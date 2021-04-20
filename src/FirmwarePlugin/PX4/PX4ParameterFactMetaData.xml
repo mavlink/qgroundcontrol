@@ -13236,11 +13236,14 @@
     <parameter name="RV_YAW_P" default="0.1" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
-    <parameter name="UCAN1_BMS0_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS0_PID</short_desc>
+    <parameter name="UCAN1_BMS_BP_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS_BP_PID</short_desc>
     </parameter>
-    <parameter name="UCAN1_BMS1_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS1_PID</short_desc>
+    <parameter name="UCAN1_BMS_BS_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS_BS_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_BMS_ES_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS_ES_PID</short_desc>
     </parameter>
     <parameter name="UCAN1_ESC0_PID" default="0" type="INT32">
       <short_desc>UCAN1_ESC0_PID</short_desc>
@@ -13256,6 +13259,9 @@
     </parameter>
     <parameter name="UCAN1_GPS_PUB" default="0" type="INT32">
       <short_desc>UCAN1_GPS_PUB</short_desc>
+    </parameter>
+    <parameter name="UCAN1_LG_BMS_PID" default="0" type="INT32">
+      <short_desc>UCAN1_LG_BMS_PID</short_desc>
     </parameter>
     <parameter name="UCAN1_SERVO_PUB" default="0" type="INT32">
       <short_desc>UCAN1_SERVO_PUB</short_desc>
