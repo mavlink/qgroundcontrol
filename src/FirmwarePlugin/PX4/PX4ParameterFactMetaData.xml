@@ -1167,9 +1167,9 @@
       <unit>s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="COM_DISARM_PRFLT" default="25.0" type="FLOAT">
-      <short_desc>Time-out for auto disarm if too slow to takeoff</short_desc>
-      <long_desc>A non-zero, positive value specifies the time after arming, in seconds, within which the vehicle must take off (after which it will automatically disarm). This is set to 25 seconds to ensure a system will not disarm if the pilot is not immediately taking off, but not so long that a system is completely forgotten about. A zero or negative value means that automatic disarming triggered by a pre-takeoff timeout is disabled.</long_desc>
+    <parameter name="COM_DISARM_PRFLT" default="10.0" type="FLOAT">
+      <short_desc>Time-out for auto disarm if not taking off</short_desc>
+      <long_desc>A non-zero, positive value specifies the time in seconds, within which the vehicle is expected to take off after arming. In case the vehicle didn't takeoff within the timout it disamrs again. A negative value disables autmoatic disarming triggered by a pre-takeoff timeout.</long_desc>
       <unit>s</unit>
       <decimal>2</decimal>
     </parameter>
