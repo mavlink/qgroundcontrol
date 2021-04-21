@@ -39,7 +39,21 @@ class LinkInterface : public QThread
 
     friend class LinkManager;
 
-public:    
+public:
+    class Channel
+    {
+    public:
+        bool reserve        (LinkManager &mgr);
+        void free           (LinkManager &mgr);
+
+        uint8_t id          (void) const;
+        inline bool isSet   (void) const { return _set; }
+
+    private:
+        uint8_t _id         = 0;
+        bool    _set        = false;
+    };
+
     virtual ~LinkInterface();
 
     Q_PROPERTY(bool isPX4Flow   READ isPX4Flow  CONSTANT)
@@ -61,7 +75,6 @@ public:
     virtual bool isLogReplay    (void) { return false; }
 
     uint8_t mavlinkChannel              (void) const;
-    uint8_t mavlinkAuxChannel           (void) const;
     bool    decodedFirstMavlinkPacket   (void) const { return _decodedFirstMavlinkPacket; }
     bool    setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { return _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void    writeBytesThreadSafe        (const char *bytes, int length);
@@ -83,23 +96,24 @@ protected:
 
     SharedLinkConfigurationPtr _config;
 
+    ///
+    /// \brief _reserveMavlinkChannel
+    ///     Called by the LinkManager during LinkInterface construction
+    /// instructing the link to setup channels.
+    ///
+    /// Default implementation reserves a single channel. But some link types
+    /// (such as MockLink and APMFirmwarePlugin) need more than one.
+    ///
+    virtual bool _reserveMavlinkChannel (LinkManager& mgr);
+    virtual void _freeMavlinkChannel    (LinkManager& mgr);
+
 private:
     // connect is private since all links should be created through LinkManager::createConnectedLink calls
     virtual bool _connect(void) = 0;
 
-    // Most links only need a single channel to use mavlink to process data.
-    // However, some Links (eg, MockLink) will use an additional channel.
-    virtual bool _needAuxChannel(void) { return false; }
-
     virtual void _writeBytes(const QByteArray) = 0; // Not thread safe, only writeBytesThreadSafe is thread safe
 
-    void _setMavlinkChannel(uint8_t channel);
-    void _setMavlinkAuxChannel(uint8_t channel);
-
-    bool    _mavlinkChannelSet          = false;
-    uint8_t _mavlinkChannel             = 0;
-    bool    _mavlinkAuxChannelSet       = false;
-    uint8_t _mavlinkAuxChannel          = 0;
+    Channel _mavlinkChannel;
     bool    _decodedFirstMavlinkPacket  = false;
     bool    _isPX4Flow                  = false;
     int     _vehicleReferenceCount      = 0;

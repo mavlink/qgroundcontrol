@@ -134,9 +134,27 @@ bool MockLink::_connect(void)
     return true;
 }
 
-bool MockLink::_needAuxChannel(void)
+bool MockLink::_reserveMavlinkChannel(LinkManager& mgr)
 {
+    if (!LinkInterface::_reserveMavlinkChannel(mgr)) {
+        return false;
+    }
+    if (!_mavlinkAuxChannel.reserve(mgr)) {
+        LinkInterface::_freeMavlinkChannel(mgr);
+        return false;
+    }
     return true;
+}
+
+void MockLink::_freeMavlinkChannel(LinkManager& mgr)
+{
+    _mavlinkAuxChannel.free(mgr);
+    LinkInterface::_freeMavlinkChannel(mgr);
+}
+
+uint8_t MockLink::mavlinkAuxChannel(void) const
+{
+    return _mavlinkAuxChannel.id();
 }
 
 void MockLink::disconnect(void)
