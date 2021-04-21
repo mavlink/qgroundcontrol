@@ -193,9 +193,10 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
 
 void InitialConnectStateMachine::_protocolVersionCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
+    InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(resultHandlerData);
+
     if (result != MAV_RESULT_ACCEPTED) {
-        InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(resultHandlerData);
-        Vehicle*                    vehicle         = connectMachine->_vehicle;
+        Vehicle* vehicle = connectMachine->_vehicle;
 
         switch (failureCode) {
         case Vehicle::MavCmdResultCommandResultOnly:
@@ -213,8 +214,8 @@ void InitialConnectStateMachine::_protocolVersionCmdResultHandler(void* resultHa
         vehicle->_mavlinkProtocolRequestComplete = true;
         vehicle->_setMaxProtoVersionFromBothSources();
         vehicle->_waitForMavlinkMessageClear();
-        connectMachine->advance();
     }
+    connectMachine->advance();
 }
 
 void InitialConnectStateMachine::_waitForProtocolVersionResultHandler(void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message)
