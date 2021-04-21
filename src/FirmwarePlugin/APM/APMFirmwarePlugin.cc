@@ -748,12 +748,10 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     setGuidedMode(vehicle, true);
 
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_message_t                       msg;
         mavlink_set_position_target_local_ned_t cmd;
-        SharedLinkInterfacePtr                  sharedLink = weakLink.lock();
-
 
         memset(&cmd, 0, sizeof(cmd));
 
@@ -893,10 +891,9 @@ QString APMFirmwarePlugin::_versionRegex() {
 
 void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* message)
 {
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_rc_channels_t   channels;
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
         mavlink_msg_rc_channels_decode(message, &channels);
         //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
@@ -915,10 +912,9 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* m
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
 {
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_rc_channels_raw_t   channels;
-        SharedLinkInterfacePtr      sharedLink = weakLink.lock();
 
         mavlink_msg_rc_channels_raw_decode(message, &channels);
         //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
@@ -956,11 +952,10 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
         return;
     }
 
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         MAVLinkProtocol*                mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_global_position_int_t   globalPositionInt;
-        SharedLinkInterfacePtr          sharedLink = weakLink.lock();
 
         memset(&globalPositionInt, 0, sizeof(globalPositionInt));
 
