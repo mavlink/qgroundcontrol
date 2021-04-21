@@ -185,17 +185,25 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
 
     paramValue.param_value = paramUnion.param_float;
 
-    // Re-Encoding is always done using mavlink 1.0 on channel 0
-    auto channel = LinkManager::reservedMavlinkChannel();
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
+    // Re-Encoding is always done using mavlink 1.0
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    LinkInterface::Channel channel;
+    if (mgr) {
+        channel.reserve(*mgr);
+    }
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel.id());
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
 
     Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_param_value_encode_chan(message->sysid,
                                         message->compid,
-                                        channel,
+                                        channel.id(),
                                         message,
                                         &paramValue);
+
+    if (mgr) {
+        channel.free(*mgr);
+    }
 }
 
 void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, LinkInterface* outgoingLink, mavlink_message_t* message)
@@ -356,9 +364,13 @@ QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
 {
-    // Re-Encoding is always done using mavlink 1.0 on channel 0
-    auto channel = LinkManager::reservedMavlinkChannel();
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
+    // Re-Encoding is always done using mavlink 1.0
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    LinkInterface::Channel channel;
+    if (mgr) {
+        channel.reserve(*mgr);
+    }
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel.id());
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
 
     mavlink_statustext_t statusText;
@@ -369,9 +381,13 @@ void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
     Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_statustext_encode_chan(message->sysid,
                                        message->compid,
-                                       channel,
+                                       channel.id(),
                                        message,
                                        &statusText);
+
+    if (mgr) {
+        channel.free(*mgr);
+    }
 }
 
 void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* message) const
@@ -379,18 +395,26 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
 
-    // Re-Encoding is always done using mavlink 1.0 on channel 0
-    auto channel = LinkManager::reservedMavlinkChannel();
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
+    // Re-Encoding is always done using mavlink 1.0
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    LinkInterface::Channel channel;
+    if (mgr) {
+        channel.reserve(*mgr);
+    }
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel.id());
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
     statusText.severity = MAV_SEVERITY_INFO;
 
     Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_statustext_encode_chan(message->sysid,
                                        message->compid,
-                                       channel,
+                                       channel.id(),
                                        message,
                                        &statusText);
+
+    if (mgr) {
+        channel.free(*mgr);
+    }
 }
 
 void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
