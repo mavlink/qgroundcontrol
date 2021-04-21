@@ -113,7 +113,7 @@ public:
     virtual void setToolbox(QGCToolbox *toolbox);
 
     /// @return This mavlink channel is never assigned to a vehicle.
-    uint8_t reservedMavlinkChannel(void) { return 0; }
+    static uint8_t reservedMavlinkChannel(void) { return 0; }
 
     /// If you are going to hold a reference to a LinkInterface* in your object you must reference count it
     /// by using this method to get access to the shared pointer.
@@ -127,7 +127,8 @@ public:
 
     /// Reserves a mavlink channel for use
     /// @return Mavlink channel index, 0 for no channels available
-    int _reserveMavlinkChannel(void);
+    uint8_t reserveMavlinkChannel(void);
+    void freeMavlinkChannel(int channel);
 
     static const char*  settingsGroup;
 
@@ -147,7 +148,6 @@ private:
     void                _removeConfiguration        (LinkConfiguration* config);
     void                _addUDPAutoConnectLink      (void);
     void                _addMAVLinkForwardingLink   (void);
-    void                _freeMavlinkChannel         (int channel);
     bool                _isSerialPortConnected      (void);
 
 #ifndef NO_SERIAL_LINK

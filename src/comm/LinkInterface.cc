@@ -8,9 +8,44 @@
  ****************************************************************************/
 
 #include "LinkInterface.h"
+#include "LinkManager.h"
 #include "QGCApplication.h"
 
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
+
+bool LinkInterface::Channel::reserve(LinkManager& mgr)
+{
+    if (_set) {
+        qCWarning(LinkInterfaceLog) << "Channel set multiple times";
+    }
+    uint8_t channel = mgr.reserveMavlinkChannel();
+    if (0 == channel) {
+        qCWarning(LinkInterfaceLog) << "Channel reserve failed";
+        return false;
+    }
+    qCDebug(LinkInterfaceLog) << "Channel::reserve" << channel;
+    _set = true;
+    _id = channel;
+    return true;
+}
+
+void LinkInterface::Channel::free(LinkManager& mgr)
+{
+    qCDebug(LinkInterfaceLog) << "Channel::free" << _id;
+    if (0 != _id) {
+        mgr.freeMavlinkChannel(_id);
+    }
+    _set = false;
+    _id = 0;
+}
+
+uint8_t LinkInterface::Channel::id(void) const
+{
+    if (!_set) {
+        qCWarning(LinkInterfaceLog) << "Call to LinkInterface::mavlinkChannel with _mavlinkChannel.set() == false";
+    }
+    return _id;
+}
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : QThread   (0)
@@ -25,45 +60,24 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
 LinkInterface::~LinkInterface()
 {
     if (_vehicleReferenceCount != 0) {
-        qWarning(LinkInterfaceLog) << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
+        qCWarning(LinkInterfaceLog) << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
     }
     _config.reset();
 }
 
 uint8_t LinkInterface::mavlinkChannel(void) const
 {
-    if (!_mavlinkChannelSet) {
-        qWarning(LinkInterfaceLog) << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
-    }
-    return _mavlinkChannel;
+    return _mavlinkChannel.id();
 }
 
-uint8_t LinkInterface::mavlinkAuxChannel(void) const
+bool LinkInterface::_reserveMavlinkChannel(LinkManager& mgr)
 {
-    if (!_mavlinkAuxChannelSet) {
-        qWarning(LinkInterfaceLog) << "Call to LinkInterface::mavlinkAuxChannel with _mavlinkAuxChannelSet == false";
-    }
-    return _mavlinkAuxChannel;
+    return _mavlinkChannel.reserve(mgr);
 }
 
-void LinkInterface::_setMavlinkChannel(uint8_t channel)
+void LinkInterface::_freeMavlinkChannel(LinkManager& mgr)
 {
-    if (_mavlinkChannelSet) {
-        qWarning() << "Mavlink channel set multiple times";
-    }
-    qCDebug(LinkInterfaceLog) << "setMavlinkChannel" << channel;
-    _mavlinkChannelSet = true;
-    _mavlinkChannel = channel;
-}
-
-void LinkInterface::_setMavlinkAuxChannel(uint8_t channel)
-{
-    if (_mavlinkAuxChannelSet) {
-        qWarning() << "Mavlink channel set multiple times";
-    }
-    qCDebug(LinkInterfaceLog) << "setMavlinkChannel" << channel;
-    _mavlinkAuxChannelSet = true;
-    _mavlinkAuxChannel = channel;
+    return _mavlinkChannel.free(mgr);
 }
 
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
@@ -87,7 +101,7 @@ void LinkInterface::removeVehicleReference(void)
             disconnect();
         }
     } else {
-        qWarning(LinkInterfaceLog) << "LinkInterface::removeVehicleReference called with no vehicle references";
+        qCWarning(LinkInterfaceLog) << "LinkInterface::removeVehicleReference called with no vehicle references";
     }
 }
 
