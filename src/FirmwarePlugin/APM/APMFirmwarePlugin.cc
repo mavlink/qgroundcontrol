@@ -26,6 +26,7 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
 #include "ArduSubFirmwarePlugin.h"
+#include "LinkManager.h"
 
 #include <QTcpSocket>
 
@@ -184,12 +185,15 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
 
     paramValue.param_value = paramUnion.param_float;
 
-    // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
+    // Re-Encoding is always done using mavlink 1.0 on channel 0
+    auto channel = LinkManager::reservedMavlinkChannel();
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
+
+    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_param_value_encode_chan(message->sysid,
                                         message->compid,
-                                        0,                  // Re-encoding uses reserved channel 0
+                                        channel,
                                         message,
                                         &paramValue);
 }
@@ -240,7 +244,11 @@ void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, 
     }
 
     _adjustOutgoingMavlinkMutex.lock();
-    mavlink_msg_param_set_encode_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message, &paramSet);
+    mavlink_msg_param_set_encode_chan(message->sysid,
+                                      message->compid,
+                                      outgoingLink->mavlinkChannel(),
+                                      message,
+                                      &paramSet);
     _adjustOutgoingMavlinkMutex.unlock();
 }
 
@@ -348,17 +356,20 @@ QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
 {
-    // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
+    // Re-Encoding is always done using mavlink 1.0 on channel 0
+    auto channel = LinkManager::reservedMavlinkChannel();
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
 
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
 
     statusText.severity = MAV_SEVERITY_INFO;
+
+    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_statustext_encode_chan(message->sysid,
                                        message->compid,
-                                       0,                  // Re-encoding uses reserved channel 0
+                                       channel,
                                        message,
                                        &statusText);
 }
@@ -367,11 +378,19 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
 {
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
-    // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
+
+    // Re-Encoding is always done using mavlink 1.0 on channel 0
+    auto channel = LinkManager::reservedMavlinkChannel();
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
     statusText.severity = MAV_SEVERITY_INFO;
-    mavlink_msg_statustext_encode_chan(message->sysid, message->compid, 0, message, &statusText);
+
+    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
+    mavlink_msg_statustext_encode_chan(message->sysid,
+                                       message->compid,
+                                       channel,
+                                       message,
+                                       &statusText);
 }
 
 void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
