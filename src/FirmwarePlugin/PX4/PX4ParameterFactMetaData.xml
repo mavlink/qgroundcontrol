@@ -1069,9 +1069,9 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="COM_ARM_CHK_ESCS" default="1" type="INT32" boolean="true">
-      <short_desc>Require all the ESCs to be detected to arm</short_desc>
-      <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
+    <parameter name="COM_ARM_CHK_ESCS" default="0" type="INT32" boolean="true">
+      <short_desc>Enable checks on ESCs that report telemetry</short_desc>
+      <long_desc>If this parameter is set, the system will check ESC's online status and failures. This param is specific for ESCs reporting status. It shall be used only if ESCs support telemetry.</long_desc>
     </parameter>
     <parameter name="COM_ARM_EKF_HGT" default="1.0" type="FLOAT">
       <short_desc>Maximum EKF height innovation test ratio that will allow arming</short_desc>
