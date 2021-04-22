@@ -37,7 +37,7 @@ LinkInterface::~LinkInterface()
 uint8_t LinkInterface::mavlinkChannel(void) const
 {
     if (!mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << "Call to MAVLinkChannel::id with isSet() == false";
+        qCWarning(LinkInterfaceLog) << "mavlinkChannel isSet() == false";
     }
     return _mavlinkChannel;
 }
