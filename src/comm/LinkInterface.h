@@ -24,7 +24,6 @@
 #include "QGCMAVLink.h"
 #include "LinkConfiguration.h"
 #include "MavlinkMessagesTimer.h"
-#include "MAVLinkChannel.h"
 
 class LinkManager;
 
