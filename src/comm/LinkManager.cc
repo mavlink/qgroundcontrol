@@ -137,7 +137,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
     }
 
     if (link) {
-        if (false == link->_reserveMavlinkChannel(*this) ) {
+        if (false == link->_allocateMavlinkChannel() ) {
             qCWarning(LinkManagerLog) << "Link failed to setup mavlink channels";
             return false;
         }
@@ -198,7 +198,7 @@ void LinkManager::_linkDisconnected(void)
     disconnect(link, &LinkInterface::bytesSent,           _mavlinkProtocol,    &MAVLinkProtocol::logSentBytes);
     disconnect(link, &LinkInterface::disconnected,        this,                &LinkManager::_linkDisconnected);
 
-    link->_freeMavlinkChannel(*this);
+    link->_freeMavlinkChannel();
     for (int i=0; i<_rgLinks.count(); i++) {
         if (_rgLinks[i].get() == link) {
             qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" << _rgLinks[i]->linkConfiguration()->name() << _rgLinks[i].use_count();
@@ -836,27 +836,30 @@ void LinkManager::startAutoConnectedLinks(void)
     }
 }
 
-uint8_t LinkManager::reserveMavlinkChannel(void)
+uint8_t LinkManager::allocateMavlinkChannel(void)
 {
-    // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
-    for (uint8_t mavlinkChannel = 1; mavlinkChannel < MAVLINK_COMM_NUM_BUFFERS; mavlinkChannel++) {
+    // Find a mavlink channel to use for this link
+    for (uint8_t mavlinkChannel = 0; mavlinkChannel < MAVLINK_COMM_NUM_BUFFERS; mavlinkChannel++) {
         if (!(_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
             mavlink_reset_channel_status(mavlinkChannel);
             // Start the channel on Mav 1 protocol
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
             mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             _mavlinkChannelsUsedBitMask |= 1 << mavlinkChannel;
-            qCDebug(LinkManagerLog) << "reserveMavlinkChannel" << mavlinkChannel;
+            qCDebug(LinkManagerLog) << "allocateMavlinkChannel" << mavlinkChannel;
             return mavlinkChannel;
         }
     }
-    qWarning(LinkManagerLog) << "reserveMavlinkChannel: all channels reserved!";
-    return 0;   // All channels reserved
+    qWarning(LinkManagerLog) << "allocateMavlinkChannel: all channels reserved!";
+    return invalidMavlinkChannel();   // All channels reserved
 }
 
-void LinkManager::freeMavlinkChannel(int channel)
+void LinkManager::freeMavlinkChannel(uint8_t channel)
 {
-    qCDebug(LinkManagerLog) << "freeMavlinkChannel" << 0;
+    qCDebug(LinkManagerLog) << "freeMavlinkChannel" << channel;
+    if (invalidMavlinkChannel() == channel) {
+        return;
+    }
     _mavlinkChannelsUsedBitMask &= ~(1 << channel);
 }
 

@@ -24,6 +24,7 @@
 #include "QGCMAVLink.h"
 #include "LinkConfiguration.h"
 #include "MavlinkMessagesTimer.h"
+#include "MAVLinkChannel.h"
 
 class LinkManager;
 
@@ -40,19 +41,6 @@ class LinkInterface : public QThread
     friend class LinkManager;
 
 public:
-    class Channel
-    {
-    public:
-        bool reserve        (LinkManager &mgr);
-        void free           (LinkManager &mgr);
-
-        uint8_t id          (void) const;
-        inline bool isSet   (void) const { return _set; }
-
-    private:
-        uint8_t _id         = 0;
-        bool    _set        = false;
-    };
 
     virtual ~LinkInterface();
 
@@ -75,6 +63,8 @@ public:
     virtual bool isLogReplay    (void) { return false; }
 
     uint8_t mavlinkChannel              (void) const;
+    bool    mavlinkChannelIsSet         (void) const;
+
     bool    decodedFirstMavlinkPacket   (void) const { return _decodedFirstMavlinkPacket; }
     bool    setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { return _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void    writeBytesThreadSafe        (const char *bytes, int length);
@@ -97,15 +87,15 @@ protected:
     SharedLinkConfigurationPtr _config;
 
     ///
-    /// \brief _reserveMavlinkChannel
+    /// \brief _allocateMavlinkChannel
     ///     Called by the LinkManager during LinkInterface construction
     /// instructing the link to setup channels.
     ///
-    /// Default implementation reserves a single channel. But some link types
-    /// (such as MockLink and APMFirmwarePlugin) need more than one.
+    /// Default implementation allocates a single channel. But some link types
+    /// (such as MockLink) need more than one.
     ///
-    virtual bool _reserveMavlinkChannel (LinkManager& mgr);
-    virtual void _freeMavlinkChannel    (LinkManager& mgr);
+    virtual bool _allocateMavlinkChannel();
+    virtual void _freeMavlinkChannel    ();
 
 private:
     // connect is private since all links should be created through LinkManager::createConnectedLink calls
@@ -113,7 +103,7 @@ private:
 
     virtual void _writeBytes(const QByteArray) = 0; // Not thread safe, only writeBytesThreadSafe is thread safe
 
-    Channel _mavlinkChannel;
+    uint8_t _mavlinkChannel             = std::numeric_limits<uint8_t>::max();
     bool    _decodedFirstMavlinkPacket  = false;
     bool    _isPX4Flow                  = false;
     int     _vehicleReferenceCount      = 0;
