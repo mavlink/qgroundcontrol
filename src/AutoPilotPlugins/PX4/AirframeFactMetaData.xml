@@ -783,7 +783,7 @@
       <type>Underwater Robot</type>
     </airframe>
   </airframe_group>
-  <airframe_group name="Vectored 6 DOF UUV" image="AirframeUnknown">
+  <airframe_group name="Vectored 6 DOF UUV" image="Vectored6DofUUV">
     <airframe name="BlueROV2 (Heavy Configuration)" id="60002" maintainer="Thies Lennart Alff &lt;thies.lennart.alff@tuhh.de&gt;">
       <class>Underwater Robot</class>
       <maintainer>Thies Lennart Alff &lt;thies.lennart.alff@tuhh.de&gt;</maintainer>
