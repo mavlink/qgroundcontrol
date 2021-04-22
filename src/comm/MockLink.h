@@ -190,9 +190,10 @@ private slots:
 private:
     // LinkInterface overrides
     bool _connect                       (void) override;
-    bool _reserveMavlinkChannel         (LinkManager& mgr) override;
-    void _freeMavlinkChannel            (LinkManager& mgr) override;
+    bool _allocateMavlinkChannel        () override;
+    void _freeMavlinkChannel            () override;
     uint8_t mavlinkAuxChannel           (void) const;
+    bool mavlinkAuxChannelIsSet         (void) const;
 
     // QThread override
     void run(void) final;
@@ -237,7 +238,7 @@ private:
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
-    Channel                     _mavlinkAuxChannel;
+    uint8_t                     _mavlinkAuxChannel              = std::numeric_limits<uint8_t>::max();
     QMutex                      _mavlinkAuxMutex;
 
     MockLinkMissionItemHandler  _missionItemHandler;
