@@ -72,7 +72,9 @@ AirMapAdvisoryManager::_requestAdvisories()
     }
     _valid = false;
     _advisories.clearAndDeleteContents();
+
     Advisory::Search::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
     //-- Geometry
     Geometry::Polygon polygon;
     //-- Get ROI bounding box, clipping to max area of interest
