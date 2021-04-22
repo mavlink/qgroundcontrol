@@ -1477,7 +1477,7 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "_handlePing: primary link gone!";
+        qCDebug(VehicleLog) << "_handlePing: primary link gone!";
         return;
     }
 
@@ -1951,7 +1951,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
     if (_firmwarePlugin->setFlightMode(flightMode, &base_mode, &custom_mode)) {
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (!sharedLink) {
-            qDebug(VehicleLog) << "setFlightMode: primary link gone!";
+            qCDebug(VehicleLog) << "setFlightMode: primary link gone!";
             return;
         }
 
@@ -1971,7 +1971,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
                                        custom_mode);
         sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     } else {
-        qWarning() << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
+        qCWarning(VehicleLog) << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
     }
 }
 
@@ -1990,7 +1990,7 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "requestDataStream: primary link gone!";
+        qCDebug(VehicleLog) << "requestDataStream: primary link gone!";
         return;
     }
 
@@ -2126,7 +2126,7 @@ void Vehicle::_firstRallyPointLoadComplete()
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
-    qDebug() << "_parametersReady" << parametersReady;
+    qCDebug(VehicleLog) << "_parametersReady" << parametersReady;
 
     // Try to set current unix time to the vehicle
     _sendQGCTimeToVehicle();
@@ -2143,7 +2143,7 @@ void Vehicle::_sendQGCTimeToVehicle()
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "_sendQGCTimeToVehicle: primary link gone!";
+        qCDebug(VehicleLog) << "_sendQGCTimeToVehicle: primary link gone!";
         return;
     }
 
@@ -2589,7 +2589,7 @@ void Vehicle::setCurrentMissionSequence(int seq)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "setCurrentMissionSequence: primary link gone!";
+        qCDebug(VehicleLog) << "setCurrentMissionSequence: primary link gone!";
         return;
     }
 
@@ -3130,7 +3130,7 @@ void Vehicle::startCalibration(Vehicle::CalibrationType calType)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "startCalibration: primary link gone!";
+        qCDebug(VehicleLog) << "startCalibration: primary link gone!";
         return;
     }
 
@@ -3257,7 +3257,7 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
     if (_offlineEditingVehicle) {
         _defaultComponentId = defaultComponentId;
     } else {
-        qWarning() << "Call to Vehicle::setOfflineEditingDefaultComponentId on vehicle which is not offline";
+        qCWarning(VehicleLog) << "Call to Vehicle::setOfflineEditingDefaultComponentId on vehicle which is not offline";
     }
 }
 
@@ -3286,7 +3286,7 @@ void Vehicle::_ackMavlinkLogData(uint16_t sequence)
 {
     SharedLinkInterfacePtr  sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "_ackMavlinkLogData: primary link gone!";
+        qCDebug(VehicleLog) << "_ackMavlinkLogData: primary link gone!";
         return;
     }
 
@@ -3788,7 +3788,7 @@ void Vehicle::sendParamMapRC(const QString& paramName, double scale, double cent
 {
     SharedLinkInterfacePtr  sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog) << "sendParamMapRC: primary link gone!";
+        qCDebug(VehicleLog) << "sendParamMapRC: primary link gone!";
         return;
     }
 
@@ -3822,7 +3822,7 @@ void Vehicle::clearAllParamMapRC(void)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog)<< "clearAllParamMapRC: primary link gone!";
+        qCDebug(VehicleLog)<< "clearAllParamMapRC: primary link gone!";
         return;
     }
 
@@ -3848,7 +3848,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
+        qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
         return;
     }
 
