@@ -13,39 +13,8 @@
 
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
 
-bool LinkInterface::Channel::reserve(LinkManager& mgr)
-{
-    if (_set) {
-        qCWarning(LinkInterfaceLog) << "Channel set multiple times";
-    }
-    uint8_t channel = mgr.reserveMavlinkChannel();
-    if (0 == channel) {
-        qCWarning(LinkInterfaceLog) << "Channel reserve failed";
-        return false;
-    }
-    qCDebug(LinkInterfaceLog) << "Channel::reserve" << channel;
-    _set = true;
-    _id = channel;
-    return true;
-}
-
-void LinkInterface::Channel::free(LinkManager& mgr)
-{
-    qCDebug(LinkInterfaceLog) << "Channel::free" << _id;
-    if (0 != _id) {
-        mgr.freeMavlinkChannel(_id);
-    }
-    _set = false;
-    _id = 0;
-}
-
-uint8_t LinkInterface::Channel::id(void) const
-{
-    if (!_set) {
-        qCWarning(LinkInterfaceLog) << "Call to LinkInterface::mavlinkChannel with _mavlinkChannel.set() == false";
-    }
-    return _id;
-}
+// The LinkManager is only forward declared in the header, so the static_assert is here instead.
+static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update LinkInterface::_mavlinkChannel");
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : QThread   (0)
@@ -67,17 +36,46 @@ LinkInterface::~LinkInterface()
 
 uint8_t LinkInterface::mavlinkChannel(void) const
 {
-    return _mavlinkChannel.id();
+    if (!mavlinkChannelIsSet()) {
+        qCWarning(LinkInterfaceLog) << "Call to MAVLinkChannel::id with isSet() == false";
+    }
+    return _mavlinkChannel;
 }
 
-bool LinkInterface::_reserveMavlinkChannel(LinkManager& mgr)
+bool LinkInterface::mavlinkChannelIsSet(void) const
 {
-    return _mavlinkChannel.reserve(mgr);
+    return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
 }
 
-void LinkInterface::_freeMavlinkChannel(LinkManager& mgr)
+bool LinkInterface::_allocateMavlinkChannel()
 {
-    return _mavlinkChannel.free(mgr);
+    // should only be called by the LinkManager during setup
+    Q_ASSERT(!mavlinkChannelIsSet());
+    if (mavlinkChannelIsSet()) {
+        qCWarning(LinkInterfaceLog) << "_allocateMavlinkChannel already have " << _mavlinkChannel;
+        return true;
+    }
+
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    _mavlinkChannel = mgr->allocateMavlinkChannel();
+    if (!mavlinkChannelIsSet()) {
+        qCWarning(LinkInterfaceLog) << "_allocateMavlinkChannel failed";
+        return false;
+    }
+    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
+    return true;
+}
+
+void LinkInterface::_freeMavlinkChannel()
+{
+    qCDebug(LinkInterfaceLog) << "_freeMavlinkChannel" << _mavlinkChannel;
+    if (LinkManager::invalidMavlinkChannel() == _mavlinkChannel) {
+        return;
+    }
+
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    mgr->freeMavlinkChannel(_mavlinkChannel);
+    _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
