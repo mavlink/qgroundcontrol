@@ -199,13 +199,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     // since the link is closed.
     SharedLinkInterfacePtr linkPtr = _linkMgr->sharedLinkInterfacePointerForLink(link, true);
     if (!linkPtr) {
-        qDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << b.size() << " bytes arrived too late";
+        qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << b.size() << " bytes arrived too late";
         return;
     }
 
     uint8_t mavlinkChannel = link->mavlinkChannel();
-
-    qDebug(MAVLinkProtocolLog) << QThread::currentThread() << this << "receiveBytes" << b.size() << mavlinkChannel;
 
     for (int position = 0; position < b.size(); position++) {
         if (mavlink_parse_char(mavlinkChannel, static_cast<uint8_t>(b[position]), &_message, &_status)) {
@@ -214,7 +212,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 link->setDecodedFirstMavlinkPacket(true);
                 mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
                 if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-                    qDebug() << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
+                    qCDebug(MAVLinkProtocolLog) << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                     mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
                     // Set all links to v2
                     setVersion(200);
@@ -463,7 +461,7 @@ void MAVLinkProtocol::_startLogging(void)
                 return;
             }
 
-            qDebug() << "Temp log" << _tempLogFile.fileName();
+            qCDebug(MAVLinkProtocolLog) << "Temp log" << _tempLogFile.fileName();
             emit checkTelemetrySavePath();
 
             _logSuspendError = false;
