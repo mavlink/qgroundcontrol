@@ -120,6 +120,9 @@ private:
 
     static const char*      _artooIP;
     static const int        _artooVideoHandshakePort;
+
+    static uint8_t          _reencodeMavlinkChannel();
+    static QMutex&          _reencodeMavlinkChannelMutex();
 };
 
 #endif

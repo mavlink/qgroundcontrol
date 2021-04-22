@@ -56,6 +56,9 @@ constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
 
+// The LinkManager is only forward declared in the header, so a static_assert is here instead to ensure we update if the value changes.
+static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update MockLink::_mavlinkAuxChannel");
+
 MockLink::MockLink(SharedLinkConfigurationPtr& config)
     : LinkInterface                         (config)
     , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
@@ -134,27 +137,49 @@ bool MockLink::_connect(void)
     return true;
 }
 
-bool MockLink::_reserveMavlinkChannel(LinkManager& mgr)
+bool MockLink::_allocateMavlinkChannel()
 {
-    if (!LinkInterface::_reserveMavlinkChannel(mgr)) {
+    // should only be called by the LinkManager during setup
+    Q_ASSERT(!mavlinkAuxChannelIsSet());
+    Q_ASSERT(!mavlinkChannelIsSet());
+
+    if (!LinkInterface::_allocateMavlinkChannel()) {
+        qCWarning(MockLinkLog) << "LinkInterface::_allocateMavlinkChannel failed";
         return false;
     }
-    if (!_mavlinkAuxChannel.reserve(mgr)) {
-        LinkInterface::_freeMavlinkChannel(mgr);
+
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    _mavlinkAuxChannel = mgr->allocateMavlinkChannel();
+    if (!mavlinkAuxChannelIsSet()) {
+        qCWarning(MockLinkLog) << "_allocateMavlinkChannel failed";
+        LinkInterface::_freeMavlinkChannel();
         return false;
     }
+    qCDebug(MockLinkLog) << "_allocateMavlinkChannel" << _mavlinkAuxChannel;
     return true;
 }
 
-void MockLink::_freeMavlinkChannel(LinkManager& mgr)
+void MockLink::_freeMavlinkChannel()
 {
-    _mavlinkAuxChannel.free(mgr);
-    LinkInterface::_freeMavlinkChannel(mgr);
+    qCDebug(MockLinkLog) << "_freeMavlinkChannel" << _mavlinkAuxChannel;
+    if (!mavlinkAuxChannelIsSet()) {
+        Q_ASSERT(!mavlinkChannelIsSet());
+        return;
+    }
+
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    mgr->freeMavlinkChannel(_mavlinkAuxChannel);
+    LinkInterface::_freeMavlinkChannel();
 }
 
 uint8_t MockLink::mavlinkAuxChannel(void) const
 {
-    return _mavlinkAuxChannel.id();
+    return _mavlinkAuxChannel;
+}
+
+bool MockLink::mavlinkAuxChannelIsSet(void) const
+{
+    return (LinkManager::invalidMavlinkChannel() != _mavlinkAuxChannel);
 }
 
 void MockLink::disconnect(void)
