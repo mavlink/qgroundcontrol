@@ -54,12 +54,24 @@ Rectangle {
             anchors.left:   parent.left
             inputMethodHints: feature ? (feature.type === AirspaceRuleFeature.Float ? Qt.ImhFormattedNumbersOnly : Qt.ImhNone) : Qt.ImhNone
             onAccepted: {
-                if(feature)
-                    feature.value = parseFloat(text)
+                if(feature) {
+                    if (feature.type === AirspaceRuleFeature.Float) {
+                        feature.value = parseFloat(text)
+                    }
+                    else if (feature.type === AirspaceRuleFeature.String) {
+                        feature.value = text
+                    }
+                }
             }
             onEditingFinished: {
-                if(feature)
-                    feature.value = parseFloat(text)
+                if(feature) {
+                    if (feature.type === AirspaceRuleFeature.Float) {
+                        feature.value = parseFloat(text)
+                    }
+                    else if (feature.type === AirspaceRuleFeature.String) {
+                        feature.value = text
+                    }
+                }
             }
         }
         Item {
