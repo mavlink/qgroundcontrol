@@ -99,7 +99,7 @@ void LinkInterface::removeVehicleReference(void)
             disconnect();
         }
     } else {
-        qCWarning(LinkInterfaceLog) << "LinkInterface::removeVehicleReference called with no vehicle references";
+        qCWarning(LinkInterfaceLog) << "removeVehicleReference called with no vehicle references";
     }
 }
 

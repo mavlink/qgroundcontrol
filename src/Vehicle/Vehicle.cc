@@ -583,7 +583,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     unsigned mavlinkVersion = _mavlink->getCurrentVersion();
     if (_maxProtoVersion != mavlinkVersion && mavlinkVersion >= 200) {
         _maxProtoVersion = mavlinkVersion;
-        qCDebug(VehicleLog) << "Vehicle::_mavlinkMessageReceived Link already running Mavlink v2. Setting _maxProtoVersion" << _maxProtoVersion;
+        qCDebug(VehicleLog) << "_mavlinkMessageReceived Link already running Mavlink v2. Setting _maxProtoVersion" << _maxProtoVersion;
     }
 
     if (message.sysid != _id && message.sysid != 0) {
