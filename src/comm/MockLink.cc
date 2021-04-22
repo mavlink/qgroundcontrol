@@ -83,7 +83,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     , _logDownloadBytesRemaining            (0)
     , _adsbAngle                            (0)
 {
-    qDebug() << "MockLink" << this;
+    qCDebug(MockLinkLog) << "MockLink" << this;
 
     MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.get());
     _firmwareType       = mockConfig->firmwareType();
@@ -118,7 +118,7 @@ MockLink::~MockLink(void)
     if (!_logDownloadFilename.isEmpty()) {
         QFile::remove(_logDownloadFilename);
     }
-    qDebug() << "~MockLink" << this;
+    qCDebug(MockLinkLog) << "~MockLink" << this;
 }
 
 bool MockLink::_connect(void)
@@ -377,7 +377,7 @@ void MockLink::_sendHighLatency2(void)
     union px4_custom_mode   px4_cm;
     px4_cm.data = _mavCustomMode;
 
-    qDebug() << "Sending" << _mavCustomMode;
+    qCDebug(MockLinkLog) << "Sending" << _mavCustomMode;
     mavlink_msg_high_latency2_pack_chan(_vehicleSystemId,
                                         _vehicleComponentId,
                                         mavlinkChannel(),
@@ -577,7 +577,7 @@ void MockLink::_handleIncomingNSHBytes(const char* bytes, int cBytes)
     }
 
     if (cBytes > 0) {
-        qDebug() << "NSH:" << (const char*)bytes;
+        qCDebug(MockLinkLog) << "NSH:" << (const char*)bytes;
 
 #if 0
         // MockLink not quite ready to handle this correctly yet
@@ -669,11 +669,11 @@ void MockLink::_handleParamMapRC(const mavlink_message_t& msg)
     const QString paramName(QString::fromLocal8Bit(paramMapRC.param_id, static_cast<int>(strnlen(paramMapRC.param_id, MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN))));
 
     if (paramMapRC.param_index == -1) {
-        qDebug() << QStringLiteral("MockLink - PARAM_MAP_RC: param(%1) tuningID(%2) centerValue(%3) scale(%4) min(%5) max(%6)").arg(paramName).arg(paramMapRC.parameter_rc_channel_index).arg(paramMapRC.param_value0).arg(paramMapRC.scale).arg(paramMapRC.param_value_min).arg(paramMapRC.param_value_max);
+        qCDebug(MockLinkLog) << QStringLiteral("MockLink - PARAM_MAP_RC: param(%1) tuningID(%2) centerValue(%3) scale(%4) min(%5) max(%6)").arg(paramName).arg(paramMapRC.parameter_rc_channel_index).arg(paramMapRC.param_value0).arg(paramMapRC.scale).arg(paramMapRC.param_value_min).arg(paramMapRC.param_value_max);
     } else if (paramMapRC.param_index == -2) {
-        qDebug() << QStringLiteral("MockLink - PARAM_MAP_RC: Clear tuningID(%1)").arg(paramMapRC.parameter_rc_channel_index);
+        qCDebug(MockLinkLog) << QStringLiteral("MockLink - PARAM_MAP_RC: Clear tuningID(%1)").arg(paramMapRC.parameter_rc_channel_index);
     } else {
-        qWarning() << QStringLiteral("MockLink - PARAM_MAP_RC: Unsupported param_index(%1)").arg(paramMapRC.param_index);
+        qCWarning(MockLinkLog) << QStringLiteral("MockLink - PARAM_MAP_RC: Unsupported param_index(%1)").arg(paramMapRC.param_index);
     }
 }
 
@@ -1369,7 +1369,7 @@ void MockConfiguration::copyFrom(LinkConfiguration *source)
     auto* usource = qobject_cast<MockConfiguration*>(source);
 
     if (!usource) {
-        qWarning() << "dynamic_cast failed" << source << usource;
+        qCWarning(MockLinkLog) << "dynamic_cast failed" << source << usource;
         return;
     }
 
@@ -1521,7 +1521,7 @@ void MockLink::_handleLogRequestList(const mavlink_message_t& msg)
     mavlink_msg_log_request_list_decode(&msg, &request);
 
     if (request.start != 0 && request.end != 0xffff) {
-        qWarning() << "MockLink::_handleLogRequestList cannot handle partial requests";
+        qCWarning(MockLinkLog) << "_handleLogRequestList cannot handle partial requests";
         return;
     }
 
@@ -1551,12 +1551,12 @@ void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
     }
 
     if (request.id != 0) {
-        qWarning() << "MockLink::_handleLogRequestData id must be 0";
+        qCWarning(MockLinkLog) << "_handleLogRequestData id must be 0";
         return;
     }
 
     if (request.ofs > _logDownloadFileSize - 1) {
-        qWarning() << "MockLink::_handleLogRequestData offset past end of file request.ofs:size" << request.ofs << _logDownloadFileSize;
+        qCWarning(MockLinkLog) << "_handleLogRequestData offset past end of file request.ofs:size" << request.ofs << _logDownloadFileSize;
         return;
     }
 
@@ -1579,7 +1579,7 @@ void MockLink::_logDownloadWorker(void)
             Q_ASSERT(file.seek(_logDownloadCurrentOffset));
             Q_ASSERT(file.read((char *)buffer, bytesToRead) == bytesToRead);
 
-            qDebug() << "MockLink::_logDownloadWorker" << _logDownloadCurrentOffset << _logDownloadBytesRemaining;
+            qCDebug(MockLinkLog) << "_logDownloadWorker" << _logDownloadCurrentOffset << _logDownloadBytesRemaining;
 
             mavlink_message_t responseMsg;
             mavlink_msg_log_data_pack_chan(_vehicleSystemId,
@@ -1597,7 +1597,7 @@ void MockLink::_logDownloadWorker(void)
 
             file.close();
         } else {
-            qWarning() << "MockLink::_logDownloadWorker open failed" << file.errorString();
+            qCWarning(MockLinkLog) << "_logDownloadWorker open failed" << file.errorString();
         }
     }
 }
