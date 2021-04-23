@@ -167,12 +167,17 @@ void VehicleLinkManager::_addLink(LinkInterface* link)
         qCWarning(VehicleLinkManagerLog) << "_addLink call with link which is already in the list";
         return;
     } else {
+        SharedLinkInterfacePtr sharedLink = _linkMgr->sharedLinkInterfacePointerForLink(link);
+        if (!sharedLink) {
+            qCDebug(VehicleLinkManagerLog) << "_addLink stale link" << (void*)link;
+            return;
+        }
         qCDebug(VehicleLinkManagerLog) << "_addLink:" << link->linkConfiguration()->name() << QString("%1").arg((qulonglong)link, 0, 16);
 
         link->addVehicleReference();
 
         LinkInfo_t linkInfo;
-        linkInfo.link = _linkMgr->sharedLinkInterfacePointerForLink(link);
+        linkInfo.link = sharedLink;
         if (!link->linkConfiguration()->isHighLatency()) {
             linkInfo.heartbeatElapsedTimer.start();
         }
@@ -231,7 +236,7 @@ void VehicleLinkManager::_linkDisconnected(void)
     }
 }
 
-WeakLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
+SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
 {
 #ifndef NO_SERIAL_LINK
     // Best choice is a USB connection
@@ -264,9 +269,10 @@ WeakLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
     }
 
     // Last possible choice is a high latency link
-    if (!_primaryLink.expired() && _primaryLink.lock().get()->linkConfiguration()->isHighLatency()) {
+    SharedLinkInterfacePtr link = _primaryLink.lock();
+    if (link && link->linkConfiguration()->isHighLatency()) {
         // Best choice continues to be the current high latency link
-        return _primaryLink;
+        return link;
     } else {
         // Pick any high latency link if one exists
         for (const LinkInfo_t& linkInfo: _rgLinkInfo) {
@@ -280,25 +286,26 @@ WeakLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
         }
     }
 
-    return WeakLinkInterfacePtr();
+    return {};
 }
 
 bool VehicleLinkManager::_updatePrimaryLink(void)
 {
-    int linkIndex = _containsLinkIndex(_primaryLink.lock().get());
-    if (linkIndex != -1 && !_rgLinkInfo[linkIndex].commLost && !_rgLinkInfo[linkIndex].link->linkConfiguration()->isHighLatency()) {
+    SharedLinkInterfacePtr primaryLink = _primaryLink.lock();
+    int linkIndex = _containsLinkIndex(primaryLink.get());
+    if (linkIndex != -1 && !_rgLinkInfo[linkIndex].commLost && !primaryLink->linkConfiguration()->isHighLatency()) {
         // Current priority link is still valid
         return false;
     }
 
-    WeakLinkInterfacePtr bestActivePrimaryLink = _bestActivePrimaryLink();
+    SharedLinkInterfacePtr bestActivePrimaryLink = _bestActivePrimaryLink();
 
-    if (linkIndex != -1 && bestActivePrimaryLink.expired()) {
+    if (linkIndex != -1 && !bestActivePrimaryLink) {
         // Nothing better available, leave things set to current primary link
         return false;
     } else {
-        if (bestActivePrimaryLink.lock().get() != _primaryLink.lock().get()) {
-            if (!_primaryLink.expired() && _primaryLink.lock()->linkConfiguration()->isHighLatency()) {
+        if (bestActivePrimaryLink != primaryLink) {
+            if (primaryLink && primaryLink->linkConfiguration()->isHighLatency()) {
                 _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
                                MAV_CMD_CONTROL_HIGH_LATENCY,
                                true,
@@ -308,7 +315,7 @@ bool VehicleLinkManager::_updatePrimaryLink(void)
             _primaryLink = bestActivePrimaryLink;
             emit primaryLinkChanged();
 
-            if (!bestActivePrimaryLink.expired() && bestActivePrimaryLink.lock()->linkConfiguration()->isHighLatency()) {
+            if (bestActivePrimaryLink && bestActivePrimaryLink->linkConfiguration()->isHighLatency()) {
                 _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
                                MAV_CMD_CONTROL_HIGH_LATENCY,
                                true,
@@ -390,11 +397,10 @@ QStringList VehicleLinkManager::linkStatuses(void) const
 
 bool VehicleLinkManager::primaryLinkIsPX4Flow(void) const
 {
-    WeakLinkInterfacePtr nullWeak;
-
-    if (_primaryLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = _primaryLink.lock();
+    if (!sharedLink) {
         return false;
     } else {
-        return _primaryLink.lock()->isPX4Flow();
+        return sharedLink->isPX4Flow();
     }
 }
