@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 class Authenticator : public airmap::Authenticator, public std::enable_shared_from_this<Authenticator> {
  public:

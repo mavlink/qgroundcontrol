@@ -46,24 +46,24 @@ class ContextRunner {
 
 }  // namespace
 
-struct airmap::qt::Client::Private {
+struct airmap::services::Client::Private {
   explicit Private(const Client::Configuration& configuration, const std::shared_ptr<ContextRunner>& context_runner,
                    const std::shared_ptr<Dispatcher>& dispatcher, const std::shared_ptr<airmap::Client>& client)
       : configuration_{configuration},
         context_runner_{context_runner},
         dispatcher_{dispatcher},
         client_{client},
-        advisory_{airmap::qt::Advisory::create(dispatcher_, client_)},
-        aircrafts_{airmap::qt::Aircrafts::create(dispatcher_, client_)},
-        airspaces_{airmap::qt::Airspaces::create(dispatcher_, client_)},
-        authenticator_{airmap::qt::Authenticator::create(dispatcher_, client_)},
-        flight_plans_{airmap::qt::FlightPlans::create(dispatcher_, client_)},
-        flights_{airmap::qt::Flights::create(dispatcher_, client_)},
-        pilots_{airmap::qt::Pilots::create(dispatcher_, client_)},
-        rulesets_{airmap::qt::RuleSets::create(dispatcher_, client_)},
-        status_{airmap::qt::Status::create(dispatcher_, client_)},
-        telemetry_{airmap::qt::Telemetry::create(dispatcher_, client_)},
-        traffic_{airmap::qt::Traffic::create(dispatcher_, client_)} {
+        advisory_{airmap::services::Advisory::create(dispatcher_, client_)},
+        aircrafts_{airmap::services::Aircrafts::create(dispatcher_, client_)},
+        airspaces_{airmap::services::Airspaces::create(dispatcher_, client_)},
+        authenticator_{airmap::services::Authenticator::create(dispatcher_, client_)},
+        flight_plans_{airmap::services::FlightPlans::create(dispatcher_, client_)},
+        flights_{airmap::services::Flights::create(dispatcher_, client_)},
+        pilots_{airmap::services::Pilots::create(dispatcher_, client_)},
+        rulesets_{airmap::services::RuleSets::create(dispatcher_, client_)},
+        status_{airmap::services::Status::create(dispatcher_, client_)},
+        telemetry_{airmap::services::Telemetry::create(dispatcher_, client_)},
+        traffic_{airmap::services::Traffic::create(dispatcher_, client_)} {
   }
 
   ~Private() {
@@ -72,22 +72,22 @@ struct airmap::qt::Client::Private {
 
   Client::Configuration configuration_;
   std::shared_ptr<ContextRunner> context_runner_;
-  std::shared_ptr<airmap::qt::Dispatcher> dispatcher_;
+  std::shared_ptr<airmap::services::Dispatcher> dispatcher_;
   std::shared_ptr<airmap::Client> client_;
-  std::shared_ptr<airmap::qt::Advisory> advisory_;
-  std::shared_ptr<airmap::qt::Aircrafts> aircrafts_;
-  std::shared_ptr<airmap::qt::Airspaces> airspaces_;
-  std::shared_ptr<airmap::qt::Authenticator> authenticator_;
-  std::shared_ptr<airmap::qt::FlightPlans> flight_plans_;
-  std::shared_ptr<airmap::qt::Flights> flights_;
-  std::shared_ptr<airmap::qt::Pilots> pilots_;
-  std::shared_ptr<airmap::qt::RuleSets> rulesets_;
-  std::shared_ptr<airmap::qt::Status> status_;
-  std::shared_ptr<airmap::qt::Telemetry> telemetry_;
-  std::shared_ptr<airmap::qt::Traffic> traffic_;
+  std::shared_ptr<airmap::services::Advisory> advisory_;
+  std::shared_ptr<airmap::services::Aircrafts> aircrafts_;
+  std::shared_ptr<airmap::services::Airspaces> airspaces_;
+  std::shared_ptr<airmap::services::Authenticator> authenticator_;
+  std::shared_ptr<airmap::services::FlightPlans> flight_plans_;
+  std::shared_ptr<airmap::services::Flights> flights_;
+  std::shared_ptr<airmap::services::Pilots> pilots_;
+  std::shared_ptr<airmap::services::RuleSets> rulesets_;
+  std::shared_ptr<airmap::services::Status> status_;
+  std::shared_ptr<airmap::services::Telemetry> telemetry_;
+  std::shared_ptr<airmap::services::Traffic> traffic_;
 };
 
-void airmap::qt::Client::create(const Client::Configuration& configuration, const std::shared_ptr<Logger>& logger,
+void airmap::services::Client::create(const Client::Configuration& configuration, const std::shared_ptr<Logger>& logger,
                                 QObject* parent, const CreateCallback& cb) {
   register_types();
 
@@ -115,52 +115,52 @@ void airmap::qt::Client::create(const Client::Configuration& configuration, cons
   }
 }
 
-airmap::qt::Client::Client(std::unique_ptr<Private>&& d, QObject* parent) : QObject{parent}, d_{std::move(d)} {
+airmap::services::Client::Client(std::unique_ptr<Private>&& d, QObject* parent) : QObject{parent}, d_{std::move(d)} {
 }
 
-airmap::qt::Client::~Client() = default;
+airmap::services::Client::~Client() = default;
 
 // From airmap::Client
-airmap::Authenticator& airmap::qt::Client::authenticator() {
+airmap::Authenticator& airmap::services::Client::authenticator() {
   return *d_->authenticator_;
 }
 
-airmap::Advisory& airmap::qt::Client::advisory() {
+airmap::Advisory& airmap::services::Client::advisory() {
   return *d_->advisory_;
 }
 
-airmap::Aircrafts& airmap::qt::Client::aircrafts() {
+airmap::Aircrafts& airmap::services::Client::aircrafts() {
   return *d_->aircrafts_;
 }
 
-airmap::Airspaces& airmap::qt::Client::airspaces() {
+airmap::Airspaces& airmap::services::Client::airspaces() {
   return *d_->airspaces_;
 }
 
-airmap::FlightPlans& airmap::qt::Client::flight_plans() {
+airmap::FlightPlans& airmap::services::Client::flight_plans() {
   return *d_->flight_plans_;
 }
 
-airmap::Flights& airmap::qt::Client::flights() {
+airmap::Flights& airmap::services::Client::flights() {
   return *d_->flights_;
 }
 
-airmap::Pilots& airmap::qt::Client::pilots() {
+airmap::Pilots& airmap::services::Client::pilots() {
   return *d_->pilots_;
 }
 
-airmap::RuleSets& airmap::qt::Client::rulesets() {
+airmap::RuleSets& airmap::services::Client::rulesets() {
   return *d_->rulesets_;
 }
 
-airmap::Status& airmap::qt::Client::status() {
+airmap::Status& airmap::services::Client::status() {
   return *d_->status_;
 }
 
-airmap::Telemetry& airmap::qt::Client::telemetry() {
+airmap::Telemetry& airmap::services::Client::telemetry() {
   return *d_->telemetry_;
 }
 
-airmap::Traffic& airmap::qt::Client::traffic() {
+airmap::Traffic& airmap::services::Client::traffic() {
   return *d_->traffic_;
 }

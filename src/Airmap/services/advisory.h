@@ -6,7 +6,7 @@
 #include "dispatcher.h"
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 class Advisory : public airmap::Advisory, public std::enable_shared_from_this<Advisory> {
  public:

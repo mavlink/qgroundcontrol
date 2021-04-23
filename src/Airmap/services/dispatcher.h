@@ -9,7 +9,7 @@
 #include <functional>
 #include <memory>
 namespace airmap {
-namespace qt {
+namespace services {
 
 class Dispatcher : public QObject {
  public:
