@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 class Telemetry : public airmap::Telemetry, public std::enable_shared_from_this<Telemetry> {
  public:
