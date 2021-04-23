@@ -9,7 +9,7 @@
 #include <set>
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 class Traffic : public airmap::Traffic, public std::enable_shared_from_this<Traffic> {
  public:
