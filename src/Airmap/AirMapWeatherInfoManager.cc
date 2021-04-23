@@ -30,12 +30,12 @@ AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     if(reset || (!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(roi.center()) > WEATHER_UPDATE_DISTANCE)) {
         _lastRoiCenter = roi.center();
         _requestWeatherUpdate(_lastRoiCenter);
-        _weatherTime.start();
+        _weatherTime = QTime::currentTime();
     } else {
         //-- Check weather once every WEATHER_UPDATE_TIME
-        if(_weatherTime.elapsed() > WEATHER_UPDATE_TIME) {
+        if(_weatherTime.msec() > WEATHER_UPDATE_TIME) {
             _requestWeatherUpdate(roi.center());
-            _weatherTime.start();
+            _weatherTime = QTime::currentTime();
         }
     }
 }

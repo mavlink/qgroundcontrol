@@ -290,7 +290,7 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileNa
 
 void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(float progress)
 {
-    int elapsedSec = _downloadStartTime.elapsed() / 1000;
+    int elapsedSec = _downloadStartTime.msec() / 1000;
     float totalDownloadTime = elapsedSec / progress;
     // abort download if it's too slow (e.g. over telemetry link) and use the fallback.
     // (we could also check if there's a http fallback)
@@ -334,7 +334,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
             if (_uriIsMAVLinkFTP(uri)) {
                 connect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
                 if (ftpManager->download(uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
-                    _downloadStartTime.start();
+                    _downloadStartTime = QTime::currentTime();
                     connect(ftpManager, &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
                 } else {
                     qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile FTPManager::download returned failure";
@@ -345,7 +345,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
                 QGCFileDownload* download = new QGCFileDownload(this);
                 connect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
                 if (download->download(uri)) {
-                    _downloadStartTime.start();
+                    _downloadStartTime = QTime::currentTime();
                 } else {
                     qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile QGCFileDownload::download returned failure";
                     disconnect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
