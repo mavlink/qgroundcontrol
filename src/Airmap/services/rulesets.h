@@ -6,7 +6,7 @@
 #include <airmap/rulesets.h>
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 class RuleSets : public airmap::RuleSets, public std::enable_shared_from_this<RuleSets> {
  public:
