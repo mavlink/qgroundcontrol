@@ -9,7 +9,7 @@
 #include <memory>
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 class Pilots : public airmap::Pilots, public std::enable_shared_from_this<Pilots> {
  public:

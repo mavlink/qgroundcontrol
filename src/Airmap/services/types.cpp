@@ -16,7 +16,7 @@ inline void register_type_once() {
 
 }  // namespace
 
-void airmap::qt::register_types() {
+void airmap::services::register_types() {
   register_type_once<Aircraft>("Aircraft");
   register_type_once<Airspace>("Airspace");
   register_type_once<Credentials>("Credentials");

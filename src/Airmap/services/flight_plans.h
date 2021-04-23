@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace airmap {
-namespace qt {
+namespace services {
 
 /// FlightPlans provides functionality for managing flight plans.
 class FlightPlans : public airmap::FlightPlans, public std::enable_shared_from_this<FlightPlans> {
