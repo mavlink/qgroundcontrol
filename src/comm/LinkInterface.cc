@@ -8,7 +8,13 @@
  ****************************************************************************/
 
 #include "LinkInterface.h"
+#include "LinkManager.h"
 #include "QGCApplication.h"
+
+QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
+
+// The LinkManager is only forward declared in the header, so the static_assert is here instead.
+static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update LinkInterface::_mavlinkChannel");
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : QThread   (0)
@@ -23,26 +29,53 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
 LinkInterface::~LinkInterface()
 {
     if (_vehicleReferenceCount != 0) {
-        qWarning() << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
+        qCWarning(LinkInterfaceLog) << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
     }
     _config.reset();
 }
 
 uint8_t LinkInterface::mavlinkChannel(void) const
 {
-    if (!_mavlinkChannelSet) {
-        qWarning() << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
+    if (!mavlinkChannelIsSet()) {
+        qCWarning(LinkInterfaceLog) << "mavlinkChannel isSet() == false";
     }
     return _mavlinkChannel;
 }
 
-void LinkInterface::_setMavlinkChannel(uint8_t channel)
+bool LinkInterface::mavlinkChannelIsSet(void) const
 {
-    if (_mavlinkChannelSet) {
-        qWarning() << "Mavlink channel set multiple times";
+    return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
+}
+
+bool LinkInterface::_allocateMavlinkChannel()
+{
+    // should only be called by the LinkManager during setup
+    Q_ASSERT(!mavlinkChannelIsSet());
+    if (mavlinkChannelIsSet()) {
+        qCWarning(LinkInterfaceLog) << "_allocateMavlinkChannel already have " << _mavlinkChannel;
+        return true;
     }
-    _mavlinkChannelSet = true;
-    _mavlinkChannel = channel;
+
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    _mavlinkChannel = mgr->allocateMavlinkChannel();
+    if (!mavlinkChannelIsSet()) {
+        qCWarning(LinkInterfaceLog) << "_allocateMavlinkChannel failed";
+        return false;
+    }
+    qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
+    return true;
+}
+
+void LinkInterface::_freeMavlinkChannel()
+{
+    qCDebug(LinkInterfaceLog) << "_freeMavlinkChannel" << _mavlinkChannel;
+    if (LinkManager::invalidMavlinkChannel() == _mavlinkChannel) {
+        return;
+    }
+
+    auto mgr = qgcApp()->toolbox()->linkManager();
+    mgr->freeMavlinkChannel(_mavlinkChannel);
+    _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
@@ -66,7 +99,7 @@ void LinkInterface::removeVehicleReference(void)
             disconnect();
         }
     } else {
-        qWarning() << "LinkInterface::removeVehicleReference called with no vehicle references";
+        qCWarning(LinkInterfaceLog) << "removeVehicleReference called with no vehicle references";
     }
 }
 
