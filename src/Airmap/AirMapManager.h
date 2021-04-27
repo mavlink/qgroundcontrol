@@ -64,7 +64,7 @@ private:
     QTimer                                                  _settingsTimer;
     AirMapSharedState                                       _shared;
     std::shared_ptr<airmap::services::Logger>               _logger;
-    std::shared_ptr<airmap::services::DispatchingLogger>    _dispatchingLogger;
+    std::shared_ptr<airmap::services::DispatchingLogger>    _dispatchingLogger; 
     AirspaceManager::AuthStatus                             _authStatus;
     const std::string                                       _telemetryHost = "telemetry.airmap.com";
     const uint16_t                                          _telemetryPort = 16060;
