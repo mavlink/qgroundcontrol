@@ -14,7 +14,7 @@
 #include "StateMachine.h"
 #include "ComponentInformationCache.h"
 
-#include <QTime>
+#include <QElapsedTimer>
 
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
@@ -67,7 +67,7 @@ private:
     QString                         _currentCacheFileTag;
     bool                            _currentFileValidCrc        = false;
 
-    QTime                           _downloadStartTime;
+    QElapsedTimer                   _downloadStartTime;
 
     static StateFn  _rgStates[];
     static int      _cStates;
