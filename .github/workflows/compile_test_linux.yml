@@ -33,6 +33,10 @@ jobs:
           modules:      'qtcharts'
           setup-python: 'false'
 
+      - name: Install dependencies
+        run: sudo apt-get install -y libsdl2-dev libxkbcommon-x11-0
+
+
       - name: mkdir directory shadow_build
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
