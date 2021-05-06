@@ -23,7 +23,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: install Qt via action
+      - name: Install Qt
         uses: jurplel/install-qt-action@v2
         with:
           version:      '5.12.6'
@@ -33,24 +33,26 @@ jobs:
           modules:      'qtcharts'
           setup-python: 'false'
 
-      - name: Install dependencies
-        run: sudo apt-get install -y libsdl2-dev libxkbcommon-x11-0
+      - name: Install QGC source dependencies
+        run: sudo apt-get install -y libsdl2-dev
 
+      - name: Install dependencies for running QGC in image
+        run: sudo apt-get install -y libxkbcommon-x11-0
 
-      - name: mkdir directory shadow_build
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
-
-      - name: run qmake and build
+      - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
               export JOBS=$((`sysctl -n hw.ncpu`+1))
+              mkdir ${{ runner.temp }}/shadow_build_dir
               qmake -r ${ACTIONS_BUILD_DIR}/qgroundcontrol.pro
               make -j$JOBS
 
-      - name: run unit tests
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run:  |
-              mkdir -p ~/.config/QtProject/
-              cp ${ACTIONS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
-              export QT_FATAL_WARNINGS=1
-              ./staging/qgroundcontrol-start.sh --unittest
+      - name: Unit tests
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          working-directory: ${{ runner.temp }}/shadow_build_dir  
+          run:  |
+                mkdir -p ~/.config/QtProject/
+                cp ${ACTIONS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
+                export QT_FATAL_WARNINGS=1
+                ./staging/qgroundcontrol-start.sh --unittest
