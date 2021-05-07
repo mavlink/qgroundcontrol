@@ -116,7 +116,7 @@ jobs:
       - name: Setup OSX cert
         if:   ${{ matrix.config.os == 'macos-latest' }}
         run: |
-            openssl aes-256-cbc -K $MAC_CERT_KEY -iv $MAC_CERT_IV -in deploy/MacCertificates.p12.enc -out deploy/MacCertificates.p12 -d
+            openssl aes-256-cbc -K ${{ secrets.MAC_CERT_KEY }} -iv ${{ secrets.MAC_CERT_IV }} -in deploy/MacCertificates.p12.enc -out deploy/MacCertificates.p12 -d
             source deploy/MacImportCert.sh
 
       - name: Create build directory
