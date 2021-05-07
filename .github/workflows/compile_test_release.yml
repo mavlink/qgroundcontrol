@@ -36,7 +36,7 @@ jobs:
           qt-target:      'desktop',
           config:         installer,
           run-unit-tests: false,
-          artifact:       'QGroundControl.AppImage'
+          artifact:       'QGroundControl.AppImage',
           save-artifact:  true
         }
         - {
