@@ -75,13 +75,3 @@ jobs:
         with:
           name: QGroundControl.dmg
           path: ${{ runner.temp }}/shadow_build_dir/package/QGroundControl.dmg
-
-      - name: Upload build artifacts to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ runner.temp }}/shadow_build_dir/package/QGroundControl.dmg
-          asset_name: QGroundControl.dmg
-          tag: ${{ github.ref }}
-          overwrite: true
-          body: "QGroundControl ${{ steps.get_version.outputs.VERSION }} test"
