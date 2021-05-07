@@ -13,16 +13,16 @@ jobs:
         config:
         - {
           name:       "Linux Debug and Test",
-          os:         ubuntu-latest
-          qt-host:    'linux'
-          qt-target:  'desktop'
+          os:         ubuntu-latest,
+          qt-host:    'linux',
+          qt-target:  'desktop',
           config:     debug
         }
         - {
           name:       "OSX Installer",
-          os:         macos-latest
-          qt-host:    'mac'
-          qt-target:  'desktop'
+          os:         macos-latest,
+          qt-host:    'mac',
+          qt-target:  'desktop',
           config:     installer
         }
 
