@@ -2,6 +2,13 @@ name: Compile, Test and Release
 
 on: [pull_request]
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  ACTIONS_BUILD_DIR: ${{ github.workspace }}/../qgroundcontrol
+
 jobs:
   build:
     name:     ${{ matrix.config.name }}
