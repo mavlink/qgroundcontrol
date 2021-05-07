@@ -47,8 +47,7 @@ jobs:
           config:           installer,
           run-unit-tests:   false,
           artifact:         'QGroundControl.dmg',
-          save-artifact:    true,
-          config-codesign:  codesign
+          save-artifact:    true
         }
 
     steps:
@@ -113,12 +112,6 @@ jobs:
             ccache -s
             ccache -z
 
-      - name: Setup OSX cert
-        if: ${{ matrix.config.os == 'macos-latest' }}
-        run: |
-            openssl aes-256-cbc -K ${{ secrets.MAC_CERT_KEY }} -iv ${{ secrets.MAC_CERT_IV }} -in ${ACTIONS_BUILD_DIR}/deploy/MacCertificates.p12.enc -out ${ACTIONS_BUILD_DIR}/deploy/MacCertificates.p12 -d
-            source ${ACTIONS_BUILD_DIR}/deploy/MacImportCert.sh
-
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
@@ -126,7 +119,7 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
               export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
-              qmake -r ${ACTIONS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }} CONFIG+=${{ matrix.config.config-codesign }}
+              qmake -r ${ACTIONS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }}
               make -j2
 
       - name: ccache post-run
