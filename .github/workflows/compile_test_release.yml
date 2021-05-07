@@ -74,7 +74,6 @@ jobs:
               for package in *.pkg ;
                 do sudo installer -verbose -pkg "$package" -target /
               done
-              export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
 
       - name: Install ccache OSX
         if:   ${{ matrix.config.os == 'macos-latest' }}
@@ -114,6 +113,7 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
+              export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
               qmake -r ${ACTIONS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }}
               make -j2
 
