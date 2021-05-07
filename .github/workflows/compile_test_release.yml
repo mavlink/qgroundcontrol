@@ -80,12 +80,8 @@ jobs:
       - name: Install Gstreamer for OSX
         if:   ${{ matrix.config.os == 'macos-latest' }}
         run:  |
-              GST_URL_BASE_PATH="https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.gst_version }}"
-              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-devel-${{ env.gst_version }}-x86_64.pkg"
-              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-${{ env.gst_version }}-x86_64.pkg"
-              for package in *.pkg ;
-                do sudo installer -verbose -pkg "$package" -target /
-              done
+            wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2 &&
+            sudo tar zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
 
       - name: Install ccache OSX
         if:   ${{ matrix.config.os == 'macos-latest' }}
@@ -125,7 +121,6 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
               qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }}
               make -j${{ matrix.config.jobs }}
 
