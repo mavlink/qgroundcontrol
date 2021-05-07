@@ -121,7 +121,7 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }}
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }} CONFIG+=DailyBuild
               make -j${{ matrix.config.jobs }}
 
       - name: ccache post-run
