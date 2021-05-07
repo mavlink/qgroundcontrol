@@ -143,7 +143,7 @@ jobs:
       - name: Create AppImage
         if:                 ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.config == 'installer' }}
         working-directory:  ${{ runner.temp }}/shadow_build_dir  
-        run:                ${ACTIONS_BUILD_DIR}/deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ./staging ./package;
+        run:                ${ACTIONS_BUILD_DIR}/deploy/create_linux_appimage.sh ${ACTIONS_BUILD_DIR} ./staging ./package;
 
       - name: Save artifact
         if:   ${{ matrix.config.save-artifact }}
