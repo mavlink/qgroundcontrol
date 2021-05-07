@@ -13,6 +13,8 @@ jobs:
   build:
     name:     ${{ matrix.config.name }}
     runs-on:  ${{ matrix.config.os }}
+    env:
+      gst_version: "1.18.1"
 
     strategy:
       fail-fast: false
