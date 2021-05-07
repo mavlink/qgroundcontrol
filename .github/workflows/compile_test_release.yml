@@ -46,11 +46,11 @@ jobs:
         if:   ${{ matrix.config.os }} == 'ubuntu-latest'
         run:  sudo apt-get install -y libsdl2-dev
 
-      - name: Install ccache
+      - name: Install ccache OSX
         if:   '${{ matrix.config.os }} == 'macos-latest'
         run:  brew install ccache
 
-      - name: Install ccache
+      - name: Install ccache Linux
         if:   '${{ matrix.config.os }} == 'ubuntu-latest'
         run:  sudo apt-get install ccache
 
