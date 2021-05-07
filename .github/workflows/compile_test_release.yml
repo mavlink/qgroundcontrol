@@ -26,6 +26,13 @@ jobs:
           config:     debug
         }
         - {
+          name:       "Linux AppImage",
+          os:         ubuntu-latest,
+          qt-host:    'linux',
+          qt-target:  'desktop',
+          config:     installer
+        }
+        - {
           name:       "OSX Installer",
           os:         macos-latest,
           qt-host:    'mac',
@@ -53,6 +60,16 @@ jobs:
         if:   ${{ matrix.config.os == 'ubuntu-latest' }}
         run:  sudo apt-get install -y libsdl2-dev
 
+      - name: Install Gstreamer for OSX
+        if:   ${{ matrix.config.os == 'macos-latest' }}
+        run:  |
+              GST_URL_BASE_PATH="https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.gst_version }}"
+              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-devel-${{ env.gst_version }}-x86_64.pkg"
+              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-${{ env.gst_version }}-x86_64.pkg"
+              for package in *.pkg ;
+                do sudo installer -verbose -pkg "$package" -target /
+              done
+
       - name: Install ccache OSX
         if:   ${{ matrix.config.os == 'macos-latest' }}
         run:  brew install ccache
@@ -72,8 +89,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.ccache
-          key: ${{matrix.config}}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{matrix.config}}-ccache-
+          key: ${{ matrix.config.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${{ matrix.config.os }}-ccache-
 
       - name: Setup ccache
         run: |
@@ -97,6 +114,13 @@ jobs:
       - name: ccache post-run
         run:  ccache -s
 
+      - name: Save OSX artifact
+        if: ${{ matrix.config.os == 'macos-latest' }}
+        uses: actions/upload-artifact@master
+        with:
+          name: QGroundControl.dmg
+          path: ${{ runner.temp }}/shadow_build_dir/package/QGroundControl.dmg
+
       - name: Setup for unit tests
         if: ${{ matrix.config.os == 'ubuntu-latest' }}
         working-directory: ${{ runner.temp }}/shadow_build_dir  
@@ -111,3 +135,9 @@ jobs:
         with:
           working-directory:  ${{ runner.temp }}/shadow_build_dir  
           run:                ./staging/qgroundcontrol-start.sh --unittest
+
+      - name: Create AppImage
+        if:                 ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.config == 'installer' }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir  
+        run:                ${ACTIONS_BUILD_DIR}/deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ./staging ./package;
+
