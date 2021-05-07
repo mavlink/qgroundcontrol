@@ -26,7 +26,8 @@ jobs:
           qt-host:        'linux',
           qt-target:      'desktop',
           config:         debug,
-          run-unit-tests: true
+          run-unit-tests: true,
+          save-artifact:  false
         }
         - {
           name:           "Linux AppImage",
@@ -34,7 +35,9 @@ jobs:
           qt-host:        'linux',
           qt-target:      'desktop',
           config:         installer,
-          run-unit-tests: true
+          run-unit-tests: false,
+          artifact:       'QGroundControl.AppImage'
+          save-artifact:  true
         }
         - {
           name:           "OSX Installer",
@@ -42,7 +45,9 @@ jobs:
           qt-host:        'mac',
           qt-target:      'desktop',
           config:         installer,
-          run-unit-tests: false
+          run-unit-tests: false,
+          artifact:       'QGroundControl.dmg',
+          save-artifact:  true
         }
 
     steps:
@@ -94,8 +99,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.ccache
-          key: ${{ matrix.config.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{ matrix.config.os }}-ccache-
+          key: ${{ matrix.config.os }}-${{ matrix.config.config }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${{ matrix.config.os }}-${{ matrix.config.config }}-ccache-
 
       - name: Setup ccache
         run: |
@@ -120,13 +125,6 @@ jobs:
       - name: ccache post-run
         run:  ccache -s
 
-      - name: Save OSX artifact
-        if: ${{ matrix.config.os == 'macos-latest' }}
-        uses: actions/upload-artifact@master
-        with:
-          name: QGroundControl.dmg
-          path: ${{ runner.temp }}/shadow_build_dir/package/QGroundControl.dmg
-
       - name: Setup for unit tests
         if: ${{ matrix.config.run-unit-tests }}
         working-directory: ${{ runner.temp }}/shadow_build_dir  
@@ -147,3 +145,9 @@ jobs:
         working-directory:  ${{ runner.temp }}/shadow_build_dir  
         run:                ${ACTIONS_BUILD_DIR}/deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ./staging ./package;
 
+      - name: Save artifact
+        if:   ${{ matrix.config.save-artifact }}
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.config.artifact }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
