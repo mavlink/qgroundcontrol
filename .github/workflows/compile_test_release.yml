@@ -21,25 +21,28 @@ jobs:
       matrix:
         config:
         - {
-          name:       "Linux Debug and Test",
-          os:         ubuntu-latest,
-          qt-host:    'linux',
-          qt-target:  'desktop',
-          config:     debug
+          name:           "Linux Debug and Test",
+          os:             ubuntu-latest,
+          qt-host:        'linux',
+          qt-target:      'desktop',
+          config:         debug,
+          run-unit-tests: true
         }
         - {
-          name:       "Linux AppImage",
-          os:         ubuntu-latest,
-          qt-host:    'linux',
-          qt-target:  'desktop',
-          config:     installer
+          name:           "Linux AppImage",
+          os:             ubuntu-latest,
+          qt-host:        'linux',
+          qt-target:      'desktop',
+          config:         installer,
+          run-unit-tests: true
         }
         - {
-          name:       "OSX Installer",
-          os:         macos-latest,
-          qt-host:    'mac',
-          qt-target:  'desktop',
-          config:     installer
+          name:           "OSX Installer",
+          os:             macos-latest,
+          qt-host:        'mac',
+          qt-target:      'desktop',
+          config:         installer,
+          run-unit-tests: false
         }
 
     steps:
@@ -71,6 +74,7 @@ jobs:
               for package in *.pkg ;
                 do sudo installer -verbose -pkg "$package" -target /
               done
+              export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
 
       - name: Install ccache OSX
         if:   ${{ matrix.config.os == 'macos-latest' }}
@@ -124,7 +128,7 @@ jobs:
           path: ${{ runner.temp }}/shadow_build_dir/package/QGroundControl.dmg
 
       - name: Setup for unit tests
-        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        if: ${{ matrix.config.run-unit-tests }}
         working-directory: ${{ runner.temp }}/shadow_build_dir  
         run:  |
               mkdir -p ~/.config/QtProject/
@@ -132,7 +136,7 @@ jobs:
               export QT_FATAL_WARNINGS=1
 
       - name: Run unit tests
-        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        if: ${{ matrix.config.run-unit-tests }}
         uses: GabrielBB/xvfb-action@v1
         with:
           working-directory:  ${{ runner.temp }}/shadow_build_dir  
