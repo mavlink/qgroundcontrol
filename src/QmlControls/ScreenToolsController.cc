@@ -57,9 +57,9 @@ ScreenToolsController::normalFontFamily() const
     //-- See App.SettinsGroup.json for index
     int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
     if(langID == 6 /*Korean*/) {
-        return QString("fonts/NanumGothic-Regular");
+        return QString("NanumGothic");
     } else {
-        return QString("opensans");
+        return QString("Open Sans");
     }
 }
 
@@ -69,9 +69,9 @@ ScreenToolsController::boldFontFamily() const
     //-- See App.SettinsGroup.json for index
     int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
     if(langID == 6 /*Korean*/) {
-        return QString("NanumGothic-Bold");
+        return QString("NanumGothic");
     } else {
-        return QString("opensans-demibold");
+        return QString("Open Sans Semibold");
     }
 }
 
