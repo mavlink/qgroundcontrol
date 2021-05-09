@@ -242,6 +242,8 @@ public:
     Q_PROPERTY(QObject*             sysStatusSensorInfo         READ sysStatusSensorInfo                                            CONSTANT)
     Q_PROPERTY(bool                 allSensorsHealthy           READ allSensorsHealthy                                              NOTIFY allSensorsHealthyChanged)    //< true: all sensors in SYS_STATUS reported as healthy
     Q_PROPERTY(bool                 requiresGpsFix              READ requiresGpsFix                                                 NOTIFY requiresGpsFixChanged)
+    Q_PROPERTY(double               loadProgress                READ loadProgress                                                   NOTIFY loadProgressChanged)
+    Q_PROPERTY(bool                 initialConnectComplete      READ _initialConnectComplete                                        NOTIFY initialConnectComplete)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -777,12 +779,14 @@ public:
 
     qreal       gimbalRoll              () const{ return static_cast<qreal>(_curGimbalRoll);}
     qreal       gimbalPitch             () const{ return static_cast<qreal>(_curGimbalPitch); }
-    qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGinmbalYaw); }
+    qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGimbalYaw); }
     bool        gimbalData              () const{ return _haveGimbalData; }
     bool        isROIEnabled            () const{ return _isROIEnabled; }
 
     CheckList   checkListState          () { return _checkListState; }
     void        setCheckListState       (CheckList cl)  { _checkListState = cl; emit checkListStateChanged(); }
+
+    double loadProgress                 () const { return _loadProgress; }
 
 public slots:
     void setVtolInFwdFlight                 (bool vtolInFwdFlight);
@@ -852,6 +856,7 @@ signals:
     void firmwareCustomVersionChanged   ();
     void gitHashChanged                 (QString hash);
     void vehicleUIDChanged              ();
+    void loadProgressChanged            (float value);
 
     /// New RC channel values coming from RC_CHANNELS message
     ///     @param channelCount Number of available channels, cMaxRcChannels max
@@ -920,6 +925,7 @@ private slots:
     void _trafficUpdate                     (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _orbitTelemetryTimeout             ();
     void _updateFlightTime                  ();
+    void _gotProgressUpdate                 (float progressValue);
 
 private:
     void _joystickChanged               (Joystick* joystick);
@@ -975,6 +981,7 @@ private:
     void _chunkedStatusTextTimeout      (void);
     void _chunkedStatusTextCompleted    (uint8_t compId);
     void _setMessageInterval            (int messageId, int rate);
+    bool _initialConnectComplete        () const;
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
@@ -1104,7 +1111,7 @@ private:
 
     float               _curGimbalRoll  = 0.0f;
     float               _curGimbalPitch = 0.0f;
-    float               _curGinmbalYaw  = 0.0f;
+    float               _curGimbalYaw  = 0.0f;
     bool                _haveGimbalData = false;
     bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
@@ -1125,6 +1132,8 @@ private:
     uint64_t    _mavlinkReceivedCount   = 0;
     uint64_t    _mavlinkLossCount       = 0;
     float       _mavlinkLossPercent     = 0.0f;
+
+    float       _loadProgress           = 0.0f;
 
     QMap<QString, QTime> _noisySpokenPrearmMap; ///< Used to prevent PreArm messages from being spoken too often
 

@@ -20,8 +20,10 @@ add_library(Vehicle
 	CompInfo.h
 	CompInfoParam.cc
 	CompInfoParam.h
-	CompInfoVersion.cc
-	CompInfoVersion.h
+	CompInfoGeneral.cc
+	CompInfoGeneral.h
+	ComponentInformationCache.cc
+	ComponentInformationCache.h
 	ComponentInformationManager.cc
 	ComponentInformationManager.h
 	FTPManager.cc

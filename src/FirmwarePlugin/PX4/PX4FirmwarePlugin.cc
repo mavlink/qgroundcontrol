@@ -58,7 +58,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
     qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
     qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
-    qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
 
     struct Modes2Name {
         uint8_t     main_mode;
@@ -646,3 +645,25 @@ bool PX4FirmwarePlugin::supportsNegativeThrust(Vehicle* vehicle)
 {
     return vehicle->vehicleType() == MAV_TYPE_GROUND_ROVER;
 }
+
+QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle) 
+{
+    static const char* HOOBS_HI = "LND_FLIGHT_T_HI";
+    static const char* HOOBS_LO = "LND_FLIGHT_T_LO";
+    uint64_t hobbsTimeSeconds = 0;
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, HOOBS_HI) &&
+            vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, HOOBS_LO)) {
+        Fact* factHi = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, HOOBS_HI);
+        Fact* factLo = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
+        hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
+        qCDebug(VehicleLog) << "Hobbs Meter raw PX4:" << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
+    } 
+
+    int hours   = hobbsTimeSeconds / 3600;
+    int minutes = (hobbsTimeSeconds % 3600) / 60;
+    int seconds = hobbsTimeSeconds % 60;
+    QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
+    qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
+    return timeStr;
+} 

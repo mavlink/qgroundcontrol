@@ -489,6 +489,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTest.h \
         src/MissionManager/TransectStyleComplexItemTestBase.h \
         src/MissionManager/VisualMissionItemTest.h \
+        src/qgcunittest/ComponentInformationCacheTest.h \
         src/qgcunittest/GeoTest.h \
         src/qgcunittest/MavlinkLogTest.h \
         src/qgcunittest/MultiSignalSpy.h \
@@ -535,6 +536,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTest.cc \
         src/MissionManager/TransectStyleComplexItemTestBase.cc \
         src/MissionManager/VisualMissionItemTest.cc \
+        src/qgcunittest/ComponentInformationCacheTest.cc \
         src/qgcunittest/GeoTest.cc \
         src/qgcunittest/MavlinkLogTest.cc \
         src/qgcunittest/MultiSignalSpy.cc \
@@ -681,7 +683,8 @@ HEADERS += \
     src/TerrainTile.h \
     src/Vehicle/CompInfo.h \
     src/Vehicle/CompInfoParam.h \
-    src/Vehicle/CompInfoVersion.h \
+    src/Vehicle/CompInfoGeneral.h \
+    src/Vehicle/ComponentInformationCache.h \
     src/Vehicle/ComponentInformationManager.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
@@ -915,7 +918,8 @@ SOURCES += \
     src/TerrainTile.cc\
     src/Vehicle/CompInfo.cc \
     src/Vehicle/CompInfoParam.cc \
-    src/Vehicle/CompInfoVersion.cc \
+    src/Vehicle/CompInfoGeneral.cc \
+    src/Vehicle/ComponentInformationCache.cc \
     src/Vehicle/ComponentInformationManager.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \

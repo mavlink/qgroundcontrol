@@ -46,7 +46,7 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
 {
     // FIXME: Does not support directories that span multiple packets
     
-    MavlinkFTP::Request  ackResponse;
+    MavlinkFTP::Request  ackResponse{};
     QString                     path;
     uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
@@ -99,7 +99,7 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
 
 void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber)
 {
-    MavlinkFTP::Request response;
+    MavlinkFTP::Request response{};
     QString             path;
     uint16_t            outgoingSeqNumber = _nextSeqNumber(seqNumber);
     QString             tmpFilename;
@@ -117,10 +117,10 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     if (path.startsWith(sizePrefix)) {
         QString sizeString = path.right(path.length() - sizePrefix.length());
         tmpFilename = _createTestTempFile(sizeString.toInt());
-    } else if (path == "/version.json") {
-        tmpFilename = ":MockLink/Version.MetaData.json";
-    } else if (path == "/version.json.xz") {
-        tmpFilename = ":MockLink/Version.MetaData.json.xz";
+    } else if (path == "/general.json") {
+        tmpFilename = ":MockLink/General.MetaData.json";
+    } else if (path == "/general.json.xz") {
+        tmpFilename = ":MockLink/General.MetaData.json.xz";
     } else if (path == "/parameter.json") {
         tmpFilename = ":MockLink/Parameter.MetaData.json";
     } else if (path == "/parameter.json.xz") {
@@ -151,7 +151,7 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
 
 void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber)
 {
-    MavlinkFTP::Request	response;
+    MavlinkFTP::Request	response{};
     uint16_t			outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     if (request->hdr.session != _sessionId) {
@@ -198,7 +198,7 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
 void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber)
 {
     uint16_t            outgoingSeqNumber = _nextSeqNumber(seqNumber);
-    MavlinkFTP::Request response;
+    MavlinkFTP::Request response{};
 
     if (request->hdr.session != _sessionId) {
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
@@ -270,7 +270,7 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t& message)
         return;
     }
     
-    MavlinkFTP::Request  ackResponse;
+    MavlinkFTP::Request  ackResponse{};
 
     mavlink_file_transfer_protocol_t requestFTP;
     mavlink_msg_file_transfer_protocol_decode(&message, &requestFTP);
@@ -353,7 +353,7 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t& message)
 /// @brief Sends an Ack
 void MockLinkFTP::_sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
 {
-    MavlinkFTP::Request ackResponse;
+    MavlinkFTP::Request ackResponse{};
     
     ackResponse.hdr.opcode      = MavlinkFTP::kRspAck;
     ackResponse.hdr.req_opcode  = reqOpcode;
@@ -365,7 +365,7 @@ void MockLinkFTP::_sendAck(uint8_t targetSystemId, uint8_t targetComponentId, ui
 
 void MockLinkFTP::_sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
 {
-    MavlinkFTP::Request nakResponse;
+    MavlinkFTP::Request nakResponse{};
 
     nakResponse.hdr.opcode      = MavlinkFTP::kRspNak;
     nakResponse.hdr.req_opcode  = reqOpcode;
@@ -378,7 +378,7 @@ void MockLinkFTP::_sendNak(uint8_t targetSystemId, uint8_t targetComponentId, Ma
 
 void MockLinkFTP::_sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpcode)
 {
-    MavlinkFTP::Request nakResponse;
+    MavlinkFTP::Request nakResponse{};
 
     nakResponse.hdr.opcode      = MavlinkFTP::kRspNak;
     nakResponse.hdr.req_opcode  = reqOpcode;

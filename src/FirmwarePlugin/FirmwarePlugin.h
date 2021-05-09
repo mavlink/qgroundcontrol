@@ -41,6 +41,8 @@ class FirmwarePlugin : public QObject
     Q_OBJECT
 
 public:
+    FirmwarePlugin ();
+
     /// Set of optional capabilites which firmware may support
     typedef enum {
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
@@ -327,6 +329,9 @@ public:
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
+
+    // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
+    virtual QString getHobbsMeter(Vehicle* vehicle) { return "Not Supported"; }
 
 signals:
     void toolIndicatorsChanged(void);

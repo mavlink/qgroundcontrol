@@ -15,6 +15,7 @@
 #include "AppSettings.h"
 #include "QGCFileDownload.h"
 #include "QGCCameraManager.h"
+#include "RadioComponentController.h"
 
 #include <QRegularExpression>
 #include <QDebug>
@@ -46,6 +47,12 @@ FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
     }
 
     return _instance;
+}
+
+
+FirmwarePlugin::FirmwarePlugin(void)
+{
+    qmlRegisterType<RadioComponentController>       ("QGroundControl.Controllers",                       1, 0, "RadioComponentController");
 }
 
 AutoPilotPlugin* FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)

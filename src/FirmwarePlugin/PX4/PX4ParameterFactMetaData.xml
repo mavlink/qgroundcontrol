@@ -1015,9 +1015,9 @@
       <max>894281</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="CBRK_USB_CHK" default="0" type="INT32" category="Developer">
+    <parameter name="CBRK_USB_CHK" default="197848" type="INT32" category="Developer">
       <short_desc>Circuit breaker for USB link check</short_desc>
-      <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander, setting it to 0 keeps them enabled (recommended). We are generally recommending to not fly with the USB link connected and production vehicles should set this parameter to zero to prevent users from flying USB powered. However, for R&amp;D purposes it has proven over the years to work just fine.</long_desc>
       <min>0</min>
       <max>197848</max>
       <reboot_required>true</reboot_required>
@@ -1069,9 +1069,9 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="COM_ARM_CHK_ESCS" default="1" type="INT32" boolean="true">
-      <short_desc>Require all the ESCs to be detected to arm</short_desc>
-      <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
+    <parameter name="COM_ARM_CHK_ESCS" default="0" type="INT32" boolean="true">
+      <short_desc>Enable checks on ESCs that report telemetry</short_desc>
+      <long_desc>If this parameter is set, the system will check ESC's online status and failures. This param is specific for ESCs reporting status. It shall be used only if ESCs support telemetry.</long_desc>
     </parameter>
     <parameter name="COM_ARM_EKF_HGT" default="1.0" type="FLOAT">
       <short_desc>Maximum EKF height innovation test ratio that will allow arming</short_desc>
@@ -1147,10 +1147,10 @@
     </parameter>
     <parameter name="COM_ARM_WO_GPS" default="1" type="INT32">
       <short_desc>Allow arming without GPS</short_desc>
-      <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
+      <long_desc>The default allows the vehicle to arm without GPS signal.</long_desc>
       <values>
-        <value code="0">Allow arming without GPS</value>
-        <value code="1">Require GPS lock to arm</value>
+        <value code="0">Require GPS lock to arm</value>
+        <value code="1">Allow arming without GPS</value>
       </values>
     </parameter>
     <parameter name="COM_CPU_MAX" default="90.0" type="FLOAT">
@@ -1168,8 +1168,8 @@
       <decimal>2</decimal>
     </parameter>
     <parameter name="COM_DISARM_PRFLT" default="10.0" type="FLOAT">
-      <short_desc>Time-out for auto disarm if too slow to takeoff</short_desc>
-      <long_desc>A non-zero, positive value specifies the time after arming, in seconds, within which the vehicle must take off (after which it will automatically disarm). A zero or negative value means that automatic disarming triggered by a pre-takeoff timeout is disabled.</long_desc>
+      <short_desc>Time-out for auto disarm if not taking off</short_desc>
+      <long_desc>A non-zero, positive value specifies the time in seconds, within which the vehicle is expected to take off after arming. In case the vehicle didn't takeoff within the timout it disamrs again. A negative value disables autmoatic disarming triggered by a pre-takeoff timeout.</long_desc>
       <unit>s</unit>
       <decimal>2</decimal>
     </parameter>
@@ -1404,6 +1404,13 @@
       <short_desc>Enable Motor Testing</short_desc>
       <long_desc>If set, enables the motor test interface via MAVLink (DO_MOTOR_TEST), that allows spinning the motors for testing purposes.</long_desc>
     </parameter>
+    <parameter name="COM_OBC_LOSS_T" default="5.0" type="FLOAT">
+      <short_desc>Time-out to wait when onboard computer connection is lost before warning about loss connection</short_desc>
+      <min>0</min>
+      <max>60</max>
+      <unit>s</unit>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="COM_OBL_ACT" default="0" type="INT32">
       <short_desc>Set offboard loss failsafe mode</short_desc>
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
@@ -1484,7 +1491,7 @@
       <min>0</min>
       <max>4</max>
     </parameter>
-    <parameter name="COM_PREARM_MODE" default="1" type="INT32">
+    <parameter name="COM_PREARM_MODE" default="0" type="INT32">
       <short_desc>Condition to enter prearmed mode</short_desc>
       <long_desc>Condition to enter the prearmed state, an intermediate state between disarmed and armed in which non-throttling actuators are active.</long_desc>
       <values>
@@ -2634,7 +2641,7 @@
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_RNG_AID" default="0" type="INT32">
+    <parameter name="EKF2_RNG_AID" default="1" type="INT32">
       <short_desc>Range sensor aid</short_desc>
       <long_desc>If this parameter is enabled then the estimator will make use of the range finder measurements to estimate it's height even if range sensor is not the primary height source. It will only do so if conditions for range measurement fusion are met. This enables the range finder to be used during low speed and low altitude operation, eg takeoff and landing, where baro interference from rotor wash is excessive and can corrupt EKF state estimates. It is intended to be used where a vertical takeoff and landing is performed, and horizontal flight does not occur until above EKF2_RNG_A_HMAX. If vehicle motion causes repeated switching between the primary height sensor and range finder, an offset in the local position origin can accumulate. Also range finder measurements are less reliable and can experience unexpected errors. For these reasons, if accurate control of height relative to ground is required, it is recommended to use the MPC_ALT_MODE parameter instead, unless baro errors are severe enough to cause problems with landing and takeoff.</long_desc>
       <values>
@@ -4478,6 +4485,7 @@
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
         <value code="10">Gimbal</value>
+        <value code="11">Onboard Low Bandwidth</value>
       </values>
     </parameter>
     <parameter name="MAV_0_RADIO_CTL" default="1" type="INT32" boolean="true">
@@ -4529,6 +4537,7 @@
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
         <value code="10">Gimbal</value>
+        <value code="11">Onboard Low Bandwidth</value>
       </values>
     </parameter>
     <parameter name="MAV_1_RADIO_CTL" default="1" type="INT32" boolean="true">
@@ -4580,6 +4589,7 @@
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
         <value code="10">Gimbal</value>
+        <value code="11">Onboard Low Bandwidth</value>
       </values>
     </parameter>
     <parameter name="MAV_2_RADIO_CTL" default="1" type="INT32" boolean="true">
@@ -5761,56 +5771,56 @@
     </parameter>
     <parameter name="PWM_AUX_DIS1" default="0" type="INT32">
       <short_desc>PWM aux 1 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS2" default="0" type="INT32">
       <short_desc>PWM aux 2 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS3" default="0" type="INT32">
       <short_desc>PWM aux 3 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS4" default="0" type="INT32">
       <short_desc>PWM aux 4 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS5" default="0" type="INT32">
       <short_desc>PWM aux 5 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS6" default="0" type="INT32">
       <short_desc>PWM aux 6 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS7" default="0" type="INT32">
       <short_desc>PWM aux 7 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_AUX_DIS8" default="0" type="INT32">
       <short_desc>PWM aux 8 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
@@ -6455,98 +6465,98 @@
     </parameter>
     <parameter name="PWM_MAIN_DIS1" default="-1" type="INT32">
       <short_desc>PWM main 1 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS10" default="-1" type="INT32">
       <short_desc>PWM main 10 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS11" default="-1" type="INT32">
       <short_desc>PWM main 11 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS12" default="-1" type="INT32">
       <short_desc>PWM main 12 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS13" default="-1" type="INT32">
       <short_desc>PWM main 13 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS14" default="-1" type="INT32">
       <short_desc>PWM main 14 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS2" default="-1" type="INT32">
       <short_desc>PWM main 2 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS3" default="-1" type="INT32">
       <short_desc>PWM main 3 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS4" default="-1" type="INT32">
       <short_desc>PWM main 4 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS5" default="-1" type="INT32">
       <short_desc>PWM main 5 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS6" default="-1" type="INT32">
       <short_desc>PWM main 6 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS7" default="-1" type="INT32">
       <short_desc>PWM main 7 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS8" default="-1" type="INT32">
       <short_desc>PWM main 8 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_DIS9" default="-1" type="INT32">
       <short_desc>PWM main 9 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
@@ -6665,98 +6675,98 @@
     </parameter>
     <parameter name="PWM_MAIN_MAX1" default="-1" type="INT32">
       <short_desc>PWM main 1 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX10" default="-1" type="INT32">
       <short_desc>PWM main 10 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX11" default="-1" type="INT32">
       <short_desc>PWM main 11 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX12" default="-1" type="INT32">
       <short_desc>PWM main 12 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX13" default="-1" type="INT32">
       <short_desc>PWM main 13 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX14" default="-1" type="INT32">
       <short_desc>PWM main 14 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX2" default="-1" type="INT32">
       <short_desc>PWM main 2 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX3" default="-1" type="INT32">
       <short_desc>PWM main 3 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX4" default="-1" type="INT32">
       <short_desc>PWM main 4 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX5" default="-1" type="INT32">
       <short_desc>PWM main 5 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX6" default="-1" type="INT32">
       <short_desc>PWM main 6 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX7" default="-1" type="INT32">
       <short_desc>PWM main 7 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX8" default="-1" type="INT32">
       <short_desc>PWM main 8 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MAX9" default="-1" type="INT32">
       <short_desc>PWM main 9 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
@@ -6770,98 +6780,98 @@
     </parameter>
     <parameter name="PWM_MAIN_MIN1" default="-1" type="INT32">
       <short_desc>PWM main 1 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN10" default="-1" type="INT32">
       <short_desc>PWM main 10 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN11" default="-1" type="INT32">
       <short_desc>PWM main 11 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN12" default="-1" type="INT32">
       <short_desc>PWM main 12 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN13" default="-1" type="INT32">
       <short_desc>PWM main 13 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN14" default="-1" type="INT32">
       <short_desc>PWM main 14 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN2" default="-1" type="INT32">
       <short_desc>PWM main 2 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN3" default="-1" type="INT32">
       <short_desc>PWM main 3 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN4" default="-1" type="INT32">
       <short_desc>PWM main 4 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN5" default="-1" type="INT32">
       <short_desc>PWM main 5 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN6" default="-1" type="INT32">
       <short_desc>PWM main 6 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN7" default="-1" type="INT32">
       <short_desc>PWM main 7 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN8" default="-1" type="INT32">
       <short_desc>PWM main 8 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
     <parameter name="PWM_MAIN_MIN9" default="-1" type="INT32">
       <short_desc>PWM main 9 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
@@ -7043,12 +7053,6 @@
       <long_desc>Parameter used to model the nonlinear relationship between motor control signal (e.g. PWM) and static thrust. The model is: rel_thrust = factor * rel_signal^2 + (1-factor) * rel_signal, where rel_thrust is the normalized thrust between 0 and 1, and rel_signal is the relative motor control signal between 0 and 1.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-    </parameter>
-  </group>
-  <group name="Peripheral">
-    <parameter name="LIGHT_EN_BLINKM" default="0" type="INT32" boolean="true">
-      <short_desc>BlinkM LED</short_desc>
-      <reboot_required>true</reboot_required>
     </parameter>
   </group>
   <group name="Precision Land">
@@ -8579,6 +8583,32 @@
     </parameter>
     <parameter name="RC_MAP_POSCTL_SW" default="0" type="INT32">
       <short_desc>Position Control switch channel</short_desc>
+      <min>0</min>
+      <max>18</max>
+      <values>
+        <value code="0">Unassigned</value>
+        <value code="1">Channel 1</value>
+        <value code="2">Channel 2</value>
+        <value code="3">Channel 3</value>
+        <value code="4">Channel 4</value>
+        <value code="5">Channel 5</value>
+        <value code="6">Channel 6</value>
+        <value code="7">Channel 7</value>
+        <value code="8">Channel 8</value>
+        <value code="9">Channel 9</value>
+        <value code="10">Channel 10</value>
+        <value code="11">Channel 11</value>
+        <value code="12">Channel 12</value>
+        <value code="13">Channel 13</value>
+        <value code="14">Channel 14</value>
+        <value code="15">Channel 15</value>
+        <value code="16">Channel 16</value>
+        <value code="17">Channel 17</value>
+        <value code="18">Channel 18</value>
+      </values>
+    </parameter>
+    <parameter name="RC_MAP_RATT_SW" default="0" type="INT32">
+      <short_desc>Rattitude switch channel (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -10340,7 +10370,7 @@
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_DGYRO_CUTOFF" default="10.0" type="FLOAT">
+    <parameter name="IMU_DGYRO_CUTOFF" default="20.0" type="FLOAT">
       <short_desc>Cutoff frequency for angular acceleration (D-Term filter)</short_desc>
       <long_desc>The cutoff frequency for the 2nd order butterworth filter used on the time derivative of the measured angular velocity, also known as the D-term filter in the rate controller. The D-term uses the derivative of the rate and thus is the most susceptible to noise. Therefore, using a D-term filter allows to increase IMU_GYRO_CUTOFF, which leads to reduced control latency and permits to increase the P gains. A value of 0 disables the filter.</long_desc>
       <min>0</min>
@@ -10415,17 +10445,17 @@
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="IMU_GYRO_RATEMAX" default="400" type="INT32">
-      <short_desc>Gyro control data maximum publication rate</short_desc>
-      <long_desc>This is the maximum rate the gyro control data (sensor_gyro) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
-      <min>0</min>
+      <short_desc>Gyro control data maximum publication rate (inner loop rate)</short_desc>
+      <long_desc>The maximum rate the gyro control data (vehicle_angular_velocity) will be allowed to publish at. This is the loop rate for the rate controller and outputs. Note: sensor data is always read and filtered at the full raw rate (eg commonly 8 kHz) regardless of this setting.</long_desc>
+      <min>100</min>
       <max>2000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="0">0 (driver minimum)</value>
         <value code="100">100 Hz</value>
         <value code="250">250 Hz</value>
         <value code="400">400 Hz</value>
+        <value code="800">800 Hz</value>
         <value code="1000">1000 Hz</value>
         <value code="2000">2000 Hz</value>
       </values>
@@ -10440,6 +10470,7 @@
       <values>
         <value code="100">100 Hz</value>
         <value code="200">200 Hz</value>
+        <value code="250">250 Hz</value>
         <value code="400">400 Hz</value>
       </values>
     </parameter>
@@ -10598,6 +10629,16 @@
         <value code="12">ROTATION_BACKWARD_FACING</value>
         <value code="24">ROTATION_UPWARD_FACING</value>
         <value code="25">ROTATION_DOWNWARD_FACING</value>
+      </values>
+    </parameter>
+    <parameter name="SENS_EN_ADIS164X" default="0" type="INT32">
+      <short_desc>Analog Devices ADIS16448 IMU (external SPI)</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
       </values>
     </parameter>
     <parameter name="SENS_EN_BATT" default="0" type="INT32" boolean="true">
@@ -11892,8 +11933,7 @@
       <long_desc>Set to 1 to reset parameters on next system startup (setting defaults). Platform-specific values are used if available. RC* parameters are preserved.</long_desc>
       <values>
         <value code="0">Keep parameters</value>
-        <value code="1">Reset parameters</value>
-        <value code="2">Reload airframe parameters</value>
+        <value code="1">Reset parameters to airframe defaults</value>
       </values>
     </parameter>
     <parameter name="SYS_AUTOSTART" default="0" type="INT32">
@@ -11980,11 +12020,6 @@
         <value code="2">ekf2 (recommended)</value>
         <value code="3">Q attitude estimator (no position)</value>
       </values>
-    </parameter>
-    <parameter name="SYS_PARAM_VER" default="1" type="INT32">
-      <short_desc>Parameter version</short_desc>
-      <long_desc>This is used internally only: an airframe configuration might set an expected parameter version value via PARAM_DEFAULTS_VER. This is checked on bootup against SYS_PARAM_VER, and if they do not match, parameters from the airframe configuration are reloaded.</long_desc>
-      <min>0</min>
     </parameter>
     <parameter name="SYS_RESTART_TYPE" default="2" type="INT32" volatile="true" category="System">
       <short_desc>Set restart type</short_desc>
@@ -12637,6 +12672,17 @@
       <min>1</min>
       <max>125</max>
     </parameter>
+    <parameter name="UAVCAN_BAT_MON" default="0" type="INT32">
+      <short_desc>UAVCAN BATTERY_MONITOR battery monitor selection</short_desc>
+      <long_desc>This parameter defines that the system will select the battery monitor under the following conditions 0 - default battery monitor 1 - CUAV battery monitor</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">default battery monitor</value>
+        <value code="1">CUAV battery monitor</value>
+      </values>
+    </parameter>
     <parameter name="UAVCAN_BITRATE" default="1000000" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
@@ -13190,11 +13236,14 @@
     <parameter name="RV_YAW_P" default="0.1" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
-    <parameter name="UCAN1_BMS0_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS0_PID</short_desc>
+    <parameter name="UCAN1_BMS_BP_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS_BP_PID</short_desc>
     </parameter>
-    <parameter name="UCAN1_BMS1_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS1_PID</short_desc>
+    <parameter name="UCAN1_BMS_BS_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS_BS_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_BMS_ES_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS_ES_PID</short_desc>
     </parameter>
     <parameter name="UCAN1_ESC0_PID" default="0" type="INT32">
       <short_desc>UCAN1_ESC0_PID</short_desc>
@@ -13210,6 +13259,9 @@
     </parameter>
     <parameter name="UCAN1_GPS_PUB" default="0" type="INT32">
       <short_desc>UCAN1_GPS_PUB</short_desc>
+    </parameter>
+    <parameter name="UCAN1_LG_BMS_PID" default="0" type="INT32">
+      <short_desc>UCAN1_LG_BMS_PID</short_desc>
     </parameter>
     <parameter name="UCAN1_SERVO_PUB" default="0" type="INT32">
       <short_desc>UCAN1_SERVO_PUB</short_desc>

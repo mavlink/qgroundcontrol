@@ -45,6 +45,13 @@ QString JapanReliefMapProvider::_getURL(const int x, const int y, const int zoom
     return JapanReliefMapUrl.arg(zoom).arg(x).arg(y);
 }
 
+static const QString LINZBasemapMapUrl = QStringLiteral("https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/%1/%2/%3.png?api=d01ev80nqcjxddfvc6amyvkk1ka");
+
+QString LINZBasemapMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return LINZBasemapMapUrl.arg(zoom).arg(x).arg(y);
+}
+
 QString CustomURLMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager)
     QString url = qgcApp()->toolbox()->settingsManager()->appSettings()->customURL()->rawValue().toString();

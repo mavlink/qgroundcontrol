@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(QGroundControl LANGUAGES C CXX)
 
+include(GNUInstallDirs)
+
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
 
 set(CMAKE_CXX_STANDARD 14)
@@ -185,6 +187,29 @@ else()
 endif()
 
 target_link_libraries(QGroundControl PRIVATE qgc)
+
+# Files/directories to install
+install(
+    TARGETS QGroundControl
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
+)
+install(
+    FILES ${CMAKE_SOURCE_DIR}/deploy/org.mavlink.qgroundcontrol.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+)
+install(
+    FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+    RENAME org.mavlink.qgroundcontrol.png
+)
+install(
+    FILES ${CMAKE_SOURCE_DIR}/deploy/org.mavlink.qgroundcontrol.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
+)
 
 if(BUILD_TESTING)
         target_link_libraries(QGroundControl PRIVATE Qt5::Test)

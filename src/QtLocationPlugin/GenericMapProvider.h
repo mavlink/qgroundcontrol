@@ -60,6 +60,16 @@ class JapanReliefMapProvider : public MapProvider {
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
+class LINZBasemapMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    LINZBasemapMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://basemaps.linz.govt.nz/v1/tiles/aerial"), QStringLiteral("png"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
 class CustomURLMapProvider : public MapProvider {
     Q_OBJECT
   public:

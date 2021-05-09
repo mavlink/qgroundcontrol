@@ -197,8 +197,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     // Since receiveBytes signals cross threads we can end up with signals in the queue
     // that come through after the link is disconnected. For these we just drop the data
     // since the link is closed.
-    WeakLinkInterfacePtr linkPtr = _linkMgr->sharedLinkInterfacePointerForLink(link, true);
-    if (linkPtr.expired()) {
+    SharedLinkInterfacePtr linkPtr = _linkMgr->sharedLinkInterfacePointerForLink(link, true);
+    if (!linkPtr) {
+        qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << b.size() << " bytes arrived too late";
         return;
     }
 
@@ -211,7 +212,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 link->setDecodedFirstMavlinkPacket(true);
                 mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
                 if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-                    qDebug() << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
+                    qCDebug(MAVLinkProtocolLog) << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                     mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
                     // Set all links to v2
                     setVersion(200);
@@ -363,7 +364,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             // Anyone handling the message could close the connection, which deletes the link,
             // so we check if it's expired
-            if (linkPtr.expired()) {
+            if (1 == linkPtr.use_count()) {
                 break;
             }
 
@@ -460,7 +461,7 @@ void MAVLinkProtocol::_startLogging(void)
                 return;
             }
 
-            qDebug() << "Temp log" << _tempLogFile.fileName();
+            qCDebug(MAVLinkProtocolLog) << "Temp log" << _tempLogFile.fileName();
             emit checkTelemetrySavePath();
 
             _logSuspendError = false;
