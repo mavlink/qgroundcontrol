@@ -60,6 +60,6 @@ class AIRMAP_EXPORT Client : public QObject, public airmap::Client {
 }  // namespace airmap
 
 /// @example qt/client.cpp
-/// Illustrates how to use airmap::services::Client, airmap::services::DispatchingLogger and airmap::services::Logger.
+/// Illustrates how to use airmap::services::Client,  airmap::services::DispatchingLogger and airmap::services::Logger.
 
 #endif  // AIRMAP_QT_CLIENT_H_
