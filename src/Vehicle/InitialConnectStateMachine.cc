@@ -249,8 +249,8 @@ void InitialConnectStateMachine::_protocolVersionCmdResultHandler(void* resultHa
         vehicle->_mavlinkProtocolRequestComplete = true;
         vehicle->_setMaxProtoVersionFromBothSources();
         vehicle->_waitForMavlinkMessageClear();
+        connectMachine->advance();
     }
-    connectMachine->advance();
 }
 
 void InitialConnectStateMachine::_waitForProtocolVersionResultHandler(void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message)
