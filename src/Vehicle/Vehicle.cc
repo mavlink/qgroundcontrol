@@ -2962,8 +2962,9 @@ void Vehicle::_waitForMavlinkMessage(WaitForMavlinkMessageResultHandler resultHa
     _waitForMavlinkMessageResultHandler     = resultHandler;
     _waitForMavlinkMessageResultHandlerData = resultHandlerData;
     _waitForMavlinkMessageId                = messageId;
-    _waitForMavlinkMessageTimeoutActive     = false;
+    _waitForMavlinkMessageTimeoutActive     = true;
     _waitForMavlinkMessageTimeoutMsecs      = timeoutMsecs;
+    _waitForMavlinkMessageElapsed.restart();
 }
 
 void Vehicle::_waitForMavlinkMessageClear(void)
@@ -2972,6 +2973,7 @@ void Vehicle::_waitForMavlinkMessageClear(void)
     _waitForMavlinkMessageResultHandler     = nullptr;
     _waitForMavlinkMessageResultHandlerData = nullptr;
     _waitForMavlinkMessageId                = 0;
+    _waitForMavlinkMessageTimeoutActive     = false;
 }
 
 void Vehicle::_waitForMavlinkMessageMessageReceived(const mavlink_message_t& message)
