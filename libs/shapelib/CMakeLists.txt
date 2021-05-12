@@ -33,11 +33,13 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 cmake_policy(SET CMP0026 OLD) # Disallow use of the LOCATION property for build targets
 
-add_compile_options(
-	-Wno-missing-braces
-	-Wno-sign-compare
-	-Wno-return-type
-)
+if(NOT MSVC)
+  add_compile_options(
+  	-Wno-missing-braces
+  	-Wno-sign-compare
+  	-Wno-return-type
+  )
+endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
