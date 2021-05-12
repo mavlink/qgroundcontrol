@@ -1,5 +1,8 @@
 add_subdirectory(qtandroidserialport)
 add_subdirectory(shapelib)
+if (WIN32)
+    add_subdirectory(zlib)
+endif (WIN32)
 if (GST_FOUND)
     add_subdirectory(qmlglsink)
 endif()
