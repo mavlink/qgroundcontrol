@@ -47,8 +47,8 @@ installer {
         QMAKE_POST_LINK += && rm /tmp/tmp.dmg
     }
     WindowsBuild {
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" $$(QGC_NSIS_INSTALLER_PARAMETERS) /DDRIVER_MSI="$$SOURCE_DIR\\deploy\\driver.msi" /DINSTALLER_ICON="\"$${QGC_INSTALLER_ICON}\"" /DHEADER_BITMAP="\"$${QGC_INSTALLER_HEADER_BITMAP}\"" /DAPPNAME="\"$${QGC_APP_NAME}\"" /DEXENAME="\"$${TARGET}\"" /DORGNAME="\"$${QGC_ORG_NAME}\"" /DDESTDIR=$${DESTDIR} /NOCD "\"/XOutFile $${DESTDIR}\\$${TARGET}-installer.exe\"" "$$SOURCE_DIR\\deploy\\qgroundcontrol_installer.nsi")
-        OTHER_FILES += deploy/qgroundcontrol_installer.nsi
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$quote("\"C:\\Program Files \(x86\)\\NSIS\\makensis.exe\"" $$(QGC_NSIS_INSTALLER_PARAMETERS) /DDRIVER_MSI="\"$${QGC_INSTALLER_DRIVER_MSI}\"" /DINSTALLER_ICON="\"$${QGC_INSTALLER_ICON}\"" /DHEADER_BITMAP="\"$${QGC_INSTALLER_HEADER_BITMAP}\"" /DAPPNAME="\"$${QGC_APP_NAME}\"" /DEXENAME="\"$${TARGET}\"" /DORGNAME="\"$${QGC_ORG_NAME}\"" /DDESTDIR=$${DESTDIR} /NOCD "\"/XOutFile $${DESTDIR}\\$${TARGET}-installer.exe\"" "\"$${QGC_INSTALLER_SCRIPT}\"")
+        OTHER_FILES += $${QGC_INSTALLER_SCRIPT}
     }
     LinuxBuild {
         #-- TODO: This uses hardcoded paths. It should use $${DESTDIR}
