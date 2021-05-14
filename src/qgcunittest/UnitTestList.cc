@@ -49,6 +49,7 @@
 #include "MissionCommandTreeEditorTest.h"
 #include "VehicleLinkManagerTest.h"
 #include "LandingComplexItemTest.h"
+#include "InitialConnectTest.h"
 
 UT_REGISTER_TEST(ComponentInformationCacheTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
@@ -61,6 +62,7 @@ UT_REGISTER_TEST(SendMavCommandWithSignallingTest)
 UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
 UT_REGISTER_TEST(RequestMessageTest)
 UT_REGISTER_TEST(FTPManagerTest)
+UT_REGISTER_TEST(InitialConnectTest)
 UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(SimpleMissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
