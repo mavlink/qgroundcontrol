@@ -299,6 +299,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
+      condition: false # Temporary disable for GitHub Actions testing
       condition: $CONFIG = installer
 
   # deploy installers to Github releases if on a tag
