@@ -1175,12 +1175,14 @@ private:
 
     // requestMessage handling
     typedef struct RequestMessageInfo {
-        bool                        commandAckReceived; // We keep track of the ack/message being received since the order in which this will come in is random
-        bool                        messageReceived;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        Vehicle*                    vehicle             = nullptr;
         int                         msgId;
         int                         compId;
         RequestMessageResultHandler resultHandler;
         void*                       resultHandlerData;
+        bool                        commandAckReceived  = false; // We keep track of the ack/message being received since the order in which this will come in is random
+        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        mavlink_message_t           message;
     } RequestMessageInfo_t;
 
     static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, MavCmdResultFailureCode_t failureCode);
@@ -1193,7 +1195,6 @@ private:
         MAV_FRAME           frame;
         float               rgParam[7]          = { 0 };
         bool                showError           = true;
-        bool                requestMessage      = false;                        // true: this is from a requestMessage call
         MavCmdResultHandler resultHandler;
         void*               resultHandlerData   = nullptr;
         int                 maxTries            = _mavCommandMaxRetryCount;
@@ -1209,7 +1210,7 @@ private:
     static const int                _mavCommandAckTimeoutMSecs              = 3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
-    void _sendMavCommandWorker  (bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+    void _sendMavCommandWorker  (bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
     bool _sendMavCommandShouldRetry(MAV_CMD command);
