@@ -46,6 +46,14 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
     QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE),   -1);
     QCOMPARE(_mockLink->sendMavCommandCount(MAV_CMD_REQUEST_MESSAGE),                                   testCase.expectedSendCount);
 
+    // We should be able to do it twice in a row without any duplicate command problems
+    testCase.resultHandlerCalled = false;
+    _mockLink->clearSendMavCommandCounts();
+    vehicle->requestMessage(_requestMessageResultHandler, &testCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG);
+    QVERIFY(QTest::qWaitFor([&]() { return testCase.resultHandlerCalled; }, 10000));
+    QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE),   -1);
+    QCOMPARE(_mockLink->sendMavCommandCount(MAV_CMD_REQUEST_MESSAGE),                                   testCase.expectedSendCount);
+
     _disconnectMockLink();
 }
 
