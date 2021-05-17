@@ -163,7 +163,6 @@ jobs:
         if:                 ${{ matrix.config.save-artifact && github.event_name == 'push' }}
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
         run: |
-              pip install --quiet --no-cache-dir --upgrade awscli
               mkdir -p ~/.aws
               touch ~/.aws/credentials
               echo "[default]
