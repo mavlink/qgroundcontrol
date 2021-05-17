@@ -160,12 +160,13 @@ jobs:
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
 
       - name: Upload to S3 Bucket
-        if:   ${{ matrix.config.save-artifact && github.event_name == 'push' }}
-        uses: zdurham/s3-upload-github-action@master
+        if:                 ${{ matrix.config.save-artifact && github.event_name == 'push' }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        uses:               zdurham/s3-upload-github-action@master
         with:
           args: --acl public-read
         env:
-          FILE:                   '/github/workspace/../../_temp/shadow_build_dir/package/${{ matrix.config.artifact }}'
+          FILE:                   './${{ matrix.config.artifact }}'
           S3_BUCKET:              'qgroundcontrol'
           S3_KEY:                 'master'
           AWS_REGION:             'us-west-1'
