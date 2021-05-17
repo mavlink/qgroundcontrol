@@ -152,6 +152,12 @@ jobs:
         working-directory:  ${{ runner.temp }}/shadow_build_dir  
         run:                ${SOURCE_DIR}/deploy/create_linux_appimage.sh ${SOURCE_DIR} ./staging ./package;
 
+      - name: Save artifact
+        if:   ${{ matrix.config.save-artifact }}
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.config.artifact }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
 
       - name: Upload to S3 Bucket
         if:   ${{ matrix.config.save-artifact && github.event_name == 'push' }}
@@ -165,10 +171,3 @@ jobs:
           AWS_REGION:             'us-west-1'
           AWS_ACCESS_KEY_ID:      ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Save artifact
-        if:   ${{ matrix.config.save-artifact }}
-        uses: actions/upload-artifact@master
-        with:
-          name: ${{ matrix.config.artifact }}
-          path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
