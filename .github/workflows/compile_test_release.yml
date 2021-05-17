@@ -160,14 +160,14 @@ jobs:
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
 
       - name: Upload to S3 Bucket
-        if:   ${{ matrix.config.save-artifact && github.event_name == 'push' }}
-        uses: zdurham/s3-upload-github-action@master
-        with:
-          args: --acl public-read
-        env:
-          FILE:                   '../../_temp/shadow_build_dir/package/${{ matrix.config.artifact }}'
-          S3_BUCKET:              'qgroundcontrol'
-          S3_KEY:                 'master'
-          AWS_REGION:             'us-west-1'
-          AWS_ACCESS_KEY_ID:      ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        if:                 ${{ matrix.config.save-artifact && github.event_name == 'push' }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        run: |
+              pip install --quiet --no-cache-dir awscli
+              mkdir -p ~/.aws
+              touch ~/.aws/credentials
+              echo "[default]
+              aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+              aws s3 cp ./${{ matrix.config.artifact }} s3://groundcontrol/master --region us-west-1 $*
+              rm -rf ~/.aws
