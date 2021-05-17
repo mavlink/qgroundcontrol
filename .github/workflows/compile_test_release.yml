@@ -121,10 +121,10 @@ jobs:
             ccache -z
 
       - name: Create build directory
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+        run:  mkdir ${{ github.workspace }}/build
 
       - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ github.workspace }}/build
         run:  |
               qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=${{ matrix.config.config }} CONFIG+=DailyBuild
               make -j${{ matrix.config.jobs }}
@@ -133,8 +133,8 @@ jobs:
         run:  ccache -s
 
       - name: Setup for unit tests
-        if: ${{ matrix.config.run-unit-tests }}
-        working-directory: ${{ runner.temp }}/shadow_build_dir  
+        if:                 ${{ matrix.config.run-unit-tests }}
+        working-directory:  ${{ github.workspace }}/build
         run:  |
               mkdir -p ~/.config/QtProject/
               cp ${SOURCE_DIR}/test/qtlogging.ini ~/.config/QtProject/
@@ -144,12 +144,12 @@ jobs:
         if: ${{ matrix.config.run-unit-tests }}
         uses: GabrielBB/xvfb-action@v1
         with:
-          working-directory:  ${{ runner.temp }}/shadow_build_dir  
+          working-directory:  ${{ github.workspace }}/build
           run:                ./staging/qgroundcontrol-start.sh --unittest
 
       - name: Create AppImage
         if:                 ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.config == 'installer' }}
-        working-directory:  ${{ runner.temp }}/shadow_build_dir  
+        working-directory:  ${{ github.workspace }}/build
         run:                ${SOURCE_DIR}/deploy/create_linux_appimage.sh ${SOURCE_DIR} ./staging ./package;
 
       - name: Save artifact
@@ -157,17 +157,17 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: ${{ matrix.config.artifact }}
-          path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
+          path: ${{ github.workspace }}/build/package/${{ matrix.config.artifact }}
 
       - name: Upload to S3 Bucket
-        if:                 ${{ matrix.config.save-artifact && github.event_name == 'push' }}
-        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
-        run: |
-              pip install --quiet --no-cache-dir --upgrade awscli
-              mkdir -p ~/.aws
-              touch ~/.aws/credentials
-              echo "[default]
-              aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
-              aws s3 cp ./${{ matrix.config.artifact }} s3://groundcontrol/master --region us-west-1 $*
-              rm -rf ~/.aws
+        if:   ${{ matrix.config.save-artifact && github.event_name == 'push' }}
+        uses: zdurham/s3-upload-github-action@master
+        with:
+          args: --acl public-read
+        env:
+          FILE:                   build/package/${{ matrix.config.artifact }}
+          AWS_REGION:             'us-west-1'
+          S3_BUCKET:              qgroundcontrol
+          S3_KEY:                 master
+          AWS_ACCESS_KEY_ID:      ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
