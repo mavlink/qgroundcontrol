@@ -165,7 +165,7 @@ jobs:
         with:
           args: --acl public-read
         env:
-          FILE:                   '/github/workspace/../../_temp/shadow_build_dir/package/${{ matrix.config.artifact }}'
+          FILE:                   '../../_temp/shadow_build_dir/package/${{ matrix.config.artifact }}'
           S3_BUCKET:              'qgroundcontrol'
           S3_KEY:                 'master'
           AWS_REGION:             'us-west-1'
