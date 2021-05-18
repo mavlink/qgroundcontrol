@@ -168,5 +168,5 @@ jobs:
               echo "[default]
               aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
-              aws s3 cp ./${{ matrix.config.artifact }} s3://groundcontrol/master --region us-west-1 --acl public-read
+              aws s3 cp ./${{ matrix.config.artifact }} s3://groundcontrol/master --region us-west-2 --acl public-read
               rm -rf ~/.aws
