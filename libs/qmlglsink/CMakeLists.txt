@@ -1,5 +1,6 @@
 
 find_package(Qt5Gui ${QT_VERSION} CONFIG REQUIRED Private)
+find_package(OpenGL REQUIRED)
 
 add_library(qmlglsink
     gst-plugins-good/ext/qt/gstplugin.cc
@@ -22,7 +23,6 @@ add_library(qmlglsink
 if(LINUX)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND)
 
-
 	find_package(Qt5 ${QT_VERSION}
 		COMPONENTS
 			X11Extras
@@ -43,9 +43,8 @@ elseif(IOS)
 elseif(WIN32)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_WIN32 HAVE_QT_QPA_HEADER)
 
-	# TODO: use FindOpenGL?
-	target_link_libraries(qmlglsink PUBLIC opengl32.lib user32.lib)
-	# LIBS += opengl32.lib user32.lib
+	target_link_libraries(qmlglsink PUBLIC user32.lib)
+	target_link_libraries(qmlglsink PUBLIC OpenGL::GL)
 elseif(ANDROID)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_ANDROID)
 endif()
@@ -54,11 +53,17 @@ target_link_libraries(qmlglsink
 	PUBLIC
 		Qt5::Core
 		Qt5::OpenGL
-                Qt5::GuiPrivate
+		Qt5::GuiPrivate
+		${GST_LINK_LIBRARIES}
 )
 
-target_compile_options(qmlglsink
-	PRIVATE
-		-Wno-unused-parameter
-		-Wno-implicit-fallthrough
-)
+target_include_directories(qmlglsink PRIVATE ${GST_INCLUDE_DIRS})
+if (MSVC)
+	target_include_directories(qmlglsink PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/windows)
+else()
+	target_compile_options(qmlglsink
+			PRIVATE
+			-Wno-unused-parameter
+			-Wno-implicit-fallthrough
+			)
+endif()
