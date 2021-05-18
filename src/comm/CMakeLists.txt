@@ -54,4 +54,3 @@ target_link_libraries(comm
 )
 
 target_include_directories(comm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
