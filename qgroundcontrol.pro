@@ -49,6 +49,7 @@ LinuxBuild {
 WindowsBuild {
     RC_ICONS = resources/icons/qgroundcontrol.ico
     CONFIG += resources_big
+    CONFIG += QGC_DISABLE_CUSTOM_BUILD
 }
 
 #
