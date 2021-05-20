@@ -159,8 +159,9 @@ jobs:
           name: ${{ matrix.config.artifact }}
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
 
+      # Currently disabled since credentials are not working correctly
       - name: Upload to S3 Bucket
-        if:                 ${{ matrix.config.save-artifact && github.event_name == 'push' }}
+        if:                 ${{ false && matrix.config.save-artifact && github.event_name == 'push' }}
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
         run: |
               mkdir -p ~/.aws
