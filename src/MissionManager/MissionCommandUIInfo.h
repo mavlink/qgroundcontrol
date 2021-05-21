@@ -122,6 +122,7 @@ public:
     Q_PROPERTY(bool     specifiesAltitudeOnly   READ specifiesAltitudeOnly  CONSTANT)
     Q_PROPERTY(bool     isLandCommand           READ isLandCommand          CONSTANT)
     Q_PROPERTY(bool     isTakeoffCommand        READ isTakeoffCommand       CONSTANT)
+    Q_PROPERTY(bool     isLoiterCommand         READ isLoiterCommand        CONSTANT)
     Q_PROPERTY(int      command                 READ intCommand             CONSTANT)
 
     MAV_CMD command(void) const { return _command; }
@@ -137,6 +138,7 @@ public:
     bool    specifiesAltitudeOnly   (void) const;
     bool    isLandCommand           (void) const;
     bool    isTakeoffCommand        (void) const;
+    bool    isLoiterCommand         (void) const;
 
     /// Load the data in the object from the specified json
     ///     @param jsonObject Json object to load from
@@ -198,6 +200,7 @@ private:
     static const char* _specifiesAltitudeOnlyJsonKey;
     static const char* _isLandCommandJsonKey;
     static const char* _isTakeoffCommandJsonKey;
+    static const char* _isLoiterCommandJsonKey;
     static const char* _unitsJsonKey;
     static const char* _commentJsonKey;    
     static const char* _advancedCategory;
