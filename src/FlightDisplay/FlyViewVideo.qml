@@ -67,18 +67,16 @@ Item {
     QGCLabel {
         text: qsTr("Double-click to exit full screen")
         font.pointSize: ScreenTools.largeFontPointSize
-        visible: QGroundControl.videoManager.fullScreen && flyViewVideoMouseArea.isHovered
+        visible: QGroundControl.videoManager.fullScreen && flyViewVideoMouseArea.containsMouse
         anchors.centerIn: parent
     }
 
     MouseArea {
         id: flyViewVideoMouseArea
-        property bool isHovered: false
         anchors.fill:       parent
         enabled:            pipState.state === pipState.fullState
         hoverEnabled: true
         onDoubleClicked:    QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
-        onHoveredChanged: isHovered = !isHovered
     }
 
     ProximityRadarVideoView{
