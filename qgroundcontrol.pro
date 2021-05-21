@@ -218,8 +218,7 @@ LinuxBuild {
 # Qt configuration
 
 CONFIG += qt \
-    thread \
-    c++14
+    thread
 
 DebugBuild {
     CONFIG -= qtquickcompiler
