@@ -545,32 +545,17 @@ bool SimpleMissionItem::specifiesAltitude(void) const
 
 bool SimpleMissionItem::isLoiterItem() const
 {
-    switch(command()) {
-    case MAV_CMD_NAV_LOITER_UNLIM:
-    case MAV_CMD_NAV_LOITER_TURNS:
-    case MAV_CMD_NAV_LOITER_TIME:
-    case MAV_CMD_NAV_LOITER_TO_ALT:
-        return true;
-    default:
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, (MAV_CMD)command());
+    if (uiInfo) {
+        return uiInfo->isLoiterCommand();
+    } else {
         return false;
     }
 }
 
 bool SimpleMissionItem::showLoiterRadius() const
 {
-    if (specifiesCoordinate() && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()))  {
-        switch (command()) {
-        case MAV_CMD_NAV_LOITER_UNLIM:
-        case MAV_CMD_NAV_LOITER_TURNS:
-        case MAV_CMD_NAV_LOITER_TIME:
-        case MAV_CMD_NAV_LOITER_TO_ALT:
-            return true;
-        default:
-            return false;
-        }
-    } else {
-        return false;
-    }
+    return specifiesCoordinate() && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) && isLoiterItem();
 }
 
 double SimpleMissionItem::loiterRadius() const
