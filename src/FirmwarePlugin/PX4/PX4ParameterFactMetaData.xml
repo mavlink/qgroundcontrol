@@ -277,11 +277,6 @@
       <max>0.1</max>
       <unit>Hz</unit>
     </parameter>
-    <parameter name="ASPD_STALL" default="10.0" type="FLOAT">
-      <short_desc>Airspeed fault detection stall airspeed</short_desc>
-      <long_desc>This is the minimum indicated airspeed at which the wing can produce 1g of lift. It is used by the airspeed sensor fault detection and failsafe calculation to detect a significant airspeed low measurement error condition and should be set based on flight test for reliable operation.</long_desc>
-      <unit>m/s</unit>
-    </parameter>
     <parameter name="ASPD_TAS_GATE" default="3" type="INT32">
       <short_desc>Airspeed Selector: Gate size for true airspeed fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
@@ -1040,7 +1035,7 @@
   <group name="Commander">
     <parameter name="COM_ARM_ARSP_EN" default="1" type="INT32">
       <short_desc>Enable preflight check for maximal allowed airspeed when arming</short_desc>
-      <long_desc>Deny arming if the current airspeed measurement is greater than half the stall speed (ASPD_STALL). Excessive airspeed measurements on ground are either caused by wind or bad airspeed calibration.</long_desc>
+      <long_desc>Deny arming if the current airspeed measurement is greater than half the cruise airspeed (FW_AIRSPD_TRIM). Excessive airspeed measurements on ground are either caused by wind or bad airspeed calibration.</long_desc>
       <values>
         <value code="0">Disabled</value>
         <value code="1">Enabled</value>
@@ -1905,6 +1900,22 @@
     </parameter>
   </group>
   <group name="DShot">
+    <parameter name="DSHOT_3D_DEAD_H" default="1000" type="INT32">
+      <short_desc>DSHOT 3D deadband high</short_desc>
+      <long_desc>When the actuator_output is between DSHOT_3D_DEAD_L and DSHOT_3D_DEAD_H, motor will not spin. This value is with respect to the mixer_module range (0-1999), not the DSHOT values.</long_desc>
+      <min>1000</min>
+      <max>1999</max>
+    </parameter>
+    <parameter name="DSHOT_3D_DEAD_L" default="1000" type="INT32">
+      <short_desc>DSHOT 3D deadband low</short_desc>
+      <long_desc>When the actuator_output is between DSHOT_3D_DEAD_L and DSHOT_3D_DEAD_H, motor will not spin. This value is with respect to the mixer_module range (0-1999), not the DSHOT values.</long_desc>
+      <min>0</min>
+      <max>1000</max>
+    </parameter>
+    <parameter name="DSHOT_3D_ENABLE" default="0" type="INT32" boolean="true">
+      <short_desc>Allows for 3d mode when using DShot and suitable mixer</short_desc>
+      <long_desc>WARNING: ESC must be configured for 3D mode, and DSHOT_MIN set to 0. This splits the throttle ranges in two. Direction 1) 48 is the slowest, 1047 is the fastest. Direction 2) 1049 is the slowest, 2047 is the fastest. When mixer outputs 1000 or value inside DSHOT 3D deadband, DShot 0 is sent.</long_desc>
+    </parameter>
     <parameter name="DSHOT_CONFIG" default="0" type="INT32">
       <short_desc>Configure DShot</short_desc>
       <long_desc>This enables/disables DShot. The different modes define different speeds, for example DShot150 = 150kb/s. Not all ESCs support all modes. Note: this enables DShot on the FMU outputs. For boards with an IO it is the AUX outputs.</long_desc>
@@ -3494,7 +3505,16 @@
     </parameter>
     <parameter name="FW_AIRSPD_MIN" default="10.0" type="FLOAT">
       <short_desc>Minimum Airspeed (CAS)</short_desc>
-      <long_desc>If the CAS (calibrated airspeed) falls below this value, the TECS controller will try to increase airspeed more aggressively.</long_desc>
+      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively.</long_desc>
+      <min>0.5</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_AIRSPD_STALL" default="7.0" type="FLOAT">
+      <short_desc>Stall Airspeed (CAS)</short_desc>
+      <long_desc>The stall airspeed (calibrated airspeed) of the vehicle. It is used for airspeed sensor failure detection and for the control surface scaling airspeed limits.</long_desc>
       <min>0.5</min>
       <max>40</max>
       <unit>m/s</unit>
@@ -3767,7 +3787,7 @@
       <short_desc>Protocol for Main GPS</short_desc>
       <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
       <min>0</min>
-      <max>4</max>
+      <max>5</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto detect</value>
@@ -3775,6 +3795,7 @@
         <value code="2">MTK</value>
         <value code="3">Ashtech / Trimble</value>
         <value code="4">Emlid Reach</value>
+        <value code="5">Femtomes</value>
       </values>
     </parameter>
     <parameter name="GPS_2_CONFIG" default="0" type="INT32">
@@ -3813,7 +3834,7 @@
       <short_desc>Protocol for Secondary GPS</short_desc>
       <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
       <min>0</min>
-      <max>4</max>
+      <max>5</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto detect</value>
@@ -3821,6 +3842,7 @@
         <value code="2">MTK</value>
         <value code="3">Ashtech / Trimble</value>
         <value code="4">Emlid Reach</value>
+        <value code="5">Femtomes</value>
       </values>
     </parameter>
     <parameter name="GPS_DUMP_COMM" default="0" type="INT32">
@@ -4082,6 +4104,14 @@
       <short_desc>Multicopter max rotation</short_desc>
       <long_desc>Maximum allowed angular velocity around each axis allowed in the landed state.</long_desc>
       <unit>deg/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="LNDMC_TRIG_TIME" default="1.0" type="FLOAT">
+      <short_desc>Multicopter land detection trigger time</short_desc>
+      <long_desc>Total time it takes to go through all three land detection stages: ground contact, maybe landed, landed when all necessary conditions are constantly met.</long_desc>
+      <min>0.1</min>
+      <max>10.0</max>
+      <unit>s</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="LNDMC_XY_VEL_MAX" default="1.5" type="FLOAT">
@@ -5135,7 +5165,7 @@
       <max>15</max>
       <unit>m</unit>
     </parameter>
-    <parameter name="CP_GO_NO_DATA" default="0" type="FLOAT" boolean="true">
+    <parameter name="CP_GO_NO_DATA" default="0" type="INT32" boolean="true">
       <short_desc>Boolean to allow moving into directions where there is no sensor data (outside FOV)</short_desc>
       <long_desc>Only used in Position mode.</long_desc>
     </parameter>
@@ -10370,7 +10400,7 @@
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_DGYRO_CUTOFF" default="20.0" type="FLOAT">
+    <parameter name="IMU_DGYRO_CUTOFF" default="30.0" type="FLOAT">
       <short_desc>Cutoff frequency for angular acceleration (D-Term filter)</short_desc>
       <long_desc>The cutoff frequency for the 2nd order butterworth filter used on the time derivative of the measured angular velocity, also known as the D-term filter in the rate controller. The D-term uses the derivative of the rate and thus is the most susceptible to noise. Therefore, using a D-term filter allows to increase IMU_GYRO_CUTOFF, which leads to reduced control latency and permits to increase the P gains. A value of 0 disables the filter.</long_desc>
       <min>0</min>
@@ -10382,7 +10412,7 @@
       <short_desc>IMU gyro auto calibration enable</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_CUTOFF" default="30.0" type="FLOAT">
+    <parameter name="IMU_GYRO_CUTOFF" default="40.0" type="FLOAT">
       <short_desc>Low pass filter cutoff frequency for gyro</short_desc>
       <long_desc>The cutoff frequency for the 2nd order butterworth filter on the primary gyro. This only affects the angular velocity sent to the controllers, not the estimators. It applies also to the angular acceleration (D-Term filter), see IMU_DGYRO_CUTOFF. A value of 0 disables the filter.</long_desc>
       <min>0</min>
@@ -13265,6 +13295,9 @@
     </parameter>
     <parameter name="UCAN1_SERVO_PUB" default="0" type="INT32">
       <short_desc>UCAN1_SERVO_PUB</short_desc>
+    </parameter>
+    <parameter name="UCAN1_UORB_GPS" default="0" type="INT32">
+      <short_desc>UCAN1_UORB_GPS</short_desc>
     </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
       <short_desc>Skip the controller</short_desc>
