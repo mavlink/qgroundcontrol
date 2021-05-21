@@ -64,6 +64,7 @@
             "friendlyName":         "Loiter",
             "description":          "Travel to a position and Loiter around the specified position indefinitely.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param3": {
@@ -86,6 +87,7 @@
             "friendlyName":         "Loiter (turns)",
             "description":          "Travel to a position and Loiter around the specified position for a number of turns.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
@@ -120,6 +122,7 @@
             "friendlyName":         "Loiter (time)",
             "description":          "Travel to a position and Loiter around the specified position for an amount of time.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
@@ -224,6 +227,7 @@
             "friendlyName":         "Loiter (altitude)",
             "description":          "Loiter at specified position until altitude reached.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
