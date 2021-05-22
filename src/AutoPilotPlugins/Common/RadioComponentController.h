@@ -301,7 +301,6 @@ private:
     int _rcRawValue[_chanMax];         ///< Current set of raw channel values
 
     int     _stickDetectChannel;
-    int     _stickDetectInitialValue;
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
     QElapsedTimer   _stickDetectSettleElapsed;
