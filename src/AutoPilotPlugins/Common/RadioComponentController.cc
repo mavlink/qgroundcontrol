@@ -350,7 +350,7 @@ bool RadioComponentController::_stickSettleComplete(int value)
     if (abs(_stickDetectValue - value) > _rcCalSettleDelta) {
         // Stick is moving too much to consider stopped
 
-        qCDebug(RadioComponentControllerLog) << "_stickSettleComplete still moving, _stickDetectValue:value" << _stickDetectValue << value;
+        qCDebug(RadioComponentControllerLog) << "_stickSettleComplete Still moving, _stickDetectValue:value" << _stickDetectValue << value;
 
         _stickDetectValue = value;
         _stickDetectSettleStarted = false;
@@ -367,7 +367,7 @@ bool RadioComponentController::_stickSettleComplete(int value)
         } else {
             // Start waiting for the stick to stay settled for _stickDetectSettleWaitMSecs msecs
 
-            qCDebug(RadioComponentControllerLog) << "_stickSettleComplete starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
+            qCDebug(RadioComponentControllerLog) << "_stickSettleComplete Starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
 
             _stickDetectSettleStarted = true;
             _stickDetectSettleElapsed.start();
@@ -379,12 +379,13 @@ bool RadioComponentController::_stickSettleComplete(int value)
 
 void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, int channel, int value)
 {
-    qCDebug(RadioComponentControllerLog) << "_inputStickDetect function:channel:value" << _functionInfo()[function].parameterName << channel << value;
-
     // If this channel is already used in a mapping we can't use it again
     if (_rgChannelInfo[channel].function != rcCalFunctionMax) {
         return;
     }
+
+    QString functionParamName = _functionInfo()[function].parameterName;
+    qCDebug(RadioComponentControllerLog) << "_inputStickDetect function:channel:value" << functionParamName << channel << value;
 
     if (_stickDetectChannel == _chanMax) {
         // We have not detected enough movement on a channel yet
@@ -392,32 +393,28 @@ void RadioComponentController::_inputStickDetect(enum rcCalFunctions function, i
         if (abs(_rcValueSave[channel] - value) > _rcCalMoveDelta) {
             // Stick has moved far enough to consider it as being selected for the function
 
-            qCDebug(RadioComponentControllerLog) << "_inputStickDetect starting settle wait, function:channel:value" << function << channel << value;
+            qCDebug(RadioComponentControllerLog) << "_inputStickDetect Starting settle wait";
 
             // Setup up to detect stick being pegged to min or max value
             _stickDetectChannel = channel;
-            _stickDetectInitialValue = value;
-            _stickDetectValue = value;
         }
     } else if (channel == _stickDetectChannel) {
         if (_stickSettleComplete(value)) {
             ChannelInfo* info = &_rgChannelInfo[channel];
 
-            // Stick detection is complete. Stick should be at max position.
             // Map the channel to the function
             _rgFunctionChannelMapping[function] = channel;
             info->function = function;
 
-            // Channel should be at max value, if it is below initial set point the the channel is reversed.
+            // A non-reversed channel should show a higher PWM value than center.
             info->reversed = value < _rcValueSave[channel];
-
-            qCDebug(RadioComponentControllerLog) << "_inputStickDetect settle complete, function:channel:value:reversed" << function << channel << value << info->reversed;
-
             if (info->reversed) {
                 _rgChannelInfo[channel].rcMin = value;
             } else {
                 _rgChannelInfo[channel].rcMax = value;
             }
+
+            qCDebug(RadioComponentControllerLog) << "_inputStickDetect Settle complete, reversed:" << info->reversed;
 
             _signalAllAttitudeValueChanges();
 
@@ -433,33 +430,37 @@ void RadioComponentController::_inputStickMin(enum rcCalFunctions function, int 
         return;
     }
 
+    QString functionParamName = _functionInfo()[function].parameterName;
+    qCDebug(RadioComponentControllerLog) << "_inputStickMin function:channel:value" << functionParamName << channel << value;
+
     if (_stickDetectChannel == _chanMax) {
         // Setup up to detect stick being pegged to extreme position
         if (_rgChannelInfo[channel].reversed) {
             if (value > _rcCalPWMCenterPoint + _rcCalMoveDelta) {
+                qCDebug(RadioComponentControllerLog) << "_inputStickMin Movement detected, starting settle wait";
                 _stickDetectChannel = channel;
-                _stickDetectInitialValue = value;
                 _stickDetectValue = value;
             }
         } else {
             if (value < _rcCalPWMCenterPoint - _rcCalMoveDelta) {
+                qCDebug(RadioComponentControllerLog) << "_inputStickMin Movement detected, starting settle wait";
                 _stickDetectChannel = channel;
-                _stickDetectInitialValue = value;
                 _stickDetectValue = value;
             }
         }
     } else {
         // We are waiting for the selected channel to settle out
-
         if (_stickSettleComplete(value)) {
             ChannelInfo* info = &_rgChannelInfo[channel];
 
-            // Stick detection is complete. Stick should be at min position.
+            // Stick detection is complete. Stick should be at extreme position.
             if (info->reversed) {
                 _rgChannelInfo[channel].rcMax = value;
             } else {
                 _rgChannelInfo[channel].rcMin = value;
             }
+
+            qCDebug(RadioComponentControllerLog) << "_inputStickMin Settle complete";
 
             // Check if this is throttle and set trim accordingly
             if (function == rcCalFunctionThrottle) {
@@ -480,13 +481,16 @@ void RadioComponentController::_inputCenterWait(enum rcCalFunctions function, in
         return;
     }
 
+    QString functionParamName = _functionInfo()[function].parameterName;
+    qCDebug(RadioComponentControllerLog) << "_inputCenterWait function:channel:value" << functionParamName << channel << value;
+
     if (_stickDetectChannel == _chanMax) {
         // Sticks have not yet moved close enough to center
 
         if (abs(_rcCalPWMCenterPoint - value) < _rcCalRoughCenterDelta) {
             // Stick has moved close enough to center that we can start waiting for it to settle
+            qCDebug(RadioComponentControllerLog) << "_inputCenterWait Center detected. Waiting for settle.";
             _stickDetectChannel = channel;
-            _stickDetectInitialValue = value;
             _stickDetectValue = value;
         }
     } else {
