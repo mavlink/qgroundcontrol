@@ -54,10 +54,14 @@ public:
     void            setSendStatusText   (bool sendStatusText)           { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
     typedef enum {
-        FailNone,                           // No failures
-        FailParamNoReponseToRequestList,    // Do no respond to PARAM_REQUEST_LIST
-        FailMissingParamOnInitialReqest,    // Not all params are sent on initial request, should still succeed since QGC will re-query missing params
-        FailMissingParamOnAllRequests,      // Not all params are sent on initial request, QGC retries will fail as well
+        FailNone,                                                   // No failures
+        FailParamNoReponseToRequestList,                            // Do no respond to PARAM_REQUEST_LIST
+        FailMissingParamOnInitialReqest,                            // Not all params are sent on initial request, should still succeed since QGC will re-query missing params
+        FailMissingParamOnAllRequests,                              // Not all params are sent on initial request, QGC retries will fail as well
+        FailInitialConnectRequestMessageAutopilotVersionFailure,    // REQUEST_MESSAGE:AUTOPILOT_VERSION returns failure
+        FailInitialConnectRequestMessageAutopilotVersionLost,       // REQUEST_MESSAGE:AUTOPILOT_VERSION success, AUTOPILOT_VERSION never sent
+        FailInitialConnectRequestMessageProtocolVersionFailure,     // REQUEST_MESSAGE:PROTOCOL_VERSION returns failure
+        FailInitialConnectRequestMessageProtocolVersionLost,        // REQUEST_MESSAGE:PROTOCOL_VERSION success, PROTOCOL_VERSION never sent
     } FailureMode_t;
     FailureMode_t failureMode(void) { return _failureMode; }
     void setFailureMode(FailureMode_t failureMode) { _failureMode = failureMode; }
@@ -164,13 +168,11 @@ public:
     void clearSendMavCommandCounts(void) { _sendMavCommandCountMap.clear(); }
     int sendMavCommandCount(MAV_CMD command) { return _sendMavCommandCountMap[command]; }
 
-    // Special message ids for testing requestMessage support
     typedef enum {
         FailRequestMessageNone,
         FailRequestMessageCommandAcceptedMsgNotSent,
         FailRequestMessageCommandUnsupported,
         FailRequestMessageCommandNoResponse,
-        FailRequestMessageCommandAcceptedSecondAttempMsgSent,
     } RequestMessageFailureMode_t;
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
 

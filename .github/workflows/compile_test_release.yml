@@ -1,6 +1,12 @@
 name: Compile, Test and Release
 
-on: [pull_request]
+on:
+  push:
+    branches:
+    - 'master'
+  pull_request:
+    branches:
+    - '*'
 
 defaults:
   run:
@@ -152,3 +158,16 @@ jobs:
         with:
           name: ${{ matrix.config.artifact }}
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.config.artifact }}
+
+      # Currently disabled since credentials are not working correctly
+      - name: Upload to S3 Bucket
+        if:                 ${{ false && matrix.config.save-artifact && github.event_name == 'push' }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        run: |
+              mkdir -p ~/.aws
+              touch ~/.aws/credentials
+              echo "[default]
+              aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+              aws s3 cp ./${{ matrix.config.artifact }} s3://groundcontrol/master --region us-west-2 --acl public-read
+              rm -rf ~/.aws

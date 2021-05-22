@@ -363,7 +363,7 @@ QString UnitTest::_getSaveFileName(
     return _fileDialogResponseSingle(getSaveFileName);
 }
 
-void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
+void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
 
@@ -371,13 +371,13 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 
     switch (autopilot) {
     case MAV_AUTOPILOT_PX4:
-        _mockLink = MockLink::startPX4MockLink(false);
+        _mockLink = MockLink::startPX4MockLink(false, failureMode);
         break;
     case MAV_AUTOPILOT_ARDUPILOTMEGA:
-        _mockLink = MockLink::startAPMArduCopterMockLink(false);
+        _mockLink = MockLink::startAPMArduCopterMockLink(false, failureMode);
         break;
     case MAV_AUTOPILOT_GENERIC:
-        _mockLink = MockLink::startGenericMockLink(false);
+        _mockLink = MockLink::startGenericMockLink(false, failureMode);
         break;
     case MAV_AUTOPILOT_INVALID:
         _mockLink = MockLink::startNoInitialConnectMockLink(false);
