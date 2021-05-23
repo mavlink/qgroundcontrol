@@ -64,8 +64,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     attitudeStamped(false),
     lastAttitude(0),
 
-    imagePackets(0),    // We must initialize to 0, otherwise extended data packets maybe incorrectly thought to be images
-
     blockHomePositionChanges(false),
 
     // Note variances calculated from flight case from this log: http://dash.oznet.ch/view/MRjW8NUNYQSuSZkbn8dEjY
@@ -145,60 +143,6 @@ void UAS::receiveMessage(mavlink_message_t message)
     {
         switch (message.msgid)
         {
-
-        case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
-        {
-            mavlink_data_transmission_handshake_t p;
-            mavlink_msg_data_transmission_handshake_decode(&message, &p);
-            imageSize = p.size;
-            imagePackets = p.packets;
-            imagePayload = p.payload;
-            imageQuality = p.jpg_quality;
-            imageType = p.type;
-            imageWidth = p.width;
-            imageHeight = p.height;
-            imageStart = QGC::groundTimeMilliseconds();
-            imagePacketsArrived = 0;
-
-        }
-            break;
-
-        case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
-        {
-            mavlink_encapsulated_data_t img;
-            mavlink_msg_encapsulated_data_decode(&message, &img);
-            int seq = img.seqnr;
-            int pos = seq * imagePayload;
-
-            // Check if we have a valid transaction
-            if (imagePackets == 0)
-            {
-                // NO VALID TRANSACTION - ABORT
-                // Restart statemachine
-                imagePacketsArrived = 0;
-                break;
-            }
-
-            for (int i = 0; i < imagePayload; ++i)
-            {
-                if (pos <= imageSize) {
-                    imageRecBuffer[pos] = img.data[i];
-                }
-                ++pos;
-            }
-
-            ++imagePacketsArrived;
-
-            // emit signal if all packets arrived
-            if (imagePacketsArrived >= imagePackets)
-            {
-                // Restart statemachine
-                imagePackets = 0;
-                imagePacketsArrived = 0;
-                emit imageReady(this);
-            }
-        }
-            break;
 
         case MAVLINK_MSG_ID_LOG_ENTRY:
         {
@@ -414,84 +358,6 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     }
 }
-
-QImage UAS::getImage()
-{
-
-//    qDebug() << "IMAGE TYPE:" << imageType;
-
-    // RAW greyscale
-    if (imageType == MAVLINK_DATA_STREAM_IMG_RAW8U)
-    {
-        int imgColors = 255;
-
-        // Construct PGM header
-        QString header("P5\n%1 %2\n%3\n");
-        header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
-
-        QByteArray tmpImage(header.toStdString().c_str(), header.length());
-        tmpImage.append(imageRecBuffer);
-
-        //qDebug() << "IMAGE SIZE:" << tmpImage.size() << "HEADER SIZE: (15):" << header.size() << "HEADER: " << header;
-
-        if (imageRecBuffer.isNull())
-        {
-            qDebug()<< "could not convertToPGM()";
-            return QImage();
-        }
-
-        if (!image.loadFromData(tmpImage, "PGM"))
-        {
-            qDebug()<< __FILE__ << __LINE__ << "could not create extracted image";
-            return QImage();
-        }
-
-    }
-    // BMP with header
-    else if (imageType == MAVLINK_DATA_STREAM_IMG_BMP ||
-             imageType == MAVLINK_DATA_STREAM_IMG_JPEG ||
-             imageType == MAVLINK_DATA_STREAM_IMG_PGM ||
-             imageType == MAVLINK_DATA_STREAM_IMG_PNG)
-    {
-        if (!image.loadFromData(imageRecBuffer))
-        {
-            qDebug() << __FILE__ << __LINE__ << "Loading data from image buffer failed!";
-            return QImage();
-        }
-    }
-
-    // Restart statemachine
-    imagePacketsArrived = 0;
-    imagePackets = 0;
-    imageRecBuffer.clear();
-    return image;
-}
-
-void UAS::requestImage()
-{
-    if (!_vehicle) {
-        return;
-    }
-
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-
-    qDebug() << "trying to get an image from the uas...";
-
-    // check if there is already an image transmission going on
-    if (!weakLink.expired() && imagePacketsArrived == 0) {
-        mavlink_message_t       msg;
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
-
-        mavlink_msg_data_transmission_handshake_pack_chan(mavlink->getSystemId(),
-                                                          mavlink->getComponentId(),
-                                                          sharedLink->mavlinkChannel(),
-                                                          &msg,
-                                                          MAVLINK_DATA_STREAM_IMG_JPEG,
-                                                          0, 0, 0, 0, 0, 50);
-        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
-    }
-}
-
 
 /* MANAGEMENT */
 
