@@ -43,9 +43,8 @@ add_library(comm
 )
 
 target_link_libraries(comm
-	PRIVATE
-		qgc
 	PUBLIC
+		qgc
 		Qt5::Location
 		Qt5::SerialPort
 		Qt5::Test
