@@ -1057,7 +1057,31 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
 {
     int                         seqNum      = _sequenceNumber;
     BuildMissionItemsState_t    buildState  = _buildMissionItemsState();
-    MAV_FRAME                   mavFrame    = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    MAV_FRAME                   mavFrame    ;
+
+    /*
+     * simorghshoa co
+     * @author : Simorghsoha co
+     * @date : 2021/5/22
+     * @description : ba en taghir enjad shode mitavan ba entekhab frame az menu mission
+     * item frame mission ro dar halat survy taghir dad
+     * @param1 : globalAltitudeMode -> enum
+     * @param2 : _cameraCalc.distanceToSurface() -> tik Relative
+     * */
+
+     if(_missionController->globalAltitudeMode() == 4 && _cameraCalc.distanceToSurface()) {
+
+     mavFrame  =  MAV_FRAME_GLOBAL_TERRAIN_ALT; }
+
+     else if(_missionController->globalAltitudeMode() == 1 && _cameraCalc.distanceToSurface()) {
+
+     mavFrame  =  MAV_FRAME_GLOBAL_RELATIVE_ALT; }
+
+     else {
+
+     mavFrame  =  MAV_FRAME_GLOBAL;
+
+     }
 
     qCDebug(TransectStyleComplexItemLog) << "_buildAndAppendMissionItems";
 
