@@ -185,7 +185,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
     _uas->setParent(this);
 
-    connect(_uas, &UAS::imageReady,                     this, &Vehicle::_imageReady);
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _commonInit();
@@ -372,6 +371,7 @@ void Vehicle::_commonInit()
     _componentInformationManager    = new ComponentInformationManager   (this);
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
     _ftpManager                     = new FTPManager                    (this);
+    _imageProtocolManager           = new ImageProtocolManager          ();
     _vehicleLinkManager             = new VehicleLinkManager            (this);
 
     _parameterManager = new ParameterManager(this);
@@ -394,6 +394,8 @@ void Vehicle::_commonInit()
 
     // Flight modes can differ based on advanced mode
     connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
+
+    connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
 
     // Build FactGroup object model
 
@@ -638,6 +640,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
     _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
+    _imageProtocolManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);
 
@@ -2253,15 +2256,12 @@ void Vehicle::_sendQGCTimeToVehicle()
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
-void Vehicle::_imageReady(UASInterface*)
+void Vehicle::_imageProtocolImageReady(void)
 {
-    if(_uas)
-    {
-        QImage img = _uas->getImage();
-        _toolbox->imageProvider()->setImage(&img, _id);
-        _flowImageIndex++;
-        emit flowImageIndexChanged();
-    }
+    QImage img = _imageProtocolManager->getImage();
+    _toolbox->imageProvider()->setImage(&img, _id);
+    _flowImageIndex++;
+    emit flowImageIndexChanged();
 }
 
 void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
