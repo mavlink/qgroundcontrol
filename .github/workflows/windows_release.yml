@@ -49,7 +49,7 @@ jobs:
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
 
       - name: Create build directory
-        run:  mkdir ${{ runner.temp }}\\shadow_build_dir
+        run:  mkdir ${{ runner.temp }}\shadow_build_dir
 
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
