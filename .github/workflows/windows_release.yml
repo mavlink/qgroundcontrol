@@ -40,6 +40,8 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
+            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             aws s3 cp s3://qgroundcontrol/dependencies/gstreamer-1.0-msvc-x86_64-1.18.1.msi ${{ runner.temp }}\gstreamer.msi --region us-west-2
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer.msi /passive ADDLOCAL=ALL
 
