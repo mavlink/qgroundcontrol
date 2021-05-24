@@ -51,6 +51,11 @@ jobs:
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}\shadow_build_dir
 
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
+
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run:  |
