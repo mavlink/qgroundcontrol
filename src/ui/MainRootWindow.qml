@@ -167,18 +167,26 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
-    function showMessageDialog(title, text) {
-        var dialog = simpleMessageDialog.createObject(mainWindow, { title: title, text: text })
-        dialog.open()
+    function showMessageDialog(dialogTitle, dialogText) {
+        showPopupDialogFromComponent(simpleMessageDialog, { title: dialogTitle, text: dialogText })
     }
 
     Component {
         id: simpleMessageDialog
 
-        MessageDialog {
-            standardButtons:    StandardButton.Ok
-            modality:           Qt.ApplicationModal
-            visible:            false
+        QGCPopupDialog {
+            title:      dialogProperties.title
+            buttons:    StandardButton.Ok
+
+            ColumnLayout {
+                QGCLabel {
+                    id:                     textLabel
+                    wrapMode:               Text.WordWrap
+                    text:                   dialogProperties.text
+                    Layout.fillWidth:       true
+                    Layout.maximumWidth:    mainWindow.width / 2
+                }
+            }
         }
     }
 
