@@ -16,6 +16,7 @@ env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.12.6
   ARTIFACT:     QGroundControl.AppImage
+  CCACHE_NAME:  Linux
 
 jobs:
   build:
@@ -59,8 +60,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path:         ~/.ccache
-          key:          ${{ jobs.build.runs-on }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{ jobs.build.runs-on }}-ccache-
+          key:          ${CCACHE_NAME}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${CCACHE_NAME}-ccache-
 
       - name: Setup ccache
         run: |
