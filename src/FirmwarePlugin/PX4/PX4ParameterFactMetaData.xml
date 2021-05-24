@@ -10420,7 +10420,7 @@
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_DYN_NF" default="0" type="INT32">
+    <parameter name="IMU_GYRO_DYN_NF" default="0" type="INT32" category="Developer">
       <short_desc>IMU gyro dynamic notch filtering</short_desc>
       <long_desc>Enable bank of dynamically updating notch filters. Requires ESC RPM feedback or onboard FFT (IMU_GYRO_FFT_EN).</long_desc>
       <min>0</min>
