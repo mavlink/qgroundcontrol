@@ -1,4 +1,4 @@
-name: Compile, Test and Release
+name: MacOS Release
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
         uses: jurplel/install-qt-action@v2
         with:
           version:      ${QT_VERSION}
-          host:         linux
+          host:         mac
           target:       desktop
           dir:          ${{ runner.temp }}
           modules:      qtcharts
