@@ -88,8 +88,8 @@ jobs:
       - name: Save artifact
         uses: actions/upload-artifact@master
         with:
-          name: ${ARTIFACT}
-          path: ${{ runner.temp }}/shadow_build_dir/package/${ARTIFACT}
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
 
       # Currently disabled since credentials are not working correctly
       - name: Upload to S3 Bucket
