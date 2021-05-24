@@ -1647,16 +1647,7 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
             break;
         }
 
-        uint8_t             nullVersion[8]  = { 0 };
-        uint8_t             nullUID2[18]    = { 0 };
-        mavlink_message_t   responseMsg;
-        mavlink_msg_autopilot_version_pack_chan(_vehicleSystemId,
-                                                _vehicleComponentId,
-                                                mavlinkChannel(),
-                                                &responseMsg,
-                                                MAV_PROTOCOL_CAPABILITY_MISSION_INT | MAV_PROTOCOL_CAPABILITY_COMMAND_INT | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MAVLINK2,
-                                                0, 0, 0, 0, nullVersion, nullVersion, nullVersion, 0, 0, 0, nullUID2);
-        respondWithMavlinkMessage(responseMsg);
+        _respondWithAutopilotVersion();
     }
         return true;
 
