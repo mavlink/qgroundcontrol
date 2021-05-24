@@ -38,11 +38,9 @@ jobs:
           setup-python: false
 
       - name: Install QGC source dependencies
-        if:   ${{ matrix.config.os == 'ubuntu-latest' }}
         run:  sudo apt-get install -y libsdl2-dev
 
       - name: Install Gstreamer
-        if:   ${{ matrix.config.os == 'ubuntu-latest' }}
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
       - name: Install ccache
