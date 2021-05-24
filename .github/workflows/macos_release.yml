@@ -31,7 +31,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
         with:
-          version:      ${{ env.QT_VERSION }
+          version:      ${{ env.QT_VERSION }}
           host:         mac
           target:       desktop
           dir:          ${{ runner.temp }}
