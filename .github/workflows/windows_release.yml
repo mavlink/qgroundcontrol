@@ -47,7 +47,7 @@ jobs:
       - name: Unzip JOM
         working-directory: ${{ runner.temp }}
         run:  |
-              7z x jom.zip
+              7z x jom.zip -ojom
 
       - name: Download Gstreamer
         uses: suisei-cn/actions-download-file@v1
