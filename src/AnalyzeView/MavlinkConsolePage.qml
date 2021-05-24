@@ -22,10 +22,10 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
 AnalyzePage {
-    id:              mavlinkConsolePage
-    pageComponent:   pageComponent
-    pageName:        qsTr("Mavlink Console")
-    pageDescription: qsTr("Mavlink Console provides a connection to the vehicle's system shell.")
+    id:                 mavlinkConsolePage
+    pageComponent:      pageComponent
+    pageDescription:    qsTr("Provides a connection to the vehicle's system shell.")
+    allowPopout:        true
 
     property bool isLoaded: false
 

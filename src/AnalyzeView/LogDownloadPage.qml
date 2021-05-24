@@ -21,7 +21,6 @@ import QGroundControl.ScreenTools   1.0
 AnalyzePage {
     id:                 logDownloadPage
     pageComponent:      pageComponent
-    pageName:           qsTr("Log Download")
     pageDescription:    qsTr("Log Download allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
 
     property real _margin:          ScreenTools.defaultFontPixelWidth
