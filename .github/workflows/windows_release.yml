@@ -1,0 +1,68 @@
+name: Windows Release
+
+on:
+  push:
+    branches:
+    - 'master'
+  pull_request:
+    branches:
+    - '*'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.12.6
+  ARTIFACT:     QGroundControl-installer.exe
+
+jobs:
+  build:
+    runs-on:  windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win64_msvc2017_64
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts
+          setup-python: false
+
+      - name: Install Gstreamer
+        run:  |
+            aws s3 cp s3://qgroundcontrol/dependencies/gstreamer-1.0-msvc-x86_64-1.18.1.msi ${{ runner.temp }}\gstreamer.msi
+            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer.msi /passive ADDLOCAL=ALL
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}\\shadow_build_dir
+
+      - name: Build
+        working-directory: ${{ runner.temp }}\shadow_build_dir
+        run:  |
+              qmake -r ${SOURCE_DIR}\qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
+              make -j2
+
+      - name: Save artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: ${ARTIFACT}
+          path: ${{ runner.temp }}\shadow_build_dir\staging\${ARTIFACT}
+
+      # Currently disabled since credentials are not working correctly
+      - name: Upload to S3 Bucket
+        if:                 ${{ false }}
+        working-directory:  ${{ runner.temp }}\shadow_build_dir\staging
+        run: |
+              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws s3 cp ${ARTIFACT} s3://groundcontrol/master --region us-west-2 --acl public-read
