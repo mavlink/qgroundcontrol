@@ -60,7 +60,7 @@ jobs:
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run:  |
               qmake -r ${{ env.SOURCE_DIR }}\qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
-              make -j2
+              jom -j2
 
       - name: Save artifact
         uses: actions/upload-artifact@master
