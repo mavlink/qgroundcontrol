@@ -44,6 +44,17 @@ jobs:
           url:    https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi
           target: ${{ runner.temp }}\
 
+      - name: Download JOM
+        uses: suisei-cn/actions-download-file@v1
+        with:
+          url:    http://download.qt.io/official_releases/jom/jom.zip
+          target: ${{ runner.temp }}\
+
+      - name: Unzip JOM
+        working-directory: ${{ runner.temp }}\shadow_build_dir
+        run:  |
+              7z x jom.zip
+
       - name: Install Gstreamer
         run:  |
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
@@ -60,7 +71,7 @@ jobs:
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run:  |
               qmake -r ${{ env.SOURCE_DIR }}\qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
-              ${{ runner.temp }}\Qt\Tools\QtCreator\bin\jom -j2
+              ${{ runner.temp }}\jom\jom -j2
 
       - name: Save artifact
         uses: actions/upload-artifact@master
