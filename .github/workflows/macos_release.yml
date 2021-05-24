@@ -16,7 +16,6 @@ env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.12.6
   ARTIFACT:     QGroundControl.dmg
-  CCACHE_NAME:  MacOS
 
 jobs:
   build:
@@ -38,12 +37,12 @@ jobs:
           modules:      qtcharts
           setup-python: false
 
-      - name: Install Gstreamer for OSX
+      - name: Install Gstreamer
         run:  |
             wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2 &&
             sudo tar zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
 
-      - name: Install ccache OSX
+      - name: Install ccache
         run:  brew install ccache
 
       - name: Prepare ccache timestamp
@@ -57,8 +56,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path:         ~/.ccache
-          key:          ${CCACHE_NAME}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${CCACHE_NAME}-ccache-
+          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${{ runner.os }}-ccache-
 
       - name: Setup ccache
         run: |

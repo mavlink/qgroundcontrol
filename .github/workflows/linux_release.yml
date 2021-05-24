@@ -16,7 +16,6 @@ env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.12.6
   ARTIFACT:     QGroundControl.AppImage
-  CCACHE_NAME:  Linux
 
 jobs:
   build:
@@ -38,15 +37,15 @@ jobs:
           modules:      qtcharts
           setup-python: false
 
-      - name: Install QGC source dependencies for Linux
+      - name: Install QGC source dependencies
         if:   ${{ matrix.config.os == 'ubuntu-latest' }}
         run:  sudo apt-get install -y libsdl2-dev
 
-      - name: Install Gstreamer for Linux
+      - name: Install Gstreamer
         if:   ${{ matrix.config.os == 'ubuntu-latest' }}
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
-      - name: Install ccache Linux
+      - name: Install ccache
         run:  sudo apt-get install ccache
 
       - name: Prepare ccache timestamp
@@ -60,8 +59,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path:         ~/.ccache
-          key:          ${CCACHE_NAME}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${CCACHE_NAME}-ccache-
+          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${{ runner.os }}-ccache-
 
       - name: Setup ccache
         run: |
