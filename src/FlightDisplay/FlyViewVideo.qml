@@ -12,6 +12,7 @@ import QtQuick 2.12
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.ScreenTools   1.0
 
 Item {
     id:         _root
@@ -63,9 +64,18 @@ Item {
         source:         visible ? (QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml") : ""
     }
 
+    QGCLabel {
+        text: qsTr("Double-click to exit full screen")
+        font.pointSize: ScreenTools.largeFontPointSize
+        visible: QGroundControl.videoManager.fullScreen && flyViewVideoMouseArea.containsMouse
+        anchors.centerIn: parent
+    }
+
     MouseArea {
+        id: flyViewVideoMouseArea
         anchors.fill:       parent
         enabled:            pipState.state === pipState.fullState
+        hoverEnabled: true
         onDoubleClicked:    QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
     }
 
