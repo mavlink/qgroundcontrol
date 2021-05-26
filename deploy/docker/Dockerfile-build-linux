@@ -69,5 +69,4 @@ RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 100
 USER user
 
 WORKDIR /project/build
-CMD git --git-dir=/project/source/.git submodule update --init --recursive \
-	&& qmake /project/source && make -j$(nproc)
+CMD qmake /project/source && make -j$(nproc)
