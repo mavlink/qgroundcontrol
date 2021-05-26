@@ -18,7 +18,7 @@
 
 CONFIG -= debug_and_release
 CONFIG += warn_on
-CONFIG += c++14
+CONFIG += c++17
     
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
