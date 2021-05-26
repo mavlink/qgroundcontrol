@@ -49,11 +49,12 @@ public:
     ~QGroundControlQmlGlobal();
 
     enum AltitudeMode {
-        AltitudeModeNone,           // Being used as distance value unrelated to ground (for example distance to structure)
-        AltitudeModeRelative,       // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        AltitudeModeAbsolute,       // MAV_FRAME_GLOBAL
-        AltitudeModeAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
-        AltitudeModeTerrainFrame    // MAV_FRAME_GLOBAL_TERRAIN_ALT
+        AltitudeModeMixed,              // Used by global altitude mode for mission planning
+        AltitudeModeRelative,           // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        AltitudeModeAbsolute,           // MAV_FRAME_GLOBAL
+        AltitudeModeCalcAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
+        AltitudeModeTerrainFrame,       // MAV_FRAME_GLOBAL_TERRAIN_ALT
+        AltitudeModeNone,               // Being used as distance value unrelated to ground (for example distance to structure)
     };
     Q_ENUM(AltitudeMode)
 
