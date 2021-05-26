@@ -112,8 +112,9 @@ SOURCES += \
 	libs/libevents/libevents/libs/cpp/protocol/receive.cpp \
 	libs/libevents/libevents/libs/cpp/parse/parser.cpp \
 	libs/libevents/definitions.cpp
-INCLUDEPATH += libs/libevents
-
+INCLUDEPATH += \
+        libs/libevents \
+        libs/libevents/libs/cpp/parse
 #
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib
