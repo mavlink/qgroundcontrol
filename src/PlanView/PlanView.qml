@@ -118,7 +118,7 @@ Item {
         target: _appSettings ? _appSettings.defaultMissionItemAltitude : null
         onRawValueChanged: {
             if (_visualItems.count > 1) {
-                mainWindow.showComponentDialog(applyNewAltitude, qsTr("Apply new alititude"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                mainWindow.showComponentDialog(applyNewAltitude, qsTr("Apply new altitude"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
             }
         }
     }
