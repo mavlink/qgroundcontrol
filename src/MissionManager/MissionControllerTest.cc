@@ -264,10 +264,10 @@ void MissionControllerTest::_testGlobalAltMode(void)
         QGroundControlQmlGlobal::AltitudeMode   altMode;
         MAV_FRAME                               expectedMavFrame;
     } altModeTestCases[] = {
-        { QGroundControlQmlGlobal::AltitudeModeRelative,        MAV_FRAME_GLOBAL_RELATIVE_ALT },
-        { QGroundControlQmlGlobal::AltitudeModeAbsolute,        MAV_FRAME_GLOBAL },
-        { QGroundControlQmlGlobal::AltitudeModeAboveTerrain,    MAV_FRAME_GLOBAL },
-        { QGroundControlQmlGlobal::AltitudeModeTerrainFrame,    MAV_FRAME_GLOBAL_TERRAIN_ALT },
+        { QGroundControlQmlGlobal::AltitudeModeRelative,            MAV_FRAME_GLOBAL_RELATIVE_ALT },
+        { QGroundControlQmlGlobal::AltitudeModeAbsolute,            MAV_FRAME_GLOBAL },
+        { QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain,    MAV_FRAME_GLOBAL },
+        { QGroundControlQmlGlobal::AltitudeModeTerrainFrame,        MAV_FRAME_GLOBAL_TERRAIN_ALT },
     };
 
     for (const _globalAltMode_s& testCase: altModeTestCases) {

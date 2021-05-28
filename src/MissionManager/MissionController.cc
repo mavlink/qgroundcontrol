@@ -325,7 +325,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
 
             if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
                 newItem->altitude()->setRawValue(prevAltitude);
-                if (globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeNone) {
+                if (globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeMixed) {
                     // We are in mixed altitude modes, so copy from previous. Otherwise alt mode will be set from global setting.
                     newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
                 }
@@ -618,7 +618,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
         return false;
     }
 
-    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeNone);   // Mixed mode
+    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeMixed);
 
     // Read complex items
     QList<SurveyComplexItem*> surveyItems;
@@ -723,7 +723,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
         return false;
     }
 
-    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeNone);   // Mixed mode
+    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeMixed);
 
     qCDebug(MissionControllerLog) << "MissionController::_loadJsonMissionFileV2 itemCount:" << json[_jsonItemsKey].toArray().count();
 
@@ -1057,7 +1057,7 @@ bool MissionController::loadTextFile(QFile& file, QString& errorString)
     QByteArray  bytes = file.readAll();
     QTextStream stream(bytes);
 
-    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeNone);   // Mixed mode
+    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeMixed);
 
     QmlObjectListModel* loadedVisualItems = new QmlObjectListModel(this);
     if (!_loadTextMissionFile(stream, loadedVisualItems, errorStr)) {
@@ -2647,7 +2647,7 @@ QGroundControlQmlGlobal::AltitudeMode MissionController::globalAltitudeMode(void
 
 QGroundControlQmlGlobal::AltitudeMode MissionController::globalAltitudeModeDefault(void)
 {
-    if (_globalAltMode == QGroundControlQmlGlobal::AltitudeModeNone) {
+    if (_globalAltMode == QGroundControlQmlGlobal::AltitudeModeMixed) {
         return QGroundControlQmlGlobal::AltitudeModeRelative;
     } else {
         return _globalAltMode;
