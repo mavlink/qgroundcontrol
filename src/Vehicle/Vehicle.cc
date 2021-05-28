@@ -3888,8 +3888,8 @@ void Vehicle::sendParamMapRC(const QString& paramName, double scale, double cent
                                        param_id_cstr,
                                        -1,                                                  // parameter name specified as string in previous argument
                                        static_cast<uint8_t>(tuningID),
-                                       static_cast<float>(scale),
                                        static_cast<float>(centerValue),
+                                       static_cast<float>(scale),
                                        static_cast<float>(minValue),
                                        static_cast<float>(maxValue));
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
