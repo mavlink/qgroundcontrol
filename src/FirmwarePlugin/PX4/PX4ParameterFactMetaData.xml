@@ -4996,7 +4996,7 @@
       <short_desc>Mount input mode</short_desc>
       <long_desc>RC uses the AUX input channels (see MNT_MAN_* parameters), MAVLINK_ROI uses the MAV_CMD_DO_SET_ROI Mavlink message, and MAVLINK_DO_MOUNT the MAV_CMD_DO_MOUNT_CONFIGURE and MAV_CMD_DO_MOUNT_CONTROL messages to control a mount.</long_desc>
       <min>-1</min>
-      <max>3</max>
+      <max>4</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">DISABLED</value>
