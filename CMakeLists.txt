@@ -154,6 +154,8 @@ include(CompileOptions)
 include_directories(
 	libs/eigen
 
+	libs/libevents
+
 	libs/mavlink/include/mavlink/v2.0
 	libs/mavlink/include/mavlink/v2.0/ardupilotmega
 	libs/mavlink/include/mavlink/v2.0/common
