@@ -102,6 +102,20 @@ INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
+# [REQUIRED] Events submodule
+HEADERS+= \
+	libs/libevents/libevents/libs/cpp/protocol/receive.h \
+	libs/libevents/libevents/libs/cpp/parse/parser.h \
+	libs/libevents/libevents/libs/cpp/generated/events_generated.h \
+	libs/libevents/libevents_definitions.h
+SOURCES += \
+	libs/libevents/libevents/libs/cpp/protocol/receive.cpp \
+	libs/libevents/libevents/libs/cpp/parse/parser.cpp \
+	libs/libevents/definitions.cpp
+INCLUDEPATH += \
+        libs/libevents \
+        libs/libevents/libs/cpp/parse
+#
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib
 SOURCES += \

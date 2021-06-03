@@ -64,9 +64,9 @@ RUN /tmp/qt/install-qt-linux.sh
 # Reconfigure locale
 RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 
-# create user with id 1001 (jenkins docker workflow default)
-RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
+# create user with id 1000 to not run commands/generate files as root
+RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 1000
+USER user
 
 WORKDIR /project/build
-CMD git --git-dir=/project/source/.git submodule update --init --recursive \
-	&& qmake /project/source && make -j$(nproc)
+CMD qmake /project/source && make -j$(nproc)

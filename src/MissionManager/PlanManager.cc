@@ -358,32 +358,20 @@ void PlanManager::_requestNextMissionItem(void)
         SharedLinkInterfacePtr  sharedLink = weakLink.lock();
         mavlink_message_t       message;
 
-        if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
-            mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                                      sharedLink->mavlinkChannel(),
-                                                      &message,
-                                                      _vehicle->id(),
-                                                      MAV_COMP_ID_AUTOPILOT1,
-                                                      _itemIndicesToRead[0],
-                    _planType);
-        } else {
-            mavlink_msg_mission_request_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+        mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                   sharedLink->mavlinkChannel(),
                                                   &message,
                                                   _vehicle->id(),
                                                   MAV_COMP_ID_AUTOPILOT1,
                                                   _itemIndicesToRead[0],
-                    _planType);
-        }
-
+                                                  _planType);
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
     _startAckTimeout(AckMissionItem);
 }
 
-void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool missionItemInt)
+void PlanManager::_handleMissionItem(const mavlink_message_t& message)
 {
     MAV_CMD     command;
     MAV_FRAME   frame;
@@ -398,39 +386,21 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
     bool        isCurrentItem;
     int         seq;
 
-    if (missionItemInt) {
-        mavlink_mission_item_int_t missionItem;
-        mavlink_msg_mission_item_int_decode(&message, &missionItem);
+    mavlink_mission_item_int_t missionItem;
+    mavlink_msg_mission_item_int_decode(&message, &missionItem);
 
-        command =       (MAV_CMD)missionItem.command,
-        frame =         (MAV_FRAME)missionItem.frame,
-        param1 =        missionItem.param1;
-        param2 =        missionItem.param2;
-        param3 =        missionItem.param3;
-        param4 =        missionItem.param4;
-        param5 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.x : (double)missionItem.x * 1e-7;
-        param6 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.y : (double)missionItem.y * 1e-7;
-        param7 =        (double)missionItem.z;
-        autoContinue =  missionItem.autocontinue;
-        isCurrentItem = missionItem.current;
-        seq =           missionItem.seq;
-    } else {
-        mavlink_mission_item_t missionItem;
-        mavlink_msg_mission_item_decode(&message, &missionItem);
-
-        command =       (MAV_CMD)missionItem.command,
-        frame =         (MAV_FRAME)missionItem.frame,
-        param1 =        missionItem.param1;
-        param2 =        missionItem.param2;
-        param3 =        missionItem.param3;
-        param4 =        missionItem.param4;
-        param5 =        missionItem.x;
-        param6 =        missionItem.y;
-        param7 =        missionItem.z;
-        autoContinue =  missionItem.autocontinue;
-        isCurrentItem = missionItem.current;
-        seq =           missionItem.seq;
-    }
+    command =       (MAV_CMD)missionItem.command,
+            frame =         (MAV_FRAME)missionItem.frame,
+            param1 =        missionItem.param1;
+    param2 =        missionItem.param2;
+    param3 =        missionItem.param3;
+    param4 =        missionItem.param4;
+    param5 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.x : (double)missionItem.x * 1e-7;
+    param6 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.y : (double)missionItem.y * 1e-7;
+    param7 =        (double)missionItem.z;
+    autoContinue =  missionItem.autocontinue;
+    isCurrentItem = missionItem.current;
+    seq =           missionItem.seq;
 
     // We don't support editing ALT_INT frames so change on the way in.
     if (frame == MAV_FRAME_GLOBAL_INT) {
@@ -503,22 +473,15 @@ void PlanManager::_clearMissionItems(void)
     _clearAndDeleteMissionItems();
 }
 
-void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool missionItemInt)
+void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
 {
     MAV_MISSION_TYPE    missionRequestMissionType;
     uint16_t            missionRequestSeq;
 
-    if (missionItemInt) {
-        mavlink_mission_request_int_t missionRequest;
-        mavlink_msg_mission_request_int_decode(&message, &missionRequest);
-        missionRequestMissionType = static_cast<MAV_MISSION_TYPE>(missionRequest.mission_type);
-        missionRequestSeq = missionRequest.seq;
-    } else {
-        mavlink_mission_request_t missionRequest;
-        mavlink_msg_mission_request_decode(&message, &missionRequest);
-        missionRequestMissionType = static_cast<MAV_MISSION_TYPE>(missionRequest.mission_type);
-        missionRequestSeq = missionRequest.seq;
-    }
+    mavlink_mission_request_int_t missionRequest;
+    mavlink_msg_mission_request_int_decode(&message, &missionRequest);
+    missionRequestMissionType = static_cast<MAV_MISSION_TYPE>(missionRequest.mission_type);
+    missionRequestSeq = missionRequest.seq;
 
     if (missionRequestMissionType != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
@@ -553,33 +516,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
 
     WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
     if (!weakLink.expired()) {
-        bool                    forceMissionItemInt = (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) && _vehicle->apmFirmware(); // ArduPilot always expects to get MISSION_ITEM_INT if possible
         mavlink_message_t       messageOut;
         SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-
-        if (missionItemInt || forceMissionItemInt) {
-            mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                                   sharedLink->mavlinkChannel(),
-                                                   &messageOut,
-                                                   _vehicle->id(),
-                                                   MAV_COMP_ID_AUTOPILOT1,
-                                                   missionRequestSeq,
-                                                   item->frame(),
-                                                   item->command(),
-                                                   missionRequestSeq == 0,
-                                                   item->autoContinue(),
-                                                   item->param1(),
-                                                   item->param2(),
-                                                   item->param3(),
-                                                   item->param4(),
-                                                   item->frame() == MAV_FRAME_MISSION ? item->param5() : item->param5() * 1e7,
-                                                   item->frame() == MAV_FRAME_MISSION ? item->param6() : item->param6() * 1e7,
-                                                   item->param7(),
-                                                   _planType);
-        } else {
-            mavlink_msg_mission_item_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+        mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                sharedLink->mavlinkChannel(),
                                                &messageOut,
@@ -594,12 +534,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                                item->param2(),
                                                item->param3(),
                                                item->param4(),
-                                               item->param5(),
-                                               item->param6(),
+                                               item->frame() == MAV_FRAME_MISSION ? item->param5() : item->param5() * 1e7,
+                                               item->frame() == MAV_FRAME_MISSION ? item->param6() : item->param6() * 1e7,
                                                item->param7(),
                                                _planType);
-        }
-
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
     }
     _startAckTimeout(AckMissionRequest);
@@ -700,20 +638,13 @@ void PlanManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         _handleMissionCount(message);
         break;
 
-    case MAVLINK_MSG_ID_MISSION_ITEM:
-        _handleMissionItem(message, false /* missionItemInt */);
-        break;
-
     case MAVLINK_MSG_ID_MISSION_ITEM_INT:
-        _handleMissionItem(message, true /* missionItemInt */);
+        _handleMissionItem(message);
         break;
 
     case MAVLINK_MSG_ID_MISSION_REQUEST:
-        _handleMissionRequest(message, false /* missionItemInt */);
-        break;
-
     case MAVLINK_MSG_ID_MISSION_REQUEST_INT:
-        _handleMissionRequest(message, true /* missionItemInt */);
+        _handleMissionRequest(message);
         break;
 
     case MAVLINK_MSG_ID_MISSION_ACK:

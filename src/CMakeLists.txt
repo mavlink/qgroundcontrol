@@ -168,14 +168,13 @@ add_subdirectory(VideoReceiver)
 target_link_libraries(qgc
 	PRIVATE
 		shp
-                Qt5::QuickControls2
-                z # zlib
+		Qt5::QuickControls2
 
 	PUBLIC
 		Qt5::QuickWidgets
 		Qt5::Widgets
 
-                ADSB
+		ADSB
 		Airmap
 		AnalyzeView
 		api
@@ -201,6 +200,7 @@ target_link_libraries(qgc
 		Vehicle
 		VehicleSetup
 		VideoManager
+		z # zlib
 )
 
 if(BUILD_TESTING)

@@ -13,3 +13,6 @@
 [submodule "libs/xz-embedded"]
 	path = libs/xz-embedded
 	url = https://github.com/Auterion/xz-embedded.git
+[submodule "libs/libevents/libevents"]
+	path = libs/libevents/libevents
+	url = https://github.com/mavlink/libevents.git

@@ -14,16 +14,10 @@ jobs:
     include:
         - stage: "Build"
           name: "Linux Installer"
+          if: branch = master
           os: linux
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
-          sudo: required
-        - stage: "Build"
-          name: "Linux Debug"
-          os: linux
-          dist: bionic
-          env: SPEC=linux-g++-64 CONFIG=debug
-          services: xvfb
           sudo: required
         - stage: "Build"
           name: "Android 32 bit"
@@ -39,6 +33,7 @@ jobs:
           sudo: false
         - stage: "Build"
           name: "OSX Installer"
+          if: branch = master
           os: osx
           osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
@@ -299,7 +294,6 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: false # Temporary disable for GitHub Actions testing
       condition: $CONFIG = installer
 
   # deploy installers to Github releases if on a tag
