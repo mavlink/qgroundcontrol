@@ -5799,56 +5799,56 @@
       <min>0.0</min>
       <unit>s/(1000*PWM)</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS1" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS1" default="-1" type="INT32">
       <short_desc>PWM aux 1 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS2" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS2" default="-1" type="INT32">
       <short_desc>PWM aux 2 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS3" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS3" default="-1" type="INT32">
       <short_desc>PWM aux 3 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS4" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS4" default="-1" type="INT32">
       <short_desc>PWM aux 4 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS5" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS5" default="-1" type="INT32">
       <short_desc>PWM aux 5 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS6" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS6" default="-1" type="INT32">
       <short_desc>PWM aux 6 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS7" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS7" default="-1" type="INT32">
       <short_desc>PWM aux 7 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS8" default="0" type="INT32">
+    <parameter name="PWM_AUX_DIS8" default="-1" type="INT32">
       <short_desc>PWM aux 8 disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
       <min>-1</min>
@@ -5862,59 +5862,59 @@
       <max>2200</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL1" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL1" default="-1" type="INT32">
       <short_desc>PWM aux 1 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL2" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL2" default="-1" type="INT32">
       <short_desc>PWM aux 2 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL3" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL3" default="-1" type="INT32">
       <short_desc>PWM aux 3 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL4" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL4" default="-1" type="INT32">
       <short_desc>PWM aux 4 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL5" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL5" default="-1" type="INT32">
       <short_desc>PWM aux 5 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL6" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL6" default="-1" type="INT32">
       <short_desc>PWM aux 6 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL7" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL7" default="-1" type="INT32">
       <short_desc>PWM aux 7 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_FAIL8" default="0" type="INT32">
+    <parameter name="PWM_AUX_FAIL8" default="-1" type="INT32">
       <short_desc>PWM aux 8 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
@@ -6598,101 +6598,101 @@
       <max>2200</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL1" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL1" default="-1" type="INT32">
       <short_desc>PWM main 1 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL10" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL10" default="-1" type="INT32">
       <short_desc>PWM main 10 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL11" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL11" default="-1" type="INT32">
       <short_desc>PWM main 11 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL12" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL12" default="-1" type="INT32">
       <short_desc>PWM main 12 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL13" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL13" default="-1" type="INT32">
       <short_desc>PWM main 13 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL14" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL14" default="-1" type="INT32">
       <short_desc>PWM main 14 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL2" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL2" default="-1" type="INT32">
       <short_desc>PWM main 2 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL3" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL3" default="-1" type="INT32">
       <short_desc>PWM main 3 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL4" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL4" default="-1" type="INT32">
       <short_desc>PWM main 4 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL5" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL5" default="-1" type="INT32">
       <short_desc>PWM main 5 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL6" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL6" default="-1" type="INT32">
       <short_desc>PWM main 6 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL7" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL7" default="-1" type="INT32">
       <short_desc>PWM main 7 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL8" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL8" default="-1" type="INT32">
       <short_desc>PWM main 8 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_MAIN_FAIL9" default="0" type="INT32">
+    <parameter name="PWM_MAIN_FAIL9" default="-1" type="INT32">
       <short_desc>PWM main 9 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
+      <min>-1</min>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
