@@ -5212,7 +5212,7 @@
     </parameter>
     <parameter name="MPC_ACC_HOR" default="3.0" type="FLOAT">
       <short_desc>Acceleration for auto and for manual</short_desc>
-      <long_desc>Note: In manual, this parameter is only used in MPC_POS_MODE 1.</long_desc>
+      <long_desc>Note: In manual, this parameter is only used in MPC_POS_MODE 4.</long_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s^2</unit>
@@ -5278,7 +5278,7 @@
     </parameter>
     <parameter name="MPC_JERK_MAX" default="8.0" type="FLOAT">
       <short_desc>Maximum jerk limit</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: This is only used when MPC_POS_MODE is set to a smoothing mode 1, 3 or 4.</long_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: This is only used when MPC_POS_MODE is set to a smoothing mode 3 or 4.</long_desc>
       <min>0.5</min>
       <max>500.0</max>
       <unit>m/s^3</unit>
@@ -12826,20 +12826,6 @@
     </parameter>
   </group>
   <group name="UAVCAN v1">
-    <parameter name="UAVCAN_V1_BAT_ID" default="4242" type="INT32">
-      <short_desc>UAVCAN v1 battery port ID</short_desc>
-      <min>1</min>
-      <max>32767</max>
-    </parameter>
-    <parameter name="UAVCAN_V1_BAT_MD" default="0" type="INT32">
-      <short_desc>UAVCAN v1 battery mode</short_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disable</value>
-        <value code="1">Receive BMSStatus</value>
-        <value code="2">Send BMSStatus</value>
-      </values>
-    </parameter>
     <parameter name="UAVCAN_V1_BAUD" default="1000000" type="INT32">
       <short_desc>UAVCAN/CAN v1 bus bitrate</short_desc>
       <min>20000</min>
@@ -12851,6 +12837,61 @@
       <short_desc>UAVCAN v1</short_desc>
       <long_desc>0 - UAVCAN disabled. 1 - Enables UAVCANv1</long_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UCAN1_BMS_BP_PID" default="-1" type="INT32">
+      <short_desc>DS-015 battery parameters port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_BMS_BS_PID" default="-1" type="INT32">
+      <short_desc>DS-015 battery status port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_BMS_ES_PID" default="-1" type="INT32">
+      <short_desc>DS-015 battery energy source port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_ESC0_PID" default="-1" type="INT32">
+      <short_desc>ESC0 port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_ESC_PUB" default="-1" type="INT32">
+      <short_desc>UAVCAN v1 ESC port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_GPS0_PID" default="-1" type="INT32">
+      <short_desc>GPS 0 port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_GPS1_PID" default="-1" type="INT32">
+      <short_desc>GPS 1 port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_GPS_PUB" default="-1" type="INT32">
+      <short_desc>UAVCAN v1 GPS port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_LG_BMS_PID" default="-1" type="INT32">
+      <short_desc>UAVCAN v1 leagcy battery port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_SERVO_PUB" default="-1" type="INT32">
+      <short_desc>UAVCAN v1 Servo port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_UORB_GPS" default="-1" type="INT32">
+      <short_desc>sensor_gps uORB over UAVCAN v1 port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
     </parameter>
   </group>
   <group name="UAVCANv1">
@@ -13283,39 +13324,6 @@
     </parameter>
     <parameter name="RV_YAW_P" default="0.1" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
-    </parameter>
-    <parameter name="UCAN1_BMS_BP_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS_BP_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_BMS_BS_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS_BS_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_BMS_ES_PID" default="0" type="INT32">
-      <short_desc>UCAN1_BMS_ES_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_ESC0_PID" default="0" type="INT32">
-      <short_desc>UCAN1_ESC0_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_ESC_PUB" default="0" type="INT32">
-      <short_desc>UCAN1_ESC_PUB</short_desc>
-    </parameter>
-    <parameter name="UCAN1_GPS0_PID" default="0" type="INT32">
-      <short_desc>UCAN1_GPS0_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_GPS1_PID" default="0" type="INT32">
-      <short_desc>UCAN1_GPS1_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_GPS_PUB" default="0" type="INT32">
-      <short_desc>UCAN1_GPS_PUB</short_desc>
-    </parameter>
-    <parameter name="UCAN1_LG_BMS_PID" default="0" type="INT32">
-      <short_desc>UCAN1_LG_BMS_PID</short_desc>
-    </parameter>
-    <parameter name="UCAN1_SERVO_PUB" default="0" type="INT32">
-      <short_desc>UCAN1_SERVO_PUB</short_desc>
-    </parameter>
-    <parameter name="UCAN1_UORB_GPS" default="0" type="INT32">
-      <short_desc>UCAN1_UORB_GPS</short_desc>
     </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
       <short_desc>Skip the controller</short_desc>
