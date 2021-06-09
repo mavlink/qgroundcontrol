@@ -10357,6 +10357,22 @@
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter name="BATMON_ADDR_DFLT" default="11" type="INT32">
+      <short_desc>I2C address for BatMon battery 1</short_desc>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="BATMON_DRIVER_EN" default="0" type="INT32">
+      <short_desc>Parameter to enable BatMon module</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Start on default I2C addr(BATMON_ADDR_DFLT)</value>
+        <value code="2">Autodetect I2C address (TODO)</value>
+      </values>
+    </parameter>
     <parameter name="BAT_C_MULT" default="1.0" type="FLOAT">
       <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
       <decimal>1</decimal>
