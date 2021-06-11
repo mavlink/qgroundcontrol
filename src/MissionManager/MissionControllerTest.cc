@@ -261,7 +261,7 @@ void MissionControllerTest::_testGlobalAltMode(void)
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
     struct  _globalAltMode_s {
-        QGroundControlQmlGlobal::AltitudeMode   altMode;
+        QGroundControlQmlGlobal::AltMode   altMode;
         MAV_FRAME                               expectedMavFrame;
     } altModeTestCases[] = {
         { QGroundControlQmlGlobal::AltitudeModeRelative,            MAV_FRAME_GLOBAL_RELATIVE_ALT },
