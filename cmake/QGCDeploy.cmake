@@ -39,6 +39,11 @@ elseif(WIN32)
 	include(Windeployqt)
 	windeployqt(QGroundControl "QGroundControl-installer.exe")
 
+	add_custom_command(TARGET QGroundControl POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E
+		copy_if_different $<TARGET_FILE:sdl2> $<TARGET_FILE_DIR:QGroundControl>
+	)
+
 elseif(ANDROID)
 	include(AddQtAndroidApk)
 	add_qt_android_apk(QGroundControl.apk QGroundControl
