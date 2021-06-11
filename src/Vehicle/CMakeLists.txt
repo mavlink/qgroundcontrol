@@ -36,6 +36,8 @@ add_library(Vehicle
 	GPSRTKFactGroup.h
 	HealthAndArmingChecks.cc
 	HealthAndArmingChecks.h
+	ImageProtocolManager.cc
+	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
 	InitialConnectStateMachine.h
 	MAVLinkLogManager.cc
