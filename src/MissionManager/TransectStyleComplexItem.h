@@ -42,7 +42,6 @@ public:
     Q_PROPERTY(bool             hoverAndCaptureAllowed      READ hoverAndCaptureAllowed                             CONSTANT)
     Q_PROPERTY(QVariantList     visualTransectPoints        READ visualTransectPoints                               NOTIFY visualTransectPointsChanged)
 
-    Q_PROPERTY(bool             followTerrain               READ followTerrain              WRITE setFollowTerrain  NOTIFY followTerrainChanged)
     Q_PROPERTY(Fact*            terrainAdjustTolerance      READ terrainAdjustTolerance                             CONSTANT)
     Q_PROPERTY(Fact*            terrainAdjustMaxDescentRate READ terrainAdjustMaxDescentRate                        CONSTANT)
     Q_PROPERTY(Fact*            terrainAdjustMaxClimbRate   READ terrainAdjustMaxClimbRate                          CONSTANT)
@@ -64,11 +63,8 @@ public:
     int             cameraShots             (void) const { return _cameraShots; }
     double          coveredArea             (void) const;
     bool            hoverAndCaptureAllowed  (void) const;
-    bool            followTerrain           (void) const { return _followTerrain; }
 
     virtual double  timeBetweenShots        (void) { return 0; } // Most be overridden. Implementation here is needed for unit testing.
-
-    void setFollowTerrain(bool followTerrain);
 
     double  triggerDistance         (void) const { return _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble(); }
     bool    hoverAndCaptureEnabled  (void) const { return hoverAndCapture()->rawValue().toBool(); }
@@ -128,7 +124,6 @@ signals:
     void timeBetweenShotsChanged        (void);
     void visualTransectPointsChanged    (void);
     void coveredAreaChanged             (void);
-    void followTerrainChanged           (bool followTerrain);
     void _updateFlightPathSegmentsSignal(void);
 
 protected slots:
@@ -188,7 +183,6 @@ protected:
     double          _timeBetweenShots = 0;
     double          _vehicleSpeed =     5;
     CameraCalc      _cameraCalc;
-    bool            _followTerrain =    false;
     double          _minAMSLAltitude =  qQNaN();
     double          _maxAMSLAltitude =  qQNaN();
 
@@ -209,7 +203,6 @@ protected:
     static const char* _jsonTransectStyleComplexItemKey;
     static const char* _jsonVisualTransectPointsKey;
     static const char* _jsonItemsKey;
-    static const char* _jsonTerrainFollowKey;
     static const char* _jsonTerrainFlightSpeed;
     static const char* _jsonCameraShotsKey;
 
@@ -218,10 +211,10 @@ protected:
 
 private slots:
     void _reallyQueryTransectsPathHeightInfo        (void);
-    void _followTerrainChanged                      (bool followTerrain);
     void _handleHoverAndCaptureEnabled              (QVariant enabled);
     void _updateFlightPathSegmentsDontCallDirectly  (void);
     void _segmentTerrainCollisionChanged            (bool terrainCollision) final;
+    void _distanceModeChanged                       (int distanceMode);
 
 private:
     typedef struct {
@@ -242,4 +235,7 @@ private:
 
     TerrainPolyPathQuery*       _currentTerrainFollowQuery =            nullptr;
     QTimer                      _terrainQueryTimer;
+
+    // Deprecated json keys
+    static const char* _jsonTerrainFollowKeyDeprecated;
 };

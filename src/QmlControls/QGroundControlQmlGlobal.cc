@@ -29,6 +29,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     setParent(nullptr);
+
     // Load last coordinates and zoom from config file
     QSettings settings;
     settings.beginGroup(_flightMapPositionSettingsGroup);
@@ -261,7 +262,7 @@ QString QGroundControlQmlGlobal::qgcVersion(void) const
     return versionStr;
 }
 
-QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltitudeMode altMode)
+QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltMode altMode)
 {
     switch (altMode) {
     case AltitudeModeNone:
@@ -284,7 +285,7 @@ QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltitudeMode altMode)
     return QString();
 }
 
-QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltitudeMode altMode)
+QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
 {
     switch (altMode) {
     case AltitudeModeNone:

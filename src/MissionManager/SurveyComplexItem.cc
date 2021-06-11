@@ -115,7 +115,7 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
 {
     QJsonObject saveObject;
 
-    _saveWorker(saveObject);
+    _saveCommon(saveObject);
     planItems.append(saveObject);
 }
 
@@ -123,11 +123,11 @@ void SurveyComplexItem::savePreset(const QString& name)
 {
     QJsonObject saveObject;
 
-    _saveWorker(saveObject);
+    _saveCommon(saveObject);
     _savePresetJson(name, saveObject);
 }
 
-void SurveyComplexItem::_saveWorker(QJsonObject& saveObject)
+void SurveyComplexItem::_saveCommon(QJsonObject& saveObject)
 {
     TransectStyleComplexItem::_save(saveObject);
 
@@ -292,7 +292,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraTriggerInTurnAroundFact.setRawValue  (complexObject[_jsonV3CameraTriggerInTurnaroundKey].toBool(true));
 
     _cameraCalc.valueSetIsDistance()->setRawValue   (complexObject[_jsonV3FixedValueIsAltitudeKey].toBool(true));
-    _cameraCalc.setDistanceToSurfaceRelative        (complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true));
+    _cameraCalc.setDistanceMode(complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true) ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute);
 
     bool manualGrid = complexObject[_jsonV3ManualGridKey].toBool(true);
 
@@ -301,7 +301,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
         { _jsonV3GridAltitudeRelativeKey,   QJsonValue::Bool,   true },
         { _jsonV3GridAngleKey,              QJsonValue::Double, true },
         { _jsonV3GridSpacingKey,            QJsonValue::Double, true },
-        { _jsonEntryPointKey,      QJsonValue::Double, false },
+        { _jsonEntryPointKey,               QJsonValue::Double, false },
         { _jsonV3TurnaroundDistKey,         QJsonValue::Double, true },
     };
     QJsonObject gridObject = complexObject[_jsonV3GridObjectKey].toObject();
