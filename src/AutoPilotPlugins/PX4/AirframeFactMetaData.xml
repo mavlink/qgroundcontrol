@@ -758,7 +758,7 @@
       <class>Rover</class>
       <maintainer>Timothy Scott</maintainer>
       <type>Rover</type>
-      <url>http://docs.aionrobotics.com/en/latest/r1-ugv.html</url>
+      <url>https://www.aionrobotics.com/r1</url>
       <output name="MAIN0">Speed of left wheels</output>
       <output name="MAIN1">Speed of right wheels</output>
     </airframe>
