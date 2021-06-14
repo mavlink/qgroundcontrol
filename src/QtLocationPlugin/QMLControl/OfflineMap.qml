@@ -40,6 +40,7 @@ Item {
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
     property Fact   _esriFact:          _settingsManager ? _settingsManager.appSettings.esriToken : null
     property Fact   _customURLFact:     _settingsManager ? _settingsManager.appSettings.customURL : null
+    property Fact   _vworldFact:        _settingsManager ? _settingsManager.appSettings.vworldToken : null
 
     property string mapType:            _fmSettings ? (_fmSettings.mapProvider.value + " " + _fmSettings.mapType.value) : ""
     property bool   isMapInteractive:   false
@@ -367,6 +368,23 @@ Item {
                         wrapMode:       Text.WordWrap
                         text:           qsTr("To enable Esri maps, enter your access token.")
                         visible:        _esriFact ? _esriFact.visible : false
+                        font.pointSize: _adjustableFontPointSize
+                    }
+
+                    Item { width: 1; height: 1; visible: _vworldFact ? _vworldFact.visible : false }
+                    QGCLabel { text: qsTr("VWorld Access Token"); visible: _vworldFact ? _vworldFact.visible : false }
+                    FactTextField {
+                        fact:               _vworldFact
+                        visible:            _vworldFact ? _vworldFact.visible : false
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
+                    }
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("To enable VWorld maps, enter your access token.")
+                        visible:        _vworldFact ? _vworldFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
 
