@@ -138,7 +138,7 @@ class VWorldSatMapProvider : public MapProvider {
     Q_OBJECT
   public:
     VWorldSatMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("www.vworld.kr"), QStringLiteral("jpg"),
+        : MapProvider(QStringLiteral("www.vworld.kr"), QStringLiteral("jpeg"),
                       AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
