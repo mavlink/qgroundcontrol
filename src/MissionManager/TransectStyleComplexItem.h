@@ -131,6 +131,7 @@ protected slots:
     void _setIfDirty                        (bool dirty);
     void _updateCoordinateAltitudes         (void);
     void _polyPathTerrainData               (bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
+    void _missionItemCoordTerrainData       (bool success, QList<double> heights);
     void _rebuildTransects                  (void);
 
 protected:
@@ -172,10 +173,12 @@ protected:
         CoordType       coordType;
     } CoordInfo_t;
 
-    QVariantList                                _visualTransectPoints;  ///< Used to draw the flight path visuals on the screen
+    QVariantList                                _visualTransectPoints;                          ///< Used to draw the flight path visuals on the screen
     QList<QList<CoordInfo_t>>                   _transects;
-    QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;      ///< Path height for each segment includes turn segments
-    QList<CoordInfo_t>                          _rgFlightPathCoordInfo; ///< Fully calculated flight path (including terrain if needed)
+    QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;                              ///< Path height for each segment includes turn segments
+    QList<QGeoCoordinate>                       _rgFlyThroughMissionItemCoords;
+    QList<double>                               _rgFlyThroughMissionItemCoordsTerrainHeights;
+    QList<CoordInfo_t>                          _rgFlightPathCoordInfo;                         ///< Fully calculated flight path (including terrain if needed)
 
     bool            _ignoreRecalc =     false;
     double          _complexDistance =  qQNaN();
@@ -224,17 +227,22 @@ private:
         bool useConditionGate;
     } BuildMissionItemsState_t;
 
-    void    _queryTransectsPathHeightInfo   (void);
-    void    _adjustTransectsForTerrain      (void);
-    bool    _buildRawFlightPath             (void);
-    void    _adjustForMaxRates              (void);
-    void    _adjustForTolerance             (void);
-    double  _altitudeBetweenCoords          (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
-    int     _maxPathHeight                  (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
-    BuildMissionItemsState_t _buildMissionItemsState(void) const;
+    void    _queryTransectsPathHeightInfo                                   (void);
+    void    _queryMissionItemCoordHeights                                   (void);
+    void    _adjustForAvailableTerrainData                                  (void);
+    void    _buildFlightPathCoordInfoFromTransects                          (void);
+    void    _buildFlightPathCoordInfoFromPathHeightInfoForCalcAboveTerrain  (void);
+    void    _buildFlightPathCoordInfoFromPathHeightInfoForTerrainFrame      (void);
+    void    _buildFlightPathCoordInfoFromMissionItems                       (void);
+    void    _adjustForMaxRates                                              (void);
+    void    _adjustForTolerance                                             (void);
+    double  _altitudeBetweenCoords                                          (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
+    int     _maxPathHeight                                                  (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
+    BuildMissionItemsState_t _buildMissionItemsState                        (void) const;
 
-    TerrainPolyPathQuery*       _currentTerrainFollowQuery =            nullptr;
-    QTimer                      _terrainQueryTimer;
+    TerrainPolyPathQuery*       _currentTerrainPolyPathQuery        = nullptr;
+    TerrainAtCoordinateQuery*   _currentTerrainAtCoordinateQuery    = nullptr;
+    QTimer                      _terrainPolyPathQueryTimer;
 
     // Deprecated json keys
     static const char* _jsonTerrainFollowKeyDeprecated;
