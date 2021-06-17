@@ -143,31 +143,34 @@ void FlightPathSegment::_updateTotalDistance(void)
 
 void FlightPathSegment::_updateTerrainCollision(void)
 {
-    double slope =      (_coord2AMSLAlt - _coord1AMSLAlt) / _totalDistance;
-    double yIntercept = _coord1AMSLAlt;
-
     bool newTerrainCollision = false;
-    double x = 0;
-    for (int i=0; i<_amslTerrainHeights.count(); i++) {
-        bool ignoreCollision = false;
-        if (_segmentType == SegmentTypeTakeoff && x < _collisionIgnoreMeters) {
-            ignoreCollision = true;
-        } else if (_segmentType == SegmentTypeLand && x > _totalDistance - _collisionIgnoreMeters) {
-            ignoreCollision = true;
-        }
 
-        if (!ignoreCollision) {
-            double y = _amslTerrainHeights[i].value<double>();
-            if (y > (slope * x) + yIntercept) {
-                newTerrainCollision = true;
-                break;
+    if (_segmentType != SegmentTypeTerrainFrame) {
+        double slope =      (_coord2AMSLAlt - _coord1AMSLAlt) / _totalDistance;
+        double yIntercept = _coord1AMSLAlt;
+
+        double x = 0;
+        for (int i=0; i<_amslTerrainHeights.count(); i++) {
+            bool ignoreCollision = false;
+            if (_segmentType == SegmentTypeTakeoff && x < _collisionIgnoreMeters) {
+                ignoreCollision = true;
+            } else if (_segmentType == SegmentTypeLand && x > _totalDistance - _collisionIgnoreMeters) {
+                ignoreCollision = true;
             }
-        }
 
-        if (i == _amslTerrainHeights.count() - 2) {
-            x += _finalDistanceBetween;
-        } else {
-            x += _distanceBetween;
+            if (!ignoreCollision) {
+                double y = _amslTerrainHeights[i].value<double>();
+                if (y > (slope * x) + yIntercept) {
+                    newTerrainCollision = true;
+                    break;
+                }
+            }
+
+            if (i == _amslTerrainHeights.count() - 2) {
+                x += _finalDistanceBetween;
+            } else {
+                x += _distanceBetween;
+            }
         }
     }
 

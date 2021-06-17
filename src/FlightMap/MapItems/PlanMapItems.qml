@@ -27,9 +27,9 @@ Item {
 
     property var    _map:                       map
     property var    _vehicle:                   vehicle
-    property var    _missionController:         masterController.missionController
-    property var    _geoFenceController:        masterController.geoFenceController
-    property var    _rallyPointController:      masterController.rallyPointController
+    property var    _missionController:         planMasterController.missionController
+    property var    _geoFenceController:        planMasterController.geoFenceController
+    property var    _rallyPointController:      planMasterController.rallyPointController
     property var    _guidedController:          globals.guidedControllerFlyView
     property var    _missionLineViewComponent
 

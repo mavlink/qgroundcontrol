@@ -934,6 +934,14 @@
       <decimal>0</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="TRIG_PINS_EX" default="0" type="INT32">
+      <short_desc>Camera trigger pin extended</short_desc>
+      <long_desc>This Bit mask selects which FMU pin is used (range: AUX9-AUX32) If the value is not 0 it takes precedence over TRIG_PINS. If bits above 8 are set that value is used as the selector for trigger pins. greater then 8. 0x00000300 Would be Pins 9,10. If the value is</long_desc>
+      <min>0</min>
+      <max>4294967040</max>
+      <decimal>0</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="TRIG_POLARITY" default="0" type="INT32">
       <short_desc>Camera trigger polarity</short_desc>
       <long_desc>This parameter sets the polarity of the trigger (0 = active low, 1 = active high )</long_desc>
@@ -4496,6 +4504,15 @@
     </parameter>
   </group>
   <group name="MAVLink">
+    <parameter name="MAV_0_BROADCAST" default="1" type="INT32">
+      <short_desc>Broadcast heartbeats on local network for MAVLink instance 0</short_desc>
+      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
+      <values>
+        <value code="0">Never broadcast</value>
+        <value code="1">Always broadcast</value>
+        <value code="2">Only multicast</value>
+      </values>
+    </parameter>
     <parameter name="MAV_0_CONFIG" default="101" type="INT32">
       <short_desc>Serial Configuration for MAVLink (instance 0)</short_desc>
       <long_desc>Configure on which serial port to run MAVLink.</long_desc>
@@ -4512,6 +4529,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="1000">Ethernet</value>
       </values>
     </parameter>
     <parameter name="MAV_0_FORWARD" default="1" type="INT32" boolean="true">
@@ -4548,6 +4566,25 @@
       <unit>B/s</unit>
       <reboot_required>True</reboot_required>
     </parameter>
+    <parameter name="MAV_0_REMOTE_PRT" default="14550" type="INT32">
+      <short_desc>MAVLink Remote Port for instance 0</short_desc>
+      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 0, selected remote port will be set and used in MAVLink instance 0.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="MAV_0_UDP_PRT" default="14556" type="INT32">
+      <short_desc>MAVLink Network Port for instance 0</short_desc>
+      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 0, selected udp port will be set and used in MAVLink instance 0.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="MAV_1_BROADCAST" default="0" type="INT32">
+      <short_desc>Broadcast heartbeats on local network for MAVLink instance 1</short_desc>
+      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
+      <values>
+        <value code="0">Never broadcast</value>
+        <value code="1">Always broadcast</value>
+        <value code="2">Only multicast</value>
+      </values>
+    </parameter>
     <parameter name="MAV_1_CONFIG" default="0" type="INT32">
       <short_desc>Serial Configuration for MAVLink (instance 1)</short_desc>
       <long_desc>Configure on which serial port to run MAVLink.</long_desc>
@@ -4564,6 +4601,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="1000">Ethernet</value>
       </values>
     </parameter>
     <parameter name="MAV_1_FORWARD" default="0" type="INT32" boolean="true">
@@ -4600,6 +4638,25 @@
       <unit>B/s</unit>
       <reboot_required>True</reboot_required>
     </parameter>
+    <parameter name="MAV_1_REMOTE_PRT" default="0" type="INT32">
+      <short_desc>MAVLink Remote Port for instance 1</short_desc>
+      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 1, selected remote port will be set and used in MAVLink instance 1.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="MAV_1_UDP_PRT" default="0" type="INT32">
+      <short_desc>MAVLink Network Port for instance 1</short_desc>
+      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 1, selected udp port will be set and used in MAVLink instance 1.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="MAV_2_BROADCAST" default="0" type="INT32">
+      <short_desc>Broadcast heartbeats on local network for MAVLink instance 2</short_desc>
+      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
+      <values>
+        <value code="0">Never broadcast</value>
+        <value code="1">Always broadcast</value>
+        <value code="2">Only multicast</value>
+      </values>
+    </parameter>
     <parameter name="MAV_2_CONFIG" default="0" type="INT32">
       <short_desc>Serial Configuration for MAVLink (instance 2)</short_desc>
       <long_desc>Configure on which serial port to run MAVLink.</long_desc>
@@ -4616,6 +4673,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="1000">Ethernet</value>
       </values>
     </parameter>
     <parameter name="MAV_2_FORWARD" default="0" type="INT32" boolean="true">
@@ -4650,6 +4708,16 @@
       <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
       <min>0</min>
       <unit>B/s</unit>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="MAV_2_REMOTE_PRT" default="0" type="INT32">
+      <short_desc>MAVLink Remote Port for instance 2</short_desc>
+      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 2, selected remote port will be set and used in MAVLink instance 2.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter name="MAV_2_UDP_PRT" default="0" type="INT32">
+      <short_desc>MAVLink Network Port for instance 2</short_desc>
+      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 2, selected udp port will be set and used in MAVLink instance 2.</long_desc>
       <reboot_required>True</reboot_required>
     </parameter>
     <parameter name="MAV_COMP_ID" default="1" type="INT32">
@@ -10357,6 +10425,22 @@
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter name="BATMON_ADDR_DFLT" default="11" type="INT32">
+      <short_desc>I2C address for BatMon battery 1</short_desc>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="BATMON_DRIVER_EN" default="0" type="INT32">
+      <short_desc>Parameter to enable BatMon module</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Start on default I2C addr(BATMON_ADDR_DFLT)</value>
+        <value code="2">Autodetect I2C address (TODO)</value>
+      </values>
+    </parameter>
     <parameter name="BAT_C_MULT" default="1.0" type="FLOAT">
       <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
       <decimal>1</decimal>
