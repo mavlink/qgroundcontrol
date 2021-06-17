@@ -1,6 +1,6 @@
 
 include_directories(
-	.
+	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 	VideoManager
@@ -13,23 +13,6 @@ if(MOBILE)
 		MobileScreenMgr.cc
 		MobileScreenMgr.h
 	)
-endif()
-if(GST_FOUND)
-	# TODO: Transform those in targets.
-	list(APPEND EXTRA_SRC
-		Taisync/TaisyncManager.cc
-		Taisync/TaisyncHandler.cc
-		Taisync/TaisyncSettings.cc
-		Microhard/MicrohardManager.cc
-		Microhard/MicrohardHandler.cc
-		Microhard/MicrohardSettings.cc
-	)
-	if(ANDROID) # Should also be expanded to iOS
-		list(APPEND EXTRA_SRC
-			Taisync/TaisyncTelemetry.cc
-			Taisync/TaisyncVideoReceiver.cc
-		)
-	endif()
 endif()
 
 if(BUILD_TESTING)
@@ -152,12 +135,14 @@ add_subdirectory(FollowMe)
 add_subdirectory(Geo)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
+add_subdirectory(Microhard)
 add_subdirectory(MissionManager)
 add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
+add_subdirectory(Taisync)
 add_subdirectory(Terrain)
 add_subdirectory(uas)
 add_subdirectory(Vehicle)
@@ -168,14 +153,13 @@ add_subdirectory(VideoReceiver)
 target_link_libraries(qgc
 	PRIVATE
 		shp
-                Qt5::QuickControls2
-                z # zlib
+		Qt5::QuickControls2
 
 	PUBLIC
 		Qt5::QuickWidgets
 		Qt5::Widgets
 
-                ADSB
+		ADSB
 		Airmap
 		AnalyzeView
 		api
@@ -201,7 +185,13 @@ target_link_libraries(qgc
 		Vehicle
 		VehicleSetup
 		VideoManager
+		z # zlib
 )
+
+if(GST_FOUND)
+	target_link_libraries(qgc PUBLIC Microhard)
+	target_link_libraries(qgc PUBLIC Taisync)
+endif()
 
 if(BUILD_TESTING)
 	target_link_libraries(qgc PUBLIC qgcunittest)

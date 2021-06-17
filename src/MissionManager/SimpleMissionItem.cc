@@ -99,7 +99,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
 
     struct MavFrame2AltMode_s {
         MAV_FRAME                               mavFrame;
-        QGroundControlQmlGlobal::AltitudeMode   altMode;
+        QGroundControlQmlGlobal::AltMode   altMode;
     };
 
     const struct MavFrame2AltMode_s rgMavFrame2AltMode[] = {
@@ -330,7 +330,7 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
                 return false;
             }
 
-            _altitudeMode = (QGroundControlQmlGlobal::AltitudeMode)(int)json[_jsonAltitudeModeKey].toDouble();
+            _altitudeMode = (QGroundControlQmlGlobal::AltMode)(int)json[_jsonAltitudeModeKey].toDouble();
             _altitudeFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
             _amslAltAboveTerrainFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
         } else {
@@ -680,7 +680,7 @@ void SimpleMissionItem::_altitudeModeChanged(void)
     case QGroundControlQmlGlobal::AltitudeModeTerrainFrame:
         _missionItem.setFrame(MAV_FRAME_GLOBAL_TERRAIN_ALT);
         break;
-    case QGroundControlQmlGlobal::AltitudeModeAboveTerrain:
+    case QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain:
         // Terrain altitudes are Absolute
         _missionItem.setFrame(MAV_FRAME_GLOBAL);
         // Clear any old calculated values
@@ -696,6 +696,9 @@ void SimpleMissionItem::_altitudeModeChanged(void)
     case QGroundControlQmlGlobal::AltitudeModeNone:
         qWarning() << "Internal Error SimpleMissionItem::_altitudeModeChanged: Invalid altitudeMode == AltitudeModeNone";
         break;
+    case QGroundControlQmlGlobal::AltitudeModeMixed:
+        qWarning() << "Internal Error SimpleMissionItem::_altitudeModeChanged: Invalid altitudeMode == AltitudeModeMixed";
+        break;
     }
 
     // We always call _altitudeChanged to make sure that param7 is always setup correctly on mode change
@@ -708,12 +711,12 @@ void SimpleMissionItem::_altitudeChanged(void)
         return;
     }
 
-    if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeAboveTerrain || _altitudeMode == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
+    if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain || _altitudeMode == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
         _terrainAltChanged();
     }
 
-    if (_altitudeMode != QGroundControlQmlGlobal::AltitudeModeAboveTerrain) {
+    if (_altitudeMode != QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain) {
         _missionItem._param7Fact.setRawValue(_altitudeFact.rawValue());
     }
 }
@@ -725,16 +728,20 @@ void SimpleMissionItem::_terrainAltChanged(void)
         return;
     }
 
-    if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeAboveTerrain) {
+    if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain || _altitudeMode == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
         if (qIsNaN(terrainAltitude())) {
             // Set NaNs to signal we are waiting on terrain data
-            _missionItem._param7Fact.setRawValue(qQNaN());
+            if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain) {
+                _missionItem._param7Fact.setRawValue(qQNaN());
+            }
             _amslAltAboveTerrainFact.setRawValue(qQNaN());
         } else {
             double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
             double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
             if (!QGC::fuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
-                _missionItem._param7Fact.setRawValue(newAboveTerrain);
+                if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain) {
+                    _missionItem._param7Fact.setRawValue(newAboveTerrain);
+                }
                 _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
             }
         }
@@ -1013,7 +1020,7 @@ void SimpleMissionItem::setMissionFlightStatus(MissionController::MissionFlightS
     }
 }
 
-void SimpleMissionItem::setAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altitudeMode)
+void SimpleMissionItem::setAltitudeMode(QGroundControlQmlGlobal::AltMode altitudeMode)
 {
     if (altitudeMode != _altitudeMode) {
         _altitudeMode = altitudeMode;
@@ -1065,13 +1072,16 @@ double SimpleMissionItem::amslEntryAlt(void) const
     switch (_altitudeMode) {
     case QGroundControlQmlGlobal::AltitudeModeTerrainFrame:
         return _missionItem.param7() + _terrainAltitude;
-    case QGroundControlQmlGlobal::AltitudeModeAboveTerrain:
+    case QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain:
     case QGroundControlQmlGlobal::AltitudeModeAbsolute:
         return _missionItem.param7();
     case QGroundControlQmlGlobal::AltitudeModeRelative:
         return _missionItem.param7() + _masterController->missionController()->plannedHomePosition().altitude();
     case QGroundControlQmlGlobal::AltitudeModeNone:
         qWarning() << "Internal Error SimpleMissionItem::amslEntryAlt: Invalid altitudeMode:AltitudeModeNone";
+        return qQNaN();
+    case QGroundControlQmlGlobal::AltitudeModeMixed:
+        qWarning() << "Internal Error SimpleMissionItem::amslEntryAlt: Invalid altitudeMode:AltitudeModeMixed";
         return qQNaN();
     }
 

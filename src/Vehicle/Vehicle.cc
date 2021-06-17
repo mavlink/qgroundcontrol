@@ -77,6 +77,7 @@ const char* Vehicle::_pitchRateFactName =           "pitchRate";
 const char* Vehicle::_yawRateFactName =             "yawRate";
 const char* Vehicle::_airSpeedFactName =            "airSpeed";
 const char* Vehicle::_airSpeedSetpointFactName =    "airSpeedSetpoint";
+const char* Vehicle::_xTrackErrorFactName =         "xTrackError";
 const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
@@ -142,6 +143,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _altitudeAMSLFact             (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _altitudeTuningFact           (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
     , _altitudeTuningSetpointFact   (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
+    , _xTrackErrorFact              (0, _xTrackErrorFactName,       FactMetaData::valueTypeDouble)
     , _flightDistanceFact           (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact               (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact           (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
@@ -185,7 +187,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
     _uas->setParent(this);
 
-    connect(_uas, &UAS::imageReady,                     this, &Vehicle::_imageReady);
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _commonInit();
@@ -295,6 +296,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _altitudeAMSLFact                 (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
     , _altitudeTuningFact               (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
     , _altitudeTuningSetpointFact       (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
+    , _xTrackErrorFact                  (0, _xTrackErrorFactName,       FactMetaData::valueTypeDouble)
     , _flightDistanceFact               (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact                   (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact               (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
@@ -372,6 +374,7 @@ void Vehicle::_commonInit()
     _componentInformationManager    = new ComponentInformationManager   (this);
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
     _ftpManager                     = new FTPManager                    (this);
+    _imageProtocolManager           = new ImageProtocolManager          ();
     _vehicleLinkManager             = new VehicleLinkManager            (this);
 
     _parameterManager = new ParameterManager(this);
@@ -395,6 +398,8 @@ void Vehicle::_commonInit()
     // Flight modes can differ based on advanced mode
     connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
+    connect(_imageProtocolManager, &ImageProtocolManager::imageReady, this, &Vehicle::_imageProtocolImageReady);
+
     // Build FactGroup object model
 
     _addFact(&_rollFact,                _rollFactName);
@@ -411,6 +416,7 @@ void Vehicle::_commonInit()
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
     _addFact(&_altitudeTuningFact,       _altitudeTuningFactName);
     _addFact(&_altitudeTuningSetpointFact, _altitudeTuningSetpointFactName);
+    _addFact(&_xTrackErrorFact,         _xTrackErrorFactName);
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
@@ -638,6 +644,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
     _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
+    _imageProtocolManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);
 
@@ -978,6 +985,7 @@ void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
     mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
 
     _altitudeTuningSetpointFact.setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.alt_error);
+    _xTrackErrorFact.setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.xtrack_error);
     _airSpeedSetpointFact.setRawValue(_airSpeedFact.rawValue().toDouble() - navControllerOutput.aspd_error);
 }
 
@@ -1024,6 +1032,11 @@ void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, dou
 
 void Vehicle::_handleAttitude(mavlink_message_t& message)
 {
+    // only accept the attitude message from the vehicle's flight controller
+    if (message.sysid != _id || message.compid != _compID) {
+        return;
+    }
+
     if (_receivingAttitudeQuaternion) {
         return;
     }
@@ -1036,6 +1049,11 @@ void Vehicle::_handleAttitude(mavlink_message_t& message)
 
 void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
 {
+    // only accept the attitude message from the vehicle's flight controller
+    if (message.sysid != _id || message.compid != _compID) {
+        return;
+    }
+
     _receivingAttitudeQuaternion = true;
 
     mavlink_attitude_quaternion_t attitudeQuaternion;
@@ -2253,15 +2271,12 @@ void Vehicle::_sendQGCTimeToVehicle()
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
-void Vehicle::_imageReady(UASInterface*)
+void Vehicle::_imageProtocolImageReady(void)
 {
-    if(_uas)
-    {
-        QImage img = _uas->getImage();
-        _toolbox->imageProvider()->setImage(&img, _id);
-        _flowImageIndex++;
-        emit flowImageIndexChanged();
-    }
+    QImage img = _imageProtocolManager->getImage();
+    _toolbox->imageProvider()->setImage(&img, _id);
+    _flowImageIndex++;
+    emit flowImageIndexChanged();
 }
 
 void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
@@ -3888,8 +3903,8 @@ void Vehicle::sendParamMapRC(const QString& paramName, double scale, double cent
                                        param_id_cstr,
                                        -1,                                                  // parameter name specified as string in previous argument
                                        static_cast<uint8_t>(tuningID),
-                                       static_cast<float>(scale),
                                        static_cast<float>(centerValue),
+                                       static_cast<float>(scale),
                                        static_cast<float>(minValue),
                                        static_cast<float>(maxValue));
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);

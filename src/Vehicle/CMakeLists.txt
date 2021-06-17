@@ -18,6 +18,8 @@ endif()
 add_library(Vehicle
 	CompInfo.cc
 	CompInfo.h
+	CompInfoEvents.cc
+	CompInfoEvents.h
 	CompInfoParam.cc
 	CompInfoParam.h
 	CompInfoGeneral.cc
@@ -26,10 +28,16 @@ add_library(Vehicle
 	ComponentInformationCache.h
 	ComponentInformationManager.cc
 	ComponentInformationManager.h
+	EventHandler.cc
+	EventHandler.h
 	FTPManager.cc
 	FTPManager.h
 	GPSRTKFactGroup.cc
 	GPSRTKFactGroup.h
+	HealthAndArmingChecks.cc
+	HealthAndArmingChecks.h
+	ImageProtocolManager.cc
+	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
 	InitialConnectStateMachine.h
 	MAVLinkLogManager.cc
@@ -88,6 +96,8 @@ target_link_libraries(Vehicle
 	PRIVATE
 		ui
 		compression
+		libevents_generated
+		libevents_parser
 	PUBLIC
 		qgc
 )

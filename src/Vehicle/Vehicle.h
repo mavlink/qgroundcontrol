@@ -44,6 +44,7 @@
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "FTPManager.h"
+#include "ImageProtocolManager.h"
 
 class EventHandler;
 class UAS;
@@ -288,6 +289,7 @@ public:
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
     Q_PROPERTY(Fact* altitudeTuning     READ altitudeTuning     CONSTANT)
     Q_PROPERTY(Fact* altitudeTuningSetpoint READ altitudeTuningSetpoint CONSTANT)
+    Q_PROPERTY(Fact* xTrackError        READ xTrackError        CONSTANT)
     Q_PROPERTY(Fact* flightDistance     READ flightDistance     CONSTANT)
     Q_PROPERTY(Fact* distanceToHome     READ distanceToHome     CONSTANT)
     Q_PROPERTY(Fact* missionItemIndex   READ missionItemIndex   CONSTANT)
@@ -626,6 +628,7 @@ public:
     Fact* altitudeAMSL                      () { return &_altitudeAMSLFact; }
     Fact* altitudeTuning                    () { return &_altitudeTuningFact; }
     Fact* altitudeTuningSetpoint            () { return &_altitudeTuningSetpointFact; }
+    Fact* xTrackError                       () { return &_xTrackErrorFact; }
     Fact* flightDistance                    () { return &_flightDistanceFact; }
     Fact* distanceToHome                    () { return &_distanceToHomeFact; }
     Fact* missionItemIndex                  () { return &_missionItemIndexFact; }
@@ -918,7 +921,7 @@ private slots:
     void _offlineHoverSpeedSettingChanged   (QVariant value);
     void _handleTextMessage                 (int newCount);
     void _handletextMessageReceived         (UASMessage* message);
-    void _imageReady                        (UASInterface* uas);    ///< A new camera image has arrived
+    void _imageProtocolImageReady           (void);
     void _prearmErrorTimeout                ();
     void _firstMissionLoadComplete          ();
     void _firstGeoFenceLoadComplete         ();
@@ -1250,6 +1253,7 @@ private:
     Fact _altitudeAMSLFact;
     Fact _altitudeTuningFact;
     Fact _altitudeTuningSetpointFact;
+    Fact _xTrackErrorFact;
     Fact _flightDistanceFact;
     Fact _flightTimeFact;
     Fact _distanceToHomeFact;
@@ -1282,6 +1286,7 @@ private:
     RallyPointManager*              _rallyPointManager          = nullptr;
     VehicleLinkManager*             _vehicleLinkManager         = nullptr;
     FTPManager*                     _ftpManager                 = nullptr;
+    ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
 
     static const char* _rollFactName;
@@ -1298,6 +1303,7 @@ private:
     static const char* _altitudeAMSLFactName;
     static const char* _altitudeTuningFactName;
     static const char* _altitudeTuningSetpointFactName;
+    static const char* _xTrackErrorFactName;
     static const char* _flightDistanceFactName;
     static const char* _flightTimeFactName;
     static const char* _distanceToHomeFactName;

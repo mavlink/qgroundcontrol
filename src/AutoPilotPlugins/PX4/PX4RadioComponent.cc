@@ -43,7 +43,7 @@ bool PX4RadioComponent::setupComplete(void) const
     if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
         // The best we can do to detect the need for a radio calibration is look for attitude
         // controls to be mapped.
-        for(const QString &mapParam : {"RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE"}) {
+        for(const char* const&mapParam : {"RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE"}) {
             if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, mapParam)->rawValue().toInt() == 0) {
                 return false;
             }

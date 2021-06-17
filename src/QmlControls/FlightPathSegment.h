@@ -25,9 +25,10 @@ class FlightPathSegment : public QObject
     
 public:
     enum SegmentType {
-        SegmentTypeTakeoff, // Takeoff segments ignore the first part of the segment for terrain collisions
-        SegmentTypeGeneric, // Generic segments take into account the entire segment for terrain collisions
-        SegmentTypeLand     // Land segments ignore the last part of the segment for terrain collisions
+        SegmentTypeTakeoff,         // Takeoff segments ignore the first part of the segment for terrain collisions
+        SegmentTypeGeneric,         // Generic segments take into account the entire segment for terrain collisions
+        SegmentTypeLand,            // Land segments ignore the last part of the segment for terrain collisions
+        SegmentTypeTerrainFrame,    // Flight path in between the two coords follows terrain
     };
     Q_ENUM(SegmentType)
 

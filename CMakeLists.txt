@@ -86,19 +86,25 @@ endif()
 # GStreamer
 #
 find_package(PkgConfig)
-pkg_check_modules(GST
-    gstreamer-1.0>=1.14
-    gstreamer-video-1.0>=1.14
-    gstreamer-gl-1.0>=1.14
-    egl
-)
+
+set(GST_DEPENDENCIES
+	gstreamer-1.0>=1.14
+	gstreamer-video-1.0>=1.14
+	gstreamer-gl-1.0>=1.14
+	)
+
+if (MSVC)
+	pkg_check_modules(GST
+		${GST_DEPENDENCIES}
+		)
+else()
+	pkg_check_modules(GST
+		${GST_DEPENDENCIES}
+		egl
+		)
+endif()
 
 if (GST_FOUND)
-    include_directories(
-        ${GST_INCLUDE_DIRS}
-        src/Taisync
-        src/Microhard
-    )
     add_definitions(
         -DQGC_GST_STREAMING
         -DQGC_GST_TAISYNC_ENABLED
@@ -154,6 +160,8 @@ include(CompileOptions)
 include_directories(
 	libs/eigen
 
+	libs/libevents
+
 	libs/mavlink/include/mavlink/v2.0
 	libs/mavlink/include/mavlink/v2.0/ardupilotmega
 	libs/mavlink/include/mavlink/v2.0/common
@@ -165,14 +173,23 @@ add_subdirectory(libs)
 add_subdirectory(src)
 
 set(QGC_RESOURCES
-	qgcresources.qrc
-	qgroundcontrol.qrc
-	qgcimages.qrc
-	src/FirmwarePlugin/APM/APMResources.qrc
-	src/FirmwarePlugin/PX4/PX4Resources.qrc
-	src/Airmap/airmap.qrc
-	src/Airmap/dummy/airmap_dummy.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/qgcimages.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/qgcresources.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/qgroundcontrol.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Airmap/airmap.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Airmap/dummy/airmap_dummy.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
+	${CMAKE_CURRENT_SOURCE_DIR}/VideoReceiverApp/qml.qrc
 	)
+
+if (WIN32)
+	# append application icon resource for Windows
+	set(QGC_RESOURCES
+		${QGC_RESOURCES}
+		${CMAKE_CURRENT_SOURCE_DIR}/windows/QGroundControl.rc)
+endif()
 
 if(BUILD_TESTING)
 	list(APPEND QGC_RESOURCES
@@ -223,4 +240,3 @@ if(NOT QT_MKSPEC MATCHES "winrt")
 endif()
 
 include(QGCDeploy)
-
