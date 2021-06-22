@@ -370,6 +370,7 @@ void CameraSectionTest::_checkAvailable(void)
     SimpleMissionItem* item = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
     QVERIFY(item->cameraSection());
     QCOMPARE(item->cameraSection()->available(), false);
+    qCDebug(VisualMissionItemLog) << item << "(checkAvailable)";
 }
 
 
