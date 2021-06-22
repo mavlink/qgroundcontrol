@@ -367,12 +367,10 @@ void CameraSectionTest::_checkAvailable(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    SimpleMissionItem* item = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
+    QScopedPointer<SimpleMissionItem> item(new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this));
     QVERIFY(item->cameraSection());
     QCOMPARE(item->cameraSection()->available(), false);
-    qCDebug(VisualMissionItemLog) << item << "(checkAvailable)";
 }
-
 
 void CameraSectionTest::_testItemCount(void)
 {
