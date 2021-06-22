@@ -134,6 +134,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     emit coordinateChanged(coordinate());
 
     setDirty(false);
+    qCDebug(VisualMissionItemLog) << this << "ctor";
 }
 
 void SimpleMissionItem::_connectSignals(void)
@@ -269,7 +270,8 @@ void SimpleMissionItem::_setupMetaData(void)
 }
 
 SimpleMissionItem::~SimpleMissionItem()
-{    
+{
+    qCDebug(VisualMissionItemLog) << this << "dtor";
 }
 
 void SimpleMissionItem::save(QJsonArray&  missionItems)

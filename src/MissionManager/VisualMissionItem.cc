@@ -19,6 +19,8 @@
 #include "PlanMasterController.h"
 #include "QGC.h"
 
+QGC_LOGGING_CATEGORY(VisualMissionItemLog, "VisualMissionItemLog")
+
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
 const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
@@ -31,6 +33,7 @@ VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, boo
     , _controllerVehicle(masterController->controllerVehicle())
 {
     _commonInit();
+    qCDebug(VisualMissionItemLog) << this << "ctor";
 }
 
 VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent)
@@ -40,6 +43,7 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyVie
     *this = other;
 
     _commonInit();
+    qCDebug(VisualMissionItemLog) << this << "ctor";
 }
 
 void VisualMissionItem::_commonInit(void)
@@ -75,7 +79,13 @@ const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& o
 }
 
 VisualMissionItem::~VisualMissionItem()
-{    
+{
+    if (_currentTerrainAtCoordinateQuery) {
+        disconnect(_currentTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived,
+                this, &VisualMissionItem::_terrainDataReceived);
+        _currentTerrainAtCoordinateQuery = nullptr;
+    }
+    qCDebug(VisualMissionItemLog) << this << "dtor";
 }
 
 void VisualMissionItem::setIsCurrentItem(bool isCurrentItem)
@@ -206,6 +216,7 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 
 void VisualMissionItem::_terrainDataReceived(bool success, QList<double> heights)
 {
+    qCDebug(VisualMissionItemLog) << this << "_terrainDataReceived";
     _terrainAltitude = success ? heights[0] : qQNaN();
     emit terrainAltitudeChanged(_terrainAltitude);
     _currentTerrainAtCoordinateQuery = nullptr;

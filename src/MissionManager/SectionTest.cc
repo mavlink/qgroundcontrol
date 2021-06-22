@@ -38,6 +38,7 @@ void SectionTest::init(void)
                             true,           // autoContinue
                             false);         // isCurrentItem
     _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
+    qCDebug(VisualMissionItemLog) << _simpleItem << "(SectionTest::_simpleItem)";
 }
 
 void SectionTest::cleanup(void)
