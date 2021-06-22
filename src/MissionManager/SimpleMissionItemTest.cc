@@ -97,20 +97,20 @@ void SimpleMissionItemTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
+    _simpleItem.reset(new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this));
 
     // It's important top check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
     // to incorrect ui or perf impact of uneeded signals propogating ui change.
 
     _spySimpleItem = new MultiSignalSpy();
-    QCOMPARE(_spySimpleItem->init(_simpleItem, rgSimpleItemSignals, cSimpleItemSignals), true);
-    VisualMissionItemTest::_createSpy(_simpleItem, &_spyVisualItem);
+    QCOMPARE(_spySimpleItem->init(_simpleItem.get(), rgSimpleItemSignals, cSimpleItemSignals), true);
+    VisualMissionItemTest::_createSpy(_simpleItem.get(), &_spyVisualItem);
 }
 
 void SimpleMissionItemTest::cleanup(void)
 {
-    delete _simpleItem;
+    _simpleItem.reset();
     VisualMissionItemTest::cleanup();
 }
 

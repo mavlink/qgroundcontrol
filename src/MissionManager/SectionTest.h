@@ -45,5 +45,5 @@ protected:
     static const size_t cSectionSignals = maxSignalIndex;
     const char*         rgSectionSignals[cSectionSignals];
 
-    SimpleMissionItem*  _simpleItem;
+    QScopedPointer<SimpleMissionItem>  _simpleItem;
 };

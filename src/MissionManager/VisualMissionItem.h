@@ -30,8 +30,6 @@ class PlanMasterController;
 class MissionController;
 class TerrainAtCoordinateQuery;
 
-Q_DECLARE_LOGGING_CATEGORY(VisualMissionItemLog)
-
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject
 {

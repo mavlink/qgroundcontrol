@@ -81,7 +81,7 @@ private:
     void _testEditorFactsWorker (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode, const ItemExpected_t* rgExpected);
     bool _classMatch            (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
 
-    SimpleMissionItem*  _simpleItem;
-    MultiSignalSpy*     _spySimpleItem;
-    MultiSignalSpy*     _spyVisualItem;
+    QScopedPointer<SimpleMissionItem> _simpleItem;
+    MultiSignalSpy*                   _spySimpleItem;
+    MultiSignalSpy*                   _spyVisualItem;
 };

@@ -11,7 +11,7 @@
 #include "SurveyComplexItem.h"
 
 SectionTest::SectionTest(void)
-    : _simpleItem(nullptr)
+    : _simpleItem{}
 {
     
 }
@@ -37,13 +37,12 @@ void SectionTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
-    qCDebug(VisualMissionItemLog) << _simpleItem << "(SectionTest::_simpleItem)";
+    _simpleItem.reset(new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this));
 }
 
 void SectionTest::cleanup(void)
 {
-    _simpleItem->deleteLater();
+    _simpleItem.reset();
     VisualMissionItemTest::cleanup();
 }
 
