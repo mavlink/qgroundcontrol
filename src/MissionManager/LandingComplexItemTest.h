@@ -56,7 +56,7 @@ private:
     static const size_t cSignals = maxSignalIndex;
     const char*         rgSignals[cSignals];
 
-    LandingComplexItem* _item                   = nullptr;
+    QScopedPointer<LandingComplexItem> _item;
     MultiSignalSpy*     _multiSpy               = nullptr;
     MultiSignalSpy*     _viMultiSpy             = nullptr;
     SimpleMissionItem*  _validStopVideoItem     = nullptr;
@@ -78,7 +78,7 @@ public:
     QString mapVisualQML(void) const final { return QStringLiteral("FWLandingPatternMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-    void    save        (QJsonArray&  /*missionItems*/) override { };
+    void    save        (QJsonArray&  /*missionItems*/) override { }
 
     static const QString name;
 
@@ -103,7 +103,7 @@ private:
     const Fact*     _useLoiterToAlt         (void) const final { return &_useLoiterToAltFact; }
     const Fact*     _stopTakingPhotos       (void) const final { return &_stopTakingPhotosFact; }
     const Fact*     _stopTakingVideo        (void) const final { return &_stopTakingVideoFact; }
-    void            _calcGlideSlope         (void) final { };
+    void            _calcGlideSlope         (void) final { }
     MissionItem*    _createLandItem         (int seqNum, bool altRel, double lat, double lon, double alt, QObject* parent) final;
 
     QMap<QString, FactMetaData*> _metaDataMap;

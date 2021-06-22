@@ -26,7 +26,7 @@ void LandingComplexItemTest::init(void)
 {
     VisualMissionItemTest::init();
 
-    _item = new SimpleLandingComplexItem(_masterController, false /* flyView */, this);
+    _item.reset(new SimpleLandingComplexItem(_masterController, false /* flyView */, this));
 
     // Start in a clean state
     QVERIFY(!_item->dirty());
@@ -34,7 +34,7 @@ void LandingComplexItemTest::init(void)
     _item->setDirty(false);
     QVERIFY(!_item->dirty());
 
-    VisualMissionItemTest::_createSpy(_item, &_viMultiSpy);
+    VisualMissionItemTest::_createSpy(_item.get(), &_viMultiSpy);
 
     rgSignals[finalApproachCoordinateChangedIndex]  = SIGNAL(finalApproachCoordinateChanged(QGeoCoordinate));
     rgSignals[loiterTangentCoordinateChangedIndex]  = SIGNAL(loiterTangentCoordinateChanged(QGeoCoordinate));
@@ -44,7 +44,7 @@ void LandingComplexItemTest::init(void)
     rgSignals[_updateFlightPathSegmentsSignalIndex] = SIGNAL(_updateFlightPathSegmentsSignal());
 
     _multiSpy = new MultiSignalSpy();
-    QCOMPARE(_multiSpy->init(_item, rgSignals, cSignals), true);
+    QCOMPARE(_multiSpy->init(_item.get(), rgSignals, cSignals), true);
 
     _validStopVideoItem     = CameraSectionTest::createValidStopTimeItem(_masterController, this);
     _validStopDistanceItem  = CameraSectionTest::createValidStopTimeItem(_masterController, this);
@@ -57,6 +57,7 @@ void LandingComplexItemTest::cleanup(void)
     delete _validStopVideoItem;
     delete _validStopDistanceItem;
     delete _validStopTimeItem;
+    _item.reset();
     VisualMissionItemTest::cleanup();
 }
 
@@ -99,7 +100,7 @@ void LandingComplexItemTest::_testDirty(void)
         qDebug() << boolName;
         QVERIFY(!_item->dirty());
         QMetaProperty boolProp = metaObject->property(metaObject->indexOfProperty(boolName));
-        QVERIFY(boolProp.write(_item, !boolProp.read(_item).toBool()));
+        QVERIFY(boolProp.write(_item.get(), !boolProp.read(_item.get()).toBool()));
         QVERIFY(_viMultiSpy->checkSignalByMask(dirtyChangedMask));
         QVERIFY(_viMultiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
         _item->setDirty(false);
@@ -245,7 +246,7 @@ void LandingComplexItemTest::_testScanForItems(void)
         QCOMPARE(visualItems->count(), 1);
         SimpleLandingComplexItem* scannedItem = visualItems->value<SimpleLandingComplexItem*>(0);
         QVERIFY(scannedItem);
-        _validateItem(scannedItem, _item);
+        _validateItem(scannedItem, _item.get());
 
         visualItems->deleteLater();
         rgMissionItems.clear();
@@ -270,7 +271,7 @@ void LandingComplexItemTest::_testSaveLoad(void)
     }
     QVERIFY(loadSuccess);
     QVERIFY(errorString.isEmpty());
-    _validateItem(newItem, _item);
+    _validateItem(newItem, _item.get());
     newItem->deleteLater();
 
     // Test useDeprecatedRelAltKeys = true
@@ -285,7 +286,7 @@ void LandingComplexItemTest::_testSaveLoad(void)
     }
     QVERIFY(loadSuccess);
     QVERIFY(errorString.isEmpty());
-    _validateItem(newItem, _item);
+    _validateItem(newItem, _item.get());
     newItem->deleteLater();
 
     // Test for _jsonDeprecatedLoiterCoordinateKey support
@@ -302,7 +303,7 @@ void LandingComplexItemTest::_testSaveLoad(void)
     }
     QVERIFY(loadSuccess);
     QVERIFY(errorString.isEmpty());
-    _validateItem(newItem, _item);
+    _validateItem(newItem, _item.get());
     newItem->deleteLater();
 }
 
