@@ -2253,7 +2253,7 @@
       <decimal>2</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="EKF2_GND_EFF_DZ" default="0.0" type="FLOAT">
+    <parameter name="EKF2_GND_EFF_DZ" default="4.0" type="FLOAT">
       <short_desc>Baro deadzone range for height fusion</short_desc>
       <long_desc>Sets the value of deadzone applied to negative baro innovations. Deadzone is enabled when EKF2_GND_EFF_DZ &gt; 0.</long_desc>
       <min>0.0</min>
