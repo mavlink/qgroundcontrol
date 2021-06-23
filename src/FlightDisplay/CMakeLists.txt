@@ -46,5 +46,8 @@ add_custom_target(FligthDisplayQml
 		VehicleWarnings.qml
 		VirtualJoystick.qml
 		VTOLChecklist.qml
+		ObstacleDistanceOverlay.qml
+		ObstacleDistanceOverlayMap.qml
+		ObstacleDistanceOverlayVideo.qml
 )
 
