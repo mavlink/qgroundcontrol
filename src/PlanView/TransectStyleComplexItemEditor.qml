@@ -184,15 +184,19 @@ Rectangle {
                         Layout.fillWidth:   true
                         text:               qsTr("Delete Preset")
                         enabled:            _missionItem.presetNames.length != 0
-                        onClicked:          mainWindow.showComponentDialog(deletePresetMessage, qsTr("Delete Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                        onClicked:          mainWindow.showPopupDialogFromComponent(deletePresetDialog, { presetName: presetCombo.textAt(presetCombo.currentIndex) })
 
                         Component {
-                            id: deletePresetMessage
-                            QGCViewMessage {
-                                message: qsTr("Are you sure you want to delete '%1' preset?").arg(presetName)
-                                property string presetName: presetCombo.textAt(presetCombo.currentIndex)
+                            id: deletePresetDialog
+
+                            QGCPopupDialog {
+                                title:      qsTr("Delete Preset")
+                                buttons:    StandardButton.Yes | StandardButton.No
+
+                                QGCLabel { text: qsTr("Are you sure you want to delete '%1' preset?").arg(dialogProperties.presetName) }
+
                                 function accept() {
-                                    _missionItem.deletePreset(presetName)
+                                    _missionItem.deletePreset(dialogProperties.presetName)
                                     hideDialog()
                                 }
                             }
@@ -206,7 +210,7 @@ Rectangle {
                     Layout.alignment:   Qt.AlignCenter
                     Layout.fillWidth:   true
                     text:               qsTr("Save Settings As New Preset")
-                    onClicked:          mainWindow.showComponentDialog(savePresetDialog, qsTr("Save Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                    onClicked:          mainWindow.showPopupDialogFromComponent(savePresetDialog)
                 }
 
                 SectionHeader {
@@ -240,18 +244,21 @@ Rectangle {
         Component {
             id: savePresetDialog
 
-            QGCViewDialog {
+            QGCPopupDialog {
+                id:         popupDialog
+                title:      qsTr("Save Preset")
+                buttons:    StandardButton.Save | StandardButton.Cancel
+
                 function accept() {
                     if (presetNameField.text != "") {
-                        _missionItem.savePreset(presetNameField.text)
+                        _missionItem.savePreset(presetNameField.text.trim())
                         hideDialog()
                     }
                 }
 
                 ColumnLayout {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    spacing:        ScreenTools.defaultFontPixelHeight
+                    width:      ScreenTools.defaultFontPixelWidth * 30
+                    spacing:    ScreenTools.defaultFontPixelHeight
 
                     QGCLabel {
                         Layout.fillWidth:   true
@@ -266,6 +273,31 @@ Rectangle {
                     QGCTextField {
                         id:                 presetNameField
                         Layout.fillWidth:   true
+                        placeholderText:    qsTr("Enter preset name")
+
+                        Component.onCompleted:  validateText(presetNameField.text)
+                        onTextChanged:          validateText(text)
+
+                        function validateText(text) {
+                            if (text.trim() === "") {
+                                nameError.text = qsTr("Preset name cannot be blank.")
+                                popupDialog.disableAcceptButton()
+                            } else if (text.includes("/")) {
+                                nameError.text = qsTr("Preset name cannot include the \"/\" character.")
+                                popupDialog.disableAcceptButton()
+                            } else {
+                                nameError.text = ""
+                                popupDialog.enableAcceptButton()
+                            }
+                        }
+                    }
+
+                    QGCLabel {
+                        id:                 nameError
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        color:              QGroundControl.globalPalette.warningText
+                        visible:            text !== ""
                     }
                 }
             }
