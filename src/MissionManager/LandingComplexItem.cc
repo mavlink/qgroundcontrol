@@ -25,7 +25,7 @@ const char* LandingComplexItem::_jsonLoiterRadiusKey            = "loiterRadius"
 const char* LandingComplexItem::_jsonLoiterClockwiseKey         = "loiterClockwise";
 const char* LandingComplexItem::_jsonLandingCoordinateKey       = "landCoordinate";
 const char* LandingComplexItem::_jsonAltitudesAreRelativeKey    = "altitudesAreRelative";
-const char* LandingComplexItem::_jsonUseLoiterToAltKey          = "stopTakingPhotos";
+const char* LandingComplexItem::_jsonUseLoiterToAltKey          = "useLoiterToAlt";
 const char* LandingComplexItem::_jsonStopTakingPhotosKey        = "stopTakingPhotos";
 const char* LandingComplexItem::_jsonStopTakingVideoKey         = "stopVideoPhotos";
 
