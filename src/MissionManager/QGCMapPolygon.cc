@@ -257,6 +257,9 @@ void QGCMapPolygon::splitPolygonSegment(int vertexIndex)
         _polygonModel.insert(nextIndex, new QGCQGeoCoordinate(newVertex, this));
         _polygonPath.insert(nextIndex, QVariant::fromValue(newVertex));
         emit pathChanged();
+        if (0 <= _selectedVertexIndex && vertexIndex < _selectedVertexIndex) {
+            selectVertex(_selectedVertexIndex+1);
+        }
     }
 }
 
