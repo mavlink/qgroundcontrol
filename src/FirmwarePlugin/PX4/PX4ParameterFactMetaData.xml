@@ -5369,7 +5369,7 @@
     </parameter>
     <parameter name="MPC_LAND_ALT1" default="10.0" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude: - descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" and "MPC_LAND_SPEED" - horizontal velocity gets limited to a value between "MPC_VEL_MANUAL" and "MPC_LAND_VEL_XY" for a smooth descent and landing experience. Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -5377,7 +5377,7 @@
     </parameter>
     <parameter name="MPC_LAND_ALT2" default="5.0" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
-      <long_desc>Below this altitude descending and horizontal velocities get limited to "MPC_LAND_SPEED" and "MPC_LAND_VEL_XY", respectively. Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED". Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -5386,13 +5386,6 @@
     <parameter name="MPC_LAND_SPEED" default="0.7" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
       <min>0.6</min>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-    </parameter>
-    <parameter name="MPC_LAND_VEL_XY" default="10.0" type="FLOAT">
-      <short_desc>Maximum horizontal position mode velocity when close to ground/home altitude</short_desc>
-      <long_desc>Set the value higher than the otherwise expected maximum to disable any slowdown.</long_desc>
-      <min>0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
