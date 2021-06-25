@@ -25,7 +25,7 @@ class LandingComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    LandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent);
+    LandingComplexItem(PlanMasterController* masterController, bool flyView);
 
     Q_PROPERTY(Fact*            finalApproachAltitude   READ    finalApproachAltitude                                           CONSTANT)
     Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                                    CONSTANT)
@@ -153,7 +153,7 @@ protected:
     bool            _load                   (const QJsonObject& complexObject, int sequenceNumber, const QString& jsonComplexItemTypeValue, bool useDeprecatedRelAltKeys, QString& errorString);
 
     typedef bool                (*IsLandItemFunc)(const MissionItem& missionItem);
-    typedef LandingComplexItem* (*CreateItemFunc)(PlanMasterController* masterController, bool flyView, QObject* parent);
+    typedef LandingComplexItem* (*CreateItemFunc)(PlanMasterController* masterController, bool flyView);
 
     static bool _scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController, IsLandItemFunc isLandItemFunc, CreateItemFunc createItemFunc);
 

@@ -50,8 +50,8 @@ const char* LandingComplexItem::_jsonDeprecatedLoiterAltitudeRelativeKey    = "l
 // the new support for using either a loiter or just a waypoint as the approach entry point.
 const char* LandingComplexItem::_jsonDeprecatedLoiterCoordinateKey          = "loiterCoordinate";
 
-LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : ComplexMissionItem        (masterController, flyView, parent)
+LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
+    : ComplexMissionItem        (masterController, flyView)
 {
     _isIncomplete = false;
 
@@ -475,7 +475,7 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
 
     // Now stuff all the scanned information into the item
 
-    LandingComplexItem* complexItem = createItemFunc(masterController, flyView, visualItems /* parent */);
+    LandingComplexItem* complexItem = createItemFunc(masterController, flyView);
 
     complexItem->_ignoreRecalcSignals = true;
 
