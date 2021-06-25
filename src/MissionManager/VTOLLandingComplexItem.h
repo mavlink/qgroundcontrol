@@ -24,7 +24,7 @@ class VTOLLandingComplexItem : public LandingComplexItem
     Q_OBJECT
 
 public:
-    VTOLLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent);
+    VTOLLandingComplexItem(PlanMasterController* masterController, bool flyView);
 
     /// Scans the loaded items for a landing pattern complex item
     static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController);
@@ -47,7 +47,7 @@ private slots:
     void _updateFlightPathSegmentsDontCallDirectly(void) override;
 
 private:
-    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView, QObject* parent) { return new VTOLLandingComplexItem(masterController, flyView, parent); }
+    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView) { return new VTOLLandingComplexItem(masterController, flyView); }
     static bool                 _isValidLandItem(const MissionItem& missionItem);
 
     // Overrides from LandingComplexItem

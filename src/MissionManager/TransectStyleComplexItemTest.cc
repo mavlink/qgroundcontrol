@@ -19,7 +19,7 @@ void TransectStyleComplexItemTest::init(void)
 {
     TransectStyleComplexItemTestBase::init();
 
-    _transectStyleItem = new TestTransectStyleItem(_masterController, this);
+    _transectStyleItem = new TestTransectStyleItem(_masterController);
     _transectStyleItem->cameraTriggerInTurnAround()->setRawValue(false);
     _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
@@ -32,9 +32,13 @@ void TransectStyleComplexItemTest::init(void)
 
 void TransectStyleComplexItemTest::cleanup(void)
 {
-    delete _transectStyleItem;
     delete _multiSpy;
+    _multiSpy = nullptr;
+
     TransectStyleComplexItemTestBase::cleanup();
+
+    // These items are deleted when _masterController is deleted
+    _transectStyleItem = nullptr;
 }
 
 void TransectStyleComplexItemTest::_testDirty(void)
@@ -223,8 +227,8 @@ void TransectStyleComplexItemTest::_testFollowTerrain(void)
     }
 }
 
-TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController, QObject* parent)
-    : TransectStyleComplexItem      (masterController, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
+TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController)
+    : TransectStyleComplexItem      (masterController, false /* flyView */, QStringLiteral("UnitTestTransect"))
     , rebuildTransectsPhase1Called  (false)
     , recalcComplexDistanceCalled   (false)
     , recalcCameraShotsCalled       (false)
