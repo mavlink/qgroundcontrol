@@ -23,8 +23,10 @@ const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
 const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
 
-VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : QObject           (parent)
+// All VisualMissionItem derived classes are parented to masterController in order to tie their lifecycles together.
+
+VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, bool flyView)
+    : QObject           (masterController)
     , _flyView          (flyView)
     , _masterController (masterController)
     , _missionController(masterController->missionController())
@@ -33,8 +35,8 @@ VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, boo
     _commonInit();
 }
 
-VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent)
-    : QObject                   (parent)
+VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView)
+    : QObject                   (other._masterController)
     , _flyView                  (flyView)
 {
     *this = other;
@@ -57,6 +59,8 @@ void VisualMissionItem::_commonInit(void)
 
 const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& other)
 {
+    setParent(other._masterController);
+
     _masterController = other._masterController;
     _controllerVehicle = other._controllerVehicle;
 

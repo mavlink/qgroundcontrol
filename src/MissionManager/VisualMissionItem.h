@@ -36,8 +36,8 @@ class VisualMissionItem : public QObject
     Q_OBJECT
 
 public:
-    VisualMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent);
-    VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent);
+    VisualMissionItem(PlanMasterController* masterController, bool flyView);
+    VisualMissionItem(const VisualMissionItem& other, bool flyView);
 
     ~VisualMissionItem();
 

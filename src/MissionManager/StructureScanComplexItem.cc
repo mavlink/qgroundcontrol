@@ -36,8 +36,8 @@ const char* StructureScanComplexItem::startFromTopName =            "StartFromTo
 const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureScan";
 const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
 
-StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile, QObject* parent)
-    : ComplexMissionItem        (masterController, flyView, parent)
+StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
+    : ComplexMissionItem        (masterController, flyView)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
     , _entryVertex              (0)

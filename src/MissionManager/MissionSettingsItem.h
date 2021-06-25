@@ -26,7 +26,7 @@ class MissionSettingsItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    MissionSettingsItem(PlanMasterController* masterController, bool flyView, QObject* parent);
+    MissionSettingsItem(PlanMasterController* masterController, bool flyView);
 
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)

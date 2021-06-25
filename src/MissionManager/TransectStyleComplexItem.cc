@@ -43,8 +43,8 @@ const char* TransectStyleComplexItem::_jsonCameraShotsKey                   = "C
 
 const char* TransectStyleComplexItem::_jsonTerrainFollowKeyDeprecated       = "FollowTerrain";
 
-TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup, QObject* parent)
-    : ComplexMissionItem                (masterController, flyView, parent)
+TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup)
+    : ComplexMissionItem                (masterController, flyView)
     , _cameraCalc                       (masterController, settingsGroup)
     , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
     , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_controllerVehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
