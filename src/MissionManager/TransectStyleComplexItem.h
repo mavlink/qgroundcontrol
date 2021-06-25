@@ -27,7 +27,7 @@ class TransectStyleComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settignsGroup, QObject* parent);
+    TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settignsGroup);
 
     Q_PROPERTY(QGCMapPolygon*   surveyAreaPolygon           READ surveyAreaPolygon                                  CONSTANT)
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                         CONSTANT)

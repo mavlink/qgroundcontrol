@@ -22,8 +22,8 @@ const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 
 const char* ComplexMissionItem::_presetSettingsKey =        "_presets";
 
-ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : VisualMissionItem (masterController, flyView, parent)
+ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView)
+    : VisualMissionItem (masterController, flyView)
     , _toolbox          (qgcApp()->toolbox())
     , _settingsManager  (_toolbox->settingsManager())
 {

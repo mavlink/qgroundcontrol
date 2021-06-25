@@ -51,8 +51,12 @@ void VisualMissionItemTest::init(void)
 
 void VisualMissionItemTest::cleanup(void)
 {
+    delete _masterController;
+
+    _masterController   = nullptr;
+    _controllerVehicle  = nullptr;
+
     UnitTest::cleanup();
-    _masterController->deleteLater();
 }
 
 void VisualMissionItemTest::_createSpy(VisualMissionItem* visualItem, MultiSignalSpy** visualSpy)
