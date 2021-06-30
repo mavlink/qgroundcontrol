@@ -331,7 +331,7 @@ public:
     static const QString px4FollowMeFlightMode;
 
     // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
-    virtual QString getHobbsMeter(Vehicle* vehicle) { return "Not Supported"; }
+    virtual QString getHobbsMeter(Vehicle* vehicle) { Q_UNUSED(vehicle); return "Not Supported"; }
 
 signals:
     void toolIndicatorsChanged(void);
