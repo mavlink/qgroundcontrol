@@ -11408,6 +11408,16 @@
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
+    <parameter name="SENS_OR_ADIS164X" default="0" type="INT32">
+      <short_desc>Analog Devices ADIS16448 IMU Orientation(external SPI)</short_desc>
+      <min>0</min>
+      <max>101</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">ROTATION_NONE</value>
+        <value code="4">ROTATION_YAW_180</value>
+      </values>
+    </parameter>
     <parameter name="SENS_SF0X_CFG" default="0" type="INT32">
       <short_desc>Serial Configuration for Lightware Laser Rangefinder (serial)</short_desc>
       <long_desc>Configure on which serial port to run Lightware Laser Rangefinder (serial).</long_desc>
