@@ -270,6 +270,7 @@ void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordina
 void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicle)
 {
     // Not supported by generic vehicle
+    Q_UNUSED(pauseVehicle);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
