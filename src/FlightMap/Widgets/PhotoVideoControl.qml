@@ -467,8 +467,19 @@ Rectangle {
                                 stepSize:                   parent._fact.increment
                                 visible:                    parent._isSlider
                                 updateValueWhileDragging:   false
-                                onValueChanged:             parent._fact.value = value
-                                Component.onCompleted:      value = parent._fact.value
+                                property bool initialized:  false
+
+                                onValueChanged: {
+                                    if (!initialized) {
+                                        return
+                                    }
+                                    parent._fact.value = value
+                                }
+
+                                Component.onCompleted: {
+                                    value = parent._fact.value
+                                    initialized = true
+                                }
                             }
                             QGCSwitch {
                                 checked:        parent._fact ? parent._fact.value : false
