@@ -20,23 +20,23 @@
 #include "SettingsManager.h"
 #include "PlanMasterController.h"
 
-TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad, QObject* parent)
-    : SimpleMissionItem (masterController, flyView, forLoad, parent)
+TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem (masterController, flyView, forLoad)
     , _settingsItem     (settingsItem)
 {
     _init(forLoad);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (masterController, flyView, false /* forLoad */, parent)
+TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem)
+    : SimpleMissionItem (masterController, flyView, false /* forLoad */)
     , _settingsItem     (settingsItem)
 {
     setCommand(takeoffCmd);
     _init(false /* forLoad */);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (masterController, flyView, missionItem, parent)
+TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem)
+    : SimpleMissionItem (masterController, flyView, missionItem)
     , _settingsItem     (settingsItem)
 {
     _init(false /* forLoad */);

@@ -52,8 +52,8 @@ static const struct EnumInfo_s _rgMavFrameInfo[] = {
 { "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT",   MAV_FRAME_GLOBAL_TERRAIN_ALT_INT },
 };
 
-SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad, QObject* parent)
-    : VisualMissionItem                 (masterController, flyView, parent)
+SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad)
+    : VisualMissionItem                 (masterController, flyView)
     , _commandTree                      (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact             (0, "Command:",             FactMetaData::valueTypeUint32)
     , _altitudeFact                     (0, "Altitude",             FactMetaData::valueTypeDouble)
@@ -80,8 +80,8 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     }
 }
 
-SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem, QObject* parent)
-    : VisualMissionItem         (masterController, flyView, parent)
+SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem)
+    : VisualMissionItem         (masterController, flyView)
     , _missionItem              (missionItem)
     , _commandTree              (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact     (0,         "Command:",             FactMetaData::valueTypeUint32)

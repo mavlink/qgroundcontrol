@@ -77,16 +77,16 @@ private:
         visualItemsChangedSignalMask =                 1 << visualItemsChangedSignalIndex,
     };
 
-    MultiSignalSpy*     _multiSpyMissionController;
-    static const size_t _cMissionControllerSignals = missionControllerMaxSignalIndex;
-    const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
+    MultiSignalSpy*         _multiSpyMissionController  = nullptr;
+    MultiSignalSpy*         _multiSpyMissionItem        = nullptr;
+    PlanMasterController*   _masterController           = nullptr;
+    MissionController*      _missionController          = nullptr;
 
-    MultiSignalSpy*     _multiSpyMissionItem;
     static const size_t _cVisualItemSignals = visualItemMaxSignalIndex;
-    const char*         _rgVisualItemSignals[_cVisualItemSignals];
+    static const size_t _cMissionControllerSignals = missionControllerMaxSignalIndex;
 
-    PlanMasterController*   _masterController;
-    MissionController*      _missionController;
+    const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
+    const char*         _rgVisualItemSignals[_cVisualItemSignals];
 };
 
 #endif

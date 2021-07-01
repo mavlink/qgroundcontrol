@@ -254,3 +254,83 @@ void QGCMapPolygonTest::_testSelectVertex(void)
     _mapPolygon->removeVertex(0);
     QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 1);
 }
+
+void QGCMapPolygonTest::_testSegmentSplit(void)
+{
+    // Create polygon
+    foreach (auto vertex, _polyPoints) {
+        _mapPolygon->appendVertex(vertex);
+    }
+
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+    QVERIFY(_mapPolygon->count() == _polyPoints.count());
+    QVERIFY(_mapPolygon->count() == 4);
+
+    // Test deselect, select, deselect
+    _mapPolygon->selectVertex(-1);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+    _mapPolygon->selectVertex(3);
+    QVERIFY(_mapPolygon->selectedVertex() == 3);
+    _mapPolygon->selectVertex(-1);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split at beginning, with no selected
+    _mapPolygon->selectVertex(-1);
+    _mapPolygon->splitPolygonSegment(0);
+    QVERIFY(_mapPolygon->count() == 5);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split at beginning, with same idx selected
+    _mapPolygon->selectVertex(0);
+    _mapPolygon->splitPolygonSegment(0);
+    QVERIFY(_mapPolygon->count() == 6);
+    QVERIFY(_mapPolygon->selectedVertex() == 0);
+
+    // Test split at beginning, with later idx selected
+    _mapPolygon->selectVertex(1);
+    _mapPolygon->splitPolygonSegment(0);
+    QVERIFY(_mapPolygon->count() == 7);
+    QVERIFY(_mapPolygon->selectedVertex() == 2);
+
+    // Test split in middle, with no selected
+    _mapPolygon->selectVertex(-1);
+    _mapPolygon->splitPolygonSegment(2);
+    QVERIFY(_mapPolygon->count() == 8);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split in middle, with earlier selected
+    _mapPolygon->selectVertex(1);
+    _mapPolygon->splitPolygonSegment(2);
+    QVERIFY(_mapPolygon->count() == 9);
+    QVERIFY(_mapPolygon->selectedVertex() == 1);
+
+    // Test split in middle, with same selected
+    _mapPolygon->selectVertex(2);
+    _mapPolygon->splitPolygonSegment(2);
+    QVERIFY(_mapPolygon->count() == 10);
+    QVERIFY(_mapPolygon->selectedVertex() == 2);
+
+    // Test split in middle, with later selected
+    _mapPolygon->selectVertex(3);
+    _mapPolygon->splitPolygonSegment(2);
+    QVERIFY(_mapPolygon->count() == 11);
+    QVERIFY(_mapPolygon->selectedVertex() == 4);
+
+    // Test split at end, with no selected
+    _mapPolygon->selectVertex(-1);
+    _mapPolygon->splitPolygonSegment(_mapPolygon->count()-1);
+    QVERIFY(_mapPolygon->count() == 12);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split at end, with earlier selected
+    _mapPolygon->selectVertex(_mapPolygon->count()-2);
+    _mapPolygon->splitPolygonSegment(_mapPolygon->count()-1);
+    QVERIFY(_mapPolygon->count() == 13);
+    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count()-3);
+
+    // Test split at end, with same selected
+    _mapPolygon->selectVertex(_mapPolygon->count()-1);
+    _mapPolygon->splitPolygonSegment(_mapPolygon->count()-1);
+    QVERIFY(_mapPolygon->count() == 14);
+    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count()-2);
+}

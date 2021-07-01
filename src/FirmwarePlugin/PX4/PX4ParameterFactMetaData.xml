@@ -1441,6 +1441,9 @@
         <value code="7">Lockdown</value>
       </values>
     </parameter>
+    <parameter name="COM_OBS_AVOID" default="0" type="INT32" boolean="true">
+      <short_desc>Flag to enable obstacle avoidance</short_desc>
+    </parameter>
     <parameter name="COM_OF_LOSS_T" default="1.0" type="FLOAT">
       <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action</short_desc>
       <long_desc>See COM_OBL_ACT and COM_OBL_RC_ACT to configure action.</long_desc>
@@ -1511,6 +1514,17 @@
       <unit>s</unit>
       <decimal>3</decimal>
     </parameter>
+    <parameter name="COM_RCL_EXCEPT" default="0" type="INT32">
+      <short_desc>RC loss exceptions</short_desc>
+      <long_desc>Specify modes in which RC loss is ignored and the failsafe action not triggered.</long_desc>
+      <min>0</min>
+      <max>31</max>
+      <bitmask>
+        <bit index="0">Mission</bit>
+        <bit index="1">Hold</bit>
+        <bit index="2">Offboard</bit>
+      </bitmask>
+    </parameter>
     <parameter name="COM_RC_ARM_HYST" default="1000" type="INT32">
       <short_desc>RC input arm/disarm command duration</short_desc>
       <long_desc>The default value of 1000 requires the stick to be held in the arm or disarm position for 1 second.</long_desc>
@@ -1562,10 +1576,45 @@
       <short_desc>Rearming grace period</short_desc>
       <long_desc>Re-arming grace allows to rearm the drone with manual command without running prearmcheck during 5 s after disarming.</long_desc>
     </parameter>
+    <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
+      <short_desc>Action after TAKEOFF has been accepted</short_desc>
+      <long_desc>The mode transition after TAKEOFF has completed successfully.</long_desc>
+      <values>
+        <value code="0">Hold</value>
+        <value code="1">Mission (if valid)</value>
+      </values>
+    </parameter>
     <parameter name="COM_VEL_FS_EVH" default="1" type="FLOAT">
       <short_desc>Horizontal velocity error threshold</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m/s</unit>
+    </parameter>
+    <parameter name="NAV_DLL_ACT" default="0" type="INT32">
+      <short_desc>Set data link loss failsafe mode</short_desc>
+      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed.</long_desc>
+      <min>0</min>
+      <max>6</max>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Return mode</value>
+        <value code="3">Land mode</value>
+        <value code="5">Terminate</value>
+        <value code="6">Lockdown</value>
+      </values>
+    </parameter>
+    <parameter name="NAV_RCL_ACT" default="2" type="INT32">
+      <short_desc>Set RC loss failsafe mode</short_desc>
+      <long_desc>The RC loss failsafe will only be entered after a timeout, set by COM_RC_LOSS_T in seconds. If RC input checks have been disabled by setting the COM_RC_IN_MODE param it will not be triggered.</long_desc>
+      <min>1</min>
+      <max>6</max>
+      <values>
+        <value code="1">Hold mode</value>
+        <value code="2">Return mode</value>
+        <value code="3">Land mode</value>
+        <value code="5">Terminate</value>
+        <value code="6">Lockdown</value>
+      </values>
     </parameter>
     <parameter name="RTL_FLT_TIME" default="15" type="FLOAT">
       <short_desc>Maximum allowed RTL flight in minutes</short_desc>
@@ -2253,7 +2302,7 @@
       <decimal>2</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="EKF2_GND_EFF_DZ" default="0.0" type="FLOAT">
+    <parameter name="EKF2_GND_EFF_DZ" default="4.0" type="FLOAT">
       <short_desc>Baro deadzone range for height fusion</short_desc>
       <long_desc>Sets the value of deadzone applied to negative baro innovations. Deadzone is enabled when EKF2_GND_EFF_DZ &gt; 0.</long_desc>
       <min>0.0</min>
@@ -4810,17 +4859,6 @@
     </parameter>
   </group>
   <group name="Mission">
-    <parameter name="COM_OBS_AVOID" default="0" type="INT32" boolean="true">
-      <short_desc>Flag to enable obstacle avoidance</short_desc>
-    </parameter>
-    <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
-      <short_desc>Action after TAKEOFF has been accepted</short_desc>
-      <long_desc>The mode transition after TAKEOFF has completed successfully.</long_desc>
-      <values>
-        <value code="0">Hold</value>
-        <value code="1">Mission (if valid)</value>
-      </values>
-    </parameter>
     <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
       <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIS_1WP from the home position.</long_desc>
@@ -4910,18 +4948,6 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="NAV_DLL_ACT" default="0" type="INT32">
-      <short_desc>Set data link loss failsafe mode</short_desc>
-      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed.</long_desc>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">Hold mode</value>
-        <value code="2">Return mode</value>
-        <value code="3">Land mode</value>
-        <value code="5">Terminate</value>
-        <value code="6">Lockdown</value>
-      </values>
-    </parameter>
     <parameter name="NAV_FORCE_VT" default="1" type="INT32" boolean="true">
       <short_desc>Force VTOL mode takeoff and land</short_desc>
     </parameter>
@@ -4959,18 +4985,6 @@
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="NAV_RCL_ACT" default="2" type="INT32">
-      <short_desc>Set RC loss failsafe mode</short_desc>
-      <long_desc>The RC loss failsafe will only be entered after a timeout, set by COM_RC_LOSS_T in seconds. If RC input checks have been disabled by setting the COM_RC_IN_MODE param it will not be triggered.</long_desc>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">Hold mode</value>
-        <value code="2">Return mode</value>
-        <value code="3">Land mode</value>
-        <value code="5">Terminate</value>
-        <value code="6">Lockdown</value>
-      </values>
     </parameter>
     <parameter name="NAV_TRAFF_AVOID" default="1" type="INT32">
       <short_desc>Set traffic avoidance mode</short_desc>
@@ -5355,7 +5369,7 @@
     </parameter>
     <parameter name="MPC_LAND_ALT1" default="10.0" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude: - descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" and "MPC_LAND_SPEED" - horizontal velocity gets limited to a value between "MPC_VEL_MANUAL" and "MPC_LAND_VEL_XY" for a smooth descent and landing experience. Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -5363,7 +5377,7 @@
     </parameter>
     <parameter name="MPC_LAND_ALT2" default="5.0" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
-      <long_desc>Below this altitude descending and horizontal velocities get limited to "MPC_LAND_SPEED" and "MPC_LAND_VEL_XY", respectively. Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED". Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -5372,13 +5386,6 @@
     <parameter name="MPC_LAND_SPEED" default="0.7" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
       <min>0.6</min>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-    </parameter>
-    <parameter name="MPC_LAND_VEL_XY" default="10.0" type="FLOAT">
-      <short_desc>Maximum horizontal position mode velocity when close to ground/home altitude</short_desc>
-      <long_desc>Set the value higher than the otherwise expected maximum to disable any slowdown.</long_desc>
-      <min>0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
@@ -11401,6 +11408,16 @@
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
+    <parameter name="SENS_OR_ADIS164X" default="0" type="INT32">
+      <short_desc>Analog Devices ADIS16448 IMU Orientation(external SPI)</short_desc>
+      <min>0</min>
+      <max>101</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">ROTATION_NONE</value>
+        <value code="4">ROTATION_YAW_180</value>
+      </values>
+    </parameter>
     <parameter name="SENS_SF0X_CFG" default="0" type="INT32">
       <short_desc>Serial Configuration for Lightware Laser Rangefinder (serial)</short_desc>
       <long_desc>Configure on which serial port to run Lightware Laser Rangefinder (serial).</long_desc>
@@ -13009,21 +13026,27 @@
     </parameter>
     <parameter name="UUV_PITCH_D" default="2.0" type="FLOAT">
       <short_desc>Pitch differential gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_PITCH_P" default="4.0" type="FLOAT">
       <short_desc>Pitch proportional gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_ROLL_D" default="1.5" type="FLOAT">
       <short_desc>Roll differential gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_ROLL_P" default="4.0" type="FLOAT">
       <short_desc>Roll proportional gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_YAW_D" default="2.0" type="FLOAT">
       <short_desc>Yaw differential gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_YAW_P" default="4.0" type="FLOAT">
       <short_desc>Yawh proportional gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
   </group>
   <group name="UUV Position Control">

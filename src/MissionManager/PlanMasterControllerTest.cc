@@ -35,7 +35,6 @@ void PlanMasterControllerTest::cleanup(void)
 {
     delete _masterController;
     _masterController = nullptr;
-
     UnitTest::cleanup();
 }
 

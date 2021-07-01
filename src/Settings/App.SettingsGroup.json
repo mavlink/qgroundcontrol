@@ -228,6 +228,13 @@
     "default":     ""
 },
 {
+    "name":             "vworldToken",
+    "shortDesc": "VWorld Token",
+    "longDesc":  "Your personal access token for VWorld maps",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "defaultFirmwareType",
     "shortDesc": "Default firmware type for flashing",
     "type":             "uint32",

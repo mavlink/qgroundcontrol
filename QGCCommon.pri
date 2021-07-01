@@ -18,6 +18,7 @@
 
 CONFIG -= debug_and_release
 CONFIG += warn_on
+CONFIG += resources_big
 
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
