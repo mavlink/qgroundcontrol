@@ -107,9 +107,10 @@ endif()
 if (GST_FOUND)
     add_definitions(
         -DQGC_GST_STREAMING
-        -DQGC_GST_TAISYNC_ENABLED
-        -DQGC_GST_MICROHARD_ENABLED
     )
+
+    option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
+    option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
 endif()
 
 add_definitions(
