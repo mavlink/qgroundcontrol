@@ -13026,21 +13026,27 @@
     </parameter>
     <parameter name="UUV_PITCH_D" default="2.0" type="FLOAT">
       <short_desc>Pitch differential gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_PITCH_P" default="4.0" type="FLOAT">
       <short_desc>Pitch proportional gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_ROLL_D" default="1.5" type="FLOAT">
       <short_desc>Roll differential gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_ROLL_P" default="4.0" type="FLOAT">
       <short_desc>Roll proportional gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_YAW_D" default="2.0" type="FLOAT">
       <short_desc>Yaw differential gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="UUV_YAW_P" default="4.0" type="FLOAT">
       <short_desc>Yawh proportional gain</short_desc>
+      <decimal>2</decimal>
     </parameter>
   </group>
   <group name="UUV Position Control">
