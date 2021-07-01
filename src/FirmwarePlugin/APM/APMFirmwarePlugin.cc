@@ -309,27 +309,39 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_messa
 
 bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
+    // We use loss of BATTERY_STATUS/HOME_POSITION as a trigger to reinitialize stream rates
+    auto instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+
     if (message->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
         // We need to look at all heartbeats that go by from any component
         _handleIncomingHeartbeat(vehicle, message);
-        return true;
+    } else if (message->msgid == MAVLINK_MSG_ID_BATTERY_STATUS && instanceData)  {
+        instanceData->lastBatteryStatusTime = QTime::currentTime();
+    } else if (message->msgid == MAVLINK_MSG_ID_HOME_POSITION && instanceData)  {
+        instanceData->lastHomePositionTime = QTime::currentTime();
+    } else {
+        // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
+        if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
+            switch (message->msgid) {
+            case MAVLINK_MSG_ID_PARAM_VALUE:
+                _handleIncomingParamValue(vehicle, message);
+                break;
+            case MAVLINK_MSG_ID_STATUSTEXT:
+                return _handleIncomingStatusText(vehicle, message);
+            case MAVLINK_MSG_ID_RC_CHANNELS:
+                _handleRCChannels(vehicle, message);
+                break;
+            case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+                _handleRCChannelsRaw(vehicle, message);
+                break;
+            }
+        }
     }
 
-    // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
-    if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
-        switch (message->msgid) {
-        case MAVLINK_MSG_ID_PARAM_VALUE:
-            _handleIncomingParamValue(vehicle, message);
-            break;
-        case MAVLINK_MSG_ID_STATUSTEXT:
-            return _handleIncomingStatusText(vehicle, message);
-        case MAVLINK_MSG_ID_RC_CHANNELS:
-            _handleRCChannels(vehicle, message);
-            break;
-        case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-            _handleRCChannelsRaw(vehicle, message);
-            break;
-        }
+    // If we lose BATTERY_STATUS/HOME_POSITION for reinitStreamsTimeoutSecs seconds we re-initialize stream rates
+    const int reinitStreamsTimeoutSecs = 10;
+    if (instanceData && (instanceData->lastBatteryStatusTime.secsTo(QTime::currentTime()) > reinitStreamsTimeoutSecs || instanceData->lastHomePositionTime.secsTo(QTime::currentTime()) > reinitStreamsTimeoutSecs)) {
+        initializeStreamRates(vehicle);
     }
 
     return true;
@@ -400,28 +412,39 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
 
 void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
 {
-    APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
+    // We use loss of BATTERY_STATUS/HOME_POSITION as a trigger to reinitialize stream rates
+    auto instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+    if (!instanceData) {
+        instanceData = new APMFirmwarePluginInstanceData(vehicle);
+        instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
+        vehicle->setFirmwarePluginInstanceData(instanceData);
+    }
 
-    struct StreamInfo_s {
-        MAV_DATA_STREAM mavStream;
-        int             streamRate;
-    };
+    if (qgcApp()->toolbox()->settingsManager()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
 
-    StreamInfo_s rgStreamInfo[] = {
-        { MAV_DATA_STREAM_RAW_SENSORS,      streamRates->streamRateRawSensors()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTENDED_STATUS,  streamRates->streamRateExtendedStatus()->rawValue().toInt() },
-        { MAV_DATA_STREAM_RC_CHANNELS,      streamRates->streamRateRCChannels()->rawValue().toInt() },
-        { MAV_DATA_STREAM_POSITION,         streamRates->streamRatePosition()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTRA1,           streamRates->streamRateExtra1()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTRA2,           streamRates->streamRateExtra2()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTRA3,           streamRates->streamRateExtra3()->rawValue().toInt() },
-    };
+        APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
 
-    for (size_t i=0; i<sizeof(rgStreamInfo)/sizeof(rgStreamInfo[0]); i++) {
-        const StreamInfo_s& streamInfo = rgStreamInfo[i];
+        struct StreamInfo_s {
+            MAV_DATA_STREAM mavStream;
+            int             streamRate;
+        };
 
-        if (streamInfo.streamRate >= 0) {
-            vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
+        StreamInfo_s rgStreamInfo[] = {
+            { MAV_DATA_STREAM_RAW_SENSORS,      streamRates->streamRateRawSensors()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTENDED_STATUS,  streamRates->streamRateExtendedStatus()->rawValue().toInt() },
+            { MAV_DATA_STREAM_RC_CHANNELS,      streamRates->streamRateRCChannels()->rawValue().toInt() },
+            { MAV_DATA_STREAM_POSITION,         streamRates->streamRatePosition()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTRA1,           streamRates->streamRateExtra1()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTRA2,           streamRates->streamRateExtra2()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTRA3,           streamRates->streamRateExtra3()->rawValue().toInt() },
+        };
+
+        for (size_t i=0; i<sizeof(rgStreamInfo)/sizeof(rgStreamInfo[0]); i++) {
+            const StreamInfo_s& streamInfo = rgStreamInfo[i];
+
+            if (streamInfo.streamRate >= 0) {
+                vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
+            }
         }
     }
 
@@ -431,6 +454,8 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
     // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. So we set showError=false.
     // Which also means than on older firmwares you may be left with some missing features.
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
+
+    instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
 }
 
 
@@ -468,10 +493,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
             break;
         }
     } else {
-        if (qgcApp()->toolbox()->settingsManager()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
-            // Streams are not started automatically on APM stack (sort of)
-            initializeStreamRates(vehicle);
-        }
+        initializeStreamRates(vehicle);
     }
 
     if (qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoSource3DRSolo) {
@@ -598,7 +620,7 @@ QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
         Fact* factFltTime = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "STAT_FLTTIME");
         hobbsTimeSeconds = (uint64_t)factFltTime->rawValue().toUInt();
         qCDebug(VehicleLog) << "Hobbs Meter raw Ardupilot(s):" << "(" <<  hobbsTimeSeconds << ")";
-    } 
+    }
 
     int hours   = hobbsTimeSeconds / 3600;
     int minutes = (hobbsTimeSeconds % 3600) / 60;
