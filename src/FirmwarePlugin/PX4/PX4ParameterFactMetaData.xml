@@ -6137,6 +6137,12 @@
       <max>1600</max>
       <unit>us</unit>
     </parameter>
+    <parameter name="PWM_AUX_OUT" default="0" type="INT32">
+      <short_desc>PWM channels used as ESC outputs</short_desc>
+      <long_desc>Number representing the channels e.g. 134 - Channel 1, 3 and 4. Global e.g. PWM_AUX_MIN/MAX/DISARM limits only apply to these channels.</long_desc>
+      <min>0</min>
+      <max>123456789</max>
+    </parameter>
     <parameter name="PWM_AUX_RATE" default="50" type="INT32">
       <short_desc>PWM aux output frequency</short_desc>
       <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
@@ -6998,6 +7004,12 @@
       <min>-1</min>
       <max>1600</max>
       <unit>us</unit>
+    </parameter>
+    <parameter name="PWM_MAIN_OUT" default="0" type="INT32">
+      <short_desc>PWM channels used as ESC outputs</short_desc>
+      <long_desc>Number representing the channels e.g. 134 - Channel 1, 3 and 4. Global e.g. PWM_MAIN_MIN/MAX/DISARM limits only apply to these channels.</long_desc>
+      <min>0</min>
+      <max>123456789</max>
     </parameter>
     <parameter name="PWM_MAIN_RATE" default="400" type="INT32">
       <short_desc>PWM main output frequency</short_desc>
