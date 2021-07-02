@@ -25,8 +25,8 @@ const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHome
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
-MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : ComplexMissionItem                (masterController, flyView, parent)
+MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController, bool flyView)
+    : ComplexMissionItem                (masterController, flyView)
     , _managerVehicle                   (masterController->managerVehicle())
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
     , _cameraSection                    (masterController)

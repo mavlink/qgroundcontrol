@@ -732,6 +732,10 @@ VideoManager::_updateVideoUri(unsigned id, const QString& uri)
 void
 VideoManager::_restartVideo(unsigned id)
 {
+#if !defined(QGC_GST_STREAMING)
+    Q_UNUSED(id);
+#endif
+
     if (qgcApp()->runningUnitTests()) {
         return;
     }
@@ -781,6 +785,8 @@ VideoManager::_startReceiver(unsigned id)
             _videoReceiver[id]->start(_videoUri[id], timeout, _lowLatencyStreaming[id] ? -1 : 0);
         }
     }
+#else
+    Q_UNUSED(id);
 #endif
 }
 
@@ -794,6 +800,8 @@ VideoManager::_stopReceiver(unsigned id)
     } else if (_videoReceiver[id] != nullptr) {
         _videoReceiver[id]->stop();
     }
+#else
+    Q_UNUSED(id);
 #endif
 }
 

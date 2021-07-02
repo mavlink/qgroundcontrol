@@ -9,6 +9,7 @@
 
 #include "TransectStyleComplexItemTest.h"
 #include "QGCApplication.h"
+#include "QGroundControlQmlGlobal.h"
 
 TransectStyleComplexItemTest::TransectStyleComplexItemTest(void)
 {
@@ -18,7 +19,7 @@ void TransectStyleComplexItemTest::init(void)
 {
     TransectStyleComplexItemTestBase::init();
 
-    _transectStyleItem = new TestTransectStyleItem(_masterController, this);
+    _transectStyleItem = new TestTransectStyleItem(_masterController);
     _transectStyleItem->cameraTriggerInTurnAround()->setRawValue(false);
     _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
@@ -31,9 +32,13 @@ void TransectStyleComplexItemTest::init(void)
 
 void TransectStyleComplexItemTest::cleanup(void)
 {
-    delete _transectStyleItem;
     delete _multiSpy;
+    _multiSpy = nullptr;
+
     TransectStyleComplexItemTestBase::cleanup();
+
+    // These items are deleted when _masterController is deleted
+    _transectStyleItem = nullptr;
 }
 
 void TransectStyleComplexItemTest::_testDirty(void)
@@ -89,6 +94,8 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
 {
     auto coveredAreaChangedMask         = _multiSpy->signalNameToMask(SIGNAL(coveredAreaChanged));
     auto lastSequenceNumberChangedMask  = _multiSpy->signalNameToMask(SIGNAL(lastSequenceNumberChanged));
+
+    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::xlatCustomCameraName());
 
     // Changing the survey polygon should trigger:
     //  _rebuildTransects calls
@@ -181,32 +188,6 @@ void TransectStyleComplexItemTest::_testDistanceSignalling(void)
     rgFacts.clear();
 }
 
-
-
-void TransectStyleComplexItemTest::_testAltMode(void)
-{
-    // Default should be relative
-    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
-
-    // Manual camera allows non-relative altitudes, validate that changing back to known
-    // camera switches back to relative
-    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
-    _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
-    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalCustomCameraName());
-    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
-
-    // When you turn off terrain following mode make sure that the altitude mode changed back to relative altitudes
-    _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
-    _transectStyleItem->setFollowTerrain(true);
-
-    QVERIFY(!_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
-    QVERIFY(_transectStyleItem->followTerrain());
-
-    _transectStyleItem->setFollowTerrain(false);
-    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
-    QVERIFY(!_transectStyleItem->followTerrain());
-}
-
 void TransectStyleComplexItemTest::_testAltitudes(void)
 {
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
@@ -229,7 +210,7 @@ void TransectStyleComplexItemTest::_testFollowTerrain(void)
 {
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
     _transectStyleItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(0);
-    _transectStyleItem->setFollowTerrain(true);
+    _transectStyleItem->cameraCalc()->setDistanceMode(QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain);
 
     QVERIFY(QTest::qWaitFor([&]() { return _transectStyleItem->readyForSaveState() == TransectStyleComplexItem::ReadyForSave; }, 2000));
 
@@ -246,8 +227,8 @@ void TransectStyleComplexItemTest::_testFollowTerrain(void)
     }
 }
 
-TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController, QObject* parent)
-    : TransectStyleComplexItem      (masterController, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
+TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController)
+    : TransectStyleComplexItem      (masterController, false /* flyView */, QStringLiteral("UnitTestTransect"))
     , rebuildTransectsPhase1Called  (false)
     , recalcComplexDistanceCalled   (false)
     , recalcCameraShotsCalled       (false)

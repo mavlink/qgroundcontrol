@@ -118,7 +118,7 @@ Item {
         target: _appSettings ? _appSettings.defaultMissionItemAltitude : null
         onRawValueChanged: {
             if (_visualItems.count > 1) {
-                mainWindow.showComponentDialog(applyNewAltitude, qsTr("Apply new alititude"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                mainWindow.showComponentDialog(applyNewAltitude, qsTr("Apply new altitude"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
             }
         }
     }
@@ -479,10 +479,11 @@ Item {
             Repeater {
                 model: _missionController.visualItems
                 delegate: MissionItemMapVisual {
-                    map:        editorMap
-                    onClicked:  _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
-                    opacity:    _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
+                    map:         editorMap
+                    onClicked:   _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                    opacity:     _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
                     interactive: _editingLayer == _layerMission
+                    vehicle:     _planMasterController.controllerVehicle
                 }
             }
 

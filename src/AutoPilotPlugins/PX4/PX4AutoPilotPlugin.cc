@@ -156,8 +156,6 @@ QString PX4AutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
                 return _airframeComponent->name();
             } else if (_radioComponent && !_radioComponent->setupComplete()) {
                 return _radioComponent->name();
-            } else if (_sensorsComponent && !_sensorsComponent->setupComplete()) {
-                return _sensorsComponent->name();
             }
         }
     } else if (qobject_cast<const PX4RadioComponent*>(component)) {

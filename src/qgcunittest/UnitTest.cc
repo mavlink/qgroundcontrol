@@ -32,7 +32,7 @@ enum UnitTest::FileDialogType UnitTest::_fileDialogExpectedType = getOpenFileNam
 int UnitTest::_missedFileDialogCount = 0;
 
 UnitTest::UnitTest(void)
-{    
+{
 
 }
 
@@ -50,7 +50,7 @@ void UnitTest::_addTest(UnitTest* test)
     QList<UnitTest*>& tests = _testList();
 
     Q_ASSERT(!tests.contains(test));
-    
+
     tests.append(test);
 }
 
@@ -63,13 +63,13 @@ void UnitTest::_unitTestCalled(void)
 QList<UnitTest*>& UnitTest::_testList(void)
 {
     static QList<UnitTest*> tests;
-	return tests;
+    return tests;
 }
 
 int UnitTest::run(QString& singleTest)
 {
     int ret = 0;
-    
+
     for (UnitTest* test: _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
             if (test->standalone() && singleTest.isEmpty()) {
@@ -80,7 +80,7 @@ int UnitTest::run(QString& singleTest)
             ret += QTest::qExec(test, args);
         }
     }
-    
+
     return ret;
 }
 
@@ -100,12 +100,12 @@ void UnitTest::init(void)
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
     appSettings->offlineEditingVehicleClass()->setRawValue(appSettings->offlineEditingVehicleClass()->rawDefaultValue());
-    
+
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;
     _badResponseButton = false;
     _messageBoxResponseButton = QMessageBox::NoButton;
-    
+
     _fileDialogRespondedTo = false;
     _missedFileDialogCount = 0;
     _fileDialogResponseSet = false;
@@ -113,7 +113,7 @@ void UnitTest::init(void)
 
     _expectMissedFileDialog = false;
     _expectMissedMessageBox = false;
-    
+
     MAVLinkProtocol::deleteTempLogFiles();
 }
 
@@ -134,6 +134,12 @@ void UnitTest::cleanup(void)
         QEXPECT_FAIL("", "Expecting failure due internal testing", Continue);
     }
     QCOMPARE(_missedFileDialogCount, 0);
+
+    // Don't let any lingering signals or events cross to the next unit test.
+    // If you have a failure whose stack trace points to this then
+    // your test is leaking signals or events. It could cause use-after-free or
+    // segmentation faults from wild pointers.
+    qgcApp()->processEvents();
 }
 
 void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)
@@ -178,20 +184,20 @@ void UnitTest::checkExpectedMessageBox(int expectFailFlags)
 {
     // Previous call to setExpectedMessageBox should have already checked this
     Q_ASSERT(_missedMessageBoxCount == 0);
-    
+
     // Check for a valid response
-    
+
     if (expectFailFlags & expectFailBadResponseButton) {
         QEXPECT_FAIL("", "Expecting failure due to bad button response", Continue);
     }
     QCOMPARE(_badResponseButton, false);
-    
+
     if (expectFailFlags & expectFailNoDialog) {
         QEXPECT_FAIL("", "Expecting failure due to no message box", Continue);
     }
-    
+
     // Clear this flag before QCOMPARE since anything after QCOMPARE will be skipped on failure
-    
+
     //-- TODO
     // bool messageBoxRespondedTo = _messageBoxRespondedTo;
     // QCOMPARE(messageBoxRespondedTo, true);
@@ -208,7 +214,7 @@ void UnitTest::checkMultipleExpectedMessageBox(int messageCount)
 void UnitTest::checkExpectedFileDialog(int expectFailFlags)
 {
     // Internal testing
-    
+
     if (expectFailFlags & expectFailNoDialog) {
         QEXPECT_FAIL("", "Expecting failure due to no file dialog", Continue);
     }
@@ -218,18 +224,18 @@ void UnitTest::checkExpectedFileDialog(int expectFailFlags)
         // Previous call to setExpectedFileDialog should have already checked this
         Q_ASSERT(_missedFileDialogCount == 0);
     }
-    
+
     // Clear this flag before QCOMPARE since anything after QCOMPARE will be skipped on failure
     bool fileDialogRespondedTo = _fileDialogRespondedTo;
     _fileDialogRespondedTo = false;
-    
+
     QCOMPARE(fileDialogRespondedTo, true);
 }
 
 QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const QString& title, const QString& text, QMessageBox::StandardButtons buttons, QMessageBox::StandardButton defaultButton)
 {
     QMessageBox::StandardButton retButton;
-    
+
     Q_UNUSED(icon);
     Q_UNUSED(title);
     Q_UNUSED(text);
@@ -249,10 +255,10 @@ QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const 
         }
         _messageBoxRespondedTo = true;
     }
-    
+
     // Clear response for next message box
     _messageBoxResponseButton = QMessageBox::NoButton;
-    
+
     return retButton;
 }
 
@@ -260,7 +266,7 @@ QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const 
 QString UnitTest::_fileDialogResponseSingle(enum FileDialogType type)
 {
     QString retFile;
-    
+
     if (!_fileDialogResponseSet || _fileDialogExpectedType != type) {
         // If no response is set or the type does not match what we expected it means we were not expecting this file dialog.
         // Respond with no selection.
@@ -272,11 +278,11 @@ QString UnitTest::_fileDialogResponseSingle(enum FileDialogType type)
         }
         _fileDialogRespondedTo = true;
     }
-    
+
     // Clear response for next message box
     _fileDialogResponse.clear();
     _fileDialogResponseSet = false;
-    
+
     return retFile;
 }
 
@@ -306,7 +312,7 @@ QString UnitTest::_getOpenFileName(
     Q_UNUSED(dir);
     Q_UNUSED(filter);
     Q_UNUSED(options);
-    
+
     return _fileDialogResponseSingle(getOpenFileName);
 }
 
@@ -324,7 +330,7 @@ QStringList UnitTest::_getOpenFileNames(
     Q_UNUSED(options);
 
     QStringList retFiles;
-    
+
     if (!_fileDialogResponseSet || _fileDialogExpectedType != getOpenFileNames) {
         // If no response is set or the type does not match what we expected it means we were not expecting this file dialog.
         // Respond with no selection.
@@ -334,11 +340,11 @@ QStringList UnitTest::_getOpenFileNames(
         retFiles = _fileDialogResponse;
         _fileDialogRespondedTo = true;
     }
-    
+
     // Clear response for next message box
     _fileDialogResponse.clear();
     _fileDialogResponseSet = false;
-    
+
     return retFiles;
 }
 
@@ -363,7 +369,7 @@ QString UnitTest::_getSaveFileName(
     return _fileDialogResponseSingle(getSaveFileName);
 }
 
-void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
+void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
 
@@ -371,13 +377,13 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 
     switch (autopilot) {
     case MAV_AUTOPILOT_PX4:
-        _mockLink = MockLink::startPX4MockLink(false);
+        _mockLink = MockLink::startPX4MockLink(false, failureMode);
         break;
     case MAV_AUTOPILOT_ARDUPILOTMEGA:
-        _mockLink = MockLink::startAPMArduCopterMockLink(false);
+        _mockLink = MockLink::startAPMArduCopterMockLink(false, failureMode);
         break;
     case MAV_AUTOPILOT_GENERIC:
-        _mockLink = MockLink::startGenericMockLink(false);
+        _mockLink = MockLink::startGenericMockLink(false, failureMode);
         break;
     case MAV_AUTOPILOT_INVALID:
         _mockLink = MockLink::startNoInitialConnectMockLink(false);
