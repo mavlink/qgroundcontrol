@@ -12939,6 +12939,11 @@
       <long_desc>0 - UAVCAN disabled. 1 - Enables UAVCANv1</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UCAN1_ACTR_PUB" default="-1" type="INT32">
+      <short_desc>actuator_outputs uORB over UAVCAN v1 port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
     <parameter name="UCAN1_BMS_BP_PID" default="-1" type="INT32">
       <short_desc>DS-015 battery parameters port ID</short_desc>
       <min>-1</min>
