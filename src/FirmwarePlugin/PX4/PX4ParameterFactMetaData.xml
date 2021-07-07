@@ -12953,62 +12953,62 @@
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UCAN1_ACTR_PUB" default="-1" type="INT32">
-      <short_desc>actuator_outputs uORB over UAVCAN v1 port ID</short_desc>
+      <short_desc>actuator_outputs uORB over UAVCAN v1 publication port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_BMS_BP_PID" default="-1" type="INT32">
-      <short_desc>DS-015 battery parameters port ID</short_desc>
+    <parameter name="UCAN1_BMS_BP_SUB" default="-1" type="INT32">
+      <short_desc>DS-015 battery parameters subscription  port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_BMS_BS_PID" default="-1" type="INT32">
-      <short_desc>DS-015 battery status port ID</short_desc>
+    <parameter name="UCAN1_BMS_BS_SUB" default="-1" type="INT32">
+      <short_desc>DS-015 battery status subscription port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_BMS_ES_PID" default="-1" type="INT32">
-      <short_desc>DS-015 battery energy source port ID</short_desc>
+    <parameter name="UCAN1_BMS_ES_SUB" default="-1" type="INT32">
+      <short_desc>DS-015 battery energy source subscription port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_ESC0_PID" default="-1" type="INT32">
-      <short_desc>ESC0 port ID</short_desc>
+    <parameter name="UCAN1_ESC0_SUB" default="-1" type="INT32">
+      <short_desc>ESC 0 subscription port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
     <parameter name="UCAN1_ESC_PUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 ESC port ID</short_desc>
+      <short_desc>UAVCAN v1 ESC publication port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_GPS0_PID" default="-1" type="INT32">
-      <short_desc>GPS 0 port ID</short_desc>
+    <parameter name="UCAN1_GPS0_SUB" default="-1" type="INT32">
+      <short_desc>GPS 0 subscription port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_GPS1_PID" default="-1" type="INT32">
-      <short_desc>GPS 1 port ID</short_desc>
+    <parameter name="UCAN1_GPS1_SUB" default="-1" type="INT32">
+      <short_desc>GPS 1 subscription port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
     <parameter name="UCAN1_GPS_PUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 GPS port ID</short_desc>
+      <short_desc>UAVCAN v1 GPS publication port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
-    <parameter name="UCAN1_LG_BMS_PID" default="-1" type="INT32">
+    <parameter name="UCAN1_LG_BMS_SUB" default="-1" type="INT32">
       <short_desc>UAVCAN v1 leagcy battery port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
     <parameter name="UCAN1_SERVO_PUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 Servo port ID</short_desc>
+      <short_desc>UAVCAN v1 Servo publication port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
     <parameter name="UCAN1_UORB_GPS" default="-1" type="INT32">
-      <short_desc>sensor_gps uORB over UAVCAN v1 port ID</short_desc>
+      <short_desc>sensor_gps uORB over UAVCAN v1 subscription port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>
