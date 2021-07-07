@@ -10555,12 +10555,13 @@
       <short_desc>IMU gyro FFT enable</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_LEN" default="1024" type="INT32">
+    <parameter name="IMU_GYRO_FFT_LEN" default="512" type="INT32">
       <short_desc>IMU gyro FFT length</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
       <values>
         <value code="256">256</value>
+        <value code="512">512</value>
         <value code="1024">1024</value>
         <value code="4096">4096</value>
       </values>
