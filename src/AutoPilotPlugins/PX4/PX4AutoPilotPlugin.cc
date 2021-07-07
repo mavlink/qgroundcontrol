@@ -67,9 +67,11 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _airframeComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_airframeComponent)));
 
-                _sensorsComponent = new SensorsComponent(_vehicle, this, this);
-                _sensorsComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_sensorsComponent)));
+                if (!_vehicle->hilMode()) {
+                    _sensorsComponent = new SensorsComponent(_vehicle, this, this);
+                    _sensorsComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_sensorsComponent)));
+                }
 
                 _radioComponent = new PX4RadioComponent(_vehicle, this, this);
                 _radioComponent->setupTriggerSignals();
