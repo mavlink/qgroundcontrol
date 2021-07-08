@@ -193,8 +193,14 @@ target_link_libraries(qgc
 )
 
 if(GST_FOUND)
-	target_link_libraries(qgc PUBLIC Microhard)
-	target_link_libraries(qgc PUBLIC Taisync)
+	if (${QGC_GST_MICROHARD_ENABLED})
+		target_compile_definitions(qgc PUBLIC QGC_GST_MICROHARD_ENABLED)
+		target_link_libraries(qgc PUBLIC Microhard)
+	endif()
+	if (${QGC_GST_TAISYNC_ENABLED})
+		target_compile_definitions(qgc PUBLIC QGC_GST_TAISYNC_ENABLED)
+		target_link_libraries(qgc PUBLIC Taisync)
+	endif()
 endif()
 
 if(BUILD_TESTING)
