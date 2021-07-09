@@ -10409,7 +10409,7 @@
     </parameter>
     <parameter name="CAL_AIR_TUBED_MM" default="1.5" type="FLOAT">
       <short_desc>Airspeed sensor tube diameter. Only used for the Tube Pressure Drop Compensation</short_desc>
-      <min>0.1</min>
+      <min>1.5</min>
       <max>100</max>
       <unit>mm</unit>
     </parameter>
