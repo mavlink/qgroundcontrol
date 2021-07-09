@@ -708,20 +708,6 @@
     <parameter name="BAT_ADC_CHANNEL" default="-1" type="INT32">
       <short_desc>This parameter is deprecated. Please use BAT1_ADC_CHANNEL</short_desc>
     </parameter>
-    <parameter name="BAT_A_PER_V" default="-1.0" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_A_PER_V</short_desc>
-      <decimal>8</decimal>
-    </parameter>
-    <parameter name="BAT_CAPACITY" default="-1.0" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_CAPACITY instead</short_desc>
-      <long_desc>Defines the capacity of battery 1.</long_desc>
-      <min>-1.0</min>
-      <max>100000</max>
-      <unit>mAh</unit>
-      <decimal>0</decimal>
-      <increment>50</increment>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="BAT_CRIT_THR" default="0.07" type="FLOAT">
       <short_desc>Critical threshold</short_desc>
       <long_desc>Sets the threshold when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL.</long_desc>
@@ -748,78 +734,6 @@
       <min>0.12</min>
       <max>0.5</max>
       <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="BAT_N_CELLS" default="0" type="INT32">
-      <short_desc>This parameter is deprecated. Please use BAT1_N_CELLS instead</short_desc>
-      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
-      <unit>S</unit>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Unconfigured</value>
-        <value code="2">2S Battery</value>
-        <value code="3">3S Battery</value>
-        <value code="4">4S Battery</value>
-        <value code="5">5S Battery</value>
-        <value code="6">6S Battery</value>
-        <value code="7">7S Battery</value>
-        <value code="8">8S Battery</value>
-        <value code="9">9S Battery</value>
-        <value code="10">10S Battery</value>
-        <value code="11">11S Battery</value>
-        <value code="12">12S Battery</value>
-        <value code="13">13S Battery</value>
-        <value code="14">14S Battery</value>
-        <value code="15">15S Battery</value>
-        <value code="16">16S Battery</value>
-      </values>
-    </parameter>
-    <parameter name="BAT_R_INTERNAL" default="-1.0" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_R_INTERNAL instead</short_desc>
-      <long_desc>If non-negative, then this will be used in place of BAT_V_LOAD_DROP for all calculations.</long_desc>
-      <min>-1.0</min>
-      <max>0.2</max>
-      <unit>Ohm</unit>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="BAT_SOURCE" default="0" type="INT32">
-      <short_desc>This parameter is deprecated. Please use BAT1_SOURCE instead</short_desc>
-      <long_desc>Battery monitoring source. This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Power Module</value>
-        <value code="1">External</value>
-      </values>
-    </parameter>
-    <parameter name="BAT_V_CHARGED" default="4.05" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_CHARGED instead</short_desc>
-      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="BAT_V_DIV" default="-1.0" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_DIV</short_desc>
-      <decimal>8</decimal>
-    </parameter>
-    <parameter name="BAT_V_EMPTY" default="3.5" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_EMPTY instead</short_desc>
-      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="BAT_V_LOAD_DROP" default="0.3" type="FLOAT">
-      <short_desc>This parameter is deprecated. Please use BAT1_V_LOAD_DROP instead</short_desc>
-      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT_R_INTERNAL is set.</long_desc>
-      <min>0.07</min>
-      <max>0.5</max>
-      <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
@@ -10444,6 +10358,22 @@
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter name="BAT1_C_MULT" default="1.0" type="FLOAT">
+      <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="BAT1_SMBUS_MODEL" default="0" type="INT32">
+      <short_desc>Battery device model</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">AutoDetect</value>
+        <value code="1">BQ40Z50 based</value>
+        <value code="2">BQ40Z80 based</value>
+      </values>
+    </parameter>
     <parameter name="BATMON_ADDR_DFLT" default="11" type="INT32">
       <short_desc>I2C address for BatMon battery 1</short_desc>
       <decimal>1</decimal>
@@ -10458,22 +10388,6 @@
         <value code="0">Disabled</value>
         <value code="1">Start on default I2C addr(BATMON_ADDR_DFLT)</value>
         <value code="2">Autodetect I2C address (TODO)</value>
-      </values>
-    </parameter>
-    <parameter name="BAT_C_MULT" default="1.0" type="FLOAT">
-      <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
-      <decimal>1</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="BAT_SMBUS_MODEL" default="0" type="INT32">
-      <short_desc>Battery device model</short_desc>
-      <min>0</min>
-      <max>2</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">AutoDetect</value>
-        <value code="1">BQ40Z50 based</value>
-        <value code="2">BQ40Z80 based</value>
       </values>
     </parameter>
     <parameter name="CAL_AIR_CMODEL" default="0" type="INT32">
