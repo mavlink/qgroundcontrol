@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef APMFirmwarePlugin_H
-#define APMFirmwarePlugin_H
+#pragma once
 
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
@@ -125,4 +120,17 @@ private:
     static QMutex&          _reencodeMavlinkChannelMutex();
 };
 
-#endif
+class APMFirmwarePluginInstanceData : public QObject
+{
+    Q_OBJECT
+
+public:
+    APMFirmwarePluginInstanceData(QObject* parent = nullptr)
+        : QObject(parent)
+    {
+
+    }
+
+    QTime lastBatteryStatusTime;
+    QTime lastHomePositionTime;
+};

@@ -24,8 +24,7 @@ void StructureScanComplexItemTest::init(void)
     _rgSignals[dirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
 
     _masterController = new PlanMasterController(this);
-    _controllerVehicle = _masterController->controllerVehicle();
-    _structureScanItem = new StructureScanComplexItem(new PlanMasterController(this), false /* flyView */, QString() /* kmlFile */, this /* parent */);
+    _structureScanItem = new StructureScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
     _structureScanItem->setDirty(false);
 
     _multiSpy = new MultiSignalSpy();
@@ -35,7 +34,14 @@ void StructureScanComplexItemTest::init(void)
 
 void StructureScanComplexItemTest::cleanup(void)
 {
-    delete _structureScanItem;
+    delete _masterController;
+    delete _multiSpy;
+
+    _masterController   = nullptr;
+    _structureScanItem  = nullptr;  // Deleted when _masterController is deleted
+    _multiSpy           = nullptr;
+
+    UnitTest::cleanup();
 }
 
 void StructureScanComplexItemTest::_testDirty(void)
@@ -114,7 +120,7 @@ void StructureScanComplexItemTest::_testSaveLoad(void)
     _structureScanItem->save(items);
 
     QString errorString;
-    StructureScanComplexItem* newItem = new StructureScanComplexItem(new PlanMasterController(this), false /* flyView */, QString() /* kmlFile */, this /* parent */);
+    StructureScanComplexItem* newItem = new StructureScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
     QVERIFY(newItem->load(items[0].toObject(), 10, errorString));
     QVERIFY(errorString.isEmpty());
     _validateItem(newItem);

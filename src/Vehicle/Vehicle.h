@@ -15,6 +15,7 @@
 #include <QGeoCoordinate>
 #include <QTime>
 #include <QQueue>
+#include <QSharedPointer>
 
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
@@ -43,7 +44,9 @@
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "FTPManager.h"
+#include "ImageProtocolManager.h"
 
+class EventHandler;
 class UAS;
 class UASInterface;
 class FirmwarePlugin;
@@ -70,6 +73,12 @@ class InitialConnectStateMachine;
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
 #endif
+
+namespace events {
+namespace parser {
+class ParsedEvent;
+}
+}
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -280,6 +289,7 @@ public:
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
     Q_PROPERTY(Fact* altitudeTuning     READ altitudeTuning     CONSTANT)
     Q_PROPERTY(Fact* altitudeTuningSetpoint READ altitudeTuningSetpoint CONSTANT)
+    Q_PROPERTY(Fact* xTrackError        READ xTrackError        CONSTANT)
     Q_PROPERTY(Fact* flightDistance     READ flightDistance     CONSTANT)
     Q_PROPERTY(Fact* distanceToHome     READ distanceToHome     CONSTANT)
     Q_PROPERTY(Fact* missionItemIndex   READ missionItemIndex   CONSTANT)
@@ -578,6 +588,7 @@ public:
     bool            allSensorsHealthy           () const{ return _allSensorsHealthy; }
     QObject*        sysStatusSensorInfo         () { return &_sysStatusSensorInfo; }
     bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & SysStatusSensorGPS); }
+    bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
 
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
@@ -618,6 +629,7 @@ public:
     Fact* altitudeAMSL                      () { return &_altitudeAMSLFact; }
     Fact* altitudeTuning                    () { return &_altitudeTuningFact; }
     Fact* altitudeTuningSetpoint            () { return &_altitudeTuningSetpointFact; }
+    Fact* xTrackError                       () { return &_xTrackErrorFact; }
     Fact* flightDistance                    () { return &_flightDistanceFact; }
     Fact* distanceToHome                    () { return &_distanceToHomeFact; }
     Fact* missionItemIndex                  () { return &_missionItemIndexFact; }
@@ -788,6 +800,8 @@ public:
 
     double loadProgress                 () const { return _loadProgress; }
 
+    void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
+
 public slots:
     void setVtolInFwdFlight                 (bool vtolInFwdFlight);
     void _offlineFirmwareTypeSettingChanged (QVariant varFirmwareType); // Should only be used by MissionControler to set firmware from Plan file
@@ -819,6 +833,7 @@ signals:
     void toolIndicatorsChanged          ();
     void modeIndicatorsChanged          ();
     void textMessageReceived            (int uasid, int componentid, int severity, QString text);
+    void calibrationEventReceived       (int uasid, int componentid, int severity, QSharedPointer<events::parser::ParsedEvent> event);
     void checkListStateChanged          ();
     void messagesReceivedChanged        ();
     void messagesSentChanged            ();
@@ -907,7 +922,7 @@ private slots:
     void _offlineHoverSpeedSettingChanged   (QVariant value);
     void _handleTextMessage                 (int newCount);
     void _handletextMessageReceived         (UASMessage* message);
-    void _imageReady                        (UASInterface* uas);    ///< A new camera image has arrived
+    void _imageProtocolImageReady           (void);
     void _prearmErrorTimeout                ();
     void _firstMissionLoadComplete          ();
     void _firstGeoFenceLoadComplete         ();
@@ -955,6 +970,7 @@ private:
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
+    void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback          (const mavlink_message_t& message);
@@ -982,6 +998,7 @@ private:
     void _chunkedStatusTextCompleted    (uint8_t compId);
     void _setMessageInterval            (int messageId, int rate);
     bool _initialConnectComplete        () const;
+    EventHandler& _eventHandler         (uint8_t compid);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
@@ -1143,6 +1160,8 @@ private:
     QTimer          _orbitTelemetryTimer;
     static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
 
+    QMap<uint8_t, QSharedPointer<EventHandler>> _events; ///< One protocol handler for each component ID
+
     MAVLinkStreamConfig _mavlinkStreamConfig;
 
     // Chunked status text support
@@ -1175,12 +1194,14 @@ private:
 
     // requestMessage handling
     typedef struct RequestMessageInfo {
-        bool                        commandAckReceived; // We keep track of the ack/message being received since the order in which this will come in is random
-        bool                        messageReceived;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        Vehicle*                    vehicle             = nullptr;
         int                         msgId;
         int                         compId;
         RequestMessageResultHandler resultHandler;
         void*                       resultHandlerData;
+        bool                        commandAckReceived  = false; // We keep track of the ack/message being received since the order in which this will come in is random
+        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        mavlink_message_t           message;
     } RequestMessageInfo_t;
 
     static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, MavCmdResultFailureCode_t failureCode);
@@ -1193,7 +1214,6 @@ private:
         MAV_FRAME           frame;
         float               rgParam[7]          = { 0 };
         bool                showError           = true;
-        bool                requestMessage      = false;                        // true: this is from a requestMessage call
         MavCmdResultHandler resultHandler;
         void*               resultHandlerData   = nullptr;
         int                 maxTries            = _mavCommandMaxRetryCount;
@@ -1209,7 +1229,7 @@ private:
     static const int                _mavCommandAckTimeoutMSecs              = 3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
-    void _sendMavCommandWorker  (bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+    void _sendMavCommandWorker  (bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
     bool _sendMavCommandShouldRetry(MAV_CMD command);
@@ -1234,6 +1254,7 @@ private:
     Fact _altitudeAMSLFact;
     Fact _altitudeTuningFact;
     Fact _altitudeTuningSetpointFact;
+    Fact _xTrackErrorFact;
     Fact _flightDistanceFact;
     Fact _flightTimeFact;
     Fact _distanceToHomeFact;
@@ -1266,6 +1287,7 @@ private:
     RallyPointManager*              _rallyPointManager          = nullptr;
     VehicleLinkManager*             _vehicleLinkManager         = nullptr;
     FTPManager*                     _ftpManager                 = nullptr;
+    ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
 
     static const char* _rollFactName;
@@ -1282,6 +1304,7 @@ private:
     static const char* _altitudeAMSLFactName;
     static const char* _altitudeTuningFactName;
     static const char* _altitudeTuningSetpointFactName;
+    static const char* _xTrackErrorFactName;
     static const char* _flightDistanceFactName;
     static const char* _flightTimeFactName;
     static const char* _distanceToHomeFactName;

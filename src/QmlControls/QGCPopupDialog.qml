@@ -18,6 +18,10 @@ Item {
     height: childrenRect.height
 
     signal hideDialog
+    signal enableAcceptButton
+    signal disableAcceptButton
+    signal enableRejectButton
+    signal disableRejectButton
 
     Keys.onReleased: {
         if (event.key === Qt.Key_Escape) {

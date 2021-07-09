@@ -1634,6 +1634,51 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
     noAck = false;
 
     switch ((int)request.param1) {
+    case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
+    {
+        switch (_failureMode) {
+        case MockConfiguration::FailNone:
+            break;
+        case MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionFailure:
+            return false;
+        case MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionLost:
+            return true;
+        default:
+            break;
+        }
+
+        _respondWithAutopilotVersion();
+    }
+        return true;
+
+    case MAVLINK_MSG_ID_PROTOCOL_VERSION:
+    {
+        switch (_failureMode) {
+        case MockConfiguration::FailNone:
+            break;
+        case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionFailure:
+            return false;
+        case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionLost:
+            return true;
+        default:
+            break;
+        }
+
+        uint8_t             nullHash[8] = { 0 };
+        mavlink_message_t   responseMsg;
+        mavlink_msg_protocol_version_pack_chan(_vehicleSystemId,
+                                                _vehicleComponentId,
+                                                mavlinkChannel(),
+                                                &responseMsg,
+                                               200,
+                                               100,
+                                               200,
+                                               nullHash,
+                                               nullHash);
+        respondWithMavlinkMessage(responseMsg);
+    }
+        return true;
+
     case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
         if (_firmwareType == MAV_AUTOPILOT_PX4) {
             _sendGeneralMetaData();
@@ -1650,8 +1695,6 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
             return false;
         case FailRequestMessageCommandNoResponse:
             noAck = true;
-            return true;
-        case FailRequestMessageCommandAcceptedSecondAttempMsgSent:
             return true;
         }
     {
