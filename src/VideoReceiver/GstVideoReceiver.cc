@@ -790,6 +790,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
                 }
+                g_object_set(buffer, "latency", 70, NULL);
 
                 gst_bin_add(GST_BIN(bin), buffer);
 
@@ -1087,8 +1088,6 @@ GstVideoReceiver::_addVideoSink(GstPad* pad)
     }
 
     gst_element_sync_state_with_parent(_videoSink);
-
-    g_object_set(_videoSink, "sync", _buffer >= 0, NULL);
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 

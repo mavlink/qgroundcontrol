@@ -196,7 +196,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Set video stream to udp if running ArduSub and Video is disabled
     if (sub() && _settingsManager->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
-        _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
     //-- Airspace Management
@@ -462,7 +461,6 @@ void Vehicle::_commonInit()
     // Set video stream to udp if running ArduSub and Video is disabled
     if (sub() && _settingsManager->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
-        _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
     //-- Airspace Management
