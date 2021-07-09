@@ -48,7 +48,7 @@ Rectangle {
     property var    _planViewSettings:          QGroundControl.settingsManager.planViewSettings
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property var    _videoSettings:             QGroundControl.settingsManager.videoSettings
-    property string _videoSource:               _videoSettings.videoSource.value
+    property string _videoSource:               _videoSettings.videoSource.rawValue
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
     property bool   _isUDP264:                  _isGst && _videoSource === _videoSettings.udp264VideoSource
     property bool   _isUDP265:                  _isGst && _videoSource === _videoSettings.udp265VideoSource
