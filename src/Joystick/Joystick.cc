@@ -28,6 +28,7 @@ const char* Joystick::_buttonActionNameKey =            "ButtonActionName%1";
 const char* Joystick::_buttonActionRepeatKey =          "ButtonActionRepeat%1";
 const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
 const char* Joystick::_exponentialSettingsKey =         "Exponential";
+const char* Joystick::_joystick_multiSettingsKey =      "joystick_multi";
 const char* Joystick::_accumulatorSettingsKey =         "Accumulator";
 const char* Joystick::_deadbandSettingsKey =            "Deadband";
 const char* Joystick::_circleCorrectionSettingsKey =    "Circle_Correction";
@@ -170,6 +171,7 @@ void Joystick::_setDefaultCalibration(void) {
     _rgFunctionAxis[gimbalYawFunction]  = 5;
 
     _exponential        = 0;
+    _joystick_multi     = 0;
     _accumulator        = false;
     _deadband           = false;
     _axisFrequencyHz    = _defaultAxisFrequencyHz;
@@ -233,6 +235,7 @@ void Joystick::_loadSettings()
 
     _calibrated         = settings.value(_calibratedSettingsKey,        false).toBool();
     _exponential        = settings.value(_exponentialSettingsKey,       0).toFloat();
+    _joystick_multi     = settings.value(_joystick_multiSettingsKey,    0).toFloat();
     _accumulator        = settings.value(_accumulatorSettingsKey,       false).toBool();
     _deadband           = settings.value(_deadbandSettingsKey,          false).toBool();
     _axisFrequencyHz    = settings.value(_axisFrequencySettingsKey,     _defaultAxisFrequencyHz).toFloat();
@@ -242,7 +245,7 @@ void Joystick::_loadSettings()
     _throttleMode   = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
     badSettings |= !convertOk;
 
-    qCDebug(JoystickLog) << "_loadSettings calibrated:txmode:throttlemode:exponential:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
+    qCDebug(JoystickLog) << "_loadSettings calibrated:txmode:throttlemode:exponential:joystick_multi:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << joystick_multi << _deadband << badSettings;
 
     QString minTpl      ("Axis%1Min");
     QString maxTpl      ("Axis%1Max");
@@ -336,6 +339,7 @@ void Joystick::_saveSettings()
     settings.beginGroup(_name);
     settings.setValue(_calibratedSettingsKey,       _calibrated);
     settings.setValue(_exponentialSettingsKey,      _exponential);
+    settings.setValue(_joystick_multiSettingsKey,   _joystick_multi);
     settings.setValue(_accumulatorSettingsKey,      _accumulator);
     settings.setValue(_deadbandSettingsKey,         _deadband);
     settings.setValue(_axisFrequencySettingsKey,    _axisFrequencyHz);
@@ -651,6 +655,15 @@ void Joystick::_handleAxis()
                 yaw =   -_exponential*powf(yaw,  3) + (1+_exponential)*yaw;
             }
 
+            if (joystick_multi != 1) {
+                // _joystick_multi is set by a slider in joystickConfigAdvanced.qml
+                // Calculate new RPY with joystick_multi applied
+                roll  *= _joystick_multi;
+                pitch *= _joystick_multi;
+                yaw   *= _joystick_multi;
+            }
+            
+
             // Adjust throttle to 0:1 range
             if (_throttleMode == ThrottleModeCenterZero && _activeVehicle->supportsThrottleModeCenterZero()) {
                 if (!_activeVehicle->supportsNegativeThrust() || !_negativeThrust) {
@@ -890,12 +903,23 @@ float Joystick::exponential() const
 {
     return _exponential;
 }
+float Joystick::joystick_multi() const
+{
+    return _joystick_multi;
+}
 
 void Joystick::setExponential(float expo)
 {
     _exponential = expo;
     _saveSettings();
     emit exponentialChanged(_exponential);
+}
+
+void Joystick::setjoystick_multi(float multi)
+{
+    _joystick_multi = multi;//joystick_multi
+    _saveSettings();
+    emit joystick_multiChanged(_joystick_multi);
 }
 
 bool Joystick::accumulator() const
