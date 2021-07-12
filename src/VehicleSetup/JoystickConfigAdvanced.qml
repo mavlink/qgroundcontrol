@@ -87,6 +87,25 @@ Item {
                 text:   expoSlider.value.toFixed(2)
             }
         }
+        //---------------------------------------------------------------------
+        QGCLabel {
+            text:               qsTr("multiplication:")
+        }
+        Row {
+            spacing:            ScreenTools.defaultFontPixelWidth
+            QGCSlider {
+                id:             multiSlider
+                width:          ScreenTools.defaultFontPixelWidth * 20
+                minimumValue:   0.25
+                maximumValue:   2.5
+                Component.onCompleted: value = -_activeJoystick.joystick_multi
+                onValueChanged: _activeJoystick.joystick_multi = -value
+             }
+            QGCLabel {
+                id:     multiSliderIndicator
+                text:   multiSlider.value.toFixed(2)
+            }
+        }
         //-----------------------------------------------------------------
         //-- Enable Advanced Mode
         QGCLabel {
@@ -184,5 +203,3 @@ Item {
         }
     }
 }
-
-
