@@ -101,6 +101,39 @@ public:
     /// Does not check altitude.
     static bool fuzzyCompareLatLon(const QGeoCoordinate& coord1, const QGeoCoordinate& coord2);
 
+    ///
+    /// \brief waitForSignal waits for the specified number of signals to be captured
+    /// by the given QSignalSpy
+    /// \details QSignalSpy::wait is not always useful because it checkes the number of
+    /// signals currently captured and busy-waits for that number to grow. It is then
+    /// impossible to write a test case that:
+    /// --
+    /// QSignalSpy spy(target, signal);
+    /// emit target->signal
+    /// QVERIFY(spy.wait())
+    /// --
+    /// In other words, spy.wait() will never capture a signal that's already raised.
+    /// It is then impossible to set the spy, provoke an action that
+    /// synchrounsly emits the signal and then hope for the spy to catch it.
+    /// This function does allow it.
+    /// \param spy - the spy set on a specific target and signal
+    /// \param number - number of signals to expect
+    /// \param timeout - timeout to wait for before returning false
+    /// \return true if at least the given number of signals have been captured
+    ///
+    static bool waitForSignal(QSignalSpy &spy, int number, int timeout = 5000);
+
+    ///
+    /// \brief consumeSignals - like waitForSignal, but it consumes the captured signals
+    /// before returning, so that it's possible to call consumeSignals again on
+    /// the same target and have it wait for additional signals.
+    /// \param spy - the spy set on a specific target and signal
+    /// \param number - number of signals to expect
+    /// \param timeout - timeout to wait for before returning false
+    /// \return true if at least the given number of signals have been captured
+    ///
+    static bool consumeSignals(QSignalSpy &spy, int number, int timeout = 5000);
+
 protected slots:
 
     // These are all pure virtuals to force the derived class to implement each one and in turn

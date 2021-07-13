@@ -50,3 +50,31 @@ void PlanMasterControllerTest::_testMissionPlannerFileLoad(void)
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
     QCOMPARE(_masterController->missionController()->visualItems()->count(), 6);
 }
+
+void PlanMasterControllerTest::_testActiveVehicleChanged(void) {
+    // There was a defect where the PlanMasterController would, upon a new active vehicle,
+    // overzelously disconnect all subscribers interested in the outgoing active vechicle.
+    Vehicle* outgoingManagerVehicle = _masterController->managerVehicle();
+
+    // spyMissionManager emulates a subscriber that should not be disconnected when
+    // the active vehicle changes
+    QSignalSpy spyMissionManager(
+        outgoingManagerVehicle->missionManager(),
+        &MissionManager::error);
+    QSignalSpy managerVehicleChanged(
+        _masterController,
+        &PlanMasterController::managerVehicleChanged);
+
+    // Since MissionManager works with actual vehicles (which we don't have in the test cycle)
+    // we have to be a bit creative emulating a signal emitted by a MissionManager.
+    emit outgoingManagerVehicle->missionManager()->error(0,"");
+    QVERIFY(consumeSignals(spyMissionManager, 1));
+
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    QVERIFY(consumeSignals(managerVehicleChanged, 1));
+
+    emit outgoingManagerVehicle->missionManager()->error(0,"");
+    // This signal was affected by the defect - it wouldn't reach the subscriber. Here
+    // we make sure it does.
+    QVERIFY(consumeSignals(spyMissionManager, 1));
+}
