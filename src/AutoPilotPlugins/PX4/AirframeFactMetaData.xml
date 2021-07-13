@@ -402,11 +402,6 @@
       <maintainer>Silvan Fuhrer</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe name="Hobbyking Micro PCB" id="4020" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;">
-      <class>Copter</class>
-      <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
     <airframe name="3DR Solo" id="4030" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;">
       <class>Copter</class>
       <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
