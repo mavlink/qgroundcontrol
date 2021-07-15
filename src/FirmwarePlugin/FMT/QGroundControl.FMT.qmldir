@@ -1,0 +1,3 @@
+Module QGroundControl.PX4
+
+SensorSetupPage 1.0 SensorSetupPage.qml

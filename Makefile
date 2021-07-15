@@ -47,7 +47,7 @@ else
 		PX4_CMAKE_GENERATOR := "Unix\ Makefiles"
 	endif
 	PX4_MAKE = $(MAKE)
-	PX4_MAKE_ARGS = -j$(j) --no-print-directory
+	PX4_MAKE_ARGS = -j$(j) --no-print-directory -CRT_SECURE_NO_WARNINGS
 endif
 
 CMAKE_BUILD_TYPE ?= RelWithDebInfo

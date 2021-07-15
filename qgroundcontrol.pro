@@ -174,6 +174,19 @@ contains (CONFIG, QGC_DISABLE_PX4_PLUGIN_FACTORY) {
     CONFIG += PX4FirmwarePluginFactory
 }
 
+contains (CONFIG, QGC_DISABLE_FMT_PLUGIN) {
+    message("Disable FMT Plugin")
+} else {
+    CONFIG += FMTFirmwarePlugin
+}
+
+contains (CONFIG, QGC_DISABLE_FMT_PLUGIN_FACTORY) {
+    message("Disable FMT Plugin Factory")
+} else {
+    CONFIG += FMTFirmwarePluginFactory
+}
+
+
 # Bluetooth
 contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
     message("Skipping support for Bluetooth (manual override from command line)")
@@ -406,14 +419,54 @@ HEADERS += \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
     src/comm/MavlinkMessagesTimer.h \
-    src/GPS/Drivers/src/base_station.h
+    src/GPS/Drivers/src/base_station.h \
+    src/FirmwarePlugin/FMT/fmt_custom_mode.h \
+    src/FirmwarePlugin/FMT/FMTFirmwarePlugin.h \
+    src/FirmwarePlugin/FMT/FMTFirmwarePluginFactory.h \
+    src/FirmwarePlugin/FMT/FMTParameterMetaData.h \
+    src/AutoPilotPlugins/FMT/AirframeComponent.h \
+    src/AutoPilotPlugins/FMT/AirframeComponentAirframes.h \
+    src/AutoPilotPlugins/FMT/AirframeComponentController.h \
+    src/AutoPilotPlugins/FMT/CameraComponent.h \
+    src/AutoPilotPlugins/FMT/FMTAutoPilotPlugin.h \
+    src/AutoPilotPlugins/FMT/FlightModesComponent.h \
+    src/AutoPilotPlugins/FMT/FMTAdvancedFlightModesController.h \
+    src/AutoPilotPlugins/FMT/FMTAirframeLoader.h \
+    src/AutoPilotPlugins/FMT/FMTAutoPilotPlugin.h \
+    src/AutoPilotPlugins/FMT/FMTRadioComponent.h \
+    src/AutoPilotPlugins/FMT/FMTSimpleFlightModesController.h \
+    src/AutoPilotPlugins/FMT/FMTTuningComponent.h \
+    src/AutoPilotPlugins/FMT/PowerComponent.h \
+    src/AutoPilotPlugins/FMT/PowerComponentController.h \
+    src/AutoPilotPlugins/FMT/SafetyComponent.h \
+    src/AutoPilotPlugins/FMT/SensorsComponent.h \
+    src/AutoPilotPlugins/FMT/SensorsComponentController.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
     src/api/QmlComponentInfo.cc \
-    src/comm/MavlinkMessagesTimer.cc
+    src/comm/MavlinkMessagesTimer.cc \
+    src/FirmwarePlugin/FMT/FMTFirmwarePlugin.cc \
+    src/FirmwarePlugin/FMT/FMTFirmwarePluginFactory.cc \
+    src/FirmwarePlugin/FMT/FMTParameterMetaData.cc \
+    src/AutoPilotPlugins/FMT/AirframeComponent.cc \
+    src/AutoPilotPlugins/FMT/AirframeComponentAirframes.cc \
+    src/AutoPilotPlugins/FMT/AirframeComponentController.cc \
+    src/AutoPilotPlugins/FMT/CameraComponent.cc \
+    src/AutoPilotPlugins/FMT/FlightModesComponent.cc \
+    src/AutoPilotPlugins/FMT/FMTAdvancedFlightModesController.cc \
+    src/AutoPilotPlugins/FMT/FMTAirframeLoader.cc \
+    src/AutoPilotPlugins/FMT/FMTAutoPilotPlugin.cc \
+    src/AutoPilotPlugins/FMT/FMTRadioComponent.cc \
+    src/AutoPilotPlugins/FMT/FMTSimpleFlightModesController.cc \
+    src/AutoPilotPlugins/FMT/FMTTuningComponent.cc \
+    src/AutoPilotPlugins/FMT/PowerComponent.cc \
+    src/AutoPilotPlugins/FMT/PowerComponentController.cc \
+    src/AutoPilotPlugins/FMT/SafetyComponent.cc \
+    src/AutoPilotPlugins/FMT/SensorsComponent.cc \
+    src/AutoPilotPlugins/FMT/SensorsComponentController.cc
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
@@ -1085,6 +1138,62 @@ PX4FirmwarePluginFactory {
     SOURCES   += src/FirmwarePlugin/PX4/PX4FirmwarePluginFactory.cc
 }
 
+
+# FMT FirmwarePlugin
+
+FMTFirmwarePlugin {
+    RESOURCES *= src/FirmwarePlugin/FMT/FMTResources.qrc
+
+    INCLUDEPATH += \
+        src/AutoPilotPlugins/FMT \
+        src/FirmwarePlugin/FMT \
+
+    HEADERS+= \
+        src/AutoPilotPlugins/FMT/AirframeComponent.h \
+        src/AutoPilotPlugins/FMT/AirframeComponentAirframes.h \
+        src/AutoPilotPlugins/FMT/AirframeComponentController.h \
+        src/AutoPilotPlugins/FMT/CameraComponent.h \
+        src/AutoPilotPlugins/FMT/FlightModesComponent.h \
+        src/AutoPilotPlugins/FMT/FMTAdvancedFlightModesController.h \
+        src/AutoPilotPlugins/FMT/FMTAirframeLoader.h \
+        src/AutoPilotPlugins/FMT/FMTAutoPilotPlugin.h \
+        src/AutoPilotPlugins/FMT/FMTRadioComponent.h \
+        src/AutoPilotPlugins/FMT/FMTSimpleFlightModesController.h \
+        src/AutoPilotPlugins/FMT/FMTTuningComponent.h \
+        src/AutoPilotPlugins/FMT/PowerComponent.h \
+        src/AutoPilotPlugins/FMT/PowerComponentController.h \
+        src/AutoPilotPlugins/FMT/SafetyComponent.h \
+        src/AutoPilotPlugins/FMT/SensorsComponent.h \
+        src/AutoPilotPlugins/FMT/SensorsComponentController.h \
+        src/FirmwarePlugin/FMT/FMTFirmwarePlugin.h \
+        src/FirmwarePlugin/FMT/FMTParameterMetaData.h \
+
+    SOURCES += \
+        src/AutoPilotPlugins/FMT/AirframeComponent.cc \
+        src/AutoPilotPlugins/FMT/AirframeComponentAirframes.cc \
+        src/AutoPilotPlugins/FMT/AirframeComponentController.cc \
+        src/AutoPilotPlugins/FMT/CameraComponent.cc \
+        src/AutoPilotPlugins/FMT/FlightModesComponent.cc \
+        src/AutoPilotPlugins/FMT/FMTAdvancedFlightModesController.cc \
+        src/AutoPilotPlugins/FMT/FMTAirframeLoader.cc \
+        src/AutoPilotPlugins/FMT/FMTAutoPilotPlugin.cc \
+        src/AutoPilotPlugins/FMT/FMTRadioComponent.cc \
+        src/AutoPilotPlugins/FMT/FMTSimpleFlightModesController.cc \
+        src/AutoPilotPlugins/FMT/FMTTuningComponent.cc \
+        src/AutoPilotPlugins/FMT/PowerComponent.cc \
+        src/AutoPilotPlugins/FMT/PowerComponentController.cc \
+        src/AutoPilotPlugins/FMT/SafetyComponent.cc \
+        src/AutoPilotPlugins/FMT/SensorsComponent.cc \
+        src/AutoPilotPlugins/FMT/SensorsComponentController.cc \
+        src/FirmwarePlugin/FMT/FMTFirmwarePlugin.cc \
+        src/FirmwarePlugin/FMT/FMTParameterMetaData.cc \
+}
+
+FMTFirmwarePluginFactory {
+    HEADERS   += src/FirmwarePlugin/FMT/FMTFirmwarePluginFactory.h
+    SOURCES   += src/FirmwarePlugin/FMT/FMTFirmwarePluginFactory.cc
+}
+
 # Fact System code
 
 INCLUDEPATH += \
@@ -1279,3 +1388,80 @@ contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
 #
 
 include(QGCInstaller.pri)
+
+DISTFILES += \
+    src/FirmwarePlugin/FMT/MavCmdInfoCommon.json \
+    src/FirmwarePlugin/FMT/MavCmdInfoFixedWing.json \
+    src/FirmwarePlugin/FMT/MavCmdInfoMultiRotor.json \
+    src/FirmwarePlugin/FMT/MavCmdInfoRover.json \
+    src/FirmwarePlugin/FMT/MavCmdInfoSub.json \
+    src/FirmwarePlugin/FMT/MavCmdInfoVTOL.json \
+    src/FirmwarePlugin/FMT/FMTParameterFactMetaData.xml \
+    src/FirmwarePlugin/FMT/FMTBrandImage.png \
+    src/FirmwarePlugin/FMT/QGroundControl.FMT.qmldir \
+    src/FirmwarePlugin/FMT/V1.4.OfflineEditing.params \
+    src/AutoPilotPlugins/FMT/AirframeFactMetaData.xml \
+    src/AutoPilotPlugins/FMT/Images/CameraComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/FlightModesComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/RadioComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/Rotate.png \
+    src/AutoPilotPlugins/FMT/Images/RotateBack.png \
+    src/AutoPilotPlugins/FMT/Images/RotateFront.png \
+    src/AutoPilotPlugins/FMT/Images/SafetyComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/SensorsComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/TuningComponentIcon.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleDown.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleDownRotate.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleLeft.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleLeftRotate.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleNoseDown.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleNoseDownRotate.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleRight.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleRightRotate.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleTailDown.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleTailDownRotate.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleUpsideDown.png \
+    src/AutoPilotPlugins/FMT/Images/VehicleUpsideDownRotate.png \
+    src/AutoPilotPlugins/FMT/Images/CameraTrigger.svg \
+    src/AutoPilotPlugins/FMT/Images/DatalinkLoss.svg \
+    src/AutoPilotPlugins/FMT/Images/DatalinkLossLight.svg \
+    src/AutoPilotPlugins/FMT/Images/GeoFence.svg \
+    src/AutoPilotPlugins/FMT/Images/GeoFenceLight.svg \
+    src/AutoPilotPlugins/FMT/Images/LandMode.svg \
+    src/AutoPilotPlugins/FMT/Images/LandModeCopter.svg \
+    src/AutoPilotPlugins/FMT/Images/LowBattery.svg \
+    src/AutoPilotPlugins/FMT/Images/LowBatteryLight.svg \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentBattery_01cell.svg \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentBattery_02cell.svg \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentBattery_03cell.svg \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentBattery_04cell.svg \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentBattery_05cell.svg \
+    src/AutoPilotPlugins/FMT/Images/PowerComponentBattery_06cell.svg \
+    src/AutoPilotPlugins/FMT/Images/RCLoss.svg \
+    src/AutoPilotPlugins/FMT/Images/RCLossLight.svg \
+    src/AutoPilotPlugins/FMT/Images/ReturnToHomeAltitude.svg \
+    src/AutoPilotPlugins/FMT/Images/ReturnToHomeAltitudeCopter.svg \
+    src/AutoPilotPlugins/FMT/AirframeComponent.qml \
+    src/AutoPilotPlugins/FMT/AirframeComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/CameraComponent.qml \
+    src/AutoPilotPlugins/FMT/CameraComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/FlightModesComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/FMTAdvancedFlightModes.qml \
+    src/AutoPilotPlugins/FMT/FMTFlightModes.qml \
+    src/AutoPilotPlugins/FMT/FMTRadioComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/FMTSimpleFlightModes.qml \
+    src/AutoPilotPlugins/FMT/FMTTuningComponentCopter.qml \
+    src/AutoPilotPlugins/FMT/FMTTuningComponentPlane.qml \
+    src/AutoPilotPlugins/FMT/FMTTuningComponentVTOL.qml \
+    src/AutoPilotPlugins/FMT/PowerComponent.qml \
+    src/AutoPilotPlugins/FMT/PowerComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/SafetyComponent.qml \
+    src/AutoPilotPlugins/FMT/SafetyComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/SensorsComponent.qml \
+    src/AutoPilotPlugins/FMT/SensorsComponentSummary.qml \
+    src/AutoPilotPlugins/FMT/SensorsComponentSummaryFixedWing.qml \
+    src/AutoPilotPlugins/FMT/SensorsSetup.qml
+
+RESOURCES += \
+    src/FirmwarePlugin/FMT/FMTResources.qrc

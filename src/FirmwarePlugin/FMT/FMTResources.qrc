@@ -1,0 +1,40 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="AirframeComponent.qml">../../AutoPilotPlugins/FMT/AirframeComponent.qml</file>
+        <file alias="AirframeComponentSummary.qml">../../AutoPilotPlugins/FMT/AirframeComponentSummary.qml</file>
+        <file alias="CameraComponent.qml">../../AutoPilotPlugins/FMT/CameraComponent.qml</file>
+        <file alias="CameraComponentSummary.qml">../../AutoPilotPlugins/FMT/CameraComponentSummary.qml</file>
+        <file alias="FlightModesComponentSummary.qml">../../AutoPilotPlugins/FMT/FlightModesComponentSummary.qml</file>
+        <file alias="PowerComponent.qml">../../AutoPilotPlugins/FMT/PowerComponent.qml</file>
+        <file alias="PowerComponentSummary.qml">../../AutoPilotPlugins/FMT/PowerComponentSummary.qml</file>
+        <file alias="FMTAdvancedFlightModes.qml">../../AutoPilotPlugins/FMT/FMTAdvancedFlightModes.qml</file>
+        <file alias="FMTFlightModes.qml">../../AutoPilotPlugins/FMT/FMTFlightModes.qml</file>
+        <file alias="FMTRadioComponentSummary.qml">../../AutoPilotPlugins/FMT/FMTRadioComponentSummary.qml</file>
+        <file alias="FMTSimpleFlightModes.qml">../../AutoPilotPlugins/FMT/FMTSimpleFlightModes.qml</file>
+        <file alias="FMTTuningComponentCopter.qml">../../AutoPilotPlugins/FMT/FMTTuningComponentCopter.qml</file>
+        <file alias="FMTTuningComponentPlane.qml">../../AutoPilotPlugins/FMT/FMTTuningComponentPlane.qml</file>
+        <file alias="FMTTuningComponentVTOL.qml">../../AutoPilotPlugins/FMT/FMTTuningComponentVTOL.qml</file>
+        <file alias="SafetyComponent.qml">../../AutoPilotPlugins/FMT/SafetyComponent.qml</file>
+        <file alias="SafetyComponentSummary.qml">../../AutoPilotPlugins/FMT/SafetyComponentSummary.qml</file>
+        <file alias="SensorsComponent.qml">../../AutoPilotPlugins/FMT/SensorsComponent.qml</file>
+        <file alias="SensorsComponentSummary.qml">../../AutoPilotPlugins/FMT/SensorsComponentSummary.qml</file>
+        <file alias="SensorsComponentSummaryFixedWing.qml">../../AutoPilotPlugins/FMT/SensorsComponentSummaryFixedWing.qml</file>
+        <file alias="SensorsSetup.qml">../../AutoPilotPlugins/FMT/SensorsSetup.qml</file>
+        <file alias="QGroundControl/FMT/qmldir">QGroundControl.FMT.qmldir</file>
+    </qresource>
+    <qresource prefix="/json">
+        <file alias="FMT/MavCmdInfoCommon.json">MavCmdInfoCommon.json</file>
+        <file alias="FMT/MavCmdInfoFixedWing.json">MavCmdInfoFixedWing.json</file>
+        <file alias="FMT/MavCmdInfoMultiRotor.json">MavCmdInfoMultiRotor.json</file>
+        <file alias="FMT/MavCmdInfoRover.json">MavCmdInfoRover.json</file>
+        <file alias="FMT/MavCmdInfoSub.json">MavCmdInfoSub.json</file>
+        <file alias="FMT/MavCmdInfoVTOL.json">MavCmdInfoVTOL.json</file>
+    </qresource>
+    <qresource prefix="/AutoPilotPlugins/FMT">
+        <file alias="AirframeFactMetaData.xml">../../AutoPilotPlugins/FMT/AirframeFactMetaData.xml</file>
+    </qresource>
+    <qresource prefix="/FirmwarePlugin/FMT">
+        <file alias="FMTParameterFactMetaData.xml">FMTParameterFactMetaData.xml</file>
+        <file alias="FMT.OfflineEditing.params">V1.4.OfflineEditing.params</file>
+    </qresource>
+</RCC>
