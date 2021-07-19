@@ -201,10 +201,10 @@ public:
     bool    hasAPMSupport           () { return true; }
 #endif
 
-#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
-    bool    hasMAVLinkInspector     () { return true; }
-#else
+#if defined(QGC_DISABLE_MAVLINK_INSPECTOR)
     bool    hasMAVLinkInspector     () { return false; }
+#else
+    bool    hasMAVLinkInspector     () { return true; }
 #endif
 
     bool    singleFirmwareSupport   ();
