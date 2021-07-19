@@ -117,10 +117,6 @@ else()
 	endif()
 endif()
 
-add_definitions(
-    -DQGC_ENABLE_MAVLINK_INSPECTOR
-)
-
 #=============================================================================
 # Qt5
 #
