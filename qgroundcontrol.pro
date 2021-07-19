@@ -1237,7 +1237,10 @@ SOURCES += \
 
 #-------------------------------------------------------------------------------------
 # MAVLink Inspector
-contains (DEFINES, QGC_ENABLE_MAVLINK_INSPECTOR) {
+
+contains (DEFINES, QGC_DISABLE_MAVLINK_INSPECTOR) {
+    message("Disable mavlink inspector")
+} else {
     HEADERS += \
         src/AnalyzeView/MAVLinkInspectorController.h
     SOURCES += \
