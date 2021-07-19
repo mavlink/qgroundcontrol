@@ -101,7 +101,7 @@ void PX4AdvancedFlightModesController::_init(void)
     // Setup the channel combobox model
     QVector<int> usedChannels;
 
-    for (const QString &attitudeParam : {"RC_MAP_THROTTLE", "RC_MAP_YAW", "RC_MAP_PITCH", "RC_MAP_ROLL", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2"}) {
+    for (const QString &attitudeParam : QStringList{"RC_MAP_THROTTLE", "RC_MAP_YAW", "RC_MAP_PITCH", "RC_MAP_ROLL", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2"}) {
         int channel = getParameterFact(-1, attitudeParam)->rawValue().toInt();
         if (channel != 0) {
             usedChannels << channel;
@@ -170,7 +170,7 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
     }
     
     // Validate thresholds within range
-    for(const QString &thresholdParam : {"RC_ASSIST_TH", "RC_AUTO_TH", "RC_ACRO_TH", "RC_POSCTL_TH", "RC_LOITER_TH", "RC_RETURN_TH", "RC_OFFB_TH"}) {
+    for(const QString &thresholdParam : QStringList{"RC_ASSIST_TH", "RC_AUTO_TH", "RC_ACRO_TH", "RC_POSCTL_TH", "RC_LOITER_TH", "RC_RETURN_TH", "RC_OFFB_TH"}) {
         float threshold = getParameterFact(-1, thresholdParam)->rawValue().toFloat();
         if (threshold < 0.0f || threshold > 1.0f) {
             _validConfiguration = false;
