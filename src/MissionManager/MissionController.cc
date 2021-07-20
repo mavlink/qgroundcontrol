@@ -1287,8 +1287,13 @@ void MissionController::_recalcFlightPathSegments(void)
     // Mission Settings item needs to start with no segment
     lastFlyThroughVI->clearSimpleFlighPathSegment();
 
-    // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
+    // We need to clear the simple flight path segments on all items since they are going to be rebuilt. We can't just do this in the main loop
+    // below since that loop won't always process all items.
+    for (int i=1; i<_visualItems->count(); i++) {
+        qobject_cast<VisualMissionItem*>(_visualItems->get(i))->clearSimpleFlighPathSegment();
+    }
 
+    // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem*  visualItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         SimpleMissionItem*  simpleItem =    qobject_cast<SimpleMissionItem*>(visualItem);
