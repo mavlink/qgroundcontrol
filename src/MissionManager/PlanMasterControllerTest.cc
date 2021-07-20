@@ -15,11 +15,12 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "MultiSignalSpyV2.h"
 
 PlanMasterControllerTest::PlanMasterControllerTest(void)
     : _masterController(nullptr)
 {
-    
+
 }
 
 void PlanMasterControllerTest::init(void)
@@ -58,23 +59,25 @@ void PlanMasterControllerTest::_testActiveVehicleChanged(void) {
 
     // spyMissionManager emulates a subscriber that should not be disconnected when
     // the active vehicle changes
-    QSignalSpy spyMissionManager(
-        outgoingManagerVehicle->missionManager(),
-        &MissionManager::error);
-    QSignalSpy managerVehicleChanged(
-        _masterController,
-        &PlanMasterController::managerVehicleChanged);
+    MultiSignalSpyV2 spyMissionManager;
+    spyMissionManager.init(outgoingManagerVehicle->missionManager());
+    MultiSignalSpyV2 spyMasterController;
+    spyMasterController.init(_masterController);
 
     // Since MissionManager works with actual vehicles (which we don't have in the test cycle)
     // we have to be a bit creative emulating a signal emitted by a MissionManager.
     emit outgoingManagerVehicle->missionManager()->error(0,"");
-    QVERIFY(consumeSignals(spyMissionManager, 1));
+    auto missionManagerErrorSignalMask = spyMissionManager.signalNameToMask("error");
+    QVERIFY(spyMissionManager.checkOnlySignalByMask(missionManagerErrorSignalMask));
+    spyMissionManager.clearSignal("error");
+    QVERIFY(spyMissionManager.checkNoSignals());
 
     _connectMockLink(MAV_AUTOPILOT_PX4);
-    QVERIFY(consumeSignals(managerVehicleChanged, 1));
+    auto masterControllerMgrVehicleChanged = spyMasterController.signalNameToMask("managerVehicleChanged");
+    QVERIFY(spyMasterController.checkSignalByMask(masterControllerMgrVehicleChanged));
 
     emit outgoingManagerVehicle->missionManager()->error(0,"");
     // This signal was affected by the defect - it wouldn't reach the subscriber. Here
     // we make sure it does.
-    QVERIFY(consumeSignals(spyMissionManager, 1));
+    QVERIFY(spyMissionManager.checkOnlySignalByMask(missionManagerErrorSignalMask));
 }

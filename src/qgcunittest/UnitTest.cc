@@ -531,22 +531,3 @@ QGeoCoordinate UnitTest::changeCoordinateValue(const QGeoCoordinate& coordinate)
 {
     return coordinate.atDistanceAndAzimuth(1, 0);
 }
-
-bool UnitTest::waitForSignal(QSignalSpy &spy, int number, int timeout)
-{
-    QElapsedTimer timer;
-    timer.start();
-    while (spy.count() < number && timer.elapsed() < timeout) {
-        QCoreApplication::processEvents();
-    }
-    return spy.count() >= number;
-}
-
-bool UnitTest::consumeSignals(QSignalSpy &spy, int number, int timeout)
-{
-    bool result = waitForSignal(spy, number, timeout);
-    while (!spy.isEmpty() && number--) {
-        spy.pop_front();
-    }
-    return result;
-}
