@@ -223,6 +223,11 @@ FlightMap {
         planMasterController:       _planMasterController
     }
 
+    ObstacleDistanceOverlayMap {
+        id: obstacleDistance
+        showText: !pipMode
+    }
+
     // Add trajectory lines to the map
     MapPolyline {
         id:         trajectoryPolyline

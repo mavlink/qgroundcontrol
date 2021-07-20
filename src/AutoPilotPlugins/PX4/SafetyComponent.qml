@@ -176,6 +176,7 @@ SetupPage {
                                     if(_collisionPrevention) {
                                         _collisionPrevention.value = index > 0 ? 5 : -1
                                         console.log('Collision prevention enabled: ' + _collisionPrevention.value)
+                                        showObstacleDistanceOverlayCheckBox.checked = _collisionPrevention.value > 0
                                     }
                                 }
                             }
@@ -230,6 +231,15 @@ SetupPage {
                                         }
                                     }
                                 }
+                            }
+
+                            FactCheckBox {
+                                id:         showObstacleDistanceOverlayCheckBox
+                                text:       qsTr("Show obstacle distance overlay")
+                                visible:    _showObstacleDistanceOverlay.visible
+                                fact:       _showObstacleDistanceOverlay
+
+                                property Fact _showObstacleDistanceOverlay: QGroundControl.settingsManager.flyViewSettings.showObstacleDistanceOverlay
                             }
                         }
                     }

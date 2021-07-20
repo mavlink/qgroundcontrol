@@ -54,6 +54,12 @@
     "default":      true
 },
 {
+    "name":         "showObstacleDistanceOverlay",
+    "shortDesc":    "Show obstacle distance overlay on map and video.",
+    "type":         "bool",
+    "default":      false
+},
+{
     "name":             "maxGoToLocationDistance",
     "shortDesc": "Maximum distance allowed for Go To Location.",
     "type":             "double",
