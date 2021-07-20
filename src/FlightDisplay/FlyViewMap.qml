@@ -286,7 +286,7 @@ FlightMap {
         PlanMapItems {
             map:                    _root
             largeMapView:           !pipMode
-            planMasterController:   _planMasterController
+            planMasterController:   masterController
             vehicle:                _vehicle
 
             property var _vehicle: object
