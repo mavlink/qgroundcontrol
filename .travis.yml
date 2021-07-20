@@ -140,8 +140,8 @@ install:
     fi
 
   - if [[ "${SPEC}" = "macx-clang" ]]; then
-        wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2 &&
-        sudo tar zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
+        wget --quiet https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.3.tar.bz2 &&
+        sudo tar zxf gstreamer-osx-1.18.3.tar.bz2 -C /Library/Frameworks
         ;
     fi
 
