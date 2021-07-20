@@ -852,7 +852,7 @@
       <short_desc>Camera trigger pin extended</short_desc>
       <long_desc>This Bit mask selects which FMU pin is used (range: AUX9-AUX32) If the value is not 0 it takes precedence over TRIG_PINS. If bits above 8 are set that value is used as the selector for trigger pins. greater then 8. 0x00000300 Would be Pins 9,10. If the value is</long_desc>
       <min>0</min>
-      <max>4294967040</max>
+      <max>2147483647</max>
       <decimal>0</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
