@@ -44,31 +44,6 @@ T.HorizontalFactValueGrid {
         spacing:    0
 
         RowLayout {
-
-            Item {
-                id:                     lockItem
-                Layout.fillHeight:      true
-                Layout.preferredWidth:  ScreenTools.minTouchPixels
-                visible:                settingsUnlocked
-                enabled:                settingsUnlocked
-
-                QGCColoredImage {
-                    anchors.centerIn:   parent
-                    source:             "/res/LockOpen.svg"
-                    mipmap:             true
-                    width:              parent.width * 0.75
-                    height:             width
-                    sourceSize.width:   width
-                    color:              qgcPal.text
-                    fillMode:           Image.PreserveAspectFit
-                }
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  settingsUnlocked = false
-                }
-            }
-
             RowLayout {
                 id:         labelValueColumnLayout
                 spacing:    ScreenTools.defaultFontPixelWidth * 1.25
