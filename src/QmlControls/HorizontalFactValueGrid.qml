@@ -195,6 +195,7 @@ T.HorizontalFactValueGrid {
         width:      labelValueColumnLayout.width
         height:     labelValueColumnLayout.height
         visible:    settingsUnlocked
+        cursorShape:Qt.PointingHandCursor
 
         property var mappedLabelValueColumnLayoutPosition: _root.mapFromItem(labelValueColumnLayout, labelValueColumnLayout.x, labelValueColumnLayout.y)
 
