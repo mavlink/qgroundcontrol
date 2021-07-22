@@ -44,7 +44,7 @@
     "shortDesc": "Rangefinder",
     "type":             "float",
     "decimalPlaces":    2,
-    "units":            "meters"
+    "units":            "m"
 },
 {   "name":             "rollPitchToggle",
     "shortDesc": "Roll/Pitch Toggle",
