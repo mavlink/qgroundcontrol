@@ -94,6 +94,7 @@ jobs:
       # Currently disabled since credentials are not working correctly
       - name: Upload to S3 Bucket
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
