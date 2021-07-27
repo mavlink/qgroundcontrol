@@ -82,6 +82,7 @@ SetupPage {
                                 id:         monitor1Combo
                                 fact:       _batt1Monitor
                                 indexModel: false
+                                sizeToContents: true
                             }
                         }
 
@@ -168,6 +169,7 @@ SetupPage {
                                 id:         monitor2Combo
                                 fact:       _batt2Monitor
                                 indexModel: false
+                                sizeToContents: true
                             }
                         }
 
@@ -364,6 +366,7 @@ SetupPage {
                     id:         monitorCombo
                     fact:       battMonitor
                     indexModel: false
+                    sizeToContents: true
                 }
 
                 QGCLabel {
@@ -427,6 +430,7 @@ SetupPage {
                     fact:                   battCurrPin
                     indexModel:             false
                     visible:                _showAdvanced
+                    sizeToContents:         true
                 }
 
                 QGCLabel {
@@ -441,6 +445,7 @@ SetupPage {
                     fact:                   battVoltPin
                     indexModel:             false
                     visible:                _showAdvanced
+                    sizeToContents:         true
                 }
 
                 QGCLabel {
