@@ -164,6 +164,7 @@ SetupPage {
 
                             MouseArea {
                                 anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: setFrameConfig(subFrameModel.get(index).paramValue)
                             }
                         }
