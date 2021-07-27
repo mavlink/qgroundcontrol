@@ -138,7 +138,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   "Logic when Dry:"
+                                text:                   qsTr("Logic when Dry:")
                                 width:                  failsafeSettings._labelWidth
                                 visible:                leakEnableCombo.currentIndex != 0
                                 anchors.verticalCenter: leakEnableCombo.verticalCenter
@@ -173,7 +173,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   "Voltage:"
+                                text:                   qsTr("Voltage:")
                                 width:                  failsafeSettings._labelWidth
                                 anchors.verticalCenter: batteryEnableCombo.verticalCenter
                                 visible:                batteryEnableCombo.currentIndex != 0
@@ -187,7 +187,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   "Remaining Capacity:"
+                                text:                   qsTr("Remaining Capacity:")
                                 width:                  failsafeSettings._labelWidth
                                 anchors.verticalCenter: batteryEnableCombo.verticalCenter
                                 visible:                batteryEnableCombo.currentIndex != 0
@@ -255,7 +255,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   "Timeout:"
+                                text:                   qsTr("Timeout:")
                                 width:                  failsafeSettings._labelWidth
                                 anchors.verticalCenter: pilotEnableCombo.verticalCenter
                                 visible:                pilotEnableCombo.currentIndex != 0
@@ -290,7 +290,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text: "Threshold:"
+                                text:               qsTr("Threshold:")
                                 width:              failsafeSettings._labelWidth
                                 visible:            temperatureEnableCombo.currentIndex != 0
                                 anchors.baseline:   temperatureEnableCombo.baseline
