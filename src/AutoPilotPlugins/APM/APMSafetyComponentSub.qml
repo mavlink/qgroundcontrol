@@ -123,7 +123,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   qsTr( "Detector Pin:")
+                                text:                   qsTr("Detector Pin:")
                                 width:                  failsafeSettings._labelWidth
                                 anchors.verticalCenter: leakEnableCombo.verticalCenter
                                 visible:                leakEnableCombo.currentIndex != 0
