@@ -116,40 +116,40 @@ SetupPage {
                             }
 
                             FactComboBox {
-                                id:                 leakEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafeLeakEnable
-                                indexModel:         false
+                                id:                     leakEnableCombo
+                                width:                  failsafeSettings._editWidth
+                                fact:                   _failsafeLeakEnable
+                                indexModel:             false
                             }
 
                             QGCLabel {
-                                text:               qsTr( "Detector Pin:")
-                                width:              failsafeSettings._labelWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
+                                text:                   qsTr( "Detector Pin:")
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                visible:                leakEnableCombo.currentIndex != 0
                             }
 
                             FactComboBox {
-                                width:              failsafeSettings._editWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
-                                fact:               _failsafeLeakPin
-                                indexModel:         false
+                                width:                  failsafeSettings._editWidth
+                                visible:                leakEnableCombo.currentIndex != 0
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                fact:                   _failsafeLeakPin
+                                indexModel:             false
                             }
 
                             QGCLabel {
-                                text: "Logic when Dry:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
+                                text:                   "Logic when Dry:"
+                                width:                  failsafeSettings._labelWidth
+                                visible:                leakEnableCombo.currentIndex != 0
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
                             }
 
                             FactComboBox {
-                                width:              failsafeSettings._editWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
-                                fact:               _failsafeLeakLogic
-                                indexModel:         false
+                                width:                  failsafeSettings._editWidth
+                                visible:                leakEnableCombo.currentIndex != 0
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                fact:                   _failsafeLeakLogic
+                                indexModel:             false
                             }
                         }
 
