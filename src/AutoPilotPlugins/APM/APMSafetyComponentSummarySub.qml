@@ -53,7 +53,17 @@ Item {
         VehicleSummaryRow {
             visible: !_firmware34
             labelText: qsTr("Battery failsafe:")
-            valueText: _firmware34 ? "" : _failsafeBatteryEnable.enumOrValueString
+            valueText: {
+                if(_firmware34) {
+                    return "Firmware not supported"
+                }
+
+                if (!_failsafeBatteryEnable) {
+                    return "Disabled"
+                }
+
+                return _failsafeBatteryEnable.enumOrValueString
+            }
         }
         VehicleSummaryRow {
             visible: !_firmware34
