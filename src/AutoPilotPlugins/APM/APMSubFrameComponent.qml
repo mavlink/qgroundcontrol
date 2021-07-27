@@ -41,6 +41,18 @@ SetupPage {
 
             function setFrameConfig(frame) {
                 _frameConfig.value = frame;
+
+                // Frame configuration required parameter file to be loaded
+                switch(_frameConfig.value) {
+                    case 1: // Vectored
+                        controller.loadParameters(subFramePage.getParametersFile())
+                        break;
+                    case 2: // Heavy
+                        controller.loadParameters(subFramePage.getParametersFile("heavy"))
+                        break;
+                    default:
+                        // No parameter file available
+                }
             }
 
             property real _minW:        ScreenTools.defaultFontPixelWidth * 30
