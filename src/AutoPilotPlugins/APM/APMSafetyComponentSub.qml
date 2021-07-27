@@ -255,18 +255,19 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text: "Timeout:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            pilotEnableCombo.currentIndex != 0
-                                anchors.baseline:   pilotEnableCombo.baseline
+                                text:                   "Timeout:"
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
+                                visible:                pilotEnableCombo.currentIndex != 0
 
                             }
 
                             FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            pilotEnableCombo.currentIndex != 0
-                                anchors.baseline:   pilotEnableCombo.baseline
-                                fact:               _failsafePilotTimeout
+                                width:                  failsafeSettings._editWidth
+                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
+                                visible:                pilotEnableCombo.currentIndex != 0
+                                anchors.baseline:       pilotEnableCombo.baseline
+                                fact:                   _failsafePilotTimeout
                             }
                         }
 
