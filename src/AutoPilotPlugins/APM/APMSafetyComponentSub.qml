@@ -173,31 +173,31 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text: "Voltage:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
+                                text:                   "Voltage:"
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
                             }
 
                             FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
-                                fact:               _failsafeBatteryVoltage
+                                width:                  failsafeSettings._editWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
+                                fact:                   _failsafeBatteryVoltage
                             }
 
                             QGCLabel {
-                                text: "Remaining Capacity:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
+                                text:                   "Remaining Capacity:"
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
                             }
 
                             FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
-                                fact:               _failsafeBatteryCapacity
+                                width:                  failsafeSettings._editWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
+                                fact:                   _failsafeBatteryCapacity
                             }
                         }
 
