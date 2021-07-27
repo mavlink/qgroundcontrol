@@ -28,6 +28,20 @@ SetupPage {
 
     APMAirframeComponentController { id: controller; }
 
+    function getParametersFile(frame) {
+        const filename = frame === "heavy" ? "Sub/bluerov2-heavy" : "Sub/bluerov2"
+        if (globals.activeVehicle.versionCompare(4 ,0 ,0) >= 0) {
+            return filename + "-4_0_0.params"
+        }
+        if (globals.activeVehicle.versionCompare(3 ,5 ,4) >= 0) {
+            return filename + "-3_5_4.params"
+        }
+        if (globals.activeVehicle.versionCompare(3 ,5 ,2) >= 0) {
+            return filename + "-3_5_2.params"
+        }
+        return filename + "-3_5.params"
+    }
+
     Component {
         id: subFramePageComponent
 
@@ -123,19 +137,6 @@ SetupPage {
                 }
             }
 
-            Item {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                height: defaultsButton.height
-
-                QGCButton {
-                    id: defaultsButton
-                    anchors.left: parent.left
-                    text:       qsTr("Load Vehicle Default Parameters")
-                    onClicked:  mainWindow.showComponentDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
-                }
-            }
-
             Flow {
                 id:         flowView
                 width:      parent.width
@@ -185,65 +186,4 @@ SetupPage {
             }// Flow
         } // Column
     } // Component
-
-
-    Component {
-        id: selectParamFileDialogComponent
-
-        QGCViewDialog {
-            QGCLabel {
-                id:                 applyParamsText
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.margins:    _margins
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Select your vehicle to load the default parameters:")
-            }
-
-            Flow {
-                function getParametersFile(frame) {
-                    const filename = frame === "heavy" ? "Sub/bluerov2-heavy" : "Sub/bluerov2"
-                    if (globals.activeVehicle.versionCompare(4 ,0 ,0) >= 0) {
-                        return filename + "-4_0_0.params"
-                    }
-                    if (globals.activeVehicle.versionCompare(3 ,5 ,4) >= 0) {
-                        return filename + "-3_5_4.params"
-                    }
-                    if (globals.activeVehicle.versionCompare(3 ,5 ,2) >= 0) {
-                        return filename + "-3_5_2.params"
-                    }
-                    return filename + "-3_5.params"
-                }
-
-                anchors.margins:    _margins
-                anchors.top:        applyParamsText.bottom
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.bottom:     parent.bottom
-                spacing :           _margins
-                layoutDirection:    Qt.Vertical;
-
-                QGCButton {
-                    width:  parent.width
-                    text:   "Blue Robotics BlueROV2"
-
-                    onClicked : {
-                        controller.loadParameters(parent.getParametersFile())
-                        hideDialog()
-                    }
-                }
-
-                QGCButton {
-                    width:  parent.width
-                    text:   "Blue Robotics BlueROV2 Heavy"
-
-                    onClicked : {
-                        controller.loadParameters(parent.getParametersFile("heavy"))
-                        hideDialog()
-                    }
-                }
-            }
-        }
-    }
 } // SetupPage
