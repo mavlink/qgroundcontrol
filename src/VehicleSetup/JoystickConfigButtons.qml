@@ -75,6 +75,7 @@ Item {
                         id:                         buttonActionCombo
                         width:                      ScreenTools.defaultFontPixelWidth * 26
                         model:                      _activeJoystick ? _activeJoystick.assignableActionTitles : []
+                        sizeToContents:             true
 
                         function _findCurrentButtonAction() {
                             if(_activeJoystick) {
@@ -160,17 +161,19 @@ Item {
                 }
 
                 FactComboBox {
-                    id:         mainJSButtonActionCombo
-                    width:      ScreenTools.defaultFontPixelWidth * 15
-                    fact:       controller.parameterExists(-1, "BTN"+index+"_FUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_FUNCTION") : null;
-                    indexModel: false
+                    id:             mainJSButtonActionCombo
+                    width:          ScreenTools.defaultFontPixelWidth * 15
+                    fact:           controller.parameterExists(-1, "BTN"+index+"_FUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_FUNCTION") : null;
+                    indexModel:     false
+                    sizeToContents: true
                 }
 
                 FactComboBox {
-                    id:         shiftJSButtonActionCombo
-                    width:      ScreenTools.defaultFontPixelWidth * 15
-                    fact:       controller.parameterExists(-1, "BTN"+index+"_SFUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_SFUNCTION") : null;
-                    indexModel: false
+                    id:             shiftJSButtonActionCombo
+                    width:          ScreenTools.defaultFontPixelWidth * 15
+                    fact:           controller.parameterExists(-1, "BTN"+index+"_SFUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_SFUNCTION") : null;
+                    indexModel:     false
+                    sizeToContents: true
                 }
             }
         }
