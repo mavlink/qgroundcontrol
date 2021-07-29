@@ -14,7 +14,7 @@ defaults:
 
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   5.12.6
+  QT_VERSION:   5.15.2
   ARTIFACT:     QGroundControl-installer.exe
 
 jobs:
