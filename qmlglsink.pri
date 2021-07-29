@@ -18,7 +18,9 @@ SOURCES += \
     libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsink.cc \
     libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsrc.cc \
     libs/qmlglsink/gst-plugins-good/ext/qt/qtwindow.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.cc
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtoverlay.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtglrenderer.cc \
 
 HEADERS += \
     libs/qmlglsink/gst-plugins-good/ext/qt/gstqsgtexture.h \
@@ -27,4 +29,6 @@ HEADERS += \
     libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsink.h \
     libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsrc.h \
     libs/qmlglsink/gst-plugins-good/ext/qt/qtwindow.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.h
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtoverlay.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtglrenderer.h \
