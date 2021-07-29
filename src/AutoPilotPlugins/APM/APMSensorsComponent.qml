@@ -667,7 +667,7 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("Gyro")
-                        visible:    globals.activeVehicle && (globals.activeVehicle.multiRotor | globals.activeVehicle.rover)
+                        visible:    globals.activeVehicle && (globals.activeVehicle.multiRotor | globals.activeVehicle.rover | globals.activeVehicle.sub)
                         onClicked:  mainWindow.showComponentDialog(calibrateGyroDialogComponent, qsTr("Calibrate Gyro"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
 
