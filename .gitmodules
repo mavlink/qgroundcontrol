@@ -9,7 +9,7 @@
 	url = https://github.com/Auterion/android_openssl
 [submodule "libs/qmlglsink/gst-plugins-good"]
 	path = libs/qmlglsink/gst-plugins-good
-	url = https://github.com/mavlink/gst-plugins-good.git
+	url = git://anongit.freedesktop.org/gstreamer/gst-plugins-good
 [submodule "libs/xz-embedded"]
 	path = libs/xz-embedded
 	url = https://github.com/Auterion/xz-embedded.git
