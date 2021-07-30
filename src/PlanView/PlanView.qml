@@ -752,12 +752,22 @@ Item {
                 anchors.top:        parent.top
                 //-------------------------------------------------------
                 // Airmap Airspace Control
-                AirspaceControl {
-                    id:             airspaceControl
-                    width:          parent.width
-                    visible:        _airspaceEnabled
-                    planView:       true
-                    showColapse:    true
+                Component {
+                    id: airspaceControlComponent
+                    AirspaceControl {
+                        id:             airspaceControl
+                        width:          parent.width
+                        visible:        _airspaceEnabled
+                        planView:       true
+                        showColapse:    true
+                    }
+                }
+
+                Loader {
+                    id: airspaceControlLoader
+                    active: false
+                    sourceComponent: airspaceControlComponent
+                    Component.onCompleted: airspaceControlLoader.active = _airspaceEnabled
                 }
                 //-------------------------------------------------------
                 // Mission Controls (Colapsed)
