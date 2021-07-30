@@ -25,8 +25,19 @@ SetupPage {
     pageComponent:      subFramePageComponent
 
     property bool _oldFW:   globals.activeVehicle.versionCompare(3 ,5 ,2) < 0
+    property var frameModelSelected: undefined
 
     APMAirframeComponentController { id: controller; }
+
+    property Fact _frameConfig: controller.getParameterFact(-1, "FRAME_CONFIG")
+
+    function setFrameConfig(frameNumber) {
+        _frameConfig.value = frameNumber
+    }
+
+    function loadFrameDefaultParameters(frameName) {
+        controller.loadParameters(subFramePage.getParametersFile(frameName))
+    }
 
     function getParametersFile(frameName) {
         let version = "3_5"
@@ -50,24 +61,6 @@ SetupPage {
             width:  availableWidth
 
             QGCPalette { id: palette; colorGroupEnabled: true }
-
-            property Fact _frameConfig: controller.getParameterFact(-1, "FRAME_CONFIG")
-
-            function setFrameConfig(frame) {
-                _frameConfig.value = frame;
-
-                // Frame configuration required parameter file to be loaded
-                switch(_frameConfig.value) {
-                    case 1: // Vectored
-                        controller.loadParameters(subFramePage.getParametersFile())
-                        break;
-                    case 2: // Heavy
-                        controller.loadParameters(subFramePage.getParametersFile("heavy"))
-                        break;
-                    default:
-                        // No parameter file available
-                }
-            }
 
             property real _minW:        ScreenTools.defaultFontPixelWidth * 30
             property real _boxWidth:    _minW
@@ -110,12 +103,14 @@ SetupPage {
                     name: "BlueROV2/Vectored"
                     resource: "qrc:///qmlimages/Frames/Vectored.png"
                     paramValue: 1
+                    paramFileName: "bluerov2"
                 }
 
                 ListElement {
                     name: "Vectored-6DOF"
                     resource: "qrc:///qmlimages/Frames/Vectored6DOF.png"
                     paramValue: 2
+                    paramFileName: "bluerov2-heavy"
                 }
 
                 ListElement {
@@ -178,7 +173,10 @@ SetupPage {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: setFrameConfig(subFrameModel.get(index).paramValue)
+                                onClicked: {
+                                    frameModelSelected = subFrameModel.get(index)
+                                    mainWindow.showComponentDialog(confirmFrameComponent, qsTr("Frame selection"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                                }
                             }
                         }
                     }
@@ -186,4 +184,68 @@ SetupPage {
             }// Flow
         } // Column
     } // Component
-} // SetupPage
+
+    Component {
+        id: confirmFrameComponent
+
+        QGCViewDialog {
+            QGCLabel {
+                id:                 applyParamsText
+                anchors.left:       parent.left
+                anchors.margins:    _margins
+                anchors.right:      parent.right
+                anchors.top:        parent.top
+                wrapMode:           Text.WordWrap
+                text: {
+                    if (frameModelSelected.paramFileName != undefined) {
+                        return qsTr("Would you like to load the default parameters for the frame ?")
+                    }
+
+                    return qsTr("Would you like to set the desired frame ?")
+                }
+            }
+
+            Flow {
+                anchors.bottom:     parent.bottom
+                anchors.left:       parent.left
+                anchors.margins:    _margins
+                anchors.right:      parent.right
+                anchors.top:        applyParamsText.bottom
+                spacing:            _margins
+                layoutDirection:    Qt.Vertical
+
+                QGCButton {
+                    width:                  parent.width
+                    text:                   qsTr(`Yes, Load default parameter set for ${frameModelSelected.name}`)
+                    wrapMode:               Text.WordWrap
+                    horizontalAlignment:    Text.AlignHCenter
+                    visible:                frameModelSelected.paramFileName != undefined
+
+                    onClicked: {
+                        setFrameConfig(frameModelSelected.paramValue)
+                        loadFrameDefaultParameters(frameModelSelected.paramFileName)
+                        hideDialog()
+                    }
+                }
+
+                QGCButton {
+                    width:                  parent.width
+                    wrapMode:               Text.WordWrap
+                    horizontalAlignment:    Text.AlignHCenter
+                    text: {
+                        if (frameModelSelected.paramFileName != undefined) {
+                            return qsTr("No, set frame only")
+                        }
+
+                        return qsTr(`Confirm frame ${frameModelSelected.name}`)
+                    }
+
+                    onClicked: {
+                        setFrameConfig(frameModelSelected.paramValue)
+                        hideDialog()
+                    }
+                }
+            }
+        }
+    }
+}
