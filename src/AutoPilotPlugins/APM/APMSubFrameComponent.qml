@@ -28,18 +28,18 @@ SetupPage {
 
     APMAirframeComponentController { id: controller; }
 
-    function getParametersFile(frame) {
-        const filename = frame === "heavy" ? "Sub/bluerov2-heavy" : "Sub/bluerov2"
-        if (globals.activeVehicle.versionCompare(4 ,0 ,0) >= 0) {
-            return filename + "-4_0_0.params"
+    function getParametersFile(frameName) {
+        let version = "3_5"
+
+        if (globals.activeVehicle.versionCompare(4, 0, 0) >= 0) {
+            version = "4_0_0"
+        } else if (globals.activeVehicle.versionCompare(3, 5, 4) >= 0) {
+            version = "3_5_4"
+        } else if (globals.activeVehicle.versionCompare(3, 5, 2) >= 0) {
+            version = "3_5_2"
         }
-        if (globals.activeVehicle.versionCompare(3 ,5 ,4) >= 0) {
-            return filename + "-3_5_4.params"
-        }
-        if (globals.activeVehicle.versionCompare(3 ,5 ,2) >= 0) {
-            return filename + "-3_5_2.params"
-        }
-        return filename + "-3_5.params"
+
+        return `Sub/${frameName}-${version}.params`
     }
 
     Component {
