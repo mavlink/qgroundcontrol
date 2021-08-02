@@ -17,13 +17,6 @@
  */
 
 #include <QFile>
-#include <QFlags>
-#include <QPixmap>
-#include <QDesktopWidget>
-#include <QPainter>
-#include <QStyleFactory>
-#include <QAction>
-#include <QStringListModel>
 #include <QRegularExpression>
 #include <QFontDatabase>
 #include <QQuickWindow>
