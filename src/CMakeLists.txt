@@ -87,8 +87,6 @@ add_library(qgc
 	QGCComboBox.cc
 	QGCComboBox.h
 	QGCConfig.h
-	QGCDockWidget.cc
-	QGCDockWidget.h
 	QGCFileDownload.cc
 	QGCFileDownload.h
 	QGCLoggingCategory.cc
