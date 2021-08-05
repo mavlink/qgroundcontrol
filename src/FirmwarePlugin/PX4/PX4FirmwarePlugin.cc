@@ -629,7 +629,7 @@ QString PX4FirmwarePlugin::_versionRegex() {
 
 bool PX4FirmwarePlugin::supportsNegativeThrust(Vehicle* vehicle)
 {
-    return vehicle->vehicleType() == MAV_TYPE_GROUND_ROVER;
+    return ((vehicle->vehicleType() == MAV_TYPE_GROUND_ROVER) || (vehicle->vehicleType() == MAV_TYPE_SUBMARINE));
 }
 
 QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle) 
