@@ -849,7 +849,37 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
+        metaData = new CameraMetaData(
+                    "Workswell Wiris Security Thermal Camera",
+                    tr("Workswell"),
+                    tr("Wiris Security"),
+                    13.6,                // sensorWidth
+                    10.2,                // sensorHeight
+                    800,               // imageWidth
+                    600,               // imageHeight
+                    35,                // focalLength
+                    true,               // true: landscape orientation
+                    false,              // true: camera is fixed orientation
+                    1.0,                  // minimum trigger interval
+                    "",   // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
+                    this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
 
+        metaData = new CameraMetaData(
+                    "Workswell Wiris Security Visual Camera",
+                    tr("Workswell"),
+                    tr("Wiris Security"),
+                    4.826,                // sensorWidth
+                    3.556,                // sensorHeight
+                    1920,               // imageWidth
+                    1080,               // imageHeight
+                    4.3,                // focalLength
+                    true,               // true: landscape orientation
+                    false,              // true: camera is fixed orientation
+                    1.0,                  // minimum trigger interval
+                    "",   // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
+                    this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;
