@@ -860,7 +860,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     35,                // focalLength
                     true,               // true: landscape orientation
                     false,              // true: camera is fixed orientation
-                    1.0,                  // minimum trigger interval
+                    1.8,                  // minimum trigger interval
                     "",   // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
@@ -876,7 +876,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     4.3,                // focalLength
                     true,               // true: landscape orientation
                     false,              // true: camera is fixed orientation
-                    1.0,                  // minimum trigger interval
+                    1.8,                  // minimum trigger interval
                     "",   // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
