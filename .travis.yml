@@ -2,6 +2,9 @@
 
 language: cpp
 
+# We only build tags since we have a limited number of credits for travis
+if: tag IS present
+
 env:
   global:
     - JOBS=4
