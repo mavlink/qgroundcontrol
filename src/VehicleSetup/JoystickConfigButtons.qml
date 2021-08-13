@@ -111,7 +111,7 @@ ColumnLayout {
             }
         }
     }
-    Column {
+    ColumnLayout {
         id:         buttonCol
         width:      parent.width
         visible:    globals.activeVehicle.supportsJSButton
@@ -124,11 +124,11 @@ ColumnLayout {
                 text:                   qsTr("#")
             }
             QGCLabel {
-                width:                  ScreenTools.defaultFontPixelWidth * 15
+                width:                  ScreenTools.defaultFontPixelWidth * 26
                 text:                   qsTr("Function: ")
             }
             QGCLabel {
-                width:                  ScreenTools.defaultFontPixelWidth * 15
+                width:                  ScreenTools.defaultFontPixelWidth * 26
                 text:                   qsTr("Shift Function: ")
             }
         }
@@ -165,7 +165,7 @@ ColumnLayout {
 
                 FactComboBox {
                     id:             mainJSButtonActionCombo
-                    width:          ScreenTools.defaultFontPixelWidth * 15
+                    width:          ScreenTools.defaultFontPixelWidth * 26
                     fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterName) : null;
                     visible:        hasFirmwareSupport
                     indexModel:     false
@@ -174,7 +174,7 @@ ColumnLayout {
 
                 FactComboBox {
                     id:             shiftJSButtonActionCombo
-                    width:          ScreenTools.defaultFontPixelWidth * 15
+                    width:          ScreenTools.defaultFontPixelWidth * 26
                     fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterShiftName) : null;
                     visible:        hasFirmwareSupport
                     indexModel:     false
@@ -183,7 +183,7 @@ ColumnLayout {
 
                 QGCLabel {
                     text:                   qsTr("No firmware support")
-                    width:                  ScreenTools.defaultFontPixelWidth * 15
+                    width:                  ScreenTools.defaultFontPixelWidth * 26
                     visible:                !hasFirmwareSupport
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -191,5 +191,3 @@ ColumnLayout {
         }
     }
 }
-
-
