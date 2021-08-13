@@ -1,0 +1,90 @@
+name: MacOS Release
+
+on: [push, pull_request]
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.12.6
+  ARTIFACT:     QGroundControl.dmg
+
+jobs:
+  build:
+    runs-on:  macos-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         mac
+          target:       desktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts
+          setup-python: false
+
+      - name: Install Gstreamer
+        run:  |
+            wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2 &&
+            sudo tar zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
+
+      - name: Install ccache
+        run:  brew install ccache
+
+      - name: Prepare ccache timestamp
+        id: ccache_cache_timestamp
+        shell: cmake -P {0}
+        run: |
+          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+          message("::set-output name=timestamp::${current_date}")
+
+      - name: ccache cache files
+        uses: actions/cache@v2
+        with:
+          path:         ~/.ccache
+          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${{ runner.os }}-ccache-
+
+      - name: Setup ccache
+        run: |
+            mkdir -p ~/.ccache
+            echo "base_dir = ${GITHUB_WORKSPACE}" > ~/.ccache/ccache.conf
+            echo "compression = true" >> ~/.ccache/ccache.conf
+            echo "compression_level = 5" >> ~/.ccache/ccache.conf
+            ccache -s
+            ccache -z
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run:  |
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
+              make -j3
+
+      - name: ccache post-run
+        run:  ccache -s
+
+      - name: Save artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
+
+      # Currently disabled since credentials are not working correctly
+      - name: Upload to S3 Bucket
+        if:                 ${{ false }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        run: |
+              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws s3 cp ${ARTIFACT} s3://groundcontrol/master --region us-west-2 --acl public-read
