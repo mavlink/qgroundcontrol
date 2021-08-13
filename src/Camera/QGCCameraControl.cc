@@ -1994,7 +1994,7 @@ QGCCameraControl::_httpRequest(const QString &url)
     tempProxy.setType(QNetworkProxy::DefaultProxy);
     _netManager->setProxy(tempProxy);
     QNetworkRequest request(url);
-    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);

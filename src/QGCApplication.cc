@@ -423,7 +423,7 @@ void QGCApplication::setLanguage()
             _locale = QLocale(QLocale::Korean);
             break;
         case 13:
-            _locale = QLocale(QLocale::Norwegian);
+            _locale = QLocale(QLocale::NorwegianBokmal);
             break;
         case 14:
             _locale = QLocale(QLocale::Polish);
