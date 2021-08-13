@@ -84,7 +84,18 @@ Item {
             sourceSize.height:  height
             source:             "/qmlimages/Joystick.png"
             fillMode:           Image.PreserveAspectFit
-            color:              globals.activeVehicle && globals.activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
+            color: {
+                if(globals.activeVehicle && joystickManager.activeJoystick) {
+                    if(globals.activeVehicle.joystickEnabled) {
+                        // Everything ready to use joystick
+                        return qgcPal.buttonText
+                    }
+                    // Joystick is not enabled in the joystick configuration page
+                    return "yellow"
+                }
+                // Joystick not available or there is no active vehicle
+                return "red"
+            }
         }
     }
 
