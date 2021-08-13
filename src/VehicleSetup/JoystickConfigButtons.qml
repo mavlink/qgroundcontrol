@@ -139,6 +139,9 @@ ColumnLayout {
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
                 visible: globals.activeVehicle.supportsJSButton
+                property var parameterName: `BTN${index}_FUNCTION`
+                property var parameterShiftName: `BTN${index}_SFUNCTION`
+                property bool hasFirmwareSupport: controller.parameterExists(-1, parameterName)
 
                 property bool pressed
 
@@ -163,7 +166,8 @@ ColumnLayout {
                 FactComboBox {
                     id:             mainJSButtonActionCombo
                     width:          ScreenTools.defaultFontPixelWidth * 15
-                    fact:           controller.parameterExists(-1, "BTN"+index+"_FUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_FUNCTION") : null;
+                    fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterName) : null;
+                    visible:        hasFirmwareSupport
                     indexModel:     false
                     sizeToContents: true
                 }
@@ -171,9 +175,17 @@ ColumnLayout {
                 FactComboBox {
                     id:             shiftJSButtonActionCombo
                     width:          ScreenTools.defaultFontPixelWidth * 15
-                    fact:           controller.parameterExists(-1, "BTN"+index+"_SFUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_SFUNCTION") : null;
+                    fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterShiftName) : null;
+                    visible:        hasFirmwareSupport
                     indexModel:     false
                     sizeToContents: true
+                }
+
+                QGCLabel {
+                    text:                   qsTr("No firmware support")
+                    width:                  ScreenTools.defaultFontPixelWidth * 15
+                    visible:                !hasFirmwareSupport
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }
