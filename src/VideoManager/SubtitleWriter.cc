@@ -166,7 +166,7 @@ void SubtitleWriter::_captureTelemetry()
     stringColumns << QStringLiteral("Dialogue: 0,%1,%2,Default,,0,0,0,,{\\pos(10,35)}%3\n")
         .arg(start.toString("H:mm:ss.zzz").chopped(2))
         .arg(end.toString("H:mm:ss.zzz").chopped(2))
-        .arg(QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate));
+        .arg(QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat)));
     // Write new data
     QTextStream stream(&_file);
     for (const auto& i : stringColumns) {
