@@ -743,7 +743,7 @@ MAVLinkLogManager::_sendLog(const QString& logFile)
     file->setParent(multiPart);
     QNetworkRequest request(_uploadURL);
 #if QT_VERSION > 0x050600
-    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
 #endif
     QNetworkReply* reply = _nam->post(request, multiPart);
     connect(reply, &QNetworkReply::finished,  this, &MAVLinkLogManager::_uploadFinished);
