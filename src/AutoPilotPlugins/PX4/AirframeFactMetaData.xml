@@ -433,6 +433,15 @@
       <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
+    <airframe name="Advanced Technology Labs (ATL) Mantis EDU" id="4061" maintainer="">
+      <class>Copter</class>
+      <maintainer />
+      <type>Quadrotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+    </airframe>
     <airframe name="UVify IFO" id="4071" maintainer="Hyon Lim &lt;lim@uvify.com&gt;">
       <class>Copter</class>
       <maintainer>Hyon Lim &lt;lim@uvify.com&gt;</maintainer>
@@ -708,6 +717,11 @@
       <output name="MAIN4">throttle</output>
       <output name="MAIN5">flaps</output>
       <output name="MAIN6">gear</output>
+    </airframe>
+    <airframe name="SIH plane AERT" id="1101" maintainer="Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;">
+      <class>Plane</class>
+      <maintainer>Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;</maintainer>
+      <type>Simulation</type>
     </airframe>
   </airframe_group>
   <airframe_group name="Standard Plane" image="Plane">
