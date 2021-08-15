@@ -9351,6 +9351,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_ACC0_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Accelerometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_ACC0_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Accelerometer X-axis offset</short_desc>
     </parameter>
@@ -9434,6 +9438,10 @@
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
+    </parameter>
+    <parameter name="CAL_ACC1_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Accelerometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
     </parameter>
     <parameter name="CAL_ACC1_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Accelerometer X-axis offset</short_desc>
@@ -9519,6 +9527,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_ACC2_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Accelerometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_ACC2_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Accelerometer X-axis offset</short_desc>
     </parameter>
@@ -9602,6 +9614,10 @@
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
+    </parameter>
+    <parameter name="CAL_ACC3_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Accelerometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
     </parameter>
     <parameter name="CAL_ACC3_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Accelerometer X-axis offset</short_desc>
@@ -9687,6 +9703,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_GYRO0_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Gyroscope calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_GYRO0_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
@@ -9761,6 +9781,10 @@
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
+    </parameter>
+    <parameter name="CAL_GYRO1_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Gyroscope calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
     </parameter>
     <parameter name="CAL_GYRO1_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Gyro X-axis offset</short_desc>
@@ -9837,6 +9861,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_GYRO2_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Gyroscope calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_GYRO2_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
@@ -9912,6 +9940,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_GYRO3_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Gyroscope calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_GYRO3_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
@@ -9986,6 +10018,10 @@
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
+    </parameter>
+    <parameter name="CAL_MAG0_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Magnetometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
     </parameter>
     <parameter name="CAL_MAG0_XCOMP" default="0.0" type="FLOAT" category="System">
       <short_desc>X Axis throttle compensation for Mag 0</short_desc>
@@ -10092,6 +10128,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_MAG1_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Magnetometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_MAG1_XCOMP" default="0.0" type="FLOAT" category="System">
       <short_desc>X Axis throttle compensation for Mag 1</short_desc>
       <long_desc>Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
@@ -10197,6 +10237,10 @@
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
     </parameter>
+    <parameter name="CAL_MAG2_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Magnetometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
+    </parameter>
     <parameter name="CAL_MAG2_XCOMP" default="0.0" type="FLOAT" category="System">
       <short_desc>X Axis throttle compensation for Mag 2</short_desc>
       <long_desc>Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
@@ -10301,6 +10345,10 @@
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
       </values>
+    </parameter>
+    <parameter name="CAL_MAG3_TEMP" default="NAN" type="FLOAT" volatile="true" category="System">
+      <short_desc>Magnetometer calibration temperature</short_desc>
+      <long_desc>Temperature during last calibration.</long_desc>
     </parameter>
     <parameter name="CAL_MAG3_XCOMP" default="0.0" type="FLOAT" category="System">
       <short_desc>X Axis throttle compensation for Mag 3</short_desc>
