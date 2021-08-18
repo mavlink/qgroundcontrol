@@ -706,7 +706,7 @@
       <reboot_required>True</reboot_required>
     </parameter>
     <parameter name="BAT_ADC_CHANNEL" default="-1" type="INT32">
-      <short_desc>This parameter is deprecated. Please use BAT1_ADC_CHANNEL</short_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_I_CHANNEL</short_desc>
     </parameter>
     <parameter name="BAT_CRIT_THR" default="0.07" type="FLOAT">
       <short_desc>Critical threshold</short_desc>
