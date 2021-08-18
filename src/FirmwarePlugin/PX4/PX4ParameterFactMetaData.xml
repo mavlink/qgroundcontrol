@@ -3811,6 +3811,7 @@
         <value code="3">Ashtech / Trimble</value>
         <value code="4">Emlid Reach</value>
         <value code="5">Femtomes</value>
+        <value code="6">NMEA (generic)</value>
       </values>
     </parameter>
     <parameter name="GPS_2_CONFIG" default="0" type="INT32">
@@ -3858,6 +3859,7 @@
         <value code="3">Ashtech / Trimble</value>
         <value code="4">Emlid Reach</value>
         <value code="5">Femtomes</value>
+        <value code="6">NMEA (generic)</value>
       </values>
     </parameter>
     <parameter name="GPS_DUMP_COMM" default="0" type="INT32">
