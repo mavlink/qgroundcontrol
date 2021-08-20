@@ -27,6 +27,7 @@ const char* Joystick::_calibratedSettingsKey =          "Calibrated4"; // Increm
 const char* Joystick::_buttonActionNameKey =            "ButtonActionName%1";
 const char* Joystick::_buttonActionRepeatKey =          "ButtonActionRepeat%1";
 const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
+const char* Joystick::_negativeThrustSettingsKey =      "NegativeThrust";
 const char* Joystick::_exponentialSettingsKey =         "Exponential";
 const char* Joystick::_accumulatorSettingsKey =         "Accumulator";
 const char* Joystick::_deadbandSettingsKey =            "Deadband";
@@ -238,6 +239,8 @@ void Joystick::_loadSettings()
     _axisFrequencyHz    = settings.value(_axisFrequencySettingsKey,     _defaultAxisFrequencyHz).toFloat();
     _buttonFrequencyHz  = settings.value(_buttonFrequencySettingsKey,   _defaultButtonFrequencyHz).toFloat();
     _circleCorrection   = settings.value(_circleCorrectionSettingsKey,  false).toBool();
+    _negativeThrust     = settings.value(_negativeThrustSettingsKey,    false).toBool();
+
 
     _throttleMode   = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
     badSettings |= !convertOk;
@@ -341,6 +344,7 @@ void Joystick::_saveSettings()
     settings.setValue(_axisFrequencySettingsKey,    _axisFrequencyHz);
     settings.setValue(_buttonFrequencySettingsKey,  _buttonFrequencyHz);
     settings.setValue(_throttleModeSettingsKey,     _throttleMode);
+    settings.setValue(_negativeThrustSettingsKey,   _negativeThrust);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
 
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _circleCorrection << _transmitterMode;
