@@ -311,6 +311,7 @@ private:
     static const char* _buttonActionNameKey;
     static const char* _buttonActionRepeatKey;
     static const char* _throttleModeSettingsKey;
+    static const char* _negativeThrustSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
