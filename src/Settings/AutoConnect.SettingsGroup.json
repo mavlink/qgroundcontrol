@@ -60,6 +60,13 @@
     "default":     4800
 },
 {
+    "name":             "autoConnectZeroConf",
+    "shortDesc": "Automatically open a connection with Zero-Conf",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.",
+    "type":             "bool",
+    "default":     true
+},
+{
     "name":             "udpListenPort",
     "shortDesc": "UDP port for autoconnect",
     "type":             "uint32",

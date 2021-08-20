@@ -33,6 +33,7 @@ public:
     DEFINE_SETTINGFACT(autoConnectLibrePilot)
     DEFINE_SETTINGFACT(autoConnectNmeaPort)
     DEFINE_SETTINGFACT(autoConnectNmeaBaud)
+    DEFINE_SETTINGFACT(autoConnectZeroConf)
     DEFINE_SETTINGFACT(udpListenPort)
     DEFINE_SETTINGFACT(udpTargetHostIP)
     DEFINE_SETTINGFACT(udpTargetHostPort)
