@@ -64,7 +64,7 @@ Item {
         }
         QGCCheckBox {
             visible:            globals.activeVehicle.supportsNegativeThrust
-            enabled:            _activeJoystick.negativeThrust = globals.activeVehicle.supportsNegativeThrust
+            enabled:            globals.activeVehicle.supportsNegativeThrust
             checked:            _activeJoystick ? _activeJoystick.negativeThrust : false
             onClicked:          _activeJoystick.negativeThrust = checked
         }
