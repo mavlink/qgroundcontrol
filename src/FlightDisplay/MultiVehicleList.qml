@@ -89,7 +89,7 @@ Item {
         property real _cacheBuffer:     height * 2
 
         delegate: Rectangle {
-            width:      parent.width
+            width:      missionItemEditorListView.width
             height:     innerColumn.y + innerColumn.height + _margin
             color:      qgcPal.missionItemEditor
             opacity:    _rectOpacity

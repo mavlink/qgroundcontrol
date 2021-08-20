@@ -21,7 +21,7 @@ void CorridorScanComplexItemTest::init(void)
 {
     TransectStyleComplexItemTestBase::init();
 
-    _corridorItem = new CorridorScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */, this /* parent */);
+    _corridorItem = new CorridorScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
     _corridorItem->corridorPolyline()->appendVertices(_polyLineVertices);
 
     // Setup for expected transect count
@@ -42,8 +42,10 @@ void CorridorScanComplexItemTest::init(void)
 
 void CorridorScanComplexItemTest::cleanup(void)
 {
-    delete _corridorItem;
     TransectStyleComplexItemTestBase::cleanup();
+
+    // _corridorItem is deleted when _masterController goes away
+    _corridorItem = nullptr;
 }
 
 void CorridorScanComplexItemTest::_testDirty(void)

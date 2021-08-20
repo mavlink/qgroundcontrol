@@ -113,7 +113,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
             break;
         case MAV_TYPE_GROUND_ROVER:
         case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = "APMrover2";
+            vehicleName = "Rover";
             break;
         case MAV_TYPE_SUBMARINE:
             vehicleName = "ArduSub";
@@ -143,7 +143,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
     }
     _parameterMetaDataLoaded = true;
 
-    QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|ArduSub|AntennaTracker");
+    QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|Rover|ArduSub|AntennaTracker");
     QString currentCategory;
 
     qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
@@ -426,14 +426,23 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
 
 FactMetaData* APMParameterMetaData::getMetaDataForFact(const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type)
 {
-    const QString mavTypeString = mavTypeToString(vehicleType);
-    APMFactMetaDataRaw* rawMetaData = nullptr;
+    bool                keepTrying      = true;
+    QString             mavTypeString   = mavTypeToString(vehicleType);
+    APMFactMetaDataRaw* rawMetaData     = nullptr;
 
     // check if we have metadata for fact, use generic otherwise
-    if (_vehicleTypeToParametersMap[mavTypeString].contains(name)) {
-        rawMetaData = _vehicleTypeToParametersMap[mavTypeString][name];
-    } else if (_vehicleTypeToParametersMap["libraries"].contains(name)) {
-        rawMetaData = _vehicleTypeToParametersMap["libraries"][name];
+    while (keepTrying) {
+        if (_vehicleTypeToParametersMap[mavTypeString].contains(name)) {
+            rawMetaData = _vehicleTypeToParametersMap[mavTypeString][name];
+        } else if (_vehicleTypeToParametersMap["libraries"].contains(name)) {
+            rawMetaData = _vehicleTypeToParametersMap["libraries"][name];
+        }
+        if (!rawMetaData && mavTypeString == "Rover") {
+            // Hack city: Older versions of Rover have different name
+            mavTypeString = "APMrover2";
+        } else {
+            keepTrying = false;
+        }
     }
 
     FactMetaData *metaData = new FactMetaData(type, this);

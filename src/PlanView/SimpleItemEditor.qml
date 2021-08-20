@@ -21,7 +21,6 @@ Rectangle {
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
     property real _altRectMargin:           ScreenTools.defaultFontPixelWidth / 2
     property var  _controllerVehicle:       missionItem.masterController.controllerVehicle
-    property bool _supportsTerrainFrame:    _controllerVehicle.supportsTerrainFrame
     property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
     property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeMixed
     property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
@@ -144,9 +143,6 @@ Rectangle {
                             }
                             if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && missionItem.altitudeMode !== QGroundControl.AltitudeModeAbsolute) {
                                 removeModes.push(QGroundControl.AltitudeModeAbsolute)
-                            }
-                            if (!_supportsTerrainFrame) {
-                                removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
                             }
                             removeModes.push(QGroundControl.AltitudeModeMixed)
                             mainWindow.showPopupDialogFromComponent(altModeDialogComponent, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction })

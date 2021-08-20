@@ -1,6 +1,6 @@
 
 include_directories(
-	.
+	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 	VideoManager
@@ -13,23 +13,6 @@ if(MOBILE)
 		MobileScreenMgr.cc
 		MobileScreenMgr.h
 	)
-endif()
-if(GST_FOUND)
-	# TODO: Transform those in targets.
-	list(APPEND EXTRA_SRC
-		Taisync/TaisyncManager.cc
-		Taisync/TaisyncHandler.cc
-		Taisync/TaisyncSettings.cc
-		Microhard/MicrohardManager.cc
-		Microhard/MicrohardHandler.cc
-		Microhard/MicrohardSettings.cc
-	)
-	if(ANDROID) # Should also be expanded to iOS
-		list(APPEND EXTRA_SRC
-			Taisync/TaisyncTelemetry.cc
-			Taisync/TaisyncVideoReceiver.cc
-		)
-	endif()
 endif()
 
 if(BUILD_TESTING)
@@ -104,8 +87,6 @@ add_library(qgc
 	QGCComboBox.cc
 	QGCComboBox.h
 	QGCConfig.h
-	QGCDockWidget.cc
-	QGCDockWidget.h
 	QGCFileDownload.cc
 	QGCFileDownload.h
 	QGCLoggingCategory.cc
@@ -152,12 +133,18 @@ add_subdirectory(FollowMe)
 add_subdirectory(Geo)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
+if (${QGC_GST_MICROHARD_ENABLED})
+  add_subdirectory(Microhard)
+endif ()
 add_subdirectory(MissionManager)
 add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
+if (${QGC_GST_TAISYNC_ENABLED})
+  add_subdirectory(Taisync)
+endif ()
 add_subdirectory(Terrain)
 add_subdirectory(uas)
 add_subdirectory(Vehicle)
@@ -202,6 +189,17 @@ target_link_libraries(qgc
 		VideoManager
 		z # zlib
 )
+
+if(GST_FOUND)
+	if (${QGC_GST_MICROHARD_ENABLED})
+		target_compile_definitions(qgc PUBLIC QGC_GST_MICROHARD_ENABLED)
+		target_link_libraries(qgc PUBLIC Microhard)
+	endif()
+	if (${QGC_GST_TAISYNC_ENABLED})
+		target_compile_definitions(qgc PUBLIC QGC_GST_TAISYNC_ENABLED)
+		target_link_libraries(qgc PUBLIC Taisync)
+	endif()
+endif()
 
 if(BUILD_TESTING)
 	target_link_libraries(qgc PUBLIC qgcunittest)

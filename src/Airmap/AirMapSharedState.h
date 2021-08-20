@@ -14,7 +14,7 @@
 
 #include "AirspaceManager.h"
 
-#include <airmap/qt/client.h>
+#include <Airmap/services/client.h>
 
 /**
  * @class AirMapSharedState
@@ -35,7 +35,7 @@ public:
 
     void                setSettings         (const Settings& settings);
     const Settings&     settings            () const { return _settings; }
-    void                setClient           (airmap::qt::Client* client) { _client = client; }
+    void                setClient           (airmap::services::Client* client) { _client = client; }
 
     QString             pilotID             () { return _pilotID; }
     void                setPilotID          (const QString& pilotID) { _pilotID = pilotID; }
@@ -44,9 +44,9 @@ public:
      * Get the current client instance. It can be NULL. If not NULL, it implies
      * there's an API key set.
      */
-    airmap::qt::Client* client              () const { return _client; }
-    bool                hasAPIKey           () const { return _settings.apiKey != ""; }
-    bool                isLoggedIn          () const { return _loginToken != ""; }
+    airmap::services::Client*   client              () const { return _client; }
+    bool                        hasAPIKey           () const { return _settings.apiKey != ""; }
+    bool                        isLoggedIn          () const { return _loginToken != ""; }
 
     using Callback = std::function<void(const QString& /* login_token */)>;
 
@@ -67,11 +67,11 @@ private:
     void _processPendingRequests            ();
 
 private:
-    bool                _isLoginInProgress = false;
-    QString             _loginToken;        ///< login token: empty when not logged in
-    QString             _pilotID;
-    airmap::qt::Client* _client = nullptr;
-    Settings            _settings;
-    QQueue<Callback>    _pendingRequests;   ///< pending requests that are processed after a successful login
+    bool                        _isLoginInProgress = false;
+    QString                     _loginToken;        ///< login token: empty when not logged in
+    QString                     _pilotID;
+    airmap::services::Client*   _client = nullptr;
+    Settings                    _settings;
+    QQueue<Callback>            _pendingRequests;   ///< pending requests that are processed after a successful login
 };
 

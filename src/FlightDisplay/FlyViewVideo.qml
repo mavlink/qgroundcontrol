@@ -83,4 +83,9 @@ Item {
         anchors.fill:   parent
         vehicle:        QGroundControl.multiVehicleManager.activeVehicle
     }
+
+    ObstacleDistanceOverlayVideo {
+        id: obstacleDistance
+        showText: pipState.state === pipState.fullState
+    }
 }

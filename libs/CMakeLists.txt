@@ -1,6 +1,8 @@
+add_subdirectory(libevents)
 add_subdirectory(qtandroidserialport)
 add_subdirectory(shapelib)
 if (WIN32)
+    add_subdirectory(sdl2)
     add_subdirectory(zlib)
 endif (WIN32)
 if (GST_FOUND)

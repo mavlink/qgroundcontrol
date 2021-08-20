@@ -20,7 +20,7 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 
-Item {
+ColumnLayout {
     width:                  availableWidth
     height:                 (globals.activeVehicle.supportsJSButton ? buttonCol.height : flowColumn.height) + (ScreenTools.defaultFontPixelHeight * 2)
     Connections {
@@ -75,6 +75,7 @@ Item {
                         id:                         buttonActionCombo
                         width:                      ScreenTools.defaultFontPixelWidth * 26
                         model:                      _activeJoystick ? _activeJoystick.assignableActionTitles : []
+                        sizeToContents:             true
 
                         function _findCurrentButtonAction() {
                             if(_activeJoystick) {
@@ -138,6 +139,9 @@ Item {
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
                 visible: globals.activeVehicle.supportsJSButton
+                property var parameterName: `BTN${index}_FUNCTION`
+                property var parameterShiftName: `BTN${index}_SFUNCTION`
+                property bool hasFirmwareSupport: controller.parameterExists(-1, parameterName)
 
                 property bool pressed
 
@@ -160,17 +164,28 @@ Item {
                 }
 
                 FactComboBox {
-                    id:         mainJSButtonActionCombo
-                    width:      ScreenTools.defaultFontPixelWidth * 15
-                    fact:       controller.parameterExists(-1, "BTN"+index+"_FUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_FUNCTION") : null;
-                    indexModel: false
+                    id:             mainJSButtonActionCombo
+                    width:          ScreenTools.defaultFontPixelWidth * 15
+                    fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterName) : null;
+                    visible:        hasFirmwareSupport
+                    indexModel:     false
+                    sizeToContents: true
                 }
 
                 FactComboBox {
-                    id:         shiftJSButtonActionCombo
-                    width:      ScreenTools.defaultFontPixelWidth * 15
-                    fact:       controller.parameterExists(-1, "BTN"+index+"_SFUNCTION") ? controller.getParameterFact(-1, "BTN" + index + "_SFUNCTION") : null;
-                    indexModel: false
+                    id:             shiftJSButtonActionCombo
+                    width:          ScreenTools.defaultFontPixelWidth * 15
+                    fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterShiftName) : null;
+                    visible:        hasFirmwareSupport
+                    indexModel:     false
+                    sizeToContents: true
+                }
+
+                QGCLabel {
+                    text:                   qsTr("No firmware support")
+                    width:                  ScreenTools.defaultFontPixelWidth * 15
+                    visible:                !hasFirmwareSupport
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }

@@ -116,40 +116,40 @@ SetupPage {
                             }
 
                             FactComboBox {
-                                id:                 leakEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafeLeakEnable
-                                indexModel:         false
+                                id:                     leakEnableCombo
+                                width:                  failsafeSettings._editWidth
+                                fact:                   _failsafeLeakEnable
+                                indexModel:             false
                             }
 
                             QGCLabel {
-                                text:               qsTr( "Detector Pin:")
-                                width:              failsafeSettings._labelWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
+                                text:                   qsTr("Detector Pin:")
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                visible:                leakEnableCombo.currentIndex != 0
                             }
 
                             FactComboBox {
-                                width:              failsafeSettings._editWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
-                                fact:               _failsafeLeakPin
-                                indexModel:         false
+                                width:                  failsafeSettings._editWidth
+                                visible:                leakEnableCombo.currentIndex != 0
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                fact:                   _failsafeLeakPin
+                                indexModel:             false
                             }
 
                             QGCLabel {
-                                text: "Logic when Dry:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
+                                text:                   qsTr("Logic when Dry:")
+                                width:                  failsafeSettings._labelWidth
+                                visible:                leakEnableCombo.currentIndex != 0
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
                             }
 
                             FactComboBox {
-                                width:              failsafeSettings._editWidth
-                                visible:            leakEnableCombo.currentIndex != 0
-                                anchors.baseline:   leakEnableCombo.baseline
-                                fact:               _failsafeLeakLogic
-                                indexModel:         false
+                                width:                  failsafeSettings._editWidth
+                                visible:                leakEnableCombo.currentIndex != 0
+                                anchors.verticalCenter: leakEnableCombo.verticalCenter
+                                fact:                   _failsafeLeakLogic
+                                indexModel:             false
                             }
                         }
 
@@ -173,31 +173,31 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text: "Voltage:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
+                                text:                   qsTr("Voltage:")
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
                             }
 
                             FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
-                                fact:               _failsafeBatteryVoltage
+                                width:                  failsafeSettings._editWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
+                                fact:                   _failsafeBatteryVoltage
                             }
 
                             QGCLabel {
-                                text: "Remaining Capacity:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
+                                text:                   qsTr("Remaining Capacity:")
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
                             }
 
                             FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
-                                anchors.baseline:   batteryEnableCombo.baseline
-                                fact:               _failsafeBatteryCapacity
+                                width:                  failsafeSettings._editWidth
+                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
+                                visible:                batteryEnableCombo.currentIndex != 0
+                                fact:                   _failsafeBatteryCapacity
                             }
                         }
 
@@ -255,18 +255,19 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text: "Timeout:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            pilotEnableCombo.currentIndex != 0
-                                anchors.baseline:   pilotEnableCombo.baseline
+                                text:                   qsTr("Timeout:")
+                                width:                  failsafeSettings._labelWidth
+                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
+                                visible:                pilotEnableCombo.currentIndex != 0
 
                             }
 
                             FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            pilotEnableCombo.currentIndex != 0
-                                anchors.baseline:   pilotEnableCombo.baseline
-                                fact:               _failsafePilotTimeout
+                                width:                  failsafeSettings._editWidth
+                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
+                                visible:                pilotEnableCombo.currentIndex != 0
+                                anchors.baseline:       pilotEnableCombo.baseline
+                                fact:                   _failsafePilotTimeout
                             }
                         }
 
@@ -289,7 +290,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text: "Threshold:"
+                                text:               qsTr("Threshold:")
                                 width:              failsafeSettings._labelWidth
                                 visible:            temperatureEnableCombo.currentIndex != 0
                                 anchors.baseline:   temperatureEnableCombo.baseline
