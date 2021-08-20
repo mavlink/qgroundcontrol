@@ -147,6 +147,7 @@ private:
     void                _updateSerialPorts          (void);
     void                _removeConfiguration        (LinkConfiguration* config);
     void                _addUDPAutoConnectLink      (void);
+    void                _addZeroConfAutoConnectLink (void);
     void                _addMAVLinkForwardingLink   (void);
     bool                _isSerialPortConnected      (void);
 
