@@ -1,4 +1,5 @@
 add_subdirectory(libevents)
+add_subdirectory(qmdnsengine)
 add_subdirectory(qtandroidserialport)
 add_subdirectory(shapelib)
 if (WIN32)
