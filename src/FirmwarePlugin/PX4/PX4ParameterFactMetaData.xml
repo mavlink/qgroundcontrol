@@ -12215,6 +12215,11 @@
       <long_desc>Disable this if the board has no barometer, such as some of the Omnibus F4 SD variants. If disabled, the preflight checks will not check for the presence of a barometer.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SYS_HAS_GPS" default="1" type="INT32" boolean="true">
+      <short_desc>Control if the vehicle has a GPS</short_desc>
+      <long_desc>Disable this if the system has no GPS. If disabled, the sensors hub will not process sensor_gps, and GPS will not be available for the rest of the system.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SYS_HAS_MAG" default="1" type="INT32" boolean="true">
       <short_desc>Control if the vehicle has a magnetometer</short_desc>
       <long_desc>Disable this if the board has no magnetometer, such as the Omnibus F4 SD. If disabled, the preflight checks will not check for the presence of a magnetometer.</long_desc>
