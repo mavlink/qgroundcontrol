@@ -46,10 +46,13 @@ public:
 
 
     MAV_AUTOPILOT   firmwareType        (void)                          { return _firmwareType; }
+    uint16_t        boardVendorId       (void)                          { return _boardVendorId; }
+    uint16_t        boardProductId      (void)                          { return _boardProductId; }
     MAV_TYPE        vehicleType         (void)                          { return _vehicleType; }
     bool            sendStatusText      (void) const                         { return _sendStatusText; }
 
     void            setFirmwareType     (MAV_AUTOPILOT firmwareType)    { _firmwareType = firmwareType; emit firmwareChanged(); }
+    void            setBoardVendorProduct(uint16_t vendorId, uint16_t productId) { _boardVendorId = vendorId; _boardProductId = productId; }
     void            setVehicleType      (MAV_TYPE vehicleType)          { _vehicleType = vehicleType; emit vehicleChanged(); }
     void            setSendStatusText   (bool sendStatusText)           { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
@@ -86,6 +89,8 @@ private:
     bool            _sendStatusText     = false;
     FailureMode_t   _failureMode        = FailNone;
     bool            _incrementVehicleId = true;
+    uint16_t        _boardVendorId      = 0;
+    uint16_t        _boardProductId     = 0;
 
     static const char* _firmwareTypeKey;
     static const char* _vehicleTypeKey;
@@ -274,6 +279,12 @@ private:
     double                      _vehicleAltitude;
     bool                        _commLost                       = false;
     bool                        _highLatencyTransmissionEnabled = true;
+
+    // These are just set for reporting the fields in _respondWithAutopilotVersion()
+    // and ensuring that the Vehicle reports the fields in Vehicle::firmwareBoardVendorId etc.
+    // They do not control any mock simulation (and it is up to the Custom build to do that).
+    uint16_t                    _boardVendorId      = 0;
+    uint16_t                    _boardProductId     = 0;
 
     MockLinkFTP* _mockLinkFTP = nullptr;
 

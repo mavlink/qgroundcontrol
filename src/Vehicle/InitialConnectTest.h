@@ -19,4 +19,5 @@ class InitialConnectTest : public UnitTest
 
 private slots:
     void _performTestCases(void);
+    void _boardVendorProductId(void);
 };
