@@ -128,6 +128,8 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
         mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
 
         vehicle->_uid = (quint64)autopilotVersion.uid;
+        vehicle->_firmwareBoardVendorId = autopilotVersion.vendor_id;
+        vehicle->_firmwareBoardProductId = autopilotVersion.product_id;
         emit vehicle->vehicleUIDChanged();
 
         if (autopilotVersion.flight_sw_version != 0) {
