@@ -2764,6 +2764,11 @@ void Vehicle::sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bo
                           param1, param2, param3, param4, param5, param6, param7);
 }
 
+bool Vehicle::isMavCommandPending(int targetCompId, MAV_CMD command)
+{
+    return ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
+}
+
 int Vehicle::_findMavCommandListEntryIndex(int targetCompId, MAV_CMD command)
 {
     for (int i=0; i<_mavCommandList.count(); i++) {
@@ -2809,8 +2814,7 @@ bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
 
 void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int targetCompId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-    int entryIndex = _findMavCommandListEntryIndex(targetCompId, command);
-    if (entryIndex != -1 || targetCompId == MAV_COMP_ID_ALL) {
+    if ((targetCompId == MAV_COMP_ID_ALL) || isMavCommandPending(targetCompId, command)) {
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
         QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
 
@@ -3726,7 +3730,7 @@ void Vehicle::_setMessageInterval(int messageId, int rate)
                    rate);
 }
 
-bool Vehicle::_initialConnectComplete() const
+bool Vehicle::isInitialConnectComplete() const
 {
     return !_initialConnectStateMachine->active();
 }
