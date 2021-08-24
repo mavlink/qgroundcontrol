@@ -93,6 +93,8 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config)
     _vehicleSystemId    = mockConfig->incrementVehicleId() ?  _nextVehicleSystemId++ : _nextVehicleSystemId;
     _vehicleLatitude    = _defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001);
     _vehicleLongitude   = _defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001);
+    _boardVendorId      = mockConfig->boardVendorId();
+    _boardProductId     = mockConfig->boardProductId();
 
     QObject::connect(this, &MockLink::writeBytesQueuedSignal, this, &MockLink::_writeBytesQueued, Qt::QueuedConnection);
 
@@ -1204,8 +1206,8 @@ void MockLink::_respondWithAutopilotVersion(void)
                                             (uint8_t *)&customVersion,       // flight_custom_version,
                                             (uint8_t *)&customVersion,       // middleware_custom_version,
                                             (uint8_t *)&customVersion,       // os_custom_version,
-                                            0,                               // vendor_id,
-                                            0,                               // product_id,
+                                            _boardVendorId,
+                                            _boardProductId,
                                             0,                               // uid
                                             0);                              // uid2
     respondWithMavlinkMessage(msg);
