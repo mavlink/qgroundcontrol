@@ -125,6 +125,7 @@ protected:
     static void _wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer data);
     static void _linkPad(GstElement* element, GstPad* pad, gpointer data);
     static gboolean _padProbe(GstElement* element, GstPad* pad, gpointer user_data);
+    static gboolean _filterParserCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
