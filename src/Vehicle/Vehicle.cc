@@ -711,6 +711,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
+    case MAVLINK_MSG_ID_HYGROMETER_SENSOR:
+       _handleHygrometerSensor(message);
+       break;
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         _handleNavControllerOutput(message);
         break;
@@ -977,6 +980,16 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
         _altitudeTuningOffset = vfrHud.alt;
     }
     _altitudeTuningFact.setRawValue(vfrHud.alt - _altitudeTuningOffset);
+}
+
+void Vehicle::_handleHygrometerSensor(mavlink_message_t& message)
+{
+    mavlink_hygrometer_sensor_t hygrometer;
+    mavlink_msg_hygrometer_sensor_decode(&message, &hygrometer);
+
+    _hygroIDFact.setRawValue(hygrometer.id);
+    _hygroTempFact.setRawValue(hygrometer.temperature);
+    _hygroHumiFact.setRawValue(hygrometer.humidity);
 }
 
 void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
