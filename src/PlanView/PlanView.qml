@@ -116,7 +116,7 @@ Item {
 
     Connections {
         target: _appSettings ? _appSettings.defaultMissionItemAltitude : null
-        onRawValueChanged: {
+        function onRawValueChanged() {
             if (_visualItems.count > 1) {
                 mainWindow.showComponentDialog(applyNewAltitude, qsTr("Apply new altitude"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
             }
@@ -198,7 +198,7 @@ Item {
 
     Connections {
         target: QGroundControl.airspaceManager
-        onAirspaceVisibleChanged: {
+        function onAirspaceVisibleChanged() {
             planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
         }
     }
@@ -303,7 +303,7 @@ Item {
     Connections {
         target: _missionController
 
-        onNewItemsFromVehicle: {
+        function onNewItemsFromVehicle() {
             if (_visualItems && _visualItems.count !== 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
             }
@@ -545,13 +545,13 @@ Item {
 
                 Connections {
                     target:                 _missionController
-                    onSplitSegmentChanged:  splitSegmentItem._updateSplitCoord()
+                    function onSplitSegmentChanged()  { splitSegmentItem._updateSplitCoord() }
                 }
 
                 Connections {
                     target:                 _missionController.splitSegment
-                    onCoordinate1Changed:   splitSegmentItem._updateSplitCoord()
-                    onCoordinate2Changed:   splitSegmentItem._updateSplitCoord()
+                    function onCoordinate1Changed()   { splitSegmentItem._updateSplitCoord() }
+                    function onCoordinate2Changed()   { splitSegmentItem._updateSplitCoord() }
                 }
             }
 
