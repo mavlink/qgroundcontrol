@@ -89,8 +89,8 @@ Item {
     Connections {
         target: _missionItem
 
-        onIsCurrentItemChanged:         updateDragArea()
-        onSpecifiesCoordinateChanged:   updateDragArea()
+        function onIsCurrentItemChanged() {         updateDragArea() }
+        function onSpecifiesCoordinateChanged() {   updateDragArea() }
     }
 
     Connections {
@@ -172,7 +172,9 @@ Item {
 
                 Connections {
                     target:            _mapCircle.radius
-                    onRawValueChanged: if(!blockSignals) loiterMapCircleVisuals.updateMissionItem()
+                    function onRawValueChanged() {
+                        if(!blockSignals) loiterMapCircleVisuals.updateMissionItem()
+                    }
                 }
             }
         }
