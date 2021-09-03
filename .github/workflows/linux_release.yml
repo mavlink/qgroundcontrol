@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on:  ubuntu-latest
+    runs-on:  ubuntu-18.04
 
     steps:
       - name: Checkout repo
@@ -29,7 +29,7 @@ jobs:
           target:       desktop
           dir:          ${{ runner.temp }}
           modules:      qtcharts
-          setup-python: false
+          setup-python: true
 
       - name: Install QGC source dependencies
         run:  sudo apt-get install -y libsdl2-dev
