@@ -81,7 +81,7 @@ jobs:
         run:  ccache -s
 
       - name: Setup for unit tests
-        working-directory: ${{ runner.temp }}/shadow_build_dir  
+        working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
               mkdir -p ~/.config/QtProject/
               cp ${SOURCE_DIR}/test/qtlogging.ini ~/.config/QtProject/
@@ -90,5 +90,5 @@ jobs:
       - name: Run unit tests
         uses: GabrielBB/xvfb-action@v1
         with:
-          working-directory:  ${{ runner.temp }}/shadow_build_dir  
+          working-directory:  ${{ runner.temp }}/shadow_build_dir
           run:                ./staging/qgroundcontrol-start.sh --unittest

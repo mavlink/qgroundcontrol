@@ -82,7 +82,7 @@ jobs:
         run:  ccache -s
 
       - name: Create AppImage
-        working-directory:  ${{ runner.temp }}/shadow_build_dir  
+        working-directory:  ${{ runner.temp }}/shadow_build_dir
         run:                ${SOURCE_DIR}/deploy/create_linux_appimage.sh ${SOURCE_DIR} ./staging ./package;
 
       - name: Save artifact
@@ -93,7 +93,7 @@ jobs:
 
       # Currently disabled since credentials are not working correctly
       - name: Upload to S3 Bucket
-        if:                 ${{ false }}
+        #if:                 ${{ false }}
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
