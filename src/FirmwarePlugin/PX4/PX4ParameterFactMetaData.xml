@@ -5406,10 +5406,19 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="MPC_THR_MIN" default="0.12" type="FLOAT">
-      <short_desc>Minimum thrust in auto thrust control</short_desc>
-      <long_desc>It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
+      <short_desc>Minimum collective thrust in auto thrust control</short_desc>
+      <long_desc>It's recommended to set it &gt; 0 to avoid free fall with zero thrust. Note: Without airmode zero thrust leads to zero roll/pitch control authority. (see MC_AIRMODE)</long_desc>
       <min>0.05</min>
       <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="MPC_THR_XY_MARG" default="0.3" type="FLOAT">
+      <short_desc>Horizontal thrust margin</short_desc>
+      <long_desc>Margin that is kept for horizontal control when prioritizing vertical thrust. To avoid completely starving horizontal control with high vertical error.</long_desc>
+      <min>0.0</min>
+      <max>0.5</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
