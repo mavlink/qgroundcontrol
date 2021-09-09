@@ -1498,3 +1498,22 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 
 DISTFILES += \
     src/QmlControls/QGroundControl/Specific/qmldir
+
+#
+# Steps for "install" target on Linux
+#
+LinuxBuild {
+    target.path = $${PREFIX}/bin/
+
+    share_qgroundcontrol.path = $${PREFIX}/share/qgroundcontrol/
+    share_qgroundcontrol.files = $${IN_PWD}/resources/
+
+    share_icons.path = $${PREFIX}/share/icons/hicolor/128x128/apps/
+    share_icons.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
+    share_metainfo.path = $${PREFIX}/share/metainfo/
+    share_metainfo.files = $${IN_PWD}/deploy/org.mavlink.qgroundcontrol.metainfo.xml
+    share_applications.path = $${PREFIX}/share/applications/
+    share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
+
+    INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
+}
