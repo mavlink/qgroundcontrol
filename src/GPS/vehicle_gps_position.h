@@ -49,6 +49,8 @@ struct sensor_gps_s {
 	int32_t lon;
 	int32_t alt;
 	int32_t alt_ellipsoid;
+	int32_t automatic_gain_control;
+	int32_t jamming_state;
 	float s_variance_m_s;
 	float c_variance_rad;
 	float eph;
