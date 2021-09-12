@@ -71,8 +71,8 @@ Rectangle {
         id: editPositionDialog
 
         EditPositionDialog {
-            coordinate: missionItem.coordinate
-            onCoordinateChanged: missionItem.coordinate = coordinate
+            coordinate: missionItem.isSurveyItem ?  missionItem.centerCoordinate : missionItem.coordinate
+            onCoordinateChanged: missionItem.isSurveyItem ?  missionItem.centerCoordinate = coordinate : missionItem.coordinate = coordinate
         }
     }
 
