@@ -8511,6 +8511,32 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
+    <parameter name="RC_MAP_FLTM_BTN" default="0" type="INT32">
+      <short_desc>Button flight mode selection</short_desc>
+      <long_desc>This bitmask allows to specify multiple channels for changing flight modes using momentary buttons. Each channel is assigned to a mode slot ((lowest channel = slot 1). The resulting modes for each slot X is defined by the COM_FLTMODEX parameters. The functionality can be used only if RC_MAP_FLTMODE is disabled. The maximum number of available slots and hence bits set in the mask is 6.</long_desc>
+      <min>0</min>
+      <max>258048</max>
+      <bitmask>
+        <bit index="0">Mask Channel 1 as a mode button</bit>
+        <bit index="1">Mask Channel 2 as a mode button</bit>
+        <bit index="2">Mask Channel 3 as a mode button</bit>
+        <bit index="3">Mask Channel 4 as a mode button</bit>
+        <bit index="4">Mask Channel 5 as a mode button</bit>
+        <bit index="5">Mask Channel 6 as a mode button</bit>
+        <bit index="6">Mask Channel 7 as a mode button</bit>
+        <bit index="7">Mask Channel 8 as a mode button</bit>
+        <bit index="8">Mask Channel 9 as a mode button</bit>
+        <bit index="9">Mask Channel 10 as a mode button</bit>
+        <bit index="10">Mask Channel 11 as a mode button</bit>
+        <bit index="11">Mask Channel 12 as a mode button</bit>
+        <bit index="12">Mask Channel 13 as a mode button</bit>
+        <bit index="13">Mask Channel 14 as a mode button</bit>
+        <bit index="14">Mask Channel 15 as a mode button</bit>
+        <bit index="15">Mask Channel 16 as a mode button</bit>
+        <bit index="16">Mask Channel 17 as a mode button</bit>
+        <bit index="17">Mask Channel 18 as a mode button</bit>
+      </bitmask>
+    </parameter>
     <parameter name="RC_MAP_GEAR_SW" default="0" type="INT32">
       <short_desc>Landing gear switch channel</short_desc>
       <min>0</min>
