@@ -113,7 +113,6 @@ AirMapTelemetry::startTelemetryStream(const QString& flightID)
     _state      = State::StartCommunication;
     _flightID   = flightID;
     Flights::StartFlightCommunications::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
     params.id = _flightID.toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flights().start_flight_communications(params, [this, isAlive](const Flights::StartFlightCommunications::Result& result) {
@@ -142,7 +141,6 @@ AirMapTelemetry::stopTelemetryStream()
     qCInfo(AirMapManagerLog) << "Stopping Telemetry stream with flightID" << _flightID;
     _state = State::EndCommunication;
     Flights::EndFlightCommunications::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
     params.id = _flightID.toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flights().end_flight_communications(params, [this, isAlive](const Flights::EndFlightCommunications::Result& result) {

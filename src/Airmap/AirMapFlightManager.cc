@@ -49,7 +49,6 @@ AirMapFlightManager::findFlight(const QGCGeoBoundingCube& bc)
         }
         _flightID.clear();
         Flights::Search::Parameters params;
-        params.authorization = login_token.toStdString();
         params.geometry      = Geometry(lineString);
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
             if (!isAlive.lock()) return;
@@ -94,7 +93,6 @@ AirMapFlightManager::endFlight(const QString& flightID)
     qCDebug(AirMapManagerLog) << "Ending flight" << flightID;
     _state = State::FlightEnd;
     Flights::EndFlight::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
     params.id = flightID.toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flights().end_flight(params, [this, isAlive](const Flights::EndFlight::Result& result) {

@@ -230,7 +230,6 @@ AirMapFlightPlanManager::submitFlightPlan()
     emit flightIDChanged(_flightId);
     _state = State::FlightSubmit;
     FlightPlans::Submit::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
     params.id            = flightPlanID().toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flight_plans().submit(params, [this, isAlive](const FlightPlans::Submit::Result& result) {
@@ -285,7 +284,6 @@ AirMapFlightPlanManager::endFlight(QString flightID)
         _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
             if (!isAlive.lock()) return;
             Pilots::Authenticated::Parameters params;
-            params.authorization = login_token.toStdString();
             _shared.client()->pilots().authenticated(params, [this, isAlive](const Pilots::Authenticated::Result& result) {
                 if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
@@ -325,7 +323,6 @@ AirMapFlightPlanManager::_endFlight()
     _state = State::FlightEnd;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     Flights::EndFlight::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
     params.id = _flightToEnd.toStdString();
     //-- End flight
     _shared.client()->flights().end_flight(params, [this, isAlive](const Flights::EndFlight::Result& result) {
@@ -397,7 +394,6 @@ AirMapFlightPlanManager::_createFlightPlan()
         _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
             if (!isAlive.lock()) return;
             Pilots::Authenticated::Parameters params;
-            params.authorization = login_token.toStdString();
             _shared.client()->pilots().authenticated(params, [this, isAlive](const Pilots::Authenticated::Result& result) {
                 if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
@@ -531,7 +527,6 @@ AirMapFlightPlanManager::_uploadFlightPlan()
             polygon.outer_ring.coordinates.push_back(coord);
         }
         params.geometry = Geometry(polygon);
-        params.authorization = login_token.toStdString();
         //-- Create flight plan
         _shared.client()->flight_plans().create_by_polygon(params, [this, isAlive](const FlightPlans::Create::Result& result) {
             if (!isAlive.lock()) return;
@@ -605,7 +600,6 @@ AirMapFlightPlanManager::_updateFlightPlan(bool interactive)
         if (!isAlive.lock()) return;
         if (_state != State::FlightUpdate) return;
         FlightPlans::Update::Parameters params = {};
-        params.authorization                 = login_token.toStdString();
         params.flight_plan                   = _flightPlan;
         //-- Update flight plan
         _shared.client()->flight_plans().update(params, [this, isAlive](const FlightPlans::Update::Result& result) {
@@ -667,7 +661,6 @@ AirMapFlightPlanManager::_pollBriefing()
     }
     _state = State::FlightPolling;
     FlightPlans::RenderBriefing::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
     params.id            = flightPlanID().toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flight_plans().render_briefing(params, [this, isAlive](const FlightPlans::RenderBriefing::Result& result) {
@@ -850,7 +843,6 @@ AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
         _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
             if (!isAlive.lock()) return;
             Pilots::Authenticated::Parameters params;
-            params.authorization = login_token.toStdString();
             _shared.client()->pilots().authenticated(params, [this, isAlive](const Pilots::Authenticated::Result& result) {
                 if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
@@ -892,7 +884,6 @@ AirMapFlightPlanManager::_loadFlightList()
         if (!isAlive.lock()) return;
         if (_state != State::LoadFlightList) return;
         Flights::Search::Parameters params;
-        params.authorization = login_token.toStdString();
         quint64 start   = static_cast<quint64>(_rangeStart.toUTC().toMSecsSinceEpoch());
         quint64 end     = static_cast<quint64>(_rangeEnd.toUTC().toMSecsSinceEpoch());
         params.start_after  = airmap::from_milliseconds_since_epoch(airmap::milliseconds(static_cast<long long>(start)));
