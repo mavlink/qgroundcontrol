@@ -1926,6 +1926,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="MOT_POLE_COUNT" default="14" type="INT32">
@@ -3782,6 +3783,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="GPS_1_GNSS" default="0" type="INT32">
@@ -3830,6 +3832,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="GPS_2_GNSS" default="0" type="INT32">
@@ -4048,6 +4051,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="ISBD_READ_INT" default="0" type="INT32">
@@ -4521,6 +4525,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
         <value code="1000">Ethernet</value>
       </values>
     </parameter>
@@ -4593,6 +4598,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
         <value code="1000">Ethernet</value>
       </values>
     </parameter>
@@ -4665,6 +4671,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
         <value code="1000">Ethernet</value>
       </values>
     </parameter>
@@ -7212,6 +7219,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="RTPS_MAV_CONFIG" default="0" type="INT32">
@@ -7230,6 +7238,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
   </group>
@@ -8955,6 +8964,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
   </group>
@@ -10841,6 +10851,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="SENS_CM8JL65_R_0" default="25" type="INT32">
@@ -11099,6 +11110,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="SENS_MAG_MODE" default="1" type="INT32" category="System">
@@ -11551,6 +11563,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="SENS_TEMP_ID" default="0" type="INT32" category="System">
@@ -11572,6 +11585,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="SENS_TFMINI_CFG" default="0" type="INT32">
@@ -11590,6 +11604,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="SENS_ULAND_CFG" default="0" type="INT32">
@@ -11608,6 +11623,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="VOXLPM_SHUNT_BAT" default="0.00063" type="FLOAT">
@@ -11644,6 +11660,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="SER_GPS1_BAUD" default="0" type="INT32">
@@ -11715,6 +11732,39 @@
     <parameter name="SER_GPS3_BAUD" default="0" type="INT32">
       <short_desc>Baudrate for the GPS 3 Serial Port</short_desc>
       <long_desc>Configure the Baudrate for the GPS 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter name="SER_PPB_BAUD" default="57600" type="INT32">
+      <short_desc>Baudrate for the Pixhawk Payload Bus Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the Pixhawk Payload Bus Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto</value>
@@ -12344,6 +12394,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="TEL_HOTT_CONFIG" default="0" type="INT32">
@@ -12362,6 +12413,7 @@
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
+        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
   </group>
