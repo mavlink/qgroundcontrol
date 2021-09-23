@@ -16,6 +16,7 @@
 
 #include "PlanMasterController.h"
 #include "QGCMAVLink.h"
+#include "FlightPathSegment.h"
 
 #include "airmap/date_time.h"
 #include "airmap/flight_plans.h"
@@ -360,11 +361,20 @@ AirMapFlightPlanManager::_collectFlightData()
         qCDebug(AirMapManagerLog) << "Not enough points for a flight plan.";
         return false;
     }
+    QList<QGeoCoordinate> waypoints;
+    QmlObjectListModel *flightPathSegments = _planController->missionController()->simpleFlightPathSegments();
+
+    if (flightPathSegments->count()) {
+        waypoints.append(flightPathSegments->value<FlightPathSegment *>(0)->coordinate1());
+        for (int i=0, count=flightPathSegments->count(); i < count; i++) {
+            waypoints.append(flightPathSegments->value<FlightPathSegment *>(0)->coordinate2());
+        }
+    }
+
     // altitude reference for AirMap is takeoff altitude & all altitudes provided in the bounding cube are relative to takeoff already
     _flight.takeoffCoord            = _planController->missionController()->takeoffCoordinate();
     _flight.maxAltitudeAboveTakeoff = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
-    _flight.coords                  = bc.polygon2D();
-    _flight.bc                      = bc;
+    _flight.coords                  = waypoints;
     emit missionAreaChanged();
     return true;
 }
