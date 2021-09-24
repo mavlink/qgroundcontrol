@@ -479,8 +479,7 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
             }
 
             auto link = new TCPConfiguration(tcpName);
-            QHostAddress address(hostname);
-            link->setAddress(address);
+            link->setHost(hostname);
             link->setPort(service.port());
             link->setAutoConnect(true);
             link->setDynamic(true);
