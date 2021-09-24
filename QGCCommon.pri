@@ -104,11 +104,6 @@ linux {
         CONFIG  -= x86
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
-        equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
-                QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
-        } else {
-                QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-        }
         QMAKE_CXXFLAGS += -fvisibility=hidden
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
             -Wno-unused-parameter           # gst-plugins-good
@@ -116,9 +111,6 @@ linux {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
 } else : ios {
-    !equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 4) {
-        error("Unsupported Qt version, 5.5.x or greater is required for iOS")
-    }
     message("iOS build")
     CONFIG  += iOSBuild MobileBuild app_bundle NoSerialBuild
     CONFIG  -= bitcode
