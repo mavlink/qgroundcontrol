@@ -8366,26 +8366,8 @@
     </parameter>
   </group>
   <group name="Radio Switches">
-    <parameter name="RC_ACRO_TH" default="0.75" type="FLOAT">
-      <short_desc>Threshold for selecting acro mode</short_desc>
-      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
-      <min>-1</min>
-      <max>1</max>
-    </parameter>
     <parameter name="RC_ARMSWITCH_TH" default="0.75" type="FLOAT">
       <short_desc>Threshold for the arm switch</short_desc>
-      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
-      <min>-1</min>
-      <max>1</max>
-    </parameter>
-    <parameter name="RC_ASSIST_TH" default="0.25" type="FLOAT">
-      <short_desc>Threshold for selecting assist mode</short_desc>
-      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
-      <min>-1</min>
-      <max>1</max>
-    </parameter>
-    <parameter name="RC_AUTO_TH" default="0.75" type="FLOAT">
-      <short_desc>Threshold for selecting auto mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
@@ -8408,14 +8390,8 @@
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter name="RC_MAN_TH" default="0.75" type="FLOAT">
-      <short_desc>Threshold for the manual switch</short_desc>
-      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
-      <min>-1</min>
-      <max>1</max>
-    </parameter>
     <parameter name="RC_MAP_ACRO_SW" default="0" type="INT32">
-      <short_desc>Acro switch channel</short_desc>
+      <short_desc>Acro switch channel (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -8625,7 +8601,7 @@
       </values>
     </parameter>
     <parameter name="RC_MAP_MAN_SW" default="0" type="INT32">
-      <short_desc>Manual switch channel mapping</short_desc>
+      <short_desc>Manual switch channel mapping (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -8651,7 +8627,7 @@
       </values>
     </parameter>
     <parameter name="RC_MAP_MODE_SW" default="0" type="INT32">
-      <short_desc>Mode switch channel mapping</short_desc>
+      <short_desc>Mode switch channel mapping (deprecated)</short_desc>
       <long_desc>This is the main flight mode selector. The channel index (starting from 1 for channel 1) indicates which channel should be used for deciding about the main mode. A value of zero indicates the switch is not assigned.</long_desc>
       <min>0</min>
       <max>18</max>
@@ -8704,7 +8680,7 @@
       </values>
     </parameter>
     <parameter name="RC_MAP_POSCTL_SW" default="0" type="INT32">
-      <short_desc>Position Control switch channel</short_desc>
+      <short_desc>Position Control switch channel (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -8782,7 +8758,7 @@
       </values>
     </parameter>
     <parameter name="RC_MAP_STAB_SW" default="0" type="INT32">
-      <short_desc>Stabilize switch channel mapping</short_desc>
+      <short_desc>Stabilize switch channel mapping  (deprecated)</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
@@ -8839,20 +8815,8 @@
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter name="RC_POSCTL_TH" default="0.75" type="FLOAT">
-      <short_desc>Threshold for selecting posctl mode</short_desc>
-      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
-      <min>-1</min>
-      <max>1</max>
-    </parameter>
     <parameter name="RC_RETURN_TH" default="0.75" type="FLOAT">
       <short_desc>Threshold for selecting return to launch mode</short_desc>
-      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
-      <min>-1</min>
-      <max>1</max>
-    </parameter>
-    <parameter name="RC_STAB_TH" default="0.5" type="FLOAT">
-      <short_desc>Threshold for the stabilize switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
@@ -12350,26 +12314,17 @@
         <value code="3">Q attitude estimator (no position)</value>
       </values>
     </parameter>
-    <parameter name="SYS_RESTART_TYPE" default="2" type="INT32" volatile="true" category="System">
-      <short_desc>Set restart type</short_desc>
-      <long_desc>Set by px4io to indicate type of restart</long_desc>
-      <min>0</min>
-      <max>2</max>
-      <values>
-        <value code="0">Data survives resets</value>
-        <value code="1">Data survives in-flight resets only</value>
-        <value code="2">Data does not survive reset</value>
-      </values>
-    </parameter>
     <parameter name="SYS_STCK_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable stack checking</short_desc>
     </parameter>
-    <parameter name="SYS_USE_IO" default="1" type="INT32" boolean="true">
+    <parameter name="SYS_USE_IO" default="1" type="INT32">
       <short_desc>Set usage of IO board</short_desc>
-      <long_desc>Can be used to use a standard startup script but with a FMU only set-up. Set to 0 to force the FMU only set-up.</long_desc>
-      <min>0</min>
-      <max>1</max>
+      <long_desc>Can be used to use a configure the use of the IO board.</long_desc>
       <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">IO PWM disabled (RC only)</value>
+        <value code="1">IO enabled (RC &amp; PWM)</value>
+      </values>
     </parameter>
   </group>
   <group name="Telemetry">
