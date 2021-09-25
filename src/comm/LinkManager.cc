@@ -444,7 +444,7 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
     };
 
     connect(browser.get(), &QMdnsEngine::Browser::serviceAdded, this, [checkIfConnectionLinkExist, this](const QMdnsEngine::Service &service) {
-        qCDebug(LinkManagerLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
+        qCDebug(LinkManagerVerboseLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
 
         if(!service.type().startsWith("_mavlink")) {
             return;
