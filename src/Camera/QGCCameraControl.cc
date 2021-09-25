@@ -1278,11 +1278,7 @@ QGCCameraControl::_processConditionTest(const QString conditionTest)
     QStringList test;
 
     auto split = [&conditionTest](const QString& sep ) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        return conditionTest.split(sep, QString::SkipEmptyParts);
-#else
         return conditionTest.split(sep, Qt::SkipEmptyParts);
-#endif
     };
 
     if(conditionTest.contains("!=")) {
@@ -1330,11 +1326,7 @@ QGCCameraControl::_processCondition(const QString condition)
     bool result = true;
     bool andOp  = true;
     if(!condition.isEmpty()) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        QStringList scond = condition.split(" ", QString::SkipEmptyParts);
-#else
         QStringList scond = condition.split(" ", Qt::SkipEmptyParts);
-#endif
         while(scond.size()) {
             QString test = scond.first();
             scond.removeFirst();

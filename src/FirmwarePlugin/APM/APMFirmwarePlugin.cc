@@ -639,11 +639,7 @@ void APMFirmwarePlugin::_soloVideoHandshake(void)
 {
     QTcpSocket* socket = new QTcpSocket(this);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &APMFirmwarePlugin::_artooSocketError);
-#else
     QObject::connect(socket, &QAbstractSocket::errorOccurred, this, &APMFirmwarePlugin::_artooSocketError);
-#endif
     socket->connectToHost(_artooIP, _artooVideoHandshakePort);
 }
 

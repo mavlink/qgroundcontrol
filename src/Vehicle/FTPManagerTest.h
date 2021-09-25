@@ -16,14 +16,14 @@ class FTPManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _performSizeBasedTestCases (void);
-    void _performTestCases          (void);
     void _testLostPackets           (void);
 
     // Overrides from UnitTest
     void cleanup(void) override;
 
 private:
+    void _performSizeBasedTestCases (void);
+    void _performTestCases          (void);
     typedef struct {
         const char* file;
     } TestCase_t;

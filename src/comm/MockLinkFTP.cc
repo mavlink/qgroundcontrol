@@ -281,7 +281,8 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t& message)
 
     MavlinkFTP::Request* request = (MavlinkFTP::Request*)&requestFTP.payload[0];
 
-    if (_randomDropsEnabled) {
+    // kCmdOpenFileRO and kCmdResetSessions don't support retry so we can't drop those
+    if (_randomDropsEnabled && request->hdr.opcode != MavlinkFTP::kCmdOpenFileRO && request->hdr.opcode != MavlinkFTP::kCmdResetSessions) {
         if ((rand() % 5) == 0) {
             qDebug() << "MockLinkFTP: Random drop of incoming packet";
             return;
@@ -406,7 +407,8 @@ void MockLinkFTP::_sendResponse(uint8_t targetSystemId, uint8_t targetComponentI
                                                  targetComponentId,
                                                  (uint8_t*)request);            // Payload
 
-    if (_randomDropsEnabled) {
+    // kCmdOpenFileRO and kCmdResetSessions don't support retry so we can't drop those
+    if (_randomDropsEnabled && request->hdr.req_opcode != MavlinkFTP::kCmdOpenFileRO && request->hdr.req_opcode != MavlinkFTP::kCmdResetSessions) {
         if ((rand() % 5) == 0) {
             qDebug() << "MockLinkFTP: Random drop of outgoing packet";
             return;
