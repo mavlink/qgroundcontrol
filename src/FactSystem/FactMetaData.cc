@@ -1531,18 +1531,10 @@ bool FactMetaData::_parseEnum(const QJsonObject& jsonObject, DefineMap_t defineM
     }
 
     QString strings = jsonObject.value(_enumStringsJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    rgDescriptions = defineMap.value(strings, strings).split(",", QString::SkipEmptyParts);
-#else
     rgDescriptions = defineMap.value(strings, strings).split(",", Qt::SkipEmptyParts);
-#endif
 
     QString values = jsonObject.value(_enumValuesJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    rgValues = defineMap.value(values, values).split(",", QString::SkipEmptyParts);
-#else
     rgValues = defineMap.value(values, values).split(",", Qt::SkipEmptyParts);
-#endif
 
     if (rgDescriptions.count() != rgValues.count()) {
         errorString = QStringLiteral("Enum strings/values count mismatch - strings:values %1:%2").arg(rgDescriptions.count()).arg(rgValues.count());

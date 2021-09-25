@@ -521,11 +521,7 @@ void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
         const QLineF& line = lineList[i];
 
         auto isLineBoundedIntersect = [&line, &intersectPoint](const QLineF& linePosition) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-            return line.intersect(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
-#else
             return line.intersects(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
-#endif
         };
 
         int foundCount = 0;
@@ -586,11 +582,7 @@ void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
             QPointF intersectPoint;
             QLineF polygonLine = QLineF(polygon[j], polygon[j+1]);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-            auto intersect = line.intersect(polygonLine, &intersectPoint);
-#else
             auto intersect = line.intersects(polygonLine, &intersectPoint);
-#endif
             if (intersect == QLineF::BoundedIntersection) {
                 if (!intersections.contains(intersectPoint)) {
                     intersections.append(intersectPoint);
@@ -1105,11 +1097,7 @@ bool SurveyComplexItem::_VertexCanSeeOther(const QPolygonF& polygon, const QPoin
         QLineF lineCD(*vertexC, *vertexD);
         QPointF intersection{};
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        auto intersects = lineAB.intersect(lineCD, &intersection);
-#else
         auto intersects = lineAB.intersects(lineCD, &intersection);
-#endif
         if (intersects == QLineF::IntersectType::BoundedIntersection) {
 //            auto diffIntersection = *vertexA - intersection;
 //            auto distanceIntersection = sqrtf(diffIntersection.x() * diffIntersection.x() + diffIntersection.y()*diffIntersection.y());
