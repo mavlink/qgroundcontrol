@@ -114,17 +114,8 @@ bool TCPLink::_hardwareConnect()
     _socket = new QTcpSocket();
     QObject::connect(_socket, &QIODevice::readyRead, this, &TCPLink::_readBytes);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
-#else
     QSignalSpy errorSpy(_socket, &QAbstractSocket::errorOccurred);
-#endif
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QObject::connect(_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),
-                     this, &TCPLink::_socketError);
-#else
     QObject::connect(_socket, &QAbstractSocket::errorOccurred, this, &TCPLink::_socketError);
-#endif
 
     _socket->connectToHost(_tcpConfig->address(), _tcpConfig->port());
 
