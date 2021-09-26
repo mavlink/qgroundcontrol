@@ -4033,6 +4033,22 @@
       <unit>normalized_thrust/s</unit>
       <decimal>4</decimal>
     </parameter>
+    <parameter name="HTE_VXY_THR" default="10.0" type="FLOAT">
+      <short_desc>Horizontal velocity threshold for sensitivity reduction</short_desc>
+      <long_desc>Above this speed, the measurement noise is linearly increased to reduce the sensitivity of the estimator from biased measurement. Set to a low value on vehicles with large lifting surfaces.</long_desc>
+      <min>1.0</min>
+      <max>20.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="HTE_VZ_THR" default="2.0" type="FLOAT">
+      <short_desc>Vertical velocity threshold for sensitivity reduction</short_desc>
+      <long_desc>Above this speed, the measurement noise is linearly increased to reduce the sensitivity of the estimator from biased measurement. Set to a low value on vehicles affected by air drag when climbing or descending.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
   </group>
   <group name="Iridium SBD">
     <parameter name="ISBD_CONFIG" default="0" type="INT32">
