@@ -12241,18 +12241,6 @@
     </parameter>
   </group>
   <group name="System">
-    <parameter name="LED_RGB1_MAXBRT" default="31" type="INT32">
-      <short_desc>RGB Led brightness limit</short_desc>
-      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 31 (max)</long_desc>
-      <min>0</min>
-      <max>31</max>
-    </parameter>
-    <parameter name="LED_RGB_MAXBRT" default="15" type="INT32">
-      <short_desc>RGB Led brightness limit</short_desc>
-      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
-      <min>0</min>
-      <max>15</max>
-    </parameter>
     <parameter name="SYS_AUTOCONFIG" default="0" type="INT32">
       <short_desc>Automatically configure default values</short_desc>
       <long_desc>Set to 1 to reset parameters on next system startup (setting defaults). Platform-specific values are used if available. RC* parameters are preserved.</long_desc>
@@ -12350,6 +12338,11 @@
         <value code="2">ekf2 (recommended)</value>
         <value code="3">Q attitude estimator (no position)</value>
       </values>
+    </parameter>
+    <parameter name="SYS_RGB_MAXBRT" default="1." type="FLOAT">
+      <short_desc>RGB Led brightness limit</short_desc>
+      <long_desc>Set to 0 to disable, 1 for maximum brightness</long_desc>
+      <unit>%</unit>
     </parameter>
     <parameter name="SYS_STCK_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable stack checking</short_desc>
