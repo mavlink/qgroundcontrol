@@ -4750,8 +4750,8 @@
       <long_desc>Disabling the parameter hash check functionality will make the mavlink instance stream parameters continuously.</long_desc>
     </parameter>
     <parameter name="MAV_HB_FORW_EN" default="1" type="INT32" boolean="true">
-      <short_desc>Hearbeat message forwarding</short_desc>
-      <long_desc>The mavlink hearbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
+      <short_desc>Heartbeat message forwarding</short_desc>
+      <long_desc>The mavlink heartbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
     </parameter>
     <parameter name="MAV_ODOM_LP" default="0" type="INT32" boolean="true">
       <short_desc>Activate ODOMETRY loopback</short_desc>
