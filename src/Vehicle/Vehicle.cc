@@ -107,6 +107,7 @@ const char* Vehicle::_localPositionSetpointFactGroupName ="localPositionSetpoint
 const char* Vehicle::_escStatusFactGroupName =          "escStatus";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
 const char* Vehicle::_terrainFactGroupName =            "terrain";
+const char* Vehicle::_hygrometerFactGroupName =         "hygrometer";
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -165,6 +166,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _localPositionSetpointFactGroup(this)
     , _escStatusFactGroup           (this)
     , _estimatorStatusFactGroup     (this)
+    , _hygrometerFactGroup          (this)
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
@@ -314,6 +316,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _distanceSensorFactGroup          (this)
     , _localPositionFactGroup           (this)
     , _localPositionSetpointFactGroup   (this)
+    , _hygrometerFactGroup              (this)
 {
     _linkManager = _toolbox->linkManager();
 
@@ -442,6 +445,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_escStatusFactGroup,         _escStatusFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
+    _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
@@ -711,9 +715,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
-    case MAVLINK_MSG_ID_HYGROMETER_SENSOR:
-       _handleHygrometerSensor(message);
-       break;
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         _handleNavControllerOutput(message);
         break;
@@ -980,16 +981,6 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
         _altitudeTuningOffset = vfrHud.alt;
     }
     _altitudeTuningFact.setRawValue(vfrHud.alt - _altitudeTuningOffset);
-}
-
-void Vehicle::_handleHygrometerSensor(mavlink_message_t& message)
-{
-    mavlink_hygrometer_sensor_t hygrometer;
-    mavlink_msg_hygrometer_sensor_decode(&message, &hygrometer);
-
-    _hygroIDFact.setRawValue(hygrometer.id);
-    _hygroTempFact.setRawValue(hygrometer.temperature);
-    _hygroHumiFact.setRawValue(hygrometer.humidity);
 }
 
 void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
