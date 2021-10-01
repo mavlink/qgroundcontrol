@@ -44,6 +44,8 @@ AirMapFlightAuthorization::status()
         return AirspaceFlightAuthorization::Rejected;
     case Evaluation::Authorization::Status::pending:
         return AirspaceFlightAuthorization::Pending;
+    case Evaluation::Authorization::Status::manual_authorization:
+        return AirspaceFlightAuthorization::ManualAuthorization;
     case Evaluation::Authorization::Status::accepted_upon_submission:
         return AirspaceFlightAuthorization::AcceptedOnSubmission;
     case Evaluation::Authorization::Status::rejected_upon_submission:
@@ -123,6 +125,7 @@ AirMapFlightPlanManager::AirMapFlightPlanManager(AirMapSharedState& shared, QObj
     : AirspaceFlightPlanProvider(parent)
     , _shared(shared)
 {
+    _pollBackoffCounter = 0;
     connect(&_pollTimer, &QTimer::timeout, this, &AirMapFlightPlanManager::_pollBriefing);
     _flightStartTime = QDateTime::currentDateTime().addSecs(60);
 }
@@ -214,6 +217,7 @@ AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planControlle
         _planController = planController;
         //-- Get notified of mission changes
         connect(planController->missionController(), &MissionController::missionBoundingCubeChanged, this, &AirMapFlightPlanManager::_missionChanged);
+        connect(planController, &PlanMasterController::currentPlanFileChanged, this, &AirMapFlightPlanManager::_clearFlightPlan);
     }
     //-- Set initial flight start time
     setFlightStartTime(QDateTime::currentDateTime().addSecs(5 * 60));
@@ -367,7 +371,7 @@ AirMapFlightPlanManager::_collectFlightData()
     if (flightPathSegments->count()) {
         waypoints.append(flightPathSegments->value<FlightPathSegment *>(0)->coordinate1());
         for (int i=0, count=flightPathSegments->count(); i < count; i++) {
-            waypoints.append(flightPathSegments->value<FlightPathSegment *>(0)->coordinate2());
+            waypoints.append(flightPathSegments->value<FlightPathSegment *>(i)->coordinate2());
         }
     }
 
@@ -627,6 +631,35 @@ AirMapFlightPlanManager::_updateFlightPlan(bool interactive)
     });
 }
 
+void
+AirMapFlightPlanManager::_clearFlightPlan()
+{
+    _flightPlan.reset();
+    _state = State::Idle;
+    _flight.reset();
+    _flightId = "";
+    _flightToEnd = "";
+    _valid = false;
+    _loadingFlightList = false;
+    _flightStartsNow = false;
+    _advisories.clear();
+    _rulesets.clear();
+    _rulesViolation.clear();
+    _rulesInfo.clear();
+    _rulesReview.clear();
+    _rulesFollowing.clear();
+    _briefFeatures.clear();
+    _authorizations.clear();
+    _flightList.clear();
+    _flightDuration = 15 * 60;
+
+    _importantFeatures.clear();
+
+    _airspaceColor = AirspaceAdvisoryProvider::AdvisoryColor::Green;
+    _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
+
+}
+
 //-----------------------------------------------------------------------------
 static bool
 adv_sort(QObject* a, QObject* b)
@@ -780,6 +813,7 @@ AirMapFlightPlanManager::_pollBriefing()
                         rejected = true;
                         break;
                     case Evaluation::Authorization::Status::pending:
+                    case Evaluation::Authorization::Status::manual_authorization:
                         pending = true;
                         break;
                     }
@@ -793,16 +827,20 @@ AirMapFlightPlanManager::_pollBriefing()
                     }
                     emit flightPermitStatusChanged();
                 } else {
-                    //-- Pending. Try again.
+                    //-- Pending. Try again later..
+                    int backoff_ms = std::min(((2^_pollBackoffCounter)), 60);
+                    _pollBackoffCounter++;
                     _pollTimer.setSingleShot(true);
-                    _pollTimer.start(1000);
+                    _pollTimer.start(backoff_ms*500);
                 }
             }
             emit advisoryChanged();
             emit rulesChanged();
             _state = State::Idle;
+            _pollBackoffCounter = 0;
         } else {
             _state = State::Idle;
+            _pollBackoffCounter = 0;
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
             emit error("Brief Request failed",
                     QString::fromStdString(result.error().message()), description);

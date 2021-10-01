@@ -80,7 +80,7 @@ Item {
                                     anchors.left:       parent.left
                                     height:             label.height + (ScreenTools.defaultFontPixelHeight * 0.5)
                                     color: {
-                                        if(object.status === AirspaceFlightAuthorization.Pending)
+                                        if(object.status === AirspaceFlightAuthorization.Pending || object.status === AirspaceFlightAuthorization.ManualAuthorization)
                                             return _colorOrange
                                         if(object.status === AirspaceFlightAuthorization.Accepted || object.status === AirspaceFlightAuthorization.AcceptedOnSubmission)
                                             return _colorGreen
@@ -92,7 +92,7 @@ Item {
                                         id:     label
                                         color:  _colorWhite
                                         text: {
-                                            if(object.status === AirspaceFlightAuthorization.Pending)
+                                            if(object.status === AirspaceFlightAuthorization.Pending || object.status === AirspaceFlightAuthorization.ManualAuthorization)
                                                 return qsTr("Authorization Pending")
                                             if(object.status === AirspaceFlightAuthorization.Accepted || object.status === AirspaceFlightAuthorization.AcceptedOnSubmission)
                                                 return qsTr("Authorization Accepted")
@@ -112,7 +112,7 @@ Item {
                             height:             noAuthLabel.height + (ScreenTools.defaultFontPixelHeight * 0.5)
                             visible:            QGroundControl.airspaceManager.flightPlan.authorizations.count < 1
                             color: {
-                                if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
+                                if(_flightPermit === AirspaceFlightPlanProvider.PermitPending || _flightPermit === AirspaceFlightPlanProvider.PermitManualAuthorization)
                                     return _colorOrange
                                 if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted || _flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
                                     return _colorGreen
@@ -124,7 +124,7 @@ Item {
                                 id:     noAuthLabel
                                 color:  _colorWhite
                                 text: {
-                                    if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
+                                    if(_flightPermit === AirspaceFlightPlanProvider.PermitPending || _flightPermit === AirspaceFlightPlanProvider.PermitManualAuthorization)
                                         return qsTr("Authorization Pending")
                                     if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
                                         return qsTr("Authorization Accepted")
@@ -211,7 +211,6 @@ Item {
                 backRadius:     4
                 heightFactor:   0.3333
                 showBorder:     true
-                enabled:        _flightPermit === AirspaceFlightPlanProvider.PermitAccepted || _flightPermit === AirspaceFlightPlanProvider.PermitNotRequired
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 visible:        planView
                 onClicked: {

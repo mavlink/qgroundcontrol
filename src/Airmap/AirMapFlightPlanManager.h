@@ -110,6 +110,7 @@ signals:
 private slots:
     void _pollBriefing                      ();
     void _missionChanged                    ();
+    void _clearFlightPlan                   ();
     void _endFlight                         ();
     void _uploadFlightPlan                  ();
     void _updateFlightPlanOnTimer           ();
@@ -151,6 +152,7 @@ private:
     State                   _state = State::Idle;
     AirMapSharedState&      _shared;
     QTimer                  _pollTimer;             ///< timer to poll for approval check
+    int                     _pollBackoffCounter;    ///< for exponential backoff
     QString                 _flightId;              ///< Current flight ID, not necessarily accepted yet
     QString                 _flightToEnd;
     PlanMasterController*   _planController = nullptr;

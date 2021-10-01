@@ -227,7 +227,7 @@ rules_sort(QObject* a, QObject* b)
 //-----------------------------------------------------------------------------
 void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
-    Q_UNUSED(reset);
+    Q_UNUSED(reset)
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Airspace";
         return;

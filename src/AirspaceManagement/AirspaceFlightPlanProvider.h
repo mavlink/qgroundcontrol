@@ -36,6 +36,7 @@ public:
         Accepted,
         Rejected,
         Pending,
+        ManualAuthorization,
         AcceptedOnSubmission,
         RejectedOnSubmission,
         Unknown

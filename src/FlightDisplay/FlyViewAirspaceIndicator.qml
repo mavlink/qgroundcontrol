@@ -42,7 +42,7 @@ Rectangle {
         QGCLabel {
             text: {
                 if(_flightPermit) {
-                    if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
+                    if(_flightPermit === AirspaceFlightPlanProvider.PermitPending || _flightPermit === AirspaceFlightPlanProvider.PermitManualAuthorization)
                         return qsTr("Approval Pending")
                     if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted || _flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
                         return qsTr("Flight Approved")
@@ -53,7 +53,7 @@ Rectangle {
             }
             color: {
                 if(_flightPermit) {
-                    if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
+                    if(_flightPermit === AirspaceFlightPlanProvider.PermitPending || _flightPermit === AirspaceFlightPlanProvider.PermitManualAuthorization)
                         return qgcPal.colorOrange
                     if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted || _flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
                         return qgcPal.colorGreen
