@@ -502,6 +502,34 @@
       <decimal>2</decimal>
     </parameter>
   </group>
+  <group name="Autotune">
+    <parameter name="MC_AT_APPLY" default="1" type="INT32">
+      <short_desc>Controls when to apply the new gains</short_desc>
+      <long_desc>After the auto-tuning sequence is completed, a new set of gains is available and can be applied immediately or after landing. WARNING Applying the gains in air is dangerous as there is no guarantee that those new gains will be able to stabilize the drone properly.</long_desc>
+      <values>
+        <value code="0">Do not apply the new gains (logging only)</value>
+        <value code="1">Apply the new gains after disarm</value>
+        <value code="2">WARNING Apply the new gains in air</value>
+      </values>
+    </parameter>
+    <parameter name="MC_AT_RISE_TIME" default="0.14" type="FLOAT">
+      <short_desc>Desired angular rate closed-loop rise time</short_desc>
+      <min>0.01</min>
+      <max>0.5</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="MC_AT_START" default="0" type="INT32" boolean="true">
+      <short_desc>Start the autotuning sequence</short_desc>
+      <long_desc>WARNING: this will inject steps to the rate controller and can be dangerous. Only activate if you know what you are doing, and in a safe environment. Any motion of the remote stick will abord the signal injection and reset this parameter Best is to perform the identification in position or hold mode. Increase the amplitude of the injected signal using MC_AT_SYSID_AMP for more signal/noise ratio</long_desc>
+    </parameter>
+    <parameter name="MC_AT_SYSID_AMP" default="0.7" type="FLOAT">
+      <short_desc>Amplitude of the injected signal</short_desc>
+      <min>0.1</min>
+      <max>6.0</max>
+      <decimal>1</decimal>
+    </parameter>
+  </group>
   <group name="Battery Calibration">
     <parameter name="BAT1_A_PER_V" default="-1.0" type="FLOAT">
       <short_desc>Battery 1 current per volt (A/V)</short_desc>
