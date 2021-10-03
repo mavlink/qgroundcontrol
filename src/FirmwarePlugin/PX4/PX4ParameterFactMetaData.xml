@@ -4852,6 +4852,21 @@
       <long_desc>If set to 1 incoming HIL GPS messages are parsed.</long_desc>
     </parameter>
   </group>
+  <group name="Magnetometer Bias Estimator">
+    <parameter name="MBE_ENABLE" default="1" type="INT32" boolean="true">
+      <short_desc>Enable online mag bias calibration</short_desc>
+      <long_desc>This enables continuous calibration of the magnetometers before takeoff using gyro data.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="MBE_LEARN_GAIN" default="18." type="FLOAT">
+      <short_desc>Mag bias estimator learning gain</short_desc>
+      <long_desc>Increase to make the estimator more responsive Decrease to make the estimator more robust to noise</long_desc>
+      <min>0.1</min>
+      <max>100</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+  </group>
   <group name="Mission">
     <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
       <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
