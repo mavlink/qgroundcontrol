@@ -36,8 +36,10 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
+    , _cameraComponent(nullptr)
     , _powerComponent(nullptr)
     , _motorComponent(nullptr)
+    , _actuatorComponent(nullptr)
     , _tuningComponent(nullptr)
     , _flightBehavior(nullptr)
     , _syslinkComponent(nullptr)
@@ -85,9 +87,19 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
 
-                _motorComponent = new MotorComponent(_vehicle, this, this);
-                _motorComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_motorComponent)));
+                if (_vehicle->actuators()) {
+                    _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators
+                }
+                if (_vehicle->actuators() && _vehicle->actuators()->showUi()) {
+                    _actuatorComponent = new ActuatorComponent(_vehicle, this, this);
+                    _actuatorComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_actuatorComponent)));
+                } else {
+                    // show previous motor UI instead
+                    _motorComponent = new MotorComponent(_vehicle, this, this);
+                    _motorComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_motorComponent)));
+                }
 
                 _safetyComponent = new SafetyComponent(_vehicle, this, this);
                 _safetyComponent->setupTriggerSignals();
