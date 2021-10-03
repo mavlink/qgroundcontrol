@@ -1,4 +1,6 @@
 
+add_subdirectory(Actuators)
+
 set(EXTRA_SRC)
 if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
@@ -96,6 +98,7 @@ add_library(Vehicle
 
 target_link_libraries(Vehicle
 	PRIVATE
+		Actuators
 		ui
 		compression
 		libevents_generated

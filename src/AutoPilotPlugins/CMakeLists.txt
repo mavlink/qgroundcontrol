@@ -34,6 +34,8 @@ add_library(AutoPilotPlugins
 
 	Generic/GenericAutoPilotPlugin.cc
 
+	PX4/ActuatorComponent.cc
+	PX4/ActuatorComponent.h
 	PX4/AirframeComponentAirframes.cc
 	PX4/AirframeComponentAirframes.h
 	PX4/AirframeComponent.cc

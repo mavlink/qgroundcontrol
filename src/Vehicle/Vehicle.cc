@@ -50,6 +50,7 @@
 #include "InitialConnectStateMachine.h"
 #include "VehicleBatteryFactGroup.h"
 #include "EventHandler.h"
+#include "Actuators/Actuators.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -1615,6 +1616,14 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
 void Vehicle::setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
 {
     _eventHandler(compid).setMetadata(metadataJsonFileName, translationJsonFileName);
+}
+
+void Vehicle::setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
+{
+    if (!_actuators) {
+        _actuators = new Actuators(this, this);
+    }
+    _actuators->load(metadataJsonFileName);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)

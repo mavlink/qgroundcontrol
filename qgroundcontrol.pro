@@ -688,6 +688,14 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
+    src/Vehicle/Actuators/ActuatorActions.h \
+    src/Vehicle/Actuators/Actuators.h \
+    src/Vehicle/Actuators/ActuatorOutputs.h \
+    src/Vehicle/Actuators/ActuatorTesting.h \
+    src/Vehicle/Actuators/Common.h \
+    src/Vehicle/Actuators/GeometryImage.h \
+    src/Vehicle/Actuators/Mixer.h \
+    src/Vehicle/Actuators/MotorAssignment.h \
     src/Vehicle/CompInfo.h \
     src/Vehicle/CompInfoEvents.h \
     src/Vehicle/CompInfoParam.h \
@@ -929,6 +937,14 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
+    src/Vehicle/Actuators/ActuatorActions.cc \
+    src/Vehicle/Actuators/Actuators.cc \
+    src/Vehicle/Actuators/ActuatorOutputs.cc \
+    src/Vehicle/Actuators/ActuatorTesting.cc \
+    src/Vehicle/Actuators/Common.cc \
+    src/Vehicle/Actuators/GeometryImage.cc \
+    src/Vehicle/Actuators/Mixer.cc \
+    src/Vehicle/Actuators/MotorAssignment.cc \
     src/Vehicle/CompInfo.cc \
     src/Vehicle/CompInfoEvents.cc \
     src/Vehicle/CompInfoParam.cc \
@@ -1168,6 +1184,7 @@ PX4FirmwarePlugin {
         src/FirmwarePlugin/PX4 \
 
     HEADERS+= \
+        src/AutoPilotPlugins/PX4/ActuatorComponent.h \
         src/AutoPilotPlugins/PX4/AirframeComponent.h \
         src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
         src/AutoPilotPlugins/PX4/AirframeComponentController.h \
@@ -1189,6 +1206,7 @@ PX4FirmwarePlugin {
         src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
 
     SOURCES += \
+        src/AutoPilotPlugins/PX4/ActuatorComponent.cc \
         src/AutoPilotPlugins/PX4/AirframeComponent.cc \
         src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
         src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
