@@ -10658,14 +10658,14 @@
         <value code="4096">4096</value>
       </values>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_MAX" default="192." type="FLOAT">
+    <parameter name="IMU_GYRO_FFT_MAX" default="150." type="FLOAT">
       <short_desc>IMU gyro FFT maximum frequency</short_desc>
       <min>1</min>
       <max>1000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_MIN" default="32." type="FLOAT">
+    <parameter name="IMU_GYRO_FFT_MIN" default="30." type="FLOAT">
       <short_desc>IMU gyro FFT minimum frequency</short_desc>
       <min>1</min>
       <max>1000</max>
