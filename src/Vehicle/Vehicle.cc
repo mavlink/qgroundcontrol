@@ -2984,6 +2984,11 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         }
     }
 
+    if (ack.command == MAV_CMD_PREFLIGHT_STORAGE) {
+        auto result = (ack.result == MAV_RESULT_ACCEPTED);
+        emit sensorsParametersResetAck(result);
+    }
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
         qgcApp()->showAppMessage(tr("Bootloader flash succeeded"));
