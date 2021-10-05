@@ -930,6 +930,8 @@ signals:
     void isROIEnabledChanged            ();
     void initialConnectComplete         ();
 
+    void sensorsParametersResetAck      (bool success);
+
 private slots:
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext           ();
