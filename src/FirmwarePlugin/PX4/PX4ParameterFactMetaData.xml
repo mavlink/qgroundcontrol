@@ -13375,12 +13375,6 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="VT_DWN_PITCH_MAX" default="5.0" type="FLOAT">
-      <short_desc>Maximum allowed angle the vehicle is allowed to pitch down to generate forward force</short_desc>
-      <long_desc>When fixed-wing forward actuation is active (see VT_FW_TRHUST_EN). If demanded down pitch exceeds this limmit, the fixed-wing forward actuators are used instead.</long_desc>
-      <min>0.0</min>
-      <max>45.0</max>
-    </parameter>
     <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32" boolean="true">
       <short_desc>Lock elevons in multicopter mode</short_desc>
       <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
@@ -13486,6 +13480,12 @@
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
+    <parameter name="VT_LND_PTCH_MIN" default="-5.0" type="FLOAT">
+      <short_desc>Minimum pitch angle during hover landing</short_desc>
+      <long_desc>Overrides  VT_PTCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
+      <min>-10.0</min>
+      <max>45.0</max>
+    </parameter>
     <parameter name="VT_MC_ON_FMU" default="0" type="INT32" boolean="true">
       <short_desc>Enable the usage of AUX outputs for hover motors</short_desc>
       <long_desc>Set this parameter to true if the vehicle's hover motors are connected to the FMU (AUX) port. Not required for boards that only have a FMU, and no IO. Only applies for standard VTOL and tiltrotor.</long_desc>
@@ -13503,6 +13503,12 @@
       <max>20</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter name="VT_PTCH_MIN" default="-5.0" type="FLOAT">
+      <short_desc>Minimum pitch angle during hover</short_desc>
+      <long_desc>Minimum pitch angle during hover flight. If the desired pitch angle is is lower than this value then the fixed-wing forward actuation can be used to compensate for the missing thrust in forward direction (see VT_FW_TRHUST_EN)</long_desc>
+      <min>-10.0</min>
+      <max>45.0</max>
     </parameter>
     <parameter name="VT_TILT_FW" default="1.0" type="FLOAT">
       <short_desc>Position of tilt servo in fw mode</short_desc>
