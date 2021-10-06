@@ -1498,7 +1498,7 @@
     </parameter>
     <parameter name="COM_RC_OVERRIDE" default="1" type="INT32">
       <short_desc>Enable RC stick override of auto and/or offboard modes</short_desc>
-      <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV from their center position immediately gives control back to the pilot by switching to Position mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode.</long_desc>
+      <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV from their center position immediately gives control back to the pilot by switching to Position mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode. This parameter is not considered in case of a GPS failure (Descend flight mode), where stick override is always enabled.</long_desc>
       <min>0</min>
       <max>7</max>
       <bitmask>
@@ -1532,6 +1532,15 @@
       <short_desc>Horizontal velocity error threshold</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m/s</unit>
+    </parameter>
+    <parameter name="COM_WIND_WARN" default="-1." type="FLOAT">
+      <short_desc>Wind speed warning threshold</short_desc>
+      <long_desc>A warning is triggered if the currently estimated wind speed is above this value. Warning is sent periodically (every 1min). A negative value disables the feature.</long_desc>
+      <min>-1</min>
+      <max>30</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="NAV_DLL_ACT" default="0" type="INT32">
       <short_desc>Set data link loss failsafe mode</short_desc>
