@@ -13390,7 +13390,7 @@
     </parameter>
     <parameter name="VT_FWD_THRUST_EN" default="0" type="INT32">
       <short_desc>Enable/disable usage of fixed-wing actuators in hover to generate forward force (instead of pitching down)</short_desc>
-      <long_desc>This technique can be used to avoid the plane having to pitch down in order to move forward. This prevents large, negative lift values being created when facing strong winds. Fixed-wing forward actuators refers to puller/pusher (standard VTOL), or forward-tilt (tiltrotor VTOL). Only active if demaded down pitch is above VT_DWN_PITCH_MAX, and uses VT_FWD_THRUST_SC to get from demanded down pitch to fixed-wing actuation.</long_desc>
+      <long_desc>This technique can be used to avoid the plane having to pitch down in order to move forward. This prevents large, negative lift values being created when facing strong winds. Fixed-wing forward actuators refers to puller/pusher (standard VTOL), or forward-tilt (tiltrotor VTOL). Only active if demaded down pitch is below VT_PITCH_MIN, and uses VT_FWD_THRUST_SC to get from demanded down pitch to fixed-wing actuation.</long_desc>
       <values>
         <value code="0">Disable FW forward actuation in hover.</value>
         <value code="1">Enable FW forward actuation in hover in altitude, position and auto modes (except LANDING).</value>
@@ -13403,7 +13403,7 @@
     </parameter>
     <parameter name="VT_FWD_THRUST_SC" default="0.7" type="FLOAT">
       <short_desc>Fixed-wing actuator thrust scale for hover forward flight</short_desc>
-      <long_desc>Scale applied to the demanded down-pitch to get the fixed-wing forward actuation in hover mode. Only active if demaded down pitch is above VT_DWN_PITCH_MAX. Enabled via VT_FWD_THRUST_EN.</long_desc>
+      <long_desc>Scale applied to the demanded down-pitch to get the fixed-wing forward actuation in hover mode. Only active if demaded down pitch is below VT_PITCH_MIN. Enabled via VT_FWD_THRUST_EN.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
     </parameter>
