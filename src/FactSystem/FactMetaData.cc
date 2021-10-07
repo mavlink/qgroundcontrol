@@ -141,6 +141,7 @@ const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_incrementJsonKey =           "increment";
 const char* FactMetaData::_hasControlJsonKey =          "control";
 const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
+const char* FactMetaData::_rebootRequiredJsonKey =      "rebootRequired";
 const char* FactMetaData::_categoryJsonKey =            "category";
 const char* FactMetaData::_groupJsonKey =               "group";
 const char* FactMetaData::_volatileJsonKey =            "volatile";
@@ -1269,6 +1270,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         { _maxJsonKey,                  QJsonValue::Double, false },
         { _hasControlJsonKey,           QJsonValue::Bool,   false },
         { _qgcRebootRequiredJsonKey,    QJsonValue::Bool,   false },
+        { _rebootRequiredJsonKey,       QJsonValue::Bool,   false },
         { _categoryJsonKey,             QJsonValue::String, false },
         { _groupJsonKey,                QJsonValue::String, false },
         { _volatileJsonKey,             QJsonValue::Bool,   false },
@@ -1423,6 +1425,12 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         qgcRebootRequired = json[_qgcRebootRequiredJsonKey].toBool();
     }
     metaData->setQGCRebootRequired(qgcRebootRequired);
+
+    bool rebootRequired = false;
+    if (json.contains(_rebootRequiredJsonKey)) {
+        rebootRequired = json[_rebootRequiredJsonKey].toBool();
+    }
+    metaData->setVehicleRebootRequired(rebootRequired);
 
     bool volatileValue = false;
     if (json.contains(_volatileJsonKey)) {
