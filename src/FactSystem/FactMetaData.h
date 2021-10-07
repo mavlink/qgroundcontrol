@@ -371,6 +371,7 @@ private:
     static const char* _incrementJsonKey;
     static const char* _hasControlJsonKey;
     static const char* _qgcRebootRequiredJsonKey;
+    static const char* _rebootRequiredJsonKey;
     static const char* _categoryJsonKey;
     static const char* _groupJsonKey;
     static const char* _volatileJsonKey;
