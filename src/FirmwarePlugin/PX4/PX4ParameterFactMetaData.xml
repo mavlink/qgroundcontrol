@@ -11015,6 +11015,9 @@
         <value code="3">SF10/b</value>
         <value code="4">SF10/c</value>
         <value code="5">SF11/c</value>
+        <value code="6">SF30/b</value>
+        <value code="7">SF30/c</value>
+        <value code="8">LW20/c</value>
       </values>
     </parameter>
     <parameter name="SENS_EN_SF1XX" default="0" type="INT32">
