@@ -479,15 +479,6 @@
       <maintainer>Henry Zhang &lt;zhanghui629@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe name="Teal One" id="4250" maintainer="Matt McFadden &lt;matt.mcfadden@tealdrones.com&gt;">
-      <class>Copter</class>
-      <maintainer>Matt McFadden &lt;matt.mcfadden@tealdrones.com&gt;</maintainer>
-      <type>Quadrotor x</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">motor 4</output>
-    </airframe>
     <airframe name="COEX Clover 4" id="4500" maintainer="Oleg Kalachev &lt;okalachev@gmail.com&gt;">
       <class>Copter</class>
       <maintainer>Oleg Kalachev &lt;okalachev@gmail.com&gt;</maintainer>
