@@ -57,7 +57,7 @@ installer {
     }
     AndroidBuild {
         QMAKE_POST_LINK += && mkdir -p package
-        QMAKE_POST_LINK += && make install INSTALL_ROOT=android-build/
+        QMAKE_POST_LINK += && make apk_install_target INSTALL_ROOT=android-build/
         QMAKE_POST_LINK += && androiddeployqt --input android-libQGroundControl.so-deployment-settings.json --output android-build --deployment bundled --gradle --sign $${SOURCE_DIR}/android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
         contains(QT_ARCH, arm) {
             QGC_APK_BITNESS = "32"
