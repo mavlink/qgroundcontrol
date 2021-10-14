@@ -107,9 +107,9 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-clang" ]; then
-        wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-1.0-android-universal-1.18.1.tar.xz &&
-        mkdir gstreamer-1.0-android-universal-1.18.1 &&
-        tar xf gstreamer-1.0-android-universal-1.18.1.tar.xz -C gstreamer-1.0-android-universal-1.18.1 &&
+        wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz &&
+        mkdir gstreamer-1.0-android-universal-1.18.5 &&
+        tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5 &&
         wget --quiet https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip &&
         unzip android-ndk-r20-linux-x86_64.zip > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r20 &&

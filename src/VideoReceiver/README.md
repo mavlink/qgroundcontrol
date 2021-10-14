@@ -89,12 +89,12 @@ The installer places them under ~/Library/Developer/GStreamer/iPhone.sdk/GStream
 
 ### Android
 
-Download the gstreamer from here: [gstreamer-1.0-android-universal-1.18.1.tar.xz](https://gstreamer.freedesktop.org/data/pkg/android/1.18.1/gstreamer-1.0-android-universal-1.18.1.tar.xz)
+Download the gstreamer from here: [gstreamer-1.0-android-universal-1.18.5.tar.xz](https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz)
 
-Create a directory named "gstreamer-1.0-android-universal-1.18.1" under the root qgroundcontrol directory (the same directory qgroundcontrol.pro is located). Extract the downloaded archive under this directory. That's where the build system will look for it. Make sure your archive tool doesn't create any additional top level directories. The structure after extracting the archive should look like this:
+Create a directory named "gstreamer-1.0-android-universal-1.18.5" under the root qgroundcontrol directory (the same directory qgroundcontrol.pro is located). Extract the downloaded archive under this directory. That's where the build system will look for it. Make sure your archive tool doesn't create any additional top level directories. The structure after extracting the archive should look like this:
 ```
 qgroundcontrol
-├── gstreamer-1.0-android-universal-1.18.1
+├── gstreamer-1.0-android-universal-1.18.5
 │   │
 │   ├──armv7
 │   │   ├── bin
