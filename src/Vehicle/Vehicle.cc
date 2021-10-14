@@ -2824,7 +2824,7 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResul
         // Because of this we fail in that case.
         MavCmdResultFailureCode_t failureCode = compIdAll ? MavCmdResultCommandResultOnly : MavCmdResultFailureDuplicateCommand;
         if (resultHandler) {
-            (*resultHandler)(resultHandlerData, targetCompId, MAV_RESULT_FAILED, failureCode);
+            (*resultHandler)(resultHandlerData, targetCompId, MAV_RESULT_FAILED, 0, failureCode);
         } else {
             emit mavCommandResult(_id, targetCompId, command, MAV_RESULT_FAILED, failureCode);
         }
@@ -2875,7 +2875,7 @@ void Vehicle::_sendMavCommandFromList(int index)
         qCDebug(VehicleLog) << "_sendMavCommandFromList giving up after max retries" << rawCommandName;
         _mavCommandList.removeAt(index);
         if (commandEntry.resultHandler) {
-            (*commandEntry.resultHandler)(commandEntry.resultHandlerData, commandEntry.targetCompId, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
+            (*commandEntry.resultHandler)(commandEntry.resultHandlerData, commandEntry.targetCompId, MAV_RESULT_FAILED, 0, MavCmdResultFailureNoResponseToCommand);
         } else {
             emit mavCommandResult(_id, commandEntry.targetCompId, commandEntry.command, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         }
@@ -3001,7 +3001,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         MavCommandListEntry_t commandEntry = _mavCommandList.takeAt(entryIndex);
         if (commandEntry.command == ack.command) {
             if (commandEntry.resultHandler) {
-                (*commandEntry.resultHandler)(commandEntry.resultHandlerData, message.compid, static_cast<MAV_RESULT>(ack.result), MavCmdResultCommandResultOnly);
+                (*commandEntry.resultHandler)(commandEntry.resultHandlerData, message.compid, static_cast<MAV_RESULT>(ack.result), ack.progress, MavCmdResultCommandResultOnly);
             } else {
                 if (commandEntry.showError) {
                     switch (ack.result) {
@@ -3103,7 +3103,7 @@ void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* re
                           param1, param2, param3, param4, param5, 0);
 }
 
-void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, MavCmdResultFailureCode_t failureCode)
+void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, uint8_t progress, MavCmdResultFailureCode_t failureCode)
 {
     RequestMessageInfo_t*   pInfo   = static_cast<RequestMessageInfo_t*>(resultHandlerData);
     Vehicle*                vehicle = pInfo->vehicle;
@@ -3200,8 +3200,10 @@ QString Vehicle::firmwareVersionTypeString() const
     }
 }
 
-void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode)
+void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode)
 {
+    Q_UNUSED(progress)
+
     Vehicle* vehicle = static_cast<Vehicle*>(resultHandlerData);
 
     if (commandResult != MAV_RESULT_ACCEPTED) {
