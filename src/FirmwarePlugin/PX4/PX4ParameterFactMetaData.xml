@@ -13226,7 +13226,7 @@
     <parameter name="UAVCAN_V1_ID" default="1" type="INT32">
       <short_desc>UAVCAN v1 Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
-      <min>1</min>
+      <min>-1</min>
       <max>125</max>
       <reboot_required>true</reboot_required>
     </parameter>
