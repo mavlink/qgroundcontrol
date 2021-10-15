@@ -19,8 +19,10 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 
 message(Qt version $$[QT_VERSION])
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 10) {
-    error("Unsupported Qt version, 5.11+ is required")
+!contains(CONFIG, DISABLE_QT_VERSION_CHECK) {
+    !equals(QT_MAJOR_VERSION, 5) | !equals(QT_MINOR_VERSION, 15) {
+        error("Unsupported Qt version, 5.15 is required")
+    }
 }
 
 include(QGCCommon.pri)
@@ -1498,3 +1500,22 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 
 DISTFILES += \
     src/QmlControls/QGroundControl/Specific/qmldir
+
+#
+# Steps for "install" target on Linux
+#
+LinuxBuild {
+    target.path = $${PREFIX}/bin/
+
+    share_qgroundcontrol.path = $${PREFIX}/share/qgroundcontrol/
+    share_qgroundcontrol.files = $${IN_PWD}/resources/
+
+    share_icons.path = $${PREFIX}/share/icons/hicolor/128x128/apps/
+    share_icons.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
+    share_metainfo.path = $${PREFIX}/share/metainfo/
+    share_metainfo.files = $${IN_PWD}/deploy/org.mavlink.qgroundcontrol.metainfo.xml
+    share_applications.path = $${PREFIX}/share/applications/
+    share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
+
+    INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
+}

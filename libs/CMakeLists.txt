@@ -8,3 +8,6 @@ endif (WIN32)
 if (GST_FOUND)
     add_subdirectory(qmlglsink)
 endif()
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force qmdnsengine to build as static" FORCE)
+add_subdirectory(qmdnsengine)

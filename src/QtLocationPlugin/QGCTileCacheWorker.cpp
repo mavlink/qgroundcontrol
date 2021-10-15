@@ -1194,11 +1194,7 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
             emit internetStatus(true);
             socket->deleteLater();
         });
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, [this, socket](QAbstractSocket::SocketError error) {
-#else
         connect(socket, &QAbstractSocket::errorOccurred, this, [this, socket](QAbstractSocket::SocketError error) {
-#endif
             qCDebug(QGCTileCacheLog) << "No internet connection, reason:" << error;
             emit internetStatus(false);
             socket->deleteLater();

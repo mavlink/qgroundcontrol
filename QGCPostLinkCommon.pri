@@ -89,6 +89,8 @@ LinuxBuild {
         libQt5PositioningQuick.so.5 \
         libQt5PrintSupport.so.5 \
         libQt5Qml.so.5 \
+        libQt5QmlModels.so.5 \
+        libQt5QmlWorkerScript.so.5 \
         libQt5Quick.so.5 \
         libQt5QuickControls2.so.5 \
         libQt5QuickShapes.so.5 \

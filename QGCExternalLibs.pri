@@ -150,6 +150,57 @@ INCLUDEPATH += \
     libs/xz-embedded/linux/include/linux
 DEFINES += XZ_DEC_ANY_CHECK XZ_USE_CRC64
 
+# [REQUIRED] QMDNS Engine
+HEADERS+= \
+    libs/qmdnsengine_export.h \
+    libs/qmdnsengine/src/src/bitmap_p.h \
+    libs/qmdnsengine/src/src/browser_p.h \
+    libs/qmdnsengine/src/src/cache_p.h \
+    libs/qmdnsengine/src/src/hostname_p.h \
+    libs/qmdnsengine/src/src/message_p.h \
+    libs/qmdnsengine/src/src/prober_p.h \
+    libs/qmdnsengine/src/src/provider_p.h \
+    libs/qmdnsengine/src/src/query_p.h \
+    libs/qmdnsengine/src/src/record_p.h \
+    libs/qmdnsengine/src/src/resolver_p.h \
+    libs/qmdnsengine/src/src/server_p.h \
+    libs/qmdnsengine/src/src/service_p.h \
+    libs/qmdnsengine/src/include/qmdnsengine/abstractserver.h \
+    libs/qmdnsengine/src/include/qmdnsengine/bitmap.h \
+    libs/qmdnsengine/src/include/qmdnsengine/browser.h \
+    libs/qmdnsengine/src/include/qmdnsengine/cache.h \
+    libs/qmdnsengine/src/include/qmdnsengine/dns.h \
+    libs/qmdnsengine/src/include/qmdnsengine/hostname.h \
+    libs/qmdnsengine/src/include/qmdnsengine/mdns.h \
+    libs/qmdnsengine/src/include/qmdnsengine/message.h \
+    libs/qmdnsengine/src/include/qmdnsengine/prober.h \
+    libs/qmdnsengine/src/include/qmdnsengine/provider.h \
+    libs/qmdnsengine/src/include/qmdnsengine/query.h \
+    libs/qmdnsengine/src/include/qmdnsengine/record.h \
+    libs/qmdnsengine/src/include/qmdnsengine/resolver.h \
+    libs/qmdnsengine/src/include/qmdnsengine/server.h \
+    libs/qmdnsengine/src/include/qmdnsengine/service.h
+SOURCES += \
+    libs/qmdnsengine/src/src/abstractserver.cpp \
+    libs/qmdnsengine/src/src/bitmap.cpp \
+    libs/qmdnsengine/src/src/browser.cpp \
+    libs/qmdnsengine/src/src/cache.cpp \
+    libs/qmdnsengine/src/src/dns.cpp \
+    libs/qmdnsengine/src/src/hostname.cpp \
+    libs/qmdnsengine/src/src/mdns.cpp \
+    libs/qmdnsengine/src/src/message.cpp \
+    libs/qmdnsengine/src/src/prober.cpp \
+    libs/qmdnsengine/src/src/provider.cpp \
+    libs/qmdnsengine/src/src/query.cpp \
+    libs/qmdnsengine/src/src/record.cpp \
+    libs/qmdnsengine/src/src/resolver.cpp \
+    libs/qmdnsengine/src/src/server.cpp \
+    libs/qmdnsengine/src/src/service.cpp
+INCLUDEPATH += \
+    libs/ \
+    libs/qmdnsengine/src/include/ \
+    libs/qmdnsengine/src/src/
+
 #
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
@@ -255,12 +306,12 @@ contains (DEFINES, DISABLE_AIRMAP) {
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
-            wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && \
-            ar p "$${AIRMAP_PLATFORM_SDK_FILENAME}" data.tar.gz | tar xvz -C "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/" --strip-components=1 && \
+            curl --location --output "$${AIRMAP_PLATFORM_SDK_FILEPATH}" "$${AIRMAP_PLATFORM_SDK_URL}" && \
+            ar p "$${AIRMAP_PLATFORM_SDK_FILEPATH}" data.tar.gz | tar xvz -C "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/" --strip-components=1 && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
             rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
-            rm "$${AIRMAP_PLATFORM_SDK_FILENAME}"
+            rm "$${AIRMAP_PLATFORM_SDK_FILEPATH}"
         airmap_platform_sdk_install.depends =
         QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
         PRE_TARGETDEPS += $$airmap_platform_sdk_install.target

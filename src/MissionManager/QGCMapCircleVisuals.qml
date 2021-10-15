@@ -122,7 +122,7 @@ Item {
 
             Connections {
                 target:             mapCircle
-                onCenterChanged:    updateCoordinate()
+                function onCenterChanged()    { updateCoordinate() }
             }
 
             sourceItem: Shape {

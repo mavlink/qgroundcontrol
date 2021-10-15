@@ -59,9 +59,9 @@ ColumnLayout {
 
         Connections {
             target:                 instrumentValueData
-            onRangeTypeChanged:     valueIcon.updateIcon()
-            onCurrentIconChanged:   valueIcon.updateIcon()
-            onIconChanged:          valueIcon.updateIcon()
+            function onRangeTypeChanged() { valueIcon.updateIcon() }
+            function onCurrentIconChanged() { valueIcon.updateIcon() }
+            function onIconChanged() { valueIcon.updateIcon() }
         }
         Component.onCompleted:      updateIcon();
 

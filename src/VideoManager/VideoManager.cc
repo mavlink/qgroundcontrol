@@ -640,7 +640,11 @@ VideoManager::_updateSettings(unsigned id)
                         }
                         break;
                     case VIDEO_STREAM_TYPE_RTPUDP:
-                        if ((settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri())))) {
+                        if ((settingsChanged |= _updateVideoUri(
+                                        id,
+                                        pInfo->uri().contains("udp://")
+                                            ? pInfo->uri() // Specced case
+                                            : QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri())))) {
                             _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
                         }
                         break;

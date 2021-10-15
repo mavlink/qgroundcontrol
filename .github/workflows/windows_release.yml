@@ -14,7 +14,7 @@ defaults:
 
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   5.12.6
+  QT_VERSION:   5.15.2
   ARTIFACT:     QGroundControl-installer.exe
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
           version:      ${{ env.QT_VERSION }}
           host:         windows
           target:       desktop
-          arch:         win64_msvc2017_64
+          arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
           modules:      qtcharts
           setup-python: false

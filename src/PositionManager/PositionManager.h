@@ -27,6 +27,8 @@ public:
 
     Q_PROPERTY(QGeoCoordinate gcsPosition  READ gcsPosition  NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading   READ gcsHeading   NOTIFY gcsHeadingChanged)
+    Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy  READ gcsPositionHorizontalAccuracy
+                                                             NOTIFY gcsPositionHorizontalAccuracyChanged)
 
     enum QGCPositionSource {
         Simulated,
@@ -37,6 +39,7 @@ public:
 
     QGeoCoordinate      gcsPosition         (void) { return _gcsPosition; }
     qreal               gcsHeading          (void) const{ return _gcsHeading; }
+    qreal               gcsPositionHorizontalAccuracy(void) const { return _gcsPositionHorizontalAccuracy; }
     QGeoPositionInfo    geoPositionInfo     (void) const { return _geoPositionInfo; }
     void                setPositionSource   (QGCPositionSource source);
     int                 updateInterval      (void) const;
@@ -54,12 +57,14 @@ signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
     void gcsHeadingChanged(qreal gcsHeading);
     void positionInfoUpdated(QGeoPositionInfo update);
+    void gcsPositionHorizontalAccuracyChanged();
 
 private:
     int                 _updateInterval =   0;
     QGeoPositionInfo    _geoPositionInfo;
     QGeoCoordinate      _gcsPosition;
     qreal               _gcsHeading =       qQNaN();
+    qreal               _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
 
     QGeoPositionInfoSource*     _currentSource =        nullptr;
     QGeoPositionInfoSource*     _defaultSource =        nullptr;

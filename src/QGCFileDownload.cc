@@ -57,11 +57,7 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
 
     connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
     connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCFileDownload::_downloadError);
-#else
     connect(networkReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_downloadError);
-#endif
     return true;
 }
 
