@@ -297,7 +297,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
     } else:LinuxBuild {
         #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
         AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.1.0/airmap-platform-sdk-2.1.0-Linux-x86_64.deb"
-        AIRMAP_PLATFORM_SDK_FILENAME = "airmap-platform-sdk.deb"
+        AIRMAP_PLATFORM_SDK_FILEPATH = "$${OUT_PWD}/airmap-platform-sdk.deb"
         AIRMAP_PLATFORM_SDK_INSTALL_DIR = "tmp"
 
         airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
