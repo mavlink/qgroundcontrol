@@ -13322,13 +13322,13 @@
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="VT_B_DEC_FF" default="0.12" type="FLOAT">
+    <parameter name="VT_B_DEC_FF" default="0." type="FLOAT">
       <short_desc>Backtransition deceleration setpoint to pitch feedforward gain</short_desc>
       <min>0</min>
       <max>0.2</max>
       <unit>rad s^2/m</unit>
       <decimal>1</decimal>
-      <increment>0.05</increment>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="VT_B_DEC_I" default="0.1" type="FLOAT">
       <short_desc>Backtransition deceleration setpoint to pitch I gain</short_desc>
