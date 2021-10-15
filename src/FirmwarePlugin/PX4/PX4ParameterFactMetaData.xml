@@ -13043,6 +13043,10 @@
       <min>1</min>
       <max>125</max>
     </parameter>
+    <parameter name="CANNODE_TERM" default="0" type="INT32" boolean="true">
+      <short_desc>CAN built-in bus termination</short_desc>
+      <max>1</max>
+    </parameter>
     <parameter name="UAVCAN_BAT_MON" default="0" type="INT32">
       <short_desc>UAVCAN BATTERY_MONITOR battery monitor selection</short_desc>
       <long_desc>This parameter defines that the system will select the battery monitor under the following conditions 0 - default battery monitor 1 - CUAV battery monitor</long_desc>
