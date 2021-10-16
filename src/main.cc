@@ -21,7 +21,10 @@
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "AppMessages.h"
-#include "SerialLink.h"
+
+#ifndef NO_SERIAL_LINK
+    #include "SerialLink.h"
+#endif
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
