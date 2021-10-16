@@ -17,6 +17,10 @@
 #include "MultiVehicleManager.h"
 #include "QGCToolbox.h"
 
+#ifdef QGC_ENABLE_BLUETOOTH
+#include "blefinder.h"
+#endif
+
 #include <QVariantList>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
@@ -51,6 +55,10 @@ public:
 
     void restartJoystickCheckTimer(void);
 
+#ifdef QGC_ENABLE_BLUETOOTH
+    BLEFinder *deviceFinder(void);
+#endif
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -79,4 +87,8 @@ private:
 
     int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;
+
+#ifdef QGC_ENABLE_BLUETOOTH
+    BLEFinder finder;
+#endif
 };
