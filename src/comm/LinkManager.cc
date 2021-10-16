@@ -895,11 +895,12 @@ LogReplayLink* LinkManager::startLogReplay(const QString& logFile)
 
 bool LinkManager::_isSerialPortConnected(void)
 {
+#ifndef NO_SERIAL_LINK
     for (SharedLinkInterfacePtr link: _rgLinks) {
         if (qobject_cast<SerialLink*>(link.get())) {
             return true;
         }
     }
-
+#endif
     return false;
 }
