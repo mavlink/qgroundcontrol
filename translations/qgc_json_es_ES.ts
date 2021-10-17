@@ -7,355 +7,355 @@
       <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Home Position</source>
-      <translation type="unfinished">Home Position</translation>
+      <translation>Posición de inicio</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Planned home position for mission.</source>
-      <translation type="unfinished">Planned home position for mission.</translation>
+      <translation>Posición de inicio planificada para la misión.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Basic</source>
-      <translation type="unfinished">Basic</translation>
+      <translation>Básico</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Latitude</source>
-      <translation type="unfinished">Latitude</translation>
+      <translation>Latitud</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param6.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Longitude</source>
-      <translation type="unfinished">Longitude</translation>
+      <translation>Longitud</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Waypoint</source>
-      <translation type="unfinished">Waypoint</translation>
+      <translation>Punto de ruta</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space.</source>
-      <translation type="unfinished">Travel to a position in 3D space.</translation>
+      <translation>Trasladarse a una posición 3D en el espacio</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>Mantener</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Acceptance</source>
-      <translation type="unfinished">Acceptance</translation>
+      <translation>Aceptación</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pass Radius</source>
-      <translation type="unfinished">Pass Radius</translation>
+      <translation>Radio de paso</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>Guiñada </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>Esperar</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position indefinitely.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position indefinitely.</translation>
+      <translation>Trasladarse a una posición y esperar alrededor de una posición específica de manera indefinida</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Radius</source>
-      <translation type="unfinished">Radius</translation>
+      <translation>Radio</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (turns)</source>
-      <translation type="unfinished">Loiter (turns)</translation>
+      <translation>Esperar (vueltas)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position for a number of turns.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position for a number of turns.</translation>
+      <translation>Trasladarse a una posición y esperar alrededor de  una posición específica durante un número de vueltas especificado.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Turns</source>
-      <translation type="unfinished">Turns</translation>
+      <translation>Vueltas.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Leave Loiter</source>
-      <translation type="unfinished">Leave Loiter</translation>
+      <translation>Cesar espera</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction of next waypoint,Any direction</source>
-      <translation type="unfinished">Direction of next waypoint,Any direction</translation>
+      <translation>Dirección del siguiente punto de ruta,Cualquier dirección. </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exit loiter from</source>
-      <translation type="unfinished">Exit loiter from</translation>
+      <translation>Salir de espera desde</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Center,Tangent</source>
-      <translation type="unfinished">Center,Tangent</translation>
+      <translation>Centro, tangente</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (time)</source>
-      <translation type="unfinished">Loiter (time)</translation>
+      <translation>Espera (tiempo)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position for an amount of time.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position for an amount of time.</translation>
+      <translation>Trasladarse a una posición y  esperar alrededor de la posición específica por una cantidad de tiempo</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter Time</source>
-      <translation type="unfinished">Loiter Time</translation>
+      <translation>Tiempo de espera</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction of next waypoint,Current direction</source>
-      <translation type="unfinished">Direction of next waypoint,Current direction</translation>
+      <translation>Dirección del siguiente punto de ruta, dirección actual</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Return To Launch</source>
-      <translation type="unfinished">Return To Launch</translation>
+      <translation>Regreso a punto de despegue</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Send the vehicle back to the launch position.</source>
-      <translation type="unfinished">Send the vehicle back to the launch position.</translation>
+      <translation>Enviar el vehículo de regreso a la posición de lanzamiento</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Aterrizar</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land vehicle at the specified location.</source>
-      <translation type="unfinished">Land vehicle at the specified location.</translation>
+      <translation>Aterrizar el vehículo en la ubicación especificada</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Abort Alt</source>
-      <translation type="unfinished">Abort Alt</translation>
+      <translation>Altitud de abortar</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Precision Land</source>
-      <translation type="unfinished">Precision Land</translation>
+      <translation>Aterrizaje de precisión</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disabled,Opportunistic,Required</source>
-      <translation type="unfinished">Disabled,Opportunistic,Required</translation>
+      <translation>Deshabilitado,Oportunista,Requerido</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Despegue</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Launch from the ground and travel towards the specified takeoff position.</source>
-      <translation type="unfinished">Launch from the ground and travel towards the specified takeoff position.</translation>
+      <translation>Despegue desde tierra y viajar hacia la posición de despegue especificada</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>Cabeceo </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land local</source>
-      <translation type="unfinished">Land local</translation>
+      <translation>Aterrizaje local</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF_LOCAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff local</source>
-      <translation type="unfinished">Takeoff local</translation>
+      <translation>Despegue local</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_FOLLOW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Nav follow</source>
-      <translation type="unfinished">Nav follow</translation>
+      <translation>Seguir navegación </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change Altitude</source>
-      <translation type="unfinished">Change Altitude</translation>
+      <translation>Cambiar altitud</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</source>
-      <translation type="unfinished">Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</translation>
+      <translation>Continuar en la dirección actual y ascender/descender a la altitud especificada. Cuando se alcance la altitud continuar al siguiente comando</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].category, .mavCmdInfo[MAV_CMD_DO_LAND_START].category, .mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Flight control</source>
-      <translation type="unfinished">Flight control</translation>
+      <translation>Control de Vuelo</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_MODE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.label, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.label, .mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mode</source>
-      <translation type="unfinished">Mode</translation>
+      <translation>Modo</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Climb,Neutral,Descend</source>
-      <translation type="unfinished">Climb,Neutral,Descend</translation>
+      <translation>Ascender,neutro,descender</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (altitude)</source>
-      <translation type="unfinished">Loiter (altitude)</translation>
+      <translation>Espera (altitud)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter at specified position until altitude reached.</source>
-      <translation type="unfinished">Loiter at specified position until altitude reached.</translation>
+      <translation>Esperar en una posición especificada  hasta que se alcance una altitud</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Follow Me</source>
-      <translation type="unfinished">Follow Me</translation>
+      <translation>Sígueme</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Vehicle reposition</source>
-      <translation type="unfinished">Vehicle reposition</translation>
+      <translation>Reposición del vehículo.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Path planning</source>
-      <translation type="unfinished">Path planning</translation>
+      <translation>Planificación de ruta </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control autonomous path planning.</source>
-      <translation type="unfinished">Control autonomous path planning.</translation>
+      <translation>Control de la planificación autónoma de la ruta</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].category, .mavCmdInfo[MAV_CMD_DO_SET_MODE].category, .mavCmdInfo[MAV_CMD_DO_JUMP].category, .mavCmdInfo[MAV_CMD_DO_SET_HOME].category, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_GRIPPER].category, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Advanced</source>
-      <translation type="unfinished">Advanced</translation>
+      <translation>Avanzado</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Local planning</source>
-      <translation type="unfinished">Local planning</translation>
+      <translation>Planificación local</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset</source>
-      <translation type="unfinished">Disable,Enable,Enable+reset</translation>
+      <translation>Deshabilitar, Activar,Activar+restablecer</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Full planning</source>
-      <translation type="unfinished">Full planning</translation>
+      <translation>Planificación completa</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset,Enable+reset route only</source>
-      <translation type="unfinished">Disable,Enable,Enable+reset,Enable+reset route only</translation>
+      <translation>Deshabilitar, activar, activar+reset,Activar+restablecer ruta únicamente </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Heading goal</source>
-      <translation type="unfinished">Heading goal</translation>
+      <translation>Rumbo objetivo </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Spline waypoint</source>
-      <translation type="unfinished">Spline waypoint</translation>
+      <translation>Punto de ruta Spline</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space using spline path.</source>
-      <translation type="unfinished">Travel to a position in 3D space using spline path.</translation>
+      <translation>Viaja a una posición en espacio 3D usando la ruta Spline</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_ALTITUDE_WAIT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Altitude wait</source>
-      <translation type="unfinished">Altitude wait</translation>
+      <translation>Altitud de espera </translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL takeoff</source>
-      <translation type="unfinished">VTOL takeoff</translation>
+      <translation>Despegue VTOL</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
@@ -409,19 +409,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>Habilitar</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>On,Off</source>
-      <translation type="unfinished">On,Off</translation>
+      <translation>Encendido,Apagado</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay until</source>
-      <translation type="unfinished">Delay until</translation>
+      <translation>Retardo hasta</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].description, </extracomment>
