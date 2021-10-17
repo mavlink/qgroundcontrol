@@ -6,7 +6,7 @@
     <message>
       <location filename="../src/ADSB/ADSBVehicleManager.cc" line="70"/>
       <source>ADSB Server Error: %1</source>
-      <translation type="unfinished">ADSB Server Error: %1</translation>
+      <translation>Error del servidor ADSB: %1</translation>
     </message>
   </context>
   <context>
@@ -15,7 +15,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="71"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="71"/>
       <source>Airframe is currently not set.</source>
-      <translation type="unfinished">Airframe is currently not set.</translation>
+      <translation>Tipo de fuselaje no configurado.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="72"/>
@@ -40,29 +40,29 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="75"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="75"/>
       <source> To change this configuration, select the desired frame class below and frame type.</source>
-      <translation type="unfinished"> To change this configuration, select the desired frame class below and frame type.</translation>
+      <translation> Para cambiar esta configuración, seleccione a continuación la clase y tipo de fuselaje.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="166"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="166"/>
       <source>Frame Type</source>
-      <translation type="unfinished">Frame Type</translation>
+      <translation>Tipo de Fuselaje</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="209"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="209"/>
       <source>Invalid setting for FRAME_TYPE. Click to Reset.</source>
-      <translation type="unfinished">Invalid setting for FRAME_TYPE. Click to Reset.</translation>
+      <translation>Configuración inválida para FRAME_TYPE. Haga clic para reiniciar.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.cc" line="19"/>
       <source>Frame</source>
-      <translation type="unfinished">Frame</translation>
+      <translation>Fuselaje</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.cc" line="40"/>
       <source>Frame Setup is used to select the airframe which matches your vehicle.</source>
-      <translation type="unfinished">Frame Setup is used to select the airframe which matches your vehicle.</translation>
+      <translation>La configuración de fuselaje se utiliza para elegir el fuselaje que coincide con su vehículo.</translation>
     </message>
   </context>
   <context>
@@ -75,7 +75,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentController.cc" line="261"/>
       <source>Param file download failed: %1</source>
-      <translation type="unfinished">Param file download failed: %1</translation>
+      <translation>Error al descargar el archivo de parámetros: %1</translation>
     </message>
   </context>
   <context>
@@ -84,25 +84,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="23"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="23"/>
       <source>Frame Class</source>
-      <translation type="unfinished">Frame Class</translation>
+      <translation>Clase de Fuselaje</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="29"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="29"/>
       <source>Frame Type</source>
-      <translation type="unfinished">Frame Type</translation>
+      <translation>Tipo de Fuselaje</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="35"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="35"/>
       <source>Firmware Version</source>
-      <translation type="unfinished">Firmware Version</translation>
+      <translation>Versión de Firmware</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="36"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>Desconocido</translation>
     </message>
   </context>
   <context>
@@ -110,7 +110,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc" line="224"/>
       <source>WARNING: The flight board you are using has a critical service bulletin against it which advises against flying. For details see: https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406</source>
-      <translation type="unfinished">WARNING: The flight board you are using has a critical service bulletin against it which advises against flying. For details see: https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406</translation>
+      <translation>ADVERTENCIA: El controlador de vuelo que está utilizando tiene un boletín de servicio crítico que aconseja no volar. Para más detalles, consulte: https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406</translation>
     </message>
   </context>
   <context>
@@ -119,13 +119,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>Deshabilitado</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
       <source>Channel </source>
-      <translation type="unfinished">Channel </translation>
+      <translation>Canal </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="221"/>
@@ -137,25 +137,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="239"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="239"/>
       <source>Stabilize</source>
-      <translation type="unfinished">Stabilize</translation>
+      <translation>Estabilizar</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="251"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="251"/>
       <source>Servo reverse</source>
-      <translation type="unfinished">Servo reverse</translation>
+      <translation>Invertir servo</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="265"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="265"/>
       <source>Output channel:</source>
-      <translation type="unfinished">Output channel:</translation>
+      <translation>Canal de salida:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="286"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="286"/>
       <source>Input channel:</source>
-      <translation type="unfinished">Input channel:</translation>
+      <translation>Canal de entrada:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="306"/>
@@ -169,7 +169,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="315"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="359"/>
       <source>min</source>
-      <translation type="unfinished">min</translation>
+      <translation>min</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="333"/>
@@ -177,13 +177,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="333"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="378"/>
       <source>max</source>
-      <translation type="unfinished">max</translation>
+      <translation>máx</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="351"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="351"/>
       <source>Servo PWM limits:</source>
-      <translation type="unfinished">Servo PWM limits:</translation>
+      <translation>Límites PWM del servo:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="406"/>
@@ -195,7 +195,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="423"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="423"/>
       <source>Type:</source>
-      <translation type="unfinished">Type:</translation>
+      <translation>Tipo:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="445"/>
@@ -207,13 +207,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="453"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="453"/>
       <source>Default Mode:</source>
-      <translation type="unfinished">Default Mode:</translation>
+      <translation>Modo predeterminado:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="473"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="473"/>
       <source>Tilt</source>
-      <translation type="unfinished">Tilt</translation>
+      <translation>Inclinación</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="491"/>
@@ -230,7 +230,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.cc" line="20"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>Cámara</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.cc" line="31"/>
@@ -343,7 +343,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="315"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="315"/>
       <source>Output channel:</source>
-      <translation type="unfinished">Output channel:</translation>
+      <translation>Canal de salida</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="340"/>
@@ -369,7 +369,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="374"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="409"/>
       <source>min</source>
-      <translation type="unfinished">min</translation>
+      <translation>min</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="384"/>
@@ -407,13 +407,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="492"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="492"/>
       <source>Default Mode:</source>
-      <translation type="unfinished">Default Mode:</translation>
+      <translation>Modo por defecto</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="513"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="513"/>
       <source>Tilt</source>
-      <translation type="unfinished">Tilt</translation>
+      <translation>Modo predeterminado</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="533"/>
