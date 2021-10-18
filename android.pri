@@ -12,10 +12,16 @@ exists($$PWD/custom/android) {
     PRE_TARGETDEPS += $$android_source_dir_target.target
     QMAKE_EXTRA_TARGETS += android_source_dir_target
 
-    android_source_dir_target.commands = $$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR && \
-            $$QMAKE_COPY_DIR $$PWD/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
-            $$QMAKE_COPY_DIR $$PWD/custom/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
-            $$QMAKE_STREAM_EDITOR -i \"s/package=\\\"org.mavlink.qgroundcontrol\\\"/package=\\\"$$QGC_ANDROID_PACKAGE\\\"/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
+    manifest_path = $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
+    manifest_tmp_path = $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml.sed
+
+    android_source_dir_target.commands = \
+        $$sprintf($$QMAKE_MKDIR_CMD, $$system_path($$ANDROID_PACKAGE_SOURCE_DIR)) && \
+        $$QMAKE_COPY_DIR $$system_path($$PWD/android/*) $$system_path($$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR) && \
+        $$QMAKE_COPY_DIR $$system_path($$PWD/custom/android/*) $$system_path($$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR) && \
+        $$QMAKE_STREAM_EDITOR -e \"s/package=\\\"org.mavlink.qgroundcontrol\\\"/package=\\\"$$QGC_ANDROID_PACKAGE\\\"/g\" \
+            $$system_path($$manifest_path) > $$system_path($$manifest_tmp_path) && \
+        $$QMAKE_MOVE $$system_path($$manifest_tmp_path) $$system_path($$manifest_path)
     android_source_dir_target.depends = FORCE
 }
 
