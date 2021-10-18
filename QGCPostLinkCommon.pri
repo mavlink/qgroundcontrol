@@ -106,7 +106,9 @@ LinuxBuild {
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
         libicui18n.so* \
-        libQt5TextToSpeech.so.5
+        libQt5TextToSpeech.so.5 \
+        libQt5WaylandClient.so.5 \
+        libQt5WaylandCompositor.so.5
 
     exists($$[QT_INSTALL_LIBS]/libicudata.so.56) {
         # Some Qt distributions link with *.so.56
