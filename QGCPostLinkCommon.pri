@@ -73,6 +73,7 @@ WindowsBuild {
 
 LinuxBuild {
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/Qt/libs && mkdir -p $$DESTDIR/Qt/plugins
+    QMAKE_RPATHDIR += $ORIGIN/Qt/libs
 
     # QT_INSTALL_LIBS
     QT_LIB_LIST += \
