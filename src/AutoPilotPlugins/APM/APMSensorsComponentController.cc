@@ -216,6 +216,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
         return;
     }
 
+    /*
     if (command == MAV_CMD_DO_CANCEL_MAG_CAL) {
         disconnect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
         if (result == MAV_RESULT_ACCEPTED) {
@@ -281,14 +282,15 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
     } else if (command == MAV_CMD_DO_START_MAG_CAL && result != MAV_RESULT_ACCEPTED) {
         _restorePreviousCompassCalFitness();
     }
+    */
 }
 
 void APMSensorsComponentController::calibrateCompass(void)
 {
     // First we need to determine if the vehicle support onboard compass cal. There isn't an easy way to
     // do this. A hack is to send the mag cancel command and see if it is accepted.
-    connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
-    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+    //connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
+    //_vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
 
     // Now we wait for the result to come back
 }
@@ -435,8 +437,8 @@ void APMSensorsComponentController::cancelCalibration(void)
         emit waitingForCancelChanged();
         _compassCal.cancelCalibration();
     } else if (_calTypeInProgress == CalTypeOnboardCompass) {
-        _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
-        _stopCalibration(StopCalibrationCancelled);
+        //_vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
+        //_stopCalibration(StopCalibrationCancelled);
     } else {
         _waitingForCancel = true;
         emit waitingForCancelChanged();
@@ -517,6 +519,7 @@ void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message
 
 void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& message)
 {
+    /*
     if (_calTypeInProgress == CalTypeOnboardCompass) {
         mavlink_mag_cal_progress_t magCalProgress;
         mavlink_msg_mag_cal_progress_decode(&message, &magCalProgress);
@@ -540,7 +543,7 @@ void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& mes
         if (_progressBar) {
             _progressBar->setProperty("value", (float)(_rgCompassCalProgress[0] + _rgCompassCalProgress[1] + _rgCompassCalProgress[2]) / 100.0);
         }
-    }
+    }*/
 }
 
 void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& message)
@@ -593,6 +596,7 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
 
 void APMSensorsComponentController::_handleCommandLong(mavlink_message_t& message)
 {
+    /*
     bool                    updateImages = false;
     mavlink_command_long_t  commandLong;
 
@@ -669,6 +673,7 @@ void APMSensorsComponentController::_handleCommandLong(mavlink_message_t& messag
             emit orientationCalSidesRotateChanged();
         }
     }
+    */
 }
 
 void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
@@ -683,8 +688,8 @@ void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link,
     case MAVLINK_MSG_ID_COMMAND_ACK:
         _handleCommandAck(message);
         break;
-    case MAVLINK_MSG_ID_MAG_CAL_PROGRESS:
-        _handleMagCalProgress(message);
+    //case MAVLINK_MSG_ID_MAG_CAL_PROGRESS:
+    //    _handleMagCalProgress(message);
         break;
     case MAVLINK_MSG_ID_MAG_CAL_REPORT:
         _handleMagCalReport(message);

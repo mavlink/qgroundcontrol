@@ -13,3 +13,6 @@
 [submodule "libs/libevents/libevents"]
 	path = libs/libevents/libevents
 	url = https://github.com/mavlink/libevents.git
+[submodule "libs/mavlink/include/mavlink/v2.0"]
+	path = libs/mavlink/include/mavlink/v2.0
+	url = ssh://git@github.com/Auterion/c_library_v2.git

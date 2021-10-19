@@ -244,13 +244,14 @@ void ArduSubFirmwarePlugin::_handleMavlinkMessage(mavlink_message_t* message)
     case (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT):
         _handleNamedValueFloat(message);
         break;
+    /*
     case (MAVLINK_MSG_ID_RANGEFINDER):
     {
         mavlink_rangefinder_t msg;
         mavlink_msg_rangefinder_decode(message, &msg);
         _infoFactGroup.getFact("rangefinderDistance")->setRawValue(msg.distance);
         break;
-    }
+    }*/
     }
 }
 

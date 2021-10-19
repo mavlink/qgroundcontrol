@@ -757,9 +757,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
         // Following are ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
-    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
+/*    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
-        break;
+        break;*/
 #endif
     }
 
@@ -772,7 +772,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
 #if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
-{
+{/*
     mavlink_camera_feedback_t feedback;
 
     mavlink_msg_camera_feedback_decode(&message, &feedback);
@@ -780,7 +780,7 @@ void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
     QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lng / qPow(10.0, 7.0), feedback.alt_msl);
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
     _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
-}
+*/}
 #endif
 
 void Vehicle::_handleOrbitExecutionStatus(const mavlink_message_t& message)
@@ -2975,9 +2975,9 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
-    if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
+    /*if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
         qgcApp()->showAppMessage(tr("Bootloader flash succeeded"));
-    }
+    }*/
 #endif
 
     int entryIndex = _findMavCommandListEntryIndex(message.compid, static_cast<MAV_CMD>(ack.command));
@@ -3789,14 +3789,14 @@ void Vehicle::_writeCsvLine()
 
 #if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::flashBootloader()
-{
+{/*
     sendMavCommand(defaultComponentId(),
                    MAV_CMD_FLASH_BOOTLOADER,
                    true,        // show error
                    0, 0, 0, 0,  // param 1-4 not used
                    290876);     // magic number
 
-}
+*/}
 #endif
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
@@ -3946,15 +3946,16 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         return;
     }
 
-    mavlink_message_t message;
+    //mavlink_message_t message;
 
     // Incoming values are in the range -1:1
-    float axesScaling =         1.0 * 1000.0;
-    float newRollCommand =      roll * axesScaling;
-    float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
-    float newYawCommand    =    yaw * axesScaling;
-    float newThrustCommand =    thrust * axesScaling;
+    //float axesScaling =         1.0 * 1000.0;
+    //float newRollCommand =      roll * axesScaling;
+    //float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
+    //float newYawCommand    =    yaw * axesScaling;
+    //float newThrustCommand =    thrust * axesScaling;
 
+    /*
     mavlink_msg_manual_control_pack_chan(
                 static_cast<uint8_t>(_mavlink->getSystemId()),
                 static_cast<uint8_t>(_mavlink->getComponentId()),
@@ -3966,7 +3967,8 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
                 static_cast<int16_t>(newThrustCommand),
                 static_cast<int16_t>(newYawCommand),
                 buttons);
-    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    */
+    //sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
 void Vehicle::triggerSimpleCamera()

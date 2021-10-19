@@ -34,7 +34,7 @@
 
 #include <mavlink_types.h>
 extern mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
-#include <mavlink.h>
+#include <auterion/mavlink.h>
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
