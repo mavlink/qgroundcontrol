@@ -140,7 +140,7 @@ linux|macx|ios {
     }
 }
 
-!MacBuild {
+!MacBuild:!AndroidBuild {
     # See QGCPostLinkCommon.pri for details on why MacBuild doesn't use DESTDIR
     DESTDIR = staging
 }
@@ -163,6 +163,8 @@ exists ($$PWD/.git) {
     GIT_BRANCH   = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --abbrev-ref HEAD)
     GIT_HASH     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --short HEAD)
     GIT_TIME     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD show --oneline --format=\"%ci\" -s HEAD)
+
+    message(GIT_DESCRIBE $${GIT_DESCRIBE})
 
     # determine if we're on a tag matching vX.Y.Z (stable release)
     contains(GIT_DESCRIBE, v[0-9]+.[0-9]+.[0-9]+) {
