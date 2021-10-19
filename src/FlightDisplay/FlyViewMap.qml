@@ -238,7 +238,7 @@ FlightMap {
 
         Connections {
             target:                 QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged() {
+            function onActiveVehicleChanged(activeVehicle) {
                 trajectoryPolyline.path = _activeVehicle ? _activeVehicle.trajectoryPoints.list() : []
             }
         }
@@ -382,7 +382,7 @@ FlightMap {
 
         Connections {
             target: QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged() {
+            function onActiveVehicleChanged(activeVehicle) {
                 if (!activeVehicle) {
                     gotoLocationItem.visible = false
                 }
@@ -420,7 +420,7 @@ FlightMap {
 
         Connections {
             target: QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged() {
+            function onActiveVehicleChanged(activeVehicle) {
                 if (!activeVehicle) {
                     orbitMapCircle.visible = false
                 }
