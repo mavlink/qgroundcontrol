@@ -1,13 +1,12 @@
 configs:
     dev:
-        'qt_deps_tarball': 'Qt5.12.6-gcc_64-min.tar.bz2'
         'qt_deps_unpack_parent_dir': '/home/vagrant'
 
-        'qt_deps_unpack_dir': '/home/vagrant/Qt5.12-gcc_64/5.12.6'
-        'qt_deps_bin_unpack_dir': '/home/vagrant/Qt5.12-gcc_64/5.12.6/gcc_64/bin'
-        'qt_deps_lib_unpack_dir': '/home/vagrant/Qt5.12-gcc_64/5.12.6/gcc_64/lib'
-        'qt_deps_plugins_unpack_dir': '/home/vagrant/Qt5.12-gcc_64/5.12.6/gcc_64/plugins'
-        'qt_deps_qml_unpack_dir': '/home/vagrant/Qt5.12-gcc_64/5.12.6/gcc_64/qml'
+        'qt_deps_unpack_dir': '/home/vagrant/Qt'
+        'qt_deps_bin_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/bin'
+        'qt_deps_lib_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/lib'
+        'qt_deps_plugins_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/plugins'
+        'qt_deps_qml_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/qml'
 
         'project_root_dir': '/vagrant'
 
@@ -20,4 +19,3 @@ configs:
         'spec': 'linux-g++-64'
         'shadow_build_dir': '/vagrant/shadow-build'
         'pro': '/vagrant/qgroundcontrol.pro'
-        'deps_url': 'https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.6-gcc_64-min.tar.bz2'
