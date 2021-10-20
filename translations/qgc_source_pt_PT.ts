@@ -119,7 +119,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>Desativado</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
