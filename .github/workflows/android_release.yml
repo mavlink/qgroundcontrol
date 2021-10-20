@@ -15,6 +15,7 @@ defaults:
 env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
+  ARTIFACT:     QGroundControl.aab
 
 jobs:
   build:
@@ -90,6 +91,8 @@ jobs:
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run:  |
             if [ $GIT_BRANCH_NAME == "Stable*" ]; then
               echo "Stable build" &&
@@ -98,11 +101,18 @@ jobs:
               echo "Daily build" &&
               export STABLE_OR_DAILY=DailyBuild;
             fi
-            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${STABLE_OR_DAILY} ANDROID_ABIS="armeabi-v7a arm64-v8a"
-            make -j2 apk
+            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=installer CONFIG+=${STABLE_OR_DAILY} ANDROID_ABIS="armeabi-v7a arm64-v8a"
+            make -j2 aab
 
       - name: ccache post-run
         run:  ccache -s
+
+      - name: Save artifact
+        uses: actions/upload-artifact@master
+        with:
+          if:   github.event_name == 'push'
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
 
       # Currently disabled since credentials are not working correctly
       - name: Upload to S3 Bucket
