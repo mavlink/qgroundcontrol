@@ -165,7 +165,7 @@ ApplicationWindow {
     }
 
     function showJoystickTool() {
-        showTool(qsTr("Joystick Setup"), "JoystickBLE.qml", "/qmlimages/Joystick.png")
+        showTool(qsTr("Joystick Setup"), "BLEJoystick.qml", "/qmlimages/Joystick.png")
     }
 
 
