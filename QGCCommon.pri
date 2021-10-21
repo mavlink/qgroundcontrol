@@ -95,7 +95,8 @@ linux {
             /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
             /wd4290 \   # ignore exception specifications
             /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
-            /wd4100     # unreferenced formal parameter - gst-plugins-good
+            /wd4100 \   # unreferenced formal parameter - gst-plugins-good
+            /wd4996     # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-3-c4996
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
