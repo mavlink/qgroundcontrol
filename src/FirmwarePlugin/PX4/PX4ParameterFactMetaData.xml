@@ -11350,17 +11350,6 @@
       <short_desc>CAN built-in bus termination</short_desc>
       <max>1</max>
     </parameter>
-    <parameter name="UAVCAN_BAT_MON" default="0" type="INT32">
-      <short_desc>UAVCAN BATTERY_MONITOR battery monitor selection</short_desc>
-      <long_desc>This parameter defines that the system will select the battery monitor under the following conditions 0 - default battery monitor 1 - CUAV battery monitor</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">default battery monitor</value>
-        <value code="1">CUAV battery monitor</value>
-      </values>
-    </parameter>
     <parameter name="UAVCAN_BITRATE" default="1000000" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
@@ -11453,6 +11442,63 @@
       <short_desc>UAVCAN rangefinder minimum range</short_desc>
       <long_desc>This parameter defines the minimum valid range for a rangefinder connected via UAVCAN.</long_desc>
       <unit>m</unit>
+    </parameter>
+    <parameter name="UAVCAN_SUB_ASPD" default="0" type="INT32" boolean="true">
+      <short_desc>subscription airspeed</short_desc>
+      <long_desc>Enable UAVCAN airspeed subscriptions. uavcan::equipment::air_data::IndicatedAirspeed uavcan::equipment::air_data::TrueAirspeed uavcan::equipment::air_data::StaticTemperature</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_BARO" default="0" type="INT32" boolean="true">
+      <short_desc>subscription barometer</short_desc>
+      <long_desc>Enable UAVCAN barometer subscription. uavcan::equipment::air_data::StaticPressure uavcan::equipment::air_data::StaticTemperature</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_BAT" default="0" type="INT32">
+      <short_desc>subscription battery</short_desc>
+      <long_desc>Enable UAVCAN battery subscription. 1) uavcan::equipment::power::BatteryInfo 2) cuav::equipment::power::CBAT</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">disabled</value>
+        <value code="1">default</value>
+        <value code="2">CUAV battery monitor</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_SUB_DPRES" default="0" type="INT32" boolean="true">
+      <short_desc>subscription differential pressure</short_desc>
+      <long_desc>Enable UAVCAN differential pressure subscription. uavcan::equipment::air_data::RawAirData</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_FLOW" default="0" type="INT32" boolean="true">
+      <short_desc>subscription flow</short_desc>
+      <long_desc>Enable UAVCAN optical flow subscription.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_GPS" default="1" type="INT32" boolean="true">
+      <short_desc>subscription GPS</short_desc>
+      <long_desc>Enable UAVCAN GPS subscriptions. uavcan::equipment::gnss::Fix uavcan::equipment::gnss::Fix2 uavcan::equipment::gnss::Auxiliary</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_ICE" default="0" type="INT32" boolean="true">
+      <short_desc>subscription ICE</short_desc>
+      <long_desc>Enable UAVCAN internal combusion engine (ICE) subscription. uavcan::equipment::ice::reciprocating::Status</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_IMU" default="0" type="INT32" boolean="true">
+      <short_desc>subscription IMU</short_desc>
+      <long_desc>Enable UAVCAN IMU subscription. uavcan::equipment::ahrs::RawIMU</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_MAG" default="1" type="INT32" boolean="true">
+      <short_desc>subscription magnetometer</short_desc>
+      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::ahrs::MagneticFieldStrength uavcan::equipment::ahrs::MagneticFieldStrength2</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_RNG" default="0" type="INT32" boolean="true">
+      <short_desc>subscription range finder</short_desc>
+      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::range_sensor::Measurement</long_desc>
+      <reboot_required>true</reboot_required>
     </parameter>
   </group>
   <group name="UAVCAN v1">
