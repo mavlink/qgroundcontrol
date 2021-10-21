@@ -56,15 +56,15 @@ installer {
         QMAKE_POST_LINK += && tar -cj --exclude='package' -f package/QGroundControl.tar.bz2 staging --transform 's/$${DESTDIR}/qgroundcontrol/'
     }
     AndroidBuild {
-        #_ANDROID_KEYSTORE_PASSWORD = $$(ANDROID_KEYSTORE_PASSWORD)
-        #isEmpty(_ANDROID_KEYSTORE_PASSWORD) {
-        #    message(Skipping androiddeployqt since keystore password is not available)
-        #} else {
-            QMAKE_POST_LINK += && mkdir -p package
-            QMAKE_POST_LINK += && make apk_install_target INSTALL_ROOT=android-build/
-            #QMAKE_POST_LINK += && androiddeployqt --verbose --input android-QGroundControl-deployment-settings.json --output android-build --release --aab --sign $${SOURCE_DIR}/android/android_release.keystore QGCAndroidKeyStore --storepass $$(ANDROID_KEYSTORE_PASSWORD)
-            QMAKE_POST_LINK += && androiddeployqt --verbose --input android-QGroundControl-deployment-settings.json --output android-build --release --aab
-            QMAKE_POST_LINK += && cp android-build/build/outputs/bundle/release/android-build-release.aab package/QGroundControl.aab
-        #}
+        QMAKE_POST_LINK += && mkdir -p package
+        QMAKE_POST_LINK += && make apk_install_target INSTALL_ROOT=android-build/
+        _ANDROID_KEYSTORE_PASSWORD = $$(ANDROID_KEYSTORE_PASSWORD)
+        isEmpty(_ANDROID_KEYSTORE_PASSWORD) {
+            message(Skipping package signing since keystore password is not provided)
+            QMAKE_POST_LINK += && androiddeployqt --input android-QGroundControl-deployment-settings.json --output android-build --release --aab
+        } else {
+            QMAKE_POST_LINK += && androiddeployqt --input android-QGroundControl-deployment-settings.json --output android-build --release --aab --sign $${SOURCE_DIR}/android/android_release.keystore QGCAndroidKeyStore --storepass $$(ANDROID_KEYSTORE_PASSWORD)
+        }
+        QMAKE_POST_LINK += && cp android-build/build/outputs/bundle/release/android-build-release.aab package/QGroundControl.aab
     }
 }
