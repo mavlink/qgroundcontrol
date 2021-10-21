@@ -976,35 +976,35 @@
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="167"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="167"/>
       <source>Light Output Channels</source>
-      <translation type="unfinished">Light Output Channels</translation>
+      <translation>조명 출력 채널</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="184"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="184"/>
       <source>Lights 1:</source>
-      <translation type="unfinished">Lights 1:</translation>
+      <translation>조명 1:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="205"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="205"/>
       <source>Lights 2:</source>
-      <translation type="unfinished">Lights 2:</translation>
+      <translation>조명 2:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="226"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="226"/>
       <source>Brightness Steps:</source>
-      <translation type="unfinished">Brightness Steps:</translation>
+      <translation>밝기 단계:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.cc" line="21"/>
       <source>Lights</source>
-      <translation type="unfinished">Lights</translation>
+      <translation>조명</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.cc" line="32"/>
       <source>Lights setup is used to adjust light output channels.</source>
-      <translation type="unfinished">Lights setup is used to adjust light output channels.</translation>
+      <translation>조명설정은 조명 출력 채널을 설정합니다.</translation>
     </message>
   </context>
   <context>
@@ -1013,79 +1013,79 @@
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="63"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>비활성화</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
       <source>Channel 5</source>
-      <translation type="unfinished">Channel 5</translation>
+      <translation>채널 5</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="65"/>
       <source>Channel 6</source>
-      <translation type="unfinished">Channel 6</translation>
+      <translation>채널 6</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="66"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="66"/>
       <source>Channel 7</source>
-      <translation type="unfinished">Channel 7</translation>
+      <translation>채널 7</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="67"/>
       <source>Channel 8</source>
-      <translation type="unfinished">Channel 8</translation>
+      <translation>채널 8</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="68"/>
       <source>Channel 9</source>
-      <translation type="unfinished">Channel 9</translation>
+      <translation>채널 9</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="69"/>
       <source>Channel 10</source>
-      <translation type="unfinished">Channel 10</translation>
+      <translation>채널 10</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="70"/>
       <source>Channel 11</source>
-      <translation type="unfinished">Channel 11</translation>
+      <translation>채널 11</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="71"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="71"/>
       <source>Channel 12</source>
-      <translation type="unfinished">Channel 12</translation>
+      <translation>채널 12</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="72"/>
       <source>Channel 13</source>
-      <translation type="unfinished">Channel 13</translation>
+      <translation>채널 13</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="73"/>
       <source>Channel 14</source>
-      <translation type="unfinished">Channel 14</translation>
+      <translation>채널 14</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="89"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="89"/>
       <source>Lights Output 1</source>
-      <translation type="unfinished">Lights Output 1</translation>
+      <translation>조명 출력 1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="94"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="94"/>
       <source>Lights Output 2</source>
-      <translation type="unfinished">Lights Output 2</translation>
+      <translation>조명 출력 2</translation>
     </message>
   </context>
   <context>
@@ -1093,7 +1093,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.cc" line="15"/>
       <source>Motors</source>
-      <translation type="unfinished">Motors</translation>
+      <translation>모터</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="39"/>
@@ -1105,25 +1105,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="96"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="96"/>
       <source>All</source>
-      <translation type="unfinished">All</translation>
+      <translation>전체</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="122"/>
       <source>Moving the sliders will causes the motors to spin. Make sure you remove all props.</source>
-      <translation type="unfinished">Moving the sliders will causes the motors to spin. Make sure you remove all props.</translation>
+      <translation>슬라이더를 움직이면 모터가 움직입니다. 프로펠러를 모두 제거하였는지 확인해주십시오</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <source>Careful: Motor sliders are enabled</source>
-      <translation type="unfinished">Careful: Motor sliders are enabled</translation>
+      <translation>주의 : 모터 슬라이더가 활성화 됨</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.qml" line="142"/>
       <source>Propellers are removed - Enable motor sliders</source>
-      <translation type="unfinished">Propellers are removed - Enable motor sliders</translation>
+      <translation>프로펠러를 제거하였습니다 - 모터 슬라이더를 활성화합니다</translation>
     </message>
   </context>
   <context>
@@ -1132,7 +1132,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMNotSupported.qml" line="17"/>
       <location filename="../src/AutoPilotPlugins/APM/APMNotSupported.qml" line="17"/>
       <source>Not supported</source>
-      <translation type="unfinished">Not supported</translation>
+      <translation>지원하지 않음</translation>
     </message>
   </context>
   <context>
@@ -1141,7 +1141,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="50"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="50"/>
       <source>Requires vehicle reboot</source>
-      <translation type="unfinished">Requires vehicle reboot</translation>
+      <translation>기체 재부팅이 필요합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="60"/>
@@ -1149,13 +1149,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="109"/>
       <source>Battery 1</source>
-      <translation type="unfinished">Battery 1</translation>
+      <translation>배터리 1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="80"/>
       <source>Battery1 monitor:</source>
-      <translation type="unfinished">Battery1 monitor:</translation>
+      <translation>배터리1 모니터:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="94"/>
@@ -1163,7 +1163,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="94"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="179"/>
       <source>Reboot vehicle</source>
-      <translation type="unfinished">Reboot vehicle</translation>
+      <translation>기체 재부팅</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="145"/>
@@ -1171,19 +1171,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="145"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="194"/>
       <source>Battery 2</source>
-      <translation type="unfinished">Battery 2</translation>
+      <translation>배터리 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="165"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="165"/>
       <source>Battery2 monitor:</source>
-      <translation type="unfinished">Battery2 monitor:</translation>
+      <translation>배터리2 모니터:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="229"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="229"/>
       <source>ESC Calibration</source>
-      <translation type="unfinished">ESC Calibration</translation>
+      <translation>ESC 캘리브레이션</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="248"/>
