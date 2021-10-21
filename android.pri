@@ -44,12 +44,3 @@ OTHER_FILES += \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java
-
-
-DISTFILES += \
-    $$PWD/android/gradle/wrapper/gradle-wrapper.jar \
-    $$PWD/android/gradlew \
-    $$PWD/android/res/values/libs.xml \
-    $$PWD/android/build.gradle \
-    $$PWD/android/gradle/wrapper/gradle-wrapper.properties \
-    $$PWD/android/gradlew.bat
