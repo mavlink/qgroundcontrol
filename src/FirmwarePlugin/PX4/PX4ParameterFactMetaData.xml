@@ -7232,6 +7232,15 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="RTL_HDG_MD" default="0" type="INT32">
+      <short_desc>RTL heading mode</short_desc>
+      <long_desc>Defines the heading behavior during RTL</long_desc>
+      <values>
+        <value code="0">Towards next waypoint.</value>
+        <value code="1">Heading matches destination.</value>
+        <value code="2">Use current heading.</value>
+      </values>
+    </parameter>
     <parameter name="RTL_LAND_DELAY" default="0.0" type="FLOAT">
       <short_desc>Return mode delay</short_desc>
       <long_desc>Delay before landing (after initial descent) in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
@@ -7259,6 +7268,15 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="RTL_PLD_MD" default="0" type="INT32">
+      <short_desc>RTL precision land mode</short_desc>
+      <long_desc>Use precision landing when doing an RTL landing phase.</long_desc>
+      <values>
+        <value code="0">No precision landing</value>
+        <value code="1">Opportunistic precision landing</value>
+        <value code="2">Required precision landing</value>
+      </values>
+    </parameter>
     <parameter name="RTL_RETURN_ALT" default="60" type="FLOAT">
       <short_desc>Return mode return altitude</short_desc>
       <long_desc>Default minimum altitude above destination (e.g. home, safe point, landing pattern) for return flight. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
@@ -7276,17 +7294,6 @@
         <value code="1">Return to closest safe point other than home (mission landing pattern or rally point), via direct path. If no mission landing or rally points are defined return home via direct path.</value>
         <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path. Do not consider rally points.</value>
         <value code="3">Return via direct path to closest destination: home, start of mission landing pattern or safe point. If the destination is a mission landing pattern, follow the pattern to land.</value>
-      </values>
-    </parameter>
-  </group>
-  <group name="Return To Land">
-    <parameter name="RTL_PLD_MD" default="0" type="INT32">
-      <short_desc>RTL precision land mode</short_desc>
-      <long_desc>Use precision landing when doing an RTL landing phase.</long_desc>
-      <values>
-        <value code="0">No precision landing</value>
-        <value code="1">Opportunistic precision landing</value>
-        <value code="2">Required precision landing</value>
       </values>
     </parameter>
   </group>
