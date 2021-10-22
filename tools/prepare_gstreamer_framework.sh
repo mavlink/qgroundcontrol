@@ -77,8 +77,6 @@ rsync -a --delete $GST_SOURCE $BUNDLE_TARGET/Contents/Frameworks/ || die "Error 
 GSTINBUNDLE=$BUNDLE_TARGET/Contents/Frameworks/GStreamer.framework/Versions/$GST_VER
 pushd $GSTINBUNDLE/libexec && ln -sf ../../../../../Frameworks . && popd || die "Error creating Frameworks symlink in $GST_TARGET/libexec"
 #-- Fix main binary
-install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer "$QGC_BINARY" > /dev/null || die "Error relocating $QGC_BINARY"
-pushd $GSTINBUNDLE && install_name_tool -id @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer GStreamer && popd || die "Error relocating GStreamer"
-
-
-
+#install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer "$QGC_BINARY" > /dev/null || die "Error relocating $QGC_BINARY"
+#pushd $GSTINBUNDLE
+#&& install_name_tool -id @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer GStreamer && popd || die "Error relocating GStreamer"

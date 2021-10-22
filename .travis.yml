@@ -50,7 +50,7 @@ jobs:
           before_deploy: skip
           after_deploy: skip
           script: echo "Google Play Upload"
-        
+
 # iOS build needs updating Qt to > 5.10
 #        - os: osx
 #          osx_image: xcode9.2
@@ -140,8 +140,8 @@ install:
     fi
 
   - if [[ "${SPEC}" = "macx-clang" ]]; then
-        wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2 &&
-        sudo tar zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
+        wget --quiet https://s3.amazonaws.com/downloads.bluerobotics.com/QGC/dependencies/gstreamer-osx-1.18.3.tar.bz2 &&
+        sudo tar jxf gstreamer-osx-1.18.3.tar.bz2 -C /Library/Frameworks
         ;
     fi
 
@@ -181,7 +181,7 @@ before_script:
         git fetch --tags origin master &&
         ./tools/update_android_version.sh ${BITNESS} ${TRAVIS_BRANCH};
     fi
-    
+
   # Install signing cert into OSX keychain
   - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         export CODESIGN=codesign;
