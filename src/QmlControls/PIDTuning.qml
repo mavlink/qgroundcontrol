@@ -186,7 +186,9 @@ RowLayout {
             id:             rightColumn
 
             Row {
-                spacing: _margins
+                id:        _autotuneSelectRow
+                spacing:   _margins
+                visible:   tuningMode === Vehicle.ModeRateAndAttitude
 
                 Switch {
                     id:        autotuningEnabled
@@ -201,7 +203,7 @@ RowLayout {
 
             Column {
                 width:     parent.width
-                visible:   autotuningEnabled.checked
+                visible:   _autotuneSelectRow.visible && autotuningEnabled.checked
 
                 AutotuneUI {
                     anchors {
@@ -215,7 +217,7 @@ RowLayout {
 
             Column {
                 width:     parent.width
-                visible:   !autotuningEnabled.checked
+                visible:   !_autotuneSelectRow.visible || !autotuningEnabled.checked
 
                 Column {
                     RowLayout {
