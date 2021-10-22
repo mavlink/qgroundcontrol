@@ -40,6 +40,11 @@ public:
     Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
     Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
 
+#ifdef QGC_ENABLE_BLUETOOTH
+    Q_PROPERTY(BLEFinder* deviceFinder READ deviceFinder CONSTANT)
+#endif
+
+
     /// List of available joysticks
     QVariantList joysticks();
     /// List of available joystick names
