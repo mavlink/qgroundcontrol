@@ -430,6 +430,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 HEADERS += \
     src/QmlControls/QmlUnitsConversion.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
+    src/Vehicle/VehicleHygrometerFactGroup.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
@@ -443,6 +444,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 
 SOURCES += \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
+    src/Vehicle/VehicleHygrometerFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
@@ -721,6 +723,7 @@ HEADERS += \
     src/Vehicle/VehicleTemperatureFactGroup.h \
     src/Vehicle/VehicleVibrationFactGroup.h \
     src/Vehicle/VehicleWindFactGroup.h \
+    src/Vehicle/VehicleHygrometerFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -959,6 +962,7 @@ SOURCES += \
     src/Vehicle/VehicleSetpointFactGroup.cc \
     src/Vehicle/VehicleTemperatureFactGroup.cc \
     src/Vehicle/VehicleVibrationFactGroup.cc \
+    src/Vehicle/VehicleHygrometerFactGroup.cc \
     src/Vehicle/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
