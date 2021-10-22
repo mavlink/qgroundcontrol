@@ -61,9 +61,9 @@ installer {
         _ANDROID_KEYSTORE_PASSWORD = $$(ANDROID_KEYSTORE_PASSWORD)
         isEmpty(_ANDROID_KEYSTORE_PASSWORD) {
             message(Skipping package signing since keystore password is not provided)
-            QMAKE_POST_LINK += && androiddeployqt --input android-QGroundControl-deployment-settings.json --output android-build --release --aab
+            QMAKE_POST_LINK += && androiddeployqt --gradle --input android-QGroundControl-deployment-settings.json --output android-build --release --aab
         } else {
-            QMAKE_POST_LINK += && androiddeployqt --input android-QGroundControl-deployment-settings.json --output android-build --release --aab --sign $${SOURCE_DIR}/android/android_release.keystore QGCAndroidKeyStore --storepass $$(ANDROID_KEYSTORE_PASSWORD)
+            QMAKE_POST_LINK += && androiddeployqt --gradle --input android-QGroundControl-deployment-settings.json --output android-build --release --aab --sign $${SOURCE_DIR}/android/android_release.keystore QGCAndroidKeyStore --storepass $$(ANDROID_KEYSTORE_PASSWORD)
         }
         QMAKE_POST_LINK += && cp android-build/build/outputs/bundle/release/android-build-release.aab package/QGroundControl.aab
     }
