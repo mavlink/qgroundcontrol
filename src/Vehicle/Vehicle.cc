@@ -108,6 +108,7 @@ const char* Vehicle::_localPositionSetpointFactGroupName ="localPositionSetpoint
 const char* Vehicle::_escStatusFactGroupName =          "escStatus";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
 const char* Vehicle::_terrainFactGroupName =            "terrain";
+const char* Vehicle::_hygrometerFactGroupName =         "hygrometer";
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -167,6 +168,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _escStatusFactGroup           (this)
     , _estimatorStatusFactGroup     (this)
     , _terrainFactGroup             (this)
+    , _hygrometerFactGroup          (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
     _linkManager = _toolbox->linkManager();
@@ -445,6 +447,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_escStatusFactGroup,         _escStatusFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
+    _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
