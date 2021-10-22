@@ -329,6 +329,7 @@
 		<file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
 		<file alias="Vehicle/VibrationFact.json">../src/Vehicle/VibrationFact.json</file>
 		<file alias="Vehicle/WindFact.json">../src/Vehicle/WindFact.json</file>
+                <file alias="Vehicle/HygrometerFact.json">../src/Vehicle/HygrometerFact.json</file>
 		<file alias="Video.SettingsGroup.json">../src/Settings/Video.SettingsGroup.json</file>
 		<file alias="VTOLLandingPattern.FactMetaData.json">../src/MissionManager/VTOLLandingPattern.FactMetaData.json</file>
 	</qresource>
