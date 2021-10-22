@@ -210,10 +210,19 @@
       <min>0</min>
       <max>1</max>
       <unit>rad</unit>
+      <decimal>3</decimal>
     </parameter>
-    <parameter name="ASPD_DO_CHECKS" default="1" type="INT32" boolean="true">
+    <parameter name="ASPD_DO_CHECKS" default="7" type="INT32">
       <short_desc>Enable checks on airspeed sensors</short_desc>
-      <long_desc>If set to true then the data comming from the airspeed sensors is checked for validity. Only applied if ASPD_PRIMARY &gt; 0.</long_desc>
+      <long_desc>Controls which checks are run to check airspeed data for validity. Only applied if ASPD_PRIMARY &gt; 0. Note that the data missing check is enabled if any of the options is set.</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <bitmask>
+        <bit index="0">Only data missing check (triggers if more than 1s no data)</bit>
+        <bit index="1">Data stuck (triggers if data is exactly constant for 2s)</bit>
+        <bit index="2">Innovation check (see ASPD_FS_INNOV)</bit>
+        <bit index="3">Load factor check (triggers if measurement is below stall speed)</bit>
+      </bitmask>
     </parameter>
     <parameter name="ASPD_FALLBACK_GW" default="0" type="INT32" boolean="true">
       <short_desc>Enable fallback to sensor-less airspeed estimation</short_desc>
@@ -223,17 +232,21 @@
         <value code="1">Enable fallback to sensor-less estimation</value>
       </values>
     </parameter>
-    <parameter name="ASPD_FS_INNOV" default="1.0" type="FLOAT">
-      <short_desc>Airspeed failsafe consistency threshold</short_desc>
-      <long_desc>This specifies the minimum airspeed test ratio required to trigger a failsafe. Larger values make the check less sensitive, smaller values make it more sensitive. Start with a value of 1.0 when tuning. When tas_test_ratio is &gt; 1.0 it indicates the inconsistency between predicted and measured airspeed is large enough to cause the wind EKF to reject airspeed measurements. The time required to detect a fault when the threshold is exceeded depends on the size of the exceedance and is controlled by the ASPD_FS_INTEG parameter.</long_desc>
+    <parameter name="ASPD_FS_INNOV" default="5." type="FLOAT">
+      <short_desc>Airspeed failure innovation threshold</short_desc>
+      <long_desc>This specifies the minimum airspeed innovation required to trigger a failsafe. Larger values make the check less sensitive, smaller values make it more sensitive. Large innovations indicate an inconsistency between predicted (groundspeed - windspeeed) and measured airspeed. The time required to detect a fault when the threshold is exceeded depends on the size of the exceedance and is controlled by the ASPD_FS_INTEG parameter.</long_desc>
       <min>0.5</min>
-      <max>3.0</max>
+      <max>10.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_FS_INTEG" default="5.0" type="FLOAT">
-      <short_desc>Airspeed failsafe consistency delay</short_desc>
-      <long_desc>This sets the time integral of airspeed test ratio exceedance above ASPD_FS_INNOV required to trigger a failsafe. For example if ASPD_FS_INNOV is 1 and estimator_status.tas_test_ratio is 2.0, then the exceedance is 1.0 and the integral will rise at a rate of 1.0/second. A negative value disables the check. Larger positive values make the check less sensitive, smaller positive values make it more sensitive.</long_desc>
-      <max>30.0</max>
-      <unit>s</unit>
+    <parameter name="ASPD_FS_INTEG" default="10." type="FLOAT">
+      <short_desc>Airspeed failure innovation integral threshold</short_desc>
+      <long_desc>This sets the time integral of airspeed innovation exceedance above ASPD_FS_INNOV required to trigger a failsafe. Larger values make the check less sensitive, smaller positive values make it more sensitive.</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="ASPD_FS_T_START" default="-1" type="INT32">
       <short_desc>Airspeed failsafe start delay</short_desc>
@@ -260,15 +273,37 @@
         <value code="3">Third airspeed sensor</value>
       </values>
     </parameter>
-    <parameter name="ASPD_SCALE" default="1.0" type="FLOAT">
-      <short_desc>Airspeed scale (scale from IAS to CAS)</short_desc>
-      <long_desc>Scale can either be entered manually, or estimated in-flight by setting ASPD_SCALE_EST to 1.</long_desc>
+    <parameter name="ASPD_SCALE_1" default="1.0" type="FLOAT" volatile="true">
+      <short_desc>Scale of airspeed sensor 1</short_desc>
+      <long_desc>This is the scale IAS --&gt; CAS of the first airspeed sensor instance</long_desc>
       <min>0.5</min>
-      <max>1.5</max>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="ASPD_SCALE_EST" default="0" type="INT32" boolean="true">
-      <short_desc>Automatic airspeed scale estimation on</short_desc>
-      <long_desc>Turns the automatic airspeed scale (scale from IAS to CAS) on or off. It is recommended to fly level altitude while performing the estimation. Set to 1 to start estimation (best when already flying). Set to 0 to end scale estimation. The estimated scale is then saved using the ASPD_SCALE parameter.</long_desc>
+    <parameter name="ASPD_SCALE_2" default="1.0" type="FLOAT" volatile="true">
+      <short_desc>Scale of airspeed sensor 2</short_desc>
+      <long_desc>This is the scale IAS --&gt; CAS of the second airspeed sensor instance</long_desc>
+      <min>0.5</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ASPD_SCALE_3" default="1.0" type="FLOAT" volatile="true">
+      <short_desc>Scale of airspeed sensor 3</short_desc>
+      <long_desc>This is the scale IAS --&gt; CAS of the third airspeed sensor instance</long_desc>
+      <min>0.5</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ASPD_SCALE_APPLY" default="1" type="INT32">
+      <short_desc>Controls when to apply the new estimated airspeed scale(s)</short_desc>
+      <values>
+        <value code="0">Do not automatically apply the estimated scale</value>
+        <value code="1">Apply the estimated scale after disarm</value>
+        <value code="2">Apply the estimated scale in air</value>
+      </values>
     </parameter>
     <parameter name="ASPD_SC_P_NOISE" default="0.0001" type="FLOAT">
       <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise</short_desc>
@@ -276,6 +311,7 @@
       <min>0</min>
       <max>0.1</max>
       <unit>Hz</unit>
+      <decimal>5</decimal>
     </parameter>
     <parameter name="ASPD_TAS_GATE" default="3" type="INT32">
       <short_desc>Airspeed Selector: Gate size for true airspeed fusion</short_desc>
@@ -290,6 +326,7 @@
       <min>0</min>
       <max>4</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="ASPD_W_P_NOISE" default="0.1" type="FLOAT">
       <short_desc>Airspeed Selector: Wind estimator wind process noise</short_desc>
@@ -297,6 +334,7 @@
       <min>0</min>
       <max>1</max>
       <unit>m/s^2</unit>
+      <decimal>2</decimal>
     </parameter>
   </group>
   <group name="Angular Velocity Control">
