@@ -23,13 +23,6 @@
 # to be used, like such:
 # LD_LIBRARY_PATH=./Qt/libs ./QGroundControl
 #
-# In addition, Qt will sometimes want to reference its own directory to find
-# certain resources. This installs a file, qt.conf, which tells Qt where its
-# installation is at.
-# Without the qt.conf file, you would need to tell Qt where to find certain
-# files, particularly for QML, like such:
-# QML2_IMPORT_PATH=./Qt/qml QT_PLUGIN_PATH=./Qt/plugins ./QGroundControl
-#
 
 # -e: stop on error
 # -u: undefined variable use is an error
@@ -92,11 +85,3 @@ while IFS='' read -r library; do
     # patch the library's rpath
     patchelf --set-rpath "${new_rpath}" "${library}"
 done
-
-# Create a qt.conf file
-# https://doc.qt.io/qt-5/qt-conf.html
-cat <<EOF > "${QTCONF_PATH}"
-[Paths]
-Prefix=./Qt
-Libraries=libs
-EOF
