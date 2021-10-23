@@ -45,6 +45,9 @@ jobs:
       - name: Install ccache
         run:  sudo apt-get install ccache
 
+      - name: Install post-link dependencies
+        run:  sudo apt-get install -y patchelf
+
       - name: Prepare ccache timestamp
         id: ccache_cache_timestamp
         shell: cmake -P {0}
