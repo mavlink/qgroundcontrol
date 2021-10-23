@@ -164,7 +164,7 @@ LinuxBuild {
         include($$PWD/custom/custom_deploy.pri)
     }
 
-    QMAKE_POST_LINK += && QTDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" QTCONF_PATH="$$DESTDIR/qt.conf" $$SOURCE_DIR/deploy/linux-post-link.sh
+    QMAKE_POST_LINK += && QTDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" QTCONF_PATH="$$DESTDIR/qt.conf" $$SOURCE_DIR/deploy/linux-fixup-rpaths.bash
 
     # https://doc.qt.io/qt-5/qt-conf.html
     QMAKE_POST_LINK += && cp deploy/qt.conf $$DESTDIR
