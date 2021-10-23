@@ -30,9 +30,9 @@
 set -euo pipefail
 
 # To set these arguments, set them as an environment variable. For example:
-# QTDIR=/opt/qgc-deploy/Qt RPATHDIR=/opt/qgc-deploy/Qt/libs QTCONF_PATH=/opt/qgc-deploy/qt.conf ./linux-post-link.sh
-: "${QTDIR:=./Qt}"
-: "${RPATHDIR:="${QTDIR}/libs"}"
+# SEARCHDIR=/opt/qgc-deploy/Qt RPATHDIR=/opt/qgc-deploy/Qt/libs QTCONF_PATH=/opt/qgc-deploy/qt.conf ./linux-post-link.sh
+: "${SEARCHDIR:=./Qt}"
+: "${RPATHDIR:="${SEARCHDIR}/libs"}"
 : "${QTCONF_PATH:=./qt.conf}"
 
 # find:
@@ -41,7 +41,7 @@ set -euo pipefail
 #    or that end with '.so.5'
 #    and are executable
 #    silence stderr (find will complain if it doesn't have permission to traverse)
-find "${QTDIR}" \
+find "${SEARCHDIR}" \
     -type f \
     -iname '*.so' \
     -o -iname '*.so.5' \
