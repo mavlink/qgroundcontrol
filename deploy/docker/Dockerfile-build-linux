@@ -47,6 +47,7 @@ RUN apt update && apt -y --quiet --no-install-recommends install \
 		ninja-build \
 		openssh-client \
 		openssl \
+		patchelf \
 		pkg-config \
 		rsync \
 		speech-dispatcher \
