@@ -56,9 +56,11 @@ find "${QTDIR}" \
     2>/dev/null |
 while IFS='' read -r library; do
     # Get the library's current RPATH (RUNPATH)
-    # Example output of `readelf readelf -d ./build/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-Debug/staging/QGroundControl`:
+    # Example output of `readelf -d ./build/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-Debug/staging/QGroundControl`:
     #  0x000000000000001d (RUNPATH)            Library runpath: [$ORIGIN/Qt/libs:/home/kbennett/storage/Qt/5.15.2/gcc_64/lib]
     #
+    # It's possible there's no current rpath for a particular library, so turn
+    # off pipefail to avoid grep causing it to die.
     # If you find a better way to do this, please fix.
     set +o pipefail
     current_rpath="$(
