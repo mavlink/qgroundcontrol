@@ -26,11 +26,10 @@
 # QML2_IMPORT_PATH=./Qt/qml QT_PLUGIN_PATH=./Qt/plugins ./QGroundControl
 #
 
-# -x: echo
 # -e: stop on error
 # -u: undefined variable use is an error
 # -o pipefail: if any part of a pipeline fails, then the whole pipeline fails.
-set -xeuo pipefail
+set -euo pipefail
 
 # To set these arguments, set them as an environment variable. For example:
 # QTDIR=/opt/qgc-deploy/Qt RPATHDIR=/opt/qgc-deploy/Qt/libs QTCONF_PATH=/opt/qgc-deploy/qt.conf ./linux-post-link.sh
