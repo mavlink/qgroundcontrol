@@ -165,4 +165,7 @@ LinuxBuild {
     }
 
     QMAKE_POST_LINK += && QTDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" QTCONF_PATH="$$DESTDIR/qt.conf" $$SOURCE_DIR/deploy/linux-post-link.sh
+
+    # https://doc.qt.io/qt-5/qt-conf.html
+    QMAKE_POST_LINK += && cp deploy/qt.conf $$DESTDIR
 }
