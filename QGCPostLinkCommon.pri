@@ -106,9 +106,17 @@ LinuxBuild {
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
         libicui18n.so* \
-        libQt5TextToSpeech.so.5 \
+        libQt5TextToSpeech.so.5
+
+    # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
+    QT_LIB_OPTIONALS = \
         libQt5WaylandClient.so.5 \
         libQt5WaylandCompositor.so.5
+    for(QT_LIB, QT_LIB_OPTIONALS) {
+        exists("$$[QT_INSTALL_LIBS]/$$QT_LIB") {
+            QT_LIB_LIST += $$QT_LIB
+        }
+    }
 
     exists($$[QT_INSTALL_LIBS]/libicudata.so.56) {
         # Some Qt distributions link with *.so.56
@@ -164,8 +172,8 @@ LinuxBuild {
         include($$PWD/custom/custom_deploy.pri)
     }
 
-    QMAKE_POST_LINK += && SEARCHDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" $$SOURCE_DIR/deploy/linux-fixup-rpaths.bash
+    QMAKE_POST_LINK += && SEARCHDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" "$$SOURCE_DIR/deploy/linux-fixup-rpaths.bash"
 
     # https://doc.qt.io/qt-5/qt-conf.html
-    QMAKE_POST_LINK += && cp $$SOURCE_DIR/deploy/qt.conf $$DESTDIR
+    QMAKE_POST_LINK += && cp "$$SOURCE_DIR/deploy/qt.conf" "$$DESTDIR"
 }
