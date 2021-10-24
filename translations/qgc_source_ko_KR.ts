@@ -21,13 +21,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="72"/>
       <source>Currently set to frame class &apos;%1&apos;</source>
-      <translation type="unfinished">Currently set to frame class &apos;%1&apos;</translation>
+      <translation>현재 프레임 클래스 &apos;%1&apos;와</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="73"/>
       <source> and frame type &apos;%2&apos;</source>
-      <translation type="unfinished"> and frame type &apos;%2&apos;</translation>
+      <translation> 프레임 유형 &apos;%2&apos;으로 설정되었습니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="74"/>
@@ -52,7 +52,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="209"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="209"/>
       <source>Invalid setting for FRAME_TYPE. Click to Reset.</source>
-      <translation type="unfinished">Invalid setting for FRAME_TYPE. Click to Reset.</translation>
+      <translation>FRAME_TYPE (기체종류)에 대한 유효하지 않은 설정입니다. 재 설정을 누르십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.cc" line="19"/>
