@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 #
 # Premise:
 # Shared libraries (Qt, airmap, etc) on Linux are built without knowing where
