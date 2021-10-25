@@ -69,6 +69,7 @@ class RequestMessageTest;
 class LinkInterface;
 class LinkManager;
 class InitialConnectStateMachine;
+class Autotune;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -272,6 +273,7 @@ public:
     Q_PROPERTY(ParameterManager*        parameterManager    READ parameterManager   CONSTANT)
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
     Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
+    Q_PROPERTY(Autotune*                autotune            READ autotune           CONSTANT)
 
     // FactGroup object model properties
 
@@ -664,6 +666,7 @@ public:
     FTPManager*                     ftpManager          () { return _ftpManager; }
     ComponentInformationManager*    compInfoManager     () { return _componentInformationManager; }
     VehicleObjectAvoidance*         objectAvoidance     () { return _objectAvoidance; }
+    Autotune*                       autotune            () const { return _autotune; }
 
     static const int cMaxRcChannels = 18;
 
@@ -1105,6 +1108,7 @@ private:
     JoystickManager*                _joystickManager                = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
+    Autotune*                       _autotune                       = nullptr;
 #if defined(QGC_AIRMAP_ENABLED)
     AirspaceVehicleManager*         _airspaceVehicleManager         = nullptr;
 #endif

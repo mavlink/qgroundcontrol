@@ -28,6 +28,7 @@
 class Vehicle;
 class QGCCameraControl;
 class QGCCameraManager;
+class Autotune;
 
 /// This is the base class for Firmware specific plugins
 ///
@@ -332,6 +333,9 @@ public:
 
     // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
     virtual QString getHobbsMeter(Vehicle* vehicle) { Q_UNUSED(vehicle); return "Not Supported"; }
+
+    /// Creates Autotune object.
+    virtual Autotune* createAutotune(Vehicle *vehicle);
 
 signals:
     void toolIndicatorsChanged(void);
