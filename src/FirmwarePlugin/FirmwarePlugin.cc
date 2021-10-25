@@ -16,6 +16,7 @@
 #include "QGCFileDownload.h"
 #include "QGCCameraManager.h"
 #include "RadioComponentController.h"
+#include "Autotune.h"
 
 #include <QRegularExpression>
 #include <QDebug>
@@ -1124,4 +1125,9 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionRe
                                               &follow_target);
         vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
+}
+
+Autotune* FirmwarePlugin::createAutotune(Vehicle *vehicle)
+{
+    return new Autotune(vehicle);
 }
