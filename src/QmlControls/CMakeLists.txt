@@ -50,7 +50,7 @@ add_custom_target(QmlControlsQml
 		EditPositionDialog.qml
 		ExclusiveGroupItem.qml
 		FactSliderPanel.qml
-        AutotuneUI.qml
+		AutotuneUI.qml
 		FileButton.qml
 		FlightModeDropdown.qml
 		FlightModeMenu.qml
