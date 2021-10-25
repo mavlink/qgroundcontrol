@@ -11416,6 +11416,21 @@
       <min>20000</min>
       <max>1000000</max>
     </parameter>
+    <parameter name="CANNODE_FLOW_ROT" default="0" type="INT32">
+      <short_desc>Cannode flow board rotation</short_desc>
+      <long_desc>This parameter defines the yaw rotation of the Cannode flow board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
     <parameter name="CANNODE_NODE_ID" default="120" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
