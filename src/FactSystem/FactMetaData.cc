@@ -1297,6 +1297,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     QStringList     rgDescriptions;
     QList<double>   rgDoubleValues;
+    QList<int>      rgIntValues;
     QStringList     rgStringValues;
 
     bool foundBitmask = false;
@@ -1304,7 +1305,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseValueDescriptionArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
     }
     if (rgDescriptions.isEmpty()) {
-        if (!_parseBitmaskArray(json, rgDescriptions, rgDoubleValues, errorString)) {
+        if (!_parseBitmaskArray(json, rgDescriptions, rgIntValues, errorString)) {
             qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseBitmaskArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
         }
         foundBitmask = rgDescriptions.count() != 0;
@@ -1317,13 +1318,13 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     if (errorString.isEmpty() && rgDescriptions.count()) {
         for (int i=0; i<rgDescriptions.count(); i++) {
-            QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
-            QVariant    convertedValueVariant;
-            QString     errorString;
 
             if (foundBitmask) {
-                metaData->addBitmaskInfo(rgDescriptions[i], rawValueVariant);
+                metaData->addBitmaskInfo(rgDescriptions[i], 1 << rgIntValues[i]);
             } else {
+                QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
+                QVariant    convertedValueVariant;
+                QString     errorString;
                 if (metaData->convertAndValidateRaw(rawValueVariant, false /* validate */, convertedValueVariant, errorString)) {
                     metaData->addEnumInfo(rgDescriptions[i], convertedValueVariant);
                 } else {
@@ -1587,7 +1588,7 @@ bool FactMetaData::_parseValuesArray(const QJsonObject& jsonObject, QStringList&
     return true;
 }
 
-bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString)
+bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<int>& rgValues, QString& errorString)
 {
     rgDescriptions.clear();
     rgValues.clear();
@@ -1616,7 +1617,7 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList
         }
 
         rgDescriptions.append(valueDescriptionObject[_enumBitmaskArrayDescriptionJsonKey].toString());
-        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toDouble());
+        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toInt());
     }
 
     return true;
