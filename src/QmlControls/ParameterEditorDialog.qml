@@ -169,7 +169,7 @@ QGCViewDialog {
             Column {
                 id:         bitmaskColumn
                 spacing:    ScreenTools.defaultFontPixelHeight / 2
-                visible:    fact.bitmaskStrings.length > 0 ? true : false;
+                visible:    fact.bitmaskStrings.length > 0
 
                 Repeater {
                     id:     bitmaskRepeater
