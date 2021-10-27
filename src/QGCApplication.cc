@@ -760,6 +760,22 @@ void QGCApplication::showAppMessage(const QString& message, const QString& title
     }
 }
 
+void QGCApplication::showRebootAppMessage(const QString& message, const QString& title)
+{
+    static QTime lastRebootMessage;
+
+    QTime currentTime = QTime::currentTime();
+    QTime previousTime = lastRebootMessage;
+    lastRebootMessage = currentTime;
+
+    if (previousTime.isValid() && previousTime.msecsTo(currentTime) < 60 * 1000 * 2) {
+        // Debounce reboot messages
+        return;
+    }
+
+    showAppMessage(message, title);
+}
+
 void QGCApplication::_showDelayedAppMessages(void)
 {
     if (_rootQmlObject()) {
