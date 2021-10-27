@@ -21,9 +21,10 @@ class TakeoffMissionItem : public SimpleMissionItem
     Q_OBJECT
     
 public:
+    // Note: forLoad = true indicates that TakeoffMissionItem::load will be called onthe item
     TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
-    TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem);
-    TakeoffMissionItem(const MissionItem& missionItem,  PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem);
+    TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
+    TakeoffMissionItem(const MissionItem& missionItem,  PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
 
     Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE setLaunchCoordinate               NOTIFY launchCoordinateChanged)
     Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE setLaunchTakeoffAtSameLocation    NOTIFY launchTakeoffAtSameLocationChanged)
