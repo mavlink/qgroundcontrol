@@ -7,7 +7,7 @@
       <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Home Position</source>
-      <translation type="unfinished">Home Position</translation>
+      <translation>홈 포지션</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
@@ -19,25 +19,25 @@
       <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Basic</source>
-      <translation type="unfinished">Basic</translation>
+      <translation>기본</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Latitude</source>
-      <translation type="unfinished">Latitude</translation>
+      <translation>위도 (Latitude)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param6.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Longitude</source>
-      <translation type="unfinished">Longitude</translation>
+      <translation>경도 (Longitude)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Waypoint</source>
-      <translation type="unfinished">Waypoint</translation>
+      <translation>경로지점</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
@@ -67,13 +67,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>요</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>로이터</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
@@ -157,7 +157,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Return To Launch</source>
-      <translation type="unfinished">Return To Launch</translation>
+      <translation>이륙 위치로 귀환</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
@@ -169,7 +169,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>착륙</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
@@ -187,7 +187,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Precision Land</source>
-      <translation type="unfinished">Precision Land</translation>
+      <translation>정밀 착륙</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.enumStrings, </extracomment>
@@ -199,7 +199,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>이륙</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
@@ -211,7 +211,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>피치</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
@@ -235,7 +235,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change Altitude</source>
-      <translation type="unfinished">Change Altitude</translation>
+      <translation>고도 변경</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].description, </extracomment>
@@ -253,7 +253,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_MODE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.label, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.label, .mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mode</source>
-      <translation type="unfinished">Mode</translation>
+      <translation>모드</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
@@ -265,7 +265,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (altitude)</source>
-      <translation type="unfinished">Loiter (altitude)</translation>
+      <translation>정지비행 고도</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
@@ -277,7 +277,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Follow Me</source>
-      <translation type="unfinished">Follow Me</translation>
+      <translation>팔로우미</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
@@ -289,7 +289,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Path planning</source>
-      <translation type="unfinished">Path planning</translation>
+      <translation>경로 계획</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].description, </extracomment>
@@ -301,7 +301,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].category, .mavCmdInfo[MAV_CMD_DO_SET_MODE].category, .mavCmdInfo[MAV_CMD_DO_JUMP].category, .mavCmdInfo[MAV_CMD_DO_SET_HOME].category, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_GRIPPER].category, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Advanced</source>
-      <translation type="unfinished">Advanced</translation>
+      <translation>고급 설정</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
@@ -355,7 +355,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL takeoff</source>
-      <translation type="unfinished">VTOL takeoff</translation>
+      <translation>VTOL 이륙</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
@@ -379,7 +379,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL land</source>
-      <translation type="unfinished">VTOL land</translation>
+      <translation>VTOL 착륙</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
@@ -409,13 +409,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>활성화</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>On,Off</source>
-      <translation type="unfinished">On,Off</translation>
+      <translation>켜기,끄기</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].friendlyName, </extracomment>
@@ -427,25 +427,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay unti the specified time is reached.</source>
-      <translation type="unfinished">Delay unti the specified time is reached.</translation>
+      <translation>설정한 시간동안 지연됩니다.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hour (utc)</source>
-      <translation type="unfinished">Hour (utc)</translation>
+      <translation>시 (utc)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Min (utc)</source>
-      <translation type="unfinished">Min (utc)</translation>
+      <translation>분 (utc)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sec (utc)</source>
-      <translation type="unfinished">Sec (utc)</translation>
+      <translation>초(UTC)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].friendlyName, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].param1.label, </extracomment>
@@ -499,7 +499,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Distance</source>
-      <translation type="unfinished">Distance</translation>
+      <translation>거리</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].friendlyName, </extracomment>
@@ -535,7 +535,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.label, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Offset</source>
-      <translation type="unfinished">Offset</translation>
+      <translation>오프셋(Offset)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.enumStrings, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.enumStrings, </extracomment>
@@ -547,7 +547,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set mode</source>
-      <translation type="unfinished">Set mode</translation>
+      <translation>모드 설정</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
@@ -565,7 +565,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Custom Mode</source>
-      <translation type="unfinished">Custom Mode</translation>
+      <translation>사용자 지정 모드</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param3.label, </extracomment>
@@ -595,13 +595,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Repeat</source>
-      <translation type="unfinished">Repeat</translation>
+      <translation>반복</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change speed</source>
-      <translation type="unfinished">Change speed</translation>
+      <translation>속도 변경</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].description, </extracomment>
@@ -613,7 +613,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Type</source>
-      <translation type="unfinished">Type</translation>
+      <translation>유형</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.enumStrings, </extracomment>
@@ -625,13 +625,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>속도</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Throttle</source>
-      <translation type="unfinished">Throttle</translation>
+      <translation>스로틀</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].friendlyName, </extracomment>
@@ -679,7 +679,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Value</source>
-      <translation type="unfinished">Value</translation>
+      <translation>값</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].friendlyName, </extracomment>
@@ -703,7 +703,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param3.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Time</source>
-      <translation type="unfinished">Time</translation>
+      <translation>시간</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].friendlyName, </extracomment>
@@ -721,13 +721,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Servo</source>
-      <translation type="unfinished">Servo</translation>
+      <translation>서보</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>PWM</source>
-      <translation type="unfinished">PWM</translation>
+      <translation>PWM</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].friendlyName, </extracomment>
@@ -811,7 +811,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].category, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].category, .mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>카메라</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].friendlyName, </extracomment>
@@ -1645,31 +1645,32 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>피치</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>롤</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>요
+</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>활성화</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation type="unfinished">Enable,Disable</translation>
+      <translation>활성,비활성</translation>
     </message>
   </context>
   <context>
@@ -1678,7 +1679,7 @@
       <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Hide,Show</source>
-      <translation type="unfinished">Hide,Show</translation>
+      <translation>숨기기,표시</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
@@ -1690,7 +1691,7 @@
       <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>mkv,mov,mp4</source>
-      <translation type="unfinished">mkv,mov,mp4</translation>
+      <translation>mkv,mov,mp4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
@@ -1705,7 +1706,7 @@
       <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>ChibiOS,NuttX</source>
-      <translation type="unfinished">ChibiOS,NuttX</translation>
+      <translation>ChibiOS,NuttX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
@@ -1729,7 +1730,7 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation type="unfinished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
+      <translation>아두파일럿,PX4 프로,일반 Mavlink 장치</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
