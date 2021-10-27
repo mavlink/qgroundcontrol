@@ -193,7 +193,8 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, _flyView, *missionItem);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                 // This needs to be a TakeoffMissionItem
-                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem);
+                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem, false /* forLoad */);
+                _takeoffMissionItem->setWizardMode(false);
                 simpleItem->deleteLater();
                 simpleItem = _takeoffMissionItem;
             }
@@ -359,7 +360,7 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
 VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem);
+    _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem, false /* forLoad */);
     _takeoffMissionItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(_takeoffMissionItem);
 
