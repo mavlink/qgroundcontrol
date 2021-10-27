@@ -76,12 +76,6 @@ public:
     /// multiple times.
     void reportMissingParameter(int componentId, const QString& name);
 
-    /// Show non-modal vehicle message to the user
-    Q_SLOT void showCriticalVehicleMessage(const QString& message);
-
-    /// Show modal application message to the user
-    Q_SLOT void showAppMessage(const QString& message, const QString& title = QString());
-
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) const { return _fakeMobile; }
 
@@ -132,6 +126,16 @@ public slots:
 
     /// Get current language
     const QLocale getCurrentLanguage() { return _locale; }
+
+    /// Show non-modal vehicle message to the user
+    void showCriticalVehicleMessage(const QString& message);
+
+    /// Show modal application message to the user
+    void showAppMessage(const QString& message, const QString& title = QString());
+
+    /// Show modal application message to the user about the need for a reboot. Multiple messages will be supressed if they occur
+    /// one after the other.
+    void showRebootAppMessage(const QString& message, const QString& title = QString());
 
 signals:
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
