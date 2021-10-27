@@ -466,13 +466,13 @@ Rectangle {
 
                                 QGCLabel {
                                     text:           qsTr("Language")
-                                    visible: QGroundControl.settingsManager.appSettings.language.visible
+                                    visible: QGroundControl.settingsManager.appSettings.qLocaleLanguage.visible
                                 }
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   QGroundControl.settingsManager.appSettings.language
+                                    fact:                   QGroundControl.settingsManager.appSettings.qLocaleLanguage
                                     indexModel:             false
-                                    visible:                QGroundControl.settingsManager.appSettings.language.visible
+                                    visible:                QGroundControl.settingsManager.appSettings.qLocaleLanguage.visible
                                 }
 
                                 QGCLabel {

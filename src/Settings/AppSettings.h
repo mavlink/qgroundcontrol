@@ -58,7 +58,7 @@ public:
     DEFINE_SETTINGFACT(enableTaisync)
     DEFINE_SETTINGFACT(enableTaisyncVideo)
     DEFINE_SETTINGFACT(enableMicrohard)
-    DEFINE_SETTINGFACT(language)
+    DEFINE_SETTINGFACT(qLocaleLanguage)
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(usePairing)
     DEFINE_SETTINGFACT(saveCsvTelemetry)
@@ -121,11 +121,11 @@ public:
     static const char* photoDirectory;
     static const char* crashDirectory;
 
-    // Returns the current language setting bypassing the standard SettingsGroup path. This should only be used
+    // Returns the current qLocaleLanguage setting bypassing the standard SettingsGroup path. This should only be used
     // by QGCApplication::setLanguage to query the language setting as early in the boot process as possible.
     // Specfically prior to any JSON files being loaded such that JSON file can be translated. Also since this
     // is a one-off mechanism custom build overrides for language are not currently supported.
-    static int _languageID(void);
+    static QLocale::Language _qLocaleLanguageID(void);
 
 signals:
     void savePathsChanged();
@@ -133,5 +133,9 @@ signals:
 private slots:
     void _indoorPaletteChanged();
     void _checkSavePathDirectories();
-    void _languageChanged();
+    void _qLocaleLanguageChanged();
+
+private:
+    static QList<int> _rgReleaseLanguages;
+    static QList<int> _rgPartialLanguages;
 };
