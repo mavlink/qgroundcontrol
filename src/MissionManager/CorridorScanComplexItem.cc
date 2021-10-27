@@ -22,7 +22,7 @@
 
 QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
 
-const QString CorridorScanComplexItem::name(tr("Corridor Scan"));
+const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
 
 const char* CorridorScanComplexItem::settingsGroup =            "CorridorScan";
 const char* CorridorScanComplexItem::corridorWidthName =        "CorridorWidth";
