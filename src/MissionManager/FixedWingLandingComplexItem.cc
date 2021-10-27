@@ -19,7 +19,7 @@
 
 QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexItemLog")
 
-const QString FixedWingLandingComplexItem::name(tr("Fixed Wing Landing"));
+const QString FixedWingLandingComplexItem::name(FixedWingLandingComplexItem::tr("Fixed Wing Landing"));
 
 const char* FixedWingLandingComplexItem::settingsGroup                      = "FixedWingLanding";
 const char* FixedWingLandingComplexItem::jsonComplexItemTypeValue           = "fwLandingPattern";
