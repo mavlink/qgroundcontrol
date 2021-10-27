@@ -216,7 +216,7 @@ SetupPage {
 
                 QGCButton {
                     width:                  parent.width
-                    text:                   qsTr(`Yes, Load default parameter set for ${frameModelSelected.name}`)
+                    text:                   qsTr("Yes, Load default parameter set for %1").arg(frameModelSelected.name)
                     wrapMode:               Text.WordWrap
                     horizontalAlignment:    Text.AlignHCenter
                     visible:                frameModelSelected.paramFileName != undefined
@@ -237,7 +237,7 @@ SetupPage {
                             return qsTr("No, set frame only")
                         }
 
-                        return qsTr(`Confirm frame ${frameModelSelected.name}`)
+                        return qsTr("Confirm frame %1").arg(frameModelSelected.name)
                     }
 
                     onClicked: {

@@ -179,7 +179,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
         }
         for (int i=0; i<rgOriginalStrings.count(); i++) {
             if (_rgPartialLanguages.contains(rgOriginalValues[i].toInt())) {
-                rgUpdatedStrings.append(rgOriginalStrings[i] + tr(" (Partial)"));
+                rgUpdatedStrings.append(rgOriginalStrings[i] + AppSettings::tr(" (Partial)"));
                 rgUpdatedValues.append(rgOriginalValues[i].toInt());
             }
         }
@@ -188,7 +188,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
         for (int i=0; i<rgOriginalStrings.count(); i++) {
             int languageId = rgOriginalValues[i].toInt();
             if (!_rgReleaseLanguages.contains(languageId)  || !_rgPartialLanguages.contains(languageId)) {
-                rgUpdatedStrings.append(rgOriginalStrings[i] + tr(" (Test only)"));
+                rgUpdatedStrings.append(rgOriginalStrings[i] + AppSettings::tr(" (Test only)"));
                 rgUpdatedValues.append(rgOriginalValues[i].toInt());
             }
         }

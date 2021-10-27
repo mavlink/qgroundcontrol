@@ -20,7 +20,7 @@
 
 QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "VTOLLandingComplexItemLog")
 
-const QString VTOLLandingComplexItem::name(tr("VTOL Landing"));
+const QString VTOLLandingComplexItem::name(VTOLLandingComplexItem::tr("VTOL Landing"));
 
 const char* VTOLLandingComplexItem::settingsGroup =            "VTOLLanding";
 const char* VTOLLandingComplexItem::jsonComplexItemTypeValue = "vtolLandingPattern";
