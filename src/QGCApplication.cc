@@ -383,71 +383,9 @@ void QGCApplication::setLanguage()
     _locale = QLocale::system();
     qDebug() << "System reported locale:" << _locale << "; Name" << _locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
 
-    int langID = AppSettings::_languageID();
-    //-- See App.SettinsGroup.json for index
-    if(langID) {
-        switch(langID) {
-        case 1:
-            _locale = QLocale(QLocale::Bulgarian);
-            break;
-        case 2:
-            _locale = QLocale(QLocale::Chinese);
-            break;
-        case 3:
-            _locale = QLocale(QLocale::Dutch);
-            break;
-        case 4:
-            _locale = QLocale(QLocale::English);
-            break;
-        case 5:
-            _locale = QLocale(QLocale::Finnish);
-            break;
-        case 6:
-            _locale = QLocale(QLocale::French);
-            break;
-        case 7:
-            _locale = QLocale(QLocale::German);
-            break;
-        case 8:
-            _locale = QLocale(QLocale::Greek);
-            break;
-        case 9:
-            _locale = QLocale(QLocale::Hebrew);
-            break;
-        case 10:
-            _locale = QLocale(QLocale::Italian);
-            break;
-        case 11:
-            _locale = QLocale(QLocale::Japanese);
-            break;
-        case 12:
-            _locale = QLocale(QLocale::Korean);
-            break;
-        case 13:
-            _locale = QLocale(QLocale::NorwegianBokmal);
-            break;
-        case 14:
-            _locale = QLocale(QLocale::Polish);
-            break;
-        case 15:
-            _locale = QLocale(QLocale::Portuguese);
-            break;
-        case 16:
-            _locale = QLocale(QLocale::Russian);
-            break;
-        case 17:
-            _locale = QLocale(QLocale::Spanish);
-            break;
-        case 18:
-            _locale = QLocale(QLocale::Swedish);
-            break;
-        case 19:
-            _locale = QLocale(QLocale::Turkish);
-            break;
-        case 20:
-            _locale = QLocale(QLocale::Azerbaijani);
-            break;
-        }
+    QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageID();
+    if (possibleLocale != QLocale::AnyLanguage) {
+        _locale = QLocale(possibleLocale);
     }
     //-- We have specific fonts for Korean
     if(_locale == QLocale::Korean) {
