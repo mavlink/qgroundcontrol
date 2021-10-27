@@ -940,9 +940,14 @@
       <max>180</max>
       <unit>deg</unit>
     </parameter>
-    <parameter name="COM_ARM_MAG_STR" default="1" type="INT32" boolean="true">
+    <parameter name="COM_ARM_MAG_STR" default="1" type="INT32">
       <short_desc>Enable mag strength preflight check</short_desc>
-      <long_desc>Deny arming if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
+      <long_desc>Check if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Deny arming</value>
+        <value code="2">Warning only</value>
+      </values>
     </parameter>
     <parameter name="COM_ARM_MIS_REQ" default="0" type="INT32" boolean="true">
       <short_desc>Require valid mission to arm</short_desc>
