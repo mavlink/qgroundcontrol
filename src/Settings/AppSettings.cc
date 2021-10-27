@@ -169,37 +169,27 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
         QVariantList    rgOriginalValues    = metaData->enumValues();
         QStringList     rgUpdatedStrings;
         QVariantList    rgUpdatedValues;
-#ifdef DAILY_BUILD
-        // Daily builds include selection of all languages and mark non-release languages as testing only
+
+        // All builds contains released and partial languages
         for (int i=0; i<rgOriginalStrings.count(); i++) {
-            int languageId = rgOriginalValues[i].toInt();
-
-            QString updatedString = rgOriginalStrings[i];
-            if (_rgPartialLanguages.contains(languageId)) {
-                updatedString += tr(" (Partial)");
-            } else if (!_rgReleaseLanguages.contains(languageId)) {
-                updatedString += tr(" (Testing Only)");
-            }
-            rgUpdatedStrings.append(updatedString);
-            rgUpdatedValues.append(rgOriginalValues[i]);
-        }
-#else
-        // Stable builds only allow released and partial language selection
-        for (int i=0; i<rgOriginalStrings.count(); i++) {
-            bool addToList = false;
-            int languageId = rgOriginalValues[i].toInt();
-
-            QString updatedString = rgOriginalStrings[i];
-            if (_rgPartialLanguages.contains(languageId)) {
-                addToList = true;
-                updatedString += tr(" (Partial)");
-            } else if (_rgReleaseLanguages.contains(languageId)) {
-                addToList = true;
-            }
-
-            if (addToList) {
-                rgUpdatedStrings.append(updatedString);
+            if (_rgReleaseLanguages.contains(rgOriginalValues[i].toInt())) {
+                rgUpdatedStrings.append(rgOriginalStrings[i]);
                 rgUpdatedValues.append(rgOriginalValues[i]);
+            }
+        }
+        for (int i=0; i<rgOriginalStrings.count(); i++) {
+            if (_rgPartialLanguages.contains(rgOriginalValues[i].toInt())) {
+                rgUpdatedStrings.append(rgOriginalStrings[i] + tr(" (Partial)"));
+                rgUpdatedValues.append(rgOriginalValues[i].toInt());
+            }
+        }
+#ifdef DAILY_BUILD
+        // Only daily builds include full set
+        for (int i=0; i<rgOriginalStrings.count(); i++) {
+            int languageId = rgOriginalValues[i].toInt();
+            if (!_rgReleaseLanguages.contains(languageId)  || !_rgPartialLanguages.contains(languageId)) {
+                rgUpdatedStrings.append(rgOriginalStrings[i] + tr(" (Test only)"));
+                rgUpdatedValues.append(rgOriginalValues[i].toInt());
             }
         }
 #endif
