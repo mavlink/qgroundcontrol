@@ -1266,8 +1266,10 @@ void MissionController::_recalcFlightPathSegments(void)
     bool                homePositionValid =         _settingsItem->coordinate().isValid();
     bool                roiActive =                 false;
     bool                previousItemIsIncomplete =  false;
+    bool                signalSplitSegmentChanged = false;
 
     qCDebug(MissionControllerLog) << "_recalcFlightPathSegments homePositionValid" << homePositionValid;
+    qDebug() << "_recalcFlightPathSegments homePositionValid" << homePositionValid;
 
     FlightPathSegmentHashTable oldSegmentTable = _flightPathSegmentHashTable;
 
@@ -1379,6 +1381,12 @@ void MissionController::_recalcFlightPathSegments(void)
                         if (addDirectionArrow) {
                             _directionArrows.append(segment);
                         }
+                        if (visualItem->isCurrentItem() && _delayedSplitSegmentUpdate) {
+                            _splitSegment = segment;
+                            _delayedSplitSegmentUpdate = false;
+                            signalSplitSegmentChanged = true;
+                            qDebug() << "Update delayed split segment";
+                        }
                         lastFlyThroughVI->setSimpleFlighPathSegment(segment);
                     }
                 }
@@ -1451,6 +1459,9 @@ void MissionController::_recalcFlightPathSegments(void)
 
     emit waypointPathChanged();
     emit recalcTerrainProfile();
+    if (signalSplitSegmentChanged) {
+        emit splitSegmentChanged();
+    }
 }
 
 void MissionController::_updateBatteryInfo(int waypointIndex)
@@ -2357,6 +2368,7 @@ bool MissionController::_isROICancelItem(SimpleMissionItem* simpleItem)
 void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 {
     if (_visualItems && (force || sequenceNumber != _currentPlanViewSeqNum)) {
+        qDebug() << "setCurrentPlanViewSeqNum";
         bool    foundLand =             false;
         int     takeoffSeqNum =         -1;
         int     landSeqNum =            -1;
@@ -2453,14 +2465,23 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 
                 if (pVI->specifiesCoordinate()) {
                     if (!pVI->isStandaloneCoordinate()) {
+                        qDebug() << "Here3";
                         // Determine split segment used to display line split editing ui.
                         for (int j=viIndex-1; j>0; j--) {
                             VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
                             if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
+                                qDebug() << "Found";
                                 VisualItemPair splitPair(pPrev, pVI);
                                 if (_flightPathSegmentHashTable.contains(splitPair)) {
+                                    qDebug() << "Split segment added in setCurrentPlanViewSeqNum";
                                     _splitSegment = _flightPathSegmentHashTable[splitPair];
+                                } else {
+                                    // The recalc of flight path segments hasn't happened yet since it is delayed and compressed.
+                                    // So we need to register the fact that we need a split segment update and it will happen in the recalc instead.
+                                    qDebug() << "Delayed split";
+                                    _delayedSplitSegmentUpdate = true;
                                 }
+                                break;
                             }
                         }
                     }
