@@ -1,0 +1,135 @@
+#
+# QGroundControl android build environment
+#
+
+ARG BASE_IMAGE=ubuntu:20.04
+FROM $BASE_IMAGE
+LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
+
+ARG QT_VERSION=5.15.2
+ARG NDK_VERSION=r20
+ARG SDK_BUILD_TOOLS=28.0.3
+ARG SDK_PACKAGES="tools platform-tools"
+ARG SDK_PLATFORM=android-27
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QT_PATH /opt/Qt
+ENV QT_TARGET android
+ENV QT_ANDROID $QT_PATH/${QT_VERSION}/${QT_TARGET}
+
+ENV ANDROID_HOME=/opt/android
+
+ENV ANDROID_NDK_ARCH=arch-arm
+ENV ANDROID_NDK_EABI=llvm
+ENV ANDROID_NDK_HOST=linux-x86_64
+ENV ANDROID_NDK_TOOLCHAIN_PREFIX=arm-linux-androideabi
+ENV ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+ENV ANDROID_TARGET_ARCH=armeabi-v7a
+ENV QMAKESPEC=android-clang
+
+ENV GSTREAMER_VERSION 1.18.5
+ENV QGC_ANDROID_GSTREAMER_URL=https://gstreamer.freedesktop.org/pkg/android/${GSTREAMER_VERSION}/gstreamer-1.0-android-universal-${GSTREAMER_VERSION}.tar.xz
+ENV QGC_ANDROID_GSTREAMER_PATH=/opt/gstreamer-1.0-android-universal-${GSTREAMER_VERSION}
+
+ENV ANDROID_SDK_ROOT=${ANDROID_HOME}/sdk
+ENV ANDROID_NDK_PLATFORM=${SDK_PLATFORM}
+ENV ANDROID_NDK_ROOT=${ANDROID_HOME}/android-ndk-${NDK_VERSION}
+ENV ANDROID_NDK_TOOLS_PREFIX=${ANDROID_NDK_TOOLCHAIN_PREFIX}
+
+ENV ANDROID_DEV=${ANDROID_NDK_ROOT}/platforms/${ANDROID_NDK_PLATFORM}/${ANDROID_NDK_ARCH}/usr
+ENV ANDROID_NDK_TOOLCHAIN=${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_TOOLCHAIN_PREFIX}-${ANDROID_NDK_TOOLCHAIN_VERSION}/prebuilt/${ANDROID_NDK_HOST}
+
+ENV PATH=${ANDROID_NDK_TOOLCHAIN}/${ANDROID_NDK_TOOLCHAIN_PREFIX}/bin:${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_EABI}/prebuilt/${ANDROID_NDK_HOST}/bin:${ANDROID_SDK_ROOT}/tools:${ANDROID_SDK_ROOT}/tools/bin:${ANDROID_SDK_ROOT}/platform-tools:${PATH}
+ENV PATH /usr/lib/ccache:$QT_ANDROID/bin:$PATH
+
+RUN dpkg --add-architecture i386 \
+        && apt update \
+        && apt -y --quiet --no-install-recommends install \
+        ant \
+		apt-utils \
+		build-essential \
+		ca-certificates \
+		ccache \
+		checkinstall \
+		cmake \
+		curl \
+		default-jdk \
+		espeak \
+		fuse \
+		g++ \
+		gcc \
+		git \
+		gosu \
+		kmod \
+		libc6:i386 \
+		libdbus-1-3 \
+		libespeak-dev \
+		libfontconfig1 \
+		libfuse2 \
+		libgcc1:i386 \
+        libice6 \
+        libncurses5:i386 \
+        libsdl1.2debian:i386 \
+        libsm6 \
+        libstdc++6:i386 \
+        libxext6 \
+        libxrender1 \
+        libz1:i386 \
+		libgstreamer-plugins-base1.0-dev \
+		libgstreamer1.0-0 \
+		libgstreamer1.0-dev \
+		libsdl2-dev \
+		libssl-dev \
+		libudev-dev \
+		locales \
+		make \
+		ninja-build \
+		openssh-client \
+		openssl \
+		pkg-config \
+		rsync \
+		speech-dispatcher \
+		unzip \
+		wget \
+		xvfb \
+		zlib1g:i386 \
+		zlib1g-dev \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+# Install Qt
+COPY deploy/docker/install-qt-linux.sh /tmp/qt/
+RUN /tmp/qt/install-qt-linux.sh
+
+# Download & unpack android SDK
+# URLs come from here: https://developer.android.com/studio#downloads
+
+RUN curl -Lo /tmp/sdk-tools.zip 'https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip' \
+	&& mkdir -p ${ANDROID_SDK_ROOT} && unzip -q /tmp/sdk-tools.zip -d ${ANDROID_SDK_ROOT} && rm -f /tmp/sdk-tools.zip \
+	&& yes | ${ANDROID_SDK_ROOT}/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses \
+	&& ${ANDROID_SDK_ROOT}/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --verbose "platforms;${SDK_PLATFORM}" "build-tools;${SDK_BUILD_TOOLS}" ${SDK_PACKAGES}
+
+# Download & unpack android NDK
+RUN mkdir /tmp/android && cd /tmp/android && curl -Lo ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux-x86_64.zip" \
+	&& unzip -q ndk.zip && mv android-ndk-* $ANDROID_NDK_ROOT && chmod -R +rX $ANDROID_NDK_ROOT \
+	&& rm -rf /tmp/android
+
+# Download & unpack gstreamer
+RUN curl --silent -Lo /tmp/gstreamer-android.tar.xz ${QGC_ANDROID_GSTREAMER_URL} && mkdir -p ${QGC_ANDROID_GSTREAMER_PATH} && tar xf /tmp/gstreamer-android.tar.xz -C ${QGC_ANDROID_GSTREAMER_PATH} && rm -f /tmp/gstreamer-android.tar.xz
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1000 to not run commands/generate files as root
+RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 1000
+USER user
+
+WORKDIR /project/build
+CMD trap "rm -f /project/source/gstreamer-1.0-android-universal-${GSTREAMER_VERSION}" EXIT \
+    && ln -s ${QGC_ANDROID_GSTREAMER_PATH} /project/source/gstreamer-1.0-android-universal-${GSTREAMER_VERSION} \
+    && qmake /project/source ANDROID_ABIS=${ANDROID_TARGET_ARCH} CONFIG+=installer \
+    && make -j$(nproc)

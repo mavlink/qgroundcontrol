@@ -2,10 +2,11 @@
 # QGroundControl linux build environment
 #
 
-FROM ubuntu:20.04
+ARG BASE_IMAGE=ubuntu:20.04
+FROM $BASE_IMAGE
 LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
 
-ARG QT_VERSION=5.12.10
+ARG QT_VERSION=5.15.2
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -69,4 +70,4 @@ RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 100
 USER user
 
 WORKDIR /project/build
-CMD qmake /project/source && make -j$(nproc)
+CMD qmake /project/source CONFIG+=installer && make -j$(nproc)
