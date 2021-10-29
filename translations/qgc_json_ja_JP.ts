@@ -7,13 +7,13 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation>ArduPilot,PX4 Pro,Mavlink標準</translation>
+      <translation>ArduPilot,PX4 Pro,Mavlink 汎用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,Mavlink標準</translation>
+      <translation>固定翼機,マルチコプター,VTOL機,ローバー,サブマリン,Mavlink 汎用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
@@ -37,7 +37,7 @@
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</source>
-      <translation type="unfinished">System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</translation>
+      <translation>System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</translation>
     </message>
   </context>
   <context>
@@ -271,7 +271,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>ヨー</translation>
     </message>
   </context>
   <context>
@@ -280,7 +280,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
   </context>
   <context>
