@@ -21,15 +21,26 @@ installer {
             # Relocate all dylibs so they can work under @executable_path/...
             # Copy the result into the app bundle
             # Make sure qgroundcontrol can find them
-            QMAKE_POST_LINK += && $$SOURCE_DIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${TARGET}.app $${TARGET}
+            #QMAKE_POST_LINK += && $$SOURCE_DIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${TARGET}.app $${TARGET}
         }
 
         QMAKE_POST_LINK += && echo macdeployqt
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${SOURCE_DIR}/src
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
-        QMAKE_POST_LINK += && echo osxrelocator
-        QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
+        QMAKE_POST_LINK += && echo patrick
+        QMAKE_POST_LINK += && cp -R /Library/Frameworks/GStreamer.framework $${TARGET}.app/Contents/Frameworks
+        #QMAKE_POST_LINK += && CONTENT_FOLDER=$${TARGET}.app/Contents $$SOURCE_DIR/rpath.py
+        QMAKE_POST_LINK += && echo libexec
+        #QMAKE_POST_LINK += && find $${TARGET}.app/Contents
+        QMAKE_POST_LINK += && ln -sf $${TARGET}.app/Contents/Frameworks $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/Frameworks
+        QMAKE_POST_LINK += && install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer $${TARGET}.app/Contents/MacOS/QGroundControl
+        QMAKE_POST_LINK += && rm -rf $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/{bin,etc,share,Headers,include,Commands}
+        QMAKE_POST_LINK += && rm -rf $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/{*.a,*.la,glib-2.0,gst-validate-launcher,pkgconfig}
+        #QMAKE_POST_LINK += && echo osxrelocator
+        #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/libMoltenVK.dylib @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib -r > /dev/null 2>&1
+        #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0 -r > /dev/null 2>&1
+        #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
 
         codesign {
             # Disabled for now since it's not working correctly yet
