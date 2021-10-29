@@ -515,7 +515,9 @@ void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& ma
     }
 
     complexItem->setSequenceNumber(sequenceNumber);
-    complexItem->setWizardMode(true);
+    if (!qobject_cast<VTOLLandingComplexItem*>(complexItem)) {
+        complexItem->setWizardMode(true);
+    }
     _initVisualItem(complexItem);
 
     if (visualItemIndex == -1) {
