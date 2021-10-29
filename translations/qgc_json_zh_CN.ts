@@ -7,7 +7,7 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation type="unfinished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
+      <translation>ArduPilot，PX4 Pro，Mavlink 通用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
@@ -25,13 +25,13 @@
       <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Indoor,Outdoor</source>
-      <translation type="unfinished">Indoor,Outdoor</translation>
+      <translation>室内，室外</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation type="unfinished">Never,Always,When in Follow Me Flight Mode</translation>
+      <translation>从不，总是，处于“跟随我”飞行模式时</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
@@ -46,13 +46,13 @@
       <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>ChibiOS,NuttX</source>
-      <translation type="unfinished">ChibiOS,NuttX</translation>
+      <translation>ChibiOS，NuttX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation type="unfinished">Multi-Rotor,Helicopter,Plane,Rover,Sub</translation>
+      <translation>多机器人，直升机，固定翼，旋翼和水下装置</translation>
     </message>
   </context>
   <context>
@@ -61,7 +61,7 @@
       <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
       <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
       <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation type="unfinished">Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
+      <translation>由无人机控制，0 赫兹，1赫兹,2  赫兹，3  赫兹，4 赫兹，5  赫兹，6 赫兹，7 赫兹，8  赫兹，9 赫兹，10  赫兹，50  赫兹，100 赫兹</translation>
     </message>
   </context>
   <context>
@@ -70,19 +70,19 @@
       <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Hide,Show</source>
-      <translation type="unfinished">Hide,Show</translation>
+      <translation>隐藏，显示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Fit Width,Fit Height,Stretch</source>
-      <translation type="unfinished">Fit Width,Fit Height,Stretch</translation>
+      <translation>适合宽度,适合高度,拉伸数</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>mkv,mov,mp4</source>
-      <translation type="unfinished">mkv,mov,mp4</translation>
+      <translation>mkv，mov，mp4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
@@ -118,7 +118,7 @@
       <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation type="unfinished">None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
+      <translation>无，无，2D锁定，3D锁定，3D DGPS锁定，3D RTK GPS 锁定（浮动），3D RTK GPS锁定（固定），静态（固定）</translation>
     </message>
   </context>
   <context>
@@ -133,7 +133,7 @@
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Disabled,Enabled,Unavailable</source>
-      <translation type="unfinished">Disabled,Enabled,Unavailable</translation>
+      <translation>禁用，启用，不可用</translation>
     </message>
   </context>
   <context>
@@ -142,7 +142,7 @@
       <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
       <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
       <source>North,South</source>
-      <translation type="unfinished">North,South</translation>
+      <translation>北，南</translation>
     </message>
   </context>
   <context>
@@ -151,37 +151,37 @@
       <extracomment>.mavCmdInfo[Override testing].description, .mavCmdInfo[Override testing].category, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4</source>
-      <translation type="unfinished">override fw 4</translation>
+      <translation>覆盖 fw 4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 1</source>
-      <translation type="unfinished">override fw 4 1</translation>
+      <translation>覆盖 fw 4 1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param1.enumStrings, .mavCmdInfo[Override testing].param3.enumStrings, .mavCmdInfo[Override testing].param5.enumStrings, .mavCmdInfo[Override testing].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
+      <translation>1，2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param3.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 3</source>
-      <translation type="unfinished">override fw 4 3</translation>
+      <translation>覆盖 fw 4 3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param5.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 5</source>
-      <translation type="unfinished">override fw 4 5</translation>
+      <translation>覆盖 fw 4 5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param7.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 7</source>
-      <translation type="unfinished">override fw 4 7</translation>
+      <translation>覆盖 fw 4 7</translation>
     </message>
   </context>
   <context>
@@ -190,79 +190,79 @@
       <extracomment>.mavCmdInfo[UNITTEST_2].param1.label, .mavCmdInfo[UNITTEST_3].param1.label, .mavCmdInfo[UNITTEST_4].param1.label, .mavCmdInfo[UNITTEST_5].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param1</source>
-      <translation type="unfinished">param1</translation>
+      <translation>参数1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 3</source>
-      <translation type="unfinished">Unit Test 3</translation>
+      <translation>参数1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].description, .mavCmdInfo[UNITTEST_4].description, .mavCmdInfo[UNITTEST_5].description, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>description</source>
-      <translation type="unfinished">description</translation>
+      <translation>描述</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].category, .mavCmdInfo[UNITTEST_4].category, .mavCmdInfo[UNITTEST_5].category, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>category</source>
-      <translation type="unfinished">category</translation>
+      <translation>类别</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param1.enumStrings, .mavCmdInfo[UNITTEST_3].param2.enumStrings, .mavCmdInfo[UNITTEST_3].param3.enumStrings, .mavCmdInfo[UNITTEST_3].param4.enumStrings, .mavCmdInfo[UNITTEST_3].param5.enumStrings, .mavCmdInfo[UNITTEST_3].param6.enumStrings, .mavCmdInfo[UNITTEST_3].param7.enumStrings, .mavCmdInfo[UNITTEST_4].param1.enumStrings, .mavCmdInfo[UNITTEST_4].param2.enumStrings, .mavCmdInfo[UNITTEST_4].param3.enumStrings, .mavCmdInfo[UNITTEST_4].param4.enumStrings, .mavCmdInfo[UNITTEST_4].param5.enumStrings, .mavCmdInfo[UNITTEST_4].param6.enumStrings, .mavCmdInfo[UNITTEST_4].param7.enumStrings, .mavCmdInfo[UNITTEST_5].param1.enumStrings, .mavCmdInfo[UNITTEST_5].param2.enumStrings, .mavCmdInfo[UNITTEST_5].param3.enumStrings, .mavCmdInfo[UNITTEST_5].param4.enumStrings, .mavCmdInfo[UNITTEST_5].param5.enumStrings, .mavCmdInfo[UNITTEST_5].param6.enumStrings, .mavCmdInfo[UNITTEST_5].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
+      <translation>1，2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param2.label, .mavCmdInfo[UNITTEST_4].param2.label, .mavCmdInfo[UNITTEST_5].param2.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param2</source>
-      <translation type="unfinished">param2</translation>
+      <translation>参数2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param3.label, .mavCmdInfo[UNITTEST_4].param3.label, .mavCmdInfo[UNITTEST_5].param3.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param3</source>
-      <translation type="unfinished">param3</translation>
+      <translation>参数3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param4.label, .mavCmdInfo[UNITTEST_4].param4.label, .mavCmdInfo[UNITTEST_5].param4.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param4</source>
-      <translation type="unfinished">param4</translation>
+      <translation>参数4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param5.label, .mavCmdInfo[UNITTEST_4].param5.label, .mavCmdInfo[UNITTEST_5].param5.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param5</source>
-      <translation type="unfinished">param5</translation>
+      <translation>参数5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param6.label, .mavCmdInfo[UNITTEST_4].param6.label, .mavCmdInfo[UNITTEST_5].param6.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param6</source>
-      <translation type="unfinished">param6</translation>
+      <translation>参数6</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param7.label, .mavCmdInfo[UNITTEST_4].param7.label, .mavCmdInfo[UNITTEST_5].param7.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param7</source>
-      <translation type="unfinished">param7</translation>
+      <translation>参数7</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_4].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 4</source>
-      <translation type="unfinished">Unit Test 4</translation>
+      <translation>单元测试 4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_5].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 5</source>
-      <translation type="unfinished">Unit Test 5</translation>
+      <translation>单元测试 5</translation>
     </message>
   </context>
   <context>
@@ -289,25 +289,25 @@
       <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Home Position</source>
-      <translation type="unfinished">Home Position</translation>
+      <translation>起始位置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Planned home position for mission.</source>
-      <translation type="unfinished">Planned home position for mission.</translation>
+      <translation>计划执行任务的起始位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Basic</source>
-      <translation type="unfinished">Basic</translation>
+      <translation>常规</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Latitude</source>
-      <translation type="unfinished">Latitude</translation>
+      <translation>纬度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param6.label, </extracomment>
@@ -319,79 +319,79 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Waypoint</source>
-      <translation type="unfinished">Waypoint</translation>
+      <translation>航点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space.</source>
-      <translation type="unfinished">Travel to a position in 3D space.</translation>
+      <translation>前往三维空间中的某个位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>保持</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Acceptance</source>
-      <translation type="unfinished">Acceptance</translation>
+      <translation>接受</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pass Radius</source>
-      <translation type="unfinished">Pass Radius</translation>
+      <translation>通过半径</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>偏航</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>盘旋</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position indefinitely.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position indefinitely.</translation>
+      <translation>移动到一个位置，在指定的半径周围盘旋。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Radius</source>
-      <translation type="unfinished">Radius</translation>
+      <translation>半径</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (turns)</source>
-      <translation type="unfinished">Loiter (turns)</translation>
+      <translation>盘旋 (旋转)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position and Loiter around the specified position for a number of turns.</source>
-      <translation type="unfinished">Travel to a position and Loiter around the specified position for a number of turns.</translation>
+      <translation>移动到一个位置，在指定的半径周围盘旋指定圈數。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Turns</source>
-      <translation type="unfinished">Turns</translation>
+      <translation>转到</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Leave Loiter</source>
-      <translation type="unfinished">Leave Loiter</translation>
+      <translation>离开盤旋模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.enumStrings, </extracomment>
@@ -403,19 +403,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exit loiter from</source>
-      <translation type="unfinished">Exit loiter from</translation>
+      <translation>退出盘旋</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Center,Tangent</source>
-      <translation type="unfinished">Center,Tangent</translation>
+      <translation>中心,切线</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (time)</source>
-      <translation type="unfinished">Loiter (time)</translation>
+      <translation>悬停(时间)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
@@ -439,31 +439,31 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Return To Launch</source>
-      <translation type="unfinished">Return To Launch</translation>
+      <translation>返回起飞点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Send the vehicle back to the launch position.</source>
-      <translation type="unfinished">Send the vehicle back to the launch position.</translation>
+      <translation>将无人机送回起飞位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>降落</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land vehicle at the specified location.</source>
-      <translation type="unfinished">Land vehicle at the specified location.</translation>
+      <translation>在指定位置降落无人机。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Abort Alt</source>
-      <translation type="unfinished">Abort Alt</translation>
+      <translation>中止高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
@@ -481,163 +481,163 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>起飞</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Launch from the ground and travel towards the specified takeoff position.</source>
-      <translation type="unfinished">Launch from the ground and travel towards the specified takeoff position.</translation>
+      <translation>从地面发射并前往指定的起飞位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land local</source>
-      <translation type="unfinished">Land local</translation>
+      <translation>降落地点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF_LOCAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff local</source>
-      <translation type="unfinished">Takeoff local</translation>
+      <translation>本地起飞</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_FOLLOW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Nav follow</source>
-      <translation type="unfinished">Nav follow</translation>
+      <translation>跟随导航</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change Altitude</source>
-      <translation type="unfinished">Change Altitude</translation>
+      <translation>改变高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</source>
-      <translation type="unfinished">Continue on the current course and climb/descend to specified altitude. When the altitude is reached continue to the next command.</translation>
+      <translation>沿当前路线继续，然后爬升/下降到指定的高度。 到达高度后，继续执行下一个命令。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].category, .mavCmdInfo[MAV_CMD_DO_LAND_START].category, .mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Flight control</source>
-      <translation type="unfinished">Flight control</translation>
+      <translation>飞行控制</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_MODE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.label, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.label, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.label, .mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mode</source>
-      <translation type="unfinished">Mode</translation>
+      <translation>模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Climb,Neutral,Descend</source>
-      <translation type="unfinished">Climb,Neutral,Descend</translation>
+      <translation>爬升、空档、下降</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (altitude)</source>
-      <translation type="unfinished">Loiter (altitude)</translation>
+      <translation>盘旋（高度）</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter at specified position until altitude reached.</source>
-      <translation type="unfinished">Loiter at specified position until altitude reached.</translation>
+      <translation>在指定位置盘旋，直到达到高度为止。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Follow Me</source>
-      <translation type="unfinished">Follow Me</translation>
+      <translation>跟随模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Vehicle reposition</source>
-      <translation type="unfinished">Vehicle reposition</translation>
+      <translation>无人机重置位置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Path planning</source>
-      <translation type="unfinished">Path planning</translation>
+      <translation>路线规划</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control autonomous path planning.</source>
-      <translation type="unfinished">Control autonomous path planning.</translation>
+      <translation>控制自主规划路径。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].category, .mavCmdInfo[MAV_CMD_DO_SET_MODE].category, .mavCmdInfo[MAV_CMD_DO_JUMP].category, .mavCmdInfo[MAV_CMD_DO_SET_HOME].category, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_GRIPPER].category, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Advanced</source>
-      <translation type="unfinished">Advanced</translation>
+      <translation>高级</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Local planning</source>
-      <translation type="unfinished">Local planning</translation>
+      <translation>本地规划</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset</source>
-      <translation type="unfinished">Disable,Enable,Enable+reset</translation>
+      <translation>禁用，启用，启用+重置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Full planning</source>
-      <translation type="unfinished">Full planning</translation>
+      <translation>本地规划</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset,Enable+reset route only</source>
-      <translation type="unfinished">Disable,Enable,Enable+reset,Enable+reset route only</translation>
+      <translation>禁用，启用，启用+重置，仅启用+重置路由</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Heading goal</source>
-      <translation type="unfinished">Heading goal</translation>
+      <translation>标题目标</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Spline waypoint</source>
-      <translation type="unfinished">Spline waypoint</translation>
+      <translation>样条航路点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space using spline path.</source>
-      <translation type="unfinished">Travel to a position in 3D space using spline path.</translation>
+      <translation>使用样条曲线路径移动到三维空间中的某个位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_ALTITUDE_WAIT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Altitude wait</source>
-      <translation type="unfinished">Altitude wait</translation>
+      <translation>高度差</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL takeoff</source>
-      <translation type="unfinished">VTOL takeoff</translation>
+      <translation>垂直起降</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</source>
-      <translation type="unfinished">Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.</translation>
+      <translation>悬停在指定的高度上，过渡到固定翼并飞到指定的起飞位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.label, </extracomment>
@@ -655,13 +655,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL land</source>
-      <translation type="unfinished">VTOL land</translation>
+      <translation>垂起着陆</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Fly to specified location at current altitude, transition to multi-rotor and land.</source>
-      <translation type="unfinished">Fly to specified location at current altitude, transition to multi-rotor and land.</translation>
+      <translation>飞行到当前高度的指定位置，过渡到多旋翼并着陆。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param3.label, </extracomment>
@@ -673,115 +673,115 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Guided enable</source>
-      <translation type="unfinished">Guided enable</translation>
+      <translation>启用引用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable/Disabled guided mode.</source>
-      <translation type="unfinished">Enable/Disabled guided mode.</translation>
+      <translation>启用/禁用引导模式。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>启用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>On,Off</source>
-      <translation type="unfinished">On,Off</translation>
+      <translation>开启，关闭</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay until</source>
-      <translation type="unfinished">Delay until</translation>
+      <translation>延迟至</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay unti the specified time is reached.</source>
-      <translation type="unfinished">Delay unti the specified time is reached.</translation>
+      <translation>延迟到达指定时间。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hour (utc)</source>
-      <translation type="unfinished">Hour (utc)</translation>
+      <translation>小时(utc)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Min (utc)</source>
-      <translation type="unfinished">Min (utc)</translation>
+      <translation>分（utc）</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sec (utc)</source>
-      <translation type="unfinished">Sec (utc)</translation>
+      <translation>秒（utc）</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].friendlyName, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay</source>
-      <translation type="unfinished">Delay</translation>
+      <translation>延时</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission for the number of seconds.</source>
-      <translation type="unfinished">Delay the mission for the number of seconds.</translation>
+      <translation>延迟任务秒数。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Wait for altitude</source>
-      <translation type="unfinished">Wait for altitude</translation>
+      <translation>等待高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission until the specified altitide is reached.</source>
-      <translation type="unfinished">Delay the mission until the specified altitide is reached.</translation>
+      <translation>将任务推迟到达到指定的高度为止。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].category, .mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].category, .mavCmdInfo[MAV_CMD_CONDITION_YAW].category, .mavCmdInfo[MAV_CMD_CONDITION_GATE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Conditionals</source>
-      <translation type="unfinished">Conditionals</translation>
+      <translation>条件</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_CHANGE_ALT].param1.label, .mavCmdInfo[MAV_CMD_CONDITION_YAW].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Rate</source>
-      <translation type="unfinished">Rate</translation>
+      <translation>速率</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Wait for distance</source>
-      <translation type="unfinished">Wait for distance</translation>
+      <translation>等待距离</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission until within the specified distance of the next waypoint.</source>
-      <translation type="unfinished">Delay the mission until within the specified distance of the next waypoint.</translation>
+      <translation>将任务推迟到下一个航点的指定距离以内。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Distance</source>
-      <translation type="unfinished">Distance</translation>
+      <translation>距离</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Wait for Yaw</source>
-      <translation type="unfinished">Wait for Yaw</translation>
+      <translation>等待偏航</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].description, </extracomment>
@@ -799,877 +799,877 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.label, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction</source>
-      <translation type="unfinished">Direction</translation>
+      <translation>方向</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Clockwise,Counter-Clockwise</source>
-      <translation type="unfinished">Clockwise,Counter-Clockwise</translation>
+      <translation>顺时针，逆时针</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.label, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Offset</source>
-      <translation type="unfinished">Offset</translation>
+      <translation>偏移量</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param4.enumStrings, .mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Relative,Absolute</source>
-      <translation type="unfinished">Relative,Absolute</translation>
+      <translation>相对，绝对</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set mode</source>
-      <translation type="unfinished">Set mode</translation>
+      <translation>设置模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode</source>
-      <translation type="unfinished">Set flight mode</translation>
+      <translation>设置飞行模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode.</source>
-      <translation type="unfinished">Set flight mode.</translation>
+      <translation>设置飞行模式。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Custom Mode</source>
-      <translation type="unfinished">Custom Mode</translation>
+      <translation>自定义模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sub Mode</source>
-      <translation type="unfinished">Sub Mode</translation>
+      <translation>子模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Jump to item</source>
-      <translation type="unfinished">Jump to item</translation>
+      <translation>跳转到项目</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission will continue at the specified item.</source>
-      <translation type="unfinished">Mission will continue at the specified item.</translation>
+      <translation>任务将在指定的项目继续。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Item #</source>
-      <translation type="unfinished">Item #</translation>
+      <translation>项目 #</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Repeat</source>
-      <translation type="unfinished">Repeat</translation>
+      <translation>重复</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change speed</source>
-      <translation type="unfinished">Change speed</translation>
+      <translation>更改速度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change speed and/or throttle set points.</source>
-      <translation type="unfinished">Change speed and/or throttle set points.</translation>
+      <translation>更改速度和/或节点设定。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Type</source>
-      <translation type="unfinished">Type</translation>
+      <translation>类型</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Airspeed,Ground Speed</source>
-      <translation type="unfinished">Airspeed,Ground Speed</translation>
+      <translation>飞行速度，地面速度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>速度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CHANGE_SPEED].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Throttle</source>
-      <translation type="unfinished">Throttle</translation>
+      <translation>油门</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set launch location</source>
-      <translation type="unfinished">Set launch location</translation>
+      <translation>设置启动位置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Changes the launch location either to the current location or a specified location.</source>
-      <translation type="unfinished">Changes the launch location either to the current location or a specified location.</translation>
+      <translation>更改起飞位置到当前位置或指定位置。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_HOME].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Vehicle position,Specified position</source>
-      <translation type="unfinished">Vehicle position,Specified position</translation>
+      <translation>无人机位置，指定位置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_PARAMETER].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set Parameter</source>
-      <translation type="unfinished">Set Parameter</translation>
+      <translation>设置参数</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set relay</source>
-      <translation type="unfinished">Set relay</translation>
+      <translation>设置继电器</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set relay to a condition.</source>
-      <translation type="unfinished">Set relay to a condition.</translation>
+      <translation>将继电器设置为条件。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Relay #</source>
-      <translation type="unfinished">Relay #</translation>
+      <translation>继电器 #</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Value</source>
-      <translation type="unfinished">Value</translation>
+      <translation>值</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycle relay</source>
-      <translation type="unfinished">Cycle relay</translation>
+      <translation>循环继电器</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycle relay on/off for desired cycles/time.</source>
-      <translation type="unfinished">Cycle relay on/off for desired cycles/time.</translation>
+      <translation>循环继电器开/关以达到预期的周期/时间。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycles</source>
-      <translation type="unfinished">Cycles</translation>
+      <translation>循环</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_RELAY].param3.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Time</source>
-      <translation type="unfinished">Time</translation>
+      <translation>时间</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set servo</source>
-      <translation type="unfinished">Set servo</translation>
+      <translation>设置舵机</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].description, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set servo to specified PWM value.</source>
-      <translation type="unfinished">Set servo to specified PWM value.</translation>
+      <translation>设置舵机为指定的 PWM 值。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param1.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Servo</source>
-      <translation type="unfinished">Servo</translation>
+      <translation>舵机</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_SERVO].param2.label, .mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>PWM</source>
-      <translation type="unfinished">PWM</translation>
+      <translation>PWM</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPEAT_SERVO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cycle servo</source>
-      <translation type="unfinished">Cycle servo</translation>
+      <translation>循环伺服</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FLIGHTTERMINATION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Flight termination</source>
-      <translation type="unfinished">Flight termination</translation>
+      <translation>飞行终止</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land start</source>
-      <translation type="unfinished">Land start</translation>
+      <translation>开始着陆</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Marker to indicate start of landing sequence.</source>
-      <translation type="unfinished">Marker to indicate start of landing sequence.</translation>
+      <translation>指示着陆顺序开始的标记。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_RALLY_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Rally land</source>
-      <translation type="unfinished">Rally land</translation>
+      <translation>集合地</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GO_AROUND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Go around</source>
-      <translation type="unfinished">Go around</translation>
+      <translation>盘旋</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Reposition</source>
-      <translation type="unfinished">Reposition</translation>
+      <translation>更改位置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PAUSE_CONTINUE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pause/Continue</source>
-      <translation type="unfinished">Pause/Continue</translation>
+      <translation>暂停/继续</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set moving direction</source>
-      <translation type="unfinished">Set moving direction</translation>
+      <translation>设置移动方向</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set moving direction to forward or reverse.</source>
-      <translation type="unfinished">Set moving direction to forward or reverse.</translation>
+      <translation>将移动方向设置为向前或向后方向。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Forward,Reverse</source>
-      <translation type="unfinished">Forward,Reverse</translation>
+      <translation>向前，向后</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Region of interest (ROI)</source>
-      <translation type="unfinished">Region of interest (ROI)</translation>
+      <translation>目标兴趣范围 (ROI)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].description, .mavCmdInfo[MAV_CMD_DO_SET_ROI].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sets the region of interest for cameras.</source>
-      <translation type="unfinished">Sets the region of interest for cameras.</translation>
+      <translation>设置摄像头目标区域。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].category, .mavCmdInfo[MAV_CMD_DO_SET_ROI].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].category, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].category, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].category, .mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].category, .mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].category, .mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>相机</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ROI to next waypoint</source>
-      <translation type="unfinished">ROI to next waypoint</translation>
+      <translation>兴趣区到下一个航点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sets the region of interest to point towards the next waypoint with optional offsets.</source>
-      <translation type="unfinished">Sets the region of interest to point towards the next waypoint with optional offsets.</translation>
+      <translation>设置兴趣区来用可选补偿指向下一个航点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pitch offset</source>
-      <translation type="unfinished">Pitch offset</translation>
+      <translation>俯仰补偿</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param6.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Roll offset</source>
-      <translation type="unfinished">Roll offset</translation>
+      <translation>滚转补偿</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param7.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw offset</source>
-      <translation type="unfinished">Yaw offset</translation>
+      <translation>偏航补偿</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cancel ROI</source>
-      <translation type="unfinished">Cancel ROI</translation>
+      <translation>取消 ROI</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cancels the region of interest.</source>
-      <translation type="unfinished">Cancels the region of interest.</translation>
+      <translation>取消感兴趣的区域。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CONTROL_VIDEO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control video</source>
-      <translation type="unfinished">Control video</translation>
+      <translation>控制视频</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Region of interest</source>
-      <translation type="unfinished">Region of interest</translation>
+      <translation>感兴趣区域</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>None,Next waypoint,Mission item,Location,ROI item</source>
-      <translation type="unfinished">None,Next waypoint,Mission item,Location,ROI item</translation>
+      <translation>无，下一个航点，任务项目，位置，ROI 项目</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission Index</source>
-      <translation type="unfinished">Mission Index</translation>
+      <translation>任务索引</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ROI Index</source>
-      <translation type="unfinished">ROI Index</translation>
+      <translation>ROI 索引</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera config</source>
-      <translation type="unfinished">Camera config</translation>
+      <translation>相机配置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Configure onboard camera controller.</source>
-      <translation type="unfinished">Configure onboard camera controller.</translation>
+      <translation>配置板载摄像头控制器。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Shutter spd</source>
-      <translation type="unfinished">Shutter spd</translation>
+      <translation>快门速度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Aperture</source>
-      <translation type="unfinished">Aperture</translation>
+      <translation>光圈</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ISO</source>
-      <translation type="unfinished">ISO</translation>
+      <translation>感光度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exposure</source>
-      <translation type="unfinished">Exposure</translation>
+      <translation>曝光</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param6.label, .mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Command</source>
-      <translation type="unfinished">Command</translation>
+      <translation>指令</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param7.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Cut off</source>
-      <translation type="unfinished">Cut off</translation>
+      <translation>关闭</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera control</source>
-      <translation type="unfinished">Camera control</translation>
+      <translation>相机控制</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control onboard camera.</source>
-      <translation type="unfinished">Control onboard camera.</translation>
+      <translation>控制机载摄像头。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Session</source>
-      <translation type="unfinished">Session</translation>
+      <translation>Session会话</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Zoom</source>
-      <translation type="unfinished">Zoom</translation>
+      <translation>缩放</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Step</source>
-      <translation type="unfinished">Step</translation>
+      <translation>步骤</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Focus lock</source>
-      <translation type="unfinished">Focus lock</translation>
+      <translation>聚焦锁</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONTROL].param6.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Id</source>
-      <translation type="unfinished">Id</translation>
+      <translation>ID</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Configure Mount</source>
-      <translation type="unfinished">Configure Mount</translation>
+      <translation>配置挂载</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Configure the vehicle mount (e.g. gimbal).</source>
-      <translation type="unfinished">Configure the vehicle mount (e.g. gimbal).</translation>
+      <translation>配置无人机挂载（例如云台）。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param1.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</source>
-      <translation type="unfinished">Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point</translation>
+      <translation>收回，中立，Mavlink 定位，RC定位，GPS 点</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stabilize Roll</source>
-      <translation type="unfinished">Stabilize Roll</translation>
+      <translation>滚转稳定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param2.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.enumStrings, .mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>No,Yes</source>
-      <translation type="unfinished">No,Yes</translation>
+      <translation>否，是</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stabilize Pitch</source>
-      <translation type="unfinished">Stabilize Pitch</translation>
+      <translation>俯仰稳定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONFIGURE].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stabilize Yaw</source>
-      <translation type="unfinished">Stabilize Yaw</translation>
+      <translation>偏航稳定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control Mount</source>
-      <translation type="unfinished">Control Mount</translation>
+      <translation>控制挂载</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control the vehicle mount (e.g. gimbal).</source>
-      <translation type="unfinished">Control the vehicle mount (e.g. gimbal).</translation>
+      <translation>控制无人机支架（例如云台）。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Lat/Pitch</source>
-      <translation type="unfinished">Lat/Pitch</translation>
+      <translation>纬度/俯仰</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Lon/Roll</source>
-      <translation type="unfinished">Lon/Roll</translation>
+      <translation>经度/滚转</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Alt/Yaw</source>
-      <translation type="unfinished">Alt/Yaw</translation>
+      <translation>高度/偏航</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Camera trigger distance</source>
-      <translation type="unfinished">Camera trigger distance</translation>
+      <translation>相机定距触发的间距</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera trigger distance.</source>
-      <translation type="unfinished">Set camera trigger distance.</translation>
+      <translation>设置相机触发距离。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Shutter</source>
-      <translation type="unfinished">Shutter</translation>
+      <translation>快门</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.label, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Trigger</source>
-      <translation type="unfinished">Trigger</translation>
+      <translation>触发源</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param3.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>No Trigger,Once Immediately</source>
-      <translation type="unfinished">No Trigger,Once Immediately</translation>
+      <translation>无触发，立即</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable geofence</source>
-      <translation type="unfinished">Enable geofence</translation>
+      <translation>启用地理围栏</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].description, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable/Disable geofence.</source>
-      <translation type="unfinished">Enable/Disable geofence.</translation>
+      <translation>启用/禁用地理围栏。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].category, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Safety</source>
-      <translation type="unfinished">Safety</translation>
+      <translation>安全</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Disable floor only,Enable</source>
-      <translation type="unfinished">Disable,Disable floor only,Enable</translation>
+      <translation>禁用，仅禁用地面，启用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Trigger parachute</source>
-      <translation type="unfinished">Trigger parachute</translation>
+      <translation>触发降落伞</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Release</source>
-      <translation type="unfinished">Disable,Enable,Release</translation>
+      <translation>禁用，启用，发布</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOTOR_TEST].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Motor test</source>
-      <translation type="unfinished">Motor test</translation>
+      <translation>电机测试</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Inverted flight</source>
-      <translation type="unfinished">Inverted flight</translation>
+      <translation>倒飞</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Change to/from inverted flight.</source>
-      <translation type="unfinished">Change to/from inverted flight.</translation>
+      <translation>更改到/从反向飞行。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Inverted</source>
-      <translation type="unfinished">Inverted</translation>
+      <translation>反转</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_INVERTED_FLIGHT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Normal,Inverted</source>
-      <translation type="unfinished">Normal,Inverted</translation>
+      <translation>正常，反转</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Gripper</source>
-      <translation type="unfinished">Gripper</translation>
+      <translation>夹持器</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Operate EPM gripper.</source>
-      <translation type="unfinished">Operate EPM gripper.</translation>
+      <translation>运行 EPM 控制器。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Gripper id</source>
-      <translation type="unfinished">Gripper id</translation>
+      <translation>夹持器</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Action</source>
-      <translation type="unfinished">Action</translation>
+      <translation>执行</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GRIPPER].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Release,Grab</source>
-      <translation type="unfinished">Release,Grab</translation>
+      <translation>发布，抓取</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>AutoTune Enable</source>
-      <translation type="unfinished">AutoTune Enable</translation>
+      <translation>自动调试启用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>AutoTune Enable.</source>
-      <translation type="unfinished">AutoTune Enable.</translation>
+      <translation>自动调试已启用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation type="unfinished">Enable,Disable</translation>
+      <translation>启用，禁用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Guided limits</source>
-      <translation type="unfinished">Guided limits</translation>
+      <translation>指导限制</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set limits for external control</source>
-      <translation type="unfinished">Set limits for external control</translation>
+      <translation>设置外部控制限制</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Timeout</source>
-      <translation type="unfinished">Timeout</translation>
+      <translation>超时</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Min Alt</source>
-      <translation type="unfinished">Min Alt</translation>
+      <translation>最小高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Max Alt</source>
-      <translation type="unfinished">Max Alt</translation>
+      <translation>最大高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>H Limit</source>
-      <translation type="unfinished">H Limit</translation>
+      <translation>H 限制</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_CALIBRATION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Calibration</source>
-      <translation type="unfinished">Calibration</translation>
+      <translation>校准</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set sensor offsets</source>
-      <translation type="unfinished">Set sensor offsets</translation>
+      <translation>设置传感器偏移</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_UAVCAN].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>UAVCAN configure</source>
-      <translation type="unfinished">UAVCAN configure</translation>
+      <translation>UAVCAN 配置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_STORAGE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Store parameters</source>
-      <translation type="unfinished">Store parameters</translation>
+      <translation>存储参数</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Reboot/Shutdown vehicle</source>
-      <translation type="unfinished">Reboot/Shutdown vehicle</translation>
+      <translation>重启/关闭车辆</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_OVERRIDE_GOTO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Override goto</source>
-      <translation type="unfinished">Override goto</translation>
+      <translation>覆写 goto</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_MISSION_START].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission start</source>
-      <translation type="unfinished">Mission start</translation>
+      <translation>任务开始</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_COMPONENT_ARM_DISARM].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Arm/Disarm</source>
-      <translation type="unfinished">Arm/Disarm</translation>
+      <translation>上锁/解锁</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_GET_HOME_POSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Get launch position</source>
-      <translation type="unfinished">Get launch position</translation>
+      <translation>获取启动位置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_START_RX_PAIR].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Bind Spektrum receiver</source>
-      <translation type="unfinished">Bind Spektrum receiver</translation>
+      <translation>绑定频谱接收机</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_GET_MESSAGE_INTERVAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Get message interval</source>
-      <translation type="unfinished">Get message interval</translation>
+      <translation>获取消息间隔</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_MESSAGE_INTERVAL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set message interval</source>
-      <translation type="unfinished">Set message interval</translation>
+      <translation>设置消息间隔</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Get capabilities</source>
-      <translation type="unfinished">Get capabilities</translation>
+      <translation>获取能力</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera modes</source>
-      <translation type="unfinished">Set camera modes</translation>
+      <translation>设置相机模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera photo, video modes.</source>
-      <translation type="unfinished">Set camera photo, video modes.</translation>
+      <translation>设置相机照片，视频模式。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Take photos,Record video,Survey photo mode</source>
-      <translation type="unfinished">Take photos,Record video,Survey photo mode</translation>
+      <translation>拍照，录制视频，调查照片模式</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start image capture</source>
-      <translation type="unfinished">Start image capture</translation>
+      <translation>开始抓取图像</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start taking one or more photos.</source>
-      <translation type="unfinished">Start taking one or more photos.</translation>
+      <translation>开始拍摄一张或多张照片。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Interval</source>
-      <translation type="unfinished">Interval</translation>
+      <translation>间隔</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Photo count</source>
-      <translation type="unfinished">Photo count</translation>
+      <translation>拍摄张数</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop image capture</source>
-      <translation type="unfinished">Stop image capture</translation>
+      <translation>停止抓取图像</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop taking photos.</source>
-      <translation type="unfinished">Stop taking photos.</translation>
+      <translation>停止拍照。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_TRIGGER_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Trigger control</source>
-      <translation type="unfinished">Trigger control</translation>
+      <translation>触发器控制</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start video capture</source>
-      <translation type="unfinished">Start video capture</translation>
+      <translation>开始录制视频</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start video capture.</source>
-      <translation type="unfinished">Start video capture.</translation>
+      <translation>开始录制视频。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Status Frequency</source>
-      <translation type="unfinished">Status Frequency</translation>
+      <translation>状态频率</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop video capture</source>
-      <translation type="unfinished">Stop video capture</translation>
+      <translation>停止视频捕获。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop video capture.</source>
-      <translation type="unfinished">Stop video capture.</translation>
+      <translation>停止视频捕获。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONTROL_HIGH_LATENCY].friendlyName, </extracomment>
@@ -1681,67 +1681,67 @@
       <extracomment>.mavCmdInfo[MAV_CMD_PANORAMA_CREATE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Create panorama</source>
-      <translation type="unfinished">Create panorama</translation>
+      <translation>创建全景</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL Transition</source>
-      <translation type="unfinished">VTOL Transition</translation>
+      <translation>垂直起降转换</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Perform flight mode transition.</source>
-      <translation type="unfinished">Perform flight mode transition.</translation>
+      <translation>执行飞行模式转换。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL</source>
-      <translation type="unfinished">VTOL</translation>
+      <translation>垂直起降</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Multi Rotor,Fixed Wing</source>
-      <translation type="unfinished">Multi Rotor,Fixed Wing</translation>
+      <translation>多旋翼，固定翼</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Condition Gate</source>
-      <translation type="unfinished">Condition Gate</translation>
+      <translation>条件门</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay mission state machine until gate has been reached.</source>
-      <translation type="unfinished">Delay mission state machine until gate has been reached.</translation>
+      <translation>延迟任务状态机直到到达门。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Ignore Alt</source>
-      <translation type="unfinished">Ignore Alt</translation>
+      <translation>忽略高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_GATE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>False,True</source>
-      <translation type="unfinished">False,True</translation>
+      <translation>错误，正确</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_PREPARE_DEPLOY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Payload prepare deploy</source>
-      <translation type="unfinished">Payload prepare deploy</translation>
+      <translation>有效载荷准备部署</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PAYLOAD_CONTROL_DEPLOY].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Payload control deploy</source>
-      <translation type="unfinished">Payload control deploy</translation>
+      <translation>载荷控制部署</translation>
     </message>
   </context>
   <context>
@@ -1750,13 +1750,13 @@
       <extracomment>.QGC.MetaData.Facts[CameraAction].enumStrings, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</source>
-      <translation type="unfinished">No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</translation>
+      <translation>无变动，拍照，拍摄照片(时间)，拍照(远距离)，停止拍照，开始录制视频，停止录制视频</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraMode].enumStrings, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Photo,Video,Survey</source>
-      <translation type="unfinished">Photo,Video,Survey</translation>
+      <translation>照片，视频，调查</translation>
     </message>
   </context>
   <context>
@@ -1765,67 +1765,67 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Take off from the ground and ascend to specified altitude.</source>
-      <translation type="unfinished">Take off from the ground and ascend to specified altitude.</translation>
+      <translation>从地面起飞并升至特定高度。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Takeoff to specified altitude.</source>
-      <translation type="unfinished">Takeoff to specified altitude.</translation>
+      <translation>起飞至指定高度</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>VTOL</source>
-      <translation type="unfinished">VTOL</translation>
+      <translation>垂直起降</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Land using VTOL mode.</source>
-      <translation type="unfinished">Land using VTOL mode.</translation>
+      <translation>使用VTOL模式降落</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Setting</source>
-      <translation type="unfinished">Setting</translation>
+      <translation>设置</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>On,Off</source>
-      <translation type="unfinished">On,Off</translation>
+      <translation>开启，关闭</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>俯仰</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>滚转</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>偏航</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>启用</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation type="unfinished">Enable,Disable</translation>
+      <translation>启用/禁用</translation>
     </message>
   </context>
 </TS>
