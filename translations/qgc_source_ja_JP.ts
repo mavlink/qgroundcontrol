@@ -797,25 +797,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="36"/>
       <source>Batt1 monitor</source>
-      <translation>バッテリー1 モニター</translation>
+      <translation>Batt1モニター</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="41"/>
       <source>Batt1 capacity</source>
-      <translation>バッテリー1 容量</translation>
+      <translation>Batt1容量</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="47"/>
       <source>Batt2 monitor</source>
-      <translation>バッテリー2 モニター</translation>
+      <translation>Batt2モニター</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="53"/>
       <source>Batt2 capacity</source>
-      <translation>バッテリー2 容量</translation>
+      <translation>Batt2容量</translation>
     </message>
   </context>
   <context>
@@ -1175,25 +1175,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="147"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="197"/>
       <source>Battery 2</source>
-      <translation type="unfinished">Battery 2</translation>
+      <translation>バッテリー 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="167"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="167"/>
       <source>Battery2 monitor:</source>
-      <translation type="unfinished">Battery2 monitor:</translation>
+      <translation>バッテリー 2 モニター:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="233"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="233"/>
       <source>ESC Calibration</source>
-      <translation type="unfinished">ESC Calibration</translation>
+      <translation>ESCキャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="252"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="252"/>
       <source>WARNING: Remove props prior to calibration!</source>
-      <translation type="unfinished">WARNING: Remove props prior to calibration!</translation>
+      <translation>警告：キャリブレーションの前にプロペラを外してください！</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="260"/>
@@ -1373,7 +1373,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="512"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="512"/>
       <source>If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. Click the Calculate button for help with calculating a new value.</source>
-      <translation>表示される消費電流が、電流計を使用して外部から読み取れる電流と大きく異なる場合は、これを補正するために電流 / 電圧値を調整できます。新しい値を計算する方法については【計算】ボタンをクリックしてください。</translation>
+      <translation>表示される消費電流が、電流計を使用して外部から読み取れる電流と大きく異なる場合は、これを補正するために電圧あたりの電流値を調整できます。新しい値を計算する方法については【計算】ボタンをクリックしてください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="517"/>
@@ -1557,7 +1557,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="93"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="93"/>
       <source>Low voltage threshold:</source>
-      <translation type="unfinished">Low voltage threshold:</translation>
+      <translation>最小電圧のしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="101"/>
@@ -1569,7 +1569,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="108"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="108"/>
       <source>Low mAh threshold:</source>
-      <translation type="unfinished">Low mAh threshold:</translation>
+      <translation>最小電流(mAh)のしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="115"/>
@@ -1581,19 +1581,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="136"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="136"/>
       <source>Reboot vehicle</source>
-      <translation type="unfinished">Reboot vehicle</translation>
+      <translation>機体 再起動</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="147"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="147"/>
       <source>Battery1 Failsafe Triggers</source>
-      <translation type="unfinished">Battery1 Failsafe Triggers</translation>
+      <translation>バッテリー1 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="181"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="181"/>
       <source>Battery2 Failsafe Triggers</source>
-      <translation type="unfinished">Battery2 Failsafe Triggers</translation>
+      <translation>バッテリー2 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="220"/>
@@ -1601,19 +1601,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="220"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="279"/>
       <source>Failsafe Triggers</source>
-      <translation type="unfinished">Failsafe Triggers</translation>
+      <translation>フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="238"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="238"/>
       <source>Throttle PWM threshold:</source>
-      <translation type="unfinished">Throttle PWM threshold:</translation>
+      <translation>スロットルPWMしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="252"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="252"/>
       <source>GCS failsafe</source>
-      <translation type="unfinished">GCS failsafe</translation>
+      <translation>GCS フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="296"/>
@@ -1629,7 +1629,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="303"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="373"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="310"/>
@@ -1637,85 +1637,85 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="310"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="383"/>
       <source>PWM threshold:</source>
-      <translation type="unfinished">PWM threshold:</translation>
+      <translation>PWM しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="316"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="316"/>
       <source>Failsafe Crash Check:</source>
-      <translation type="unfinished">Failsafe Crash Check:</translation>
+      <translation>フェイルセーフ クラッシュチェック:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="345"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="345"/>
       <source>General Failsafe Triggers</source>
-      <translation type="unfinished">General Failsafe Triggers</translation>
+      <translation>一般 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
       <source>Always RTL</source>
-      <translation type="unfinished">Always RTL</translation>
+      <translation>常時 RTL</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <source>Continue with Mission in Auto Mode</source>
-      <translation type="unfinished">Continue with Mission in Auto Mode</translation>
+      <translation>オートモードでミッションを継続</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <source>Always Land</source>
-      <translation type="unfinished">Always Land</translation>
+      <translation>常時 着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="414"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="414"/>
       <source>GeoFence</source>
-      <translation type="unfinished">GeoFence</translation>
+      <translation>ジオフェンス</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="429"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="429"/>
       <source>Circle GeoFence enabled</source>
-      <translation type="unfinished">Circle GeoFence enabled</translation>
+      <translation>サークルジオフェンスは有効です</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="454"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="454"/>
       <source>Altitude GeoFence enabled</source>
-      <translation type="unfinished">Altitude GeoFence enabled</translation>
+      <translation>高度ジオフェンスは有効です</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="479"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="479"/>
       <source>Report only</source>
-      <translation type="unfinished">Report only</translation>
+      <translation>レポートのみ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="490"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="490"/>
       <source>RTL or Land</source>
-      <translation type="unfinished">RTL or Land</translation>
+      <translation>RTLまたは着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="500"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="500"/>
       <source>Max radius:</source>
-      <translation type="unfinished">Max radius:</translation>
+      <translation>最大半径:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="516"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="516"/>
       <source>Max altitude:</source>
-      <translation type="unfinished">Max altitude:</translation>
+      <translation>最大高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="549"/>
@@ -1731,7 +1731,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="585"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="692"/>
       <source>Return at current altitude</source>
-      <translation type="unfinished">Return at current altitude</translation>
+      <translation>現在の高度で戻る</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="596"/>
@@ -1739,52 +1739,52 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="596"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="703"/>
       <source>Return at specified altitude:</source>
-      <translation type="unfinished">Return at specified altitude:</translation>
+      <translation>指定した高度で戻る:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="617"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="617"/>
       <source>Loiter above Home for:</source>
-      <translation type="unfinished">Loiter above Home for:</translation>
+      <translation>ホーム上空でのロイター時間:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="635"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="635"/>
       <source>Final land stage altitude:</source>
-      <translation type="unfinished">Final land stage altitude:</translation>
+      <translation>最終着陸箇所の高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="650"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="650"/>
       <source>Final land stage descent speed:</source>
-      <translation type="unfinished">Final land stage descent speed:</translation>
+      <translation>最終着陸箇所の降下速度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="730"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="730"/>
       <source>Arming Checks</source>
-      <translation type="unfinished">Arming Checks</translation>
+      <translation>アームチェック</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="761"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="761"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation type="unfinished">Warning: Turning off arming checks can lead to loss of Vehicle control.</translation>
+      <translation>警告: アームチェックをOFFにすると、機体の制御ができなくなる可能性があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.cc" line="20"/>
       <source>Safety</source>
-      <translation type="unfinished">Safety</translation>
+      <translation>セーフティ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.cc" line="33"/>
       <source>Safety Setup is used to setup failsafe actions, leak detection, and arming checks.</source>
-      <translation type="unfinished">Safety Setup is used to setup failsafe actions, leak detection, and arming checks.</translation>
+      <translation>セーフティ設定はフェイルセーフの有無、リーク検出、アームチェックの設定を行います。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.cc" line="44"/>
       <source>Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.</source>
-      <translation type="unfinished">Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.</translation>
+      <translation>セーフティ設定はReturn to Land (RTL)トリガーとRTL自体の設定に使用されます。</translation>
     </message>
   </context>
   <context>
@@ -1792,13 +1792,13 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="85"/>
       <source>Battery1 Failsafe Triggers</source>
-      <translation type="unfinished">Battery1 Failsafe Triggers</translation>
+      <translation>バッテリー1 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="106"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="178"/>
       <source>Battery low action:</source>
-      <translation type="unfinished">Battery low action:</translation>
+      <translation>バッテリー残量低下時の動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="114"/>
@@ -1810,23 +1810,23 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="195"/>
       <source>Voltage threshold:</source>
-      <translation type="unfinished">Voltage threshold:</translation>
+      <translation>電圧 しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="136"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="206"/>
       <source>MAH threshold:</source>
-      <translation type="unfinished">MAH threshold:</translation>
+      <translation>容量(mAh) しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="155"/>
       <source>Battery2 Failsafe Triggers</source>
-      <translation type="unfinished">Battery2 Failsafe Triggers</translation>
+      <translation>バッテリー2 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="224"/>
       <source>General Failsafe Triggers</source>
-      <translation type="unfinished">General Failsafe Triggers</translation>
+      <translation>一般 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="245"/>
@@ -1836,67 +1836,67 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="252"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="254"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="254"/>
       <source>Always RTL</source>
-      <translation type="unfinished">Always RTL</translation>
+      <translation>常時 RTL</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="255"/>
       <source>Continue with Mission in Auto Mode</source>
-      <translation type="unfinished">Continue with Mission in Auto Mode</translation>
+      <translation>オートモードでミッションを継続</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="255"/>
       <source>Always Land</source>
-      <translation type="unfinished">Always Land</translation>
+      <translation>常時 着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="262"/>
       <source>PWM threshold:</source>
-      <translation type="unfinished">PWM threshold:</translation>
+      <translation>PWM しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="278"/>
       <source>GeoFence</source>
-      <translation type="unfinished">GeoFence</translation>
+      <translation>ジオフェンス</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="293"/>
       <source>Circle GeoFence enabled</source>
-      <translation type="unfinished">Circle GeoFence enabled</translation>
+      <translation>サークルジオフェンスは有効です</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="318"/>
       <source>Altitude GeoFence enabled</source>
-      <translation type="unfinished">Altitude GeoFence enabled</translation>
+      <translation>高度ジオフェンスを有効にします</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="343"/>
       <source>Report only</source>
-      <translation type="unfinished">Report only</translation>
+      <translation>レポートのみ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="355"/>
       <source>RTL or Land</source>
-      <translation type="unfinished">RTL or Land</translation>
+      <translation>RTLまたは着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="366"/>
       <source>Max radius:</source>
-      <translation type="unfinished">Max radius:</translation>
+      <translation>最大半径:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="382"/>
       <source>Max altitude:</source>
-      <translation type="unfinished">Max altitude:</translation>
+      <translation>最大高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="402"/>
@@ -1906,37 +1906,37 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="438"/>
       <source>Return at current altitude</source>
-      <translation type="unfinished">Return at current altitude</translation>
+      <translation>現在の高度で戻る</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="450"/>
       <source>Return at specified altitude:</source>
-      <translation type="unfinished">Return at specified altitude:</translation>
+      <translation>指定した高度で戻る:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="472"/>
       <source>Loiter above Home for:</source>
-      <translation type="unfinished">Loiter above Home for:</translation>
+      <translation>ホーム上空でのロイター時間:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="491"/>
       <source>Land with descent speed:</source>
-      <translation type="unfinished">Land with descent speed:</translation>
+      <translation>着陸の降下速度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="512"/>
       <source>Final loiter altitude:</source>
-      <translation type="unfinished">Final loiter altitude:</translation>
+      <translation>最終ロイター高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="534"/>
       <source>Arming Checks</source>
-      <translation type="unfinished">Arming Checks</translation>
+      <translation>アームチェック</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="565"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation type="unfinished">Warning: Turning off arming checks can lead to loss of Vehicle control.</translation>
+      <translation>警告: アームチェックをOFFにすると、機体の制御ができなくなる可能性があります。</translation>
     </message>
   </context>
   <context>
@@ -1987,7 +1987,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="53"/>
       <source>Failsafe Triggers</source>
-      <translation type="unfinished">Failsafe Triggers</translation>
+      <translation>フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="68"/>
@@ -1997,42 +1997,42 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="87"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="105"/>
       <source>PWM threshold:</source>
-      <translation type="unfinished">PWM threshold:</translation>
+      <translation>PWM しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="122"/>
       <source>Failsafe Crash Check:</source>
-      <translation type="unfinished">Failsafe Crash Check:</translation>
+      <translation>フェイルセーフ クラッシュチェック:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>ホールド</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
       <source>Hold and Disarm</source>
-      <translation type="unfinished">Hold and Disarm</translation>
+      <translation>ホールドとディスアーム</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="143"/>
       <source>Arming Checks</source>
-      <translation type="unfinished">Arming Checks</translation>
+      <translation>アームチェック</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="174"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation type="unfinished">Warning: Turning off arming checks can lead to loss of Vehicle control.</translation>
+      <translation>警告: アームチェックをOFFにすると、機体の制御ができなくなる可能性があります。</translation>
     </message>
   </context>
   <context>
@@ -2133,7 +2133,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="378"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="378"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation>警告: アームチェックをOFFにすると機体コントロールが失われる可能性があります。</translation>
+      <translation>警告: アームチェックをOFFにすると、機体の制御ができなくなる可能性があります。</translation>
     </message>
   </context>
   <context>
@@ -2142,19 +2142,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="37"/>
       <source>Arming Checks:</source>
-      <translation type="unfinished">Arming Checks:</translation>
+      <translation>アームチェック:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>有効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <source>Some disabled</source>
-      <translation type="unfinished">Some disabled</translation>
+      <translation>一部無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="44"/>
@@ -2164,43 +2164,43 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="60"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="68"/>
       <source>Failsafe Action:</source>
-      <translation type="unfinished">Failsafe Action:</translation>
+      <translation>フェイルセーフ動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="76"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="76"/>
       <source>Failsafe Crash Check:</source>
-      <translation type="unfinished">Failsafe Crash Check:</translation>
+      <translation>フェイルセーフ クラッシュチェック:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="84"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="84"/>
       <source>Batt1 low failsafe:</source>
-      <translation type="unfinished">Batt1 low failsafe:</translation>
+      <translation>Batt1低電圧フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="90"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="90"/>
       <source>Batt1 critical failsafe:</source>
-      <translation>Batt1 致命的フェイルセーフ:</translation>
+      <translation>Batt1致命的フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="96"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="96"/>
       <source>Batt2 low failsafe:</source>
-      <translation type="unfinished">Batt2 low failsafe:</translation>
+      <translation>Batt2低電圧フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="102"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="102"/>
       <source>Batt2 critical failsafe:</source>
-      <translation>Batt2 致命的フェイルセーフ:</translation>
+      <translation>Batt2致命的フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="108"/>
@@ -2208,49 +2208,49 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="108"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="129"/>
       <source>GeoFence:</source>
-      <translation type="unfinished">GeoFence:</translation>
+      <translation>ジオフェンス:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="112"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="112"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="115"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="115"/>
       <source>Altitude</source>
-      <translation type="unfinished">Altitude</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="118"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="118"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>サークル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="120"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="120"/>
       <source>Altitude,Circle</source>
-      <translation type="unfinished">Altitude,Circle</translation>
+      <translation>高度、サークル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="131"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="131"/>
       <source>Report only</source>
-      <translation type="unfinished">Report only</translation>
+      <translation>レポートのみ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="132"/>
       <source>RTL or Land</source>
-      <translation type="unfinished">RTL or Land</translation>
+      <translation>RTLまたは着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="132"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>不明</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="137"/>
@@ -2258,7 +2258,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="137"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="145"/>
       <source>RTL min alt:</source>
-      <translation type="unfinished">RTL min alt:</translation>
+      <translation>RTL最小高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="138"/>
@@ -2266,7 +2266,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="138"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="146"/>
       <source>current</source>
-      <translation type="unfinished">current</translation>
+      <translation>現在</translation>
     </message>
   </context>
   <context>
@@ -2274,93 +2274,93 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="41"/>
       <source>Arming Checks:</source>
-      <translation type="unfinished">Arming Checks:</translation>
+      <translation>アームチェック:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="42"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>有効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="42"/>
       <source>Some disabled</source>
-      <translation type="unfinished">Some disabled</translation>
+      <translation>一部無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="46"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="51"/>
       <source>Batt1 low failsafe:</source>
-      <translation type="unfinished">Batt1 low failsafe:</translation>
+      <translation>Batt1低電圧フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="57"/>
       <source>Batt1 critical failsafe:</source>
-      <translation>Batt1 致命的フェイルセーフ:</translation>
+      <translation>Batt1致命的フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="63"/>
       <source>Batt2 low failsafe:</source>
-      <translation type="unfinished">Batt2 low failsafe:</translation>
+      <translation>Batt2低電圧フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="69"/>
       <source>Batt2 critical failsafe:</source>
-      <translation>Batt2 致命的フェイルセーフ:</translation>
+      <translation>Batt2致命的フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="75"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="84"/>
       <source>GeoFence:</source>
-      <translation type="unfinished">GeoFence:</translation>
+      <translation>ジオフェンス:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="77"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="79"/>
       <source>Altitude</source>
-      <translation type="unfinished">Altitude</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="80"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>サークル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="80"/>
       <source>Altitude,Circle</source>
-      <translation type="unfinished">Altitude,Circle</translation>
+      <translation>高度、サークル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="86"/>
       <source>Report only</source>
-      <translation type="unfinished">Report only</translation>
+      <translation>レポートのみ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="87"/>
       <source>RTL or Land</source>
-      <translation type="unfinished">RTL or Land</translation>
+      <translation>RTLまたは着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="87"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>不明</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="92"/>
       <source>RTL min alt:</source>
-      <translation type="unfinished">RTL min alt:</translation>
+      <translation>RTL最小高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="93"/>
       <source>current</source>
-      <translation type="unfinished">current</translation>
+      <translation>現在</translation>
     </message>
   </context>
   <context>
@@ -2405,63 +2405,63 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="93"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="57"/>
       <source>Always RTL</source>
-      <translation type="unfinished">Always RTL</translation>
+      <translation>常時 RTL</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="60"/>
       <source>Always Hold</source>
-      <translation type="unfinished">Always Hold</translation>
+      <translation>常時 Hold</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="79"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>不明</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="73"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>ホールド</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="76"/>
       <source>Hold and Disarm</source>
-      <translation type="unfinished">Hold and Disarm</translation>
+      <translation>ホールドとディスアーム</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="87"/>
       <source>Arming Checks:</source>
-      <translation type="unfinished">Arming Checks:</translation>
+      <translation>アームチェック</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="88"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>有効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="88"/>
       <source>Some disabled</source>
-      <translation type="unfinished">Some disabled</translation>
+      <translation>一部無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="92"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="97"/>
       <source>Failsafe Action:</source>
-      <translation type="unfinished">Failsafe Action:</translation>
+      <translation>フェイルセーフ動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="102"/>
       <source>Failsafe Crash Check:</source>
-      <translation type="unfinished">Failsafe Crash Check:</translation>
+      <translation>フェイルセーフ クラッシュチェック:</translation>
     </message>
   </context>
   <context>
@@ -2539,7 +2539,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <source>Before calibrating make sure rotation settings are correct. </source>
-      <translation type="unfinished">Before calibrating make sure rotation settings are correct. </translation>
+      <translation>キャリブレーションする前に、回転の設定が正しいことを確認してください。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="42"/>
@@ -2581,7 +2581,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="57"/>
       <source>The calibration for Compass %1 appears to be poor. </source>
-      <translation type="unfinished">The calibration for Compass %1 appears to be poor. </translation>
+      <translation>Compass %1 のキャリブレーションが正しくありません。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="58"/>
@@ -2595,13 +2595,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="95"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="645"/>
       <source>Calibrate Compass</source>
-      <translation type="unfinished">Calibrate Compass</translation>
+      <translation>コンパス キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="101"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="101"/>
       <source>Calibrate Accelerometer</source>
-      <translation type="unfinished">Calibrate Accelerometer</translation>
+      <translation>水平 キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="107"/>
@@ -2609,31 +2609,31 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="107"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="692"/>
       <source>Sensor Settings</source>
-      <translation type="unfinished">Sensor Settings</translation>
+      <translation>センサー設定</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="155"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="155"/>
       <source>Calibration Cancel</source>
-      <translation type="unfinished">Calibration Cancel</translation>
+      <translation>キャリブレーション キャンセル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="162"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="162"/>
       <source>Accelerometer calibration complete</source>
-      <translation type="unfinished">Accelerometer calibration complete</translation>
+      <translation>水平 キャリブレーション完了</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="165"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="165"/>
       <source>Compass calibration complete</source>
-      <translation type="unfinished">Compass calibration complete</translation>
+      <translation>コンパス キャリブレーション完了</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="169"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="169"/>
       <source>Calibration complete</source>
-      <translation type="unfinished">Calibration complete</translation>
+      <translation>キャリブレーション完了</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="185"/>
@@ -2645,19 +2645,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
       <source>(primary</source>
-      <translation type="unfinished">(primary</translation>
+      <translation>(プライマリ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
       <source>(secondary</source>
-      <translation type="unfinished">(secondary</translation>
+      <translation>(セカンダリ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="349"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="349"/>
       <source>Use Compass</source>
-      <translation type="unfinished">Use Compass</translation>
+      <translation>コンパスを使用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="281"/>
@@ -2665,49 +2665,45 @@
       <source>Shown in the indicator bars is the quality of the calibration for each compass.
 
 </source>
-      <translation type="unfinished">Shown in the indicator bars is the quality of the calibration for each compass.
-
-</translation>
+      <translation>インジケータバーに表示されているのは各コンパス キャリブレーションの品質状態です。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="115"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="115"/>
       <source>Compass %1 </source>
-      <translation type="unfinished">Compass %1 </translation>
+      <translation>コンパス %1 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="128"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="128"/>
       <source>, </source>
-      <translation type="unfinished">, </translation>
+      <translation>, </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="130"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="130"/>
       <source>external</source>
-      <translation type="unfinished">external</translation>
+      <translation>外部</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="130"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="130"/>
       <source>internal</source>
-      <translation type="unfinished">internal</translation>
+      <translation>内部</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="282"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="282"/>
       <source>- Green indicates a well functioning compass.
 </source>
-      <translation type="unfinished">- Green indicates a well functioning compass.
-</translation>
+      <translation>- 緑色はコンパスが正常に機能していることを示しています。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="283"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="283"/>
       <source>- Yellow indicates a questionable compass or calibration.
 </source>
-      <translation type="unfinished">- Yellow indicates a questionable compass or calibration.
-</translation>
+      <translation>- 黄色はコンパスやキャリブレーションに問題があることを示しています。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="284"/>
@@ -2715,9 +2711,7 @@
       <source>- Red indicates a compass which should not be used.
 
 </source>
-      <translation type="unfinished">- Red indicates a compass which should not be used.
-
-</translation>
+      <translation>- 赤色は使用してはいけないコンパスを示しています。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="285"/>
@@ -2725,7 +2719,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="285"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="313"/>
       <source>YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.</source>
-      <translation type="unfinished">YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.</translation>
+      <translation>キャリブレーションのたびに機体を再起動する必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="289"/>
@@ -2733,31 +2727,31 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="289"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="317"/>
       <source>Reboot Vehicle</source>
-      <translation type="unfinished">Reboot Vehicle</translation>
+      <translation>機体 再起動</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <source>Priority 1</source>
-      <translation type="unfinished">Priority 1</translation>
+      <translation>優先度 1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <source>Priority 2</source>
-      <translation type="unfinished">Priority 2</translation>
+      <translation>優先度 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <source>Priority 3</source>
-      <translation type="unfinished">Priority 3</translation>
+      <translation>優先度 3</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="355"/>
       <source>Not Set</source>
-      <translation type="unfinished">Not Set</translation>
+      <translation>未設定</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="389"/>
@@ -2793,13 +2787,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="514"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="514"/>
       <source>CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </source>
-      <translation type="unfinished">CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </translation>
+      <translation>CompassMotは磁気干渉が電流に比例するため、バッテリー電流モニターがある場合にのみ有効です。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="515"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="515"/>
       <source>It is technically possible to set-up CompassMot using throttle but this is not recommended.</source>
-      <translation type="unfinished">It is technically possible to set-up CompassMot using throttle but this is not recommended.</translation>
+      <translation>スロットルを使用してCompassMotを設定することは技術的に可能ですが、これは推奨されません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="522"/>
@@ -2818,13 +2812,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="530"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="530"/>
       <source>Secure the copter (perhaps with tape) so that it does not move.</source>
-      <translation type="unfinished">Secure the copter (perhaps with tape) so that it does not move.</translation>
+      <translation>機体が動かないように (テープ等で) 固定します。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="537"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="537"/>
       <source>Turn on your transmitter and keep throttle at zero.</source>
-      <translation type="unfinished">Turn on your transmitter and keep throttle at zero.</translation>
+      <translation>送信機の電源を入れ、スロットルを最下位 (ゼロ) にしてください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="544"/>
@@ -2842,19 +2836,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="588"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="588"/>
       <source>depth</source>
-      <translation type="unfinished">depth</translation>
+      <translation>深度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="588"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="588"/>
       <source>altitude</source>
-      <translation type="unfinished">altitude</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="589"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="589"/>
       <source>Pressure calibration will set the %1 to zero at the current pressure reading. %2</source>
-      <translation type="unfinished">Pressure calibration will set the %1 to zero at the current pressure reading. %2</translation>
+      <translation>気圧キャリブレーションは、現在の測定値で %1 がゼロに設定されます。 %2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="590"/>
@@ -2876,43 +2870,43 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="632"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="632"/>
       <source>Accelerometer</source>
-      <translation type="unfinished">Accelerometer</translation>
+      <translation>加速度センサー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="640"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="640"/>
       <source>Compass</source>
-      <translation type="unfinished">Compass</translation>
+      <translation>コンパス</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="645"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="645"/>
       <source>Accelerometer must be calibrated prior to Compass.</source>
-      <translation type="unfinished">Accelerometer must be calibrated prior to Compass.</translation>
+      <translation>加速度センサーはコンパスより前にキャリブレーションする必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="656"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="656"/>
       <source>Level Horizon</source>
-      <translation type="unfinished">Level Horizon</translation>
+      <translation>水平レベル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="660"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="660"/>
       <source>Accelerometer must be calibrated prior to Level Horizon.</source>
-      <translation type="unfinished">Accelerometer must be calibrated prior to Level Horizon.</translation>
+      <translation>加速度センサーは水平レベルより前にキャリブレーションする必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="669"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="669"/>
       <source>Gyro</source>
-      <translation type="unfinished">Gyro</translation>
+      <translation>ジャイロ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="671"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="671"/>
       <source>Calibrate Gyro</source>
-      <translation type="unfinished">Calibrate Gyro</translation>
+      <translation>ジャイロ キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="679"/>
@@ -2924,13 +2918,13 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="679"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="679"/>
       <source>Pressure</source>
-      <translation type="unfinished">Pressure</translation>
+      <translation>気圧</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="684"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="684"/>
       <source>CompassMot</source>
-      <translation type="unfinished">CompassMot</translation>
+      <translation>CompassMot</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="687"/>
@@ -2942,13 +2936,13 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="707"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="707"/>
       <source>Next</source>
-      <translation type="unfinished">Next</translation>
+      <translation>次へ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="715"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="715"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>キャンセル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="789"/>
@@ -2964,7 +2958,7 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="825"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="834"/>
       <source>Rotate</source>
-      <translation type="unfinished">Rotate</translation>
+      <translation>回転</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="789"/>
@@ -2980,17 +2974,17 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="825"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="834"/>
       <source>Hold Still</source>
-      <translation type="unfinished">Hold Still</translation>
+      <translation>動かないでください</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.cc" line="21"/>
       <source>Sensors</source>
-      <translation type="unfinished">Sensors</translation>
+      <translation>センサー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.cc" line="33"/>
       <source>Sensors Setup is used to calibrate the sensors within your vehicle.</source>
-      <translation type="unfinished">Sensors Setup is used to calibrate the sensors within your vehicle.</translation>
+      <translation>センサー設定は、機体内センサーをキャリブレーションするためのものです。</translation>
     </message>
   </context>
   <context>
@@ -2998,7 +2992,7 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="186"/>
       <source>Calibration complete</source>
-      <translation type="unfinished">Calibration complete</translation>
+      <translation>キャリブレーション完了</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="203"/>
@@ -3008,22 +3002,22 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="267"/>
       <source>Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right .</source>
-      <translation type="unfinished">Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right .</translation>
+      <translation>進捗バーが右端いっぱいになるまで、すべての軸に対してランダムに機体を回転させてください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="347"/>
       <source>Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds.</source>
-      <translation type="unfinished">Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds.</translation>
+      <translation>スロットルをゆっくりと50～75%まで (プロペラが回転します！)、5～10秒ほど上げ続けてください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="348"/>
       <source>Quickly bring the throttle back down to zero</source>
-      <translation type="unfinished">Quickly bring the throttle back down to zero</translation>
+      <translation>素早くスロットルをゼロに戻してください</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="349"/>
       <source>Press the Next button to complete the calibration</source>
-      <translation type="unfinished">Press the Next button to complete the calibration</translation>
+      <translation>次のボタンを押しキャリブレーションが完了します</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="358"/>
@@ -3033,22 +3027,22 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="367"/>
       <source>Requesting pressure calibration...</source>
-      <translation type="unfinished">Requesting pressure calibration...</translation>
+      <translation>気圧 キャリブレーションをリクエスト中...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="376"/>
       <source>Requesting gyro calibration...</source>
-      <translation type="unfinished">Requesting gyro calibration...</translation>
+      <translation>ジャイロ キャリブレーションをリクエスト中...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="506"/>
       <source>Successfully completed</source>
-      <translation type="unfinished">Successfully completed</translation>
+      <translation>正常に完了しました</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="510"/>
       <source>Failed</source>
-      <translation type="unfinished">Failed</translation>
+      <translation>失敗しました</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="302"/>
@@ -3058,37 +3052,37 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="558"/>
       <source>Compass %1 calibration complete</source>
-      <translation type="unfinished">Compass %1 calibration complete</translation>
+      <translation>コンパス %1 キャリブレーション完了</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="560"/>
       <source>Compass %1 calibration below quality threshold</source>
-      <translation type="unfinished">Compass %1 calibration below quality threshold</translation>
+      <translation>コンパス %1 キャリブレーションが品質のしきい値を下回っています</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="579"/>
       <source>All compasses calibrated successfully</source>
-      <translation type="unfinished">All compasses calibrated successfully</translation>
+      <translation>すべてのコンパス キャリブレーションに成功しました</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="580"/>
       <source>YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT</source>
-      <translation type="unfinished">YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT</translation>
+      <translation>新しい設定を有効にするには、機体を再起動する必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="583"/>
       <source>Compass calibration failed</source>
-      <translation type="unfinished">Compass calibration failed</translation>
+      <translation>コンパス キャリブレーションに失敗しました</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="584"/>
       <source>YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT</source>
-      <translation type="unfinished">YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT</translation>
+      <translation>今すぐ機体を再起動して、フライト前にコンパス キャリブレーションをやり直す必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="588"/>
       <source>Continue rotating...</source>
-      <translation type="unfinished">Continue rotating...</translation>
+      <translation>回転継続中...</translation>
     </message>
   </context>
   <context>
@@ -3097,7 +3091,7 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="33"/>
       <source>Compass </source>
-      <translation type="unfinished">Compass </translation>
+      <translation>コンパス</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="40"/>
@@ -3105,25 +3099,25 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="40"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>設定が必要です</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="41"/>
       <source>Not installed</source>
-      <translation type="unfinished">Not installed</translation>
+      <translation>インストールできませんでした</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="46"/>
       <source>Accelerometer(s)</source>
-      <translation type="unfinished">Accelerometer(s)</translation>
+      <translation>加速度センサー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>準備完了</translation>
     </message>
   </context>
   <context>
@@ -3254,12 +3248,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponent.cc" line="18"/>
       <source>Tuning</source>
-      <translation type="unfinished">Tuning</translation>
+      <translation>チューニング</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponent.cc" line="29"/>
       <source>Tuning Setup is used to tune the flight characteristics of the Vehicle.</source>
-      <translation type="unfinished">Tuning Setup is used to tune the flight characteristics of the Vehicle.</translation>
+      <translation>チューニング設定は、機体の飛行特性を調整するためのものです。</translation>
     </message>
   </context>
   <context>
@@ -3268,49 +3262,49 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="125"/>
       <source>Basic Tuning</source>
-      <translation type="unfinished">Basic Tuning</translation>
+      <translation>基本チューニング</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="149"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="149"/>
       <source>Roll/Pitch Sensitivity</source>
-      <translation type="unfinished">Roll/Pitch Sensitivity</translation>
+      <translation>ロール / ピッチ感度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="154"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="154"/>
       <source>Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy</source>
-      <translation type="unfinished">Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy</translation>
+      <translation>機体の動きが鈍いときは右にスライドさせ、機体の動きが機敏なときは左にスライドさせます。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="182"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="182"/>
       <source>Climb Sensitivity</source>
-      <translation type="unfinished">Climb Sensitivity</translation>
+      <translation>上昇感度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="187"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="187"/>
       <source>Slide to the right to climb more aggressively or slide to the left to climb more gently</source>
-      <translation type="unfinished">Slide to the right to climb more aggressively or slide to the left to climb more gently</translation>
+      <translation>右にスライドさせるとよりアグレッシブに、左にスライドさせるとより緩やかに上昇させることができます。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="215"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="215"/>
       <source>RC Roll/Pitch Feel</source>
-      <translation type="unfinished">RC Roll/Pitch Feel</translation>
+      <translation>RCロール / ピッチの感触</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="220"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="220"/>
       <source>Slide to the left for soft control, slide to the right for crisp control</source>
-      <translation type="unfinished">Slide to the left for soft control, slide to the right for crisp control</translation>
+      <translation>左にスライドすると柔らかく、右にスライドすると鋭いコントロールになります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="245"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="245"/>
       <source>Spin While Armed</source>
-      <translation type="unfinished">Spin While Armed</translation>
+      <translation>アーム時にスピン</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="250"/>
@@ -3322,19 +3316,19 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="275"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="275"/>
       <source>Minimum Thrust</source>
-      <translation type="unfinished">Minimum Thrust</translation>
+      <translation>推力最小値</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="280"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="280"/>
       <source>Adjust the minimum amount of thrust require for the vehicle to move</source>
-      <translation type="unfinished">Adjust the minimum amount of thrust require for the vehicle to move</translation>
+      <translation>機体移動における必要最小限の推力を調整します</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="284"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="284"/>
       <source>Warning: This setting should be higher than &apos;Spin While Armed&apos;</source>
-      <translation type="unfinished">Warning: This setting should be higher than &apos;Spin While Armed&apos;</translation>
+      <translation>警告: この設定は &apos;アーム時にスピン&apos; の値よりも高くなければなりません</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="320"/>
@@ -3400,7 +3394,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="380"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="380"/>
       <source>In Flight Tuning</source>
-      <translation type="unfinished">In Flight Tuning</translation>
+      <translation>フライト中のチューニング</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="404"/>
@@ -3412,31 +3406,31 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="422"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="422"/>
       <source>Min:</source>
-      <translation type="unfinished">Min:</translation>
+      <translation>最小:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="434"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="434"/>
       <source>Max:</source>
-      <translation type="unfinished">Max:</translation>
+      <translation>最大:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="462"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="462"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>ロール</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="462"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="462"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="462"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="462"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>ヨー</translation>
     </message>
   </context>
   <context>
@@ -3885,32 +3879,32 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="30"/>
       <source>Airport</source>
-      <translation type="unfinished">Airport</translation>
+      <translation>空港</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="31"/>
       <source>Controlled Airspace</source>
-      <translation type="unfinished">Controlled Airspace</translation>
+      <translation>コントロールされた空域:</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="32"/>
       <source>Special Use Airspace</source>
-      <translation type="unfinished">Special Use Airspace</translation>
+      <translation>特別に使用される空域</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="33"/>
       <source>TFR</source>
-      <translation type="unfinished">TFR</translation>
+      <translation>TFR</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="34"/>
       <source>Wild Fire</source>
-      <translation type="unfinished">Wild Fire</translation>
+      <translation>山火事</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="35"/>
       <source>Park</source>
-      <translation type="unfinished">Park</translation>
+      <translation>公園</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="36"/>
@@ -3920,42 +3914,42 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="37"/>
       <source>Heliport</source>
-      <translation type="unfinished">Heliport</translation>
+      <translation>ヘリポート</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="38"/>
       <source>Prison</source>
-      <translation type="unfinished">Prison</translation>
+      <translation>刑務所</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="39"/>
       <source>School</source>
-      <translation type="unfinished">School</translation>
+      <translation>学校</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="40"/>
       <source>Hospital</source>
-      <translation type="unfinished">Hospital</translation>
+      <translation>病院</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="41"/>
       <source>Fire</source>
-      <translation type="unfinished">Fire</translation>
+      <translation>消防署</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="42"/>
       <source>Emergency</source>
-      <translation type="unfinished">Emergency</translation>
+      <translation>緊急</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="43"/>
       <source>Custom</source>
-      <translation type="unfinished">Custom</translation>
+      <translation>カスタム</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="44"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>不明</translation>
     </message>
   </context>
   <context>
@@ -4091,7 +4085,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AppMessages.cc" line="108"/>
       <source>Open console log output file failed %1 : %2</source>
-      <translation type="unfinished">Open console log output file failed %1 : %2</translation>
+      <translation>コンソールログ出力ファイルを開けませんでした %1 : %2</translation>
     </message>
   </context>
   <context>
@@ -4099,27 +4093,27 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="115"/>
       <source>GStreamer Debug Level</source>
-      <translation type="unfinished">GStreamer Debug Level</translation>
+      <translation>GStreamer デバッグレベル</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="159"/>
       <source>Logging categories</source>
-      <translation type="unfinished">Logging categories</translation>
+      <translation>ログカテゴリ</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="170"/>
       <source>Search:</source>
-      <translation type="unfinished">Search:</translation>
+      <translation>検索: </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="181"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>クリア</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="189"/>
       <source>Clear All</source>
-      <translation type="unfinished">Clear All</translation>
+      <translation>すべてクリア</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="87"/>
@@ -4210,7 +4204,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/ui/toolbar/ArmedIndicator.qml" line="24"/>
       <source>Disarmed</source>
-      <translation type="unfinished">Disarmed</translation>
+      <translation>ディスアームしました</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/ArmedIndicator.qml" line="25"/>
@@ -4220,7 +4214,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/ui/toolbar/ArmedIndicator.qml" line="25"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>ディスアーム</translation>
     </message>
   </context>
   <context>
@@ -4535,7 +4529,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/VehicleSetup/Bootloader.cc" line="371"/>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="541"/>
       <source>Firmware file read failed: %1</source>
-      <translation type="unfinished">Firmware file read failed: %1</translation>
+      <translation>ファームウェアファイルの読み込みに失敗しました: %1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="387"/>
@@ -4579,7 +4573,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="40"/>
       <source>Open failed on port %1: %2</source>
-      <translation type="unfinished">Open failed on port %1: %2</translation>
+      <translation>ポート %1 は開けませんでした: %2</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="92"/>
@@ -5322,7 +5316,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AutoPilotPlugins/Common/ESP8266Component.qml" line="258"/>
       <source>QGC UDP Port</source>
-      <translation type="unfinished">QGC UDP Port</translation>
+      <translation>QGC UDPポート</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/ESP8266Component.qml" line="277"/>
@@ -5531,7 +5525,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/Vehicle/FTPManager.cc" line="368"/>
       <location filename="../src/Vehicle/FTPManager.cc" line="497"/>
       <source>Download failed: Error saving file</source>
-      <translation type="unfinished">Download failed: Error saving file</translation>
+      <translation>ダウンロード失敗: ファイル保存中にエラーが発生しました</translation>
     </message>
   </context>
   <context>
@@ -5625,12 +5619,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="257"/>
       <source>* Avoid tailwind on landing.</source>
-      <translation type="unfinished">* Avoid tailwind on landing.</translation>
+      <translation>* 着陸時の追い風は避けてください。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="283"/>
       <source>Click in map to set landing point.</source>
-      <translation type="unfinished">Click in map to set landing point.</translation>
+      <translation>地図をクリックして着陸地点を設定します。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="290"/>
@@ -5653,7 +5647,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="332"/>
       <source>Landing Area</source>
-      <translation type="unfinished">Landing Area</translation>
+      <translation>着陸エリア</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternMapVisual.qml" line="370"/>
@@ -7196,7 +7190,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="636"/>
       <source>Clear Settings</source>
-      <translation type="unfinished">Clear Settings</translation>
+      <translation>設定をクリア</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="637"/>
@@ -7423,7 +7417,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="762"/>
       <source>UDP</source>
-      <translation type="unfinished">UDP</translation>
+      <translation>UDP</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="762"/>
@@ -7449,7 +7443,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="832"/>
       <source>NMEA stream UDP port</source>
-      <translation type="unfinished">NMEA stream UDP port</translation>
+      <translation>NMEA stream UDPポート</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="870"/>
@@ -7479,7 +7473,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="253"/>
       <source>UDP Port</source>
-      <translation type="unfinished">UDP Port</translation>
+      <translation>UDPポート</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="264"/>
@@ -7499,7 +7493,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="331"/>
       <source>Disable When Disarmed</source>
-      <translation type="unfinished">Disable When Disarmed</translation>
+      <translation>ディスアーム時に無効</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="338"/>
@@ -7558,7 +7552,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/GeoFenceController.cc" line="172"/>
       <source>GeoFence circle not stored as object</source>
-      <translation type="unfinished">GeoFence circle not stored as object</translation>
+      <translation>ジオフェンスサークルはオブジェクトとして保存されていません</translation>
     </message>
   </context>
   <context>
@@ -7994,7 +7988,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="64"/>
       <source>Continue the mission from the current waypoint.</source>
-      <translation>現在のウェイポイントからミッションを続行します。</translation>
+      <translation>現在のウェイポイントからミッションを継続します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="65"/>
@@ -8256,7 +8250,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Joystick/Joystick.cc" line="46"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>ディスアーム</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.cc" line="47"/>
@@ -8726,7 +8720,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/LinkManager.cc" line="685"/>
       <source>UDP</source>
-      <translation type="unfinished">UDP</translation>
+      <translation>UDP</translation>
     </message>
     <message>
       <location filename="../src/comm/LinkManager.cc" line="686"/>
@@ -9563,7 +9557,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="173"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>ディスアーム</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="173"/>
@@ -10541,7 +10535,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/MultiVehicleList.qml" line="130"/>
       <source>Disarmed</source>
-      <translation type="unfinished">Disarmed</translation>
+      <translation>ディスアームしました</translation>
     </message>
   </context>
   <context>
@@ -10938,7 +10932,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="343"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>クリア</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="348"/>
@@ -11190,7 +11184,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <source>The aircraft flies in a circle around the current position at the current altitude. </source>
-      <translation>機体は現在の位置を中心に、現状高度で円を描くように飛行します。 </translation>
+      <translation>機体は現在の位置を中心に、現状高度でサークルを描くように飛行します。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
@@ -11958,7 +11952,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="101"/>
       <source>Damping: increase to reduce overshoots and oscillations, but not higher than really needed.</source>
-      <translation type="unfinished">Damping: increase to reduce overshoots and oscillations, but not higher than really needed.</translation>
+      <translation>ダンピング: オーバーシュートや振動を抑えるために強めに設定しますが、本当に必要以上は設定してはいけません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="77"/>
@@ -12162,7 +12156,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="74"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>クリア</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="85"/>
@@ -12304,7 +12298,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="242"/>
       <source>Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. </source>
-      <translation type="unfinished">Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. </translation>
+      <translation>警告: 飛行中に機体の値を変更すると、不安定になり機体ロストしてしまう可能性があります。 </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="243"/>
@@ -12487,7 +12481,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="538"/>
       <source>Reset Camera to Factory Settings</source>
-      <translation>カメラを工場出荷時設定にリセット</translation>
+      <translation>カメラを工場出荷時の設定にリセット</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="539"/>
@@ -13310,37 +13304,37 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="298"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="298"/>
       <source>Battery Max:</source>
-      <translation type="unfinished">Battery Max:</translation>
+      <translation>バッテリー最大:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="301"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="301"/>
       <source>Empty Voltage (per cell)</source>
-      <translation type="unfinished">Empty Voltage (per cell)</translation>
+      <translation>電圧なし ( /セル)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="307"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="307"/>
       <source>Battery Min:</source>
-      <translation type="unfinished">Battery Min:</translation>
+      <translation>バッテリー最小:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="320"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="320"/>
       <source>Voltage divider</source>
-      <translation type="unfinished">Voltage divider</translation>
+      <translation>電圧分圧器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="415"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="415"/>
       <source>Calculate Voltage Divider</source>
-      <translation type="unfinished">Calculate Voltage Divider</translation>
+      <translation>電圧分圧器 計算</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="339"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="339"/>
       <source>If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. </source>
-      <translation type="unfinished">If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. </translation>
+      <translation>機体電圧と外部電圧計の測定値が違う場合、電圧係数を変更し調整することができます。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="340"/>
@@ -13348,31 +13342,31 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="340"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="364"/>
       <source>Click the Calculate button for help with calculating a new value.</source>
-      <translation type="unfinished">Click the Calculate button for help with calculating a new value.</translation>
+      <translation>【計算】ボタンをクリックすると、新しい値を計算します。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="344"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="344"/>
       <source>Amps per volt</source>
-      <translation type="unfinished">Amps per volt</translation>
+      <translation>アンペア / ボルト</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="472"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="472"/>
       <source>Calculate Amps per Volt</source>
-      <translation type="unfinished">Calculate Amps per Volt</translation>
+      <translation>電圧あたりの電流値を計算</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="363"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="363"/>
       <source>If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. </source>
-      <translation type="unfinished">If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. </translation>
+      <translation>表示される消費電流が、電流計を使用して外部から読み取れる電流と大きく異なる場合は、これを補正するために電圧あたりの電流値を調整できます。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="110"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="110"/>
       <source>ESC PWM Minimum and Maximum Calibration</source>
-      <translation type="unfinished">ESC PWM Minimum and Maximum Calibration</translation>
+      <translation>ESC PWM最小 &amp; 最大値キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="120"/>
@@ -13384,25 +13378,25 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="125"/>
       <source>You must use USB connection for this operation.</source>
-      <translation type="unfinished">You must use USB connection for this operation.</translation>
+      <translation>この操作はUSB接続で行う必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="129"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="129"/>
       <source>Calibrate</source>
-      <translation type="unfinished">Calibrate</translation>
+      <translation>キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="138"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="138"/>
       <source>Show UAVCAN Settings</source>
-      <translation type="unfinished">Show UAVCAN Settings</translation>
+      <translation>UAVCAN設定を表示</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="144"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="144"/>
       <source>UAVCAN Bus Configuration</source>
-      <translation type="unfinished">UAVCAN Bus Configuration</translation>
+      <translation>UAVCANバス設定</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="160"/>
@@ -13444,25 +13438,25 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="201"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="201"/>
       <source>Stop Assignment</source>
-      <translation type="unfinished">Stop Assignment</translation>
+      <translation>割り当て停止</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="371"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="371"/>
       <source>Show Advanced Settings</source>
-      <translation type="unfinished">Show Advanced Settings</translation>
+      <translation>詳細設定を表示</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="375"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="375"/>
       <source>Voltage Drop on Full Load (per cell)</source>
-      <translation type="unfinished">Voltage Drop on Full Load (per cell)</translation>
+      <translation>限界負荷時の電圧降下 (1セルあたり)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="391"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="391"/>
       <source>Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full </source>
-      <translation type="unfinished">Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full </translation>
+      <translation>バッテリーは高スロットル時では電圧が低くなります。アイドル時とフルスロットルとの間の電圧差を入力してください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="392"/>
@@ -13474,7 +13468,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="393"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="393"/>
       <source>If this value is set too high, the battery might be deep discharged and damaged.</source>
-      <translation type="unfinished">If this value is set too high, the battery might be deep discharged and damaged.</translation>
+      <translation>この値を高く設定しすぎると、バッテリーが大きく放電され破損する恐れがあります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="398"/>
@@ -13751,12 +13745,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QGCApplication.cc" line="673"/>
       <source>Unable to save telemetry log. Application save directory is not set.</source>
-      <translation type="unfinished">Unable to save telemetry log. Application save directory is not set.</translation>
+      <translation>テレメトリーログを保存できません。アプリケーションの保存ディレクトリが設定されていません。</translation>
     </message>
     <message>
       <location filename="../src/QGCApplication.cc" line="680"/>
       <source>Unable to save telemetry log. Telemetry save directory &quot;%1&quot; does not exist.</source>
-      <translation type="unfinished">Unable to save telemetry log. Telemetry save directory &quot;%1&quot; does not exist.</translation>
+      <translation>テレメトリーログを保存できません。テレメトリー保存ディレクトリ &quot;%1&quot; が存在しません。</translation>
     </message>
   </context>
   <context>
@@ -13765,7 +13759,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/QmlControls/QGCControlDebug.qml" line="22"/>
       <source>%1 x:%2 y:%3 width:%4 height:%5 visible:%6 enabled:%7 z:%8 parent:%9 implicitWidth/Height:%10:%11</source>
       <comment>Do not translate</comment>
-      <translation type="unfinished">%1 x:%2 y:%3 width:%4 height:%5 visible:%6 enabled:%7 z:%8 parent:%9 implicitWidth/Height:%10:%11</translation>
+      <translation>%1 x:%2 y:%3 幅:%4 高さ:%5 表示:%6 有効:%7 z:%8 元:%9 暗黙の幅/高さ:%10:%11</translation>
     </message>
   </context>
   <context>
@@ -13913,7 +13907,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCFileDialog.qml" line="235"/>
       <source>Save to existing file:</source>
-      <translation type="unfinished">Save to existing file:</translation>
+      <translation>既存のファイルに保存:</translation>
     </message>
   </context>
   <context>
@@ -13926,22 +13920,22 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QGCFileDownload.cc" line="112"/>
       <source>Could not save downloaded file to %1. Error: %2</source>
-      <translation type="unfinished">Could not save downloaded file to %1. Error: %2</translation>
+      <translation>ダウンロードしたファイルを %1に保存できませんでした。エラー: %2</translation>
     </message>
     <message>
       <location filename="../src/QGCFileDownload.cc" line="135"/>
       <source>Download cancelled</source>
-      <translation type="unfinished">Download cancelled</translation>
+      <translation>ダウンロードがキャンセルされました</translation>
     </message>
     <message>
       <location filename="../src/QGCFileDownload.cc" line="138"/>
       <source>Error: File Not Found</source>
-      <translation type="unfinished">Error: File Not Found</translation>
+      <translation>エラー: ファイルが見つかりません</translation>
     </message>
     <message>
       <location filename="../src/QGCFileDownload.cc" line="141"/>
       <source>Error during download. Error: %1</source>
-      <translation type="unfinished">Error during download. Error: %1</translation>
+      <translation>ダウンロード中にエラーが発生しました。エラー: %1</translation>
     </message>
   </context>
   <context>
@@ -13949,7 +13943,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/AnalyzeView/LogDownloadController.cc" line="95"/>
       <source>Pending</source>
-      <translation type="unfinished">Pending</translation>
+      <translation>保留中</translation>
     </message>
   </context>
   <context>
@@ -13970,33 +13964,33 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="220"/>
       <source>Select Polygon File</source>
-      <translation type="unfinished">Select Polygon File</translation>
+      <translation>ポリゴンファイルを選択</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="248"/>
       <source>Remove vertex</source>
-      <translation type="unfinished">Remove vertex</translation>
+      <translation>頂点を削除</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="50"/>
       <source>Polygon Tools</source>
-      <translation type="unfinished">Polygon Tools</translation>
+      <translation>ポリゴンツール</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="51"/>
       <source>Click in the map to add vertices. Click &apos;Done Tracing&apos; when finished.</source>
-      <translation type="unfinished">Click in the map to add vertices. Click &apos;Done Tracing&apos; when finished.</translation>
+      <translation>マップ上をクリックして頂点を追加します。終了したら、 &apos;トレース完了&apos; をクリックします。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="261"/>
       <source>Set radius...</source>
-      <translation type="unfinished">Set radius...</translation>
+      <translation>半径を設定...</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="267"/>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="273"/>
       <source>Edit position...</source>
-      <translation type="unfinished">Edit position...</translation>
+      <translation>ポジションを編集...</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="269"/>
@@ -14006,22 +14000,22 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="275"/>
       <source>Edit Vertex Position</source>
-      <translation type="unfinished">Edit Vertex Position</translation>
+      <translation>頂点位置を編集</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="528"/>
       <source>Basic</source>
-      <translation type="unfinished">Basic</translation>
+      <translation>基本</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="535"/>
       <source>Circular</source>
-      <translation type="unfinished">Circular</translation>
+      <translation>円形</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="542"/>
       <source>Done Tracing</source>
-      <translation type="unfinished">Done Tracing</translation>
+      <translation>トレース完了</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="542"/>
@@ -14031,7 +14025,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="560"/>
       <source>Load KML/SHP...</source>
-      <translation type="unfinished">Load KML/SHP...</translation>
+      <translation>KML/SHPをロード...</translation>
     </message>
   </context>
   <context>
@@ -14039,17 +14033,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="40"/>
       <source>Polyline Tools</source>
-      <translation type="unfinished">Polyline Tools</translation>
+      <translation>ポリラインツール</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="41"/>
       <source>Click in the map to add vertices. Click &apos;Done Tracing&apos; when finished.</source>
-      <translation type="unfinished">Click in the map to add vertices. Click &apos;Done Tracing&apos; when finished.</translation>
+      <translation>マップ上をクリックして頂点を追加します。終了したら、 &apos;トレース完了&apos; をクリックします。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="128"/>
       <source>Select KML File</source>
-      <translation type="unfinished">Select KML File</translation>
+      <translation>KMLファイルを選択</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="150"/>
@@ -14074,7 +14068,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="342"/>
       <source>Done Tracing</source>
-      <translation type="unfinished">Done Tracing</translation>
+      <translation>トレース完了</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="342"/>
@@ -14084,7 +14078,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="359"/>
       <source>Load KML...</source>
-      <translation type="unfinished">Load KML...</translation>
+      <translation>KMLをロード...</translation>
     </message>
   </context>
   <context>
@@ -14092,7 +14086,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCOptionsComboBox.qml" line="24"/>
       <source>Options</source>
-      <translation type="unfinished">Options</translation>
+      <translation>オプション</translation>
     </message>
   </context>
   <context>
@@ -14100,17 +14094,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/ui/QGCPluginHost.ui" line="14"/>
       <source>Form</source>
-      <translation type="unfinished">Form</translation>
+      <translation>フォーム</translation>
     </message>
     <message>
       <location filename="../src/ui/QGCPluginHost.ui" line="49"/>
       <source>Loaded Plugins</source>
-      <translation type="unfinished">Loaded Plugins</translation>
+      <translation>ロードされたプラグイン</translation>
     </message>
     <message>
       <location filename="../src/ui/QGCPluginHost.ui" line="62"/>
       <source>Plugin Log</source>
-      <translation type="unfinished">Plugin Log</translation>
+      <translation>プラグインログ</translation>
     </message>
   </context>
   <context>
@@ -14149,12 +14143,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="118"/>
       <source>Yes to All</source>
-      <translation type="unfinished">Yes to All</translation>
+      <translation>すべて『はい』</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="121"/>
       <source>Retry</source>
-      <translation type="unfinished">Retry</translation>
+      <translation>再試行</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="124"/>
@@ -14164,7 +14158,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="127"/>
       <source>Restore to Defaults</source>
-      <translation type="unfinished">Restore to Defaults</translation>
+      <translation>デフォルトに戻す</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="130"/>
@@ -14184,17 +14178,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="142"/>
       <source>No</source>
-      <translation type="unfinished">No</translation>
+      <translation>いいえ</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="145"/>
       <source>No to All</source>
-      <translation type="unfinished">No to All</translation>
+      <translation>すべて『いいえ』</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="148"/>
       <source>Abort</source>
-      <translation type="unfinished">Abort</translation>
+      <translation>中止</translation>
     </message>
   </context>
   <context>
@@ -14202,7 +14196,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCTextField.qml" line="119"/>
       <source>?</source>
-      <translation type="unfinished">?</translation>
+      <translation>？</translation>
     </message>
   </context>
   <context>
@@ -14210,7 +14204,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="34"/>
       <source>Ok</source>
-      <translation type="unfinished">Ok</translation>
+      <translation>OK</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="37"/>
@@ -14231,32 +14225,32 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="49"/>
       <source>Save All</source>
-      <translation type="unfinished">Save All</translation>
+      <translation>すべて保存</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="52"/>
       <source>Yes</source>
-      <translation type="unfinished">Yes</translation>
+      <translation>はい</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="55"/>
       <source>Yes to All</source>
-      <translation type="unfinished">Yes to All</translation>
+      <translation>すべて『はい』</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="58"/>
       <source>Retry</source>
-      <translation type="unfinished">Retry</translation>
+      <translation>再試行</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="61"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>リセット</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="64"/>
       <source>Restore to Defaults</source>
-      <translation type="unfinished">Restore to Defaults</translation>
+      <translation>デフォルトに戻す</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="67"/>
@@ -14281,7 +14275,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="82"/>
       <source>No to All</source>
-      <translation>すべていいえ</translation>
+      <translation>すべて『いいえ』</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="85"/>
@@ -14740,7 +14734,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="183"/>
       <source>Not Mapped</source>
-      <translation type="unfinished">Not Mapped</translation>
+      <translation>割り当てなし</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="209"/>
@@ -14786,17 +14780,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="371"/>
       <source>Additional Radio setup:</source>
-      <translation type="unfinished">Additional Radio setup:</translation>
+      <translation>追加 送信機設定:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="408"/>
       <source>Spektrum Bind</source>
-      <translation type="unfinished">Spektrum Bind</translation>
+      <translation>Spektrumバインド</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="413"/>
       <source>Copy Trims</source>
-      <translation type="unfinished">Copy Trims</translation>
+      <translation>トリムをコピー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="437"/>
@@ -14842,7 +14836,7 @@ Click Next to continue</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="124"/>
       <source>Move the Throttle stick all the way up and hold it there...</source>
-      <translation type="unfinished">Move the Throttle stick all the way up and hold it there...</translation>
+      <translation>スロットルスティックを最上部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="125"/>
@@ -14852,37 +14846,37 @@ Click Next to continue</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="126"/>
       <source>Move the Yaw stick all the way to the left and hold it there...</source>
-      <translation type="unfinished">Move the Yaw stick all the way to the left and hold it there...</translation>
+      <translation>ヨースティックを最左部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="127"/>
       <source>Move the Yaw stick all the way to the right and hold it there...</source>
-      <translation type="unfinished">Move the Yaw stick all the way to the right and hold it there...</translation>
+      <translation>ヨースティックを最右部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="128"/>
       <source>Move the Roll stick all the way to the left and hold it there...</source>
-      <translation type="unfinished">Move the Roll stick all the way to the left and hold it there...</translation>
+      <translation>ロールスティックを最左部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="129"/>
       <source>Move the Roll stick all the way to the right and hold it there...</source>
-      <translation type="unfinished">Move the Roll stick all the way to the right and hold it there...</translation>
+      <translation>ロールスティックを最右部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="130"/>
       <source>Move the Pitch stick all the way down and hold it there...</source>
-      <translation type="unfinished">Move the Pitch stick all the way down and hold it there...</translation>
+      <translation>ピッチスティックを最下部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="131"/>
       <source>Move the Pitch stick all the way up and hold it there...</source>
-      <translation type="unfinished">Move the Pitch stick all the way up and hold it there...</translation>
+      <translation>ピッチスティックを最上部まで動かし、そこで保持します...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="132"/>
       <source>Allow the Pitch stick to move back to center...</source>
-      <translation type="unfinished">Allow the Pitch stick to move back to center...</translation>
+      <translation>ピッチスティックをセンターに戻してください...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="133"/>
@@ -14917,7 +14911,7 @@ Click Next to continue</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="826"/>
       <source>Calibrate</source>
-      <translation type="unfinished">Calibrate</translation>
+      <translation>キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="850"/>
@@ -14934,12 +14928,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/MissionManager/RallyPointController.cc" line="102"/>
       <source>Rally: %1</source>
-      <translation type="unfinished">Rally: %1</translation>
+      <translation>集結: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/RallyPointController.cc" line="105"/>
       <source>Rally Points supports version %1</source>
-      <translation type="unfinished">Rally Points supports version %1</translation>
+      <translation>集結ポイントはバージョン %1 をサポートしています</translation>
     </message>
   </context>
   <context>
@@ -14982,7 +14976,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="25"/>
       <source>Rover Initial Checks</source>
-      <translation type="unfinished">Rover Initial Checks</translation>
+      <translation>ローバー 初期チェック</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="28"/>
@@ -14992,7 +14986,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="29"/>
       <source>Battery mounted and secured?</source>
-      <translation type="unfinished">Battery mounted and secured?</translation>
+      <translation>バッテリーは安全に固定しましたか？</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="50"/>
@@ -15027,7 +15021,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="71"/>
       <source>Wind &amp; weather</source>
-      <translation type="unfinished">Wind &amp; weather</translation>
+      <translation>風と天気</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="72"/>
@@ -15037,7 +15031,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="76"/>
       <source>Mission area</source>
-      <translation type="unfinished">Mission area</translation>
+      <translation>ミッションエリア</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="77"/>
@@ -15050,7 +15044,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/SHPFileHelper.cc" line="18"/>
       <source>SHP file load failed. %1</source>
-      <translation type="unfinished">SHP file load failed. %1</translation>
+      <translation>SHPファイルがロードできませんでした。 %1</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="51"/>
@@ -15060,47 +15054,47 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/SHPFileHelper.cc" line="54"/>
       <source>Only WGS84 or UTM projections are supported.</source>
-      <translation type="unfinished">Only WGS84 or UTM projections are supported.</translation>
+      <translation>WGS84またはUTMの投影のみ対応しています。</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="57"/>
       <source>PRJ file open failed: %1</source>
-      <translation type="unfinished">PRJ file open failed: %1</translation>
+      <translation>PRJファイルのオープンに失敗しました: %1</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="60"/>
       <source>File not found: %1</source>
-      <translation type="unfinished">File not found: %1</translation>
+      <translation>ファイルが見つかりません: %1</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="63"/>
       <source>File is not a .shp file: %1</source>
-      <translation type="unfinished">File is not a .shp file: %1</translation>
+      <translation>ファイルは拡張子.shpファイルではありません: %1</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="79"/>
       <source>SHPOpen failed.</source>
-      <translation type="unfinished">SHPOpen failed.</translation>
+      <translation>SHPが開けません。</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="101"/>
       <source>More than one entity found.</source>
-      <translation type="unfinished">More than one entity found.</translation>
+      <translation>複数の実体が見つかりました。</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="105"/>
       <source>No supported types found.</source>
-      <translation type="unfinished">No supported types found.</translation>
+      <translation>サポートされているタイプが見つかりませんでした。</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="133"/>
       <source>File does not contain a polygon.</source>
-      <translation type="unfinished">File does not contain a polygon.</translation>
+      <translation>ファイルにポリゴンが含まれていません。</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="139"/>
       <source>Only single part polygons are supported.</source>
-      <translation type="unfinished">Only single part polygons are supported.</translation>
+      <translation>シングルパートポリゴンのみ対応しています。</translation>
     </message>
   </context>
   <context>
@@ -15109,7 +15103,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="67"/>
       <source>Low Battery Failsafe Trigger</source>
-      <translation type="unfinished">Low Battery Failsafe Trigger</translation>
+      <translation>低バッテリー フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="95"/>
@@ -15119,37 +15113,37 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="277"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="329"/>
       <source>Failsafe Action:</source>
-      <translation type="unfinished">Failsafe Action:</translation>
+      <translation>フェイルセーフ動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="107"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="107"/>
       <source>Battery Warn Level:</source>
-      <translation type="unfinished">Battery Warn Level:</translation>
+      <translation>バッテリー警告レベル:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="116"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="116"/>
       <source>Battery Failsafe Level:</source>
-      <translation type="unfinished">Battery Failsafe Level:</translation>
+      <translation>バッテリーフェイルセーフレベル:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="125"/>
       <source>Battery Emergency Level:</source>
-      <translation type="unfinished">Battery Emergency Level:</translation>
+      <translation>バッテリー緊急レベル:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="137"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="137"/>
       <source>Object Detection</source>
-      <translation type="unfinished">Object Detection</translation>
+      <translation>オブジェクト検出</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="165"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="165"/>
       <source>Collision Prevention:</source>
-      <translation type="unfinished">Collision Prevention:</translation>
+      <translation>衝突防止:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="170"/>
@@ -15175,55 +15169,55 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="185"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="185"/>
       <source>Obstacle Avoidance:</source>
-      <translation type="unfinished">Obstacle Avoidance:</translation>
+      <translation>障害物回避:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="202"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="202"/>
       <source>Minimum Distance: (</source>
-      <translation type="unfinished">Minimum Distance: (</translation>
+      <translation>最小距離: (</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="238"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="238"/>
       <source>Show obstacle distance overlay</source>
-      <translation type="unfinished">Show obstacle distance overlay</translation>
+      <translation>障害物距離 オーバーレイ表示</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="249"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="249"/>
       <source>RC Loss Failsafe Trigger</source>
-      <translation type="unfinished">RC Loss Failsafe Trigger</translation>
+      <translation>RC損失フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="289"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="289"/>
       <source>RC Loss Timeout:</source>
-      <translation type="unfinished">RC Loss Timeout:</translation>
+      <translation>RC損失タイムアウト:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="301"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="301"/>
       <source>Data Link Loss Failsafe Trigger</source>
-      <translation type="unfinished">Data Link Loss Failsafe Trigger</translation>
+      <translation>データリンク損失フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="341"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="341"/>
       <source>Data Link Loss Timeout:</source>
-      <translation type="unfinished">Data Link Loss Timeout:</translation>
+      <translation>データリンク失敗タイムアウト:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="353"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="353"/>
       <source>Geofence Failsafe Trigger</source>
-      <translation type="unfinished">Geofence Failsafe Trigger</translation>
+      <translation>ジオフェンス フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="382"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="382"/>
       <source>Action on breach:</source>
-      <translation type="unfinished">Action on breach:</translation>
+      <translation>違反行為:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="395"/>
@@ -15259,37 +15253,37 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="451"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="451"/>
       <source>Climb to altitude of:</source>
-      <translation type="unfinished">Climb to altitude of:</translation>
+      <translation>高度に上昇:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="471"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="471"/>
       <source>Land immediately</source>
-      <translation type="unfinished">Land immediately</translation>
+      <translation>すぐに着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="481"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="481"/>
       <source>Loiter and do not land</source>
-      <translation type="unfinished">Loiter and do not land</translation>
+      <translation>ロイターし着陸しない</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="491"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="491"/>
       <source>Loiter and land after specified time</source>
-      <translation type="unfinished">Loiter and land after specified time</translation>
+      <translation>指定された時間の後にロイターと着陸を実施</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="497"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="497"/>
       <source>Loiter Time</source>
-      <translation type="unfinished">Loiter Time</translation>
+      <translation>ロイター時間</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="507"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="507"/>
       <source>Loiter Altitude</source>
-      <translation type="unfinished">Loiter Altitude</translation>
+      <translation>ロイター高度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="520"/>
@@ -15301,13 +15295,13 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="549"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="549"/>
       <source>Landing Descent Rate:</source>
-      <translation type="unfinished">Landing Descent Rate:</translation>
+      <translation>着陸降下レート:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="563"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="563"/>
       <source>Disarm After:</source>
-      <translation type="unfinished">Disarm After:</translation>
+      <translation>ディスアーム後:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="578"/>
@@ -15319,18 +15313,18 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="628"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="628"/>
       <source>Hardware in the Loop Simulation</source>
-      <translation type="unfinished">Hardware in the Loop Simulation</translation>
+      <translation>HITL シミュレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="657"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="657"/>
       <source>HITL Enabled:</source>
-      <translation type="unfinished">HITL Enabled:</translation>
+      <translation>HITL 有効:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.cc" line="19"/>
       <source>Safety</source>
-      <translation type="unfinished">Safety</translation>
+      <translation>セーフティ</translation>
     </message>
   </context>
   <context>
@@ -15339,67 +15333,67 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="28"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="28"/>
       <source>Low Battery Failsafe</source>
-      <translation type="unfinished">Low Battery Failsafe</translation>
+      <translation>低バッテリー フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="33"/>
       <source>RC Loss Failsafe</source>
-      <translation type="unfinished">RC Loss Failsafe</translation>
+      <translation>RC損失フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="38"/>
       <source>RC Loss Timeout</source>
-      <translation type="unfinished">RC Loss Timeout</translation>
+      <translation>RC損失タイムアウト</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="43"/>
       <source>Data Link Loss Failsafe</source>
-      <translation type="unfinished">Data Link Loss Failsafe</translation>
+      <translation>データリンク損失フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="48"/>
       <source>RTL Climb To</source>
-      <translation type="unfinished">RTL Climb To</translation>
+      <translation>RTL 上昇</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="53"/>
       <source>RTL, Then</source>
-      <translation type="unfinished">RTL, Then</translation>
+      <translation>RTL, その後</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="55"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="55"/>
       <source>Land immediately</source>
-      <translation type="unfinished">Land immediately</translation>
+      <translation>すぐに着陸</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="57"/>
       <source>Loiter and do not land</source>
-      <translation type="unfinished">Loiter and do not land</translation>
+      <translation>ロイターし着陸しない</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="58"/>
       <source>Loiter and land after specified time</source>
-      <translation type="unfinished">Loiter and land after specified time</translation>
+      <translation>指定された時間の後にロイターと着陸を実施</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="63"/>
       <source>Loiter Alt</source>
-      <translation type="unfinished">Loiter Alt</translation>
+      <translation>ロイター高度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="69"/>
       <source>Land Delay</source>
-      <translation type="unfinished">Land Delay</translation>
+      <translation>着陸遅延</translation>
     </message>
   </context>
   <context>
@@ -15407,12 +15401,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="27"/>
       <source>Sensors</source>
-      <translation type="unfinished">Sensors</translation>
+      <translation>センサー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="39"/>
       <source>Sensors Setup is used to calibrate the sensors within your vehicle.</source>
-      <translation type="unfinished">Sensors Setup is used to calibrate the sensors within your vehicle.</translation>
+      <translation>センサー設定は、機体のセンサーをキャリブレーションするためのものです。</translation>
     </message>
   </context>
   <context>
@@ -15420,7 +15414,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="173"/>
       <source>Calibration complete</source>
-      <translation type="unfinished">Calibration complete</translation>
+      <translation>キャリブレーション完了</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="190"/>
@@ -15440,7 +15434,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="393"/>
       <source>Rotate the vehicle continuously as shown in the diagram until marked as Completed</source>
-      <translation type="unfinished">Rotate the vehicle continuously as shown in the diagram until marked as Completed</translation>
+      <translation>【完了】と表示されるまで、ダイアグラムに示すように連続して機体を回転させます</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="395"/>
@@ -15460,12 +15454,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="502"/>
       <source>Reset successful</source>
-      <translation type="unfinished">Reset successful</translation>
+      <translation>リセットしました</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="509"/>
       <source>Reset failed</source>
-      <translation type="unfinished">Reset failed</translation>
+      <translation>リセットに失敗しました</translation>
     </message>
   </context>
   <context>
@@ -15822,7 +15816,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="628"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="628"/>
       <source>Factory reset</source>
-      <translation type="unfinished">Factory reset</translation>
+      <translation>工場出荷時の状態にリセット</translation>
     </message>
   </context>
   <context>
@@ -15830,7 +15824,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/comm/SerialLink.h" line="83"/>
       <source>Serial Link Settings</source>
-      <translation type="unfinished">Serial Link Settings</translation>
+      <translation>シリアルリンク設定</translation>
     </message>
   </context>
   <context>
@@ -15838,12 +15832,12 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/comm/SerialLink.cc" line="75"/>
       <source>Could not send data - link %1 is disconnected!</source>
-      <translation type="unfinished">Could not send data - link %1 is disconnected!</translation>
+      <translation>データを送信できませんでした - リンク %1 は切断されました！</translation>
     </message>
     <message>
       <location filename="../src/comm/SerialLink.cc" line="121"/>
       <source>Error connecting: Could not create port. %1</source>
-      <translation type="unfinished">Error connecting: Could not create port. %1</translation>
+      <translation>接続エラー: ポートを作成できませんでした。 %1</translation>
     </message>
     <message>
       <location filename="../src/comm/SerialLink.cc" line="244"/>
@@ -15866,32 +15860,32 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="114"/>
       <source>Enable Flow Control</source>
-      <translation type="unfinished">Enable Flow Control</translation>
+      <translation>フロー制御 有効</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="31"/>
       <source>Serial Port</source>
-      <translation type="unfinished">Serial Port</translation>
+      <translation>シリアルポート</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="65"/>
       <source>None Available</source>
-      <translation type="unfinished">None Available</translation>
+      <translation>利用不可</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="73"/>
       <source>Baud Rate</source>
-      <translation type="unfinished">Baud Rate</translation>
+      <translation>伝送速度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="102"/>
       <source>Advanced Settings</source>
-      <translation type="unfinished">Advanced Settings</translation>
+      <translation>詳細設定</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="119"/>
       <source>Parity</source>
-      <translation type="unfinished">Parity</translation>
+      <translation>パリティ</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="122"/>
@@ -15911,12 +15905,12 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="157"/>
       <source>Data Bits</source>
-      <translation type="unfinished">Data Bits</translation>
+      <translation>データビット</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="165"/>
       <source>Stop Bits</source>
-      <translation type="unfinished">Stop Bits</translation>
+      <translation>ストップビット</translation>
     </message>
   </context>
   <context>
@@ -15957,22 +15951,22 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="38"/>
       <source>missing message panel text</source>
-      <translation type="unfinished">missing message panel text</translation>
+      <translation>メッセージパネルのテキストがありません</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="80"/>
       <source>%1 setup must be completed prior to %2 setup.</source>
-      <translation type="unfinished">%1 setup must be completed prior to %2 setup.</translation>
+      <translation>%2 の設定の前に %1 の設定を完了する必要があります。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="132"/>
       <source>%1 does not currently support setup of your vehicle type. </source>
-      <translation type="unfinished">%1 does not currently support setup of your vehicle type. </translation>
+      <translation>%1 は現在、貴方の機体設定をサポートしていません。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="150"/>
       <source>Vehicle settings and info will display after connecting your vehicle.</source>
-      <translation type="unfinished">Vehicle settings and info will display after connecting your vehicle.</translation>
+      <translation>機体を接続すると、機体の設定や情報が表示されます。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="171"/>
@@ -15982,7 +15976,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="172"/>
       <source>As a result, the full set of vehicle setup options are not available.</source>
-      <translation type="unfinished">As a result, the full set of vehicle setup options are not available.</translation>
+      <translation>そのため、すべての機体設定オプションを利用することはできません。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="231"/>
@@ -16015,7 +16009,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="17"/>
       <source>Shape file load failed. %1</source>
-      <translation type="unfinished">Shape file load failed. %1</translation>
+      <translation>シェイプファイルがロードできませんでした。 %1</translation>
     </message>
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="40"/>
@@ -16025,17 +16019,17 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="93"/>
       <source>Polyline not support from SHP files.</source>
-      <translation type="unfinished">Polyline not support from SHP files.</translation>
+      <translation>SHPファイルからのポリラインはサポートしていません。</translation>
     </message>
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="102"/>
       <source>KML Files (*.%1)</source>
-      <translation type="unfinished">KML Files (*.%1)</translation>
+      <translation>KMLファイル (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="107"/>
       <source>KML/SHP Files (*.%1 *.%2)</source>
-      <translation type="unfinished">KML/SHP Files (*.%1 *.%2)</translation>
+      <translation>KML/SHPファイル (*.%1 *.%2)</translation>
     </message>
   </context>
   <context>
@@ -16174,7 +16168,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="235"/>
       <source>%1 does not support loading this complex mission item type: %2:%3</source>
-      <translation type="unfinished">%1 does not support loading this complex mission item type: %2:%3</translation>
+      <translation>%1 はこの複雑なミッション項目タイプの読み込みをサポートしていません: %2:%3</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="241"/>
@@ -16382,13 +16376,13 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="169"/>
       <source>Survey items do not support version %1</source>
-      <translation type="unfinished">Survey items do not support version %1</translation>
+      <translation>アンケート項目はバージョン %1 をサポートしていません</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="226"/>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="282"/>
       <source>%1 does not support loading this complex mission item type: %2:%3</source>
-      <translation type="unfinished">%1 does not support loading this complex mission item type: %2:%3</translation>
+      <translation>%1 はこの複雑なミッション項目タイプの読み込みをサポートしていません: %2:%3</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="330"/>
@@ -16466,7 +16460,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Vehicle/SysStatusSensorInfo.cc" line="111"/>
       <source>Normal</source>
-      <translation type="unfinished">Normal</translation>
+      <translation>ノーマル</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/SysStatusSensorInfo.cc" line="119"/>
@@ -16582,17 +16576,17 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="71"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>全般</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="88"/>
       <source>Enable Taisync</source>
-      <translation type="unfinished">Enable Taisync</translation>
+      <translation>Taisync 有効</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="94"/>
       <source>Enable Taisync Video</source>
-      <translation type="unfinished">Enable Taisync Video</translation>
+      <translation>Taisync Video 有効</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="112"/>
@@ -16608,18 +16602,18 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
       <location filename="../src/Taisync/TaisyncSettings.qml" line="138"/>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="146"/>
       <source>Connected</source>
-      <translation type="unfinished">Connected</translation>
+      <translation>接続しました</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="138"/>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="146"/>
       <source>Not Connected</source>
-      <translation type="unfinished">Not Connected</translation>
+      <translation>接続されていません</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="143"/>
       <source>Air Unit:</source>
-      <translation type="unfinished">Air Unit:</translation>
+      <translation>エアユニット:</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="150"/>
@@ -16664,22 +16658,22 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="254"/>
       <source>Radio Frequency:</source>
-      <translation type="unfinished">Radio Frequency:</translation>
+      <translation>送信機 周波数:</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="275"/>
       <source>Video Settings</source>
-      <translation type="unfinished">Video Settings</translation>
+      <translation>映像設定</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="297"/>
       <source>Video Output:</source>
-      <translation type="unfinished">Video Output:</translation>
+      <translation>映像出力:</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="307"/>
       <source>Encoder:</source>
-      <translation type="unfinished">Encoder:</translation>
+      <translation>エンコーダー:</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="316"/>
@@ -16694,7 +16688,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="359"/>
       <source>RTSP URI:</source>
-      <translation type="unfinished">RTSP URI:</translation>
+      <translation>RTSP URI:</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="370"/>
@@ -16715,7 +16709,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="415"/>
       <source>Set Streaming Settings</source>
-      <translation type="unfinished">Set Streaming Settings</translation>
+      <translation>ストリーミング設定</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="416"/>
@@ -16749,7 +16743,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="521"/>
       <source>Set Network Settings</source>
-      <translation type="unfinished">Set Network Settings</translation>
+      <translation>ネットワーク設定</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="522"/>
@@ -16774,12 +16768,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/ui/preferences/TcpSettings.qml" line="29"/>
       <source>Server Address</source>
-      <translation type="unfinished">Server Address</translation>
+      <translation>サーバアドレス</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/TcpSettings.qml" line="36"/>
       <source>Port</source>
-      <translation type="unfinished">Port</translation>
+      <translation>ポート</translation>
     </message>
   </context>
   <context>
@@ -16787,7 +16781,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/ui/toolbar/TelemetryRSSIIndicator.qml" line="48"/>
       <source>Telemetry RSSI Status</source>
-      <translation type="unfinished">Telemetry RSSI Status</translation>
+      <translation>テレメトリーRSSI状態</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/TelemetryRSSIIndicator.qml" line="58"/>
@@ -16807,7 +16801,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/ui/toolbar/TelemetryRSSIIndicator.qml" line="64"/>
       <source>Errors Fixed:</source>
-      <translation type="unfinished">Errors Fixed:</translation>
+      <translation>エラー修正:</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/TelemetryRSSIIndicator.qml" line="66"/>
@@ -16830,12 +16824,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/FlightDisplay/TerrainProgress.qml" line="69"/>
       <source>Terrain Load Progress</source>
-      <translation type="unfinished">Terrain Load Progress</translation>
+      <translation>地形負荷の経過</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/TerrainProgress.qml" line="87"/>
       <source>Done</source>
-      <translation type="unfinished">Done</translation>
+      <translation>完了</translation>
     </message>
   </context>
   <context>
@@ -17011,12 +17005,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/uas/UAS.cc" line="318"/>
       <source>UNINIT</source>
-      <translation type="unfinished">UNINIT</translation>
+      <translation>UNINIT</translation>
     </message>
     <message>
       <location filename="../src/uas/UAS.cc" line="319"/>
       <source>Unitialized, booting up.</source>
-      <translation type="unfinished">Unitialized, booting up.</translation>
+      <translation>ユニット化されました、起動しています。</translation>
     </message>
     <message>
       <location filename="../src/uas/UAS.cc" line="322"/>
@@ -17041,12 +17035,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/uas/UAS.cc" line="330"/>
       <source>ACTIVE</source>
-      <translation type="unfinished">ACTIVE</translation>
+      <translation>有効</translation>
     </message>
     <message>
       <location filename="../src/uas/UAS.cc" line="331"/>
       <source>Active, normal operation.</source>
-      <translation type="unfinished">Active, normal operation.</translation>
+      <translation>有効、通常オペレーション</translation>
     </message>
     <message>
       <location filename="../src/uas/UAS.cc" line="334"/>
@@ -17147,7 +17141,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/comm/UDPLink.h" line="79"/>
       <source>UDP Link Settings</source>
-      <translation type="unfinished">UDP Link Settings</translation>
+      <translation>UDPリンク設定</translation>
     </message>
   </context>
   <context>
@@ -17156,17 +17150,17 @@ Confirm change?</source>
       <location filename="../src/comm/UDPLink.cc" line="269"/>
       <location filename="../src/comm/UDPLink.cc" line="293"/>
       <source>UDP Link Error</source>
-      <translation type="unfinished">UDP Link Error</translation>
+      <translation>UDPリンクエラー</translation>
     </message>
     <message>
       <location filename="../src/comm/UDPLink.cc" line="269"/>
       <source>Error binding UDP port: %1</source>
-      <translation type="unfinished">Error binding UDP port: %1</translation>
+      <translation>UDPポートのバインド中にエラーが発生しました: %1</translation>
     </message>
     <message>
       <location filename="../src/comm/UDPLink.cc" line="293"/>
       <source>Error registering Zeroconf</source>
-      <translation type="unfinished">Error registering Zeroconf</translation>
+      <translation>Zeroconf 登録エラー</translation>
     </message>
   </context>
   <context>
@@ -17174,7 +17168,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/AnalyzeView/ULogParser.cc" line="95"/>
       <source>Could not detect ULog file header magic</source>
-      <translation type="unfinished">Could not detect ULog file header magic</translation>
+      <translation>ULogファイルヘッダーのフォーマット識別子を検出できませんでした</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/ULogParser.cc" line="180"/>
@@ -17187,32 +17181,32 @@ Confirm change?</source>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="31"/>
       <source>Note: For best perfomance, please disable AutoConnect to UDP devices on the General page.</source>
-      <translation type="unfinished">Note: For best perfomance, please disable AutoConnect to UDP devices on the General page.</translation>
+      <translation>注: 最良のパフォーマンスを得るためには、【全般】ページでUDPデバイスの自動接続を無効にしてください。</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="37"/>
       <source>Port</source>
-      <translation type="unfinished">Port</translation>
+      <translation>ポート</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="48"/>
       <source>Server Addresses (optional)</source>
-      <translation type="unfinished">Server Addresses (optional)</translation>
+      <translation>サーバアドレス (オプション)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="62"/>
       <source>Remove</source>
-      <translation type="unfinished">Remove</translation>
+      <translation>削除</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="74"/>
       <source>Example: 127.0.0.1:14550</source>
-      <translation type="unfinished">Example: 127.0.0.1:14550</translation>
+      <translation>例: 127.0.0.1:14550</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="77"/>
       <source>Add Server</source>
-      <translation type="unfinished">Add Server</translation>
+      <translation>サーバ追加</translation>
     </message>
   </context>
   <context>
@@ -17220,27 +17214,27 @@ Confirm change?</source>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="21"/>
       <source>Measurement Units</source>
-      <translation type="unfinished">Measurement Units</translation>
+      <translation>測定単位</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Horizontal Distance</source>
-      <translation type="unfinished">Horizontal Distance</translation>
+      <translation>水平距離</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Vertical Distance</source>
-      <translation type="unfinished">Vertical Distance</translation>
+      <translation>垂直距離</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Area</source>
-      <translation type="unfinished">Area</translation>
+      <translation>エリア</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>速度</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
@@ -17250,12 +17244,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="64"/>
       <source>Choose the measurement units you want to use. You can also change it later in General Settings.</source>
-      <translation>使用したい測定単位を選択してください。後で【一般設定】で変更することもできます。</translation>
+      <translation>使用したい測定単位を選択してください。後で【全般】設定で変更することもできます。</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="84"/>
       <source>System of units</source>
-      <translation type="unfinished">System of units</translation>
+      <translation>システム単位</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="97"/>
@@ -17273,7 +17267,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="196"/>
       <source>Weight units</source>
-      <translation type="unfinished">Weight units</translation>
+      <translation>重量単位</translation>
     </message>
   </context>
   <context>
@@ -17281,7 +17275,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="25"/>
       <source>VTOL Initial Checks</source>
-      <translation type="unfinished">VTOL Initial Checks</translation>
+      <translation>VTOL 初期チェック</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="28"/>
@@ -17301,12 +17295,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="53"/>
       <source>Actuators</source>
-      <translation type="unfinished">Actuators</translation>
+      <translation>駆動装置 (アクチュエーター)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="54"/>
       <source>Move all control surfaces. Did they work properly?</source>
-      <translation type="unfinished">Move all control surfaces. Did they work properly?</translation>
+      <translation>すべてのコントロールサーフェスを移動します。うまく動作しましたか？</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="58"/>
@@ -17364,7 +17358,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/MissionManager/VTOLLandingComplexItem.cc" line="23"/>
       <source>VTOL Landing</source>
-      <translation type="unfinished">VTOL Landing</translation>
+      <translation>VTOL 着陸</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/VTOLLandingComplexItem.cc" line="82"/>
@@ -17494,12 +17488,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/ui/toolbar/VTOLModeIndicator.qml" line="24"/>
       <source>VTOL: FW</source>
-      <translation type="unfinished">VTOL: FW</translation>
+      <translation>VTOL: FW</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/VTOLModeIndicator.qml" line="24"/>
       <source>VTOL: MR</source>
-      <translation type="unfinished">VTOL: MR</translation>
+      <translation>VTOL: MR</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/VTOLModeIndicator.qml" line="25"/>
@@ -17760,7 +17754,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2441"/>
       <source>disarmed</source>
-      <translation type="unfinished">disarmed</translation>
+      <translation>ディスアームしました</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2835"/>
