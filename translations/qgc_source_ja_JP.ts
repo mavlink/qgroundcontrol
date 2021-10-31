@@ -1944,27 +1944,27 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="53"/>
       <source>Failsafe Triggers</source>
-      <translation type="unfinished">Failsafe Triggers</translation>
+      <translation>フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="67"/>
       <source>Throttle PWM threshold:</source>
-      <translation type="unfinished">Throttle PWM threshold:</translation>
+      <translation>スロットルPWMしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="88"/>
       <source>Voltage threshold:</source>
-      <translation type="unfinished">Voltage threshold:</translation>
+      <translation>電圧しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="109"/>
       <source>MAH threshold:</source>
-      <translation type="unfinished">MAH threshold:</translation>
+      <translation>容量(mAh) しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="130"/>
       <source>GCS failsafe</source>
-      <translation type="unfinished">GCS failsafe</translation>
+      <translation>GCSフェールセール</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="142"/>
@@ -1974,12 +1974,12 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="156"/>
       <source>Return at current altitude</source>
-      <translation type="unfinished">Return at current altitude</translation>
+      <translation>現在の高度で戻る</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="168"/>
       <source>Return at specified altitude:</source>
-      <translation type="unfinished">Return at specified altitude:</translation>
+      <translation>指定した高度で戻る:</translation>
     </message>
   </context>
   <context>
@@ -2368,34 +2368,34 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="27"/>
       <source>Throttle failsafe:</source>
-      <translation type="unfinished">Throttle failsafe:</translation>
+      <translation>スロットル フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="28"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="38"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>無効</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="32"/>
       <source>Voltage failsafe:</source>
-      <translation type="unfinished">Voltage failsafe:</translation>
+      <translation>電圧 フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="37"/>
       <source>mAh failsafe:</source>
-      <translation type="unfinished">mAh failsafe:</translation>
+      <translation>容量(mAh) フェイルセーフ:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="42"/>
       <source>RTL min alt:</source>
-      <translation type="unfinished">RTL min alt:</translation>
+      <translation>RTL最小高度:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="43"/>
       <source>current</source>
-      <translation type="unfinished">current</translation>
+      <translation>現在</translation>
     </message>
   </context>
   <context>
@@ -2639,7 +2639,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="185"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="185"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
-      <translation>車両がキャンセルに応答するのを待っています。数秒かかる場合があります。</translation>
+      <translation>機体がキャンセルに応答するのを待機しています。数秒かかる場合があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
@@ -2860,7 +2860,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="590"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="590"/>
       <source>To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</source>
-      <translation type="unfinished">To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</translation>
+      <translation>対気速度センサーをキャリブレーションする際には、風を遮るようにしてください。またキャリブレーション中はセンサーに触れたり、穴を塞いだりしないでください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="610"/>
@@ -2918,7 +2918,7 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="679"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="679"/>
       <source>Baro/Airspeed</source>
-      <translation type="unfinished">Baro/Airspeed</translation>
+      <translation>気圧 / 対気速度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="679"/>
@@ -3028,7 +3028,7 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="358"/>
       <source>Hold the vehicle in its level flight position.</source>
-      <translation>そのレベルの飛行位置に機体を保持します。</translation>
+      <translation>そのレベルの飛行ポジションに機体を保持します。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="367"/>
@@ -3340,19 +3340,19 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="320"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="320"/>
       <source>AutoTune</source>
-      <translation type="unfinished">AutoTune</translation>
+      <translation>自動調整</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="341"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="341"/>
       <source>Axes to AutoTune:</source>
-      <translation type="unfinished">Axes to AutoTune:</translation>
+      <translation>自動調整 軸:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="350"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="350"/>
       <source>Channel for AutoTune switch:</source>
-      <translation>自動調整スイッチのチャンネル:</translation>
+      <translation>自動調整スイッチ チャンネル:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
@@ -3445,13 +3445,13 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="41"/>
       <source>Attitude Controller Parameters</source>
-      <translation>姿勢制御 パラメータ</translation>
+      <translation>姿勢制御パラメータ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="49"/>
       <source>Position Controller Parameters</source>
-      <translation>ポジションコントローラ パラメータ</translation>
+      <translation>ポジション制御パラメータ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="56"/>
@@ -3915,7 +3915,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="36"/>
       <source>Power Plant</source>
-      <translation type="unfinished">Power Plant</translation>
+      <translation>発電所</translation>
     </message>
     <message>
       <location filename="../src/AirspaceManagement/AirspaceAdvisoryProvider.cc" line="37"/>
@@ -4043,7 +4043,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="48"/>
       <source>Specified altitudes are relative to launch position height.</source>
-      <translation>指定された高度は、離陸地点に対する相対的な高度です。</translation>
+      <translation>指定された高度は、離陸ポジションに対する相対的な高度です。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="52"/>
@@ -4254,72 +4254,72 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="37"/>
       <source>Autotune: In progress</source>
-      <translation type="unfinished">Autotune: In progress</translation>
+      <translation>自動調整: 進行中</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="90"/>
       <source>Autotune: initializing</source>
-      <translation type="unfinished">Autotune: initializing</translation>
+      <translation>自動調整: 初期化</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="93"/>
       <source>Autotune: roll</source>
-      <translation type="unfinished">Autotune: roll</translation>
+      <translation>自動調整: ロール</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="96"/>
       <source>Autotune: pitch</source>
-      <translation type="unfinished">Autotune: pitch</translation>
+      <translation>自動調整: ピッチ</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="99"/>
       <source>Autotune: yaw</source>
-      <translation type="unfinished">Autotune: yaw</translation>
+      <translation>自動調整: ヨー</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="102"/>
       <source>Wait for disarm</source>
-      <translation type="unfinished">Wait for disarm</translation>
+      <translation>ディスアーム 待機</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="105"/>
       <source>Land and disarm the vehicle in order to apply the parameters.</source>
-      <translation type="unfinished">Land and disarm the vehicle in order to apply the parameters.</translation>
+      <translation>パラメータを適用するためには、機体を着陸させてディスアームする必要があります。</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="110"/>
       <source>Autotune: in progress</source>
-      <translation type="unfinished">Autotune: in progress</translation>
+      <translation>自動調整: 進行中</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="117"/>
       <source>Autotune: Success</source>
-      <translation type="unfinished">Autotune: Success</translation>
+      <translation>自動調整: 成功</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="119"/>
       <source>Autotune successful.</source>
-      <translation type="unfinished">Autotune successful.</translation>
+      <translation>自動調整: 成功しました。</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="122"/>
       <source>Autotune: Unknown error</source>
-      <translation type="unfinished">Autotune: Unknown error</translation>
+      <translation>自動調整: 不明なエラー</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="134"/>
       <source>Autotune: Failed</source>
-      <translation type="unfinished">Autotune: Failed</translation>
+      <translation>自動調整: 失敗</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.cpp" line="144"/>
       <source>Autotune: Ack error %1</source>
-      <translation type="unfinished">Autotune: Ack error %1</translation>
+      <translation>自動調整: Ack エラー %1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Autotune.h" line="59"/>
       <source>Autotune: Not performed</source>
-      <translation type="unfinished">Autotune: Not performed</translation>
+      <translation>自動調整: 行いません</translation>
     </message>
   </context>
   <context>
@@ -4327,7 +4327,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AutotuneUI.qml" line="27"/>
       <source>Autotune</source>
-      <translation type="unfinished">Autotune</translation>
+      <translation>自動調整</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AutotuneUI.qml" line="37"/>
@@ -4342,17 +4342,16 @@ Before starting the auto-tuning process, make sure that:
 
 Click Ok to start the auto-tuning process.
 </source>
-      <translation type="unfinished">WARNING!
+      <translation>警告！
 
-The auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure!
+自動調整を行う前に、機体が十分に安定していることを確認してください！
 
-Before starting the auto-tuning process, make sure that: 
-1. You have read the auto-tuning guide and have followed the preliminary steps 
-2. The current control gains are good enough to stabilize the drone in presence of medium disturbances 
-3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens. 
+自動調整を始める前に次のことを確認してください: 
+1. 自動調整ガイドを閲覧し、その手順に従うこととする
+2. 現在の制御ゲイン(強度)は、中程度の外乱(妨害)等があるような場合に機体を安定させるのに十分である
+3. 不測の事態が発生した場合、送信機スティックを動かし自動調整を中止する準備ができている
 
-Click Ok to start the auto-tuning process.
-</translation>
+【OK】をクリックすると、自動調整プロセスが開始されます。</translation>
     </message>
   </context>
   <context>
@@ -4417,7 +4416,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/BlankPlanCreator.cc" line="16"/>
       <source>Blank</source>
-      <translation type="unfinished">Blank</translation>
+      <translation>空白</translation>
     </message>
   </context>
   <context>
@@ -4446,17 +4445,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/BluetoothSettings.qml" line="31"/>
       <source>Device</source>
-      <translation type="unfinished">Device</translation>
+      <translation>デバイス</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/BluetoothSettings.qml" line="37"/>
       <source>Address</source>
-      <translation type="unfinished">Address</translation>
+      <translation>アドレス</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/BluetoothSettings.qml" line="44"/>
       <source>Bluetooth Devices</source>
-      <translation type="unfinished">Bluetooth Devices</translation>
+      <translation>Bluetoothデバイス</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/BluetoothSettings.qml" line="67"/>
@@ -4484,7 +4483,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="250"/>
       <source>Timeout waiting for bytes to be available</source>
-      <translation type="unfinished">Timeout waiting for bytes to be available</translation>
+      <translation>タイムアウトは利用可能になるバイト数を待機しています</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="260"/>
@@ -4620,7 +4619,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="319"/>
       <source>Get Device: </source>
-      <translation type="unfinished">Get Device: </translation>
+      <translation>デバイスを取得: </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="747"/>
@@ -4651,17 +4650,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CameraCalcCamera.qml" line="108"/>
       <source>Width</source>
-      <translation type="unfinished">Width</translation>
+      <translation>幅</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcCamera.qml" line="112"/>
       <source>Height</source>
-      <translation type="unfinished">Height</translation>
+      <translation>高さ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcCamera.qml" line="120"/>
       <source>Sensor</source>
-      <translation type="unfinished">Sensor</translation>
+      <translation>センサー</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcCamera.qml" line="135"/>
@@ -4671,7 +4670,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CameraCalcCamera.qml" line="150"/>
       <source>Focal length</source>
-      <translation type="unfinished">Focal length</translation>
+      <translation>焦点距離</translation>
     </message>
   </context>
   <context>
@@ -4679,27 +4678,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CameraCalcGrid.qml" line="47"/>
       <source>Front Lap</source>
-      <translation type="unfinished">Front Lap</translation>
+      <translation>フロントラップ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcGrid.qml" line="51"/>
       <source>Side Lap</source>
-      <translation type="unfinished">Side Lap</translation>
+      <translation>サイドラップ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcGrid.qml" line="59"/>
       <source>Overlap</source>
-      <translation type="unfinished">Overlap</translation>
+      <translation>オーバーラップ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcGrid.qml" line="72"/>
       <source>Select one:</source>
-      <translation type="unfinished">Select one:</translation>
+      <translation>1つ選択:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraCalcGrid.qml" line="102"/>
       <source>Grnd Res</source>
-      <translation type="unfinished">Grnd Res</translation>
+      <translation>解像度</translation>
     </message>
   </context>
   <context>
@@ -4825,37 +4824,37 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="29"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>カメラ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="54"/>
       <source>Time</source>
-      <translation type="unfinished">Time</translation>
+      <translation>時間</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="70"/>
       <source>Distance</source>
-      <translation type="unfinished">Distance</translation>
+      <translation>距離</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="87"/>
       <source>Mode</source>
-      <translation type="unfinished">Mode</translation>
+      <translation>モード</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="107"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="108"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>ヨー</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="106"/>
       <source>Gimbal</source>
-      <translation type="unfinished">Gimbal</translation>
+      <translation>ジンバル</translation>
     </message>
   </context>
   <context>
@@ -5004,22 +5003,22 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="19"/>
       <source>Corridor</source>
-      <translation type="unfinished">Corridor</translation>
+      <translation>回廊</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="38"/>
       <source>Width</source>
-      <translation type="unfinished">Width</translation>
+      <translation>幅</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="45"/>
       <source>Turnaround dist</source>
-      <translation type="unfinished">Turnaround dist</translation>
+      <translation>折り返し距離</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="18"/>
       <source>Use the Polyline Tools to create the polyline which defines the corridor.</source>
-      <translation type="unfinished">Use the Polyline Tools to create the polyline which defines the corridor.</translation>
+      <translation>ポリラインツールを使って、回廊を定義するポリラインを作成します。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="56"/>
@@ -5545,28 +5544,28 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="41"/>
       <source>Set to vehicle location</source>
-      <translation type="unfinished">Set to vehicle location</translation>
+      <translation>機体位置を設定</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="80"/>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="142"/>
       <source>Altitude</source>
-      <translation type="unfinished">Altitude</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="89"/>
       <source>Radius</source>
-      <translation type="unfinished">Radius</translation>
+      <translation>半径</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="103"/>
       <source>Loiter clockwise</source>
-      <translation type="unfinished">Loiter clockwise</translation>
+      <translation>ロイター 時計回り</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="119"/>
       <source>Landing point</source>
-      <translation type="unfinished">Landing point</translation>
+      <translation>着陸地点</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="135"/>
@@ -5576,7 +5575,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="166"/>
       <source>Glide Slope</source>
-      <translation type="unfinished">Glide Slope</translation>
+      <translation>グライドスロープ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="191"/>
@@ -6048,7 +6047,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="528"/>
       <source>6X Sensor</source>
-      <translation type="unfinished">6X Sensor</translation>
+      <translation>6X Sensor</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="545"/>
@@ -6255,19 +6254,19 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="856"/>
       <source>Duo Pro R</source>
-      <translation type="unfinished">Duo Pro R</translation>
+      <translation>Duo Pro R</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="871"/>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="887"/>
       <source>Workswell</source>
-      <translation type="unfinished">Workswell</translation>
+      <translation>Workswell</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="872"/>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="888"/>
       <source>Wiris Security</source>
-      <translation type="unfinished">Wiris Security</translation>
+      <translation>Wiris Security</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="1061"/>
@@ -6290,7 +6289,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="47"/>
       <source>%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.</source>
-      <translation type="unfinished">%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.</translation>
+      <translation>はPixhawk デバイス、SiK Radios、PX4 Flow Smart Camera のファームウェアをアップグレードできます。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="48"/>
@@ -6325,7 +6324,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="127"/>
       <source>Multiple devices detected! Remove all detected devices to perform the firmware upgrade.</source>
-      <translation type="unfinished">Multiple devices detected! Remove all detected devices to perform the firmware upgrade.</translation>
+      <translation>複数のデバイスが検出されました！検出されたデバイスをすべて削除し、ファームウェアのアップグレードを実施してください。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="128"/>
@@ -6335,7 +6334,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="135"/>
       <source>Found device</source>
-      <translation type="unfinished">Found device</translation>
+      <translation>デバイスが見つかりました</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="177"/>
@@ -6669,7 +6668,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/FixedWingLandingComplexItem.cc" line="22"/>
       <source>Fixed Wing Landing</source>
-      <translation type="unfinished">Fixed Wing Landing</translation>
+      <translation>固定翼機 着陸</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/FixedWingLandingComplexItem.cc" line="98"/>
@@ -6945,7 +6944,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="510"/>
       <source>Orbit</source>
       <comment>Orbit waypoint</comment>
-      <translation type="unfinished">Orbit</translation>
+      <translation>オービット</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="522"/>
@@ -6955,7 +6954,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="531"/>
       <source>Orbit at location</source>
-      <translation type="unfinished">Orbit at location</translation>
+      <translation>指定位置オービット</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="540"/>
@@ -7022,7 +7021,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="22"/>
       <source>Plan</source>
-      <translation type="unfinished">Plan</translation>
+      <translation>プラン</translation>
     </message>
   </context>
   <context>
@@ -7030,7 +7029,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewVideo.qml" line="68"/>
       <source>Double-click to exit full screen</source>
-      <translation type="unfinished">Double-click to exit full screen</translation>
+      <translation>ダブルクリックで全画面表示を終了</translation>
     </message>
   </context>
   <context>
@@ -7364,7 +7363,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="356"/>
       <source>Plan View</source>
-      <translation type="unfinished">Plan View</translation>
+      <translation>プランビュー</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="378"/>
@@ -7399,7 +7398,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="731"/>
       <source>AutoConnect to the following devices</source>
-      <translation type="unfinished">AutoConnect to the following devices</translation>
+      <translation>次のデバイスに自動接続</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="762"/>
@@ -7435,12 +7434,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="762"/>
       <source>Zero-Conf</source>
-      <translation type="unfinished">Zero-Conf</translation>
+      <translation>Zero-Conf</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="781"/>
       <source>NMEA GPS Device</source>
-      <translation type="unfinished">NMEA GPS Device</translation>
+      <translation>NMEA GPS デバイス</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="812"/>
@@ -7725,7 +7724,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="26"/>
       <source>Used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.</source>
-      <translation type="unfinished">Used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.</translation>
+      <translation>使われた調査ミッションの画像セットをGPS座標をタグ付けするために使用します。フライトにおけるバイナリログと、タグ付けする画像を含むディレクトリを指定する必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="67"/>
@@ -7920,7 +7919,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="50"/>
       <source>Orbit</source>
-      <translation>軌道</translation>
+      <translation>オービット</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="51"/>
@@ -7985,7 +7984,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="62"/>
       <source>Takeoff from ground and hold position.</source>
-      <translation>地上から離陸し上空で位置を保持します。</translation>
+      <translation>地上から離陸し上空でポジションを保持します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="63"/>
@@ -8005,7 +8004,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="66"/>
       <source>Land the vehicle at the current position.</source>
-      <translation>機体の現在の位置に着陸します。</translation>
+      <translation>機体の現在のポジションに着陸します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="68"/>
@@ -8025,7 +8024,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="71"/>
       <source>Orbit the vehicle around the specified location.</source>
-      <translation>指定位置付近に機体を軌道に乗せます。</translation>
+      <translation>指定位置付近で機体をオービットさせます。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="72"/>
@@ -8035,12 +8034,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="73"/>
       <source>Pause the vehicle at it&apos;s current position, adjusting altitude up or down as needed.</source>
-      <translation>現在の位置で一時停止し、必要に応じて高度を上げ下げします。</translation>
+      <translation>現在のポジションで一時停止し、必要に応じて高度を上げ下げします。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="74"/>
       <source>Pause all vehicles at their current position.</source>
-      <translation>現在位置にあるすべての機体を一時停止します。</translation>
+      <translation>現在のポジションにあるすべての機体を一時停止します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="75"/>
@@ -8496,7 +8495,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigButtons.qml" line="185"/>
       <source>No firmware support</source>
-      <translation type="unfinished">No firmware support</translation>
+      <translation>ファームウェアがサポートされていません</translation>
     </message>
   </context>
   <context>
@@ -8801,12 +8800,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="183"/>
       <source>Name</source>
-      <translation type="unfinished">Name</translation>
+      <translation>名前</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="189"/>
       <source>Enter name</source>
-      <translation type="unfinished">Enter name</translation>
+      <translation>名前を入力</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="194"/>
@@ -8821,7 +8820,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="206"/>
       <source>Type</source>
-      <translation type="unfinished">Type</translation>
+      <translation>タイプ</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="240"/>
@@ -9041,7 +9040,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="26"/>
       <source>Log File</source>
-      <translation type="unfinished">Log File</translation>
+      <translation>ログファイル</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="35"/>
@@ -9051,17 +9050,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="41"/>
       <source>Select Telemetery Log</source>
-      <translation type="unfinished">Select Telemetery Log</translation>
+      <translation>テレメトリーログを選択</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="42"/>
       <source>Telemetry Logs (*.%1)</source>
-      <translation type="unfinished">Telemetry Logs (*.%1)</translation>
+      <translation>テレメトリーログ (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="42"/>
       <source>All Files (*)</source>
-      <translation type="unfinished">All Files (*)</translation>
+      <translation>すべてのファイル (*)</translation>
     </message>
   </context>
   <context>
@@ -9187,7 +9186,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="209"/>
       <source>X/Y position control</source>
-      <translation>X / Y 位置制御</translation>
+      <translation>X / Y ポジション制御</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="210"/>
@@ -9491,7 +9490,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="351"/>
       <source>Select Tool</source>
-      <translation type="unfinished">Select Tool</translation>
+      <translation>ツール選択</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="419"/>
@@ -9592,7 +9591,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainToolBar.qml" line="201"/>
       <source>Downloading</source>
-      <translation type="unfinished">Downloading</translation>
+      <translation>ダウンロード中</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainToolBar.qml" line="209"/>
@@ -9976,7 +9975,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/Microhard/MicrohardSettings.qml" line="126"/>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="142"/>
       <source>Connected</source>
-      <translation type="unfinished">Connected</translation>
+      <translation>接続しました</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="128"/>
@@ -9993,22 +9992,22 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="137"/>
       <source>Air Unit:</source>
-      <translation type="unfinished">Air Unit:</translation>
+      <translation>エアユニット:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="152"/>
       <source>Uplink RSSI:</source>
-      <translation type="unfinished">Uplink RSSI:</translation>
+      <translation>アップリンク RSSI:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="158"/>
       <source>Downlink RSSI:</source>
-      <translation type="unfinished">Downlink RSSI:</translation>
+      <translation>ダウンリンク RSSI:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="176"/>
       <source>Network Settings</source>
-      <translation type="unfinished">Network Settings</translation>
+      <translation>ネットワーク設定</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="198"/>
@@ -10299,7 +10298,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="57"/>
       <source>APM ArduPlane Vehicle</source>
-      <translation type="unfinished">APM ArduPlane Vehicle</translation>
+      <translation>APM ArduPlane 機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="63"/>
@@ -10365,17 +10364,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="84"/>
       <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
+      <translation>ファームウェア</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="88"/>
       <source>PX4 Pro</source>
-      <translation type="unfinished">PX4 Pro</translation>
+      <translation> PX4 Pro</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="88"/>
       <source>ArduPilot</source>
-      <translation type="unfinished">ArduPilot</translation>
+      <translation>ArduPilot</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="88"/>
@@ -10385,7 +10384,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="94"/>
       <source>Vehicle Type</source>
-      <translation type="unfinished">Vehicle Type</translation>
+      <translation>機体タイプ</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="100"/>
@@ -10395,7 +10394,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="100"/>
       <source>ArduPlane</source>
-      <translation type="unfinished">ArduPlane</translation>
+      <translation>ArduPlane</translation>
     </message>
   </context>
   <context>
@@ -10626,27 +10625,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="369"/>
       <source>To enable Esri maps, enter your access token.</source>
-      <translation type="unfinished">To enable Esri maps, enter your access token.</translation>
+      <translation>ESRIマップを有効にするには、アクセストークンを入力してください。</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="375"/>
       <source>VWorld Access Token</source>
-      <translation type="unfinished">VWorld Access Token</translation>
+      <translation>VWorld アクセストークン</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="386"/>
       <source>To enable VWorld maps, enter your access token.</source>
-      <translation type="unfinished">To enable VWorld maps, enter your access token.</translation>
+      <translation>VWorldマップを有効にするにはアクセストークンを入力してください。</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="392"/>
       <source>Custom Map URL</source>
-      <translation type="unfinished">Custom Map URL</translation>
+      <translation>カスタムマップ URL</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="403"/>
       <source>URL with {x} {y} {z} or {zoom} substitutions</source>
-      <translation type="unfinished">URL with {x} {y} {z} or {zoom} substitutions</translation>
+      <translation>{x} {y} {z} または {zoom} の代用URL</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="418"/>
@@ -10909,17 +10908,17 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="200"/>
       <source>Autotune enabled</source>
-      <translation type="unfinished">Autotune enabled</translation>
+      <translation>自動調整を有効化</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="200"/>
       <source>Autotune disabled</source>
-      <translation type="unfinished">Autotune disabled</translation>
+      <translation>自動調整を無効化</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="227"/>
       <source>Select Tuning:</source>
-      <translation type="unfinished">Select Tuning:</translation>
+      <translation>チューニング選択:</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="253"/>
@@ -11059,7 +11058,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="51"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="51"/>
       <source>In order for the Attitude Control/Position Control switch to be active, the Main switch must be in Assist mode.</source>
-      <translation type="unfinished">In order for the Attitude Control/Position Control switch to be active, the Main switch must be in Assist mode.</translation>
+      <translation>姿勢制御 / ポジション制御スイッチを有効にするには、メインスイッチがアシストモードになっている必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="53"/>
@@ -11077,7 +11076,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="55"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="55"/>
       <source>In order for the Mission/Loiter switch to be active, the Main switch must be in Auto mode.</source>
-      <translation type="unfinished">In order for the Mission/Loiter switch to be active, the Main switch must be in Auto mode.</translation>
+      <translation>ミッション / ロイタースイッチを有効にするには、メインスイッチがオートモードになっている必要があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="57"/>
@@ -11095,13 +11094,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="59"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="59"/>
       <source>Roll/pitch angles and rudder deflection are controlled. </source>
-      <translation type="unfinished">Roll/pitch angles and rudder deflection are controlled. </translation>
+      <translation>ロール / ピッチ角、ラダー偏向を制御します。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="60"/>
       <source>The angular rates are controlled, but not the attitude. </source>
-      <translation type="unfinished">The angular rates are controlled, but not the attitude. </translation>
+      <translation>角速度は制御できますが、姿勢は制御できません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="62"/>
@@ -11113,13 +11112,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="63"/>
       <source>Roll stick controls banking, pitch stick altitude </source>
-      <translation type="unfinished">Roll stick controls banking, pitch stick altitude </translation>
+      <translation>ロールのスティックでバンク角を、ピッチのスティックで高度を制御 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="64"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="64"/>
       <source>Throttle stick controls speed. </source>
-      <translation type="unfinished">Throttle stick controls speed. </translation>
+      <translation>スロットルのスティックで速度を制御します。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="65"/>
@@ -11131,43 +11130,43 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="66"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="66"/>
       <source>Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady. </source>
-      <translation type="unfinished">Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady. </translation>
+      <translation>スタビライズモードと同じですが、スロットルで上昇 / 下降レートを制御します。スロットル中央値は高度を一定に保ちます。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="68"/>
       <source>Position Control</source>
-      <translation type="unfinished">Position Control</translation>
+      <translation>ポジション制御</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="69"/>
       <source>Roll stick controls banking, pitch stick controls altitude. </source>
-      <translation type="unfinished">Roll stick controls banking, pitch stick controls altitude. </translation>
+      <translation>ロールのスティックでバンク角を、ピッチのスティックで高度を制御します。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="70"/>
       <source>Throttle stick controls speed.</source>
-      <translation type="unfinished">Throttle stick controls speed.</translation>
+      <translation>スロットルのスティックで速度を制御します。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="71"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="71"/>
       <source>With no stick inputs the plane flies a straight line, even in wind. </source>
-      <translation type="unfinished">With no stick inputs the plane flies a straight line, even in wind. </translation>
+      <translation>スティックを入力をしなくても、風が吹いていても、飛行機はまっすぐに飛びます。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="72"/>
       <source>Roll and Pitch sticks control sideways and forward speed </source>
-      <translation type="unfinished">Roll and Pitch sticks control sideways and forward speed </translation>
+      <translation>ロールとピッチのスティックで、横方向と前方向の速度を制御します </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="73"/>
       <source>Throttle stick controls climb / sink rade. </source>
-      <translation type="unfinished">Throttle stick controls climb / sink rade. </translation>
+      <translation>スロットルのスティックで上昇 / 下降を制御します。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="75"/>
@@ -11197,7 +11196,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
       <source>The multirotor hovers at the current position and altitude. </source>
-      <translation type="unfinished">The multirotor hovers at the current position and altitude. </translation>
+      <translation>マルチローターは、現在のポジションと高度でホバリングします。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="82"/>
@@ -11215,13 +11214,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="85"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="85"/>
       <source>Offboard</source>
-      <translation type="unfinished">Offboard</translation>
+      <translation>オフボード</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="86"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="86"/>
       <source>All flight control aspects are controlled by an offboard system.</source>
-      <translation type="unfinished">All flight control aspects are controlled by an offboard system.</translation>
+      <translation>すべてのフライト制御の特徴は、オフボードシステムによって制御されます。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="159"/>
@@ -11239,7 +11238,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="204"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="204"/>
       <source>Generate Thresholds</source>
-      <translation type="unfinished">Generate Thresholds</translation>
+      <translation>しきい値の生成</translation>
     </message>
   </context>
   <context>
@@ -11248,8 +11247,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc" line="151"/>
       <source>%1 is set to %2. Mapping must between 0 and %3 (inclusive).
 </source>
-      <translation type="unfinished">%1 is set to %2. Mapping must between 0 and %3 (inclusive).
-</translation>
+      <translation>%1 が %2 に設定されています。マッピングは、0 から %3 (含む)の間でなければなりません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc" line="167"/>
@@ -11261,8 +11259,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc" line="177"/>
       <source>%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).
 </source>
-      <translation type="unfinished">%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).
-</translation>
+      <translation>%1 が %2 に設定されています。しきい値は、0.0 から 1.0 (含む)の間でなければなりません。</translation>
     </message>
   </context>
   <context>
@@ -11270,7 +11267,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc" line="144"/>
       <source>Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle.</source>
-      <translation type="unfinished">Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle.</translation>
+      <translation>警告: この機体はHardware In The Loop (HITL) シミュレーションが有効です。</translation>
     </message>
   </context>
   <context>
@@ -11363,7 +11360,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="54"/>
       <source>Orbit</source>
-      <translation type="unfinished">Orbit</translation>
+      <translation>オービット</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="187"/>
@@ -11373,7 +11370,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="396"/>
       <source>Unable to takeoff, vehicle position not known.</source>
-      <translation type="unfinished">Unable to takeoff, vehicle position not known.</translation>
+      <translation>離陸することができません。機体ポジションが不明です。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="416"/>
@@ -11383,7 +11380,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="489"/>
       <source>Unable to pause vehicle.</source>
-      <translation type="unfinished">Unable to pause vehicle.</translation>
+      <translation>機体を一時停止できません。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="498"/>
@@ -11416,32 +11413,32 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/VehicleSetup/PX4FirmwareUpgradeThread.cc" line="153"/>
       <source>Programming new version...</source>
-      <translation type="unfinished">Programming new version...</translation>
+      <translation>新バージョンをプログラミングしています...</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/PX4FirmwareUpgradeThread.cc" line="163"/>
       <source>Verifying program...</source>
-      <translation type="unfinished">Verifying program...</translation>
+      <translation>プログラムを確認しています...</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/PX4FirmwareUpgradeThread.cc" line="167"/>
       <source>Verify complete</source>
-      <translation type="unfinished">Verify complete</translation>
+      <translation>確認が完了しました</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/PX4FirmwareUpgradeThread.cc" line="174"/>
       <source>Rebooting board</source>
-      <translation type="unfinished">Rebooting board</translation>
+      <translation>ボードの再起動</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/PX4FirmwareUpgradeThread.cc" line="198"/>
       <source>Erasing previous program...</source>
-      <translation type="unfinished">Erasing previous program...</translation>
+      <translation>以前のプログラムを消去しています...</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/PX4FirmwareUpgradeThread.cc" line="202"/>
       <source>Erase complete</source>
-      <translation type="unfinished">Erase complete</translation>
+      <translation>消去が完了しました</translation>
     </message>
   </context>
   <context>
@@ -11449,12 +11446,12 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc" line="17"/>
       <source>Flight Behavior</source>
-      <translation type="unfinished">Flight Behavior</translation>
+      <translation>飛行挙動</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc" line="28"/>
       <source>Flight Behavior is used to configure flight characteristics.</source>
-      <translation type="unfinished">Flight Behavior is used to configure flight characteristics.</translation>
+      <translation>飛行挙動は飛行特性の設定に使用します。</translation>
     </message>
   </context>
   <context>
@@ -11463,19 +11460,19 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="49"/>
       <source>Enable responsiveness slider (if enabled, acceleration limit parameters and others are automatically set)</source>
-      <translation type="unfinished">Enable responsiveness slider (if enabled, acceleration limit parameters and others are automatically set)</translation>
+      <translation>応答性スライダーを有効にします (有効にすると加速度制限パラメータなどが自動的に設定)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="68"/>
       <source>Responsiveness</source>
-      <translation type="unfinished">Responsiveness</translation>
+      <translation>応答性</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="69"/>
       <source>A higher value makes the vehicle react faster. Be aware that this affects braking as well, and a combination of slow responsiveness with high maximum velocity will lead to long braking distances.</source>
-      <translation type="unfinished">A higher value makes the vehicle react faster. Be aware that this affects braking as well, and a combination of slow responsiveness with high maximum velocity will lead to long braking distances.</translation>
+      <translation>値が大きいほど機体の反応が速くなります。応答性の遅さと最大速度の高さが重なるような組み合わせは、制動距離が長くなるので注意が必要です。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="89"/>
@@ -11493,37 +11490,37 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="109"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="109"/>
       <source>Limit the horizonal velocity (applies to all modes).</source>
-      <translation type="unfinished">Limit the horizonal velocity (applies to all modes).</translation>
+      <translation>水平方向の速度を制限します。 (すべてのモードに適用)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="124"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="124"/>
       <source>Enable vertical velocity slider (if enabled, individual velocity limit parameters are automatically set)</source>
-      <translation type="unfinished">Enable vertical velocity slider (if enabled, individual velocity limit parameters are automatically set)</translation>
+      <translation>垂直方向の速度スライダーを有効にします (有効にした場合、個々の速度制限パラメータが自動的に設定)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="143"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="143"/>
       <source>Vertial velocity (m/s)</source>
-      <translation type="unfinished">Vertial velocity (m/s)</translation>
+      <translation>垂直速度 (m/s)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="144"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="144"/>
       <source>Limit the vertical velocity (applies to all modes).</source>
-      <translation type="unfinished">Limit the vertical velocity (applies to all modes).</translation>
+      <translation>垂直方向の速度を制限します。 (すべてのモードに適用)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="159"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="159"/>
       <source>Mission Turning Radius</source>
-      <translation type="unfinished">Mission Turning Radius</translation>
+      <translation>ミッション旋回半径</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="160"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml" line="160"/>
       <source>Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.</source>
-      <translation type="unfinished">Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.</translation>
+      <translation>この値を大きくすると、ミッションにおける曲がり角はなだらかに曲がります。(コーナーカット) 正確なコーナートラッキングをするためには、最小値を使用してください。</translation>
     </message>
   </context>
   <context>
@@ -11552,7 +11549,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="16"/>
       <source>Radio</source>
-      <translation type="unfinished">Radio</translation>
+      <translation>送信機</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="27"/>
@@ -11618,13 +11615,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
       <source>Aux1</source>
-      <translation type="unfinished">Aux1</translation>
+      <translation>Aux1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="57"/>
       <source>Aux2</source>
-      <translation type="unfinished">Aux2</translation>
+      <translation>Aux2</translation>
     </message>
   </context>
   <context>
@@ -11633,7 +11630,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="67"/>
       <source>Flight Mode Settings</source>
-      <translation type="unfinished">Flight Mode Settings</translation>
+      <translation>フライトモード設定</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="89"/>
@@ -11645,13 +11642,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="97"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="97"/>
       <source>Flight Mode %1</source>
-      <translation type="unfinished">Flight Mode %1</translation>
+      <translation>フライトモード %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="128"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="128"/>
       <source>Switch Settings</source>
-      <translation type="unfinished">Switch Settings</translation>
+      <translation>スイッチ設定</translation>
     </message>
   </context>
   <context>
@@ -11659,12 +11656,12 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponent.cc" line="17"/>
       <source>PID Tuning</source>
-      <translation type="unfinished">PID Tuning</translation>
+      <translation>PIDチューニング</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponent.cc" line="28"/>
       <source>Tuning Setup is used to tune the flight controllers.</source>
-      <translation type="unfinished">Tuning Setup is used to tune the flight controllers.</translation>
+      <translation>チューニング設定はフライトコントローラのチューニングに使用します。</translation>
     </message>
   </context>
   <context>
@@ -11673,25 +11670,25 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="31"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="31"/>
       <source>Rate Controller</source>
-      <translation type="unfinished">Rate Controller</translation>
+      <translation>レートコントローラ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="34"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="34"/>
       <source>Attitude Controller</source>
-      <translation type="unfinished">Attitude Controller</translation>
+      <translation>姿勢コントローラ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="37"/>
       <source>Velocity Controller</source>
-      <translation type="unfinished">Velocity Controller</translation>
+      <translation>速度コントローラ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="40"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml" line="40"/>
       <source>Position Controller</source>
-      <translation type="unfinished">Position Controller</translation>
+      <translation>ポジションコントローラ</translation>
     </message>
   </context>
   <context>
@@ -11700,13 +11697,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="29"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="29"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>ロール</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="36"/>
       <source>Proportional Gain (MC_ROLL_P)</source>
-      <translation type="unfinished">Proportional Gain (MC_ROLL_P)</translation>
+      <translation>P値ゲイン[強度] (MC_ROLL_P)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="37"/>
@@ -11714,37 +11711,37 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="54"/>
       <source>Increase for more responsiveness, reduce if the attitude overshoots.</source>
-      <translation type="unfinished">Increase for more responsiveness, reduce if the attitude overshoots.</translation>
+      <translation>応答性を高めたい場合は大きく、姿勢がオーバーシュートする場合は小さくします。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="46"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="53"/>
       <source>Proportional Gain (MC_PITCH_P)</source>
-      <translation type="unfinished">Proportional Gain (MC_PITCH_P)</translation>
+      <translation>P値ゲイン[強度] (MC_PITCH_P)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="63"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>ヨー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="70"/>
       <source>Proportional Gain (MC_YAW_P)</source>
-      <translation type="unfinished">Proportional Gain (MC_YAW_P)</translation>
+      <translation>P値ゲイン[強度] (MC_YAW_P)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="71"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="71"/>
       <source>Increase for more responsiveness, reduce if the attitude overshoots (there is only a setpoint when yaw is fixed, i.e. when centering the stick).</source>
-      <translation type="unfinished">Increase for more responsiveness, reduce if the attitude overshoots (there is only a setpoint when yaw is fixed, i.e. when centering the stick).</translation>
+      <translation>応答性を高めたい場合は大きく、姿勢がオーバーシュートする場合は小さくします。(ヨーが固定されている時、つまりスティック中央値の時にのみの設定値)</translation>
     </message>
   </context>
   <context>
@@ -11753,25 +11750,25 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="30"/>
       <source>Position control mode (set this to &apos;simple&apos; during tuning):</source>
-      <translation type="unfinished">Position control mode (set this to &apos;simple&apos; during tuning):</translation>
+      <translation>ポジション制御モード (チューニング中は &apos;シンプル&apos; に設定)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="43"/>
       <source>Horizontal</source>
-      <translation type="unfinished">Horizontal</translation>
+      <translation>水平方向</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="44"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="44"/>
       <source>Horizontal (Y direction, sidewards)</source>
-      <translation type="unfinished">Horizontal (Y direction, sidewards)</translation>
+      <translation>水平方向 (Y方向、横)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="51"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="51"/>
       <source>Proportional gain (MPC_XY_P)</source>
-      <translation type="unfinished">Proportional gain (MPC_XY_P)</translation>
+      <translation>P値ゲイン[強度] (MPC_XY_P)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="52"/>
@@ -11779,19 +11776,19 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="69"/>
       <source>Increase for more responsiveness, reduce if the position overshoots (there is only a setpoint when hovering, i.e. when centering the stick).</source>
-      <translation type="unfinished">Increase for more responsiveness, reduce if the position overshoots (there is only a setpoint when hovering, i.e. when centering the stick).</translation>
+      <translation>応答性を高めたい場合は大きく、ポジションがオーバーシュートする場合は小さくします。(ホバリングしている時、つまりスティック中央値の時にのみの設定値)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="61"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="61"/>
       <source>Vertical</source>
-      <translation type="unfinished">Vertical</translation>
+      <translation>垂直方向</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="68"/>
       <source>Proportional gain (MPC_Z_P)</source>
-      <translation type="unfinished">Proportional gain (MPC_Z_P)</translation>
+      <translation>P値ゲイン[強度] (MPC_Z_P)</translation>
     </message>
   </context>
   <context>
@@ -11800,25 +11797,25 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="32"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="32"/>
       <source>Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;:</source>
-      <translation type="unfinished">Airmode (disable during tuning) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;:</translation>
+      <translation>エアモード (チューニング中は無効) &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation&quot;&gt;?&lt;/a&gt;&lt;/b&gt;:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="44"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="44"/>
       <source>Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;:</source>
-      <translation type="unfinished">Thrust curve &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;:</translation>
+      <translation>スラストカーブ &lt;b&gt;&lt;a href=&quot;https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve&quot;&gt;?&lt;/a&gt;&lt;/b&gt;:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="57"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>ロール</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="64"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="64"/>
       <source>Overall Multiplier (MC_ROLLRATE_K)</source>
-      <translation type="unfinished">Overall Multiplier (MC_ROLLRATE_K)</translation>
+      <translation>全体倍率 (MC_ROLLRATE_K)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="65"/>
@@ -11828,13 +11825,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="98"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="131"/>
       <source>Multiplier for P, I and D gains: increase for more responsiveness, reduce if the rates overshoot (and increasing D does not help).</source>
-      <translation type="unfinished">Multiplier for P, I and D gains: increase for more responsiveness, reduce if the rates overshoot (and increasing D does not help).</translation>
+      <translation>P・I・D値ゲインの倍率: 応答性を高めたい場合は大きくし、レートがオーバーシュートする場合は小さくします。(D値を大きくしても効果はありません)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="72"/>
       <source>Differential Gain (MC_ROLLRATE_D)</source>
-      <translation type="unfinished">Differential Gain (MC_ROLLRATE_D)</translation>
+      <translation>D値ゲイン[強度] (MC_ROLLRATE_D)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="73"/>
@@ -11842,13 +11839,13 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="106"/>
       <source>Damping: increase to reduce overshoots and oscillations, but not higher than really needed.</source>
-      <translation type="unfinished">Damping: increase to reduce overshoots and oscillations, but not higher than really needed.</translation>
+      <translation>ダンピング: オーバーシュートや振動を抑えるために強めに設定しますが、本当に必要以上は設定してはいけません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="80"/>
       <source>Integral Gain (MC_ROLLRATE_I)</source>
-      <translation type="unfinished">Integral Gain (MC_ROLLRATE_I)</translation>
+      <translation>I値ゲイン[強度] (MC_ROLLRATE_I)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="81"/>
@@ -11858,49 +11855,49 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="114"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="139"/>
       <source>Generally does not need much adjustment, reduce this when seeing slow oscillations.</source>
-      <translation type="unfinished">Generally does not need much adjustment, reduce this when seeing slow oscillations.</translation>
+      <translation>一般的にあまり調整する必要はありませんが、ゆっくりとした振動が見られる場合に調整してください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="90"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="90"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="97"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="97"/>
       <source>Overall Multiplier (MC_PITCHRATE_K)</source>
-      <translation type="unfinished">Overall Multiplier (MC_PITCHRATE_K)</translation>
+      <translation>全体倍率 (MC_PITCHRATE_K)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="105"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="105"/>
       <source>Differential Gain (MC_PITCHRATE_D)</source>
-      <translation type="unfinished">Differential Gain (MC_PITCHRATE_D)</translation>
+      <translation>D値ゲイン[強度] (MC_PITCHRATE_D)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="113"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="113"/>
       <source>Integral Gain (MC_PITCHRATE_I)</source>
-      <translation type="unfinished">Integral Gain (MC_PITCHRATE_I)</translation>
+      <translation>I値ゲイン[強度] (MC_PITCHRATE_I)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="123"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="123"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>ヨー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="130"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="130"/>
       <source>Overall Multiplier (MC_YAWRATE_K)</source>
-      <translation type="unfinished">Overall Multiplier (MC_YAWRATE_K)</translation>
+      <translation>全体倍率 (MC_YAWRATE_K)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="138"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="138"/>
       <source>Integral Gain (MC_YAWRATE_I)</source>
-      <translation type="unfinished">Integral Gain (MC_YAWRATE_I)</translation>
+      <translation>I値ゲイン[強度] (MC_YAWRATE_I)</translation>
     </message>
   </context>
   <context>
@@ -11909,25 +11906,25 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="30"/>
       <source>Position control mode (set this to &apos;simple&apos; during tuning):</source>
-      <translation type="unfinished">Position control mode (set this to &apos;simple&apos; during tuning):</translation>
+      <translation>ポジション制御モード (チューニング中は &apos;シンプル&apos; に設定)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="43"/>
       <source>Horizontal</source>
-      <translation type="unfinished">Horizontal</translation>
+      <translation>水平方向</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="44"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="44"/>
       <source>Horizontal (Y direction, sidewards)</source>
-      <translation type="unfinished">Horizontal (Y direction, sidewards)</translation>
+      <translation>水平方向 (Y方向、横)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="51"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="51"/>
       <source>Proportional gain (MPC_XY_VEL_P_ACC)</source>
-      <translation type="unfinished">Proportional gain (MPC_XY_VEL_P_ACC)</translation>
+      <translation>P値ゲイン[強度] (MPC_XY_VEL_P_ACC)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="52"/>
@@ -11935,25 +11932,25 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="85"/>
       <source>Increase for more responsiveness, reduce if the velocity overshoots (and increasing D does not help).</source>
-      <translation type="unfinished">Increase for more responsiveness, reduce if the velocity overshoots (and increasing D does not help).</translation>
+      <translation>応答性を高めたい場合は大きく、ベロシティ(速度)でオーバーシュートする場合は小さくします。(D値を大きくしても効果はありません)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="59"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="59"/>
       <source>Integral gain (MPC_XY_VEL_I_ACC)</source>
-      <translation type="unfinished">Integral gain (MPC_XY_VEL_I_ACC)</translation>
+      <translation>I値ゲイン[強度] (MPC_XY_VEL_I_ACC)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="60"/>
       <source>Increase to reduce steady-state error (e.g. wind)</source>
-      <translation type="unfinished">Increase to reduce steady-state error (e.g. wind)</translation>
+      <translation>定常的な誤差 (例: 風) を減らすために増加させます</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="67"/>
       <source>Differential gain (MPC_XY_VEL_D_ACC)</source>
-      <translation type="unfinished">Differential gain (MPC_XY_VEL_D_ACC)</translation>
+      <translation>D値ゲイン[強度] (MPC_XY_VEL_D_ACC)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="68"/>
@@ -12009,19 +12006,19 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneTECS.qml" line="28"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneTECS.qml" line="28"/>
       <source>Altitude &amp; Airspeed</source>
-      <translation type="unfinished">Altitude &amp; Airspeed</translation>
+      <translation>高度 &amp; 対気速度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneTECS.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneTECS.qml" line="37"/>
       <source>Height rate feed forward (FW_T_HRATE_FF)</source>
-      <translation type="unfinished">Height rate feed forward (FW_T_HRATE_FF)</translation>
+      <translation>高レート フィードフォワード (FW_T_HRATE_FF)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneTECS.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneTECS.qml" line="38"/>
       <source>TODO</source>
-      <translation type="unfinished">TODO</translation>
+      <translation>TODO</translation>
     </message>
   </context>
   <context>
@@ -12030,7 +12027,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="39"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="39"/>
       <source>Multirotor</source>
-      <translation type="unfinished">Multirotor</translation>
+      <translation>マルチローター</translation>
     </message>
   </context>
   <context>
@@ -12038,44 +12035,44 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="80"/>
       <source>Pairing Successfull</source>
-      <translation type="unfinished">Pairing Successfull</translation>
+      <translation>ペアリングに成功しました</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="90"/>
       <source>Connection Successfull</source>
-      <translation type="unfinished">Connection Successfull</translation>
+      <translation>接続に成功しました</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="151"/>
       <source>Connection Rejected</source>
-      <translation type="unfinished">Connection Rejected</translation>
+      <translation>接続が拒否されました</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="154"/>
       <source>Pairing Rejected</source>
-      <translation type="unfinished">Pairing Rejected</translation>
+      <translation>ペアリングが拒否されました</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="162"/>
       <source>No Response From Vehicle</source>
-      <translation type="unfinished">No Response From Vehicle</translation>
+      <translation>機体からの応答がありません</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="191"/>
       <source>Connecting to %1</source>
-      <translation type="unfinished">Connecting to %1</translation>
+      <translation>%1 に接続中</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="252"/>
       <source>Invalid Pairing File</source>
-      <translation type="unfinished">Invalid Pairing File</translation>
+      <translation>無効なペアリングファイル</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="257"/>
       <location filename="../src/PairingManager/PairingManager.cc" line="265"/>
       <location filename="../src/PairingManager/PairingManager.cc" line="278"/>
       <source>Error Parsing Pairing File</source>
-      <translation type="unfinished">Error Parsing Pairing File</translation>
+      <translation>ペアリングファイルの解析エラー</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="461"/>
@@ -12085,13 +12082,13 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="465"/>
       <source>Microhard</source>
-      <translation type="unfinished">Microhard</translation>
+      <translation>Microhard</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/PairingManager.cc" line="495"/>
       <location filename="../src/PairingManager/PairingManager.cc" line="517"/>
       <source>Pairing...</source>
-      <translation type="unfinished">Pairing...</translation>
+      <translation>ペアリング...</translation>
     </message>
   </context>
   <context>
@@ -12099,17 +12096,17 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/PairingManager/QtNFC.cc" line="30"/>
       <source>Waiting for NFC connection</source>
-      <translation type="unfinished">Waiting for NFC connection</translation>
+      <translation>NFC接続を待機中</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/QtNFC.cc" line="78"/>
       <source>Device detected</source>
-      <translation type="unfinished">Device detected</translation>
+      <translation>デバイスを検出しました</translation>
     </message>
     <message>
       <location filename="../src/PairingManager/QtNFC.cc" line="114"/>
       <source>Device removed</source>
-      <translation type="unfinished">Device removed</translation>
+      <translation>デバイスを削除しました</translation>
     </message>
   </context>
   <context>
@@ -12117,7 +12114,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="23"/>
       <source>Load Parameters</source>
-      <translation type="unfinished">Load Parameters</translation>
+      <translation>パラメータをロード</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="42"/>
@@ -12127,7 +12124,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="43"/>
       <source>There are no differences between the file loaded and the current settings on the Vehicle.</source>
-      <translation type="unfinished">There are no differences between the file loaded and the current settings on the Vehicle.</translation>
+      <translation>読み込んだファイルと現在の機体設定に違いはありません。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="71"/>
@@ -12137,7 +12134,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="78"/>
       <source>Name</source>
-      <translation type="unfinished">Name</translation>
+      <translation>名前</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="84"/>
@@ -12340,23 +12337,23 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="678"/>
       <source>Parameter write failed: veh:%1 comp:%2 param:%3</source>
-      <translation type="unfinished">Parameter write failed: veh:%1 comp:%2 param:%3</translation>
+      <translation>パラメータの書き込みに失敗しました: veh:%1 comp:%2 param:%3</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="700"/>
       <source>Parameter read failed: veh:%1 comp:%2 param:%3</source>
-      <translation type="unfinished">Parameter read failed: veh:%1 comp:%2 param:%3</translation>
+      <translation>パラメータの読み込みに失敗しました: veh:%1 comp:%2 param:%3</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="926"/>
       <source>Parameter cache CRC match failed</source>
-      <translation type="unfinished">Parameter cache CRC match failed</translation>
+      <translation>パラメータキャッシュのCRC一致に失敗しました</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="977"/>
       <source>Parameters not loaded since they are not currently on the vehicle: %1
 </source>
-      <translation type="unfinished">Parameters not loaded since they are not currently on the vehicle: %1
+      <translation>パラメータは現在機体に搭載されていないため、ロードされませんでした: %1
 </translation>
     </message>
     <message>
@@ -12380,12 +12377,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="239"/>
       <source>Video Grab</source>
-      <translation type="unfinished">Video Grab</translation>
+      <translation>ビデオ撮影</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="243"/>
       <source>Camera Trigger</source>
-      <translation type="unfinished">Camera Trigger</translation>
+      <translation>カメラトリガー</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="299"/>
@@ -12395,12 +12392,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="305"/>
       <source>Battery: </source>
-      <translation type="unfinished">Battery: </translation>
+      <translation>バッテリー: </translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="316"/>
       <source>Settings</source>
-      <translation type="unfinished">Settings</translation>
+      <translation>設定</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="331"/>
@@ -12410,107 +12407,107 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="337"/>
       <source>Video Stream</source>
-      <translation type="unfinished">Video Stream</translation>
+      <translation>ビデオ ストリーム</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="343"/>
       <source>Thermal View Mode</source>
-      <translation type="unfinished">Thermal View Mode</translation>
+      <translation>サーマルビューモード</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="349"/>
       <source>Blend Opacity</source>
-      <translation type="unfinished">Blend Opacity</translation>
+      <translation>ブレンド 不透明度</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="364"/>
       <source>Photo Mode</source>
-      <translation type="unfinished">Photo Mode</translation>
+      <translation>写真モード</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="370"/>
       <source>Photo Interval (seconds)</source>
-      <translation type="unfinished">Photo Interval (seconds)</translation>
+      <translation>写真の間隔 (秒)</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="376"/>
       <source>Video Grid Lines</source>
-      <translation type="unfinished">Video Grid Lines</translation>
+      <translation>ビデオグリッド線</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="382"/>
       <source>Video Screen Fit</source>
-      <translation type="unfinished">Video Screen Fit</translation>
+      <translation>ビデオ画面に合わせる</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="388"/>
       <source>Reset Camera Defaults</source>
-      <translation type="unfinished">Reset Camera Defaults</translation>
+      <translation>カメラをデフォルトにリセット</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="394"/>
       <source>Storage</source>
-      <translation type="unfinished">Storage</translation>
+      <translation>ストレージ</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="421"/>
       <source>Off</source>
-      <translation type="unfinished">Off</translation>
+      <translation>OFF</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="421"/>
       <source>Blend</source>
-      <translation type="unfinished">Blend</translation>
+      <translation>ブレンド</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="421"/>
       <source>Full</source>
-      <translation type="unfinished">Full</translation>
+      <translation>全画面</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="421"/>
       <source>Picture In Picture</source>
-      <translation type="unfinished">Picture In Picture</translation>
+      <translation>ピクチャー・イン・ピクチャー</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="495"/>
       <source>Single</source>
-      <translation type="unfinished">Single</translation>
+      <translation>シングル</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="495"/>
       <source>Time Lapse</source>
-      <translation type="unfinished">Time Lapse</translation>
+      <translation>タイムラプス</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="533"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>リセット</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="538"/>
       <source>Reset Camera to Factory Settings</source>
-      <translation type="unfinished">Reset Camera to Factory Settings</translation>
+      <translation>カメラを工場出荷時設定にリセット</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="539"/>
       <source>Confirm resetting all settings?</source>
-      <translation type="unfinished">Confirm resetting all settings?</translation>
+      <translation>すべての設定をリセットしますか？</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="551"/>
       <source>Format</source>
-      <translation type="unfinished">Format</translation>
+      <translation>フォーマット</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="556"/>
       <source>Format Camera Storage</source>
-      <translation type="unfinished">Format Camera Storage</translation>
+      <translation>カメラストレージ フォーマット</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="557"/>
       <source>Confirm erasing all files?</source>
-      <translation type="unfinished">Confirm erasing all files?</translation>
+      <translation>すべてのファイルを消去してもよろしいですか？</translation>
     </message>
   </context>
   <context>
@@ -12523,32 +12520,32 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="183"/>
       <source>Mission request list failed, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission request list failed, maximum retries exceeded.</translation>
+      <translation>ミッションのリスト要求に失敗しました。最大再試行回数を超えました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="187"/>
       <source>Retrying %1 REQUEST_LIST retry Count</source>
-      <translation type="unfinished">Retrying %1 REQUEST_LIST retry Count</translation>
+      <translation>再試行 %1 REQUEST_LIST 再試行回数</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="194"/>
       <source>Mission read failed, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission read failed, maximum retries exceeded.</translation>
+      <translation>ミッションの読み込みに失敗しました。最大再試行回数を超えました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="198"/>
       <source>Retrying %1 MISSION_REQUEST retry Count</source>
-      <translation type="unfinished">Retrying %1 MISSION_REQUEST retry Count</translation>
+      <translation>再試行 %1 MISSION_REQUEST 再試行回数</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="206"/>
       <source>Mission write failed, vehicle failed to send final ack.</source>
-      <translation type="unfinished">Mission write failed, vehicle failed to send final ack.</translation>
+      <translation>ミッションの書き込みに失敗しました。機体は最終的なACKを送信できませんでした。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="211"/>
       <source>Mission write mission count failed, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission write mission count failed, maximum retries exceeded.</translation>
+      <translation>ミッションの書き込みミッションカウントに失敗しました。最大再試行回数を超えました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="220"/>
@@ -12558,32 +12555,32 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="228"/>
       <source>Mission remove all, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission remove all, maximum retries exceeded.</translation>
+      <translation>ミッションをすべて削除します。最大再試行回数を超えました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="232"/>
       <source>Retrying %1 MISSION_CLEAR_ALL retry Count</source>
-      <translation type="unfinished">Retrying %1 MISSION_CLEAR_ALL retry Count</translation>
+      <translation>再試行 %1 MISSION_CLEAR_ALL 再試行回数</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="239"/>
       <source>Vehicle did not respond to mission item communication: %1</source>
-      <translation type="unfinished">Vehicle did not respond to mission item communication: %1</translation>
+      <translation>ミッション項目の通信に機体が応答しませんでした: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="350"/>
       <source>Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read</source>
-      <translation type="unfinished">Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read</translation>
+      <translation>内部エラー: 読み込むインデックスがない状態での機体 _requestNextMissionItem の呼び出し</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="500"/>
       <source>Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.</source>
-      <translation type="unfinished">Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.</translation>
+      <translation>機体が範囲外の項目を要求しました。count:request %1:%2. 機体への送信に失敗しました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="615"/>
       <source>Vehicle remove all failed. Error: %1</source>
-      <translation type="unfinished">Vehicle remove all failed. Error: %1</translation>
+      <translation>機体の削除にすべて失敗しました。エラー: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="690"/>
@@ -12609,12 +12606,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="737"/>
       <source>Mission accepted.</source>
-      <translation type="unfinished">Mission accepted.</translation>
+      <translation>ミッションが承認されました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="740"/>
       <source>Unspecified error.</source>
-      <translation type="unfinished">Unspecified error.</translation>
+      <translation>不明なエラーです。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="743"/>
@@ -12629,12 +12626,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="749"/>
       <source>Mission item exceeds storage space.</source>
-      <translation type="unfinished">Mission item exceeds storage space.</translation>
+      <translation>ミッション項目がストレージ容量を超えています。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="752"/>
       <source>One of the parameters has an invalid value.</source>
-      <translation type="unfinished">One of the parameters has an invalid value.</translation>
+      <translation>パラメータの1つに無効な値があります。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="755"/>
@@ -12674,12 +12671,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="776"/>
       <source>Received mission item out of sequence.</source>
-      <translation type="unfinished">Received mission item out of sequence.</translation>
+      <translation>ミッション項目を順不同で受信しました。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="779"/>
       <source>Not accepting any mission commands.</source>
-      <translation type="unfinished">Not accepting any mission commands.</translation>
+      <translation>ミッションコマンドを一切受け付けません。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="783"/>
@@ -12707,22 +12704,22 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="357"/>
       <source>Error loading Plan file (%1). %2</source>
-      <translation type="unfinished">Error loading Plan file (%1). %2</translation>
+      <translation>プランファイル (%1) で読み込みエラーが発生しました。%2</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="481"/>
       <source>Plan save error %1 : %2</source>
-      <translation type="unfinished">Plan save error %1 : %2</translation>
+      <translation>プラン保存エラー %1 : %2</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="513"/>
       <source>KML save error %1 : %2</source>
-      <translation type="unfinished">KML save error %1 : %2</translation>
+      <translation>KML保存エラー %1 : %2</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="584"/>
       <source>Supported types (*.%1 *.%2 *.%3 *.%4)</source>
-      <translation type="unfinished">Supported types (*.%1 *.%2 *.%3 *.%4)</translation>
+      <translation>サポートされているタイプ (*.%1 *.%2 *.%3 *.%4)</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="585"/>
@@ -12733,7 +12730,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="594"/>
       <source>Plan Files (*.%1)</source>
-      <translation type="unfinished">Plan Files (*.%1)</translation>
+      <translation>プランファイル (*.%1)</translation>
     </message>
   </context>
   <context>
@@ -12741,28 +12738,28 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="138"/>
       <source>Selected Waypoint</source>
-      <translation type="unfinished">Selected Waypoint</translation>
+      <translation>ウェイポイントを選択しました</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="143"/>
       <source>Alt diff:</source>
-      <translation type="unfinished">Alt diff:</translation>
+      <translation>高度の差異:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="152"/>
       <source>Azimuth:</source>
-      <translation type="unfinished">Azimuth:</translation>
+      <translation>方位:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="161"/>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="197"/>
       <source>Distance:</source>
-      <translation type="unfinished">Distance:</translation>
+      <translation>距離:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="168"/>
       <source>Gradient:</source>
-      <translation type="unfinished">Gradient:</translation>
+      <translation>傾斜度:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="177"/>
@@ -12772,47 +12769,47 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="192"/>
       <source>Total Mission</source>
-      <translation type="unfinished">Total Mission</translation>
+      <translation>ミッション合計</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="206"/>
       <source>Max telem dist:</source>
-      <translation type="unfinished">Max telem dist:</translation>
+      <translation>最大テレメトリー距離:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="213"/>
       <source>Time:</source>
-      <translation type="unfinished">Time:</translation>
+      <translation>時間:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="229"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>バッテリー</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="234"/>
       <source>Batteries required:</source>
-      <translation type="unfinished">Batteries required:</translation>
+      <translation>バッテリーが必要:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="246"/>
       <source>Upload Required</source>
-      <translation type="unfinished">Upload Required</translation>
+      <translation>アップロードが必要</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="246"/>
       <source>Upload</source>
-      <translation type="unfinished">Upload</translation>
+      <translation>アップロード</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="308"/>
       <source>Syncing Mission</source>
-      <translation type="unfinished">Syncing Mission</translation>
+      <translation>ミッション同期中</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="316"/>
       <source>Click anywhere to hide</source>
-      <translation type="unfinished">Click anywhere to hide</translation>
+      <translation>非表示にする場所をクリック</translation>
     </message>
   </context>
   <context>
@@ -12820,57 +12817,57 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="62"/>
       <source>Vehicle is currently armed. Do you want to upload the mission to the vehicle?</source>
-      <translation type="unfinished">Vehicle is currently armed. Do you want to upload the mission to the vehicle?</translation>
+      <translation>機体はアームしています。ミッションを機体にアップロードしますか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="129"/>
       <source>You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?</source>
-      <translation type="unfinished">You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?</translation>
+      <translation>ミッション項目のデフォルト高度を変更しました。その高度を、現在のミッションのすべてのアイテムに適用しますか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="209"/>
       <source>You need at least one item to create a KML.</source>
-      <translation type="unfinished">You need at least one item to create a KML.</translation>
+      <translation>KMLを作成するには最低でも1つ以上の項目が必要です。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="237"/>
       <source>Plan is waiting on terrain data from server for correct altitude values.</source>
-      <translation type="unfinished">Plan is waiting on terrain data from server for correct altitude values.</translation>
+      <translation>プランは正しい高度の値を取得するために、サーバからの地形データを待機をしています。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="263"/>
       <source>Plan Upload</source>
-      <translation type="unfinished">Plan Upload</translation>
+      <translation>プラン アップロード</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="269"/>
       <source>Select Plan File</source>
-      <translation type="unfinished">Select Plan File</translation>
+      <translation>プランファイルを選択</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="280"/>
       <source>Save Plan</source>
-      <translation type="unfinished">Save Plan</translation>
+      <translation>プランを保存</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="295"/>
       <source>Save KML</source>
-      <translation type="unfinished">Save KML</translation>
+      <translation>KMLを保存</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="401"/>
       <source>Move the selected mission item to the be after following mission item:</source>
-      <translation type="unfinished">Move the selected mission item to the be after following mission item:</translation>
+      <translation>選択したミッション項目を、次のミッション項目の後方へ移動させます:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="642"/>
       <source>File</source>
-      <translation type="unfinished">File</translation>
+      <translation>ファイル</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="662"/>
       <source>Waypoint</source>
-      <translation type="unfinished">Waypoint</translation>
+      <translation>ウェイポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="669"/>
@@ -12880,102 +12877,102 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="685"/>
       <source>Pattern</source>
-      <translation type="unfinished">Pattern</translation>
+      <translation>パターン</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="708"/>
       <source>Center</source>
-      <translation type="unfinished">Center</translation>
+      <translation>中央</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="619"/>
       <location filename="../src/PlanView/PlanView.qml" line="785"/>
       <source>Plan</source>
-      <translation type="unfinished">Plan</translation>
+      <translation>プラン</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="121"/>
       <source>Apply new altitude</source>
-      <translation type="unfinished">Apply new altitude</translation>
+      <translation>新しい高度を適用</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="140"/>
       <source>Plan View - Vehicle Disconnected</source>
-      <translation type="unfinished">Plan View - Vehicle Disconnected</translation>
+      <translation>プランビュー - 機体が切断されました</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="140"/>
       <source>Plan View - Vehicle Changed</source>
-      <translation type="unfinished">Plan View - Vehicle Changed</translation>
+      <translation>プランビュー - 機体を変更しました</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="148"/>
       <source>The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?</source>
-      <translation type="unfinished">The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?</translation>
+      <translation>プランビューの、プランに関連付けられた機体が使用できなくなりました。そのプランで何をしたいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="149"/>
       <source>The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?</source>
-      <translation type="unfinished">The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?</translation>
+      <translation>プランビューで作業しているプランは、現在の機体のものではありません。そのプランで何をしたいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="156"/>
       <source>Discard Unsaved Changes</source>
-      <translation type="unfinished">Discard Unsaved Changes</translation>
+      <translation>保存されていない変更を破棄します</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="157"/>
       <source>Discard Unsaved Changes, Load New Plan From Vehicle</source>
-      <translation type="unfinished">Discard Unsaved Changes, Load New Plan From Vehicle</translation>
+      <translation>保存されていない変更を破棄し機体から新しいプランをロード</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="158"/>
       <source>Load New Plan From Vehicle</source>
-      <translation type="unfinished">Load New Plan From Vehicle</translation>
+      <translation>機体から新しいプランをロード</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="169"/>
       <source>Keep Current Plan</source>
-      <translation type="unfinished">Keep Current Plan</translation>
+      <translation>現在のプランを維持します</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="170"/>
       <source>Keep Current Plan, Don&apos;t Update From Vehicle</source>
-      <translation type="unfinished">Keep Current Plan, Don&apos;t Update From Vehicle</translation>
+      <translation>現在のプランを維持し、機体からのアップデートは行いません</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="187"/>
       <source>This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. This can lead to errors or incorrect behavior. It is recommended to recreate the Plan for the correct firmware/vehicle type.
 
 Click &apos;Ok&apos; to upload the Plan anyway.</source>
-      <translation type="unfinished">This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. This can lead to errors or incorrect behavior. It is recommended to recreate the Plan for the correct firmware/vehicle type.
+      <translation>このプランは、アップロード先の機体のファームウェア / 機体タイプとは異なるファームウェア / 機体タイプ用に作成されています。これによりエラーや不正な動作が発生する可能性があります。正しいファームウェア / 機体タイプ用にプランを再作成することを推奨致します。
 
-Click &apos;Ok&apos; to upload the Plan anyway.</translation>
+プランをアップロードするには【OK】をクリックしてください。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="260"/>
       <source>Send To Vehicle</source>
-      <translation type="unfinished">Send To Vehicle</translation>
+      <translation>機体に送信</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="260"/>
       <source>Current mission must be paused prior to uploading a new Plan</source>
-      <translation type="unfinished">Current mission must be paused prior to uploading a new Plan</translation>
+      <translation>新しいプランをアップロードする前に、現在のミッションを一時停止する必要があります。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="637"/>
       <source>Fly</source>
-      <translation type="unfinished">Fly</translation>
+      <translation>飛行</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="651"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>離陸</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="662"/>
       <source>Rally Point</source>
-      <translation type="unfinished">Rally Point</translation>
+      <translation>集結ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="669"/>
@@ -12985,47 +12982,47 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="698"/>
       <source>Return</source>
-      <translation type="unfinished">Return</translation>
+      <translation>戻る</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="698"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>着陸</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="817"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>ミッション</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="820"/>
       <source>Fence</source>
-      <translation type="unfinished">Fence</translation>
+      <translation>フェンス</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="824"/>
       <source>Rally</source>
-      <translation type="unfinished">Rally</translation>
+      <translation>集結</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="942"/>
       <source>You have unsaved/unsent changes. Loading from the Vehicle will lose these changes. Are you sure you want to load from the Vehicle?</source>
-      <translation type="unfinished">You have unsaved/unsent changes. Loading from the Vehicle will lose these changes. Are you sure you want to load from the Vehicle?</translation>
+      <translation>保存されていない / 未送信の変更があります。機体からロードするとこれらの変更が失われます。本当に機体から読み込んでもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="954"/>
       <source>You have unsaved/unsent changes. Loading from a file will lose these changes. Are you sure you want to load from a file?</source>
-      <translation type="unfinished">You have unsaved/unsent changes. Loading from a file will lose these changes. Are you sure you want to load from a file?</translation>
+      <translation>保存されていない / 未送信の変更があります。ファイルからロードするとこれらの変更が失われます。本当にファイルから読み込んでもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1228"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>クリア</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="978"/>
       <source>Are you sure you want to remove all mission items and clear the mission from the vehicle?</source>
-      <translation type="unfinished">Are you sure you want to remove all mission items and clear the mission from the vehicle?</translation>
+      <translation>すべてのミッション項目を削除し、機体からミッションをクリアしてもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1004"/>
@@ -13055,14 +13052,14 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1136"/>
       <source>Open...</source>
-      <translation type="unfinished">Open...</translation>
+      <translation>開く...</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="231"/>
       <location filename="../src/PlanView/PlanView.qml" line="236"/>
       <location filename="../src/PlanView/PlanView.qml" line="1150"/>
       <source>Save</source>
-      <translation type="unfinished">Save</translation>
+      <translation>保存</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="232"/>
@@ -13094,7 +13091,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1115"/>
       <source>Storage</source>
-      <translation type="unfinished">Storage</translation>
+      <translation>ストレージ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1164"/>
@@ -13109,24 +13106,24 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1181"/>
       <source>KML</source>
-      <translation type="unfinished">KML</translation>
+      <translation>KML</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="231"/>
       <location filename="../src/PlanView/PlanView.qml" line="236"/>
       <location filename="../src/PlanView/PlanView.qml" line="1202"/>
       <source>Upload</source>
-      <translation type="unfinished">Upload</translation>
+      <translation>アップロード</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1193"/>
       <source>Vehicle</source>
-      <translation type="unfinished">Vehicle</translation>
+      <translation>機体</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1213"/>
       <source>Download</source>
-      <translation type="unfinished">Download</translation>
+      <translation>ダウンロード</translation>
     </message>
   </context>
   <context>
@@ -13191,19 +13188,19 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="60"/>
       <source>ESC Calibration failed</source>
-      <translation type="unfinished">ESC Calibration failed</translation>
+      <translation>ESCキャリブレーションに失敗</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="537"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="537"/>
       <source>ESC Calibration failed. </source>
-      <translation type="unfinished">ESC Calibration failed. </translation>
+      <translation>ESCキャリブレーションに失敗しました。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="538"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="538"/>
       <source>Calibration complete. You can disconnect your battery now if you like.</source>
-      <translation type="unfinished">Calibration complete. You can disconnect your battery now if you like.</translation>
+      <translation>キャリブレーションが完了しました。バッテリーを外しても構いません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="545"/>
@@ -13215,13 +13212,13 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="545"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="545"/>
       <source> Connect the battery now and calibration will begin.</source>
-      <translation type="unfinished"> Connect the battery now and calibration will begin.</translation>
+      <translation> ここでバッテリーを接続すると、キャリブレーションが開始されます。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="60"/>
       <source>You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.</source>
-      <translation type="unfinished">You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.</translation>
+      <translation>ESCキャリブレーションを実行する前にバッテリーを外す必要があります。バッテリーを外して再度お試しください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="215"/>
@@ -13235,19 +13232,19 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="255"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="270"/>
       <source>Source</source>
-      <translation type="unfinished">Source</translation>
+      <translation>参照元</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="433"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="433"/>
       <source>Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier.</source>
-      <translation type="unfinished">Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier.</translation>
+      <translation>外部の電圧計でバッテリーの電圧を測定し、測定値を入力してください。【計算】ボタンをクリックし、新しい電圧倍率が設定されます。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="440"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="440"/>
       <source>Measured voltage:</source>
-      <translation type="unfinished">Measured voltage:</translation>
+      <translation>電圧測定:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="443"/>
@@ -13259,19 +13256,19 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="446"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="446"/>
       <source>Voltage divider:</source>
-      <translation type="unfinished">Voltage divider:</translation>
+      <translation>電圧分周器:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="490"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="490"/>
       <source>Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value.</source>
-      <translation type="unfinished">Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value.</translation>
+      <translation>外部の電流計で現在の電流を測定し、測定値を入力してください。【計算】ボタンをクリックし、電圧あたりの新しい電流値を設定します。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="497"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="497"/>
       <source>Measured current:</source>
-      <translation type="unfinished">Measured current:</translation>
+      <translation>測定電流:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="500"/>
@@ -14613,7 +14610,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/QmlControls/RCToParamDialog.qml" line="50"/>
       <source>Waiting on parameter update from Vehicle.</source>
-      <translation>機体からのパラメータ更新を待っています。</translation>
+      <translation>機体からのパラメータ更新を待機しています。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/RCToParamDialog.qml" line="61"/>
@@ -14748,7 +14745,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="209"/>
       <source>Attitude Controls</source>
-      <translation type="unfinished">Attitude Controls</translation>
+      <translation>姿勢制御</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="217"/>
@@ -14890,7 +14887,7 @@ Click Next to continue</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="133"/>
       <source>Move all the transmitter switches and/or dials back and forth to their extreme positions.</source>
-      <translation type="unfinished">Move all the transmitter switches and/or dials back and forth to their extreme positions.</translation>
+      <translation>送信機のスイッチやダイヤルをすべて前後に動かして末端の位置にします。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponentController.cc" line="134"/>
@@ -14950,7 +14947,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/PlanView/RallyPointEditorHeader.qml" line="30"/>
       <source>Rally Points</source>
-      <translation type="unfinished">Rally Points</translation>
+      <translation>集結ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/RallyPointEditorHeader.qml" line="51"/>
@@ -15576,7 +15573,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="47"/>
       <source>Airspeed:</source>
-      <translation type="unfinished">Airspeed:</translation>
+      <translation>対気速度:</translation>
     </message>
   </context>
   <context>
@@ -15593,7 +15590,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="48"/>
       <source>For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</source>
-      <translation type="unfinished">For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</translation>
+      <translation>対気速度のキャリブレーションを行うには、対気速度センサーを風から遠ざけ、センサー全体に風を当てる必要があります。キャリブレーション中はセンサーに触れたり、穴を塞いだりしないでください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="50"/>
@@ -15629,7 +15626,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="222"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="222"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
-      <translation>機体がキャンセルに応答するのを待っています。数秒かかる場合があります。</translation>
+      <translation>機体がキャンセルに応答するのを待機しています。数秒かかる場合があります。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="272"/>
@@ -15757,13 +15754,13 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="460"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="460"/>
       <source>Airspeed</source>
-      <translation type="unfinished">Airspeed</translation>
+      <translation>対気速度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="471"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="471"/>
       <source>Calibrate Airspeed</source>
-      <translation type="unfinished">Calibrate Airspeed</translation>
+      <translation>対気速度 キャリブレーション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="478"/>
@@ -16121,7 +16118,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="183"/>
       <source>Actual AMSL alt sent: %1 %2</source>
-      <translation type="unfinished">Actual AMSL alt sent: %1 %2</translation>
+      <translation>送信された実際のAMSL高度: %1 %2</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="243"/>
@@ -16197,7 +16194,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="69"/>
       <source>Use the Polygon Tools to create the polygon which outlines the structure.</source>
-      <translation type="unfinished">Use the Polygon Tools to create the polygon which outlines the structure.</translation>
+      <translation>ポリゴンツールを使い、構造物の輪郭を描くポリゴンを作成します。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="100"/>
@@ -16207,17 +16204,17 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="101"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>カメラ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="113"/>
       <source>Note: Polygon respresents structure surface not vehicle flight path.</source>
-      <translation type="unfinished">Note: Polygon respresents structure surface not vehicle flight path.</translation>
+      <translation>注: ポリゴンは構造物の表面を表しており、機体の飛行経路を示すものではありません。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="121"/>
       <source>WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</source>
-      <translation type="unfinished">WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</translation>
+      <translation>警告: 写真の間隔がカメラでサポートされている最小間隔 (%1 秒) を下回っています。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="130"/>
@@ -16279,37 +16276,37 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="211"/>
       <source>Statistics</source>
-      <translation type="unfinished">Statistics</translation>
+      <translation>統計情報</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="219"/>
       <source>Layers</source>
-      <translation type="unfinished">Layers</translation>
+      <translation>レイヤー</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="225"/>
       <source>Top Layer Alt</source>
-      <translation type="unfinished">Top Layer Alt</translation>
+      <translation>上位レイヤーの高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="228"/>
       <source>Bottom Layer Alt</source>
-      <translation type="unfinished">Bottom Layer Alt</translation>
+      <translation>下位レイヤーの高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="231"/>
       <source>Photo Count</source>
-      <translation type="unfinished">Photo Count</translation>
+      <translation>撮影回数</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="234"/>
       <source>Photo Interval</source>
-      <translation type="unfinished">Photo Interval</translation>
+      <translation>撮影間隔</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="235"/>
       <source>secs</source>
-      <translation type="unfinished">secs</translation>
+      <translation>秒</translation>
     </message>
   </context>
   <context>
@@ -16416,7 +16413,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="18"/>
       <source>Use the Polygon Tools to create the polygon which outlines your survey area.</source>
-      <translation>ポリゴンツールを使い、調査範囲の輪郭となるポリゴンを作成します。</translation>
+      <translation>ポリゴンツールを使い、調査範囲の輪郭を描くポリゴンを作成します。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="19"/>
@@ -16637,7 +16634,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="174"/>
       <source>Device Info</source>
-      <translation type="unfinished">Device Info</translation>
+      <translation>デバイス情報</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="196"/>
@@ -16846,7 +16843,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/PlanView/TerrainStatus.qml" line="45"/>
       <source>Height AMSL (%1)</source>
-      <translation type="unfinished">Height AMSL (%1)</translation>
+      <translation>AMSL 高さ (%1)</translation>
     </message>
   </context>
   <context>
@@ -16873,94 +16870,94 @@ Confirm change?</source>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="36"/>
       <source>Done</source>
-      <translation type="unfinished">Done</translation>
+      <translation>完了</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="92"/>
       <source>WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</source>
-      <translation type="unfinished">WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</translation>
+      <translation>警告: 写真の間隔がカメラでサポートされている最小間隔 (%1 秒) を下回っています。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="102"/>
       <source>Altitude</source>
-      <translation type="unfinished">Altitude</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="103"/>
       <source>Trigger Dist</source>
-      <translation type="unfinished">Trigger Dist</translation>
+      <translation>トリガー距離</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="104"/>
       <source>Spacing</source>
-      <translation type="unfinished">Spacing</translation>
+      <translation>間隔</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="123"/>
       <source>Rotate Entry Point</source>
-      <translation type="unfinished">Rotate Entry Point</translation>
+      <translation>エントリーポイント 回転</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="131"/>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="234"/>
       <source>Statistics</source>
-      <translation type="unfinished">Statistics</translation>
+      <translation>統計情報</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="163"/>
       <source>Presets</source>
-      <translation type="unfinished">Presets</translation>
+      <translation>プリセット</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="178"/>
       <source>Apply Preset</source>
-      <translation type="unfinished">Apply Preset</translation>
+      <translation>プリセットを適用</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="185"/>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="193"/>
       <source>Delete Preset</source>
-      <translation type="unfinished">Delete Preset</translation>
+      <translation>プリセットを削除</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="196"/>
       <source>Are you sure you want to delete &apos;%1&apos; preset?</source>
-      <translation type="unfinished">Are you sure you want to delete &apos;%1&apos; preset?</translation>
+      <translation>本当にプリセット &apos;%1&apos; を削除してもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="212"/>
       <source>Save Settings As New Preset</source>
-      <translation type="unfinished">Save Settings As New Preset</translation>
+      <translation>設定を新しいプリセットとして保存</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="249"/>
       <source>Save Preset</source>
-      <translation type="unfinished">Save Preset</translation>
+      <translation>プリセットを保存</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="265"/>
       <source>Save the current settings as a named preset.</source>
-      <translation type="unfinished">Save the current settings as a named preset.</translation>
+      <translation>現在の設定を名前付きプリセットとして保存します。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="270"/>
       <source>Preset Name</source>
-      <translation type="unfinished">Preset Name</translation>
+      <translation>プリセット名</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="276"/>
       <source>Enter preset name</source>
-      <translation type="unfinished">Enter preset name</translation>
+      <translation>プリセット名を入力</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="283"/>
       <source>Preset name cannot be blank.</source>
-      <translation type="unfinished">Preset name cannot be blank.</translation>
+      <translation>プリセット名を空白にすることはできません。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="286"/>
       <source>Preset name cannot include the &quot;/&quot; character.</source>
-      <translation type="unfinished">Preset name cannot include the &quot;/&quot; character.</translation>
+      <translation>プリセット名に &quot;/&quot; 文字を含めることはできません。</translation>
     </message>
   </context>
   <context>
@@ -17248,12 +17245,12 @@ Confirm change?</source>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Temperature</source>
-      <translation type="unfinished">Temperature</translation>
+      <translation>温度</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="64"/>
       <source>Choose the measurement units you want to use. You can also change it later in General Settings.</source>
-      <translation type="unfinished">Choose the measurement units you want to use. You can also change it later in General Settings.</translation>
+      <translation>使用したい測定単位を選択してください。後で【一般設定】で変更することもできます。</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="84"/>
@@ -17385,38 +17382,38 @@ Confirm change?</source>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="41"/>
       <source>Set to vehicle location</source>
-      <translation type="unfinished">Set to vehicle location</translation>
+      <translation>機体位置を設定</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="58"/>
       <source>Final approach</source>
-      <translation type="unfinished">Final approach</translation>
+      <translation>最終アプローチ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="70"/>
       <source>Use loiter to altitude</source>
-      <translation type="unfinished">Use loiter to altitude</translation>
+      <translation>高度にロイターを使用</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="80"/>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="142"/>
       <source>Altitude</source>
-      <translation type="unfinished">Altitude</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="89"/>
       <source>Radius</source>
-      <translation type="unfinished">Radius</translation>
+      <translation>半径</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="103"/>
       <source>Loiter clockwise</source>
-      <translation type="unfinished">Loiter clockwise</translation>
+      <translation>ロイター 時計回り</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="119"/>
       <source>Landing point</source>
-      <translation type="unfinished">Landing point</translation>
+      <translation>着陸地点</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="135"/>
@@ -17426,7 +17423,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="150"/>
       <source>Landing Dist</source>
-      <translation type="unfinished">Landing Dist</translation>
+      <translation>着陸地点</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="170"/>
@@ -17436,42 +17433,42 @@ Confirm change?</source>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="180"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>カメラ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="218"/>
       <source>* Actual flight path will vary.</source>
-      <translation type="unfinished">* Actual flight path will vary.</translation>
+      <translation>* 実際の飛行経路は異なります。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="227"/>
       <source>* Avoid tailwind on approach to land.</source>
-      <translation type="unfinished">* Avoid tailwind on approach to land.</translation>
+      <translation>* 着陸時のアプローチは追い風を避けてください。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="236"/>
       <source>* Ensure landing distance is enough to complete transition.</source>
-      <translation type="unfinished">* Ensure landing distance is enough to complete transition.</translation>
+      <translation>* 移行を完了するのに十分な着陸距離を確保してください。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="262"/>
       <source>Click in map to set landing point.</source>
-      <translation type="unfinished">Click in map to set landing point.</translation>
+      <translation>地図をクリックして着陸地点を設定します。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="269"/>
       <source>- or -</source>
-      <translation type="unfinished">- or -</translation>
+      <translation>- or -</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="301"/>
       <source>Drag the loiter point to adjust landing direction for wind and obstacles as well as distance to land point.</source>
-      <translation type="unfinished">Drag the loiter point to adjust landing direction for wind and obstacles as well as distance to land point.</translation>
+      <translation>ロイターポイントをドラッグして、風や障害物に合わせて着陸方向を調整したり、着陸地点までの距離を調整したりします。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternEditor.qml" line="305"/>
       <source>Done</source>
-      <translation type="unfinished">Done</translation>
+      <translation>完了</translation>
     </message>
   </context>
   <context>
@@ -17479,17 +17476,17 @@ Confirm change?</source>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternMapVisual.qml" line="238"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>ロイター</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternMapVisual.qml" line="238"/>
       <source>Approach</source>
-      <translation type="unfinished">Approach</translation>
+      <translation>アプローチ</translation>
     </message>
     <message>
       <location filename="../src/PlanView/VTOLLandingPatternMapVisual.qml" line="259"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>着陸</translation>
     </message>
   </context>
   <context>
