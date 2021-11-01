@@ -16,6 +16,8 @@ if(BUILD_TESTING)
 endif()
 
 add_library(Vehicle
+	Autotune.cpp
+	Autotune.h
 	CompInfo.cc
 	CompInfo.h
 	CompInfoEvents.cc
