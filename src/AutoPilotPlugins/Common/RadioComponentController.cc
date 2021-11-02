@@ -797,9 +797,7 @@ void RadioComponentController::_startCalibration(void)
     _resetInternalCalibrationValues();
 
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
-    if (_px4Vehicle()) {
-        _vehicle->startCalibration(Vehicle::CalibrationRadio);
-    }
+    _vehicle->startCalibration(Vehicle::CalibrationRadio);
 
     _nextButton->setProperty("text", tr("Next"));
     _cancelButton->setEnabled(true);
@@ -814,9 +812,9 @@ void RadioComponentController::_stopCalibration(void)
     _currentStep = -1;
 
     if (_uas) {
-        if (_px4Vehicle()) {
-            _vehicle->stopCalibration();
-        }
+        // Only PX4 is known to support this command in all versions. For other firmware which may or may not
+        // support this we don't show errors on failure.
+        _vehicle->stopCalibration(_px4Vehicle() ? true : false /* showError */);
         _setInternalCalibrationValuesFromParameters();
     } else {
         _resetInternalCalibrationValues();
