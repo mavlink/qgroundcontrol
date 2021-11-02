@@ -97,7 +97,7 @@
       <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-      <translation>n/a,全フライトシステム,推進力,アビオニクス,ペイロード</translation>
+      <translation>該当なし,全フライトシステム,推進力,アビオニクス,ペイロード</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
