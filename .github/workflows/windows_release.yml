@@ -98,4 +98,4 @@ jobs:
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/master/${ARTIFACT} --region us-west-2 --acl public-read
+              aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/master/${{ env.ARTIFACT }} --region us-west-2 --acl public-read
