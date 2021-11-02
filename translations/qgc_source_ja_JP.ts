@@ -1649,7 +1649,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="345"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="345"/>
       <source>General Failsafe Triggers</source>
-      <translation>一般 フェイルセーフトリガー</translation>
+      <translation>全般 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
@@ -1826,7 +1826,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="224"/>
       <source>General Failsafe Triggers</source>
-      <translation>一般 フェイルセーフトリガー</translation>
+      <translation>全般 フェイルセーフトリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="245"/>
@@ -1964,7 +1964,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="130"/>
       <source>GCS failsafe</source>
-      <translation>GCSフェールセール</translation>
+      <translation>GCS フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="142"/>
@@ -1987,7 +1987,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="53"/>
       <source>Failsafe Triggers</source>
-      <translation>フェイルセーフトリガー</translation>
+      <translation>フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="68"/>
@@ -2041,7 +2041,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="69"/>
       <source>Failsafe Actions</source>
-      <translation>フェイルセーフ動作</translation>
+      <translation>フェイルセーフ 動作</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="95"/>
@@ -2170,7 +2170,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="68"/>
       <source>Failsafe Action:</source>
-      <translation>フェイルセーフ動作:</translation>
+      <translation>フェイルセーフ 動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="76"/>
@@ -2456,7 +2456,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="97"/>
       <source>Failsafe Action:</source>
-      <translation>フェイルセーフ動作:</translation>
+      <translation>フェイルセーフ 動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="102"/>
@@ -3989,7 +3989,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Airmap/AirspaceControl.qml" line="372"/>
       <source>File Flight Plan</source>
-      <translation>フライトプラン ファイル</translation>
+      <translation>飛行プランファイル</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirspaceControl.qml" line="372"/>
@@ -6433,7 +6433,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="462"/>
       <source>This firmware version is ONLY intended for beta testers. </source>
-      <translation>このバージョンのファームウェアは【ベータテスタのみ】ご利用ください。 </translation>
+      <translation>このバージョンのファームウェアは【ベータテスターのみ】ご利用ください。 </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="463"/>
@@ -6704,7 +6704,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/Airmap/FlightBrief.qml" line="101"/>
       <location filename="../src/Airmap/FlightBrief.qml" line="135"/>
       <source>Authorization Unknown</source>
-      <translation>認証が不明です</translation>
+      <translation>承認が不明です</translation>
     </message>
     <message>
       <location filename="../src/Airmap/FlightBrief.qml" line="134"/>
@@ -6818,7 +6818,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/QmlControls/FlightModeDropdown.qml" line="22"/>
       <source>N/A</source>
       <comment>No data to display</comment>
-      <translation>該当無し</translation>
+      <translation>該当なし</translation>
     </message>
   </context>
   <context>
@@ -6827,7 +6827,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/QmlControls/FlightModeMenu.qml" line="20"/>
       <source>N/A</source>
       <comment>No data to display</comment>
-      <translation>該当無し</translation>
+      <translation>該当なし</translation>
     </message>
   </context>
   <context>
@@ -6926,7 +6926,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="371"/>
       <source>Go here</source>
       <comment>Go to location waypoint</comment>
-      <translation>ここへ</translation>
+      <translation>ここへ移動</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="474"/>
@@ -6961,7 +6961,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="44"/>
       <source>Flight Plan complete</source>
-      <translation>飛行計画 完了</translation>
+      <translation>飛行プラン 完了</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="80"/>
@@ -7061,7 +7061,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/ui/toolbar/GPSIndicator.qml" line="66"/>
       <source>N/A</source>
       <comment>No data to display</comment>
-      <translation>該当無し</translation>
+      <translation>該当なし</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/GPSIndicator.qml" line="65"/>
@@ -7102,7 +7102,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/GPSRTKIndicator.qml" line="47"/>
       <source>RTK Streaming</source>
-      <translation>RTKストリーミング</translation>
+      <translation>RTK ストリーミング</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/GPSRTKIndicator.qml" line="61"/>
@@ -10292,7 +10292,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="57"/>
       <source>APM ArduPlane Vehicle</source>
-      <translation>APM ArduPlane 機体</translation>
+      <translation>APM ArduPlane Vehicle</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="63"/>
@@ -12143,7 +12143,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="93"/>
       <source>N/A</source>
-      <translation>該当無し</translation>
+      <translation>該当なし</translation>
     </message>
   </context>
   <context>
@@ -14581,7 +14581,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/ui/toolbar/RCRSSIIndicator.qml" line="51"/>
       <source>N/A</source>
       <comment>No data available</comment>
-      <translation>該当無し</translation>
+      <translation>該当なし</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/RCRSSIIndicator.qml" line="64"/>
@@ -15103,7 +15103,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="67"/>
       <source>Low Battery Failsafe Trigger</source>
-      <translation>低バッテリー フェイルセーフトリガー</translation>
+      <translation>低バッテリー フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="95"/>
@@ -15113,7 +15113,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="277"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="329"/>
       <source>Failsafe Action:</source>
-      <translation>フェイルセーフ動作:</translation>
+      <translation>フェイルセーフ 動作:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="107"/>
@@ -15125,7 +15125,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="116"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="116"/>
       <source>Battery Failsafe Level:</source>
-      <translation>バッテリーフェイルセーフレベル:</translation>
+      <translation>バッテリー フェイルセーフ レベル:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="125"/>
@@ -15187,7 +15187,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="249"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="249"/>
       <source>RC Loss Failsafe Trigger</source>
-      <translation>RC損失フェイルセーフトリガー</translation>
+      <translation>RC損失 フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="289"/>
@@ -15199,7 +15199,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="301"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="301"/>
       <source>Data Link Loss Failsafe Trigger</source>
-      <translation>データリンク損失フェイルセーフトリガー</translation>
+      <translation>データリンク損失 フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="341"/>
@@ -15211,7 +15211,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="353"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="353"/>
       <source>Geofence Failsafe Trigger</source>
-      <translation>ジオフェンス フェイルセーフトリガー</translation>
+      <translation>ジオフェンス フェイルセーフ トリガー</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="382"/>
@@ -15339,7 +15339,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="33"/>
       <source>RC Loss Failsafe</source>
-      <translation>RC損失フェイルセーフ</translation>
+      <translation>RC損失 フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="38"/>
@@ -15351,7 +15351,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="43"/>
       <source>Data Link Loss Failsafe</source>
-      <translation>データリンク損失フェイルセーフ</translation>
+      <translation>データリンク損失 フェイルセーフ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="48"/>
@@ -16709,7 +16709,7 @@ ROTATION_NONEは、コンポーネントがフライト方向を向いている�
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="415"/>
       <source>Set Streaming Settings</source>
-      <translation>ストリーミング設定</translation>
+      <translation>ストリーミング設定の有効</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="416"/>
@@ -17939,7 +17939,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/FlightDisplay/VehicleWarnings.qml" line="37"/>
       <source>No GPS Lock for Vehicle</source>
-      <translation>位置が特定できていません</translation>
+      <translation>GPSでの位置が特定ができません</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VehicleWarnings.qml" line="56"/>
