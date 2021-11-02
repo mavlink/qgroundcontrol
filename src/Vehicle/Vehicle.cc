@@ -3305,11 +3305,11 @@ void Vehicle::startCalibration(Vehicle::CalibrationType calType)
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
-void Vehicle::stopCalibration(void)
+void Vehicle::stopCalibration(bool showError)
 {
     sendMavCommand(defaultComponentId(),    // target component
                    MAV_CMD_PREFLIGHT_CALIBRATION,     // command id
-                   true,                              // showError
+                   showError,
                    0,                                 // gyro cal
                    0,                                 // mag cal
                    0,                                 // ground pressure

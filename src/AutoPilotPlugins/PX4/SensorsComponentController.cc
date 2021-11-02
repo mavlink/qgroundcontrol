@@ -493,7 +493,7 @@ void SensorsComponentController::cancelCalibration(void)
     _waitingForCancel = true;
     emit waitingForCancelChanged();
     _cancelButton->setEnabled(false);
-    _vehicle->stopCalibration();
+    _vehicle->stopCalibration(true /* showError */);
 }
 
 void SensorsComponentController::_handleParametersReset(bool success)
