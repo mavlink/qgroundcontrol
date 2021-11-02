@@ -61,7 +61,7 @@ Item {
         id:             cameraLoader
         anchors.fill:   parent
         visible:        !QGroundControl.videoManager.isGStreamer
-        source:         visible ? (QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml") : ""
+        source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
     }
 
     QGCLabel {

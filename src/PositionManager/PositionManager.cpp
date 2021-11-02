@@ -11,6 +11,12 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#include <QSerialPortInfo>
+#endif
+
+#include <QtPositioning/private/qgeopositioninfosource_p.h>
+
 QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool           (app, toolbox)
 {
@@ -39,7 +45,34 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
 
    if (!_defaultSource) {
        //-- Otherwise, create a default one
+#if 0
+       // Calling this can end up falling through a path which tries to instantiate a serialnmea source.
+       // The Qt code for this will pop a qWarning if there are no serial ports available. This in turn
+       // causes you to be unable to run with QT_FATAL_WARNINGS=1 to debug stuff.
        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
+#else
+       // So instead we create our own version of QGeoPositionInfoSource::createDefaultSource which isn't as stupid.
+       QList<QJsonObject> plugins = QGeoPositionInfoSourcePrivate::pluginsSorted();
+       foreach (const QJsonObject &obj, plugins) {
+           if (obj.value("Position").isBool() && obj.value("Position").toBool()) {
+               QString pluginName = obj.value("Keys").toArray()[0].toString();
+               if (pluginName == "serialnmea") {
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+                   if (QSerialPortInfo::availablePorts().isEmpty()) {
+                       // This prevents the qWarning from popping
+                       continue;
+                   }
+#else
+                   continue;
+#endif
+               }
+               _defaultSource = QGeoPositionInfoSource::createSource(pluginName, this);
+               if (_defaultSource) {
+                   break;
+               }
+           }
+       }
+#endif
    }
    _simulatedSource = new SimulatedPosition();
 
