@@ -583,6 +583,7 @@ HEADERS += \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/Joystick/JoystickMavCommand.h \
     src/JsonHelper.h \
     src/KMLDomDocument.h \
     src/KMLHelper.h \
@@ -826,6 +827,7 @@ SOURCES += \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/Joystick/JoystickMavCommand.cc \
     src/JsonHelper.cc \
     src/KMLDomDocument.cc \
     src/KMLHelper.cc \
