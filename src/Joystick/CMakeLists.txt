@@ -11,6 +11,7 @@ add_library(Joystick
 	Joystick.cc
 	JoystickManager.cc
 	JoystickSDL.cc
+	JoystickMavCommand.cc
 	${EXTRA_SRC}
 )
 
