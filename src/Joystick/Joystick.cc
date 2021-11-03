@@ -120,6 +120,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
     _loadSettings();
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
+
+    _customMavCommands = JoystickMavCommand::load("JoystickMavCommands.json");
 }
 
 void Joystick::stop()
@@ -1024,6 +1026,14 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionEmergencyStop) {
       if(buttonDown) emit emergencyStop();
     } else {
+        if (buttonDown && _activeVehicle) {
+            for (auto& item : _customMavCommands) {
+                if (action == item.name()) {
+                    item.send(_activeVehicle);
+                    return;
+                }
+            }
+        }
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
 }
@@ -1112,6 +1122,9 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
+    for (auto& item : _customMavCommands)
+        _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
+
     for(int i = 0; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();
