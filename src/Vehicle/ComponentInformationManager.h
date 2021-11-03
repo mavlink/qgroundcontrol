@@ -111,6 +111,7 @@ private:
     static void _stateRequestCompInfoGeneralComplete(StateMachine* stateMachine);
     static void _stateRequestCompInfoParam          (StateMachine* stateMachine);
     static void _stateRequestCompInfoEvents         (StateMachine* stateMachine);
+    static void _stateRequestCompInfoActuators      (StateMachine* stateMachine);
     static void _stateRequestAllCompInfoComplete    (StateMachine* stateMachine);
 
     Vehicle*                        _vehicle                    = nullptr;
