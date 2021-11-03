@@ -22,6 +22,8 @@ add_library(Vehicle
 	Autotune.h
 	CompInfo.cc
 	CompInfo.h
+	CompInfoActuators.cc
+	CompInfoActuators.h
 	CompInfoEvents.cc
 	CompInfoEvents.h
 	CompInfoParam.cc
