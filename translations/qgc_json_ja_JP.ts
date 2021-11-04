@@ -190,13 +190,13 @@
       <extracomment>.mavCmdInfo[UNITTEST_2].param1.label, .mavCmdInfo[UNITTEST_3].param1.label, .mavCmdInfo[UNITTEST_4].param1.label, .mavCmdInfo[UNITTEST_5].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param1</source>
-      <translation>パラメータ 1</translation>
+      <translation>パラメータ1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 3</source>
-      <translation>単体テスト 3</translation>
+      <translation>単体テスト3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].description, .mavCmdInfo[UNITTEST_4].description, .mavCmdInfo[UNITTEST_5].description, </extracomment>
@@ -220,49 +220,49 @@
       <extracomment>.mavCmdInfo[UNITTEST_3].param2.label, .mavCmdInfo[UNITTEST_4].param2.label, .mavCmdInfo[UNITTEST_5].param2.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param2</source>
-      <translation>パラメータ 2</translation>
+      <translation>パラメータ2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param3.label, .mavCmdInfo[UNITTEST_4].param3.label, .mavCmdInfo[UNITTEST_5].param3.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param3</source>
-      <translation>パラメータ 3</translation>
+      <translation>パラメータ3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param4.label, .mavCmdInfo[UNITTEST_4].param4.label, .mavCmdInfo[UNITTEST_5].param4.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param4</source>
-      <translation>パラメータ 4</translation>
+      <translation>パラメータ4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param5.label, .mavCmdInfo[UNITTEST_4].param5.label, .mavCmdInfo[UNITTEST_5].param5.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param5</source>
-      <translation>パラメータ 5</translation>
+      <translation>パラメータ5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param6.label, .mavCmdInfo[UNITTEST_4].param6.label, .mavCmdInfo[UNITTEST_5].param6.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param6</source>
-      <translation>パラメータ 6</translation>
+      <translation>パラメータ6</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param7.label, .mavCmdInfo[UNITTEST_4].param7.label, .mavCmdInfo[UNITTEST_5].param7.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param7</source>
-      <translation>パラメータ 7</translation>
+      <translation>パラメータ7</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_4].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 4</source>
-      <translation>単体テスト 4</translation>
+      <translation>単体テスト4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_5].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 5</source>
-      <translation>単体テスト 5</translation>
+      <translation>単体テスト5</translation>
     </message>
   </context>
   <context>
@@ -373,7 +373,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (turns)</source>
-      <translation>ロイター (ターン)</translation>
+      <translation>ロイター(ターン)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
@@ -415,7 +415,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (time)</source>
-      <translation>ロイター (時間)</translation>
+      <translation>ロイター(時間)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
@@ -535,13 +535,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Climb,Neutral,Descend</source>
-      <translation>上昇, ニュートラル, 下降</translation>
+      <translation>上昇,ニュートラル,下降</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (altitude)</source>
-      <translation>ロイター (高度)</translation>
+      <translation>ロイター(高度)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].description, </extracomment>
@@ -583,31 +583,31 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Local planning</source>
-      <translation>ローカル計画</translation>
+      <translation>ローカルプラン</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset</source>
-      <translation>無効,有効,有効＋リセット</translation>
+      <translation>無効,有効,有効+リセット</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Full planning</source>
-      <translation>全体計画</translation>
+      <translation>全体プラン</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Disable,Enable,Enable+reset,Enable+reset route only</source>
-      <translation>無効,有効,有効＋リセット,有効＋経路リセットのみ</translation>
+      <translation>無効,有効,有効+リセット,有効+経路リセットのみ</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Heading goal</source>
-      <translation>目標方位</translation>
+      <translation>ヘッディング目標</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
@@ -631,7 +631,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL takeoff</source>
-      <translation>VTOL 離陸</translation>
+      <translation>VTOL離陸</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
@@ -643,7 +643,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Transition Heading</source>
-      <translation>方位の遷移</translation>
+      <translation>ヘッディング遷移</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.enumStrings, </extracomment>
@@ -655,7 +655,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL land</source>
-      <translation>VTOL 着陸</translation>
+      <translation>VTOL着陸</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
@@ -667,7 +667,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Approach Alt</source>
-      <translation>高度制御 アプローチ</translation>
+      <translation>高度制御アプローチ</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].friendlyName, </extracomment>
@@ -709,19 +709,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hour (utc)</source>
-      <translation>時 (UTC)</translation>
+      <translation>時(UTC)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Min (utc)</source>
-      <translation>分 (UTC)</translation>
+      <translation>分(UTC)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_DELAY].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sec (utc)</source>
-      <translation>秒 (UTC)</translation>
+      <translation>秒(UTC)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DELAY].friendlyName, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].param1.label, </extracomment>
@@ -793,7 +793,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Heading</source>
-      <translation>方位</translation>
+      <translation>ヘッディング</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_YAW].param3.label, .mavCmdInfo[MAV_CMD_DO_SET_REVERSE].param1.label, </extracomment>
@@ -829,7 +829,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode</source>
-      <translation>フライトモード 設定</translation>
+      <translation>フライトモード設定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
@@ -931,7 +931,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_PARAMETER].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set Parameter</source>
-      <translation>パラメータ 設定</translation>
+      <translation>パラメータ設定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].friendlyName, </extracomment>
@@ -1021,7 +1021,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land start</source>
-      <translation>着陸 開始</translation>
+      <translation>着陸開始</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_LAND_START].description, </extracomment>
@@ -1057,7 +1057,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set moving direction</source>
-      <translation>移動方向 設定</translation>
+      <translation>移動方向設定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_REVERSE].description, </extracomment>
@@ -1075,7 +1075,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Region of interest (ROI)</source>
-      <translation>対象領域 (ROI)</translation>
+      <translation>対象領域(ROI)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_LOCATION].description, .mavCmdInfo[MAV_CMD_DO_SET_ROI].description, </extracomment>
@@ -1105,19 +1105,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Pitch offset</source>
-      <translation>ピッチ オフセット</translation>
+      <translation>ピッチオフセット</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param6.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Roll offset</source>
-      <translation>ロール オフセット</translation>
+      <translation>ロールオフセット</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param7.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw offset</source>
-      <translation>ヨー オフセット</translation>
+      <translation>ヨーオフセット</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_NONE].friendlyName, </extracomment>
@@ -1153,13 +1153,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission Index</source>
-      <translation>ミッション インデックス</translation>
+      <translation>ミッションインデックス</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ROI Index</source>
-      <translation>ROI インデックス</translation>
+      <translation>ROIインデックス</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].friendlyName, </extracomment>
@@ -1357,7 +1357,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable geofence</source>
-      <translation>ジオフェンス 有効</translation>
+      <translation>ジオフェンス有効</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].description, .mavCmdInfo[MAV_CMD_DO_PARACHUTE].description, </extracomment>
@@ -1465,7 +1465,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation>有効, 無効</translation>
+      <translation>有効,無効</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_GUIDED_LIMITS].friendlyName, </extracomment>
@@ -1513,19 +1513,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set sensor offsets</source>
-      <translation>センサーオフセット 設定</translation>
+      <translation>センサオフセット設定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_UAVCAN].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>UAVCAN configure</source>
-      <translation>UAVCAN 設定</translation>
+      <translation>UAVCAN設定</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_STORAGE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Store parameters</source>
-      <translation>ストア パラメータ</translation>
+      <translation>ストアパラメータ</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN].friendlyName, </extracomment>
@@ -1543,7 +1543,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_MISSION_START].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission start</source>
-      <translation>ミッション 開始</translation>
+      <translation>ミッション開始</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_COMPONENT_ARM_DISARM].friendlyName, </extracomment>
@@ -1627,7 +1627,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop image capture</source>
-      <translation>画像キャプチャ 停止</translation>
+      <translation>画像キャプチャ停止</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_STOP_CAPTURE].description, </extracomment>
@@ -1639,13 +1639,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_TRIGGER_CONTROL].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Trigger control</source>
-      <translation>トリガー 制御</translation>
+      <translation>トリガー制御</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Start video capture</source>
-      <translation>動画撮影 開始</translation>
+      <translation>動画撮影開始</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_START_CAPTURE].description, </extracomment>
@@ -1663,7 +1663,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Stop video capture</source>
-      <translation>動画撮影 停止</translation>
+      <translation>動画撮影停止</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_VIDEO_STOP_CAPTURE].description, </extracomment>
@@ -1687,7 +1687,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>VTOL Transition</source>
-      <translation>VTOL 切り替え</translation>
+      <translation>VTOL切り替え</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].description, </extracomment>
@@ -1765,7 +1765,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Take off from the ground and ascend to specified altitude.</source>
-      <translation>地面から離陸し、指定された高度まで上昇します。</translation>
+      <translation>地上から離陸し、指定された高度まで上昇します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
