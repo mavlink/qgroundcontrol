@@ -581,6 +581,9 @@
         <value code="2">WARNING Apply the new gains in air</value>
       </values>
     </parameter>
+    <parameter name="MC_AT_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Multicopter autotune module enable</short_desc>
+    </parameter>
     <parameter name="MC_AT_RISE_TIME" default="0.14" type="FLOAT">
       <short_desc>Desired angular rate closed-loop rise time</short_desc>
       <min>0.01</min>
@@ -1194,6 +1197,18 @@
       <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.5</increment>
+    </parameter>
+    <parameter name="COM_IMB_PROP_ACT" default="0" type="INT32">
+      <short_desc>Imbalanced propeller failsafe mode</short_desc>
+      <long_desc>Action the system takes when an imbalanced propeller is detected by the failure detector. See also FD_IMB_PROP_THR to set the failure threshold.</long_desc>
+      <decimal>0</decimal>
+      <increment>1</increment>
+      <values>
+        <value code="-1">Disabled</value>
+        <value code="0">Warning</value>
+        <value code="1">Return</value>
+        <value code="2">Land</value>
+      </values>
     </parameter>
     <parameter name="COM_KILL_DISARM" default="5.0" type="FLOAT">
       <short_desc>Timeout value for disarming when kill switch is engaged</short_desc>
@@ -3605,6 +3620,13 @@
       <max>5</max>
       <unit>s</unit>
       <decimal>2</decimal>
+    </parameter>
+    <parameter name="FD_IMB_PROP_THR" default="30" type="INT32">
+      <short_desc>Imbalanced propeller check threshold</short_desc>
+      <long_desc>Value at which the imbalanced propeller metric (based on horizontal and vertical acceleration variance) triggers a failure Setting this value to 0 disables the feature.</long_desc>
+      <min>0</min>
+      <max>1000</max>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="Follow target">
