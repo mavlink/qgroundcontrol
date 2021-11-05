@@ -581,9 +581,6 @@
         <value code="2">WARNING Apply the new gains in air</value>
       </values>
     </parameter>
-    <parameter name="MC_AT_EN" default="0" type="INT32" boolean="true">
-      <short_desc>Multicopter autotune module enable</short_desc>
-    </parameter>
     <parameter name="MC_AT_RISE_TIME" default="0.14" type="FLOAT">
       <short_desc>Desired angular rate closed-loop rise time</short_desc>
       <min>0.01</min>
