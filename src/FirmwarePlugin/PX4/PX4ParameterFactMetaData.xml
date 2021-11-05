@@ -3779,44 +3779,6 @@
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
-  <group name="GPS Failure Navigation">
-    <parameter name="NAV_GPSF_LT" default="0.0" type="FLOAT">
-      <short_desc>Loiter time</short_desc>
-      <long_desc>The time in seconds the system should do open loop loiter and wait for GPS recovery before it goes into flight termination. Set to 0 to disable.</long_desc>
-      <min>0.0</min>
-      <max>3600.0</max>
-      <unit>s</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="NAV_GPSF_P" default="0.0" type="FLOAT">
-      <short_desc>Fixed pitch angle</short_desc>
-      <long_desc>Pitch in degrees during the open loop loiter</long_desc>
-      <min>-30.0</min>
-      <max>30.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="NAV_GPSF_R" default="15.0" type="FLOAT">
-      <short_desc>Fixed bank angle</short_desc>
-      <long_desc>Roll in degrees during the loiter</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="NAV_GPSF_TR" default="0.0" type="FLOAT">
-      <short_desc>Thrust</short_desc>
-      <long_desc>Thrust value which is set during the open loop loiter</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-  </group>
   <group name="Geofence">
     <parameter name="GF_ACTION" default="2" type="INT32">
       <short_desc>Geofence violation action</short_desc>
@@ -4549,6 +4511,22 @@
     </parameter>
   </group>
   <group name="Mission">
+    <parameter name="FW_GPSF_LT" default="30" type="INT32">
+      <short_desc>GPS failure loiter time</short_desc>
+      <long_desc>The time in seconds the system should do open loop loiter and wait for GPS recovery before it starts descending. Set to 0 to disable. Roll angle is set to FW_GPSF_R. Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
+      <min>0</min>
+      <max>3600</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter name="FW_GPSF_R" default="15.0" type="FLOAT">
+      <short_desc>GPS failure fixed roll angle</short_desc>
+      <long_desc>Roll in degrees during the loiter after the vehicle has lost GPS in an auto mode (e.g. mission or loiter). Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
+      <min>0.0</min>
+      <max>30.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
     <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
       <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIST_1WP from the home position.</long_desc>
