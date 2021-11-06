@@ -278,61 +278,61 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="184"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="184"/>
       <source>Channel 5</source>
-      <translation>チャンネル 5</translation>
+      <translation>チャンネル5</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="185"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="185"/>
       <source>Channel 6</source>
-      <translation>チャンネル 6</translation>
+      <translation>チャンネル6</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="186"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="186"/>
       <source>Channel 7</source>
-      <translation>チャンネル 7</translation>
+      <translation>チャンネル7</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="187"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="187"/>
       <source>Channel 8</source>
-      <translation>チャンネル 8</translation>
+      <translation>チャンネル8</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="188"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="188"/>
       <source>Channel 9</source>
-      <translation>チャンネル 9</translation>
+      <translation>チャンネル9</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="189"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="189"/>
       <source>Channel 10</source>
-      <translation>チャンネル 10</translation>
+      <translation>チャンネル10</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="190"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="190"/>
       <source>Channel 11</source>
-      <translation>チャンネル 11</translation>
+      <translation>チャンネル11</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="191"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="191"/>
       <source>Channel 12</source>
-      <translation>チャンネル 12</translation>
+      <translation>チャンネル12</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="192"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="192"/>
       <source>Channel 13</source>
-      <translation>チャンネル 13</translation>
+      <translation>チャンネル13</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="193"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="193"/>
       <source>Channel 14</source>
-      <translation>チャンネル 14</translation>
+      <translation>チャンネル14</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="282"/>
@@ -454,7 +454,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="844"/>
       <source>Unable to takeoff, vehicle position not known.</source>
-      <translation>位置が不明のため、離陸できません。</translation>
+      <translation>機体位置が不明のため、離陸できません。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="854"/>
@@ -470,7 +470,7 @@
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="877"/>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="897"/>
       <source>Unable to start mission: Vehicle failed to change to Auto mode.</source>
-      <translation>ミッションを開始できません: オートモードに変更できませんでした。</translation>
+      <translation>ミッションを開始できません: 自動モードに変更できませんでした。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="885"/>
@@ -485,7 +485,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="975"/>
       <source>Follow failed: Home position not set.</source>
-      <translation>フォローに失敗しました: ホームポジションが設定されていません。</translation>
+      <translation>フォローに失敗しました: ホーム位置が設定されていません。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="985"/>
@@ -505,7 +505,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="58"/>
       <source> (Channel 5)</source>
-      <translation> (チャンネル 5)</translation>
+      <translation> (チャンネル5)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="82"/>
@@ -706,7 +706,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="248"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="248"/>
       <source>Vehicle Position</source>
-      <translation>機体の位置</translation>
+      <translation>機体位置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="252"/>
@@ -1023,61 +1023,61 @@
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
       <source>Channel 5</source>
-      <translation>チャンネル 5</translation>
+      <translation>チャンネル5</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="65"/>
       <source>Channel 6</source>
-      <translation>チャンネル 6</translation>
+      <translation>チャンネル6</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="66"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="66"/>
       <source>Channel 7</source>
-      <translation>チャンネル 7</translation>
+      <translation>チャンネル7</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="67"/>
       <source>Channel 8</source>
-      <translation>チャンネル 8</translation>
+      <translation>チャンネル8</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="68"/>
       <source>Channel 9</source>
-      <translation>チャンネル 9</translation>
+      <translation>チャンネル9</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="69"/>
       <source>Channel 10</source>
-      <translation>チャンネル 10</translation>
+      <translation>チャンネル10</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="70"/>
       <source>Channel 11</source>
-      <translation>チャンネル 11</translation>
+      <translation>チャンネル11</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="71"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="71"/>
       <source>Channel 12</source>
-      <translation>チャンネル 12</translation>
+      <translation>チャンネル12</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="72"/>
       <source>Channel 13</source>
-      <translation>チャンネル 13</translation>
+      <translation>チャンネル13</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="73"/>
       <source>Channel 14</source>
-      <translation>チャンネル 14</translation>
+      <translation>チャンネル14</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="89"/>
@@ -1512,7 +1512,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="34"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="39"/>
       <source>Channel %1</source>
-      <translation>チャンネル %1</translation>
+      <translation>チャンネル%1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="28"/>
@@ -1557,7 +1557,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="93"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="93"/>
       <source>Low voltage threshold:</source>
-      <translation>最小電圧のしきい値:</translation>
+      <translation>最小電圧しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="101"/>
@@ -1569,7 +1569,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="108"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="108"/>
       <source>Low mAh threshold:</source>
-      <translation>最小電流(mAh)のしきい値:</translation>
+      <translation>最小電流(mAh)しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="115"/>
@@ -1637,7 +1637,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="310"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="383"/>
       <source>PWM threshold:</source>
-      <translation>PWM しきい値:</translation>
+      <translation>PWMしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="316"/>
@@ -1667,7 +1667,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <source>Continue with Mission in Auto Mode</source>
-      <translation>オートモードでミッションを継続</translation>
+      <translation>自動モードでミッションを継続</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
@@ -1685,7 +1685,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="429"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="429"/>
       <source>Circle GeoFence enabled</source>
-      <translation>サークルジオフェンスは有効です</translation>
+      <translation>ジオフェンスサークルは有効です</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="454"/>
@@ -1810,13 +1810,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="195"/>
       <source>Voltage threshold:</source>
-      <translation>電圧 しきい値:</translation>
+      <translation>電圧しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="136"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="206"/>
       <source>MAH threshold:</source>
-      <translation>容量(mAh) しきい値:</translation>
+      <translation>容量(mAh)しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="155"/>
@@ -1851,7 +1851,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="255"/>
       <source>Continue with Mission in Auto Mode</source>
-      <translation>オートモードでミッションを継続</translation>
+      <translation>自動モードでミッションを継続</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="255"/>
@@ -1861,7 +1861,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="262"/>
       <source>PWM threshold:</source>
-      <translation>PWM しきい値:</translation>
+      <translation>PWMしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="278"/>
@@ -1871,7 +1871,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="293"/>
       <source>Circle GeoFence enabled</source>
-      <translation>サークルジオフェンスは有効です</translation>
+      <translation>ジオフェンスサークルは有効です</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="318"/>
@@ -1959,7 +1959,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="109"/>
       <source>MAH threshold:</source>
-      <translation>容量(mAh) しきい値:</translation>
+      <translation>容量(mAh)しきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="130"/>
@@ -2002,7 +2002,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="105"/>
       <source>PWM threshold:</source>
-      <translation>PWM しきい値:</translation>
+      <translation>PWMしきい値:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="122"/>
@@ -2232,7 +2232,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="120"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="120"/>
       <source>Altitude,Circle</source>
-      <translation>高度、サークル</translation>
+      <translation>高度, サークル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="131"/>
@@ -2335,7 +2335,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="80"/>
       <source>Altitude,Circle</source>
-      <translation>高度、サークル</translation>
+      <translation>高度, サークル</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="86"/>
@@ -2415,7 +2415,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="60"/>
       <source>Always Hold</source>
-      <translation>常時 Hold</translation>
+      <translation>常時ホールド</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="63"/>
@@ -2775,7 +2775,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="466"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="466"/>
       <source>Manual Magnetic Declination</source>
-      <translation>手動 磁針の偏角</translation>
+      <translation>手動による方位偏角</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="513"/>
@@ -3022,7 +3022,7 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="358"/>
       <source>Hold the vehicle in its level flight position.</source>
-      <translation>そのレベルの飛行ポジションに機体を保持します。</translation>
+      <translation>そのレベルの飛行位置に機体を保持します。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="367"/>
@@ -3358,37 +3358,37 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <source>Channel 7</source>
-      <translation>チャンネル 7</translation>
+      <translation>チャンネル7</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <source>Channel 8</source>
-      <translation>チャンネル 8</translation>
+      <translation>チャンネル8</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <source>Channel 9</source>
-      <translation>チャンネル 9</translation>
+      <translation>チャンネル9</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <source>Channel 10</source>
-      <translation>チャンネル 10</translation>
+      <translation>チャンネル10</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <source>Channel 11</source>
-      <translation>チャンネル 11</translation>
+      <translation>チャンネル11</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="356"/>
       <source>Channel 12</source>
-      <translation>チャンネル 12</translation>
+      <translation>チャンネル12</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="380"/>
@@ -4037,7 +4037,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="48"/>
       <source>Specified altitudes are relative to launch position height.</source>
-      <translation>指定された高度は、離陸ポジションに対する相対的な高度です。</translation>
+      <translation>指定された高度は、離陸位置に対する相対的な高度です。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="52"/>
@@ -5468,7 +5468,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/EditPositionDialog.qml" line="112"/>
       <source>Set UTM</source>
-      <translation>UTMを設定</translation>
+      <translation>UTM設定</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/EditPositionDialog.qml" line="124"/>
@@ -5483,7 +5483,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/EditPositionDialog.qml" line="144"/>
       <source>Set From Vehicle Position</source>
-      <translation>機体ポジションを設定</translation>
+      <translation>機体位置を設定</translation>
     </message>
   </context>
   <context>
@@ -5499,7 +5499,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Vehicle/FTPManager.cc" line="234"/>
       <source>Invalid Nak format</source>
-      <translation>無効なNakフォーマット</translation>
+      <translation>無効なNAKフォーマット</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/FTPManager.cc" line="236"/>
@@ -7453,12 +7453,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="904"/>
       <source>Use Specified Base Position</source>
-      <translation>指定されたベースポジションを使用</translation>
+      <translation>指定されたベース位置を使用</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="965"/>
       <source>Save Current Base Position</source>
-      <translation>現在のベースポジションを保存</translation>
+      <translation>現在のベース位置を保存</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="981"/>
@@ -7933,7 +7933,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="67"/>
       <source>Return to the launch position of the vehicle.</source>
-      <translation>機体の離陸ポジションへ戻ります。</translation>
+      <translation>機体の離陸位置へ戻ります。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="54"/>
@@ -7998,7 +7998,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="66"/>
       <source>Land the vehicle at the current position.</source>
-      <translation>機体の現在のポジションに着陸します。</translation>
+      <translation>機体は現在位置に着陸します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="68"/>
@@ -8028,12 +8028,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="73"/>
       <source>Pause the vehicle at it&apos;s current position, adjusting altitude up or down as needed.</source>
-      <translation>現在のポジションで一時停止し、必要に応じて高度を上げ下げします。</translation>
+      <translation>現在位置で一時停止し、必要に応じて高度を上げ下げします。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="74"/>
       <source>Pause all vehicles at their current position.</source>
-      <translation>現在のポジションにあるすべての機体を一時停止します。</translation>
+      <translation>現在位置にあるすべての機体を一時停止します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="75"/>
@@ -9590,7 +9590,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainToolBar.qml" line="209"/>
       <source>Click anywhere to hide</source>
-      <translation>どこかをクリックすると非表示</translation>
+      <translation>クリックして非表示</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainToolBar.qml" line="82"/>
@@ -9669,7 +9669,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="82"/>
       <source>MAVLink Logging</source>
-      <translation>MAVLink ログ</translation>
+      <translation>MAVLinkログ</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="83"/>
@@ -9797,12 +9797,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="398"/>
       <source>Manual Start/Stop:</source>
-      <translation>マニュアル 開始 / 停止:</translation>
+      <translation>手動開始 / 停止:</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="402"/>
       <source>Start Logging</source>
-      <translation>ログ 開始</translation>
+      <translation>ログ開始</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="409"/>
@@ -10124,7 +10124,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="206"/>
       <source>Move to vehicle position</source>
-      <translation>機体ポジションを移動</translation>
+      <translation>機体位置を移動</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="215"/>
@@ -10208,7 +10208,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="239"/>
       <source>Launch Position</source>
-      <translation>離陸ポジション</translation>
+      <translation>離陸位置</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="275"/>
@@ -10312,7 +10312,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="43"/>
       <source>Send status text + voice</source>
-      <translation>ステータステキスト+音声を送信</translation>
+      <translation>ステータステキスト + 音声を送信</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="80"/>
@@ -11008,7 +11008,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="42"/>
       <source>Manual/Main</source>
-      <translation>マニュアル / メイン</translation>
+      <translation>手動 / メイン</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="43"/>
@@ -11184,13 +11184,13 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <source>The aircraft flies in a circle around the current position at the current altitude. </source>
-      <translation>機体は現在の位置を中心に、現状高度でサークルを描くように飛行します。 </translation>
+      <translation>機体は現在位置を中心に、現状高度でサークルを描くように飛行します。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
       <source>The multirotor hovers at the current position and altitude. </source>
-      <translation>マルチコプターは、現在のポジションと高度でホバリングします。</translation>
+      <translation>マルチコプターは、現在の位置と高度でホバリングします。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="82"/>
@@ -11364,12 +11364,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="396"/>
       <source>Unable to takeoff, vehicle position not known.</source>
-      <translation>離陸することができません。機体ポジションが不明です。</translation>
+      <translation>離陸することができません。機体位置が不明です。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="416"/>
       <source>Unable to go to location, vehicle position not known.</source>
-      <translation>位置の移動ができません。機体ポジションが不明です。</translation>
+      <translation>位置の移動ができません。機体位置が不明です。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="489"/>
@@ -11379,12 +11379,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="498"/>
       <source>Unable to change altitude, home position unknown.</source>
-      <translation>高度を変更することができません。ホームポジションが不明です。</translation>
+      <translation>高度を変更することができません。ホーム位置が不明です。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="502"/>
       <source>Unable to change altitude, home position altitude unknown.</source>
-      <translation>高度を変更することができません。ホームポジション高度が不明です。</translation>
+      <translation>高度を変更することができません。ホーム位置の高度が不明です。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="533"/>
@@ -11849,7 +11849,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="114"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="139"/>
       <source>Generally does not need much adjustment, reduce this when seeing slow oscillations.</source>
-      <translation>一般的にあまり調整する必要はありませんが、ゆっくりとした振動が見られる場合に調整してください。</translation>
+      <translation>全般的にあまり調整する必要はありませんが、ゆっくりとした振動が見られる場合に調整してください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterRate.qml" line="90"/>
@@ -12803,7 +12803,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="316"/>
       <source>Click anywhere to hide</source>
-      <translation>非表示にする場所をクリック</translation>
+      <translation>クリックして非表示</translation>
     </message>
   </context>
   <context>
@@ -13310,7 +13310,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="301"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="301"/>
       <source>Empty Voltage (per cell)</source>
-      <translation>電圧なし ( /セル)</translation>
+      <translation>電圧なし(セルあたり)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="307"/>
@@ -13660,7 +13660,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="39"/>
       <source>Failure. Airspeed sensor issues. Check console.</source>
-      <translation>飛行速度センサの問題が発生しました。コンソールを確認してください。</translation>
+      <translation>対気速度センサの問題が発生しました。コンソールを確認してください。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="40"/>
@@ -13683,12 +13683,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/FlightDisplay/PreFlightSoundCheck.qml" line="17"/>
       <source>QGC audio output enabled. System audio output enabled, too?</source>
-      <translation>QGC音声出力が有効です。システム音声出力も有効ですか？</translation>
+      <translation>QGC音声出力が有効です。システム音声出力も有効にしますか？</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/PreFlightSoundCheck.qml" line="18"/>
       <source>QGC audio output is disabled. Please enable it under application settings-&gt;general to hear audio warnings!</source>
-      <translation>QGC 音声出力が無効になっています。アプリケーションの設定で有効にしてください-&gt;一般的な音声警告を聞いてください！</translation>
+      <translation>QGC音声出力が無効になっています。アプリケーションの設定で有効にしてください-&gt;一般的な警告音を聞いてください！</translation>
     </message>
   </context>
   <context>
@@ -13847,7 +13847,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="199"/>
       <source>MAVLink Inspector</source>
-      <translation>MAVLink インスペクタ</translation>
+      <translation>MAVLinkインスペクタ</translation>
     </message>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="286"/>
@@ -13951,7 +13951,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="587"/>
       <source>Comp All</source>
-      <translation>Comp All</translation>
+      <translation>すべてのコンポーネント</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="592"/>
@@ -14724,12 +14724,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="120"/>
       <source>DSMX (7 channels or less)</source>
-      <translation>DSMX (チャンネル 7以下)</translation>
+      <translation>DSMX (7チャンネル以下)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="127"/>
       <source>DSMX (8 channels or more)</source>
-      <translation>DSMX (チャンネル 8以上)</translation>
+      <translation>DSMX (8チャンネル以上)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="183"/>
