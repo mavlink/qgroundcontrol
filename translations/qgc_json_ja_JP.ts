@@ -559,7 +559,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FOLLOW_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Vehicle reposition</source>
-      <translation>機体 位置変更</translation>
+      <translation>機体位置変更</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_PATHPLANNING].friendlyName, </extracomment>
@@ -859,7 +859,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Mission will continue at the specified item.</source>
-      <translation>指定された項目でミッションを続行します。</translation>
+      <translation>指定された項目でミッションを継続します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].param1.label, </extracomment>
@@ -1045,7 +1045,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_REPOSITION].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Reposition</source>
-      <translation>再配置</translation>
+      <translation>位置変更</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PAUSE_CONTINUE].friendlyName, </extracomment>
