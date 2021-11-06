@@ -52,7 +52,7 @@ Item {
         VehicleSummaryRow {
             visible:    _camTriggerPol
             labelText:  qsTr("AUX pin polarity")
-            valueText:  _camTriggerPol ? (_camTriggerPol.value ? "High (3.3V)" : "Low (0V)") : ""
+            valueText:  _camTriggerPol ? (_camTriggerPol.value ? qsTr("High (3.3V)") : qsTr("Low (0V)")) : ""
         }
 
     }

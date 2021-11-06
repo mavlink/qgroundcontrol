@@ -647,7 +647,7 @@ Item {
                     spacing:                _margins
 
                     QGCButton {
-                        text:       "Show zoom previews"
+                        text:       qsTr("Show zoom previews")
                         visible:    !_showPreview
                         onClicked:  _showPreview = !_showPreview
                     }
