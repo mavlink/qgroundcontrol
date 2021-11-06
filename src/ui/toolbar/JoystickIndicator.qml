@@ -58,12 +58,12 @@ Item {
 
                     QGCLabel { text: qsTr("Connected:") }
                     QGCLabel {
-                        text:  joystickManager.activeJoystick ? "Yes" : "No"
+                        text:  joystickManager.activeJoystick ? qsTr("Yes") : qsTr("No")
                         color: joystickManager.activeJoystick ? qgcPal.buttonText : "red"
                     }
                     QGCLabel { text: qsTr("Enabled:") }
                     QGCLabel {
-                        text:  globals.activeVehicle && globals.activeVehicle.joystickEnabled ? "Yes" : "No"
+                        text:  globals.activeVehicle && globals.activeVehicle.joystickEnabled ? qsTr("Yes") : qsTr("No")
                         color: globals.activeVehicle && globals.activeVehicle.joystickEnabled ? qgcPal.buttonText : "red"
                     }
                 }

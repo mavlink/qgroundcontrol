@@ -274,7 +274,7 @@ AnalyzePage {
                 QGCTextField {
                     id:               commandInput
                     Layout.fillWidth: true
-                    placeholderText:  "Enter Commands here..."
+                    placeholderText:  qsTr("Enter Commands here...")
                     inputMethodHints: Qt.ImhNoAutoUppercase
 
                     function sendCommand() {
