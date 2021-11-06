@@ -209,6 +209,7 @@ const QVariantList& ArduSubFirmwarePlugin::modeIndicators(const Vehicle* vehicle
         _modeIndicators = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
         });
     }
     return _modeIndicators;
