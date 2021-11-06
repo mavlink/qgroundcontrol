@@ -546,11 +546,11 @@ Rectangle {
                             textRole:   "text"
                             model: ListModel {
                                 id: windItems
-                                ListElement { text: "Please Select"; value: -1 }
-                                ListElement { text: "Calm";     value: 0 }
-                                ListElement { text: "Breeze";   value: 5 }
-                                ListElement { text: "Gale";     value: 8 }
-                                ListElement { text: "Storm";    value: 10 }
+                                ListElement { text: qsTr("Please Select"); value: -1 }
+                                ListElement { text: qsTr("Calm");     value: 0 }
+                                ListElement { text: qsTr("Breeze");   value: 5 }
+                                ListElement { text: qsTr("Gale");     value: 8 }
+                                ListElement { text: qsTr("Storm");    value: 10 }
                             }
                             onActivated: {
                                 saveItems();
@@ -584,12 +584,12 @@ Rectangle {
                             textRole:   "text"
                             model: ListModel {
                                 id: ratingItems
-                                ListElement { text: "Please Select";            value: "notset"}
-                                ListElement { text: "Crashed (Pilot Error)";    value: "crash_pilot" }
-                                ListElement { text: "Crashed (Software or Hardware issue)";   value: "crash_sw_hw" }
-                                ListElement { text: "Unsatisfactory";           value: "unsatisfactory" }
-                                ListElement { text: "Good";                     value: "good" }
-                                ListElement { text: "Great";                    value: "great" }
+                                ListElement { text: qsTr("Please Select");            value: "notset"}
+                                ListElement { text: qsTr("Crashed (Pilot Error)");    value: "crash_pilot" }
+                                ListElement { text: qsTr("Crashed (Software or Hardware issue)");   value: "crash_sw_hw" }
+                                ListElement { text: qsTr("Unsatisfactory");           value: "unsatisfactory" }
+                                ListElement { text: qsTr("Good");                     value: "good" }
+                                ListElement { text: qsTr("Great");                    value: "great" }
                             }
                             onActivated: {
                                 saveItems();

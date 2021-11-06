@@ -117,7 +117,7 @@ RowLayout {
         min:            0
         max:            0
         labelFormat:    "%.2f"
-        titleText:      "sec"
+        titleText:      qsTr("sec")
         tickCount:      11
     }
 
