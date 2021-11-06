@@ -77,7 +77,7 @@ SetupPage {
                 QGCLabel {
                     visible:            _sys_vehicle_resp && _sys_vehicle_resp.value > 0.8
                     color:              qgcPal.warningText
-                    text:              "Warning: a high responsiveness requires a vehicle with large thrust-to-weight ratio. The vehicle might lose altitude otherwise."
+                    text:              qsTr("Warning: a high responsiveness requires a vehicle with large thrust-to-weight ratio. The vehicle might lose altitude otherwise.")
                 }
             }
 

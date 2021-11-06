@@ -138,7 +138,7 @@ AnalyzePage {
                 }
             }
             QGCLabel {
-                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? "/TAGGED folder in your image folder" : geoController.imageDirectory + "/TAGGED") : geoController.saveDirectory
+                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? qsTr("/TAGGED folder in your image folder") : geoController.imageDirectory + qsTr("/TAGGED")) : geoController.saveDirectory
                 elide:              Text.ElideLeft
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
