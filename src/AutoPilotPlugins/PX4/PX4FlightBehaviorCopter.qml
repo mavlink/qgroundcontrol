@@ -140,7 +140,7 @@ SetupPage {
                         id:             zVelSlider
 
                         ListElement {
-                            title:          qsTr("Vertial velocity (m/s)")
+                            title:          qsTr("Vertical velocity (m/s)")
                             description:    qsTr("Limit the vertical velocity (applies to all modes).")
                             param:          "MPC_Z_VEL_ALL"
                             min:            0.2
