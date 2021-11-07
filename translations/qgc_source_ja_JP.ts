@@ -16,7 +16,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="71"/>
       <source>Airframe is currently not set.</source>
       <translation>
-エアフレームは現在設定されていません。</translation>
+フレームは現在設定されていません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="72"/>
@@ -63,7 +63,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.cc" line="40"/>
       <source>Frame Setup is used to select the airframe which matches your vehicle.</source>
-      <translation>フレーム設定では、機体に合ったエアフレームを選択します。</translation>
+      <translation>フレーム設定では、機体に合ったフレームを選択します。</translation>
     </message>
   </context>
   <context>
@@ -3451,7 +3451,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="56"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="56"/>
       <source>Waypoint navigation parameters</source>
-      <translation>ウェイポイントナビゲーションパラメータ</translation>
+      <translation>ポイントナビゲーションパラメータ</translation>
     </message>
   </context>
   <context>
@@ -3478,7 +3478,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="45"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="45"/>
       <source>Your vehicle is using a custom airframe configuration. </source>
-      <translation>機体はカスタムエアフレーム構成を使用しています。 </translation>
+      <translation>機体はカスタムフレーム構成を使用しています。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="46"/>
@@ -3492,7 +3492,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="47"/>
       <source>If you want to reset your airframe configuration and select a standard configuration, click &apos;Reset&apos; below.</source>
-      <translation>エアフレーム設定をリセットして標準設定にする場合は、以下の【リセット】をクリックしてください。</translation>
+      <translation>フレーム設定をリセットして標準設定にする場合は、以下の【リセット】をクリックしてください。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="50"/>
@@ -3522,7 +3522,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="132"/>
       <source>Airframe is not set.</source>
-      <translation>エアフレームは設定されていません。</translation>
+      <translation>フレームは設定されていません。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="141"/>
@@ -3535,12 +3535,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="19"/>
       <source>Airframe</source>
-      <translation>エアフレーム</translation>
+      <translation>フレーム</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="31"/>
       <source>Airframe Setup is used to select the airframe that matches your vehicle. This will in turn set up the various tuning values for flight parameters.</source>
-      <translation>エアフレーム設定は、機体に合ったエアフレームを選択します。これにより飛行パラメータの各種調整値が設定されます。</translation>
+      <translation>フレーム設定は、機体に合ったフレームを選択します。これにより飛行パラメータの各種調整値が設定されます。</translation>
     </message>
   </context>
   <context>
@@ -3548,7 +3548,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentController.cc" line="85"/>
       <source>You cannot change airframe configuration while connected to multiple vehicles.</source>
-      <translation>複数の機体に接続した状態でエアフレーム設定を変更することはできません。</translation>
+      <translation>複数の機体に接続した状態でフレーム設定を変更することはできません。</translation>
     </message>
   </context>
   <context>
@@ -3563,7 +3563,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="27"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="27"/>
       <source>Airframe type</source>
-      <translation>エアフレームタイプ</translation>
+      <translation>フレームタイプ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="28"/>
@@ -3806,7 +3806,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="499"/>
       <source>Loading Flight List</source>
-      <translation>飛行リストをロード中</translation>
+      <translation>飛行リストを読み込み中</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="531"/>
@@ -3856,12 +3856,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="653"/>
       <source> Flights Loaded</source>
-      <translation> 飛行プランがロードされました</translation>
+      <translation> 飛行プランが読み込まれました</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="653"/>
       <source>No Flights Loaded</source>
-      <translation> 飛行プランがロードされませんでした</translation>
+      <translation> 飛行プランが読み込まれませんでした</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="657"/>
@@ -5223,7 +5223,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="64"/>
       <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
-      <translation>ミッションが有効であることを確認してください。(ウェイポイント有効、地形衝突なし)</translation>
+      <translation>ミッションが有効であることを確認してください。(ポイント有効、地形衝突なし)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="72"/>
@@ -5761,7 +5761,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/FactValueGrid.cc" line="318"/>
       <source>Load Settings</source>
-      <translation>設定をロード</translation>
+      <translation>設定の読み込み</translation>
     </message>
   </context>
   <context>
@@ -5845,12 +5845,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="305"/>
       <source>Write failed for airframe meta data file, error: %1</source>
-      <translation>エアフレームのメタデータファイルへの書き込みに失敗しました。エラー: %1</translation>
+      <translation>フレームのメタデータファイルへの書き込みに失敗しました。エラー: %1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="312"/>
       <source>Unable to open airframe meta data file %1 for writing, error: %2</source>
-      <translation>エアフレームを書き込むメタデータファイル %1 を開けません。エラー: %2</translation>
+      <translation>フレームを書き込むメタデータファイル %1 を開けません。エラー: %2</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="338"/>
@@ -6619,7 +6619,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="64"/>
       <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
-      <translation>ミッションが有効であることを確認してください。(ウェイポイント有効、地形衝突なし)</translation>
+      <translation>ミッションが有効であることを確認してください。(ポイント有効、地形衝突なし)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="72"/>
@@ -6981,12 +6981,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="116"/>
       <source>Resume Mission From Waypoint %1</source>
-      <translation>ウェイポイント %1 からミッションを再開</translation>
+      <translation>ポイント %1 からミッションを再開</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="127"/>
       <source>Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.</source>
-      <translation>ミッションを再開すると、最後に飛行したウェイポイントから現在のミッションを再構築し、次の飛行のために機体にアップロードします。</translation>
+      <translation>ミッションを再開すると、最後に飛行したポイントから現在のミッションを再構築し、次の飛行のために機体にアップロードします。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="135"/>
@@ -7200,7 +7200,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="661"/>
       <source>Application Load/Save Path</source>
-      <translation>アプリケーション ロード / セーブ先</translation>
+      <translation>アプリケーション読込 / 保存先</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="665"/>
@@ -7217,7 +7217,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="672"/>
       <source>Choose the location to save/load files</source>
-      <translation>ファイルのセーブ / ロード先を選択</translation>
+      <translation>ファイル読込 / 保存先を選択</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="685"/>
@@ -7668,7 +7668,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/GeoFenceManager.cc" line="178"/>
       <source>GeoFence load: Incomplete polygon loaded</source>
-      <translation>ジオフェンス読込: 不完全なポリゴンのロード</translation>
+      <translation>ジオフェンス読込: 不完全なポリゴンの読み込み</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/GeoFenceManager.cc" line="186"/>
@@ -7923,7 +7923,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="52"/>
       <source>Set Waypoint</source>
-      <translation>ウェイポイント設定</translation>
+      <translation>ポイント設定</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="53"/>
@@ -7988,7 +7988,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="64"/>
       <source>Continue the mission from the current waypoint.</source>
-      <translation>現在のウェイポイントからミッションを継続します。</translation>
+      <translation>現在のポイントからミッションを継続します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="65"/>
@@ -8013,7 +8013,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="70"/>
       <source>Adjust current waypoint to %1.</source>
-      <translation>現在のウェイポイントを %1 に調整します。</translation>
+      <translation>現在のポイントを %1 に変更します。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="71"/>
@@ -8632,7 +8632,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/KMLHelper.cc" line="15"/>
       <source>KML file load failed. %1</source>
-      <translation>KMLファイルがロードできませんでした。 %1</translation>
+      <translation>KMLファイルが読み込めませんでした。 %1</translation>
     </message>
     <message>
       <location filename="../src/KMLHelper.cc" line="24"/>
@@ -9097,7 +9097,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="104"/>
       <source>Load Telemetry Log</source>
-      <translation>テレメトリーログのロード</translation>
+      <translation>テレメトリログの読み込み</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="110"/>
@@ -10228,7 +10228,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="103"/>
       <source>Initial Waypoint Alt</source>
-      <translation>初期ウェイポイント高度</translation>
+      <translation>初期ポイント高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="208"/>
@@ -10482,7 +10482,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="59"/>
       <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
-      <translation>ミッションが有効であることを確認してください。(ウェイポイント有効、地形衝突なし)</translation>
+      <translation>ミッションが有効であることを確認してください。(ポイント有効、地形衝突なし)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="67"/>
@@ -12108,12 +12108,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="23"/>
       <source>Load Parameters</source>
-      <translation>パラメータをロード</translation>
+      <translation>パラメータの読み込み</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="42"/>
       <source>The following parameters from the loaded file differ from what is currently set on the Vehicle. Click &apos;Ok&apos; to update them on the Vehicle.</source>
-      <translation>ロードされたファイルの次のパラメータは、現在機体に設定されているものとは異なります。【OK】をクリックすると機体側で更新されます。</translation>
+      <translation>読み込まれたファイルの次のパラメータは、現在機体に設定されているものとは異なります。【OK】をクリックすると機体側で更新されます。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="43"/>
@@ -12192,12 +12192,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="119"/>
       <source>Load from file...</source>
-      <translation>ファイルからロード…</translation>
+      <translation>ファイルから読み込み…</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="121"/>
       <source>Load Parameters</source>
-      <translation>パラメータをロード</translation>
+      <translation>パラメータの読み込み</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="127"/>
@@ -12347,7 +12347,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
       <location filename="../src/FactSystem/ParameterManager.cc" line="977"/>
       <source>Parameters not loaded since they are not currently on the vehicle: %1
 </source>
-      <translation>パラメータは現在機体に搭載されていないため、ロードされませんでした: %1
+      <translation>パラメータは現在機体に搭載されていないため読み込まれませんでした: %1
 </translation>
     </message>
     <message>
@@ -12732,7 +12732,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="138"/>
       <source>Selected Waypoint</source>
-      <translation>ウェイポイントを選択しました</translation>
+      <translation>ポイントを選択しました</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="143"/>
@@ -12861,7 +12861,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="662"/>
       <source>Waypoint</source>
-      <translation>ウェイポイント</translation>
+      <translation>ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="669"/>
@@ -12917,12 +12917,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="157"/>
       <source>Discard Unsaved Changes, Load New Plan From Vehicle</source>
-      <translation>保存されていない変更を破棄し機体から新しいプランをロード</translation>
+      <translation>保存されていない変更を破棄し、機体から新しいプランを読み込みます</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="158"/>
       <source>Load New Plan From Vehicle</source>
-      <translation>機体から新しいプランをロード</translation>
+      <translation>機体から新しいプランを読み込み</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="169"/>
@@ -13001,12 +13001,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="942"/>
       <source>You have unsaved/unsent changes. Loading from the Vehicle will lose these changes. Are you sure you want to load from the Vehicle?</source>
-      <translation>保存されていない / 未送信の変更があります。機体からロードするとこれらの変更が失われます。本当に機体から読み込んでもよろしいですか？</translation>
+      <translation>保存されていない / 未送信の変更があります。機体から読み込まれるとこれらの変更が失われます。本当に機体から読み込んでもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="954"/>
       <source>You have unsaved/unsent changes. Loading from a file will lose these changes. Are you sure you want to load from a file?</source>
-      <translation>保存されていない / 未送信の変更があります。ファイルからロードするとこれらの変更が失われます。本当にファイルから読み込んでもよろしいですか？</translation>
+      <translation>保存されていない / 未送信の変更があります。ファイルから読み込まれるとこれらの変更が失われます。本当にファイルから読み込んでもよろしいですか？</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1228"/>
@@ -13095,7 +13095,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1176"/>
       <source>Save Mission Waypoints As KML...</source>
-      <translation>ミッションウェイポイントをKMLとして保存...</translation>
+      <translation>ミッションポイントをKMLとして保存...</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1181"/>
@@ -14025,7 +14025,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="560"/>
       <source>Load KML/SHP...</source>
-      <translation>KML/SHPをロード...</translation>
+      <translation>KML/SHPの読み込み...</translation>
     </message>
   </context>
   <context>
@@ -14078,7 +14078,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="359"/>
       <source>Load KML...</source>
-      <translation>KMLをロード...</translation>
+      <translation>KMLの読み込み...</translation>
     </message>
   </context>
   <context>
@@ -14099,7 +14099,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/ui/QGCPluginHost.ui" line="49"/>
       <source>Loaded Plugins</source>
-      <translation>ロードされたプラグイン</translation>
+      <translation>読み込まれたプラグイン</translation>
     </message>
     <message>
       <location filename="../src/ui/QGCPluginHost.ui" line="62"/>
@@ -15001,7 +15001,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="54"/>
       <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
-      <translation>ミッションが有効であることを確認してください。(ウェイポイント有効、地形衝突なし)</translation>
+      <translation>ミッションが有効であることを確認してください。(ポイント有効、地形衝突なし)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="62"/>
@@ -15044,7 +15044,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/SHPFileHelper.cc" line="18"/>
       <source>SHP file load failed. %1</source>
-      <translation>SHPファイルがロードできませんでした。 %1</translation>
+      <translation>SHPファイルが読み込まれませんでした。 %1</translation>
     </message>
     <message>
       <location filename="../src/SHPFileHelper.cc" line="51"/>
@@ -16009,7 +16009,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="17"/>
       <source>Shape file load failed. %1</source>
-      <translation>シェイプファイルがロードできませんでした。 %1</translation>
+      <translation>シェイプファイルが読み込まれませんでした。 %1</translation>
     </message>
     <message>
       <location filename="../src/ShapeFileHelper.cc" line="40"/>
@@ -16353,7 +16353,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/FlightDisplay/SubChecklist.qml" line="64"/>
       <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
-      <translation>ミッションが有効であることを確認してください。(ウェイポイント有効、地形衝突なし)</translation>
+      <translation>ミッションが有効であることを確認してください。(ポイント有効、地形衝突なし)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/SubChecklist.qml" line="72"/>
@@ -17320,7 +17320,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="64"/>
       <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
-      <translation>ミッションが有効であることを確認してください。(ウェイポイント有効、地形衝突なし)</translation>
+      <translation>ミッションが有効であることを確認してください。(ポイント有効、地形衝突なし)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="72"/>
