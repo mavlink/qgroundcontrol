@@ -319,7 +319,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Waypoint</source>
-      <translation>ウェイポイント</translation>
+      <translation>ポイント</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
@@ -397,7 +397,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction of next waypoint,Any direction</source>
-      <translation>次のウェイポイントの方向, 任意の方向</translation>
+      <translation>次のポイントの方向, 任意の方向</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
@@ -433,7 +433,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Direction of next waypoint,Current direction</source>
-      <translation>次のウェイポイントの方向,現在の方向</translation>
+      <translation>次のポイントの方向,現在の方向</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
@@ -613,7 +613,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Spline waypoint</source>
-      <translation>スプライン ウェイポイント</translation>
+      <translation>スプラインポイント</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].description, </extracomment>
@@ -649,7 +649,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param2.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Default,Next waypoint,Takeoff,Specified,Any</source>
-      <translation>デフォルト,次のウェイポイント,離陸,指定値,すべて</translation>
+      <translation>デフォルト,次のポイント,離陸,指定値,すべて</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].friendlyName, </extracomment>
@@ -769,7 +769,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Delay the mission until within the specified distance of the next waypoint.</source>
-      <translation>次のウェイポイントまでの距離が指定された間隔になるまでミッションを遅延させます。</translation>
+      <translation>次のポイントまでの距離が指定された間隔になるまでミッションを遅延させます。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_CONDITION_DISTANCE].param1.label, .mavCmdInfo[MAV_CMD_DO_SET_CAM_TRIGG_DIST].param1.label, </extracomment>
@@ -1093,13 +1093,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ROI to next waypoint</source>
-      <translation>対象領域から次のウェイポイントへ</translation>
+      <translation>対象領域から次のポイントへ</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sets the region of interest to point towards the next waypoint with optional offsets.</source>
-      <translation>次のウェイポイントを指すように対象領域を設定し、オプションでオフセットを設定します。</translation>
+      <translation>次のポイントを指すように対象領域を設定し、オプションでオフセットを設定します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET].param5.label, </extracomment>
@@ -1147,7 +1147,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>None,Next waypoint,Mission item,Location,ROI item</source>
-      <translation>なし,次のウェイポイント,ミッション項目,場所,ROI項目</translation>
+      <translation>なし,次のポイント,ミッション項目,場所,ROI項目</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].param2.label, </extracomment>
