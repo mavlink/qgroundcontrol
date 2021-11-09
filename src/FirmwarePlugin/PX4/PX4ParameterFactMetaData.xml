@@ -9073,6 +9073,11 @@
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="IMU_GYRO_FFT_SNR" default="10." type="FLOAT">
+      <short_desc>IMU gyro FFT SNR</short_desc>
+      <min>1</min>
+      <max>30</max>
+    </parameter>
     <parameter name="IMU_GYRO_NF_BW" default="20.0" type="FLOAT">
       <short_desc>Notch filter bandwidth for gyro</short_desc>
       <long_desc>The frequency width of the stop band for the 2nd order notch filter on the primary gyro. See "IMU_GYRO_NF_FREQ" to activate the filter and to set the notch frequency. Applies to both angular velocity and angular acceleration sent to the controllers.</long_desc>
