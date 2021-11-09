@@ -13,6 +13,7 @@
 #include <QSettings>
 #include <QUrl>
 #include <QDir>
+#include <QQuickWindow>
 
 #ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
@@ -569,7 +570,7 @@ void
 VideoManager::_initVideo()
 {
 #if defined(QGC_GST_STREAMING)
-    QQuickItem* root = qgcApp()->mainRootWindow();
+    QQuickWindow* root = qgcApp()->mainRootWindow();
 
     if (root == nullptr) {
         qCDebug(VideoManagerLog) << "mainRootWindow() failed. No root window";

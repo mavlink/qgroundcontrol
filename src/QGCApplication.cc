@@ -553,7 +553,7 @@ bool QGCApplication::_initForNormalAppBoot()
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
     _qmlAppEngine->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
 
-    QQuickWindow* rootWindow = (QQuickWindow*)qgcApp()->mainRootWindow();
+    QQuickWindow* rootWindow = qgcApp()->mainRootWindow();
 
     if (rootWindow) {
         rootWindow->scheduleRenderJob (new FinishVideoInitialization (toolbox()->videoManager()),
@@ -788,10 +788,10 @@ void QGCApplication::_showDelayedAppMessages(void)
     }
 }
 
-QQuickItem* QGCApplication::mainRootWindow()
+QQuickWindow* QGCApplication::mainRootWindow()
 {
     if(!_mainRootWindow) {
-        _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
+        _mainRootWindow = qobject_cast<QQuickWindow*>(_rootQmlObject());
     }
     return _mainRootWindow;
 }
@@ -1013,4 +1013,25 @@ bool QGCApplication::compressEvent(QEvent*event, QObject* receiver, QPostEventLi
     }
 
     return false;
+}
+
+bool QGCApplication::event(QEvent *e)
+{
+    if (e->type() == QEvent::Quit) {
+        // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit even here only.
+        // This in turn causes the standard QGC shutdown sequence to not run. So in this case we close the window ourselves such that the
+        // signal is sent and the normal shutdown sequence runs.
+        bool forceClose = _mainRootWindow->property("_forceClose").toBool();
+        qDebug() << "Quit event" << forceClose;
+        // forceClose
+        //  true:   Standard QGC shutdown sequence is complete. Let the app quit normally by falling through to the base class processing.
+        //  false:  QGC shutdown sequence has not been run yet. Don't let this event close the app yet. Close the main window to kick off the normal shutdown.
+        if (!forceClose) {
+            //
+            _mainRootWindow->close();
+            e->ignore();
+            return true;
+        }
+    }
+    return QApplication::event(e);
 }
