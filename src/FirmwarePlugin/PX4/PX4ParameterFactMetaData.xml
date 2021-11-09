@@ -1369,9 +1369,9 @@
       <min>0</min>
       <max>2</max>
       <values>
-        <value code="0">RC Transmitter</value>
-        <value code="1">Joystick/No RC Checks</value>
-        <value code="2">Virtual RC by Joystick</value>
+        <value code="0">RC Transmitter only</value>
+        <value code="1">Joystick only/No RC Checks</value>
+        <value code="2">RC and Joystick are accepted</value>
       </values>
     </parameter>
     <parameter name="COM_RC_LOSS_T" default="0.5" type="FLOAT">
@@ -1385,13 +1385,12 @@
     </parameter>
     <parameter name="COM_RC_OVERRIDE" default="1" type="INT32">
       <short_desc>Enable RC stick override of auto and/or offboard modes</short_desc>
-      <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV from their center position immediately gives control back to the pilot by switching to Position mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode. This parameter is not considered in case of a GPS failure (Descend flight mode), where stick override is always enabled.</long_desc>
+      <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV immediately gives control back to the pilot by switching to Position mode and if position is unavailable Altitude mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode. This parameter is not considered in case of a GPS failure (Descend flight mode), where stick override is always enabled.</long_desc>
       <min>0</min>
-      <max>7</max>
+      <max>3</max>
       <bitmask>
         <bit index="0">Enable override during auto modes (except for in critical battery reaction)</bit>
         <bit index="1">Enable override during offboard mode</bit>
-        <bit index="2">Ignore throttle stick</bit>
       </bitmask>
     </parameter>
     <parameter name="COM_RC_STICK_OV" default="30.0" type="FLOAT">
