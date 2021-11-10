@@ -7185,7 +7185,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="626"/>
       <source>Clear all settings on next start</source>
-      <translation>次回の開始時にすべての設定をクリアします</translation>
+      <translation>次回の開始時にすべての設定をクリア</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="636"/>
@@ -7277,7 +7277,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="618"/>
       <source>Check for Internet connection</source>
-      <translation>インターネット接続を確認してください</translation>
+      <translation>インターネット接続の確認</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="719"/>
@@ -7362,7 +7362,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="378"/>
       <source>Default Mission Altitude</source>
-      <translation>デフォルトミッション高度</translation>
+      <translation>ミッション高度 初期値</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="384"/>
@@ -7372,12 +7372,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="392"/>
       <source>Use MAV_CMD_CONDITION_GATE for pattern generation</source>
-      <translation>パターン生成に MAV_CMD_CONDITION_GATE を使用</translation>
+      <translation>パターン生成に【MAV_CMD_CONDITION_GATE】を使用</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="397"/>
       <source>Missions Do Not Require Takeoff Item</source>
-      <translation>ミッションは離陸項目を必要としません</translation>
+      <translation>プランは離陸項目を必要としません</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
@@ -7468,7 +7468,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="999"/>
       <source>Note: These setting are not meant for use with an ADSB transponder which is situated on the vehicle.</source>
-      <translation>注: これらの設定は機体上にあるADSBトランスポンダーで使用するためのものではありません。</translation>
+      <translation>注: 下記の設定は、機体上のADSBトランスポンダー設定をする項目ではありません。</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="253"/>
@@ -10282,27 +10282,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="46"/>
       <source>PX4 Vehicle</source>
-      <translation>PX4 Vehicle</translation>
+      <translation>PX4機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="51"/>
       <source>APM ArduCopter Vehicle</source>
-      <translation>APM ArduCopter Vehicle</translation>
+      <translation>APM ArduCopter機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="57"/>
       <source>APM ArduPlane Vehicle</source>
-      <translation>APM ArduPlane Vehicle</translation>
+      <translation>APM ArduPlane機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="63"/>
       <source>APM ArduSub Vehicle</source>
-      <translation>APM ArduSub Vehicle</translation>
+      <translation>APM ArduSub機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="69"/>
       <source>APM ArduRover Vehicle</source>
-      <translation>APM ArduRover Vehicle</translation>
+      <translation>APM ArduRover機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="75"/>
