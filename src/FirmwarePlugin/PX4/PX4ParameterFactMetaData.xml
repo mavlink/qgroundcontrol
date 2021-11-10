@@ -5219,7 +5219,7 @@
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_XY_CRUISE" default="5.0" type="FLOAT">
-      <short_desc>Maximum horizontal velocity in mission</short_desc>
+      <short_desc>Default horizontal velocity in mission</short_desc>
       <long_desc>Horizontal velocity used when flying autonomously in e.g. Missions, RTL, Goto.</long_desc>
       <min>3.0</min>
       <max>20.0</max>
