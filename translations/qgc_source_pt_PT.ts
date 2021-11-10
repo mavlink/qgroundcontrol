@@ -7021,7 +7021,7 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
     <message>
       <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="22"/>
       <source>Plan</source>
-      <translation>Planejamento</translation>
+      <translation>Rotas</translation>
     </message>
   </context>
   <context>
@@ -7363,7 +7363,7 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="356"/>
       <source>Plan View</source>
-      <translation type="unfinished">Plan View</translation>
+      <translation>Painel Rotas</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="378"/>
@@ -8795,7 +8795,7 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="173"/>
       <source>Create New Link Configuration</source>
-      <translation>Criar nova configuração de link</translation>
+      <translation>Criar nova configuração de conexão</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="183"/>
@@ -9474,7 +9474,7 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
       <location filename="../src/ui/MainRootWindow.qml" line="160"/>
       <location filename="../src/ui/MainRootWindow.qml" line="370"/>
       <source>Vehicle Setup</source>
-      <translation>Configuração do Veículo</translation>
+      <translation>Configurações do Veículo</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="164"/>
@@ -9873,12 +9873,12 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="658"/>
       <source>Delete log file after uploading</source>
-      <translation>Excluir arquivo de log após enviar</translation>
+      <translation>Excluir arquivo de registros após enviar</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="677"/>
       <source>Saved Log Files</source>
-      <translation>Arquivos de Log Salvos</translation>
+      <translation>Arquivos de Registros Salvos</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="740"/>
@@ -13779,7 +13779,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="138"/>
       <source>Comm Links</source>
-      <translation>Links de Comunicação</translation>
+      <translation>Conexões de Comun.</translation>
     </message>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="142"/>
@@ -15867,7 +15867,7 @@ ROTATION_NONE indica que o componente aponta na direção do voo.</translation>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="114"/>
       <source>Enable Flow Control</source>
-      <translation type="unfinished">Enable Flow Control</translation>
+      <translation>Habilitar Controle de Fluxo</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="31"/>
@@ -15917,7 +15917,7 @@ ROTATION_NONE indica que o componente aponta na direção do voo.</translation>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="165"/>
       <source>Stop Bits</source>
-      <translation>Bits de parada</translation>
+      <translation>Bits de Parada</translation>
     </message>
   </context>
   <context>
