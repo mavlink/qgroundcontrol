@@ -31,7 +31,7 @@
       <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation>Never,常に,フォローミーモード時</translation>
+      <translation>設定しない,常時設定,フォローミーモード時</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
@@ -88,7 +88,7 @@
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-      <translation>デフォルト,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</translation>
+      <translation>デフォルト,ソフトウェア デコーダー,NVIDIA デコーダー,VA-API デコーダー,DirectX 3D 11 デコーダー,VideoToolbox デコーダー</translation>
     </message>
   </context>
   <context>
