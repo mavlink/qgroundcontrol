@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QMap>
 #include <QSet>
 
 #include "Common.h"
@@ -35,6 +36,7 @@ enum class Function {
 struct MixerParameter {
     Parameter param;
     Function function{Function::Unspecified};
+    QString identifier; ///< optional identifier for rules
     QList<float> values{}; ///< fixed values if not configurable (param.name == "")
 };
 
@@ -80,6 +82,25 @@ struct MixerOption
 };
 
 using MixerOptions = QList<MixerOption>;
+
+struct Rule {
+    struct RuleItem {
+        bool hasMin{false};
+        bool hasMax{false};
+        bool hasDefault{false};
+
+        float min{};
+        float max{};
+        float defaultVal{};
+        bool hidden{false};
+        bool disabled{false};
+    };
+    QString selectIdentifier;
+    QList<QString> applyIdentifiers;
+    QMap<int, QList<RuleItem>> items;
+};
+
+using Rules = QList<Rule>;
 
 /**
  * Config parameters that apply to a group of actuators
@@ -133,6 +154,7 @@ public:
     Parameter::DisplayOption displayOption() const { return _parameter.param.displayOption; }
     int indexOffset() const { return _parameter.param.indexOffset; }
 
+    const QString& identifier() const { return _parameter.identifier; }
 private:
     const MixerParameter _parameter;
     const bool _isActuatorTypeConfig; ///< actuator type config instead of mixer channel config
@@ -145,20 +167,38 @@ class ChannelConfigInstance : public QObject
 {
     Q_OBJECT
 public:
-    ChannelConfigInstance(QObject* parent, Fact* fact, ChannelConfig& config)
-        : QObject(parent), _fact(fact), _config(config) {}
+    ChannelConfigInstance(QObject* parent, Fact* fact, ChannelConfig& config, int ruleApplyIdentifierIdx)
+        : QObject(parent), _fact(fact), _config(config), _ruleApplyIdentifierIdx(ruleApplyIdentifierIdx) {}
 
     Q_PROPERTY(ChannelConfig* config      READ channelConfig    CONSTANT)
-    Q_PROPERTY(Fact* fact                 READ fact            CONSTANT)
+    Q_PROPERTY(Fact* fact                 READ fact             CONSTANT)
+    Q_PROPERTY(bool visible               READ visible          NOTIFY visibleChanged)
+    Q_PROPERTY(bool enabled               READ enabled          NOTIFY enabledChanged)
 
     ChannelConfig* channelConfig() const { return &_config; }
 
     Fact* fact() { return _fact; }
 
+    bool visible() const { return _visible; }
+    bool enabled() const { return _enabled; }
+
+    // controlled via rules
+    void setVisible(bool visible) { _visible = visible; emit visibleChanged(); }
+    void setEnabled(bool enabled) { _enabled = enabled; emit enabledChanged(); }
+
+    int ruleApplyIdentifierIdx() const { return _ruleApplyIdentifierIdx; }
+
+signals:
+    void visibleChanged();
+    void enabledChanged();
 private:
 
     Fact* _fact{nullptr};
     ChannelConfig& _config;
+    const int _ruleApplyIdentifierIdx;
+
+    bool _visible{true};
+    bool _enabled{true};
 };
 
 class MixerChannel : public QObject
@@ -167,7 +207,7 @@ class MixerChannel : public QObject
 public:
     MixerChannel(QObject* parent, const QString& label, int actuatorFunction,
             int paramIndex, int actuatorTypeIndex, QmlObjectListModel& channelConfigs, ParameterManager* parameterManager,
-            std::function<void(Fact*)> factAddedCb);
+            const Rule* rule, std::function<void(Fact*)> factAddedCb);
 
     Q_PROPERTY(QString label                            READ label               CONSTANT)
     Q_PROPERTY(QmlObjectListModel* configInstances      READ configInstances     NOTIFY configInstancesChanged)
@@ -180,16 +220,24 @@ public:
     bool getGeometry(const ActuatorTypes& actuatorTypes, const MixerOption::ActuatorGroup& group,
             ActuatorGeometry& geometry) const;
 
+public slots:
+    void applyRule(bool noConstraints = false);
+
 signals:
     void configInstancesChanged();
+
 private:
 
     const QString _label;
     const int _actuatorFunction;
     const int _paramIndex;
     const int _actuatorTypeIndex;
+    const Rule* _rule;
 
     QmlObjectListModel* _configInstances = new QmlObjectListModel(this); ///< list of ChannelConfigInstance*
+    int _ruleSelectIdentifierIdx{-1};
+    int _currentSelectIdentifierValue{};
+    bool _applyingRule{false};
 };
 
 class MixerConfigGroup : public QObject
@@ -253,7 +301,7 @@ public:
     };
 
     void reset(const ActuatorTypes& actuatorTypes, const MixerOptions& mixerOptions,
-            const QMap<int, OutputFunction>& functions);
+            const QMap<int, OutputFunction>& functions, const Rules& rules);
 
     Q_PROPERTY(QmlObjectListModel* groups         READ groups        NOTIFY groupsChanged)
 
@@ -289,14 +337,16 @@ public slots:
 signals:
     void groupsChanged();
     void paramChanged();
+    void geometryParamChanged();
 
 private:
 
     Fact* getFact(const QString& paramName);
-    void subscribeFact(Fact* fact);
+    void subscribeFact(Fact* fact, bool geometry=false);
     void unsubscribeFacts();
 
     QSet<Fact*> _subscribedFacts{};
+    QSet<Fact*> _subscribedFactsGeometry{};
 
     ActuatorTypes _actuatorTypes;
     MixerOptions _mixerOptions;
@@ -308,6 +358,8 @@ private:
 
     QMap<int, QString> _functionsSpecificLabel; ///< function with specific label, e.g. 'Front Left Motor (Motor 1)'
     ParameterManager* _parameterManager{nullptr};
+
+    Rules _rules;
 };
 
 } // namespace Mixer

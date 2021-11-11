@@ -24,6 +24,7 @@ Actuators::Actuators(QObject* parent, Vehicle* vehicle)
       _motorAssignment(nullptr, vehicle, _actuatorOutputs), _vehicle(vehicle)
 {
     connect(&_mixer, &Mixer::Mixers::paramChanged, this, &Actuators::parametersChanged);
+    connect(&_mixer, &Mixer::Mixers::geometryParamChanged, this, &Actuators::updateGeometryImage);
     qRegisterMetaType<Actuators*>("Actuators*");
     connect(&_motorAssignment, &MotorAssignment::activeChanged, this, &Actuators::motorAssignmentActiveChanged);
     connect(&_motorAssignment, &MotorAssignment::messageChanged, this, &Actuators::motorAssignmentMessageChanged);
@@ -534,6 +535,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
                 QJsonValue parameter = parameterJson.toObject();
                 Mixer::MixerParameter mixerParameter{};
                 mixerParameter.param.parse(parameter);
+                mixerParameter.identifier = parameter["identifier"].toString();
                 QString function = parameter["function"].toString();
                 if (function == "posx") {
                     mixerParameter.function = Mixer::Function::PositionX;
@@ -590,7 +592,57 @@ bool Actuators::parseJson(const QJsonDocument &json)
         mixerOptions.append(option);
     }
 
-    _mixer.reset(actuatorTypes, mixerOptions, outputFunctions);
+    QList<Mixer::Rule> rules;
+    QJsonValue mixerRulesJson = mixerJson.toObject().value("rules");
+    QJsonArray mixerRulesJsonArr = mixerRulesJson.toArray();
+    for (const auto& mixerRuleJson : mixerRulesJsonArr) {
+        QJsonValue mixerRule = mixerRuleJson.toObject();
+        Mixer::Rule rule{};
+        rule.selectIdentifier = mixerRule["select-identifier"].toString();
+
+        QJsonArray identifiersJson = mixerRule["apply-identifiers"].toArray();
+        for (const auto& identifierJson : identifiersJson) {
+            rule.applyIdentifiers.append(identifierJson.toString());
+        }
+
+        QJsonObject itemsJson = mixerRule["items"].toObject();
+        for (const auto& itemKey : itemsJson.keys()) {
+            bool ok;
+            int key = itemKey.toInt(&ok);
+            if (ok) {
+                QJsonArray itemsArr = itemsJson.value(itemKey).toArray();
+                QList<Mixer::Rule::RuleItem> items{};
+                for (const auto& itemJson : itemsArr) {
+                    QJsonObject itemObj = itemJson.toObject();
+
+                    Mixer::Rule::RuleItem item{};
+                    if (itemObj.contains("min")) {
+                        item.hasMin = true;
+                        item.min = itemObj["min"].toDouble();
+                    }
+                    if (itemObj.contains("max")) {
+                        item.hasMax = true;
+                        item.max = itemObj["max"].toDouble();
+                    }
+                    if (itemObj.contains("default")) {
+                        item.hasDefault = true;
+                        item.defaultVal = itemObj["default"].toDouble();
+                    }
+                    item.hidden = itemObj["hidden"].toBool(false);
+                    item.disabled = itemObj["disabled"].toBool(false);
+                    items.append(item);
+                }
+                if (items.size() == rule.applyIdentifiers.size()) {
+                    rule.items[key] = items;
+                } else {
+                    qCWarning(ActuatorsConfigLog) << "Rules: unexpected num items in " << itemsArr << "expected:" << rule.applyIdentifiers.size();
+                }
+            }
+        }
+        rules.append(rule);
+    }
+
+    _mixer.reset(actuatorTypes, mixerOptions, outputFunctions, rules);
     _init = true;
     return true;
 }

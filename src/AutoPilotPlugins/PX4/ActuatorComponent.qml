@@ -109,7 +109,8 @@ SetupPage {
                                                 fact:           object.fact
                                                 Layout.row:     1 + channelIndex
                                                 Layout.column:  1 + index
-                                                visible:        object.config.visible && (_showAdvanced || !object.config.advanced)
+                                                visible:        object.config.visible && (_showAdvanced || !object.config.advanced) && object.visible
+                                                enabled:        object.enabled
                                             }
                                         }
                                     }
