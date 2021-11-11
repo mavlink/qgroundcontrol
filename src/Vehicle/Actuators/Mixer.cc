@@ -16,8 +16,9 @@
 using namespace Mixer;
 
 MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFunction, int paramIndex, int actuatorTypeIndex,
-        QmlObjectListModel &channelConfigs, ParameterManager* parameterManager, std::function<void(Fact*)> factAddedCb) :
-        QObject(parent), _label(label), _actuatorFunction(actuatorFunction), _paramIndex(paramIndex), _actuatorTypeIndex(actuatorTypeIndex)
+        QmlObjectListModel &channelConfigs, ParameterManager* parameterManager, const Rule* rule, std::function<void(Fact*)> factAddedCb) :
+        QObject(parent), _label(label), _actuatorFunction(actuatorFunction), _paramIndex(paramIndex), _actuatorTypeIndex(actuatorTypeIndex),
+        _rule(rule)
 {
     for (int i = 0; i < channelConfigs.count(); ++i) {
         auto channelConfig = channelConfigs.value<ChannelConfig*>(i);
@@ -57,9 +58,85 @@ MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFu
             qCDebug(ActuatorsConfigLog) << "ActuatorOutputChannel: Param does not exist:" << param;
         }
 
-        ChannelConfigInstance* instance = new ChannelConfigInstance(this, fact, *channelConfig);
+        // if we have a valid rule, check the identifiers
+        int applyIdentifierIdx = -1;
+        if (rule) {
+            if (channelConfig->identifier() == rule->selectIdentifier) {
+                _ruleSelectIdentifierIdx = _configInstances->count();
+                if (fact) {
+                    _currentSelectIdentifierValue = fact->rawValue().toInt();
+                }
+            } else {
+                for (int i = 0; i < rule->applyIdentifiers.size(); ++i) {
+                    if (channelConfig->identifier() == rule->applyIdentifiers[i]) {
+                        applyIdentifierIdx = i;
+                    }
+                }
+            }
+
+            if (fact) {
+                connect(fact, &Fact::rawValueChanged, this, [this]() { applyRule(); });
+            }
+        }
+
+        ChannelConfigInstance* instance = new ChannelConfigInstance(this, fact, *channelConfig, applyIdentifierIdx);
         _configInstances->append(instance);
     }
+
+    applyRule(true);
+}
+
+void MixerChannel::applyRule(bool noConstraints)
+{
+    if (!_rule || _ruleSelectIdentifierIdx == -1 || _applyingRule) {
+        return;
+    }
+    _applyingRule = true; // prevent recursive signals
+
+    Fact* selectFact = _configInstances->value<ChannelConfigInstance*>(_ruleSelectIdentifierIdx)->fact();
+    if (selectFact && selectFact->type() == FactMetaData::valueTypeInt32) {
+        const int value = selectFact->rawValue().toInt();
+        if (_rule->items.contains(value)) {
+            bool valueChanged = value != _currentSelectIdentifierValue;
+            const auto& items = _rule->items[value];
+            for (int i = 0; i < _configInstances->count(); ++i) {
+                ChannelConfigInstance* configInstance = _configInstances->value<ChannelConfigInstance*>(i);
+                if (configInstance->fact() && configInstance->ruleApplyIdentifierIdx() >= 0) {
+                    const Rule::RuleItem& ruleItem = items[configInstance->ruleApplyIdentifierIdx()];
+                    double factValue = configInstance->fact()->rawValue().toDouble();
+                    bool changed = false;
+                    if (ruleItem.hasMin && factValue < ruleItem.min) {
+                        factValue = ruleItem.min;
+                        changed = true;
+                    }
+                    if (ruleItem.hasMax && factValue > ruleItem.max) {
+                        factValue = ruleItem.max;
+                        changed = true;
+                    }
+                    if (valueChanged && ruleItem.hasDefault) {
+                        factValue = ruleItem.defaultVal;
+                        changed = true;
+                    }
+                    if (changed && !noConstraints) {
+                        // here we could notify the user that a constraint got applied...
+                        configInstance->fact()->setRawValue(factValue);
+                    }
+                    configInstance->setVisible(!ruleItem.hidden);
+                    configInstance->setEnabled(!ruleItem.disabled);
+                }
+            }
+
+        } else {
+            // no rule set for this value, just reset
+            for (int i = 0; i < _configInstances->count(); ++i) {
+                ChannelConfigInstance* configInstance = _configInstances->value<ChannelConfigInstance*>(i);
+                configInstance->setVisible(true);
+                configInstance->setEnabled(true);
+            }
+        }
+        _currentSelectIdentifierValue = value;
+    }
+    _applyingRule = false;
 }
 
 bool MixerChannel::getGeometry(const ActuatorTypes& actuatorTypes, const MixerOption::ActuatorGroup& group,
@@ -126,13 +203,14 @@ void MixerConfigGroup::addConfigParam(ConfigParameter* param)
 }
 
 void Mixers::reset(const ActuatorTypes& actuatorTypes, const MixerOptions& mixerOptions,
-        const QMap<int, OutputFunction>& functions)
+        const QMap<int, OutputFunction>& functions, const Rules& rules)
 {
     _groups->clearAndDeleteContents();
     _actuatorTypes = actuatorTypes;
     _mixerOptions = mixerOptions;
     _functions = functions;
     _functionsSpecificLabel.clear();
+    _rules = rules;
     _mixerConditions.clear();
     for (const auto& mixerOption : _mixerOptions) {
         _mixerConditions.append(Condition(mixerOption.option, _parameterManager));
@@ -188,8 +266,18 @@ void Mixers::update()
                     currentMixerGroup->addChannelConfig(new ChannelConfig(currentMixerGroup, param, true));
                 }
             }
+
+            const Rule* selectedRule{nullptr}; // at most 1 rule can be applied
             for (const auto& perItemParam : actuatorGroup.perItemParameters) {
                 currentMixerGroup->addChannelConfig(new ChannelConfig(currentMixerGroup, perItemParam, false));
+
+                if (!perItemParam.identifier.isEmpty()) {
+                    for (const auto& rule : _rules) {
+                        if (rule.selectIdentifier == perItemParam.identifier) {
+                            selectedRule = &rule;
+                        }
+                    }
+                }
             }
 
             // 'count' param
@@ -221,7 +309,7 @@ void Mixers::update()
                     }
                 }
                 MixerChannel* channel = new MixerChannel(currentMixerGroup, label, actuatorFunction, actuatorIdx, actuatorTypeIndex,
-                        *currentMixerGroup->channelConfigs(), _parameterManager, [this](Fact* fact) { subscribeFact(fact); });
+                        *currentMixerGroup->channelConfigs(), _parameterManager, selectedRule, [this](Fact* fact) { subscribeFact(fact, true); });
                 currentMixerGroup->addChannel(channel);
                 ++actuatorTypeIndex;
             }
@@ -287,11 +375,18 @@ Fact* Mixers::getFact(const QString& paramName)
 	return fact;
 }
 
-void Mixers::subscribeFact(Fact* fact)
+void Mixers::subscribeFact(Fact* fact, bool geometry)
 {
-    if (fact && !_subscribedFacts.contains(fact)) {
-        connect(fact, &Fact::rawValueChanged, this, &Mixers::paramChanged);
-        _subscribedFacts.insert(fact);
+    if (geometry) {
+        if (fact && !_subscribedFactsGeometry.contains(fact)) {
+            connect(fact, &Fact::rawValueChanged, this, &Mixers::geometryParamChanged);
+            _subscribedFactsGeometry.insert(fact);
+        }
+    } else {
+        if (fact && !_subscribedFacts.contains(fact)) {
+            connect(fact, &Fact::rawValueChanged, this, &Mixers::paramChanged);
+            _subscribedFacts.insert(fact);
+        }
     }
 }
 
@@ -301,4 +396,9 @@ void Mixers::unsubscribeFacts()
         disconnect(fact, &Fact::rawValueChanged, this, &Mixers::paramChanged);
     }
     _subscribedFacts.clear();
+
+    for (Fact* fact : _subscribedFactsGeometry) {
+        disconnect(fact, &Fact::rawValueChanged, this, &Mixers::geometryParamChanged);
+    }
+    _subscribedFactsGeometry.clear();
 }
