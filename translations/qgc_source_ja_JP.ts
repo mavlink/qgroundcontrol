@@ -9822,7 +9822,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="460"/>
       <source>Email address for Log Upload:</source>
-      <translation>ログアップロードのメールアドレス:</translation>
+      <translation>メールアドレス:</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="481"/>
@@ -10287,22 +10287,22 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="51"/>
       <source>APM ArduCopter Vehicle</source>
-      <translation>APM ArduCopter機体</translation>
+      <translation>AP ArduCopter機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="57"/>
       <source>APM ArduPlane Vehicle</source>
-      <translation>APM ArduPlane機体</translation>
+      <translation>AP ArduPlane機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="63"/>
       <source>APM ArduSub Vehicle</source>
-      <translation>APM ArduSub機体</translation>
+      <translation>AP ArduSub機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="69"/>
       <source>APM ArduRover Vehicle</source>
-      <translation>APM ArduRover機体</translation>
+      <translation>AP ArduRover機体</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="75"/>
@@ -12966,7 +12966,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="662"/>
       <source>Rally Point</source>
-      <translation>ラリーポイント</translation>
+      <translation>ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="669"/>
@@ -12996,7 +12996,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="824"/>
       <source>Rally</source>
-      <translation>ラリー</translation>
+      <translation>ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="942"/>
@@ -13036,7 +13036,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1029"/>
       <source>Rally Points overwrite</source>
-      <translation>ラリーポイント 上書き</translation>
+      <translation>ポイント 上書き</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1037"/>
@@ -13772,7 +13772,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="138"/>
       <source>Comm Links</source>
-      <translation>Commリンク</translation>
+      <translation>通信リンク</translation>
     </message>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="142"/>
@@ -14928,12 +14928,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/MissionManager/RallyPointController.cc" line="102"/>
       <source>Rally: %1</source>
-      <translation>ラリー: %1</translation>
+      <translation>ポイント: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/RallyPointController.cc" line="105"/>
       <source>Rally Points supports version %1</source>
-      <translation>ラリーポイントはバージョン %1 をサポートしています</translation>
+      <translation>ポイントはバージョン %1 をサポートしています</translation>
     </message>
   </context>
   <context>
@@ -14941,12 +14941,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/PlanView/RallyPointEditorHeader.qml" line="30"/>
       <source>Rally Points</source>
-      <translation>ラリーポイント</translation>
+      <translation>ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/RallyPointEditorHeader.qml" line="51"/>
       <source>Rally Points provide alternate landing points when performing a Return to Launch (RTL).</source>
-      <translation>ラリーポイントは【着陸地点へ戻る】(RTL) を実行した際の代替着陸地点となります。</translation>
+      <translation>ポイントは【着陸地点へ戻る】(RTL) を実行した際の代替着陸地点となります。</translation>
     </message>
   </context>
   <context>
@@ -14954,7 +14954,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/PlanView/RallyPointItemEditor.qml" line="51"/>
       <source>Rally Point</source>
-      <translation>ラリーポイント</translation>
+      <translation>ポイント</translation>
     </message>
     <message>
       <location filename="../src/PlanView/RallyPointItemEditor.qml" line="74"/>
@@ -17567,7 +17567,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2180"/>
       <source>Rally Point transfer failed. Error: %1</source>
-      <translation>ラリーポイントの転送に失敗しました。エラー: %1</translation>
+      <translation>ポイントの転送に失敗しました。エラー: %1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="1423"/>
