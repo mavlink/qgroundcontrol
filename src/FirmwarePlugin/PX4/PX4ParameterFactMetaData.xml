@@ -9033,7 +9033,13 @@
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_DYN_NF" default="0" type="INT32" category="Developer">
+    <parameter name="IMU_GYRO_DNF_BW" default="15." type="FLOAT">
+      <short_desc>IMU gyro ESC notch filter bandwidth</short_desc>
+      <long_desc>Bandwidth per notch filter when using dynamic notch filtering with ESC RPM.</long_desc>
+      <min>5</min>
+      <max>30</max>
+    </parameter>
+    <parameter name="IMU_GYRO_DNF_EN" default="0" type="INT32">
       <short_desc>IMU gyro dynamic notch filtering</short_desc>
       <long_desc>Enable bank of dynamically updating notch filters. Requires ESC RPM feedback or onboard FFT (IMU_GYRO_FFT_EN).</long_desc>
       <min>0</min>
