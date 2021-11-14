@@ -6283,7 +6283,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="47"/>
       <source>%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.</source>
-      <translation>はPixhawk デバイス、SiK Radios、PX4 Flow Smart Camera のファームウェアをアップグレードできます。</translation>
+      <translation>%1 はPixhawk デバイス、SiK Radios、PX4 Flow Smart Camera のファームウェアをアップグレードできます。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="48"/>
