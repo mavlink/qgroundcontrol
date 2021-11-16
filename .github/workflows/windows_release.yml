@@ -1,6 +1,8 @@
 name: Windows Release
 
 on:
+  release:
+    types: [released]
   push:
     branches:
     - 'master'
@@ -92,8 +94,16 @@ jobs:
           name: qgroundcontrol.pdb
           path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
 
-      - name: Upload to S3 Bucket
+      - name: Upload to Daily S3 Bucket
         if:   github.event_name == 'push'
+        working-directory:  ${{ runner.temp }}\shadow_build_dir\staging
+        run: |
+              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/builds/master/${{ env.ARTIFACT }} --region us-west-2 --acl public-read
+
+      - name: Upload to Latest S3 Bucket
+        if:   github.event_name == 'release'
         working-directory:  ${{ runner.temp }}\shadow_build_dir\staging
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
