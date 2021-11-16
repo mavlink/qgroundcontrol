@@ -549,6 +549,8 @@ bool QGCApplication::_initForNormalAppBoot()
     _qmlAppEngine = toolbox()->corePlugin()->createQmlApplicationEngine(this);
     toolbox()->corePlugin()->createRootWindow(_qmlAppEngine);
 
+    createMultiVideoWindow();
+
     // Image provider for PX4 Flow
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
     _qmlAppEngine->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
@@ -1034,4 +1036,16 @@ bool QGCApplication::event(QEvent *e)
         }
     }
     return QApplication::event(e);
+}
+
+void QGCApplication::createMultiVideoWindow(void)
+{
+    _multiVideoQmlAppEngine = new QQmlApplicationEngine(this);
+    _multiVideoQmlAppEngine->addImportPath("qrc:/qml");
+    _multiVideoQmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MultiVideoWindow.qml")));
+}
+
+QQuickWindow* QGCApplication::multiVideoWindow()
+{
+    return reinterpret_cast<QQuickWindow*>(_multiVideoQmlAppEngine->rootObjects().at(0));
 }

@@ -239,6 +239,14 @@ private:
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
+
+private:
+    QQmlApplicationEngine* _multiVideoQmlAppEngine = nullptr;
+
+public:
+    void createMultiVideoWindow(void);
+
+    QQuickWindow* multiVideoWindow();
 };
 
 /// @brief Returns the QGCApplication object singleton.
