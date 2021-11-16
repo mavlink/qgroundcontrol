@@ -1,6 +1,7 @@
 name: Linux Release
 
 on:
+  create:
   push:
     branches:
     - 'master'
@@ -13,9 +14,10 @@ defaults:
     shell: bash
 
 env:
-  SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   5.15.2
-  ARTIFACT:     QGroundControl.AppImage
+  SOURCE_DIR:        ${{ github.workspace }}
+  QT_VERSION:        5.15.2
+  ARTIFACT:          QGroundControl.AppImage
+  IS_STABLE_RELEASE: ${{ github.event_name == 'create' && startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
   build:
@@ -75,7 +77,7 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer ${{ IS_STABLE_RELEASE ? '' : 'CONFIG+=DailyBuild' }}
               make -j2
 
       - name: ccache post-run
@@ -91,10 +93,18 @@ jobs:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
 
-      - name: Upload to S3 Bucket
+      - name: Upload to Daily S3 Bucket
         if:   github.event_name == 'push'
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
               aws s3 cp ${ARTIFACT} s3://qgroundcontrol/builds/master/${ARTIFACT} --region us-west-2 --acl public-read
+
+      - name: Upload to Latest S3 Bucket
+        if:   ${{ IS_STABLE_RELEASE }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        run: |
+              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/latest/${ARTIFACT} --region us-west-2 --acl public-read
