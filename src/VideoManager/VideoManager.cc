@@ -105,6 +105,8 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
+   _multiVideoManager = new MultiVideoManager(_app, _toolbox);
+
 #if defined(QGC_GST_STREAMING)
     GStreamer::blacklist(static_cast<VideoSettings::VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
 #ifndef QGC_DISABLE_UVC
@@ -570,8 +572,8 @@ void
 VideoManager::_initVideo()
 {
 #if defined(QGC_GST_STREAMING)
-    // QQuickWindow* root = qgcApp()->mainRootWindow();
-    QQuickWindow* root = qgcApp()->multiVideoWindow();
+    QQuickWindow* root = qgcApp()->mainRootWindow();
+    // QQuickWindow* root = qgcApp()->multiVideoWindow();
 
     if (root == nullptr) {
         qCDebug(VideoManagerLog) << "mainRootWindow() failed. No root window";

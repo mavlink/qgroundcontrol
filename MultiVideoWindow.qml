@@ -25,15 +25,5 @@ ApplicationWindow {
             height: parent.height
             property var receiver
         }
-
-//        Text {
-//            anchors.bottom: parent.bottom
-//            anchors.horizontalCenter: parent.horizontalCenter
-//            text: "qmlglsink text"
-//            font.pointSize: 20
-//            color: "yellow"
-//            style: Text.Outline
-//            styleColor: "blue"
-//        }
     }
 }
