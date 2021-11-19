@@ -1285,6 +1285,9 @@
       <unit>s</unit>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="COM_PARACHUTE" default="0" type="INT32" boolean="true">
+      <short_desc>Expect and require a healthy MAVLink parachute system</short_desc>
+    </parameter>
     <parameter name="COM_POSCTL_NAVL" default="0" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
       <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
