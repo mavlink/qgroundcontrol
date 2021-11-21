@@ -22,6 +22,8 @@
 #include "QGCToolbox.h"
 #include "SubtitleWriter.h"
 
+#include "MultiVideoManager.h"
+
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class VideoSettings;
@@ -173,6 +175,8 @@ protected:
     QString                 _videoSourceID;
     bool                    _fullScreen             = false;
     Vehicle*                _activeVehicle          = nullptr;
+
+    MultiVideoManager*      _multiVideoManager      = nullptr;
 };
 
 #endif

@@ -5,6 +5,8 @@ add_library(VideoManager
     SubtitleWriter.h
     VideoManager.cc
     VideoManager.h
+    MultiVideoManager.cc
+    MultiVideoManager.h
 )
 
 target_link_libraries(VideoManager
