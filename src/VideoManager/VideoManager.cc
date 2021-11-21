@@ -106,6 +106,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
    _multiVideoManager = new MultiVideoManager(_app, _toolbox);
+   _multiVideoManager->setToolbox(toolbox);
 
 #if defined(QGC_GST_STREAMING)
     GStreamer::blacklist(static_cast<VideoSettings::VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
@@ -609,6 +610,8 @@ VideoManager::_initVideo()
     } else {
         qCDebug(VideoManagerLog) << "thermal video receiver disabled";
     }
+
+    _multiVideoManager->init();
 #endif
 }
 

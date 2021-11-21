@@ -26,10 +26,16 @@ public:
     void startStreaming              ();
     void stopStreaming               ();
 
+    virtual void setToolbox (QGCToolbox *toolbox);
+
 private:
     VideoReceiver* _videoReceiver[QGC_MULTI_VIDEO_COUNT] = { nullptr, nullptr, nullptr };
     void*          _videoSink[QGC_MULTI_VIDEO_COUNT]     = { nullptr, nullptr, nullptr };
-    QString        _videoUri[QGC_MULTI_VIDEO_COUNT];
+    QString        _videoUri[QGC_MULTI_VIDEO_COUNT]      = { nullptr, nullptr, nullptr };
+
+    void _setupReceiver(QGCToolbox *toolbox, unsigned int id);
+    void _startReceiver(unsigned int id);
+    void _updateVideoURI(unsigned int id, const QString &uri);
 };
 
 #endif // MULTIVIDEOMANAGER_H

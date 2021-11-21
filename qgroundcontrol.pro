@@ -430,7 +430,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 HEADERS += \
     src/QmlControls/QmlUnitsConversion.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
-    src/VideoManager/MultiVideoManager.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
@@ -444,7 +443,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 
 SOURCES += \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
-    src/VideoManager/MultiVideoManager.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
@@ -1435,10 +1433,12 @@ INCLUDEPATH += \
 
 HEADERS += \
     src/VideoManager/SubtitleWriter.h \
+    src/VideoManager/MultiVideoManager.h \
     src/VideoManager/VideoManager.h
 
 SOURCES += \
     src/VideoManager/SubtitleWriter.cc \
+    src/VideoManager/MultiVideoManager.cc \
     src/VideoManager/VideoManager.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
