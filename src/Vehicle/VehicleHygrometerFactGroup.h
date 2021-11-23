@@ -37,7 +37,7 @@ public:
 protected:
     void _handleHygrometerSensor        (mavlink_message_t& message);
 
-    Fact _hygroIDFact;
     Fact _hygroTempFact;
     Fact _hygroHumiFact;
+    Fact _hygroIDFact;
 };
