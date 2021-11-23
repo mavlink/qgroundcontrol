@@ -1358,8 +1358,8 @@ private:
     static const char* _localPositionSetpointFactGroupName;
     static const char* _escStatusFactGroupName;
     static const char* _estimatorStatusFactGroupName;
-    static const char* _terrainFactGroupName;
     static const char* _hygrometerFactGroupName;
+    static const char* _terrainFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs      = 100;
 
