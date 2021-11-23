@@ -4534,6 +4534,13 @@
       <increment>0.1</increment>
     </parameter>
   </group>
+  <group name="Manual Control">
+    <parameter name="MAN_ARM_GESTURE" default="1" type="INT32" boolean="true">
+      <short_desc>Enable arm/disarm stick gesture</short_desc>
+      <long_desc>This determines if moving the left stick to the lower right arms and to the lower left disarms the vehicle.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+  </group>
   <group name="Mission">
     <parameter name="FW_GPSF_LT" default="30" type="INT32">
       <short_desc>GPS failure loiter time</short_desc>
