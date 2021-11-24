@@ -17,6 +17,13 @@ ApplicationWindow {
 
     Item {
         anchors.fill: parent
+        Rectangle {
+            width: parent.width/2
+            height: parent.height/2
+            x: 0
+            y: 0
+            color: "#000000"
+        }
         GstGLVideoItem {
             objectName: "videoContent0"
             width: parent.width/2
@@ -29,6 +36,13 @@ ApplicationWindow {
 
     Item {
         anchors.fill: parent
+        Rectangle {
+            width: parent.width/2
+            height: parent.height/2
+            x: parent.width/2
+            y: 0
+            color: "#000000"
+        }
         GstGLVideoItem {
             objectName: "videoContent1"
             width: parent.width/2
@@ -41,11 +55,18 @@ ApplicationWindow {
 
     Item {
         anchors.fill: parent
+        Rectangle {
+            width: parent.width/2
+            height: parent.height/2
+            x: parent.width/4
+            y: parent.height/2
+            color: "#000000"
+        }
         GstGLVideoItem {
             objectName: "videoContent2"
             width: parent.width/2
             height: parent.height/2
-            x: parent.width/2
+            x: parent.width/4
             y: parent.height/2
             property var receiver
         }
