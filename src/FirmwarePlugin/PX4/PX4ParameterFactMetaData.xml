@@ -1458,11 +1458,6 @@
         <value code="6">Lockdown</value>
       </values>
     </parameter>
-    <parameter name="RTL_FLT_TIME" default="15" type="FLOAT">
-      <short_desc>Maximum allowed RTL flight in minutes</short_desc>
-      <long_desc>This is used to determine when the vehicle should be switched to RTL due to low battery. Note, particularly for multirotors this should reflect flight time at cruise speed, not while stationary</long_desc>
-      <unit>min</unit>
-    </parameter>
   </group>
   <group name="Data Link Loss">
     <parameter name="NAV_AH_ALT" default="600.0" type="FLOAT">
@@ -6868,6 +6863,25 @@
         <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path. Do not consider rally points.</value>
         <value code="3">Return via direct path to closest destination: home, start of mission landing pattern or safe point. If the destination is a mission landing pattern, follow the pattern to land.</value>
       </values>
+    </parameter>
+  </group>
+  <group name="Return To Land">
+    <parameter name="RTL_TIME_FACTOR" default="1.1" type="FLOAT">
+      <short_desc>RTL time estimate safety margin factor</short_desc>
+      <long_desc>Safety factor that is used to scale the actual RTL time estiamte. Time with margin = RTL_TIME_FACTOR * time + RTL_TIME_MARGIN</long_desc>
+      <min>1.0</min>
+      <max>2.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="RTL_TIME_MARGIN" default="110" type="INT32">
+      <short_desc>RTL time estimate safety margin offset</short_desc>
+      <long_desc>Margin that is added to the time estimate, after it has already been scaled Time with margin = RTL_TIME_FACTOR * time + RTL_TIME_MARGIN</long_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="Roboclaw driver">
