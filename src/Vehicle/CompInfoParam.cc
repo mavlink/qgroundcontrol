@@ -20,10 +20,6 @@
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 
-const char* CompInfoParam::_jsonParametersKey           = "parameters";
-const char* CompInfoParam::_cachedMetaDataFilePrefix    = "ParameterFactMetaData";
-const char* CompInfoParam::_indexedNameTag              = "{n}";
-
 CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId, vehicle, parent)
 {

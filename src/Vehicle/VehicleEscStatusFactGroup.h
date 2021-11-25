@@ -58,22 +58,23 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _indexFactName;
+    static constexpr const char* _indexFactName = "index";
 
-    static const char* _rpmFirstFactName;
-    static const char* _rpmSecondFactName;
-    static const char* _rpmThirdFactName;
-    static const char* _rpmFourthFactName;
+    static constexpr const char* _rpmFirstFactName  = "rpm1";
+    static constexpr const char* _rpmSecondFactName = "rpm2";
+    static constexpr const char* _rpmThirdFactName  = "rpm3";
+    static constexpr const char* _rpmFourthFactName = "rpm4";
 
-    static const char* _currentFirstFactName;
-    static const char* _currentSecondFactName;
-    static const char* _currentThirdFactName;
-    static const char* _currentFourthFactName;
+    static constexpr const char* _currentFirstFactName  = "current1";
+    static constexpr const char* _currentSecondFactName = "current2";
+    static constexpr const char* _currentThirdFactName  = "current3";
+    static constexpr const char* _currentFourthFactName = "current4";
 
-    static const char* _voltageFirstFactName;
-    static const char* _voltageSecondFactName;
-    static const char* _voltageThirdFactName;
-    static const char* _voltageFourthFactName;
+    static constexpr const char* _voltageFirstFactName  = "voltage1";
+    static constexpr const char* _voltageSecondFactName = "voltage2";
+    static constexpr const char* _voltageThirdFactName  = "voltage3";
+    static constexpr const char* _voltageFourthFactName = "voltage4";
+    
 private:
     Fact _indexFact;
 

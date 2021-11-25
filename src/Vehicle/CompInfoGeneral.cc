@@ -21,8 +21,6 @@
 
 QGC_LOGGING_CATEGORY(CompInfoGeneralLog, "CompInfoGeneralLog")
 
-const char* CompInfoGeneral::_jsonMetadataTypesKey = "metadataTypes";
-
 CompInfoGeneral::CompInfoGeneral(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_GENERAL, compId, vehicle, parent)
 {

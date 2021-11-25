@@ -47,20 +47,20 @@ public:
     Fact* timeRemainingStr          () { return &_timeRemainingStrFact; }
     Fact* chargeState               () { return &_chargeStateFact; }
 
-    static const char* _batteryIdFactName;
-    static const char* _batteryFunctionFactName;
-    static const char* _batteryTypeFactName;
-    static const char* _temperatureFactName;
-    static const char* _voltageFactName;
-    static const char* _currentFactName;
-    static const char* _mahConsumedFactName;
-    static const char* _percentRemainingFactName;
-    static const char* _timeRemainingFactName;
-    static const char* _timeRemainingStrFactName;
-    static const char* _chargeStateFactName;
-    static const char* _instantPowerFactName;
+    static constexpr const char* _batteryIdFactName             = "id";
+    static constexpr const char* _batteryFunctionFactName       = "batteryFunction";
+    static constexpr const char* _batteryTypeFactName           = "batteryType";
+    static constexpr const char* _voltageFactName               = "voltage";
+    static constexpr const char* _percentRemainingFactName      = "percentRemaining";
+    static constexpr const char* _mahConsumedFactName           = "mahConsumed";
+    static constexpr const char* _currentFactName               = "current";
+    static constexpr const char* _temperatureFactName           = "temperature";
+    static constexpr const char* _instantPowerFactName          = "instantPower";
+    static constexpr const char* _timeRemainingFactName         = "timeRemaining";
+    static constexpr const char* _timeRemainingStrFactName      = "timeRemainingStr";
+    static constexpr const char* _chargeStateFactName           = "chargeState";
 
-    static const char* _settingsGroup;
+    static constexpr const char* _settingsGroup                 = "Vehicle.battery";
 
     /// Creates a new fact group for the battery id as needed and updates the Vehicle with it
     static void handleMessageForFactGroupCreation(Vehicle* vehicle, mavlink_message_t& message);
@@ -90,5 +90,5 @@ private:
     Fact            _chargeStateFact;
     Fact            _instantPowerFact;
 
-    static const char* _batteryFactGroupNamePrefix;
+    static constexpr const char* _batteryFactGroupNamePrefix = "battery";
 };

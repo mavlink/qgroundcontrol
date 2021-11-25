@@ -43,7 +43,7 @@ public:
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
     void cancel();
 
-    static const char* mavlinkFTPScheme;
+    static constexpr const char* mavlinkFTPScheme = "mftp";
 
 signals:
     void downloadComplete(const QString& file, const QString& errorMsg);

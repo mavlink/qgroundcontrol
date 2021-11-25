@@ -14,13 +14,6 @@
 #include "QGCApplication.h"
 #include "MultiSignalSpyV2.h"
 
-const char* VehicleLinkManagerTest::_primaryLinkChangedSignalName               = "primaryLinkChanged";
-const char* VehicleLinkManagerTest::_allLinksRemovedSignalName                  = "allLinksRemoved";
-const char* VehicleLinkManagerTest::_communicationLostChangedSignalName         = "communicationLostChanged";
-const char* VehicleLinkManagerTest::_communicationLostEnabledChangedSignalName  = "communicationLostEnabledChanged";
-const char* VehicleLinkManagerTest::_linkNamesChangedSignalName                 = "linkNamesChanged";
-const char* VehicleLinkManagerTest::_linkStatusesChangedSignalName              = "linkStatusesChanged";
-
 VehicleLinkManagerTest::VehicleLinkManagerTest(void)
 {
 

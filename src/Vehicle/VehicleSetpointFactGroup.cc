@@ -12,13 +12,6 @@
 
 #include <QtMath>
 
-const char* VehicleSetpointFactGroup::_rollFactName =       "roll";
-const char* VehicleSetpointFactGroup::_pitchFactName =      "pitch";
-const char* VehicleSetpointFactGroup::_yawFactName =        "yaw";
-const char* VehicleSetpointFactGroup::_rollRateFactName =   "rollRate";
-const char* VehicleSetpointFactGroup::_pitchRateFactName =  "pitchRate";
-const char* VehicleSetpointFactGroup::_yawRateFactName =    "yawRate";
-
 VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
     : FactGroup     (1000, ":/json/Vehicle/SetpointFact.json", parent)
     , _rollFact     (0, _rollFactName,      FactMetaData::valueTypeDouble)

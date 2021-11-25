@@ -66,26 +66,26 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _goodAttitudeEstimateFactName;
-    static const char* _goodHorizVelEstimateFactName;
-    static const char* _goodVertVelEstimateFactName;
-    static const char* _goodHorizPosRelEstimateFactName;
-    static const char* _goodHorizPosAbsEstimateFactName;
-    static const char* _goodVertPosAbsEstimateFactName;
-    static const char* _goodVertPosAGLEstimateFactName;
-    static const char* _goodConstPosModeEstimateFactName;
-    static const char* _goodPredHorizPosRelEstimateFactName;
-    static const char* _goodPredHorizPosAbsEstimateFactName;
-    static const char* _gpsGlitchFactName;
-    static const char* _accelErrorFactName;
-    static const char* _velRatioFactName;
-    static const char* _horizPosRatioFactName;
-    static const char* _vertPosRatioFactName;
-    static const char* _magRatioFactName;
-    static const char* _haglRatioFactName;
-    static const char* _tasRatioFactName;
-    static const char* _horizPosAccuracyFactName;
-    static const char* _vertPosAccuracyFactName;
+    static constexpr const char* _goodAttitudeEstimateFactName          = "goodAttitudeEsimate";
+    static constexpr const char* _goodHorizVelEstimateFactName          = "goodHorizVelEstimate";
+    static constexpr const char* _goodVertVelEstimateFactName           = "goodVertVelEstimate";
+    static constexpr const char* _goodHorizPosRelEstimateFactName       = "goodHorizPosRelEstimate";
+    static constexpr const char* _goodHorizPosAbsEstimateFactName       = "goodHorizPosAbsEstimate";
+    static constexpr const char* _goodVertPosAbsEstimateFactName        = "goodVertPosAbsEstimate";
+    static constexpr const char* _goodVertPosAGLEstimateFactName        = "goodVertPosAGLEstimate";
+    static constexpr const char* _goodConstPosModeEstimateFactName      = "goodConstPosModeEstimate";
+    static constexpr const char* _goodPredHorizPosRelEstimateFactName   = "goodPredHorizPosRelEstimate";
+    static constexpr const char* _goodPredHorizPosAbsEstimateFactName   = "goodPredHorizPosAbsEstimate";
+    static constexpr const char* _gpsGlitchFactName                     = "gpsGlitch";
+    static constexpr const char* _accelErrorFactName                    = "accelError";
+    static constexpr const char* _velRatioFactName                      = "velRatio";
+    static constexpr const char* _horizPosRatioFactName                 = "horizPosRatio";
+    static constexpr const char* _vertPosRatioFactName                  = "vertPosRatio";
+    static constexpr const char* _magRatioFactName                      = "magRatio";
+    static constexpr const char* _haglRatioFactName                     = "haglRatio";
+    static constexpr const char* _tasRatioFactName                      = "tasRatio";
+    static constexpr const char* _horizPosAccuracyFactName              = "horizPosAccuracy";
+    static constexpr const char* _vertPosAccuracyFactName               = "vertPosAccuracy";
 
 private:
     Fact _goodAttitudeEstimateFact;

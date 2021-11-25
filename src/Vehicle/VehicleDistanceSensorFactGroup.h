@@ -50,18 +50,18 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _rotationNoneFactName;
-    static const char* _rotationYaw45FactName;
-    static const char* _rotationYaw90FactName;
-    static const char* _rotationYaw135FactName;
-    static const char* _rotationYaw180FactName;
-    static const char* _rotationYaw225FactName;
-    static const char* _rotationYaw270FactName;
-    static const char* _rotationYaw315FactName;
-    static const char* _rotationPitch90FactName;
-    static const char* _rotationPitch270FactName;
-    static const char* _minDistanceFactName;
-    static const char* _maxDistanceFactName;
+    static constexpr const char* _rotationNoneFactName      = "rotationNone";
+    static constexpr const char* _rotationYaw45FactName     = "rotationYaw45";
+    static constexpr const char* _rotationYaw90FactName     = "rotationYaw90";
+    static constexpr const char* _rotationYaw135FactName    = "rotationYaw135";
+    static constexpr const char* _rotationYaw180FactName    = "rotationYaw180";
+    static constexpr const char* _rotationYaw225FactName    = "rotationYaw225";
+    static constexpr const char* _rotationYaw270FactName    = "rotationYaw270";
+    static constexpr const char* _rotationYaw315FactName    = "rotationYaw315";
+    static constexpr const char* _rotationPitch90FactName   = "rotationPitch90";
+    static constexpr const char* _rotationPitch270FactName  = "rotationPitch270";
+    static constexpr const char* _minDistanceFactName       = "minDistance";
+    static constexpr const char* _maxDistanceFactName       = "maxDistance";
 
 private:
     Fact _rotationNoneFact;

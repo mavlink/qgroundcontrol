@@ -49,7 +49,7 @@ private:
     QList<RegexFactMetaDataPair_t>      _indexedNameMetaDataList;
     QObject*                            _opaqueParameterMetaData    = nullptr;
 
-    static const char* _cachedMetaDataFilePrefix;
-    static const char* _jsonParametersKey;
-    static const char* _indexedNameTag;
+    static constexpr const char* _jsonParametersKey           = "parameters";
+    static constexpr const char* _cachedMetaDataFilePrefix    = "ParameterFactMetaData";
+    static constexpr const char* _indexedNameTag              = "{n}";
 };

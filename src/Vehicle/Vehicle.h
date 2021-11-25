@@ -1321,50 +1321,50 @@ private:
     ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
 
-    static const char* _rollFactName;
-    static const char* _pitchFactName;
-    static const char* _headingFactName;
-    static const char* _rollRateFactName;
-    static const char* _pitchRateFactName;
-    static const char* _yawRateFactName;
-    static const char* _groundSpeedFactName;
-    static const char* _airSpeedFactName;
-    static const char* _airSpeedSetpointFactName;
-    static const char* _climbRateFactName;
-    static const char* _altitudeRelativeFactName;
-    static const char* _altitudeAMSLFactName;
-    static const char* _altitudeTuningFactName;
-    static const char* _altitudeTuningSetpointFactName;
-    static const char* _xTrackErrorFactName;
-    static const char* _flightDistanceFactName;
-    static const char* _flightTimeFactName;
-    static const char* _distanceToHomeFactName;
-    static const char* _missionItemIndexFactName;
-    static const char* _headingToNextWPFactName;
-    static const char* _headingToHomeFactName;
-    static const char* _distanceToGCSFactName;
-    static const char* _hobbsFactName;
-    static const char* _throttlePctFactName;
+    static constexpr const char* _rollFactName                       = "roll";
+    static constexpr const char* _pitchFactName                      = "pitch";
+    static constexpr const char* _headingFactName                    = "heading";
+    static constexpr const char* _rollRateFactName                   = "rollRate";
+    static constexpr const char* _pitchRateFactName                  = "pitchRate";
+    static constexpr const char* _yawRateFactName                    = "yawRate";
+    static constexpr const char* _airSpeedFactName                   = "airSpeed";
+    static constexpr const char* _airSpeedSetpointFactName           = "airSpeedSetpoint";
+    static constexpr const char* _xTrackErrorFactName                = "xTrackError";
+    static constexpr const char* _groundSpeedFactName                = "groundSpeed";
+    static constexpr const char* _climbRateFactName                  = "climbRate";
+    static constexpr const char* _altitudeRelativeFactName           = "altitudeRelative";
+    static constexpr const char* _altitudeAMSLFactName               = "altitudeAMSL";
+    static constexpr const char* _altitudeTuningFactName             = "altitudeTuning";
+    static constexpr const char* _altitudeTuningSetpointFactName     = "altitudeTuningSetpoint";
+    static constexpr const char* _flightDistanceFactName             = "flightDistance";
+    static constexpr const char* _flightTimeFactName                 = "flightTime";
+    static constexpr const char* _distanceToHomeFactName             = "distanceToHome";
+    static constexpr const char* _missionItemIndexFactName           = "missionItemIndex";
+    static constexpr const char* _headingToNextWPFactName            = "headingToNextWP";
+    static constexpr const char* _headingToHomeFactName              = "headingToHome";
+    static constexpr const char* _distanceToGCSFactName              = "distanceToGCS";
+    static constexpr const char* _hobbsFactName                      = "hobbs";
+    static constexpr const char* _throttlePctFactName                = "throttlePct";
 
-    static const char* _gpsFactGroupName;
-    static const char* _gps2FactGroupName;
-    static const char* _windFactGroupName;
-    static const char* _vibrationFactGroupName;
-    static const char* _temperatureFactGroupName;
-    static const char* _clockFactGroupName;
-    static const char* _setpointFactGroupName;
-    static const char* _distanceSensorFactGroupName;
-    static const char* _localPositionFactGroupName;
-    static const char* _localPositionSetpointFactGroupName;
-    static const char* _escStatusFactGroupName;
-    static const char* _estimatorStatusFactGroupName;
-    static const char* _terrainFactGroupName;
+    static constexpr const char* _gpsFactGroupName                   = "gps";
+    static constexpr const char* _gps2FactGroupName                  = "gps2";
+    static constexpr const char* _windFactGroupName                  = "wind";
+    static constexpr const char* _vibrationFactGroupName             = "vibration";
+    static constexpr const char* _temperatureFactGroupName           = "temperature";
+    static constexpr const char* _clockFactGroupName                 = "clock";
+    static constexpr const char* _setpointFactGroupName              = "setpoint";
+    static constexpr const char* _distanceSensorFactGroupName        = "distanceSensor";
+    static constexpr const char* _localPositionFactGroupName         = "localPosition";
+    static constexpr const char* _localPositionSetpointFactGroupName = "localPositionSetpoint";
+    static constexpr const char* _escStatusFactGroupName             = "escStatus";
+    static constexpr const char* _estimatorStatusFactGroupName       = "estimatorStatus";
+    static constexpr const char* _terrainFactGroupName               = "terrain";
 
     static const int _vehicleUIUpdateRateMSecs      = 100;
 
     // Settings keys
-    static const char* _settingsGroup;
-    static const char* _joystickEnabledSettingsKey;
+    static constexpr const char* _settingsGroup              = "Vehicle%1"; // %1 replaced with mavlink system id
+    static constexpr const char* _joystickEnabledSettingsKey = "JoystickEnabled";
 };
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

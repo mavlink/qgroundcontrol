@@ -26,8 +26,8 @@ public:
     Fact* blocksPending () { return &_blocksPendingFact; }
     Fact* blocksLoaded  () { return &_blocksLoadedFact; }
 
-    static const char* _blocksPendingFactName;
-    static const char* _blocksLoadedFactName;
+    static constexpr const char* _blocksPendingFactName = "blocksPending";
+    static constexpr const char* _blocksLoadedFactName  = "blocksLoaded";
 
 private:
     Fact _blocksPendingFact;

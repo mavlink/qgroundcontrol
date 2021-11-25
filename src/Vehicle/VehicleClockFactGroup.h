@@ -27,8 +27,8 @@ public:
     Fact* currentTime () { return &_currentTimeFact; }
     Fact* currentDate () { return &_currentDateFact; }
 
-    static const char* _currentTimeFactName;
-    static const char* _currentDateFactName;
+    static constexpr const char* _currentTimeFactName = "currentTime";
+    static constexpr const char* _currentDateFactName = "currentDate";
 
     static const char* _settingsGroup;
 

@@ -45,10 +45,10 @@ private:
     //void _highLatencyLinkTest       (void);
     MultiVehicleManager*    _multiVehicleMgr = nullptr;
 
-    static const char* _primaryLinkChangedSignalName;
-    static const char* _allLinksRemovedSignalName;
-    static const char* _communicationLostChangedSignalName;
-    static const char* _communicationLostEnabledChangedSignalName;
-    static const char* _linkNamesChangedSignalName;
-    static const char* _linkStatusesChangedSignalName;
+    static constexpr const char* _primaryLinkChangedSignalName               = "primaryLinkChanged";
+    static constexpr const char* _allLinksRemovedSignalName                  = "allLinksRemoved";
+    static constexpr const char* _communicationLostChangedSignalName         = "communicationLostChanged";
+    static constexpr const char* _communicationLostEnabledChangedSignalName  = "communicationLostEnabledChanged";
+    static constexpr const char* _linkNamesChangedSignalName                 = "linkNamesChanged";
+    static constexpr const char* _linkStatusesChangedSignalName              = "linkStatusesChanged";
 };

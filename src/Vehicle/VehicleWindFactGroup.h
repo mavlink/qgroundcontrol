@@ -30,9 +30,9 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _directionFactName;
-    static const char* _speedFactName;
-    static const char* _verticalSpeedFactName;
+    static constexpr const char* _directionFactName     = "direction";
+    static constexpr const char* _speedFactName         = "speed";
+    static constexpr const char* _verticalSpeedFactName = "verticalSpeed";
 
 private:
     void _handleHighLatency (mavlink_message_t& message);

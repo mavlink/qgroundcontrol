@@ -30,9 +30,9 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _temperature1FactName;
-    static const char* _temperature2FactName;
-    static const char* _temperature3FactName;
+    static constexpr const char* _temperature1FactName    = "temperature1";
+    static constexpr const char* _temperature2FactName    = "temperature2";
+    static constexpr const char* _temperature3FactName    = "temperature3";
 
     static const char* _settingsGroup;
 

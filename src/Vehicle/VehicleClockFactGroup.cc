@@ -10,9 +10,6 @@
 #include "VehicleClockFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleClockFactGroup::_currentTimeFactName = "currentTime";
-const char* VehicleClockFactGroup::_currentDateFactName = "currentDate";
-
 VehicleClockFactGroup::VehicleClockFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/ClockFact.json", parent)
     , _currentTimeFact  (0, _currentTimeFactName,    FactMetaData::valueTypeString)

@@ -39,15 +39,15 @@ public:
     Fact* active            (void) { return &_active; }
     Fact* numSatellites     (void) { return &_numSatellites; }
 
-    static const char* _connectedFactName;
-    static const char* _currentDurationFactName;
-    static const char* _currentAccuracyFactName;
-    static const char* _currentLatitudeFactName;
-    static const char* _currentLongitudeFactName;
-    static const char* _currentAltitudeFactName;
-    static const char* _validFactName;
-    static const char* _activeFactName;
-    static const char* _numSatellitesFactName;
+    static constexpr const char* _connectedFactName         = "connected";
+    static constexpr const char* _currentAccuracyFactName   = "currentAccuracy";
+    static constexpr const char* _currentDurationFactName   = "currentDuration";
+    static constexpr const char* _currentLatitudeFactName   = "currentLatitude";
+    static constexpr const char* _currentLongitudeFactName  = "currentLongitude";
+    static constexpr const char* _currentAltitudeFactName   = "currentAltitude";
+    static constexpr const char* _validFactName             = "valid";
+    static constexpr const char* _activeFactName            = "active";
+    static constexpr const char* _numSatellitesFactName     = "numSatellites";
 
 private:
     Fact _connected;        ///< is an RTK gps connected?

@@ -36,12 +36,12 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _xFactName;
-    static const char* _yFactName;
-    static const char* _zFactName;
-    static const char* _vxFactName;
-    static const char* _vyFactName;
-    static const char* _vzFactName;
+    static constexpr const char* _xFactName     = "x";
+    static constexpr const char* _yFactName     = "y";
+    static constexpr const char* _zFactName     = "z";
+    static constexpr const char* _vxFactName    = "vx";
+    static constexpr const char* _vyFactName    = "vy";
+    static constexpr const char* _vzFactName    = "vz";
 
 private:
     Fact _xFact;

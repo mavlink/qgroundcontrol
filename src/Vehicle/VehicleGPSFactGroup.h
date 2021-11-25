@@ -40,14 +40,14 @@ public:
     // Overrides from FactGroup
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _latFactName;
-    static const char* _lonFactName;
-    static const char* _mgrsFactName;
-    static const char* _hdopFactName;
-    static const char* _vdopFactName;
-    static const char* _courseOverGroundFactName;
-    static const char* _countFactName;
-    static const char* _lockFactName;
+    static constexpr const char* _latFactName                 = "lat";
+    static constexpr const char* _lonFactName                 = "lon";
+    static constexpr const char* _mgrsFactName                = "mgrs";
+    static constexpr const char* _hdopFactName                = "hdop";
+    static constexpr const char* _vdopFactName                = "vdop";
+    static constexpr const char* _courseOverGroundFactName    = "courseOverGround";
+    static constexpr const char* _countFactName               = "count";
+    static constexpr const char* _lockFactName                = "lock";
 
 protected:
     void _handleGpsRawInt   (mavlink_message_t& message);
