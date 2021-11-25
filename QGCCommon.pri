@@ -172,8 +172,9 @@ exists ($$PWD/.git) {
     contains(GIT_DESCRIBE, ^[vd][0-9]+.[0-9]+.[0-9]+.*) {
         message( release version "vX.Y.Z")
         GIT_VERSION = $${GIT_DESCRIBE}
-        VERSION      = $$replace(GIT_DESCRIBE, "v", "")
-        VERSION      = $$replace(GIT_DESCRIBE, "d", "")
+        VERSION      = $${GIT_DESCRIBE}
+        VERSION      = $$replace(VERSION, "v", "")
+        VERSION      = $$replace(VERSION, "d", "")
         VERSION      = $$replace(VERSION, "-", ".")
         VERSION      = $$section(VERSION, ".", 0, 3)
     } else {
