@@ -9,10 +9,10 @@ import org.freedesktop.gstreamer.GLVideoItem 1.0
 ApplicationWindow {
     id:             multiVideoWindow
     title:          "Multi-Video Context"
-    minimumWidth:   300
-    minimumHeight:  400
     width:          1280
     height:         720
+    minimumWidth:   width/2
+    minimumHeight:  height/2
     visible:        true
 
     Item {

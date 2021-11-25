@@ -19,6 +19,37 @@
     "default":     5600
 },
 {
+    "name": "multiVideoEnabled",
+    "shortDesc": "Enable and disable multi-video",
+    "longDesc": "Enable and disable multi-video",
+    "type": "bool",
+    "default": true
+},
+{
+    "name": "udpPort0",
+    "shortDesc": "MultiVideo UDP Port 1",
+    "longDesc": "UDP ports to bind for video streams.",
+    "type": "uint16",
+    "min": 1025,
+    "default": 5600
+},
+{
+    "name": "udpPort1",
+    "shortDesc": "MultiVideo UDP Port 2",
+    "longDesc": "UDP ports to bind for video streams.",
+    "type": "uint16",
+    "min": 1025,
+    "default": 5601
+},
+{
+    "name": "udpPort2",
+    "shortDesc": "MultiVideo UDP Port 3",
+    "longDesc": "UDP ports to bind for video streams.",
+    "type": "uint16",
+    "min": 1025,
+    "default": 5602
+},
+{
     "name":             "rtspUrl",
     "shortDesc": "Video RTSP Url",
     "longDesc":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",

@@ -347,6 +347,53 @@ Rectangle {
                                     visible:    _showSaveVideoSettings && fact.visible
                                 }
                             }
+                            GridLayout {
+                                id: multiVideoGrid
+                                columns: 2
+                                visible: true
+
+                                QGCLabel {
+                                    text: qsTr("Multi-Video Settings")
+                                    Layout.columnSpan: 2
+                                    Layout.alignment: Qt.AlignHCenter
+                                }
+                                Item { width: 1; height: 1}
+                                FactCheckBox {
+                                    text: qsTr("Multi-Video Enabled")
+                                    fact: _videoSettings.multiVideoEnabled
+                                    visible: true
+                                }
+                                QGCLabel {
+                                    id: udpPort0Label
+                                    text: qsTr("UDP Port 1")
+                                    visible: true
+                                }
+                                FactTextField {
+                                    Layout.preferredWidth: _comboFieldWidth
+                                    fact: _videoSettings.udpPort0
+                                    visible: udpPort0Label.visible
+                                }
+                                QGCLabel {
+                                    id: udpPort1Label
+                                    text: qsTr("UDP Port 2")
+                                    visible: true
+                                }
+                                FactTextField {
+                                    Layout.preferredWidth: _comboFieldWidth
+                                    fact: _videoSettings.udpPort1
+                                    visible: udpPort1Label.visible
+                                }
+                                QGCLabel {
+                                    id: udpPort2Label
+                                    text: qsTr("UDP Port 3")
+                                    visible: true
+                                }
+                                FactTextField {
+                                    Layout.preferredWidth: _comboFieldWidth
+                                    fact: _videoSettings.udpPort2
+                                    visible: udpPort2Label.visible
+                                }
+                            }
                         }
                     }
 

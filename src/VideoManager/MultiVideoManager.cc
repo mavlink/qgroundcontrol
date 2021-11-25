@@ -13,6 +13,7 @@
 #include "VideoSettings.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
+#include "SettingsManager.h"
 
 MultiVideoManager::MultiVideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -47,14 +48,30 @@ void MultiVideoManager::_startReceiver(unsigned int id)
     }
 }
 
-void MultiVideoManager::_updateVideoURI(unsigned int id, const QString &uri)
+void MultiVideoManager::_stopReceiver(unsigned int id) {
+    if (_videoReceiver[id] != nullptr) {
+        if (!_videoUri[id].isEmpty()) {
+            _videoReceiver[id]->stop();
+        }
+    }
+}
+
+void MultiVideoManager::_updateVideoURI(unsigned int id, unsigned int port)
 {
-    _videoUri[id] = uri;
+    _videoUri[id] = QStringLiteral("udp://0.0.0.0:%1").arg(port);
 }
 
 void MultiVideoManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
+
+    // TODO: Make these settings per video instead of per manager (see comment in VideoManager.cc)
+    _videoSettings = toolbox->settingsManager()->videoSettings();
+    // restart all videos when a port is changed
+    // TODO: wrap in array
+    connect(_videoSettings->udpPort0(), &Fact::rawValueChanged, this, &MultiVideoManager::_udpPortChanged);
+    connect(_videoSettings->udpPort1(), &Fact::rawValueChanged, this, &MultiVideoManager::_udpPortChanged);
+    connect(_videoSettings->udpPort2(), &Fact::rawValueChanged, this, &MultiVideoManager::_udpPortChanged);
 
     for (int i = 0; i < QGC_MULTI_VIDEO_COUNT; i++) {
         _setupReceiver(toolbox, i);
@@ -65,9 +82,9 @@ void MultiVideoManager::init()
 {
     QQuickWindow* root = qgcApp()->multiVideoWindow();
 
-    _updateVideoURI(0, "udp://0.0.0.0:5600");
-    _updateVideoURI(1, "udp://0.0.0.0:5601");
-    _updateVideoURI(2, "udp://0.0.0.0:5602");
+    _updateVideoURI(0, _videoSettings->udpPort0()->rawValue().toInt());
+    _updateVideoURI(1, _videoSettings->udpPort1()->rawValue().toInt());
+    _updateVideoURI(2, _videoSettings->udpPort2()->rawValue().toInt());
 
     if (root == nullptr) {
         qCDebug(VideoManagerLog) << "multiVideoWindow() failed. No multi-video window";
@@ -79,5 +96,19 @@ void MultiVideoManager::init()
         widget = root->findChild<QQuickItem*>(QStringLiteral("videoContent%1").arg(i));
         _videoSink[i] = qgcApp()->toolbox()->corePlugin()->createVideoSink(this, widget);
         _startReceiver(i);
+    }
+}
+
+void MultiVideoManager::_restartVideo(unsigned int id) {
+    _stopReceiver(id);
+    _startReceiver(id);
+}
+
+void MultiVideoManager::_udpPortChanged() {
+    _updateVideoURI(0, _videoSettings->udpPort0()->rawValue().toInt());
+    _updateVideoURI(1, _videoSettings->udpPort1()->rawValue().toInt());
+    _updateVideoURI(2, _videoSettings->udpPort2()->rawValue().toInt());
+    for (int i = 0; i < QGC_MULTI_VIDEO_COUNT; i++) {
+        _restartVideo(i);
     }
 }

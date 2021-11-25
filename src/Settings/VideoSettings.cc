@@ -161,6 +161,42 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
     return _udpPortFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, multiVideoEnabled)
+{
+    if (!_multiVideoEnabledFact) {
+        _multiVideoEnabledFact = _createSettingsFact(multiVideoEnabledName);
+        connect(_multiVideoEnabledFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _multiVideoEnabledFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort0)
+{
+    if (!_udpPort0Fact) {
+        _udpPort0Fact = _createSettingsFact(udpPort0Name);
+        connect(_udpPort0Fact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _udpPort0Fact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort1)
+{
+    if (!_udpPort1Fact) {
+        _udpPort1Fact = _createSettingsFact(udpPort1Name);
+        connect(_udpPort1Fact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _udpPort1Fact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort2)
+{
+    if (!_udpPort2Fact) {
+        _udpPort2Fact = _createSettingsFact(udpPort2Name);
+        connect(_udpPort2Fact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _udpPort2Fact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
 {
     if (!_rtspUrlFact) {

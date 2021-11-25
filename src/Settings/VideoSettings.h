@@ -22,6 +22,10 @@ public:
 
     DEFINE_SETTINGFACT(videoSource)
     DEFINE_SETTINGFACT(udpPort)
+    DEFINE_SETTINGFACT(multiVideoEnabled)
+    DEFINE_SETTINGFACT(udpPort0)
+    DEFINE_SETTINGFACT(udpPort1)
+    DEFINE_SETTINGFACT(udpPort2)
     DEFINE_SETTINGFACT(tcpUrl)
     DEFINE_SETTINGFACT(rtspUrl)
     DEFINE_SETTINGFACT(aspectRatio)
