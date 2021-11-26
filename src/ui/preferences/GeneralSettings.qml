@@ -357,12 +357,12 @@ Rectangle {
                                     Layout.columnSpan: 2
                                     Layout.alignment: Qt.AlignHCenter
                                 }
-                                Item { width: 1; height: 1}
-                                FactCheckBox {
-                                    text: qsTr("Multi-Video Enabled")
-                                    fact: _videoSettings.multiVideoEnabled
-                                    visible: true
-                                }
+//                                Item { width: 1; height: 1}
+//                                FactCheckBox {
+//                                    text: qsTr("Multi-Video Enabled")
+//                                    fact: _videoSettings.multiVideoEnabled
+//                                    visible: true
+//                                }
                                 QGCLabel {
                                     id: udpPort0Label
                                     text: qsTr("UDP Port 1")
