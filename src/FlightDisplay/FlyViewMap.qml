@@ -489,6 +489,46 @@ FlightMap {
         }
     }
 
+    // Change Heading visuals
+    MapQuickItem {
+        id:             changeHeadingItem
+        visible:        false
+        z:              QGroundControl.zOrderMapItems
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("Yaw towards here", "Turn towards location waypoint")
+        }
+
+        Connections {
+            target: QGroundControl.multiVehicleManager
+            function onActiveVehicleChanged(activeVehicle) {
+                if (!activeVehicle) {
+                    changeHeadingItem.visible = false
+                }
+            }
+        }
+
+        function show(coord) {
+            changeHeadingItem.coordinate = coord
+            changeHeadingItem.visible = true
+        }
+
+        function hide() {
+            changeHeadingItem.visible = false
+        }
+
+        function actionConfirmed() {
+            hide()
+        }
+
+        function actionCancelled() {
+            hide()
+        }
+    }
+
     // Orbit telemetry visuals
     QGCMapCircleVisuals {
         id:             orbitTelemetryCircle
@@ -543,6 +583,15 @@ FlightMap {
                 onTriggered: {
                     roiLocationItem.show(clickMenu.coord)
                     globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
+                }
+            }
+            QGCMenuItem {
+                text:           qsTr("Yaw towards location")
+                visible:        globals.guidedControllerFlyView.showChangeHeading
+
+                onTriggered: {
+                    changeHeadingItem.show(clickMenu.coord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionChangeHeading, clickMenu.coord, changeHeadingItem)
                 }
             }
         }
