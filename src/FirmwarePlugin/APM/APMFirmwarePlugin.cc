@@ -77,7 +77,7 @@ AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
 
 bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
-    uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
+    uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability | ChangeHeadingCapability;
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
     } else if (vehicle->vtol()) {
