@@ -3423,11 +3423,10 @@ void Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
     mavlink_msg_logging_data_decode(&message, &log);
     if (static_cast<size_t>(log.length) > sizeof(log.data)) {
             qWarning() << "Invalid length for LOGGING_DATA, discarding." << log.length;
-        } else {
-            emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
-                        log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
-        }
-    
+    } else {
+      emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
+                          log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
+    }
 }
 
 void Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
@@ -3437,10 +3436,10 @@ void Vehicle::_handleMavlinkLoggingDataAcked(mavlink_message_t& message)
     _ackMavlinkLogData(log.sequence);
     if (static_cast<size_t>(log.length) > sizeof(log.data)) {
             qWarning() << "Invalid length for LOGGING_DATA_ACKED, discarding." << log.length;
-        } else {
-            emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
-                        log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
-        }
+    } else {
+      emit mavlinkLogData(this, log.target_system, log.target_component, log.sequence,
+                          log.first_message_offset, QByteArray((const char*)log.data, log.length), false);
+    }
 }
 
 void Vehicle::setFirmwarePluginInstanceData(QObject* firmwarePluginInstanceData)
