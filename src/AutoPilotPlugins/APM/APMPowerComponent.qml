@@ -341,7 +341,7 @@ SetupPage {
                 }
 
                 ListElement {
-                    text:       qsTr("Blue Robotics Power Sense Module R2")
+                    text:       qsTr("Blue Robotics Power Sense Module")
                     voltPin:    2
                     currPin:    3
                     voltMult:   11.000
