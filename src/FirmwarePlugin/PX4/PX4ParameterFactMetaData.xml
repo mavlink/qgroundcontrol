@@ -6874,11 +6874,11 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="RTL_TIME_MARGIN" default="110" type="INT32">
+    <parameter name="RTL_TIME_MARGIN" default="100" type="INT32">
       <short_desc>RTL time estimate safety margin offset</short_desc>
       <long_desc>Margin that is added to the time estimate, after it has already been scaled Time with margin = RTL_TIME_FACTOR * time + RTL_TIME_MARGIN</long_desc>
       <min>0</min>
-      <max>300</max>
+      <max>3600</max>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
