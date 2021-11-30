@@ -15,6 +15,7 @@ defaults:
 env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
+  ARTIFACT:     QGroundControl.aab
 
 jobs:
   build:
@@ -105,3 +106,17 @@ jobs:
 
       - name: ccache post-run
         run:  ccache -s
+
+      - name: Save artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
+
+      - name: Upload to S3 Bucket
+        if:   github.event_name == 'push'
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        run: |
+              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/builds/master/${ARTIFACT} --region us-west-2 --acl public-read
