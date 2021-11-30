@@ -101,8 +101,8 @@ jobs:
               echo "Daily build" &&
               export STABLE_OR_DAILY=DailyBuild;
             fi
-            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${STABLE_OR_DAILY} ANDROID_ABIS="armeabi-v7a arm64-v8a"
-            make -j2 aab
+            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${STABLE_OR_DAILY} CONFIG+=installer ANDROID_ABIS="armeabi-v7a arm64-v8a"
+            make -j2
 
       - name: ccache post-run
         run:  ccache -s
