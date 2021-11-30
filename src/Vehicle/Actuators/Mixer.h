@@ -207,7 +207,7 @@ class MixerChannel : public QObject
 public:
     MixerChannel(QObject* parent, const QString& label, int actuatorFunction,
             int paramIndex, int actuatorTypeIndex, QmlObjectListModel& channelConfigs, ParameterManager* parameterManager,
-            const Rule* rule, std::function<void(Fact*)> factAddedCb);
+            const Rule* rule, std::function<void(Function, Fact*)> factAddedCb);
 
     Q_PROPERTY(QString label                            READ label               CONSTANT)
     Q_PROPERTY(QmlObjectListModel* configInstances      READ configInstances     NOTIFY configInstancesChanged)
@@ -219,6 +219,8 @@ public:
 
     bool getGeometry(const ActuatorTypes& actuatorTypes, const MixerOption::ActuatorGroup& group,
             ActuatorGeometry& geometry) const;
+
+    Fact* getFact(Function function) const;
 
 public slots:
     void applyRule(bool noConstraints = false);
