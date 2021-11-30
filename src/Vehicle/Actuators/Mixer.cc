@@ -16,9 +16,10 @@
 using namespace Mixer;
 
 MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFunction, int paramIndex, int actuatorTypeIndex,
-        QmlObjectListModel &channelConfigs, ParameterManager* parameterManager, const Rule* rule, std::function<void(Fact*)> factAddedCb) :
-        QObject(parent), _label(label), _actuatorFunction(actuatorFunction), _paramIndex(paramIndex), _actuatorTypeIndex(actuatorTypeIndex),
-        _rule(rule)
+        QmlObjectListModel &channelConfigs, ParameterManager* parameterManager, const Rule* rule,
+        std::function<void(Function, Fact*)> factAddedCb)
+    : QObject(parent), _label(label), _actuatorFunction(actuatorFunction), _paramIndex(paramIndex),
+      _actuatorTypeIndex(actuatorTypeIndex), _rule(rule)
 {
     for (int i = 0; i < channelConfigs.count(); ++i) {
         auto channelConfig = channelConfigs.value<ChannelConfig*>(i);
@@ -53,7 +54,7 @@ MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFu
             } else if (channelConfig->displayOption() == Parameter::DisplayOption::BoolTrueIfPositive) {
                 fact = new FactFloatAsBool(channelConfig, fact);
             }
-            factAddedCb(fact);
+            factAddedCb(channelConfig->function(), fact);
         } else {
             qCDebug(ActuatorsConfigLog) << "ActuatorOutputChannel: Param does not exist:" << param;
         }
@@ -185,6 +186,17 @@ bool MixerChannel::getGeometry(const ActuatorTypes& actuatorTypes, const MixerOp
     return numPositionAxis == 3;
 }
 
+Fact* MixerChannel::getFact(Function function) const
+{
+    for (int i = 0; i < _configInstances->count(); ++i) {
+        ChannelConfigInstance* configInstance = _configInstances->value<ChannelConfigInstance*>(i);
+        if (configInstance->channelConfig()->function() == Function::Type) {
+            return configInstance->fact();
+        }
+    }
+    return nullptr;
+}
+
 void MixerConfigGroup::addChannelConfig(ChannelConfig* channelConfig)
 {
     _channelConfigs->append(channelConfig);
@@ -308,8 +320,12 @@ void Mixers::update()
                         _functionsSpecificLabel[actuatorFunction] = label;
                     }
                 }
+                auto factAdded = [this](Function function, Fact* fact) {
+                    // Type might change more than the geometry
+                    subscribeFact(fact, function != Function::Type);
+                };
                 MixerChannel* channel = new MixerChannel(currentMixerGroup, label, actuatorFunction, actuatorIdx, actuatorTypeIndex,
-                        *currentMixerGroup->channelConfigs(), _parameterManager, selectedRule, [this](Fact* fact) { subscribeFact(fact, true); });
+                        *currentMixerGroup->channelConfigs(), _parameterManager, selectedRule, factAdded);
                 currentMixerGroup->addChannel(channel);
                 ++actuatorTypeIndex;
             }
@@ -331,6 +347,23 @@ void Mixers::update()
 
 QString Mixers::getSpecificLabelForFunction(int function) const
 {
+    // Try to get it from the actuator type param
+    for (int mixerGroupIdx = 0; mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
+        Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
+        for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
+            Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
+
+            if (mixerChannel->actuatorFunction() != function) {
+                continue;
+            }
+
+            Fact* typeFact = mixerChannel->getFact(Function::Type);
+            if (typeFact) {
+                return typeFact->enumOrValueString() + " (" + _functions.value(function).label +")";
+            }
+        }
+    }
+
     const auto iter = _functionsSpecificLabel.find(function);
     if (iter == _functionsSpecificLabel.end()) {
         return _functions.value(function).label;
