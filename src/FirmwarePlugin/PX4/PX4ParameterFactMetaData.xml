@@ -10640,6 +10640,11 @@
       <min>-1</min>
       <max>6143</max>
     </parameter>
+    <parameter name="UCAN1_UORB_GPS_P" default="-1" type="INT32">
+      <short_desc>sensor_gps uORB over UAVCAN v1 publication port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
   </group>
   <group name="UAVCANv1">
     <parameter name="UAVCAN_V1_ID" default="1" type="INT32">
