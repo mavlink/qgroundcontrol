@@ -1,4 +1,4 @@
-name: Android Release
+name: Android 64-bit Release
 
 on:
   push:
@@ -15,7 +15,7 @@ defaults:
 env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
-  ARTIFACT:     QGroundControl.aab
+  ARTIFACT:     QGroundControl64.apk
 
 jobs:
   build:
@@ -101,7 +101,7 @@ jobs:
               echo "Daily build" &&
               export STABLE_OR_DAILY=DailyBuild;
             fi
-            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${STABLE_OR_DAILY} CONFIG+=installer ANDROID_ABIS="armeabi-v7a arm64-v8a"
+            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${STABLE_OR_DAILY} CONFIG+=installer ANDROID_ABIS="arm64-v8a"
             make -j2
 
       - name: ccache post-run
