@@ -258,9 +258,6 @@ installer {
     CONFIG -= debug
     CONFIG -= debug_and_release
     CONFIG += release
-    AndroidBuild {
-        #ANDROID_ABIS = "armeabi-v7a arm64-v8a"
-    }
     message(Build Installer)
 }
 
