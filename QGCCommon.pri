@@ -229,22 +229,24 @@ AndroidBuild {
         DEV_VERSION = $$join(DEV_VERSION, "", "0")
     }
 
-    # Bitness is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
+    # Bitness for android version number is 66/34 instead of 64/32 in because of a required version number bump screw-up ages ago
     equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-        ANDROID_BITNESS = 66
+        ANDROID_TRUE_BITNESS = 64
+        ANDROID_VERSION_BITNESS = 66
     } else {
-        ANDROID_BITNESS = 34
+        ANDROID_TRUE_BITNESS = 32
+        ANDROID_VERSION_BITNESS = 34
     }
 
     # Version code format: BBMIPPDDD (B=Bitness, I=Minor)
     ANDROID_VERSION_CODE = "BBMIPPDDD"
-    ANDROID_VERSION_CODE = $$replace(ANDROID_VERSION_CODE, "BB", $$ANDROID_BITNESS)
+    ANDROID_VERSION_CODE = $$replace(ANDROID_VERSION_CODE, "BB", $$ANDROID_VERSION_BITNESS)
     ANDROID_VERSION_CODE = $$replace(ANDROID_VERSION_CODE, "M", $$MAJOR_VERSION)
     ANDROID_VERSION_CODE = $$replace(ANDROID_VERSION_CODE, "I", $$MINOR_VERSION)
     ANDROID_VERSION_CODE = $$replace(ANDROID_VERSION_CODE, "PP", $$PATCH_VERSION)
     ANDROID_VERSION_CODE = $$replace(ANDROID_VERSION_CODE, "DDD", $$DEV_VERSION)
 
-    message(Android version info: $${ANDROID_VERSION_CODE} bitness:$${ANDROID_BITNESS} major:$${MAJOR_VERSION} minor:$${MINOR_VERSION} patch:$${PATCH_VERSION} dev:$${DEV_VERSION})
+    message(Android version info: $${ANDROID_VERSION_CODE} bitness:$${ANDROID_VERSION_BITNESS} major:$${MAJOR_VERSION} minor:$${MINOR_VERSION} patch:$${PATCH_VERSION} dev:$${DEV_VERSION})
 
     ANDROID_VERSION_NAME    = GIT_VERSION
 }
