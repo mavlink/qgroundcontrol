@@ -9016,6 +9016,10 @@
       <long_desc>For systems with an external barometer, this should be set to false to make sure that the external is used.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_MAG_AUTOCAL" default="0" type="INT32" boolean="true" category="System">
+      <short_desc>Magnetometer auto calibration</short_desc>
+      <long_desc>Automatically initialize magnetometer calibration from bias estimate if available.</long_desc>
+    </parameter>
     <parameter name="SENS_MAG_MODE" default="1" type="INT32" category="System">
       <short_desc>Sensors hub mag mode</short_desc>
       <reboot_required>true</reboot_required>
