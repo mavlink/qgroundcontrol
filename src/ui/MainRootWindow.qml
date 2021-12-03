@@ -164,6 +164,10 @@ ApplicationWindow {
         showTool(qsTr("Application Settings"), "AppSettings.qml", "/res/QGCLogoWhite")
     }
 
+    function showJoystickTool() {
+        showTool(qsTr("Joystick Setup"), "BLEJoystick.qml", "/qmlimages/Joystick.png")
+    }
+
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
@@ -406,6 +410,21 @@ ApplicationWindow {
                             if (!mainWindow.preventViewSwitch()) {
                                 toolSelectDialog.hideDialog()
                                 mainWindow.showSettingsTool()
+                            }
+                        }
+                    }
+                    SubMenuButton {
+                        id:                 joystickButton
+                        height:             _toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("BLE Joystick settings")
+                        imageResource:      "/qmlimages/Joystick.png"
+                        imageColor:         qgcPal.text
+                        visible:            true
+                        onClicked: {
+                            if (!mainWindow.preventViewSwitch()) {
+                                toolSelectDialog.hideDialog()
+                                mainWindow.showJoystickTool()
                             }
                         }
                     }

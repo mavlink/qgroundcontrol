@@ -22,6 +22,10 @@
     #include "JoystickAndroid.h"
 #endif
 
+#ifdef QGC_ENABLE_BLUETOOTH
+#include "joystickBLE.h"
+#endif
+
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 
 const char * JoystickManager::_settingsGroup =              "JoystickManager";
@@ -31,6 +35,10 @@ JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _activeJoystick(nullptr)
     , _multiVehicleManager(nullptr)
+#ifdef QGC_ENABLE_BLUETOOTH
+      ,
+      finder(this)
+#endif
 {
 }
 
@@ -65,6 +73,11 @@ void JoystickManager::init() {
     }
     connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, &JoystickManager::restartJoystickCheckTimer);
 #endif
+#ifdef QGC_ENABLE_BLUETOOTH
+    if (JoystickBLE::init(this, &finder)) {
+      connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, &JoystickManager::restartJoystickCheckTimer);
+    }
+#endif
     connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
     _joystickCheckTimerCounter = 5;
     _joystickCheckTimer.start(1000);
@@ -79,6 +92,15 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
     newMap = JoystickAndroid::discover(_multiVehicleManager);
+#endif
+
+#ifdef QGC_ENABLE_BLUETOOTH
+    //    doesnt compile with older qt
+    //    newMap.insert(JoystickBLE::discover(_multiVehicleManager));
+    auto ble_map = JoystickBLE::discover(_multiVehicleManager);
+    for (const auto &key : ble_map.keys()) {
+      newMap.insert(key, ble_map[key]);
+    }
 #endif
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
@@ -209,7 +231,7 @@ void JoystickManager::_updateAvailableJoysticks()
             break;
         }
     }
-#elif defined(__android__)
+#elif defined(__android__) || defined(QGC_ENABLE_BLUETOOTH) 
     _joystickCheckTimerCounter--;
     _setActiveJoystickFromSettings();
     if (_joystickCheckTimerCounter <= 0) {
@@ -223,3 +245,7 @@ void JoystickManager::restartJoystickCheckTimer()
     _joystickCheckTimerCounter = 5;
     _joystickCheckTimer.start(1000);
 }
+
+#ifdef QGC_ENABLE_BLUETOOTH
+BLEFinder *JoystickManager::deviceFinder() { return &finder; }
+#endif

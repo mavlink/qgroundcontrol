@@ -17,6 +17,10 @@
 #include "MultiVehicleManager.h"
 #include "QGCToolbox.h"
 
+#ifdef QGC_ENABLE_BLUETOOTH
+#include "blefinder.h"
+#endif
+
 #include <QVariantList>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
@@ -35,6 +39,9 @@ public:
 
     Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
     Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
+#ifdef QGC_ENABLE_BLUETOOTH
+    Q_PROPERTY(BLEFinder* deviceFinder READ deviceFinder CONSTANT)
+#endif
 
     /// List of available joysticks
     QVariantList joysticks();
@@ -50,6 +57,10 @@ public:
     void setActiveJoystickName(const QString& name);
 
     void restartJoystickCheckTimer(void);
+
+#ifdef QGC_ENABLE_BLUETOOTH
+    BLEFinder *deviceFinder(void);
+#endif
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -79,4 +90,7 @@ private:
 
     int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;
+#ifdef QGC_ENABLE_BLUETOOTH
+    BLEFinder finder;
+#endif
 };
