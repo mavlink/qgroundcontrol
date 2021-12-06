@@ -43,7 +43,8 @@ Column {
         value:                      defaultVal
         updateValueWhileDragging:   true
         anchors.horizontalCenter:   parent.horizontalCenter
-		height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
+        height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
+        indicatorBarVisible:        sendTimer.running
 
         onValueChanged: {
             if (blockUpdates)
