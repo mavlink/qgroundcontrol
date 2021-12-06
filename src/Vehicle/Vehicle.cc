@@ -985,7 +985,7 @@ void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
     mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
 
     _altitudeTuningSetpointFact.setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.alt_error);
-    _xTrackErrorFact.setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.xtrack_error);
+    _xTrackErrorFact.setRawValue(navControllerOutput.xtrack_error);
     _airSpeedSetpointFact.setRawValue(_airSpeedFact.rawValue().toDouble() - navControllerOutput.aspd_error);
 }
 
