@@ -37,7 +37,7 @@ public:
             AutoPilotStackAPM,
             PX4FlowPX4,
             PX4FlowAPM,
-            ThreeDRRadio,
+            SiKRadio,
             SingleFirmwareMode
         } AutoPilotStackType_t;
 
@@ -78,7 +78,7 @@ public:
 
         // members
         AutoPilotStackType_t    autopilotStackType;
-        FirmwareBuildType_t          firmwareType;
+        FirmwareBuildType_t     firmwareType;
         FirmwareVehicleType_t   firmwareVehicleType;
     };
 
@@ -204,7 +204,7 @@ private:
 
     // Firmware hashes
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
-    QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
+    QHash<FirmwareIdentifier, QString> _rgSiKRadioFirmware;
 
     // Hash map for ArduPilot ChibiOS lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;
