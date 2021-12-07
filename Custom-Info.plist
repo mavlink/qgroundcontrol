@@ -20,5 +20,7 @@
     <string>Camera devices used for FPV</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>Bluetooth required for connecting joysticks</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Bluetooth required for detecting joysticks</string>
 </dict>
 </plist>
