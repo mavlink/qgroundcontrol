@@ -72,7 +72,7 @@ SetupPage {
                                          qsTr("Currently set to frame class '%1'").arg(_frameClass.enumStringValue) +
                                          (_frameTypeAvailable ?  qsTr(" and frame type '%2'").arg(_frameType.enumStringValue) : "") +
                                          qsTr(".", "period for end of sentence")) +
-                                    qsTr(" To change this configuration, select the desired frame class below.")
+                                    qsTr(" To change this configuration, select the desired frame class below and then reboot the vehicle.")
                 font.family:        ScreenTools.demiboldFontFamily
                 wrapMode:           Text.WordWrap
             }
