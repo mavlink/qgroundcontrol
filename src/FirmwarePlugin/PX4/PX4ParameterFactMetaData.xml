@@ -2773,10 +2773,10 @@
     </parameter>
     <parameter name="FW_L1_PERIOD" default="20.0" type="FLOAT">
       <short_desc>L1 period</short_desc>
-      <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 18-25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
-      <min>12.0</min>
+      <long_desc>Used to determine the L1 gain and controller time constant. This parameter is proportional to the L1 distance (which points ahead of the aircraft on the path it is following). A value of 18-25 seconds works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
+      <min>7.0</min>
       <max>50.0</max>
-      <unit>m</unit>
+      <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
