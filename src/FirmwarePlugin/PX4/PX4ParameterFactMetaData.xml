@@ -4375,13 +4375,13 @@
       <max>360.0</max>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MNT_RANGE_PITCH" default="360.0" type="FLOAT">
+    <parameter name="MNT_RANGE_PITCH" default="90.0" type="FLOAT">
       <short_desc>Range of pitch channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MNT_RANGE_ROLL" default="360.0" type="FLOAT">
+    <parameter name="MNT_RANGE_ROLL" default="90.0" type="FLOAT">
       <short_desc>Range of roll channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
@@ -4404,6 +4404,15 @@
       <long_desc>Full stick input [-1..1] translats to [-yaw rate..yaw rate].</long_desc>
       <min>1.0</min>
       <max>90.0</max>
+    </parameter>
+    <parameter name="MNT_RC_IN_MODE" default="1" type="INT32">
+      <short_desc>Input mode for RC gimbal input</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <values>
+        <value code="0">Angle</value>
+        <value code="1">Angular rate</value>
+      </values>
     </parameter>
   </group>
   <group name="Multicopter Attitude Control">
