@@ -9755,6 +9755,15 @@
       <long_desc>If disabled, the existing mixing implementation is used. If enabled, dynamic control allocation with runtime configuration of the mixing and output functions is used. Note: this is work-in-progress and not all vehicle types are supported yet.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SYS_DM_BACKEND" default="0" type="INT32" boolean="true">
+      <short_desc>Dataman storage backend</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="-1">Disabled</value>
+        <value code="0">default (SD card)</value>
+        <value code="1">RAM (not persistent)</value>
+      </values>
+    </parameter>
     <parameter name="SYS_FAC_CAL_MODE" default="0" type="INT32" boolean="true">
       <short_desc>Enable factory calibration mode</short_desc>
       <long_desc>If enabled, future sensor calibrations will be stored to /fs/mtd_caldata. Note: this is only supported on boards with a separate calibration storage /fs/mtd_caldata.</long_desc>
