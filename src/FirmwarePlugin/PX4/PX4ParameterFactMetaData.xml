@@ -1366,15 +1366,17 @@
       <max>1500</max>
       <unit>ms</unit>
     </parameter>
-    <parameter name="COM_RC_IN_MODE" default="0" type="INT32">
+    <parameter name="COM_RC_IN_MODE" default="3" type="INT32">
       <short_desc>RC control input mode</short_desc>
       <long_desc>The default value of 0 requires a valid RC transmitter setup. Setting this to 1 allows joystick control and disables RC input handling and the associated checks. A value of 2 will generate RC control data from manual input received via MAVLink instead of directly forwarding the manual input data.</long_desc>
       <min>0</min>
-      <max>2</max>
+      <max>4</max>
       <values>
         <value code="0">RC Transmitter only</value>
-        <value code="1">Joystick only/No RC Checks</value>
-        <value code="2">RC and Joystick are accepted</value>
+        <value code="1">Joystick only</value>
+        <value code="2">RC and Joystick with fallback</value>
+        <value code="3">RC or Joystick keep first</value>
+        <value code="4">Stick input disabled</value>
       </values>
     </parameter>
     <parameter name="COM_RC_LOSS_T" default="0.5" type="FLOAT">
