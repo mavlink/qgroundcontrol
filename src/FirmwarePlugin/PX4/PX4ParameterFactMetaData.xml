@@ -9697,6 +9697,31 @@
       </values>
     </parameter>
   </group>
+  <group name="Simulator">
+    <parameter name="SIM_BARO_OFF_P" default="0.0" type="FLOAT">
+      <short_desc>simulated barometer pressure offset</short_desc>
+    </parameter>
+    <parameter name="SIM_BARO_OFF_T" default="0.0" type="FLOAT">
+      <short_desc>simulated barometer temperature offset</short_desc>
+    </parameter>
+    <parameter name="SIM_GPS_USED" default="10" type="INT32">
+      <short_desc>simulated GPS number of satellites used</short_desc>
+      <min>0</min>
+      <max>50</max>
+    </parameter>
+    <parameter name="SIM_MAG_OFFSET_X" default="0.0" type="FLOAT">
+      <short_desc>simulated magnetometer X offset</short_desc>
+      <unit>gauss</unit>
+    </parameter>
+    <parameter name="SIM_MAG_OFFSET_Y" default="0.0" type="FLOAT">
+      <short_desc>simulated magnetometer Y offset</short_desc>
+      <unit>gauss</unit>
+    </parameter>
+    <parameter name="SIM_MAG_OFFSET_Z" default="0.0" type="FLOAT">
+      <short_desc>simulated magnetometer Z offset</short_desc>
+      <unit>gauss</unit>
+    </parameter>
+  </group>
   <group name="System">
     <parameter name="SYS_AUTOCONFIG" default="0" type="INT32">
       <short_desc>Automatically configure default values</short_desc>
