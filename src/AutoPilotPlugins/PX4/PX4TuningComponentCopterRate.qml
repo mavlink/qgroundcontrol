@@ -23,6 +23,7 @@ ColumnLayout {
     anchors.fill: parent
     property Fact _airmode:           controller.getParameterFact(-1, "MC_AIRMODE", false)
     property Fact _thrustModelFactor: controller.getParameterFact(-1, "THR_MDL_FAC", false)
+    property alias autotuningEnabled: pidTuning.autotuningEnabled
 
     GridLayout {
         columns: 2
@@ -52,6 +53,7 @@ ColumnLayout {
     }
     PIDTuning {
         width: availableWidth
+        id:    pidTuning
 
         property var roll: QtObject {
             property string name: qsTr("Roll")
@@ -150,6 +152,7 @@ ColumnLayout {
         axis: [ roll, pitch, yaw ]
         chartDisplaySec: 3
         showAutoModeChange: true
+        showAutoTuning:     true
     }
 }
 
