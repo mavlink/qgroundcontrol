@@ -21,9 +21,11 @@ import QGroundControl.Vehicle       1.0
 ColumnLayout {
     width: availableWidth
     anchors.fill: parent
+    property alias autotuningEnabled: pidTuning.autotuningEnabled
 
     PIDTuning {
         width: availableWidth
+        id:    pidTuning
 
         property var roll: QtObject {
             property string name: qsTr("Roll")
@@ -81,6 +83,7 @@ ColumnLayout {
         unit: "deg"
         axis: [ roll, pitch, yaw ]
         showAutoModeChange: true
+        showAutoTuning:     true
     }
 }
 
