@@ -28,6 +28,8 @@ RowLayout {
     property var    tuningMode
     property double chartDisplaySec:     8 // number of seconds to display
     property bool   showAutoModeChange:  false
+    property bool   showAutoTuning:      false
+    property alias  autotuningEnabled:   autotuningEnabled.checked
 
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property int    _currentAxis:       0
@@ -188,7 +190,7 @@ RowLayout {
             Row {
                 id:        _autotuneSelectRow
                 spacing:   _margins
-                visible:   tuningMode === Vehicle.ModeRateAndAttitude
+                visible:   showAutoTuning
 
                 Switch {
                     id:        autotuningEnabled
