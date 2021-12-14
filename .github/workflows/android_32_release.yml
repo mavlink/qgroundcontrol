@@ -83,6 +83,7 @@ jobs:
             mkdir gstreamer-1.0-android-universal-1.18.5
             tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
 
+      # This will set GIT_BRANCH_NAME environment variable
       - name: Git branch name
         id:   git-branch-name
         uses: EthanSK/git-branch-name-action@v1
