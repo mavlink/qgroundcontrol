@@ -95,6 +95,11 @@ jobs:
           name: qgroundcontrol.pdb
           path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
 
+      # This will set GIT_BRANCH_NAME environment variable
+      - name: Git branch name
+        id:   git-branch-name
+        uses: EthanSK/git-branch-name-action@v1
+
       - name: Upload build to S3 Bucket
         if:                 github.event_name == 'push'
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
