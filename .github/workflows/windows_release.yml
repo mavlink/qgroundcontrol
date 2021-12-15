@@ -32,10 +32,12 @@ jobs:
 
       - name: Test
         id:   git-branch-name-test
-        run:
-          - echo ${{ env.ARTIFACT }}
-          - echo ${{ env.GIT_BRANCH_NAME }}
-          - echo "After"
+        run: |
+          echo ${ARTIFACT}
+          echo ${GIT_BRANCH_NAME}
+          echo ${{ env.ARTIFACT }}
+          echo ${{ env.GIT_BRANCH_NAME }}
+          echo "After"
 
       - name: Checkout repo
         uses: actions/checkout@v2
