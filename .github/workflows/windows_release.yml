@@ -25,6 +25,19 @@ jobs:
     runs-on:  windows-2019
 
     steps:
+      # This will set GIT_BRANCH_NAME environment variable
+      - name: Git branch name
+        id:   git-branch-name
+        uses: EthanSK/git-branch-name-action@v1
+
+      - name: Test
+        id:   git-branch-name-test
+        run:
+          - echo ${ARTIFACT}
+          - echo ${GIT_BRANCH_NAME}
+          - echo ${{ env.ARTIFACT }}
+          - echo ${{ env.GIT_BRANCH_NAME }}
+
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
@@ -94,11 +107,6 @@ jobs:
         with:
           name: qgroundcontrol.pdb
           path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
-
-      # This will set GIT_BRANCH_NAME environment variable
-      - name: Git branch name
-        id:   git-branch-name
-        uses: EthanSK/git-branch-name-action@v1
 
       - name: Upload build to S3 Bucket
         if:                 github.event_name == 'push'
