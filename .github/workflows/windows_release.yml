@@ -37,6 +37,7 @@ jobs:
           echo ${GIT_BRANCH_NAME}
           echo ${{ env.ARTIFACT }}
           echo ${{ env.GIT_BRANCH_NAME }}
+          echo "aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/builds/${{ env.GIT_BRANCH_NAME }}/${{ env.ARTIFACT }} --region us-west-2 --acl public-read"
           echo "After"
 
       - name: Checkout repo
