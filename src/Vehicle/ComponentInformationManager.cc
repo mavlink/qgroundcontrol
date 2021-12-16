@@ -15,6 +15,7 @@
 #include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
 #include "CompInfoEvents.h"
+#include "CompInfoActuators.h"
 #include "QGCFileDownload.h"
 #include "QGCApplication.h"
 
@@ -29,6 +30,7 @@ const ComponentInformationManager::StateFn ComponentInformationManager::_rgState
     ComponentInformationManager::_stateRequestCompInfoGeneralComplete,
     ComponentInformationManager::_stateRequestCompInfoParam,
     ComponentInformationManager::_stateRequestCompInfoEvents,
+    ComponentInformationManager::_stateRequestCompInfoActuators,
     ComponentInformationManager::_stateRequestAllCompInfoComplete
 };
 
@@ -52,6 +54,7 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]     = new CompInfoEvents    (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_ACTUATORS]  = new CompInfoActuators (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
 }
 
 int ComponentInformationManager::stateCount(void) const
@@ -136,6 +139,18 @@ void ComponentInformationManager::_stateRequestCompInfoEvents(StateMachine* stat
     }
 }
 
+void ComponentInformationManager::_stateRequestCompInfoActuators(StateMachine* stateMachine)
+{
+    ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
+
+    if (compMgr->_isCompTypeSupported(COMP_METADATA_TYPE_ACTUATORS)) {
+        compMgr->_requestTypeStateMachine.request(compMgr->_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_ACTUATORS]);
+    } else {
+        qCDebug(ComponentInformationManagerLog) << "_stateRequestCompInfoActuators skipping, not supported";
+        compMgr->advance();
+    }
+}
+
 void ComponentInformationManager::_stateRequestAllCompInfoComplete(StateMachine* stateMachine)
 {
     ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
@@ -208,6 +223,7 @@ QString RequestMetaDataTypeStateMachine::typeToString(void)
         case COMP_METADATA_TYPE_COMMANDS: return "COMP_METADATA_TYPE_COMMANDS";
         case COMP_METADATA_TYPE_PERIPHERALS: return "COMP_METADATA_TYPE_PERIPHERALS";
         case COMP_METADATA_TYPE_EVENTS: return "COMP_METADATA_TYPE_EVENTS";
+        case COMP_METADATA_TYPE_ACTUATORS: return "COMP_METADATA_TYPE_ACTUATORS";
         default: break;
     }
     return "Unknown";

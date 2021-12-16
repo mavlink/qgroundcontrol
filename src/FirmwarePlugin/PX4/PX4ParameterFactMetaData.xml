@@ -210,10 +210,19 @@
       <min>0</min>
       <max>1</max>
       <unit>rad</unit>
+      <decimal>3</decimal>
     </parameter>
-    <parameter name="ASPD_DO_CHECKS" default="1" type="INT32" boolean="true">
+    <parameter name="ASPD_DO_CHECKS" default="7" type="INT32">
       <short_desc>Enable checks on airspeed sensors</short_desc>
-      <long_desc>If set to true then the data comming from the airspeed sensors is checked for validity. Only applied if ASPD_PRIMARY &gt; 0.</long_desc>
+      <long_desc>Controls which checks are run to check airspeed data for validity. Only applied if ASPD_PRIMARY &gt; 0. Note that the data missing check is enabled if any of the options is set.</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <bitmask>
+        <bit index="0">Only data missing check (triggers if more than 1s no data)</bit>
+        <bit index="1">Data stuck (triggers if data is exactly constant for 2s)</bit>
+        <bit index="2">Innovation check (see ASPD_FS_INNOV)</bit>
+        <bit index="3">Load factor check (triggers if measurement is below stall speed)</bit>
+      </bitmask>
     </parameter>
     <parameter name="ASPD_FALLBACK_GW" default="0" type="INT32" boolean="true">
       <short_desc>Enable fallback to sensor-less airspeed estimation</short_desc>
@@ -223,17 +232,21 @@
         <value code="1">Enable fallback to sensor-less estimation</value>
       </values>
     </parameter>
-    <parameter name="ASPD_FS_INNOV" default="1.0" type="FLOAT">
-      <short_desc>Airspeed failsafe consistency threshold</short_desc>
-      <long_desc>This specifies the minimum airspeed test ratio required to trigger a failsafe. Larger values make the check less sensitive, smaller values make it more sensitive. Start with a value of 1.0 when tuning. When tas_test_ratio is &gt; 1.0 it indicates the inconsistency between predicted and measured airspeed is large enough to cause the wind EKF to reject airspeed measurements. The time required to detect a fault when the threshold is exceeded depends on the size of the exceedance and is controlled by the ASPD_FS_INTEG parameter.</long_desc>
+    <parameter name="ASPD_FS_INNOV" default="5." type="FLOAT">
+      <short_desc>Airspeed failure innovation threshold</short_desc>
+      <long_desc>This specifies the minimum airspeed innovation required to trigger a failsafe. Larger values make the check less sensitive, smaller values make it more sensitive. Large innovations indicate an inconsistency between predicted (groundspeed - windspeeed) and measured airspeed. The time required to detect a fault when the threshold is exceeded depends on the size of the exceedance and is controlled by the ASPD_FS_INTEG parameter.</long_desc>
       <min>0.5</min>
-      <max>3.0</max>
+      <max>10.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_FS_INTEG" default="5.0" type="FLOAT">
-      <short_desc>Airspeed failsafe consistency delay</short_desc>
-      <long_desc>This sets the time integral of airspeed test ratio exceedance above ASPD_FS_INNOV required to trigger a failsafe. For example if ASPD_FS_INNOV is 1 and estimator_status.tas_test_ratio is 2.0, then the exceedance is 1.0 and the integral will rise at a rate of 1.0/second. A negative value disables the check. Larger positive values make the check less sensitive, smaller positive values make it more sensitive.</long_desc>
-      <max>30.0</max>
-      <unit>s</unit>
+    <parameter name="ASPD_FS_INTEG" default="10." type="FLOAT">
+      <short_desc>Airspeed failure innovation integral threshold</short_desc>
+      <long_desc>This sets the time integral of airspeed innovation exceedance above ASPD_FS_INNOV required to trigger a failsafe. Larger values make the check less sensitive, smaller positive values make it more sensitive.</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="ASPD_FS_T_START" default="-1" type="INT32">
       <short_desc>Airspeed failsafe start delay</short_desc>
@@ -260,15 +273,37 @@
         <value code="3">Third airspeed sensor</value>
       </values>
     </parameter>
-    <parameter name="ASPD_SCALE" default="1.0" type="FLOAT">
-      <short_desc>Airspeed scale (scale from IAS to CAS)</short_desc>
-      <long_desc>Scale can either be entered manually, or estimated in-flight by setting ASPD_SCALE_EST to 1.</long_desc>
+    <parameter name="ASPD_SCALE_1" default="1.0" type="FLOAT" volatile="true">
+      <short_desc>Scale of airspeed sensor 1</short_desc>
+      <long_desc>This is the scale IAS --&gt; CAS of the first airspeed sensor instance</long_desc>
       <min>0.5</min>
-      <max>1.5</max>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="ASPD_SCALE_EST" default="0" type="INT32" boolean="true">
-      <short_desc>Automatic airspeed scale estimation on</short_desc>
-      <long_desc>Turns the automatic airspeed scale (scale from IAS to CAS) on or off. It is recommended to fly level altitude while performing the estimation. Set to 1 to start estimation (best when already flying). Set to 0 to end scale estimation. The estimated scale is then saved using the ASPD_SCALE parameter.</long_desc>
+    <parameter name="ASPD_SCALE_2" default="1.0" type="FLOAT" volatile="true">
+      <short_desc>Scale of airspeed sensor 2</short_desc>
+      <long_desc>This is the scale IAS --&gt; CAS of the second airspeed sensor instance</long_desc>
+      <min>0.5</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ASPD_SCALE_3" default="1.0" type="FLOAT" volatile="true">
+      <short_desc>Scale of airspeed sensor 3</short_desc>
+      <long_desc>This is the scale IAS --&gt; CAS of the third airspeed sensor instance</long_desc>
+      <min>0.5</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ASPD_SCALE_APPLY" default="1" type="INT32">
+      <short_desc>Controls when to apply the new estimated airspeed scale(s)</short_desc>
+      <values>
+        <value code="0">Do not automatically apply the estimated scale</value>
+        <value code="1">Apply the estimated scale after disarm</value>
+        <value code="2">Apply the estimated scale in air</value>
+      </values>
     </parameter>
     <parameter name="ASPD_SC_P_NOISE" default="0.0001" type="FLOAT">
       <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise</short_desc>
@@ -276,6 +311,7 @@
       <min>0</min>
       <max>0.1</max>
       <unit>Hz</unit>
+      <decimal>5</decimal>
     </parameter>
     <parameter name="ASPD_TAS_GATE" default="3" type="INT32">
       <short_desc>Airspeed Selector: Gate size for true airspeed fusion</short_desc>
@@ -290,6 +326,7 @@
       <min>0</min>
       <max>4</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="ASPD_W_P_NOISE" default="0.1" type="FLOAT">
       <short_desc>Airspeed Selector: Wind estimator wind process noise</short_desc>
@@ -297,6 +334,7 @@
       <min>0</min>
       <max>1</max>
       <unit>m/s^2</unit>
+      <decimal>2</decimal>
     </parameter>
   </group>
   <group name="Angular Velocity Control">
@@ -503,6 +541,37 @@
     </parameter>
   </group>
   <group name="Autotune">
+    <parameter name="FW_AT_APPLY" default="2" type="INT32">
+      <short_desc>Controls when to apply the new gains</short_desc>
+      <long_desc>After the auto-tuning sequence is completed, a new set of gains is available and can be applied immediately or after landing.</long_desc>
+      <values>
+        <value code="0">Do not apply the new gains (logging only)</value>
+        <value code="1">Apply the new gains after disarm</value>
+        <value code="2">Apply the new gains in air</value>
+      </values>
+    </parameter>
+    <parameter name="FW_AT_AXES" default="3" type="INT32">
+      <short_desc>Tuning axes selection</short_desc>
+      <long_desc>Defines which axes will be tuned during the auto-tuning sequence Set bits in the following positions to enable: 0 : Roll 1 : Pitch 2 : Yaw</long_desc>
+      <min>1</min>
+      <max>7</max>
+      <bitmask>
+        <bit index="0">roll</bit>
+        <bit index="1">pitch</bit>
+        <bit index="2">yaw</bit>
+      </bitmask>
+    </parameter>
+    <parameter name="FW_AT_START" default="0" type="INT32" boolean="true">
+      <short_desc>Start the autotuning sequence</short_desc>
+      <long_desc>WARNING: this will inject steps to the rate controller and can be dangerous. Only activate if you know what you are doing, and in a safe environment. Any motion of the remote stick will abord the signal injection and reset this parameter Best is to perform the identification in position or hold mode. Increase the amplitude of the injected signal using FW_AT_SYSID_AMP for more signal/noise ratio</long_desc>
+    </parameter>
+    <parameter name="FW_AT_SYSID_AMP" default="1.0" type="FLOAT">
+      <short_desc>Amplitude of the injected signal</short_desc>
+      <long_desc>This parameter scales the signal sent to the rate controller during system identification.</long_desc>
+      <min>0.1</min>
+      <max>6.0</max>
+      <decimal>1</decimal>
+    </parameter>
     <parameter name="MC_AT_APPLY" default="1" type="INT32">
       <short_desc>Controls when to apply the new gains</short_desc>
       <long_desc>After the auto-tuning sequence is completed, a new set of gains is available and can be applied immediately or after landing. WARNING Applying the gains in air is dangerous as there is no guarantee that those new gains will be able to stabilize the drone properly.</long_desc>
@@ -511,6 +580,9 @@
         <value code="1">Apply the new gains after disarm</value>
         <value code="2">WARNING Apply the new gains in air</value>
       </values>
+    </parameter>
+    <parameter name="MC_AT_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Multicopter autotune module enable</short_desc>
     </parameter>
     <parameter name="MC_AT_RISE_TIME" default="0.14" type="FLOAT">
       <short_desc>Desired angular rate closed-loop rise time</short_desc>
@@ -531,208 +603,6 @@
     </parameter>
   </group>
   <group name="Battery Calibration">
-    <parameter name="BAT1_A_PER_V" default="-1.0" type="FLOAT">
-      <short_desc>Battery 1 current per volt (A/V)</short_desc>
-      <long_desc>The voltage seen by the ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
-      <decimal>8</decimal>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_CAPACITY" default="-1.0" type="FLOAT">
-      <short_desc>Battery 1 capacity</short_desc>
-      <long_desc>Defines the capacity of battery 1 in mAh.</long_desc>
-      <min>-1.0</min>
-      <max>100000</max>
-      <unit>mAh</unit>
-      <decimal>0</decimal>
-      <increment>50</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_I_CHANNEL" default="-1" type="INT32">
-      <short_desc>Battery 1 Current ADC Channel</short_desc>
-      <long_desc>This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_N_CELLS" default="0" type="INT32">
-      <short_desc>Number of cells for battery 1</short_desc>
-      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="2">2S Battery</value>
-        <value code="3">3S Battery</value>
-        <value code="4">4S Battery</value>
-        <value code="5">5S Battery</value>
-        <value code="6">6S Battery</value>
-        <value code="7">7S Battery</value>
-        <value code="8">8S Battery</value>
-        <value code="9">9S Battery</value>
-        <value code="10">10S Battery</value>
-        <value code="11">11S Battery</value>
-        <value code="12">12S Battery</value>
-        <value code="13">13S Battery</value>
-        <value code="14">14S Battery</value>
-        <value code="15">15S Battery</value>
-        <value code="16">16S Battery</value>
-      </values>
-    </parameter>
-    <parameter name="BAT1_R_INTERNAL" default="-1.0" type="FLOAT">
-      <short_desc>Explicitly defines the per cell internal resistance for battery 1</short_desc>
-      <long_desc>If non-negative, then this will be used in place of BAT1_V_LOAD_DROP for all calculations.</long_desc>
-      <min>-1.0</min>
-      <max>0.2</max>
-      <unit>Ohm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_SOURCE" default="0" type="INT32">
-      <short_desc>Battery 1 monitoring source</short_desc>
-      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="-1">Disabled</value>
-        <value code="0">Power Module</value>
-        <value code="1">External</value>
-        <value code="2">ESCs</value>
-      </values>
-    </parameter>
-    <parameter name="BAT1_V_CHANNEL" default="-1" type="INT32">
-      <short_desc>Battery 1 Voltage ADC Channel</short_desc>
-      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_V_CHARGED" default="4.05" type="FLOAT">
-      <short_desc>Full cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_V_DIV" default="-1.0" type="FLOAT">
-      <short_desc>Battery 1 voltage divider (V divider)</short_desc>
-      <long_desc>This is the divider from battery 1 voltage to ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
-      <decimal>8</decimal>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_V_EMPTY" default="3.5" type="FLOAT">
-      <short_desc>Empty cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT1_V_LOAD_DROP" default="0.3" type="FLOAT">
-      <short_desc>Voltage drop per cell on full throttle</short_desc>
-      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT1_R_INTERNAL is set.</long_desc>
-      <min>0.07</min>
-      <max>0.5</max>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_A_PER_V" default="-1.0" type="FLOAT">
-      <short_desc>Battery 2 current per volt (A/V)</short_desc>
-      <long_desc>The voltage seen by the ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
-      <decimal>8</decimal>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_CAPACITY" default="-1.0" type="FLOAT">
-      <short_desc>Battery 2 capacity</short_desc>
-      <long_desc>Defines the capacity of battery 2 in mAh.</long_desc>
-      <min>-1.0</min>
-      <max>100000</max>
-      <unit>mAh</unit>
-      <decimal>0</decimal>
-      <increment>50</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_I_CHANNEL" default="-1" type="INT32">
-      <short_desc>Battery 2 Current ADC Channel</short_desc>
-      <long_desc>This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_N_CELLS" default="0" type="INT32">
-      <short_desc>Number of cells for battery 2</short_desc>
-      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="2">2S Battery</value>
-        <value code="3">3S Battery</value>
-        <value code="4">4S Battery</value>
-        <value code="5">5S Battery</value>
-        <value code="6">6S Battery</value>
-        <value code="7">7S Battery</value>
-        <value code="8">8S Battery</value>
-        <value code="9">9S Battery</value>
-        <value code="10">10S Battery</value>
-        <value code="11">11S Battery</value>
-        <value code="12">12S Battery</value>
-        <value code="13">13S Battery</value>
-        <value code="14">14S Battery</value>
-        <value code="15">15S Battery</value>
-        <value code="16">16S Battery</value>
-      </values>
-    </parameter>
-    <parameter name="BAT2_R_INTERNAL" default="-1.0" type="FLOAT">
-      <short_desc>Explicitly defines the per cell internal resistance for battery 2</short_desc>
-      <long_desc>If non-negative, then this will be used in place of BAT2_V_LOAD_DROP for all calculations.</long_desc>
-      <min>-1.0</min>
-      <max>0.2</max>
-      <unit>Ohm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_SOURCE" default="-1" type="INT32">
-      <short_desc>Battery 2 monitoring source</short_desc>
-      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="-1">Disabled</value>
-        <value code="0">Power Module</value>
-        <value code="1">External</value>
-        <value code="2">ESCs</value>
-      </values>
-    </parameter>
-    <parameter name="BAT2_V_CHANNEL" default="-1" type="INT32">
-      <short_desc>Battery 2 Voltage ADC Channel</short_desc>
-      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_V_CHARGED" default="4.05" type="FLOAT">
-      <short_desc>Full cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_V_DIV" default="-1.0" type="FLOAT">
-      <short_desc>Battery 2 voltage divider (V divider)</short_desc>
-      <long_desc>This is the divider from battery 2 voltage to ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
-      <decimal>8</decimal>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_V_EMPTY" default="3.5" type="FLOAT">
-      <short_desc>Empty cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="BAT2_V_LOAD_DROP" default="0.3" type="FLOAT">
-      <short_desc>Voltage drop per cell on full throttle</short_desc>
-      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT2_R_INTERNAL is set.</long_desc>
-      <min>0.07</min>
-      <max>0.5</max>
-      <unit>V</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <reboot_required>True</reboot_required>
-    </parameter>
     <parameter name="BAT_ADC_CHANNEL" default="-1" type="INT32">
       <short_desc>This parameter is deprecated. Please use BAT1_I_CHANNEL</short_desc>
     </parameter>
@@ -1073,9 +943,14 @@
       <max>180</max>
       <unit>deg</unit>
     </parameter>
-    <parameter name="COM_ARM_MAG_STR" default="1" type="INT32" boolean="true">
+    <parameter name="COM_ARM_MAG_STR" default="2" type="INT32">
       <short_desc>Enable mag strength preflight check</short_desc>
-      <long_desc>Deny arming if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
+      <long_desc>Check if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Deny arming</value>
+        <value code="2">Warning only</value>
+      </values>
     </parameter>
     <parameter name="COM_ARM_MIS_REQ" default="0" type="INT32" boolean="true">
       <short_desc>Require valid mission to arm</short_desc>
@@ -1323,6 +1198,18 @@
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="COM_IMB_PROP_ACT" default="0" type="INT32">
+      <short_desc>Imbalanced propeller failsafe mode</short_desc>
+      <long_desc>Action the system takes when an imbalanced propeller is detected by the failure detector. See also FD_IMB_PROP_THR to set the failure threshold.</long_desc>
+      <decimal>0</decimal>
+      <increment>1</increment>
+      <values>
+        <value code="-1">Disabled</value>
+        <value code="0">Warning</value>
+        <value code="1">Return</value>
+        <value code="2">Land</value>
+      </values>
+    </parameter>
     <parameter name="COM_KILL_DISARM" default="5.0" type="FLOAT">
       <short_desc>Timeout value for disarming when kill switch is engaged</short_desc>
       <min>0.0</min>
@@ -1397,6 +1284,9 @@
       <max>60</max>
       <unit>s</unit>
       <increment>0.01</increment>
+    </parameter>
+    <parameter name="COM_PARACHUTE" default="0" type="INT32" boolean="true">
+      <short_desc>Expect and require a healthy MAVLink parachute system</short_desc>
     </parameter>
     <parameter name="COM_POSCTL_NAVL" default="0" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
@@ -1476,15 +1366,17 @@
       <max>1500</max>
       <unit>ms</unit>
     </parameter>
-    <parameter name="COM_RC_IN_MODE" default="0" type="INT32">
+    <parameter name="COM_RC_IN_MODE" default="3" type="INT32">
       <short_desc>RC control input mode</short_desc>
       <long_desc>The default value of 0 requires a valid RC transmitter setup. Setting this to 1 allows joystick control and disables RC input handling and the associated checks. A value of 2 will generate RC control data from manual input received via MAVLink instead of directly forwarding the manual input data.</long_desc>
       <min>0</min>
-      <max>2</max>
+      <max>4</max>
       <values>
-        <value code="0">RC Transmitter</value>
-        <value code="1">Joystick/No RC Checks</value>
-        <value code="2">Virtual RC by Joystick</value>
+        <value code="0">RC Transmitter only</value>
+        <value code="1">Joystick only</value>
+        <value code="2">RC and Joystick with fallback</value>
+        <value code="3">RC or Joystick keep first</value>
+        <value code="4">Stick input disabled</value>
       </values>
     </parameter>
     <parameter name="COM_RC_LOSS_T" default="0.5" type="FLOAT">
@@ -1498,13 +1390,12 @@
     </parameter>
     <parameter name="COM_RC_OVERRIDE" default="1" type="INT32">
       <short_desc>Enable RC stick override of auto and/or offboard modes</short_desc>
-      <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV from their center position immediately gives control back to the pilot by switching to Position mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode. This parameter is not considered in case of a GPS failure (Descend flight mode), where stick override is always enabled.</long_desc>
+      <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV immediately gives control back to the pilot by switching to Position mode and if position is unavailable Altitude mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode. This parameter is not considered in case of a GPS failure (Descend flight mode), where stick override is always enabled.</long_desc>
       <min>0</min>
-      <max>7</max>
+      <max>3</max>
       <bitmask>
         <bit index="0">Enable override during auto modes (except for in critical battery reaction)</bit>
         <bit index="1">Enable override during offboard mode</bit>
-        <bit index="2">Ignore throttle stick</bit>
       </bitmask>
     </parameter>
     <parameter name="COM_RC_STICK_OV" default="30.0" type="FLOAT">
@@ -1568,407 +1459,6 @@
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
       </values>
-    </parameter>
-    <parameter name="RTL_FLT_TIME" default="15" type="FLOAT">
-      <short_desc>Maximum allowed RTL flight in minutes</short_desc>
-      <long_desc>This is used to determine when the vehicle should be switched to RTL due to low battery. Note, particularly for multirotors this should reflect flight time at cruise speed, not while stationary</long_desc>
-      <unit>min</unit>
-    </parameter>
-  </group>
-  <group name="Control Allocation">
-    <parameter name="CA_ACT0_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 0</short_desc>
-    </parameter>
-    <parameter name="CA_ACT0_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 0</short_desc>
-    </parameter>
-    <parameter name="CA_ACT10_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 10</short_desc>
-    </parameter>
-    <parameter name="CA_ACT10_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 10</short_desc>
-    </parameter>
-    <parameter name="CA_ACT11_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 11</short_desc>
-    </parameter>
-    <parameter name="CA_ACT11_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 11</short_desc>
-    </parameter>
-    <parameter name="CA_ACT12_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 12</short_desc>
-    </parameter>
-    <parameter name="CA_ACT12_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 12</short_desc>
-    </parameter>
-    <parameter name="CA_ACT13_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 13</short_desc>
-    </parameter>
-    <parameter name="CA_ACT13_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 13</short_desc>
-    </parameter>
-    <parameter name="CA_ACT14_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 14</short_desc>
-    </parameter>
-    <parameter name="CA_ACT14_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 14</short_desc>
-    </parameter>
-    <parameter name="CA_ACT15_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 15</short_desc>
-    </parameter>
-    <parameter name="CA_ACT15_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 15</short_desc>
-    </parameter>
-    <parameter name="CA_ACT1_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 1</short_desc>
-    </parameter>
-    <parameter name="CA_ACT1_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 1</short_desc>
-    </parameter>
-    <parameter name="CA_ACT2_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 2</short_desc>
-    </parameter>
-    <parameter name="CA_ACT2_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 2</short_desc>
-    </parameter>
-    <parameter name="CA_ACT3_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 3</short_desc>
-    </parameter>
-    <parameter name="CA_ACT3_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 3</short_desc>
-    </parameter>
-    <parameter name="CA_ACT4_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 4</short_desc>
-    </parameter>
-    <parameter name="CA_ACT4_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 4</short_desc>
-    </parameter>
-    <parameter name="CA_ACT5_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 5</short_desc>
-    </parameter>
-    <parameter name="CA_ACT5_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 5</short_desc>
-    </parameter>
-    <parameter name="CA_ACT6_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 6</short_desc>
-    </parameter>
-    <parameter name="CA_ACT6_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 6</short_desc>
-    </parameter>
-    <parameter name="CA_ACT7_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 7</short_desc>
-    </parameter>
-    <parameter name="CA_ACT7_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 7</short_desc>
-    </parameter>
-    <parameter name="CA_ACT8_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 8</short_desc>
-    </parameter>
-    <parameter name="CA_ACT8_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 8</short_desc>
-    </parameter>
-    <parameter name="CA_ACT9_MAX" default="0.0" type="FLOAT">
-      <short_desc>Maximum value for actuator 9</short_desc>
-    </parameter>
-    <parameter name="CA_ACT9_MIN" default="0.0" type="FLOAT">
-      <short_desc>Minimum value for actuator 9</short_desc>
-    </parameter>
-    <parameter name="CA_AIRFRAME" default="0" type="INT32">
-      <short_desc>Airframe ID</short_desc>
-      <long_desc>This is used to retrieve pre-computed control effectiveness matrix</long_desc>
-      <min>0</min>
-      <max>2</max>
-      <values>
-        <value code="0">Multirotor</value>
-        <value code="1">Standard VTOL (WIP)</value>
-        <value code="2">Tiltrotor VTOL (WIP)</value>
-      </values>
-    </parameter>
-    <parameter name="CA_AIR_SCALE_EN" default="0" type="INT32" boolean="true">
-      <short_desc>Airspeed scaler</short_desc>
-      <long_desc>This compensates for the variation of flap effectiveness with airspeed.</long_desc>
-    </parameter>
-    <parameter name="CA_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
-      <short_desc>Battery power level scaler</short_desc>
-      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The copter should constantly behave as if it was fully charged with reduced max acceleration at lower battery percentages. i.e. if hover is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 0 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 0 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 0 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 0</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT0_MIN and CA_ACT0_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 0</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 0 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 0 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R0_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 0 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 1 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 1 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 1 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 1</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT1_MIN and CA_ACT1_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 1</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust, Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 1 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 1 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R1_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 1 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 2 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 2 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 2 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 2</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT2_MIN and CA_ACT2_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 2</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 2 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 2 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R2_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 2 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 3 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 3 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 3 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 3</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT3_MIN and CA_ACT3_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 3</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 3 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 3 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R3_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 3 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 4 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 4 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 4 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 4</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT4_MIN and CA_ACT4_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 4</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 4 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 4 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R4_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 4 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 5 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 5 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 5 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 5</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT5_MIN and CA_ACT5_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 5</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 5 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 5 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R5_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 5 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 6 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 6 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 6 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 6</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT6_MIN and CA_ACT6_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 6</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 6 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 6 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R6_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 6 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_AX" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 7 thrust vector, X body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_AY" default="0.0" type="FLOAT">
-      <short_desc>Axis of rotor 7 thrust vector, Y body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_AZ" default="-1.0" type="FLOAT">
-      <short_desc>Axis of rotor 7 thrust vector, Z body axis component</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_CT" default="0.0" type="FLOAT">
-      <short_desc>Thrust coefficient of rotor 7</short_desc>
-      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT7_MIN and CA_ACT7_MAX) is the output signal sent to the motor controller.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_KM" default="0.05" type="FLOAT">
-      <short_desc>Moment coefficient of rotor 7</short_desc>
-      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_PX" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 7 along X body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_PY" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 7 along Y body axis</short_desc>
-    </parameter>
-    <parameter name="CA_MC_R7_PZ" default="0.0" type="FLOAT">
-      <short_desc>Position of rotor 7 along Z body axis</short_desc>
-    </parameter>
-    <parameter name="CA_METHOD" default="0" type="INT32">
-      <short_desc>Control allocation method</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Pseudo-inverse with output clipping (default)</value>
-        <value code="1">Pseudo-inverse with sequential desaturation technique</value>
-      </values>
-    </parameter>
-  </group>
-  <group name="DShot">
-    <parameter name="DSHOT_3D_DEAD_H" default="1000" type="INT32">
-      <short_desc>DSHOT 3D deadband high</short_desc>
-      <long_desc>When the actuator_output is between DSHOT_3D_DEAD_L and DSHOT_3D_DEAD_H, motor will not spin. This value is with respect to the mixer_module range (0-1999), not the DSHOT values.</long_desc>
-      <min>1000</min>
-      <max>1999</max>
-    </parameter>
-    <parameter name="DSHOT_3D_DEAD_L" default="1000" type="INT32">
-      <short_desc>DSHOT 3D deadband low</short_desc>
-      <long_desc>When the actuator_output is between DSHOT_3D_DEAD_L and DSHOT_3D_DEAD_H, motor will not spin. This value is with respect to the mixer_module range (0-1999), not the DSHOT values.</long_desc>
-      <min>0</min>
-      <max>1000</max>
-    </parameter>
-    <parameter name="DSHOT_3D_ENABLE" default="0" type="INT32" boolean="true">
-      <short_desc>Allows for 3d mode when using DShot and suitable mixer</short_desc>
-      <long_desc>WARNING: ESC must be configured for 3D mode, and DSHOT_MIN set to 0. This splits the throttle ranges in two. Direction 1) 48 is the slowest, 1047 is the fastest. Direction 2) 1049 is the slowest, 2047 is the fastest. When mixer outputs 1000 or value inside DSHOT 3D deadband, DShot 0 is sent.</long_desc>
-    </parameter>
-    <parameter name="DSHOT_CONFIG" default="0" type="INT32">
-      <short_desc>Configure DShot</short_desc>
-      <long_desc>This enables/disables DShot. The different modes define different speeds, for example DShot150 = 150kb/s. Not all ESCs support all modes. Note: this enables DShot on the FMU outputs. For boards with an IO it is the AUX outputs.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="0">Disable (use PWM/Oneshot)</value>
-        <value code="150">DShot150</value>
-        <value code="300">DShot300</value>
-        <value code="600">DShot600</value>
-        <value code="1200">DShot1200</value>
-      </values>
-    </parameter>
-    <parameter name="DSHOT_MIN" default="0.055" type="FLOAT">
-      <short_desc>Minimum DShot Motor Output</short_desc>
-      <long_desc>Minimum Output Value for DShot in percent. The value depends on the ESC. Make sure to set this high enough so that the motors are always spinning while armed.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <unit>%</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="DSHOT_TEL_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for DShot Driver</short_desc>
-      <long_desc>Configure on which serial port to run DShot Driver.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="MOT_POLE_COUNT" default="14" type="INT32">
-      <short_desc>Number of magnetic poles of the motors</short_desc>
-      <long_desc>Specify the number of magnetic poles of the motors. It is required to compute the RPM value from the eRPM returned with the ESC telemetry. Either get the number from the motor spec sheet or count the magnets on the bell of the motor (not the stator magnets). Typical motors for 5 inch props have 14 poles.</long_desc>
     </parameter>
   </group>
   <group name="Data Link Loss">
@@ -2417,7 +1907,7 @@
       <unit>gauss/s</unit>
       <decimal>6</decimal>
     </parameter>
-    <parameter name="EKF2_MAG_CHECK" default="0" type="INT32" boolean="true">
+    <parameter name="EKF2_MAG_CHECK" default="1" type="INT32" boolean="true">
       <short_desc>Magnetic field strength test selection</short_desc>
       <long_desc>When set, the EKF checks the strength of the magnetic field to decide whether the magnetometer data is valid. If GPS data is received, the magnetic field is compared to a World Magnetic Model (WMM), otherwise an average value is used. This check is useful to reject occasional hard iron disturbance.</long_desc>
     </parameter>
@@ -3285,10 +2775,10 @@
     </parameter>
     <parameter name="FW_L1_PERIOD" default="20.0" type="FLOAT">
       <short_desc>L1 period</short_desc>
-      <long_desc>This is the L1 distance and defines the tracking point ahead of the aircraft its following. A value of 18-25 meters works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
-      <min>12.0</min>
+      <long_desc>Used to determine the L1 gain and controller time constant. This parameter is proportional to the L1 distance (which points ahead of the aircraft on the path it is following). A value of 18-25 seconds works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
+      <min>7.0</min>
       <max>50.0</max>
-      <unit>m</unit>
+      <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
@@ -3775,6 +3265,13 @@
       <unit>s</unit>
       <decimal>2</decimal>
     </parameter>
+    <parameter name="FD_IMB_PROP_THR" default="30" type="INT32">
+      <short_desc>Imbalanced propeller check threshold</short_desc>
+      <long_desc>Value at which the imbalanced propeller metric (based on horizontal and vertical acceleration variance) triggers a failure Setting this value to 0 disables the feature.</long_desc>
+      <min>0</min>
+      <max>1000</max>
+      <increment>1</increment>
+    </parameter>
   </group>
   <group name="Follow target">
     <parameter name="NAV_FT_DST" default="8.0" type="FLOAT">
@@ -3804,25 +3301,6 @@
     </parameter>
   </group>
   <group name="GPS">
-    <parameter name="GPS_1_CONFIG" default="201" type="INT32">
-      <short_desc>Serial Configuration for Main GPS</short_desc>
-      <long_desc>Configure on which serial port to run Main GPS.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
     <parameter name="GPS_1_GNSS" default="0" type="INT32">
       <short_desc>GNSS Systems for Primary GPS (integer bitmask)</short_desc>
       <long_desc>This integer bitmask controls the set of GNSS systems used by the receiver. Check your receiver's documentation on how many systems are supported to be used in parallel. Currently this functionality is just implemented for u-blox receivers. When no bits are set, the receiver's default configuration should be used. Set bits true to enable: 0 : Use GPS (with QZSS) 1 : Use SBAS (multiple GPS augmentation systems) 2 : Use Galileo 3 : Use BeiDou 4 : Use GLONASS</long_desc>
@@ -3851,25 +3329,6 @@
         <value code="4">Emlid Reach</value>
         <value code="5">Femtomes</value>
         <value code="6">NMEA (generic)</value>
-      </values>
-    </parameter>
-    <parameter name="GPS_2_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Secondary GPS</short_desc>
-      <long_desc>Configure on which serial port to run Secondary GPS.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
       </values>
     </parameter>
     <parameter name="GPS_2_GNSS" default="0" type="INT32">
@@ -3929,61 +3388,26 @@
     </parameter>
     <parameter name="GPS_UBX_MODE" default="0" type="INT32">
       <short_desc>u-blox GPS Mode</short_desc>
-      <long_desc>Select the u-blox configuration setup. Most setups will use the default, including RTK and dual GPS without heading. The Heading mode requires 2 F9P devices to be attached. The main GPS will act as rover and output heading information, whereas the secondary will act as moving base, sending RTCM on UART2 to the rover GPS. RTK is still possible with this setup.</long_desc>
+      <long_desc>Select the u-blox configuration setup. Most setups will use the default, including RTK and dual GPS without heading. The Heading mode requires 2 F9P devices to be attached. The main GPS will act as rover and output heading information, whereas the secondary will act as moving base. Modes 1 and 2 require each F9P UART1 to be connected to the Autopilot. In addition, UART2 on the F9P units are connected to each other. Modes 3 and 4 only require UART1 on each F9P connected to the Autopilot or Can Node. UART RX DMA is required. RTK is still possible with this setup.</long_desc>
       <min>0</min>
       <max>1</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Default</value>
-        <value code="1">Heading</value>
+        <value code="1">Heading (Rover With Moving Base UART1 Connected To Autopilot, UART2 Connected To Moving Base)</value>
+        <value code="2">Moving Base (UART1 Connected To Autopilot, UART2 Connected To Rover)</value>
+        <value code="3">Heading (Rover With Moving Base UART1 Connected to Autopilot Or Can Node At 921600)</value>
+        <value code="4">Moving Base (Moving Base UART1 Connected to Autopilot Or Can Node At 921600)</value>
       </values>
     </parameter>
     <parameter name="GPS_YAW_OFFSET" default="0." type="FLOAT">
       <short_desc>Heading/Yaw offset for dual antenna GPS</short_desc>
-      <long_desc>Heading offset angle for dual antenna GPS setups that support heading estimation. (currently only for the Trimble MB-Two). Set this to 0 if the antennas are parallel to the forward-facing direction of the vehicle and the first antenna is in front. The offset angle increases clockwise. Set this to 90 if the first antenna is placed on the right side and the second on the left side of the vehicle.</long_desc>
+      <long_desc>Heading offset angle for dual antenna GPS setups that support heading estimation. Set this to 0 if the antennas are parallel to the forward-facing direction of the vehicle and the first antenna is in front. The offset angle increases clockwise. Set this to 90 if the first antenna is placed on the right side and the second on the left side of the vehicle.</long_desc>
       <min>0</min>
       <max>360</max>
       <unit>deg</unit>
       <decimal>0</decimal>
       <reboot_required>true</reboot_required>
-    </parameter>
-  </group>
-  <group name="GPS Failure Navigation">
-    <parameter name="NAV_GPSF_LT" default="0.0" type="FLOAT">
-      <short_desc>Loiter time</short_desc>
-      <long_desc>The time in seconds the system should do open loop loiter and wait for GPS recovery before it goes into flight termination. Set to 0 to disable.</long_desc>
-      <min>0.0</min>
-      <max>3600.0</max>
-      <unit>s</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="NAV_GPSF_P" default="0.0" type="FLOAT">
-      <short_desc>Fixed pitch angle</short_desc>
-      <long_desc>Pitch in degrees during the open loop loiter</long_desc>
-      <min>-30.0</min>
-      <max>30.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="NAV_GPSF_R" default="15.0" type="FLOAT">
-      <short_desc>Fixed bank angle</short_desc>
-      <long_desc>Roll in degrees during the loiter</long_desc>
-      <min>0.0</min>
-      <max>30.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="NAV_GPSF_TR" default="0.0" type="FLOAT">
-      <short_desc>Thrust</short_desc>
-      <long_desc>Thrust value which is set during the open loop loiter</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
     </parameter>
   </group>
   <group name="Geofence">
@@ -4088,25 +3512,6 @@
     </parameter>
   </group>
   <group name="Iridium SBD">
-    <parameter name="ISBD_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Iridium (with MAVLink)</short_desc>
-      <long_desc>Configure on which serial port to run Iridium (with MAVLink).</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
     <parameter name="ISBD_READ_INT" default="0" type="INT32">
       <short_desc>Satellite radio read interval. Only required to be nonzero if data is not sent using a ring call</short_desc>
       <min>0</min>
@@ -4129,31 +3534,31 @@
   </group>
   <group name="Land Detector">
     <parameter name="LNDFW_AIRSPD_MAX" default="6.00" type="FLOAT">
-      <short_desc>Airspeed max</short_desc>
+      <short_desc>Fixed-wing land detector: Max airspeed</short_desc>
       <long_desc>Maximum airspeed allowed in the landed state</long_desc>
-      <min>4</min>
+      <min>2</min>
       <max>20</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="LNDFW_VEL_XY_MAX" default="5.0" type="FLOAT">
-      <short_desc>Fixedwing max horizontal velocity</short_desc>
-      <long_desc>Maximum horizontal velocity allowed in the landed state</long_desc>
+      <short_desc>Fixed-wing land detector: Max horizontal velocity threshold</short_desc>
+      <long_desc>Maximum horizontal velocity allowed in the landed state. A factor of 0.7 is applied in case of airspeed-less flying (either because no sensor is present or sensor data got invalid in flight).</long_desc>
       <min>0.5</min>
       <max>10</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="LNDFW_VEL_Z_MAX" default="3.0" type="FLOAT">
-      <short_desc>Fixedwing max climb rate</short_desc>
-      <long_desc>Maximum vertical velocity allowed in the landed state</long_desc>
+    <parameter name="LNDFW_VEL_Z_MAX" default="2.0" type="FLOAT">
+      <short_desc>Fixed-wing land detector: Max vertiacal velocity threshold</short_desc>
+      <long_desc>Maximum vertical velocity allowed in the landed state. A factor of 0.7 is applied in case of airspeed-less flying (either because no sensor is present or sensor data got invalid in flight).</long_desc>
       <min>0.1</min>
       <max>20</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="LNDFW_XYACC_MAX" default="8.0" type="FLOAT">
-      <short_desc>Fixedwing max horizontal acceleration</short_desc>
+      <short_desc>Fixed-wing land detector: Max horizontal acceleration</short_desc>
       <long_desc>Maximum horizontal (x,y body axes) acceleration allowed in the landed state</long_desc>
       <min>2</min>
       <max>15</max>
@@ -4553,225 +3958,6 @@
     </parameter>
   </group>
   <group name="MAVLink">
-    <parameter name="MAV_0_BROADCAST" default="1" type="INT32">
-      <short_desc>Broadcast heartbeats on local network for MAVLink instance 0</short_desc>
-      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
-      <values>
-        <value code="0">Never broadcast</value>
-        <value code="1">Always broadcast</value>
-        <value code="2">Only multicast</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_0_CONFIG" default="101" type="INT32">
-      <short_desc>Serial Configuration for MAVLink (instance 0)</short_desc>
-      <long_desc>Configure on which serial port to run MAVLink.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-        <value code="1000">Ethernet</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_0_FORWARD" default="1" type="INT32" boolean="true">
-      <short_desc>Enable MAVLink Message forwarding for instance 0</short_desc>
-      <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_0_MODE" default="0" type="INT32">
-      <short_desc>MAVLink Mode for instance 0</short_desc>
-      <long_desc>The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="0">Normal</value>
-        <value code="1">Custom</value>
-        <value code="2">Onboard</value>
-        <value code="3">OSD</value>
-        <value code="4">Magic</value>
-        <value code="5">Config</value>
-        <value code="7">Minimal</value>
-        <value code="8">External Vision</value>
-        <value code="10">Gimbal</value>
-        <value code="11">Onboard Low Bandwidth</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_0_RADIO_CTL" default="1" type="INT32" boolean="true">
-      <short_desc>Enable software throttling of mavlink on instance 0</short_desc>
-      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_0_RATE" default="1200" type="INT32">
-      <short_desc>Maximum MAVLink sending rate for instance 0</short_desc>
-      <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
-      <min>0</min>
-      <unit>B/s</unit>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_0_REMOTE_PRT" default="14550" type="INT32">
-      <short_desc>MAVLink Remote Port for instance 0</short_desc>
-      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 0, selected remote port will be set and used in MAVLink instance 0.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_0_UDP_PRT" default="14556" type="INT32">
-      <short_desc>MAVLink Network Port for instance 0</short_desc>
-      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 0, selected udp port will be set and used in MAVLink instance 0.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_1_BROADCAST" default="0" type="INT32">
-      <short_desc>Broadcast heartbeats on local network for MAVLink instance 1</short_desc>
-      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
-      <values>
-        <value code="0">Never broadcast</value>
-        <value code="1">Always broadcast</value>
-        <value code="2">Only multicast</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_1_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for MAVLink (instance 1)</short_desc>
-      <long_desc>Configure on which serial port to run MAVLink.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-        <value code="1000">Ethernet</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_1_FORWARD" default="0" type="INT32" boolean="true">
-      <short_desc>Enable MAVLink Message forwarding for instance 1</short_desc>
-      <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_1_MODE" default="2" type="INT32">
-      <short_desc>MAVLink Mode for instance 1</short_desc>
-      <long_desc>The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="0">Normal</value>
-        <value code="1">Custom</value>
-        <value code="2">Onboard</value>
-        <value code="3">OSD</value>
-        <value code="4">Magic</value>
-        <value code="5">Config</value>
-        <value code="7">Minimal</value>
-        <value code="8">External Vision</value>
-        <value code="10">Gimbal</value>
-        <value code="11">Onboard Low Bandwidth</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_1_RADIO_CTL" default="1" type="INT32" boolean="true">
-      <short_desc>Enable software throttling of mavlink on instance 1</short_desc>
-      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_1_RATE" default="0" type="INT32">
-      <short_desc>Maximum MAVLink sending rate for instance 1</short_desc>
-      <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
-      <min>0</min>
-      <unit>B/s</unit>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_1_REMOTE_PRT" default="0" type="INT32">
-      <short_desc>MAVLink Remote Port for instance 1</short_desc>
-      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 1, selected remote port will be set and used in MAVLink instance 1.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_1_UDP_PRT" default="0" type="INT32">
-      <short_desc>MAVLink Network Port for instance 1</short_desc>
-      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 1, selected udp port will be set and used in MAVLink instance 1.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_2_BROADCAST" default="0" type="INT32">
-      <short_desc>Broadcast heartbeats on local network for MAVLink instance 2</short_desc>
-      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
-      <values>
-        <value code="0">Never broadcast</value>
-        <value code="1">Always broadcast</value>
-        <value code="2">Only multicast</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_2_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for MAVLink (instance 2)</short_desc>
-      <long_desc>Configure on which serial port to run MAVLink.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-        <value code="1000">Ethernet</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_2_FORWARD" default="0" type="INT32" boolean="true">
-      <short_desc>Enable MAVLink Message forwarding for instance 2</short_desc>
-      <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_2_MODE" default="0" type="INT32">
-      <short_desc>MAVLink Mode for instance 2</short_desc>
-      <long_desc>The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="0">Normal</value>
-        <value code="1">Custom</value>
-        <value code="2">Onboard</value>
-        <value code="3">OSD</value>
-        <value code="4">Magic</value>
-        <value code="5">Config</value>
-        <value code="7">Minimal</value>
-        <value code="8">External Vision</value>
-        <value code="10">Gimbal</value>
-        <value code="11">Onboard Low Bandwidth</value>
-      </values>
-    </parameter>
-    <parameter name="MAV_2_RADIO_CTL" default="1" type="INT32" boolean="true">
-      <short_desc>Enable software throttling of mavlink on instance 2</short_desc>
-      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_2_RATE" default="0" type="INT32">
-      <short_desc>Maximum MAVLink sending rate for instance 2</short_desc>
-      <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
-      <min>0</min>
-      <unit>B/s</unit>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_2_REMOTE_PRT" default="0" type="INT32">
-      <short_desc>MAVLink Remote Port for instance 2</short_desc>
-      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 2, selected remote port will be set and used in MAVLink instance 2.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
-    <parameter name="MAV_2_UDP_PRT" default="0" type="INT32">
-      <short_desc>MAVLink Network Port for instance 2</short_desc>
-      <long_desc>If ethernet enabled and selected as configuration for MAVLink instance 2, selected udp port will be set and used in MAVLink instance 2.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
     <parameter name="MAV_COMP_ID" default="1" type="INT32">
       <short_desc>MAVLink component ID</short_desc>
       <min>1</min>
@@ -4876,7 +4062,30 @@
       <increment>0.1</increment>
     </parameter>
   </group>
+  <group name="Manual Control">
+    <parameter name="MAN_ARM_GESTURE" default="1" type="INT32" boolean="true">
+      <short_desc>Enable arm/disarm stick gesture</short_desc>
+      <long_desc>This determines if moving the left stick to the lower right arms and to the lower left disarms the vehicle.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+  </group>
   <group name="Mission">
+    <parameter name="FW_GPSF_LT" default="30" type="INT32">
+      <short_desc>GPS failure loiter time</short_desc>
+      <long_desc>The time in seconds the system should do open loop loiter and wait for GPS recovery before it starts descending. Set to 0 to disable. Roll angle is set to FW_GPSF_R. Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
+      <min>0</min>
+      <max>3600</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter name="FW_GPSF_R" default="15.0" type="FLOAT">
+      <short_desc>GPS failure fixed roll angle</short_desc>
+      <long_desc>Roll in degrees during the loiter after the vehicle has lost GPS in an auto mode (e.g. mission or loiter). Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
+      <min>0.0</min>
+      <max>30.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
     <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
       <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIST_1WP from the home position.</long_desc>
@@ -5168,13 +4377,13 @@
       <max>360.0</max>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MNT_RANGE_PITCH" default="360.0" type="FLOAT">
+    <parameter name="MNT_RANGE_PITCH" default="90.0" type="FLOAT">
       <short_desc>Range of pitch channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MNT_RANGE_ROLL" default="360.0" type="FLOAT">
+    <parameter name="MNT_RANGE_ROLL" default="90.0" type="FLOAT">
       <short_desc>Range of roll channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
@@ -5197,6 +4406,15 @@
       <long_desc>Full stick input [-1..1] translats to [-yaw rate..yaw rate].</long_desc>
       <min>1.0</min>
       <max>90.0</max>
+    </parameter>
+    <parameter name="MNT_RC_IN_MODE" default="1" type="INT32">
+      <short_desc>Input mode for RC gimbal input</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <values>
+        <value code="0">Angle</value>
+        <value code="1">Angular rate</value>
+      </values>
     </parameter>
   </group>
   <group name="Multicopter Attitude Control">
@@ -5548,7 +4766,7 @@
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_XY_CRUISE" default="5.0" type="FLOAT">
-      <short_desc>Maximum horizontal velocity in mission</short_desc>
+      <short_desc>Default horizontal velocity in mission</short_desc>
       <long_desc>Horizontal velocity used when flying autonomously in e.g. Missions, RTL, Goto.</long_desc>
       <min>3.0</min>
       <max>20.0</max>
@@ -5919,1293 +5137,6 @@
       <min>0.0</min>
       <unit>s/(1000*PWM)</unit>
     </parameter>
-    <parameter name="PWM_AUX_DIS1" default="-1" type="INT32">
-      <short_desc>PWM aux 1 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS2" default="-1" type="INT32">
-      <short_desc>PWM aux 2 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS3" default="-1" type="INT32">
-      <short_desc>PWM aux 3 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS4" default="-1" type="INT32">
-      <short_desc>PWM aux 4 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS5" default="-1" type="INT32">
-      <short_desc>PWM aux 5 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS6" default="-1" type="INT32">
-      <short_desc>PWM aux 6 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS7" default="-1" type="INT32">
-      <short_desc>PWM aux 7 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DIS8" default="-1" type="INT32">
-      <short_desc>PWM aux 8 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_DISARM" default="1500" type="INT32">
-      <short_desc>PWM aux disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
-      <min>0</min>
-      <max>2200</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL1" default="-1" type="INT32">
-      <short_desc>PWM aux 1 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL2" default="-1" type="INT32">
-      <short_desc>PWM aux 2 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL3" default="-1" type="INT32">
-      <short_desc>PWM aux 3 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL4" default="-1" type="INT32">
-      <short_desc>PWM aux 4 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL5" default="-1" type="INT32">
-      <short_desc>PWM aux 5 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL6" default="-1" type="INT32">
-      <short_desc>PWM aux 6 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL7" default="-1" type="INT32">
-      <short_desc>PWM aux 7 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_FAIL8" default="-1" type="INT32">
-      <short_desc>PWM aux 8 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX" default="2000" type="INT32">
-      <short_desc>PWM aux maximum value</short_desc>
-      <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
-      <min>1600</min>
-      <max>2200</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX1" default="-1" type="INT32">
-      <short_desc>PWM aux 1 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX2" default="-1" type="INT32">
-      <short_desc>PWM aux 2 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX3" default="-1" type="INT32">
-      <short_desc>PWM aux 3 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX4" default="-1" type="INT32">
-      <short_desc>PWM aux 4 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX5" default="-1" type="INT32">
-      <short_desc>PWM aux 5 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX6" default="-1" type="INT32">
-      <short_desc>PWM aux 6 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX7" default="-1" type="INT32">
-      <short_desc>PWM aux 7 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MAX8" default="-1" type="INT32">
-      <short_desc>PWM aux 8 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN" default="1000" type="INT32">
-      <short_desc>PWM aux minimum value</short_desc>
-      <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
-      <min>800</min>
-      <max>1400</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN1" default="-1" type="INT32">
-      <short_desc>PWM aux 1 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN2" default="-1" type="INT32">
-      <short_desc>PWM aux 2 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN3" default="-1" type="INT32">
-      <short_desc>PWM aux 3 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN4" default="-1" type="INT32">
-      <short_desc>PWM aux 4 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN5" default="-1" type="INT32">
-      <short_desc>PWM aux 5 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN6" default="-1" type="INT32">
-      <short_desc>PWM aux 6 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN7" default="-1" type="INT32">
-      <short_desc>PWM aux 7 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_MIN8" default="-1" type="INT32">
-      <short_desc>PWM aux 8 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_AUX_OUT" default="0" type="INT32">
-      <short_desc>PWM channels used as ESC outputs</short_desc>
-      <long_desc>Number representing the channels e.g. 134 - Channel 1, 3 and 4. Global e.g. PWM_AUX_MIN/MAX/DISARM limits only apply to these channels.</long_desc>
-      <min>0</min>
-      <max>123456789</max>
-    </parameter>
-    <parameter name="PWM_AUX_RATE" default="50" type="INT32">
-      <short_desc>PWM aux output frequency</short_desc>
-      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
-      <min>-1</min>
-      <max>2000</max>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter name="PWM_AUX_RATE1" default="50" type="INT32">
-      <short_desc>PWM aux 1 rate</short_desc>
-      <long_desc>Set the default PWM output frequency for the aux outputs</long_desc>
-      <min>0</min>
-      <max>400</max>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter name="PWM_AUX_REV1" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 1 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV2" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 2 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV3" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 3 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV4" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 4 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV5" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 5 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV6" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 6 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV7" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 7 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_REV8" default="0" type="INT32" boolean="true">
-      <short_desc>PWM aux 8 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM1" default="0" type="FLOAT">
-      <short_desc>PWM aux 1 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM2" default="0" type="FLOAT">
-      <short_desc>PWM aux 2 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM3" default="0" type="FLOAT">
-      <short_desc>PWM aux 3 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM4" default="0" type="FLOAT">
-      <short_desc>PWM aux 4 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM5" default="0" type="FLOAT">
-      <short_desc>PWM aux 5 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM6" default="0" type="FLOAT">
-      <short_desc>PWM aux 6 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM7" default="0" type="FLOAT">
-      <short_desc>PWM aux 7 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_AUX_TRIM8" default="0" type="FLOAT">
-      <short_desc>PWM aux 8 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS1" default="-1" type="INT32">
-      <short_desc>PWM extra 1 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS2" default="-1" type="INT32">
-      <short_desc>PWM extra 2 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS3" default="-1" type="INT32">
-      <short_desc>PWM extra 3 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS4" default="-1" type="INT32">
-      <short_desc>PWM extra 4 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS5" default="-1" type="INT32">
-      <short_desc>PWM extra 5 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS6" default="-1" type="INT32">
-      <short_desc>PWM extra 6 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS7" default="-1" type="INT32">
-      <short_desc>PWM extra 7 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DIS8" default="-1" type="INT32">
-      <short_desc>PWM extra 8 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_DISARM" default="1500" type="INT32">
-      <short_desc>PWM extra disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
-      <min>0</min>
-      <max>2200</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL1" default="0" type="INT32">
-      <short_desc>PWM extra 1 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL2" default="0" type="INT32">
-      <short_desc>PWM extra 2 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL3" default="0" type="INT32">
-      <short_desc>PWM extra 3 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL4" default="0" type="INT32">
-      <short_desc>PWM extra 4 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL5" default="0" type="INT32">
-      <short_desc>PWM extra 5 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL6" default="0" type="INT32">
-      <short_desc>PWM extra 6 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL7" default="0" type="INT32">
-      <short_desc>PWM extra 7 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_FAIL8" default="0" type="INT32">
-      <short_desc>PWM extra 8 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>0</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX" default="2000" type="INT32">
-      <short_desc>PWM extra maximum value</short_desc>
-      <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
-      <min>1600</min>
-      <max>2200</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX1" default="-1" type="INT32">
-      <short_desc>PWM extra 1 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX2" default="-1" type="INT32">
-      <short_desc>PWM extra 2 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX3" default="-1" type="INT32">
-      <short_desc>PWM extra 3 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX4" default="-1" type="INT32">
-      <short_desc>PWM extra 4 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX5" default="-1" type="INT32">
-      <short_desc>PWM extra 5 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX6" default="-1" type="INT32">
-      <short_desc>PWM extra 6 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX7" default="-1" type="INT32">
-      <short_desc>PWM extra 7 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MAX8" default="-1" type="INT32">
-      <short_desc>PWM extra 8 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN" default="1000" type="INT32">
-      <short_desc>PWM extra minimum value</short_desc>
-      <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
-      <min>800</min>
-      <max>1400</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN1" default="-1" type="INT32">
-      <short_desc>PWM extra 1 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN2" default="-1" type="INT32">
-      <short_desc>PWM extra 2 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN3" default="-1" type="INT32">
-      <short_desc>PWM extra 3 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN4" default="-1" type="INT32">
-      <short_desc>PWM extra 4 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN5" default="-1" type="INT32">
-      <short_desc>PWM extra 5 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN6" default="-1" type="INT32">
-      <short_desc>PWM extra 6 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN7" default="-1" type="INT32">
-      <short_desc>PWM extra 7 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_MIN8" default="-1" type="INT32">
-      <short_desc>PWM extra 8 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_RATE" default="50" type="INT32">
-      <short_desc>PWM extra output frequency</short_desc>
-      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
-      <min>-1</min>
-      <max>2000</max>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_RATE1" default="50" type="INT32">
-      <short_desc>PWM extra 1 rate</short_desc>
-      <long_desc>Set the default PWM output frequency for the main outputs</long_desc>
-      <min>0</min>
-      <max>400</max>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV1" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 1 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV2" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 2 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV3" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 3 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV4" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 4 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV5" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 5 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV6" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 6 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV7" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 7 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_REV8" default="0" type="INT32" boolean="true">
-      <short_desc>PWM extra 8 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM1" default="0" type="FLOAT">
-      <short_desc>PWM extra 1 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM2" default="0" type="FLOAT">
-      <short_desc>PWM extra 2 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM3" default="0" type="FLOAT">
-      <short_desc>PWM extra 3 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM4" default="0" type="FLOAT">
-      <short_desc>PWM extra 4 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM5" default="0" type="FLOAT">
-      <short_desc>PWM extra 5 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM6" default="0" type="FLOAT">
-      <short_desc>PWM extra 6 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM7" default="0" type="FLOAT">
-      <short_desc>PWM extra 7 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_EXTRA_TRIM8" default="0" type="FLOAT">
-      <short_desc>PWM extra 8 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS1" default="-1" type="INT32">
-      <short_desc>PWM main 1 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS10" default="-1" type="INT32">
-      <short_desc>PWM main 10 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS11" default="-1" type="INT32">
-      <short_desc>PWM main 11 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS12" default="-1" type="INT32">
-      <short_desc>PWM main 12 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS13" default="-1" type="INT32">
-      <short_desc>PWM main 13 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS14" default="-1" type="INT32">
-      <short_desc>PWM main 14 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS2" default="-1" type="INT32">
-      <short_desc>PWM main 2 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS3" default="-1" type="INT32">
-      <short_desc>PWM main 3 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS4" default="-1" type="INT32">
-      <short_desc>PWM main 4 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS5" default="-1" type="INT32">
-      <short_desc>PWM main 5 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS6" default="-1" type="INT32">
-      <short_desc>PWM main 6 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS7" default="-1" type="INT32">
-      <short_desc>PWM main 7 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS8" default="-1" type="INT32">
-      <short_desc>PWM main 8 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DIS9" default="-1" type="INT32">
-      <short_desc>PWM main 9 disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_MAIN_DISARM will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_DISARM" default="900" type="INT32">
-      <short_desc>PWM main disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
-      <min>0</min>
-      <max>2200</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL1" default="-1" type="INT32">
-      <short_desc>PWM main 1 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL10" default="-1" type="INT32">
-      <short_desc>PWM main 10 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL11" default="-1" type="INT32">
-      <short_desc>PWM main 11 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL12" default="-1" type="INT32">
-      <short_desc>PWM main 12 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL13" default="-1" type="INT32">
-      <short_desc>PWM main 13 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL14" default="-1" type="INT32">
-      <short_desc>PWM main 14 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL2" default="-1" type="INT32">
-      <short_desc>PWM main 2 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL3" default="-1" type="INT32">
-      <short_desc>PWM main 3 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL4" default="-1" type="INT32">
-      <short_desc>PWM main 4 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL5" default="-1" type="INT32">
-      <short_desc>PWM main 5 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL6" default="-1" type="INT32">
-      <short_desc>PWM main 6 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL7" default="-1" type="INT32">
-      <short_desc>PWM main 7 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL8" default="-1" type="INT32">
-      <short_desc>PWM main 8 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_FAIL9" default="-1" type="INT32">
-      <short_desc>PWM main 9 failsafe value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX" default="2000" type="INT32">
-      <short_desc>PWM main maximum value</short_desc>
-      <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
-      <min>1600</min>
-      <max>2200</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX1" default="-1" type="INT32">
-      <short_desc>PWM main 1 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX10" default="-1" type="INT32">
-      <short_desc>PWM main 10 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX11" default="-1" type="INT32">
-      <short_desc>PWM main 11 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX12" default="-1" type="INT32">
-      <short_desc>PWM main 12 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX13" default="-1" type="INT32">
-      <short_desc>PWM main 13 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX14" default="-1" type="INT32">
-      <short_desc>PWM main 14 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX2" default="-1" type="INT32">
-      <short_desc>PWM main 2 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX3" default="-1" type="INT32">
-      <short_desc>PWM main 3 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX4" default="-1" type="INT32">
-      <short_desc>PWM main 4 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX5" default="-1" type="INT32">
-      <short_desc>PWM main 5 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX6" default="-1" type="INT32">
-      <short_desc>PWM main 6 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX7" default="-1" type="INT32">
-      <short_desc>PWM main 7 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX8" default="-1" type="INT32">
-      <short_desc>PWM main 8 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MAX9" default="-1" type="INT32">
-      <short_desc>PWM main 9 maximum value</short_desc>
-      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MAX will be used</long_desc>
-      <min>-1</min>
-      <max>2150</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN" default="1000" type="INT32">
-      <short_desc>PWM main minimum value</short_desc>
-      <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
-      <min>800</min>
-      <max>1400</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN1" default="-1" type="INT32">
-      <short_desc>PWM main 1 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN10" default="-1" type="INT32">
-      <short_desc>PWM main 10 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN11" default="-1" type="INT32">
-      <short_desc>PWM main 11 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN12" default="-1" type="INT32">
-      <short_desc>PWM main 12 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN13" default="-1" type="INT32">
-      <short_desc>PWM main 13 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN14" default="-1" type="INT32">
-      <short_desc>PWM main 14 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN2" default="-1" type="INT32">
-      <short_desc>PWM main 2 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN3" default="-1" type="INT32">
-      <short_desc>PWM main 3 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN4" default="-1" type="INT32">
-      <short_desc>PWM main 4 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN5" default="-1" type="INT32">
-      <short_desc>PWM main 5 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN6" default="-1" type="INT32">
-      <short_desc>PWM main 6 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN7" default="-1" type="INT32">
-      <short_desc>PWM main 7 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN8" default="-1" type="INT32">
-      <short_desc>PWM main 8 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_MIN9" default="-1" type="INT32">
-      <short_desc>PWM main 9 minimum value</short_desc>
-      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAIN_MIN will be used</long_desc>
-      <min>-1</min>
-      <max>1600</max>
-      <unit>us</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_OUT" default="0" type="INT32">
-      <short_desc>PWM channels used as ESC outputs</short_desc>
-      <long_desc>Number representing the channels e.g. 134 - Channel 1, 3 and 4. Global e.g. PWM_MAIN_MIN/MAX/DISARM limits only apply to these channels.</long_desc>
-      <min>0</min>
-      <max>123456789</max>
-    </parameter>
-    <parameter name="PWM_MAIN_RATE" default="400" type="INT32">
-      <short_desc>PWM main output frequency</short_desc>
-      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
-      <min>-1</min>
-      <max>2000</max>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_RATE1" default="50" type="INT32">
-      <short_desc>PWM main 1 rate</short_desc>
-      <long_desc>Set the default PWM output frequency for the main outputs</long_desc>
-      <min>0</min>
-      <max>400</max>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter name="PWM_MAIN_REV1" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 1 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV10" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 10 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV11" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 11 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV12" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 12 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV13" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 13 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV14" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 14 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV2" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 2 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV3" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 3 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV4" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 4 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV5" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 5 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV6" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 6 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV7" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 7 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV8" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 8 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_REV9" default="0" type="INT32" boolean="true">
-      <short_desc>PWM main 9 reverse value</short_desc>
-      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM1" default="0" type="FLOAT">
-      <short_desc>PWM main 1 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM10" default="0" type="FLOAT">
-      <short_desc>PWM main 10 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM11" default="0" type="FLOAT">
-      <short_desc>PWM main 11 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM12" default="0" type="FLOAT">
-      <short_desc>PWM main 12 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM13" default="0" type="FLOAT">
-      <short_desc>PWM main 13 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM14" default="0" type="FLOAT">
-      <short_desc>PWM main 14 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM2" default="0" type="FLOAT">
-      <short_desc>PWM main 2 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM3" default="0" type="FLOAT">
-      <short_desc>PWM main 3 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM4" default="0" type="FLOAT">
-      <short_desc>PWM main 4 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM5" default="0" type="FLOAT">
-      <short_desc>PWM main 5 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM6" default="0" type="FLOAT">
-      <short_desc>PWM main 6 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM7" default="0" type="FLOAT">
-      <short_desc>PWM main 7 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM8" default="0" type="FLOAT">
-      <short_desc>PWM main 8 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_MAIN_TRIM9" default="0" type="FLOAT">
-      <short_desc>PWM main 9 trim value</short_desc>
-      <long_desc>Set to normalized offset</long_desc>
-      <min>-0.2</min>
-      <max>0.2</max>
-      <decimal>2</decimal>
-    </parameter>
     <parameter name="PWM_SBUS_MODE" default="0" type="INT32" boolean="true">
       <short_desc>S.BUS out</short_desc>
       <long_desc>Set to 1 to enable S.BUS version 1 output instead of RSSI.</long_desc>
@@ -7215,6 +5146,8 @@
       <long_desc>Parameter used to model the nonlinear relationship between motor control signal (e.g. PWM) and static thrust. The model is: rel_thrust = factor * rel_signal^2 + (1-factor) * rel_signal, where rel_thrust is the normalized thrust between 0 and 1, and rel_signal is the relative motor control signal between 0 and 1.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
   </group>
   <group name="Precision Land">
@@ -7268,46 +5201,6 @@
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
-    </parameter>
-  </group>
-  <group name="RTPS">
-    <parameter name="RTPS_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for FastRTPS</short_desc>
-      <long_desc>Configure on which serial port to run FastRTPS.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="RTPS_MAV_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for MAVLink + FastRTPS</short_desc>
-      <long_desc>Configure on which serial port to run MAVLink + FastRTPS.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
     </parameter>
   </group>
   <group name="Radio Calibration">
@@ -8921,6 +6814,15 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="RTL_HDG_MD" default="0" type="INT32">
+      <short_desc>RTL heading mode</short_desc>
+      <long_desc>Defines the heading behavior during RTL</long_desc>
+      <values>
+        <value code="0">Towards next waypoint.</value>
+        <value code="1">Heading matches destination.</value>
+        <value code="2">Use current heading.</value>
+      </values>
+    </parameter>
     <parameter name="RTL_LAND_DELAY" default="0.0" type="FLOAT">
       <short_desc>Return mode delay</short_desc>
       <long_desc>Delay before landing (after initial descent) in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
@@ -8948,6 +6850,15 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="RTL_PLD_MD" default="0" type="INT32">
+      <short_desc>RTL precision land mode</short_desc>
+      <long_desc>Use precision landing when doing an RTL landing phase.</long_desc>
+      <values>
+        <value code="0">No precision landing</value>
+        <value code="1">Opportunistic precision landing</value>
+        <value code="2">Required precision landing</value>
+      </values>
+    </parameter>
     <parameter name="RTL_RETURN_ALT" default="60" type="FLOAT">
       <short_desc>Return mode return altitude</short_desc>
       <long_desc>Default minimum altitude above destination (e.g. home, safe point, landing pattern) for return flight. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
@@ -8962,42 +6873,29 @@
       <long_desc>Return mode destination and flight path (home location, rally point, mission landing pattern, reverse mission)</long_desc>
       <values>
         <value code="0">Return to closest safe point (home or rally point) via direct path.</value>
-        <value code="1">Return to closest safe point other than home (mission landing pattern or rally point), via direct path. If no mission landing or rally points are defined return home via direct path.</value>
+        <value code="1">Return to closest safe point other than home (mission landing pattern or rally point), via direct path. If no mission landing or rally points are defined return home via direct path. Always chose closest safe landing point if vehicle is a VTOL in hover mode.</value>
         <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path. Do not consider rally points.</value>
         <value code="3">Return via direct path to closest destination: home, start of mission landing pattern or safe point. If the destination is a mission landing pattern, follow the pattern to land.</value>
       </values>
     </parameter>
   </group>
   <group name="Return To Land">
-    <parameter name="RTL_PLD_MD" default="0" type="INT32">
-      <short_desc>RTL precision land mode</short_desc>
-      <long_desc>Use precision landing when doing an RTL landing phase.</long_desc>
-      <values>
-        <value code="0">No precision landing</value>
-        <value code="1">Opportunistic precision landing</value>
-        <value code="2">Required precision landing</value>
-      </values>
+    <parameter name="RTL_TIME_FACTOR" default="1.1" type="FLOAT">
+      <short_desc>RTL time estimate safety margin factor</short_desc>
+      <long_desc>Safety factor that is used to scale the actual RTL time estiamte. Time with margin = RTL_TIME_FACTOR * time + RTL_TIME_MARGIN</long_desc>
+      <min>1.0</min>
+      <max>2.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
-  </group>
-  <group name="Roboclaw">
-    <parameter name="RBCLW_SER_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Roboclaw Driver</short_desc>
-      <long_desc>Configure on which serial port to run Roboclaw Driver.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
+    <parameter name="RTL_TIME_MARGIN" default="100" type="INT32">
+      <short_desc>RTL time estimate safety margin offset</short_desc>
+      <long_desc>Margin that is added to the time estimate, after it has already been scaled Time with margin = RTL_TIME_FACTOR * time + RTL_TIME_MARGIN</long_desc>
+      <min>0</min>
+      <max>3600</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="Roboclaw driver">
@@ -10642,7 +8540,13 @@
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_DYN_NF" default="0" type="INT32" category="Developer">
+    <parameter name="IMU_GYRO_DNF_BW" default="15." type="FLOAT">
+      <short_desc>IMU gyro ESC notch filter bandwidth</short_desc>
+      <long_desc>Bandwidth per notch filter when using dynamic notch filtering with ESC RPM.</long_desc>
+      <min>5</min>
+      <max>30</max>
+    </parameter>
+    <parameter name="IMU_GYRO_DNF_EN" default="0" type="INT32">
       <short_desc>IMU gyro dynamic notch filtering</short_desc>
       <long_desc>Enable bank of dynamically updating notch filters. Requires ESC RPM feedback or onboard FFT (IMU_GYRO_FFT_EN).</long_desc>
       <min>0</min>
@@ -10680,6 +8584,11 @@
       <max>1000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="IMU_GYRO_FFT_SNR" default="10." type="FLOAT">
+      <short_desc>IMU gyro FFT SNR</short_desc>
+      <min>1</min>
+      <max>30</max>
     </parameter>
     <parameter name="IMU_GYRO_NF_BW" default="20.0" type="FLOAT">
       <short_desc>Notch filter bandwidth for gyro</short_desc>
@@ -10887,38 +8796,6 @@
       <short_desc>Board rotation Z (YAW) offset</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
       <unit>deg</unit>
-    </parameter>
-    <parameter name="SENS_CM8JL65_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Lanbao PSK-CM8JL65-CC5</short_desc>
-      <long_desc>Configure on which serial port to run Lanbao PSK-CM8JL65-CC5.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="SENS_CM8JL65_R_0" default="25" type="INT32">
-      <short_desc>Distance Sensor Rotation</short_desc>
-      <long_desc>Distance Sensor Rotation as MAV_SENSOR_ORIENTATION enum</long_desc>
-      <reboot_required>True</reboot_required>
-      <values>
-        <value code="0">ROTATION_FORWARD_FACING</value>
-        <value code="2">ROTATION_RIGHT_FACING</value>
-        <value code="6">ROTATION_LEFT_FACING</value>
-        <value code="12">ROTATION_BACKWARD_FACING</value>
-        <value code="24">ROTATION_UPWARD_FACING</value>
-        <value code="25">ROTATION_DOWNWARD_FACING</value>
-      </values>
     </parameter>
     <parameter name="SENS_EN_ADIS164X" default="0" type="INT32">
       <short_desc>Analog Devices ADIS16448 IMU (external SPI)</short_desc>
@@ -11150,24 +9027,9 @@
       <long_desc>For systems with an external barometer, this should be set to false to make sure that the external is used.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_LEDDAR1_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for LeddarOne Rangefinder</short_desc>
-      <long_desc>Configure on which serial port to run LeddarOne Rangefinder.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
+    <parameter name="SENS_MAG_AUTOCAL" default="0" type="INT32" boolean="true" category="System">
+      <short_desc>Magnetometer auto calibration</short_desc>
+      <long_desc>Automatically initialize magnetometer calibration from bias estimate if available.</long_desc>
     </parameter>
     <parameter name="SENS_MAG_MODE" default="1" type="INT32" category="System">
       <short_desc>Sensors hub mag mode</short_desc>
@@ -11603,84 +9465,8 @@
         <value code="4">ROTATION_YAW_180</value>
       </values>
     </parameter>
-    <parameter name="SENS_SF0X_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Lightware Laser Rangefinder (serial)</short_desc>
-      <long_desc>Configure on which serial port to run Lightware Laser Rangefinder (serial).</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
     <parameter name="SENS_TEMP_ID" default="0" type="INT32" category="System">
       <short_desc>Target IMU device ID to regulate temperature</short_desc>
-    </parameter>
-    <parameter name="SENS_TFLOW_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for ThoneFlow-3901U optical flow sensor</short_desc>
-      <long_desc>Configure on which serial port to run ThoneFlow-3901U optical flow sensor.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="SENS_TFMINI_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Benewake TFmini Rangefinder</short_desc>
-      <long_desc>Configure on which serial port to run Benewake TFmini Rangefinder.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="SENS_ULAND_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for uLanding Radar</short_desc>
-      <long_desc>Configure on which serial port to run uLanding Radar.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
     </parameter>
     <parameter name="VOXLPM_SHUNT_BAT" default="0.00063" type="FLOAT">
       <short_desc>VOXL Power Monitor Shunt, Battery</short_desc>
@@ -11697,390 +9483,6 @@
       <decimal>10</decimal>
       <increment>.000000001</increment>
       <reboot_required>true</reboot_required>
-    </parameter>
-  </group>
-  <group name="Serial">
-    <parameter name="RC_PORT_CONFIG" default="300" type="INT32">
-      <short_desc>Serial Configuration for RC Input Driver</short_desc>
-      <long_desc>Configure on which serial port to run RC Input Driver. Setting this to 'Disabled' will use a board-specific default port for RC input.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="SER_GPS1_BAUD" default="0" type="INT32">
-      <short_desc>Baudrate for the GPS 1 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the GPS 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_GPS2_BAUD" default="0" type="INT32">
-      <short_desc>Baudrate for the GPS 2 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the GPS 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_GPS3_BAUD" default="0" type="INT32">
-      <short_desc>Baudrate for the GPS 3 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the GPS 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_PPB_BAUD" default="57600" type="INT32">
-      <short_desc>Baudrate for the Pixhawk Payload Bus Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the Pixhawk Payload Bus Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_RC_BAUD" default="0" type="INT32">
-      <short_desc>Baudrate for the Radio Controller Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the Radio Controller Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_TEL1_BAUD" default="57600" type="INT32">
-      <short_desc>Baudrate for the TELEM 1 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the TELEM 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_TEL2_BAUD" default="921600" type="INT32">
-      <short_desc>Baudrate for the TELEM 2 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the TELEM 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_TEL3_BAUD" default="57600" type="INT32">
-      <short_desc>Baudrate for the TELEM 3 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the TELEM 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_TEL4_BAUD" default="57600" type="INT32">
-      <short_desc>Baudrate for the TELEM/SERIAL 4 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the TELEM/SERIAL 4 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_URT6_BAUD" default="57600" type="INT32">
-      <short_desc>Baudrate for the UART 6 Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the UART 6 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
-    </parameter>
-    <parameter name="SER_WIFI_BAUD" default="1" type="INT32">
-      <short_desc>Baudrate for the Wifi Port Serial Port</short_desc>
-      <long_desc>Configure the Baudrate for the Wifi Port Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="50">50 8N1</value>
-        <value code="75">75 8N1</value>
-        <value code="110">110 8N1</value>
-        <value code="134">134 8N1</value>
-        <value code="150">150 8N1</value>
-        <value code="200">200 8N1</value>
-        <value code="300">300 8N1</value>
-        <value code="600">600 8N1</value>
-        <value code="1200">1200 8N1</value>
-        <value code="1800">1800 8N1</value>
-        <value code="2400">2400 8N1</value>
-        <value code="4800">4800 8N1</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-        <value code="230400">230400 8N1</value>
-        <value code="460800">460800 8N1</value>
-        <value code="500000">500000 8N1</value>
-        <value code="921600">921600 8N1</value>
-        <value code="1000000">1000000 8N1</value>
-        <value code="1500000">1500000 8N1</value>
-        <value code="2000000">2000000 8N1</value>
-        <value code="3000000">3000000 8N1</value>
-      </values>
     </parameter>
   </group>
   <group name="Simulation In Hardware">
@@ -12295,6 +9697,31 @@
       </values>
     </parameter>
   </group>
+  <group name="Simulator">
+    <parameter name="SIM_BARO_OFF_P" default="0.0" type="FLOAT">
+      <short_desc>simulated barometer pressure offset</short_desc>
+    </parameter>
+    <parameter name="SIM_BARO_OFF_T" default="0.0" type="FLOAT">
+      <short_desc>simulated barometer temperature offset</short_desc>
+    </parameter>
+    <parameter name="SIM_GPS_USED" default="10" type="INT32">
+      <short_desc>simulated GPS number of satellites used</short_desc>
+      <min>0</min>
+      <max>50</max>
+    </parameter>
+    <parameter name="SIM_MAG_OFFSET_X" default="0.0" type="FLOAT">
+      <short_desc>simulated magnetometer X offset</short_desc>
+      <unit>gauss</unit>
+    </parameter>
+    <parameter name="SIM_MAG_OFFSET_Y" default="0.0" type="FLOAT">
+      <short_desc>simulated magnetometer Y offset</short_desc>
+      <unit>gauss</unit>
+    </parameter>
+    <parameter name="SIM_MAG_OFFSET_Z" default="0.0" type="FLOAT">
+      <short_desc>simulated magnetometer Z offset</short_desc>
+      <unit>gauss</unit>
+    </parameter>
+  </group>
   <group name="System">
     <parameter name="SYS_AUTOCONFIG" default="0" type="INT32">
       <short_desc>Automatically configure default values</short_desc>
@@ -12349,6 +9776,20 @@
       <short_desc>Minimum starting temperature for thermal calibration</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>celcius</unit>
+    </parameter>
+    <parameter name="SYS_CTRL_ALLOC" default="0" type="INT32" boolean="true">
+      <short_desc>Enable Dynamic Control Allocation</short_desc>
+      <long_desc>If disabled, the existing mixing implementation is used. If enabled, dynamic control allocation with runtime configuration of the mixing and output functions is used. Note: this is work-in-progress and not all vehicle types are supported yet.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SYS_DM_BACKEND" default="0" type="INT32" boolean="true">
+      <short_desc>Dataman storage backend</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="-1">Disabled</value>
+        <value code="0">default (SD card)</value>
+        <value code="1">RAM (not persistent)</value>
+      </values>
     </parameter>
     <parameter name="SYS_FAC_CAL_MODE" default="0" type="INT32" boolean="true">
       <short_desc>Enable factory calibration mode</short_desc>
@@ -12417,44 +9858,6 @@
       <short_desc>Blacksheep telemetry Enable</short_desc>
       <long_desc>If true, the FMU will try to connect to Blacksheep telemetry on start up</long_desc>
       <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="TEL_FRSKY_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for FrSky Telemetry</short_desc>
-      <long_desc>Configure on which serial port to run FrSky Telemetry.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
-    </parameter>
-    <parameter name="TEL_HOTT_CONFIG" default="0" type="INT32">
-      <short_desc>Serial Configuration for HoTT Telemetry</short_desc>
-      <long_desc>Configure on which serial port to run HoTT Telemetry.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="6">UART 6</value>
-        <value code="101">TELEM 1</value>
-        <value code="102">TELEM 2</value>
-        <value code="103">TELEM 3</value>
-        <value code="104">TELEM/SERIAL 4</value>
-        <value code="201">GPS 1</value>
-        <value code="202">GPS 2</value>
-        <value code="203">GPS 3</value>
-        <value code="300">Radio Controller</value>
-        <value code="301">Wifi Port</value>
-        <value code="401">Pixhawk Payload Bus</value>
-      </values>
     </parameter>
   </group>
   <group name="Testing">
@@ -13037,6 +10440,21 @@
       <min>20000</min>
       <max>1000000</max>
     </parameter>
+    <parameter name="CANNODE_FLOW_ROT" default="0" type="INT32">
+      <short_desc>Cannode flow board rotation</short_desc>
+      <long_desc>This parameter defines the yaw rotation of the Cannode flow board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
     <parameter name="CANNODE_NODE_ID" default="120" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
@@ -13046,17 +10464,6 @@
     <parameter name="CANNODE_TERM" default="0" type="INT32" boolean="true">
       <short_desc>CAN built-in bus termination</short_desc>
       <max>1</max>
-    </parameter>
-    <parameter name="UAVCAN_BAT_MON" default="0" type="INT32">
-      <short_desc>UAVCAN BATTERY_MONITOR battery monitor selection</short_desc>
-      <long_desc>This parameter defines that the system will select the battery monitor under the following conditions 0 - default battery monitor 1 - CUAV battery monitor</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">default battery monitor</value>
-        <value code="1">CUAV battery monitor</value>
-      </values>
     </parameter>
     <parameter name="UAVCAN_BITRATE" default="1000000" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
@@ -13151,6 +10558,63 @@
       <long_desc>This parameter defines the minimum valid range for a rangefinder connected via UAVCAN.</long_desc>
       <unit>m</unit>
     </parameter>
+    <parameter name="UAVCAN_SUB_ASPD" default="0" type="INT32" boolean="true">
+      <short_desc>subscription airspeed</short_desc>
+      <long_desc>Enable UAVCAN airspeed subscriptions. uavcan::equipment::air_data::IndicatedAirspeed uavcan::equipment::air_data::TrueAirspeed uavcan::equipment::air_data::StaticTemperature</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_BARO" default="0" type="INT32" boolean="true">
+      <short_desc>subscription barometer</short_desc>
+      <long_desc>Enable UAVCAN barometer subscription. uavcan::equipment::air_data::StaticPressure uavcan::equipment::air_data::StaticTemperature</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_BAT" default="0" type="INT32">
+      <short_desc>subscription battery</short_desc>
+      <long_desc>Enable UAVCAN battery subscription. 1) uavcan::equipment::power::BatteryInfo 2) cuav::equipment::power::CBAT</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">disabled</value>
+        <value code="1">default</value>
+        <value code="2">CUAV battery monitor</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_SUB_DPRES" default="0" type="INT32" boolean="true">
+      <short_desc>subscription differential pressure</short_desc>
+      <long_desc>Enable UAVCAN differential pressure subscription. uavcan::equipment::air_data::RawAirData</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_FLOW" default="0" type="INT32" boolean="true">
+      <short_desc>subscription flow</short_desc>
+      <long_desc>Enable UAVCAN optical flow subscription.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_GPS" default="1" type="INT32" boolean="true">
+      <short_desc>subscription GPS</short_desc>
+      <long_desc>Enable UAVCAN GPS subscriptions. uavcan::equipment::gnss::Fix uavcan::equipment::gnss::Fix2 uavcan::equipment::gnss::Auxiliary</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_ICE" default="0" type="INT32" boolean="true">
+      <short_desc>subscription ICE</short_desc>
+      <long_desc>Enable UAVCAN internal combusion engine (ICE) subscription. uavcan::equipment::ice::reciprocating::Status</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_IMU" default="0" type="INT32" boolean="true">
+      <short_desc>subscription IMU</short_desc>
+      <long_desc>Enable UAVCAN IMU subscription. uavcan::equipment::ahrs::RawIMU</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_MAG" default="1" type="INT32" boolean="true">
+      <short_desc>subscription magnetometer</short_desc>
+      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::ahrs::MagneticFieldStrength uavcan::equipment::ahrs::MagneticFieldStrength2</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_RNG" default="0" type="INT32" boolean="true">
+      <short_desc>subscription range finder</short_desc>
+      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::range_sensor::Measurement</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="UAVCAN v1">
     <parameter name="UAVCAN_V1_BAUD" default="1000000" type="INT32">
@@ -13222,6 +10686,11 @@
     </parameter>
     <parameter name="UCAN1_UORB_GPS" default="-1" type="INT32">
       <short_desc>sensor_gps uORB over UAVCAN v1 subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_UORB_GPS_P" default="-1" type="INT32">
+      <short_desc>sensor_gps uORB over UAVCAN v1 publication port ID</short_desc>
       <min>-1</min>
       <max>6143</max>
     </parameter>

@@ -76,6 +76,7 @@ signals:
     void connected          (void);
     void disconnected       (void);
     void communicationError (const QString& title, const QString& error);
+    void _invokeWriteBytes  (QByteArray);
 
 protected:
     // Links are only created by LinkManager so constructor is not public
@@ -96,18 +97,17 @@ protected:
     virtual bool _allocateMavlinkChannel();
     virtual void _freeMavlinkChannel    ();
 
+private slots:
+    virtual void _writeBytes(const QByteArray) = 0; // Not thread safe if called directly, only writeBytesThreadSafe is thread safe
+
 private:
     // connect is private since all links should be created through LinkManager::createConnectedLink calls
     virtual bool _connect(void) = 0;
-
-    virtual void _writeBytes(const QByteArray) = 0; // Not thread safe, only writeBytesThreadSafe is thread safe
 
     uint8_t _mavlinkChannel             = std::numeric_limits<uint8_t>::max();
     bool    _decodedFirstMavlinkPacket  = false;
     bool    _isPX4Flow                  = false;
     int     _vehicleReferenceCount      = 0;
-
-    mutable QMutex _writeBytesMutex;
 
     QMap<int /* vehicle id */, MavlinkMessagesTimer*> _mavlinkMessagesTimers;
 };

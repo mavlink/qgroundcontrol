@@ -193,7 +193,8 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, _flyView, *missionItem);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                 // This needs to be a TakeoffMissionItem
-                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem);
+                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem, false /* forLoad */);
+                _takeoffMissionItem->setWizardMode(false);
                 simpleItem->deleteLater();
                 simpleItem = _takeoffMissionItem;
             }
@@ -359,7 +360,7 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
 VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem);
+    _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem, false /* forLoad */);
     _takeoffMissionItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(_takeoffMissionItem);
 
@@ -514,7 +515,9 @@ void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& ma
     }
 
     complexItem->setSequenceNumber(sequenceNumber);
-    complexItem->setWizardMode(true);
+    if (!qobject_cast<VTOLLandingComplexItem*>(complexItem)) {
+        complexItem->setWizardMode(true);
+    }
     _initVisualItem(complexItem);
 
     if (visualItemIndex == -1) {
@@ -1263,8 +1266,10 @@ void MissionController::_recalcFlightPathSegments(void)
     bool                homePositionValid =         _settingsItem->coordinate().isValid();
     bool                roiActive =                 false;
     bool                previousItemIsIncomplete =  false;
+    bool                signalSplitSegmentChanged = false;
 
     qCDebug(MissionControllerLog) << "_recalcFlightPathSegments homePositionValid" << homePositionValid;
+    qDebug() << "_recalcFlightPathSegments homePositionValid" << homePositionValid;
 
     FlightPathSegmentHashTable oldSegmentTable = _flightPathSegmentHashTable;
 
@@ -1376,6 +1381,12 @@ void MissionController::_recalcFlightPathSegments(void)
                         if (addDirectionArrow) {
                             _directionArrows.append(segment);
                         }
+                        if (visualItem->isCurrentItem() && _delayedSplitSegmentUpdate) {
+                            _splitSegment = segment;
+                            _delayedSplitSegmentUpdate = false;
+                            signalSplitSegmentChanged = true;
+                            qDebug() << "Update delayed split segment";
+                        }
                         lastFlyThroughVI->setSimpleFlighPathSegment(segment);
                     }
                 }
@@ -1448,6 +1459,9 @@ void MissionController::_recalcFlightPathSegments(void)
 
     emit waypointPathChanged();
     emit recalcTerrainProfile();
+    if (signalSplitSegmentChanged) {
+        emit splitSegmentChanged();
+    }
 }
 
 void MissionController::_updateBatteryInfo(int waypointIndex)
@@ -2354,6 +2368,7 @@ bool MissionController::_isROICancelItem(SimpleMissionItem* simpleItem)
 void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 {
     if (_visualItems && (force || sequenceNumber != _currentPlanViewSeqNum)) {
+        qDebug() << "setCurrentPlanViewSeqNum";
         bool    foundLand =             false;
         int     takeoffSeqNum =         -1;
         int     landSeqNum =            -1;
@@ -2454,10 +2469,18 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                         for (int j=viIndex-1; j>0; j--) {
                             VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
                             if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
+                                qDebug() << "Found";
                                 VisualItemPair splitPair(pPrev, pVI);
                                 if (_flightPathSegmentHashTable.contains(splitPair)) {
+                                    qDebug() << "Split segment added in setCurrentPlanViewSeqNum";
                                     _splitSegment = _flightPathSegmentHashTable[splitPair];
+                                } else {
+                                    // The recalc of flight path segments hasn't happened yet since it is delayed and compressed.
+                                    // So we need to register the fact that we need a split segment update and it will happen in the recalc instead.
+                                    qDebug() << "Delayed split";
+                                    _delayedSplitSegmentUpdate = true;
                                 }
+                                break;
                             }
                         }
                     }

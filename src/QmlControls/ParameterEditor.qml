@@ -243,7 +243,17 @@ Item {
                     id:     valueLabel
                     width:  ScreenTools.defaultFontPixelWidth  * 20
                     color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText) : qgcPal.text
-                    text:   factRow.modelFact.enumStrings.length === 0 ? factRow.modelFact.valueString + " " + factRow.modelFact.units : factRow.modelFact.enumStringValue
+                    text:   {
+                        if(factRow.modelFact.enumStrings.length === 0) {
+                            return factRow.modelFact.valueString + " " + factRow.modelFact.units
+                        }
+
+                        if(factRow.modelFact.bitmaskStrings.length != 0) {
+                            return factRow.modelFact.selectedBitmaskStrings.join(',')
+                        }
+
+                        return factRow.modelFact.enumStringValue
+                    }
                     clip:   true
                 }
 

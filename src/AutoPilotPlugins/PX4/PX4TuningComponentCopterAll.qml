@@ -17,7 +17,8 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.ScreenTools   1.0
 
 Item {
-    width: availableWidth
+    width:                            availableWidth
+    property bool _autotuningEnabled: true // used to restore setting when switching between tabs
 
     FactPanelController {
         id:         controller
@@ -39,6 +40,11 @@ Item {
         QGCTabButton {
             text:       qsTr("Position Controller")
         }
+        onCurrentIndexChanged: {
+            if (typeof loader.item.autotuningEnabled !== "undefined") {
+                _autotuningEnabled = loader.item.autotuningEnabled;
+            }
+        }
     }
 
     property var pages:  [
@@ -49,10 +55,16 @@ Item {
     ]
 
     Loader {
+        id:                loader
         source:            pages[bar.currentIndex]
         width:             parent.width
         anchors.top:       bar.bottom
         anchors.topMargin: ScreenTools.defaultFontPixelWidth
         anchors.bottom:    parent.bottom
+        onLoaded: {
+            if (typeof loader.item.autotuningEnabled !== "undefined") {
+                loader.item.autotuningEnabled = _autotuningEnabled;
+            }
+        }
     }
 }

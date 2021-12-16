@@ -77,7 +77,7 @@ SetupPage {
                 QGCLabel {
                     visible:            _sys_vehicle_resp && _sys_vehicle_resp.value > 0.8
                     color:              qgcPal.warningText
-                    text:              "Warning: a high responsiveness requires a vehicle with large thrust-to-weight ratio. The vehicle might lose altitude otherwise."
+                    text:              qsTr("Warning: a high responsiveness requires a vehicle with large thrust-to-weight ratio. The vehicle might lose altitude otherwise.")
                 }
             }
 
@@ -140,7 +140,7 @@ SetupPage {
                         id:             zVelSlider
 
                         ListElement {
-                            title:          qsTr("Vertial velocity (m/s)")
+                            title:          qsTr("Vertical velocity (m/s)")
                             description:    qsTr("Limit the vertical velocity (applies to all modes).")
                             param:          "MPC_Z_VEL_ALL"
                             min:            0.2

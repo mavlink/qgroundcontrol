@@ -442,7 +442,7 @@ void APMSensorsComponentController::cancelCalibration(void)
         emit waitingForCancelChanged();
         // The firmware doesn't always allow us to cancel calibration. The best we can do is wait
         // for it to timeout.
-        _vehicle->stopCalibration();
+        _vehicle->stopCalibration(true /* showError */);
     }
 
 }

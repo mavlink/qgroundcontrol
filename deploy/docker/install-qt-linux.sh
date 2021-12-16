@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Set default variables
-QT_VERSION="${QT_VERSION:-5.12.10}"
+QT_VERSION="${QT_VERSION:-5.15.2}"
 QT_PATH="${QT_PATH:-/opt/Qt}"
 QT_HOST="${QT_HOST:-linux}"
 QT_TARGET="${QT_TARGET:-desktop}"

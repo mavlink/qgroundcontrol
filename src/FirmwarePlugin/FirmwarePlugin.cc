@@ -16,6 +16,7 @@
 #include "QGCFileDownload.h"
 #include "QGCCameraManager.h"
 #include "RadioComponentController.h"
+#include "Autotune.h"
 
 #include <QRegularExpression>
 #include <QDebug>
@@ -500,7 +501,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     5.4,                // focalLength
                     true,               // landscape
                     false,              // fixedOrientation
-                    0.5,                // minTriggerInterval
+                    0.8,                // minTriggerInterval
                     tr("Sentera Double 4K Sensor"),// SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);
         _cameraList.append(QVariant::fromValue(metaData));
@@ -1124,4 +1125,9 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionRe
                                               &follow_target);
         vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
+}
+
+Autotune* FirmwarePlugin::createAutotune(Vehicle *vehicle)
+{
+    return new Autotune(vehicle);
 }

@@ -572,6 +572,7 @@ HEADERS += \
     src/AnalyzeView/ULogParser.h \
     src/AnalyzeView/MavlinkConsoleController.h \
     src/Audio/AudioOutput.h \
+    src/Vehicle/Autotune.h \
     src/Camera/QGCCameraControl.h \
     src/Camera/QGCCameraIO.h \
     src/Camera/QGCCameraManager.h \
@@ -582,6 +583,7 @@ HEADERS += \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/Joystick/JoystickMavCommand.h \
     src/JsonHelper.h \
     src/KMLDomDocument.h \
     src/KMLHelper.h \
@@ -686,7 +688,16 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
+    src/Vehicle/Actuators/ActuatorActions.h \
+    src/Vehicle/Actuators/Actuators.h \
+    src/Vehicle/Actuators/ActuatorOutputs.h \
+    src/Vehicle/Actuators/ActuatorTesting.h \
+    src/Vehicle/Actuators/Common.h \
+    src/Vehicle/Actuators/GeometryImage.h \
+    src/Vehicle/Actuators/Mixer.h \
+    src/Vehicle/Actuators/MotorAssignment.h \
     src/Vehicle/CompInfo.h \
+    src/Vehicle/CompInfoActuators.h \
     src/Vehicle/CompInfoEvents.h \
     src/Vehicle/CompInfoParam.h \
     src/Vehicle/CompInfoGeneral.h \
@@ -721,6 +732,7 @@ HEADERS += \
     src/Vehicle/VehicleTemperatureFactGroup.h \
     src/Vehicle/VehicleVibrationFactGroup.h \
     src/Vehicle/VehicleWindFactGroup.h \
+    src/Vehicle/VehicleHygrometerFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -815,6 +827,7 @@ SOURCES += \
     src/AnalyzeView/ULogParser.cc \
     src/AnalyzeView/MavlinkConsoleController.cc \
     src/Audio/AudioOutput.cc \
+    src/Vehicle/Autotune.cpp \
     src/Camera/QGCCameraControl.cc \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
@@ -824,6 +837,7 @@ SOURCES += \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/Joystick/JoystickMavCommand.cc \
     src/JsonHelper.cc \
     src/KMLDomDocument.cc \
     src/KMLHelper.cc \
@@ -925,7 +939,16 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
+    src/Vehicle/Actuators/ActuatorActions.cc \
+    src/Vehicle/Actuators/Actuators.cc \
+    src/Vehicle/Actuators/ActuatorOutputs.cc \
+    src/Vehicle/Actuators/ActuatorTesting.cc \
+    src/Vehicle/Actuators/Common.cc \
+    src/Vehicle/Actuators/GeometryImage.cc \
+    src/Vehicle/Actuators/Mixer.cc \
+    src/Vehicle/Actuators/MotorAssignment.cc \
     src/Vehicle/CompInfo.cc \
+    src/Vehicle/CompInfoActuators.cc \
     src/Vehicle/CompInfoEvents.cc \
     src/Vehicle/CompInfoParam.cc \
     src/Vehicle/CompInfoGeneral.cc \
@@ -959,6 +982,7 @@ SOURCES += \
     src/Vehicle/VehicleSetpointFactGroup.cc \
     src/Vehicle/VehicleTemperatureFactGroup.cc \
     src/Vehicle/VehicleVibrationFactGroup.cc \
+    src/Vehicle/VehicleHygrometerFactGroup.cc \
     src/Vehicle/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
@@ -1164,6 +1188,7 @@ PX4FirmwarePlugin {
         src/FirmwarePlugin/PX4 \
 
     HEADERS+= \
+        src/AutoPilotPlugins/PX4/ActuatorComponent.h \
         src/AutoPilotPlugins/PX4/AirframeComponent.h \
         src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
         src/AutoPilotPlugins/PX4/AirframeComponentController.h \
@@ -1185,6 +1210,7 @@ PX4FirmwarePlugin {
         src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
 
     SOURCES += \
+        src/AutoPilotPlugins/PX4/ActuatorComponent.cc \
         src/AutoPilotPlugins/PX4/AirframeComponent.cc \
         src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
         src/AutoPilotPlugins/PX4/AirframeComponentController.cc \

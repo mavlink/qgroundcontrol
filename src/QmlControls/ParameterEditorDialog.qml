@@ -169,7 +169,7 @@ QGCViewDialog {
             Column {
                 id:         bitmaskColumn
                 spacing:    ScreenTools.defaultFontPixelHeight / 2
-                visible:    fact.bitmaskStrings.length > 0 ? true : false;
+                visible:    fact.bitmaskStrings.length > 0
 
                 Repeater {
                     id:     bitmaskRepeater
@@ -228,12 +228,12 @@ QGCViewDialog {
 
             QGCLabel {
                 visible:    fact.vehicleRebootRequired
-                text:       "Vehicle reboot required after change"
+                text:       qsTr("Vehicle reboot required after change")
             }
 
             QGCLabel {
                 visible:    fact.qgcRebootRequired
-                text:       "Application restart required after change"
+                text:       qsTr("Application restart required after change")
             }
 
             QGCLabel {
