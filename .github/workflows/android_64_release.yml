@@ -34,7 +34,6 @@ jobs:
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |
-          git fetch --unshallow
           git fetch --all --tags
 
       - name: Install Qt
