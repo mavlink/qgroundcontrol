@@ -3668,7 +3668,7 @@ void Vehicle::_updateHomepoint()
         QGeoCoordinate gcsPosition = _toolbox->qgcPositionManager()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
             sendMavCommand(defaultComponentId(),
-                           MAV_CMD_DO_SET_HOME, true,
+                           MAV_CMD_DO_SET_HOME, false,
                            0,
                            0, 0, 0,
                            static_cast<float>(gcsPosition.latitude()) ,
