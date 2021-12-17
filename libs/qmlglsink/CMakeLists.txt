@@ -18,6 +18,12 @@ add_library(qmlglsink
     gst-plugins-good/ext/qt/gstqtsrc.h
     gst-plugins-good/ext/qt/qtwindow.h
     gst-plugins-good/ext/qt/qtitem.h
+
+    gst-plugins-good/ext/qt/gstqtoverlay.cc
+    gst-plugins-good/ext/qt/gstqtoverlay.h
+
+    gst-plugins-good/ext/qt/qtglrenderer.cc
+    gst-plugins-good/ext/qt/qtglrenderer.h
 )
 
 if(LINUX)
@@ -52,6 +58,7 @@ endif()
 target_link_libraries(qmlglsink
 	PUBLIC
 		Qt5::Core
+		Qt5::Quick
 		Qt5::OpenGL
 		Qt5::GuiPrivate
 		${GST_LINK_LIBRARIES}
