@@ -3409,6 +3409,11 @@
       <decimal>0</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="PPS_CAP_ENABLE" default="0" type="INT32" boolean="true">
+      <short_desc>PPS Capture Enable</short_desc>
+      <long_desc>Enables the PPS capture module. This switches mode of FMU channel 7 to be the PPS input channel.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="Geofence">
     <parameter name="GF_ACTION" default="2" type="INT32">
