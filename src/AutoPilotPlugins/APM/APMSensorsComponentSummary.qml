@@ -1,6 +1,7 @@
 import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
+import QtQuick.Layouts          1.2
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
@@ -26,12 +27,20 @@ Item {
     Column {
         anchors.fill:       parent
 
-        Repeater {
-            model: 3
+        VehicleSummaryRow {
+        labelText:  qsTr("Compasses:")
+        valueText: ""
+        }
 
-            VehicleSummaryRow {
-                labelText:  qsTr("Compass ") + (index + 1) + ""
-                valueText:  sensorParams.rgCompassAvailable[index] ?
+        Repeater {
+            model: sensorParams.rgCompassAvailable.length
+            RowLayout {
+                Layout.fillWidth: true
+                width: parent.width
+
+                QGCLabel {
+
+                    text:  sensorParams.rgCompassAvailable[index] ?
                                 (sensorParams.rgCompassCalibrated[index] ?
                                      (sensorParams.rgCompassPrimary[index] ? "Primary" : "Secondary") +
                                      (sensorParams.rgCompassExternalParamAvailable[index] ?
@@ -39,6 +48,14 @@ Item {
                                           "") :
                                      qsTr("Setup required")) :
                                 qsTr("Not installed")
+                }
+
+                APMSensorIdDecoder {
+                    horizontalAlignment:    Text.AlignRight
+                    Layout.alignment:       Qt.AlignRight
+
+                    fact: sensorParams.rgCompassPrio[index]
+                }
             }
         }
 
