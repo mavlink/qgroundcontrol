@@ -1,3 +1,4 @@
 Module QGroundControl.ArduPilot
 
 APMSensorParams 1.0 APMSensorParams.qml
+APMSensorIdDecoder 1.0 APMSensorIdDecoder.qml
