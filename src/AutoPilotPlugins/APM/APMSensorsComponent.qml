@@ -341,6 +341,9 @@ SetupPage {
                     QGCLabel {
                         text: compassLabel(index)
                     }
+                    APMSensorIdDecoder {
+                        fact: sensorParams.rgCompassId[index]
+                    }
 
                     Column {
                         anchors.margins:    ScreenTools.defaultFontPixelWidth * 2
