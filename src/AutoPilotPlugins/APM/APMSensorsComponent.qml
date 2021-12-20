@@ -94,7 +94,6 @@ SetupPage {
                 case _calTypeCompass:
                     _orientationsDialogShowCompass = true
                     _orientationDialogHelp = orientationHelpCal
-                    _singleCompassSettingsComponentShowPriority = false
                     dialogTitle = qsTr("Calibrate Compass")
                     buttons |= StandardButton.Cancel
                     break
