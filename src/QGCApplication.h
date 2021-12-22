@@ -165,6 +165,8 @@ public:
 
     bool    isErrorState() const { return _error; }
 
+    QQmlApplicationEngine* qmlAppEngine() { return _qmlAppEngine; }
+
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
 

@@ -15,6 +15,7 @@ defaults:
 env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
 jobs:
   build:
@@ -45,6 +46,9 @@ jobs:
       - name: Install ccache
         run:  sudo apt-get install ccache
 
+      - name: Install post-link dependencies
+        run:  sudo apt-get install -y binutils patchelf
+
       - name: Prepare ccache timestamp
         id: ccache_cache_timestamp
         shell: cmake -P {0}
@@ -74,7 +78,7 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=debug CONFIG+=DailyBuild
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=debug CONFIG+=${BUILD_TYPE}
               make -j2
 
       - name: ccache post-run

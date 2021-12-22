@@ -7,31 +7,31 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation type="unfinished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
+      <translation>ArduPilot,PX4 Pro,Mavlink Genérico</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation type="unfinished">Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</translation>
+      <translation>Ala fija, Multi-Rotor,VTOL,Explorador,Sub,Mavlink Genérico</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
-      <translation type="unfinished">Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</translation>
+      <translation>Deshabilitado,error,advertencia,arréglame,info,debug,registrar,rastrear</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Indoor,Outdoor</source>
-      <translation type="unfinished">Indoor,Outdoor</translation>
+      <translation>Interiores,exteriores</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation type="unfinished">Never,Always,When in Follow Me Flight Mode</translation>
+      <translation>Nunca,siempre,cuando esté en modo Sígueme </translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
@@ -46,13 +46,13 @@
       <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>ChibiOS,NuttX</source>
-      <translation type="unfinished">ChibiOS,NuttX</translation>
+      <translation>ChibiOS,NuttX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation type="unfinished">Multi-Rotor,Helicopter,Plane,Rover,Sub</translation>
+      <translation>Multi-Rotor,Helicóptero,Avión,explorador,Sub</translation>
     </message>
   </context>
   <context>
@@ -61,7 +61,7 @@
       <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
       <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
       <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation type="unfinished">Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
+      <translation>Controlado por Vehículo,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
     </message>
   </context>
   <context>
@@ -70,25 +70,25 @@
       <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Hide,Show</source>
-      <translation type="unfinished">Hide,Show</translation>
+      <translation>Ocultar,Mostrar</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Fit Width,Fit Height,Stretch</source>
-      <translation type="unfinished">Fit Width,Fit Height,Stretch</translation>
+      <translation>Ajustar anchura, ajustar altura, ajustar estrecho</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>mkv,mov,mp4</source>
-      <translation type="unfinished">mkv,mov,mp4</translation>
+      <translation>mkv,mov,mp4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-      <translation type="unfinished">Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</translation>
+      <translation>Por defecto,Forzar decodificador de software,Forzar decodificador NVIDIA,Forzar decodificador VA-API,Forzar decodificador DirectX3D 11,Forzar decodificador VideoToolbox</translation>
     </message>
   </context>
   <context>
@@ -97,19 +97,19 @@
       <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-      <translation type="unfinished">n/a,All Flight Systems,Propulsion,Avionics,Payload</translation>
+      <translation>n/a,Todos los sistemas de vuelo,Propulsión,aviónica,carga útil</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>n/a,LIPO,LIFE,LION,NIMH</source>
-      <translation type="unfinished">n/a,LIPO,LIFE,LION,NIMH</translation>
+      <translation>n/a,LIPO,LIFE,LION,NIMH</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
-      <translation type="unfinished">n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</translation>
+      <translation>n/a,Ok,Bajo,Crítico,Emergencia,Fallo,Insano,Cargando</translation>
     </message>
   </context>
   <context>
@@ -118,7 +118,7 @@
       <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation type="unfinished">None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
+      <translation>Ninguno,ninguno,fijado 2d,fijado 3d, fijado 3D DGPS, fijado 3D gps rtk (flotante), fijado 3D gps rtk (fijo),estático (fijo)</translation>
     </message>
   </context>
   <context>
@@ -127,13 +127,13 @@
       <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation type="unfinished">Disabled,Enabled</translation>
+      <translation>Desactivado/activado</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Disabled,Enabled,Unavailable</source>
-      <translation type="unfinished">Disabled,Enabled,Unavailable</translation>
+      <translation>Deshabilitado,Activado,No disponible</translation>
     </message>
   </context>
   <context>
@@ -142,7 +142,7 @@
       <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
       <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
       <source>North,South</source>
-      <translation type="unfinished">North,South</translation>
+      <translation>Norte,Sur</translation>
     </message>
   </context>
   <context>
@@ -151,37 +151,37 @@
       <extracomment>.mavCmdInfo[Override testing].description, .mavCmdInfo[Override testing].category, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4</source>
-      <translation type="unfinished">override fw 4</translation>
+      <translation>Anular fw 4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 1</source>
-      <translation type="unfinished">override fw 4 1</translation>
+      <translation>anular fw 4 1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param1.enumStrings, .mavCmdInfo[Override testing].param3.enumStrings, .mavCmdInfo[Override testing].param5.enumStrings, .mavCmdInfo[Override testing].param7.enumStrings, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
+      <translation>1,2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param3.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 3</source>
-      <translation type="unfinished">override fw 4 3</translation>
+      <translation>anular fw 4 3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param5.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 5</source>
-      <translation type="unfinished">override fw 4 5</translation>
+      <translation>anular fw 4 5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param7.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 7</source>
-      <translation type="unfinished">override fw 4 7</translation>
+      <translation>Anular fw 4 7</translation>
     </message>
   </context>
   <context>
@@ -190,7 +190,7 @@
       <extracomment>.mavCmdInfo[UNITTEST_2].param1.label, .mavCmdInfo[UNITTEST_3].param1.label, .mavCmdInfo[UNITTEST_4].param1.label, .mavCmdInfo[UNITTEST_5].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param1</source>
-      <translation type="unfinished">param1</translation>
+      <translation>param1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].friendlyName, </extracomment>

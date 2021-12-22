@@ -5,7 +5,7 @@
 FROM ubuntu:20.04
 LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
 
-ARG QT_VERSION=5.12.10
+ARG QT_VERSION=5.15.2
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -20,6 +20,7 @@ ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
 
 RUN apt update && apt -y --quiet --no-install-recommends install \
 		apt-utils \
+		binutils \
 		build-essential \
 		ca-certificates \
 		ccache \
@@ -47,6 +48,7 @@ RUN apt update && apt -y --quiet --no-install-recommends install \
 		ninja-build \
 		openssh-client \
 		openssl \
+		patchelf \
 		pkg-config \
 		rsync \
 		speech-dispatcher \

@@ -303,6 +303,39 @@ QVariantList Fact::bitmaskValues(void) const
     }
 }
 
+/**
+ * @brief Provide a list of selected strings based on the fact value with the bitmaskString/bitmaskValues map
+ *
+ * @return QStringList
+ */
+QStringList Fact::selectedBitmaskStrings(void) const
+{
+    if (_metaData) {
+        const auto values = _metaData->bitmaskValues();
+        const auto strings = _metaData->bitmaskStrings();
+        if(values.size() != strings.size()) {
+            qWarning() << "Size of bitmask value and string is different."  << name();
+            return {};
+        }
+
+        QStringList selected;
+        for(int i = 0; i < values.size(); i++) {
+            if(rawValue().toInt() & values[i].toInt()) {
+                selected += strings[i];
+            }
+        }
+
+        if(selected.isEmpty()) {
+            selected += "Not value selected";
+        }
+
+        return selected;
+    } else {
+        qWarning() << kMissingMetadata << name();
+        return {};
+    }
+}
+
 QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
 {
     QString valueString;

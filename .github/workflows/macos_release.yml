@@ -3,10 +3,13 @@ name: MacOS Release
 on:
   push:
     branches:
-    - 'master'
+      - 'master'
+      - 'Stable*'
+    tags:
+      - 'v*'
   pull_request:
     branches:
-    - '*'
+      - '*'
 
 defaults:
   run:
@@ -16,6 +19,7 @@ env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
   ARTIFACT:     QGroundControl.dmg
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
 jobs:
   build:
@@ -26,6 +30,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
@@ -74,7 +83,7 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${BUILD_TYPE}
               make -j3
 
       - name: ccache post-run
@@ -86,11 +95,23 @@ jobs:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
 
-      - name: Upload to S3 Bucket
-        if:   github.event_name == 'push'
+      # This will set GIT_BRANCH_NAME environment variable
+      - name: Git branch name
+        id:   git-branch-name
+        uses: EthanSK/git-branch-name-action@v1
+
+      - name: Upload build to S3 Bucket
+        if:                 github.event_name == 'push'
         working-directory:  ${{ runner.temp }}/shadow_build_dir/package
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/master/${ARTIFACT} --region us-west-2 --acl public-read
-              
+              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/builds/${GIT_BRANCH_NAME}/${ARTIFACT} --region us-west-2 --acl public-read
+
+      - name: Upload tagged stable build to S3 latest Bucket
+        if:                 github.event_name == 'push' && github.ref_type == 'tag'
+        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
+        run: |
+              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws s3 cp ${ARTIFACT} s3://qgroundcontrol/latest/${ARTIFACT} --region us-west-2 --acl public-read

@@ -1,0 +1,17 @@
+{
+    "comment": "Joystick MAV commands",
+    "version": 1,
+
+    "commands": [
+        {
+            "id":                   31010,
+            "name":                 "MAV_CMD_USER_1",
+            "param1":               1.0
+        },
+        {
+            "id":                   31011,
+            "name":                 "MAV_CMD_USER_2",
+            "param1":               0.0
+        }
+    ]
+}
