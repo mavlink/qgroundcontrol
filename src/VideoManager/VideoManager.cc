@@ -346,6 +346,18 @@ VideoManager::stopRecording()
 }
 
 void
+VideoManager::startMultiCamRecording(const QString& videoFile)
+{
+    _multiVideoManager->startRecording(videoFile);
+}
+
+void
+VideoManager::stopMultiCamRecording()
+{
+    _multiVideoManager->stopRecording();
+}
+
+void
 VideoManager::grabImage(const QString& imageFile)
 {
     if (qgcApp()->runningUnitTests()) {

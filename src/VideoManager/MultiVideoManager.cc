@@ -8,12 +8,19 @@
 #include <QQuickWindow>
 
 #include "GStreamer.h"
+#include "GstVideoReceiver.h"
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "VideoSettings.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
 #include "SettingsManager.h"
+
+static const char* kFileExtension[VideoReceiver::FILE_FORMAT_MAX - VideoReceiver::FILE_FORMAT_MIN] = {
+    "mkv",
+    "mov",
+    "mp4"
+};
 
 MultiVideoManager::MultiVideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -96,6 +103,44 @@ void MultiVideoManager::init()
         widget = root->findChild<QQuickItem*>(QStringLiteral("videoContent%1").arg(i));
         _videoSink[i] = qgcApp()->toolbox()->corePlugin()->createVideoSink(this, widget);
         _startReceiver(i);
+    }
+}
+
+void MultiVideoManager::startRecording(const QString &videoFile) {
+    // TODO: check if receiver is ready
+
+    const VideoReceiver::FILE_FORMAT fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(_videoSettings->recordingFormat()->rawValue().toInt());
+
+    if(fileFormat < VideoReceiver::FILE_FORMAT_MIN || fileFormat >= VideoReceiver::FILE_FORMAT_MAX) {
+        qgcApp()->showAppMessage(tr("Invalid video format defined."));
+        return;
+    }
+    QString ext = kFileExtension[fileFormat - VideoReceiver::FILE_FORMAT_MIN];
+
+    // TODO: clean up old videos
+
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+
+    if (savePath.isEmpty()) {
+        qgcApp()->showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+        return;
+    }
+
+    // TODO: check for videoStarted
+
+    for (int i = 0; i < QGC_MULTI_VIDEO_COUNT; i++) {
+        QString _videoFile = savePath + "/"
+                + (videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile);
+        _videoFile = QStringLiteral("%1_%2").arg(_videoFile).arg(i) + ".";
+        qCDebug(VideoManagerLog) << "Video File: " << _videoFile;
+        _videoFile += ext;
+        _videoReceiver[i]->startRecording(_videoFile, fileFormat);
+    }
+}
+
+void MultiVideoManager::stopRecording() {
+    for (int i = 0; i < QGC_MULTI_VIDEO_COUNT; i++) {
+        _videoReceiver[i]->stopRecording();
     }
 }
 

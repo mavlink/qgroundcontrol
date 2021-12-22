@@ -27,6 +27,9 @@ public:
     void startStreaming              ();
     void stopStreaming               ();
 
+    void startRecording              (const QString& videoFile = QString());
+    void stopRecording               ();
+
     virtual void setToolbox (QGCToolbox *toolbox);
 
 private:

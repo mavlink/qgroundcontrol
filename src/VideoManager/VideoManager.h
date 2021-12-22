@@ -111,6 +111,10 @@ public:
     Q_INVOKABLE void startRecording (const QString& videoFile = QString());
     Q_INVOKABLE void stopRecording  ();
 
+    Q_INVOKABLE void startMultiCamRecording (const QString& videoFile = QString());
+    Q_INVOKABLE void stopMultiCamRecording  ();
+    // Q_INVOKABLE void grabMultiCamImage      (const QString& imageFile = QString());
+
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
 
 signals:
