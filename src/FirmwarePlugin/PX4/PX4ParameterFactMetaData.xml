@@ -1176,6 +1176,11 @@
       <max>60</max>
       <unit>s</unit>
     </parameter>
+    <parameter name="COM_HOME_EN" default="1" type="INT32" boolean="true">
+      <short_desc>Home position enabled</short_desc>
+      <long_desc>Set home position automatically if possible.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="COM_HOME_H_T" default="5.0" type="FLOAT">
       <short_desc>Home set horizontal threshold</short_desc>
       <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
