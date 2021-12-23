@@ -42,12 +42,25 @@ Item {
 
                     text:  sensorParams.rgCompassAvailable[index] ?
                                 (sensorParams.rgCompassCalibrated[index] ?
-                                     (sensorParams.rgCompassPrimary[index] ? "Primary" : "Secondary") +
+                                     getPriority(index) +
                                      (sensorParams.rgCompassExternalParamAvailable[index] ?
                                           (sensorParams.rgCompassExternal[index] ? ", External" : ", Internal" ) :
                                           "") :
                                      qsTr("Setup required")) :
                                 qsTr("Not installed")
+
+                    function getPriority (index) {
+                        if (sensorParams.rgCompassId[index].value == sensorParams.rgCompassPrio[0].value) {
+                            return "Primary"
+                        }
+                        if (sensorParams.rgCompassId[index].value == sensorParams.rgCompassPrio[1].value) {
+                            return "Secondary"
+                        }
+                        if (sensorParams.rgCompassId[index].value == sensorParams.rgCompassPrio[2].value) {
+                            return "Tertiary"
+                        }
+                        return "Unused"
+                    }
                 }
 
                 APMSensorIdDecoder {
