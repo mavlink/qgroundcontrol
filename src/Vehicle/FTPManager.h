@@ -37,7 +37,7 @@ public:
     ///     @param toDir    Local directory to download file to
     /// @return true: download has started, false: error, no download
     /// Signals downloadComplete, commandError, commandProgress
-    bool download(const QString& fromURI, const QString& toDir);
+    bool download(const QString& fromURI, const QString& toDir, const QString& fileName="");
 
     /// Cancel the current operation
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
