@@ -34,7 +34,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
     Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
 }
 
-bool FTPManager::download(const QString& fromURI, const QString& toDir)
+bool FTPManager::download(const QString& fromURI, const QString& toDir, const QString& fileName)
 {
     qCDebug(FTPManagerLog) << "download fromURI:" << fromURI << "to:" << toDir;
 
@@ -72,7 +72,11 @@ bool FTPManager::download(const QString& fromURI, const QString& toDir)
     }
     lastDirSlashIndex++; // move past slash
 
-    _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
+    if (fileName.size() == 0) {
+        _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
+    } else {
+        _downloadState.fileName = fileName;
+    }
 
     qCDebug(FTPManagerLog) << "_downloadState.fullPathOnVehicle:_downloadState.fileName" << _downloadState.fullPathOnVehicle << _downloadState.fileName;
 
@@ -641,6 +645,8 @@ bool FTPManager::_parseURI(const QString& uri, QString& parsedURI, uint8_t& comp
         if (!ok) {
             qCWarning(FTPManagerLog) << "Incorrect format for component id" << uri;
             return false;
+        } else {
+            qCDebug(FTPManagerLog) << "Found compId:" << (int)compId;
         }
         parsedURI.replace(QRegularExpression("\\[\\;comp\\=\\d+\\]"), "");
     }

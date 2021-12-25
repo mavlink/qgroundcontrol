@@ -372,6 +372,7 @@ private:
     void    _updateRanges                   (Fact* pFact);
     void    _httpRequest                    (const QString& url);
     void    _handleDefinitionFile           (const QString& url);
+    void    _ftpDownloadComplete            (const QString& fileName, const QString& errorMsg);
 
     QStringList     _loadExclusions         (QDomNode option);
     QStringList     _loadUpdates            (QDomNode option);
