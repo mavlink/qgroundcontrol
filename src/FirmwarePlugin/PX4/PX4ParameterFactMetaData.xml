@@ -5143,7 +5143,7 @@
   <group name="PWM Outputs">
     <parameter name="MOT_SLEW_MAX" default="0.0" type="FLOAT">
       <short_desc>Minimum motor rise time (slew rate limit)</short_desc>
-      <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in maximum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
+      <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in minimum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
       <min>0.0</min>
       <unit>s/(1000*PWM)</unit>
     </parameter>
@@ -10871,8 +10871,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32" boolean="true">
-      <short_desc>Lock elevons in multicopter mode</short_desc>
-      <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
+      <short_desc>Lock control surfaces in hover</short_desc>
+      <long_desc>If set to 1 the control surfaces are locked at the disarmed value in multicopter mode.</long_desc>
     </parameter>
     <parameter name="VT_FWD_THRUST_EN" default="0" type="INT32">
       <short_desc>Enable/disable usage of fixed-wing actuators in hover to generate forward force (instead of pitching down)</short_desc>
