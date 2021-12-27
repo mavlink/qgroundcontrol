@@ -10642,6 +10642,11 @@
       <long_desc>Enable UAVCAN GPS subscriptions. uavcan::equipment::gnss::Fix uavcan::equipment::gnss::Fix2 uavcan::equipment::gnss::Auxiliary</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_SUB_HYGRO" default="0" type="INT32" boolean="true">
+      <short_desc>subscription hygrometer</short_desc>
+      <long_desc>Enable UAVCAN hygrometer subscriptions. dronecan::sensors::hygrometer::Hygrometer</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="UAVCAN_SUB_ICE" default="0" type="INT32" boolean="true">
       <short_desc>subscription ICE</short_desc>
       <long_desc>Enable UAVCAN internal combusion engine (ICE) subscription. uavcan::equipment::ice::reciprocating::Status</long_desc>
