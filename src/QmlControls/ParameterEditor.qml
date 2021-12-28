@@ -282,7 +282,7 @@ Item {
                 acceptedButtons:    Qt.LeftButton
                 onClicked: {
                     _editorDialogFact = factRow.modelFact
-                    mainWindow.showComponentDialog(editorDialogComponent, qsTr("Parameter Editor"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                    editorDialogComponent.createObject(mainWindow).open()
                 }
             }
         }
@@ -301,7 +301,7 @@ Item {
         onAcceptedForLoad: {
             close()
             if (controller.buildDiffFromFile(file)) {
-                mainWindow.showPopupDialogFromComponent(parameterDiffDialog)
+                parameterDiffDialog.createObject(mainWindow).open()
             }
         }
     }
@@ -312,6 +312,7 @@ Item {
         ParameterEditorDialog {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
+            destroyOnClose: true
         }
     }
 
@@ -366,7 +367,8 @@ Item {
         id: parameterDiffDialog
 
         ParameterDiffDialog {
-            paramController: _controller
+            paramController:    _controller
+            destroyOnClose:     true
         }
     }
 }
