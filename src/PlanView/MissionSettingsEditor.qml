@@ -45,7 +45,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal }
     QGCFileDialogController { id: fileController }
-    Component { id: altModeDialogComponent; AltModeDialog { } }
+    Component { id: altModeDialogComponent; AltModeDialog { destroyOnClose: true } }
 
     Connections {
         target: _controllerVehicle
@@ -79,7 +79,7 @@ Rectangle {
                 if (!_controllerVehicle.supportsTerrainFrame) {
                     removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
                 }
-                mainWindow.showPopupDialogFromComponent(altModeDialogComponent, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction })
+                altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
             }
 
             RowLayout {

@@ -153,7 +153,7 @@ Rectangle {
 
         QGCMouseArea {
             fillItem:   parent
-            onClicked:  mainWindow.showPopupDialogFromComponent(settingsDialogComponent)
+            onClicked:  settingsDialogComponent.createObject(mainWindow).open()
         }
     }
 
@@ -313,8 +313,9 @@ Rectangle {
         id: settingsDialogComponent
 
         QGCPopupDialog {
-            title:      qsTr("Settings")
-            buttons:    StandardButton.Close
+            title:          qsTr("Settings")
+            buttons:        StandardButton.Close
+            destroyOnClose: true
 
             ColumnLayout {
                 spacing: _margins

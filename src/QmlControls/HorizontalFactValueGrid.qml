@@ -181,7 +181,7 @@ T.HorizontalFactValueGrid {
             var labelOrDataItem = columnGridLayoutItem.childAt(mappedMouse.x, mappedMouse.y)
             //console.log(mappedMouse.x, mappedMouse.y, labelOrDataItem, labelOrDataItem ? labelOrDataItem.instrumentValueData : "null", labelOrDataItem && labelOrDataItem.parent ? labelOrDataItem.parent.instrumentValueData : "null")
             if (labelOrDataItem && labelOrDataItem.instrumentValueData !== undefined) {
-                mainWindow.showPopupDialogFromComponent(valueEditDialog, { instrumentValueData: labelOrDataItem.instrumentValueData })
+                valueEditDialog.createObject(mainWindow, { instrumentValueData: labelOrDataItem.instrumentValueData }).open()
             }
         }
     }
@@ -189,6 +189,6 @@ T.HorizontalFactValueGrid {
     Component {
         id: valueEditDialog
 
-        InstrumentValueEditDialog { }
+        InstrumentValueEditDialog { destroyOnClose: true }
     }
 }

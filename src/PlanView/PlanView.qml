@@ -137,8 +137,9 @@ Item {
     Component {
         id: promptForPlanUsageOnVehicleChangePopupComponent
         QGCPopupDialog {
-            title:      _planMasterController.managerVehicle.isOfflineEditingVehicle ? qsTr("Plan View - Vehicle Disconnected") : qsTr("Plan View - Vehicle Changed")
-            buttons:    StandardButton.NoButton
+            title:          _planMasterController.managerVehicle.isOfflineEditingVehicle ? qsTr("Plan View - Vehicle Disconnected") : qsTr("Plan View - Vehicle Changed")
+            buttons:        StandardButton.NoButton
+            destroyOnClose: true
 
             ColumnLayout {
                 QGCLabel {
@@ -159,7 +160,7 @@ Item {
                     onClicked: {
                         _planMasterController.showPlanFromManagerVehicle()
                         _promptForPlanUsageShowing = false
-                        hideDialog();
+                        close();
                     }
                 }
 
@@ -173,7 +174,7 @@ Item {
                             _planMasterController.dirty = true
                         }
                         _promptForPlanUsageShowing = false
-                        hideDialog()
+                        close()
                     }
                 }
             }
@@ -223,7 +224,7 @@ Item {
         onPromptForPlanUsageOnVehicleChange: {
             if (!_promptForPlanUsageShowing) {
                 _promptForPlanUsageShowing = true
-                mainWindow.showPopupDialogFromComponent(promptForPlanUsageOnVehicleChangePopupComponent)
+                promptForPlanUsageOnVehicleChangePopupComponent.createObject(mainWindow).open()
             }
         }
 

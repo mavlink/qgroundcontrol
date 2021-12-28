@@ -20,16 +20,20 @@ QGCPopupDialog {
     title:   qsTr("Select Altitude Mode")
     buttons: StandardButton.Close
 
+    property var rgRemoveModes
+    property var updateAltModeFn
+    property var currentAltMode
+
     Component.onCompleted: {
         // Check for custom build override on AMSL usage
-        if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && dialogProperties.currentAltMode != QGroundControl.AltitudeModeAbsolute) {
-            dialogProperties.rgRemoveModes.push(QGroundControl.AltitudeModeAbsolute)
+        if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && currentAltMode != QGroundControl.AltitudeModeAbsolute) {
+            rgRemoveModes.push(QGroundControl.AltitudeModeAbsolute)
         }
 
         // Remove modes specified by consumer
-        for (var i=0; i<dialogProperties.rgRemoveModes.length; i++) {
+        for (var i=0; i<rgRemoveModes.length; i++) {
             for (var j=0; j<buttonModel.count; j++) {
-                if (buttonModel.get(j).modeValue == dialogProperties.rgRemoveModes[i]) {
+                if (buttonModel.get(j).modeValue == rgRemoveModes[i]) {
                     buttonModel.remove(j)
                     break
                 }
@@ -78,7 +82,7 @@ QGCPopupDialog {
 
             Button {
                 hoverEnabled:   true
-                checked:        modeValue == dialogProperties.currentAltMode
+                checked:        modeValue == currentAltMode
 
                 background: Rectangle {
                     radius: ScreenTools.defaultFontPixelHeight / 2
@@ -104,8 +108,8 @@ QGCPopupDialog {
                 }
 
                 onClicked: {
-                    dialogProperties.updateAltModeFn(modeValue)
-                    hideDialog()
+                    updateAltModeFn(modeValue)
+                    close()
                 }
             }
         }

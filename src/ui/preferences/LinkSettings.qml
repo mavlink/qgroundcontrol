@@ -78,6 +78,7 @@ Rectangle {
                     onClicked: {
                         checked = true
                         _currentSelection = object
+                        console.log("clicked", object, object.link)
                     }
                 }
             }
@@ -134,7 +135,12 @@ Rectangle {
         QGCButton {
             text:       qsTr("MockLink Options")
             visible:    _currentSelection && _currentSelection.link && _currentSelection.link.isMockLink
-            onClicked:  mainWindow.showPopupDialogFromSource("qrc:/unittest/MockLinkOptionsDlg.qml", { link: _currentSelection.link })
+            onClicked:  mockLinkOptionDialog.open()
+
+            MockLinkOptionsDlg {
+                id:     mockLinkOptionDialog
+                link:   _currentSelection ? _currentSelection.link : undefined
+            }
         }
     }
 
