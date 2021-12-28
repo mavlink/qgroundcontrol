@@ -44,6 +44,7 @@ AirMapSharedState::login()
     if (isLoggedIn() || _isLoginInProgress) {
         return;
     }
+    Q_ASSERT(nullptr != _client);
     _isLoginInProgress = true;
     if (_settings.userName == "") { //use anonymous login
         qCDebug(AirMapManagerLog) << "Anonymous authentication";
