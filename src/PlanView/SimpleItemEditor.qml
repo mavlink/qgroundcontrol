@@ -47,7 +47,7 @@ Rectangle {
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    Component { id: altModeDialogComponent; AltModeDialog { } }
+    Component { id: altModeDialogComponent; AltModeDialog { destroyOnClose: true } }
 
     Column {
         id:                 editorColumn
@@ -145,7 +145,7 @@ Rectangle {
                                 removeModes.push(QGroundControl.AltitudeModeAbsolute)
                             }
                             removeModes.push(QGroundControl.AltitudeModeMixed)
-                            mainWindow.showPopupDialogFromComponent(altModeDialogComponent, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction })
+                            altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
                         }
                     }
 
