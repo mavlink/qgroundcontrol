@@ -1757,7 +1757,7 @@ void MissionController::_recalcMissionFlightStatus()
     }
 
     emit missionMaxTelemetryChanged     (_missionFlightStatus.maxTelemetryDistance);
-    emit missionDistanceChanged         (_missionFlightStatus.totalDistance);
+    //emit missionDistanceChanged         (_missionFlightStatus.totalDistance);
     emit missionHoverDistanceChanged    (_missionFlightStatus.hoverDistance);
     emit missionCruiseDistanceChanged   (_missionFlightStatus.cruiseDistance);
     emit missionTimeChanged             ();
