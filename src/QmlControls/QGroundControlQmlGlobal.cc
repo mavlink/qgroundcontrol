@@ -36,6 +36,26 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
     _coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey,    _coord.latitude()).toDouble());
     _coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey,  _coord.longitude()).toDouble());
     _zoom = settings.value(_flightMapZoomSettingsKey, _zoom).toDouble();
+    _flightMapPositionSettledTimer.setSingleShot(true);
+    _flightMapPositionSettledTimer.setInterval(1000);
+    connect(&_flightMapPositionSettledTimer, &QTimer::timeout, [](){
+        // When they settle, save flightMapPosition and Zoom to the config file
+        QSettings settings;
+        settings.beginGroup(_flightMapPositionSettingsGroup);
+        settings.setValue(_flightMapPositionLatitudeSettingsKey, _coord.latitude());
+        settings.setValue(_flightMapPositionLongitudeSettingsKey, _coord.longitude());
+        settings.setValue(_flightMapZoomSettingsKey, _zoom);
+    });
+    connect(this, &QGroundControlQmlGlobal::flightMapPositionChanged, this, [this](QGeoCoordinate){
+        if (!_flightMapPositionSettledTimer.isActive()) {
+            _flightMapPositionSettledTimer.start();
+        }
+    });
+    connect(this, &QGroundControlQmlGlobal::flightMapZoomChanged, this, [this](double){
+        if (!_flightMapPositionSettledTimer.isActive()) {
+            _flightMapPositionSettledTimer.start();
+        }
+    });
 }
 
 QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
@@ -228,10 +248,6 @@ void QGroundControlQmlGlobal::setFlightMapPosition(QGeoCoordinate& coordinate)
     if (coordinate != flightMapPosition()) {
         _coord.setLatitude(coordinate.latitude());
         _coord.setLongitude(coordinate.longitude());
-        QSettings settings;
-        settings.beginGroup(_flightMapPositionSettingsGroup);
-        settings.setValue(_flightMapPositionLatitudeSettingsKey, _coord.latitude());
-        settings.setValue(_flightMapPositionLongitudeSettingsKey, _coord.longitude());
         emit flightMapPositionChanged(coordinate);
     }
 }
@@ -240,9 +256,6 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
 {
     if (zoom != flightMapZoom()) {
         _zoom = zoom;
-        QSettings settings;
-        settings.beginGroup(_flightMapPositionSettingsGroup);
-        settings.setValue(_flightMapZoomSettingsKey, _zoom);
         emit flightMapZoomChanged(zoom);
     }
 }
