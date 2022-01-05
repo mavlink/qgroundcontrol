@@ -152,7 +152,7 @@ SetupPage {
 
                 onWaitingForCancelChanged: {
                     if (controller.waitingForCancel) {
-                        mainWindow.showComponentDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), mainWindow.showDialogDefaultWidth, 0)
+                        waitForCancelDialogComponent.createObject(mainWindow).open()
                     }
                 }
 
@@ -181,15 +181,17 @@ SetupPage {
             Component {
                 id: waitForCancelDialogComponent
 
-                QGCViewMessage {
-                    message: qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds.")
+                QGCSimpleMessageDialog {
+                    title:      qsTr("Calibration Cancel")
+                    text:       qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds.")
+                    buttons:    0
 
                     Connections {
                         target: controller
 
                         onWaitingForCancelChanged: {
                             if (!controller.waitingForCancel) {
-                                hideDialog()
+                                close()
                             }
                         }
                     }

@@ -156,9 +156,8 @@ Item {
         id: filtersDialogComponent
 
         QGCPopupDialog {
-            title:          qsTr("Logging categories")
-            buttons:        StandardButton.Close
-            destroyOnClose: true
+            title:      qsTr("Logging categories")
+            buttons:    StandardButton.Close
 
             ColumnLayout {
                 RowLayout {

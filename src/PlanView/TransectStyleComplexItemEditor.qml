@@ -189,16 +189,14 @@ Rectangle {
                         Component {
                             id: deletePresetDialog
 
-                            QGCPopupDialog {
-                                title:          qsTr("Delete Preset")
-                                buttons:        StandardButton.Yes | StandardButton.No
-                                destroyOnClose: true
+                            QGCSimpleMessageDialog {
+                                title:      qsTr("Delete Preset")
+                                text:       qsTr("Are you sure you want to delete '%1' preset?").arg(presetName)
+                                buttons:    StandardButton.Yes | StandardButton.No
 
                                 property string presetName
 
-                                onAccepted: _missionItem.deletePreset(presetName)
-
-                                QGCLabel { text: qsTr("Are you sure you want to delete '%1' preset?").arg(presetName) }
+                                onAccepted: { _missionItem.deletePreset(presetName) }
                             }
                         }
                     }
@@ -245,10 +243,9 @@ Rectangle {
             id: savePresetDialog
 
             QGCPopupDialog {
-                id:             popupDialog
-                title:          qsTr("Save Preset")
-                buttons:        StandardButton.Save | StandardButton.Cancel
-                destroyOnClose: true
+                id:         popupDialog
+                title:      qsTr("Save Preset")
+                buttons:    StandardButton.Save | StandardButton.Cancel
 
                 onAccepted: {
                     if (presetNameField.text != "") {

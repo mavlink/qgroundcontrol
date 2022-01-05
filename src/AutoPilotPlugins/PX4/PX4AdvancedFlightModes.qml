@@ -152,14 +152,6 @@ Item {
         scrollItem.height = nextY
     }
 
-    Component {
-        id: joystickEnabledDialogComponent
-
-        QGCViewMessage {
-            message: qsTr("Flight Mode Config is disabled since you have a Joystick enabled.")
-        }
-    }
-
     ScrollView {
         id:                         scroll
         anchors.fill:               parent

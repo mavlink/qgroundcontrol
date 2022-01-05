@@ -313,9 +313,8 @@ Rectangle {
         id: settingsDialogComponent
 
         QGCPopupDialog {
-            title:          qsTr("Settings")
-            buttons:        StandardButton.Close
-            destroyOnClose: true
+            title:      qsTr("Settings")
+            buttons:    StandardButton.Close
 
             ColumnLayout {
                 spacing: _margins

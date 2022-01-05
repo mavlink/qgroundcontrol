@@ -513,9 +513,8 @@ QGCPopupDialog {
         id: iconPickerDialog
 
         QGCPopupDialog {
-            title:          qsTr("Select Icon")
-            buttons:        StandardButton.Close
-            destroyOnClose: true
+            title:      qsTr("Select Icon")
+            buttons:    StandardButton.Close
 
             property var     iconNames
             property string  icon
