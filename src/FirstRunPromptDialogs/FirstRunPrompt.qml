@@ -15,7 +15,7 @@ import QGroundControl.Controls  1.0
 
 // Base class for all first run prompt dialogs
 QGCPopupDialog {
-    buttons:    StandardButton.Ok
+    buttons: StandardButton.Ok
 
     property int  promptId
     property bool markAsShownOnClose: true

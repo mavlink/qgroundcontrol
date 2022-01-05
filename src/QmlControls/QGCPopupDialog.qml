@@ -17,6 +17,28 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
+// Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
+//
+// Example usage:
+//      Component {
+//          id: dialogComponent
+//
+//          QGCPopupDialog {
+//              ...
+//          }
+//      }
+//
+//      onFoo: dialogComponent.createObject(mainWindow).open()
+//
+// Notes:
+//  * QGCPopupDialog should be created from a component to limit the memory usage of the dialog
+//      to only when it is displayed.
+//  * Parent for createObject should always be mainWindow.
+// Differences from standard Qml Dialog:
+//  * The QGCPopupDialog object will automatically be destroyed when it closed. You can override this
+//      behaviour by setting destroyOnClose to false if it was not created dynamically.
+//  * Dialog will automatically close after accepted/rejected signal processing. You can prevent this by setting
+//      preventClose = true prior to returning from your signal handlers.
 Popup {
     id:                 _root
     parent:             Overlay.overlay
@@ -105,15 +127,25 @@ Popup {
         }
     }
 
-    function accept() {
+    function _accept() {
         if (acceptAllowed) {
-            close()
+            accepted()
+            if (preventClose) {
+                preventClose = false
+            } else {
+                close()
+            }
         }
     }
 
-    function reject() {
+    function _reject() {
         if (rejectAllowed) {
-            close()
+            rejected()
+            if (preventClose) {
+                preventClose = false
+            } else {
+                close()
+            }
         }
     }
 
@@ -214,29 +246,13 @@ Popup {
 
             QGCButton {
                 id:         rejectButton
-
-                onClicked: {
-                    rejected()
-                    if (preventClose) {
-                        preventClose = false
-                    } else {
-                        close()
-                    }
-                }
+                onClicked:  _reject()
             }
 
             QGCButton {
                 id:         acceptButton
                 primary:    true
-
-                onClicked: {
-                    accepted()
-                    if (preventClose) {
-                        preventClose = false
-                    } else {
-                        close()
-                    }
-                }
+                onClicked:  _accept()
             }
         }
 
@@ -261,10 +277,10 @@ Popup {
 
                     Keys.onReleased: {
                         if (event.key === Qt.Key_Escape) {
-                            reject()
+                            _reject()
                             event.accepted = true
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            accept()
+                            _accept()
                             event.accepted = true
                         }
                     }

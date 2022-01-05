@@ -97,20 +97,6 @@ SetupPage {
                 }
             }
 
-            Component {
-                id: applyRestartDialogComponent
-
-                QGCSimpleMessageDialog {
-                    buttons:        StandardButton.Apply | StandardButton.Cancel
-                    title:          qsTr("Apply and Restart")
-                    text:           qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
-All vehicle parameters other than Radio Calibration will be reset.<br><br>\
-Your vehicle will also be restarted in order to complete the process.")
-                    destroyOnClose: true
-                    onAccepted:     controller.changeAutostart()
-                }
-            }
-
             Item {
                 id:             helpApplyRow
                 anchors.left:   parent.left
@@ -132,8 +118,13 @@ Your vehicle will also be restarted in order to complete the process.")
                     id:             applyButton
                     anchors.right:  parent.right
                     text:           qsTr("Apply and Restart")
+                    onClicked:      mainWindow.showMessageDialog(qsTr("Apply and Restart"),
+                                                                 qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
+                                                                        All vehicle parameters other than Radio Calibration will be reset.<br><br>\
+                                                                        Your vehicle will also be restarted in order to complete the process."),
+                                                                 StandardButton.Apply | StandardButton.Cancel,
+                                                                 function() { controller.changeAutostart() })
 
-                    onClicked:      applyRestartDialogComponent.createObject(mainWindow).open()
                 }
             }
 
