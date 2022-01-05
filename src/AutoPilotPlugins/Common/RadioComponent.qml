@@ -54,50 +54,13 @@ SetupPage {
             }
 
             Component {
-                id: copyTrimsDialogComponent
-
-                QGCSimpleMessageDialog {
-                    title:          qsTr("Copy Trims")
-                    text:           qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero.")
-                    destroyOnClose: true
-                    onAccepted:     controller.copyTrims()
-                }
-            }
-
-            Component {
-                id: zeroTrimsDialogComponent
-
-                QGCSimpleMessageDialog {
-                    title:          qsTr("Zero Trims")
-                    text:           qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
-                                        (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle.")))
-                    destroyOnClose: true
-                    onAccepted:     controller.nextButtonClicked()
-                }
-            }
-
-            Component {
-                id: channelCountDialogComponent
-
-                QGCSimpleMessageDialog {
-                    title:          qsTr("Radio Not Ready")
-                    text:           controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
-                                                                   (controller.channelCount < controller.minChannelCount ?
-                                                                        qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
-                                                                        qsTr("Ready to calibrate."))
-                    destroyOnClose: true
-                }
-            }
-
-            Component {
                 id: spektrumBindDialogComponent
 
                 QGCPopupDialog {
-                    title:          qsTr("Spektrum Bind")
-                    buttons:        StandardButton.Ok | StandardButton.Cancel
-                    destroyOnClose: true
+                    title:      qsTr("Spektrum Bind")
+                    buttons:    StandardButton.Ok | StandardButton.Cancel
 
-                    onAccepted: controller.spektrumBindMode(radioGroup.checkedButton.bindMode)
+                    onAccepted: { controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
 
                     ButtonGroup { id: radioGroup }
 
@@ -351,9 +314,17 @@ SetupPage {
                         onClicked: {
                             if (text === qsTr("Calibrate")) {
                                 if (controller.channelCount < controller.minChannelCount) {
-                                    channelCountDialogComponent.createObject(mainWindow).open()
+                                    mainWindow.showMessageDialog(qsTr("Radio Not Ready"),
+                                                                 controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
+                                                                                                (controller.channelCount < controller.minChannelCount ?
+                                                                                                     qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
+                                                                                                     qsTr("Ready to calibrate.")))
                                 } else {
-                                    zeroTrimsDialogComponent.createObject(mainWindow).open()
+                                    mainWindow.showMessageDialog(qsTr("Zero Trims"),
+                                                                 qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
+                                                                     (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
+                                                                 StandardButton.Ok,
+                                                                 function() { controller.nextButtonClicked() })
                                 }
                             } else {
                                 controller.nextButtonClicked()
@@ -419,7 +390,10 @@ SetupPage {
 
                     QGCButton {
                         text:       qsTr("Copy Trims")
-                        onClicked:  copyTrimsDialogComponent.createObject(mainWindow).open()
+                        onClicked:  mainWindow.showMessageDialog(qsTr("Copy Trims"),
+                                                                 qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
+                                                                 StandardButton.Ok | StandardButton.Cancel,
+                                                                 function() { controller.copyTrims() })
                     }
                 }
             } // Column - Left Column

@@ -412,9 +412,8 @@ SetupPage {
                 id: calcVoltageDividerDlgComponent
 
                 QGCPopupDialog {
-                    title:          qsTr("Calculate Voltage Divider")
-                    buttons:        StandardButton.Close
-                    destroyOnClose: true
+                    title:      qsTr("Calculate Voltage Divider")
+                    buttons:    StandardButton.Close
 
                     property alias batteryIndex: batParams.batteryIndex
 
@@ -471,9 +470,8 @@ SetupPage {
                 id: calcAmpsPerVoltDlgComponent
 
                 QGCPopupDialog {
-                    title:          qsTr("Calculate Amps per Volt")
-                    buttons:        StandardButton.Close
-                    destroyOnClose: true
+                    title:      qsTr("Calculate Amps per Volt")
+                    buttons:    StandardButton.Close
 
                     property alias batteryIndex: batParams.batteryIndex
 
@@ -534,7 +532,6 @@ SetupPage {
                     title:                  qsTr("ESC Calibration")
                     buttons:                StandardButton.Ok
                     acceptButtonEnabled:    false
-                    destroyOnClose:         true
 
                     Connections {
                         target: controller

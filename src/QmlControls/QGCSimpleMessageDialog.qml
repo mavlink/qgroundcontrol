@@ -14,7 +14,14 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
 QGCPopupDialog {
-    property alias text: label.text
+    property alias  text:           label.text
+    property var    acceptFunction: null        // Mainly used by MainRootWindow.showMessage to specify accept function in call
+
+    onAccepted: {
+        if (acceptFunction) {
+            acceptFunction()
+        }
+    }
 
     ColumnLayout {
         QGCLabel {

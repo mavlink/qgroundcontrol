@@ -167,15 +167,20 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
-    function showMessageDialog(dialogTitle, dialogText) {
-        simpleMessageDialog.title = dialogTitle
-        simpleMessageDialog.text = dialogText
-        simpleMessageDialog.open()
+    function showMessageDialog(dialogTitle, dialogText, buttons = StandardButton.Ok, acceptFunction = null) {
+        simpleMessageDialogComponent.createObject(mainWindow, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction }).open()
     }
 
-    QGCSimpleMessageDialog {
-        id:         simpleMessageDialog
-        buttons:    StandardButton.Ok
+    // This variant is only meant to be called by QGCApplication
+    function _showMessageDialog(dialogTitle, dialogText) {
+        showMessageDialog(dialogTitle, dialogText)
+    }
+
+    Component {
+        id: simpleMessageDialogComponent
+
+        QGCSimpleMessageDialog {
+        }
     }
 
     /// Saves main window position and size
@@ -232,7 +237,10 @@ ApplicationWindow {
 
     function checkForUnsavedMission() {
         if (globals.planMasterControllerPlanView && globals.planMasterControllerPlanView.dirty) {
-            unsavedMissionCloseDialog.open()
+            showMessageDialog(closeDialogTitle,
+                              qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
+                              StandardButton.Yes | StandardButton.No,
+                              function() { checkForPendingParameterWrites() })
         } else {
             checkForPendingParameterWrites()
         }
@@ -241,7 +249,10 @@ ApplicationWindow {
     function checkForPendingParameterWrites() {
         for (var index=0; index<QGroundControl.multiVehicleManager.vehicles.count; index++) {
             if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
-                pendingParameterWritesCloseDialog.open()
+                mainWindow.showMessageDialog(closeDialogTitle,
+                    qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
+                    StandardButton.Yes | StandardButton.No,
+                    function() { checkForActiveConnections() })
                 return
             }
         }
@@ -250,7 +261,10 @@ ApplicationWindow {
 
     function checkForActiveConnections() {
         if (QGroundControl.multiVehicleManager.activeVehicle) {
-            activeConnectionsCloseDialog.open()
+            mainWindow.showMessageDialog(closeDialogTitle,
+                qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
+                StandardButton.Yes | StandardButton.No,
+                function() { finishCloseProcess() })
         } else {
             finishCloseProcess()
         }
@@ -261,30 +275,6 @@ ApplicationWindow {
             close.accepted = false
             checkForUnsavedMission()
         }
-    }
-
-    QGCSimpleMessageDialog {
-        id:         unsavedMissionCloseDialog
-        title:      closeDialogTitle
-        text:       qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?")
-        buttons:    StandardButton.Yes | StandardButton.No
-        onAccepted: checkForPendingParameterWrites()
-    }
-
-    QGCSimpleMessageDialog {
-        id:         pendingParameterWritesCloseDialog
-        title:      closeDialogTitle
-        text:       qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?")
-        buttons:    StandardButton.Yes | StandardButton.No
-        onAccepted: checkForActiveConnections()
-    }
-
-    QGCSimpleMessageDialog {
-        id:         activeConnectionsCloseDialog
-        title:      closeDialogTitle
-        text:       qsTr("There are still active connections to vehicles. Are you sure you want to exit?")
-        buttons:    StandardButton.Yes | StandardButton.No
-        onAccepted: finishCloseProcess()
     }
 
     //-------------------------------------------------------------------------
@@ -308,119 +298,123 @@ ApplicationWindow {
 
     function showToolSelectDialog() {
         if (!mainWindow.preventViewSwitch()) {
-            toolSelectDialog.open()
+            toolSelectDialogComponent.createObject(mainWindow).open()
         }
     }
 
-    QGCPopupDialog {
-        id:         toolSelectDialog
-        title:      qsTr("Select Tool")
-        buttons:    StandardButton.Close
+    Component {
+        id: toolSelectDialogComponent
 
-        property real _toolButtonHeight:    ScreenTools.defaultFontPixelHeight * 3
-        property real _margins:             ScreenTools.defaultFontPixelWidth
+        QGCPopupDialog {
+            id:         toolSelectDialog
+            title:      qsTr("Select Tool")
+            buttons:    StandardButton.Close
 
-        ColumnLayout {
-            width:  innerLayout.width + (toolSelectDialog._margins * 2)
-            height: innerLayout.height + (toolSelectDialog._margins * 2)
+            property real _toolButtonHeight:    ScreenTools.defaultFontPixelHeight * 3
+            property real _margins:             ScreenTools.defaultFontPixelWidth
 
             ColumnLayout {
-                id:             innerLayout
-                Layout.margins: toolSelectDialog._margins
-                spacing:        ScreenTools.defaultFontPixelWidth
-
-                SubMenuButton {
-                    id:                 setupButton
-                    height:             toolSelectDialog._toolButtonHeight
-                    Layout.fillWidth:   true
-                    text:               qsTr("Vehicle Setup")
-                    imageColor:         qgcPal.text
-                    imageResource:      "/qmlimages/Gears.svg"
-                    onClicked: {
-                        if (!mainWindow.preventViewSwitch()) {
-                            toolSelectDialog.close()
-                            mainWindow.showSetupTool()
-                        }
-                    }
-                }
-
-                SubMenuButton {
-                    id:                 analyzeButton
-                    height:             toolSelectDialog._toolButtonHeight
-                    Layout.fillWidth:   true
-                    text:               qsTr("Analyze Tools")
-                    imageResource:      "/qmlimages/Analyze.svg"
-                    imageColor:         qgcPal.text
-                    visible:            QGroundControl.corePlugin.showAdvancedUI
-                    onClicked: {
-                        if (!mainWindow.preventViewSwitch()) {
-                            toolSelectDialog.close()
-                            mainWindow.showAnalyzeTool()
-                        }
-                    }
-                }
-
-                SubMenuButton {
-                    id:                 settingsButton
-                    height:             toolSelectDialog._toolButtonHeight
-                    Layout.fillWidth:   true
-                    text:               qsTr("Application Settings")
-                    imageResource:      "/res/QGCLogoFull"
-                    imageColor:         "transparent"
-                    visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                    onClicked: {
-                        if (!mainWindow.preventViewSwitch()) {
-                            toolSelectDialog.close()
-                            mainWindow.showSettingsTool()
-                        }
-                    }
-                }
+                width:  innerLayout.width + (toolSelectDialog._margins * 2)
+                height: innerLayout.height + (toolSelectDialog._margins * 2)
 
                 ColumnLayout {
-                    width:      innerLayout.width
-                    spacing:    0
+                    id:             innerLayout
+                    Layout.margins: toolSelectDialog._margins
+                    spacing:        ScreenTools.defaultFontPixelWidth
 
-                    QGCLabel {
-                        id:                     versionLabel
-                        text:                   qsTr("%1 Version").arg(QGroundControl.appName)
-                        font.pointSize:         ScreenTools.smallFontPointSize
-                        wrapMode:               QGCLabel.WordWrap
-                        Layout.maximumWidth:    parent.width
-                        Layout.alignment:       Qt.AlignHCenter
+                    SubMenuButton {
+                        id:                 setupButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Vehicle Setup")
+                        imageColor:         qgcPal.text
+                        imageResource:      "/qmlimages/Gears.svg"
+                        onClicked: {
+                            if (!mainWindow.preventViewSwitch()) {
+                                toolSelectDialog.close()
+                                mainWindow.showSetupTool()
+                            }
+                        }
                     }
 
-                    QGCLabel {
-                        text:                   QGroundControl.qgcVersion
-                        font.pointSize:         ScreenTools.smallFontPointSize
-                        wrapMode:               QGCLabel.WrapAnywhere
-                        Layout.maximumWidth:    parent.width
-                        Layout.alignment:       Qt.AlignHCenter
+                    SubMenuButton {
+                        id:                 analyzeButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Analyze Tools")
+                        imageResource:      "/qmlimages/Analyze.svg"
+                        imageColor:         qgcPal.text
+                        visible:            QGroundControl.corePlugin.showAdvancedUI
+                        onClicked: {
+                            if (!mainWindow.preventViewSwitch()) {
+                                toolSelectDialog.close()
+                                mainWindow.showAnalyzeTool()
+                            }
+                        }
+                    }
 
-                        QGCMouseArea {
-                            id:                 easterEggMouseArea
-                            anchors.topMargin:  -versionLabel.height
-                            anchors.fill:       parent
+                    SubMenuButton {
+                        id:                 settingsButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Application Settings")
+                        imageResource:      "/res/QGCLogoFull"
+                        imageColor:         "transparent"
+                        visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                        onClicked: {
+                            if (!mainWindow.preventViewSwitch()) {
+                                toolSelectDialog.close()
+                                mainWindow.showSettingsTool()
+                            }
+                        }
+                    }
 
-                            onClicked: {
-                                if (mouse.modifiers & Qt.ControlModifier) {
-                                    QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                                } else if (mouse.modifiers & Qt.ShiftModifier) {
-                                    if(!QGroundControl.corePlugin.showAdvancedUI) {
-                                        advancedModeConfirmation.open()
-                                    } else {
-                                        QGroundControl.corePlugin.showAdvancedUI = false
+                    ColumnLayout {
+                        width:      innerLayout.width
+                        spacing:    0
+
+                        QGCLabel {
+                            id:                     versionLabel
+                            text:                   qsTr("%1 Version").arg(QGroundControl.appName)
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               QGCLabel.WordWrap
+                            Layout.maximumWidth:    parent.width
+                            Layout.alignment:       Qt.AlignHCenter
+                        }
+
+                        QGCLabel {
+                            text:                   QGroundControl.qgcVersion
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               QGCLabel.WrapAnywhere
+                            Layout.maximumWidth:    parent.width
+                            Layout.alignment:       Qt.AlignHCenter
+
+                            QGCMouseArea {
+                                id:                 easterEggMouseArea
+                                anchors.topMargin:  -versionLabel.height
+                                anchors.fill:       parent
+
+                                onClicked: {
+                                    if (mouse.modifiers & Qt.ControlModifier) {
+                                        QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                                    } else if (mouse.modifiers & Qt.ShiftModifier) {
+                                        if(!QGroundControl.corePlugin.showAdvancedUI) {
+                                            advancedModeConfirmation.open()
+                                        } else {
+                                            QGroundControl.corePlugin.showAdvancedUI = false
+                                        }
                                     }
                                 }
-                            }
 
-                            MessageDialog {
-                                id:                 advancedModeConfirmation
-                                title:              qsTr("Advanced Mode")
-                                text:               QGroundControl.corePlugin.showAdvancedUIMessage
-                                standardButtons:    StandardButton.Yes | StandardButton.No
-                                onYes: {
-                                    QGroundControl.corePlugin.showAdvancedUI = true
-                                    advancedModeConfirmation.close()
+                                MessageDialog {
+                                    id:                 advancedModeConfirmation
+                                    title:              qsTr("Advanced Mode")
+                                    text:               QGroundControl.corePlugin.showAdvancedUIMessage
+                                    standardButtons:    StandardButton.Yes | StandardButton.No
+                                    onYes: {
+                                        QGroundControl.corePlugin.showAdvancedUI = true
+                                        advancedModeConfirmation.close()
+                                    }
                                 }
                             }
                         }
@@ -429,6 +423,7 @@ ApplicationWindow {
             }
         }
     }
+
 
     FlyView {
         id:             flightView

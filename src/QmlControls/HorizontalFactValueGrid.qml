@@ -189,6 +189,6 @@ T.HorizontalFactValueGrid {
     Component {
         id: valueEditDialog
 
-        InstrumentValueEditDialog { destroyOnClose: true }
+        InstrumentValueEditDialog { }
     }
 }

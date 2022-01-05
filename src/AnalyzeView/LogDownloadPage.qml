@@ -169,21 +169,10 @@ AnalyzePage {
                     enabled:    !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
                     text:       qsTr("Erase All")
                     width:      _butttonWidth
-                    onClicked:  mainWindow.showComponentDialog(
-                        eraseAllMessage,
-                        qsTr("Delete All Log Files"),
-                        mainWindow.showDialogDefaultWidth,
-                        StandardButton.Yes | StandardButton.No)
-                    Component {
-                        id: eraseAllMessage
-                        QGCViewMessage {
-                            message:    qsTr("All log files will be erased permanently. Is this really what you want?")
-                            function accept() {
-                                logController.eraseAll()
-                                hideDialog()
-                            }
-                        }
-                    }
+                    onClicked:  mainWindow.showMessageDialog(qsTr("Delete All Log Files"),
+                                                             qsTr("All log files will be erased permanently. Is this really what you want?"),
+                                                             StandardButton.Yes | StandardButton.No,
+                                                             function() { logController.eraseAll() })
                 }
                 QGCButton {
                     text:       qsTr("Cancel")

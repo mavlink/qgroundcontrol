@@ -62,7 +62,7 @@ QGCPopupDialog {
                 if (_allowForceSave) {
                     forceSave.visible = true
                 }
-                root.preventClose = true
+                preventClose = true
             }
         }
     }
@@ -268,8 +268,7 @@ QGCPopupDialog {
         id: rcToParamDialog
 
         RCToParamDialog {
-            tuningFact:     fact
-            destroyOnClose: true
+            tuningFact: fact
         }
     }
 }

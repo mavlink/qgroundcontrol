@@ -45,7 +45,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal }
     QGCFileDialogController { id: fileController }
-    Component { id: altModeDialogComponent; AltModeDialog { destroyOnClose: true } }
+    Component { id: altModeDialogComponent; AltModeDialog { } }
 
     Connections {
         target: _controllerVehicle
