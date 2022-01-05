@@ -47,7 +47,6 @@ QGCTextField {
             validate:       true
             validateValue:  _validateString
             fact:           _textField.fact
-            destroyOnClose: true
         }
     }
 
@@ -57,7 +56,6 @@ QGCTextField {
         ParameterEditorDialog {
             title:          qsTr("Value Details")
             fact:           _textField.fact
-            destroyOnClose: true
         }
     }
 }

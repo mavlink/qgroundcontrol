@@ -47,7 +47,7 @@ Rectangle {
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    Component { id: altModeDialogComponent; AltModeDialog { destroyOnClose: true } }
+    Component { id: altModeDialogComponent; AltModeDialog { } }
 
     Column {
         id:                 editorColumn

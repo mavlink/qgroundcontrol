@@ -411,19 +411,17 @@ Item {
 
     Component {
         id: deleteConfirmationDialogComponent
-        QGCViewMessage {
-            id:  deleteConfirmationDialog
-            message: {
-                if(offlineMapView._currentSelection.defaultSet)
-                    return qsTr("This will delete all tiles INCLUDING the tile sets you have created yourself.\n\nIs this really what you want?");
-                else
-                    return qsTr("Delete %1 and all its tiles.\n\nIs this really what you want?").arg(offlineMapView._currentSelection.name);
-            }
-            function accept() {
+        QGCSimpleMessageDialog {
+            title:      qsTr("Confirm Delete")
+            text:       offlineMapView._currentSelection.defaultSet ?
+                            qsTr("This will delete all tiles INCLUDING the tile sets you have created yourself.\n\nIs this really what you want?") :
+                            qsTr("Delete %1 and all its tiles.\n\nIs this really what you want?").arg(offlineMapView._currentSelection.name)
+            buttons:    StandardButton.Yes | StandardButton.No
+
+            onAccepted: {
                 QGroundControl.mapEngineManager.deleteTileSet(offlineMapView._currentSelection)
                 deleteConfirmationDialog.hideDialog()
                 leaveInfoView()
-                showList()
             }
         }
     }
@@ -606,7 +604,7 @@ Item {
                         QGCButton {
                             text:       qsTr("Delete")
                             width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
-                            onClicked:  mainWindow.showComponentDialog(deleteConfirmationDialogComponent, qsTr("Confirm Delete"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                            onClicked:  deleteConfirmationDialogComponent.createObject(mainWindow).open()
                         }
                         QGCButton {
                             text:       qsTr("Ok")
