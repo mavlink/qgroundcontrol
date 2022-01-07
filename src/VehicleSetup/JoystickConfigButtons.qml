@@ -171,8 +171,21 @@ ColumnLayout {
                     property Fact fact:         controller.parameterExists(-1, parameterName) ? controller.getParameterFact(-1, parameterName) : null
                     property Fact fact_shift:   controller.parameterExists(-1, parameterShiftName) ? controller.getParameterFact(-1, parameterShiftName) : null
                     property var factOptions:   fact ? fact.enumStrings : [];
-                    model:                      [..._activeJoystick.assignableActionTitles, ...factOptions]
-                    property var isFwAction:    currentIndex >= _activeJoystick.assignableActionTitles.length
+                    property var qgcActions:    _activeJoystick.assignableActionTitles.filter(
+                        function(s) {
+                            return [
+                                s.includes("Camera")
+                                , s.includes("Stream")
+                                , s.includes("Stream")
+                                , s.includes("Zoom")
+                                , s.includes("Gimbal")
+                                , s.includes("No Action")
+                            ].some(Boolean)
+                        }
+                    )
+
+                    model:                      [...qgcActions, ...factOptions]
+                    property var isFwAction:    currentIndex >= qgcActions.length
                     sizeToContents: true
 
                     function _findCurrentButtonAction() {
@@ -180,7 +193,7 @@ ColumnLayout {
                         if(_activeJoystick) {
                             if (fact && fact.value > 0) {
                                 // This is a firmware function
-                                currentIndex = _activeJoystick.assignableActionTitles.length + fact.value
+                                currentIndex = qgcActions.length + fact.value
                                 // For sanity reasons, make sure qgc is set to "no action" if the firmware is set to do something
                                 _activeJoystick.setButtonAction(modelData, "No Action")
                             } else {
