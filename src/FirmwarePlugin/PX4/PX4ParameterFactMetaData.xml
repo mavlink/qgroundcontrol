@@ -7917,6 +7917,10 @@
       <unit>s</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="SENS_IMU_AUTOCAL" default="1" type="INT32" boolean="true" category="System">
+      <short_desc>IMU auto calibration</short_desc>
+      <long_desc>Automatically initialize IMU (accel/gyro) calibration from bias estimates if available.</long_desc>
+    </parameter>
     <parameter name="SENS_IMU_MODE" default="1" type="INT32" category="System">
       <short_desc>Sensors hub IMU mode</short_desc>
       <reboot_required>true</reboot_required>
