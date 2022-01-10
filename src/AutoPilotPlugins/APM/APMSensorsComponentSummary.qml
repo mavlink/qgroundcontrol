@@ -73,8 +73,29 @@ Item {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Accelerometer(s)")
+            labelText: qsTr("Accelerometer(s):")
             valueText: controller.accelSetupNeeded ? qsTr("Setup required") : qsTr("Ready")
+        }
+
+        Repeater {
+            model: sensorParams.rgInsId.length
+            APMSensorIdDecoder {
+                fact:          sensorParams.rgInsId[index]
+                anchors.right: parent.right
+            }
+        }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Barometer(s):")
+            valueText: ""
+        }
+
+        Repeater {
+            model: sensorParams.rgBaroId.length
+            APMSensorIdDecoder {
+                fact:          sensorParams.rgBaroId[index]
+                anchors.right: parent.right
+            }
         }
     }
 }
