@@ -293,9 +293,16 @@ void APMSensorsComponentController::calibrateCompass(void)
     // Now we wait for the result to come back
 }
 
-void APMSensorsComponentController::calibrateAccel(void)
+void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
 {
+
     _calTypeInProgress = CalTypeAccel;
+    if (doSimpleAccelCal) {
+        _startLogCalibration();
+        _calTypeInProgress = CalTypeAccelFast;
+        _vehicle->startCalibration(Vehicle::CalibrationAPMAccelSimple);
+        return;
+    }
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startVisualCalibration();
     _cancelButton->setEnabled(false);
@@ -496,7 +503,7 @@ bool APMSensorsComponentController::usingUDPLink(void)
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
 {
-    if (_calTypeInProgress == CalTypeLevelHorizon || _calTypeInProgress == CalTypeGyro || _calTypeInProgress == CalTypePressure) {
+    if (_calTypeInProgress == CalTypeLevelHorizon || _calTypeInProgress == CalTypeGyro || _calTypeInProgress == CalTypePressure || _calTypeInProgress == CalTypeAccelFast) {
         mavlink_command_ack_t commandAck;
         mavlink_msg_command_ack_decode(&message, &commandAck);
 
