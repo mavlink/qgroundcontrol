@@ -81,6 +81,7 @@ public:
 
     Q_INVOKABLE void calibrateCompass           (void);
     Q_INVOKABLE void calibrateAccel             (bool doSimpleAccelCal);
+    Q_INVOKABLE void calibrateCompassNorth      (float lat, float lon, int mask);
     Q_INVOKABLE void calibrateGyro              (void);
     Q_INVOKABLE void calibrateMotorInterference (void);
     Q_INVOKABLE void levelHorizon               (void);
