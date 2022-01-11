@@ -40,7 +40,7 @@ elseif(APPLE)
 		COMMAND
 			rsync -a --delete ${CMAKE_BINARY_DIR}/QGroundControl.app ${CMAKE_BINARY_DIR}/staging
 		COMMAND
-			hdiutil create /tmp/tmp.dmg -ov -volname "QGroundControl-$${GIT_VERSION}" -fs HFS+ -srcfolder "staging"
+			hdiutil create /tmp/tmp.dmg -ov -volname "QGroundControl-$${APP_VERSION_STR}" -fs HFS+ -srcfolder "staging"
 		COMMAND
 			hdiutil convert /tmp/tmp.dmg -format UDBZ -o ${CMAKE_BINARY_DIR}/package/QGroundControl.dmg
 	)
