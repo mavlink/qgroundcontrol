@@ -81,10 +81,13 @@ SetupPage {
             property bool   _compassAutoRotAvailable:       controller.parameterExists(-1, "COMPASS_AUTO_ROT")
             property Fact   _compassAutoRotFact:            controller.getParameterFact(-1, "COMPASS_AUTO_ROT", false /* reportMissing */)
             property bool   _compassAutoRot:                _compassAutoRotAvailable ? _compassAutoRotFact.rawValue == 2 : false
+            property bool   _showSimpleAccelCalOption:      false
+            property bool   _doSimpleAccelCal:              false
 
             function showOrientationsDialog(calType) {
                 var dialogTitle
                 var buttons = StandardButton.Ok
+                _showSimpleAccelCalOption = false
 
                 _orientationDialogCalType = calType
                 switch (calType) {
@@ -109,6 +112,10 @@ SetupPage {
                 }
 
                 mainWindow.showComponentDialog(orientationsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, buttons)
+            }
+
+            function showSimpleAccelCalOption() {
+                _showSimpleAccelCalOption = true
             }
 
             function compassLabel(index) {
@@ -406,7 +413,7 @@ SetupPage {
 
                     function accept() {
                         if (_orientationDialogCalType == _calTypeAccel) {
-                            controller.calibrateAccel()
+                            controller.calibrateAccel(_doSimpleAccelCal)
                         } else if (_orientationDialogCalType == _calTypeCompass) {
                             controller.calibrateCompass()
                         }
@@ -439,6 +446,21 @@ SetupPage {
                                     width:      rotationColumnWidth
                                     indexModel: false
                                     fact:       boardRot
+                                }
+                            }
+
+                            Column {
+                                spacing: ScreenTools.defaultFontPixelHeight
+
+                                QGCLabel {
+                                    width:      parent.width
+                                    wrapMode:   Text.WordWrap
+                                    text: qsTr("Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.")
+                                }
+
+                                QGCCheckBox {
+                                    text: "Simple Accelerometer Calibration"
+                                    onClicked: _doSimpleAccelCal = this.checked
                                 }
                             }
 
@@ -632,7 +654,10 @@ SetupPage {
                         text:           qsTr("Accelerometer")
                         indicatorGreen: !accelCalNeeded
 
-                        onClicked: showOrientationsDialog(_calTypeAccel)
+                        onClicked: function () {
+                            showOrientationsDialog(_calTypeAccel);
+                            showSimpleAccelCalOption();
+                        }
                     }
 
                     IndicatorButton {

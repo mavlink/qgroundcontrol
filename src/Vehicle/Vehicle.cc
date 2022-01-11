@@ -3305,6 +3305,9 @@ void Vehicle::startCalibration(Vehicle::CalibrationType calType)
             // Gyro cal for ArduCopter only
             param1 = 1;
         }
+    case CalibrationAPMAccelSimple:
+        param5 = 4;
+        break;
     }
 
     // We can't use sendMavCommand here since we have no idea how long it will be before the command returns a result. This in turn
