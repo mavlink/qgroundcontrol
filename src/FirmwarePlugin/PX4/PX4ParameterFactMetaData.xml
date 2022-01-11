@@ -8627,8 +8627,9 @@
       <short_desc>Vehicle type</short_desc>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="0">MC</value>
-        <value code="1">FW</value>
+        <value code="0">Multicopter</value>
+        <value code="1">Fixed-Wing</value>
+        <value code="2">Tailsitter</value>
       </values>
     </parameter>
   </group>
