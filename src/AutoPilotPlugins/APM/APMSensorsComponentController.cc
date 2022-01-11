@@ -280,6 +280,14 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
         }
     } else if (command == MAV_CMD_DO_START_MAG_CAL && result != MAV_RESULT_ACCEPTED) {
         _restorePreviousCompassCalFitness();
+    } else if (command == MAV_CMD_FIXED_MAG_CAL_YAW) {
+        if (result == MAV_RESULT_ACCEPTED) {
+            _appendStatusLog(tr("Successfully completed"));
+            _stopCalibration(StopCalibrationSuccessShowLog);
+        } else {
+            _appendStatusLog(tr("Failed"));
+            _stopCalibration(StopCalibrationFailed);
+        }
     }
 }
 
@@ -291,6 +299,13 @@ void APMSensorsComponentController::calibrateCompass(void)
     _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
 
     // Now we wait for the result to come back
+}
+
+void APMSensorsComponentController::calibrateCompassNorth(float lat, float lon, int mask)
+{
+    _startLogCalibration();
+    connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_FIXED_MAG_CAL_YAW, true /* showError */, 0 /* north*/, mask, lat, lon);
 }
 
 void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)

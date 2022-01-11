@@ -22,6 +22,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ArduPilot     1.0
+import QGroundControl.QGCPositionManager    1.0
 
 SetupPage {
     id:             sensorsPage
@@ -83,6 +84,8 @@ SetupPage {
             property bool   _compassAutoRot:                _compassAutoRotAvailable ? _compassAutoRotFact.rawValue == 2 : false
             property bool   _showSimpleAccelCalOption:      false
             property bool   _doSimpleAccelCal:              false
+            property var    _gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
+            property var    _mapPosition:                    QGroundControl.flightMapPosition
 
             function showOrientationsDialog(calType) {
                 var dialogTitle
@@ -411,11 +414,36 @@ SetupPage {
                 QGCViewDialog {
                     id: orientationsDialog
 
+                    function compassMask () {
+                        var mask = 0
+                        mask |=  (0 + (sensorParams.rgCompassPrio[0].rawValue !== 0)) << 0
+                        mask |=  (0 + (sensorParams.rgCompassPrio[1].rawValue !== 0)) << 1
+                        mask |=  (0 + (sensorParams.rgCompassPrio[2].rawValue !== 0)) << 2
+                        return mask
+                    }
+
                     function accept() {
                         if (_orientationDialogCalType == _calTypeAccel) {
                             controller.calibrateAccel(_doSimpleAccelCal)
                         } else if (_orientationDialogCalType == _calTypeCompass) {
-                            controller.calibrateCompass()
+                            if (!northCalibrationCheckBox.checked) {
+                                controller.calibrateCompass()
+                            } else {
+                               var lat = parseFloat(northCalLat.text)
+                               var lon = parseFloat(northCalLon.text)
+                               if (useMapPositionCheckbox.checked) {
+                                   lat = _mapPosition.latitude
+                                   lon = _mapPosition.longitude
+                               }
+                               if (useGcsPositionCheckbox.checked) {
+                                   lat = _gcsPosition.latitude
+                                   lon = _gcsPosition.longitude
+                               }
+                               if (isNaN(lat) || isNaN(lon)) {
+                                   return
+                               }
+                               controller.calibrateCompassNorth(lat, lon, compassMask())
+                            }
                         }
                         orientationsDialog.hideDialog()
                     }
@@ -498,6 +526,77 @@ SetupPage {
                                     fact:       sensorParams.declinationFact
                                     enabled:    manualMagneticDeclinationCheckBox.checked
                                 }
+                            }
+
+                            Item { height: ScreenTools.defaultFontPixelHeight; width: 10 } // spacer
+
+                            QGCLabel {
+                                id:         northCalibrationLabel
+                                width:      parent.width
+                                visible:    _orientationsDialogShowCompass
+                                wrapMode:   Text.WordWrap
+                                text:       qsTr("Fast compass calibration given vehicle position and yaw. This ") +
+                                            qsTr("results in zero diagonal and off-diagonal elements, so is only ") +
+                                            qsTr("suitable for vehicles where the field is close to spherical. It is ") +
+                                            qsTr("useful for large vehicles where moving the vehicle to calibrate it ") +
+                                            qsTr("is difficult. Point the vehicle North before using it.")
+                            }
+
+                            Column {
+                                visible:            northCalibrationLabel.visible
+                                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                anchors.left:       parent.left
+                                anchors.right:      parent.right
+                                spacing:            ScreenTools.defaultFontPixelHeight
+
+                                QGCCheckBox {
+                                    id:             northCalibrationCheckBox
+                                    visible:        northCalibrationLabel.visible
+                                    text:           qsTr("Fast Calibration")
+                                }
+
+                                QGCLabel {
+                                    id:         northCalibrationManualPosition
+                                    width:      parent.width
+                                    visible:    northCalibrationCheckBox.checked && !globals.activeVehicle.coordinate.isValid
+                                    wrapMode:   Text.WordWrap
+                                    text:       qsTr("Vehicle has no Valid positon, please provide it")
+                                }
+
+                                QGCCheckBox {
+                                    visible:    northCalibrationManualPosition.visible && _gcsPosition.isValid
+                                    id:         useGcsPositionCheckbox
+                                    text:       qsTr("Use GCS position instead")
+                                    checked:    _gcsPosition.isValid
+                                }
+                                QGCCheckBox {
+                                    visible:    northCalibrationManualPosition.visible && !_gcsPosition.isValid
+                                    id:         useMapPositionCheckbox
+                                    text:       qsTr("Use current map position instead")
+                                }
+
+                                QGCLabel {
+                                    width:      parent.width
+                                    visible:    useMapPositionCheckbox.checked
+                                    wrapMode:   Text.WordWrap
+                                    text:       qsTr(`Lat: ${_mapPosition.latitude.toFixed(4)} Lon: ${_mapPosition.longitude.toFixed(4)}`)
+                                }
+
+                                FactTextField {
+                                    id:         northCalLat
+                                    visible:    !useGcsPositionCheckbox.checked && !useMapPositionCheckbox.checked && northCalibrationCheckBox.checked
+                                    text:       "0.00"
+                                    textColor:  isNaN(parseFloat(text)) ? qgcPal.warningText: qgcPal.textFieldText
+                                    enabled:    !useGcsPositionCheckbox.checked
+                                }
+                                FactTextField {
+                                    id:         northCalLon
+                                    visible:    !useGcsPositionCheckbox.checked && !useMapPositionCheckbox.checked && northCalibrationCheckBox.checked
+                                    text:       "0.00"
+                                    textColor:  isNaN(parseFloat(text)) ? qgcPal.warningText: qgcPal.textFieldText
+                                    enabled:    !useGcsPositionCheckbox.checked
+                                }
+
                             }
                         } // Column
                     } // QGCFlickable
