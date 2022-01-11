@@ -45,7 +45,7 @@ add_definitions(
 	)
 
 include(Git)
-message(STATUS "QGroundControl version: ${GIT_VERSION}")
+message(STATUS "QGroundControl version: ${APP_VERSION_STR}")
 
 #=============================================================================
 # ccache

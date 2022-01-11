@@ -39,7 +39,7 @@ set(COPYRIGHT "Copyright (c) 2020 VideoReceiverApp. All rights reserved.")
 set(IDENTIFIER "labs.auterion.VideoReceiverApp")
 
 include(Git)
-message(STATUS "VideoReceiverApp version: ${GIT_VERSION}")
+message(STATUS "VideoReceiverApp version: ${APP_VERSION_STR}")
 
 #=============================================================================
 # ccache
