@@ -798,6 +798,17 @@
       <output name="MAIN8">motor 8 CCW, stern port vertical, propeller CCW</output>
     </airframe>
   </airframe_group>
+  <airframe_group name="Simulation (VTOL)" image="AirframeUnknown">
+    <airframe name="SIH Tailsitter Duo" id="1102" maintainer="Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;">
+      <class>VTOL</class>
+      <maintainer>Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;</maintainer>
+      <type>Simulation</type>
+      <output name="MAIN1">motor right</output>
+      <output name="MAIN2">motor left</output>
+      <output name="MAIN5">elevon right</output>
+      <output name="MAIN6">elevon left</output>
+    </airframe>
+  </airframe_group>
   <airframe_group name="Standard VTOL" image="VTOLPlane">
     <airframe name="HIL Standard VTOL QuadPlane" id="1002" maintainer="Roman Bapst &lt;roman@auterion.com&gt;">
       <class>VTOL</class>
