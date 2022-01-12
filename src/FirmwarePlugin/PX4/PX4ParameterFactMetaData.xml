@@ -9412,6 +9412,10 @@
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
+    <parameter name="CANNODE_GPS_RTCM" default="0" type="INT32" boolean="true">
+      <short_desc>Enable RTCM pub/sub</short_desc>
+      <max>1</max>
+    </parameter>
     <parameter name="CANNODE_NODE_ID" default="120" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
