@@ -3575,7 +3575,7 @@
       <unit>m/s^2</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="LNDMC_ALT_GND" default="-1.0" type="FLOAT">
+    <parameter name="LNDMC_ALT_GND" default="2." type="FLOAT">
       <short_desc>Ground effect altitude for multicopters</short_desc>
       <long_desc>The height above ground below which ground effect creates barometric altitude errors. A negative value indicates no ground effect.</long_desc>
       <min>-1</min>
