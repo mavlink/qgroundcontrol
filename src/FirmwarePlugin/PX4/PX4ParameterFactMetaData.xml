@@ -4652,7 +4652,7 @@
     </parameter>
     <parameter name="MPC_LAND_ALT1" default="10.0" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" (or "MPC_Z_V_AUTO_DN") and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4927,20 +4927,23 @@
       <max>3.0</max>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="MPC_Z_VEL_MAX_DN" default="1.0" type="FLOAT">
-      <short_desc>Maximum vertical descent velocity</short_desc>
-      <long_desc>Maximum vertical velocity in AUTO mode and endpoint for stabilized modes (ALTCTRL, POSCTRL).</long_desc>
+    <parameter name="MPC_Z_VEL_MAX_DN" default="1." type="FLOAT">
+      <short_desc>Maximum descent velocity</short_desc>
+      <long_desc>Descent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_DN</long_desc>
       <min>0.5</min>
       <max>4.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
-    <parameter name="MPC_Z_VEL_MAX_UP" default="3.0" type="FLOAT">
-      <short_desc>Maximum vertical ascent velocity</short_desc>
-      <long_desc>Maximum vertical velocity in AUTO mode and endpoint for stabilized modes (ALTCTRL, POSCTRL).</long_desc>
+    <parameter name="MPC_Z_VEL_MAX_UP" default="3." type="FLOAT">
+      <short_desc>Maximum ascent velocity</short_desc>
+      <long_desc>Ascent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_UP</long_desc>
       <min>0.5</min>
       <max>8.0</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_Z_VEL_P_ACC" default="4.0" type="FLOAT">
       <short_desc>Proportional gain for vertical velocity error</short_desc>
@@ -4948,6 +4951,24 @@
       <min>2.0</min>
       <max>15.0</max>
       <decimal>2</decimal>
+    </parameter>
+    <parameter name="MPC_Z_V_AUTO_DN" default="1." type="FLOAT">
+      <short_desc>Automatic descent velocity</short_desc>
+      <long_desc>Descent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_DN</long_desc>
+      <min>0.5</min>
+      <max>4.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MPC_Z_V_AUTO_UP" default="3." type="FLOAT">
+      <short_desc>Automatic ascent velocity</short_desc>
+      <long_desc>Ascent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_UP</long_desc>
+      <min>0.5</min>
+      <max>8.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="SYS_VEHICLE_RESP" default="-0.4" type="FLOAT">
       <short_desc>Responsiveness</short_desc>
