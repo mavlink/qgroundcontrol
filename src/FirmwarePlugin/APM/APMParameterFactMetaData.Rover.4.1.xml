@@ -1173,6 +1173,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1184,7 +1185,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -1306,6 +1307,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1317,7 +1319,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -1439,6 +1441,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1450,7 +1453,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -1572,6 +1575,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1583,7 +1587,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -1705,6 +1709,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1716,7 +1721,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -1838,6 +1843,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1849,7 +1855,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -1971,6 +1977,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -1982,7 +1989,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -2104,6 +2111,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -2115,7 +2123,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -2237,6 +2245,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="2">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
+          <value code="5">Navigator</value>
           <value code="13">Pixhawk2_PM2/CubeOrange_PM2</value>
           <value code="14">CubeOrange</value>
           <value code="16">Durandal</value>
@@ -2248,7 +2257,7 @@
         <values>
           <value code="-1">Disabled</value>
           <value code="3">Pixhawk/Pixracer/Navio2/Pixhawk2_PM1</value>
-          <value code="4">CubeOrange_PM2</value>
+          <value code="4">CubeOrange_PM2/Navigator</value>
           <value code="14">Pixhawk2_PM2</value>
           <value code="15">CubeOrange</value>
           <value code="17">Durandal</value>
@@ -2525,7 +2534,7 @@
         </values>
       </param>
       <param humanName="Board options" name="BRD_OPTIONS" documentation="Board specific option flags" user="Advanced">
-        <field name="Bitmask">0:Enable hardware watchdog, 1:Disable MAVftp, 2:Enable set of internal parameters</field>
+        <field name="Bitmask">0:Enable hardware watchdog, 1:Disable MAVftp, 2:Enable set of internal parameters, 3:Enable Debug Pins</field>
       </param>
       <param humanName="Boot delay" name="BRD_BOOT_DELAY" documentation="This adds a delay in milliseconds to boot to ensure peripherals initialise fully" user="Advanced">
         <field name="Range">0 10000</field>
@@ -3141,6 +3150,9 @@
         <field name="Units">Hz</field>
         <field name="UnitText">hertz</field>
       </param>
+      <param humanName="UAVCAN options" name="CAN_D1_UC_OPTION" documentation="Option flags" user="Advanced">
+        <field name="Bitmask">0:ClearDNADatabase,1:IgnoreDNANodeConflicts</field>
+      </param>
     </parameters>
     <parameters name="CAN_D2_">
       <param humanName="Enable use of specific protocol over virtual driver" name="CAN_D2_PROTOCOL" documentation="Enabling this option starts selected protocol that will use this virtual driver" user="Advanced">
@@ -3211,6 +3223,9 @@
         <field name="Units">Hz</field>
         <field name="UnitText">hertz</field>
       </param>
+      <param humanName="UAVCAN options" name="CAN_D2_UC_OPTION" documentation="Option flags" user="Advanced">
+        <field name="Bitmask">0:ClearDNADatabase,1:IgnoreDNANodeConflicts</field>
+      </param>
     </parameters>
     <parameters name="CAN_D3_">
       <param humanName="Enable use of specific protocol over virtual driver" name="CAN_D3_PROTOCOL" documentation="Enabling this option starts selected protocol that will use this virtual driver" user="Advanced">
@@ -3280,6 +3295,9 @@
         <field name="Range">1 200</field>
         <field name="Units">Hz</field>
         <field name="UnitText">hertz</field>
+      </param>
+      <param humanName="UAVCAN options" name="CAN_D3_UC_OPTION" documentation="Option flags" user="Advanced">
+        <field name="Bitmask">0:ClearDNADatabase,1:IgnoreDNANodeConflicts</field>
       </param>
     </parameters>
     <parameters name="CAN_P1_">
@@ -4158,13 +4176,6 @@
         <field name="Bitmask">0:FirstEKF,1:SecondEKF,2:ThirdEKF,3:FourthEKF,4:FifthEKF,5:SixthEKF</field>
         <field name="RebootRequired">True</field>
       </param>
-      <param humanName="Delay from loss of navigation to yaw reset" name="EK2_GSF_DELAY" documentation="If the inertial navigation calculation stops following the GPS and other positioning sensors for longer than EK2_GSF_DELAY milli-seconds, then the EKF2 code will generate a reset request internally and reset the yaw to the estimate from the EKF-GSF filter and reset the horizontal velocity and position to the GPS. This reset will not be performed unless the use of the EKF-GSF yaw estimate is enabled via the EK2_GSF_USE parameter." user="Advanced">
-        <field name="Range">500 5000</field>
-        <field name="Increment">100</field>
-        <field name="Units">ms</field>
-        <field name="UnitText">milliseconds</field>
-        <field name="RebootRequired">True</field>
-      </param>
       <param humanName="Maximum number of resets to the EKF-GSF yaw estimate allowed" name="EK2_GSF_RST_MAX" documentation="Sets the maximum number of times the EKF2 will be allowed to reset it's yaw to the estimate from the EKF-GSF yaw estimator. No resets will be allowed unless the use of the EKF-GSF yaw estimate is enabled via the EK2_GSF_USE parameter." user="Advanced">
         <field name="Range">1 10</field>
         <field name="Increment">1</field>
@@ -4316,13 +4327,13 @@
         <field name="UnitText">meters per cubic second</field>
       </param>
       <param humanName="Wind velocity process noise (m/s^2)" name="EK3_WIND_P_NSE" documentation="This state process noise controls the growth of wind state error estimates. Increasing it makes wind estimation faster and noisier." user="Advanced">
-        <field name="Range">0.01 1.0</field>
+        <field name="Range">0.01 2.0</field>
         <field name="Increment">0.1</field>
         <field name="Units">m/s/s</field>
         <field name="UnitText">meters per square second</field>
       </param>
       <param humanName="Height rate to wind process noise scaler" name="EK3_WIND_PSCALE" documentation="This controls how much the process noise on the wind states is increased when gaining or losing altitude to take into account changes in wind speed and direction with altitude. Increasing this parameter increases how rapidly the wind states adapt when changing altitude, but does make wind velocity estimation noiser." user="Advanced">
-        <field name="Range">0.0 1.0</field>
+        <field name="Range">0.0 2.0</field>
         <field name="Increment">0.1</field>
       </param>
       <param humanName="GPS preflight check" name="EK3_GPS_CHECK" documentation="This is a 1 byte bitmap controlling which GPS preflight checks are performed. Set to 0 to bypass all checks. Set to 255 perform all checks. Set to 3 to check just the number of satellites and HDoP. Set to 31 for the most rigorous checks that will still allow checks to pass when the copter is moving, eg launch from a boat." user="Advanced">
@@ -4372,7 +4383,7 @@
         <field name="Units">Gauss/s</field>
         <field name="UnitText">gauss per second</field>
       </param>
-      <param humanName="Range finder switch height percentage" name="EK3_RNG_USE_HGT" documentation="Range finder can be used as the primary height source when below this percentage of its maximum range (see RNGFND_MAX_CM). This will not work unless Baro or GPS height is selected as the primary height source vis EK3_ALT_SOURCE = 0 or 2 respectively.  This feature should not be used for terrain following as it is designed  for vertical takeoff and landing with climb above  the range finder use height before commencing the mission, and with horizontal position changes below that height being limited to a flat region around the takeoff and landing point." user="Advanced">
+      <param humanName="Range finder switch height percentage" name="EK3_RNG_USE_HGT" documentation="Range finder can be used as the primary height source when below this percentage of its maximum range (see RNGFNDx_MAX_CM) and the primary height source is Baro or GPS (see EK3_SRCx_POSZ).  This feature should not be used for terrain following as it is designed for vertical takeoff and landing with climb above the range finder use height before commencing the mission, and with horizontal position changes below that height being limited to a flat region around the takeoff and landing point." user="Advanced">
         <field name="Range">-1 70</field>
         <field name="Increment">1</field>
         <field name="Units">%</field>
@@ -4464,13 +4475,6 @@
         <field name="Bitmask">0:FirstEKF,1:SecondEKF,2:ThirdEKF,3:FourthEKF,4:FifthEKF,5:SixthEKF</field>
         <field name="RebootRequired">True</field>
       </param>
-      <param humanName="Delay from loss of navigation to yaw reset" name="EK3_GSF_DELAY" documentation="If the inertial navigation calculation stops following the GPS and other positioning sensors for longer than EK3_GSF_DELAY milli-seconds, then the EKF3 code will generate a reset request internally and reset the yaw to the estimate from the EKF-GSF filter and reset the horizontal velocity and position to the GPS. This reset will not be performed unless the use of the EKF-GSF yaw estimate is enabled via the EK3_GSF_USE parameter." user="Advanced">
-        <field name="Range">500 5000</field>
-        <field name="Increment">100</field>
-        <field name="Units">ms</field>
-        <field name="UnitText">milliseconds</field>
-        <field name="RebootRequired">True</field>
-      </param>
       <param humanName="Maximum number of resets to the EKF-GSF yaw estimate allowed" name="EK3_GSF_RST_MAX" documentation="Sets the maximum number of times the EKF3 will be allowed to reset it's yaw to the estimate from the EKF-GSF yaw estimator. No resets will be allowed unless the use of the EKF-GSF yaw estimate is enabled via the EK3_GSF_USE parameter." user="Advanced">
         <field name="Range">1 10</field>
         <field name="Increment">1</field>
@@ -4513,6 +4517,10 @@
       <param humanName="Baro height ground effect dead zone" name="EK3_GND_EFF_DZ" documentation="This parameter sets the size of the dead zone that is applied to negative baro height spikes that can occur when takeing off or landing when a vehicle with lift rotors is operating in ground effect ground effect. Set to about 0.5m less than the amount of negative offset in baro height that occurs just prior to takeoff when lift motors are spooling up. Set to 0 if no ground effect is present. " user="Advanced">
         <field name="Range">0.0 10.0</field>
         <field name="Increment">0.5</field>
+      </param>
+      <param humanName="Primary core number" name="EK3_PRIMARY" documentation="The core number (index in IMU mask) that will be used as the primary EKF core on startup. While disarmed the EKF will force the use of this core. A value of 0 corresponds to the first IMU in EK3_IMU_MASK." user="Advanced">
+        <field name="Range">0 2</field>
+        <field name="Increment">1</field>
       </param>
     </parameters>
     <parameters name="EK3_SRC">
@@ -5135,7 +5143,7 @@
         <field name="Range">5.0 30.0</field>
       </param>
       <param humanName="driver options" name="GPS_DRV_OPTIONS" documentation="Additional backend specific options" user="Advanced">
-        <field name="Bitmask">0:Use UART2 for moving baseline on ublox,1:Use base station for GPS yaw on SBF</field>
+        <field name="Bitmask">0:Use UART2 for moving baseline on ublox,1:Use base station for GPS yaw on SBF,2:Use baudrate 115200</field>
       </param>
       <param humanName="GPS physical COM port" name="GPS_COM_PORT" documentation="The physical COM port on the connected device, currently only applies to SBF GPS" user="Advanced">
         <field name="Range">0 10</field>
@@ -10058,7 +10066,7 @@
         <field name="UnitText">seconds</field>
       </param>
       <param humanName="RC options" name="RC_OPTIONS" documentation="RC input options" user="Advanced">
-        <field name="Bitmask">0:Ignore RC Receiver, 1:Ignore MAVLink Overrides, 2:Ignore Receiver Failsafe bit but allow other RC failsafes if setup, 3:FPort Pad, 4:Log RC input bytes, 5:Arming check throttle for 0 input, 6:Skip the arming check for neutral Roll/Pitch/Yay sticks, 7:Allow Switch reverse, 8:Use passthrough for CRSF telemetry</field>
+        <field name="Bitmask">0:Ignore RC Receiver, 1:Ignore MAVLink Overrides, 2:Ignore Receiver Failsafe bit but allow other RC failsafes if setup, 3:FPort Pad, 4:Log RC input bytes, 5:Arming check throttle for 0 input, 6:Skip the arming check for neutral Roll/Pitch/Yay sticks, 7:Allow Switch reverse, 8:Use passthrough for CRSF telemetry, 9:Suppress CRSF mode/rate message for ELRS systems, 10:Enable RC Protocol re-detection</field>
       </param>
       <param humanName="RC protocols enabled" name="RC_PROTOCOLS" documentation="Bitmask of enabled RC protocols. Allows narrowing the protocol detection to only specific types of RC receivers which can avoid issues with incorrect detection. Set to 1 to enable all protocols." user="Advanced">
         <field name="Bitmask">0:All,1:PPM,2:IBUS,3:SBUS,4:SBUS_NI,5:DSM,6:SUMD,7:SRXL,8:SRXL2,9:CRSF,10:ST24,11:FPORT,12:FPORT2</field>
@@ -13734,6 +13742,7 @@
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
           <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -13794,6 +13803,7 @@
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
           <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -13854,6 +13864,7 @@
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
           <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -13914,6 +13925,7 @@
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
           <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -13974,6 +13986,7 @@
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
           <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -14034,6 +14047,7 @@
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
           <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -14057,27 +14071,27 @@
         </values>
       </param>
       <param humanName="Telem1 options" name="SERIAL1_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire. The Swap option allows the RX and TX pins to be swapped on STM32F7 based boards." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Telem2 options" name="SERIAL2_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Serial3 options" name="SERIAL3_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Serial4 options" name="SERIAL4_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Serial5 options" name="SERIAL5_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Serial6 options" name="SERIAL6_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Serial passthru first port" name="SERIAL_PASS1" documentation="This sets one side of pass-through between two serial ports. Once both sides are set then all data received on either port will be passed to the other port" user="Advanced">
@@ -14146,6 +14160,8 @@
           <value code="34">AirSpeed</value>
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
+          <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
@@ -14169,7 +14185,7 @@
         </values>
       </param>
       <param humanName="Serial7 options" name="SERIAL7_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
       <param humanName="Serial8 protocol selection" name="SERIAL8_PROTOCOL" documentation="Control what protocol Serial8 port should be used for. Note that the Frsky options require external converter hardware. See the wiki for details." user="Standard">
@@ -14209,10 +14225,12 @@
           <value code="34">AirSpeed</value>
           <value code="35">ADSB</value>
           <value code="36">AHRS</value>
+          <value code="37">SmartAudio</value>
+          <value code="38">FETtecOneWire</value>
         </values>
         <field name="RebootRequired">True</field>
       </param>
-      <param humanName="Serial 8 Baud Rate" name="SERIAL8_BAUD" documentation="The baud rate used for Serial7. Most stm32-based boards can support rates of up to 1500. If you setup a rate you cannot support and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
+      <param humanName="Serial 8 Baud Rate" name="SERIAL8_BAUD" documentation="The baud rate used for Serial8. Most stm32-based boards can support rates of up to 1500. If you setup a rate you cannot support and then can't connect to your board you should load a firmware from a different vehicle type. That will reset all your parameters to defaults." user="Standard">
         <values>
           <value code="1">1200</value>
           <value code="2">2400</value>
@@ -14232,7 +14250,7 @@
         </values>
       </param>
       <param humanName="Serial8 options" name="SERIAL8_OPTIONS" documentation="Control over UART options. The InvertRX option controls invert of the receive pin. The InvertTX option controls invert of the transmit pin. The HalfDuplex option controls half-duplex (onewire) mode, where both transmit and receive is done on the transmit wire." user="Advanced">
-        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from</field>
+        <field name="Bitmask">0:InvertRX, 1:InvertTX, 2:HalfDuplex, 3:Swap, 4: RX_PullDown, 5: RX_PullUp, 6: TX_PullDown, 7: TX_PullUp, 8: RX_NoDMA, 9: TX_NoDMA, 10: Don't forward mavlink to/from, 11: DisableFIFO</field>
         <field name="RebootRequired">True</field>
       </param>
     </parameters>
@@ -15994,6 +16012,18 @@
       </param>
       <param humanName="BLHeli bitmask of reversed channels" name="SERVO_BLH_RVMASK" documentation="Mask of channels which are reversed. This is used to configure ESCs in reversed mode" user="Advanced">
         <field name="Bitmask">0:Channel1,1:Channel2,2:Channel3,3:Channel4,4:Channel5,5:Channel6,6:Channel7,7:Channel8,8:Channel9,9:Channel10,10:Channel11,11:Channel12,12:Channel13,13:Channel14,14:Channel15,15:Channel16</field>
+      </param>
+    </parameters>
+    <parameters name="SERVO_FTW_">
+      <param humanName="Servo channel output bitmask" name="SERVO_FTW_MASK" documentation="Servo channel mask specifying FETtec ESC output." user="Standard">
+        <field name="Bitmask">0:SERVO1,1:SERVO2,2:SERVO3,3:SERVO4,4:SERVO5,5:SERVO6,6:SERVO7,7:SERVO8,8:SERVO9,9:SERVO10,10:SERVO11,11:SERVO12</field>
+        <field name="RebootRequired">True</field>
+      </param>
+      <param humanName="Servo channel reverse rotation bitmask" name="SERVO_FTW_RVMASK" documentation="Servo channel mask to reverse rotation of FETtec ESC outputs." user="Standard">
+        <field name="Bitmask">0:SERVO1,1:SERVO2,2:SERVO3,3:SERVO4,4:SERVO5,5:SERVO6,6:SERVO7,7:SERVO8,8:SERVO9,9:SERVO10,10:SERVO11,11:SERVO12</field>
+      </param>
+      <param humanName="Nr. electrical poles" name="SERVO_FTW_POLES" documentation="Number of motor electrical poles" user="Standard">
+        <field name="Range">2 50</field>
       </param>
     </parameters>
     <parameters name="SERVO_ROB_">
