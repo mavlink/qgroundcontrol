@@ -286,7 +286,7 @@ SetupPage {
                                                 model:              actionGroup.actions
                                                 QGCMenuItem {
                                                     text:           object.label
-                                                    onTriggered:	object.trigger()
+                                                    onTriggered:    object.trigger()
                                                 }
                                                 onObjectAdded:      actionMenu.insertItem(index, object)
                                                 onObjectRemoved:    actionMenu.removeItem(object)
@@ -354,6 +354,7 @@ SetupPage {
                             QGCButton {
                                 text:          qsTr("Identify & Assign Motors")
                                 visible:       !actuators.motorAssignmentActive && selActuatorOutput.actuatorOutput.groupsVisible
+                                enabled:       actuators.motorAssignmentEnabled
                                 onClicked: {
                                     var success = actuators.initMotorAssignment()
                                     if (success) {

@@ -103,6 +103,9 @@ void Actuators::updateGeometryImage()
 
     _imageRefreshFlag = !_imageRefreshFlag;
     emit imageRefreshFlagChanged();
+
+    _motorAssignmentEnabled = provider->numMotors() > 0;
+    emit motorAssignmentEnabledChanged();
 }
 
 bool Actuators::isMultirotor() const
@@ -674,13 +677,7 @@ bool Actuators::showUi() const
 bool Actuators::initMotorAssignment()
 {
     GeometryImage::VehicleGeometryImageProvider* provider = GeometryImage::VehicleGeometryImageProvider::instance();
-    int numMotors = 0;
-    QList<ActuatorGeometry>& actuators = provider->actuators();
-    for (const auto& actuator : actuators) {
-        if (actuator.type == ActuatorGeometry::Type::Motor) {
-            ++numMotors;
-        }
-    }
+    int numMotors = provider->numMotors();
 
     // get the minimum function for motors
     bool ret = false;
