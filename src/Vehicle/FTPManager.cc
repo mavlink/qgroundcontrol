@@ -72,7 +72,7 @@ bool FTPManager::download(const QString& fromURI, const QString& toDir, const QS
     }
     lastDirSlashIndex++; // move past slash
 
-    if (fileName.size() == 0) {
+    if (fileName.isEmpty()) {
         _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
     } else {
         _downloadState.fileName = fileName;
@@ -645,9 +645,9 @@ bool FTPManager::_parseURI(const QString& uri, QString& parsedURI, uint8_t& comp
         if (!ok) {
             qCWarning(FTPManagerLog) << "Incorrect format for component id" << uri;
             return false;
-        } else {
-            qCDebug(FTPManagerLog) << "Found compId:" << (int)compId;
         }
+
+        qCDebug(FTPManagerLog) << "Found compId in MAVLink FTP URI: " << compId;
         parsedURI.replace(QRegularExpression("\\[\\;comp\\=\\d+\\]"), "");
     }
 
