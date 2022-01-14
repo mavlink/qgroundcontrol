@@ -378,6 +378,12 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
                 QString units = xml.readElementText();
                 qCDebug(APMParameterMetaDataVerboseLog) << "read Units: " << units;
                 rawMetaData->units = units;
+            } else if (attributeName == "ReadOnly") {
+                QString strValue = xml.readElementText().trimmed();
+                if (strValue.compare("true", Qt::CaseInsensitive) == 0) {
+                    rawMetaData->readOnly = true;
+                }
+                qCDebug(APMParameterMetaDataVerboseLog) << "read ReadOnly: " << rawMetaData->readOnly;
             } else if (attributeName == "Bitmask") {
                 bool    parseError = false;
 
@@ -461,6 +467,7 @@ FactMetaData* APMParameterMetaData::getMetaDataForFact(const QString& name, MAV_
     }
     metaData->setGroup(rawMetaData->group);
     metaData->setVehicleRebootRequired(rawMetaData->rebootRequired);
+    metaData->setReadOnly(rawMetaData->readOnly);
 
     if (!rawMetaData->shortDescription.isEmpty()) {
         metaData->setShortDescription(rawMetaData->shortDescription);

@@ -278,6 +278,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 QString     units;
                 QVariant    fileValueVar    = fileValueStr;
                 bool        noVehicleValue   = false;
+                bool        readOnly         = false;
 
                 if (_vehicle->id() != vehicleId) {
                     _diffOtherVehicle = true;
@@ -299,6 +300,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                     fileFact->setMetaData(vehicleFact->metaData());
                     fileFact->setRawValue(fileValueStr);
                     vehicleFactMetaData->setVehicleRebootRequired(vehicleRebootRequired);
+                    readOnly = vehicleFact->readOnly();
 
                     if (vehicleFact->rawValue() == fileFact->rawValue()) {
                         continue;
@@ -311,18 +313,20 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                     noVehicleValue = true;
                 }
 
-                ParameterEditorDiff* paramDiff = new ParameterEditorDiff(this);
+                if (!readOnly) {
+                    ParameterEditorDiff* paramDiff = new ParameterEditorDiff(this);
 
-                paramDiff->componentId      = componentId;
-                paramDiff->name             = paramName;
-                paramDiff->valueType        = ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType));
-                paramDiff->fileValue        = fileValueStr;
-                paramDiff->fileValueVar     = fileValueVar;
-                paramDiff->vehicleValue     = vehicleValueStr;
-                paramDiff->noVehicleValue   = noVehicleValue;
-                paramDiff->units            = units;
+                    paramDiff->componentId      = componentId;
+                    paramDiff->name             = paramName;
+                    paramDiff->valueType        = ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType));
+                    paramDiff->fileValue        = fileValueStr;
+                    paramDiff->fileValueVar     = fileValueVar;
+                    paramDiff->vehicleValue     = vehicleValueStr;
+                    paramDiff->noVehicleValue   = noVehicleValue;
+                    paramDiff->units            = units;
 
-                _diffList.append(paramDiff);
+                    _diffList.append(paramDiff);
+                }
             }
         }
     }
