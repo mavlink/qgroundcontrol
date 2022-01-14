@@ -59,6 +59,9 @@ private slots:
     void spinTimeout();
 
 private:
+    static constexpr int _spinTimeoutDefaultSec = 1000;
+    static constexpr int _spinTimeoutHighSec = 3000; ///< wait a bit longer after assigning motors, so ESCs can initialize
+
     static void ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
             Vehicle::MavCmdResultFailureCode_t failureCode);
     void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
