@@ -415,3 +415,14 @@ int VehicleGeometryImageProvider::getHighlightedMotorIndexAtPos(const QPointF &p
     }
     return -1;
 }
+
+int VehicleGeometryImageProvider::numMotors() const
+{
+    int numMotors = 0;
+    for (const auto& actuator : _actuators) {
+        if (actuator.type == ActuatorGeometry::Type::Motor) {
+            ++numMotors;
+        }
+    }
+    return numMotors;
+}
