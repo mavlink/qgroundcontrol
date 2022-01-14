@@ -2495,8 +2495,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_MAN_P_MAX" default="45.0" type="FLOAT">
-      <short_desc>Max manual pitch</short_desc>
-      <long_desc>Max pitch for manual control in attitude stabilized mode</long_desc>
+      <short_desc>Maximum manual pitch angle</short_desc>
+      <long_desc>Maximum manual pitch angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
@@ -2512,8 +2512,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_MAN_R_MAX" default="45.0" type="FLOAT">
-      <short_desc>Max manual roll</short_desc>
-      <long_desc>Max roll for manual control in attitude stabilized mode</long_desc>
+      <short_desc>Maximum manual roll angle</short_desc>
+      <long_desc>Maximum manual roll angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
@@ -2890,8 +2890,8 @@
       </values>
     </parameter>
     <parameter name="FW_P_LIM_MAX" default="45.0" type="FLOAT">
-      <short_desc>Positive pitch limit</short_desc>
-      <long_desc>The maximum positive pitch the controller will output.</long_desc>
+      <short_desc>Maximum pitch angle</short_desc>
+      <long_desc>The maximum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
@@ -2899,8 +2899,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_P_LIM_MIN" default="-45.0" type="FLOAT">
-      <short_desc>Negative pitch limit</short_desc>
-      <long_desc>The minimum negative pitch the controller will output.</long_desc>
+      <short_desc>Minimum pitch angle</short_desc>
+      <long_desc>The minimum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
       <min>-60.0</min>
       <max>0.0</max>
       <unit>deg</unit>
@@ -2908,8 +2908,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_R_LIM" default="50.0" type="FLOAT">
-      <short_desc>Controller roll limit</short_desc>
-      <long_desc>The maximum roll the controller will output.</long_desc>
+      <short_desc>Maximum roll angle</short_desc>
+      <long_desc>The maximum roll angle setpoint for autonomous modes including altitude and position control.</long_desc>
       <min>35.0</min>
       <max>65.0</max>
       <unit>deg</unit>
