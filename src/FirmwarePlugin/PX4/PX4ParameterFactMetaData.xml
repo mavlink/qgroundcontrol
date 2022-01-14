@@ -3024,6 +3024,81 @@
       <increment>0.05</increment>
     </parameter>
   </group>
+  <group name="FW NPFG Control">
+    <parameter name="FW_USE_NPFG" default="0" type="INT32" boolean="true">
+      <short_desc>Use NPFG as lateral-directional guidance law for fixed-wing vehicles</short_desc>
+      <long_desc>Replaces L1.</long_desc>
+    </parameter>
+    <parameter name="NPFG_DAMPING" default="0.7" type="FLOAT">
+      <short_desc>NPFG damping ratio</short_desc>
+      <long_desc>Damping ratio of the NPFG control law.</long_desc>
+      <min>0.10</min>
+      <max>1.00</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="NPFG_EN_MIN_GSP" default="1" type="INT32" boolean="true">
+      <short_desc>Enable minimum forward ground speed maintaining excess wind handling logic</short_desc>
+    </parameter>
+    <parameter name="NPFG_GSP_MAX_TK" default="5.0" type="FLOAT">
+      <short_desc>Maximum, minimum forward ground speed for track keeping in excess wind</short_desc>
+      <long_desc>The maximum value of the minimum forward ground speed that may be commanded by the track keeping excess wind handling logic. Commanded in full at the normalized track error fraction of the track error boundary and reduced to zero on track.</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="NPFG_LB_PERIOD" default="1" type="INT32" boolean="true">
+      <short_desc>Enable automatic lower bound on the NPFG period</short_desc>
+      <long_desc>Avoids limit cycling from a too aggressively tuned period/damping combination. If set to false, also disables the upper bound NPFG_PERIOD_UB.</long_desc>
+    </parameter>
+    <parameter name="NPFG_PERIOD" default="10.0" type="FLOAT">
+      <short_desc>NPFG period</short_desc>
+      <long_desc>Period of the NPFG control law.</long_desc>
+      <min>1.0</min>
+      <max>100.0</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="NPFG_PERIOD_SF" default="1.5" type="FLOAT">
+      <short_desc>Period safety factor</short_desc>
+      <long_desc>Multiplied by period for conservative minimum period bounding (when period lower bounding is enabled). 1.0 bounds at marginal stability.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="NPFG_ROLL_TC" default="0.5" type="FLOAT">
+      <short_desc>Roll time constant</short_desc>
+      <long_desc>Time constant of roll controller command / response, modeled as first order delay. Used to determine lower period bound. Setting zero disables automatic period bounding.</long_desc>
+      <min>0.00</min>
+      <max>2.00</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="NPFG_SW_DST_MLT" default="0.32" type="FLOAT">
+      <short_desc>NPFG switch distance multiplier</short_desc>
+      <long_desc>Multiplied by the track error boundary to determine when the aircraft switches to the next waypoint and/or path segment. Should be less than 1. 1/pi (0.32) sets the switch distance equivalent to that of the L1 controller.</long_desc>
+      <min>0.1</min>
+      <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="NPFG_TRACK_KEEP" default="1" type="INT32" boolean="true">
+      <short_desc>Enable track keeping excess wind handling logic</short_desc>
+    </parameter>
+    <parameter name="NPFG_UB_PERIOD" default="1" type="INT32" boolean="true">
+      <short_desc>Enable automatic upper bound on the NPFG period</short_desc>
+      <long_desc>Adapts period to maintain track keeping in variable winds and path curvature.</long_desc>
+    </parameter>
+    <parameter name="NPFG_WIND_REG" default="1" type="INT32" boolean="true">
+      <short_desc>Enable wind excess regulation</short_desc>
+      <long_desc>Disabling this parameter further disables all other airspeed incrementation options.</long_desc>
+    </parameter>
+  </group>
   <group name="FW TECS">
     <parameter name="FW_AIRSPD_MAX" default="20.0" type="FLOAT">
       <short_desc>Maximum Airspeed (CAS)</short_desc>
