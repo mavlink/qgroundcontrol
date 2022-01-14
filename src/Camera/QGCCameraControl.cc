@@ -2038,7 +2038,7 @@ QGCCameraControl::_downloadFinished()
 
 void QGCCameraControl::_ftpDownloadComplete(const QString& fileName, const QString& errorMsg)
 {
-    qCDebug(CameraControlLog) << "QGCCameraControl::_ftpDownloadComplete fileName:errorMsg" << fileName << errorMsg;
+    qCDebug(CameraControlLog) << "FTP Download completed: " << fileName << ", " << errorMsg;
 
     disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &QGCCameraControl::_ftpDownloadComplete);
     QFile xmlFile(fileName);
