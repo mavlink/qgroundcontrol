@@ -278,6 +278,7 @@ void Fact::setEnumInfo(const QStringList& strings, const QVariantList& values)
 {
     if (_metaData) {
         _metaData->setEnumInfo(strings, values);
+        emit enumsChanged();
     } else {
         qWarning() << kMissingMetadata << name();
     }
