@@ -478,6 +478,8 @@ SetupPage {
                             }
 
                             Column {
+
+                                visible: _orientationDialogCalType == _calTypeAccel
                                 spacing: ScreenTools.defaultFontPixelHeight
 
                                 QGCLabel {
