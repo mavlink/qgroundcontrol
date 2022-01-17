@@ -106,6 +106,8 @@ private:
 
     void highlightActuators(bool highlight);
 
+    void updateFunctionMetadata();
+
     QSet<Fact*> _subscribedFacts{};
     QJsonDocument _jsonMetadata;
     bool _init{false};
@@ -120,5 +122,6 @@ private:
     bool _imageRefreshFlag{false}; ///< indicator to QML to reload the image
     int _selectedActuatorOutput{0};
     Vehicle* _vehicle{nullptr};
+    QMap<int, QString> _usedMixerLabels;
 };
 

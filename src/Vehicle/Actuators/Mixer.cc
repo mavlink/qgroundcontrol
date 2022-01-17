@@ -317,7 +317,7 @@ void Mixers::update()
                     }
                     if (itemLabelPrefix != "") {
                         label = itemLabelPrefix + " (" + label + ")";
-                        _functionsSpecificLabel[actuatorFunction] = label;
+                        _functionsSpecificLabel[actuatorFunction] = itemLabelPrefix;
                     }
                 }
                 auto factAdded = [this](Function function, Fact* fact) {
@@ -348,20 +348,37 @@ void Mixers::update()
 QString Mixers::getSpecificLabelForFunction(int function) const
 {
     // Try to get it from the actuator type param
-    for (int mixerGroupIdx = 0; mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
+    Fact* typeFact = nullptr;
+    for (int mixerGroupIdx = 0; !typeFact && mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
         Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
-        for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
+        for (int mixerChannelIdx = 0; !typeFact && mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
             Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
 
             if (mixerChannel->actuatorFunction() != function) {
                 continue;
             }
 
-            Fact* typeFact = mixerChannel->getFact(Function::Type);
-            if (typeFact) {
-                return typeFact->enumOrValueString() + " (" + _functions.value(function).label +")";
+            typeFact = mixerChannel->getFact(Function::Type);
+        }
+    }
+    if (typeFact) {
+        // Now check if we have multiple functions configured with the same type.
+        // If so, add the function label to disambiguate
+        for (int mixerGroupIdx = 0; mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
+            Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
+            for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
+                Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
+
+                if (mixerChannel->actuatorFunction() == function) {
+                    continue;
+                }
+                Fact* typeFactOther = mixerChannel->getFact(Function::Type);
+                if (typeFactOther && typeFactOther->rawValue() == typeFact->rawValue()) {
+                    return typeFact->enumOrValueString() + " (" + _functions.value(function).label +")";
+                }
             }
         }
+        return typeFact->enumOrValueString();
     }
 
     const auto iter = _functionsSpecificLabel.find(function);
@@ -371,12 +388,12 @@ QString Mixers::getSpecificLabelForFunction(int function) const
     return *iter;
 }
 
-QSet<int> Mixers::requiredFunctions() const
+QSet<int> Mixers::getFunctions(bool requiredOnly) const
 {
     QSet<int> ret;
     for (int mixerGroupIdx = 0; mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
         Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
-        if (mixerGroup->group().required) {
+        if (!requiredOnly || mixerGroup->group().required) {
             for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
                 const Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
                 if (mixerChannel->actuatorFunction() != 0) {
