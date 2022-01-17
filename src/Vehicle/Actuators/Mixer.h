@@ -321,9 +321,9 @@ public:
     QString getSpecificLabelForFunction(int function) const;
 
     /**
-     * Get the set of all required actuator functions
+     * Get the set of all (required) actuator functions
      */
-    QSet<int> requiredFunctions() const;
+    QSet<int> getFunctions(bool requiredOnly) const;
 
     QString configuredType() const;
 
