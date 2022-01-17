@@ -402,9 +402,9 @@
       <maintainer>Silvan Fuhrer</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe name="X500 V2 kit" id="4019" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
+    <airframe name="X500 V2 kit" id="4019" maintainer="Farhang Naderi">
       <class>Copter</class>
-      <maintainer>Farhang Naderi &lt;farhang.nba@gmail.com&gt;</maintainer>
+      <maintainer>Farhang Naderi</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="3DR Solo" id="4030" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;">
