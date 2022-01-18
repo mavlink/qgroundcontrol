@@ -69,7 +69,7 @@
 },
 {
     "name":             "updateHomePosition",
-    "shortDesc": "Update GCS' homeposition coordinates in case of change on Autopilot",
+    "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
     "type":                 "bool",
     "default":              false
 }
