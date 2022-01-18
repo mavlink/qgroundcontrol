@@ -149,6 +149,11 @@ bool FirmwarePlugin::supportsMotorInterference(void)
     return true;
 }
 
+bool FirmwarePlugin::supportsGuidedActionVtolTakeoff(void)
+{
+    return false;
+}
+
 bool FirmwarePlugin::supportsJSButton(void)
 {
     return false;

@@ -2405,6 +2405,11 @@ bool Vehicle::supportsMotorInterference() const
     return _firmwarePlugin->supportsMotorInterference();
 }
 
+bool Vehicle::supportsGuidedActionVtolTakeoff() const
+{
+    return _firmwarePlugin->supportsGuidedActionVtolTakeoff();
+}
+
 bool Vehicle::supportsTerrainFrame() const
 {
     return !px4Firmware();

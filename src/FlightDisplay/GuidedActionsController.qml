@@ -131,7 +131,7 @@ Item {
     property bool showActionList:       _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort)
     property string changeSpeedTitle:   _fixedWing ? changeAirspeedTitle : changeCruiseSpeedTitle
     property string changeSpeedMessage: _fixedWing ? changeAirspeedMessage : changeCruiseSpeedMessage
-    property bool showVtolTakeoff:      _guidedActionsEnabled && _activeVehicle.vtol
+    property bool showVtolTakeoff:      _guidedActionsEnabled && _activeVehicle.vtol && _activeVehicle.supportsGuidedActionVtolTakeoff
 
     // Note: The '_missionItemCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
     property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _missionItemCount - 2)

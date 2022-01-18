@@ -72,6 +72,7 @@ public:
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
     bool                supportsNegativeThrust          (Vehicle* vehicle) override;
+    bool                supportsGuidedActionVtolTakeoff () override { return true;};
     QString             getHobbsMeter                   (Vehicle* vehicle) override;
     double              getDefaultLoiterRadius          (Vehicle* vehicle) override;
 

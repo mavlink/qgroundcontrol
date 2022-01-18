@@ -200,6 +200,7 @@ public:
     Q_PROPERTY(bool                 supportsJSButton            READ supportsJSButton                                               CONSTANT)
     Q_PROPERTY(bool                 supportsRadio               READ supportsRadio                                                  CONSTANT)
     Q_PROPERTY(bool               supportsMotorInterference     READ supportsMotorInterference                                      CONSTANT)
+    Q_PROPERTY(bool                 supportsGuidedActionVtolTakeoff READ supportsGuidedActionVtolTakeoff                            CONSTANT)
     Q_PROPERTY(QString              prearmError                 READ prearmError                WRITE setPrearmError                NOTIFY prearmErrorChanged)
     Q_PROPERTY(int                  motorCount                  READ motorCount                                                     CONSTANT)
     Q_PROPERTY(bool                 coaxialMotors               READ coaxialMotors                                                  CONSTANT)
@@ -530,6 +531,7 @@ public:
     bool supportsRadio                  () const;
     bool supportsJSButton               () const;
     bool supportsMotorInterference      () const;
+    bool supportsGuidedActionVtolTakeoff () const;
     bool supportsTerrainFrame           () const;
 
     void setGuidedMode(bool guidedMode);
