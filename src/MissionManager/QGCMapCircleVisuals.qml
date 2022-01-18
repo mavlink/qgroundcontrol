@@ -32,11 +32,15 @@ Item {
     property color  borderColor:              QGroundControl.globalPalette.mapMissionTrajectory
     property bool   centerDragHandleVisible:  true
     property real   _radius:                  mapCircle ? mapCircle.radius.rawValue : 0
+    property bool   externalCenterCoordHandling : false // if true center coordinate will not directly be changed in here but via centerDragCoordChanged signal
+    property bool   radiusDragable:           true    // can be set to have a dragable circle with fixed radius
 
     property var    _circleComponent
     property var    _topRotationIndicatorComponent
     property var    _bottomRotationIndicatorComponent
     property var    _dragHandlesComponent
+
+    signal centerDragCoordChanged(var coordinate)
 
     function addVisuals() {
         if (!_circleComponent) {
@@ -195,7 +199,14 @@ Item {
         MissionItemIndicatorDrag {
             mapControl: _root.mapControl
 
-            onItemCoordinateChanged: mapCircle.center = itemCoordinate
+            onItemCoordinateChanged: {
+
+                if (externalCenterCoordHandling) {
+                    centerDragCoordChanged(itemCoordinate)
+                } else {
+                    mapCircle.center = itemCoordinate
+                }
+            }
         }
     }
 
@@ -222,18 +233,22 @@ Item {
             property real circleRadius:         _radius
 
             function calcRadiusDragCoord() {
-                radiusDragCoord = mapCircle.center.atDistanceAndAzimuth(circleRadius, 90)
+                if (radiusDragHandle) {
+                    radiusDragCoord = mapCircle.center.atDistanceAndAzimuth(circleRadius, 90)
+                }
             }
 
             onCircleCenterCoordChanged: calcRadiusDragCoord()
             onCircleRadiusChanged:      calcRadiusDragCoord()
 
             Component.onCompleted: {
-                calcRadiusDragCoord()
-                radiusDragHandle = dragHandleComponent.createObject(mapControl)
-                radiusDragHandle.coordinate = Qt.binding(function() { return radiusDragCoord })
-                mapControl.addMapItem(radiusDragHandle)
-                radiusDragArea = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": radiusDragCoord } )
+                if (radiusDragable) {
+                    calcRadiusDragCoord()
+                    radiusDragHandle = dragHandleComponent.createObject(mapControl)
+                    radiusDragHandle.coordinate = Qt.binding(function() { return radiusDragCoord })
+                    mapControl.addMapItem(radiusDragHandle)
+                    radiusDragArea = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": radiusDragCoord } )
+                }
                 centerDragHandle = dragHandleComponent.createObject(mapControl, { "visible": _root.centerDragHandleVisible })
                 centerDragHandle.coordinate = Qt.binding(function() { return circleCenterCoord })
                 mapControl.addMapItem(centerDragHandle)
@@ -243,8 +258,13 @@ Item {
             Component.onDestruction: {
                 centerDragHandle.destroy()
                 centerDragArea.destroy()
-                radiusDragHandle.destroy()
-                radiusDragArea.destroy()
+                if (radiusDragHandle) {
+                    radiusDragHandle.destroy()
+                }
+
+                if (radiusDragArea) {
+                    radiusDragArea.destroy()
+                }
             }
         }
     }
