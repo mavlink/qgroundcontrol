@@ -3663,8 +3663,9 @@ void Vehicle::_updateDistanceToGCS()
 
 void Vehicle::_updateHomepoint()
 {
-    if(_toolbox->settingsManager()->flyViewSettings()->updateHomePosition()->rawValue().toBool()
-            && firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME)){
+    const bool setHomeCmdSupported = firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME);
+    const bool updateHomeActivated = _toolbox->settingsManager()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
+    if(setHomeCmdSupported && updateHomeActivated){
         QGeoCoordinate gcsPosition = _toolbox->qgcPositionManager()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
             sendMavCommand(defaultComponentId(),
