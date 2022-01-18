@@ -592,4 +592,9 @@ FlightMap {
         property real centerInset: visible ? parent.height - y : 0
     }
 
+    VtolTakeoffPreview {
+            flightMap: _root
+            _guidedActionsController: globals.guidedControllerFlyView
+
+    }
 }

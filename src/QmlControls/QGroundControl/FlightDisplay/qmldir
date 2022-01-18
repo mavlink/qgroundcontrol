@@ -21,6 +21,7 @@ GuidedActionPause               1.0 GuidedActionPause.qml
 GuidedActionRTL                 1.0 GuidedActionRTL.qml
 GuidedValueSlider               1.0 GuidedValueSlider.qml
 GuidedActionTakeoff             1.0 GuidedActionTakeoff.qml
+GuidedActionVtolTakeoff         1.0 GuidedActionVtolTakeoff.qml
 GuidedToolStripAction           1.0 GuidedToolStripAction.qml
 MultiVehicleList                1.0 MultiVehicleList.qml
 PreFlightBatteryCheck           1.0 PreFlightBatteryCheck.qml
@@ -36,3 +37,4 @@ VehicleWarnings                 1.0 VehicleWarnings.qml
 ObstacleDistanceOverlay         1.0 ObstacleDistanceOverlay.qml
 ObstacleDistanceOverlayMap      1.0 ObstacleDistanceOverlayMap.qml
 ObstacleDistanceOverlayVideo    1.0 ObstacleDistanceOverlayVideo.qml
+VtolTakeoffPreview              1.0 VtolTakeoffPreview.qml

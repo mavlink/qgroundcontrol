@@ -65,6 +65,8 @@ Rectangle {
             mapIndicator.actionCancelled()
             mapIndicator = undefined
         }
+
+        guidedController.actionCancelled()
     }
 
     Timer {

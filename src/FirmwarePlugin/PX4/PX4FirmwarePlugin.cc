@@ -456,6 +456,27 @@ bool PX4FirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
             vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MAX");
 }
 
+void PX4FirmwarePlugin::guidedModeVtolTakeoff(Vehicle* vehicle, double takeoffAltRel, double lat, double lon)
+{
+    double vehicleAltitudeAMSL = vehicle->altitudeAMSL()->rawValue().toDouble();
+    if (qIsNaN(vehicleAltitudeAMSL)) {
+        qgcApp()->showAppMessage(tr("Unable to takeoff, vehicle position not known."));
+        return;
+    }
+
+    double takeoffAltAMSL = takeoffAltRel + vehicleAltitudeAMSL;
+
+    connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_NAV_VTOL_TAKEOFF,
+        true,                                   // show error is fails
+        NAN,NAN,NAN,NAN,                                     // params 1-4
+        lat,
+        lon,
+        static_cast<float>(takeoffAltAMSL));    // AMSL altitude
+}
+
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
     if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {

@@ -352,6 +352,9 @@ public:
     /// Command vehicle to takeoff from current location
     Q_INVOKABLE void guidedModeTakeoff(double altitudeRelative);
 
+    /// Command vehicle to do a vtol takeoff
+    Q_INVOKABLE void guidedModeVtolTakeoff(double transAltRelative, double lat_loiter, double lon_loiter);
+
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     Q_INVOKABLE double minimumTakeoffAltitude();
 

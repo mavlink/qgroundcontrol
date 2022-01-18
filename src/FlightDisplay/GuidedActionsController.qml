@@ -105,6 +105,7 @@ Item {
     readonly property int actionActionList:                 23
     readonly property int actionForceArm:                   24
     readonly property int actionChangeSpeed:                25
+    readonly property int actionVtolTakeoff:                26
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -130,6 +131,7 @@ Item {
     property bool showActionList:       _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort)
     property string changeSpeedTitle:   _fixedWing ? changeAirspeedTitle : changeCruiseSpeedTitle
     property string changeSpeedMessage: _fixedWing ? changeAirspeedMessage : changeCruiseSpeedMessage
+    property bool showVtolTakeoff:      _guidedActionsEnabled && _activeVehicle.vtol
 
     // Note: The '_missionItemCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
     property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _missionItemCount - 2)
@@ -167,6 +169,11 @@ Item {
     property bool __roiSupported:           _activeVehicle ? !_hideROI && _activeVehicle.roiModeSupported : false
     property bool __orbitSupported:         _activeVehicle ? !_hideOrbit && _activeVehicle.orbitModeSupported : false
     property bool __flightMode:             _flightMode
+
+    property var vtolTakeoffLoiterCoordinate: null
+
+    signal showVtolTakeoffLoiter
+    signal actionCancelled
 
     function _outputState() {
         if (_corePlugin.guidedActionsControllerLogging()) {
@@ -493,6 +500,15 @@ Item {
             confirmDialog.message = changeSpeedMessage
             guidedValueSlider.visible = true
             break
+        case actionVtolTakeoff:
+            confirmDialog.title = takeoffTitle
+            confirmDialog.message = takeoffMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
+            altitudeSlider.setToMinimumTakeoff()
+            altitudeSlider.visible = true
+            showVtolTakeoffLoiter()
+            break;
+
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -581,6 +597,8 @@ Item {
                     _activeVehicle.guidedModeChangeGroundSpeed(sliderOutputValue)
                 }
             }
+        case actionVtolTakeoff:
+            _activeVehicle.guidedModeVtolTakeoff(actionAltitudeChange, vtolTakeoffLoiterCoordinate.latitude, vtolTakeoffLoiterCoordinate.longitude)
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

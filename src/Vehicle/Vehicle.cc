@@ -2543,6 +2543,15 @@ void Vehicle::guidedModeTakeoff(double altitudeRelative)
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
 }
 
+void Vehicle::guidedModeVtolTakeoff(double transAltRelative, double lat_loiter, double lon_loiter)
+{
+    if (!guidedModeSupported()) {
+        qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+        return;
+    }
+    _firmwarePlugin->guidedModeVtolTakeoff(this, transAltRelative, lat_loiter, lon_loiter);
+}
+
 double Vehicle::minimumTakeoffAltitude()
 {
     return _firmwarePlugin->minimumTakeoffAltitude(this);

@@ -147,6 +147,9 @@ public:
     /// Command vehicle to takeoff from current location to a firmware specific height.
     virtual void guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel);
 
+    /// Command vehicle to do a vtol takeoff.
+    virtual void guidedModeVtolTakeoff(Vehicle* vehicle, double takeoffAltRel, double lat, double lon);
+
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     virtual double minimumTakeoffAltitude(Vehicle* /*vehicle*/) { return 10; }
 
