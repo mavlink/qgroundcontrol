@@ -51,6 +51,7 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     , _followMeFlightMode   (tr("Follow Me"))
     , _simpleFlightMode     (tr("Simple"))
     , _orbitFlightMode      (tr("Orbit"))
+    , _vtolTakeoffFlightMode(tr("VTOL Takeoff"))
 {
     qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
     qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
@@ -85,6 +86,7 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_READY,         false,  true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,          false,  true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,       false,  true,   true },
+        { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_VTOL_TAKEOFF,  false,  false,  true }
     };
 
     // Must be in same order as above structure
@@ -107,6 +109,7 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
         &_readyFlightMode,
         &_rtgsFlightMode,
         &_takeoffFlightMode,
+        &_vtolTakeoffFlightMode
     };
 
     // Convert static information to dynamic list. This allows for plugin override class to manipulate list.
@@ -377,7 +380,7 @@ void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int comm
         return;
     }
 
-    if (command == MAV_CMD_NAV_TAKEOFF && result == MAV_RESULT_ACCEPTED) {
+    if ((command == MAV_CMD_NAV_TAKEOFF || command == MAV_CMD_NAV_VTOL_TAKEOFF) && result == MAV_RESULT_ACCEPTED) {
         // Now that we are in takeoff mode we can arm the vehicle which will cause it to takeoff.
         // We specifically don't retry arming if it fails. This way we don't fight with the user if
         // They are trying to disarm.
