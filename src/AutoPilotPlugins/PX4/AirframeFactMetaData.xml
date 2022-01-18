@@ -402,6 +402,11 @@
       <maintainer>Silvan Fuhrer</maintainer>
       <type>Quadrotor x</type>
     </airframe>
+    <airframe name="Holybro X500 V2" id="4019" maintainer="Farhang Naderi &lt;farhang.nba@gmail.com&gt;">
+      <class>Copter</class>
+      <maintainer>Farhang Naderi &lt;farhang.nba@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
     <airframe name="3DR Solo" id="4030" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;">
       <class>Copter</class>
       <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
