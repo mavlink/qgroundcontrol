@@ -725,4 +725,15 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
     QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
     qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
     return timeStr;
+} 
+
+double PX4FirmwarePlugin::getDefaultLoiterRadius(Vehicle* vehicle)
+{
+    static const char* LOITER_RADIUS = "NAV_LOITER_RAD";
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, LOITER_RADIUS)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, LOITER_RADIUS)->rawValue().toDouble();
+    }
+
+    return FirmwarePlugin::getDefaultLoiterRadius(vehicle);
 }

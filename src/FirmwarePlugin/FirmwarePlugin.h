@@ -357,6 +357,8 @@ public:
     // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
     virtual QString getHobbsMeter(Vehicle* vehicle) { Q_UNUSED(vehicle); return "Not Supported"; }
 
+    virtual double getDefaultLoiterRadius(Vehicle* vehicle) { Q_UNUSED(vehicle); return 0; }
+
     /// Creates Autotune object.
     virtual Autotune* createAutotune(Vehicle *vehicle);
 

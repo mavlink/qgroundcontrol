@@ -3746,6 +3746,11 @@ QString Vehicle::hobbsMeter()
     return _firmwarePlugin->getHobbsMeter(this);
 }
 
+double Vehicle::loiterRadius()
+{
+    return _firmwarePlugin->getDefaultLoiterRadius(this);
+}
+
 void Vehicle::_vehicleParamLoaded(bool ready)
 {
     //-- TODO: This seems silly but can you think of a better

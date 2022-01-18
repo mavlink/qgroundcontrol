@@ -256,6 +256,7 @@ public:
     Q_PROPERTY(bool                 requiresGpsFix              READ requiresGpsFix                                                 NOTIFY requiresGpsFixChanged)
     Q_PROPERTY(double               loadProgress                READ loadProgress                                                   NOTIFY loadProgressChanged)
     Q_PROPERTY(bool                 initialConnectComplete      READ isInitialConnectComplete                                       NOTIFY initialConnectComplete)
+    Q_PROPERTY(double               loiterRadius                READ loiterRadius                                               CONSTANT)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -818,6 +819,7 @@ public:
 
     QGCCameraManager*           cameraManager       () { return _cameraManager; }
     QString                     hobbsMeter          ();
+    double                      loiterRadius        ();
 
     /// The vehicle is responsible for making the initial request for the Plan.
     /// @return: true: initial request is complete, false: initial request is still in progress;

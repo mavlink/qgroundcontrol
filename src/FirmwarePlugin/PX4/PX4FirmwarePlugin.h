@@ -72,6 +72,7 @@ public:
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
     bool                supportsNegativeThrust          (Vehicle* vehicle) override;
     QString             getHobbsMeter                   (Vehicle* vehicle) override;
+    double              getDefaultLoiterRadius          (Vehicle* vehicle) override;
 
 protected:
     typedef struct {
