@@ -836,6 +836,19 @@ AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
 {
     //-- TODO: This is not checking if the state is Idle. Again, these need to
     //   queued up and handled by a worker thread.
+    if (!_shared.client()) {
+        // Pilot needs to set an AirMap API key to retrieve flight lists.
+        // The API key is associated with the application developer. It may be
+        // compiled-in with customized versions of QGC.
+        emit error(tr("Failed to get flight lists"), tr("AirMap application API key needed for flight lists."), tr("Set your AirMap application API key in Settings -> AirMap"));
+        return;
+    }
+    if (!_shared.isLoggedIn()) {
+        // Flights are associated with the pilot's AirMap account. Anonymous
+        // users have no flights and will have an empty flight list.
+        emit error(tr("Failed to get flight lists"), tr("AirMap username/password required for flight lists."), tr("Set your AirMap username/password in Settings -> AirMap"));
+        return;
+    }
     qCDebug(AirMapManagerLog) << "Preparing load flight list";
     _loadingFlightList = true;
     emit loadingFlightListChanged();

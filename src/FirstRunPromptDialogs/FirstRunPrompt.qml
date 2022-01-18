@@ -20,7 +20,7 @@ QGCPopupDialog {
     property int  promptId
     property bool markAsShownOnClose: true
 
-    onHideDialog: {
+    onClosed: {
         if (markAsShownOnClose) {
             QGroundControl.settingsManager.appSettings.firstRunPromptIdsMarkIdAsShown(promptId)
         }

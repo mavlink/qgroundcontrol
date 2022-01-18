@@ -124,11 +124,12 @@ ColumnLayout {
                 text:                   qsTr("#")
             }
             QGCLabel {
-                width:                  ScreenTools.defaultFontPixelWidth * 15
+                width:                  ScreenTools.defaultFontPixelWidth * 26
                 text:                   qsTr("Function: ")
             }
             QGCLabel {
-                width:                  ScreenTools.defaultFontPixelWidth * 15
+                width:                  ScreenTools.defaultFontPixelWidth * 26
+                visible:                globals.activeVehicle.supportsJSButton
                 text:                   qsTr("Shift Function: ")
             }
         }
@@ -144,6 +145,7 @@ ColumnLayout {
                 property bool hasFirmwareSupport: controller.parameterExists(-1, parameterName)
 
                 property bool pressed
+                property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
 
                 Rectangle {
                     anchors.verticalCenter:     parent.verticalCenter
@@ -163,24 +165,96 @@ ColumnLayout {
                     }
                 }
 
-                FactComboBox {
-                    id:             mainJSButtonActionCombo
-                    width:          ScreenTools.defaultFontPixelWidth * 15
-                    fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterName) : null;
-                    visible:        hasFirmwareSupport
-                    indexModel:     false
+                QGCComboBox {
+                    id:                         buttonActionCombo
+                    width:                      ScreenTools.defaultFontPixelWidth * 26
+                    property Fact fact:         controller.parameterExists(-1, parameterName) ? controller.getParameterFact(-1, parameterName) : null
+                    property Fact fact_shift:   controller.parameterExists(-1, parameterShiftName) ? controller.getParameterFact(-1, parameterShiftName) : null
+                    property var factOptions:   fact ? fact.enumStrings : [];
+                    property var qgcActions:    _activeJoystick.assignableActionTitles.filter(
+                        function(s) {
+                            return [
+                                s.includes("Camera")
+                                , s.includes("Stream")
+                                , s.includes("Stream")
+                                , s.includes("Zoom")
+                                , s.includes("Gimbal")
+                                , s.includes("No Action")
+                            ].some(Boolean)
+                        }
+                    )
+
+                    model:                      [...qgcActions, ...factOptions]
+                    property var isFwAction:    currentIndex >= qgcActions.length
                     sizeToContents: true
+
+                    function _findCurrentButtonAction() {
+                        // Find the index in the dropdown of the current action, checks FW and QGC actions
+                        if(_activeJoystick) {
+                            if (fact && fact.value > 0) {
+                                // This is a firmware function
+                                currentIndex = qgcActions.length + fact.value
+                                // For sanity reasons, make sure qgc is set to "no action" if the firmware is set to do something
+                                _activeJoystick.setButtonAction(modelData, "No Action")
+                            } else {
+                                // If there is not firmware function, check QGC ones
+                                currentIndex = find(_activeJoystick.buttonActions[modelData])
+                            }
+                        }
+                    }
+
+                    Component.onCompleted:  _findCurrentButtonAction()
+                    onModelChanged:         _findCurrentButtonAction()
+                    onActivated:            function (optionIndex) {
+                        var func = textAt(optionIndex)
+                        if (factOptions.indexOf(func) > -1) {
+                            // This is a FW action, set parameter to the action and set QGC's handler to No Action
+                            fact.value = factOptions.indexOf(func)
+                            _activeJoystick.setButtonAction(modelData, "No Action")
+                        } else {
+                            // This is a QGC action, set parameters to Disabled and QGC to the desired action
+                            _activeJoystick.setButtonAction(modelData, func)
+                            fact.value = 0
+                            fact_shift.value = 0
+                        }
+                    }
+                }
+                QGCCheckBox {
+                    id:                         repeatCheck
+                    text:                       qsTr("Repeat")
+                    enabled:                    currentAssignableAction && _activeJoystick.calibrated && currentAssignableAction.canRepeat
+                    visible:                    !globals.activeVehicle.supportsJSButton
+
+                    onClicked: {
+                        _activeJoystick.setButtonRepeat(modelData, checked)
+                    }
+                    Component.onCompleted: {
+                        if(_activeJoystick) {
+                            checked = _activeJoystick.getButtonRepeat(modelData)
+                        }
+                    }
+                    anchors.verticalCenter:     parent.verticalCenter
+                }
+                Item {
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     1
                 }
 
                 FactComboBox {
-                    id:             shiftJSButtonActionCombo
-                    width:          ScreenTools.defaultFontPixelWidth * 15
-                    fact:           hasFirmwareSupport ? controller.getParameterFact(-1, parameterShiftName) : null;
-                    visible:        hasFirmwareSupport
-                    indexModel:     false
+                    id:         shiftJSButtonActionCombo
+                    width:      ScreenTools.defaultFontPixelWidth * 26
+                    fact:       controller.parameterExists(-1, parameterShiftName) ? controller.getParameterFact(-1, parameterShiftName) : null;
+                    indexModel: false
+                    visible:    buttonActionCombo.isFwAction
                     sizeToContents: true
                 }
 
+                QGCLabel {
+                    text:                   qsTr("QGC functions do not support shift actions")
+                    width:                  ScreenTools.defaultFontPixelWidth * 15
+                    visible:                hasFirmwareSupport && !buttonActionCombo.isFwAction
+                    anchors.verticalCenter: parent.verticalCenter
+                }
                 QGCLabel {
                     text:                   qsTr("No firmware support")
                     width:                  ScreenTools.defaultFontPixelWidth * 15

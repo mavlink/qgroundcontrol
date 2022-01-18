@@ -16,4 +16,7 @@
 	<file alias="PolygonBadCoordinatesNode.kml">src/MissionManager/UnitTest/PolygonBadCoordinatesNode.kml</file>
 	<file alias="MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
     </qresource>
+    <qresource prefix="/qml">
+        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
+    </qresource>
 </RCC>

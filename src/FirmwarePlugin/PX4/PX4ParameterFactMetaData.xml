@@ -1176,6 +1176,11 @@
       <max>60</max>
       <unit>s</unit>
     </parameter>
+    <parameter name="COM_HOME_EN" default="1" type="INT32" boolean="true">
+      <short_desc>Home position enabled</short_desc>
+      <long_desc>Set home position automatically if possible.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="COM_HOME_H_T" default="5.0" type="FLOAT">
       <short_desc>Home set horizontal threshold</short_desc>
       <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
@@ -2490,8 +2495,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_MAN_P_MAX" default="45.0" type="FLOAT">
-      <short_desc>Max manual pitch</short_desc>
-      <long_desc>Max pitch for manual control in attitude stabilized mode</long_desc>
+      <short_desc>Maximum manual pitch angle</short_desc>
+      <long_desc>Maximum manual pitch angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
@@ -2507,8 +2512,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_MAN_R_MAX" default="45.0" type="FLOAT">
-      <short_desc>Max manual roll</short_desc>
-      <long_desc>Max roll for manual control in attitude stabilized mode</long_desc>
+      <short_desc>Maximum manual roll angle</short_desc>
+      <long_desc>Maximum manual roll angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
@@ -2885,8 +2890,8 @@
       </values>
     </parameter>
     <parameter name="FW_P_LIM_MAX" default="45.0" type="FLOAT">
-      <short_desc>Positive pitch limit</short_desc>
-      <long_desc>The maximum positive pitch the controller will output.</long_desc>
+      <short_desc>Maximum pitch angle</short_desc>
+      <long_desc>The maximum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
@@ -2894,8 +2899,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_P_LIM_MIN" default="-45.0" type="FLOAT">
-      <short_desc>Negative pitch limit</short_desc>
-      <long_desc>The minimum negative pitch the controller will output.</long_desc>
+      <short_desc>Minimum pitch angle</short_desc>
+      <long_desc>The minimum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
       <min>-60.0</min>
       <max>0.0</max>
       <unit>deg</unit>
@@ -2903,8 +2908,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_R_LIM" default="50.0" type="FLOAT">
-      <short_desc>Controller roll limit</short_desc>
-      <long_desc>The maximum roll the controller will output.</long_desc>
+      <short_desc>Maximum roll angle</short_desc>
+      <long_desc>The maximum roll angle setpoint for autonomous modes including altitude and position control.</long_desc>
       <min>35.0</min>
       <max>65.0</max>
       <unit>deg</unit>
@@ -3017,6 +3022,81 @@
       <unit>s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
+    </parameter>
+  </group>
+  <group name="FW NPFG Control">
+    <parameter name="FW_USE_NPFG" default="0" type="INT32" boolean="true">
+      <short_desc>Use NPFG as lateral-directional guidance law for fixed-wing vehicles</short_desc>
+      <long_desc>Replaces L1.</long_desc>
+    </parameter>
+    <parameter name="NPFG_DAMPING" default="0.7" type="FLOAT">
+      <short_desc>NPFG damping ratio</short_desc>
+      <long_desc>Damping ratio of the NPFG control law.</long_desc>
+      <min>0.10</min>
+      <max>1.00</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="NPFG_EN_MIN_GSP" default="1" type="INT32" boolean="true">
+      <short_desc>Enable minimum forward ground speed maintaining excess wind handling logic</short_desc>
+    </parameter>
+    <parameter name="NPFG_GSP_MAX_TK" default="5.0" type="FLOAT">
+      <short_desc>Maximum, minimum forward ground speed for track keeping in excess wind</short_desc>
+      <long_desc>The maximum value of the minimum forward ground speed that may be commanded by the track keeping excess wind handling logic. Commanded in full at the normalized track error fraction of the track error boundary and reduced to zero on track.</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="NPFG_LB_PERIOD" default="1" type="INT32" boolean="true">
+      <short_desc>Enable automatic lower bound on the NPFG period</short_desc>
+      <long_desc>Avoids limit cycling from a too aggressively tuned period/damping combination. If set to false, also disables the upper bound NPFG_PERIOD_UB.</long_desc>
+    </parameter>
+    <parameter name="NPFG_PERIOD" default="10.0" type="FLOAT">
+      <short_desc>NPFG period</short_desc>
+      <long_desc>Period of the NPFG control law.</long_desc>
+      <min>1.0</min>
+      <max>100.0</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="NPFG_PERIOD_SF" default="1.5" type="FLOAT">
+      <short_desc>Period safety factor</short_desc>
+      <long_desc>Multiplied by period for conservative minimum period bounding (when period lower bounding is enabled). 1.0 bounds at marginal stability.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="NPFG_ROLL_TC" default="0.5" type="FLOAT">
+      <short_desc>Roll time constant</short_desc>
+      <long_desc>Time constant of roll controller command / response, modeled as first order delay. Used to determine lower period bound. Setting zero disables automatic period bounding.</long_desc>
+      <min>0.00</min>
+      <max>2.00</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="NPFG_SW_DST_MLT" default="0.32" type="FLOAT">
+      <short_desc>NPFG switch distance multiplier</short_desc>
+      <long_desc>Multiplied by the track error boundary to determine when the aircraft switches to the next waypoint and/or path segment. Should be less than 1. 1/pi (0.32) sets the switch distance equivalent to that of the L1 controller.</long_desc>
+      <min>0.1</min>
+      <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="NPFG_TRACK_KEEP" default="1" type="INT32" boolean="true">
+      <short_desc>Enable track keeping excess wind handling logic</short_desc>
+    </parameter>
+    <parameter name="NPFG_UB_PERIOD" default="1" type="INT32" boolean="true">
+      <short_desc>Enable automatic upper bound on the NPFG period</short_desc>
+      <long_desc>Adapts period to maintain track keeping in variable winds and path curvature.</long_desc>
+    </parameter>
+    <parameter name="NPFG_WIND_REG" default="1" type="INT32" boolean="true">
+      <short_desc>Enable wind excess regulation</short_desc>
+      <long_desc>Disabling this parameter further disables all other airspeed incrementation options.</long_desc>
     </parameter>
   </group>
   <group name="FW TECS">
@@ -3570,7 +3650,7 @@
       <unit>m/s^2</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="LNDMC_ALT_GND" default="-1.0" type="FLOAT">
+    <parameter name="LNDMC_ALT_GND" default="2." type="FLOAT">
       <short_desc>Ground effect altitude for multicopters</short_desc>
       <long_desc>The height above ground below which ground effect creates barometric altitude errors. A negative value indicates no ground effect.</long_desc>
       <min>-1</min>
@@ -3620,6 +3700,43 @@
       <short_desc>Total flight time in microseconds</short_desc>
       <long_desc>Total flight time of this autopilot. Lower 32 bits of the value. Flight time in microseconds = (LND_FLIGHT_T_HI &lt;&lt; 32) | LND_FLIGHT_T_LO.</long_desc>
       <min>0</min>
+    </parameter>
+  </group>
+  <group name="Landing Target Estimator">
+    <parameter name="LTEST_SENS_POS_X" default="0.0" type="FLOAT">
+      <short_desc>X Position of IRLOCK in body frame (forward)</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="LTEST_SENS_POS_Y" default="0.0" type="FLOAT">
+      <short_desc>Y Position of IRLOCK in body frame (right)</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="LTEST_SENS_POS_Z" default="0.0" type="FLOAT">
+      <short_desc>Z Position of IRLOCK in body frame (downward)</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="LTEST_SENS_ROT" default="2" type="INT32">
+      <short_desc>Rotation of IRLOCK sensor relative to airframe</short_desc>
+      <long_desc>Default orientation of Yaw 90°</long_desc>
+      <min>-1</min>
+      <max>40</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
     </parameter>
   </group>
   <group name="Landing target Estimator">
@@ -4610,7 +4727,7 @@
     </parameter>
     <parameter name="MPC_LAND_ALT1" default="10.0" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" (or "MPC_Z_V_AUTO_DN") and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4885,20 +5002,23 @@
       <max>3.0</max>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="MPC_Z_VEL_MAX_DN" default="1.0" type="FLOAT">
-      <short_desc>Maximum vertical descent velocity</short_desc>
-      <long_desc>Maximum vertical velocity in AUTO mode and endpoint for stabilized modes (ALTCTRL, POSCTRL).</long_desc>
+    <parameter name="MPC_Z_VEL_MAX_DN" default="1." type="FLOAT">
+      <short_desc>Maximum descent velocity</short_desc>
+      <long_desc>Descent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_DN</long_desc>
       <min>0.5</min>
       <max>4.0</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
-    <parameter name="MPC_Z_VEL_MAX_UP" default="3.0" type="FLOAT">
-      <short_desc>Maximum vertical ascent velocity</short_desc>
-      <long_desc>Maximum vertical velocity in AUTO mode and endpoint for stabilized modes (ALTCTRL, POSCTRL).</long_desc>
+    <parameter name="MPC_Z_VEL_MAX_UP" default="3." type="FLOAT">
+      <short_desc>Maximum ascent velocity</short_desc>
+      <long_desc>Ascent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_UP</long_desc>
       <min>0.5</min>
       <max>8.0</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_Z_VEL_P_ACC" default="4.0" type="FLOAT">
       <short_desc>Proportional gain for vertical velocity error</short_desc>
@@ -4906,6 +5026,24 @@
       <min>2.0</min>
       <max>15.0</max>
       <decimal>2</decimal>
+    </parameter>
+    <parameter name="MPC_Z_V_AUTO_DN" default="1." type="FLOAT">
+      <short_desc>Automatic descent velocity</short_desc>
+      <long_desc>Descent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_DN</long_desc>
+      <min>0.5</min>
+      <max>4.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MPC_Z_V_AUTO_UP" default="3." type="FLOAT">
+      <short_desc>Automatic ascent velocity</short_desc>
+      <long_desc>Ascent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_UP</long_desc>
+      <min>0.5</min>
+      <max>8.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="SYS_VEHICLE_RESP" default="-0.4" type="FLOAT">
       <short_desc>Responsiveness</short_desc>
@@ -5138,7 +5276,7 @@
   <group name="PWM Outputs">
     <parameter name="MOT_SLEW_MAX" default="0.0" type="FLOAT">
       <short_desc>Minimum motor rise time (slew rate limit)</short_desc>
-      <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in maximum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
+      <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in minimum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
       <min>0.0</min>
       <unit>s/(1000*PWM)</unit>
     </parameter>
@@ -7288,1122 +7426,6 @@
     </parameter>
   </group>
   <group name="Sensor Calibration">
-    <parameter name="CAL_ACC0_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC0_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Accelerometer 0 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC0_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of accelerometer 0 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC0_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_ACC0_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC0_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC0_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC0_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC0_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC0_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Accelerometer 1 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC1_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of accelerometer 1 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC1_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_ACC1_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC1_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Accelerometer 2 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC2_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of accelerometer 2 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC2_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_ACC2_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC2_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Accelerometer 3 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC3_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of accelerometer 3 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_ACC3_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_ACC3_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_ACC3_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Accelerometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO0_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO0_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Gyro 0 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO0_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of gyro 0 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO0_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyroscope calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_GYRO0_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO0_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO0_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO1_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO1_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Gyro 1 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO1_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of gyro 1 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO1_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyroscope calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_GYRO1_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO1_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO1_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO2_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO2_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Gyro 2 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO2_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of gyro 2 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO2_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyroscope calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_GYRO2_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO2_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO2_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO3_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of the Gyro that the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO3_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Gyro 3 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO3_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of gyro 3 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_GYRO3_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyroscope calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_GYRO3_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO3_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_GYRO3_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of Magnetometer the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Mag 0 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG0_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of magnetometer 0 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG0_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_MAG0_XCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>X Axis throttle compensation for Mag 0</short_desc>
-      <long_desc>Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_XODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_YCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Y Axis throttle compensation for Mag 0</short_desc>
-      <long_desc>Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_YODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_ZCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Z Axis throttle compensation for Mag 0</short_desc>
-      <long_desc>Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_ZODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG0_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of Magnetometer the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Mag 1 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG1_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of magnetometer 1 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG1_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_MAG1_XCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>X Axis throttle compensation for Mag 1</short_desc>
-      <long_desc>Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_XODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_YCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Y Axis throttle compensation for Mag 1</short_desc>
-      <long_desc>Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_YODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_ZCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Z Axis throttle compensation for Mag 1</short_desc>
-      <long_desc>Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_ZODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG1_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of Magnetometer the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Mag 2 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG2_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of magnetometer 2 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG2_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_MAG2_XCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>X Axis throttle compensation for Mag 2</short_desc>
-      <long_desc>Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_XODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_YCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Y Axis throttle compensation for Mag 2</short_desc>
-      <long_desc>Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_YODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_ZCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Z Axis throttle compensation for Mag 2</short_desc>
-      <long_desc>Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_ZODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG2_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of Magnetometer the calibration is for</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_PRIO" default="-1" type="INT32" category="System">
-      <short_desc>Mag 3 priority</short_desc>
-      <values>
-        <value code="-1"> Uninitialized</value>
-        <value code="0">  Disabled</value>
-        <value code="1">  Min</value>
-        <value code="25"> Low</value>
-        <value code="50"> Medium (Default)</value>
-        <value code="75"> High</value>
-        <value code="100">Max</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG3_ROT" default="-1" type="INT32" category="System">
-      <short_desc>Rotation of magnetometer 3 relative to airframe</short_desc>
-      <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="-1">Internal</value>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-        <value code="8">Roll 180°</value>
-        <value code="9">Roll 180°, Yaw 45°</value>
-        <value code="10">Roll 180°, Yaw 90°</value>
-        <value code="11">Roll 180°, Yaw 135°</value>
-        <value code="12">Pitch 180°</value>
-        <value code="13">Roll 180°, Yaw 225°</value>
-        <value code="14">Roll 180°, Yaw 270°</value>
-        <value code="15">Roll 180°, Yaw 315°</value>
-        <value code="16">Roll 90°</value>
-        <value code="17">Roll 90°, Yaw 45°</value>
-        <value code="18">Roll 90°, Yaw 90°</value>
-        <value code="19">Roll 90°, Yaw 135°</value>
-        <value code="20">Roll 270°</value>
-        <value code="21">Roll 270°, Yaw 45°</value>
-        <value code="22">Roll 270°, Yaw 90°</value>
-        <value code="23">Roll 270°, Yaw 135°</value>
-        <value code="24">Pitch 90°</value>
-        <value code="25">Pitch 270°</value>
-        <value code="26">Pitch 180°, Yaw 90°</value>
-        <value code="27">Pitch 180°, Yaw 270°</value>
-        <value code="28">Roll 90°, Pitch 90°</value>
-        <value code="29">Roll 180°, Pitch 90°</value>
-        <value code="30">Roll 270°, Pitch 90°</value>
-        <value code="31">Roll 90°, Pitch 180°</value>
-        <value code="32">Roll 270°, Pitch 180°</value>
-        <value code="33">Roll 90°, Pitch 270°</value>
-        <value code="34">Roll 180°, Pitch 270°</value>
-        <value code="35">Roll 270°, Pitch 270°</value>
-        <value code="36">Roll 90°, Pitch 180°, Yaw 90°</value>
-        <value code="37">Roll 90°, Yaw 270°</value>
-        <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
-        <value code="39">Pitch 315°</value>
-        <value code="40">Roll 90°, Pitch 315°</value>
-      </values>
-    </parameter>
-    <parameter name="CAL_MAG3_TEMP" default="-1000." type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer calibration temperature</short_desc>
-      <long_desc>Temperature during last calibration.</long_desc>
-      <unit>celcius</unit>
-    </parameter>
-    <parameter name="CAL_MAG3_XCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>X Axis throttle compensation for Mag 3</short_desc>
-      <long_desc>Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_XODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_XOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_XSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer X-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_YCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Y Axis throttle compensation for Mag 3</short_desc>
-      <long_desc>Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_YODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_YOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_YSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Y-axis scaling factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_ZCOMP" default="0.0" type="FLOAT" category="System">
-      <short_desc>Z Axis throttle compensation for Mag 3</short_desc>
-      <long_desc>Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP. Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_ZODIAG" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_ZOFF" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis offset</short_desc>
-    </parameter>
-    <parameter name="CAL_MAG3_ZSCALE" default="1.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Magnetometer Z-axis scaling factor</short_desc>
-    </parameter>
     <parameter name="CAL_MAG_COMP_TYP" default="0" type="INT32" category="System">
       <short_desc>Type of magnetometer compensation</short_desc>
       <values>
@@ -8990,6 +8012,10 @@
       <max>100.0</max>
       <unit>s</unit>
       <decimal>1</decimal>
+    </parameter>
+    <parameter name="SENS_IMU_AUTOCAL" default="1" type="INT32" boolean="true" category="System">
+      <short_desc>IMU auto calibration</short_desc>
+      <long_desc>Automatically initialize IMU (accel/gyro) calibration from bias estimates if available.</long_desc>
     </parameter>
     <parameter name="SENS_IMU_MODE" default="1" type="INT32" category="System">
       <short_desc>Sensors hub IMU mode</short_desc>
@@ -9697,8 +8723,9 @@
       <short_desc>Vehicle type</short_desc>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="0">MC</value>
-        <value code="1">FW</value>
+        <value code="0">Multicopter</value>
+        <value code="1">Fixed-Wing</value>
+        <value code="2">Tailsitter</value>
       </values>
     </parameter>
   </group>
@@ -10460,6 +9487,10 @@
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
+    <parameter name="CANNODE_GPS_RTCM" default="0" type="INT32" boolean="true">
+      <short_desc>Enable RTCM pub/sub</short_desc>
+      <max>1</max>
+    </parameter>
     <parameter name="CANNODE_NODE_ID" default="120" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
@@ -10598,6 +9629,11 @@
     <parameter name="UAVCAN_SUB_GPS" default="1" type="INT32" boolean="true">
       <short_desc>subscription GPS</short_desc>
       <long_desc>Enable UAVCAN GPS subscriptions. uavcan::equipment::gnss::Fix uavcan::equipment::gnss::Fix2 uavcan::equipment::gnss::Auxiliary</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_SUB_HYGRO" default="0" type="INT32" boolean="true">
+      <short_desc>subscription hygrometer</short_desc>
+      <long_desc>Enable UAVCAN hygrometer subscriptions. dronecan::sensors::hygrometer::Hygrometer</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_SUB_ICE" default="0" type="INT32" boolean="true">
@@ -10866,8 +9902,8 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32" boolean="true">
-      <short_desc>Lock elevons in multicopter mode</short_desc>
-      <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
+      <short_desc>Lock control surfaces in hover</short_desc>
+      <long_desc>If set to 1 the control surfaces are locked at the disarmed value in multicopter mode.</long_desc>
     </parameter>
     <parameter name="VT_FWD_THRUST_EN" default="0" type="INT32">
       <short_desc>Enable/disable usage of fixed-wing actuators in hover to generate forward force (instead of pitching down)</short_desc>

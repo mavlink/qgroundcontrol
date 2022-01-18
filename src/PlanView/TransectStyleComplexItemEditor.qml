@@ -184,21 +184,21 @@ Rectangle {
                         Layout.fillWidth:   true
                         text:               qsTr("Delete Preset")
                         enabled:            _missionItem.presetNames.length != 0
-                        onClicked:          mainWindow.showPopupDialogFromComponent(deletePresetDialog, { presetName: presetCombo.textAt(presetCombo.currentIndex) })
+                        onClicked:          deletePresetDialog.createObject(mainWindow, { presetName: presetCombo.textAt(presetCombo.currentIndex) }).open()
 
                         Component {
                             id: deletePresetDialog
 
                             QGCPopupDialog {
-                                title:      qsTr("Delete Preset")
-                                buttons:    StandardButton.Yes | StandardButton.No
+                                title:          qsTr("Delete Preset")
+                                buttons:        StandardButton.Yes | StandardButton.No
+                                destroyOnClose: true
 
-                                QGCLabel { text: qsTr("Are you sure you want to delete '%1' preset?").arg(dialogProperties.presetName) }
+                                property string presetName
 
-                                function accept() {
-                                    _missionItem.deletePreset(dialogProperties.presetName)
-                                    hideDialog()
-                                }
+                                onAccepted: _missionItem.deletePreset(presetName)
+
+                                QGCLabel { text: qsTr("Are you sure you want to delete '%1' preset?").arg(presetName) }
                             }
                         }
                     }
@@ -210,7 +210,7 @@ Rectangle {
                     Layout.alignment:   Qt.AlignCenter
                     Layout.fillWidth:   true
                     text:               qsTr("Save Settings As New Preset")
-                    onClicked:          mainWindow.showPopupDialogFromComponent(savePresetDialog)
+                    onClicked:          savePresetDialog.createObject(mainWindow).open()
                 }
 
                 SectionHeader {
@@ -245,14 +245,16 @@ Rectangle {
             id: savePresetDialog
 
             QGCPopupDialog {
-                id:         popupDialog
-                title:      qsTr("Save Preset")
-                buttons:    StandardButton.Save | StandardButton.Cancel
+                id:             popupDialog
+                title:          qsTr("Save Preset")
+                buttons:        StandardButton.Save | StandardButton.Cancel
+                destroyOnClose: true
 
-                function accept() {
+                onAccepted: {
                     if (presetNameField.text != "") {
                         _missionItem.savePreset(presetNameField.text.trim())
-                        hideDialog()
+                    } else {
+                        preventClose = true
                     }
                 }
 
@@ -281,13 +283,13 @@ Rectangle {
                         function validateText(text) {
                             if (text.trim() === "") {
                                 nameError.text = qsTr("Preset name cannot be blank.")
-                                popupDialog.disableAcceptButton()
+                                popupDialog.acceptButtonEnabled = false
                             } else if (text.includes("/")) {
                                 nameError.text = qsTr("Preset name cannot include the \"/\" character.")
-                                popupDialog.disableAcceptButton()
+                                popupDialog.acceptButtonEnabled = false
                             } else {
                                 nameError.text = ""
-                                popupDialog.enableAcceptButton()
+                                popupDialog.acceptButtonEnabled = true
                             }
                         }
                     }

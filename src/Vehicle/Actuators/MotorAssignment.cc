@@ -17,7 +17,7 @@
 MotorAssignment::MotorAssignment(QObject* parent, Vehicle* vehicle, QmlObjectListModel* actuators)
         : QObject(parent), _vehicle(vehicle), _actuators(actuators)
 {
-    _spinTimer.setInterval(1000);
+    _spinTimer.setInterval(_spinTimeoutDefaultSec);
     _spinTimer.setSingleShot(true);
     connect(&_spinTimer, &QTimer::timeout, this, &MotorAssignment::spinTimeout);
 }
@@ -141,6 +141,7 @@ void MotorAssignment::start()
     }
     _state = State::Running;
     emit activeChanged();
+    _spinTimer.setInterval(_assignMotors ? _spinTimeoutHighSec : _spinTimeoutDefaultSec);
     _spinTimer.start();
 }
 
@@ -169,6 +170,7 @@ void MotorAssignment::selectMotor(int motorIndex)
         emit activeChanged();
     } else {
         // spin the next motor after some time
+        _spinTimer.setInterval(_spinTimeoutDefaultSec);
         _spinTimer.start();
     }
 }

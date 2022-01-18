@@ -20,6 +20,7 @@ env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   5.15.2
   ARTIFACT:     QGroundControl64.apk
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
 jobs:
   build:
@@ -34,7 +35,7 @@ jobs:
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |
-          git fetch --all --tags
+          git fetch --all --tags -f
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
@@ -98,14 +99,7 @@ jobs:
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run:  |
-            if [ $GIT_BRANCH_NAME == "Stable*" ]; then
-              echo "Stable build" &&
-              export STABLE_OR_DAILY=StableBuild;
-            else
-              echo "Daily build" &&
-              export STABLE_OR_DAILY=DailyBuild;
-            fi
-            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${STABLE_OR_DAILY} CONFIG+=installer ANDROID_ABIS="arm64-v8a"
+            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="arm64-v8a"
             make -j2
 
       - name: ccache post-run
