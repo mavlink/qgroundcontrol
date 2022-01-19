@@ -8070,7 +8070,7 @@
         <value code="1">Publish primary magnetometer</value>
       </values>
     </parameter>
-    <parameter name="SENS_MAG_RATE" default="50.0" type="FLOAT">
+    <parameter name="SENS_MAG_RATE" default="15.0" type="FLOAT">
       <short_desc>Magnetometer max rate</short_desc>
       <long_desc>Magnetometer data maximum publication rate. This is an upper bound, actual magnetometer data rate is still dependant on the sensor.</long_desc>
       <min>1</min>
