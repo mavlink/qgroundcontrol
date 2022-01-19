@@ -1979,14 +1979,6 @@
       <unit>1/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_MIN_OBS_DT" default="20" type="INT32">
-      <short_desc>Minimum time of arrival delta between non-IMU observations before data is downsampled</short_desc>
-      <long_desc>Baro and Magnetometer data will be averaged before downsampling, other data will be point sampled resulting in loss of information.</long_desc>
-      <min>10</min>
-      <max>50</max>
-      <unit>ms</unit>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="EKF2_MIN_RNG" default="0.1" type="FLOAT">
       <short_desc>Expected range finder reading when on ground</short_desc>
       <long_desc>If the vehicle is on ground, is not moving as determined by the motion test controlled by EKF2_MOVE_TEST and the range finder is returning invalid or no data, then an assumed range value of EKF2_MIN_RNG will be used by the terrain estimator so that a terrain height estimate is avilable at the start of flight in situations where the range finder may be inside its minimum measurements distance when on ground.</long_desc>
