@@ -32,8 +32,8 @@ Item {
     property bool _vehicleInMissionFlightMode:      _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
     property bool _vehicleWasInMissionFlightMode:   false
     property bool _showMissionCompleteDialog:       _vehicleWasArmed && _vehicleWasInMissionFlightMode &&
-                                                        (missionController.containsItems || geoFenceController.containsItems || rallyPointController.containsItems ||
-                                                        (_activeVehicle ? _activeVehicle.cameraTriggerPoints.count !== 0 : false))
+                                                    (missionController.containsItems || geoFenceController.containsItems || rallyPointController.containsItems ||
+                                                     (_activeVehicle ? _activeVehicle.cameraTriggerPoints.count !== 0 : false))
 
     on_VehicleArmedChanged: {
         if (_vehicleArmed) {
@@ -41,7 +41,7 @@ Item {
             _vehicleWasInMissionFlightMode = _vehicleInMissionFlightMode
         } else {
             if (_showMissionCompleteDialog) {
-                mainWindow.showComponentDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                missionCompleteDialogComponent.createObject(mainWindow).open()
             }
             _vehicleWasArmed = false
             _vehicleWasInMissionFlightMode = false
@@ -57,84 +57,82 @@ Item {
     Component {
         id: missionCompleteDialogComponent
 
-        QGCViewDialog {
+        QGCPopupDialog {
+            id:         missionCompleteDialog
+            title:      qsTr("Flight Plan complete")
+            buttons:    StandardButton.Close
+
             property var activeVehicleCopy: _activeVehicle
             onActiveVehicleCopyChanged:
                 if (!activeVehicleCopy) {
-                    hideDialog()
+                    missionCompleteDialog.close()
                 }
 
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  column.height
+            ColumnLayout {
+                id:         column
+                width:      40 * ScreenTools.defaultFontPixelWidth
+                spacing:    ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    text:                   qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
+                    horizontalAlignment:    Text.AlignHCenter
+                    visible:                _activeVehicle.cameraTriggerPoints.count !== 0
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Remove plan from vehicle")
+                    visible:            !_activeVehicle.communicationLost// && !_activeVehicle.apmFirmware  // ArduPilot has a bug somewhere with mission clear
+                    onClicked: {
+                        _planController.removeAllFromVehicle()
+                        missionCompleteDialog.close()
+                    }
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               qsTr("Leave plan on vehicle")
+                    onClicked:          missionCompleteDialog.close()
+
+                }
+
+                Rectangle {
+                    Layout.fillWidth:   true
+                    color:              qgcPal.text
+                    height:             1
+                }
 
                 ColumnLayout {
-                    id:                 column
-                    anchors.margins:    _margins
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
+                    Layout.fillWidth:   true
                     spacing:            ScreenTools.defaultFontPixelHeight
-
-                    QGCLabel {
-                        Layout.fillWidth:       true
-                        text:                   qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
-                        horizontalAlignment:    Text.AlignHCenter
-                        visible:                _activeVehicle.cameraTriggerPoints.count !== 0
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Remove plan from vehicle")
-                        visible:            !_activeVehicle.communicationLost// && !_activeVehicle.apmFirmware  // ArduPilot has a bug somewhere with mission clear
-                        onClicked: {
-                            _planController.removeAllFromVehicle()
-                            hideDialog()
-                        }
-                    }
+                    visible:            !_activeVehicle.communicationLost && globals.guidedControllerFlyView.showResumeMission
 
                     QGCButton {
                         Layout.fillWidth:   true
                         Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Leave plan on vehicle")
-                        onClicked:          hideDialog()
-                    }
+                        text:               qsTr("Resume Mission From Waypoint %1").arg(globals.guidedControllerFlyView._resumeMissionIndex)
 
-                    Rectangle {
-                        Layout.fillWidth:   true
-                        color:              qgcPal.text
-                        height:             1
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth:   true
-                        spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            !_activeVehicle.communicationLost && globals.guidedControllerFlyView.showResumeMission
-
-                        QGCButton {
-                            Layout.fillWidth:   true
-                            Layout.alignment:   Qt.AlignHCenter
-                            text:               qsTr("Resume Mission From Waypoint %1").arg(globals.guidedControllerFlyView._resumeMissionIndex)
-
-                            onClicked: {
-                                globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionResumeMission, null, null)
-                                hideDialog()
-                            }
-                        }
-
-                        QGCLabel {
-                            Layout.fillWidth:   true
-                            wrapMode:           Text.WordWrap
-                            text:               qsTr("Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.")
+                        onClicked: {
+                            globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionResumeMission, null, null)
+                            missionCompleteDialog.close()
                         }
                     }
 
                     QGCLabel {
                         Layout.fillWidth:   true
                         wrapMode:           Text.WordWrap
-                        color:              qgcPal.warningText
-                        text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle.")
-                        visible:            globals.guidedControllerFlyView.showResumeMission
+                        text:               qsTr("Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.")
                     }
+                }
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    wrapMode:           Text.WordWrap
+                    color:              qgcPal.warningText
+                    text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle.")
+                    visible:            globals.guidedControllerFlyView.showResumeMission
                 }
             }
         }

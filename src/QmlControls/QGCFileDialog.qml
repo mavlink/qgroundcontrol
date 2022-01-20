@@ -27,7 +27,7 @@ Item {
     function openForLoad() {
         _openForLoad = true
         if (_mobileDlg && folder.length !== 0) {
-            mainWindow.showComponentDialog(mobileFileOpenDialog, title, mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+            mobileFileOpenDialogComponent.createObject(mainWindow).open()
         } else {
             fullFileDialog.open()
         }
@@ -36,7 +36,7 @@ Item {
     function openForSave() {
         _openForLoad = false
         if (_mobileDlg && folder.length !== 0) {
-            mainWindow.showComponentDialog(mobileFileSaveDialog, title, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+            mobileFileSaveDialogComponent.createObject(mainWindow).open()
         } else {
             fullFileDialog.open()
         }
@@ -107,168 +107,158 @@ Item {
     }
 
     Component {
-        id: mobileFileOpenDialog
+        id: mobileFileOpenDialogComponent
 
-        QGCViewDialog {
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  fileOpenColumn.height
+        QGCPopupDialog {
+            id:         mobileFileOpenDialog
+            title:      _root.title
+            buttons:    StandardButton.Cancel
 
-                Column {
-                    id:             fileOpenColumn
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    spacing:        ScreenTools.defaultFontPixelHeight / 2
+            Column {
+                id:         fileOpenColumn
+                width:      40 * ScreenTools.defaultFontPixelWidth
+                spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-                    QGCLabel { text: qsTr("Path: %1").arg(_mobileShortPath) }
+                QGCLabel { text: qsTr("Path: %1").arg(_mobileShortPath) }
 
-                    Repeater {
-                        id:     fileRepeater
-                        model:  controller.getFiles(folder, _rgExtensions)
+                Repeater {
+                    id:     fileRepeater
+                    model:  controller.getFiles(folder, _rgExtensions)
 
-                        FileButton {
-                            id:             fileButton
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            text:           modelData
+                    FileButton {
+                        id:             fileButton
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           modelData
 
-                            onClicked: {
-                                hideDialog()
-                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData))
-                            }
+                        onClicked: {
+                            mobileFileOpenDialog.close()
+                            _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData))
+                        }
 
-                            onHamburgerClicked: {
-                                highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData)
-                                hamburgerMenu.popup()
-                            }
+                        onHamburgerClicked: {
+                            highlight = true
+                            hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData)
+                            hamburgerMenu.popup()
+                        }
 
-                            QGCMenu {
-                                id: hamburgerMenu
+                        QGCMenu {
+                            id: hamburgerMenu
 
-                                property string fileToDelete
+                            property string fileToDelete
 
-                                onAboutToHide: fileButton.highlight = false
+                            onAboutToHide: fileButton.highlight = false
 
-                                QGCMenuItem {
-                                    text:           qsTr("Delete")
-                                    onTriggered: {
-                                        controller.deleteFile(hamburgerMenu.fileToDelete)
-                                        fileRepeater.model = controller.getFiles(folder, _rgExtensions)
-                                    }
+                            QGCMenuItem {
+                                text:           qsTr("Delete")
+                                onTriggered: {
+                                    controller.deleteFile(hamburgerMenu.fileToDelete)
+                                    fileRepeater.model = controller.getFiles(folder, _rgExtensions)
                                 }
                             }
                         }
                     }
+                }
 
-                    QGCLabel {
-                        text:       qsTr("No files")
-                        visible:    fileRepeater.model.length === 0
-                    }
+                QGCLabel {
+                    text:       qsTr("No files")
+                    visible:    fileRepeater.model.length === 0
                 }
             }
         }
     }
 
     Component {
-        id: mobileFileSaveDialog
+        id: mobileFileSaveDialogComponent
 
-        QGCViewDialog {
-            function accept() {
+        QGCPopupDialog {
+            id:         mobileFileSaveDialog
+            title:      _root.title
+            buttons:    StandardButton.Cancel | StandardButton.Ok
+
+            onAccepted: {
                 if (filenameTextField.text == "") {
+                    mobileFileSaveDialog.preventClose = true
                     return
                 }
                 if (!replaceMessage.visible) {
                     if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, _rgExtensions))) {
                         replaceMessage.visible = true
+                        mobileFileSaveDialog.preventClose = true
                         return
                     }
                 }
                 _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, _rgExtensions))
-                hideDialog()
             }
 
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  fileSaveColumn.height
+            Column {
+                id:         fileSaveColumn
+                width:      40 * ScreenTools.defaultFontPixelWidth
+                spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-                Column {
-                    id:             fileSaveColumn
+                RowLayout {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    spacing:        ScreenTools.defaultFontPixelHeight / 2
+                    spacing:        ScreenTools.defaultFontPixelWidth
 
-                    RowLayout {
+                    QGCLabel { text: qsTr("New file name:") }
+
+                    QGCTextField {
+                        id:                 filenameTextField
+                        Layout.fillWidth:   true
+                        onTextChanged:      replaceMessage.visible = false
+                    }
+                }
+
+                QGCLabel {
+                    id:             replaceMessage
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("The file %1 exists. Click Save again to replace it.").arg(filenameTextField.text)
+                    visible:        false
+                    color:          qgcPal.warningText
+                }
+
+                SectionHeader {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("Save to existing file:")
+                }
+
+                Repeater {
+                    id:     fileRepeater
+                    model:  controller.getFiles(folder, [ _rgExtensions ])
+
+                    FileButton {
+                        id:             fileButton
                         anchors.left:   parent.left
                         anchors.right:  parent.right
-                        spacing:        ScreenTools.defaultFontPixelWidth
+                        text:           modelData
 
-                        QGCLabel { text: qsTr("New file name:") }
-
-                        QGCTextField {
-                            id:                 filenameTextField
-                            Layout.fillWidth:   true
-                            onTextChanged:      replaceMessage.visible = false
+                        onClicked: {
+                            mobileFileSaveDialog.close()
+                            _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData))
                         }
-                    }
 
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("File names must end with .%1 file extension. If missing it will be added.").arg(fileExtension)
-                    }
+                        onHamburgerClicked: {
+                            highlight = true
+                            hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData)
+                            hamburgerMenu.popup()
+                        }
 
-                    QGCLabel {
-                        id:             replaceMessage
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("The file %1 exists. Click Save again to replace it.").arg(filenameTextField.text)
-                        visible:        false
-                        color:          qgcPal.warningText
-                    }
+                        QGCMenu {
+                            id: hamburgerMenu
 
-                    SectionHeader {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        text:           qsTr("Save to existing file:")
-                    }
+                            property string fileToDelete
 
-                    Repeater {
-                        id:     fileRepeater
-                        model:  controller.getFiles(folder, [ fileExtension ])
+                            onAboutToHide: fileButton.highlight = false
 
-                        FileButton {
-                            id:             fileButton
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            text:           modelData
-
-                            onClicked: {
-                                hideDialog()
-                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData))
-                            }
-
-                            onHamburgerClicked: {
-                                highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData)
-                                hamburgerMenu.popup()
-                            }
-
-                            QGCMenu {
-                                id: hamburgerMenu
-
-                                property string fileToDelete
-
-                                onAboutToHide: fileButton.highlight = false
-
-                                QGCMenuItem {
-                                    text:           qsTr("Delete")
-                                    onTriggered: {
-                                        controller.deleteFile(hamburgerMenu.fileToDelete)
-                                        fileRepeater.model = controller.getFiles(folder, [ fileExtension ])
-                                    }
+                            QGCMenuItem {
+                                text:           qsTr("Delete")
+                                onTriggered: {
+                                    controller.deleteFile(hamburgerMenu.fileToDelete)
+                                    fileRepeater.model = controller.getFiles(folder, [ _rgExtensions ])
                                 }
                             }
                         }
