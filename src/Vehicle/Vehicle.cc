@@ -2638,6 +2638,28 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
     }
 }
 
+void Vehicle::setEkfOrigin(const QGeoCoordinate& centerCoord)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "setCurrentMissionSequence: primary link gone!";
+        return;
+    }
+    mavlink_message_t msg;
+    mavlink_msg_set_gps_global_origin_pack_chan(
+        _mavlink->getSystemId(),
+        _mavlink->getComponentId(),
+        sharedLink->mavlinkChannel(),
+        &msg,
+        id(),
+        centerCoord.latitude()*1e7,
+        centerCoord.longitude()*1e7,
+        centerCoord.altitude()*1e3,
+        static_cast<float>(qQNaN())
+    );
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
 void Vehicle::stopGuidedModeROI()
 {
     if (!roiModeSupported()) {

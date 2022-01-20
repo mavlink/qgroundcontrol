@@ -545,10 +545,18 @@ FlightMap {
                     globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
                 }
             }
+            QGCMenuItem {
+                text:           qsTr("Set EKF Origin")
+                visible:        globals.guidedControllerFlyView.showSetEkfOrigin
+
+                onTriggered: {
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEkfOrigin, clickMenu.coord)
+                }
+            }
         }
 
         onClicked: {
-            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI)) {
+            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetEkfOrigin)) {
                 orbitMapCircle.hide()
                 gotoLocationItem.hide()
                 var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
