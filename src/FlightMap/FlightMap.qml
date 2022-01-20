@@ -66,12 +66,13 @@ Map {
     }
 
     function centerToSpecifiedLocation() {
-        mainWindow.showComponentDialog(specifyMapPositionDialog, qsTr("Specify Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+        specifyMapPositionDialog.createObject(mainWindow).open()
     }
 
     Component {
         id: specifyMapPositionDialog
         EditPositionDialog {
+            title:                  qsTr("Specify Position")
             coordinate:             center
             onCoordinateChanged:    center = coordinate
         }

@@ -87,8 +87,6 @@ QGCTabButton                            1.0 QGCTabButton.qml
 QGCTextField                            1.0 QGCTextField.qml
 QGCToolBarButton                        1.0 QGCToolBarButton.qml
 QGCToolInsets                           1.0 QGCToolInsets.qml
-QGCViewDialog                           1.0 QGCViewDialog.qml
-QGCViewDialogContainer                  1.0 QGCViewDialogContainer.qml
 RallyPointEditorHeader                  1.0 RallyPointEditorHeader.qml
 RallyPointItemEditor                    1.0 RallyPointItemEditor.qml
 RallyPointMapVisuals                    1.0 RallyPointMapVisuals.qml
