@@ -247,166 +247,156 @@ Item {
     Component {
         id: optionsDialogComponent
 
-        QGCViewDialog {
-            id: optionDialog
+        QGCPopupDialog {
+            title:      qsTr("Offline Maps Options")
+            buttons:    StandardButton.Save | StandardButton.Cancel
 
-            function accept() {
+            onAccepted: {
                 QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
                 QGroundControl.mapEngineManager.maxMemCache  = parseInt(maxCacheMemSize.text)
-                optionDialog.hideDialog()
             }
 
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  optionsColumn.height
+            Column {
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                Column {
-                    id:                 optionsColumn
-                    anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                    anchors.top:        parent.top
-                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                QGCLabel { text:       qsTr("Max Cache Disk Size (MB):") }
 
-                    QGCLabel { text:       qsTr("Max Cache Disk Size (MB):") }
+                QGCTextField {
+                    id:                 maxCacheSize
+                    maximumLength:      6
+                    inputMethodHints:   Qt.ImhDigitsOnly
+                    validator:          IntValidator {bottom: 1; top: 262144;}
+                    text:               QGroundControl.mapEngineManager.maxDiskCache
+                }
 
-                    QGCTextField {
-                        id:                 maxCacheSize
-                        maximumLength:      6
-                        inputMethodHints:   Qt.ImhDigitsOnly
-                        validator:          IntValidator {bottom: 1; top: 262144;}
-                        text:               QGroundControl.mapEngineManager.maxDiskCache
-                    }
+                Item { width: 1; height: 1 }
 
-                    Item { width: 1; height: 1 }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("Max Cache Memory Size (MB):")
+                }
 
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("Max Cache Memory Size (MB):")
-                    }
+                QGCTextField {
+                    id:                 maxCacheMemSize
+                    maximumLength:      4
+                    inputMethodHints:   Qt.ImhDigitsOnly
+                    validator:          IntValidator {bottom: 1; top: 1024;}
+                    text:               QGroundControl.mapEngineManager.maxMemCache
+                }
 
-                    QGCTextField {
-                        id:                 maxCacheMemSize
-                        maximumLength:      4
-                        inputMethodHints:   Qt.ImhDigitsOnly
-                        validator:          IntValidator {bottom: 1; top: 1024;}
-                        text:               QGroundControl.mapEngineManager.maxMemCache
-                    }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    font.pointSize: _adjustableFontPointSize
+                    text:           qsTr("Memory cache changes require a restart to take effect.")
+                }
 
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        font.pointSize: _adjustableFontPointSize
-                        text:           qsTr("Memory cache changes require a restart to take effect.")
-                    }
+                Item { width: 1; height: 1; visible: _mapboxFact ? _mapboxFact.visible : false }
+                QGCLabel { text: qsTr("Mapbox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
+                FactTextField {
+                    fact:               _mapboxFact
+                    visible:            _mapboxFact ? _mapboxFact.visible : false
+                    maximumLength:      256
+                    width:              ScreenTools.defaultFontPixelWidth * 30
+                }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("To enable Mapbox maps, enter your access token.")
+                    visible:        _mapboxFact ? _mapboxFact.visible : false
+                    font.pointSize: _adjustableFontPointSize
+                }
 
-                    Item { width: 1; height: 1; visible: _mapboxFact ? _mapboxFact.visible : false }
-                    QGCLabel { text: qsTr("Mapbox Access Token"); visible: _mapboxFact ? _mapboxFact.visible : false }
-                    FactTextField {
-                        fact:               _mapboxFact
-                        visible:            _mapboxFact ? _mapboxFact.visible : false
-                        maximumLength:      256
-                        width:              ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("To enable Mapbox maps, enter your access token.")
-                        visible:        _mapboxFact ? _mapboxFact.visible : false
-                        font.pointSize: _adjustableFontPointSize
-                    }
+                Item { width: 1; height: 1; visible: _mapboxAccountFact ? _mapboxAccountFact.visible : false }
+                QGCLabel { text: qsTr("Mapbox User Name"); visible: _mapboxAccountFact ? _mapboxAccountFact.visible : false }
+                FactTextField {
+                    fact:               _mapboxAccountFact
+                    visible:            _mapboxAccountFact ? _mapboxAccountFact.visible : false
+                    maximumLength:      256
+                    width:              ScreenTools.defaultFontPixelWidth * 30
+                }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("To enable custom Mapbox styles, enter your account name.")
+                    visible:        _mapboxAccountFact ? _mapboxAccountFact.visible : false
+                    font.pointSize: _adjustableFontPointSize
+                }
 
-                    Item { width: 1; height: 1; visible: _mapboxAccountFact ? _mapboxAccountFact.visible : false }
-                    QGCLabel { text: qsTr("Mapbox User Name"); visible: _mapboxAccountFact ? _mapboxAccountFact.visible : false }
-                    FactTextField {
-                        fact:               _mapboxAccountFact
-                        visible:            _mapboxAccountFact ? _mapboxAccountFact.visible : false
-                        maximumLength:      256
-                        width:              ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("To enable custom Mapbox styles, enter your account name.")
-                        visible:        _mapboxAccountFact ? _mapboxAccountFact.visible : false
-                        font.pointSize: _adjustableFontPointSize
-                    }
+                Item { width: 1; height: 1; visible: _mapboxStyleFact ? _mapboxStyleFact.visible : false }
+                QGCLabel { text: qsTr("Mapbox Style ID"); visible: _mapboxStyleFact ? _mapboxStyleFact.visible : false }
+                FactTextField {
+                    fact:               _mapboxStyleFact
+                    visible:            _mapboxStyleFact ? _mapboxStyleFact.visible : false
+                    maximumLength:      256
+                    width:              ScreenTools.defaultFontPixelWidth * 30
+                }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("To enable custom Mapbox styles, enter your style ID.")
+                    visible:        _mapboxStyleFact ? _mapboxStyleFact.visible : false
+                    font.pointSize: _adjustableFontPointSize
+                }
 
-                    Item { width: 1; height: 1; visible: _mapboxStyleFact ? _mapboxStyleFact.visible : false }
-                    QGCLabel { text: qsTr("Mapbox Style ID"); visible: _mapboxStyleFact ? _mapboxStyleFact.visible : false }
-                    FactTextField {
-                        fact:               _mapboxStyleFact
-                        visible:            _mapboxStyleFact ? _mapboxStyleFact.visible : false
-                        maximumLength:      256
-                        width:              ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("To enable custom Mapbox styles, enter your style ID.")
-                        visible:        _mapboxStyleFact ? _mapboxStyleFact.visible : false
-                        font.pointSize: _adjustableFontPointSize
-                    }
+                Item { width: 1; height: 1; visible: _esriFact ? _esriFact.visible : false }
+                QGCLabel { text: qsTr("Esri Access Token"); visible: _esriFact ? _esriFact.visible : false }
+                FactTextField {
+                    fact:               _esriFact
+                    visible:            _esriFact ? _esriFact.visible : false
+                    maximumLength:      256
+                    width:              ScreenTools.defaultFontPixelWidth * 30
+                }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("To enable Esri maps, enter your access token.")
+                    visible:        _esriFact ? _esriFact.visible : false
+                    font.pointSize: _adjustableFontPointSize
+                }
 
-                    Item { width: 1; height: 1; visible: _esriFact ? _esriFact.visible : false }
-                    QGCLabel { text: qsTr("Esri Access Token"); visible: _esriFact ? _esriFact.visible : false }
-                    FactTextField {
-                        fact:               _esriFact
-                        visible:            _esriFact ? _esriFact.visible : false
-                        maximumLength:      256
-                        width:              ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("To enable Esri maps, enter your access token.")
-                        visible:        _esriFact ? _esriFact.visible : false
-                        font.pointSize: _adjustableFontPointSize
-                    }
+                Item { width: 1; height: 1; visible: _vworldFact ? _vworldFact.visible : false }
+                QGCLabel { text: qsTr("VWorld Access Token"); visible: _vworldFact ? _vworldFact.visible : false }
+                FactTextField {
+                    fact:               _vworldFact
+                    visible:            _vworldFact ? _vworldFact.visible : false
+                    maximumLength:      256
+                    width:              ScreenTools.defaultFontPixelWidth * 30
+                }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("To enable VWorld maps, enter your access token.")
+                    visible:        _vworldFact ? _vworldFact.visible : false
+                    font.pointSize: _adjustableFontPointSize
+                }
 
-                    Item { width: 1; height: 1; visible: _vworldFact ? _vworldFact.visible : false }
-                    QGCLabel { text: qsTr("VWorld Access Token"); visible: _vworldFact ? _vworldFact.visible : false }
-                    FactTextField {
-                        fact:               _vworldFact
-                        visible:            _vworldFact ? _vworldFact.visible : false
-                        maximumLength:      256
-                        width:              ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("To enable VWorld maps, enter your access token.")
-                        visible:        _vworldFact ? _vworldFact.visible : false
-                        font.pointSize: _adjustableFontPointSize
-                    }
-
-                    Item { width: 1; height: 1; visible: _customURLFact ? _customURLFact.visible : false }
-                    QGCLabel { text: qsTr("Custom Map URL"); visible: _customURLFact ? _customURLFact.visible : false }
-                    FactTextField {
-                        fact:               _customURLFact
-                        visible:            _customURLFact ? _customURLFact.visible : false
-                        maximumLength:      256
-                        width:              ScreenTools.defaultFontPixelWidth * 30
-                    }
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("URL with {x} {y} {z} or {zoom} substitutions")
-                        visible:        _customURLFact ? _customURLFact.visible : false
-                        font.pointSize: _adjustableFontPointSize
-                    }
-                } // GridLayout
-            } // QGCFlickable
-        } // QGCViewDialog - optionsDialog
+                Item { width: 1; height: 1; visible: _customURLFact ? _customURLFact.visible : false }
+                QGCLabel { text: qsTr("Custom Map URL"); visible: _customURLFact ? _customURLFact.visible : false }
+                FactTextField {
+                    fact:               _customURLFact
+                    visible:            _customURLFact ? _customURLFact.visible : false
+                    maximumLength:      256
+                    width:              ScreenTools.defaultFontPixelWidth * 30
+                }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("URL with {x} {y} {z} or {zoom} substitutions")
+                    visible:        _customURLFact ? _customURLFact.visible : false
+                    font.pointSize: _adjustableFontPointSize
+                }
+            }
+        }
     } // Component - optionsDialogComponent
 
     Component {
@@ -1084,7 +1074,7 @@ Item {
             QGCButton {
                 text:           qsTr("Options")
                 width:          _buttonSize
-                onClicked:      mainWindow.showComponentDialog(optionsDialogComponent, qsTr("Offline Maps Options"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                onClicked:      optionsDialogComponent.createObject(mainWindow).open()
             }
         }
 

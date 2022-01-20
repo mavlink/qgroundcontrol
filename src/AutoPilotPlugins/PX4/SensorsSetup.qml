@@ -451,7 +451,7 @@ Item {
                 onClicked: {
                     preCalibrationDialogType = "airspeed"
                     preCalibrationDialogHelp = airspeedHelp
-                    mainWindow.showComponentDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    preCalibrationDialogComponent.createObject(mainWindow, { title: qsTr("Calibrate Airspeed") }).open()
                 }
             }
 
