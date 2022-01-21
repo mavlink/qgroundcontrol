@@ -87,7 +87,7 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("Barometer(s):")
-            valueText: ""
+            valueText: sensorParams.baroIdAvailable ? "" : qsTr("Not Supported(Over APM 4.1)")
         }
 
         Repeater {
