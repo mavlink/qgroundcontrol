@@ -624,8 +624,8 @@ Rectangle {
                             text:               QGroundControl.mavlinkLogManager.feedback
                             enabled:            !_disableDataPersistence
                             style: TextAreaStyle {
-                                textColor:          qgcPal.windowShade
-                                backgroundColor:    qgcPal.text
+                                textColor:          qgcPal.textFieldText
+                                backgroundColor:    qgcPal.textField
                             }
                         }
                     }
