@@ -389,6 +389,10 @@ void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int comm
             vehicle->setArmedShowError(true);
         }
     }
+
+    if (command == MAV_CMD_NAV_VTOL_TAKEOFF) {
+        vehicle->publishVtolTakeoffResult(result == MAV_RESULT_ACCEPTED);
+    }
 }
 
 void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel)

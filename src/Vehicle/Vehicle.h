@@ -860,6 +860,8 @@ public:
     void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
     void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
 
+    void publishVtolTakeoffResult(bool success) { emit  vtolTakeoffResult(success);}
+
 public slots:
     void setVtolInFwdFlight                 (bool vtolInFwdFlight);
     void _offlineFirmwareTypeSettingChanged (QVariant varFirmwareType); // Should only be used by MissionControler to set firmware from Plan file
@@ -926,6 +928,7 @@ signals:
     void requiresGpsFixChanged          ();
     void haveMRSpeedLimChanged          ();
     void haveFWSpeedLimChanged          ();
+    void vtolTakeoffResult              (bool success);
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
