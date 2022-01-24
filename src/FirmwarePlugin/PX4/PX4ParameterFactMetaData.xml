@@ -7575,6 +7575,12 @@
         <bit index="1">FFT</bit>
       </bitmask>
     </parameter>
+    <parameter name="IMU_GYRO_DNF_HMC" default="3" type="INT32">
+      <short_desc>IMU gyro dynamic notch filter harmonics</short_desc>
+      <long_desc>ESC RPM number of harmonics (multiples of RPM) for ESC RPM dynamic notch filtering.</long_desc>
+      <min>1</min>
+      <max>7</max>
+    </parameter>
     <parameter name="IMU_GYRO_FFT_EN" default="0" type="INT32" boolean="true">
       <short_desc>IMU gyro FFT enable</short_desc>
       <reboot_required>true</reboot_required>
