@@ -22,6 +22,7 @@ Item {
     property var    _loiterComponent: null
     property var    _lineComponent: null
     property var    activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
+    property bool _takeoff_executed: false
 
     property var distHomeToLoiter : activeVehicle ? activeVehicle.loiterRadiusMeters * 3 : 0
 
@@ -146,6 +147,21 @@ Item {
             }
         }
 
+        onVtolTakeoffResult: {
+            _takeoff_executed = success
+            if (success) {
+                vtLoiterCircle.interactive = false
+            } else {
+                if (_loiterComponent) {
+                    _loiterComponent.destroy()
+                }
+
+                if (_lineComponent) {
+                    _lineComponent.destroy()
+                }
+            }
+        }
+
     }
 
     Connections {
@@ -159,18 +175,22 @@ Item {
             vtLoiterCircle.radius.rawValue = activeVehicle.loiterRadius
             vtLoiterCircle.center = activeVehicle.homePosition.atDistanceAndAzimuth(distHomeToLoiter, activeVehicle.heading.rawValue)
             _guidedActionsController.vtolTakeoffLoiterCoordinate = vtLoiterCircle.center
+            vtLoiterCircle.interactive = true
+            _takeoff_executed = false
         }
 
         onActionCancelled: {
-            if (_loiterComponent) {
-                _loiterComponent.destroy()
-            }
+            if (!_takeoff_executed) {
+                if (_loiterComponent) {
+                    _loiterComponent.destroy()
+                }
 
-            if (_lineComponent) {
-                _lineComponent.destroy()
-            }
+                if (_lineComponent) {
+                    _lineComponent.destroy()
+                }
 
-            _guidedActionsController.vtolTakeoffLoiterCoordinate = QtPositioning.coordinate()
+                _guidedActionsController.vtolTakeoffLoiterCoordinate = QtPositioning.coordinate()
+            }
         }
     }
 }
