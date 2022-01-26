@@ -2104,6 +2104,13 @@
       <max>0.5</max>
       <decimal>2</decimal>
     </parameter>
+    <parameter name="EKF2_PREDICT_US" default="10000" type="INT32">
+      <short_desc>EKF prediction period</short_desc>
+      <long_desc>EKF prediction period in microseconds. This should ideally be an integer multiple of the IMU time delta. Actual filter update will be an integer multiple of IMU update.</long_desc>
+      <min>1000</min>
+      <max>20000</max>
+      <unit>us</unit>
+    </parameter>
     <parameter name="EKF2_REQ_EPH" default="3.0" type="FLOAT">
       <short_desc>Required EPH to use GPS</short_desc>
       <min>2</min>
