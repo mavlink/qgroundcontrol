@@ -9610,17 +9610,10 @@
       <long_desc>Enable UAVCAN barometer subscription. uavcan::equipment::air_data::StaticPressure uavcan::equipment::air_data::StaticTemperature</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="UAVCAN_SUB_BAT" default="0" type="INT32">
+    <parameter name="UAVCAN_SUB_BAT" default="0" type="INT32" boolean="true">
       <short_desc>subscription battery</short_desc>
-      <long_desc>Enable UAVCAN battery subscription. 1) uavcan::equipment::power::BatteryInfo 2) cuav::equipment::power::CBAT</long_desc>
-      <min>0</min>
-      <max>2</max>
+      <long_desc>Enable UAVCAN battery subscription. uavcan::equipment::power::BatteryInfo ardupilot::equipment::power::BatteryInfoAux</long_desc>
       <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">disabled</value>
-        <value code="1">default</value>
-        <value code="2">CUAV battery monitor</value>
-      </values>
     </parameter>
     <parameter name="UAVCAN_SUB_DPRES" default="0" type="INT32" boolean="true">
       <short_desc>subscription differential pressure</short_desc>
