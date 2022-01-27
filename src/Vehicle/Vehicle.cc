@@ -1561,7 +1561,6 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
 
     // handle special groups & protocols
     if (event->group() == "health" || event->group() == "arming_check") {
-        _events[comp_id]->healthAndArmingChecks().handleEvent(*event.get());
         // these are displayed separately
         return;
     }
@@ -1613,13 +1612,41 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
                 sendRequestEventMessageCB,
                 _mavlink->getSystemId(), _mavlink->getComponentId(), _id, compid)};
         eventData = _events.insert(compid, eventHandler);
+
+        // connect health and arming check updates
+        connect(eventHandler.data(), &EventHandler::healthAndArmingChecksUpdated, this, [compid, this]() {
+            // TODO: use user-intended mode instead of currently set mode
+            const QSharedPointer<EventHandler>& eventHandler = _events[compid];
+            _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
+                    eventHandler->getModeGroup(_custom_mode));
+        });
+        connect(this, &Vehicle::flightModeChanged, this, [compid, this]() {
+            const QSharedPointer<EventHandler>& eventHandler = _events[compid];
+            _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
+                    eventHandler->getModeGroup(_custom_mode));
+        });
     }
     return *eventData->data();
 }
 
 void Vehicle::setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
 {
-    _eventHandler(compid).setMetadata(metadataJsonFileName, translationJsonFileName);
+    _eventHandler(compid).setMetadata(metadataJsonFileName);
+
+    // get the mode group for some well-known flight modes
+    int modeGroups[2]{-1, -1};
+    const QString modes[2]{"Takeoff", "Mission"};
+    for (size_t i = 0; i < sizeof(modeGroups)/sizeof(modeGroups[0]); ++i) {
+        uint8_t     base_mode;
+        uint32_t    custom_mode;
+        if (_firmwarePlugin->setFlightMode(modes[i], &base_mode, &custom_mode)) {
+            modeGroups[i] = _eventHandler(compid).getModeGroup(custom_mode);
+            if (modeGroups[i] == -1) {
+                qCDebug(VehicleLog) << "Failed to get mode group for mode" << modes[i] << "(Might not be in metadata)";
+            }
+        }
+    }
+    _healthAndArmingCheckReport.setModeGroups(modeGroups[0], modeGroups[1]);
 }
 
 void Vehicle::setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
