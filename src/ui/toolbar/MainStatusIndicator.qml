@@ -15,6 +15,7 @@ import QGroundControl.Controls              1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
+import QGroundControl.FactSystem            1.0
 
 RowLayout {
     id:         _root
@@ -26,6 +27,7 @@ RowLayout {
     property bool   _armed:             _activeVehicle ? _activeVehicle.armed : false
     property real   _margins:           ScreenTools.defaultFontPixelWidth
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
+    property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
 
     QGCLabel {
         id:             mainStatusLabel
@@ -49,6 +51,17 @@ RowLayout {
                 }
                 if (_activeVehicle.armed) {
                     _mainStatusBGColor = "green"
+
+                    if (_healthAndArmingChecksSupported) {
+                        if (_activeVehicle.healthAndArmingCheckReport.canArm) {
+                            if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
+                                _mainStatusBGColor = "yellow"
+                            }
+                        } else {
+                            _mainStatusBGColor = "red"
+                        }
+                    }
+
                     if (_activeVehicle.flying) {
                         return mainStatusLabel._flyingText
                     } else if (_activeVehicle.landing) {
@@ -57,7 +70,19 @@ RowLayout {
                         return mainStatusLabel._armedText
                     }
                 } else {
-                    if (_activeVehicle.readyToFlyAvailable) {
+                    if (_healthAndArmingChecksSupported) {
+                        if (_activeVehicle.healthAndArmingCheckReport.canArm) {
+                            if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
+                                _mainStatusBGColor = "yellow"
+                            } else {
+                                _mainStatusBGColor = "green"
+                            }
+                            return mainStatusLabel._readyToFlyText
+                        } else {
+                            _mainStatusBGColor = "red"
+                            return mainStatusLabel._notReadyToFlyText
+                        }
+                    } else if (_activeVehicle.readyToFlyAvailable) {
                         if (_activeVehicle.readyToFly) {
                             _mainStatusBGColor = "green"
                             return mainStatusLabel._readyToFlyText
@@ -167,7 +192,10 @@ RowLayout {
                     spacing:    _spacing
 
                     QGCButton {
-                        Layout.alignment:   Qt.AlignHCenter
+                        Layout.leftMargin:  _healthAndArmingChecksSupported ? width / 2 : 0
+                        Layout.alignment:   _healthAndArmingChecksSupported ? Qt.AlignLeft : Qt.AlignHCenter
+                        // FIXME: forceArm is not possible anymore if _healthAndArmingChecksSupported == true
+                        enabled:            _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
                         text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
 
                         property bool forceArm: false
@@ -192,6 +220,7 @@ RowLayout {
                     QGCLabel {
                         Layout.alignment:   Qt.AlignHCenter
                         text:               qsTr("Sensor Status")
+                        visible:            !_healthAndArmingChecksSupported
                     }
 
                     GridLayout {
@@ -199,6 +228,7 @@ RowLayout {
                         columnSpacing:  _spacing
                         rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
                         flow:           GridLayout.TopToBottom
+                        visible:        !_healthAndArmingChecksSupported
 
                         Repeater {
                             model: _activeVehicle.sysStatusSensorInfo.sensorNames
@@ -216,6 +246,126 @@ RowLayout {
                             }
                         }
                     }
+
+
+                    QGCLabel {
+                        text:               qsTr("Arming Check Report:")
+                        visible:            _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
+                    }
+                    // List health and arming checks
+                    QGCListView {
+                        visible:            _healthAndArmingChecksSupported
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        width:              mainWindow.width * 0.66666
+                        height:             contentHeight
+                        model:              _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
+                        delegate:           listdelegate
+                    }
+
+                    FactPanelController {
+                        id: controller
+                    }
+
+                    Component {
+                        id: listdelegate
+
+                        Column {
+                            width:      parent ? parent.width : 0
+                            Row {
+                                width:  parent.width
+                                QGCLabel {
+                                    id:           message
+                                    text:         object.message
+                                    wrapMode:     Text.WordWrap
+                                    textFormat:   TextEdit.RichText
+                                    width:        parent.width - arrowDownIndicator.width
+                                    color:        object.severity == 'error' ? qgcPal.colorRed : object.severity == 'warning' ? qgcPal.colorOrange : qgcPal.text
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            if (object.description != "")
+                                                object.expanded = !object.expanded
+                                        }
+                                    }
+                                }
+
+                                QGCColoredImage {
+                                    id:                     arrowDownIndicator
+                                    height:                 1.5 * ScreenTools.defaultFontPixelWidth
+                                    width:                  height
+                                    source:                 "/qmlimages/arrow-down.png"
+                                    color:                  qgcPal.text
+                                    visible:                object.description != ""
+                                    MouseArea {
+                                        anchors.fill:       parent
+                                        onClicked:          object.expanded = !object.expanded
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                property var margin:      ScreenTools.defaultFontPixelWidth
+                                id:                       descriptionRect
+                                width:                    parent.width
+                                height:                   description.height + margin
+                                color:                    qgcPal.windowShade
+                                visible:                  false
+                                Connections {
+                                    target:               object
+                                    function onExpandedChanged() {
+                                        if (object.expanded) {
+                                            description.height = description.preferredHeight
+                                        } else {
+                                            description.height = 0
+                                        }
+                                    }
+                                }
+
+                                Behavior on height {
+                                    NumberAnimation {
+                                        id: animation
+                                        duration: 150
+                                        onRunningChanged: {
+                                            descriptionRect.visible = animation.running || object.expanded
+                                        }
+                                    }
+                                }
+                                QGCLabel {
+                                    id:                 description
+                                    anchors.centerIn:   parent
+                                    width:              parent.width - parent.margin * 2
+                                    height:             0
+                                    text:               object.description
+                                    textFormat:         TextEdit.RichText
+                                    wrapMode:           Text.WordWrap
+                                    clip:               true
+                                    property var fact:  null
+                                    onLinkActivated: {
+                                        if (link.startsWith('param://')) {
+                                            var paramName = link.substr(8);
+                                            fact = controller.getParameterFact(-1, paramName, true)
+                                            if (fact != null) {
+                                                paramEditorDialogComponent.createObject(mainWindow).open()
+                                            }
+                                        } else {
+                                            Qt.openUrlExternally(link);
+                                        }
+                                    }
+                                }
+
+                                Component {
+                                    id: paramEditorDialogComponent
+
+                                    ParameterEditorDialog {
+                                        title:          qsTr("Edit Parameter")
+                                        fact:           description.fact
+                                        destroyOnClose: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
             }
         }

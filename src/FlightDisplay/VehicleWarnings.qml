@@ -23,7 +23,7 @@ Rectangle {
 
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property bool _noGPSLockVisible:    _activeVehicle && _activeVehicle.requiresGpsFix && !_activeVehicle.coordinate.isValid
-    property bool _prearmErrorVisible:  _activeVehicle && !_activeVehicle.armed && _activeVehicle.prearmError
+    property bool _prearmErrorVisible:  _activeVehicle && !_activeVehicle.armed && _activeVehicle.prearmError && !_activeVehicle.healthAndArmingCheckReport.supported
 
     Column {
         id:         warningsCol

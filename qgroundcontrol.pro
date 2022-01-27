@@ -709,7 +709,7 @@ HEADERS += \
     src/Vehicle/EventHandler.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
-    src/Vehicle/HealthAndArmingChecks.h \
+    src/Vehicle/HealthAndArmingCheckReport.h \
     src/Vehicle/ImageProtocolManager.h \
     src/Vehicle/InitialConnectStateMachine.h \
     src/Vehicle/MAVLinkLogManager.h \
@@ -964,7 +964,7 @@ SOURCES += \
     src/Vehicle/EventHandler.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
-    src/Vehicle/HealthAndArmingChecks.cc \
+    src/Vehicle/HealthAndArmingCheckReport.cc \
     src/Vehicle/ImageProtocolManager.cc \
     src/Vehicle/InitialConnectStateMachine.cc \
     src/Vehicle/MAVLinkLogManager.cc \
