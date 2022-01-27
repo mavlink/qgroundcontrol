@@ -40,8 +40,8 @@ add_library(Vehicle
 	FTPManager.h
 	GPSRTKFactGroup.cc
 	GPSRTKFactGroup.h
-	HealthAndArmingChecks.cc
-	HealthAndArmingChecks.h
+	HealthAndArmingCheckReport.cc
+	HealthAndArmingCheckReport.h
 	ImageProtocolManager.cc
 	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
