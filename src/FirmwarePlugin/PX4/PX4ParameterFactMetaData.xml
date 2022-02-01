@@ -7953,6 +7953,10 @@
         <value code="6">SF/LW20/c</value>
       </values>
     </parameter>
+    <parameter name="SENS_EN_SHT3X" default="0" type="INT32" boolean="true">
+      <short_desc>SHT3x temperature and hygrometer</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_SR05" default="0" type="INT32" boolean="true">
       <short_desc>HY-SRF05 / HC-SR05</short_desc>
       <reboot_required>true</reboot_required>
