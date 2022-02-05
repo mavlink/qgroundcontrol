@@ -4735,10 +4735,24 @@
     </parameter>
     <parameter name="MPC_LAND_ALT2" default="5.0" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED". Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
+      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED" Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="MPC_LAND_ALT3" default="1.0" type="FLOAT">
+      <short_desc>Altitude for 3. step of slow landing</short_desc>
+      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_CRWL", if LIDAR available. No effect if LIDAR not available</long_desc>
+      <min>0</min>
+      <max>122</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="MPC_LAND_CRWL" default="0.3" type="FLOAT">
+      <short_desc>Land crawl descend rate. Used below</short_desc>
+      <min>0.3</min>
+      <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MPC_LAND_SPEED" default="0.7" type="FLOAT">
