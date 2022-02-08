@@ -100,9 +100,11 @@ Item {
     property Fact ins3Id:                           factPanelController.getParameterFact(-1, "INS_ACC3_ID")
     property var  rgInsId:                          [ ins1Id, ins2Id, ins3Id ]
 
-    property Fact baro1Id:                           factPanelController.getParameterFact(-1, "BARO1_DEVID")
-    property Fact baro2Id:                           factPanelController.getParameterFact(-1, "BARO2_DEVID")
-    property Fact baro3Id:                           factPanelController.getParameterFact(-1, "BARO3_DEVID")
-    property var  rgBaroId:                          [ baro1Id, baro2Id, baro3Id ]
+    property bool baroIdAvailable:                  factPanelController.parameterExists(-1, "BARO1_DEVID")
+
+    property Fact baro1Id:                          baroIdAvailable ? factPanelController.getParameterFact(-1, "BARO1_DEVID") : _noFact
+    property Fact baro2Id:                          baroIdAvailable ? factPanelController.getParameterFact(-1, "BARO2_DEVID") : _noFact
+    property Fact baro3Id:                          baroIdAvailable ? factPanelController.getParameterFact(-1, "BARO3_DEVID") : _noFact
+    property var  rgBaroId:                         [ baro1Id, baro2Id, baro3Id ]
 
 }
