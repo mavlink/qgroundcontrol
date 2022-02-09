@@ -7486,6 +7486,11 @@
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter name="ADC_ADS1115_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Enable external ADS1115 ADC</short_desc>
+      <long_desc>If enabled, the internal ADC is not used.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="BAT1_C_MULT" default="1.0" type="FLOAT">
       <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
       <decimal>1</decimal>
