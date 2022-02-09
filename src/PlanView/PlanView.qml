@@ -795,7 +795,7 @@ Item {
                         map:            editorMap
                         masterController:  _planMasterController
                         missionItem:    object
-                        width:          parent.width
+                        width:          missionItemEditorListView.width
                         readOnly:       false
                         onClicked:      _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
                         onRemove: {
