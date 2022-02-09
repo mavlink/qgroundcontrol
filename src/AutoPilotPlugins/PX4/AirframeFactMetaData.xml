@@ -149,11 +149,6 @@
       <output name="AUX1">feed-through of RC AUX1 channel</output>
       <output name="AUX2">feed-through of RC AUX2 channel</output>
     </airframe>
-    <airframe name="Hex X with control allocation" id="6003" maintainer="Silvan Fuhrer">
-      <class>Copter</class>
-      <maintainer>Silvan Fuhrer</maintainer>
-      <type>Hexarotor x</type>
-    </airframe>
   </airframe_group>
   <airframe_group name="Octo Coax Wide" image="OctoRotorXCoaxial">
     <airframe name="Steadidrone MAVRIK" id="12002" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
@@ -396,11 +391,6 @@
       <output name="MAIN2">motor 2</output>
       <output name="MAIN3">motor 3</output>
       <output name="MAIN4">motor 4</output>
-    </airframe>
-    <airframe name="S500 with control allocation" id="4018" maintainer="Silvan Fuhrer">
-      <class>Copter</class>
-      <maintainer>Silvan Fuhrer</maintainer>
-      <type>Quadrotor x</type>
     </airframe>
     <airframe name="Holybro X500 V2" id="4019" maintainer="Farhang Naderi &lt;farhang.nba@gmail.com&gt;">
       <class>Copter</class>
