@@ -131,9 +131,9 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN", false /* reportMissing */)
-                        property FactGroup  _batteryFactGroup:  controller.vehicle.getFactGroup("battery0")
-                        property Fact vehicleVoltage:   _batteryFactGroup.voltage
-                        property Fact vehicleCurrent:   _batteryFactGroup.current
+                        property FactGroup  _batteryFactGroup:  _batt1FullSettings.visible ? controller.vehicle.getFactGroup("battery0") : null
+                        property Fact vehicleVoltage:   _batteryFactGroup ? _batteryFactGroup.voltage : null
+                        property Fact vehicleCurrent:   _batteryFactGroup ? _batteryFactGroup.current : null
                     }
                 }
             }
@@ -218,9 +218,9 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT2_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT2_VOLT_PIN", false /* reportMissing */)
-                        property FactGroup  _batteryFactGroup:  controller.vehicle.getFactGroup("battery1")
-                        property Fact vehicleVoltage:   _batteryFactGroup.voltage
-                        property Fact vehicleCurrent:   _batteryFactGroup.current
+                        property FactGroup  _batteryFactGroup:  batt2FullSettings.visible ? controller.vehicle.getFactGroup("battery1") : null
+                        property Fact vehicleVoltage:   _batteryFactGroup ? _batteryFactGroup.voltage : null
+                        property Fact vehicleCurrent:   _batteryFactGroup ? _batteryFactGroup.current : null
                     }
                 }
             }
@@ -296,8 +296,8 @@ SetupPage {
 
             function calcSensor() {
                 for (var i=0; i<sensorModel.count - 1; i++) {
-                    if (sensorModel.get(i).voltPin == battVoltPin.value &&
-                            sensorModel.get(i).currPin == battCurrPin.value &&
+                    if (sensorModel.get(i).voltPin === battVoltPin.value &&
+                            sensorModel.get(i).currPin === battCurrPin.value &&
                             Math.abs(sensorModel.get(i).voltMult - battVoltMult.value) < 0.001 &&
                             Math.abs(sensorModel.get(i).ampPerVolt - battAmpPerVolt.value) < 0.0001 &&
                             Math.abs(sensorModel.get(i).ampOffset - battAmpOffset.value) < 0.0001) {
@@ -566,10 +566,10 @@ SetupPage {
 
                     onClicked:  {
                         var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                        if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
+                        if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue) || !vehicleVoltageFact || !battVoltMultFact) {
                             return
                         }
-                        var newVoltageMultiplier = (measuredVoltageValue * battVoltMultFact.value) / vehicleVoltageFact.value
+                        var newVoltageMultiplier = (vehicleVoltageFact.value !== 0) ? (measuredVoltageValue * battVoltMultFact.value) / vehicleVoltageFact.value : 0
                         if (newVoltageMultiplier > 0) {
                             battVoltMultFact.value = newVoltageMultiplier
                         }
@@ -619,11 +619,11 @@ SetupPage {
 
                     onClicked:  {
                         var measuredCurrentValue = parseFloat(measuredCurrent.text)
-                        if (measuredCurrentValue == 0) {
+                        if (measuredCurrentValue === 0 || isNaN(measuredCurrentValue) || !vehicleCurrentFact || !battAmpPerVoltFact) {
                             return
                         }
-                        var newAmpsPerVolt = (measuredCurrentValue * battAmpPerVoltFact.value) / vehicleCurrentFact.value
-                        if (newAmpsPerVolt != 0) {
+                        var newAmpsPerVolt = (vehicleCurrentFact.value !== 0) ? (measuredCurrentValue * battAmpPerVoltFact.value) / vehicleCurrentFact.value : 0
+                        if (newAmpsPerVolt !== 0) {
                             battAmpPerVoltFact.value = newAmpsPerVolt
                         }
                     }
