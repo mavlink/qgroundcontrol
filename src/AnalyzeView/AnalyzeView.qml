@@ -16,6 +16,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 Rectangle {
     id:     _root
@@ -89,6 +90,8 @@ Rectangle {
                     setupIndicator:     false
                     exclusiveGroup:     setupButtonGroup
                     text:               modelData.title
+                    visible:            !((modelData.title === "MAVLink Console" || modelData.title === "GeoTag Images") &&
+                                        !QGroundControl.multiVehicleManager.activeVehicle.px4Firmware)
 
                     onClicked: {
                         panelLoader.source  = modelData.url
