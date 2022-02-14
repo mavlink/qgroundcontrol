@@ -2056,6 +2056,7 @@ void QGCCameraControl::_ftpDownloadComplete(const QString& fileName, const QStri
         return;
     }
 
+    _cached = true;
     QByteArray bytes = xmlFile.readAll();
     emit dataReady(bytes);
 }
