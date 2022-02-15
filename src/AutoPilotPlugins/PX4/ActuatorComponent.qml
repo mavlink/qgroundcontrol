@@ -31,10 +31,23 @@ SetupPage {
                 implicitWidth:              _leftColumnWidth
 
                 // mixer ui
-                QGCLabel {
-                    text:                   qsTr("Geometry")
-                    font.pointSize:         ScreenTools.mediumFontPointSize
-                    visible:                actuators.mixer.groups.count > 0
+                RowLayout {
+                    width:                      _leftColumnWidth
+                    visible:                    actuators.mixer.groups.count > 0
+                    QGCLabel {
+                        text:                   qsTr("Geometry") + (actuators.mixer.title ? ": " + actuators.mixer.title : "")
+                        font.pointSize:         ScreenTools.mediumFontPointSize
+                        Layout.fillWidth:       true
+                    }
+                    QGCLabel {
+                        text:                   "<a href='"+actuators.mixer.helpUrl+"'>?</a>"
+                        font.pointSize:         ScreenTools.mediumFontPointSize
+                        visible:                actuators.mixer.helpUrl
+                        textFormat:             Text.RichText
+                        onLinkActivated: {
+                            Qt.openUrlExternally(link);
+                        }
+                    }
                 }
 
                 Rectangle {
