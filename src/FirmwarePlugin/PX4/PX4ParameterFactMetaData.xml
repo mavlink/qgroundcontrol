@@ -10148,6 +10148,17 @@
       <increment>0.01</increment>
     </parameter>
   </group>
+  <group name="VTOL Takeoff">
+    <parameter name="VTO_LOITER_ALT" default="80" type="FLOAT">
+      <short_desc>VTOL Takeoff relative loiter altitude</short_desc>
+      <long_desc>Altitude relative to home at which vehicle will loiter after front transition.</long_desc>
+      <min>20</min>
+      <max>300</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
+  </group>
   <group name="Vehicle Model">
     <parameter name="VM_INERTIA_XX" default="0.01" type="FLOAT">
       <short_desc>Inertia matrix, XX component</short_desc>
