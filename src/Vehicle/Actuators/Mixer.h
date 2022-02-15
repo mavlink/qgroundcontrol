@@ -128,6 +128,8 @@ private:
     const bool _advanced;
 };
 
+class ChannelConfigInstance;
+
 /**
  * Config parameters that apply to individual channels
  */
@@ -140,16 +142,15 @@ public:
         : QObject(parent), _parameter(parameter), _isActuatorTypeConfig(isActuatorTypeConfig) {}
 
     Q_PROPERTY(QString label      READ label        CONSTANT)
-    Q_PROPERTY(bool visible       READ visible      CONSTANT)
+    Q_PROPERTY(bool visible       READ visible      NOTIFY visibleChanged)
     Q_PROPERTY(bool advanced      READ advanced     CONSTANT)
 
     const QString& label() const { return _parameter.param.label; }
-    const QString& parameter() const { return _parameter.param.name; }
     Function function() const { return _parameter.function; }
     bool advanced() const { return _parameter.param.advanced; }
     bool isActuatorTypeConfig() const { return _isActuatorTypeConfig; }
 
-    bool visible() const { return true; }
+    bool visible() const { return _visible; }
 
     const QList<float>& fixedValues() const { return _parameter.values; }
 
@@ -157,9 +158,37 @@ public:
     int indexOffset() const { return _parameter.param.indexOffset; }
 
     const QString& identifier() const { return _parameter.identifier; }
+
+    const MixerParameter& config() const { return _parameter; }
+
+    virtual ChannelConfigInstance* instantiate(int paramIndex, int actuatorTypeIndex,
+        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb);
+
+signals:
+    void visibleChanged();
+protected:
+    void channelInstanceCreated(ChannelConfigInstance* instance);
+
+private slots:
+    void instanceVisibleChanged();
+
 private:
     const MixerParameter _parameter;
     const bool _isActuatorTypeConfig; ///< actuator type config instead of mixer channel config
+    bool _visible{true}; ///< this is false if none of the instances is visible
+    QList<ChannelConfigInstance*> _instances;
+};
+
+class ChannelConfigVirtualAxis : public ChannelConfig
+{
+    Q_OBJECT
+public:
+    ChannelConfigVirtualAxis(QObject* parent, const MixerParameter& parameter)
+        : ChannelConfig(parent, parameter) {}
+
+    ChannelConfigInstance* instantiate(int paramIndex, int actuatorTypeIndex,
+        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb) override;
+private:
 };
 
 /**
@@ -169,8 +198,8 @@ class ChannelConfigInstance : public QObject
 {
     Q_OBJECT
 public:
-    ChannelConfigInstance(QObject* parent, Fact* fact, ChannelConfig& config, int ruleApplyIdentifierIdx)
-        : QObject(parent), _fact(fact), _config(config), _ruleApplyIdentifierIdx(ruleApplyIdentifierIdx) {}
+    ChannelConfigInstance(QObject* parent, Fact* fact, ChannelConfig& config)
+        : QObject(parent), _fact(fact), _config(config) {}
 
     Q_PROPERTY(ChannelConfig* config      READ channelConfig    CONSTANT)
     Q_PROPERTY(Fact* fact                 READ fact             CONSTANT)
@@ -181,26 +210,66 @@ public:
 
     Fact* fact() { return _fact; }
 
-    bool visible() const { return _visible; }
-    bool enabled() const { return _enabled; }
+    bool visible() const { return _visibleRule && _visibleAxis; }
+    bool enabled() const { return _enabledRule; }
 
-    // controlled via rules
-    void setVisible(bool visible) { _visible = visible; emit visibleChanged(); }
-    void setEnabled(bool enabled) { _enabled = enabled; emit enabledChanged(); }
+    bool visibleRule() const { return _visibleRule; }
+    bool enabledRule() const { return _enabledRule; }
+
+    void setVisibleRule(bool visible) { _visibleRule = visible; emit visibleChanged(); }
+    void setEnabledRule(bool enabled) { _enabledRule = enabled; emit enabledChanged(); }
+
+    void setVisibleAxis(bool visible) { _visibleAxis = visible; emit visibleChanged(); }
 
     int ruleApplyIdentifierIdx() const { return _ruleApplyIdentifierIdx; }
+    void setRuleApplyIdentifierIdx(int idx) { _ruleApplyIdentifierIdx = idx; }
+
+    virtual void allInstancesInitialized(QmlObjectListModel* configInstances) {}
 
 signals:
     void visibleChanged();
     void enabledChanged();
-private:
 
+protected:
     Fact* _fact{nullptr};
-    ChannelConfig& _config;
-    const int _ruleApplyIdentifierIdx;
 
-    bool _visible{true};
-    bool _enabled{true};
+private:
+    ChannelConfig& _config;
+    int _ruleApplyIdentifierIdx{-1};
+
+    bool _visibleRule{true};
+    bool _enabledRule{true};
+
+    bool _visibleAxis{true};
+};
+
+class ChannelConfigInstanceVirtualAxis : public ChannelConfigInstance
+{
+    Q_OBJECT
+public:
+    enum class Direction {
+        Custom = 0,
+        Upwards = 1,
+        Downwards = 2,
+        Forwards = 3,
+        Backwards = 4,
+        Leftwards = 5,
+        Rightwards = 6,
+    };
+    ChannelConfigInstanceVirtualAxis(QObject* parent, ChannelConfig& config)
+        : ChannelConfigInstance(parent, nullptr, config) {}
+
+    void allInstancesInitialized(QmlObjectListModel* configInstances) override;
+
+private slots:
+    void setFactFromAxes(bool keepVisible = false);
+    void setAxesFromFact();
+    void axisVisibleChanged();
+    void axisEnableChanged();
+
+private:
+    ChannelConfigInstance* _axes[3]{};
+    bool _ignoreChange{false};
 };
 
 class MixerChannel : public QObject

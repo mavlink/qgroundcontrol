@@ -15,6 +15,215 @@
 
 using namespace Mixer;
 
+ChannelConfigInstance* ChannelConfig::instantiate(int paramIndex, int actuatorTypeIndex,
+        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
+{
+    QString param = _parameter.param.name;
+    int usedParamIndex;
+    if (_isActuatorTypeConfig) {
+        usedParamIndex = actuatorTypeIndex + indexOffset();
+    } else {
+        usedParamIndex = paramIndex + indexOffset();
+    }
+    param.replace("${i}", QString::number(usedParamIndex));
+
+    Fact* fact = nullptr;
+    if (param == "" && !_isActuatorTypeConfig) { // constant value
+        float value = 0.f;
+        if (fixedValues().size() == 1) {
+            value = fixedValues()[0];
+        } else if (paramIndex < fixedValues().size()) {
+            value = fixedValues()[paramIndex];
+        }
+
+        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeFloat, "", this);
+        metaData->setReadOnly(true);
+        metaData->setDecimalPlaces(4);
+        fact = new Fact("", metaData, this);
+        fact->setRawValue(value);
+
+    } else if (parameterManager->parameterExists(FactSystem::defaultComponentId, param)) {
+        fact = parameterManager->getParameter(FactSystem::defaultComponentId, param);
+        if (displayOption() == Parameter::DisplayOption::Bitset) {
+            fact = new FactBitset(this, fact, usedParamIndex);
+        } else if (displayOption() == Parameter::DisplayOption::BoolTrueIfPositive) {
+            fact = new FactFloatAsBool(this, fact);
+        }
+        factAddedCb(function(), fact);
+    } else {
+        qCDebug(ActuatorsConfigLog) << "ActuatorOutputChannel: Param does not exist:" << param;
+    }
+
+    ChannelConfigInstance* instance = new ChannelConfigInstance(this, fact, *this);
+    channelInstanceCreated(instance);
+    return instance;
+}
+
+void ChannelConfig::channelInstanceCreated(ChannelConfigInstance* instance)
+{
+    _instances.append(instance);
+    connect(instance, &ChannelConfigInstance::visibleChanged,
+            this, &ChannelConfig::instanceVisibleChanged);
+}
+
+void ChannelConfig::instanceVisibleChanged()
+{
+    bool visible = false;
+    for (const auto& instance : _instances) {
+        if (instance->visible()) {
+            visible = true;
+        }
+    }
+
+    if (visible != _visible) {
+        _visible = visible;
+        emit visibleChanged();
+    }
+}
+
+ChannelConfigInstance* ChannelConfigVirtualAxis::instantiate(int paramIndex, int actuatorTypeIndex,
+        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
+{
+    ChannelConfigInstance* instance = new ChannelConfigInstanceVirtualAxis(this, *this);
+    channelInstanceCreated(instance);
+    return instance;
+}
+
+void ChannelConfigInstanceVirtualAxis::allInstancesInitialized(QmlObjectListModel* configInstances)
+{
+    for (int i = 0; i < configInstances->count(); ++i) {
+        auto channelConfigInstance = configInstances->value<ChannelConfigInstance*>(i);
+        if (channelConfigInstance->channelConfig()->function() == Function::AxisX) {
+            _axes[0] = channelConfigInstance;
+        } else if (channelConfigInstance->channelConfig()->function() == Function::AxisY) {
+            _axes[1] = channelConfigInstance;
+        } else if (channelConfigInstance->channelConfig()->function() == Function::AxisZ) {
+            _axes[2] = channelConfigInstance;
+        }
+    }
+    Q_ASSERT(_axes[0] && _axes[1] && _axes[2]);
+
+    for (int i = 0; i < 3; ++i) {
+        if (!_axes[i]->fact())
+            return;
+    }
+
+    // Initialize fact
+    QStringList enumStrings{tr("Custom"), tr("Upwards"), tr("Downwards"), tr("Forwards"), tr("Backwards"),
+        tr("Leftwards"), tr("Rightwards")};
+    QVariantList enumValues{0, 1, 2, 3, 4, 5, 6};
+    FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
+    metaData->setEnumInfo(enumStrings, enumValues);
+    _fact = new Fact("", metaData, this);
+    setFactFromAxes();
+
+    connect(_fact, &Fact::rawValueChanged, this, &ChannelConfigInstanceVirtualAxis::setAxesFromFact);
+    for (int i=0; i < 3; ++i) {
+        connect(_axes[i]->fact(), &Fact::rawValueChanged,
+                this, [this](){ ChannelConfigInstanceVirtualAxis::setFactFromAxes(true); });
+    }
+    // Inherit visibility & enabled from the first axis
+    connect(_axes[0], &ChannelConfigInstance::visibleChanged,
+            this, &ChannelConfigInstanceVirtualAxis::axisVisibleChanged);
+    connect(_axes[0], &ChannelConfigInstance::enabledChanged,
+            this, &ChannelConfigInstanceVirtualAxis::axisEnableChanged);
+    axisVisibleChanged();
+    axisEnableChanged();
+}
+
+void ChannelConfigInstanceVirtualAxis::axisVisibleChanged()
+{
+    if (_axes[0]->visibleRule() != visibleRule()) {
+        setVisibleRule(_axes[0]->visibleRule());
+    }
+}
+
+void ChannelConfigInstanceVirtualAxis::axisEnableChanged()
+{
+    if (_axes[0]->enabledRule() != enabledRule()) {
+        setEnabledRule(_axes[0]->enabledRule());
+    }
+}
+
+void ChannelConfigInstanceVirtualAxis::setFactFromAxes(bool keepVisible)
+{
+    if (_ignoreChange) {
+        return;
+    }
+    _ignoreChange = true;
+    float x = _axes[0]->fact()->rawValue().toFloat();
+    float y = _axes[1]->fact()->rawValue().toFloat();
+    float z = _axes[2]->fact()->rawValue().toFloat();
+    Direction direction{Direction::Custom}; // set to custom if no match
+    const float eps = 0.00001f;
+    if (fabsf(x) < eps && fabsf(y) < eps && fabsf(z + 1.f) < eps) {
+        direction = Direction::Upwards;
+    } else if (fabsf(x) < eps && fabsf(y) < eps && fabsf(z - 1.f) < eps) {
+        direction = Direction::Downwards;
+    } else if (fabsf(x - 1.f) < eps && fabsf(y) < eps && fabsf(z) < eps) {
+        direction = Direction::Forwards;
+    } else if (fabsf(x + 1.f) < eps && fabsf(y) < eps && fabsf(z) < eps) {
+        direction = Direction::Backwards;
+    } else if (fabsf(x) < eps && fabsf(y + 1.f) < eps && fabsf(z) < eps) {
+        direction = Direction::Leftwards;
+    } else if (fabsf(x) < eps && fabsf(y - 1.f) < eps && fabsf(z) < eps) {
+        direction = Direction::Rightwards;
+    }
+    _fact->setRawValue((uint32_t)direction);
+
+    bool visible = direction == Direction::Custom || keepVisible;
+    for(int i=0; i < 3; ++i) {
+        _axes[i]->setVisibleAxis(visible);
+    }
+    _ignoreChange = false;
+}
+
+void ChannelConfigInstanceVirtualAxis::setAxesFromFact()
+{
+    if (_ignoreChange) {
+        return;
+    }
+    _ignoreChange = true;
+    int directionIdx = _fact->rawValue().toInt();
+
+    if (directionIdx > 0) {
+        Direction direction = (Direction)directionIdx;
+        float x{}, y{}, z{};
+        switch (direction) {
+            case Direction::Upwards:
+                x = 0.f; y = 0.f; z = -1.f;
+                break;
+            case Direction::Downwards:
+                x = 0.f; y = 0.f; z = 1.f;
+                break;
+            case Direction::Forwards:
+                x = 1.f; y = 0.f; z = 0.f;
+                break;
+            case Direction::Backwards:
+                x = -1.f; y = 0.f; z = 0.f;
+                break;
+            case Direction::Leftwards:
+                x = 0.f; y = -1.f; z = 0.f;
+                break;
+            case Direction::Rightwards:
+                x = 0.f; y = 1.f; z = 0.f;
+                break;
+            case Direction::Custom:
+                break;
+        }
+        _axes[0]->fact()->setRawValue(x);
+        _axes[1]->fact()->setRawValue(y);
+        _axes[2]->fact()->setRawValue(z);
+    }
+
+
+    bool visible = directionIdx == 0;
+    for(int i=0; i < 3; ++i) {
+        _axes[i]->setVisibleAxis(visible);
+    }
+    _ignoreChange = false;
+}
+
 MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFunction, int paramIndex, int actuatorTypeIndex,
         QmlObjectListModel &channelConfigs, ParameterManager* parameterManager, const Rule* rule,
         std::function<void(Function, Fact*)> factAddedCb)
@@ -23,44 +232,11 @@ MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFu
 {
     for (int i = 0; i < channelConfigs.count(); ++i) {
         auto channelConfig = channelConfigs.value<ChannelConfig*>(i);
-        QString param = channelConfig->parameter();
-        int usedParamIndex;
-        if (channelConfig->isActuatorTypeConfig()) {
-            usedParamIndex = actuatorTypeIndex + channelConfig->indexOffset();
-        } else {
-            usedParamIndex = paramIndex + channelConfig->indexOffset();
-        }
-        param.replace("${i}", QString::number(usedParamIndex));
 
-        Fact* fact = nullptr;
-        if (param == "" && !channelConfig->isActuatorTypeConfig()) { // constant value
-            float value = 0.f;
-            if (channelConfig->fixedValues().size() == 1) {
-                value = channelConfig->fixedValues()[0];
-            } else if (paramIndex < channelConfig->fixedValues().size()) {
-                value = channelConfig->fixedValues()[paramIndex];
-            }
-
-            FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeFloat, "", this);
-            metaData->setReadOnly(true);
-            metaData->setDecimalPlaces(4);
-            fact = new Fact("", metaData, this);
-            fact->setRawValue(value);
-
-        } else if (parameterManager->parameterExists(FactSystem::defaultComponentId, param)) {
-            fact = parameterManager->getParameter(FactSystem::defaultComponentId, param);
-            if (channelConfig->displayOption() == Parameter::DisplayOption::Bitset) {
-                fact = new FactBitset(channelConfig, fact, usedParamIndex);
-            } else if (channelConfig->displayOption() == Parameter::DisplayOption::BoolTrueIfPositive) {
-                fact = new FactFloatAsBool(channelConfig, fact);
-            }
-            factAddedCb(channelConfig->function(), fact);
-        } else {
-            qCDebug(ActuatorsConfigLog) << "ActuatorOutputChannel: Param does not exist:" << param;
-        }
+        ChannelConfigInstance* instance = channelConfig->instantiate(paramIndex, actuatorTypeIndex, parameterManager, factAddedCb);
+        Fact* fact = instance->fact();
 
         // if we have a valid rule, check the identifiers
-        int applyIdentifierIdx = -1;
         if (rule) {
             if (channelConfig->identifier() == rule->selectIdentifier) {
                 _ruleSelectIdentifierIdx = _configInstances->count();
@@ -70,7 +246,7 @@ MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFu
             } else {
                 for (int i = 0; i < rule->applyIdentifiers.size(); ++i) {
                     if (channelConfig->identifier() == rule->applyIdentifiers[i]) {
-                        applyIdentifierIdx = i;
+                        instance->setRuleApplyIdentifierIdx(i);
                     }
                 }
             }
@@ -80,8 +256,12 @@ MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFu
             }
         }
 
-        ChannelConfigInstance* instance = new ChannelConfigInstance(this, fact, *channelConfig, applyIdentifierIdx);
         _configInstances->append(instance);
+    }
+
+    for (int i = 0; i < _configInstances->count(); ++i) {
+        auto channelConfigInstance = _configInstances->value<ChannelConfigInstance*>(i);
+        channelConfigInstance->allInstancesInitialized(_configInstances);
     }
 
     applyRule(true);
@@ -122,8 +302,8 @@ void MixerChannel::applyRule(bool noConstraints)
                         // here we could notify the user that a constraint got applied...
                         configInstance->fact()->setRawValue(factValue);
                     }
-                    configInstance->setVisible(!ruleItem.hidden);
-                    configInstance->setEnabled(!ruleItem.disabled);
+                    configInstance->setVisibleRule(!ruleItem.hidden);
+                    configInstance->setEnabledRule(!ruleItem.disabled);
                 }
             }
 
@@ -131,8 +311,8 @@ void MixerChannel::applyRule(bool noConstraints)
             // no rule set for this value, just reset
             for (int i = 0; i < _configInstances->count(); ++i) {
                 ChannelConfigInstance* configInstance = _configInstances->value<ChannelConfigInstance*>(i);
-                configInstance->setVisible(true);
-                configInstance->setEnabled(true);
+                configInstance->setVisibleRule(true);
+                configInstance->setEnabledRule(true);
             }
         }
         _currentSelectIdentifierValue = value;
@@ -280,8 +460,17 @@ void Mixers::update()
             }
 
             const Rule* selectedRule{nullptr}; // at most 1 rule can be applied
+            int axisIdx[3]{-1, -1, -1};
             for (const auto& perItemParam : actuatorGroup.perItemParameters) {
                 currentMixerGroup->addChannelConfig(new ChannelConfig(currentMixerGroup, perItemParam, false));
+
+                if (perItemParam.function == Function::AxisX) {
+                    axisIdx[0] = currentMixerGroup->channelConfigs()->count() - 1;
+                } else if (perItemParam.function == Function::AxisY) {
+                    axisIdx[1] = currentMixerGroup->channelConfigs()->count() - 1;
+                } else if (perItemParam.function == Function::AxisZ) {
+                    axisIdx[2] = currentMixerGroup->channelConfigs()->count() - 1;
+                }
 
                 if (!perItemParam.identifier.isEmpty()) {
                     for (const auto& rule : _rules) {
@@ -290,6 +479,18 @@ void Mixers::update()
                         }
                     }
                 }
+            }
+
+            // Add virtual axis dropdown configuration param if all 3 axes are found
+            if (axisIdx[0] >= 0 && axisIdx[1] >= 0 && axisIdx[2] >= 0) {
+                ChannelConfig* axisXConfig = currentMixerGroup->channelConfigs()->value<ChannelConfig*>(axisIdx[0]);
+                MixerParameter parameter = axisXConfig->config(); // use axisX as base (somewhat arbitrary)
+                parameter.function = Function::Unspecified;
+                parameter.param.name = "";
+                parameter.param.label = tr("Axis");
+                parameter.identifier = "";
+                ChannelConfig* virtualChannelConfig = new ChannelConfigVirtualAxis(currentMixerGroup, parameter);
+                currentMixerGroup->channelConfigs()->insert(axisIdx[0], virtualChannelConfig);
             }
 
             // 'count' param
