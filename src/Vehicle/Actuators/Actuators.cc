@@ -594,6 +594,8 @@ bool Actuators::parseJson(const QJsonDocument &json)
         Mixer::MixerOption option{};
         option.option = mixerConfig["option"].toString();
         option.type = mixerConfig["type"].toString();
+        option.title = mixerConfig["title"].toString();
+        option.helpUrl = mixerConfig["help-url"].toString();
         QJsonArray actuatorsJson = mixerConfig["actuators"].toArray();
         for (const auto& actuatorJson : actuatorsJson) {
             QJsonValue actuatorJsonVal = actuatorJson.toObject();
