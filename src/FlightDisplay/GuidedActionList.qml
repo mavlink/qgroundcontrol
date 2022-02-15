@@ -28,7 +28,7 @@ Rectangle {
     visible:    false
 
     property var    guidedController
-    property var    altitudeSlider
+    property var    guidedValueSlider
 
     function show() {
         visible = true

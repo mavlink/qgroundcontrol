@@ -30,7 +30,7 @@ Item {
     property var missionController
     property var confirmDialog
     property var actionList
-    property var altitudeSlider
+    property var guidedValueSlider
     property var orbitMapCircle
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
@@ -161,6 +161,19 @@ Item {
     function _outputState() {
         if (_corePlugin.guidedActionsControllerLogging()) {
             console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _missionItemCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleWasFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_missionItemCount).arg(__roiSupported).arg(__orbitSupported).arg(_missionActive).arg(_hideROI).arg(_hideOrbit))
+        }
+    }
+
+    function setupSlider(actionCode) {
+
+        // default is an altitude slider
+        guidedValueSlider.configureAsAltSlider()
+        guidedValueSlider.reset()
+
+        if (actionCode === actionTakeoff) {
+            guidedValueSlider.setDisplayText("Takeoff Height")
+            guidedValueSlider.setCenterValue(_activeVehicle ? _activeVehicle.minimumTakeoffAltitude() : 0)
+            guidedValueSlider.reset()
         }
     }
 
@@ -308,7 +321,7 @@ Item {
     function closeAll() {
         confirmDialog.visible =     false
         actionList.visible =        false
-        altitudeSlider.visible =    false
+        guidedValueSlider.visible =    false
     }
 
     // Called when an action is about to be executed in order to confirm
@@ -321,6 +334,9 @@ Item {
         confirmDialog.mapIndicator = mapIndicator
         confirmDialog.optionText = ""
         _actionData = actionData
+
+        setupSlider(actionCode)
+
         switch (actionCode) {
         case actionArm:
             if (_vehicleFlying || !_guidedActionsEnabled) {
@@ -352,8 +368,7 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
-            altitudeSlider.setToMinimumTakeoff()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionStartMission:
             showImmediate = false
@@ -398,8 +413,7 @@ Item {
             confirmDialog.title = changeAltTitle
             confirmDialog.message = changeAltMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeAlt })
-            altitudeSlider.reset()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionGoto:
             confirmDialog.title = gotoTitle
@@ -414,8 +428,7 @@ Item {
             confirmDialog.title = orbitTitle
             confirmDialog.message = orbitMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showOrbit })
-            altitudeSlider.reset()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionLandAbort:
             confirmDialog.title = landAbortTitle
@@ -426,8 +439,7 @@ Item {
             confirmDialog.title = pauseTitle
             confirmDialog.message = pauseMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showPause })
-            altitudeSlider.reset()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionMVPause:
             confirmDialog.title = mvPauseTitle
