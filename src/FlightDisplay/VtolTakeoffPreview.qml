@@ -85,7 +85,7 @@ Item {
 
             Timer {
                 // used to periodically recalculate the loiter point in case the vehicle heading changed
-                interval: 1000; running: true; repeat: true
+                interval: 1000; running: !_takeoff_executed; repeat: true
                 onTriggered: {
                     vtLoiterCircleVisuals.updateLoiter(null)
                 }
