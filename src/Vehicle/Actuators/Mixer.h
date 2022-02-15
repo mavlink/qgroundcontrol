@@ -78,6 +78,8 @@ struct MixerOption
     };
     QString option{};
     QString type{}; ///< Mixer type, e.g. multirotor
+    QString title{};
+    QString helpUrl{};
     QList<ActuatorGroup> actuators{};
 };
 
@@ -306,8 +308,13 @@ public:
             const QMap<int, OutputFunction>& functions, const Rules& rules);
 
     Q_PROPERTY(QmlObjectListModel* groups         READ groups        NOTIFY groupsChanged)
+    Q_PROPERTY(QString title                      READ title         NOTIFY groupsChanged)
+    Q_PROPERTY(QString helpUrl                    READ helpUrl       NOTIFY groupsChanged)
 
     QmlObjectListModel* groups() { return _groups; }
+
+    QString title() const;
+    QString helpUrl() const;
 
     const ActuatorTypes& actuatorTypes() const { return _actuatorTypes; }
 

@@ -414,6 +414,21 @@ QString Mixers::configuredType() const
     return _mixerOptions[_selectedMixer].type;
 }
 
+QString Mixers::title() const
+{
+    if (_selectedMixer == -1) {
+        return "";
+    }
+    return _mixerOptions[_selectedMixer].title;
+}
+QString Mixers::helpUrl() const
+{
+    if (_selectedMixer == -1) {
+        return "";
+    }
+    return _mixerOptions[_selectedMixer].helpUrl;
+}
+
 Fact* Mixers::getFact(const QString& paramName)
 {
     if (!_parameterManager->parameterExists(FactSystem::defaultComponentId, paramName)) {
