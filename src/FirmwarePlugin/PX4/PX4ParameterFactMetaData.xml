@@ -3452,6 +3452,11 @@
         <value code="2">RTCM output (PPK)</value>
       </values>
     </parameter>
+    <parameter name="GPS_SAT_INFO" default="0" type="INT32" boolean="true">
+      <short_desc>Enable sat info (if available)</short_desc>
+      <long_desc>Enable publication of satellite info (ORB_ID(satellite_info)) if possible. Not available on MTK.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="GPS_UBX_DYNMODEL" default="7" type="INT32">
       <short_desc>u-blox GPS dynamic platform model</short_desc>
       <long_desc>u-blox receivers support different dynamic platform models to adjust the navigation engine to the expected application environment.</long_desc>
