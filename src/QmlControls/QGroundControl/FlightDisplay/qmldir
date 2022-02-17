@@ -19,7 +19,7 @@ GuidedActionLand                1.0 GuidedActionLand.qml
 GuidedActionList                1.0 GuidedActionList.qml
 GuidedActionPause               1.0 GuidedActionPause.qml
 GuidedActionRTL                 1.0 GuidedActionRTL.qml
-GuidedAltitudeSlider            1.0 GuidedAltitudeSlider.qml
+GuidedValueSlider               1.0 GuidedValueSlider.qml
 GuidedActionTakeoff             1.0 GuidedActionTakeoff.qml
 GuidedToolStripAction           1.0 GuidedToolStripAction.qml
 MultiVehicleList                1.0 MultiVehicleList.qml

@@ -51,7 +51,7 @@ Item {
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property var    _guidedController:      guidedActionsController
     property var    _guidedActionList:      guidedActionList
-    property var    _guidedAltSlider:       guidedAltSlider
+    property var    _guidedValueSlider:       guidedValueSlider
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
@@ -79,7 +79,7 @@ Item {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.left:           parent.left
-        anchors.right:          guidedAltSlider.visible ? guidedAltSlider.left : parent.right
+        anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
         z:                      _fullItemZorder + 1
         parentToolInsets:       _toolInsets
         mapControl:             _mapControl
@@ -99,7 +99,7 @@ Item {
         id:                 guidedActionsController
         missionController:  _missionController
         actionList:         _guidedActionList
-        altitudeSlider:     _guidedAltSlider
+        guidedValueSlider:     _guidedValueSlider
     }
 
     /*GuidedActionConfirm {
@@ -109,7 +109,7 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
         z:                          QGroundControl.zOrderTopMost
         guidedController:           _guidedController
-        altitudeSlider:             _guidedAltSlider
+        guidedValueSlider:             _guidedValueSlider
     }*/
 
     GuidedActionList {
@@ -121,9 +121,9 @@ Item {
         guidedController:           _guidedController
     }
 
-    //-- Altitude slider
-    GuidedAltitudeSlider {
-        id:                 guidedAltSlider
+    //-- Guided value slider (e.g. altitude)
+    GuidedValueSlider {
+        id:                 guidedValueSlider
         anchors.margins:    _toolsMargin
         anchors.right:      parent.right
         anchors.top:        parent.top
