@@ -30,7 +30,7 @@ Item {
     property var missionController
     property var confirmDialog
     property var actionList
-    property var altitudeSlider
+    property var guidedValueSlider
     property var orbitMapCircle
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
@@ -47,6 +47,8 @@ Item {
     readonly property string pauseTitle:                    qsTr("Pause")
     readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
+    readonly property string changeCruiseSpeedTitle:        qsTr("Change Cruise Speed")
+    readonly property string changeAirspeedTitle:           qsTr("Change Airspeed")
     readonly property string orbitTitle:                    qsTr("Orbit")
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
@@ -66,6 +68,8 @@ Item {
     readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
     readonly property string rtlMessage:                        qsTr("Return to the launch position of the vehicle.")
     readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
+    readonly property string changeCruiseSpeedMessage:          qsTr("Change the maximum horizontal cruise speed.")
+    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint")
     readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
     readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location.")
@@ -100,6 +104,7 @@ Item {
     readonly property int actionROI:                        22
     readonly property int actionActionList:                 23
     readonly property int actionForceArm:                   24
+    readonly property int actionChangeSpeed:                25
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -117,11 +122,14 @@ Item {
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
+    property bool showChangeSpeed:      _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive
     property bool showROI:              _guidedActionsEnabled && _vehicleFlying && __roiSupported && !_missionActive
     property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:     _guidedActionsEnabled && _vehicleFlying
     property bool showActionList:       _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort)
+    property string changeSpeedTitle:   _fixedWing ? changeAirspeedTitle : changeCruiseSpeedTitle
+    property string changeSpeedMessage: _fixedWing ? changeAirspeedMessage : changeCruiseSpeedMessage
 
     // Note: The '_missionItemCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
     property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _missionItemCount - 2)
@@ -150,6 +158,7 @@ Item {
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   _activeVehicle ? _activeVehicle.fixedWing && _vehicleLanding : false
+    property bool   _fixedWing:             _activeVehicle ? _activeVehicle.fixedWing || _activeVehicle.vtolInFwdFlight : false
 
     // You can turn on log output for GuidedActionsController by turning on GuidedActionsControllerLog category
     property bool __guidedModeSupported:    _activeVehicle ? _activeVehicle.guidedModeSupported : false
@@ -161,6 +170,32 @@ Item {
     function _outputState() {
         if (_corePlugin.guidedActionsControllerLogging()) {
             console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _missionItemCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleWasFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_missionItemCount).arg(__roiSupported).arg(__orbitSupported).arg(_missionActive).arg(_hideROI).arg(_hideOrbit))
+        }
+    }
+
+    function setupSlider(actionCode) {
+        // generic defaults
+        guidedValueSlider.configureAsLinearSlider()
+
+        if (actionCode === actionTakeoff) {
+                guidedValueSlider.setMinVal(_activeVehicle.minimumTakeoffAltitude())
+                guidedValueSlider.setValue(_activeVehicle ? _activeVehicle.minimumTakeoffAltitude() : 0)
+                guidedValueSlider.setDisplayText("Height")
+        } else if (actionCode === actionChangeSpeed) {
+            if (_activeVehicle.vtolInFwdFlight) {
+                guidedValueSlider.setDisplayText("Set Airspeed")
+                guidedValueSlider.setMinVal(_activeVehicle.minimumEquivalentAirspeed())
+                guidedValueSlider.setMaxVal(_activeVehicle.maximumEquivalentAirspeed())
+                guidedValueSlider.setValue(_activeVehicle.airSpeedSetpoint.rawValue)
+            } else {
+                guidedValueSlider.setDisplayText("Set Speed")
+                guidedValueSlider.setMinVal(0.1)
+                guidedValueSlider.setMaxVal(_activeVehicle.maximumHorizontalSpeedMultirotor())
+                guidedValueSlider.setValue(_activeVehicle.maximumHorizontalSpeedMultirotor()/2)
+            }
+        } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
+            guidedValueSlider.setDisplayText("New Alt(rel)")
+            guidedValueSlider.configureAsRelativeAltSliderExp()
         }
     }
 
@@ -308,7 +343,7 @@ Item {
     function closeAll() {
         confirmDialog.visible =     false
         actionList.visible =        false
-        altitudeSlider.visible =    false
+        guidedValueSlider.visible =    false
     }
 
     // Called when an action is about to be executed in order to confirm
@@ -321,6 +356,9 @@ Item {
         confirmDialog.mapIndicator = mapIndicator
         confirmDialog.optionText = ""
         _actionData = actionData
+
+        setupSlider(actionCode)
+
         switch (actionCode) {
         case actionArm:
             if (_vehicleFlying || !_guidedActionsEnabled) {
@@ -352,8 +390,7 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
-            altitudeSlider.setToMinimumTakeoff()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionStartMission:
             showImmediate = false
@@ -398,8 +435,7 @@ Item {
             confirmDialog.title = changeAltTitle
             confirmDialog.message = changeAltMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showChangeAlt })
-            altitudeSlider.reset()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionGoto:
             confirmDialog.title = gotoTitle
@@ -414,8 +450,7 @@ Item {
             confirmDialog.title = orbitTitle
             confirmDialog.message = orbitMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showOrbit })
-            altitudeSlider.reset()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionLandAbort:
             confirmDialog.title = landAbortTitle
@@ -426,8 +461,7 @@ Item {
             confirmDialog.title = pauseTitle
             confirmDialog.message = pauseMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showPause })
-            altitudeSlider.reset()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             break;
         case actionMVPause:
             confirmDialog.title = mvPauseTitle
@@ -452,6 +486,13 @@ Item {
         case actionActionList:
             actionList.show()
             return
+        case actionChangeSpeed:
+            confirmDialog.title = "Change Speed"
+            confirmDialog.hideTrigger = true
+            confirmDialog.title = changeSpeedTitle
+            confirmDialog.message = changeSpeedMessage
+            guidedValueSlider.visible = true
+            break
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -460,7 +501,7 @@ Item {
     }
 
     // Executes the specified action
-    function executeAction(actionCode, actionData, actionAltitudeChange, optionChecked) {
+    function executeAction(actionCode, actionData, sliderOutputValue, optionChecked) {
         var i;
         var rgVehicle;
         switch (actionCode) {
@@ -471,7 +512,7 @@ Item {
             _activeVehicle.guidedModeLand()
             break
         case actionTakeoff:
-            _activeVehicle.guidedModeTakeoff(actionAltitudeChange)
+            _activeVehicle.guidedModeTakeoff(sliderOutputValue)
             break
         case actionResumeMission:
         case actionResumeMissionUploadFail:
@@ -500,7 +541,7 @@ Item {
             _activeVehicle.emergencyStop()
             break
         case actionChangeAlt:
-            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange, false /* pauseVehicle */)
+            _activeVehicle.guidedModeChangeAltitude(sliderOutputValue, false /* pauseVehicle */)
             break
         case actionGoto:
             _activeVehicle.guidedModeGotoLocation(actionData)
@@ -509,13 +550,13 @@ Item {
             _activeVehicle.setCurrentMissionSequence(actionData)
             break
         case actionOrbit:
-            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius() * (orbitMapCircle.clockwiseRotation ? 1 : -1), _activeVehicle.altitudeAMSL.rawValue + actionAltitudeChange)
+            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius() * (orbitMapCircle.clockwiseRotation ? 1 : -1), _activeVehicle.altitudeAMSL.rawValue + sliderOutputValue)
             break
         case actionLandAbort:
             _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
             break
         case actionPause:
-            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange, true /* pauseVehicle */)
+            _activeVehicle.guidedModeChangeAltitude(sliderOutputValue, true /* pauseVehicle */)
             break
         case actionMVPause:
             rgVehicle = QGroundControl.multiVehicleManager.vehicles
@@ -531,6 +572,15 @@ Item {
             break
         case actionROI:
             _activeVehicle.guidedModeROI(actionData)
+            break
+        case actionChangeSpeed:
+            if (_activeVehicle) {
+                if (_activeVehicle.vtolInFwdFlight || _activeVehicle.fixedWing) {
+                   _activeVehicle.guidedModeChangeEquivalentAirspeed(sliderOutputValue)
+                } else {
+                    _activeVehicle.guidedModeChangeGroundSpeed(sliderOutputValue)
+                }
+            }
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

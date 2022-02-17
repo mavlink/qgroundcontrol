@@ -352,6 +352,15 @@ public:
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     Q_INVOKABLE double minimumTakeoffAltitude();
 
+    /// @return Maximum horizontal speed multirotor.
+    Q_INVOKABLE double maximumHorizontalSpeedMultirotor();
+
+    /// @return Maximum equivalent airspeed.
+    Q_INVOKABLE double maximumEquivalentAirspeed();
+
+    /// @return Minumum equivalent airspeed.
+    Q_INVOKABLE double minimumEquivalentAirspeed();
+
     /// Command vehicle to move to specified location (altitude is included and relative)
     Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
 
@@ -359,6 +368,13 @@ public:
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
     Q_INVOKABLE void guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle);
+
+    /// Command vehicle to change groundspeed
+    ///     @param groundspeed Target horizontal groundspeed
+    Q_INVOKABLE void guidedModeChangeGroundSpeed   (double groundspeed);
+    /// Command vehicle to change equivalent airspeed
+    ///     @param airspeed Target equivalent airspeed
+    Q_INVOKABLE void guidedModeChangeEquivalentAirspeed   (double airspeed);
 
     /// Command vehicle to orbit given center point
     ///     @param centerCoord Orit around this point
