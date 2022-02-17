@@ -28,7 +28,7 @@ Rectangle {
     visible:    false
 
     property var    guidedController
-    property var    altitudeSlider
+    property var    guidedValueSlider
 
     function show() {
         visible = true
@@ -62,6 +62,12 @@ Rectangle {
             text:       guidedController.landAbortMessage,
             action:     guidedController.actionLandAbort,
             visible:    guidedController.showLandAbort
+        },
+        {
+            title:      guidedController.changeSpeedTitle,
+            text:       guidedController.changeSpeedMessage,
+            action:     guidedController.actionChangeSpeed,
+            visible:    guidedController.showChangeSpeed
         }
     ]
 
@@ -90,7 +96,7 @@ Rectangle {
             Layout.minimumWidth:    _width
             Layout.maximumWidth:    _width
 
-            property real _width: Math.min((_actionWidth * 2) + _actionHorizSpacing, actionRow.width)
+            property real _width: Math.min((_actionWidth * 3) + _actionHorizSpacing*2, actionRow.width)
 
             RowLayout {
                 id:         actionRow

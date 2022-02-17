@@ -150,6 +150,15 @@ public:
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     virtual double minimumTakeoffAltitude(Vehicle* /*vehicle*/) { return 10; }
 
+    /// @return The maximum horizontal groundspeed for a multirotor.
+    virtual double maximumHorizontalSpeedMultirotor(Vehicle* /*vehicle*/) { return 10; }
+
+    /// @return The maximum equivalent airspeed setpoint.
+    virtual double maximumEquivalentAirspeed(Vehicle* /*vehicle*/) { return 25; }
+
+    /// @return The minimum equivalent airspeed setpoint
+    virtual double minimumEquivalentAirspeed(Vehicle* /*vehicle*/) { return 12; }
+
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
 
@@ -160,6 +169,14 @@ public:
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
+
+        /// Command vehicle to change groundspeed
+    ///     @param groundspeed Groundspeed in m/s
+    virtual void guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed);
+
+    /// Command vehicle to change equivalent airspeed
+    ///     @param airspeed_equiv Equivalent airspeed in m/s
+    virtual void guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv);
 
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html

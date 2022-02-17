@@ -34,22 +34,12 @@ Rectangle {
     }
 
     on_SliderCenterValueChanged: {
-       valueField.updateFunction(sliderValue)
+        valueField.updateFunction(sliderValue)
     }
 
     function setValue(val) {
-        if (valueField.updateFunction == valueField.updateExpAroundCenterValue) {
-            if (val >= _sliderCenterValue) {
-                valueSlider.value = Math.pow(val / Math.max(_sliderMaxVal - _sliderCenterValue, 0), 1.0/3.0)
-            } else {
-                valueSlider.value = -Math.pow(val / Math.max(_sliderCenterValue - _sliderMinVal, 0), 1.0/3.0)
-            }
-
-        } else {
-            valueSlider.value = valueField.getSliderValueFromOutputLinear(val)
-        }
-
-        valueField.updateFunction(sliderValue)
+        valueSlider.value = valueField.getSliderValueFromOutput(val)
+        valueField.updateFunction(valueSlider.value)
     }
 
     function configureAsRelativeAltSliderExp() {
@@ -133,8 +123,24 @@ Rectangle {
                 newValueAppUnits = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newValue).toFixed(1)
             }
 
-            function getSliderValueFromOutputLinear(value) {
-                return 2 * (value - _sliderMinVal) / (_sliderMaxVal - _sliderMinVal) - 1
+            function getSliderValueFromOutputLinear(val) {
+                return 2 * (val - _sliderMinVal) / (_sliderMaxVal - _sliderMinVal) - 1
+            }
+
+            function getSliderValueFromOutputExp(val) {
+                if (val >= _sliderCenterValue) {
+                    return Math.pow(val / Math.max(_sliderMaxVal - _sliderCenterValue, 0), 1.0/3.0)
+                } else {
+                    return -Math.pow(val / Math.max(_sliderCenterValue - _sliderMinVal, 0), 1.0/3.0)
+                }
+            }
+
+            function getSliderValueFromOutput(output) {
+                if (updateFunction == updateExpAroundCenterValue) {
+                    return getSliderValueFromOutputExp(output)
+                } else {
+                    return getSliderValueFromOutputLinear(output)
+                }
             }
         }
     }
