@@ -363,6 +363,7 @@ void Vehicle::_commonInit()
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
 
     connect(_toolbox->qgcPositionManager(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceToGCS);
+    connect(_toolbox->qgcPositionManager(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
@@ -3660,6 +3661,24 @@ void Vehicle::_updateDistanceToGCS()
         _distanceToGCSFact.setRawValue(coordinate().distanceTo(gcsPosition));
     } else {
         _distanceToGCSFact.setRawValue(qQNaN());
+    }
+}
+
+void Vehicle::_updateHomepoint()
+{
+    const bool setHomeCmdSupported = firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME);
+    const bool updateHomeActivated = _toolbox->settingsManager()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
+    if(setHomeCmdSupported && updateHomeActivated){
+        QGeoCoordinate gcsPosition = _toolbox->qgcPositionManager()->gcsPosition();
+        if (coordinate().isValid() && gcsPosition.isValid()) {
+            sendMavCommand(defaultComponentId(),
+                           MAV_CMD_DO_SET_HOME, false,
+                           0,
+                           0, 0, 0,
+                           static_cast<float>(gcsPosition.latitude()) ,
+                           static_cast<float>(gcsPosition.longitude()),
+                           static_cast<float>(gcsPosition.altitude()));
+        }
     }
 }
 

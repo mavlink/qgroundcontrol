@@ -181,6 +181,13 @@ Rectangle {
                                 property Fact _showDumbCameraControl: QGroundControl.settingsManager.flyViewSettings.showSimpleCameraControl
                             }
 
+                            FactCheckBox {
+                                text:       qsTr("Update Home Position")
+                                fact:       _updateHomePosition
+                                visible:    _updateHomePosition.visible
+                                property Fact _updateHomePosition: QGroundControl.settingsManager.flyViewSettings.updateHomePosition
+                            }
+
                             GridLayout {
                                 columns: 2
 
