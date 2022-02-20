@@ -4404,6 +4404,20 @@
         <value code="2">Stabilize yaw for absolute/lock mode.</value>
       </values>
     </parameter>
+    <parameter name="MNT_LND_P_MAX" default="90.0" type="FLOAT">
+      <short_desc>Pitch maximum when landed</short_desc>
+      <min>-90.0</min>
+      <max>90.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="MNT_LND_P_MIN" default="-90.0" type="FLOAT">
+      <short_desc>Pitch minimum when landed</short_desc>
+      <min>-90.0</min>
+      <max>90.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+    </parameter>
     <parameter name="MNT_MAN_PITCH" default="0" type="INT32">
       <short_desc>Auxiliary channel to control pitch (in AUX input or manual mode)</short_desc>
       <min>0</min>
