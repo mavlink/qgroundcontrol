@@ -3585,7 +3585,7 @@ void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
 
     mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
     if ((adsbVehicleMsg.flags & ADSB_FLAGS_VALID_COORDS) && adsbVehicleMsg.tslc <= maxTimeSinceLastSeen) {
-        ADSBVehicle::VehicleInfo_t vehicleInfo;
+        ADSBVehicle::ADSBVehicleInfo_t vehicleInfo;
 
         vehicleInfo.availableFlags = 0;
         vehicleInfo.icaoAddress = adsbVehicleMsg.ICAO_address;
