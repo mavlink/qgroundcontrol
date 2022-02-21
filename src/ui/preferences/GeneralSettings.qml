@@ -1030,7 +1030,7 @@ Rectangle {
                             FactTextField {
                                 fact:                   adsbGrid.adsbSettings.adsbServerHostAddress
                                 visible:                adsbGrid.adsbSettings.adsbServerHostAddress.visible
-                                Layout.preferredWidth:  _valueFieldWidth
+                                Layout.fillWidth:       true
                             }
 
                             QGCLabel {
