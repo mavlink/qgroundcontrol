@@ -7781,14 +7781,6 @@
       <decimal>10</decimal>
       <increment>.000000001</increment>
     </parameter>
-    <parameter name="PCF8583_ADDR" default="80" type="INT32">
-      <short_desc>PCF8583 rotorfreq (i2c) i2c address</short_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="80">Address 0x50 (80)</value>
-        <value code="81">Address 0x51 (81)</value>
-      </values>
-    </parameter>
     <parameter name="PCF8583_MAGNET" default="2" type="INT32">
       <short_desc>PCF8583 rotorfreq (i2c) pulse count</short_desc>
       <long_desc>Nmumber of signals per rotation of actuator</long_desc>
@@ -7959,6 +7951,17 @@
     <parameter name="SENS_EN_PAW3902" default="0" type="INT32" boolean="true">
       <short_desc>PAW3902 &amp; PAW3903 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_PCF8583" default="0" type="INT32">
+      <short_desc>PCF8583 eneable driver</short_desc>
+      <long_desc>Run PCF8583 driver automatically</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Eneabled</value>
+      </values>
     </parameter>
     <parameter name="SENS_EN_PGA460" default="0" type="INT32" boolean="true">
       <short_desc>PGA460 Ultrasonic driver (PGA460)</short_desc>
