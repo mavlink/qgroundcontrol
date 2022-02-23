@@ -72,7 +72,7 @@ public:
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager*             pairingManager          () { return _pairingManager; }
 #endif
-#ifndef __mobile__
+#ifndef __ios__
     GPSManager*                 gpsManager              () { return _gpsManager; }
 #endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
@@ -90,7 +90,7 @@ private:
     AudioOutput*                _audioOutput            = nullptr;
     FactSystem*                 _factSystem             = nullptr;
     FirmwarePluginManager*      _firmwarePluginManager  = nullptr;
-#ifndef __mobile__
+#ifndef __ios__
     GPSManager*                 _gpsManager             = nullptr;
 #endif
     QGCImageProvider*           _imageProvider          = nullptr;
