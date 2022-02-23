@@ -794,7 +794,7 @@ HEADERS += \
     src/comm/SerialLink.h \
 }
 
-!MobileBuild {
+!iOSBuild {
 HEADERS += \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/rtcm.h \
@@ -808,6 +808,10 @@ HEADERS += \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
     src/GPS/vehicle_gps_position.h \
+}
+
+!MobileBuild {
+    HEADERS += \
     src/Joystick/JoystickSDL.h \
     src/RunGuard.h \
 }
@@ -1033,7 +1037,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
-!MobileBuild {
+!iOSBuild {
 SOURCES += \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/rtcm.cpp \
@@ -1043,6 +1047,10 @@ SOURCES += \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
     src/GPS/RTCM/RTCMMavlink.cc \
+}
+
+!MobileBuild {
+SOURCES += \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
 }
