@@ -13,7 +13,7 @@
 #include <QString>
 #include <QThread>
 #include <QByteArray>
-#include <QSerialPort>
+#include <QtSerialPort/QSerialPort>
 
 #include <atomic>
 
