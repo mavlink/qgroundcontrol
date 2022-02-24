@@ -114,7 +114,7 @@ linux {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         }
         QMAKE_CXXFLAGS += -fvisibility=hidden
-        QMAKE_CXXFLAGS_WARN_ON += -Werror \
+        QMAKE_CXXFLAGS_WARN_ON += \
             -Wno-unused-parameter           # gst-plugins-good
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
