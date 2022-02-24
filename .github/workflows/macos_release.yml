@@ -32,9 +32,12 @@ jobs:
           setup-python: false
 
       - name: Install Gstreamer
-        run:  |
-            wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2 &&
-            sudo tar zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
+        run: |
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.1/gstreamer-1.0-devel-1.18.1-x86_64.pkg
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.1/gstreamer-1.0-1.18.1-x86_64.pkg
+            for package in *.pkg ;
+              do sudo installer -verbose -pkg "$package" -target /
+            done
 
       - name: Install ccache
         run:  brew install ccache
@@ -68,8 +71,10 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
+              export JOBS=$((`sysctl -n hw.ncpu`+1))
+              export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
               qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=DailyBuild
-              make -j3
+              make -j$JOBS
 
       - name: ccache post-run
         run:  ccache -s
