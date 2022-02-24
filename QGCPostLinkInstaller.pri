@@ -12,24 +12,16 @@
 installer {
     DEFINES += QGC_INSTALL_RELEASE
     MacBuild {
-        #QMAKE_POST_LINK += && rsync -a --delete $BUILT_PRODUCTS_DIR/$${TARGET}.app .
-        VideoEnabled {
-            # Install the gstreamer framework
-            # This will:
-            # Copy from the original distibution into DESTDIR/gstwork (if not already there)
-            # Prune the framework, removing stuff we don't need
-            # Relocate all dylibs so they can work under @executable_path/...
-            # Copy the result into the app bundle
-            # Make sure qgroundcontrol can find them
-            QMAKE_POST_LINK += && $$SOURCE_DIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${TARGET}.app $${TARGET}
-        }
-
         QMAKE_POST_LINK += && echo macdeployqt
         QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${SOURCE_DIR}/src
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
-        QMAKE_POST_LINK += && echo osxrelocator
-        QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
+        QMAKE_POST_LINK += && cp -R /Library/Frameworks/GStreamer.framework $${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && echo libexec
+        QMAKE_POST_LINK += && ln -sf $${TARGET}.app/Contents/Frameworks $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/Frameworks
+        QMAKE_POST_LINK += && install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer $${TARGET}.app/Contents/MacOS/QGroundControl
+        QMAKE_POST_LINK += && rm -rf $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/{bin,etc,share,Headers,include,Commands}
+        QMAKE_POST_LINK += && rm -rf $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/{*.a,*.la,glib-2.0,gst-validate-launcher,pkgconfig}
 
         codesign {
             # Disabled for now since it's not working correctly yet
