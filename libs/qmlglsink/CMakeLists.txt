@@ -3,21 +3,27 @@ find_package(Qt5Gui ${QT_VERSION} CONFIG REQUIRED Private)
 find_package(OpenGL REQUIRED)
 
 add_library(qmlglsink
-    gst-plugins-good/ext/qt/gstplugin.cc
-    gst-plugins-good/ext/qt/gstqtglutility.cc
-    gst-plugins-good/ext/qt/gstqsgtexture.cc
-    gst-plugins-good/ext/qt/gstqtsink.cc
-    gst-plugins-good/ext/qt/gstqtsrc.cc
-    gst-plugins-good/ext/qt/qtwindow.cc
-    gst-plugins-good/ext/qt/qtitem.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstplugin.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqsgtexture.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtelement.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtglutility.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtoverlay.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsink.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsrc.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/qtglrenderer.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/qtitem.cc
+    gstreamer/subprojects/gst-plugins-good/ext/qt/qtwindow.cc
 
-    gst-plugins-good/ext/qt/gstqsgtexture.h
-    gst-plugins-good/ext/qt/gstqtgl.h
-    gst-plugins-good/ext/qt/gstqtglutility.h
-    gst-plugins-good/ext/qt/gstqtsink.h
-    gst-plugins-good/ext/qt/gstqtsrc.h
-    gst-plugins-good/ext/qt/qtwindow.h
-    gst-plugins-good/ext/qt/qtitem.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqsgtexture.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtelements.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtgl.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtglutility.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtoverlay.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsink.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsrc.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/qtglrenderer.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/qtitem.h
+    gstreamer/subprojects/gst-plugins-good/ext/qt/qtwindow.h
 )
 
 if(LINUX)

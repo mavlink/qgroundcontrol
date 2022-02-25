@@ -12,19 +12,25 @@ LinuxBuild {
 }
 
 SOURCES += \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstplugin.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtglutility.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqsgtexture.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsink.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsrc.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/qtwindow.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.cc
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstplugin.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqsgtexture.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtelement.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtglutility.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtoverlay.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsink.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsrc.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/qtglrenderer.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/qtitem.cc \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/qtwindow.cc
 
 HEADERS += \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqsgtexture.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtgl.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtglutility.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsink.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsrc.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/qtwindow.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.h
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqsgtexture.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtelements.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtgl.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtglutility.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtoverlay.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsink.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/gstqtsrc.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/qtglrenderer.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/qtitem.h \
+    libs/qmlglsink/gstreamer/subprojects/gst-plugins-good/ext/qt/qtwindow.h

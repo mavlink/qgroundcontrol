@@ -92,7 +92,7 @@ linux {
             /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
             /wd4290 \   # ignore exception specifications
             /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
-            /wd4100     # unreferenced formal parameter - gst-plugins-good
+            /wd4100     # unreferenced formal parameter - gstreamer/subprojects/gst-plugins-good
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
@@ -106,7 +106,7 @@ linux {
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         QMAKE_CXXFLAGS += -fvisibility=hidden
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
-            -Wno-unused-parameter           # gst-plugins-good
+            -Wno-unused-parameter           # gstreamer/subprojects/gst-plugins-good
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
