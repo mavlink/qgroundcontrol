@@ -48,8 +48,10 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
-            wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.20.0.tar.bz2 &&
-            sudo tar zxf gstreamer-osx-1.20.0.tar.bz2 -C /Library/Frameworks
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/1.20.0/gstreamer-1.0-1.20.0-universal.pkg &&
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/1.20.0/gstreamer-1.0-devel-1.20.0-universal.pkg &&
+            sudo installer -pkg gstreamer-1.0-1.20.0-universal.pkg -target /Library/Frameworks &&
+            sudo installer -pkg gstreamer-1.0-devel-1.20.0-universal.pkg -target /Library/Frameworks
 
       - name: Install ccache
         run:  brew install ccache
