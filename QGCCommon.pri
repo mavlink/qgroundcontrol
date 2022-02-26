@@ -106,7 +106,10 @@ linux {
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         QMAKE_CXXFLAGS += -fvisibility=hidden
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
-            -Wno-unused-parameter           # gstreamer/subprojects/gst-plugins-good
+            -Wno-unused-parameter \
+            -Wl,-rpath-link=/Library/Frameworks/GStreamer.framework/Libraries \
+            -I/Library/Frameworks/GStreamer.framework/Headers   # gstreamer/subprojects/gst-plugins-good
+
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
