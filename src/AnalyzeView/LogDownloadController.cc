@@ -765,6 +765,22 @@ QGCLogModel::clear(void)
 }
 
 //-----------------------------------------------------------------------------
+void
+QGCLogModel::sort_by_time(void)
+{
+    if(!_logEntries.isEmpty()) {
+        beginRemoveRows(QModelIndex(), 0, _logEntries.count());
+        while (_logEntries.count()) {
+            QGCLogEntry* entry = _logEntries.last();
+            if(entry) entry->deleteLater();
+            _logEntries.removeLast();
+        }
+        endRemoveRows();
+        emit countChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
 QGCLogEntry*
 QGCLogModel::operator[](int index)
 {
