@@ -155,7 +155,7 @@ void ParameterEditorController::_factAdded(int compId, Fact* fact)
         QmlObjectListModel& groups = category->groups;
         inserted = false;
         for (int i=0; i<groups.count(); i++) {
-            if (groups.value<ParameterEditorCategory*>(i)->name > group->name) {
+            if (groups.value<ParameterEditorGroup*>(i)->name > group->name) {
                 groups.insert(i, group);
                 inserted = true;
                 break;
