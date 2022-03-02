@@ -51,8 +51,7 @@ bool FlightModesComponent::setupComplete(void) const
         return true;
     }
 
-    if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0 ||
-            (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0)) {
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0) {
         return true;
     }
 
