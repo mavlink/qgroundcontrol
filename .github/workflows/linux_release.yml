@@ -23,7 +23,7 @@ env:
 
 jobs:
   build:
-    runs-on:  ubuntu-20.04
+    runs-on:  ubuntu-18.04
 
     steps:
       - name: Checkout repo
@@ -50,7 +50,14 @@ jobs:
         run:  sudo apt-get install -y libsdl2-dev
 
       - name: Install Gstreamer
-        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
+        run: |
+            sudo apt-get install meson
+            git clone -b 1.20.0 --depth 1 https://gitlab.freedesktop.org/gstreamer/gstreamer
+            cd gstreamer && mkdir build
+            meson --prefix=/usr \
+                  --buildtype=release \
+                  build
+            ninja -C build
 
       - name: Install ccache
         run:  sudo apt-get install ccache
