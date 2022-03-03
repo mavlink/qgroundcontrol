@@ -26,9 +26,9 @@ Item {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; }
 
-    property Fact batVChargedFact:  controller.getParameterFact(-1, "BAT_V_CHARGED")
-    property Fact batVEmptyFact:    controller.getParameterFact(-1, "BAT_V_EMPTY")
-    property Fact batCellsFact:     controller.getParameterFact(-1, "BAT_N_CELLS")
+    property Fact batVChargedFact:  controller.getParameterFact(-1, "BAT1_V_CHARGED")
+    property Fact batVEmptyFact:    controller.getParameterFact(-1, "BAT1_V_EMPTY")
+    property Fact batCellsFact:     controller.getParameterFact(-1, "BAT1_N_CELLS")
 
     Column {
         anchors.fill:       parent
