@@ -271,6 +271,8 @@ public:
     Q_PROPERTY(bool     roiModeSupported        READ roiModeSupported                               CONSTANT)                   ///< Orbit mode is supported by this vehicle
     Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Guided takeoff supported
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
+    Q_PROPERTY(bool     haveMRSpeedLimits       READ haveMRSpeedLimits                              NOTIFY haveMRSpeedLimChanged)
+    Q_PROPERTY(bool     haveFWSpeedLimits       READ haveFWSpeedLimits                              NOTIFY haveFWSpeedLimChanged)
 
     Q_PROPERTY(ParameterManager*        parameterManager    READ parameterManager   CONSTANT)
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
@@ -460,6 +462,9 @@ public:
     bool    roiModeSupported        () const;
     bool    takeoffVehicleSupported () const;
     QString gotoFlightMode          () const;
+
+    bool haveMRSpeedLimits() const { return _multirotor_speed_limits_available; }
+    bool haveFWSpeedLimits() const { return _fixed_wing_airspeed_limits_available; }
 
     // Property accessors
 
@@ -912,6 +917,8 @@ signals:
     void readyToFlyChanged              (bool readyToFy);
     void allSensorsHealthyChanged       (bool allSensorsHealthy);
     void requiresGpsFixChanged          ();
+    void haveMRSpeedLimChanged          ();
+    void haveFWSpeedLimChanged          ();
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
@@ -1293,6 +1300,10 @@ private:
     QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;
 
     float _altitudeTuningOffset = qQNaN(); // altitude offset, so the plotted value is around 0
+
+    // these flags are used to determine if the speed change action from fly view should be shown
+    bool _multirotor_speed_limits_available = false;
+    bool _fixed_wing_airspeed_limits_available = false;
 
     // FactGroup facts
 

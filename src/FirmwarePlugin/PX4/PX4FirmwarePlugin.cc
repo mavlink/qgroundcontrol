@@ -442,6 +442,17 @@ double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
     return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
 }
 
+bool PX4FirmwarePlugin::mulirotorSpeedLimitsAvailable(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "MPC_XY_VEL_MAX");
+}
+
+bool PX4FirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MIN") &&
+            vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MAX");
+}
+
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
     if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
