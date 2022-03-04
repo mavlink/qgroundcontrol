@@ -159,6 +159,12 @@ public:
     /// @return The minimum equivalent airspeed setpoint
     virtual double minimumEquivalentAirspeed(Vehicle* /*vehicle*/) { return NAN; }
 
+    /// @return Return true if we have received the ground speed limits for the mulirotor.
+    virtual bool mulirotorSpeedLimitsAvailable(Vehicle* /*vehicle*/) { return false; }
+
+    /// @return Return true if we have received the airspeed limits for fixed wing.
+    virtual bool fixedWingAirSpeedLimitsAvailable(Vehicle* /*vehicle*/) { return false; }
+
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
 
