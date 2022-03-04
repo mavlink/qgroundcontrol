@@ -47,7 +47,7 @@ Item {
     readonly property string pauseTitle:                    qsTr("Pause")
     readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
-    readonly property string changeCruiseSpeedTitle:        qsTr("Change Cruise Speed")
+    readonly property string changeCruiseSpeedTitle:        qsTr("Change Max Ground Speed")
     readonly property string changeAirspeedTitle:           qsTr("Change Airspeed")
     readonly property string orbitTitle:                    qsTr("Orbit")
     readonly property string landAbortTitle:                qsTr("Land Abort")
@@ -487,7 +487,6 @@ Item {
             actionList.show()
             return
         case actionChangeSpeed:
-            confirmDialog.title = "Change Speed"
             confirmDialog.hideTrigger = true
             confirmDialog.title = changeSpeedTitle
             confirmDialog.message = changeSpeedMessage

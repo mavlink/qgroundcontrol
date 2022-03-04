@@ -151,13 +151,13 @@ public:
     virtual double minimumTakeoffAltitude(Vehicle* /*vehicle*/) { return 10; }
 
     /// @return The maximum horizontal groundspeed for a multirotor.
-    virtual double maximumHorizontalSpeedMultirotor(Vehicle* /*vehicle*/) { return 10; }
+    virtual double maximumHorizontalSpeedMultirotor(Vehicle* /*vehicle*/) { return NAN; }
 
     /// @return The maximum equivalent airspeed setpoint.
-    virtual double maximumEquivalentAirspeed(Vehicle* /*vehicle*/) { return 25; }
+    virtual double maximumEquivalentAirspeed(Vehicle* /*vehicle*/) { return NAN; }
 
     /// @return The minimum equivalent airspeed setpoint
-    virtual double minimumEquivalentAirspeed(Vehicle* /*vehicle*/) { return 12; }
+    virtual double minimumEquivalentAirspeed(Vehicle* /*vehicle*/) { return NAN; }
 
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);

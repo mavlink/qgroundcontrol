@@ -415,9 +415,9 @@ double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle)
 
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, speedParam)) {
         return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, speedParam)->rawValue().toDouble();
-    } else {
-        return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
     }
+
+    return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
 }
 
 double PX4FirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
@@ -426,9 +426,9 @@ double PX4FirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
 
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMax)) {
         return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMax)->rawValue().toDouble();
-    } else {
-        return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
     }
+
+    return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
 }
 
 double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
@@ -437,9 +437,9 @@ double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
 
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMin)) {
         return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMin)->rawValue().toDouble();
-    } else {
-        return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
     }
+
+    return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
