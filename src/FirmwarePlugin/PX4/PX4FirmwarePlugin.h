@@ -49,6 +49,8 @@ public:
     double              maximumHorizontalSpeedMultirotor(Vehicle* vehicle) override;
     double              maximumEquivalentAirspeed(Vehicle* vehicle) override;
     double              minimumEquivalentAirspeed(Vehicle* vehicle) override;
+    bool                mulirotorSpeedLimitsAvailable(Vehicle* vehicle) override;
+    bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel, bool pauseVehicle) override;
     void                guidedModeChangeGroundSpeed      (Vehicle* vehicle, double groundspeed) override;

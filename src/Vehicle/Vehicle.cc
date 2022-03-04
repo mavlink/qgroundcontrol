@@ -2266,6 +2266,12 @@ void Vehicle::_parametersReady(bool parametersReady)
         _setupAutoDisarmSignalling();
         _initialConnectStateMachine->advance();
     }
+
+    _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
+    _fixed_wing_airspeed_limits_available = _firmwarePlugin->fixedWingAirSpeedLimitsAvailable(this);
+
+    emit haveMRSpeedLimChanged();
+    emit haveFWSpeedLimChanged();
 }
 
 void Vehicle::_sendQGCTimeToVehicle()
