@@ -1420,10 +1420,6 @@
       <decimal>0</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="COM_REARM_GRACE" default="1" type="INT32" boolean="true">
-      <short_desc>Rearming grace period</short_desc>
-      <long_desc>Re-arming grace allows to rearm the drone with manual command without running prearmcheck during 5 s after disarming.</long_desc>
-    </parameter>
     <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
       <short_desc>Action after TAKEOFF has been accepted</short_desc>
       <long_desc>The mode transition after TAKEOFF has completed successfully.</long_desc>
