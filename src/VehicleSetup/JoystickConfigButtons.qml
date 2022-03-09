@@ -193,7 +193,7 @@ ColumnLayout {
                         if(_activeJoystick) {
                             if (fact && fact.value > 0) {
                                 // This is a firmware function
-                                currentIndex = qgcActions.length + fact.value
+                                currentIndex = qgcActions.length + fact.enumIndex
                                 // For sanity reasons, make sure qgc is set to "no action" if the firmware is set to do something
                                 _activeJoystick.setButtonAction(modelData, "No Action")
                             } else {
@@ -209,7 +209,7 @@ ColumnLayout {
                         var func = textAt(optionIndex)
                         if (factOptions.indexOf(func) > -1) {
                             // This is a FW action, set parameter to the action and set QGC's handler to No Action
-                            fact.value = factOptions.indexOf(func)
+                            fact.enumStringValue = func
                             _activeJoystick.setButtonAction(modelData, "No Action")
                         } else {
                             // This is a QGC action, set parameters to Disabled and QGC to the desired action
