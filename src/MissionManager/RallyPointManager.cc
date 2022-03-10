@@ -48,7 +48,7 @@ void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 
         MissionItem* item = new MissionItem(0,
                                             MAV_CMD_NAV_RALLY_POINT,
-                                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                                            MAV_FRAME_GLOBAL,
                                             0, 0, 0, 0,                 // param 1-4 unused
                                             rgPoints[i].latitude(),
                                             rgPoints[i].longitude(),

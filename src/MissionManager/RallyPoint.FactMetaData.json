@@ -16,8 +16,8 @@
     "decimalPlaces":    7
 },
 {
-    "name":             "RelativeAltitude",
-    "shortDesc": "Altitude of rally point position (home relative)",
+    "name":             "ABSOLUTE ALTITUDE",
+    "shortDesc": "Altitude of rally point position (AMSL)",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m",

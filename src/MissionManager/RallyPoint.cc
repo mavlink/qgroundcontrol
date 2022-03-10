@@ -15,7 +15,7 @@
 
 const char* RallyPoint::_longitudeFactName =    "Longitude";
 const char* RallyPoint::_latitudeFactName =     "Latitude";
-const char* RallyPoint::_altitudeFactName =     "RelativeAltitude";
+const char* RallyPoint::_altitudeFactName =     "ABSOLUTE ALTITUDE";
 
 QMap<QString, FactMetaData*> RallyPoint::_metaDataMap;
 
