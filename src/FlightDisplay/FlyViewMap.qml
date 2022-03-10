@@ -322,6 +322,16 @@ FlightMap {
         largeMapView:   !pipMode
     }
 
+    // Traffic conflict radius
+    MapCircle {
+        color:          "transparent"
+        opacity:        1
+        border.color:   Qt.rgba(1,0,0,1)
+        border.width:   3
+        radius:         5000
+        center:         _activeVehicleCoordinate
+    }
+
     GeoFenceMapVisuals {
         map:                    _root
         myGeoFenceController:   _geoFenceController
