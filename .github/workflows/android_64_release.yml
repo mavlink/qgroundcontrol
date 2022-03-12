@@ -100,7 +100,9 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run:  |
             qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="arm64-v8a"
-            make -j2
+            make -j2 apk
+            mkdir ${{ runner.temp }}/shadow_build_dir/package
+            mv ${{ runner.temp }}/shadow_build_dir/android-build/build/outputs/apk/debug/android-build-debug.apk ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
 
       - name: ccache post-run
         run:  ccache -s
