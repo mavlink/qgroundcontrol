@@ -22,3 +22,6 @@
 [submodule "libs/qmdnsengine"]
 	path = libs/qmdnsengine
 	url = https://github.com/patrickelectric/qmdnsengine
+[submodule "resources/SDL_GameControllerDB"]
+	path = resources/SDL_GameControllerDB
+	url = https://github.com/gabomdq/SDL_GameControllerDB
