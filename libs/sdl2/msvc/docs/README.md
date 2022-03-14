@@ -21,7 +21,7 @@ SDL is written in C, works natively with C++, and there are bindings
 available for several other languages, including C# and Python.
 
 This library is distributed under the zlib license, which can be found
-in the file "COPYING.txt".
+in the file "LICENSE.txt".
 
 The best way to learn how to use SDL is to check out the header files in
 the "include" subdirectory and the programs in the "test" subdirectory.
@@ -35,10 +35,11 @@ More documentation and FAQs are available online at [the wiki](http://wiki.libsd
 - [DynAPI](README-dynapi.md)
 - [Emscripten](README-emscripten.md)
 - [Gesture](README-gesture.md)
-- [Mercurial](README-hg.md)
+- [Git](README-git.md)
 - [iOS](README-ios.md)
 - [Linux](README-linux.md)
 - [OS X](README-macosx.md)
+- [OS/2](README-os2.md)
 - [Native Client](README-nacl.md)
 - [Pandora](README-pandora.md)
 - [Supported Platforms](README-platforms.md)
@@ -49,15 +50,16 @@ More documentation and FAQs are available online at [the wiki](http://wiki.libsd
 - [WinCE](README-wince.md)
 - [Windows](README-windows.md)
 - [WinRT](README-winrt.md)
+- [PSVita](README-vita.md)
 
 If you need help with the library, or just want to discuss SDL related
-issues, you can join the [developers mailing list](http://www.libsdl.org/mailing-list.php)
+issues, you can join the [SDL Discourse](https://discourse.libsdl.org/),
+which can be used as a web forum or a mailing list, at your preference.
 
 If you want to report bugs or contribute patches, please submit them to
-[bugzilla](http://bugzilla.libsdl.org/)
+[our bug tracker](https://github.com/libsdl-org/SDL/issues)
 
 Enjoy!
 
 
 Sam Lantinga <mailto:slouken@libsdl.org>
-
