@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,8 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef _SDL_power_h
-#define _SDL_power_h
+#ifndef SDL_power_h_
+#define SDL_power_h_
 
 /**
  *  \file SDL_power.h
@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 /**
- *  \brief The basic state for the system's power supply.
+ *  The basic state for the system's power supply.
  */
 typedef enum
 {
@@ -50,17 +50,30 @@ typedef enum
 
 
 /**
- *  \brief Get the current power supply details.
+ * Get the current power supply details.
  *
- *  \param secs Seconds of battery life left. You can pass a NULL here if
- *              you don't care. Will return -1 if we can't determine a
- *              value, or we're not running on a battery.
+ * You should never take a battery status as absolute truth. Batteries
+ * (especially failing batteries) are delicate hardware, and the values
+ * reported here are best estimates based on what that hardware reports. It's
+ * not uncommon for older batteries to lose stored power much faster than it
+ * reports, or completely drain when reporting it has 20 percent left, etc.
  *
- *  \param pct Percentage of battery life left, between 0 and 100. You can
- *             pass a NULL here if you don't care. Will return -1 if we
- *             can't determine a value, or we're not running on a battery.
+ * Battery status can change at any time; if you are concerned with power
+ * state, you should call this function frequently, and perhaps ignore changes
+ * until they seem to be stable for a few seconds.
  *
- *  \return The state of the battery (if any).
+ * It's possible a platform can only report battery percentage or time left
+ * but not both.
+ *
+ * \param secs seconds of battery life left, you can pass a NULL here if you
+ *             don't care, will return -1 if we can't determine a value, or
+ *             we're not running on a battery
+ * \param pct percentage of battery life left, between 0 and 100, you can pass
+ *            a NULL here if you don't care, will return -1 if we can't
+ *            determine a value, or we're not running on a battery
+ * \returns an SDL_PowerState enum representing the current battery state.
+ *
+ * \since This function is available since SDL 2.0.0.
  */
 extern DECLSPEC SDL_PowerState SDLCALL SDL_GetPowerInfo(int *secs, int *pct);
 
@@ -70,6 +83,6 @@ extern DECLSPEC SDL_PowerState SDLCALL SDL_GetPowerInfo(int *secs, int *pct);
 #endif
 #include "close_code.h"
 
-#endif /* _SDL_power_h */
+#endif /* SDL_power_h_ */
 
 /* vi: set ts=4 sw=4 expandtab: */
