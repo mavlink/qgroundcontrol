@@ -8915,6 +8915,13 @@
       <long_desc>Disable this if the board has no magnetometer, such as the Omnibus F4 SD. If disabled, the preflight checks will not check for the presence of a magnetometer.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SYS_HAS_NUM_DIST" default="0" type="INT32">
+      <short_desc>Control the number of distance sensors on the vehicle</short_desc>
+      <long_desc>If set to the number of distance sensors, the preflight check will check for their presence and valid data publication. Disable with 0 if no distance sensor present or to disbale the preflight check.</long_desc>
+      <min>0</min>
+      <max>4</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SYS_HITL" default="0" type="INT32">
       <short_desc>Enable HITL/SIH mode on next boot</short_desc>
       <long_desc>While enabled the system will boot in Hardware-In-The-Loop (HITL) or Simulation-In-Hardware (SIH) mode and not enable all sensors and checks. When disabled the same vehicle can be flown normally. Set to 'external HITL', if the system should perform as if it were a real vehicle (the only difference to a real system is then only the parameter value, which can be used for log analysis).</long_desc>
