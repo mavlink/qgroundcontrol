@@ -8008,6 +8008,10 @@
       <short_desc>SHT3x temperature and hygrometer</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_SPL06" default="0" type="INT32" boolean="true">
+      <short_desc>Goertek SPL06 Barometer (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_SR05" default="0" type="INT32" boolean="true">
       <short_desc>HY-SRF05 / HC-SR05</short_desc>
       <reboot_required>true</reboot_required>
