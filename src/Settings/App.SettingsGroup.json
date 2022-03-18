@@ -91,7 +91,7 @@
     "shortDesc": "Save telemetry log even if vehicle was not armed",
     "longDesc":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
     "type":             "bool",
-    "default":     false
+    "default":     true
 },
 {
     "name":             "audioMuted",
