@@ -47,6 +47,7 @@ Rectangle {
     property real   _margins:                   ScreenTools.defaultFontPixelWidth
     property var    _planViewSettings:          QGroundControl.settingsManager.planViewSettings
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
+    property var    _aviantSettings:            QGroundControl.settingsManager.aviantSettings
     property var    _videoSettings:             QGroundControl.settingsManager.videoSettings
     property string _videoSource:               _videoSettings.videoSource.rawValue
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
@@ -675,6 +676,48 @@ Rectangle {
                                     selectFolder:   true
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins; visible: aviantSectionLabel.visible }
+                    QGCLabel {
+                        id:         aviantSectionLabel
+                        text:       qsTr("Aviant settings")
+                        visible:    aviantRect.visible
+                    }
+                    Rectangle {
+                        id:                     aviantRect
+                        Layout.preferredHeight: aviantCol.height + (_margins * 2)
+                        Layout.preferredWidth:  aviantCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        Layout.fillWidth:       true
+                        ColumnLayout {
+                            id:                         aviantCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins
+                            FactCheckBox {
+                                id:         promptShowTrafficIndicators
+                                text:       qsTr("Show traffic indicators")
+                                fact:       _aviantSettings.showTrafficIndicators
+                            }
+                            QGCLabel {
+                                text:       qsTr("Horizontal conflict distance")
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _valueFieldWidth
+                                enabled:                promptShowTrafficIndicators.checked
+                                fact:                   _aviantSettings.horizontalConflictDistance
+                            }
+                            QGCLabel {
+                                text:       qsTr("Vertical conflict distance")
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _valueFieldWidth
+                                enabled:                promptShowTrafficIndicators.checked
+                                fact:                   _aviantSettings.verticalConflictDistance
                             }
                         }
                     }

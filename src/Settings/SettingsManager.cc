@@ -25,6 +25,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _rtkSettings                  (nullptr)
     , _flyViewSettings              (nullptr)
     , _planViewSettings             (nullptr)
+    , _aviantSettings               (nullptr)
     , _brandImageSettings           (nullptr)
     , _offlineMapsSettings          (nullptr)
     , _firmwareUpgradeSettings      (nullptr)
@@ -50,6 +51,7 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _rtkSettings =                  new RTKSettings                 (this);
     _flyViewSettings =              new FlyViewSettings             (this);
     _planViewSettings =             new PlanViewSettings            (this);
+    _aviantSettings =               new AviantSettings              (this);
     _brandImageSettings =           new BrandImageSettings          (this);
     _offlineMapsSettings =          new OfflineMapsSettings         (this);
     _firmwareUpgradeSettings =      new FirmwareUpgradeSettings     (this);

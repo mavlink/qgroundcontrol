@@ -53,6 +53,10 @@ FlightMap {
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
+    property var    _aviantSettings:            QGroundControl.settingsManager.aviantSettings
+    property bool   _showTrafficIndicators:     _aviantSettings.showTrafficIndicators.rawValue
+    property var   _horizontalConflictDistance: _aviantSettings.horizontalConflictDistance.value
+    property var   _verticalConflictDistance:  _aviantSettings.verticalConflictDistance.value
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       pipMode ? true : false
@@ -286,6 +290,31 @@ FlightMap {
         }
     }
 
+    // Add lines to ADSB vehicles to the map
+    MapItemView {
+        model: QGroundControl.adsbVehicleManager.adsbVehicles
+        delegate: MapPolyline {
+            visible:    _showTrafficIndicators && get_proximity(object, _activeVehicle, _horizontalConflictDistance*2, _verticalConflictDistance*2)
+            line.width: get_proximity(object, _activeVehicle, _horizontalConflictDistance, _verticalConflictDistance) ? 4 : 2
+            line.color: get_proximity(object, _activeVehicle, _horizontalConflictDistance, _verticalConflictDistance) ? "red" : "yellow"
+            z:          QGroundControl.zOrderVehicles+1
+            path:       visible ? [ object.coordinate, _activeVehicle.coordinate ] : []
+
+            function get_proximity(adsbVehicle, mainVehicle, horizontal_radius, vertical_radius) {
+                if (!adsbVehicle || !adsbVehicle.coordinate.isValid || !mainVehicle || !mainVehicle.coordinate.isValid) {
+                    return false
+                }
+
+                var vertical_distance = 0
+                if (!isNaN(adsbVehicle.altitude)) {
+                    vertical_distance = Math.abs(adsbVehicle.altitude - mainVehicle.coordinate.altitude)
+                }
+                var horizontal_distance = adsbVehicle.coordinate.distanceTo(mainVehicle.coordinate)
+                return vertical_distance <= vertical_radius && horizontal_distance <= horizontal_radius
+            }
+        }
+    }
+
     // Add the items associated with each vehicles flight plan to the map
     Repeater {
         model: QGroundControl.multiVehicleManager.vehicles
@@ -326,10 +355,11 @@ FlightMap {
     MapCircle {
         color:          "transparent"
         opacity:        1
-        border.color:   Qt.rgba(1,0,0,1)
-        border.width:   3
-        radius:         5000
+        border.color:   "red"
+        border.width:   4
+        radius:         _horizontalConflictDistance
         center:         _activeVehicleCoordinate
+        visible:        _showTrafficIndicators
     }
 
     GeoFenceMapVisuals {

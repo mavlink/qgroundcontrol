@@ -83,12 +83,31 @@ MapQuickItem {
             text:                       vehicleLabelText
             font.pointSize:             _adsbVehicle ? ScreenTools.defaultFontPointSize : ScreenTools.smallFontPointSize
             visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
-            property string vehicleLabelText: visible ?
-                                                  (_adsbVehicle ?
-                                                       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(altitude).toFixed(0) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString + "\n" + callsign :
-                                                       (_multiVehicle ? qsTr("Vehicle %1").arg(vehicle.id) : "")) :
-                                                  ""
+            property string vehicleLabelText: {
+                if (!visible) return ""
 
+                var label = ""
+                if (_adsbVehicle) {
+                    label += callsign
+                    if (coordinate.isValid && _activeVehicle.coordinate.isValid) {
+                        var distance = coordinate.distanceTo(_activeVehicle.coordinate)
+                        var distanceValueString = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(distance).toFixed(0)
+                        var distanceUnit = QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+                        label += "\nd+" + distanceValueString + " " + distanceUnit
+        
+                        if (!isNaN(altitude)) {
+                            var altitudeDifference = altitude - _activeVehicle.coordinate.altitude
+                            var altitudePrefix = altitudeDifference > 0 ? "+" : ""
+                            var altitudeValueString = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(altitudeDifference).toFixed(0)
+                            var altitudeUnit = QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+                            label += "\na" + altitudePrefix + altitudeValueString + " " + altitudeUnit
+                        }
+                    }
+                } else if (_multiVehicle) {
+                    label += qsTr("Vehicle %1").arg(vehicle.id)
+                }
+                return label
+            }
         }
     }
 }

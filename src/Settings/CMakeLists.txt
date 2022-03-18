@@ -2,6 +2,8 @@
 add_library(Settings
 	ADSBVehicleManagerSettings.cc
 	ADSBVehicleManagerSettings.h
+	AviantSettings.cc
+	AviantSettings.h
 	APMMavlinkStreamRateSettings.cc
 	APMMavlinkStreamRateSettings.h
 	AppSettings.cc

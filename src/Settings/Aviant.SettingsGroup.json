@@ -1,0 +1,32 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "showTrafficIndicators",
+    "shortDesc": "Show traffic indicators",
+    "longDesc":  "Shows traffic indicators, including conflict radius and line guides",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "horizontalConflictDistance",
+    "shortDesc": "Horizontal conflict distance",
+    "longDesc":  "The horizontal distance to nearby traffic inside which the situation is considered a conflict, and traffic indicators turn red. Twice this distance is used for proximity detection, meaning that the indicators will turn yellow. ",
+    "type":             "uint32",
+    "min":              0,
+    "units":            "m",
+    "default":          4000
+},
+{
+    "name":             "verticalConflictDistance",
+    "shortDesc": "Horizontal conflict distance",
+    "longDesc":  "The vertical distance to nearby traffic inside which the situation is considered a conflict, and traffic indicators turn red. Twice this distance is used for proximity detection, meaning that the indicators will turn yellow. ",
+    "type":             "uint32",
+    "min":              0,
+    "units":            "m",
+    "default":          600
+}
+]
+}

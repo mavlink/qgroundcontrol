@@ -22,6 +22,7 @@
 #include "RTKSettings.h"
 #include "FlyViewSettings.h"
 #include "PlanViewSettings.h"
+#include "AviantSettings.h"
 #include "BrandImageSettings.h"
 #include "OfflineMapsSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
@@ -51,6 +52,7 @@ public:
     Q_PROPERTY(QObject* rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject* flyViewSettings                 READ flyViewSettings                CONSTANT)
     Q_PROPERTY(QObject* planViewSettings                READ planViewSettings               CONSTANT)
+    Q_PROPERTY(QObject* aviantSettings                  READ aviantSettings                 CONSTANT)
     Q_PROPERTY(QObject* brandImageSettings              READ brandImageSettings             CONSTANT)
     Q_PROPERTY(QObject* offlineMapsSettings             READ offlineMapsSettings            CONSTANT)
     Q_PROPERTY(QObject* firmwareUpgradeSettings         READ firmwareUpgradeSettings        CONSTANT)
@@ -72,6 +74,7 @@ public:
     RTKSettings*                    rtkSettings                 (void) { return _rtkSettings; }
     FlyViewSettings*                flyViewSettings             (void) { return _flyViewSettings; }
     PlanViewSettings*               planViewSettings            (void) { return _planViewSettings; }
+    AviantSettings*                 aviantSettings              (void) { return _aviantSettings; }
     BrandImageSettings*             brandImageSettings          (void) { return _brandImageSettings; }
     OfflineMapsSettings*            offlineMapsSettings         (void) { return _offlineMapsSettings; }
     FirmwareUpgradeSettings*        firmwareUpgradeSettings     (void) { return _firmwareUpgradeSettings; }
@@ -91,6 +94,7 @@ private:
     RTKSettings*                    _rtkSettings;
     FlyViewSettings*                _flyViewSettings;
     PlanViewSettings*               _planViewSettings;
+    AviantSettings*                 _aviantSettings;
     BrandImageSettings*             _brandImageSettings;
     OfflineMapsSettings*            _offlineMapsSettings;
     FirmwareUpgradeSettings*        _firmwareUpgradeSettings;
