@@ -3544,6 +3544,10 @@
       <unit>m</unit>
       <increment>1</increment>
     </parameter>
+    <parameter name="GF_PREDICT" default="1" type="INT32" boolean="true">
+      <short_desc>Use Pre-emptive geofence triggering</short_desc>
+      <long_desc>Predict the motion of the vehicle and trigger the breach if it is determined that the current trajectory would result in a breach happening before the vehicle can make evasive maneuvers. The vehicle is then re-routed to a safe hold position (stop for multirotor, loiter for fixed wing).</long_desc>
+    </parameter>
     <parameter name="GF_SOURCE" default="0" type="INT32">
       <short_desc>Geofence source</short_desc>
       <long_desc>Select which position source should be used. Selecting GPS instead of global position makes sure that there is no dependence on the position estimator 0 = global position, 1 = GPS</long_desc>
