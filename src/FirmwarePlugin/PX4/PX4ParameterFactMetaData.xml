@@ -4138,39 +4138,28 @@
       <max>250</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="MAV_TYPE" default="2" type="INT32">
+    <parameter name="MAV_TYPE" default="0" type="INT32">
       <short_desc>MAVLink airframe type</short_desc>
-      <min>1</min>
-      <max>27</max>
+      <min>0</min>
+      <max>22</max>
       <values>
         <value code="0">Generic micro air vehicle</value>
         <value code="1">Fixed wing aircraft</value>
         <value code="2">Quadrotor</value>
         <value code="3">Coaxial helicopter</value>
         <value code="4">Normal helicopter with tail rotor</value>
-        <value code="5">Ground installation</value>
-        <value code="6">Operator control unit / ground control station</value>
         <value code="7">Airship, controlled</value>
         <value code="8">Free balloon, uncontrolled</value>
-        <value code="9">Rocket</value>
         <value code="10">Ground rover</value>
         <value code="11">Surface vessel, boat, ship</value>
         <value code="12">Submarine</value>
         <value code="13">Hexarotor</value>
         <value code="14">Octorotor</value>
         <value code="15">Tricopter</value>
-        <value code="16">Flapping wing</value>
-        <value code="17">Kite</value>
-        <value code="18">Onboard companion controller</value>
-        <value code="19">Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.</value>
-        <value code="20">Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.</value>
-        <value code="21">Tiltrotor VTOL</value>
-        <value code="22">VTOL reserved 2</value>
-        <value code="23">VTOL reserved 3</value>
-        <value code="24">VTOL reserved 4</value>
-        <value code="25">VTOL reserved 5</value>
-        <value code="26">Onboard gimbal</value>
-        <value code="27">Onboard ADSB peripheral</value>
+        <value code="19">VTOL Tailsitter Duo</value>
+        <value code="20">VTOL Tailsitter Quad</value>
+        <value code="21">VTOL Tiltrotor</value>
+        <value code="22">VTOL Standard (quadplane)</value>
       </values>
     </parameter>
     <parameter name="MAV_USEHILGPS" default="0" type="INT32" boolean="true">
