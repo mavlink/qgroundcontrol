@@ -3907,6 +3907,12 @@ void Vehicle::flashBootloader()
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
+    if (apmFirmware()) {
+        // ArduPilot firmware treats this values as centi-degrees
+        pitch *= 100;
+        yaw *= 100;
+    }
+
     //qDebug() << "Gimbal:" << pitch << yaw;
     sendMavCommand(
                 _defaultComponentId,
