@@ -3561,6 +3561,11 @@ QString Vehicle::followFlightMode() const
     return _firmwarePlugin->followFlightMode();
 }
 
+QString Vehicle::vtolTakeoffFlightMode() const
+{
+    return _firmwarePlugin->vtolTakeoffFlightMode();
+}
+
 QString Vehicle::vehicleImageOpaque() const
 {
     if(_firmwarePlugin)

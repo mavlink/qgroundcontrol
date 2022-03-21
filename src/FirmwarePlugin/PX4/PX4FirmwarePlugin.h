@@ -42,6 +42,7 @@ public:
     QString             takeControlFlightMode           (void) const override { return _manualFlightMode; }
     QString             gotoFlightMode                  (void) const override { return _holdFlightMode; }
     QString             followFlightMode                (void) const override { return _followMeFlightMode; };
+    QString             vtolTakeoffFlightMode           (void) const override { return _vtolTakeoffFlightMode; }
     void                pauseVehicle                    (Vehicle* vehicle) override;
     void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeLand                  (Vehicle* vehicle) override;

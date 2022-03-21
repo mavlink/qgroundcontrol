@@ -26,6 +26,17 @@ Item {
 
     property var distHomeToLoiter : activeVehicle ? activeVehicle.loiterRadiusMeters * 3 : 0
 
+    function destroyVisuals()
+    {
+        if ( _loiterComponent) {
+            _loiterComponent.destroy()
+        }
+
+        if (_lineComponent) {
+            _lineComponent.destroy()
+        }
+    }
+
     Component {
         id: lineComponent
 
@@ -141,9 +152,8 @@ Item {
         target: (activeVehicle && activeVehicle.vtol) ? activeVehicle : null
 
         onVtolInFwdFlightChanged: {
-            if (_loiterComponent && activeVehicle.vtolInFwdFlight) {
-                _loiterComponent.destroy()
-                _lineComponent.destroy()
+            if (activeVehicle.vtolInFwdFlight) {
+                destroyVisuals()
             }
         }
 
@@ -152,16 +162,16 @@ Item {
             if (success) {
                 vtLoiterCircle.interactive = false
             } else {
-                if (_loiterComponent) {
-                    _loiterComponent.destroy()
-                }
-
-                if (_lineComponent) {
-                    _lineComponent.destroy()
-                }
+                destroyVisuals()
             }
         }
 
+        onFlightModeChanged: {
+            if (_takeoff_executed && activeVehicle.flightMode !== activeVehicle.vtolTakeoffFlightMode) {
+                // this happens if a user aborts the vtol takeoff by changing flight mode
+                destroyVisuals()
+            }
+        }
     }
 
     Connections {
@@ -179,17 +189,13 @@ Item {
             _takeoff_executed = false
         }
 
+        onVtolTakeoffExecuted: {
+            _takeoff_executed = true
+        }
+
         onActionCancelled: {
             if (!_takeoff_executed) {
-                if (_loiterComponent) {
-                    _loiterComponent.destroy()
-                }
-
-                if (_lineComponent) {
-                    _lineComponent.destroy()
-                }
-
-                _guidedActionsController.vtolTakeoffLoiterCoordinate = QtPositioning.coordinate()
+                destroyVisuals()
             }
         }
     }

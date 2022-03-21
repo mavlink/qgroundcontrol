@@ -173,6 +173,7 @@ Item {
     property var vtolTakeoffLoiterCoordinate: null
 
     signal showVtolTakeoffLoiter
+    signal vtolTakeoffExecuted
     signal actionCancelled
 
     function _outputState() {
@@ -185,7 +186,7 @@ Item {
         // generic defaults
         guidedValueSlider.configureAsLinearSlider()
 
-        if (actionCode === actionTakeoff) {
+        if (actionCode === actionTakeoff || actionCode === actionVtolTakeoff) {
                 guidedValueSlider.setMinVal(_activeVehicle.minimumTakeoffAltitude())
                 guidedValueSlider.setValue(_activeVehicle ? _activeVehicle.minimumTakeoffAltitude() : 0)
                 guidedValueSlider.setDisplayText("Height")
@@ -504,8 +505,7 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
-            altitudeSlider.setToMinimumTakeoff()
-            altitudeSlider.visible = true
+            guidedValueSlider.visible = true
             showVtolTakeoffLoiter()
             break;
 
@@ -598,7 +598,8 @@ Item {
                 }
             }
         case actionVtolTakeoff:
-            _activeVehicle.guidedModeVtolTakeoff(actionAltitudeChange, vtolTakeoffLoiterCoordinate.latitude, vtolTakeoffLoiterCoordinate.longitude)
+            _activeVehicle.guidedModeVtolTakeoff(sliderOutputValue, vtolTakeoffLoiterCoordinate.latitude, vtolTakeoffLoiterCoordinate.longitude)
+            vtolTakeoffExecuted()
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

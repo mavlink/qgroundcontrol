@@ -122,6 +122,8 @@ public:
     /// Returns the flight mode to use when the operator wants to take back control from autonomouse flight.
     virtual QString takeControlFlightMode(void) const { return QString(); }
 
+    virtual QString vtolTakeoffFlightMode(void) const { return QString(); }
+
     /// Returns whether the vehicle is in guided mode or not.
     virtual bool isGuidedMode(const Vehicle* vehicle) const;
 
