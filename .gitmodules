@@ -7,9 +7,9 @@
 [submodule "libs/OpenSSL/android_openssl"]
 	path = libs/OpenSSL/android_openssl
 	url = https://github.com/Auterion/android_openssl
-[submodule "libs/qmlglsink/gst-plugins-good"]
-	path = libs/qmlglsink/gst-plugins-good
-	url = https://github.com/mavlink/gst-plugins-good.git
+[submodule "libs/qmlglsink/gstreamer"]
+	path = libs/qmlglsink/gstreamer
+	url = https://gitlab.com/gstreamer/gstreamer.git
 [submodule "libs/xz-embedded"]
 	path = libs/xz-embedded
 	url = https://github.com/Auterion/xz-embedded.git

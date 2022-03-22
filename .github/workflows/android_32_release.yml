@@ -79,9 +79,9 @@ jobs:
       - name:               Install gstreamer
         working-directory:  ${{ github.workspace }}
         run: |
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz
-            mkdir gstreamer-1.0-android-universal-1.18.5
-            tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.20.0/gstreamer-1.0-android-universal-1.20.0.tar.xz
+            mkdir gstreamer-1.0-android-universal-1.20.0
+            tar xf gstreamer-1.0-android-universal-1.20.0.tar.xz -C gstreamer-1.0-android-universal-1.20.0
 
       # This will set GIT_BRANCH_NAME environment variable
       - name: Git branch name
