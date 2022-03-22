@@ -1,5 +1,5 @@
 # The 32 and 64 bit version of these actions should be kept in sync
-name: Android 32-bit Release
+name: Android 32/64-bit Release
 
 on:
   push:
