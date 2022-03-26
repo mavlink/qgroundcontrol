@@ -7805,7 +7805,6 @@
       <min>500</min>
       <max>1500</max>
       <unit>hPa</unit>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_BARO_RATE" default="20.0" type="FLOAT">
       <short_desc>Baro max rate</short_desc>
@@ -7813,7 +7812,6 @@
       <min>1</min>
       <max>200</max>
       <unit>Hz</unit>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_BOARD_ROT" default="0" type="INT32">
       <short_desc>Board rotation</short_desc>
@@ -8814,6 +8812,7 @@
     </parameter>
     <parameter name="SIM_BARO_OFF_T" default="0.0" type="FLOAT">
       <short_desc>simulated barometer temperature offset</short_desc>
+      <unit>celcius</unit>
     </parameter>
     <parameter name="SIM_GPS_USED" default="10" type="INT32">
       <short_desc>simulated GPS number of satellites used</short_desc>
