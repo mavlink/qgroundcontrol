@@ -45,7 +45,7 @@ const char* FactMetaData::_jsonMetaDataFactsName                = "QGC.MetaData.
 const char* FactMetaData::_enumStringsJsonKey                   = "enumStrings";
 const char* FactMetaData::_enumValuesJsonKey                    = "enumValues";
 
-// This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_INFORMATION parameter metadata for example.
+// This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_METADATA parameter metadata for example.
 const char* FactMetaData::_enumValuesArrayJsonKey               = "values";
 const char* FactMetaData::_enumBitmaskArrayJsonKey              = "bitmask";
 const char* FactMetaData::_enumValuesArrayValueJsonKey          = "value";
