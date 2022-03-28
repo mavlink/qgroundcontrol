@@ -36,8 +36,6 @@ public:
     uint32_t crcMetaDataFallback() const { return _uris.crcMetaDataFallback; }
     bool crcMetaDataValid() const { return _uris.crcMetaDataValid; }
     bool crcMetaDataFallbackValid() const { return _uris.crcMetaDataFallbackValid; }
-    uint32_t crcTranslation() const { return _uris.crcTranslation; }
-    bool crcTranslationValid() const { return _uris.crcTranslationValid; }
 
     void setUriMetaData(const QString& uri, uint32_t crc);
 
@@ -55,13 +53,9 @@ private:
     struct Uris {
         bool                crcMetaDataValid            = false;
         bool                crcMetaDataFallbackValid    = false;
-        bool                crcTranslationValid         = false;
-        bool                crcTranslationFallbackValid = false;
 
         uint32_t            crcMetaData            = 0;
         uint32_t            crcMetaDataFallback    = 0;
-        uint32_t            crcTranslation         = 0;
-        uint32_t            crcTranslationFallback = 0;
 
         QString             uriMetaData;
         QString             uriMetaDataFallback;
