@@ -452,7 +452,7 @@ QGCMapEngineManager::importSets(QString path) {
     if(dir.isEmpty()) {
 #if defined(__mobile__)
         //-- TODO: This has to be something fixed
-        dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
+        dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toSecsSinceEpoch()));
 #else
         dir = QString(); //-- TODO: QGCQFileDialog::getOpenFileName(
         //    nullptr,
@@ -482,7 +482,7 @@ QGCMapEngineManager::exportSets(QString path) {
     QString dir = path;
     if(dir.isEmpty()) {
 #if defined(__mobile__)
-        dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
+        dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toSecsSinceEpoch()));
 #else
         dir = QString(); //-- TODO: QGCQFileDialog::getSaveFileName(
         //    MainWindow::instance(),
