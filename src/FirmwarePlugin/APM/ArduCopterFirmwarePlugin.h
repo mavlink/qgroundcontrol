@@ -33,7 +33,7 @@ public:
         OF_LOITER   = 10,  // Deprecated
         DRIFT       = 11,  // Drift 'Car Like' mode
         RESERVED_12 = 12,  // RESERVED FOR FUTURE USE
-        SPORT       = 13,
+        SPORT       = 13,  // Deprecated
         FLIP        = 14,
         AUTOTUNE    = 15,
         POS_HOLD    = 16, // HYBRID LOITER.
