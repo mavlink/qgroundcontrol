@@ -177,7 +177,11 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
 
     _port = new QSerialPort(_serialConfig->portName(), this);
 
-    QObject::connect(_port, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error), this, &SerialLink::linkError);
+#ifdef Q_OS_ANDROID
+    QObject::connect(_port, SIGNAL(&QSerialPort::error), this, SLOT(&SerialLink::linkError));
+#else
+    QObject::connect(_port, &QSerialPort::errorOccurred, this, &SerialLink::linkError);
+#endif
     QObject::connect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
 
     // After the bootloader times out, it still can take a second or so for the Pixhawk USB driver to come up and make
