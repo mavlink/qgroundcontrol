@@ -410,8 +410,8 @@ Item {
 
             onAccepted: {
                 QGroundControl.mapEngineManager.deleteTileSet(offlineMapView._currentSelection)
-                deleteConfirmationDialog.hideDialog()
                 leaveInfoView()
+                showList()
             }
         }
     }
@@ -595,6 +595,7 @@ Item {
                             text:       qsTr("Delete")
                             width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                             onClicked:  deleteConfirmationDialogComponent.createObject(mainWindow).open()
+                            enabled:    offlineMapView._currentSelection ? (offlineMapView._currentSelection.savedTileSize > 0) : false
                         }
                         QGCButton {
                             text:       qsTr("Ok")
