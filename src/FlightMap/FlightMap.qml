@@ -103,9 +103,11 @@ Map {
 
     on_ActiveVehicleCoordinateChanged: _possiblyCenterToVehiclePosition()
 
-    Component.onCompleted: {
-        updateActiveMapType()
-        _possiblyCenterToVehiclePosition()
+    onMapReadyChanged: {
+        if (_map.mapReady) {
+            updateActiveMapType()
+            _possiblyCenterToVehiclePosition()
+        }
     }
 
     Connections {
