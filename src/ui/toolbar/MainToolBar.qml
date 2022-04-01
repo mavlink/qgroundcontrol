@@ -107,9 +107,26 @@ Rectangle {
         }
     }
 
+    //-- Reboot Button
+    RowLayout {
+        anchors.right:          brandingLogo.left
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        QGCButton {
+            id:             rebootButton
+            text:           qsTr("Reboot Vehicle")
+            onClicked:    mainWindow.showMessageDialog(qsTr("Reboot Vehicle"),
+                                                            qsTr("Select Ok to reboot vehicle."),
+                                                            StandardButton.Cancel | StandardButton.Ok,
+                                                            function() { _activeVehicle.rebootVehicle() })
+            visible:            _activeVehicle
+        }
+    }
+
     //-------------------------------------------------------------------------
     //-- Branding Logo
     Image {
+        id:                     brandingLogo
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
