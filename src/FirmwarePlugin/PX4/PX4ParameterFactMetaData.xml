@@ -606,6 +606,14 @@
     <parameter name="BAT_ADC_CHANNEL" default="-1" type="INT32">
       <short_desc>This parameter is deprecated. Please use BAT1_I_CHANNEL</short_desc>
     </parameter>
+    <parameter name="BAT_AVRG_CURRENT" default="15.0" type="FLOAT">
+      <short_desc>Expected battery current in flight</short_desc>
+      <long_desc>This value is used to initialize the in-flight average current estimation, which in turn is used for estimating remaining flight time and RTL triggering.</long_desc>
+      <min>0</min>
+      <max>500</max>
+      <unit>A</unit>
+      <increment>0.1</increment>
+    </parameter>
     <parameter name="BAT_CRIT_THR" default="0.07" type="FLOAT">
       <short_desc>Critical threshold</short_desc>
       <long_desc>Sets the threshold when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL.</long_desc>
