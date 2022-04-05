@@ -1184,6 +1184,10 @@
         <value code="300">Developer</value>
       </values>
     </parameter>
+    <parameter name="COM_FORCE_SAFETY" default="0" type="INT32" boolean="true">
+      <short_desc>Enable force safety</short_desc>
+      <long_desc>Force safety when the vehicle disarms. Not supported when safety button used over PX4IO board.</long_desc>
+    </parameter>
     <parameter name="COM_HLDL_LOSS_T" default="120" type="INT32">
       <short_desc>High Latency Datalink loss time threshold</short_desc>
       <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
@@ -9708,6 +9712,11 @@
       <long_desc>Enable UAVCAN battery subscription. uavcan::equipment::power::BatteryInfo ardupilot::equipment::power::BatteryInfoAux</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_SUB_BTN" default="0" type="INT32" boolean="true">
+      <short_desc>subscription button</short_desc>
+      <long_desc>Enable UAVCAN button subscription. ardupilot::indication::Button</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="UAVCAN_SUB_DPRES" default="0" type="INT32" boolean="true">
       <short_desc>subscription differential pressure</short_desc>
       <long_desc>Enable UAVCAN differential pressure subscription. uavcan::equipment::air_data::RawAirData</long_desc>
@@ -9740,12 +9749,12 @@
     </parameter>
     <parameter name="UAVCAN_SUB_MAG" default="1" type="INT32" boolean="true">
       <short_desc>subscription magnetometer</short_desc>
-      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::ahrs::MagneticFieldStrength uavcan::equipment::ahrs::MagneticFieldStrength2</long_desc>
+      <long_desc>Enable UAVCAN mag subscription. uavcan::equipment::ahrs::MagneticFieldStrength uavcan::equipment::ahrs::MagneticFieldStrength2</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_SUB_RNG" default="0" type="INT32" boolean="true">
       <short_desc>subscription range finder</short_desc>
-      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::range_sensor::Measurement</long_desc>
+      <long_desc>Enable UAVCAN range finder subscription. uavcan::equipment::range_sensor::Measurement</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
