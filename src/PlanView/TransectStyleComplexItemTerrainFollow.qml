@@ -31,7 +31,7 @@ ColumnLayout {
             altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
         }
 
-        //Component { id: altModeDialogComponent; AltModeDialog { } }
+        Component { id: altModeDialogComponent; AltModeDialog { } }
 
         RowLayout {
             spacing: ScreenTools.defaultFontPixelWidth / 2
