@@ -4175,10 +4175,11 @@
         <value code="13">Hexarotor</value>
         <value code="14">Octorotor</value>
         <value code="15">Tricopter</value>
-        <value code="19">VTOL Tailsitter Duo</value>
-        <value code="20">VTOL Tailsitter Quad</value>
+        <value code="19">VTOL Two-rotor Tailsitter</value>
+        <value code="20">VTOL Quad-rotor Tailsitter</value>
         <value code="21">VTOL Tiltrotor</value>
-        <value code="22">VTOL Standard (quadplane)</value>
+        <value code="22">VTOL Standard (separate fixed rotors for hover and cruise flight)</value>
+        <value code="23">VTOL Tailsitter</value>
       </values>
     </parameter>
     <parameter name="MAV_USEHILGPS" default="0" type="INT32" boolean="true">
