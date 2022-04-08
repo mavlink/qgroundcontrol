@@ -179,14 +179,14 @@ private:
 #endif
 
     // NMEA GPS device for GCS position
-#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     QString                             _nmeaDeviceName;
     QSerialPort*                        _nmeaPort;
     uint32_t                            _nmeaBaud;
+#ifndef __mobile__
     UdpIODevice                         _nmeaSocket;
 #endif
-#endif
+#endif //NO_SERIAL_LINK
 
     static const char*  _defaultUDPLinkName;
     static const char*  _mavlinkForwardingLinkName;

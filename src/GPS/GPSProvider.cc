@@ -59,7 +59,7 @@ void GPSProvider::run()
             }
         }
         if (_serial->error() != QSerialPort::NoError) {
-            qWarning() << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
+            qCDebug(RTKGPSLog) << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
             return;
         }
     }
@@ -203,7 +203,9 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
         }
         case GPSCallbackType::writeDeviceData:
             if (_serial->write((char*) data1, data2) >= 0) {
+#ifndef __android__
                 if (_serial->waitForBytesWritten(-1))
+#endif
                     return data2;
             }
             return -1;

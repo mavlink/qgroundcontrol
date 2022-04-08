@@ -44,7 +44,7 @@ public class UsbIoManager implements Runnable {
     private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFSIZ);
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(BUFSIZ);
 
-    private enum State
+    public enum State
     {
         STOPPED,
         RUNNING,
@@ -118,7 +118,14 @@ public class UsbIoManager implements Runnable {
         }
     }
 
-
+    public void start()
+    {
+        if(mState != State.STOPPED)
+        {
+            throw new IllegalStateException("already started");
+        }
+        new Thread(this, this.getClass().getSimpleName()).start();
+    }
 
     public synchronized void stop()
     {
@@ -131,7 +138,7 @@ public class UsbIoManager implements Runnable {
 
 
 
-    private synchronized State getState()
+    public synchronized State getState()
     {
         return mState;
     }
@@ -147,7 +154,7 @@ public class UsbIoManager implements Runnable {
     {
         synchronized (this)
         {
-            if (mState != State.STOPPED)
+            if (getState() != State.STOPPED)
                 throw new IllegalStateException("Already running.");
 
             mState = State.RUNNING;
@@ -196,7 +203,7 @@ public class UsbIoManager implements Runnable {
             }
             mReadBuffer.clear();
         }
-/*
+
         // Handle outgoing data.
         byte[] outBuff = null;
         synchronized (mWriteBuffer)
@@ -212,7 +219,6 @@ public class UsbIoManager implements Runnable {
         }
         if (outBuff != null)
             mDriver.write(outBuff, READ_WAIT_MILLIS);
-*/
     }
 }
 

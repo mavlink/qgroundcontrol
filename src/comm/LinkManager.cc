@@ -28,10 +28,8 @@
 #include "BluetoothLink.h"
 #endif
 
-#ifndef __mobile__
 #include "GPSManager.h"
 #include "PositionManager.h"
-#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -65,10 +63,8 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(nullptr)
     , _mavlinkProtocol(nullptr)
-    #ifndef __mobile__
     #ifndef NO_SERIAL_LINK
     , _nmeaPort(nullptr)
-    #endif
     #endif
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
@@ -78,10 +74,8 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
 LinkManager::~LinkManager()
 {
-#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     delete _nmeaPort;
-#endif
 #endif
 }
 
@@ -528,17 +522,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 #ifndef NO_SERIAL_LINK
     QStringList                 currentPorts;
     QList<QGCSerialPortInfo>    portList;
-#ifdef __android__
-    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
-    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
-    // bug after we connect the first serial port we stop probing for additional ports.
-    if (!_isSerialPortConnected()) {
-        portList = QGCSerialPortInfo::availablePorts();
-    }
-    else {
-        qDebug() << "Skipping serial port list";
-    }
-#else
+
     portList = QGCSerialPortInfo::availablePorts();
 #endif
 
@@ -560,7 +544,6 @@ void LinkManager::_updateAutoConnectLinks(void)
         QString boardName;
 
 #ifndef NO_SERIAL_LINK
-#ifndef __mobile__
         // check to see if nmea gps is configured for current Serial port, if so, set it up to connect
         if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
@@ -581,10 +564,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                 _nmeaPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
             }
-        } else
-#endif
-#endif
-            if (portInfo.getBoardInfo(boardType, boardName)) {
+        } else if (portInfo.getBoardInfo(boardType, boardName)) {
                 if (portInfo.isBootloader()) {
                     // Don't connect to bootloader
                     qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
@@ -623,7 +603,6 @@ void LinkManager::_updateAutoConnectLinks(void)
                             pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                         }
                         break;
-#ifndef __mobile__
                     case QGCSerialPortInfo::BoardTypeRTKGPS:
                         if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
                             qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
@@ -631,7 +610,6 @@ void LinkManager::_updateAutoConnectLinks(void)
                             _toolbox->gpsManager()->connectGPS(portInfo.systemLocation(), boardName);
                         }
                         break;
-#endif
                     default:
                         qWarning() << "Internal error";
                         continue;
@@ -650,14 +628,12 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
     }
 
-#ifndef __mobile__
     // Check for RTK GPS connection gone
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
         _toolbox->gpsManager()->disconnectGPS();
         _autoConnectRTKPort.clear();
     }
-#endif
 
 #endif // NO_SERIAL_LINK
 }

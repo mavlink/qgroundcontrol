@@ -81,7 +81,6 @@ public class QGCActivity extends QtActivity
     
     public static Context m_context;
 
-    private final static ExecutorService m_Executor = Executors.newSingleThreadExecutor();
 
     private final static UsbIoManager.Listener m_Listener =
             new UsbIoManager.Listener()
@@ -357,7 +356,8 @@ public class QGCActivity extends QtActivity
             String          deviceInfo;
             UsbSerialDriver driver = _drivers.get(i);
 
-            if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
+            if ((driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess)
+             && (driver.permissionStatus() != UsbSerialDriver.permissionStatusOpen)) {
                 continue;
             }
 
@@ -423,7 +423,7 @@ public class QGCActivity extends QtActivity
 
             UsbIoManager ioManager = new UsbIoManager(driver, m_Listener, userData);
             m_ioManager.put(deviceId, ioManager);
-            m_Executor.submit(ioManager);
+            ioManager.start();
 
             qgcLogDebug("Port open successful");
         } catch(IOException exA) {
@@ -453,15 +453,21 @@ public class QGCActivity extends QtActivity
 
         UsbIoManager managerL = new UsbIoManager(driverL, m_Listener, _userDataHashByDeviceId.get(idA));
         m_ioManager.put(idA, managerL);
-        m_Executor.submit(managerL);
+        managerL.start();
     }
 
     public static void stopIoManager(int idA)
     {
-        if(m_ioManager.get(idA) == null)
+        UsbIoManager managerL = m_ioManager.get(idA);
+
+        if(managerL == null)
             return;
 
-        m_ioManager.get(idA).stop();
+        managerL.stop();
+        while(managerL.getState() != UsbIoManager.State.STOPPED) {
+            //Wait for USB manager stopped
+        }
+
         m_ioManager.remove(idA);
     }
 
@@ -544,6 +550,7 @@ public class QGCActivity extends QtActivity
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     public static int write(int idA, byte[] sourceA, int timeoutMSecA)
     {
+        /*
         UsbSerialDriver driverL = _findDriverByDeviceId(idA);
 
         if (driverL == null)
@@ -557,7 +564,8 @@ public class QGCActivity extends QtActivity
         {
             return 0;
         }
-        /*
+        */
+
         UsbIoManager managerL = m_ioManager.get(idA);
 
         if(managerL != null)
@@ -567,7 +575,6 @@ public class QGCActivity extends QtActivity
         }
         else
             return 0;
-        */
     }
 
     public static boolean isDeviceNameValid(String nameA)

@@ -24,14 +24,16 @@
 
 #ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
+    #include "QGCSerialPortInfo.h"
+#ifndef __mobile__
+    #include <QSerialPort>
+#else
+    #include <qserialport.h>
 #endif
+#endif //NO_SERIAL_LINK
 
 #ifndef __mobile__
-    #include "QGCSerialPortInfo.h"
     #include "RunGuard.h"
-#ifndef NO_SERIAL_LINK
-    #include <QSerialPort>
-#endif
 #endif
 
 #ifdef UNITTEST_BUILD
