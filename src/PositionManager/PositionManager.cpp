@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)//TODO(bzd) tutaj cos?
 #include <QSerialPortInfo>
 #endif
 
@@ -57,7 +57,7 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
            if (obj.value("Position").isBool() && obj.value("Position").toBool()) {
                QString pluginName = obj.value("Keys").toArray()[0].toString();
                if (pluginName == "serialnmea") {
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)   //TODO(bzd) tutaj moze byc ciekaiwe
                    if (QSerialPortInfo::availablePorts().isEmpty()) {
                        // This prevents the qWarning from popping
                        continue;

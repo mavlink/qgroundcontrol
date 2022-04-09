@@ -28,8 +28,10 @@
 #include "BluetoothLink.h"
 #endif
 
-#ifndef __mobile__
+#ifndef __ios__
 #include "GPSManager.h"
+#endif
+#ifndef __mobile__
 #include "PositionManager.h"
 #endif
 
@@ -623,7 +625,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                             pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
                         }
                         break;
-#ifndef __mobile__
+#ifndef __ios__
                     case QGCSerialPortInfo::BoardTypeRTKGPS:
                         if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
                             qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
@@ -650,7 +652,7 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
     }
 
-#ifndef __mobile__
+#ifndef __ios__
     // Check for RTK GPS connection gone
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;

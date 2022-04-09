@@ -12,8 +12,8 @@
 #include <QSettings>
 #include <QMutexLocker>
 
-#ifdef __android__
 #include "qserialport.h"
+#ifdef __android__
 #else
 #include <QSerialPort>
 #endif
