@@ -4335,7 +4335,7 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="NAV_LOITER_RAD" default="50.0" type="FLOAT">
+    <parameter name="NAV_LOITER_RAD" default="80.0" type="FLOAT">
       <short_desc>Loiter radius (FW only)</short_desc>
       <long_desc>Default value of loiter radius for missions, Hold mode, Return mode, etc. (fixedwing only).</long_desc>
       <min>25</min>
@@ -7030,7 +7030,7 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="RTL_LOITER_RAD" default="50.0" type="FLOAT">
+    <parameter name="RTL_LOITER_RAD" default="80.0" type="FLOAT">
       <short_desc>Loiter radius for rtl descend</short_desc>
       <long_desc>Set the radius for loitering to a safe altitude for VTOL transition.</long_desc>
       <min>25</min>
