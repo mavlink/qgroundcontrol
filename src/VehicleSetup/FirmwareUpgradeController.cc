@@ -87,6 +87,7 @@ static QMap<int, QString> px4_board_name_map {
     {1017, "mro_pixracerpro_default"},
     {1023, "mro_ctrl-zero-h7_default"},
     {1024, "mro_ctrl-zero-h7-oem_default"},
+    {1048, "holybro_kakuteh7_default"},
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
