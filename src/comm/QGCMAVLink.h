@@ -68,7 +68,7 @@ public:
     static constexpr VehicleClass_t VehicleClassRoverBoat   = MAV_TYPE_GROUND_ROVER;
     static constexpr VehicleClass_t VehicleClassSub         = MAV_TYPE_SUBMARINE;
     static constexpr VehicleClass_t VehicleClassMultiRotor  = MAV_TYPE_QUADROTOR;
-    static constexpr VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_QUADROTOR;
+    static constexpr VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
     static constexpr VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
 
     static bool                     isPX4FirmwareClass          (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
