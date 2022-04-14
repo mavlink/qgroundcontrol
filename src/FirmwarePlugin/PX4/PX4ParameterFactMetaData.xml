@@ -7974,6 +7974,10 @@
       <short_desc>TE MS5525 differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_PAA3905" default="0" type="INT32" boolean="true">
+      <short_desc>paa3905 Optical Flow</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_PAW3902" default="0" type="INT32" boolean="true">
       <short_desc>PAW3902 &amp; PAW3903 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
