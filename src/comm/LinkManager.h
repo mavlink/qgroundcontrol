@@ -179,6 +179,7 @@ private:
 #endif
 
     // NMEA GPS device for GCS position
+#ifndef __ios__
 #ifndef NO_SERIAL_LINK
     QString                             _nmeaDeviceName;
     QSerialPort*                        _nmeaPort;
@@ -187,6 +188,7 @@ private:
     UdpIODevice                         _nmeaSocket;
 #endif
 #endif //NO_SERIAL_LINK
+#endif //__ios__
 
     static const char*  _defaultUDPLinkName;
     static const char*  _mavlinkForwardingLinkName;

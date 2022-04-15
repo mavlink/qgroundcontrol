@@ -115,7 +115,9 @@
 #include "SerialLink.h"
 #endif
 
+#ifndef __ios__
 #include "GPS/GPSManager.h"
+#endif
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -351,6 +353,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
+#ifndef __ios__
     _gpsRtkFactGroup = new GPSRTKFactGroup(this);
    GPSManager *gpsManager = _toolbox->gpsManager();
    if (gpsManager) {
@@ -359,6 +362,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
        connect(gpsManager, &GPSManager::surveyInStatus,     this, &QGCApplication::_gpsSurveyInStatus);
        connect(gpsManager, &GPSManager::satelliteUpdate,    this, &QGCApplication::_gpsNumSatellites);
    }
+#endif
 
     _checkForNewVersion();
 }

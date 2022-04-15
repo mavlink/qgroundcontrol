@@ -794,6 +794,7 @@ HEADERS += \
     src/comm/SerialLink.h \
 }
 
+!iOSBuild {
 HEADERS += \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/rtcm.h \
@@ -807,7 +808,7 @@ HEADERS += \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
     src/GPS/vehicle_gps_position.h \
-
+}
 
 !MobileBuild {
 HEADERS += \
@@ -1036,6 +1037,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
+!iOSBuild {
 SOURCES += \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/rtcm.cpp \
@@ -1045,6 +1047,7 @@ SOURCES += \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
     src/GPS/RTCM/RTCMMavlink.cc \
+}
 
 !MobileBuild {
 SOURCES += \
