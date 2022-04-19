@@ -1207,27 +1207,9 @@
       <long_desc>Set home position automatically if possible.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="COM_HOME_H_T" default="5.0" type="FLOAT">
-      <short_desc>Home set horizontal threshold</short_desc>
-      <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
-      <min>2</min>
-      <max>15</max>
-      <unit>m</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter name="COM_HOME_IN_AIR" default="0" type="INT32" boolean="true">
       <short_desc>Allows setting the home position after takeoff</short_desc>
       <long_desc>If set to true, the autopilot is allowed to set its home position after takeoff The true home position is back-computed if a local position is estimate if available. If no local position is available, home is set to the current position.</long_desc>
-    </parameter>
-    <parameter name="COM_HOME_V_T" default="10.0" type="FLOAT">
-      <short_desc>Home set vertical threshold</short_desc>
-      <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
-      <min>5</min>
-      <max>25</max>
-      <unit>m</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
     </parameter>
     <parameter name="COM_IMB_PROP_ACT" default="0" type="INT32">
       <short_desc>Imbalanced propeller failsafe mode</short_desc>
