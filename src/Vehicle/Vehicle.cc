@@ -1575,6 +1575,30 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
     if (event->group() == "default" && severity != -1) {
         std::string message = event->message();
         std::string description = event->description();
+
+        if (event->type() == "append_health_and_arming_messages" && event->numArguments() > 0) {
+            uint32_t customMode = event->argumentValue(0).value.val_uint32_t;
+            const QSharedPointer<EventHandler>& eventHandler = _events[comp_id];
+            int modeGroup = eventHandler->getModeGroup(customMode);
+            std::vector<events::HealthAndArmingChecks::Check> checks = eventHandler->healthAndArmingCheckResults().checks(modeGroup);
+            QList<std::string> messageChecks;
+            for (const auto& check : checks) {
+                if (events::externalLogLevel(check.log_levels) <= events::Log::Warning) {
+                    messageChecks.append(check.message);
+                }
+            }
+            if (!message.empty() && !messageChecks.empty()) {
+                message += "<br/>";
+            }
+            if (messageChecks.size() == 1) {
+                message += messageChecks[0];
+            } else {
+                for (const auto& messageCheck : messageChecks) {
+                    message += "- " + messageCheck + "<br/>";
+                }
+            }
+        }
+
         if (message.size() > 0) {
             // TODO: handle this properly in the UI (e.g. with an expand button to display the description, clickable URL's + params)...
             QString msg = QString::fromStdString(message);
