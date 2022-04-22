@@ -286,7 +286,7 @@ Rectangle {
                 Layout.alignment:   Qt.AlignHCenter
                 text:               (_mavlinkCameraInVideoMode && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00"
                 font.pointSize:     ScreenTools.largeFontPointSize
-                visible:            _mavlinkCameraInVideoMode
+                visible:            _mavlinkCameraInVideoMode && _mavlinkCamera.capturesVideo
             }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
