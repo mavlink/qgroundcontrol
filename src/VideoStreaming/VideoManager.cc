@@ -89,7 +89,10 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 void
 VideoManager::startVideo()
 {
-    if(_videoReceiver) _videoReceiver->start();
+    if(_videoReceiver) {
+        _videoReceiver->start();
+        _videoReceiver->startRtpPacketLossLogging();
+    }
     if(_thermalVideoReceiver) _thermalVideoReceiver->start();
 }
 

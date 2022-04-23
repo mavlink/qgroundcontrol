@@ -70,6 +70,9 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _serverPresent(false)
     , _tcpTestInterval_ms(5000)
     , _udpReconnect_us(5000000)
+    , _packet_loss_query_interval_ms(5000)
+    , _rtpBuffer(nullptr)
+    , _packetLossRecordingStarted(false)
 #endif
     , _videoRunning(false)
     , _showFullScreen(false)
@@ -83,9 +86,14 @@ VideoReceiver::VideoReceiver(QObject* parent)
     connect(&_tcp_timer, &QTimer::timeout, this, &VideoReceiver::_tcp_timeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
     connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS);
+    connect(this, &VideoReceiver::msgInfoReceived, this, &VideoReceiver::_handleInfo);
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
+
+
+
+
 #endif
 }
 
@@ -210,10 +218,23 @@ _wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer data)
     }
 }
 
+//typedef struct _linkBufferCbData {
+//  GstElement *nextElement;
+//  VideoReceiver *videoRecieverObject;
+//} LinkBufferCbData ;
+
+//LinkBufferCbData bufferObject;
+GstElement * bufferReference = nullptr;
+
 static void
+//_linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, LinkBufferCbData *CbData)
 _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
 {
+    qCCritical(VideoReceiverLog) << "In Buffer Linking Callback";
+//    gpointer data = CbData->nextElement;
+
     gboolean isRtpPad = FALSE;
+
 
     GstCaps* filter = gst_caps_from_string("application/x-rtp");
 
@@ -235,7 +256,8 @@ _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
     if (isRtpPad) {
         GstElement* buffer;
 
-        if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) != nullptr) {
+        if ((buffer = gst_element_factory_make("rtpjitterbuffer", "rtpbuffer")) != nullptr) {
+
             gst_bin_add(GST_BIN(GST_ELEMENT_PARENT(element)), buffer);
 
             gst_element_sync_state_with_parent(buffer);
@@ -249,10 +271,15 @@ _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
                 sinkpad = nullptr;
 
                 if (ret == GST_PAD_LINK_OK) {
+                    qCCritical(VideoReceiverLog) << "Pad Link Was OK";
                     pad = gst_element_get_static_pad(buffer, "src");
                     element = buffer;
+//                    CbData->videoRecieverObject->setRtpBuffer(buffer);
+                    bufferReference = buffer;
+                    qCCritical(VideoReceiverLog) << "RTP Buffer Variable Set";
                 } else {
                     qCDebug(VideoReceiverLog) << "Partially failed - gst_pad_link()";
+//                    CbData->videoRecieverObject->setRtpBuffer(nullptr);
                 }
             } else {
                 qCDebug(VideoReceiverLog) << "Partially failed - gst_element_get_static_pad()";
@@ -367,6 +394,8 @@ VideoReceiver::_makeSource(const QString& uri)
     GstElement* bin     = nullptr;
     GstElement* srcbin  = nullptr;
 
+    //LinkBufferCbData linkBufferCbData;
+
     do {
         QUrl url(uri);
 
@@ -447,31 +476,39 @@ VideoReceiver::_makeSource(const QString& uri)
         int probeRes = 0;
 
         gst_element_foreach_src_pad(source, _padProbe, &probeRes);
-
+        qCCritical(VideoReceiverLog) << " Low Latency Mode: " << _videoSettings->lowLatencyMode()->rawValue().toBool() ;
         if (probeRes & 1) {
             if (probeRes & 2 && !_videoSettings->lowLatencyMode()->rawValue().toBool()) {
-                if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
+                if ((buffer = gst_element_factory_make("rtpjitterbuffer", "rtpbuffer")) == nullptr) {
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
                 }
-
+                qCCritical(VideoReceiverLog) << "Created rtpjitterbuffer" ;
                 gst_bin_add(GST_BIN(bin), buffer);
 
                 if (!gst_element_link_many(source, buffer, parser, nullptr)) {
                     qCCritical(VideoReceiverLog) << "gst_element_link() failed";
                     break;
                 }
+                //_rtpBuffer = buffer;
+                //setRtpBuffer(buffer);
             } else {
                 if (!gst_element_link(source, parser)) {
                     qCCritical(VideoReceiverLog) << "gst_element_link() failed";
                     break;
                 }
             }
+            qCCritical(VideoReceiverLog) << "Linked rtpjitterbuffer" ;
         } else {
             if (_videoSettings->lowLatencyMode()->rawValue().toBool()) {
                 g_signal_connect(source, "pad-added", G_CALLBACK(newPadCB), parser);
+                qCCritical(VideoReceiverLog) << "connect(source, pad-added, G_CALLBACK(newPadCB), parser)" ;
             } else {
+//                linkBufferCbData.nextElement = parser;
+//                linkBufferCbData.videoRecieverObject = this;
+//                g_signal_connect(source, "pad-added", G_CALLBACK(_linkPadWithOptionalBuffer), &linkBufferCbData);
                 g_signal_connect(source, "pad-added", G_CALLBACK(_linkPadWithOptionalBuffer), parser);
+                qCCritical(VideoReceiverLog) << "connect(source, pad-added, G_CALLBACK(_linkPadWithOptionalBuffer), parser)" ;
             }
         }
 
@@ -651,6 +688,7 @@ VideoReceiver::start()
     GstElement* source  = nullptr;
     GstElement* queue   = nullptr;
     GstElement* decoder = nullptr;
+    GstElement* performance_monitor = nullptr;
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == nullptr) {
@@ -664,6 +702,10 @@ VideoReceiver::start()
             qCCritical(VideoReceiverLog) << "_makeSource() failed";
             break;
         }
+
+        // Get Buffer Reference From Source BIN
+//        GstElement* bufferReference = gst_bin_get_by_name(GST_BIN(source), "rtpbuffer");
+//        setRtpBuffer(bufferReference);
 
         if((_tee = gst_element_factory_make("tee", nullptr)) == nullptr)  {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('tee') failed";
@@ -682,7 +724,12 @@ VideoReceiver::start()
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), source, _tee, queue, decoder, _videoSink, nullptr);
+        if ((performance_monitor = gst_element_factory_make("perf", "performance_monitor")) == nullptr) {
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('perf') failed";
+            break;
+        }
+
+        gst_bin_add_many(GST_BIN(_pipeline), source, _tee, queue, decoder, performance_monitor,  _videoSink, nullptr);
 
         pipelineUp = true;
 
@@ -693,10 +740,15 @@ VideoReceiver::start()
             break;
         }
 
-        g_signal_connect(decoder, "pad-added", G_CALLBACK(newPadCB), _videoSink);
-        g_signal_connect(decoder, "autoplug-query", G_CALLBACK(autoplugQueryCB), _videoSink);
+        if(!gst_element_link(performance_monitor,  _videoSink)) {
+            qCCritical(VideoReceiverLog) << "Unable to link perf -> sink.";
+            break;
+        }
 
-        source = queue = decoder = nullptr;
+        g_signal_connect(decoder, "pad-added", G_CALLBACK(newPadCB), performance_monitor);
+        g_signal_connect(decoder, "autoplug-query", G_CALLBACK(autoplugQueryCB), performance_monitor);
+
+        source = queue = decoder = performance_monitor = nullptr;
 
         GstBus* bus = nullptr;
 
@@ -724,6 +776,12 @@ VideoReceiver::start()
 
         // If we failed before adding items to the pipeline, then clean up
         if (!pipelineUp) {
+
+            if (performance_monitor != nullptr) {
+                gst_object_unref(performance_monitor);
+                decoder = nullptr;
+            }
+
             if (decoder != nullptr) {
                 gst_object_unref(decoder);
                 decoder = nullptr;
@@ -851,6 +909,21 @@ VideoReceiver::_handleEOS() {
         _handleError();
     }
 }
+
+void VideoReceiver::_handleInfo(GstMessage* msg)
+{
+    //qCCritical(VideoReceiverLog) << "Info Message is Received" ;
+    if(msg == nullptr) {
+        return;
+    }
+    GError *err = NULL;
+    gchar *info = NULL;
+    gst_message_parse_info(msg, &err, &info);
+
+    qCCritical(VideoReceiverLog) << info;
+    g_error_free (err);
+    g_free (info);
+}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -861,6 +934,45 @@ VideoReceiver::_handleStateChanged() {
         _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
         //qCDebug(VideoReceiverLog) << "State changed, _streaming:" << _streaming;
     }
+}
+
+void VideoReceiver::_packetLossCheckTimerCb()
+{
+
+    if(!_stop  && _videoSettings->streamEnabled()->rawValue().toBool() && !_starting) {
+        qCCritical(VideoReceiverLog) <<"Streaming - Query Stats " <<_rtpBuffer << gst_element_get_name(bufferReference) << this  ;
+        if(bufferReference != nullptr) {
+            //qCCritical(VideoReceiverLog) <<"We Have a Buffer Reference, hopefully it is the right one" ;
+            GstStructure *stats = NULL;
+            g_object_get (G_OBJECT (bufferReference), "stats", &stats, NULL);
+            if(stats != NULL ) {
+                  gchar *num_pushed_field = "num-pushed";
+                  guint64 num_pushed;
+                  gst_structure_get_uint64 (stats,
+                                          num_pushed_field,
+                                          &num_pushed);
+
+                  gchar *num_lost_field = "num-lost";
+                  guint64 num_lost;
+                  gst_structure_get_uint64 (stats,
+                                          num_lost_field,
+                                          &num_lost);
+
+                  gchar *avg_jitter_field = "avg-jitter";
+                  guint64 avg_jitter;
+                  gst_structure_get_uint64 (stats,
+                                          avg_jitter_field,
+                                          &avg_jitter);
+
+                  qCCritical(VideoReceiverLog) << num_pushed_field << ": " << num_pushed;
+                  qCCritical(VideoReceiverLog) << num_lost_field << ": " << num_lost;
+                  qCCritical(VideoReceiverLog) << avg_jitter_field << ": " << avg_jitter;
+            }
+        }
+    } else {
+        qCCritical(VideoReceiverLog) <<"Not Streaming - Query Later" ;
+    }
+
 }
 #endif
 
@@ -887,6 +999,7 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
     case(GST_MESSAGE_EOS):
         pThis->msgEOSReceived();
         break;
+
     case(GST_MESSAGE_STATE_CHANGED):
         pThis->msgStateChangedReceived();
         break;
@@ -905,6 +1018,10 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
             }
         }
     }
+        break;
+    case(GST_MESSAGE_INFO):
+        // Only for the perf Element Info Messages, no checks implemented for name or source
+        pThis->msgInfoReceived(msg);
         break;
     default:
         break;
@@ -950,6 +1067,27 @@ VideoReceiver::_cleanupOldVideos()
                 vidList.removeLast();
             }
         }
+    }
+}
+
+GstElement *VideoReceiver::rtpBuffer() const
+{
+    return _rtpBuffer;
+}
+
+void VideoReceiver::setRtpBuffer(GstElement *rtpBuffer)
+{
+    qCCritical(VideoReceiverLog) << "In setRtpBuffer" << _rtpBuffer << rtpBuffer;
+    _rtpBuffer = rtpBuffer;
+    qCCritical(VideoReceiverLog) << "In setRtpBuffer : Buffer Variable Assigned";
+}
+
+void VideoReceiver::startRtpPacketLossLogging()
+{
+    if(_packetLossRecordingStarted == false){
+        connect(&_packetLossCheckTimer, &QTimer::timeout, this, &VideoReceiver::_packetLossCheckTimerCb);
+        _packetLossCheckTimer.start(_packet_loss_query_interval_ms);
+        _packetLossRecordingStarted = true;
     }
 }
 #endif

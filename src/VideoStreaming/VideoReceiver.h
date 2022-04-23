@@ -59,8 +59,13 @@ public:
 
 #if defined(QGC_GST_STREAMING)
     void                  setVideoSink      (GstElement* videoSink);
-#endif
 
+
+    GstElement *rtpBuffer() const;
+    void setRtpBuffer(GstElement *rtpBuffer);
+    void startRtpPacketLossLogging();
+
+#endif
 signals:
     void videoRunningChanged                ();
     void imageFileChanged                   ();
@@ -70,6 +75,7 @@ signals:
     void recordingChanged                   ();
     void msgErrorReceived                   ();
     void msgEOSReceived                     ();
+    void msgInfoReceived                    (GstMessage* msg);
     void msgStateChangedReceived            ();
     void gotFirstRecordingKeyFrame          ();
 #endif
@@ -92,7 +98,10 @@ protected slots:
     virtual void _socketError               (QAbstractSocket::SocketError socketError);
     virtual void _handleError               ();
     virtual void _handleEOS                 ();
+    virtual void _handleInfo                (GstMessage* msg);
     virtual void _handleStateChanged        ();
+
+    virtual void _packetLossCheckTimerCb    ();
 #endif
 
 protected:
@@ -112,6 +121,7 @@ protected:
     bool                _starting;
     bool                _stopping;
     bool                _stop;
+    bool                _packetLossRecordingStarted;
     Sink*               _sink;
     GstElement*         _tee;
 
@@ -140,6 +150,11 @@ protected:
     QTcpSocket*     _socket;
     bool            _serverPresent;
     int             _tcpTestInterval_ms;
+
+    //-- Timer, Element, and Callback for checking packet loss stats
+    QTimer          _packetLossCheckTimer;
+    GstElement*     _rtpBuffer;
+    int             _packet_loss_query_interval_ms;
 
     //-- RTSP UDP reconnect timeout
     uint64_t        _udpReconnect_us;
