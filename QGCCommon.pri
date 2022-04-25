@@ -156,8 +156,11 @@ StableBuild {
     DEFINES += DAILY_BUILD
 }
 
-# set the QGC version from git
-
+# Set the QGC version from git
+APP_VERSION_STR = vUnknown
+VERSION         = 0.0.0   # Marker to indicate out-of-tree build
+MAC_VERSION     = 0.0.0
+MAC_BUILD       = 0
 exists ($$PWD/.git) {
     GIT_DESCRIBE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)
     GIT_BRANCH   = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --abbrev-ref HEAD)
@@ -166,35 +169,27 @@ exists ($$PWD/.git) {
 
     message(GIT_DESCRIBE $${GIT_DESCRIBE})
 
-    # Pull the version info from the last annotated version tag
-    #   Stable builds will be in the format v#.#.#
-    #   Daily builds on master will be in format d#.#.#
-    contains(GIT_DESCRIBE, ^[vd][0-9]+.[0-9]+.[0-9]+.*) {
-        message( release version "vX.Y.Z")
-        GIT_VERSION = $${GIT_DESCRIBE}
-        VERSION      = $$replace(GIT_DESCRIBE, "v", "")
-        VERSION      = $$replace(GIT_DESCRIBE, "d", "")
-        VERSION      = $$replace(VERSION, "-", ".")
-        VERSION      = $$section(VERSION, ".", 0, 3)
-    } else {
-        message(development version "Development branch:sha date")
-        GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
-        VERSION         = 0.0.0
+    # Pull the version info from the last annotated version tag. Format: v#.#.#
+    contains(GIT_DESCRIBE, ^v[0-9]+.[0-9]+.[0-9]+.*) {
+        APP_VERSION_STR = $${GIT_DESCRIBE}
+        VERSION         = $$replace(GIT_DESCRIBE, "v", "")
+        VERSION         = $$replace(VERSION, "-", ".")
+        VERSION         = $$section(VERSION, ".", 0, 3)
     }
+
+    DailyBuild {
+        APP_VERSION_STR = "Daily $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+    }
+
+    message(QGroundControl APP_VERSION_STR VERSION $${APP_VERSION_STR} $${VERSION})
 
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)
-        message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_VERSION})
-    } else {
-        message(QGroundControl $${GIT_VERSION})
+        message(QGroundControl MAC_VERSION MAC_BUILD $${MAC_VERSION} $${MAC_BUILD})
     }
-} else {
-    GIT_VERSION             = None
-    VERSION                 = 0.0.0   # Marker to indicate out-of-tree build
-    MAC_VERSION             = 0.0.0
-    MAC_BUILD               = 0
 }
+DEFINES += APP_VERSION_STR=\"\\\"$$APP_VERSION_STR\\\"\"
 
 AndroidBuild {
     message(VERSION $${VERSION})
@@ -248,10 +243,9 @@ AndroidBuild {
 
     message(Android version info: $${ANDROID_VERSION_CODE} bitness:$${ANDROID_VERSION_BITNESS} major:$${MAJOR_VERSION} minor:$${MINOR_VERSION} patch:$${PATCH_VERSION} dev:$${DEV_VERSION})
 
-    ANDROID_VERSION_NAME    = GIT_VERSION
+    ANDROID_VERSION_NAME    = APP_VERSION_STR
 }
 
-DEFINES += GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
 DEFINES += EIGEN_MPL2_ONLY
 
 # Installer configuration

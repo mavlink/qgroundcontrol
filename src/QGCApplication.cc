@@ -273,7 +273,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
-    this->setApplicationVersion(QString(GIT_VERSION));
+    this->setApplicationVersion(QString(APP_VERSION_STR));
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
