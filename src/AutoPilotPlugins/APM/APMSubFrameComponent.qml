@@ -25,6 +25,8 @@ SetupPage {
     pageComponent:      subFramePageComponent
 
     property bool _oldFW:   globals.activeVehicle.versionCompare(3 ,5 ,2) < 0
+    property bool _hasSensibledefaults:   globals.activeVehicle.versionCompare(4 ,1 ,0) >= 0
+
     property var frameModelSelected: undefined
 
     APMAirframeComponentController { id: controller; }
@@ -175,6 +177,12 @@ SetupPage {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     frameModelSelected = subFrameModel.get(index)
+                                    if (_hasSensibledefaults) {
+                                        // No need to suggest loading the default parameters.
+                                        // The firmware default should be good enough.
+                                        setFrameConfig(frameModelSelected.paramValue)
+                                        return
+                                    }
                                     mainWindow.showComponentDialog(confirmFrameComponent, qsTr("Frame selection"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                                 }
                             }
