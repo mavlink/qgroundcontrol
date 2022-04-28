@@ -7948,12 +7948,16 @@
         <value code="1">Autodetect</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_MS4525" default="0" type="INT32" boolean="true">
-      <short_desc>TE MS4525 differential pressure sensor (external I2C)</short_desc>
+    <parameter name="SENS_EN_MS4515" default="0" type="INT32" boolean="true">
+      <short_desc>TE MS4515 differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_EN_MS5525" default="0" type="INT32" boolean="true">
-      <short_desc>TE MS5525 differential pressure sensor (external I2C)</short_desc>
+    <parameter name="SENS_EN_MS4525DO" default="0" type="INT32" boolean="true">
+      <short_desc>TE MS4525DO differential pressure sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_MS5525DS" default="0" type="INT32" boolean="true">
+      <short_desc>TE MS5525DSO differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_PAA3905" default="0" type="INT32" boolean="true">
