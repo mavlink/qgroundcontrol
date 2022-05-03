@@ -95,7 +95,6 @@ Item {
         anchors.bottom: header.bottom
         anchors.right:  parent.right
         text:           qsTr("Tools")
-        visible:        !_searchFilter
         onClicked:      toolsMenu.popup()
     }
 
