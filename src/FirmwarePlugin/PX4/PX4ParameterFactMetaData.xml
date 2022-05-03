@@ -2404,6 +2404,14 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="FW_DTRIM_P_SPOIL" default="0." type="FLOAT">
+      <short_desc>Pitch trim increment for spoiler configuration</short_desc>
+      <long_desc>This increment is added to the pitch trim whenever spoilers are fully deployed.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="FW_DTRIM_P_VMAX" default="0.0" type="FLOAT">
       <short_desc>Pitch trim increment at maximum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MAX.</long_desc>
@@ -2460,25 +2468,9 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_FLAPERON_SCL" default="0.0" type="FLOAT">
-      <short_desc>Scale factor for flaperons</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="FW_FLAPS_LND_SCL" default="1.0" type="FLOAT">
       <short_desc>Flaps setting during landing</short_desc>
-      <long_desc>Sets a fraction of full flaps (FW_FLAPS_SCL) during landing</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_FLAPS_SCL" default="1.0" type="FLOAT">
-      <short_desc>Scale factor for flaps</short_desc>
+      <long_desc>Sets a fraction of full flaps during landing. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2487,7 +2479,7 @@
     </parameter>
     <parameter name="FW_FLAPS_TO_SCL" default="0.0" type="FLOAT">
       <short_desc>Flaps setting during take-off</short_desc>
-      <long_desc>Sets a fraction of full flaps (FW_FLAPS_SCL) during take-off</long_desc>
+      <long_desc>Sets a fraction of full flaps during take-off. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2667,6 +2659,31 @@
       <unit>s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_DESC" default="0." type="FLOAT">
+      <short_desc>Spoiler descend setting</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_LND" default="0." type="FLOAT">
+      <short_desc>Spoiler landing setting</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_MAN" default="0" type="INT32">
+      <short_desc>Spoiler input in manual flight</short_desc>
+      <long_desc>Chose source for manual setting of spoilers in manual flight modes.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Flaps channel</value>
+        <value code="2">Aux1</value>
+      </values>
     </parameter>
     <parameter name="FW_WR_FF" default="0.2" type="FLOAT">
       <short_desc>Wheel steering rate feed forward</short_desc>
@@ -10134,6 +10151,14 @@
       <long_desc>Minimum pitch angle during hover flight. If the desired pitch angle is is lower than this value then the fixed-wing forward actuation can be used to compensate for the missing thrust in forward direction (see VT_FW_TRHUST_EN)</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
+    </parameter>
+    <parameter name="VT_SPOILER_MC_LD" default="0." type="FLOAT">
+      <short_desc>Spoiler setting while landing (hover)</short_desc>
+      <min>-1</min>
+      <max>1</max>
+      <unit>norm</unit>
+      <decimal>1</decimal>
+      <increment>0.05</increment>
     </parameter>
     <parameter name="VT_TILT_FW" default="1.0" type="FLOAT">
       <short_desc>Position of tilt servo in fw mode</short_desc>
