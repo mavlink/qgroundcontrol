@@ -23,10 +23,13 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
 SetupPage {
-    id:             firmwarePage
-    pageComponent:  firmwarePageComponent
-    pageName:       qsTr("Firmware")
-    showAdvanced:   globals.activeVehicle && globals.activeVehicle.apmFirmware
+    id:              firmwarePage
+    pageComponent:   firmwarePageComponent
+    showAdvanced:    globals.activeVehicle && globals.activeVehicle.apmFirmware
+
+    // Name and description shown to the user as part of the Setup Page configuration
+    pageName:        qsTr("Firmware")
+    pageDescription: qsTr("%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.").arg(QGroundControl.appName)
 
     Component {
         id: firmwarePageComponent
@@ -40,18 +43,27 @@ SetupPage {
             // HTML strings to translation as this can create a security risk. we need to find
             // a better way to hightlight them, or use less highlights.
 
-            // User visible strings
+            // General Title and Welcome Text
             readonly property string title:             qsTr("Firmware Setup") // Popup dialog title
+            readonly property string welcomeTextSingle: qsTr("Update the autopilot firmware to the latest version")
+
+            // Text formatting pre & post fix strings
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
-            readonly property string welcomeText:       qsTr("%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.").arg(QGroundControl.appName)
-            readonly property string welcomeTextSingle: qsTr("Update the autopilot firmware to the latest version")
-            readonly property string plugInText:        "<big>" + highlightPrefix + qsTr("Plug in your device") + highlightSuffix + qsTr(" via USB to ") + highlightPrefix + qsTr("start") + highlightSuffix + qsTr(" firmware upgrade.") + "</big>"
+
+            // Board connection related status messages
+            readonly property string connectUsbMessage:        "<big>" + highlightPrefix + qsTr("Plug in your device") + highlightSuffix + qsTr(" via USB to ") + highlightPrefix + qsTr("start") + highlightSuffix + qsTr(" firmware upgrade.") + "</big>"
+            readonly property string noBoardFoundMessage: qsTr("No Autopilot found! ") + connectUsbMessage
+            readonly property string boardGonedMessage: qsTr("Autopilot gone! ") + connectUsbMessage
+            readonly property string activeVehicleChangedMessage: qsTr("Active Vehicle changed! ") + connectUsbMessage
+            
+            // Disconnect USB / Flash Failure messages
+            readonly property string disconnectUsbMessage1:    qsTr("All %1 connections to vehicles must be ").arg(QGroundControl.appName) + highlightPrefix + qsTr(" disconnected ") + highlightSuffix + qsTr("prior to firmware upgrade to access the bootloader.")
+            readonly property string disconnectUsbMessage2:    highlightPrefix + "<big>" + qsTr("Please click 'Reboot vehicle' button on top right. Or unplug your Pixhawk and/or Radio from USB.") + "</big>" + highlightSuffix
             readonly property string flashFailText:     qsTr("If upgrade failed, make sure to connect ") + highlightPrefix + qsTr("directly") + highlightSuffix + qsTr(" to a powered USB port on your computer, not through a USB hub. ") +
                                                         qsTr("Also make sure you are only powered via USB ") + highlightPrefix + qsTr("not battery") + highlightSuffix + "."
-            readonly property string qgcUnplugText1:    qsTr("All %1 connections to vehicles must be ").arg(QGroundControl.appName) + highlightPrefix + qsTr(" disconnected ") + highlightSuffix + qsTr("prior to firmware upgrade.")
-            readonly property string qgcUnplugText2:    highlightPrefix + "<big>" + qsTr("Please unplug your Pixhawk and/or Radio from USB.") + "</big>" + highlightSuffix
 
+            // Firmware upgrade related variables
             readonly property int _defaultFimwareTypePX4:   12
             readonly property int _defaultFimwareTypeAPM:   3
 
@@ -92,29 +104,29 @@ SetupPage {
 
                 onActiveVehicleChanged: {
                     if (!globals.activeVehicle) {
-                        statusTextArea.append(plugInText)
+                        statusTextArea.append(activeVehicleChangedMessage)
                     }
                 }
 
                 onNoBoardFound: {
                     initialBoardSearch = false
                     if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-                        statusTextArea.append(plugInText)
+                        statusTextArea.append(noBoardFoundMessage)
                     }
                 }
 
                 onBoardGone: {
                     initialBoardSearch = false
                     if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-                        statusTextArea.append(plugInText)
+                        statusTextArea.append(boardGonedMessage)
                     }
                 }
 
                 onBoardFound: {
                     if (initialBoardSearch) {
                         // Board was found right away, so something is already plugged in before we've started upgrade
-                        statusTextArea.append(qgcUnplugText1)
-                        statusTextArea.append(qgcUnplugText2)
+                        statusTextArea.append(disconnectUsbMessage1)
+                        statusTextArea.append(disconnectUsbMessage2)
 
                         var availableDevices = controller.availableBoardsName()
                         if (availableDevices.length > 1) {
@@ -134,6 +146,38 @@ SetupPage {
                 onError:                    statusTextArea.append(flashFailText)
             }
 
+            // Progress bar showing the firmware update progress
+            ProgressBar {
+                id:                     progressBar
+                Layout.preferredWidth:  parent.width
+                visible:                !flashBootloaderButton.visible
+            }
+
+            QGCButton {
+                id:         flashBootloaderButton
+                text:       qsTr("Flash ChibiOS Bootloader")
+                visible:    firmwarePage.advanced
+                onClicked:  globals.activeVehicle.flashBootloader()
+            }
+
+            // Status Text area showing Help texts and the outputs of Firmware Upgrade Controller
+            TextArea {
+                id:                 statusTextArea
+                Layout.preferredWidth:              parent.width
+                Layout.fillHeight:  true
+                readOnly:           true
+                frameVisible:       false
+                font.pointSize:     ScreenTools.defaultFontPointSize
+                textFormat:         TextEdit.RichText
+                text:               _singleFirmwareMode ? welcomeTextSingle : ""
+
+                style: TextAreaStyle {
+                    textColor:          qgcPal.text
+                    backgroundColor:    qgcPal.windowShade
+                }
+            }
+
+            // Pop up Firmware selection dialog where use can select which Firmware to flash
             Component {
                 id: firmwareSelectDialogComponent
 
@@ -460,35 +504,7 @@ SetupPage {
                     } // ColumnLayout
                 } // QGCPopupDialog
             } // Component - firmwareSelectDialogComponent
-
-            ProgressBar {
-                id:                     progressBar
-                Layout.preferredWidth:  parent.width
-                visible:                !flashBootloaderButton.visible
-            }
-
-            QGCButton {
-                id:         flashBootloaderButton
-                text:       qsTr("Flash ChibiOS Bootloader")
-                visible:    firmwarePage.advanced
-                onClicked:  globals.activeVehicle.flashBootloader()
-            }
-
-            TextArea {
-                id:                 statusTextArea
-                Layout.preferredWidth:              parent.width
-                Layout.fillHeight:  true
-                readOnly:           true
-                frameVisible:       false
-                font.pointSize:     ScreenTools.defaultFontPointSize
-                textFormat:         TextEdit.RichText
-                text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
-
-                style: TextAreaStyle {
-                    textColor:          qgcPal.text
-                    backgroundColor:    qgcPal.windowShade
-                }
-            }
+        
         } // ColumnLayout
     } // Component
 } // SetupPage
