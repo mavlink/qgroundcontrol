@@ -42,15 +42,19 @@ SetupPage {
             property Fact _hSwColDir:       controller.getParameterFact(-1, "H_SW_COL_DIR")
             property Fact _hSwLinSvo:       controller.getParameterFact(-1, "H_SW_LIN_SVO")
             property Fact _hFlybarMode:     controller.getParameterFact(-1, "H_FLYBAR_MODE")
-            property Fact _hColMax:         controller.getParameterFact(-1, "H_COL_MAX")
-            property Fact _hColMid:         controller.getParameterFact(-1, "H_COL_MID")
-            property Fact _hColMin:         controller.getParameterFact(-1, "H_COL_MIN")
             property Fact _hCycMax:         controller.getParameterFact(-1, "H_CYC_MAX")
+            property Fact _hColMax:         controller.getParameterFact(-1, "H_COL_MAX")
+            property Fact _hColAngMax:      controller.getParameterFact(-1, "H_COL_ANG_MAX")
+            property Fact _hColMin:         controller.getParameterFact(-1, "H_COL_MIN")
+            property Fact _hColAngMin:      controller.getParameterFact(-1, "H_COL_ANG_MIN")
+            property Fact _hColZeroThrst:   controller.getParameterFact(-1, "H_COL_ZERO_THRST")
+            property Fact _hColLandMin:     controller.getParameterFact(-1, "H_COL_LAND_MIN")
 
             property Fact _hRscMode:        controller.getParameterFact(-1, "H_RSC_MODE")
             property Fact _hRscCritical:    controller.getParameterFact(-1, "H_RSC_CRITICAL")
             property Fact _hRscRampTime:    controller.getParameterFact(-1, "H_RSC_RAMP_TIME")
             property Fact _hRscRunupTime:   controller.getParameterFact(-1, "H_RSC_RUNUP_TIME")
+            property Fact _hRscCldwnTime:   controller.getParameterFact(-1, "H_RSC_CLDWN_TIME")
             property Fact _hRscSetpoint:    controller.getParameterFact(-1, "H_RSC_SETPOINT")
             property Fact _hRscIdle:        controller.getParameterFact(-1, "H_RSC_IDLE")
             property Fact _hRscThrcrv0:     controller.getParameterFact(-1, "H_RSC_THRCRV_0")
@@ -59,11 +63,12 @@ SetupPage {
             property Fact _hRscThrcrv75:    controller.getParameterFact(-1, "H_RSC_THRCRV_75")
             property Fact _hRscThrcrv100:   controller.getParameterFact(-1, "H_RSC_THRCRV_100")
 
-            property Fact _hRscGovSetpnt:   controller.getParameterFact(-1, "H_RSC_GOV_SETPNT")
-            property Fact _hRscGovDisgag:   controller.getParameterFact(-1, "H_RSC_GOV_DISGAG")
+            property Fact _hRscGovComp:     controller.getParameterFact(-1, "H_RSC_GOV_COMP")
             property Fact _hRscGovDroop:    controller.getParameterFact(-1, "H_RSC_GOV_DROOP")
-            property Fact _hRscGovTcgain:   controller.getParameterFact(-1, "H_RSC_GOV_TCGAIN")
+            property Fact _hRscFf:          controller.getParameterFact(-1, "H_RSC_GOV_FF")
             property Fact _hRscGovRange:    controller.getParameterFact(-1, "H_RSC_GOV_RANGE")
+            property Fact _hRscGovRpm:      controller.getParameterFact(-1, "H_RSC_GOV_RPM")
+            property Fact _hRscGovTorque:   controller.getParameterFact(-1, "H_RSC_GOV_TORQUE")
 
             property Fact _imStbCol1:      controller.getParameterFact(-1, "IM_STB_COL_1")
             property Fact _imStbCol2:      controller.getParameterFact(-1, "IM_STB_COL_2")
@@ -310,17 +315,26 @@ SetupPage {
                         indexModel: false
                     }
 
+                    QGCLabel { text: _hCycMax.shortDescription }
+                    FactTextField { fact: _hCycMax }
+
                     QGCLabel { text: _hColMax.shortDescription }
                     FactTextField { fact: _hColMax }
 
-                    QGCLabel { text: _hColMid.shortDescription }
-                    FactTextField { fact: _hColMid }
+                    QGCLabel { text: _hColAngMax.shortDescription }
+                    FactTextField { fact: _hColAngMax }
 
                     QGCLabel { text: _hColMin.shortDescription }
                     FactTextField { fact: _hColMin }
 
-                    QGCLabel { text: _hCycMax.shortDescription }
-                    FactTextField { fact: _hCycMax }
+                    QGCLabel { text: _hColAngMin.shortDescription }
+                    FactTextField { fact: _hColAngMin }
+
+                    QGCLabel { text: _hColZeroThrst.shortDescription }
+                    FactTextField { fact: _hColZeroThrst }
+
+                    QGCLabel { text: _hColLandMin.shortDescription }
+                    FactTextField { fact: _hColLandMin }
                 }
             }
 
@@ -344,6 +358,9 @@ SetupPage {
 
                     QGCLabel { text: _hRscRunupTime.shortDescription }
                     FactTextField { fact: _hRscRunupTime }
+
+                    QGCLabel { text: _hRscCldwnTime.shortDescription }
+                    FactTextField { fact: _hRscCldwnTime }
 
                     QGCLabel { text: _hRscSetpoint.shortDescription }
                     FactTextField { fact: _hRscSetpoint }
@@ -374,20 +391,23 @@ SetupPage {
                 GridLayout {
                     columns: 2
 
-                    QGCLabel { text: _hRscGovSetpnt.shortDescription }
-                    FactTextField { fact: _hRscGovSetpnt }
-
-                    QGCLabel { text: _hRscGovDisgag.shortDescription }
-                    FactTextField { fact: _hRscGovDisgag }
+                    QGCLabel { text: _hRscGovComp.shortDescription }
+                    FactTextField { fact: _hRscGovComp }
 
                     QGCLabel { text: _hRscGovDroop.shortDescription }
                     FactTextField { fact: _hRscGovDroop }
 
-                    QGCLabel { text: _hRscGovTcgain.shortDescription }
-                    FactTextField { fact: _hRscGovTcgain }
+                    QGCLabel { text: _hRscGovFf.shortDescription }
+                    FactTextField { fact: _hRscGovFf }
 
                     QGCLabel { text: _hRscGovRange.shortDescription }
                     FactTextField { fact: _hRscGovRange }
+
+                    QGCLabel { text: _hRscGovRpm.shortDescription }
+                    FactTextField { fact: _hRscGovRpm }
+
+                    QGCLabel { text: _hRscGovTorque.shortDescription }
+                    FactTextField { fact: _hRscGovTorque }
                 }
             }
 
