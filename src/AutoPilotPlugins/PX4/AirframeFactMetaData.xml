@@ -150,21 +150,6 @@
       <output name="AUX2">feed-through of RC AUX2 channel</output>
     </airframe>
   </airframe_group>
-  <airframe_group name="Octo Coax Wide" image="OctoRotorXCoaxial">
-    <airframe name="Steadidrone MAVRIK" id="12002" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
-      <class>Copter</class>
-      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
-      <type>Octo Coax Wide</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">motor 4</output>
-      <output name="MAIN5">motor 5</output>
-      <output name="MAIN6">motor 6</output>
-      <output name="MAIN7">motor 7</output>
-      <output name="MAIN8">motor 8</output>
-    </airframe>
-  </airframe_group>
   <airframe_group name="Octorotor +" image="OctoRotorPlus">
     <airframe name="Generic Octocopter + geometry" id="9001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
       <class>Copter</class>
@@ -284,21 +269,6 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
       <output name="AUX4">feed-through of RC FLAPS channel</output>
     </airframe>
-    <airframe name="Steadidrone QU4D" id="10017" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
-      <class>Copter</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Quadrotor Wide</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">motor 4</output>
-      <output name="MAIN5">feed-through of RC AUX1 channel</output>
-      <output name="MAIN6">feed-through of RC AUX2 channel</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-      <output name="AUX4">feed-through of RC FLAPS channel</output>
-    </airframe>
     <airframe name="Team Blacksheep Discovery Endurance" id="10018" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
       <class>Copter</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
@@ -351,16 +321,6 @@
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="Lumenier QAV250" id="4009" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
-      <class>Copter</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe name="DJI F330 w/ DJI ESCs" id="4010" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
-      <class>Copter</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe name="DJI F450 w/ DJI ESCs" id="4011" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
@@ -421,11 +381,6 @@
     <airframe name="Holybro Kopis 2" id="4053" maintainer="Beat Kueng &lt;beat@px4.io&gt;">
       <class>Copter</class>
       <maintainer>Beat Kueng &lt;beat@px4.io&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe name="DJI Matrice 100" id="4060" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;">
-      <class>Copter</class>
-      <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="Advanced Technology Labs (ATL) Mantis EDU" id="4061" maintainer="">
@@ -552,17 +507,6 @@
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
-    <airframe name="IO Camflyer" id="3030" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
-      <class>Plane</class>
-      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
-      <type>Flying Wing</type>
-      <output name="MAIN1">left aileron</output>
-      <output name="MAIN2">right aileron</output>
-      <output name="MAIN4">throttle</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
     <airframe name="Phantom FPV Flying Wing" id="3031" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
@@ -598,45 +542,11 @@
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
-    <airframe name="FX-79 Buffalo Flying Wing" id="3034" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
-      <class>Plane</class>
-      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
-      <type>Flying Wing</type>
-      <output name="MAIN1">right aileron</output>
-      <output name="MAIN2">left aileron</output>
-      <output name="MAIN4">throttle</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
-    <airframe name="Viper" id="3035" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
-      <class>Plane</class>
-      <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
-      <type>Flying Wing</type>
-      <output name="MAIN1">left aileron</output>
-      <output name="MAIN2">right aileron</output>
-      <output name="MAIN4">throttle</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
     <airframe name="Sparkle Tech Pigeon" id="3036" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;">
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
       <type>Flying Wing</type>
       <url>http://www.sparkletech.hk/</url>
-      <output name="MAIN1">left aileron</output>
-      <output name="MAIN2">right aileron</output>
-      <output name="MAIN4">throttle</output>
-      <output name="AUX1">feed-through of RC AUX1 channel</output>
-      <output name="AUX2">feed-through of RC AUX2 channel</output>
-      <output name="AUX3">feed-through of RC AUX3 channel</output>
-    </airframe>
-    <airframe name="Modified Parrot Disco" id="3037" maintainer="Jan Liphardt &lt;JTLiphardt@gmail.com&gt;">
-      <class>Plane</class>
-      <maintainer>Jan Liphardt &lt;JTLiphardt@gmail.com&gt;</maintainer>
-      <type>Flying Wing</type>
-      <url />
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
@@ -966,11 +876,6 @@
       <output name="AUX2">Elevon 1</output>
       <output name="AUX3">Elevon 2</output>
       <output name="AUX4">Gear</output>
-    </airframe>
-    <airframe name="CruiseAder Claire" id="13010" maintainer="Samay Siga &lt;samay_s@icloud.com&gt;">
-      <class>VTOL</class>
-      <maintainer>Samay Siga &lt;samay_s@icloud.com&gt;</maintainer>
-      <type>VTOL Tiltrotor</type>
     </airframe>
     <airframe name="E-flite Convergence" id="13012" maintainer="Andreas Antener &lt;andreas@uaventure.com&gt;">
       <class>VTOL</class>
