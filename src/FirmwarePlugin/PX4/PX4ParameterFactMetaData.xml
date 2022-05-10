@@ -3539,7 +3539,7 @@
   <group name="Geofence">
     <parameter name="GF_ACTION" default="2" type="INT32">
       <short_desc>Geofence violation action</short_desc>
-      <long_desc>Note: Setting this value to 4 enables flight termination, which will kill the vehicle on violation of the fence. Due to the inherent danger of this, this function is disabled using a software circuit breaker, which needs to be reset to 0 to really shut down the system.</long_desc>
+      <long_desc>Note: Setting this value to 4 enables flight termination, which will kill the vehicle on violation of the fence.</long_desc>
       <min>0</min>
       <max>5</max>
       <values>
