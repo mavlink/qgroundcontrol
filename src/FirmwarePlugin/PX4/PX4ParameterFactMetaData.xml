@@ -812,13 +812,6 @@
       <max>782097</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="CBRK_ENGINEFAIL" default="284953" type="INT32" category="Developer">
-      <short_desc>Circuit breaker for engine failure detection</short_desc>
-      <long_desc>Setting this parameter to 284953 will disable the engine failure detection. If the aircraft is in engine failure mode the engine failure flag will be set to healthy WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
-      <min>0</min>
-      <max>284953</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="CBRK_FLIGHTTERM" default="121212" type="INT32" category="Developer">
       <short_desc>Circuit breaker for flight termination</short_desc>
       <long_desc>Setting this parameter to 121212 will disable the flight termination action if triggered by the FailureDetector logic or if FMU is lost. This circuit breaker does not affect the RC loss, data link loss, geofence, and takeoff failure detection safety logic.</long_desc>
@@ -865,6 +858,19 @@
     </parameter>
   </group>
   <group name="Commander">
+    <parameter name="COM_ACT_FAIL_ACT" default="0" type="INT32">
+      <short_desc>Set the actuator failure failsafe mode</short_desc>
+      <long_desc>Note: actuator failure needs to be enabled and configured via FD_ACT_* parameters.</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Land mode</value>
+        <value code="3">Return mode</value>
+        <value code="4">Terminate</value>
+      </values>
+    </parameter>
     <parameter name="COM_ARM_ARSP_EN" default="1" type="INT32">
       <short_desc>Enable preflight check for maximal allowed airspeed when arming</short_desc>
       <long_desc>Deny arming if the current airspeed measurement is greater than half the cruise airspeed (FW_AIRSPD_TRIM). Excessive airspeed measurements on ground are either caused by wind or bad airspeed calibration.</long_desc>
@@ -1018,33 +1024,6 @@
       <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
       <min>5</min>
       <max>300</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="COM_EF_C2T" default="5.0" type="FLOAT">
-      <short_desc>Engine Failure Current/Throttle Threshold</short_desc>
-      <long_desc>Engine failure triggers only below this current value</long_desc>
-      <min>0.0</min>
-      <max>50.0</max>
-      <unit>A/%</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="COM_EF_THROT" default="0.5" type="FLOAT">
-      <short_desc>Engine Failure Throttle Threshold</short_desc>
-      <long_desc>Engine failure triggers only above this throttle value</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="COM_EF_TIME" default="10.0" type="FLOAT">
-      <short_desc>Engine Failure Time Threshold</short_desc>
-      <long_desc>Engine failure triggers only if the throttle threshold and the current to throttle threshold are violated for this time</long_desc>
-      <min>0.0</min>
-      <max>60.0</max>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
@@ -3422,6 +3401,37 @@
     </parameter>
   </group>
   <group name="Failure Detector">
+    <parameter name="FD_ACT_EN" default="1" type="INT32" boolean="true">
+      <short_desc>Enable Actuator Failure check</short_desc>
+      <long_desc>If enabled, failure detector will verify that for motors, a minimum amount of ESC current per throttle level is being consumed. Otherwise this indicates an motor failure.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="FD_ACT_MOT_C2T" default="2.0" type="FLOAT">
+      <short_desc>Motor Failure Current/Throttle Threshold</short_desc>
+      <long_desc>Motor failure triggers only below this current value</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+      <unit>A/%</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="FD_ACT_MOT_THR" default="0.2" type="FLOAT">
+      <short_desc>Motor Failure Throttle Threshold</short_desc>
+      <long_desc>Motor failure triggers only above this throttle value.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FD_ACT_MOT_TOUT" default="100" type="INT32">
+      <short_desc>Motor Failure Time Threshold</short_desc>
+      <long_desc>Motor failure triggers only if the throttle threshold and the current to throttle threshold are violated for this time.</long_desc>
+      <min>10</min>
+      <max>10000</max>
+      <unit>ms</unit>
+      <increment>100</increment>
+    </parameter>
     <parameter name="FD_ESCS_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable checks on ESCs that report their arming state</short_desc>
       <long_desc>If enabled, failure detector will verify that all the ESCs have successfully armed when the vehicle has transitioned to the armed state. Timeout for receiving an acknowledgement from the ESCs is 0.3s, if no feedback is received the failure detector will auto disarm the vehicle.</long_desc>
