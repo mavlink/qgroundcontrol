@@ -70,6 +70,7 @@ Item {
             item1.pipState.state = item1.pipState.fullState
             _fullItem = item1
             _pipOrWindowItem = null
+            item1.visible = true
         }
         _setPipIsExpanded(QGroundControl.loadBoolGlobalSetting(_pipExpandedSettingsKey, true))
     }
