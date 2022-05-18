@@ -10023,7 +10023,7 @@
     <parameter name="VT_B_TRANS_DUR" default="4.0" type="FLOAT">
       <short_desc>Duration of a back transition</short_desc>
       <long_desc>Time in seconds used for a back transition</long_desc>
-      <min>0.00</min>
+      <min>0.1</min>
       <max>20.00</max>
       <unit>s</unit>
       <decimal>2</decimal>
@@ -10101,10 +10101,6 @@
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="VT_FW_PERM_STAB" default="0" type="INT32" boolean="true">
-      <short_desc>Permanent stabilization in fw mode</short_desc>
-      <long_desc>If set to one this parameter will cause permanent attitude stabilization in fw mode. This parameter has been introduced for pure convenience sake.</long_desc>
-    </parameter>
     <parameter name="VT_FW_QC_P" default="0" type="INT32">
       <short_desc>QuadChute Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before QuadChute engages Above this the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
@@ -10120,7 +10116,7 @@
     <parameter name="VT_F_TRANS_DUR" default="5.0" type="FLOAT">
       <short_desc>Duration of a front transition</short_desc>
       <long_desc>Time in seconds used for a transition</long_desc>
-      <min>0.00</min>
+      <min>0.1</min>
       <max>20.00</max>
       <unit>s</unit>
       <decimal>2</decimal>
@@ -10149,9 +10145,9 @@
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="VT_LND_PTCH_MIN" default="-5.0" type="FLOAT">
+    <parameter name="VT_LND_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover landing</short_desc>
-      <long_desc>Overrides  VT_PTCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
+      <long_desc>Overrides  VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
     </parameter>
@@ -10166,18 +10162,18 @@
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
+    <parameter name="VT_PITCH_MIN" default="-5.0" type="FLOAT">
+      <short_desc>Minimum pitch angle during hover</short_desc>
+      <long_desc>Minimum pitch angle during hover flight. If the desired pitch angle is is lower than this value then the fixed-wing forward actuation can be used to compensate for the missing thrust in forward direction (see VT_FW_TRHUST_EN)</long_desc>
+      <min>-10.0</min>
+      <max>45.0</max>
+    </parameter>
     <parameter name="VT_PSHER_RMP_DT" default="3.0" type="FLOAT">
       <short_desc>Pusher throttle ramp up window</short_desc>
       <long_desc>Defines the time window during which the pusher throttle will be ramped up linearly to VT_F_TRANS_THR during a transition to fixed wing mode. Zero or negative values will produce an instant throttle rise to VT_F_TRANS_THR.</long_desc>
       <max>20</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
-    </parameter>
-    <parameter name="VT_PTCH_MIN" default="-5.0" type="FLOAT">
-      <short_desc>Minimum pitch angle during hover</short_desc>
-      <long_desc>Minimum pitch angle during hover flight. If the desired pitch angle is is lower than this value then the fixed-wing forward actuation can be used to compensate for the missing thrust in forward direction (see VT_FW_TRHUST_EN)</long_desc>
-      <min>-10.0</min>
-      <max>45.0</max>
     </parameter>
     <parameter name="VT_SPOILER_MC_LD" default="0." type="FLOAT">
       <short_desc>Spoiler setting while landing (hover)</short_desc>
@@ -10235,7 +10231,7 @@
     <parameter name="VT_TRANS_TIMEOUT" default="15.0" type="FLOAT">
       <short_desc>Front transition timeout</short_desc>
       <long_desc>Time in seconds after which transition will be cancelled. Disabled if set to 0.</long_desc>
-      <min>0.00</min>
+      <min>0.1</min>
       <max>30.00</max>
       <unit>s</unit>
       <decimal>2</decimal>
