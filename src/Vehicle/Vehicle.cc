@@ -2876,9 +2876,22 @@ bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
     }
 }
 
+bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
+{
+    // For some commands we don't care about response as much as we care about sending them regularly.
+    // This test avoids commands not being sent due to an ACK not being received yet.
+    // MOTOR_TEST in ardusub is a case where we need a constant stream of commands so it doesn't time out.
+    switch (command) {
+    case MAV_CMD_DO_MOTOR_TEST:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int targetCompId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-    if ((targetCompId == MAV_COMP_ID_ALL) || isMavCommandPending(targetCompId, command)) {
+    if ((targetCompId == MAV_COMP_ID_ALL) || (isMavCommandPending(targetCompId, command) && !_commandCanBeDuplicated(command))) {
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
         QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
 
