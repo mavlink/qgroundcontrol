@@ -606,6 +606,14 @@
     <parameter name="BAT_ADC_CHANNEL" default="-1" type="INT32">
       <short_desc>This parameter is deprecated. Please use BAT1_I_CHANNEL</short_desc>
     </parameter>
+    <parameter name="BAT_AVRG_CURRENT" default="15.0" type="FLOAT">
+      <short_desc>Expected battery current in flight</short_desc>
+      <long_desc>This value is used to initialize the in-flight average current estimation, which in turn is used for estimating remaining flight time and RTL triggering.</long_desc>
+      <min>0</min>
+      <max>500</max>
+      <unit>A</unit>
+      <increment>0.1</increment>
+    </parameter>
     <parameter name="BAT_CRIT_THR" default="0.07" type="FLOAT">
       <short_desc>Critical threshold</short_desc>
       <long_desc>Sets the threshold when the battery will be reported as critically low. This has to be lower than the low threshold. This threshold commonly will trigger RTL.</long_desc>
@@ -804,13 +812,6 @@
       <max>782097</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="CBRK_ENGINEFAIL" default="284953" type="INT32" category="Developer">
-      <short_desc>Circuit breaker for engine failure detection</short_desc>
-      <long_desc>Setting this parameter to 284953 will disable the engine failure detection. If the aircraft is in engine failure mode the engine failure flag will be set to healthy WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
-      <min>0</min>
-      <max>284953</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="CBRK_FLIGHTTERM" default="121212" type="INT32" category="Developer">
       <short_desc>Circuit breaker for flight termination</short_desc>
       <long_desc>Setting this parameter to 121212 will disable the flight termination action if triggered by the FailureDetector logic or if FMU is lost. This circuit breaker does not affect the RC loss, data link loss, geofence, and takeoff failure detection safety logic.</long_desc>
@@ -857,6 +858,19 @@
     </parameter>
   </group>
   <group name="Commander">
+    <parameter name="COM_ACT_FAIL_ACT" default="0" type="INT32">
+      <short_desc>Set the actuator failure failsafe mode</short_desc>
+      <long_desc>Note: actuator failure needs to be enabled and configured via FD_ACT_* parameters.</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Land mode</value>
+        <value code="3">Return mode</value>
+        <value code="4">Terminate</value>
+      </values>
+    </parameter>
     <parameter name="COM_ARM_ARSP_EN" default="1" type="INT32">
       <short_desc>Enable preflight check for maximal allowed airspeed when arming</short_desc>
       <long_desc>Deny arming if the current airspeed measurement is greater than half the cruise airspeed (FW_AIRSPD_TRIM). Excessive airspeed measurements on ground are either caused by wind or bad airspeed calibration.</long_desc>
@@ -1014,33 +1028,6 @@
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="COM_EF_C2T" default="5.0" type="FLOAT">
-      <short_desc>Engine Failure Current/Throttle Threshold</short_desc>
-      <long_desc>Engine failure triggers only below this current value</long_desc>
-      <min>0.0</min>
-      <max>50.0</max>
-      <unit>A/%</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="COM_EF_THROT" default="0.5" type="FLOAT">
-      <short_desc>Engine Failure Throttle Threshold</short_desc>
-      <long_desc>Engine failure triggers only above this throttle value</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="COM_EF_TIME" default="10.0" type="FLOAT">
-      <short_desc>Engine Failure Time Threshold</short_desc>
-      <long_desc>Engine failure triggers only if the throttle threshold and the current to throttle threshold are violated for this time</long_desc>
-      <min>0.0</min>
-      <max>60.0</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
-    </parameter>
     <parameter name="COM_FLIGHT_UUID" default="0" type="INT32" volatile="true" category="System">
       <short_desc>Next flight UUID</short_desc>
       <long_desc>This number is incremented automatically after every flight on disarming in order to remember the next flight UUID. The first flight is 0.</long_desc>
@@ -1063,6 +1050,7 @@
         <value code="10">Takeoff</value>
         <value code="11">Land</value>
         <value code="12">Follow Me</value>
+        <value code="13">Precision Land</value>
       </values>
     </parameter>
     <parameter name="COM_FLTMODE2" default="-1" type="INT32">
@@ -1082,6 +1070,7 @@
         <value code="10">Takeoff</value>
         <value code="11">Land</value>
         <value code="12">Follow Me</value>
+        <value code="13">Precision Land</value>
       </values>
     </parameter>
     <parameter name="COM_FLTMODE3" default="-1" type="INT32">
@@ -1101,6 +1090,7 @@
         <value code="10">Takeoff</value>
         <value code="11">Land</value>
         <value code="12">Follow Me</value>
+        <value code="13">Precision Land</value>
       </values>
     </parameter>
     <parameter name="COM_FLTMODE4" default="-1" type="INT32">
@@ -1120,6 +1110,7 @@
         <value code="10">Takeoff</value>
         <value code="11">Land</value>
         <value code="12">Follow Me</value>
+        <value code="13">Precision Land</value>
       </values>
     </parameter>
     <parameter name="COM_FLTMODE5" default="-1" type="INT32">
@@ -1139,6 +1130,7 @@
         <value code="10">Takeoff</value>
         <value code="11">Land</value>
         <value code="12">Follow Me</value>
+        <value code="13">Precision Land</value>
       </values>
     </parameter>
     <parameter name="COM_FLTMODE6" default="-1" type="INT32">
@@ -1158,6 +1150,7 @@
         <value code="10">Takeoff</value>
         <value code="11">Land</value>
         <value code="12">Follow Me</value>
+        <value code="13">Precision Land</value>
       </values>
     </parameter>
     <parameter name="COM_FLT_PROFILE" default="0" type="INT32">
@@ -1169,6 +1162,20 @@
         <value code="200">Flight Tester</value>
         <value code="300">Developer</value>
       </values>
+    </parameter>
+    <parameter name="COM_FLT_TIME_MAX" default="-1" type="INT32">
+      <short_desc>Maximum allowed flight time</short_desc>
+      <long_desc>The vehicle aborts the current operation and returns to launch when the time since takeoff is above this value. It is not possible to resume the mission or switch to any mode other than RTL or Land. Set a nagative value to disable.</long_desc>
+      <min>-1</min>
+      <max>10000</max>
+      <unit>s</unit>
+      <values>
+        <value code="0">Disable</value>
+      </values>
+    </parameter>
+    <parameter name="COM_FORCE_SAFETY" default="0" type="INT32" boolean="true">
+      <short_desc>Enable force safety</short_desc>
+      <long_desc>Force safety when the vehicle disarms. Not supported when safety button used over PX4IO board.</long_desc>
     </parameter>
     <parameter name="COM_HLDL_LOSS_T" default="120" type="INT32">
       <short_desc>High Latency Datalink loss time threshold</short_desc>
@@ -1189,27 +1196,9 @@
       <long_desc>Set home position automatically if possible.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="COM_HOME_H_T" default="5.0" type="FLOAT">
-      <short_desc>Home set horizontal threshold</short_desc>
-      <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
-      <min>2</min>
-      <max>15</max>
-      <unit>m</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter name="COM_HOME_IN_AIR" default="0" type="INT32" boolean="true">
       <short_desc>Allows setting the home position after takeoff</short_desc>
       <long_desc>If set to true, the autopilot is allowed to set its home position after takeoff The true home position is back-computed if a local position is estimate if available. If no local position is available, home is set to the current position.</long_desc>
-    </parameter>
-    <parameter name="COM_HOME_V_T" default="10.0" type="FLOAT">
-      <short_desc>Home set vertical threshold</short_desc>
-      <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
-      <min>5</min>
-      <max>25</max>
-      <unit>m</unit>
-      <decimal>2</decimal>
-      <increment>0.5</increment>
     </parameter>
     <parameter name="COM_IMB_PROP_ACT" default="0" type="INT32">
       <short_desc>Imbalanced propeller failsafe mode</short_desc>
@@ -1326,18 +1315,6 @@
       <long_desc>This is the vertical position error (EPV) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m</unit>
     </parameter>
-    <parameter name="COM_POS_FS_GAIN" default="10" type="INT32">
-      <short_desc>Loss of position probation gain factor</short_desc>
-      <long_desc>This sets the rate that the loss of position probation time grows when position checks are failing. The default value has been optimised for rotary wing applications. For fixed wing applications a value of 0 should be used.</long_desc>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="COM_POS_FS_PROB" default="30" type="INT32">
-      <short_desc>Loss of position probation delay at takeoff</short_desc>
-      <long_desc>The probation delay is the number of seconds that the EKF innovation checks need to pass for the position to be declared good after it has been declared bad. The probation delay will be reset to this parameter value when takeoff is detected. After takeoff, if position checks are passing, the probation delay will reduce by one second for every lapsed second of valid position down to a minimum of 1 second. If position checks are failing, the probation delay will increase by COM_POS_FS_GAIN seconds for every lapsed second up to a maximum of 100 seconds. The default value has been optimised for rotary wing applications. For fixed wing applications, a value of 1 should be used.</long_desc>
-      <min>1</min>
-      <max>100</max>
-      <unit>s</unit>
-    </parameter>
     <parameter name="COM_POWER_COUNT" default="1" type="INT32">
       <short_desc>Required number of redundant power modules</short_desc>
       <long_desc>This configures a check to verify the expected number of 5V rail power supplies are present. By default only one is expected. Note: CBRK_SUPPLY_CHK disables all power checks including this one.</long_desc>
@@ -1351,6 +1328,15 @@
         <value code="0">Disabled</value>
         <value code="1">Safety button</value>
         <value code="2">Always</value>
+      </values>
+    </parameter>
+    <parameter name="COM_QC_ACT" default="0" type="INT32">
+      <short_desc>Set command after a quadchute</short_desc>
+      <values>
+        <value code="-1">No action: stay in current flight mode</value>
+        <value code="0">Return mode</value>
+        <value code="1">Land mode</value>
+        <value code="2">Hold mode</value>
       </values>
     </parameter>
     <parameter name="COM_RCL_ACT_T" default="15.0" type="FLOAT">
@@ -1420,10 +1406,6 @@
       <decimal>0</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="COM_REARM_GRACE" default="1" type="INT32" boolean="true">
-      <short_desc>Rearming grace period</short_desc>
-      <long_desc>Re-arming grace allows to rearm the drone with manual command without running prearmcheck during 5 s after disarming.</long_desc>
-    </parameter>
     <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
       <short_desc>Action after TAKEOFF has been accepted</short_desc>
       <long_desc>The mode transition after TAKEOFF has completed successfully.</long_desc>
@@ -1436,6 +1418,15 @@
       <short_desc>Horizontal velocity error threshold</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m/s</unit>
+    </parameter>
+    <parameter name="COM_WIND_MAX" default="-1." type="FLOAT">
+      <short_desc>Wind speed RLT threshold</short_desc>
+      <long_desc>Wind speed threshold above which an automatic return to launch is triggered and enforced as long as the threshold is exceeded. A negative value disables the feature.</long_desc>
+      <min>-1</min>
+      <max>30</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="COM_WIND_WARN" default="-1." type="FLOAT">
       <short_desc>Wind speed warning threshold</short_desc>
@@ -1472,6 +1463,92 @@
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
       </values>
+    </parameter>
+  </group>
+  <group name="Cyphal">
+    <parameter name="CYPHAL_BAUD" default="1000000" type="INT32">
+      <short_desc>UAVCAN/CAN v1 bus bitrate</short_desc>
+      <min>20000</min>
+      <max>1000000</max>
+      <unit>bit/s</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="CYPHAL_ENABLE" default="0" type="INT32" boolean="true">
+      <short_desc>Cyphal</short_desc>
+      <long_desc>0 - Cyphal disabled. 1 - Enables Cyphal</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="CYPHAL_ID" default="1" type="INT32">
+      <short_desc>Cyphal Node ID</short_desc>
+      <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
+      <min>-1</min>
+      <max>125</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UCAN1_ACTR_PUB" default="-1" type="INT32">
+      <short_desc>actuator_outputs uORB over Cyphal publication port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_BMS_BP_SUB" default="-1" type="INT32">
+      <short_desc>UDRAL battery parameters subscription  port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_BMS_BS_SUB" default="-1" type="INT32">
+      <short_desc>UDRAL battery status subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_BMS_ES_SUB" default="-1" type="INT32">
+      <short_desc>UDRAL battery energy source subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_ESC0_SUB" default="-1" type="INT32">
+      <short_desc>ESC 0 subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_ESC_PUB" default="-1" type="INT32">
+      <short_desc>Cyphal ESC publication port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_GPS0_SUB" default="-1" type="INT32">
+      <short_desc>GPS 0 subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_GPS1_SUB" default="-1" type="INT32">
+      <short_desc>GPS 1 subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_GPS_PUB" default="-1" type="INT32">
+      <short_desc>Cyphal GPS publication port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_LG_BMS_SUB" default="-1" type="INT32">
+      <short_desc>Cyphal leagcy battery port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_SERVO_PUB" default="-1" type="INT32">
+      <short_desc>Cyphal Servo publication port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_UORB_GPS" default="-1" type="INT32">
+      <short_desc>sensor_gps uORB over Cyphal subscription port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
+    </parameter>
+    <parameter name="UCAN1_UORB_GPS_P" default="-1" type="INT32">
+      <short_desc>sensor_gps uORB over Cyphal publication port ID</short_desc>
+      <min>-1</min>
+      <max>6143</max>
     </parameter>
   </group>
   <group name="Data Link Loss">
@@ -2210,6 +2287,13 @@
       <unit>SD</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="EKF2_RNG_K_GATE" default="1.0" type="FLOAT">
+      <short_desc>Gate size used for range finder kinematic consistency check</short_desc>
+      <long_desc>To be used, the time derivative of the distance sensor measurements projected on the vertical axis needs to be statistically consistent with the estimated vertical velocity of the drone. Decrease this value to make the filter more robust against range finder faulty data (stuck, reflections, ...). Note: tune the range finder noise parameters (EKF2_RNG_NOISE and EKF2_RNG_SFE) before tuning this gate.</long_desc>
+      <min>0.1</min>
+      <max>5.0</max>
+      <unit>SD</unit>
+    </parameter>
     <parameter name="EKF2_RNG_NOISE" default="0.1" type="FLOAT">
       <short_desc>Measurement noise for range finder fusion</short_desc>
       <min>0.01</min>
@@ -2404,6 +2488,14 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="FW_DTRIM_P_SPOIL" default="0." type="FLOAT">
+      <short_desc>Pitch trim increment for spoiler configuration</short_desc>
+      <long_desc>This increment is added to the pitch trim whenever spoilers are fully deployed.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="FW_DTRIM_P_VMAX" default="0.0" type="FLOAT">
       <short_desc>Pitch trim increment at maximum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MAX.</long_desc>
@@ -2460,25 +2552,9 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_FLAPERON_SCL" default="0.0" type="FLOAT">
-      <short_desc>Scale factor for flaperons</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="FW_FLAPS_LND_SCL" default="1.0" type="FLOAT">
       <short_desc>Flaps setting during landing</short_desc>
-      <long_desc>Sets a fraction of full flaps (FW_FLAPS_SCL) during landing</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_FLAPS_SCL" default="1.0" type="FLOAT">
-      <short_desc>Scale factor for flaps</short_desc>
+      <long_desc>Sets a fraction of full flaps during landing. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2487,7 +2563,7 @@
     </parameter>
     <parameter name="FW_FLAPS_TO_SCL" default="0.0" type="FLOAT">
       <short_desc>Flaps setting during take-off</short_desc>
-      <long_desc>Sets a fraction of full flaps (FW_FLAPS_SCL) during take-off</long_desc>
+      <long_desc>Sets a fraction of full flaps during take-off. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2667,6 +2743,31 @@
       <unit>s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_DESC" default="0." type="FLOAT">
+      <short_desc>Spoiler descend setting</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_LND" default="0." type="FLOAT">
+      <short_desc>Spoiler landing setting</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_MAN" default="0" type="INT32">
+      <short_desc>Spoiler input in manual flight</short_desc>
+      <long_desc>Chose source for manual setting of spoilers in manual flight modes.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Flaps channel</value>
+        <value code="2">Aux1</value>
+      </values>
     </parameter>
     <parameter name="FW_WR_FF" default="0.2" type="FLOAT">
       <short_desc>Wheel steering rate feed forward</short_desc>
@@ -3300,6 +3401,37 @@
     </parameter>
   </group>
   <group name="Failure Detector">
+    <parameter name="FD_ACT_EN" default="1" type="INT32" boolean="true">
+      <short_desc>Enable Actuator Failure check</short_desc>
+      <long_desc>If enabled, failure detector will verify that for motors, a minimum amount of ESC current per throttle level is being consumed. Otherwise this indicates an motor failure.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="FD_ACT_MOT_C2T" default="2.0" type="FLOAT">
+      <short_desc>Motor Failure Current/Throttle Threshold</short_desc>
+      <long_desc>Motor failure triggers only below this current value</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+      <unit>A/%</unit>
+      <decimal>2</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="FD_ACT_MOT_THR" default="0.2" type="FLOAT">
+      <short_desc>Motor Failure Throttle Threshold</short_desc>
+      <long_desc>Motor failure triggers only above this throttle value.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FD_ACT_MOT_TOUT" default="100" type="INT32">
+      <short_desc>Motor Failure Time Threshold</short_desc>
+      <long_desc>Motor failure triggers only if the throttle threshold and the current to throttle threshold are violated for this time.</long_desc>
+      <min>10</min>
+      <max>10000</max>
+      <unit>ms</unit>
+      <increment>100</increment>
+    </parameter>
     <parameter name="FD_ESCS_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable checks on ESCs that report their arming state</short_desc>
       <long_desc>If enabled, failure detector will verify that all the ESCs have successfully armed when the vehicle has transitioned to the armed state. Timeout for receiving an acknowledgement from the ESCs is 0.3s, if no feedback is received the failure detector will auto disarm the vehicle.</long_desc>
@@ -3452,6 +3584,11 @@
         <value code="2">RTCM output (PPK)</value>
       </values>
     </parameter>
+    <parameter name="GPS_SAT_INFO" default="0" type="INT32" boolean="true">
+      <short_desc>Enable sat info (if available)</short_desc>
+      <long_desc>Enable publication of satellite info (ORB_ID(satellite_info)) if possible. Not available on MTK.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="GPS_UBX_DYNMODEL" default="7" type="INT32">
       <short_desc>u-blox GPS dynamic platform model</short_desc>
       <long_desc>u-blox receivers support different dynamic platform models to adjust the navigation engine to the expected application environment.</long_desc>
@@ -3498,7 +3635,7 @@
   <group name="Geofence">
     <parameter name="GF_ACTION" default="2" type="INT32">
       <short_desc>Geofence violation action</short_desc>
-      <long_desc>Note: Setting this value to 4 enables flight termination, which will kill the vehicle on violation of the fence. Due to the inherent danger of this, this function is disabled using a software circuit breaker, which needs to be reset to 0 to really shut down the system.</long_desc>
+      <long_desc>Note: Setting this value to 4 enables flight termination, which will kill the vehicle on violation of the fence.</long_desc>
       <min>0</min>
       <max>5</max>
       <values>
@@ -3543,6 +3680,10 @@
       <unit>m</unit>
       <increment>1</increment>
     </parameter>
+    <parameter name="GF_PREDICT" default="1" type="INT32" boolean="true">
+      <short_desc>Use Pre-emptive geofence triggering</short_desc>
+      <long_desc>Predict the motion of the vehicle and trigger the breach if it is determined that the current trajectory would result in a breach happening before the vehicle can make evasive maneuvers. The vehicle is then re-routed to a safe hold position (stop for multirotor, loiter for fixed wing).</long_desc>
+    </parameter>
     <parameter name="GF_SOURCE" default="0" type="INT32">
       <short_desc>Geofence source</short_desc>
       <long_desc>Select which position source should be used. Selecting GPS instead of global position makes sure that there is no dependence on the position estimator 0 = global position, 1 = GPS</long_desc>
@@ -3578,6 +3719,14 @@
       <max>1.0</max>
       <unit>normalized_thrust/s</unit>
       <decimal>4</decimal>
+    </parameter>
+    <parameter name="HTE_THR_RANGE" default="0.2" type="FLOAT">
+      <short_desc>Max deviation from MPC_THR_HOVER</short_desc>
+      <long_desc>Defines the range of the hover thrust estimate around MPC_THR_HOVER. A value of 0.2 with MPC_THR_HOVER at 0.5 results in a range of [0.3, 0.7]. Set to a large value if the vehicle operates in varying physical conditions that affect the required hover thrust strongly (e.g. differently sized payloads).</long_desc>
+      <min>0.01</min>
+      <max>0.4</max>
+      <unit>normalized_thrust</unit>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="HTE_VXY_THR" default="10.0" type="FLOAT">
       <short_desc>Horizontal velocity threshold for sensitivity reduction</short_desc>
@@ -4129,39 +4278,29 @@
       <max>250</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="MAV_TYPE" default="2" type="INT32">
+    <parameter name="MAV_TYPE" default="0" type="INT32">
       <short_desc>MAVLink airframe type</short_desc>
-      <min>1</min>
-      <max>27</max>
+      <min>0</min>
+      <max>22</max>
       <values>
         <value code="0">Generic micro air vehicle</value>
         <value code="1">Fixed wing aircraft</value>
         <value code="2">Quadrotor</value>
         <value code="3">Coaxial helicopter</value>
         <value code="4">Normal helicopter with tail rotor</value>
-        <value code="5">Ground installation</value>
-        <value code="6">Operator control unit / ground control station</value>
         <value code="7">Airship, controlled</value>
         <value code="8">Free balloon, uncontrolled</value>
-        <value code="9">Rocket</value>
         <value code="10">Ground rover</value>
         <value code="11">Surface vessel, boat, ship</value>
         <value code="12">Submarine</value>
         <value code="13">Hexarotor</value>
         <value code="14">Octorotor</value>
         <value code="15">Tricopter</value>
-        <value code="16">Flapping wing</value>
-        <value code="17">Kite</value>
-        <value code="18">Onboard companion controller</value>
-        <value code="19">Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.</value>
-        <value code="20">Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.</value>
-        <value code="21">Tiltrotor VTOL</value>
-        <value code="22">VTOL reserved 2</value>
-        <value code="23">VTOL reserved 3</value>
-        <value code="24">VTOL reserved 4</value>
-        <value code="25">VTOL reserved 5</value>
-        <value code="26">Onboard gimbal</value>
-        <value code="27">Onboard ADSB peripheral</value>
+        <value code="19">VTOL Two-rotor Tailsitter</value>
+        <value code="20">VTOL Quad-rotor Tailsitter</value>
+        <value code="21">VTOL Tiltrotor</value>
+        <value code="22">VTOL Standard (separate fixed rotors for hover and cruise flight)</value>
+        <value code="23">VTOL Tailsitter</value>
       </values>
     </parameter>
     <parameter name="MAV_USEHILGPS" default="0" type="INT32" boolean="true">
@@ -4317,7 +4456,7 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="NAV_LOITER_RAD" default="50.0" type="FLOAT">
+    <parameter name="NAV_LOITER_RAD" default="80.0" type="FLOAT">
       <short_desc>Loiter radius (FW only)</short_desc>
       <long_desc>Default value of loiter radius for missions, Hold mode, Return mode, etc. (fixedwing only).</long_desc>
       <min>25</min>
@@ -4390,6 +4529,20 @@
         <value code="1">Stabilize all axis</value>
         <value code="2">Stabilize yaw for absolute/lock mode.</value>
       </values>
+    </parameter>
+    <parameter name="MNT_LND_P_MAX" default="90.0" type="FLOAT">
+      <short_desc>Pitch maximum when landed</short_desc>
+      <min>-90.0</min>
+      <max>90.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="MNT_LND_P_MIN" default="-90.0" type="FLOAT">
+      <short_desc>Pitch minimum when landed</short_desc>
+      <min>-90.0</min>
+      <max>90.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_MAN_PITCH" default="0" type="INT32">
       <short_desc>Auxiliary channel to control pitch (in AUX input or manual mode)</short_desc>
@@ -4486,36 +4639,42 @@
       <short_desc>Offset for pitch channel output in degrees</short_desc>
       <min>-360.0</min>
       <max>360.0</max>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_OFF_ROLL" default="0.0" type="FLOAT">
       <short_desc>Offset for roll channel output in degrees</short_desc>
       <min>-360.0</min>
       <max>360.0</max>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_OFF_YAW" default="0.0" type="FLOAT">
       <short_desc>Offset for yaw channel output in degrees</short_desc>
       <min>-360.0</min>
       <max>360.0</max>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_RANGE_PITCH" default="90.0" type="FLOAT">
       <short_desc>Range of pitch channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_RANGE_ROLL" default="90.0" type="FLOAT">
       <short_desc>Range of roll channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_RANGE_YAW" default="360.0" type="FLOAT">
       <short_desc>Range of yaw channel output in degrees (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
+      <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MNT_RATE_PITCH" default="30.0" type="FLOAT">
@@ -4523,12 +4682,14 @@
       <long_desc>Full stick input [-1..1] translats to [-pitch rate..pitch rate].</long_desc>
       <min>1.0</min>
       <max>90.0</max>
+      <unit>deg/s</unit>
     </parameter>
     <parameter name="MNT_RATE_YAW" default="30.0" type="FLOAT">
       <short_desc>Angular yaw rate for manual input in degrees/second</short_desc>
       <long_desc>Full stick input [-1..1] translats to [-yaw rate..yaw rate].</long_desc>
       <min>1.0</min>
       <max>90.0</max>
+      <unit>deg/s</unit>
     </parameter>
     <parameter name="MNT_RC_IN_MODE" default="1" type="INT32">
       <short_desc>Input mode for RC gimbal input</short_desc>
@@ -6990,7 +7151,7 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="RTL_LOITER_RAD" default="50.0" type="FLOAT">
+    <parameter name="RTL_LOITER_RAD" default="80.0" type="FLOAT">
       <short_desc>Loiter radius for rtl descend</short_desc>
       <long_desc>Set the radius for loitering to a safe altitude for VTOL transition.</long_desc>
       <min>25</min>
@@ -7486,6 +7647,11 @@
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter name="ADC_ADS1115_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Enable external ADS1115 ADC</short_desc>
+      <long_desc>If enabled, the internal ADC is not used.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="BAT1_C_MULT" default="1.0" type="FLOAT">
       <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
       <decimal>1</decimal>
@@ -7639,17 +7805,33 @@
       <min>1</min>
       <max>30</max>
     </parameter>
-    <parameter name="IMU_GYRO_NF_BW" default="20.0" type="FLOAT">
+    <parameter name="IMU_GYRO_NF0_BW" default="20.0" type="FLOAT">
       <short_desc>Notch filter bandwidth for gyro</short_desc>
-      <long_desc>The frequency width of the stop band for the 2nd order notch filter on the primary gyro. See "IMU_GYRO_NF_FREQ" to activate the filter and to set the notch frequency. Applies to both angular velocity and angular acceleration sent to the controllers.</long_desc>
+      <long_desc>The frequency width of the stop band for the 2nd order notch filter on the primary gyro. See "IMU_GYRO_NF0_FRQ" to activate the filter and to set the notch frequency. Applies to both angular velocity and angular acceleration sent to the controllers.</long_desc>
       <min>0</min>
       <max>100</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_NF_FREQ" default="0.0" type="FLOAT">
+    <parameter name="IMU_GYRO_NF0_FRQ" default="0.0" type="FLOAT">
       <short_desc>Notch filter frequency for gyro</short_desc>
-      <long_desc>The center frequency for the 2nd order notch filter on the primary gyro. This filter can be enabled to avoid feedback amplification of structural resonances at a specific frequency. This only affects the signal sent to the controllers, not the estimators. Applies to both angular velocity and angular acceleration sent to the controllers. See "IMU_GYRO_NF_BW" to set the bandwidth of the filter. A value of 0 disables the filter.</long_desc>
+      <long_desc>The center frequency for the 2nd order notch filter on the primary gyro. This filter can be enabled to avoid feedback amplification of structural resonances at a specific frequency. This only affects the signal sent to the controllers, not the estimators. Applies to both angular velocity and angular acceleration sent to the controllers. See "IMU_GYRO_NF0_BW" to set the bandwidth of the filter. A value of 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="IMU_GYRO_NF1_BW" default="20.0" type="FLOAT">
+      <short_desc>Notch filter 1 bandwidth for gyro</short_desc>
+      <long_desc>The frequency width of the stop band for the 2nd order notch filter on the primary gyro. See "IMU_GYRO_NF1_FRQ" to activate the filter and to set the notch frequency. Applies to both angular velocity and angular acceleration sent to the controllers.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="IMU_GYRO_NF1_FRQ" default="0.0" type="FLOAT">
+      <short_desc>Notch filter 2 frequency for gyro</short_desc>
+      <long_desc>The center frequency for the 2nd order notch filter on the primary gyro. This filter can be enabled to avoid feedback amplification of structural resonances at a specific frequency. This only affects the signal sent to the controllers, not the estimators. Applies to both angular velocity and angular acceleration sent to the controllers. See "IMU_GYRO_NF1_BW" to set the bandwidth of the filter. A value of 0 disables the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
       <unit>Hz</unit>
@@ -7741,14 +7923,6 @@
       <decimal>10</decimal>
       <increment>.000000001</increment>
     </parameter>
-    <parameter name="PCF8583_ADDR" default="80" type="INT32">
-      <short_desc>PCF8583 rotorfreq (i2c) i2c address</short_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="80">Address 0x50 (80)</value>
-        <value code="81">Address 0x51 (81)</value>
-      </values>
-    </parameter>
     <parameter name="PCF8583_MAGNET" default="2" type="INT32">
       <short_desc>PCF8583 rotorfreq (i2c) pulse count</short_desc>
       <long_desc>Nmumber of signals per rotation of actuator</long_desc>
@@ -7771,7 +7945,6 @@
       <min>500</min>
       <max>1500</max>
       <unit>hPa</unit>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_BARO_RATE" default="20.0" type="FLOAT">
       <short_desc>Baro max rate</short_desc>
@@ -7779,7 +7952,6 @@
       <min>1</min>
       <max>200</max>
       <unit>Hz</unit>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_BOARD_ROT" default="0" type="INT32">
       <short_desc>Board rotation</short_desc>
@@ -7879,6 +8051,10 @@
       <long_desc>For systems a INA238 Power Monitor, this should be set to true</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_IRLOCK" default="0" type="INT32" boolean="true">
+      <short_desc>IR-LOCK Sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_LL40LS" default="0" type="INT32">
       <short_desc>Lidar-Lite (LL40LS)</short_desc>
       <min>0</min>
@@ -7904,17 +8080,36 @@
         <value code="1">Autodetect</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_MS4525" default="0" type="INT32" boolean="true">
-      <short_desc>TE MS4525 differential pressure sensor (external I2C)</short_desc>
+    <parameter name="SENS_EN_MS4515" default="0" type="INT32" boolean="true">
+      <short_desc>TE MS4515 differential pressure sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_EN_MS5525" default="0" type="INT32" boolean="true">
-      <short_desc>TE MS5525 differential pressure sensor (external I2C)</short_desc>
+    <parameter name="SENS_EN_MS4525DO" default="0" type="INT32" boolean="true">
+      <short_desc>TE MS4525DO differential pressure sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_MS5525DS" default="0" type="INT32" boolean="true">
+      <short_desc>TE MS5525DSO differential pressure sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_PAA3905" default="0" type="INT32" boolean="true">
+      <short_desc>paa3905 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_PAW3902" default="0" type="INT32" boolean="true">
       <short_desc>PAW3902 &amp; PAW3903 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_PCF8583" default="0" type="INT32">
+      <short_desc>PCF8583 eneable driver</short_desc>
+      <long_desc>Run PCF8583 driver automatically</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Eneabled</value>
+      </values>
     </parameter>
     <parameter name="SENS_EN_PGA460" default="0" type="INT32" boolean="true">
       <short_desc>PGA460 Ultrasonic driver (PGA460)</short_desc>
@@ -7963,6 +8158,10 @@
     </parameter>
     <parameter name="SENS_EN_SHT3X" default="0" type="INT32" boolean="true">
       <short_desc>SHT3x temperature and hygrometer</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_SPL06" default="0" type="INT32" boolean="true">
+      <short_desc>Goertek SPL06 Barometer (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_SR05" default="0" type="INT32" boolean="true">
@@ -8761,6 +8960,7 @@
     </parameter>
     <parameter name="SIM_BARO_OFF_T" default="0.0" type="FLOAT">
       <short_desc>simulated barometer temperature offset</short_desc>
+      <unit>celcius</unit>
     </parameter>
     <parameter name="SIM_GPS_USED" default="10" type="INT32">
       <short_desc>simulated GPS number of satellites used</short_desc>
@@ -8870,6 +9070,13 @@
     <parameter name="SYS_HAS_MAG" default="1" type="INT32" boolean="true">
       <short_desc>Control if the vehicle has a magnetometer</short_desc>
       <long_desc>Disable this if the board has no magnetometer, such as the Omnibus F4 SD. If disabled, the preflight checks will not check for the presence of a magnetometer.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SYS_HAS_NUM_DIST" default="0" type="INT32">
+      <short_desc>Control the number of distance sensors on the vehicle</short_desc>
+      <long_desc>If set to the number of distance sensors, the preflight check will check for their presence and valid data publication. Disable with 0 if no distance sensor present or to disbale the preflight check.</long_desc>
+      <min>0</min>
+      <max>4</max>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SYS_HITL" default="0" type="INT32">
@@ -9635,6 +9842,11 @@
       <long_desc>Enable UAVCAN battery subscription. uavcan::equipment::power::BatteryInfo ardupilot::equipment::power::BatteryInfoAux</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_SUB_BTN" default="0" type="INT32" boolean="true">
+      <short_desc>subscription button</short_desc>
+      <long_desc>Enable UAVCAN button subscription. ardupilot::indication::Button</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="UAVCAN_SUB_DPRES" default="0" type="INT32" boolean="true">
       <short_desc>subscription differential pressure</short_desc>
       <long_desc>Enable UAVCAN differential pressure subscription. uavcan::equipment::air_data::RawAirData</long_desc>
@@ -9667,100 +9879,12 @@
     </parameter>
     <parameter name="UAVCAN_SUB_MAG" default="1" type="INT32" boolean="true">
       <short_desc>subscription magnetometer</short_desc>
-      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::ahrs::MagneticFieldStrength uavcan::equipment::ahrs::MagneticFieldStrength2</long_desc>
+      <long_desc>Enable UAVCAN mag subscription. uavcan::equipment::ahrs::MagneticFieldStrength uavcan::equipment::ahrs::MagneticFieldStrength2</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_SUB_RNG" default="0" type="INT32" boolean="true">
       <short_desc>subscription range finder</short_desc>
-      <long_desc>Enable UAVCAN GPS subscription. uavcan::equipment::range_sensor::Measurement</long_desc>
-      <reboot_required>true</reboot_required>
-    </parameter>
-  </group>
-  <group name="UAVCAN v1">
-    <parameter name="UAVCAN_V1_BAUD" default="1000000" type="INT32">
-      <short_desc>UAVCAN/CAN v1 bus bitrate</short_desc>
-      <min>20000</min>
-      <max>1000000</max>
-      <unit>bit/s</unit>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="UAVCAN_V1_ENABLE" default="0" type="INT32" boolean="true">
-      <short_desc>UAVCAN v1</short_desc>
-      <long_desc>0 - UAVCAN disabled. 1 - Enables UAVCANv1</long_desc>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="UCAN1_ACTR_PUB" default="-1" type="INT32">
-      <short_desc>actuator_outputs uORB over UAVCAN v1 publication port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_BMS_BP_SUB" default="-1" type="INT32">
-      <short_desc>DS-015 battery parameters subscription  port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_BMS_BS_SUB" default="-1" type="INT32">
-      <short_desc>DS-015 battery status subscription port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_BMS_ES_SUB" default="-1" type="INT32">
-      <short_desc>DS-015 battery energy source subscription port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_ESC0_SUB" default="-1" type="INT32">
-      <short_desc>ESC 0 subscription port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_ESC_PUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 ESC publication port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_GPS0_SUB" default="-1" type="INT32">
-      <short_desc>GPS 0 subscription port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_GPS1_SUB" default="-1" type="INT32">
-      <short_desc>GPS 1 subscription port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_GPS_PUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 GPS publication port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_LG_BMS_SUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 leagcy battery port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_SERVO_PUB" default="-1" type="INT32">
-      <short_desc>UAVCAN v1 Servo publication port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_UORB_GPS" default="-1" type="INT32">
-      <short_desc>sensor_gps uORB over UAVCAN v1 subscription port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-    <parameter name="UCAN1_UORB_GPS_P" default="-1" type="INT32">
-      <short_desc>sensor_gps uORB over UAVCAN v1 publication port ID</short_desc>
-      <min>-1</min>
-      <max>6143</max>
-    </parameter>
-  </group>
-  <group name="UAVCANv1">
-    <parameter name="UAVCAN_V1_ID" default="1" type="INT32">
-      <short_desc>UAVCAN v1 Node ID</short_desc>
-      <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
-      <min>-1</min>
-      <max>125</max>
+      <long_desc>Enable UAVCAN range finder subscription. uavcan::equipment::range_sensor::Measurement</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
@@ -10055,6 +10179,14 @@
       <min>-10.0</min>
       <max>45.0</max>
     </parameter>
+    <parameter name="VT_SPOILER_MC_LD" default="0." type="FLOAT">
+      <short_desc>Spoiler setting while landing (hover)</short_desc>
+      <min>-1</min>
+      <max>1</max>
+      <unit>norm</unit>
+      <decimal>1</decimal>
+      <increment>0.05</increment>
+    </parameter>
     <parameter name="VT_TILT_FW" default="1.0" type="FLOAT">
       <short_desc>Position of tilt servo in fw mode</short_desc>
       <min>0.0</min>
@@ -10129,6 +10261,17 @@
       <unit>Hz</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
+    </parameter>
+  </group>
+  <group name="VTOL Takeoff">
+    <parameter name="VTO_LOITER_ALT" default="80" type="FLOAT">
+      <short_desc>VTOL Takeoff relative loiter altitude</short_desc>
+      <long_desc>Altitude relative to home at which vehicle will loiter after front transition.</long_desc>
+      <min>20</min>
+      <max>300</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="Vehicle Model">

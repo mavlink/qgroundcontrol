@@ -49,51 +49,30 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    Column {
+    ColumnLayout {
         id:                 editorColumn
         anchors.margins:    _margin
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
 
-        ColumnLayout {
-            id:             wizardColumn
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        _margin
-            visible:        !missionItem.structurePolygon.isValid || missionItem.wizardMode
-
-            QGCLabel {
+        QGCLabel {
+                id:                 wizardLabel
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
                 text:               qsTr("Use the Polygon Tools to create the polygon which outlines the structure.")
+                visible:        !missionItem.structurePolygon.isValid || missionItem.wizardMode
             }
 
-            /*
-              Trial of new "done" model so leaving for now in case it comes back
-            QGCButton {
-                text:               qsTr("Done With Polygon")
-                Layout.fillWidth:   true
-                enabled:            missionItem.structurePolygon.isValid && !missionItem.structurePolygon.traceMode
-                onClicked: {
-                    missionItem.wizardMode = false
-                    // Trial of no auto select next item
-                    //editorRoot.selectNextNotReadyItem()
-                }
-            }
-            */
-        }
-
-        Column {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
+        ColumnLayout {
+            Layout.fillWidth:   true
             spacing:        _margin
-            visible:        !wizardColumn.visible
+            visible:        !wizardLabel.visible
 
             QGCTabBar {
                 id:             tabBar
-                anchors.left:   parent.left
-                anchors.right:  parent.right
+                Layout.fillWidth:   true
 
                 Component.onCompleted: currentIndex = 0
 
@@ -101,23 +80,20 @@ Rectangle {
                 QGCTabButton { text: qsTr("Camera") }
             }
 
-            Column {
-                anchors.left:       parent.left
-                anchors.right:      parent.right
+            ColumnLayout {
+                Layout.fillWidth:   true
                 spacing:            _margin
                 visible:            tabBar.currentIndex == 0
 
                 QGCLabel {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
+                    Layout.fillWidth:   true
                     text:           qsTr("Note: Polygon respresents structure surface not vehicle flight path.")
                     wrapMode:       Text.WordWrap
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
 
                 QGCLabel {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
+                    Layout.fillWidth:   true
                     text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
                     wrapMode:       Text.WordWrap
                     color:          qgcPal.warningText
@@ -125,6 +101,7 @@ Rectangle {
                 }
 
                 CameraCalcGrid {
+                    Layout.fillWidth:   true
                     cameraCalc:                     missionItem.cameraCalc
                     vehicleFlightIsFrontal:         false
                     distanceToSurfaceLabel:         qsTr("Scan Distance")
@@ -134,20 +111,17 @@ Rectangle {
 
                 SectionHeader {
                     id:             scanHeader
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
+                    Layout.fillWidth:   true
                     text:           qsTr("Scan")
                 }
 
-                Column {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
+                ColumnLayout {
+                    Layout.fillWidth:   true
                     spacing:        _margin
                     visible:        scanHeader.checked
 
                     GridLayout {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
+                        Layout.fillWidth:   true
                         columnSpacing:  _margin
                         rowSpacing:     _margin
                         columns:        2
@@ -206,8 +180,7 @@ Rectangle {
 
                 SectionHeader {
                     id:             statsHeader
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
+                    Layout.fillWidth:   true
                     text:           qsTr("Statistics")
                 }
 
@@ -239,13 +212,13 @@ Rectangle {
                 }
             } // Grid Column
 
-            Column {
-                anchors.left:       parent.left
-                anchors.right:      parent.right
+            ColumnLayout {
+                Layout.fillWidth:   true
                 spacing:            _margin
                 visible:            tabBar.currentIndex == 1
 
                 CameraCalcCamera {
+                    Layout.fillWidth:   true
                     cameraCalc: missionItem.cameraCalc
                 }
             }

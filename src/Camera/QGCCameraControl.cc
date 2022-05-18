@@ -726,6 +726,10 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 qCDebug(CameraControlLog) << "Command failed for" << command;
             }
             switch(command) {
+                case MAV_CMD_RESET_CAMERA_SETTINGS:
+                    _resetting = false;
+                    qCDebug(CameraControlLog) << "Failed to reset camera settings";
+                break;
                 case MAV_CMD_IMAGE_START_CAPTURE:
                 case MAV_CMD_IMAGE_STOP_CAPTURE:
                     if(++_captureInfoRetries < 3) {

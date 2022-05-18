@@ -49,7 +49,7 @@ find "${SEARCHDIR}" \
 while IFS='' read -r library; do
 
     # readelf is expensive, so keep track of updates with a timestamp file
-    if [ ! -e "$library.stamp" -o "$library" -nt "$library.stamp" ]; then
+    if [ ! -e "$library.stamp" ] || [ "$library" -nt "$library.stamp" ]; then
 
         # Get the library's current RPATH (RUNPATH)
         # Example output of `readelf -d ./build/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-Debug/staging/QGroundControl`:

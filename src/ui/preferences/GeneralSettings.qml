@@ -181,6 +181,13 @@ Rectangle {
                                 property Fact _showDumbCameraControl: QGroundControl.settingsManager.flyViewSettings.showSimpleCameraControl
                             }
 
+                            FactCheckBox {
+                                text:       qsTr("Update Home Position")
+                                fact:       _updateHomePosition
+                                visible:    _updateHomePosition.visible
+                                property Fact _updateHomePosition: QGroundControl.settingsManager.flyViewSettings.updateHomePosition
+                            }
+
                             GridLayout {
                                 columns: 2
 
@@ -1023,7 +1030,7 @@ Rectangle {
                             FactTextField {
                                 fact:                   adsbGrid.adsbSettings.adsbServerHostAddress
                                 visible:                adsbGrid.adsbSettings.adsbServerHostAddress.visible
-                                Layout.preferredWidth:  _valueFieldWidth
+                                Layout.fillWidth:       true
                             }
 
                             QGCLabel {

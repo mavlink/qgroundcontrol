@@ -280,7 +280,7 @@
     "name":         "qLocaleLanguage",
     "shortDesc":    "Language",
     "type":         "uint32",
-    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
+    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
     "enumValues":   "0,12,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125",
     "comment":      "enumValues uses Qt QLocale::Language values",
     "default":      0

@@ -8,7 +8,6 @@ add_custom_target(PX4AutoPilotPluginQml
 		FlightModesComponentSummary.qml
 		PowerComponent.qml
 		PowerComponentSummary.qml
-		PX4AdvancedFlightModes.qml
 		PX4FlightModes.qml
 		PX4RadioComponentSummary.qml
 		PX4SimpleFlightModes.qml

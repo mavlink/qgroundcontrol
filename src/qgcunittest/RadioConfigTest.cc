@@ -365,16 +365,6 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
         for (int channel=0; channel<_chanMax(); channel++) {
             if (_channelSettings()[channel].function == function) {
                 
-                if (_px4Vehicle()) {
-                    // Make sure this function isn't being use for a switch
-                    QStringList switchList;
-                    switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
-
-                    for (const QString &switchParam: switchList) {
-                        Q_ASSERT(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
-                    }
-                }
-                
                 _rgFunctionChannelMap[function] = channel;
                 found = true;
                 

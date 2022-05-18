@@ -42,14 +42,21 @@ bool PowerComponent::requiresSetup(void) const
 
 bool PowerComponent::setupComplete(void) const
 {
-    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT_V_CHARGED")->rawValue().toFloat() != 0.0f &&
-        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT_V_EMPTY")->rawValue().toFloat() != 0.0f &&
-        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT_N_CELLS")->rawValue().toInt() != 0;
+    if (!_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_SOURCE") ||
+        !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_V_CHARGED") ||
+        !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_V_EMPTY") ||
+        !_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "BAT1_N_CELLS")) {
+        return true;
+    }
+    return _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_SOURCE")->rawValue().toInt() == -1 ||
+        (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_V_CHARGED")->rawValue().toFloat() != 0.0f &&
+        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_V_EMPTY")->rawValue().toFloat() != 0.0f &&
+        _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "BAT1_N_CELLS")->rawValue().toInt() != 0);
 }
 
 QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
 {
-    return {"BAT_V_CHARGED", "BAT_V_EMPTY", "BAT_N_CELLS"};
+    return {"BAT1_SOURCE", "BAT1_V_CHARGED", "BAT1_V_EMPTY", "BAT1_N_CELLS"};
 }
 
 QUrl PowerComponent::setupSource(void) const
