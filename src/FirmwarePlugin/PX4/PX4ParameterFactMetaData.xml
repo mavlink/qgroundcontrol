@@ -991,7 +991,7 @@
         <value code="1">Allow arming without GPS</value>
       </values>
     </parameter>
-    <parameter name="COM_BAT_ACT_T" default="10.0" type="FLOAT">
+    <parameter name="COM_BAT_ACT_T" default="5." type="FLOAT">
       <short_desc>Delay between battery state change and failsafe reaction</short_desc>
       <long_desc>Battery state requires action -&gt; wait COM_BAT_ACT_T seconds in Hold mode for the user to realize and take a custom action -&gt; React with failsafe action COM_LOW_BAT_ACT A zero value disables the delay.</long_desc>
       <min>0.0</min>
