@@ -21,7 +21,7 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
 AnalyzePage {
-    id:                 geoTagPage
+    id:                 vibrationPage
     pageComponent:      pageComponent
     pageDescription:    qsTr("Analyze vibration associated with your vehicle.")
     allowPopout:        true
