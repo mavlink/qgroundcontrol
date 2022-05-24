@@ -647,7 +647,7 @@
     <parameter name="BAT_V_CHARGED" default="4.05" type="FLOAT" category="System">
       <short_desc>This parameter is deprecated. Please use BAT1_V_CHARGED instead</short_desc>
     </parameter>
-    <parameter name="BAT_V_EMPTY" default="3.5" type="FLOAT" category="System">
+    <parameter name="BAT_V_EMPTY" default="3.6" type="FLOAT" category="System">
       <short_desc>This parameter is deprecated. Please use BAT1_V_EMPTY instead</short_desc>
     </parameter>
     <parameter name="BAT_V_LOAD_DROP" default="0.3" type="FLOAT" category="System">
