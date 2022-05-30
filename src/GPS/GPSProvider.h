@@ -33,7 +33,11 @@ public:
     enum class GPSType {
         u_blox,
         trimble,
-        septentrio
+        septentrio,
+        nmea,
+        femtomes,
+        emlid_reach,
+        mtk
     };
 
     GPSProvider(const QString& device,
@@ -57,6 +61,7 @@ public:
 signals:
     void positionUpdate(GPSPositionMessage message);
     void satelliteInfoUpdate(GPSSatelliteMessage message);
+    void relativeUpdate(GPSRelativeMessage message);
     void RTCMDataUpdate(QByteArray message);
     void surveyInStatus(float duration, float accuracyMM, double latitude, double longitude, float altitude, bool valid, bool active);
 
@@ -66,6 +71,7 @@ protected:
 private:
     void publishGPSPosition();
     void publishGPSSatellite();
+    void publishGPSRelative(sensor_gnss_relative_s *reportRelative, int size);
 
 	/**
 	 * callback from the driver for the platform specific stuff
@@ -79,7 +85,7 @@ private:
     const std::atomic_bool& _requestStop;
     double  _surveyInAccMeters;
     int     _surveryInDurationSecs;
-    bool    _useFixedBaseLoction;
+    bool    _useFixedBaseLocation;
     double  _fixedBaseLatitude;
     double  _fixedBaseLongitude;
     float   _fixedBaseAltitudeMeters;

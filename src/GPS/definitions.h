@@ -47,8 +47,9 @@
 #define GPS_WARN(...) qWarning(__VA_ARGS__)
 #define GPS_ERR(...) qCritical(__VA_ARGS__)
 
-#include "vehicle_gps_position.h"
+#include "sensor_gps_position.h"
 #include "satellite_info.h"
+#include "sensor_gnss_relative.h"
 
 #define M_DEG_TO_RAD 		(M_PI / 180.0)
 #define M_RAD_TO_DEG 		(180.0 / M_PI)

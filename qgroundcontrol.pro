@@ -801,13 +801,18 @@ HEADERS += \
     src/GPS/Drivers/src/ashtech.h \
     src/GPS/Drivers/src/ubx.h \
     src/GPS/Drivers/src/sbf.h \
+    src/GPS/Drivers/src/emlid_reach.h \
+    src/GPS/Drivers/src/femtomes.h \
+    src/GPS/Drivers/src/mtk.h \
+    src/GPS/Drivers/src/nmea.h \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
     src/GPS/RTCM/RTCMMavlink.h \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
-    src/GPS/vehicle_gps_position.h \
+    src/GPS/sensor_gps_position.h \
+    src/GPS/sensor_gnss_relative.h \
     src/Joystick/JoystickSDL.h \
     src/RunGuard.h \
 }
@@ -1040,6 +1045,10 @@ SOURCES += \
     src/GPS/Drivers/src/ashtech.cpp \
     src/GPS/Drivers/src/ubx.cpp \
     src/GPS/Drivers/src/sbf.cpp \
+    src/GPS/Drivers/src/emlid_reach.cpp \
+    src/GPS/Drivers/src/femtomes.cpp \
+    src/GPS/Drivers/src/mtk.cpp \
+    src/GPS/Drivers/src/nmea.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
     src/GPS/RTCM/RTCMMavlink.cc \

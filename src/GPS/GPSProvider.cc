@@ -15,13 +15,17 @@
 
 #define GPS_RECEIVE_TIMEOUT 1200
 
-#include <QDebug>
+// #include <QDebug>
 
-#include "Drivers/src/ubx.h"
-#include "Drivers/src/sbf.h"
 #include "Drivers/src/ashtech.h"
 #include "Drivers/src/base_station.h"
-#include "definitions.h"
+#include "Drivers/src/emlid_reach.h"
+#include "Drivers/src/femtomes.h"
+#include "Drivers/src/mtk.h"
+#include "Drivers/src/nmea.h"
+#include "Drivers/src/sbf.h"
+#include "Drivers/src/ubx.h"
+
 
 //#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
                                //additionally make sure to call connectGPS(""), eg. from QGCToolbox.cc
@@ -70,7 +74,7 @@ void GPSProvider::run()
     _serial->setFlowControl(QSerialPort::NoFlowControl);
 
     unsigned int baudrate;
-    GPSBaseStationSupport* gpsDriver = nullptr;
+    GPSHelper* gpsDriver = nullptr;
 
     while (!_requestStop) {
 
@@ -79,54 +83,63 @@ void GPSProvider::run()
             gpsDriver = nullptr;
         }
 
-        if (_type == GPSType::trimble) {
-            gpsDriver = new GPSDriverAshtech(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
-            baudrate = 115200;
-        } else if (_type == GPSType::septentrio) {
-            gpsDriver = new GPSDriverSBF(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo, 5);
-            baudrate = 0; // auto-configure
-        } else {
-            gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
-            baudrate = 0; // auto-configure
-        }
-        gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000.0f, _surveryInDurationSecs);
-
-        if (_useFixedBaseLoction) {
-            gpsDriver->setBasePosition(_fixedBaseLatitude, _fixedBaseLongitude, _fixedBaseAltitudeMeters, _fixedBaseAccuracyMeters * 1000.0f);
-        }
-
-        _gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;
-        if (gpsDriver->configure(baudrate, _gpsConfig) == 0) {
-
-            /* reset report */
-            memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));
-
-            //In rare cases it can happen that we get an error from the driver (eg. checksum failure) due to
-            //bus errors or buggy firmware. In this case we want to try multiple times before giving up.
-            int numTries = 0;
-
-            while (!_requestStop && numTries < 3) {
-                int helperRet = gpsDriver->receive(GPS_RECEIVE_TIMEOUT);
-
-                if (helperRet > 0) {
-                    numTries = 0;
-
-                    if (helperRet & 1) {
-                        publishGPSPosition();
-                        numTries = 0;
-                    }
-
-                    if (_pReportSatInfo && (helperRet & 2)) {
-                        publishGPSSatellite();
-                        numTries = 0;
-                    }
-                } else {
-                    ++numTries;
-                }
-            }
-            if (_serial->error() != QSerialPort::NoError && _serial->error() != QSerialPort::TimeoutError) {
+        switch(_type)
+        {
+            case GPSType::trimble:
+                gpsDriver = new GPSDriverAshtech(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+                baudrate = 115200;
                 break;
-            }
+            case GPSType::septentrio:
+                gpsDriver = new GPSDriverSBF(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo, 5);
+                baudrate = 0; // auto-configure
+                break;
+            case GPSType::u_blox:
+                gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+                baudrate = 0; // auto-configure
+                break;
+            case GPSType::nmea:
+                gpsDriver = new GPSDriverNMEA(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo, 5);
+                baudrate = 0; // auto-configure
+                break;
+            case GPSType::mtk:
+                gpsDriver = new GPSDriverMTK(&callbackEntry, this, &_reportGpsPos);
+                baudrate = 38400;
+                break;
+            case GPSType::femtomes:
+                gpsDriver = new GPSDriverFemto(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo, 5);
+                baudrate = 115200;
+                break;
+            case GPSType::emlid_reach:
+                gpsDriver = new GPSDriverEmlidReach(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+                baudrate = 0; // auto-configure
+                break;
+            default:
+                qCDebug(RTKGPSLog) << "Invalid GPS type";
+                return;
+        }
+        if(gpsDriver != nullptr && (_type == GPSType::trimble || _type == GPSType::septentrio || _type == GPSType::femtomes || _type == GPSType::u_blox))
+        {
+            static_cast<GPSBaseStationSupport*>(gpsDriver)->setSurveyInSpecs(_surveyInAccMeters * 10000.0f, _surveryInDurationSecs);
+            if (_useFixedBaseLocation) static_cast<GPSBaseStationSupport*>(gpsDriver)->setBasePosition(_fixedBaseLatitude, _fixedBaseLongitude, _fixedBaseAltitudeMeters, _fixedBaseAccuracyMeters * 1000.0f);
+            _gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;
+        }
+        else if(gpsDriver != nullptr && (_type == GPSType::emlid_reach || _type == GPSType::mtk || _type == GPSType::nmea))
+        {
+            _gpsConfig.output_mode = GPSHelper::OutputMode::GPS;
+        }
+        else
+        {
+            qCDebug(RTKGPSLog) << "Failed to create GPS driver";
+            return;
+        }
+        
+        if (gpsDriver->configure(baudrate, _gpsConfig) == 0) 
+        {
+            memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));
+            int helperRet = gpsDriver->receive(GPS_RECEIVE_TIMEOUT);
+            if(helperRet == 1) publishGPSPosition();
+            else if ((helperRet == 2) && _pReportSatInfo) publishGPSSatellite();
+            if (_serial->error() != QSerialPort::NoError && _serial->error() != QSerialPort::TimeoutError) break;
         }
     }
     qCDebug(RTKGPSLog) << "Exiting GPS thread";
@@ -148,7 +161,7 @@ GPSProvider::GPSProvider(const QString& device,
     , _requestStop              (requestStop)
     , _surveyInAccMeters        (surveyInAccMeters)
     , _surveryInDurationSecs    (surveryInDurationSecs)
-    , _useFixedBaseLoction      (useFixedBaseLocation)
+    , _useFixedBaseLocation     (useFixedBaseLocation)
     , _fixedBaseLatitude        (fixedBaseLatitude)
     , _fixedBaseLongitude       (fixedBaseLongitude)
     , _fixedBaseAltitudeMeters  (fixedBaseAltitudeMeters)
@@ -178,6 +191,13 @@ void GPSProvider::publishGPSSatellite()
     emit satelliteInfoUpdate(msg);
 }
 
+void GPSProvider::publishGPSRelative(sensor_gnss_relative_s *reportRelative, int /* size */)
+{
+    GPSRelativeMessage msg;
+    msg.relative_data = *reportRelative;
+    emit relativeUpdate(msg);
+}
+
 void GPSProvider::gotRTCMData(uint8_t* data, size_t len)
 {
     QByteArray message((char*)data, static_cast<int>(len));
@@ -193,28 +213,31 @@ int GPSProvider::callbackEntry(GPSCallbackType type, void *data1, int data2, voi
 int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
 {
     switch (type) {
-        case GPSCallbackType::readDeviceData: {
-            if (_serial->bytesAvailable() == 0) {
+        case GPSCallbackType::readDeviceData: 
+        {
+            if (_serial->bytesAvailable() == 0) 
+            {
                 int timeout = *((int *) data1);
-                if (!_serial->waitForReadyRead(timeout))
-                    return 0; //timeout
+                if (!_serial->waitForReadyRead(timeout)) return 0; //timeout
             }
             return (int)_serial->read((char*) data1, data2);
         }
         case GPSCallbackType::writeDeviceData:
-            if (_serial->write((char*) data1, data2) >= 0) {
-                if (_serial->waitForBytesWritten(-1))
-                    return data2;
+        {
+            if (_serial->write((char*) data1, data2) >= 0) 
+            {
+                if (_serial->waitForBytesWritten(-1)) return data2;
             }
             return -1;
-
+        }
         case GPSCallbackType::setBaudrate:
             return _serial->setBaudRate(data2) ? 0 : -1;
-
         case GPSCallbackType::gotRTCMMessage:
             gotRTCMData((uint8_t*) data1, data2);
             break;
-
+        case GPSCallbackType::gotRelativePositionMessage:
+            if(data1 && data2 == sizeof(sensor_gnss_relative_s)) publishGPSRelative(static_cast<sensor_gnss_relative_s *>(data1), data2);
+            break;    
         case GPSCallbackType::surveyInStatus:
         {
             SurveyInStatus* status = (SurveyInStatus*)data1;
@@ -224,7 +247,6 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
             emit surveyInStatus(status->duration, status->mean_accuracy, status->latitude, status->longitude, status->altitude, (int)(status->flags & 1), (int)((status->flags>>1) & 1));
         }
             break;
-
         case GPSCallbackType::setClock:
             /* do nothing */
             break;

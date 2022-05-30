@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "vehicle_gps_position.h"
+#include "sensor_gps_position.h"
 #include "satellite_info.h"
+#include "sensor_gnss_relative.h"
 #include <QMetaType>
 
 /**
@@ -22,12 +23,16 @@ struct GPSPositionMessage
 {
     sensor_gps_s position_data;
 };
-
 Q_DECLARE_METATYPE(GPSPositionMessage);
-
 
 struct GPSSatelliteMessage
 {
     satellite_info_s satellite_data;
 };
 Q_DECLARE_METATYPE(GPSSatelliteMessage);
+
+struct GPSRelativeMessage
+{
+    sensor_gnss_relative_s relative_data;
+};
+Q_DECLARE_METATYPE(GPSRelativeMessage);

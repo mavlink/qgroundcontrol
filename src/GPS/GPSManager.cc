@@ -19,6 +19,7 @@ GPSManager::GPSManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     qRegisterMetaType<GPSPositionMessage>();
     qRegisterMetaType<GPSSatelliteMessage>();
+    qRegisterMetaType<GPSRelativeMessage>();
 }
 
 GPSManager::~GPSManager()
@@ -37,16 +38,28 @@ void GPSManager::connectGPS(const QString& device, const QString& gps_type)
     } else if (gps_type.contains("septentrio",  Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::septentrio;
         qCDebug(RTKGPSLog) << "Connecting Septentrio device";
-    } else {
+    } else if (gps_type.contains("femtomes", Qt::CaseInsensitive)) {
+        type = GPSProvider::GPSType::femtomes;
+        qCDebug(RTKGPSLog) << "Connecting Femtomes device";
+    } else if (gps_type.contains("emlid_reach", Qt::CaseInsensitive)) {
+        type = GPSProvider::GPSType::emlid_reach;
+        qCDebug(RTKGPSLog) << "Connecting Emlid Reach device";
+    } else if (gps_type.contains("mtk", Qt::CaseInsensitive)) {
+        type = GPSProvider::GPSType::mtk;
+        qCDebug(RTKGPSLog) << "Connecting MTK device";
+    } else if (gps_type.contains("u-blox", Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::u_blox;
         qCDebug(RTKGPSLog) << "Connecting U-blox device";
-    }
+    } else if (gps_type.contains("nmea", Qt::CaseInsensitive)) {
+        type = GPSProvider::GPSType::nmea;
+        qCDebug(RTKGPSLog) << "Connecting NMEA device";
+    } else return;
 
     disconnectGPS();
     _requestGpsStop = false;
     _gpsProvider = new GPSProvider(device,
                                    type,
-                                   true,    /* enableSatInfo */
+                                   (type != GPSProvider::GPSType::mtk),    /* enableSatInfo */
                                    rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
                                    rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
                                    rtkSettings->useFixedBasePosition()->rawValue().toBool(),
@@ -65,6 +78,7 @@ void GPSManager::connectGPS(const QString& device, const QString& gps_type)
     //test: connect to position update
     connect(_gpsProvider, &GPSProvider::positionUpdate,         this, &GPSManager::GPSPositionUpdate);
     connect(_gpsProvider, &GPSProvider::satelliteInfoUpdate,    this, &GPSManager::GPSSatelliteUpdate);
+    connect(_gpsProvider, &GPSProvider::relativeUpdate,         this, &GPSManager::GPSRelativeUpdate);
     connect(_gpsProvider, &GPSProvider::finished,               this, &GPSManager::onDisconnect);
     connect(_gpsProvider, &GPSProvider::surveyInStatus,         this, &GPSManager::surveyInStatus);
 
@@ -93,8 +107,14 @@ void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
 {
     qCDebug(RTKGPSLog) << QString("GPS: got position update: alt=%1, long=%2, lat=%3").arg(msg.position_data.alt).arg(msg.position_data.lon).arg(msg.position_data.lat);
 }
+
 void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
 {
-    qCDebug(RTKGPSLog) << QString("GPS: got satellite info update, %1 satellites").arg((int)msg.satellite_data.count);
+    qCDebug(RTKGPSLog) << QString("GPS: got satellite info update: %1 satellites").arg((int)msg.satellite_data.count);
     emit satelliteUpdate(msg.satellite_data.count);
+}
+
+void GPSManager::GPSRelativeUpdate(GPSRelativeMessage msg)
+{
+    qCDebug(RTKGPSLog) << QString("GPS: got relative info update: %1 device id").arg(msg.relative_data.device_id);
 }

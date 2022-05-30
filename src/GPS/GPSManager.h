@@ -41,6 +41,7 @@ signals:
 private slots:
     void GPSPositionUpdate(GPSPositionMessage msg);
     void GPSSatelliteUpdate(GPSSatelliteMessage msg);
+    void GPSRelativeUpdate(GPSRelativeMessage msg);
 
 private:
     GPSProvider* _gpsProvider = nullptr;
