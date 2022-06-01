@@ -1175,7 +1175,7 @@
     </parameter>
     <parameter name="COM_FORCE_SAFETY" default="0" type="INT32" boolean="true">
       <short_desc>Enable force safety</short_desc>
-      <long_desc>Force safety when the vehicle disarms. Not supported when safety button used over PX4IO board.</long_desc>
+      <long_desc>Force safety when the vehicle disarms</long_desc>
     </parameter>
     <parameter name="COM_HLDL_LOSS_T" default="120" type="INT32">
       <short_desc>High Latency Datalink loss time threshold</short_desc>
