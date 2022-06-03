@@ -95,9 +95,14 @@ Item {
 
     property Fact declinationFact:                  factPanelController.getParameterFact(-1, "COMPASS_DEC")
 
-    property Fact ins1Id:                           factPanelController.getParameterFact(-1, "INS_ACC_ID")
-    property Fact ins2Id:                           factPanelController.getParameterFact(-1, "INS_ACC2_ID")
-    property Fact ins3Id:                           factPanelController.getParameterFact(-1, "INS_ACC3_ID")
+    // Deals with missing parameters in older fw
+    property bool ins1IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC_ID")
+    property bool ins2IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC2_ID")
+    property bool ins3IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC3_ID")
+
+    property Fact ins1Id:                           insIdParamsAvailable ? factPanelController.getParameterFact(-1, "INS_ACC_ID") : _noFact
+    property Fact ins2Id:                           ins2IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC2_ID") : _noFact
+    property Fact ins3Id:                           ins3IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC3_ID") : _noFact
     property var  rgInsId:                          [ ins1Id, ins2Id, ins3Id ]
 
     property bool baroIdAvailable:                  factPanelController.parameterExists(-1, "BARO1_DEVID")
