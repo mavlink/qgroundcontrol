@@ -78,11 +78,13 @@ ApplicationWindow {
     QtObject {
         id: globals
 
-        readonly property var       activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
         readonly property real      defaultTextHeight:              ScreenTools.defaultFontPixelHeight
         readonly property real      defaultTextWidth:               ScreenTools.defaultFontPixelWidth
         readonly property var       planMasterControllerFlyView:    flightView.planController
         readonly property var       guidedControllerFlyView:        flightView.guidedController
+
+        // Active Vehicle instance (connected Flight controller)
+        property var                activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
 
         property var                planMasterControllerPlanView:   null
         property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
@@ -232,7 +234,7 @@ ApplicationWindow {
     }
 
     function checkForActiveConnections() {
-        if (QGroundControl.multiVehicleManager.activeVehicle) {
+        if (globals.activeVehicle) {
             mainWindow.showMessageDialog(closeDialogTitle,
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 StandardButton.Yes | StandardButton.No,
@@ -424,6 +426,7 @@ ApplicationWindow {
         property alias toolSource:  toolDrawerLoader.source
         property alias toolIcon:    toolIcon.source
 
+        // Main Tool bar at the top in sub-pages
         Rectangle {
             id:             toolDrawerToolbar
             anchors.left:   parent.left
@@ -439,6 +442,7 @@ ApplicationWindow {
                 anchors.bottom:     parent.bottom
                 spacing:            ScreenTools.defaultFontPixelWidth
 
+                // Back button icon
                 QGCColoredImage {
                     id:                     backIcon
                     width:                  ScreenTools.defaultFontPixelHeight * 2
@@ -448,16 +452,19 @@ ApplicationWindow {
                     color:                  qgcPal.text
                 }
 
+                // Back button text
                 QGCLabel {
                     id:     backTextLabel
                     text:   qsTr("Back")
                 }
 
+                // Spacing between Back button & Sub-page label
                 QGCLabel {
                     font.pointSize: ScreenTools.largeFontPointSize
                     text:           "<"
                 }
 
+                // Sub page icon
                 QGCColoredImage {
                     id:                     toolIcon
                     width:                  ScreenTools.defaultFontPixelHeight * 2
@@ -467,9 +474,28 @@ ApplicationWindow {
                     color:                  qgcPal.text
                 }
 
+                // Sub page text
                 QGCLabel {
                     id:             toolbarDrawerText
                     font.pointSize: ScreenTools.largeFontPointSize
+                }
+            }
+
+            // Reboot Button on the right-up side of the tool bar
+            RowLayout {
+                anchors.right:          parent.right
+                anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                anchors.top:            parent.top
+                anchors.bottom:         parent.bottom
+                QGCButton {
+                    id:             rebootButton
+                    text:           qsTr("Reboot Vehicle")
+                    onClicked:    mainWindow.showMessageDialog(qsTr("Reboot Vehicle"),
+                                                                    qsTr("Select Ok to reboot vehicle."),
+                                                                    StandardButton.Cancel | StandardButton.Ok,
+                                                                    function() { globals.activeVehicle.rebootVehicle() })
+                    // Only visible when there's an active vehicle that is disarmed
+                    visible:            globals.activeVehicle && !globals.activeVehicle.armed
                 }
             }
 
