@@ -3450,7 +3450,7 @@
     <parameter name="FD_FAIL_P" default="60" type="INT32">
       <short_desc>FailureDetector Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before FailureDetector triggers the attitude_failure flag. The flag triggers flight termination (if @CBRK_FLIGHTTERM = 0), which sets outputs to their failsafe values. On takeoff the flag triggers lockdown (irrespective of @CBRK_FLIGHTTERM), which disarms motors but does not set outputs to failsafe values. Setting this parameter to 0 disables the check</long_desc>
-      <min>60</min>
+      <min>0</min>
       <max>180</max>
       <unit>deg</unit>
     </parameter>
@@ -3465,7 +3465,7 @@
     <parameter name="FD_FAIL_R" default="60" type="INT32">
       <short_desc>FailureDetector Max Roll</short_desc>
       <long_desc>Maximum roll angle before FailureDetector triggers the attitude_failure flag. The flag triggers flight termination (if @CBRK_FLIGHTTERM = 0), which sets outputs to their failsafe values. On takeoff the flag triggers lockdown (irrespective of @CBRK_FLIGHTTERM), which disarms motors but does not set outputs to failsafe values. Setting this parameter to 0 disables the check</long_desc>
-      <min>60</min>
+      <min>0</min>
       <max>180</max>
       <unit>deg</unit>
     </parameter>
