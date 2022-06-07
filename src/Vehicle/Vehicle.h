@@ -396,6 +396,12 @@ public:
     /// Command vehicle to kill all motors no matter what state
     Q_INVOKABLE void emergencyStop();
 
+    /// Command vichecle to deploy landing gear
+    Q_INVOKABLE void landing_gear_deploy();
+
+    /// Command vichecle to retract landing gear
+    Q_INVOKABLE void landing_gear_retract();
+
     /// Command vehicle to abort landing
     Q_INVOKABLE void abortLanding(double climbOutAltitude);
 

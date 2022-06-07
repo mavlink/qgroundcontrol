@@ -217,6 +217,8 @@ signals:
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
     void emergencyStop              ();
+    void landing_gear_deploy        ();
+    void landing_gear_retract       ();
 
 protected:
     void    _setDefaultCalibration  ();
@@ -352,6 +354,8 @@ private:
     static const char* _buttonActionGimbalRight;
     static const char* _buttonActionGimbalCenter;
     static const char* _buttonActionEmergencyStop;
+    static const char* _buttonActionLandingGearDeploy;
+    static const char* _buttonActionLandingGearRetract;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

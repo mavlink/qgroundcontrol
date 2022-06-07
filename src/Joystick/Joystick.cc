@@ -65,6 +65,8 @@ const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left"
 const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
 const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
 const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
+const char* Joystick::_buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
+const char* Joystick::_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -697,6 +699,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
+            disconnect(this, &Joystick::landing_gear_deploy,  _activeVehicle, &Vehicle::landing_gear_deploy);
+            disconnect(this, &Joystick::landing_gear_retract, _activeVehicle, &Vehicle::landing_gear_retract);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -719,6 +723,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
+            connect(this, &Joystick::landing_gear_deploy,  _activeVehicle, &Vehicle::landing_gear_deploy);
+            connect(this, &Joystick::landing_gear_retract, _activeVehicle, &Vehicle::landing_gear_retract);
         }
     }
     if (!isRunning()) {
@@ -1027,6 +1033,10 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         }
     } else if(action == _buttonActionEmergencyStop) {
       if(buttonDown) emit emergencyStop();
+    } else if(action == _buttonActionLandingGearDeploy) {
+      if(buttonDown) emit landing_gear_deploy();
+    } else if(action == _buttonActionLandingGearRetract) {
+      if(buttonDown) emit landing_gear_retract();
     } else {
         if (buttonDown && _activeVehicle) {
             for (auto& item : _customMavCommands) {
@@ -1124,6 +1134,8 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearDeploy));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearRetract));
     for (auto& item : _customMavCommands)
         _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
 
