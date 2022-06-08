@@ -4327,7 +4327,6 @@
     <parameter name="MAN_ARM_GESTURE" default="1" type="INT32" boolean="true">
       <short_desc>Enable arm/disarm stick gesture</short_desc>
       <long_desc>This determines if moving the left stick to the lower right arms and to the lower left disarms the vehicle.</long_desc>
-      <reboot_required>true</reboot_required>
     </parameter>
   </group>
   <group name="Mission">
