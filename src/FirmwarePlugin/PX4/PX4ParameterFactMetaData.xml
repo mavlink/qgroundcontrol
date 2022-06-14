@@ -328,7 +328,7 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_WIND_NSD" default="0.1" type="FLOAT">
+    <parameter name="ASPD_WIND_NSD" default="1.e-2" type="FLOAT">
       <short_desc>Airspeed Selector: Wind estimator wind process noise noise spectral density</short_desc>
       <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector. When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
       <min>0</min>
