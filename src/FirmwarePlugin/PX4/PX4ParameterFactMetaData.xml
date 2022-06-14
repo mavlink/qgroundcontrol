@@ -305,12 +305,12 @@
         <value code="2">Apply the estimated scale in air</value>
       </values>
     </parameter>
-    <parameter name="ASPD_SC_P_NOISE" default="0.0001" type="FLOAT">
-      <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise</short_desc>
-      <long_desc>Airspeed scale process noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+    <parameter name="ASPD_SCALE_NSD" default="0.0001" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise spectral density</short_desc>
+      <long_desc>Airspeed scale process noise of the internal wind estimator(s) of the airspeed selector. When unaided, the scale uncertainty (1-sigma, unitless) increases by this amount every second.</long_desc>
       <min>0</min>
       <max>0.1</max>
-      <unit>Hz</unit>
+      <unit>1/s/sqrt(Hz)</unit>
       <decimal>5</decimal>
     </parameter>
     <parameter name="ASPD_TAS_GATE" default="3" type="INT32">
@@ -328,12 +328,12 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="ASPD_W_P_NOISE" default="0.1" type="FLOAT">
-      <short_desc>Airspeed Selector: Wind estimator wind process noise</short_desc>
-      <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+    <parameter name="ASPD_WIND_NSD" default="0.1" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator wind process noise noise spectral density</short_desc>
+      <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector. When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
       <min>0</min>
       <max>1</max>
-      <unit>m/s^2</unit>
+      <unit>m/s^2/sqrt(Hz)</unit>
       <decimal>2</decimal>
     </parameter>
   </group>
@@ -2405,11 +2405,12 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="EKF2_WIND_NOISE" default="1.0e-1" type="FLOAT">
-      <short_desc>Process noise for wind velocity prediction</short_desc>
+    <parameter name="EKF2_WIND_NSD" default="1.0e-2" type="FLOAT">
+      <short_desc>Process noise spectral density for wind velocity prediction</short_desc>
+      <long_desc>When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <unit>m/s^2</unit>
+      <unit>m/s^2/sqrt(Hz)</unit>
       <decimal>3</decimal>
     </parameter>
   </group>
