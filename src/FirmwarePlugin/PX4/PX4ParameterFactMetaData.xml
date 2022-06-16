@@ -2626,7 +2626,7 @@
     <parameter name="FW_PR_I" default="0.1" type="FLOAT">
       <short_desc>Pitch rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>0.5</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
@@ -2643,7 +2643,7 @@
     <parameter name="FW_PR_P" default="0.08" type="FLOAT">
       <short_desc>Pitch rate proportional gain</short_desc>
       <long_desc>This defines how much the elevator input will be commanded depending on the current body angular rate error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
@@ -2704,7 +2704,7 @@
     <parameter name="FW_RR_I" default="0.1" type="FLOAT">
       <short_desc>Roll rate integrator Gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>0.2</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
@@ -2721,7 +2721,7 @@
     <parameter name="FW_RR_P" default="0.05" type="FLOAT">
       <short_desc>Roll rate proportional Gain</short_desc>
       <long_desc>This defines how much the aileron input will be commanded depending on the current body angular rate error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
@@ -2782,7 +2782,7 @@
     <parameter name="FW_WR_I" default="0.1" type="FLOAT">
       <short_desc>Wheel steering rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>0.5</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
@@ -2799,7 +2799,7 @@
     <parameter name="FW_WR_P" default="0.5" type="FLOAT">
       <short_desc>Wheel steering rate proportional gain</short_desc>
       <long_desc>This defines how much the wheel steering input will be commanded depending on the current body angular rate error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
@@ -2846,7 +2846,7 @@
     <parameter name="FW_YR_P" default="0.05" type="FLOAT">
       <short_desc>Yaw rate proportional gain</short_desc>
       <long_desc>This defines how much the rudder input will be commanded depending on the current body angular rate error.</long_desc>
-      <min>0.005</min>
+      <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
