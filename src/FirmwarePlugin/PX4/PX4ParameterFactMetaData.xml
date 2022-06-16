@@ -3487,30 +3487,46 @@
     </parameter>
   </group>
   <group name="Follow target">
-    <parameter name="NAV_FT_DST" default="8.0" type="FLOAT">
+    <parameter name="FLW_TGT_ALT_M" default="0" type="INT32">
+      <short_desc>Altitude control mode</short_desc>
+      <long_desc>Maintain altitude or track target's altitude. When maintaining the altitude, the drone can crash into terrain when the target moves uphill. When tracking the target's altitude, the follow altitude NAV_MIN_FT_HT should be high enough to prevent terrain collisions due to GPS inaccuracies of the target.</long_desc>
+      <values>
+        <value code="0">2D Tracking: Maintain constant altitude relative to home and track XY position only</value>
+        <value code="1">2D + Terrain: Mantain constant altitude relative to terrain below and track XY position</value>
+        <value code="2">3D Tracking: Track target's altitude (be aware that GPS altitude bias usually makes this useless)</value>
+      </values>
+    </parameter>
+    <parameter name="FLW_TGT_DST" default="8.0" type="FLOAT">
       <short_desc>Distance to follow target from</short_desc>
       <long_desc>The distance in meters to follow the target at</long_desc>
       <min>1.0</min>
       <unit>m</unit>
     </parameter>
-    <parameter name="NAV_FT_FS" default="1" type="INT32">
-      <short_desc>Side to follow target from</short_desc>
-      <long_desc>The side to follow the target from (front right = 0, behind = 1, front = 2, front left = 3)</long_desc>
-      <min>0</min>
-      <max>3</max>
+    <parameter name="FLW_TGT_FA" default="180.0" type="FLOAT">
+      <short_desc>Follow Angle setting in degrees</short_desc>
+      <long_desc>Angle to follow the target from. 0.0 Equals straight in front of the target's course (direction of motion) and the angle increases in clockwise direction, meaning Right-side would be 90.0 degrees while Left-side is -90.0 degrees Note: When the user force sets the angle out of the min/max range, it will be wrapped (e.g. 480 -&gt; 120) in the range to gracefully handle the out of range.</long_desc>
+      <min>-180.0</min>
+      <max>180.0</max>
     </parameter>
-    <parameter name="NAV_FT_RS" default="0.5" type="FLOAT">
-      <short_desc>Dynamic filtering algorithm responsiveness to target movement</short_desc>
-      <long_desc>lower numbers increase the responsiveness to changing long lat but also ignore less noise</long_desc>
+    <parameter name="FLW_TGT_HT" default="8.0" type="FLOAT">
+      <short_desc>Follow target height</short_desc>
+      <long_desc>Following height above the target</long_desc>
+      <min>8.0</min>
+      <unit>m</unit>
+    </parameter>
+    <parameter name="FLW_TGT_MAX_VEL" default="5.0" type="FLOAT">
+      <short_desc>Maximum tangential velocity setting for generating the follow orbit trajectory</short_desc>
+      <long_desc>This is the maximum tangential velocity the drone will circle around the target whenever an orbit angle setpoint changes. Higher value means more aggressive follow behavior.</long_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="FLW_TGT_RS" default="0.1" type="FLOAT">
+      <short_desc>Responsiveness to target movement in Target Estimator</short_desc>
+      <long_desc>lower values increase the responsiveness to changing position, but also ignore less noise</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
-    </parameter>
-    <parameter name="NAV_MIN_FT_HT" default="8.0" type="FLOAT">
-      <short_desc>Minimum follow target altitude</short_desc>
-      <long_desc>The minimum height in meters relative to home for following a target</long_desc>
-      <min>8.0</min>
-      <unit>m</unit>
     </parameter>
   </group>
   <group name="GPS">
