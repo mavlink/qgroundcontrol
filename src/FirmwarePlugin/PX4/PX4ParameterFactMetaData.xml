@@ -8757,6 +8757,28 @@
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
+  <group name="Serial">
+    <parameter name="SER_MXS_BAUD" default="5" type="INT32">
+      <short_desc>MXS Serial Communication Baud rate</short_desc>
+      <long_desc>Baudrate for the Serial Port connected to the MXS Transponder</long_desc>
+      <min>0</min>
+      <max>10</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">38400</value>
+        <value code="1">600</value>
+        <value code="2">4800</value>
+        <value code="3">9600</value>
+        <value code="4">RESERVED</value>
+        <value code="5">57600</value>
+        <value code="6">115200</value>
+        <value code="7">230400</value>
+        <value code="8">19200</value>
+        <value code="9">460800</value>
+        <value code="10">921600</value>
+      </values>
+    </parameter>
+  </group>
   <group name="Simulation In Hardware">
     <parameter name="SIH_BARO_OFFSET" default="0.0" type="FLOAT">
       <short_desc>Barometer offset in meters</short_desc>
@@ -9713,6 +9735,157 @@
     <parameter name="TC_G_ENABLE" default="0" type="INT32" boolean="true">
       <short_desc>Thermal compensation for rate gyro sensors</short_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+  </group>
+  <group name="Transponder">
+    <parameter name="ADSB_EMERGC" default="0" type="INT32">
+      <short_desc>ADSB-Out Emergency State</short_desc>
+      <long_desc>Sets the vehicle emergency state</long_desc>
+      <min>0</min>
+      <max>6</max>
+      <reboot_required>false</reboot_required>
+      <values>
+        <value code="0">NoEmergency</value>
+        <value code="1">General</value>
+        <value code="2">Medical</value>
+        <value code="3">LowFuel</value>
+        <value code="4">NoCommunications</value>
+        <value code="5">Interference</value>
+        <value code="6">Downed</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_EMIT_TYPE" default="14" type="INT32">
+      <short_desc>ADSB-Out Vehicle Emitter Type</short_desc>
+      <long_desc>Configure the emitter type of the vehicle.</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Unknown</value>
+        <value code="1">Light</value>
+        <value code="2">Small</value>
+        <value code="3">Large</value>
+        <value code="4">HighVortex</value>
+        <value code="5">Heavy</value>
+        <value code="6">Performance</value>
+        <value code="7">Rotorcraft</value>
+        <value code="8">RESERVED</value>
+        <value code="9">Glider</value>
+        <value code="10">LightAir</value>
+        <value code="11">Parachute</value>
+        <value code="12">UltraLight</value>
+        <value code="13">RESERVED</value>
+        <value code="14">UAV</value>
+        <value code="15">Space</value>
+        <value code="16">RESERVED</value>
+        <value code="17">EmergencySurf</value>
+        <value code="18">ServiceSurf</value>
+        <value code="19">PointObstacle</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_ICAO_ID" default="1194684" type="INT32">
+      <short_desc>ADSB-Out ICAO configuration</short_desc>
+      <long_desc>Defines the ICAO ID of the vehicle</long_desc>
+      <min>-1</min>
+      <max>16777215</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ADSB_ICAO_SPECL" default="0" type="INT32">
+      <short_desc>ADSB-In Special ICAO configuration</short_desc>
+      <long_desc>This vehicle is always tracked. Use 0 to disable.</long_desc>
+      <min>0</min>
+      <max>16777215</max>
+      <reboot_required>false</reboot_required>
+    </parameter>
+    <parameter name="ADSB_IDENT" default="0" type="INT32" boolean="true">
+      <short_desc>ADSB-Out Ident Configuration</short_desc>
+      <long_desc>Enable Identification of Position feature</long_desc>
+      <reboot_required>false</reboot_required>
+    </parameter>
+    <parameter name="ADSB_LEN_WIDTH" default="1" type="INT32">
+      <short_desc>ADSB-Out Vehicle Size Configuration</short_desc>
+      <long_desc>Report the length and width of the vehicle in meters. In most cases, use '1' for the smallest vehicle size.</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">SizeUnknown</value>
+        <value code="1">Len15_Wid23</value>
+        <value code="2">Len25_Wid28</value>
+        <value code="3">Len25_Wid34</value>
+        <value code="4">Len35_Wid33</value>
+        <value code="5">Len35_Wid38</value>
+        <value code="6">Len45_Wid39</value>
+        <value code="7">Len45_Wid45</value>
+        <value code="8">Len55_Wid45</value>
+        <value code="9">Len55_Wid52</value>
+        <value code="10">Len65_Wid59</value>
+        <value code="11">Len65_Wid67</value>
+        <value code="12">Len75_Wid72</value>
+        <value code="13">Len75_Wid80</value>
+        <value code="14">Len85_Wid80</value>
+        <value code="15">Len85_Wid90</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_LIST_MAX" default="25" type="INT32">
+      <short_desc>ADSB-In Vehicle List Size</short_desc>
+      <long_desc>Change number of targets to track</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ADSB_MAX_SPEED" default="0" type="INT32">
+      <short_desc>ADSB-Out Vehicle Max Speed</short_desc>
+      <long_desc>Informs ADSB vehicles of this vehicle's max speed capability</long_desc>
+      <min>0</min>
+      <max>6</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">UnknownMaxSpeed</value>
+        <value code="1">75Kts</value>
+        <value code="2">150Kts</value>
+        <value code="3">300Kts</value>
+        <value code="4">600Kts</value>
+        <value code="5">1200Kts</value>
+        <value code="6">Over1200Kts</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_SQUAWK" default="1200" type="INT32">
+      <short_desc>ADSB-Out squawk code configuration</short_desc>
+      <long_desc>This parameter defines the squawk code. Value should be between 0000 and 7777.</long_desc>
+      <min>0</min>
+      <max>7777</max>
+      <reboot_required>false</reboot_required>
+    </parameter>
+    <parameter name="MXS_EXT_CFG" default="0" type="INT32" boolean="true">
+      <short_desc>Sagetech External Configuration Mode</short_desc>
+      <long_desc>Disables auto-configuration mode enabling MXS config through external software.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="MXS_OP_MODE" default="0" type="INT32">
+      <short_desc>Sagetech MXS mode configuration</short_desc>
+      <long_desc>This parameter defines the operating mode of the MXS</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>false</reboot_required>
+      <values>
+        <value code="0">Off</value>
+        <value code="1">On</value>
+        <value code="2">Standby</value>
+        <value code="3">Alt</value>
+      </values>
+    </parameter>
+    <parameter name="MXS_TARG_PORT" default="1" type="INT32">
+      <short_desc>Sagetech MXS Participant Configuration</short_desc>
+      <long_desc>The MXS communication port to receive Target data from</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>false</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="1">COM0</value>
+        <value code="2">COM1</value>
+      </values>
     </parameter>
   </group>
   <group name="UAVCAN">
