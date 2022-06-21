@@ -7636,23 +7636,23 @@
       <short_desc>Differential pressure sensor offset</short_desc>
       <long_desc>The offset (zero-reading) in Pascal</long_desc>
     </parameter>
-    <parameter name="SENS_FLOW_MAXHGT" default="3.0" type="FLOAT">
+    <parameter name="SENS_FLOW_MAXHGT" default="100." type="FLOAT">
       <short_desc>Maximum height above ground when reliant on optical flow</short_desc>
       <long_desc>This parameter defines the maximum distance from ground at which the optical flow sensor operates reliably. The height setpoint will be limited to be no greater than this value when the navigation system is completely reliant on optical flow data and the height above ground estimate is valid. The sensor may be usable above this height, but accuracy will progressively degrade.</long_desc>
       <min>1.0</min>
-      <max>25.0</max>
+      <max>100.0</max>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="SENS_FLOW_MAXR" default="2.5" type="FLOAT">
+    <parameter name="SENS_FLOW_MAXR" default="8." type="FLOAT">
       <short_desc>Magnitude of maximum angular flow rate reliably measurable by the optical flow sensor</short_desc>
       <long_desc>Optical flow data will not fused by the estimators if the magnitude of the flow rate exceeds this value and control loops will be instructed to limit ground speed such that the flow rate produced by movement over ground is less than 50% of this value.</long_desc>
       <min>1.0</min>
       <unit>rad/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="SENS_FLOW_MINHGT" default="0.7" type="FLOAT">
+    <parameter name="SENS_FLOW_MINHGT" default="0.08" type="FLOAT">
       <short_desc>Minimum height above ground when reliant on optical flow</short_desc>
       <long_desc>This parameter defines the minimum distance from ground at which the optical flow sensor operates reliably. The sensor may be usable below this height, but accuracy will progressively reduce to loss of focus.</long_desc>
       <min>0.0</min>
@@ -8109,11 +8109,11 @@
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_PAA3905" default="0" type="INT32" boolean="true">
-      <short_desc>paa3905 Optical Flow</short_desc>
+      <short_desc>PAA3905 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_PAW3902" default="0" type="INT32" boolean="true">
-      <short_desc>PAW3902 &amp; PAW3903 Optical Flow</short_desc>
+      <short_desc>PAW3902/PAW3903 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_PCF8583" default="0" type="INT32">
@@ -8214,10 +8214,17 @@
       <short_desc>External I2C probe</short_desc>
       <long_desc>Probe for optional external I2C devices.</long_desc>
     </parameter>
-    <parameter name="SENS_FLOW_ROT" default="6" type="INT32">
-      <short_desc>PX4Flow board rotation</short_desc>
-      <long_desc>This parameter defines the yaw rotation of the PX4FLOW board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle. The recommneded installation default for the PX4FLOW board is with the Y axis forward (270 deg yaw).</long_desc>
+    <parameter name="SENS_FLOW_RATE" default="70.0" type="FLOAT">
+      <short_desc>Optical flow max rate</short_desc>
+      <long_desc>Optical flow data maximum publication rate. This is an upper bound, actual optical flow data rate is still dependant on the sensor.</long_desc>
+      <min>1</min>
+      <max>200</max>
+      <unit>Hz</unit>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_FLOW_ROT" default="0" type="INT32">
+      <short_desc>Optical flow rotation</short_desc>
+      <long_desc>This parameter defines the yaw rotation of the optical flow relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle.</long_desc>
       <values>
         <value code="0">No rotation</value>
         <value code="1">Yaw 45°</value>
@@ -9893,21 +9900,6 @@
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
       <max>1000000</max>
-    </parameter>
-    <parameter name="CANNODE_FLOW_ROT" default="0" type="INT32">
-      <short_desc>Cannode flow board rotation</short_desc>
-      <long_desc>This parameter defines the yaw rotation of the Cannode flow board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-      </values>
     </parameter>
     <parameter name="CANNODE_GPS_RTCM" default="0" type="INT32" boolean="true">
       <short_desc>Enable RTCM pub/sub</short_desc>
