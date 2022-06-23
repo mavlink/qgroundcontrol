@@ -47,7 +47,7 @@ public:
     Q_PROPERTY(double           heading     READ heading        NOTIFY headingChanged)      // NaN for not available
     Q_PROPERTY(bool             alert       READ alert          NOTIFY alertChanged)        // Collision path
 
-    int             icaoAddress (void) const { return static_cast<int>(_icaoAddress); }
+    uint32_t        icaoAddress (void) const { return static_cast<uint32_t>(_icaoAddress); }
     QString         callsign    (void) const { return _callsign; }
     QGeoCoordinate  coordinate  (void) const { return _coordinate; }
     double          altitude    (void) const { return _altitude; }
