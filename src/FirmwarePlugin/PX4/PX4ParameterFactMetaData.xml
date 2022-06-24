@@ -1406,6 +1406,13 @@
       <decimal>0</decimal>
       <increment>0.05</increment>
     </parameter>
+    <parameter name="COM_SPOOLUP_TIME" default="1.0" type="FLOAT">
+      <short_desc>Enforced delay between arming and further navigation</short_desc>
+      <long_desc>The minimal time from arming the motors until moving the vehicle is possible is COM_SPOOLUP_TIME seconds. Goal: - Motors and propellers spool up to idle speed before getting commanded to spin faster - Timeout for ESCs and smart batteries to successfulyy do failure checks e.g. for stuck rotors before the vehicle is off the ground</long_desc>
+      <min>0</min>
+      <max>5</max>
+      <unit>s</unit>
+    </parameter>
     <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
       <short_desc>Action after TAKEOFF has been accepted</short_desc>
       <long_desc>The mode transition after TAKEOFF has completed successfully.</long_desc>
@@ -4978,13 +4985,6 @@
         <value code="3">Smooth position control (Jerk optimized)</value>
         <value code="4">Acceleration based input</value>
       </values>
-    </parameter>
-    <parameter name="MPC_SPOOLUP_TIME" default="1.0" type="FLOAT">
-      <short_desc>Enforced delay between arming and takeoff</short_desc>
-      <long_desc>For altitude controlled modes the time from arming the motors until a takeoff is possible gets forced to be at least MPC_SPOOLUP_TIME seconds to ensure the motors and propellers can sppol up and reach idle speed before getting commanded to spin faster. This delay is particularly useful for vehicles with slow motor spin-up e.g. because of large propellers.</long_desc>
-      <min>0</min>
-      <max>10</max>
-      <unit>s</unit>
     </parameter>
     <parameter name="MPC_THR_CURVE" default="0" type="INT32">
       <short_desc>Thrust curve in Manual Mode</short_desc>
