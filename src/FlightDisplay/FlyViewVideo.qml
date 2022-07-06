@@ -69,6 +69,20 @@ Item {
         font.pointSize: ScreenTools.largeFontPointSize
         visible: QGroundControl.videoManager.fullScreen && flyViewVideoMouseArea.containsMouse
         anchors.centerIn: parent
+
+        onVisibleChanged: {
+            if (visible) {
+                labelAnimation.start()
+            }
+        }
+
+        PropertyAnimation on opacity {
+            id: labelAnimation
+            duration: 10000
+            from: 1.0
+            to: 0.0
+            easing.type: Easing.InExpo
+        }
     }
 
     MouseArea {
