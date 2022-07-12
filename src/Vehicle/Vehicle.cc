@@ -1671,6 +1671,11 @@ void Vehicle::setEventsMetadata(uint8_t compid, const QString& metadataJsonFileN
         }
     }
     _healthAndArmingCheckReport.setModeGroups(modeGroups[0], modeGroups[1]);
+
+    // Request arming checks to be reported
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_RUN_PREARM_CHECKS,
+                   false);
 }
 
 void Vehicle::setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
@@ -2920,6 +2925,7 @@ bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
     case MAV_CMD_REQUEST_PROTOCOL_VERSION:
     case MAV_CMD_REQUEST_MESSAGE:
     case MAV_CMD_PREFLIGHT_STORAGE:
+    case MAV_CMD_RUN_PREARM_CHECKS:
         return true;
 
     default:
