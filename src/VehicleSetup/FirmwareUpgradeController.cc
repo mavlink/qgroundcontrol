@@ -696,7 +696,7 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
         for (int i=0; i<rgFirmware.count(); i++) {
             const QJsonObject& firmwareJson = rgFirmware[i].toObject();
             const int board_id = firmwareJson[_px4ManifestBoardIDJsonKey].toInt();
-            const QString target_name = firmwareJson[_px4ManifestTargetNameJsonKey];
+            const QString target_name = firmwareJson[_px4ManifestTargetNameJsonKey].toString();
 
             // Update the Board-ID <-> Target Name mapping
             _px4_board_id_2_target_name[board_id] = target_name;

@@ -184,6 +184,7 @@ private slots:
     void _eraseProgressTick                 (void);
     void _px4ReleasesGithubDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
     void _ardupilotManifestDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
+    void _PX4ManifestDownloadComplete       (QString remoteFile, QString localFile, QString errorMsg);
     void _buildAPMFirmwareNames             (void);
 
 private:
@@ -194,7 +195,9 @@ private:
     void _appendStatusLog           (const QString& text, bool critical = false);
     void _errorCancel               (const QString& msg);
     void _determinePX4StableVersion (void);
+
     void _downloadArduPilotManifest (void);
+    void _downloadPX4Manifest       (void);
 
     QString _singleFirmwareURL;
     bool    _singleFirmwareMode;
@@ -259,28 +262,28 @@ private:
     const QString _apmBoardDescriptionReplaceText;
 
     // Ardupilot Manifest file JSON keys
-    const char* FirmwareUpgradeController::_ardupilotManifestFirmwareJsonKey =               "firmware";
-    const char* FirmwareUpgradeController::_ardupilotManifestBoardIDJsonKey =                "board_id";
-    const char* FirmwareUpgradeController::_ardupilotManifestMavTypeJsonKey =                "mav-type";
-    const char* FirmwareUpgradeController::_ardupilotManifestFormatJsonKey =                 "format";
-    const char* FirmwareUpgradeController::_ardupilotManifestUrlJsonKey =                    "url";
-    const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
-    const char* FirmwareUpgradeController::_ardupilotManifestUSBIDJsonKey =                  "USBID";
-    const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
-    const char* FirmwareUpgradeController::_ardupilotManifestBootloaderStrJsonKey =          "bootloader_str";
-    const char* FirmwareUpgradeController::_ardupilotManifestLatestKey =                     "latest";
-    const char* FirmwareUpgradeController::_ardupilotManifestPlatformKey =                   "platform";
-    const char* FirmwareUpgradeController::_ardupilotManifestBrandNameKey =                  "brand_name";
+    const char* _ardupilotManifestFirmwareJsonKey =               "firmware";
+    const char* _ardupilotManifestBoardIDJsonKey =                "board_id";
+    const char* _ardupilotManifestMavTypeJsonKey =                "mav-type";
+    const char* _ardupilotManifestFormatJsonKey =                 "format";
+    const char* _ardupilotManifestUrlJsonKey =                    "url";
+    const char* _ardupilotManifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
+    const char* _ardupilotManifestUSBIDJsonKey =                  "USBID";
+    const char* _ardupilotManifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
+    const char* _ardupilotManifestBootloaderStrJsonKey =          "bootloader_str";
+    const char* _ardupilotManifestLatestKey =                     "latest";
+    const char* _ardupilotManifestPlatformKey =                   "platform";
+    const char* _ardupilotManifestBrandNameKey =                  "brand_name";
 
     // PX4 Manifest file JSON keys
-    const char* FirmwareUpgradeController::_px4ManifestBoardInfoJsonKey =                   "board_info";
-    const char* FirmwareUpgradeController::_px4ManifestBoardNameJsonKey =                   "board_name";
-    const char* FirmwareUpgradeController::_px4ManifestTargetNameJsonKey =                  "target_name";
-    const char* FirmwareUpgradeController::_px4ManifestBoardIDJsonKey =                     "board_id";
-    const char* FirmwareUpgradeController::_px4ManifestBuildVariantsJonKey =                "build_variants";
+    const char* _px4ManifestBoardInfoJsonKey =                   "board_info";
+    const char* _px4ManifestBoardNameJsonKey =                   "board_name";
+    const char* _px4ManifestTargetNameJsonKey =                  "target_name";
+    const char* _px4ManifestBoardIDJsonKey =                     "board_id";
+    const char* _px4ManifestBuildVariantsJonKey =                "build_variants";
 
     // PX4 Board-ID (Bootloader ID) to Target Name mapping
-    QMap<int, QString> _px4_board_name_map;
+    QMap<int, QString> _px4_board_id_2_target_name;
 
     typedef struct {
         uint32_t                boardId;
