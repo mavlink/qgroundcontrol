@@ -988,8 +988,8 @@
         {
             "id":                   211,
             "rawName":              "MAV_CMD_DO_GRIPPER",
-            "friendlyName":         "Gripper",
-            "description":          "Operate EPM gripper.",
+            "friendlyName":         "Gripper Mechanism",
+            "description":          "Control a gripper mechanism.",
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,
             "category":             "Advanced",
