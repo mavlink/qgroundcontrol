@@ -258,18 +258,27 @@ private:
 
     const QString _apmBoardDescriptionReplaceText;
 
-    static const char* _ardupilotManifestFirmwareJsonKey;
-    static const char* _ardupilotManifestBoardIDJsonKey;
-    static const char* _ardupilotManifestMavTypeJsonKey;
-    static const char* _ardupilotManifestFormatJsonKey;
-    static const char* _ardupilotManifestUrlJsonKey;
-    static const char* _ardupilotManifestMavFirmwareVersionTypeJsonKey;
-    static const char* _ardupilotManifestUSBIDJsonKey;
-    static const char* _ardupilotManifestMavFirmwareVersionJsonKey;
-    static const char* _ardupilotManifestBootloaderStrJsonKey;
-    static const char* _ardupilotManifestLatestKey;
-    static const char* _ardupilotManifestPlatformKey;
-    static const char* _ardupilotManifestBrandNameKey;
+    // Ardupilot Manifest file JSON keys
+    const char* FirmwareUpgradeController::_ardupilotManifestFirmwareJsonKey =               "firmware";
+    const char* FirmwareUpgradeController::_ardupilotManifestBoardIDJsonKey =                "board_id";
+    const char* FirmwareUpgradeController::_ardupilotManifestMavTypeJsonKey =                "mav-type";
+    const char* FirmwareUpgradeController::_ardupilotManifestFormatJsonKey =                 "format";
+    const char* FirmwareUpgradeController::_ardupilotManifestUrlJsonKey =                    "url";
+    const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
+    const char* FirmwareUpgradeController::_ardupilotManifestUSBIDJsonKey =                  "USBID";
+    const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
+    const char* FirmwareUpgradeController::_ardupilotManifestBootloaderStrJsonKey =          "bootloader_str";
+    const char* FirmwareUpgradeController::_ardupilotManifestLatestKey =                     "latest";
+    const char* FirmwareUpgradeController::_ardupilotManifestPlatformKey =                   "platform";
+    const char* FirmwareUpgradeController::_ardupilotManifestBrandNameKey =                  "brand_name";
+
+    // PX4 Manifest file JSON keys
+    const char* FirmwareUpgradeController::_px4ManifestBoardInfoJsonKey =                   "board_info";
+    const char* FirmwareUpgradeController::_px4ManifestBoardNameJsonKey =                   "board_name";
+    const char* FirmwareUpgradeController::_px4ManifestTargetNameJsonKey =                  "target_name";
+    const char* FirmwareUpgradeController::_px4ManifestBoardIDJsonKey =                     "board_id";
+    const char* FirmwareUpgradeController::_px4ManifestBuildVariantsJonKey =                "build_variants";
+
 
     typedef struct {
         uint32_t                boardId;

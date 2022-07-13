@@ -28,20 +28,6 @@
 
 #include "zlib.h"
 
-// Ardupilot Manifest file JSON keys
-const char* FirmwareUpgradeController::_ardupilotManifestFirmwareJsonKey =               "firmware";
-const char* FirmwareUpgradeController::_ardupilotManifestBoardIDJsonKey =                "board_id";
-const char* FirmwareUpgradeController::_ardupilotManifestMavTypeJsonKey =                "mav-type";
-const char* FirmwareUpgradeController::_ardupilotManifestFormatJsonKey =                 "format";
-const char* FirmwareUpgradeController::_ardupilotManifestUrlJsonKey =                    "url";
-const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
-const char* FirmwareUpgradeController::_ardupilotManifestUSBIDJsonKey =                  "USBID";
-const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
-const char* FirmwareUpgradeController::_ardupilotManifestBootloaderStrJsonKey =          "bootloader_str";
-const char* FirmwareUpgradeController::_ardupilotManifestLatestKey =                     "latest";
-const char* FirmwareUpgradeController::_ardupilotManifestPlatformKey =                   "platform";
-const char* FirmwareUpgradeController::_ardupilotManifestBrandNameKey =                  "brand_name";
-
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t     stackType;
     FirmwareUpgradeController::FirmwareBuildType_t      firmwareType;
