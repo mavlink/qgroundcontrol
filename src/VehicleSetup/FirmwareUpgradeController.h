@@ -258,18 +258,18 @@ private:
 
     const QString _apmBoardDescriptionReplaceText;
 
-    static const char* _manifestFirmwareJsonKey;
-    static const char* _manifestBoardIdJsonKey;
-    static const char* _manifestMavTypeJsonKey;
-    static const char* _manifestFormatJsonKey;
-    static const char* _manifestUrlJsonKey;
-    static const char* _manifestMavFirmwareVersionTypeJsonKey;
-    static const char* _manifestUSBIDJsonKey;
-    static const char* _manifestMavFirmwareVersionJsonKey;
-    static const char* _manifestBootloaderStrJsonKey;
-    static const char* _manifestLatestKey;
-    static const char* _manifestPlatformKey;
-    static const char* _manifestBrandNameKey;
+    static const char* _ardupilotManifestFirmwareJsonKey;
+    static const char* _ardupilotManifestBoardIDJsonKey;
+    static const char* _ardupilotManifestMavTypeJsonKey;
+    static const char* _ardupilotManifestFormatJsonKey;
+    static const char* _ardupilotManifestUrlJsonKey;
+    static const char* _ardupilotManifestMavFirmwareVersionTypeJsonKey;
+    static const char* _ardupilotManifestUSBIDJsonKey;
+    static const char* _ardupilotManifestMavFirmwareVersionJsonKey;
+    static const char* _ardupilotManifestBootloaderStrJsonKey;
+    static const char* _ardupilotManifestLatestKey;
+    static const char* _ardupilotManifestPlatformKey;
+    static const char* _ardupilotManifestBrandNameKey;
 
     typedef struct {
         uint32_t                boardId;

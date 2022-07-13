@@ -28,18 +28,19 @@
 
 #include "zlib.h"
 
-const char* FirmwareUpgradeController::_manifestFirmwareJsonKey =               "firmware";
-const char* FirmwareUpgradeController::_manifestBoardIdJsonKey =                "board_id";
-const char* FirmwareUpgradeController::_manifestMavTypeJsonKey =                "mav-type";
-const char* FirmwareUpgradeController::_manifestFormatJsonKey =                 "format";
-const char* FirmwareUpgradeController::_manifestUrlJsonKey =                    "url";
-const char* FirmwareUpgradeController::_manifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
-const char* FirmwareUpgradeController::_manifestUSBIDJsonKey =                  "USBID";
-const char* FirmwareUpgradeController::_manifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
-const char* FirmwareUpgradeController::_manifestBootloaderStrJsonKey =          "bootloader_str";
-const char* FirmwareUpgradeController::_manifestLatestKey =                     "latest";
-const char* FirmwareUpgradeController::_manifestPlatformKey =                   "platform";
-const char* FirmwareUpgradeController::_manifestBrandNameKey =                  "brand_name";
+// Ardupilot Manifest file JSON keys
+const char* FirmwareUpgradeController::_ardupilotManifestFirmwareJsonKey =               "firmware";
+const char* FirmwareUpgradeController::_ardupilotManifestBoardIDJsonKey =                "board_id";
+const char* FirmwareUpgradeController::_ardupilotManifestMavTypeJsonKey =                "mav-type";
+const char* FirmwareUpgradeController::_ardupilotManifestFormatJsonKey =                 "format";
+const char* FirmwareUpgradeController::_ardupilotManifestUrlJsonKey =                    "url";
+const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionTypeJsonKey = "mav-firmware-version-type";
+const char* FirmwareUpgradeController::_ardupilotManifestUSBIDJsonKey =                  "USBID";
+const char* FirmwareUpgradeController::_ardupilotManifestMavFirmwareVersionJsonKey =     "mav-firmware-version";
+const char* FirmwareUpgradeController::_ardupilotManifestBootloaderStrJsonKey =          "bootloader_str";
+const char* FirmwareUpgradeController::_ardupilotManifestLatestKey =                     "latest";
+const char* FirmwareUpgradeController::_ardupilotManifestPlatformKey =                   "platform";
+const char* FirmwareUpgradeController::_ardupilotManifestBrandNameKey =                  "brand_name";
 
 struct FirmwareToUrlElement_t {
     FirmwareUpgradeController::AutoPilotStackType_t     stackType;
@@ -617,7 +618,7 @@ void FirmwareUpgradeController::_determinePX4StableVersion(void)
 {
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_px4ReleasesGithubDownloadComplete);
-    downloader->download(QStringLiteral("https://api.github.com/repos/PX4/Firmware/releases"));
+    downloader->download(QStringLiteral("https://api.github.com/repos/PX4/PX4-Autopilot/releases"));
 }
 
 void FirmwareUpgradeController::_px4ReleasesGithubDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
@@ -645,17 +646,18 @@ void FirmwareUpgradeController::_px4ReleasesGithubDownloadComplete(QString /*rem
         }
         QJsonArray releases = doc.array();
 
-        // The first release marked prerelease=false is stable
-        // The first release marked prerelease=true is beta
         bool foundStable = false;
         bool foundBeta = false;
         for (int i=0; i<releases.count() && (!foundStable || !foundBeta); i++) {
             QJsonObject release = releases[i].toObject();
+            // The first release marked prerelease=false is stable
             if (!foundStable && !release["prerelease"].toBool()) {
                 _px4StableVersion = release["name"].toString();
                 emit px4StableVersionChanged(_px4StableVersion);
                 qCDebug(FirmwareUpgradeLog()) << "Found px4 stable version" << _px4StableVersion;
                 foundStable = true;
+            
+            // The first release marked prerelease=true is beta
             } else if (!foundBeta && release["prerelease"].toBool()) {
                 _px4BetaVersion = release["name"].toString();
                 emit px4StableVersionChanged(_px4BetaVersion);
@@ -674,6 +676,91 @@ void FirmwareUpgradeController::_px4ReleasesGithubDownloadComplete(QString /*rem
         qCWarning(FirmwareUpgradeLog) << "PX4 releases github download failed" << errorMsg;
     }
 }
+
+void FirmwareUpgradeController::_downloadPX4Manifest(void)
+{
+    _downloadingFirmwareList = true;
+    emit downloadingFirmwareListChanged(true);
+
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_PX4ManifestDownloadComplete);
+    downloader->download(QStringLiteral("https://raw.githubusercontent.com/junwoo091400/junwoo091400.github.io/main/files_dumpyard/px4_board_information.json"));
+}
+
+void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
+{
+    if (errorMsg.isEmpty()) {
+        // Delete the QGCFileDownload object
+        sender()->deleteLater();
+
+        qCDebug(FirmwareUpgradeLog) << "PX4 Board information Manifest Download Finished" << remoteFile << localFile;
+
+        QString         errorString;
+        QJsonDocument   doc;
+
+        if (!JsonHelper::isJsonFile(localFile, doc, errorString)) {
+            qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
+            return;
+        }
+
+        QJsonObject json =          doc.object();
+        QJsonArray  rgFirmware =    json[_ardupilotManifestFirmwareJsonKey].toArray();
+
+        for (int i=0; i<rgFirmware.count(); i++) {
+            const QJsonObject& firmwareJson = rgFirmware[i].toObject();
+
+            FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_ardupilotManifestMavTypeJsonKey].toString());
+            FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_ardupilotManifestMavFirmwareVersionTypeJsonKey].toString());
+            QString                 format =                firmwareJson[_ardupilotManifestFormatJsonKey].toString();
+            QString                 platform =              firmwareJson[_ardupilotManifestPlatformKey].toString();
+
+            if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware && (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
+                if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
+                    continue;
+                }
+
+                _rgManifestFirmwareInfo.append(ManifestFirmwareInfo_t());
+                ManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
+
+                firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_ardupilotManifestBoardIDJsonKey].toInt());
+                firmwareInfo.firmwareBuildType =    firmwareBuildType;
+                firmwareInfo.vehicleType =          firmwareVehicleType;
+                firmwareInfo.url =                  firmwareJson[_ardupilotManifestUrlJsonKey].toString();
+                firmwareInfo.version =              firmwareJson[_ardupilotManifestMavFirmwareVersionJsonKey].toString();
+                firmwareInfo.chibios =              format == QStringLiteral("apj");                firmwareInfo.fmuv2 =                platform.contains(QStringLiteral("fmuv2"));
+
+                QJsonArray bootloaderArray = firmwareJson[_ardupilotManifestBootloaderStrJsonKey].toArray();
+                for (int j=0; j<bootloaderArray.count(); j++) {
+                    firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
+                }
+
+                QJsonArray usbidArray = firmwareJson[_ardupilotManifestUSBIDJsonKey].toArray();
+                for (int j=0; j<usbidArray.count(); j++) {
+                    QStringList vidpid = usbidArray[j].toString().split('/');
+                    QString vid = vidpid[0];
+                    QString pid = vidpid[1];
+
+                    bool ok;
+                    firmwareInfo.rgVID.append(vid.right(vid.count() - 2).toInt(&ok, 16));
+                    firmwareInfo.rgPID.append(pid.right(pid.count() - 2).toInt(&ok, 16));
+                }
+
+                QString brandName = firmwareJson[_ardupilotManifestBrandNameKey].toString();
+                firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
+            }
+        }
+
+        if (_bootloaderFound) {
+            _buildAPMFirmwareNames();
+        }
+
+        _downloadingFirmwareList = false;
+        emit downloadingFirmwareListChanged(false);
+    } else {
+        qCWarning(FirmwareUpgradeLog) << "ArduPilot Manifest download failed" << errorMsg;
+    }
+}
+
 
 void FirmwareUpgradeController::_downloadArduPilotManifest(void)
 {
@@ -707,15 +794,15 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
         }
 
         QJsonObject json =          doc.object();
-        QJsonArray  rgFirmware =    json[_manifestFirmwareJsonKey].toArray();
+        QJsonArray  rgFirmware =    json[_ardupilotManifestFirmwareJsonKey].toArray();
 
         for (int i=0; i<rgFirmware.count(); i++) {
             const QJsonObject& firmwareJson = rgFirmware[i].toObject();
 
-            FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_manifestMavTypeJsonKey].toString());
-            FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_manifestMavFirmwareVersionTypeJsonKey].toString());
-            QString                 format =                firmwareJson[_manifestFormatJsonKey].toString();
-            QString                 platform =              firmwareJson[_manifestPlatformKey].toString();
+            FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_ardupilotManifestMavTypeJsonKey].toString());
+            FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_ardupilotManifestMavFirmwareVersionTypeJsonKey].toString());
+            QString                 format =                firmwareJson[_ardupilotManifestFormatJsonKey].toString();
+            QString                 platform =              firmwareJson[_ardupilotManifestPlatformKey].toString();
 
             if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware && (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
                 if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
@@ -725,19 +812,19 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
                 _rgManifestFirmwareInfo.append(ManifestFirmwareInfo_t());
                 ManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
 
-                firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_manifestBoardIdJsonKey].toInt());
+                firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_ardupilotManifestBoardIDJsonKey].toInt());
                 firmwareInfo.firmwareBuildType =    firmwareBuildType;
                 firmwareInfo.vehicleType =          firmwareVehicleType;
-                firmwareInfo.url =                  firmwareJson[_manifestUrlJsonKey].toString();
-                firmwareInfo.version =              firmwareJson[_manifestMavFirmwareVersionJsonKey].toString();
+                firmwareInfo.url =                  firmwareJson[_ardupilotManifestUrlJsonKey].toString();
+                firmwareInfo.version =              firmwareJson[_ardupilotManifestMavFirmwareVersionJsonKey].toString();
                 firmwareInfo.chibios =              format == QStringLiteral("apj");                firmwareInfo.fmuv2 =                platform.contains(QStringLiteral("fmuv2"));
 
-                QJsonArray bootloaderArray = firmwareJson[_manifestBootloaderStrJsonKey].toArray();
+                QJsonArray bootloaderArray = firmwareJson[_ardupilotManifestBootloaderStrJsonKey].toArray();
                 for (int j=0; j<bootloaderArray.count(); j++) {
                     firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
                 }
 
-                QJsonArray usbidArray = firmwareJson[_manifestUSBIDJsonKey].toArray();
+                QJsonArray usbidArray = firmwareJson[_ardupilotManifestUSBIDJsonKey].toArray();
                 for (int j=0; j<usbidArray.count(); j++) {
                     QStringList vidpid = usbidArray[j].toString().split('/');
                     QString vid = vidpid[0];
@@ -748,7 +835,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
                     firmwareInfo.rgPID.append(pid.right(pid.count() - 2).toInt(&ok, 16));
                 }
 
-                QString brandName = firmwareJson[_manifestBrandNameKey].toString();
+                QString brandName = firmwareJson[_ardupilotManifestBrandNameKey].toString();
                 firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
             }
         }
