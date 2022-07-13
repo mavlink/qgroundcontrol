@@ -36,47 +36,47 @@ struct FirmwareToUrlElement_t {
 };
 
 // See PX4 Bootloader board_types.txt - https://raw.githubusercontent.com/PX4/PX4-Bootloader/master/board_types.txt
-static QMap<int, QString> px4_board_name_map {
-    {9, "px4_fmu-v2_default"},
-    {255, "px4_fmu-v3_default"}, // Simulated board id for V3 which is a V2 board which supports larger flash space
-    {11, "px4_fmu-v4_default"},
-    {13, "px4_fmu-v4pro_default"},
-    {20, "uvify_core_default"},
-    {50, "px4_fmu-v5_default"},
-    {51, "px4_fmu-v5x_default"},
-    {52, "px4_fmu-v6_default"},
-    {53, "px4_fmu-v6x_default"},
-    {54, "px4_fmu-v6u_default"},
-    {56, "px4_fmu-v6c_default"},
-    {55, "sky-drones_smartap-airlink_default"},
-    {88, "airmind_mindpx-v2_default"},
-    {12, "bitcraze_crazyflie_default"},
-    {14, "bitcraze_crazyflie21_default"},
-    {42, "omnibus_f4sd_default"},
-    {33, "mro_x21_default"},
-    {65, "intel_aerofc-v1_default"},
-    {123, "holybro_kakutef7_default"},
-    {41775, "modalai_fc-v1_default"},
-    {41776, "modalai_fc-v2_default"},
-    {78, "holybro_pix32v5_default"},
-    {79, "holybro_can-gps-v1_default"},
-    {28, "nxp_fmuk66-v3_default"},
-    {30, "nxp_fmuk66-e_default"},
-    {31, "nxp_fmurt1062-v1_default"},
-    {85, "freefly_can-rtk-gps_default"},
-    {120, "cubepilot_cubeyellow_default"},
-    {136, "mro_x21-777_default"},
-    {139, "holybro_durandal-v1_default"},
-    {140, "cubepilot_cubeorange_default"},
-    {141, "mro_ctrl-zero-f7_default"},
-    {142, "mro_ctrl-zero-f7-oem_default"},
-    {1009, "cuav_nora_default"},
-    {1010, "cuav_x7pro_default"},
-    {1017, "mro_pixracerpro_default"},
-    {1023, "mro_ctrl-zero-h7_default"},
-    {1024, "mro_ctrl-zero-h7-oem_default"},
-    {1048, "holybro_kakuteh7_default"},
-};
+// static QMap<int, QString> px4_board_name_map {
+//     {9, "px4_fmu-v2_default"},
+//     {255, "px4_fmu-v3_default"}, // Simulated board id for V3 which is a V2 board which supports larger flash space
+//     {11, "px4_fmu-v4_default"},
+//     {13, "px4_fmu-v4pro_default"},
+//     {20, "uvify_core_default"},
+//     {50, "px4_fmu-v5_default"},
+//     {51, "px4_fmu-v5x_default"},
+//     {52, "px4_fmu-v6_default"},
+//     {53, "px4_fmu-v6x_default"},
+//     {54, "px4_fmu-v6u_default"},
+//     {56, "px4_fmu-v6c_default"},
+//     {55, "sky-drones_smartap-airlink_default"},
+//     {88, "airmind_mindpx-v2_default"},
+//     {12, "bitcraze_crazyflie_default"},
+//     {14, "bitcraze_crazyflie21_default"},
+//     {42, "omnibus_f4sd_default"},
+//     {33, "mro_x21_default"},
+//     {65, "intel_aerofc-v1_default"},
+//     {123, "holybro_kakutef7_default"},
+//     {41775, "modalai_fc-v1_default"},
+//     {41776, "modalai_fc-v2_default"},
+//     {78, "holybro_pix32v5_default"},
+//     {79, "holybro_can-gps-v1_default"},
+//     {28, "nxp_fmuk66-v3_default"},
+//     {30, "nxp_fmuk66-e_default"},
+//     {31, "nxp_fmurt1062-v1_default"},
+//     {85, "freefly_can-rtk-gps_default"},
+//     {120, "cubepilot_cubeyellow_default"},
+//     {136, "mro_x21-777_default"},
+//     {139, "holybro_durandal-v1_default"},
+//     {140, "cubepilot_cubeorange_default"},
+//     {141, "mro_ctrl-zero-f7_default"},
+//     {142, "mro_ctrl-zero-f7-oem_default"},
+//     {1009, "cuav_nora_default"},
+//     {1010, "cuav_x7pro_default"},
+//     {1017, "mro_pixracerpro_default"},
+//     {1023, "mro_ctrl-zero-h7_default"},
+//     {1024, "mro_ctrl-zero-h7-oem_default"},
+//     {1048, "holybro_kakuteh7_default"},
+// };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 {
@@ -134,6 +134,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     _initFirmwareHash();
     _determinePX4StableVersion();
 
+    _downloadPX4Manifest();
 #if !defined(NO_ARDUPILOT_DIALECT)
     _downloadArduPilotManifest();
 #endif
@@ -334,12 +335,12 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     }
         break;
     default:
-        if (px4_board_name_map.contains(boardId)) {
+        if (_px4_board_id_2_target_name.contains(boardId)) {
             const QString px4Url{"http://px4-travis.s3.amazonaws.com/Firmware/%1/%2.px4"};
 
-            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(px4_board_name_map.value(boardId)));
-            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(px4_board_name_map.value(boardId)));
-            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(px4_board_name_map.value(boardId)));
+            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(_px4_board_id_2_target_name.value(boardId)));
+            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(_px4_board_id_2_target_name.value(boardId)));
+            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(_px4_board_id_2_target_name.value(boardId)));
         }
         break;
     }
@@ -556,7 +557,7 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
     bool    bootloaderMatch = boardDescription.endsWith(apmDescriptionSuffix);
 
     int currentIndex = 0;
-    for (const ManifestFirmwareInfo_t& firmwareInfo: _rgManifestFirmwareInfo) {
+    for (const ArdupilotManifestFirmwareInfo_t& firmwareInfo: _rgManifestFirmwareInfo) {
         bool match = false;
         if (firmwareInfo.firmwareBuildType == _selectedFirmwareBuildType && firmwareInfo.chibios == chibios && firmwareInfo.vehicleType == vehicleType && firmwareInfo.boardId == rawBoardId) {
             if (firmwareInfo.fmuv2 && _bootloaderBoardID == Bootloader::boardIDPX4FMUV3) {
@@ -690,60 +691,22 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
         }
 
         QJsonObject json =          doc.object();
-        QJsonArray  rgFirmware =    json[_ardupilotManifestFirmwareJsonKey].toArray();
+        QJsonArray  rgFirmware =    json[_px4ManifestBoardInfoJsonKey].toArray();
 
         for (int i=0; i<rgFirmware.count(); i++) {
             const QJsonObject& firmwareJson = rgFirmware[i].toObject();
+            const int board_id = firmwareJson[_px4ManifestBoardIDJsonKey].toInt();
+            const QString target_name = firmwareJson[_px4ManifestTargetNameJsonKey];
 
-            FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_ardupilotManifestMavTypeJsonKey].toString());
-            FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_ardupilotManifestMavFirmwareVersionTypeJsonKey].toString());
-            QString                 format =                firmwareJson[_ardupilotManifestFormatJsonKey].toString();
-            QString                 platform =              firmwareJson[_ardupilotManifestPlatformKey].toString();
-
-            if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware && (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
-                if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
-                    continue;
-                }
-
-                _rgManifestFirmwareInfo.append(ManifestFirmwareInfo_t());
-                ManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
-
-                firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_ardupilotManifestBoardIDJsonKey].toInt());
-                firmwareInfo.firmwareBuildType =    firmwareBuildType;
-                firmwareInfo.vehicleType =          firmwareVehicleType;
-                firmwareInfo.url =                  firmwareJson[_ardupilotManifestUrlJsonKey].toString();
-                firmwareInfo.version =              firmwareJson[_ardupilotManifestMavFirmwareVersionJsonKey].toString();
-                firmwareInfo.chibios =              format == QStringLiteral("apj");                firmwareInfo.fmuv2 =                platform.contains(QStringLiteral("fmuv2"));
-
-                QJsonArray bootloaderArray = firmwareJson[_ardupilotManifestBootloaderStrJsonKey].toArray();
-                for (int j=0; j<bootloaderArray.count(); j++) {
-                    firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
-                }
-
-                QJsonArray usbidArray = firmwareJson[_ardupilotManifestUSBIDJsonKey].toArray();
-                for (int j=0; j<usbidArray.count(); j++) {
-                    QStringList vidpid = usbidArray[j].toString().split('/');
-                    QString vid = vidpid[0];
-                    QString pid = vidpid[1];
-
-                    bool ok;
-                    firmwareInfo.rgVID.append(vid.right(vid.count() - 2).toInt(&ok, 16));
-                    firmwareInfo.rgPID.append(pid.right(pid.count() - 2).toInt(&ok, 16));
-                }
-
-                QString brandName = firmwareJson[_ardupilotManifestBrandNameKey].toString();
-                firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
-            }
-        }
-
-        if (_bootloaderFound) {
-            _buildAPMFirmwareNames();
+            // Update the Board-ID <-> Target Name mapping
+            _px4_board_id_2_target_name[board_id] = target_name;
         }
 
         _downloadingFirmwareList = false;
         emit downloadingFirmwareListChanged(false);
+    
     } else {
-        qCWarning(FirmwareUpgradeLog) << "ArduPilot Manifest download failed" << errorMsg;
+        qCWarning(FirmwareUpgradeLog) << "PX4 Manifest download failed" << errorMsg;
     }
 }
 
@@ -795,8 +758,8 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
                     continue;
                 }
 
-                _rgManifestFirmwareInfo.append(ManifestFirmwareInfo_t());
-                ManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
+                _rgManifestFirmwareInfo.append(ArdupilotManifestFirmwareInfo_t());
+                ArdupilotManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
 
                 firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_ardupilotManifestBoardIDJsonKey].toInt());
                 firmwareInfo.firmwareBuildType =    firmwareBuildType;

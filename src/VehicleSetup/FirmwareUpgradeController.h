@@ -279,6 +279,8 @@ private:
     const char* FirmwareUpgradeController::_px4ManifestBoardIDJsonKey =                     "board_id";
     const char* FirmwareUpgradeController::_px4ManifestBuildVariantsJonKey =                "build_variants";
 
+    // PX4 Board-ID (Bootloader ID) to Target Name mapping
+    QMap<int, QString> _px4_board_name_map;
 
     typedef struct {
         uint32_t                boardId;
@@ -292,10 +294,10 @@ private:
         QString                 friendlyName;
         bool                    chibios;
         bool                    fmuv2;
-    } ManifestFirmwareInfo_t;
+    } ArdupilotManifestFirmwareInfo_t;
 
 
-    QList<ManifestFirmwareInfo_t>           _rgManifestFirmwareInfo;
+    QList<ArdupilotManifestFirmwareInfo_t>           _rgManifestFirmwareInfo;
     QMap<QString, FirmwareBuildType_t>      _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap;
     QMap<QString, FirmwareVehicleType_t>    _manifestMavTypeToFirmwareVehicleTypeMap;
     QStringList                             _apmFirmwareNames;
