@@ -1,0 +1,885 @@
+{
+	"board_info": [
+		{
+			"board_name": "mRo X2.1",
+			"target_name": "mro_x21",
+			"description": "Firmware for the mRo X2.1 board",
+			"board_id": 33,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "mRO x2.1-777",
+			"target_name": "mro_x21-777",
+			"description": "Firmware for the mRO X2.1-777 board",
+			"board_id": 136,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "mRo-ctrl-zero-f7-oem",
+			"target_name": "mro_ctrl-zero-f7-oem",
+			"description": "Firmware for the mRo-ctrl-zero-f7-oem board",
+			"board_id": 141,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "mRo-ctrl-zero-h7",
+			"target_name": "mro_ctrl-zero-h7",
+			"description": "Firmware for the mRo-ctrl-zero-h7 board",
+			"board_id": 1023,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PixracerPro",
+			"target_name": "mro_pixracerpro",
+			"description": "Firmware for the mRo Pixracer Pro board",
+			"board_id": 1017,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "mRo-ctrl-zero-classic",
+			"target_name": "mro_ctrl-zero-classic",
+			"description": "Firmware for the mRo-ctrl-zero-classic board",
+			"board_id": 1022,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "mRo-ctrl-zero-f7",
+			"target_name": "mro_ctrl-zero-f7",
+			"description": "Firmware for the mRo-ctrl-zero-f7 board",
+			"board_id": 141,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "mRo-ctrl-zero-h7-oem",
+			"target_name": "mro_ctrl-zero-h7-oem",
+			"description": "Firmware for the mRo-ctrl-zero-h7-oem board",
+			"board_id": 1024,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "FFRTK",
+			"target_name": "freefly_can-rtk-gps",
+			"description": "Firmware for the FreeFly RTK GPS",
+			"board_id": 85,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "DURANDALv1",
+			"target_name": "holybro_durandal-v1",
+			"description": "Firmware for the Durandalv1 board",
+			"board_id": 139,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "HolybroCANGPS",
+			"target_name": "holybro_can-gps-v1",
+			"description": "Firmware for the Holybro CAN GPS board",
+			"board_id": 79,
+			"image_max_size": 475136,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv5",
+			"target_name": "holybro_pix32v5",
+			"description": "Firmware for the PX4FMUv5 board",
+			"board_id": 78,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "KAKUTEF7",
+			"target_name": "holybro_kakutef7",
+			"description": "Firmware for the Holybro Kakute F7 board",
+			"board_id": 123,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "KAKUTEH7",
+			"target_name": "holybro_kakuteh7",
+			"description": "Firmware for the KakuteH7 board",
+			"board_id": 1048,
+			"image_max_size": 1835008,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "CRAZYFLIE",
+			"target_name": "bitcraze_crazyflie",
+			"description": "Firmware for the Crazyflie 2.0",
+			"board_id": 12,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "CRAZYFLIE 2.1",
+			"target_name": "bitcraze_crazyflie21",
+			"description": "Firmware for the Crazyflie 2.1",
+			"board_id": 14,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "SMARTAP-AIRLINK",
+			"target_name": "sky-drones_smartap-airlink",
+			"description": "Firmware for the SMARTAP AIRLINK board",
+			"board_id": 55,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "AV-Xv1",
+			"target_name": "av_x-v1",
+			"description": "Firmware for the AV-Xv1 board",
+			"board_id": 50,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4/MambaF405",
+			"target_name": "diatone_mamba-f405-mk2",
+			"description": "Firmware for the MambaF405Mk2 board",
+			"board_id": 42,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "UVify Core",
+			"target_name": "uvify_core",
+			"description": "Firmware for the UVify Core flight controller",
+			"board_id": 20,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "MindPXFMUv2",
+			"target_name": "airmind_mindpx-v2",
+			"description": "Firmware for the MindPXFMUv2 board",
+			"board_id": 88,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4/OmnibusF4",
+			"target_name": "omnibus_f4sd",
+			"description": "Firmware for the OmnibusF4SD board",
+			"board_id": 42,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "icm20608g"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv3",
+			"target_name": "px4_fmu-v3",
+			"description": "Firmware for the PX4FMUv3 board",
+			"board_id": 9,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv5X",
+			"target_name": "px4_fmu-v5x",
+			"description": "Firmware for the PX4FMUv5X board",
+			"board_id": 51,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "nolockstep"
+				},
+				{
+					"name": "replay"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv6C",
+			"target_name": "px4_fmu-v6c",
+			"description": "Firmware for the PX4FMUv6C board",
+			"board_id": 56,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv4PRO",
+			"target_name": "px4_fmu-v4pro",
+			"description": "Firmware for the PX4FMUv4PRO board, based on STM32F469",
+			"board_id": 13,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv6X",
+			"target_name": "px4_fmu-v6x",
+			"description": "Firmware for the PX4FMUv6X board",
+			"board_id": 53,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4IOv2",
+			"target_name": "px4_io-v2",
+			"description": "Firmware for the PX4IOv2 board",
+			"board_id": 10,
+			"image_max_size": 61440,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv6U",
+			"target_name": "px4_fmu-v6u",
+			"description": "Firmware for the PX4FMUv6U board",
+			"board_id": 54,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv2",
+			"target_name": "px4_fmu-v2",
+			"description": "Firmware for the PX4FMUv2 board",
+			"board_id": 9,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "multicopter"
+				},
+				{
+					"name": "rover"
+				},
+				{
+					"name": "lto"
+				},
+				{
+					"name": "fixedwing"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv4",
+			"target_name": "px4_fmu-v4",
+			"description": "Firmware for the PX4FMUv4 board",
+			"board_id": 11,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv5",
+			"target_name": "px4_fmu-v5",
+			"description": "Firmware for the PX4FMUv5 board",
+			"board_id": 50,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "cyphal"
+				},
+				{
+					"name": "stackcheck"
+				},
+				{
+					"name": "debug"
+				},
+				{
+					"name": "lto"
+				},
+				{
+					"name": "uavcanv0periph"
+				},
+				{
+					"name": "cryptotest"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				},
+				{
+					"name": "protected"
+				}
+			]
+		},
+		{
+			"build_variants": [
+				{
+					"name": "arm64"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "CubeYellow",
+			"target_name": "cubepilot_cubeyellow",
+			"description": "Firmware for the CubePilot CubeYellow board",
+			"board_id": 120,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "CubeOrange",
+			"target_name": "cubepilot_cubeorange",
+			"description": "Firmware for the CubePilot CubeOrange board",
+			"board_id": 140,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4IOv2",
+			"target_name": "cubepilot_io-v2",
+			"description": "Firmware for the PX4IOv2 board",
+			"board_id": 10,
+			"image_max_size": 61440,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "SPRacing_H7Extreme",
+			"target_name": "spracing_h7extreme",
+			"description": "Firmware for the SP Racing H7 Extreme board",
+			"board_id": 139,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "atl_mantis-edu",
+			"target_name": "atl_mantis-edu",
+			"description": "Firmware for the Advanced Technology Labs (ATL) Mantis EDU (V18S) board",
+			"board_id": 97,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "PX4FMUv4",
+			"target_name": "cuav_can-gps-v1",
+			"description": "Firmware for the PX4FMUv4 board",
+			"board_id": 11,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "Nora",
+			"target_name": "cuav_nora",
+			"description": "Firmware for the CUAV Nora board",
+			"board_id": 1009,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "X7Pro",
+			"target_name": "cuav_x7pro",
+			"description": "Firmware for the CUAV X7Pro board",
+			"board_id": 1010,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "RaspberrypiPico",
+			"target_name": "raspberrypi_pico",
+			"description": "Firmware for the raspberry pi Pico board",
+			"board_id": 42,
+			"image_max_size": 1032192,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "modalaifcv1",
+			"target_name": "modalai_fc-v1",
+			"description": "Firmware for the ModalAI Flight Core v1 board",
+			"board_id": 41775,
+			"image_max_size": 2064384,
+			"build_variants": [
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "modalaifcv2",
+			"target_name": "modalai_fc-v2",
+			"description": "Firmware for the ModalAI Flight Core v2 board",
+			"board_id": 41776,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "ARKCANNODE",
+			"target_name": "ark_cannode",
+			"description": "Firmware for the ARK CANnode board",
+			"board_id": 83,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "ARKRTKGPS",
+			"target_name": "ark_can-rtk-gps",
+			"description": "Firmware for the ARK RTK GPS board",
+			"board_id": 82,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "debug"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "ARFFLOW",
+			"target_name": "ark_can-flow",
+			"description": "Firmware for the ARK flow board",
+			"board_id": 80,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "ARKGPS",
+			"target_name": "ark_can-gps",
+			"description": "Firmware for the ARK gps board",
+			"board_id": 81,
+			"image_max_size": 2080768,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "MateksysGnss-m9n-f4",
+			"target_name": "matek_gnss-m9n-f4",
+			"description": "Firmware for the MatekM9nf4can cannode board",
+			"board_id": 1014,
+			"image_max_size": 983040,
+			"build_variants": [
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "MatekH743-mini",
+			"target_name": "matek_h743-mini",
+			"description": "Firmware for the MatekH743-slim board",
+			"board_id": 1013,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "MatekH743",
+			"target_name": "matek_h743",
+			"description": "Firmware for the MatekH743 boards",
+			"board_id": 1013,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "MatekH743",
+			"target_name": "matek_h743-slim",
+			"description": "Firmware for the MatekH743 board",
+			"board_id": 1013,
+			"image_max_size": 1966080,
+			"build_variants": [
+				{
+					"name": "bootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "UCANS32K146",
+			"target_name": "nxp_ucans32k146",
+			"description": "Firmware for the ucans32k146 board",
+			"board_id": 34,
+			"image_max_size": 0,
+			"build_variants": [
+				{
+					"name": "servo"
+				},
+				{
+					"name": "canbootloader"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "NXPFMUK66v3",
+			"target_name": "nxp_fmuk66-v3",
+			"description": "Firmware for the NXPFMUK66v3 board",
+			"board_id": 28,
+			"image_max_size": 2096112,
+			"build_variants": [
+				{
+					"name": "test"
+				},
+				{
+					"name": "socketcan"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "NXPFMURT1062v1",
+			"target_name": "nxp_fmurt1062-v1",
+			"description": "Firmware for the NXPFMURT1062v1 board",
+			"board_id": 31,
+			"image_max_size": 7340032,
+			"build_variants": [
+				{
+					"name": "default"
+				}
+			]
+		},
+		{
+			"board_name": "NXPFMUK66E",
+			"target_name": "nxp_fmuk66-e",
+			"description": "Firmware for the NXPFMUK66E board",
+			"board_id": 30,
+			"image_max_size": 2096112,
+			"build_variants": [
+				{
+					"name": "socketcan"
+				},
+				{
+					"name": "rtps"
+				},
+				{
+					"name": "default"
+				}
+			]
+		}
+	]
+}

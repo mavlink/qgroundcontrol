@@ -45,4 +45,7 @@
         <file alias="PX4ParameterFactMetaData.xml">PX4ParameterFactMetaData.xml</file>
         <file alias="PX4.OfflineEditing.params">V1.4.OfflineEditing.params</file>
     </qresource>
+    <qresource prefix="/FirmwarePlugin/PX4">
+        <file alias="PX4BoardInformationManifest.xml">PX4BoardInformationManifest.xml</file>
+    </qresource>
 </RCC>
