@@ -170,6 +170,7 @@ void FirmwareUpgradeController::flash(AutoPilotStackType_t stackType,
     FirmwareIdentifier firmwareId = FirmwareIdentifier(stackType, firmwareType, vehicleType);
     if (_bootloaderFound) {
         _getFirmwareFile(firmwareId);
+    
     } else {
         // We haven't found the bootloader yet. Need to wait until then to flash
         _startFlashWhenBootloaderFound = true;
@@ -314,52 +315,55 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
     _errorCancel("Unable to sync with bootloader.");
 }
 
-QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
+QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_px4FirmwareHashForBoardId(int boardId)
 {
-    _rgFirmwareDynamic.clear();
+    _rgPX4FirmwareDynamic.clear();
 
     switch (boardId) {
     case Bootloader::boardIDPX4Flow:
-        _rgFirmwareDynamic = _rgPX4FLowFirmware;
+        _rgPX4FirmwareDynamic = _rgPX4FLowFirmware;
         break;
     case Bootloader::boardIDSiKRadio1000:
     {
         FirmwareToUrlElement_t element = { SiKRadio, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx" };
-        _rgFirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
         break;
     case Bootloader::boardIDSiKRadio1060:
     {
         FirmwareToUrlElement_t element = { SiKRadio, StableFirmware, DefaultVehicleFirmware, "https://px4-travis.s3.amazonaws.com/SiK/stable/radio~hb1060.ihx" };
-        _rgFirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
         break;
     default:
         if (_px4_board_id_2_target_name.contains(boardId)) {
             const QString px4Url{"http://px4-travis.s3.amazonaws.com/Firmware/%1/%2.px4"};
 
-            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(_px4_board_id_2_target_name.value(boardId)));
-            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(_px4_board_id_2_target_name.value(boardId)));
-            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(_px4_board_id_2_target_name.value(boardId)));
+            _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(_px4_board_id_2_target_name.value(boardId)));
+            _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(_px4_board_id_2_target_name.value(boardId)));
+            _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(_px4_board_id_2_target_name.value(boardId)));
         }
         break;
     }
 
-    return &_rgFirmwareDynamic;
+    return &_rgPX4FirmwareDynamic;
 }
 
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _px4FirmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
     if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QString();
         _errorCancel(tr("Custom firmware selected but no filename given."));
+    
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
+        
         } else {
             _errorCancel(tr("Unable to find specified firmware for board type"));
             return;
+        
         }
     }
     
@@ -381,6 +385,7 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_firmwareDownloadComplete);
     connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
+    
     downloader->download(_firmwareFilename);
 }
 

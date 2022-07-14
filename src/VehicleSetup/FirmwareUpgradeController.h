@@ -188,7 +188,7 @@ private slots:
     void _buildAPMFirmwareNames             (void);
 
 private:
-    QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardId(int boardId);
+    QHash<FirmwareIdentifier, QString>* _px4FirmwareHashForBoardId(int boardId);
     void _getFirmwareFile           (FirmwareIdentifier firmwareId);
     void _initFirmwareHash          (void);
     void _downloadFirmware          (void);
@@ -209,9 +209,9 @@ private:
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rgSiKRadioFirmware;
 
-    // Hash map for ArduPilot ChibiOS lookup by board name
+    // Hash map for lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;
-    QHash<FirmwareIdentifier, QString> _rgFirmwareDynamic;
+    QHash<FirmwareIdentifier, QString> _rgPX4FirmwareDynamic;
 
     QMap<FirmwareBuildType_t, QMap<FirmwareVehicleType_t, QString> > _apmVersionMap;
     QList<FirmwareVehicleType_t>                                _apmVehicleTypeFromCurrentVersionList;

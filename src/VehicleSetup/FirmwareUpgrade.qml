@@ -353,6 +353,7 @@ SetupPage {
                             }
                         }
 
+                        // Ardupilot Firmwrae selection dropboxes
                         FactComboBox {
                             Layout.fillWidth:   true
                             visible:            !px4Flow && apmFlightStack.checked
