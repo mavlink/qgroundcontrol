@@ -290,6 +290,11 @@ void CompInfoParam::_cachePX4MetaDataFile(const QString& metaDataFile)
 
         QSettings settings;
         QDir cacheDir = QFileInfo(settings.fileName()).dir();
+
+        // Cached Parameter Metadata file format follows the following convention:
+        // <Metadata-Prefix>.<MAV_AUTOPILOT enum value>.<Parameter XML version major>
+        // For example, a PX4 Parameter xml will be saved as: "ParameterFactMetaData.12.1.xml"
+        
         QFile cacheFile(cacheDir.filePath(QString("%1.%2.%3.xml").arg(_cachedMetaDataFilePrefix).arg(MAV_AUTOPILOT_PX4).arg(newMajorVersion)));
         qCDebug(CompInfoParamLog) << "ParameterManager::cacheMetaDataFile caching file:" << cacheFile.fileName();
         QFile newFile(metaDataFile);

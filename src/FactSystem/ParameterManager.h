@@ -51,7 +51,7 @@ public:
     /// @return Directory of parameter caches
     static QDir parameterCacheDir();
 
-    /// @return Location of parameter cache file
+    /// @return Location of parameter cache file for a specified vehicle ID & Component ID
     static QString parameterCacheFile(int vehicleId, int componentId);
 
     void mavlinkMessageReceived(mavlink_message_t message);

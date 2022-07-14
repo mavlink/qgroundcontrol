@@ -267,8 +267,8 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         _jsonParamXmlKey,      // key which holds compressed bytes
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
-        QString parameterFilename = QGCApplication::cachedParameterMetaDataFile();
-        QFile parameterFile(QGCApplication::cachedParameterMetaDataFile());
+        QString parameterFilename = QGCApplication::getDefaultCachedParameterMetadataFilePath();
+        QFile parameterFile(QGCApplication::getDefaultCachedParameterMetadataFilePath());
 
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);

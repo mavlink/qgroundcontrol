@@ -318,7 +318,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         dir.removeRecursively();
         QFile airframe(cachedAirframeMetaDataFile());
         airframe.remove();
-        QFile parameter(cachedParameterMetaDataFile());
+        QFile parameter(getDefaultCachedParameterMetadataFilePath());
         parameter.remove();
     }
 
@@ -905,7 +905,7 @@ void QGCApplication::_gpsNumSatellites(int numSatellites)
     _gpsRtkFactGroup->numSatellites()->setRawValue(numSatellites);
 }
 
-QString QGCApplication::cachedParameterMetaDataFile(void)
+QString QGCApplication::getDefaultCachedParameterMetadataFilePath(void)
 {
     QSettings settings;
     QDir parameterDir = QFileInfo(settings.fileName()).dir();

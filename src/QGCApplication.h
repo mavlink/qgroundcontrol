@@ -103,7 +103,7 @@ public:
 
     bool event(QEvent *e) override;
 
-    static QString cachedParameterMetaDataFile(void);
+    static QString getDefaultCachedParameterMetadataFilePath(void);
     static QString cachedAirframeMetaDataFile(void);
 
 public slots:
