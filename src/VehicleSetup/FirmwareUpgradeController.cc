@@ -275,8 +275,10 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
     
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
+    
     } else {
-        if (_rgManifestFirmwareInfo.count()) {
+        // Prepare the list of APM Firmware names if we already have the manifest info list updated
+        if (_rgArdupilotManifestFirmwareInfo.count()) {
             _buildAPMFirmwareNames();
         }
         emit showFirmwareSelectDlg();
@@ -562,7 +564,7 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
     bool    bootloaderMatch = boardDescription.endsWith(apmDescriptionSuffix);
 
     int currentIndex = 0;
-    for (const ArdupilotManifestFirmwareInfo_t& firmwareInfo: _rgManifestFirmwareInfo) {
+    for (const ArdupilotManifestFirmwareInfo_t& firmwareInfo: _rgArdupilotManifestFirmwareInfo) {
         bool match = false;
         if (firmwareInfo.firmwareBuildType == _selectedFirmwareBuildType && firmwareInfo.chibios == chibios && firmwareInfo.vehicleType == vehicleType && firmwareInfo.boardId == rawBoardId) {
             if (firmwareInfo.fmuv2 && _bootloaderBoardID == Bootloader::boardIDPX4FMUV3) {
@@ -682,26 +684,29 @@ void FirmwareUpgradeController::_downloadPX4Manifest(void)
 void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
 {
     if (errorMsg.isEmpty()) {
-        // Delete the QGCFileDownload object
-        sender()->deleteLater();
-
+        sender()->deleteLater(); // Delete the QGCFileDownload object
         qCDebug(FirmwareUpgradeLog) << "PX4 Board information Manifest Download Finished" << remoteFile << localFile;
-
+        
         QString         errorString;
         QJsonDocument   doc;
-
+        
         if (!JsonHelper::isJsonFile(localFile, doc, errorString)) {
             qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
             return;
         }
 
+        // Parse the Manifest JSON file
         QJsonObject json =          doc.object();
-        QJsonArray  rgFirmware =    json[_px4ManifestBoardInfoJsonKey].toArray();
 
-        for (int i=0; i<rgFirmware.count(); i++) {
-            const QJsonObject& firmwareJson = rgFirmware[i].toObject();
-            const int board_id = firmwareJson[_px4ManifestBoardIDJsonKey].toInt();
-            const QString target_name = firmwareJson[_px4ManifestTargetNameJsonKey].toString();
+        // Read in each unit of board information
+        QJsonArray boardInfoArray = json[_px4ManifestBoardInfoJsonKey].toArray();
+        for (int i = 0; i < boardInfoArray.count(); i++) {
+            const QJsonObject& boardInfoUnitJson = boardInfoArray[i].toObject();
+
+            PX4Manifest_SingleBoardInfo_t boardInfoUnit = PX4Manifest_SingleBoardInfo_t();
+            boardInfoUnit.boardID = boardInfoUnitJson[_px4ManifestBoardIDJsonKey].toInt();
+            boardInfoUnit.targetName = boardInfoUnitJson[_px4ManifestTargetNameJsonKey].toString();
+            _px4BoardManifest.boards.append(boardInfoUnit);
 
             // Update the Board-ID <-> Target Name mapping
             _px4_board_id_2_target_name[board_id] = target_name;
@@ -763,8 +768,8 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
                     continue;
                 }
 
-                _rgManifestFirmwareInfo.append(ArdupilotManifestFirmwareInfo_t());
-                ArdupilotManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
+                _rgArdupilotManifestFirmwareInfo.append(ArdupilotManifestFirmwareInfo_t());
+                ArdupilotManifestFirmwareInfo_t& firmwareInfo = _rgArdupilotManifestFirmwareInfo.last();
 
                 firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_ardupilotManifestBoardIDJsonKey].toInt());
                 firmwareInfo.firmwareBuildType =    firmwareBuildType;

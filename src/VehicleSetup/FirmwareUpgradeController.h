@@ -259,7 +259,31 @@ private:
     QString _px4StableVersion;  // Version strange for latest PX4 stable
     QString _px4BetaVersion;    // Version strange for latest PX4 beta
 
-    const QString _apmBoardDescriptionReplaceText;
+    // PX4 Manifest file JSON keys
+    const char* _px4ManifestBoardInfoJsonKey =                   "board_info";
+    const char* _px4ManifestBoardNameJsonKey =                   "board_name";
+    const char* _px4ManifestTargetNameJsonKey =                  "target_name";
+    const char* _px4ManifestBoardIDJsonKey =                     "board_id";
+    const char* _px4ManifestBuildVariantsJonKey =                "build_variants";
+
+    // Struct that holds information about a single board(target)
+    typedef struct {
+        QString boardName; ///< Human friendly name of the board
+        QString targetName; ///< Name the board is referred to when building as a target
+        QString description;
+        int boardID; ///< Bootloader ID for identifying the board when connected
+        QList<string> buildVariants; ///< Build variants (e.g. default, test, rtps)
+    } PX4Manifest_SingleBoardInfo_t;
+
+    typedef struct {
+        QList<PX4Manifest_SingleBoardInfo_t> boards; ///< List of board information units
+        QMap<QString, QString> version_2_binary_url; ///< Mapping between version (e.g. stable) to it's binary url (e.g. px4-travis.s3. ...)
+    } PX4Manifest_WholeBoardInfo_t;
+
+    PX4Manifest_WholeBoardInfo_t _px4BoardManifest;
+
+    // PX4 Board-ID (Bootloader ID) to Target Name mapping, extracted from the Manifest struct
+    QMap<int, QString> _px4_board_id_2_target_name;
 
     // Ardupilot Manifest file JSON keys
     const char* _ardupilotManifestFirmwareJsonKey =               "firmware";
@@ -275,15 +299,7 @@ private:
     const char* _ardupilotManifestPlatformKey =                   "platform";
     const char* _ardupilotManifestBrandNameKey =                  "brand_name";
 
-    // PX4 Manifest file JSON keys
-    const char* _px4ManifestBoardInfoJsonKey =                   "board_info";
-    const char* _px4ManifestBoardNameJsonKey =                   "board_name";
-    const char* _px4ManifestTargetNameJsonKey =                  "target_name";
-    const char* _px4ManifestBoardIDJsonKey =                     "board_id";
-    const char* _px4ManifestBuildVariantsJonKey =                "build_variants";
-
-    // PX4 Board-ID (Bootloader ID) to Target Name mapping
-    QMap<int, QString> _px4_board_id_2_target_name;
+    const QString _apmBoardDescriptionReplaceText;
 
     typedef struct {
         uint32_t                boardId;
@@ -300,7 +316,7 @@ private:
     } ArdupilotManifestFirmwareInfo_t;
 
 
-    QList<ArdupilotManifestFirmwareInfo_t>           _rgManifestFirmwareInfo;
+    QList<ArdupilotManifestFirmwareInfo_t>           _rgArdupilotManifestFirmwareInfo;
     QMap<QString, FirmwareBuildType_t>      _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap;
     QMap<QString, FirmwareVehicleType_t>    _manifestMavTypeToFirmwareVehicleTypeMap;
     QStringList                             _apmFirmwareNames;
