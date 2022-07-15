@@ -695,10 +695,9 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
             return;
         }
 
-        // Parse the Manifest JSON file
         QJsonObject json =          doc.object();
 
-        // Read in each unit of board information
+        // Read in board informations of each target
         QJsonArray boardInfoArray = json[_px4ManifestBoardInfoJsonKey].toArray();
         for (int i = 0; i < boardInfoArray.count(); i++) {
             const QJsonObject& boardInfoUnitJson = boardInfoArray[i].toObject();
@@ -711,6 +710,10 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
             // Update the Board-ID <-> Target Name mapping
             _px4_board_id_2_target_name[board_id] = target_name;
         }
+
+        // Read in extra data from the Manifest
+        
+        _px4BoardManifest.version_to_binary_url_map[version] = url;
 
         _downloadingFirmwareList = false;
         emit downloadingFirmwareListChanged(false);

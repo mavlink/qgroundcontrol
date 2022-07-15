@@ -277,7 +277,7 @@ private:
 
     typedef struct {
         QList<PX4Manifest_SingleBoardInfo_t> boards; ///< List of board information units
-        QMap<QString, QString> version_2_binary_url; ///< Mapping between version (e.g. stable) to it's binary url (e.g. px4-travis.s3. ...)
+        QMap<QString, QString> version_to_binary_url_map; ///< Mapping between version (e.g. stable) to it's binary url (e.g. px4-travis.s3. ...)
     } PX4Manifest_WholeBoardInfo_t;
 
     PX4Manifest_WholeBoardInfo_t _px4BoardManifest;
