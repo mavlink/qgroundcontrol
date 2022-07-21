@@ -677,11 +677,14 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
             // Add in the list of build variants
             QJsonArray buildVariantsArray = boardInfoUnitJson[_px4ManifestBuildVariantsJsonKey].toArray();
             for (int build_variant_idx = 0; build_variant_idx < buildVariantsArray.count(); build_variant_idx++) {
-                boardInfoUnit.buildVariants.append(buildVariantsArray[build_variant_idx].toString());
+                QJsonObject build_variant = buildVariantsArray[build_variant_idx].toObject();
+                // Build Variant's name is encapsulated under an extra layer of Json key "name"
+                boardInfoUnit.buildVariantNames.append(build_variant[_px4ManifestBuildVariantNameJsonKey].toString());
             }
 
             // Add optional USB Autoconnect info
             boardInfoUnit.productID = boardInfoUnitJson[_px4ManifestProductIDJsonKey].toInt();
+            qInfo() << "Adding Product ID " << boardInfoUnit.productID << " to board " << boardInfoUnit.boardName;
             boardInfoUnit.productName = boardInfoUnitJson[_px4ManifestProductNameJsonKey].toString();
             boardInfoUnit.vendorID = boardInfoUnitJson[_px4ManifestVendorIDJsonKey].toInt();
             boardInfoUnit.vendorName = boardInfoUnitJson[_px4ManifestVendorNameJsonKey].toString();
@@ -715,15 +718,31 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
 void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
 {
     qInfo() << "Updating PX4 Build Variants";
-    // Identify the board by board ID of the bootloader
+
     if (_bootloaderFound) {
+        const uint16_t board_vid = _boardInfo.vendorIdentifier();
+        const uint16_t board_pid = _boardInfo.productIdentifier();
+
         foreach(const PX4Manifest_SingleBoardInfo_t &boardinfo, _px4BoardManifest.boards) {
             if (boardinfo.boardID == _bootloaderBoardID) {
                 // Found the matching board in the manifest. Update the variants list
                 qInfo() << "Found the board that has a matching bootloader ID";
                 qInfo() << boardinfo.boardName;
-                _px4FirmwareBuildVariants = QStringList(boardinfo.buildVariants);
-                return;
+
+                if (board_vid == boardinfo.vendorID && board_pid == boardinfo.productID) {
+                    qInfo() << "Vendor ID and Product ID matches as well! Updating variants list...";
+                    _px4FirmwareBuildVariants = QStringList(boardinfo.buildVariantNames);
+                    qInfo() << boardinfo.buildVariantNames;
+                    qInfo() << _px4FirmwareBuildVariants;
+                    // Emit the signal so that the Build Variants display QML Combo box would get updated
+                    emit px4FirmwareBuildVariantsChanged();
+                    return;
+                
+                } else {
+                    qInfo() << "but the Vendor ID or product ID are different, not this board!";
+                    qInfo() << "Detected VID,PID : " << board_vid << ", " << board_pid;
+                    qInfo() << "Board Manifest VID,PID : " << boardinfo.vendorID << ", " << boardinfo.productID;
+                }
             }
         }
     }

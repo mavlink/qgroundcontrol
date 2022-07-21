@@ -169,7 +169,10 @@ signals:
     void flashCancelled                 (void);
     void error                          (void);
     void selectedFirmwareBuildTypeChanged(FirmwareBuildType_t firmwareType);
-    void px4FirmwareBuildVariantsChanged (void); // Signal emitted when the Build Variant List variable is changed in the class
+
+    // Signal emitted when the PX4 Build Variant List variable is changed in the class
+    void px4FirmwareBuildVariantsChanged (void);
+
     void apmFirmwareNamesChanged        (void);
     void px4StableVersionChanged        (const QString& px4StableVersion);
     void px4BetaVersionChanged          (const QString& px4BetaVersion);
@@ -179,7 +182,7 @@ private slots:
     void _firmwareDownloadProgress          (qint64 curr, qint64 total);
     void _firmwareDownloadComplete          (QString remoteFile, QString localFile, QString errorMsg);
     /**
-     * @brief Called when a board is found in the FirmwareUpgradeThread
+     * @brief Called when a board is found in the FirmwareUpgradeThread as a Serial (USB) device
      */
     void _foundBoard                        (bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
     void _noBoardFound                      (void);
@@ -236,7 +239,7 @@ private:
     QMap<FirmwareBuildType_t, QMap<FirmwareVehicleType_t, QString> > _apmVersionMap;
     QList<FirmwareVehicleType_t>                                _apmVehicleTypeFromCurrentVersionList;
 
-    /// Information which comes back from the bootloader
+    // Information which comes back from the bootloader
     bool        _bootloaderFound;           ///< true: we have received the foundBootloader signals
     uint32_t    _bootloaderVersion;         ///< Bootloader version
     uint32_t    _bootloaderBoardID;         ///< Board ID
@@ -244,6 +247,11 @@ private:
     
     bool                 _startFlashWhenBootloaderFound;
     FirmwareIdentifier   _startFlashWhenBootloaderFoundFirmwareIdentity;
+
+    // Serial port information
+    QSerialPortInfo                 _boardInfo;
+    QGCSerialPortInfo::BoardType_t  _boardType;
+    QString                         _boardTypeName;
 
     QPixmap _boardIcon;             ///< Icon used to display image of board
     
@@ -265,12 +273,6 @@ private:
     
     QQuickItem*     _statusLog;         ///< Status log TextArea Qml control
     QQuickItem*     _progressBar;
-    
-    bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
-    
-    QSerialPortInfo                 _boardInfo;
-    QGCSerialPortInfo::BoardType_t  _boardType;
-    QString                         _boardTypeName;
 
     FirmwareBuildType_t             _selectedFirmwareBuildType;
 
@@ -286,7 +288,10 @@ private:
     const char* _px4ManifestTargetNameJsonKey =                  "target_name";
     const char* _px4ManifestDescriptionJsonKey =                 "description";
     const char* _px4ManifestBoardIDJsonKey =                     "board_id";
+
     const char* _px4ManifestBuildVariantsJsonKey =               "build_variants";
+    const char* _px4ManifestBuildVariantNameJsonKey =            "name";
+
     const char* _px4ManifestProductIDJsonKey =                   "product_id";
     const char* _px4ManifestProductNameJsonKey =                 "product_name";
     const char* _px4ManifestVendorIDJsonKey =                    "vendor_id";
@@ -300,7 +305,7 @@ private:
         QString targetName; ///< Name the board is referred to when building as a target
         QString description;
         uint32_t boardID; ///< Bootloader ID for identifying the board when connected
-        QList<QString> buildVariants; ///< Build variants (e.g. default, test, rtps)
+        QList<QString> buildVariantNames; ///< Build variants (e.g. default, test, rtps)
 
         // USB AutoConnect related variables
         int productID;

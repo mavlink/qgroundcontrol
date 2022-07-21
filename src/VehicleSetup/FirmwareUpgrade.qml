@@ -356,6 +356,7 @@ SetupPage {
                         // PX4 Firmware build variant selection dropbox
                         QGCComboBox {
                             id:                 px4FirmwareBuildVariantsCombo
+                            Layout.fillWidth:   true
                             visible:            _defaultFirmwareFact.rawValue == _defaultFimwareTypePX4
                             model:              controller.px4FirmwareBuildVariants
                             onModelChanged:     currentIndex = controller.px4FirmwareBuildVariantSelectedIdx
