@@ -11,8 +11,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0021",
-			"vendor_id": "0x26ac",
+			"product_id": 33,
+			"vendor_id": 9900,
 			"product_name": "PX4 AUAV X2.1",
 			"vendor_name": "AUAV"
 		},
@@ -27,8 +27,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0088",
-			"vendor_id": "0x26ac",
+			"product_id": 136,
+			"vendor_id": 9900,
 			"product_name": "mRo x2.1-777",
 			"vendor_name": "mRo"
 		},
@@ -43,8 +43,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x008D",
-			"vendor_id": "0x26ac",
+			"product_id": 141,
+			"vendor_id": 9900,
 			"product_name": "mRoControlZeroF7",
 			"vendor_name": "mRo"
 		},
@@ -65,8 +65,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1023",
-			"vendor_id": "0x26ac",
+			"product_id": 4131,
+			"vendor_id": 9900,
 			"product_name": "mRoControlZeroH7",
 			"vendor_name": "mRo"
 		},
@@ -87,8 +87,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1017",
-			"vendor_id": "0x26ac",
+			"product_id": 4119,
+			"vendor_id": 9900,
 			"product_name": "mRoPixracerPro",
 			"vendor_name": "mRo"
 		},
@@ -106,8 +106,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1022",
-			"vendor_id": "0x26ac",
+			"product_id": 4130,
+			"vendor_id": 9900,
 			"product_name": "mRoControlZero Classic",
 			"vendor_name": "mRo"
 		},
@@ -122,8 +122,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x008D",
-			"vendor_id": "0x26ac",
+			"product_id": 141,
+			"vendor_id": 9900,
 			"product_name": "mRoControlZeroF7",
 			"vendor_name": "mRo"
 		},
@@ -144,8 +144,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1024",
-			"vendor_id": "0x26ac",
+			"product_id": 4132,
+			"vendor_id": 9900,
 			"product_name": "mRoControlZeroH7 OEM",
 			"vendor_name": "mRo"
 		},
@@ -163,8 +163,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0016",
-			"vendor_id": "0x26ac",
+			"product_id": 22,
+			"vendor_id": 9900,
 			"product_name": "PX4 FreeFly RTK GPS",
 			"vendor_name": "Freefly"
 		},
@@ -182,8 +182,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x004b",
-			"vendor_id": "0x3162",
+			"product_id": 75,
+			"vendor_id": 12642,
 			"product_name": "PX4 DurandalV1",
 			"vendor_name": "Holybro"
 		},
@@ -213,8 +213,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x004E",
-			"vendor_id": "0x3162",
+			"product_id": 78,
+			"vendor_id": 12642,
 			"product_name": "PX4 PIX32V5",
 			"vendor_name": "Holybro"
 		},
@@ -229,8 +229,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0016",
-			"vendor_id": "0x26ac",
+			"product_id": 22,
+			"vendor_id": 9900,
 			"product_name": "PX4 KakuteF7",
 			"vendor_name": "Holybro"
 		},
@@ -248,8 +248,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x004b",
-			"vendor_id": "0x3162",
+			"product_id": 75,
+			"vendor_id": 12642,
 			"product_name": "PX4 KakuteH7",
 			"vendor_name": "Holybro"
 		},
@@ -264,8 +264,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0016",
-			"vendor_id": "0x26ac",
+			"product_id": 22,
+			"vendor_id": 9900,
 			"product_name": "PX4 Crazyflie v2.0",
 			"vendor_name": "Bitcraze AB"
 		},
@@ -280,8 +280,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0016",
-			"vendor_id": "0x26ac",
+			"product_id": 22,
+			"vendor_id": 9900,
 			"product_name": "PX4 Crazyflie v2.0",
 			"vendor_name": "Bitcraze AB"
 		},
@@ -296,8 +296,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0037",
-			"vendor_id": "0x0483",
+			"product_id": 55,
+			"vendor_id": 1155,
 			"product_name": "PX4 FMU SmartAP AIRLink",
 			"vendor_name": "Sky-Drones"
 		},
@@ -324,8 +324,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0001",
-			"vendor_id": "0x26ac",
+			"product_id": 1,
+			"vendor_id": 9900,
 			"product_name": "DiatoneMambaF405 MK2",
 			"vendor_name": "Diatone"
 		},
@@ -340,8 +340,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0012",
-			"vendor_id": "0x26ac",
+			"product_id": 18,
+			"vendor_id": 9900,
 			"product_name": "PX4 FMU UVify Core",
 			"vendor_name": "UVify"
 		},
@@ -356,8 +356,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0030",
-			"vendor_id": "0x26ac",
+			"product_id": 48,
+			"vendor_id": 9900,
 			"product_name": "MindPX FMU v2.x",
 			"vendor_name": "3D Robotics"
 		},
@@ -375,8 +375,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0001",
-			"vendor_id": "0x26ac",
+			"product_id": 1,
+			"vendor_id": 9900,
 			"product_name": "PX4 OmnibusF4SD",
 			"vendor_name": "Vertile"
 		},
@@ -394,8 +394,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0011",
-			"vendor_id": "0x26ac",
+			"product_id": 17,
+			"vendor_id": 9900,
 			"product_name": "PX4 FMU v2.x",
 			"vendor_name": "3D Robotics"
 		},
@@ -416,8 +416,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0033",
-			"vendor_id": "0x3185",
+			"product_id": 51,
+			"vendor_id": 12677,
 			"product_name": "PX4 FMU v5X.x",
 			"vendor_name": "Auterion"
 		},
@@ -435,8 +435,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0038",
-			"vendor_id": "0x3185",
+			"product_id": 56,
+			"vendor_id": 12677,
 			"product_name": "PX4 FMU v6C.x",
 			"vendor_name": "Auterion"
 		},
@@ -454,8 +454,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0013",
-			"vendor_id": "0x26ac",
+			"product_id": 19,
+			"vendor_id": 9900,
 			"product_name": "PX4 FMU v4.x PRO",
 			"vendor_name": "3D Robotics"
 		},
@@ -473,8 +473,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0035",
-			"vendor_id": "0x3185",
+			"product_id": 53,
+			"vendor_id": 12677,
 			"product_name": "PX4 FMU v6X.x",
 			"vendor_name": "Auterion"
 		},
@@ -504,8 +504,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0036",
-			"vendor_id": "0x1B8C",
+			"product_id": 54,
+			"vendor_id": 7052,
 			"product_name": "PX4 FMU v6U.x",
 			"vendor_name": "Gumstix"
 		},
@@ -532,8 +532,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0011",
-			"vendor_id": "0x26ac",
+			"product_id": 17,
+			"vendor_id": 9900,
 			"product_name": "PX4 FMU v2.x",
 			"vendor_name": "3D Robotics"
 		},
@@ -551,8 +551,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0012",
-			"vendor_id": "0x26ac",
+			"product_id": 18,
+			"vendor_id": 9900,
 			"product_name": "PX4 FMU v4.x",
 			"vendor_name": "3D Robotics"
 		},
@@ -594,8 +594,8 @@
 					"name": "protected"
 				}
 			],
-			"product_id": "0x0032",
-			"vendor_id": "0x26ac",
+			"product_id": 50,
+			"vendor_id": 9900,
 			"product_name": "PX4 FMU v5.x",
 			"vendor_name": "3D Robotics"
 		},
@@ -610,8 +610,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1012",
-			"vendor_id": "0x2DAE",
+			"product_id": 4114,
+			"vendor_id": 11694,
 			"product_name": "CubeYellow",
 			"vendor_name": "CubePilot"
 		},
@@ -632,8 +632,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1016",
-			"vendor_id": "0x2DAE",
+			"product_id": 4118,
+			"vendor_id": 11694,
 			"product_name": "CubeOrange",
 			"vendor_name": "CubePilot"
 		},
@@ -660,8 +660,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x004b",
-			"vendor_id": "0x3162",
+			"product_id": 75,
+			"vendor_id": 12642,
 			"product_name": "PX4 SP RACING H7 EXTREME",
 			"vendor_name": "SPRacing"
 		},
@@ -676,8 +676,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0061",
-			"vendor_id": "0x26ac",
+			"product_id": 97,
+			"vendor_id": 9900,
 			"product_name": "PX4 ATL Mantis-EDU",
 			"vendor_name": "Advanced Technology Labs"
 		},
@@ -710,8 +710,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x004c",
-			"vendor_id": "0x3163",
+			"product_id": 76,
+			"vendor_id": 12643,
 			"product_name": "PX4 CUAV Nora",
 			"vendor_name": "CUAV"
 		},
@@ -732,8 +732,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x004c",
-			"vendor_id": "0x3163",
+			"product_id": 76,
+			"vendor_id": 12643,
 			"product_name": "PX4 CUAV X7Pro",
 			"vendor_name": "CUAV"
 		},
@@ -748,8 +748,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0xa4a7",
-			"vendor_id": "0x0525",
+			"product_id": 42151,
+			"vendor_id": 1317,
 			"product_name": "PX4 RaspberryPi Pico",
 			"vendor_name": "NuttX"
 		},
@@ -767,8 +767,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0xa32f",
-			"vendor_id": "0x0483",
+			"product_id": 41775,
+			"vendor_id": 1155,
 			"product_name": "PX4 FMU ModalAI FCv1",
 			"vendor_name": "ModalAI"
 		},
@@ -786,8 +786,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0xa330",
-			"vendor_id": "0x0483",
+			"product_id": 41776,
+			"vendor_id": 1155,
 			"product_name": "PX4 FMU ModalAI FCv2",
 			"vendor_name": "ModalAI"
 		},
@@ -868,8 +868,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1004",
-			"vendor_id": "0x120A",
+			"product_id": 4100,
+			"vendor_id": 4618,
 			"product_name": "Matekgnssm9nf4",
 			"vendor_name": "PX4"
 		},
@@ -887,8 +887,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0036",
-			"vendor_id": "0x1B8C",
+			"product_id": 54,
+			"vendor_id": 7052,
 			"product_name": "MatekH743-mini",
 			"vendor_name": "Matek"
 		},
@@ -906,8 +906,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x0036",
-			"vendor_id": "0x1B8C",
+			"product_id": 54,
+			"vendor_id": 7052,
 			"product_name": "MatekH743",
 			"vendor_name": "Matek"
 		},
@@ -925,8 +925,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x1013",
-			"vendor_id": "0x1209",
+			"product_id": 4115,
+			"vendor_id": 4617,
 			"product_name": "MatekH743",
 			"vendor_name": "Matek"
 		},
@@ -968,8 +968,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x001c",
-			"vendor_id": "0x1FC9",
+			"product_id": 28,
+			"vendor_id": 8137,
 			"product_name": "PX4 FMUK66 v3.x",
 			"vendor_name": "NXP SEMICONDUCTORS"
 		},
@@ -984,8 +984,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x001d",
-			"vendor_id": "0x1FC9",
+			"product_id": 29,
+			"vendor_id": 8137,
 			"product_name": "PX4 FMURT1062 v1.x",
 			"vendor_name": "NXP SEMICONDUCTORS"
 		},
@@ -1006,8 +1006,8 @@
 					"name": "default"
 				}
 			],
-			"product_id": "0x001c",
-			"vendor_id": "0x1FC9",
+			"product_id": 28,
+			"vendor_id": 8137,
 			"product_name": "PX4 FMUK66 E",
 			"vendor_name": "NXP SEMICONDUCTORS"
 		}
