@@ -214,7 +214,7 @@ private:
     QHash<FirmwareIdentifier, QString>* _px4FirmwareHashForBoardId(int boardId);
     void _getFirmwareFile           (FirmwareIdentifier firmwareId);
     void _initFirmwareHash          (void);
-    void _downloadFirmware          (void);
+    void _downloadFirmware          (const QString firmwareFileName);
     void _appendStatusLog           (const QString& text, bool critical = false);
     void _errorCancel               (const QString& msg);
     void _determinePX4StableVersion (void);

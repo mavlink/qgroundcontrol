@@ -141,7 +141,7 @@ void FirmwareUpgradeController::flashFirmwareUrl(QString firmwareFlashUrl)
 {
     _firmwareFilename = firmwareFlashUrl;
     if (_bootloaderFound) {
-        _downloadFirmware();
+        _downloadFirmware(_firmwareFilename);
     } else {
         // We haven't found the bootloader yet. Need to wait until then to flash
         _startFlashWhenBootloaderFound = true;
@@ -335,23 +335,23 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     if (_firmwareFilename.isEmpty()) {
         _errorCancel(tr("No firmware file selected"));
     } else {
-        _downloadFirmware();
+        _downloadFirmware(_firmwareFilename);
     }
 }
 
 /// @brief Begins the process of downloading the selected firmware file.
-void FirmwareUpgradeController::_downloadFirmware(void)
+void FirmwareUpgradeController::_downloadFirmware(const QString firmwareFileName)
 {
-    Q_ASSERT(!_firmwareFilename.isEmpty());
+    Q_ASSERT(!firmwareFileName.isEmpty());
     
     _appendStatusLog(tr("Downloading firmware..."));
-    _appendStatusLog(tr(" From: %1").arg(_firmwareFilename));
+    _appendStatusLog(tr(" From: %1").arg(firmwareFileName));
     
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_firmwareDownloadComplete);
     connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
     
-    downloader->download(_firmwareFilename);
+    downloader->download(firmwareFileName);
 }
 
 /// @brief Updates the progress indicator while downloading
@@ -646,73 +646,72 @@ void FirmwareUpgradeController::_downloadPX4Manifest(void)
 
 void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
 {
-    if (errorMsg.isEmpty()) {
-        sender()->deleteLater(); // Delete the QGCFileDownload object
-        qCDebug(FirmwareUpgradeLog) << "PX4 Board information Manifest Download Finished" << remoteFile << localFile;
-        
-        QString         errorString;
-        QJsonDocument   doc;
-        
-        if (!JsonHelper::isJsonFile(localFile, doc, errorString)) {
-            qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
-            return;
-        }
-
-        // Parse the document and get the JSON object
-        QJsonObject json = doc.object();
-
-        // Read in board informations of each board target
-        QJsonArray boardInfoArray = json[_px4ManifestBoardInfoJsonKey].toArray();
-
-        for (int board_idx = 0; board_idx < boardInfoArray.count(); board_idx++) {
-            PX4Manifest_SingleBoardInfo_t boardInfoUnit = PX4Manifest_SingleBoardInfo_t();
-            const QJsonObject& boardInfoUnitJson = boardInfoArray[board_idx].toObject();
-
-            // Add the basic board information
-            boardInfoUnit.boardName = boardInfoUnitJson[_px4ManifestBoardNameJsonKey].toString();
-            boardInfoUnit.targetName = boardInfoUnitJson[_px4ManifestTargetNameJsonKey].toString();
-            boardInfoUnit.description = boardInfoUnitJson[_px4ManifestDescriptionJsonKey].toString();
-            boardInfoUnit.boardID = boardInfoUnitJson[_px4ManifestBoardIDJsonKey].toInt();
-
-            // Add in the list of build variants
-            QJsonArray buildVariantsArray = boardInfoUnitJson[_px4ManifestBuildVariantsJsonKey].toArray();
-            for (int build_variant_idx = 0; build_variant_idx < buildVariantsArray.count(); build_variant_idx++) {
-                QJsonObject build_variant = buildVariantsArray[build_variant_idx].toObject();
-                // Build Variant's name is encapsulated under an extra layer of Json key "name"
-                boardInfoUnit.buildVariantNames.append(build_variant[_px4ManifestBuildVariantNameJsonKey].toString());
-            }
-
-            // Add optional USB Autoconnect info
-            boardInfoUnit.productID = boardInfoUnitJson[_px4ManifestProductIDJsonKey].toInt();
-            qInfo() << "Adding Product ID " << boardInfoUnit.productID << " to board " << boardInfoUnit.boardName;
-            boardInfoUnit.productName = boardInfoUnitJson[_px4ManifestProductNameJsonKey].toString();
-            boardInfoUnit.vendorID = boardInfoUnitJson[_px4ManifestVendorIDJsonKey].toInt();
-            boardInfoUnit.vendorName = boardInfoUnitJson[_px4ManifestVendorNameJsonKey].toString();
-
-            // Add the board info into the list
-            _px4BoardManifest.boards.append(boardInfoUnit);
-
-            // Update the Board-ID <-> Target Name mapping
-            _px4_board_id_2_target_name[boardInfoUnit.boardID] = boardInfoUnit.targetName;
-        }
-
-        // Read in binary URLs (that specifies where to download firmware files from)
-        QJsonObject binaryUrls = json[_px4ManifestBinaryUrlsJsonKey].toObject();
-        foreach(const QString& key, binaryUrls.keys()) {
-            _px4BoardManifest.binary_urls[key] = binaryUrls[key].toString();
-        }
-
-        // If we already have the bootloader of the board found, update Build Variants List
-        if (_bootloaderFound) {
-            _updatePX4BuildVariantsList();
-        }
-
-        _downloadingFirmwareList = false;
-        emit downloadingFirmwareListChanged(false);
-    
-    } else {
+    if (!errorMsg.isEmpty()) {
         qCWarning(FirmwareUpgradeLog) << "PX4 Manifest download failed" << errorMsg;
     }
+
+    sender()->deleteLater(); // Delete the QGCFileDownload object
+    qCDebug(FirmwareUpgradeLog) << "PX4 Board information Manifest Download Finished" << remoteFile << localFile;
+    
+    QString         errorString;
+    QJsonDocument   doc;
+    
+    if (!JsonHelper::isJsonFile(localFile, doc, errorString)) {
+        qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
+        return;
+    }
+
+    // Parse the document and get the JSON object
+    QJsonObject json = doc.object();
+
+    // Read in board informations of each board target
+    QJsonArray boardInfoArray = json[_px4ManifestBoardInfoJsonKey].toArray();
+
+    for (int board_idx = 0; board_idx < boardInfoArray.count(); board_idx++) {
+        PX4Manifest_SingleBoardInfo_t boardInfoUnit = PX4Manifest_SingleBoardInfo_t();
+        const QJsonObject& boardInfoUnitJson = boardInfoArray[board_idx].toObject();
+
+        // Add the basic board information
+        boardInfoUnit.boardName = boardInfoUnitJson[_px4ManifestBoardNameJsonKey].toString();
+        boardInfoUnit.targetName = boardInfoUnitJson[_px4ManifestTargetNameJsonKey].toString();
+        boardInfoUnit.description = boardInfoUnitJson[_px4ManifestDescriptionJsonKey].toString();
+        boardInfoUnit.boardID = boardInfoUnitJson[_px4ManifestBoardIDJsonKey].toInt();
+
+        // Add in the list of build variants
+        QJsonArray buildVariantsArray = boardInfoUnitJson[_px4ManifestBuildVariantsJsonKey].toArray();
+        for (int build_variant_idx = 0; build_variant_idx < buildVariantsArray.count(); build_variant_idx++) {
+            QJsonObject build_variant = buildVariantsArray[build_variant_idx].toObject();
+            // Build Variant's name is encapsulated under an extra layer of Json key "name"
+            boardInfoUnit.buildVariantNames.append(build_variant[_px4ManifestBuildVariantNameJsonKey].toString());
+        }
+
+        // Add optional USB Autoconnect info
+        boardInfoUnit.productID = boardInfoUnitJson[_px4ManifestProductIDJsonKey].toInt();
+        qInfo() << "Adding Product ID " << boardInfoUnit.productID << " to board " << boardInfoUnit.boardName;
+        boardInfoUnit.productName = boardInfoUnitJson[_px4ManifestProductNameJsonKey].toString();
+        boardInfoUnit.vendorID = boardInfoUnitJson[_px4ManifestVendorIDJsonKey].toInt();
+        boardInfoUnit.vendorName = boardInfoUnitJson[_px4ManifestVendorNameJsonKey].toString();
+
+        // Add the board info into the list
+        _px4BoardManifest.boards.append(boardInfoUnit);
+
+        // Update the Board-ID <-> Target Name mapping
+        _px4_board_id_2_target_name[boardInfoUnit.boardID] = boardInfoUnit.targetName;
+    }
+
+    // Read in binary URLs (that specifies where to download firmware files from)
+    QJsonObject binaryUrls = json[_px4ManifestBinaryUrlsJsonKey].toObject();
+    foreach(const QString& key, binaryUrls.keys()) {
+        _px4BoardManifest.binary_urls[key] = binaryUrls[key].toString();
+    }
+
+    // If we already have the bootloader of the board found, update Build Variants List
+    if (_bootloaderFound) {
+        _updatePX4BuildVariantsList();
+    }
+
+    _downloadingFirmwareList = false;
+    emit downloadingFirmwareListChanged(false);
 }
 
 void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
@@ -731,9 +730,12 @@ void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
 
                 if (board_vid == boardinfo.vendorID && board_pid == boardinfo.productID) {
                     qInfo() << "Vendor ID and Product ID matches as well! Updating variants list...";
+                    // Set the BuildVariants list
                     _px4FirmwareBuildVariants = QStringList(boardinfo.buildVariantNames);
-                    qInfo() << boardinfo.buildVariantNames;
-                    qInfo() << _px4FirmwareBuildVariants;
+
+                    // Set the selected index to the "default" build variant, but if not fallback to -1
+                    _px4FirmwareBuildVariantSelectedIdx = _px4FirmwareBuildVariants.indexOf("default");
+
                     // Emit the signal so that the Build Variants display QML Combo box would get updated
                     emit px4FirmwareBuildVariantsChanged();
                     return;
