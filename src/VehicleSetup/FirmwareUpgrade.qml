@@ -253,7 +253,7 @@ SetupPage {
                             firmwareType:   FirmwareUpgradeController.BetaFirmware
                         }
                         ListElement {
-                            text:           qsTr("Developer Build (master)")
+                            text:           qsTr("Developer Build (main)")
                             firmwareType:   FirmwareUpgradeController.DeveloperFirmware
                         }
                         ListElement {

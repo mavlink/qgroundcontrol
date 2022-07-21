@@ -170,6 +170,9 @@ signals:
 private slots:
     void _firmwareDownloadProgress          (qint64 curr, qint64 total);
     void _firmwareDownloadComplete          (QString remoteFile, QString localFile, QString errorMsg);
+    /**
+     * @brief Called when a board is found in the FirmwareUpgradeThread
+     */
     void _foundBoard                        (bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
     void _noBoardFound                      (void);
     void _boardGone                         (void);
@@ -261,10 +264,18 @@ private:
 
     // PX4 Manifest file JSON keys
     const char* _px4ManifestBoardInfoJsonKey =                   "board_info";
+
     const char* _px4ManifestBoardNameJsonKey =                   "board_name";
     const char* _px4ManifestTargetNameJsonKey =                  "target_name";
+    const char* _px4ManifestDescriptionJsonKey =                 "description";
     const char* _px4ManifestBoardIDJsonKey =                     "board_id";
-    const char* _px4ManifestBuildVariantsJonKey =                "build_variants";
+    const char* _px4ManifestBuildVariantsJsonKey =               "build_variants";
+    const char* _px4ManifestProductIDJsonKey =                   "product_id";
+    const char* _px4ManifestProductNameJsonKey =                 "product_name";
+    const char* _px4ManifestVendorIDJsonKey =                    "vendor_id";
+    const char* _px4ManifestVendorNameJsonKey =                  "vendor_name";
+
+    const char* _px4ManifestBinaryUrlsJsonKey =                  "binary_urls";
 
     // Struct that holds information about a single board(target)
     typedef struct {
@@ -272,12 +283,18 @@ private:
         QString targetName; ///< Name the board is referred to when building as a target
         QString description;
         int boardID; ///< Bootloader ID for identifying the board when connected
-        QList<string> buildVariants; ///< Build variants (e.g. default, test, rtps)
+        QList<QString> buildVariants; ///< Build variants (e.g. default, test, rtps)
+
+        // USB AutoConnect related variables
+        int productID;
+        QString productName;
+        int vendorID;
+        QString vendorName;
     } PX4Manifest_SingleBoardInfo_t;
 
     typedef struct {
         QList<PX4Manifest_SingleBoardInfo_t> boards; ///< List of board information units
-        QMap<QString, QString> version_to_binary_url_map; ///< Mapping between version (e.g. stable) to it's binary url (e.g. px4-travis.s3. ...)
+        QMap<QString, QString> binary_urls; ///< Mapping between version (e.g. stable) to it's binary url (e.g. px4-travis.s3. ...)
     } PX4Manifest_WholeBoardInfo_t;
 
     PX4Manifest_WholeBoardInfo_t _px4BoardManifest;

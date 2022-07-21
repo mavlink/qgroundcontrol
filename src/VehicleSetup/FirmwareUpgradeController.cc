@@ -695,25 +695,46 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
             return;
         }
 
-        QJsonObject json =          doc.object();
+        // Parse the document and get the JSON object
+        QJsonObject json = doc.object();
 
-        // Read in board informations of each target
+        // Read in board informations of each board target
         QJsonArray boardInfoArray = json[_px4ManifestBoardInfoJsonKey].toArray();
-        for (int i = 0; i < boardInfoArray.count(); i++) {
-            const QJsonObject& boardInfoUnitJson = boardInfoArray[i].toObject();
 
+        for (int board_idx = 0; board_idx < boardInfoArray.count(); board_idx++) {
             PX4Manifest_SingleBoardInfo_t boardInfoUnit = PX4Manifest_SingleBoardInfo_t();
-            boardInfoUnit.boardID = boardInfoUnitJson[_px4ManifestBoardIDJsonKey].toInt();
+            const QJsonObject& boardInfoUnitJson = boardInfoArray[board_idx].toObject();
+
+            // Add the basic board information
+            boardInfoUnit.boardName = boardInfoUnitJson[_px4ManifestBoardNameJsonKey].toString();
             boardInfoUnit.targetName = boardInfoUnitJson[_px4ManifestTargetNameJsonKey].toString();
+            boardInfoUnit.description = boardInfoUnitJson[_px4ManifestDescriptionJsonKey].toString();
+            boardInfoUnit.boardID = boardInfoUnitJson[_px4ManifestBoardIDJsonKey].toInt();
+
+            // Add in the list of build variants
+            QJsonArray buildVariantsArray = boardInfoUnitJson[_px4ManifestBuildVariantsJsonKey].toArray();
+            for (int build_variant_idx = 0; build_variant_idx < buildVariantsArray.count(); build_variant_idx++) {
+                boardInfoUnit.buildVariants.append(buildVariantsArray[build_variant_idx].toString());
+            }
+
+            // Add optional USB Autoconnect info
+            boardInfoUnit.productID = boardInfoUnitJson[_px4ManifestProductIDJsonKey].toInt();
+            boardInfoUnit.productName = boardInfoUnitJson[_px4ManifestProductNameJsonKey].toString();
+            boardInfoUnit.vendorID = boardInfoUnitJson[_px4ManifestVendorIDJsonKey].toInt();
+            boardInfoUnit.vendorName = boardInfoUnitJson[_px4ManifestVendorNameJsonKey].toString();
+
+            // Add the board info into the list
             _px4BoardManifest.boards.append(boardInfoUnit);
 
             // Update the Board-ID <-> Target Name mapping
-            _px4_board_id_2_target_name[board_id] = target_name;
+            _px4_board_id_2_target_name[boardInfoUnit.boardID] = boardInfoUnit.targetName;
         }
 
-        // Read in extra data from the Manifest
-        
-        _px4BoardManifest.version_to_binary_url_map[version] = url;
+        // Read in binary URLs (that specifies where to download firmware files from)
+        QJsonObject binaryUrls = json[_px4ManifestBinaryUrlsJsonKey].toObject();
+        foreach(const QString& key, binaryUrls.keys()) {
+            _px4BoardManifest.binary_urls[key] = binaryUrls[key].toString();
+        }
 
         _downloadingFirmwareList = false;
         emit downloadingFirmwareListChanged(false);

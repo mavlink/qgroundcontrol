@@ -76,9 +76,11 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
         if (!_foundBoard) {
             _foundBoard = true;
             _foundBoardPortInfo = portInfo;
-            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType, boardName);
-            if (!_findBoardFirstAttempt) {
 
+            // Emit the signal that we found a board
+            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType, boardName);
+
+            if (!_findBoardFirstAttempt) {
                 _bootloader = new Bootloader(boardType == QGCSerialPortInfo::BoardTypeSiKRadio, this);
                 connect(_bootloader, &Bootloader::updateProgress, this, &PX4FirmwareUpgradeThreadWorker::_updateProgress);
 
@@ -97,11 +99,14 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
                 return;
             }
         }
+    
     } else {
+        // We didn't find the board from ports, reset the flag
         if (_foundBoard) {
             _foundBoard = false;
             qCDebug(FirmwareUpgradeLog) << "Board gone";
             emit boardGone();
+        
         } else if (_findBoardFirstAttempt) {
             emit noBoardFound();
         }
