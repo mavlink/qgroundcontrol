@@ -133,15 +133,14 @@ void FirmwareUpgradeController::flash(AutoPilotStackType_t stackType,
         // We haven't found the bootloader yet. Need to wait until then to flash
         _startFlashWhenBootloaderFound = true;
         _startFlashWhenBootloaderFoundFirmwareIdentity = firmwareId;
-        _firmwareFilename.clear();
     }
 }
 
 void FirmwareUpgradeController::flashFirmwareUrl(QString firmwareFlashUrl)
 {
-    _firmwareFilename = firmwareFlashUrl;
     if (_bootloaderFound) {
-        _downloadFirmware(_firmwareFilename);
+        _downloadFirmware(firmwareFlashUrl);
+    
     } else {
         // We haven't found the bootloader yet. Need to wait until then to flash
         _startFlashWhenBootloaderFound = true;
@@ -278,68 +277,57 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
     _errorCancel("Unable to sync with bootloader.");
 }
 
-QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_px4FirmwareHashForBoardId(int boardId)
+QString FirmwareUpgradeController::_getPX4FirmwareURL(const int boardId, const FirmwareIdentifier firmware_id, )
 {
-    _rgPX4FirmwareDynamic.clear();
-
+    // Handle PX4Flow and SiK Radio cases
     switch (boardId) {
-    case Bootloader::boardIDPX4Flow:
-        _rgPX4FirmwareDynamic = _rgPX4FLowFirmware;
-        break;
-    case Bootloader::boardIDSiKRadio1000:
-    {
-        FirmwareToUrlElement_t element = { SiKRadio, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx" };
-        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-        break;
-    case Bootloader::boardIDSiKRadio1060:
-    {
-        FirmwareToUrlElement_t element = { SiKRadio, StableFirmware, DefaultVehicleFirmware, "https://px4-travis.s3.amazonaws.com/SiK/stable/radio~hb1060.ihx" };
-        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-        break;
-    default:
-        if (_px4_board_id_2_target_name.contains(boardId)) {
-            const QString px4Url{"http://px4-travis.s3.amazonaws.com/Firmware/%1/%2.px4"};
+        case Bootloader::boardIDPX4Flow:
+            return _rgPX4FLowFirmware->value(firmware_id);
+        
+        case Bootloader::boardIDSiKRadio1000:
+            {
+                // Only the Stable Firmware is supported for SiK radio 1000
+                FirmwareIdentifier sikradio_1000(SiKRadio, StableFirmware, DefaultVehicleFirmware);
+                if (firmware_id == sikradio_1000) {
+                    return "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx"
+                }
+                // If no valid URL is found, return empty url
+                return QString();
+            }
 
-            _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(_px4_board_id_2_target_name.value(boardId)));
-            _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(_px4_board_id_2_target_name.value(boardId)));
-            _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(_px4_board_id_2_target_name.value(boardId)));
-        }
-        break;
+        case Bootloader::boardIDSiKRadio1060:
+            {
+                FirmwareIdentifier sikradio_1060(SiKRadio, StableFirmware, DefaultVehicleFirmware);
+                if (firmware_id == sikradio_1000) {
+                    return "https://px4-travis.s3.amazonaws.com/SiK/stable/radio~hb1060.ihx";
+                }
+                // If no valid URL is found, return empty url
+                return QString();
+            }
     }
 
-    return &_rgPX4FirmwareDynamic;
+    // Handle generic PX4 firmware case
+    if (_px4_board_id_2_target_name.contains(boardId)) {
+        const QString px4Url{"http://px4-travis.s3.amazonaws.com/Firmware/%1/%2.px4"};
+        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(_px4_board_id_2_target_name.value(boardId)));
+        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(_px4_board_id_2_target_name.value(boardId)));
+        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(_px4_board_id_2_target_name.value(boardId)));
+    }
 }
 
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
     // Get Firmware download URL
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _px4FirmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
+    QString firmwareDownloadURL = _getPX4FirmwareURL(static_cast<int>(_bootloaderBoardID), firmwareId);
     
-    if (firmwareId.firmwareType == CustomFirmware) {
-        _firmwareFilename = QString();
-        _errorCancel(tr("Custom firmware selected but no filename given."));
-    
-    } else {
-        if (prgFirmware->contains(firmwareId)) {
-            _firmwareFilename = prgFirmware->value(firmwareId);
-        
-        } else {
-            _errorCancel(tr("Unable to find specified firmware for board type"));
-            return;
-        
-        }
+    if(firmwareDownloadURL.isEmpty()) {
+        _errorCancel(tr("Unable to find URL for the firmware specified"));
+        return;
     }
-    
-    if (_firmwareFilename.isEmpty()) {
-        _errorCancel(tr("No firmware file selected"));
-    } else {
-        _downloadFirmware(_firmwareFilename);
-    }
+
+    _downloadFirmware(firmwareDownloadURL);
 }
 
-/// @brief Begins the process of downloading the selected firmware file.
 void FirmwareUpgradeController::_downloadFirmware(const QString firmwareFileName)
 {
     Q_ASSERT(!firmwareFileName.isEmpty());

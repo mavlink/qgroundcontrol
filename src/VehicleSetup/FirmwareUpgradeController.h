@@ -32,34 +32,34 @@ class FirmwareUpgradeController : public QObject
     Q_OBJECT
     
 public:
-        typedef enum {
-            AutoPilotStackPX4 = 0,
-            AutoPilotStackAPM,
-            PX4FlowPX4,
-            PX4FlowAPM,
-            SiKRadio,
-            SingleFirmwareMode
-        } AutoPilotStackType_t;
+    typedef enum {
+        AutoPilotStackPX4 = 0,
+        AutoPilotStackAPM,
+        PX4FlowPX4,
+        PX4FlowAPM,
+        SiKRadio,
+        SingleFirmwareMode
+    } AutoPilotStackType_t;
 
-        typedef enum {
-            StableFirmware = 0,
-            BetaFirmware,
-            DeveloperFirmware,
-            CustomFirmware
-        } FirmwareBuildType_t;
+    typedef enum {
+        StableFirmware = 0,
+        BetaFirmware,
+        DeveloperFirmware,
+        CustomFirmware
+    } FirmwareBuildType_t;
 
-        typedef enum {
-            CopterFirmware = 0,
-            HeliFirmware,
-            PlaneFirmware,
-            RoverFirmware,
-            SubFirmware,
-            DefaultVehicleFirmware
-        } FirmwareVehicleType_t;
+    typedef enum {
+        CopterFirmware = 0,
+        HeliFirmware,
+        PlaneFirmware,
+        RoverFirmware,
+        SubFirmware,
+        DefaultVehicleFirmware
+    } FirmwareVehicleType_t;
 
-        Q_ENUM(AutoPilotStackType_t)
-        Q_ENUM(FirmwareBuildType_t)
-        Q_ENUM(FirmwareVehicleType_t)
+    Q_ENUM(AutoPilotStackType_t)
+    Q_ENUM(FirmwareBuildType_t)
+    Q_ENUM(FirmwareVehicleType_t)
 
     // Identifies class for a specified Autopilot Stack, Release version and Vehicle
     class FirmwareIdentifier
@@ -117,7 +117,7 @@ public:
     /// Cancels whatever state the upgrade worker thread is in
     Q_INVOKABLE void cancel(void);
     
-    /// Called when the firmware type has been selected by the user to continue the flash process.
+    /// Flash the specified firmware
     Q_INVOKABLE void flash(AutoPilotStackType_t stackType,
                            FirmwareBuildType_t firmwareType = StableFirmware,
                            FirmwareVehicleType_t vehicleType = DefaultVehicleFirmware );
@@ -211,7 +211,18 @@ private slots:
     void _updatePX4BuildVariantsList        (void);
 
 private:
-    QHash<FirmwareIdentifier, QString>* _px4FirmwareHashForBoardId(int boardId);
+    /**
+     * @brief Returns the Firmware download URL that considers the detected board & firmware version specified
+     * 
+     * @param boardId 
+     */
+    QString _getPX4FirmwareURL(const int boardId);
+
+    /**
+     * @brief Downloads or loads the firmware file matching the identifier
+     * 
+     * It can either download from the web or load the firmware file locally
+     */
     void _getFirmwareFile           (FirmwareIdentifier firmwareId);
     void _initFirmwareHash          (void);
     void _downloadFirmware          (const QString firmwareFileName);
@@ -234,7 +245,6 @@ private:
 
     // Hash map for lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;
-    QHash<FirmwareIdentifier, QString> _rgPX4FirmwareDynamic;
 
     QMap<FirmwareBuildType_t, QMap<FirmwareVehicleType_t, QString> > _apmVersionMap;
     QList<FirmwareVehicleType_t>                                _apmVehicleTypeFromCurrentVersionList;
@@ -254,9 +264,7 @@ private:
     QString                         _boardTypeName;
 
     QPixmap _boardIcon;             ///< Icon used to display image of board
-    
-    QString _firmwareFilename;      ///< Image which we are going to flash to the board
-    
+
     QNetworkAccessManager*  _downloadManager;       ///< Used for firmware file downloading across the internet
     QNetworkReply*          _downloadNetworkReply;  ///< Used for firmware file downloading across the internet
     

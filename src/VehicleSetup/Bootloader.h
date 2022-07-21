@@ -108,7 +108,6 @@ private:
     uint32_t    _boardFlashSize     = 0;        ///< flash size for currently connected board
     uint32_t    _bootloaderVersion  = 0;        ///< Bootloader version
     uint32_t    _imageCRC           = 0;        ///< CRC for image in currently selected firmware file
-    QString     _firmwareFilename;              ///< Currently selected firmware file to flash
     QString     _errorString;                   ///< Last error
     
     static const int _eraseTimeout                      = 20000;    ///< Msecs to wait for response from erase command

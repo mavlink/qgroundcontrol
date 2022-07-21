@@ -71,6 +71,7 @@ SetupPage {
                 _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
 
+            // Dialog that opens up when user selects "custom file" to flash to the target
             QGCFileDialog {
                 id:                 customFirmwareDialog
                 title:              qsTr("Select Firmware File")
@@ -185,10 +186,13 @@ SetupPage {
                         onError:    reject()
                     }
 
+                    // When user clicks "Ok" to flash the firmware
                     onAccepted: {
                         if (_singleFirmwareMode) {
                             controller.flashSingleFirmwareMode(controller.selectedFirmwareBuildType)
+                        
                         } else {
+                            // Variables that define the Firmware Identifier
                             var stack
                             var firmwareBuildType = firmwareBuildTypeCombo.model.get(firmwareBuildTypeCombo.currentIndex).firmwareType
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
@@ -196,11 +200,14 @@ SetupPage {
                             if (px4Flow) {
                                 stack = px4FlowTypeSelectionCombo.model.get(px4FlowTypeSelectionCombo.currentIndex).stackType
                                 vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
+                            
                             } else {
+                                // Special handling for Ardupilot firmware
                                 stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
                                 if (apmFlightStack.checked) {
                                     if (firmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
                                         vehicleType = apmVehicleTypeCombo.currentIndex
+                                    
                                     } else {
                                         if (controller.apmFirmwareNames.length === 0) {
                                             // Not ready yet, or no firmware available
@@ -225,10 +232,13 @@ SetupPage {
                                     }
                                 }
                             }
-                            //-- If custom, get file path
-                            if (firmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
+
+                            // If custom firmware, get the file path
+                            if (firmwareBuildType == FirmwareUpgradeController.CustomFirmware) {
                                 customFirmwareDialog.openForLoad()
+                            
                             } else {
+                                // Flash the firmware
                                 controller.flash(stack, firmwareBuildType, vehicleType)
                             }
                         }
@@ -353,7 +363,7 @@ SetupPage {
                             }
                         }
 
-                        // PX4 Firmware build variant selection dropbox
+                        // PX4 Firmware build variant selection dropbox (default, rtps, test ...)
                         QGCComboBox {
                             id:                 px4FirmwareBuildVariantsCombo
                             Layout.fillWidth:   true
