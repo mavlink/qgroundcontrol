@@ -10,7 +10,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0021",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 AUAV X2.1",
+			"vendor_name": "AUAV"
 		},
 		{
 			"board_name": "mRO x2.1-777",
@@ -22,7 +26,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0088",
+			"vendor_id": "0x26ac",
+			"product_name": "mRo x2.1-777",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "mRo-ctrl-zero-f7-oem",
@@ -34,7 +42,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x008D",
+			"vendor_id": "0x26ac",
+			"product_name": "mRoControlZeroF7",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "mRo-ctrl-zero-h7",
@@ -52,7 +64,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1023",
+			"vendor_id": "0x26ac",
+			"product_name": "mRoControlZeroH7",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "PixracerPro",
@@ -70,7 +86,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1017",
+			"vendor_id": "0x26ac",
+			"product_name": "mRoPixracerPro",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "mRo-ctrl-zero-classic",
@@ -85,7 +105,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1022",
+			"vendor_id": "0x26ac",
+			"product_name": "mRoControlZero Classic",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "mRo-ctrl-zero-f7",
@@ -97,7 +121,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x008D",
+			"vendor_id": "0x26ac",
+			"product_name": "mRoControlZeroF7",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "mRo-ctrl-zero-h7-oem",
@@ -115,7 +143,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1024",
+			"vendor_id": "0x26ac",
+			"product_name": "mRoControlZeroH7 OEM",
+			"vendor_name": "mRo"
 		},
 		{
 			"board_name": "FFRTK",
@@ -130,7 +162,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0016",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FreeFly RTK GPS",
+			"vendor_name": "Freefly"
 		},
 		{
 			"board_name": "DURANDALv1",
@@ -145,7 +181,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x004b",
+			"vendor_id": "0x3162",
+			"product_name": "PX4 DurandalV1",
+			"vendor_name": "Holybro"
 		},
 		{
 			"board_name": "HolybroCANGPS",
@@ -172,7 +212,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x004E",
+			"vendor_id": "0x3162",
+			"product_name": "PX4 PIX32V5",
+			"vendor_name": "Holybro"
 		},
 		{
 			"board_name": "KAKUTEF7",
@@ -184,7 +228,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0016",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 KakuteF7",
+			"vendor_name": "Holybro"
 		},
 		{
 			"board_name": "KAKUTEH7",
@@ -199,7 +247,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x004b",
+			"vendor_id": "0x3162",
+			"product_name": "PX4 KakuteH7",
+			"vendor_name": "Holybro"
 		},
 		{
 			"board_name": "CRAZYFLIE",
@@ -211,7 +263,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0016",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 Crazyflie v2.0",
+			"vendor_name": "Bitcraze AB"
 		},
 		{
 			"board_name": "CRAZYFLIE 2.1",
@@ -223,7 +279,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0016",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 Crazyflie v2.0",
+			"vendor_name": "Bitcraze AB"
 		},
 		{
 			"board_name": "SMARTAP-AIRLINK",
@@ -235,7 +295,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0037",
+			"vendor_id": "0x0483",
+			"product_name": "PX4 FMU SmartAP AIRLink",
+			"vendor_name": "Sky-Drones"
 		},
 		{
 			"board_name": "AV-Xv1",
@@ -259,7 +323,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0001",
+			"vendor_id": "0x26ac",
+			"product_name": "DiatoneMambaF405 MK2",
+			"vendor_name": "Diatone"
 		},
 		{
 			"board_name": "UVify Core",
@@ -271,7 +339,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0012",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FMU UVify Core",
+			"vendor_name": "UVify"
 		},
 		{
 			"board_name": "MindPXFMUv2",
@@ -283,7 +355,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0030",
+			"vendor_id": "0x26ac",
+			"product_name": "MindPX FMU v2.x",
+			"vendor_name": "3D Robotics"
 		},
 		{
 			"board_name": "PX4/OmnibusF4",
@@ -298,7 +374,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0001",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 OmnibusF4SD",
+			"vendor_name": "Vertile"
 		},
 		{
 			"board_name": "PX4FMUv3",
@@ -313,7 +393,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0011",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FMU v2.x",
+			"vendor_name": "3D Robotics"
 		},
 		{
 			"board_name": "PX4FMUv5X",
@@ -331,26 +415,11 @@
 				{
 					"name": "default"
 				}
-			]
-		},
-		{
-			"build_variants": [
-				{
-					"name": "test"
-				},
-				{
-					"name": "nolockstep"
-				},
-				{
-					"name": "replay"
-				},
-				{
-					"name": "rtps"
-				},
-				{
-					"name": "default"
-				}
-			]
+			],
+			"product_id": "0x0033",
+			"vendor_id": "0x3185",
+			"product_name": "PX4 FMU v5X.x",
+			"vendor_name": "Auterion"
 		},
 		{
 			"board_name": "PX4FMUv6C",
@@ -365,7 +434,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0038",
+			"vendor_id": "0x3185",
+			"product_name": "PX4 FMU v6C.x",
+			"vendor_name": "Auterion"
 		},
 		{
 			"board_name": "PX4FMUv4PRO",
@@ -380,7 +453,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0013",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FMU v4.x PRO",
+			"vendor_name": "3D Robotics"
 		},
 		{
 			"board_name": "PX4FMUv6X",
@@ -395,7 +472,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0035",
+			"vendor_id": "0x3185",
+			"product_name": "PX4 FMU v6X.x",
+			"vendor_name": "Auterion"
 		},
 		{
 			"board_name": "PX4IOv2",
@@ -403,13 +484,6 @@
 			"description": "Firmware for the PX4IOv2 board",
 			"board_id": 10,
 			"image_max_size": 61440,
-			"build_variants": [
-				{
-					"name": "default"
-				}
-			]
-		},
-		{
 			"build_variants": [
 				{
 					"name": "default"
@@ -429,7 +503,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0036",
+			"vendor_id": "0x1B8C",
+			"product_name": "PX4 FMU v6U.x",
+			"vendor_name": "Gumstix"
 		},
 		{
 			"board_name": "PX4FMUv2",
@@ -453,7 +531,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0011",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FMU v2.x",
+			"vendor_name": "3D Robotics"
 		},
 		{
 			"board_name": "PX4FMUv4",
@@ -468,7 +550,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0012",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FMU v4.x",
+			"vendor_name": "3D Robotics"
 		},
 		{
 			"board_name": "PX4FMUv5",
@@ -507,17 +593,11 @@
 				{
 					"name": "protected"
 				}
-			]
-		},
-		{
-			"build_variants": [
-				{
-					"name": "arm64"
-				},
-				{
-					"name": "default"
-				}
-			]
+			],
+			"product_id": "0x0032",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 FMU v5.x",
+			"vendor_name": "3D Robotics"
 		},
 		{
 			"board_name": "CubeYellow",
@@ -529,7 +609,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1012",
+			"vendor_id": "0x2DAE",
+			"product_name": "CubeYellow",
+			"vendor_name": "CubePilot"
 		},
 		{
 			"board_name": "CubeOrange",
@@ -547,7 +631,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1016",
+			"vendor_id": "0x2DAE",
+			"product_name": "CubeOrange",
+			"vendor_name": "CubePilot"
 		},
 		{
 			"board_name": "PX4IOv2",
@@ -571,7 +659,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x004b",
+			"vendor_id": "0x3162",
+			"product_name": "PX4 SP RACING H7 EXTREME",
+			"vendor_name": "SPRacing"
 		},
 		{
 			"board_name": "atl_mantis-edu",
@@ -583,21 +675,11 @@
 				{
 					"name": "default"
 				}
-			]
-		},
-		{
-			"build_variants": [
-				{
-					"name": "default"
-				}
-			]
-		},
-		{
-			"build_variants": [
-				{
-					"name": "default"
-				}
-			]
+			],
+			"product_id": "0x0061",
+			"vendor_id": "0x26ac",
+			"product_name": "PX4 ATL Mantis-EDU",
+			"vendor_name": "Advanced Technology Labs"
 		},
 		{
 			"board_name": "PX4FMUv4",
@@ -627,7 +709,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x004c",
+			"vendor_id": "0x3163",
+			"product_name": "PX4 CUAV Nora",
+			"vendor_name": "CUAV"
 		},
 		{
 			"board_name": "X7Pro",
@@ -645,7 +731,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x004c",
+			"vendor_id": "0x3163",
+			"product_name": "PX4 CUAV X7Pro",
+			"vendor_name": "CUAV"
 		},
 		{
 			"board_name": "RaspberrypiPico",
@@ -657,7 +747,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0xa4a7",
+			"vendor_id": "0x0525",
+			"product_name": "PX4 RaspberryPi Pico",
+			"vendor_name": "NuttX"
 		},
 		{
 			"board_name": "modalaifcv1",
@@ -672,7 +766,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0xa32f",
+			"vendor_id": "0x0483",
+			"product_name": "PX4 FMU ModalAI FCv1",
+			"vendor_name": "ModalAI"
 		},
 		{
 			"board_name": "modalaifcv2",
@@ -687,7 +785,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0xa330",
+			"vendor_id": "0x0483",
+			"product_name": "PX4 FMU ModalAI FCv2",
+			"vendor_name": "ModalAI"
 		},
 		{
 			"board_name": "ARKCANNODE",
@@ -765,7 +867,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1004",
+			"vendor_id": "0x120A",
+			"product_name": "Matekgnssm9nf4",
+			"vendor_name": "PX4"
 		},
 		{
 			"board_name": "MatekH743-mini",
@@ -780,7 +886,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0036",
+			"vendor_id": "0x1B8C",
+			"product_name": "MatekH743-mini",
+			"vendor_name": "Matek"
 		},
 		{
 			"board_name": "MatekH743",
@@ -795,7 +905,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x0036",
+			"vendor_id": "0x1B8C",
+			"product_name": "MatekH743",
+			"vendor_name": "Matek"
 		},
 		{
 			"board_name": "MatekH743",
@@ -810,7 +924,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x1013",
+			"vendor_id": "0x1209",
+			"product_name": "MatekH743",
+			"vendor_name": "Matek"
 		},
 		{
 			"board_name": "UCANS32K146",
@@ -849,7 +967,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x001c",
+			"vendor_id": "0x1FC9",
+			"product_name": "PX4 FMUK66 v3.x",
+			"vendor_name": "NXP SEMICONDUCTORS"
 		},
 		{
 			"board_name": "NXPFMURT1062v1",
@@ -861,7 +983,11 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x001d",
+			"vendor_id": "0x1FC9",
+			"product_name": "PX4 FMURT1062 v1.x",
+			"vendor_name": "NXP SEMICONDUCTORS"
 		},
 		{
 			"board_name": "NXPFMUK66E",
@@ -879,7 +1005,22 @@
 				{
 					"name": "default"
 				}
-			]
+			],
+			"product_id": "0x001c",
+			"vendor_id": "0x1FC9",
+			"product_name": "PX4 FMUK66 E",
+			"vendor_name": "NXP SEMICONDUCTORS"
 		}
-	]
+	],
+	"binary_urls": {
+		"stable": {
+			"url": "http://px4-travis.s3.amazonaws.com/Firmware/stable/${target_name}_${build_variant}.px4"
+		},
+		"beta": {
+			"url": "http://px4-travis.s3.amazonaws.com/Firmware/beta/${target_name}_${build_variant}.px4"
+		},
+		"main": {
+			"url": "http://px4-travis.s3.amazonaws.com/Firmware/main/${target_name}_${build_variant}.px4"
+		}
+	}
 }
