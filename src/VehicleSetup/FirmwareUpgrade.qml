@@ -134,6 +134,7 @@ SetupPage {
                 onError:                    statusTextArea.append(flashFailText)
             }
 
+            // Popup for selecting the Firmware
             Component {
                 id: firmwareSelectDialogComponent
 
@@ -171,7 +172,6 @@ SetupPage {
                             versionString = controller.px4StableVersion
                         }
                         px4FlightStackRadio.text = qsTr("PX4 Pro ") + versionString
-                        //px4FlightStackRadio2.text = qsTr("PX4 Pro ") + versionString
                     }
 
                     Component.onCompleted: {
@@ -351,6 +351,14 @@ SetupPage {
                                     firmwareVersionChanged(firmwareBuildTypeList)
                                 }
                             }
+                        }
+
+                        // PX4 Firmware build variant selection dropbox
+                        QGCComboBox {
+                            id:                 px4FirmwareBuildVariantsCombo
+                            visible:            _defaultFirmwareFact.rawValue == _defaultFimwareTypePX4
+                            model:              controller.px4FirmwareBuildVariants
+                            onModelChanged:     currentIndex = controller.px4FirmwareBuildVariantSelectedIdx
                         }
 
                         // Ardupilot Firmwrae selection dropboxes

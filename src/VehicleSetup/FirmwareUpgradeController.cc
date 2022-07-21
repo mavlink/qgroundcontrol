@@ -35,49 +35,6 @@ struct FirmwareToUrlElement_t {
     QString                                             url;
 };
 
-// See PX4 Bootloader board_types.txt - https://raw.githubusercontent.com/PX4/PX4-Bootloader/master/board_types.txt
-// static QMap<int, QString> px4_board_name_map {
-//     {9, "px4_fmu-v2_default"},
-//     {255, "px4_fmu-v3_default"}, // Simulated board id for V3 which is a V2 board which supports larger flash space
-//     {11, "px4_fmu-v4_default"},
-//     {13, "px4_fmu-v4pro_default"},
-//     {20, "uvify_core_default"},
-//     {50, "px4_fmu-v5_default"},
-//     {51, "px4_fmu-v5x_default"},
-//     {52, "px4_fmu-v6_default"},
-//     {53, "px4_fmu-v6x_default"},
-//     {54, "px4_fmu-v6u_default"},
-//     {56, "px4_fmu-v6c_default"},
-//     {55, "sky-drones_smartap-airlink_default"},
-//     {88, "airmind_mindpx-v2_default"},
-//     {12, "bitcraze_crazyflie_default"},
-//     {14, "bitcraze_crazyflie21_default"},
-//     {42, "omnibus_f4sd_default"},
-//     {33, "mro_x21_default"},
-//     {65, "intel_aerofc-v1_default"},
-//     {123, "holybro_kakutef7_default"},
-//     {41775, "modalai_fc-v1_default"},
-//     {41776, "modalai_fc-v2_default"},
-//     {78, "holybro_pix32v5_default"},
-//     {79, "holybro_can-gps-v1_default"},
-//     {28, "nxp_fmuk66-v3_default"},
-//     {30, "nxp_fmuk66-e_default"},
-//     {31, "nxp_fmurt1062-v1_default"},
-//     {85, "freefly_can-rtk-gps_default"},
-//     {120, "cubepilot_cubeyellow_default"},
-//     {136, "mro_x21-777_default"},
-//     {139, "holybro_durandal-v1_default"},
-//     {140, "cubepilot_cubeorange_default"},
-//     {141, "mro_ctrl-zero-f7_default"},
-//     {142, "mro_ctrl-zero-f7-oem_default"},
-//     {1009, "cuav_nora_default"},
-//     {1010, "cuav_x7pro_default"},
-//     {1017, "mro_pixracerpro_default"},
-//     {1023, "mro_ctrl-zero-h7_default"},
-//     {1024, "mro_ctrl-zero-h7-oem_default"},
-//     {1048, "holybro_kakuteh7_default"},
-// };
-
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 {
     return static_cast<uint>(( firmwareId.autopilotStackType |
@@ -168,6 +125,7 @@ void FirmwareUpgradeController::flash(AutoPilotStackType_t stackType,
 {
     qCDebug(FirmwareUpgradeLog) << "FirmwareUpgradeController::flash stackType:firmwareType:vehicleType" << stackType << firmwareType << vehicleType;
     FirmwareIdentifier firmwareId = FirmwareIdentifier(stackType, firmwareType, vehicleType);
+    
     if (_bootloaderFound) {
         _getFirmwareFile(firmwareId);
     
@@ -281,6 +239,9 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
         if (_rgArdupilotManifestFirmwareInfo.count()) {
             _buildAPMFirmwareNames();
         }
+        // Update the Build Variants list for the detected board
+        _updatePX4BuildVariantsList();
+
         emit showFirmwareSelectDlg();
     }
 }
@@ -353,7 +314,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
 
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
+    // Get Firmware download URL
     QHash<FirmwareIdentifier, QString>* prgFirmware = _px4FirmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
+    
     if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QString();
         _errorCancel(tr("Custom firmware selected but no filename given."));
@@ -736,6 +699,11 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
             _px4BoardManifest.binary_urls[key] = binaryUrls[key].toString();
         }
 
+        // If we already have the bootloader of the board found, update Build Variants List
+        if (_bootloaderFound) {
+            _updatePX4BuildVariantsList();
+        }
+
         _downloadingFirmwareList = false;
         emit downloadingFirmwareListChanged(false);
     
@@ -744,6 +712,24 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
     }
 }
 
+void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
+{
+    qInfo() << "Updating PX4 Build Variants";
+    // Identify the board by board ID of the bootloader
+    if (_bootloaderFound) {
+        foreach(const PX4Manifest_SingleBoardInfo_t &boardinfo, _px4BoardManifest.boards) {
+            if (boardinfo.boardID == _bootloaderBoardID) {
+                // Found the matching board in the manifest. Update the variants list
+                qInfo() << "Found the board that has a matching bootloader ID";
+                qInfo() << boardinfo.boardName;
+                _px4FirmwareBuildVariants = QStringList(boardinfo.buildVariants);
+                return;
+            }
+        }
+    }
+}
+
+// Ardupilot Manifest code
 
 void FirmwareUpgradeController::_downloadArduPilotManifest(void)
 {

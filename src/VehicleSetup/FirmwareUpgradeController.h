@@ -61,6 +61,7 @@ public:
         Q_ENUM(FirmwareBuildType_t)
         Q_ENUM(FirmwareVehicleType_t)
 
+    // Identifies class for a specified Autopilot Stack, Release version and Vehicle
     class FirmwareIdentifier
     {
     public:
@@ -92,6 +93,12 @@ public:
     Q_PROPERTY(bool                 pixhawkBoard                READ pixhawkBoard                                                   NOTIFY boardFound)
     Q_PROPERTY(bool                 px4FlowBoard                READ px4FlowBoard                                                   NOTIFY boardFound)
     Q_PROPERTY(FirmwareBuildType_t  selectedFirmwareBuildType   READ selectedFirmwareBuildType  WRITE setSelectedFirmwareBuildType  NOTIFY selectedFirmwareBuildTypeChanged)
+    
+    // List of firmware build variants of PX4 that shows in the dropdown combobox
+    Q_PROPERTY(QStringList          px4FirmwareBuildVariants            MEMBER _px4FirmwareBuildVariants                            NOTIFY px4FirmwareBuildVariantsChanged)
+    Q_PROPERTY(int                  px4FirmwareBuildVariantSelectedIdx   MEMBER _px4FirmwareBuildVariantSelectedIdx                  NOTIFY px4FirmwareBuildVariantsChanged)
+
+    // List of firmware of ardupilot that shows on firmware selection dropdown combobox
     Q_PROPERTY(QStringList          apmFirmwareNames            MEMBER _apmFirmwareNames                                            NOTIFY apmFirmwareNamesChanged)
     Q_PROPERTY(int                  apmFirmwareNamesBestIndex   MEMBER _apmFirmwareNamesBestIndex                                   NOTIFY apmFirmwareNamesChanged)
     Q_PROPERTY(QStringList          apmFirmwareUrls             MEMBER _apmFirmwareUrls                                             NOTIFY apmFirmwareNamesChanged)
@@ -162,6 +169,7 @@ signals:
     void flashCancelled                 (void);
     void error                          (void);
     void selectedFirmwareBuildTypeChanged(FirmwareBuildType_t firmwareType);
+    void px4FirmwareBuildVariantsChanged (void); // Signal emitted when the Build Variant List variable is changed in the class
     void apmFirmwareNamesChanged        (void);
     void px4StableVersionChanged        (const QString& px4StableVersion);
     void px4BetaVersionChanged          (const QString& px4BetaVersion);
@@ -185,10 +193,19 @@ private slots:
     void _eraseStarted                      (void);
     void _eraseComplete                     (void);
     void _eraseProgressTick                 (void);
-    void _px4ReleasesGithubDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
+    
     void _ardupilotManifestDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
-    void _PX4ManifestDownloadComplete       (QString remoteFile, QString localFile, QString errorMsg);
     void _buildAPMFirmwareNames             (void);
+
+    void _px4ReleasesGithubDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
+    void _PX4ManifestDownloadComplete       (QString remoteFile, QString localFile, QString errorMsg);
+    /**
+     * @brief Update the internal PX4 Build Variants List for the detected board
+     * 
+     * It will then set the appropriate combo selection box in the QML to show supported
+     * build variants that user can flash
+     */
+    void _updatePX4BuildVariantsList        (void);
 
 private:
     QHash<FirmwareIdentifier, QString>* _px4FirmwareHashForBoardId(int boardId);
@@ -277,12 +294,12 @@ private:
 
     const char* _px4ManifestBinaryUrlsJsonKey =                  "binary_urls";
 
-    // Struct that holds information about a single board(target)
+    // Struct that holds information about a single PX4 board (target)
     typedef struct {
         QString boardName; ///< Human friendly name of the board
         QString targetName; ///< Name the board is referred to when building as a target
         QString description;
-        int boardID; ///< Bootloader ID for identifying the board when connected
+        uint32_t boardID; ///< Bootloader ID for identifying the board when connected
         QList<QString> buildVariants; ///< Build variants (e.g. default, test, rtps)
 
         // USB AutoConnect related variables
@@ -301,6 +318,11 @@ private:
 
     // PX4 Board-ID (Bootloader ID) to Target Name mapping, extracted from the Manifest struct
     QMap<int, QString> _px4_board_id_2_target_name;
+
+    // PX4 Firmware Build Variants of currently detected board as string list (used in QML)
+    QStringList _px4FirmwareBuildVariants;
+    int _px4FirmwareBuildVariantSelectedIdx = -1;
+
 
     // Ardupilot Manifest file JSON keys
     const char* _ardupilotManifestFirmwareJsonKey =               "firmware";
@@ -336,6 +358,7 @@ private:
     QList<ArdupilotManifestFirmwareInfo_t>           _rgArdupilotManifestFirmwareInfo;
     QMap<QString, FirmwareBuildType_t>      _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap;
     QMap<QString, FirmwareVehicleType_t>    _manifestMavTypeToFirmwareVehicleTypeMap;
+
     QStringList                             _apmFirmwareNames;
     int                                     _apmFirmwareNamesBestIndex = 0;
     QStringList                             _apmFirmwareUrls;
