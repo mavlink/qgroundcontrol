@@ -239,7 +239,7 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
             _buildAPMFirmwareNames();
         }
         // Update the Build Variants list for the detected board
-        _updatePX4BuildVariantsList();
+        _updatePX4BuildVariantsListAndDetectBoard();
 
         emit showFirmwareSelectDlg();
     }
@@ -277,19 +277,23 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
     _errorCancel("Unable to sync with bootloader.");
 }
 
-QString FirmwareUpgradeController::_getPX4FirmwareURL(const int boardId, const FirmwareIdentifier firmware_id, )
+QString FirmwareUpgradeController::_getPX4FirmwareURL(const uint32_t boardId, const FirmwareIdentifier firmware_id, const QString target_name, const QString build_variant)
 {
+    qInfo() << "Inside get PX4 Firmware URL";
+    qInfo() << target_name << ", " << build_variant;
+    qInfo() << firmware_id.firmwareType;
+
     // Handle PX4Flow and SiK Radio cases
     switch (boardId) {
         case Bootloader::boardIDPX4Flow:
-            return _rgPX4FLowFirmware->value(firmware_id);
+            return _rgPX4FLowFirmware.value(firmware_id);
         
         case Bootloader::boardIDSiKRadio1000:
             {
                 // Only the Stable Firmware is supported for SiK radio 1000
                 FirmwareIdentifier sikradio_1000(SiKRadio, StableFirmware, DefaultVehicleFirmware);
                 if (firmware_id == sikradio_1000) {
-                    return "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx"
+                    return "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx";
                 }
                 // If no valid URL is found, return empty url
                 return QString();
@@ -298,7 +302,7 @@ QString FirmwareUpgradeController::_getPX4FirmwareURL(const int boardId, const F
         case Bootloader::boardIDSiKRadio1060:
             {
                 FirmwareIdentifier sikradio_1060(SiKRadio, StableFirmware, DefaultVehicleFirmware);
-                if (firmware_id == sikradio_1000) {
+                if (firmware_id == sikradio_1060) {
                     return "https://px4-travis.s3.amazonaws.com/SiK/stable/radio~hb1060.ihx";
                 }
                 // If no valid URL is found, return empty url
@@ -306,19 +310,38 @@ QString FirmwareUpgradeController::_getPX4FirmwareURL(const int boardId, const F
             }
     }
 
-    // Handle generic PX4 firmware case
-    if (_px4_board_id_2_target_name.contains(boardId)) {
-        const QString px4Url{"http://px4-travis.s3.amazonaws.com/Firmware/%1/%2.px4"};
-        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(_px4_board_id_2_target_name.value(boardId)));
-        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(_px4_board_id_2_target_name.value(boardId)));
-        _rgPX4FirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(_px4_board_id_2_target_name.value(boardId)));
+    // Depending on the build type select the appropriate binary url from the manifest data
+    QString firmware_url_template = "";
+    switch (firmware_id.firmwareType) {
+        case StableFirmware:
+            firmware_url_template = _px4BoardManifest.binary_urls["stable"];
+            break;
+        case BetaFirmware:
+            firmware_url_template = _px4BoardManifest.binary_urls["beta"];
+            break;
+        case DeveloperFirmware:
+            firmware_url_template = _px4BoardManifest.binary_urls["main"];
+            break;
+        default:
+            // If no valid URL is found, return empty url
+            return QString();
     }
+
+    qInfo() << "Firmware url template: " << firmware_url_template;
+
+    // Return the formatted download URL string
+    return firmware_url_template.replace("${target_name}", target_name).replace("${build_variant}", build_variant);
 }
 
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
+    // Fetch the selected build variant that user wants to flash (e.g. default / rtps / etc)
+    const QString build_variant_selected = _px4FirmwareBuildVariants[_px4FirmwareBuildVariantSelectedIdx];
+    // Fetch the target name from the detected board information struct
+    const QString build_target_name = _detectedBoardInfo->targetName;
+
     // Get Firmware download URL
-    QString firmwareDownloadURL = _getPX4FirmwareURL(static_cast<int>(_bootloaderBoardID), firmwareId);
+    QString firmwareDownloadURL = _getPX4FirmwareURL(_bootloaderBoardID, firmwareId, build_target_name, build_variant_selected);
     
     if(firmwareDownloadURL.isEmpty()) {
         _errorCancel(tr("Unable to find URL for the firmware specified"));
@@ -682,27 +705,26 @@ void FirmwareUpgradeController::_PX4ManifestDownloadComplete(QString remoteFile,
 
         // Add the board info into the list
         _px4BoardManifest.boards.append(boardInfoUnit);
-
-        // Update the Board-ID <-> Target Name mapping
-        _px4_board_id_2_target_name[boardInfoUnit.boardID] = boardInfoUnit.targetName;
     }
 
     // Read in binary URLs (that specifies where to download firmware files from)
     QJsonObject binaryUrls = json[_px4ManifestBinaryUrlsJsonKey].toObject();
+    // Each 'key' corresponds to the build type (stable, beta, main, etc.)
     foreach(const QString& key, binaryUrls.keys()) {
-        _px4BoardManifest.binary_urls[key] = binaryUrls[key].toString();
+        // Each binary url object has extra layer of 'url' key to specify the url.
+        _px4BoardManifest.binary_urls[key] = binaryUrls[key].toObject()["url"].toString();
     }
 
     // If we already have the bootloader of the board found, update Build Variants List
     if (_bootloaderFound) {
-        _updatePX4BuildVariantsList();
+        _updatePX4BuildVariantsListAndDetectBoard();
     }
 
     _downloadingFirmwareList = false;
     emit downloadingFirmwareListChanged(false);
 }
 
-void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
+void FirmwareUpgradeController::_updatePX4BuildVariantsListAndDetectBoard(void)
 {
     qInfo() << "Updating PX4 Build Variants";
 
@@ -710,19 +732,25 @@ void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
         const uint16_t board_vid = _boardInfo.vendorIdentifier();
         const uint16_t board_pid = _boardInfo.productIdentifier();
 
-        foreach(const PX4Manifest_SingleBoardInfo_t &boardinfo, _px4BoardManifest.boards) {
-            if (boardinfo.boardID == _bootloaderBoardID) {
+        for (int board_idx = 0; board_idx < _px4BoardManifest.boards.count(); board_idx++) {
+            // Pointer to the board information we are interested in
+            PX4Manifest_SingleBoardInfo_t *boardinfo = &_px4BoardManifest.boards[board_idx];
+            
+            if (boardinfo->boardID == _bootloaderBoardID) {
                 // Found the matching board in the manifest. Update the variants list
                 qInfo() << "Found the board that has a matching bootloader ID";
-                qInfo() << boardinfo.boardName;
+                qInfo() << boardinfo->boardName;
 
-                if (board_vid == boardinfo.vendorID && board_pid == boardinfo.productID) {
+                if (board_vid == boardinfo->vendorID && board_pid == boardinfo->productID) {
                     qInfo() << "Vendor ID and Product ID matches as well! Updating variants list...";
                     // Set the BuildVariants list
-                    _px4FirmwareBuildVariants = QStringList(boardinfo.buildVariantNames);
+                    _px4FirmwareBuildVariants = QStringList(boardinfo->buildVariantNames);
 
                     // Set the selected index to the "default" build variant, but if not fallback to -1
                     _px4FirmwareBuildVariantSelectedIdx = _px4FirmwareBuildVariants.indexOf("default");
+
+                    // Set the detected board pointer
+                    _detectedBoardInfo = boardinfo;
 
                     // Emit the signal so that the Build Variants display QML Combo box would get updated
                     emit px4FirmwareBuildVariantsChanged();
@@ -731,7 +759,7 @@ void FirmwareUpgradeController::_updatePX4BuildVariantsList(void)
                 } else {
                     qInfo() << "but the Vendor ID or product ID are different, not this board!";
                     qInfo() << "Detected VID,PID : " << board_vid << ", " << board_pid;
-                    qInfo() << "Board Manifest VID,PID : " << boardinfo.vendorID << ", " << boardinfo.productID;
+                    qInfo() << "Board Manifest VID,PID : " << boardinfo->vendorID << ", " << boardinfo->productID;
                 }
             }
         }

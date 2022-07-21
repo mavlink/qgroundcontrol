@@ -202,13 +202,14 @@ private slots:
 
     void _px4ReleasesGithubDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
     void _PX4ManifestDownloadComplete       (QString remoteFile, QString localFile, QString errorMsg);
+    
     /**
      * @brief Update the internal PX4 Build Variants List for the detected board
      * 
      * It will then set the appropriate combo selection box in the QML to show supported
      * build variants that user can flash
      */
-    void _updatePX4BuildVariantsList        (void);
+    void _updatePX4BuildVariantsListAndDetectBoard        (void);
 
 private:
     /**
@@ -216,7 +217,7 @@ private:
      * 
      * @param boardId 
      */
-    QString _getPX4FirmwareURL(const int boardId);
+    QString _getPX4FirmwareURL(const uint32_t boardId, const FirmwareIdentifier firmware_id, const QString target_name, const QString build_variant);
 
     /**
      * @brief Downloads or loads the firmware file matching the identifier
@@ -307,35 +308,33 @@ private:
 
     const char* _px4ManifestBinaryUrlsJsonKey =                  "binary_urls";
 
-    // Struct that holds information about a single PX4 board (target)
     typedef struct {
-        QString boardName; ///< Human friendly name of the board
-        QString targetName; ///< Name the board is referred to when building as a target
-        QString description;
-        uint32_t boardID; ///< Bootloader ID for identifying the board when connected
-        QList<QString> buildVariantNames; ///< Build variants (e.g. default, test, rtps)
+            // Generic board / target information
+            QString boardName; ///< Human friendly name of the board
+            QString targetName; ///< Name the board is referred to when building as a target
+            QString description;
+            uint32_t boardID; ///< Bootloader ID for identifying the board when connected
+            QList<QString> buildVariantNames; ///< Build variants (e.g. default, test, rtps)
 
-        // USB AutoConnect related variables
-        int productID;
-        QString productName;
-        int vendorID;
-        QString vendorName;
-    } PX4Manifest_SingleBoardInfo_t;
+            // USB AutoConnect information
+            int productID;
+            QString productName;
+            int vendorID;
+            QString vendorName;
+        } PX4Manifest_SingleBoardInfo_t;
 
     typedef struct {
         QList<PX4Manifest_SingleBoardInfo_t> boards; ///< List of board information units
         QMap<QString, QString> binary_urls; ///< Mapping between version (e.g. stable) to it's binary url (e.g. px4-travis.s3. ...)
     } PX4Manifest_WholeBoardInfo_t;
 
+    // Struct that holds the entire data parsed from the PX4 Board Information Manifest JSON file
     PX4Manifest_WholeBoardInfo_t _px4BoardManifest;
-
-    // PX4 Board-ID (Bootloader ID) to Target Name mapping, extracted from the Manifest struct
-    QMap<int, QString> _px4_board_id_2_target_name;
 
     // PX4 Firmware Build Variants of currently detected board as string list (used in QML)
     QStringList _px4FirmwareBuildVariants;
     int _px4FirmwareBuildVariantSelectedIdx = -1;
-
+    PX4Manifest_SingleBoardInfo_t *_detectedBoardInfo; // pointer to the board that is detected
 
     // Ardupilot Manifest file JSON keys
     const char* _ardupilotManifestFirmwareJsonKey =               "firmware";

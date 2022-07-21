@@ -370,6 +370,7 @@ SetupPage {
                             visible:            _defaultFirmwareFact.rawValue == _defaultFimwareTypePX4
                             model:              controller.px4FirmwareBuildVariants
                             onModelChanged:     currentIndex = controller.px4FirmwareBuildVariantSelectedIdx
+                            onActivated:        controller.px4FirmwareBuildVariantSelectedIdx = currentIndex
                         }
 
                         // Ardupilot Firmwrae selection dropboxes
