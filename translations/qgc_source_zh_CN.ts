@@ -7007,7 +7007,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewPreFlightChecklistPopup.qml" line="21"/>
       <source>Pre-Flight Checklist</source>
-      <translation type="unfinished">Pre-Flight Checklist</translation>
+        <translation>飞行前检查单</translation>
     </message>
   </context>
   <context>
@@ -7023,7 +7023,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="22"/>
       <source>Plan</source>
-      <translation type="unfinished">Plan</translation>
+        <translation>计划</translation>
     </message>
   </context>
   <context>
@@ -7031,7 +7031,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewVideo.qml" line="68"/>
       <source>Double-click to exit full screen</source>
-      <translation type="unfinished">Double-click to exit full screen</translation>
+        <translation>双击退出全屏</translation>
     </message>
   </context>
   <context>
@@ -7039,12 +7039,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewWidgetLayer.qml" line="89"/>
       <source>Single</source>
-      <translation type="unfinished">Single</translation>
+        <translation>单载具</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewWidgetLayer.qml" line="95"/>
       <source>Multi-Vehicle</source>
-      <translation type="unfinished">Multi-Vehicle</translation>
+        <translation>多载具</translation>
     </message>
   </context>
   <context>
@@ -7250,27 +7250,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="145"/>
       <source>Auto-Center Throttle</source>
-      <translation type="unfinished">Auto-Center Throttle</translation>
+        <translation>自动回中油门</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="177"/>
       <source>Show simple camera controls (DIGICAM_CONTROL)</source>
-      <translation type="unfinished">Show simple camera controls (DIGICAM_CONTROL)</translation>
+        <translation>显示简单相机控制 (DIGICAM_CONTROL)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="188"/>
       <source>Guided Command Settings</source>
-      <translation type="unfinished">Guided Command Settings</translation>
+        <translation>引导式命令设置</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="194"/>
       <source>Minimum Altitude</source>
-      <translation type="unfinished">Minimum Altitude</translation>
+        <translation>最小高度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="205"/>
       <source>Maximum Altitude</source>
-      <translation type="unfinished">Maximum Altitude</translation>
+        <translation>最大高度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="539"/>
@@ -7340,27 +7340,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="233"/>
       <source>Video Settings</source>
-      <translation type="unfinished">Video Settings</translation>
+        <translation>视频设置</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="240"/>
       <source>Source</source>
-      <translation type="unfinished">Source</translation>
+        <translation>视频源</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="296"/>
       <source>File Format</source>
-      <translation type="unfinished">File Format</translation>
+        <translation>文件格式</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="318"/>
       <source>Video decode priority</source>
-      <translation type="unfinished">Video decode priority</translation>
+        <translation>视频解码优先级</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="345"/>
       <source>Auto-Delete Saved Recordings</source>
-      <translation type="unfinished">Auto-Delete Saved Recordings</translation>
+        <translation>自动删除历史视频</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="356"/>
@@ -7395,7 +7395,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
       <source>Vertical Distance</source>
-      <translation type="unfinished">Vertical Distance</translation>
+        <translation>垂直距离</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="731"/>
@@ -7747,7 +7747,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="77"/>
       <source>All Files (*)</source>
-      <translation type="unfinished">All Files (*)</translation>
+        <translation>所有文件 (*)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="95"/>
@@ -7951,7 +7951,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="38"/>
       <source>Force Arm</source>
-      <translation type="unfinished">Force Arm</translation>
+        <translation>强行解锁</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="55"/>
@@ -7971,7 +7971,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="59"/>
       <source>WARNING: This will force arming of the vehicle bypassing any safety checks.</source>
-      <translation type="unfinished">WARNING: This will force arming of the vehicle bypassing any safety checks.</translation>
+        <translation>警告: 这将跳过所有安全检查并强行解锁载具。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="60"/>
@@ -8613,7 +8613,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/JsonHelper.cc" line="181"/>
       <source>File open failed: file:error %1 %2</source>
-      <translation type="unfinished">File open failed: file:error %1 %2</translation>
+        <translation>文件打开失败: 文件:错误 %1 %2</translation>
     </message>
     <message>
       <location filename="../src/JsonHelper.cc" line="334"/>
@@ -8788,7 +8788,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="135"/>
       <source>MockLink Options</source>
-      <translation type="unfinished">MockLink Options</translation>
+        <translation>虚拟连接选项</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="173"/>
@@ -8803,7 +8803,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="183"/>
       <source>Name</source>
-      <translation type="unfinished">Name</translation>
+        <translation>名称</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="189"/>
@@ -8823,7 +8823,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="206"/>
       <source>Type</source>
-      <translation type="unfinished">Type</translation>
+        <translation>类型</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="240"/>
@@ -9043,7 +9043,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="26"/>
       <source>Log File</source>
-      <translation type="unfinished">Log File</translation>
+        <translation>日志文件</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="35"/>
@@ -9053,17 +9053,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="41"/>
       <source>Select Telemetery Log</source>
-      <translation type="unfinished">Select Telemetery Log</translation>
+        <translation>选择遥测日志</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="42"/>
       <source>Telemetry Logs (*.%1)</source>
-      <translation type="unfinished">Telemetry Logs (*.%1)</translation>
+        <translation>遥测日志 (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LogReplaySettings.qml" line="42"/>
       <source>All Files (*)</source>
-      <translation type="unfinished">All Files (*)</translation>
+        <translation>所有文件 (*)</translation>
     </message>
   </context>
   <context>
@@ -9111,7 +9111,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="110"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+        <translation>关闭</translation>
     </message>
   </context>
   <context>
@@ -9119,27 +9119,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="195"/>
       <source>Gyro</source>
-      <translation type="unfinished">Gyro</translation>
+        <translation>陀螺仪</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="196"/>
       <source>Accelerometer</source>
-      <translation type="unfinished">Accelerometer</translation>
+        <translation>加速度计</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="197"/>
       <source>Magnetometer</source>
-      <translation type="unfinished">Magnetometer</translation>
+        <translation>磁力计</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="198"/>
       <source>Absolute pressure</source>
-      <translation type="unfinished">Absolute pressure</translation>
+        <translation>绝对气压</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="199"/>
       <source>Differential pressure</source>
-      <translation type="unfinished">Differential pressure</translation>
+        <translation>相对气压</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="200"/>
@@ -9149,17 +9149,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="201"/>
       <source>Optical flow</source>
-      <translation type="unfinished">Optical flow</translation>
+        <translation>光流</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="202"/>
       <source>Computer vision position</source>
-      <translation type="unfinished">Computer vision position</translation>
+        <translation>视觉定位</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="203"/>
       <source>Laser based position</source>
-      <translation type="unfinished">Laser based position</translation>
+        <translation>激光定位</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="204"/>
@@ -9169,12 +9169,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="205"/>
       <source>Angular rate control</source>
-      <translation type="unfinished">Angular rate control</translation>
+        <translation>角速度控制</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="206"/>
       <source>Attitude stabilization</source>
-      <translation type="unfinished">Attitude stabilization</translation>
+        <translation>姿态稳定</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="207"/>
@@ -9184,42 +9184,42 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="208"/>
       <source>Z/altitude control</source>
-      <translation type="unfinished">Z/altitude control</translation>
+        <translation>Z 高度控制</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="209"/>
       <source>X/Y position control</source>
-      <translation type="unfinished">X/Y position control</translation>
+        <translation>X/Y 位置控制</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="210"/>
       <source>Motor outputs / control</source>
-      <translation type="unfinished">Motor outputs / control</translation>
+        <translation>电机输出/控制</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="211"/>
       <source>RC receiver</source>
-      <translation type="unfinished">RC receiver</translation>
+        <translation>遥控接收器</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="212"/>
       <source>Gyro 2</source>
-      <translation type="unfinished">Gyro 2</translation>
+        <translation>陀螺仪 2</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="213"/>
       <source>Accelerometer 2</source>
-      <translation type="unfinished">Accelerometer 2</translation>
+        <translation>加速度计 2</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="214"/>
       <source>Magnetometer 2</source>
-      <translation type="unfinished">Magnetometer 2</translation>
+        <translation>磁力计 2</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="215"/>
       <source>GeoFence</source>
-      <translation type="unfinished">GeoFence</translation>
+        <translation>地理围栏</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="216"/>
@@ -9234,17 +9234,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="218"/>
       <source>Motors reversed</source>
-      <translation type="unfinished">Motors reversed</translation>
+        <translation>电机反转</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="219"/>
       <source>Logging</source>
-      <translation type="unfinished">Logging</translation>
+        <translation>日志记录中</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="220"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+        <translation>电池</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="221"/>
@@ -9254,17 +9254,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="222"/>
       <source>Satellite Communication</source>
-      <translation type="unfinished">Satellite Communication</translation>
+        <translation>卫星通信</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="223"/>
       <source>Pre-Arm Check</source>
-      <translation type="unfinished">Pre-Arm Check</translation>
+        <translation>解锁前检查</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="224"/>
       <source>Avoidance/collision prevention</source>
-      <translation type="unfinished">Avoidance/collision prevention</translation>
+        <translation>防碰撞</translation>
     </message>
   </context>
   <context>
@@ -9272,7 +9272,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="236"/>
       <source>Unknown sensor</source>
-      <translation type="unfinished">Unknown sensor</translation>
+        <translation>未知传感器</translation>
     </message>
   </context>
   <context>
@@ -9365,7 +9365,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="859"/>
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="874"/>
       <source>System %1</source>
-      <translation type="unfinished">System %1</translation>
+        <translation>系统 %1</translation>
     </message>
   </context>
   <context>
@@ -9472,19 +9472,19 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/ui/MainRootWindow.qml" line="156"/>
       <location filename="../src/ui/MainRootWindow.qml" line="385"/>
       <source>Analyze Tools</source>
-      <translation type="unfinished">Analyze Tools</translation>
+        <translation>分析工具</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="160"/>
       <location filename="../src/ui/MainRootWindow.qml" line="370"/>
       <source>Vehicle Setup</source>
-      <translation type="unfinished">Vehicle Setup</translation>
+        <translation>载具设置</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="164"/>
       <location filename="../src/ui/MainRootWindow.qml" line="401"/>
       <source>Application Settings</source>
-      <translation type="unfinished">Application Settings</translation>
+        <translation>软件设置</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="288"/>
@@ -9495,22 +9495,22 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="351"/>
       <source>Select Tool</source>
-      <translation type="unfinished">Select Tool</translation>
+        <translation>选择工具</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="419"/>
       <source>%1 Version</source>
-      <translation type="unfinished">%1 Version</translation>
+        <translation>%1 版本</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="452"/>
       <source>Advanced Mode</source>
-      <translation type="unfinished">Advanced Mode</translation>
+        <translation>高级模式</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="520"/>
       <source>Back</source>
-      <translation type="unfinished">Back</translation>
+        <translation>返回</translation>
     </message>
   </context>
   <context>
@@ -9518,37 +9518,37 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="35"/>
       <source>Communication Lost</source>
-      <translation type="unfinished">Communication Lost</translation>
+        <translation>通信丢失</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="36"/>
       <source>Ready To Fly</source>
-      <translation type="unfinished">Ready To Fly</translation>
+        <translation>飞行已就绪</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="37"/>
       <source>Not Ready</source>
-      <translation type="unfinished">Not Ready</translation>
+        <translation>未就绪</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="38"/>
       <source>Disconnected</source>
-      <translation type="unfinished">Disconnected</translation>
+        <translation>断开连接</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="39"/>
       <source>Armed</source>
-      <translation type="unfinished">Armed</translation>
+        <translation>已解锁</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="40"/>
       <source>Flying</source>
-      <translation type="unfinished">Flying</translation>
+        <translation>飞行中</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="41"/>
       <source>Landing</source>
-      <translation type="unfinished">Landing</translation>
+        <translation>降落中</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="136"/>
@@ -9563,22 +9563,22 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="196"/>
       <source>Sensor Status</source>
-      <translation type="unfinished">Sensor Status</translation>
+        <translation>传感器状态</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="173"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+        <translation>加锁</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="173"/>
       <source>Force Arm</source>
-      <translation type="unfinished">Force Arm</translation>
+        <translation>强行解锁</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="173"/>
       <source>Arm</source>
-      <translation type="unfinished">Arm</translation>
+        <translation>解锁</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="241"/>
@@ -9596,7 +9596,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainToolBar.qml" line="201"/>
       <source>Downloading</source>
-      <translation type="unfinished">Downloading</translation>
+        <translation>正在下载</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainToolBar.qml" line="209"/>
@@ -9662,12 +9662,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AnalyzeView/MavlinkConsolePage.qml" line="140"/>
       <source>Copy</source>
-      <translation type="unfinished">Copy</translation>
+        <translation>复制</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MavlinkConsolePage.qml" line="146"/>
       <source>Paste</source>
-      <translation type="unfinished">Paste</translation>
+        <translation>粘贴</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MavlinkConsolePage.qml" line="290"/>
@@ -9710,17 +9710,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="159"/>
       <source>Enable MAVLink forwarding</source>
-      <translation type="unfinished">Enable MAVLink forwarding</translation>
+        <translation>打开MAVLink转发</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="170"/>
       <source>Host name:</source>
-      <translation type="unfinished">Host name:</translation>
+        <translation>主机名:</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="183"/>
       <source>&lt;i&gt; Changing the host name requires restart of application. &lt;/i&gt;</source>
-      <translation type="unfinished">&lt;i&gt; Changing the host name requires restart of application. &lt;/i&gt;</translation>
+        <translation>&lt;i&gt; 修改主机名需要重启应用程序. &lt;/i&gt;</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="199"/>
@@ -9951,7 +9951,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MessageIndicator.qml" line="112"/>
       <source>No Messages</source>
-      <translation type="unfinished">No Messages</translation>
+        <translation>无消息</translation>
     </message>
   </context>
   <context>
