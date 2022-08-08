@@ -41,6 +41,11 @@ public:
 
     int getModeGroup(int32_t customMode);
 
+    bool healthAndArmingChecksSupported() const {
+        const auto& protocols = _parser.supportedProtocols(_compid);
+        return protocols.find("health_and_arming_check") != protocols.end();
+    }
+
 signals:
     void healthAndArmingChecksUpdated();
 
