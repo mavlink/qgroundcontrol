@@ -4310,3 +4310,62 @@ void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
         break;
     }
 }
+
+void Vehicle::rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue)
+{
+    const int maxRcChannels = 16;
+    if (rcChannel > maxRcChannels) {
+        qCWarning(VehicleLog) << "Unsupported rc channel " << rcChannel << " to override";
+        return;
+    }
+    if (pwmValue > 2000 || pwmValue < 1000) {
+        qCWarning(VehicleLog) << "Bad PWM override value " << pwmValue << " for channel " << rcChannel;
+        return;
+    }
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog)<< "rcChannelOverride: primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    qCDebug(VehicleLog) << "Sending RC channel " << rcChannel << " PWM override to " << pwmValue;
+
+    uint16_t override_data[18] = {};
+    for (int i = 0; i < 18; i++) {
+        override_data[i] = UINT16_MAX;
+    }
+    override_data[rcChannel - 1] = pwmValue;
+
+    mavlink_message_t message;
+
+    mavlink_msg_rc_channels_override_pack_chan(
+        static_cast<uint8_t>(_mavlink->getSystemId()),
+        static_cast<uint8_t>(_mavlink->getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        static_cast<uint8_t>(_id),
+        0,
+        override_data[0],
+        override_data[1],
+        override_data[2],
+        override_data[3],
+        override_data[4],
+        override_data[5],
+        override_data[6],
+        override_data[7],
+        override_data[8],
+        override_data[9],
+        override_data[10],
+        override_data[11],
+        override_data[12],
+        override_data[13],
+        override_data[14],
+        override_data[15],
+        override_data[16],
+        override_data[17]);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+}

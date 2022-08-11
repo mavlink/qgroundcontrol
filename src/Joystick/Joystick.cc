@@ -26,6 +26,8 @@ const char* Joystick::_settingsGroup =                  "Joysticks";
 const char* Joystick::_calibratedSettingsKey =          "Calibrated4"; // Increment number to force recalibration
 const char* Joystick::_buttonActionNameKey =            "ButtonActionName%1";
 const char* Joystick::_buttonActionRepeatKey =          "ButtonActionRepeat%1";
+const char* Joystick::_buttonActionLowPwmValueKey =     "ButtonActionLowPwm%1";
+const char* Joystick::_buttonActionHighPwmValueKey =    "ButtonActionHighPwm%1";
 const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
 const char* Joystick::_negativeThrustSettingsKey =      "NegativeThrust";
 const char* Joystick::_exponentialSettingsKey =         "Exponential";
@@ -126,6 +128,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
 
     _customMavCommands = JoystickMavCommand::load("JoystickMavCommands.json");
+    JoystickRcOverride rco(8, 1200, 1800, true);
+    _rcOverrides.append(rco);
 }
 
 void Joystick::stop()
@@ -860,6 +864,59 @@ QString Joystick::getButtonAction(int button)
     return QString(_buttonActionNone);
 }
 
+bool Joystick::assignableActionIsPWM(int button) {
+    qDebug(JoystickLog) << "assignableActionIsPWM: " << button;
+    if (_validButton(button)) {
+        auto action = getButtonAction(button);
+        qDebug(JoystickLog) << "action " << action;
+        return action.contains("PWM");
+    }
+    return false;
+}
+
+void Joystick::setButtonPWM(int button, bool lowPwm, int value) {
+    qDebug(JoystickLog) << "setButtonPWM: " << button << (lowPwm ? "LOW " : "HIGH ") << value;
+    if (_validButton(button)) {
+        if (assignableActionIsPWM(button)) {
+            auto action = getButtonAction(button);
+            int rc = getRcChannelFromAction(action);
+            if (rc < 0) {
+                return;
+            }
+            QSettings settings;
+            settings.beginGroup(_settingsGroup);
+            settings.beginGroup(_name);
+            if (lowPwm) {
+                settings.setValue(QString(_buttonActionLowPwmValueKey).arg(button), value);
+            } else {
+                settings.setValue(QString(_buttonActionHighPwmValueKey).arg(button), value);
+            }
+        }
+    }
+}
+
+int Joystick::getButtonPWM(int button, bool lowPwm) {
+    qDebug(JoystickLog) << "getButtonPWM: " << button << (lowPwm ? "LOW " : "HIGH ");
+    if (_validButton(button)) {
+        if (assignableActionIsPWM(button)) {
+            auto action = getButtonAction(button);
+            int rc = getRcChannelFromAction(action);
+            if (rc < 0) {
+                return -1;
+            }
+            QSettings settings;
+            settings.beginGroup(_settingsGroup);
+            settings.beginGroup(_name);
+            if (lowPwm) {
+                return settings.value(QString(_buttonActionLowPwmValueKey).arg(button), -1).toInt();
+            } else {
+                return settings.value(QString(_buttonActionHighPwmValueKey).arg(button), -1).toInt();
+            }
+        }
+    }
+    return -1;
+}
+
 QStringList Joystick::buttonActions()
 {
     QStringList list;
@@ -1045,13 +1102,22 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
             emit gripperAction(GRIPPER_ACTION_RELEASE);
         }
     } else {
-        if (buttonDown && _activeVehicle) {
-            for (auto& item : _customMavCommands) {
-                if (action == item.name()) {
-                    item.send(_activeVehicle);
-                    return;
+        qCDebug(JoystickLog) << "Action " << action << " button " << (buttonDown ? "down" : "up");
+        if (_activeVehicle) {
+            bool actionServed = false;
+            if (action.startsWith("Channel")) {
+                actionServed = _executeRcOverrideButtonAction(action, buttonDown);
+            }
+            if (buttonDown && !actionServed) {
+                for (auto& item : _customMavCommands) {
+                    if (action == item.name()) {
+                        item.send(_activeVehicle);
+                        return;
+                    }
                 }
             }
+        } else {
+            qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
         }
     }
 }
@@ -1143,6 +1209,11 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
 
+    for (int ch = 8; ch <= 16;ch++) {
+         _assignableButtonActions.append(new AssignableButtonAction(this, QString("Channel %1 direct PWM").arg(ch)));
+    }
+
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     for (auto& item : _customMavCommands) {
         _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
     }
@@ -1152,4 +1223,35 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
         _availableActionTitles << p->action();
     }
     emit assignableActionsChanged();
+}
+
+bool Joystick::_executeRcOverrideButtonAction(const QString &action, bool buttonDown)
+{
+    QRegularExpression re("^Channel (\\d{1,2}) direct PWM");
+    QRegularExpressionMatch match = re.match(action);
+    if (match.hasMatch()) {
+        QString channelNoStr = match.captured(1);
+        qCDebug(JoystickLog) << "RC override matched for channel " << channelNoStr;
+        uint8_t channelNo = channelNoStr.toInt();
+
+        for (auto& item : _rcOverrides) {
+            if (channelNo == item.channel()) {
+                item.send(_activeVehicle, buttonDown);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int Joystick::getRcChannelFromAction(QString actionName) {
+    QRegularExpression re("^Channel (\\d{1,2}) direct PWM");
+    QRegularExpressionMatch match = re.match(actionName);
+    if (match.hasMatch()) {
+        QString channelNoStr = match.captured(1);
+        qCDebug(JoystickLog) << "RC override matched for channel " << channelNoStr;
+        uint8_t channelNo = channelNoStr.toInt();
+        return channelNo;
+    }
+    return -1;
 }

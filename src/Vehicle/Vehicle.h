@@ -485,6 +485,14 @@ public:
     void setJoystickEnabled         (bool enabled);
     void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons);
 
+    /// Sends Channel override value
+    ///     @param rcChannel channel number 1-16
+    ///     @param pwmValue direct value 1000 - 2000
+    void rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue);
+    /// Sends disabling of channel override
+    ///     @param rcChannel channel number 1-16
+    void disableChannelOverride(uint8_t rcChannel);
+
     // Property accesors
     int id() const{ return _id; }
     int compId() const{ return _compID; }

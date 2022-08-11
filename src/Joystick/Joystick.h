@@ -16,10 +16,11 @@
 #include <QThread>
 #include <atomic>
 
+#include "JoystickMavCommand.h"
+#include "JoystickRcOverride.h"
+#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
-#include "MultiVehicleManager.h"
-#include "JoystickMavCommand.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
@@ -118,6 +119,10 @@ public:
     Q_INVOKABLE bool    getButtonRepeat     (int button);
     Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
     Q_INVOKABLE QString getButtonAction     (int button);
+    Q_INVOKABLE bool    assignableActionIsPWM     (int button);
+    Q_INVOKABLE void    setButtonPWM     (int button, bool lowPwm, int value);
+    Q_INVOKABLE int     getButtonPWM     (int button, bool lowPwm);
+
 
     // Property accessors
 
@@ -307,6 +312,7 @@ protected:
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
     QList<JoystickMavCommand> _customMavCommands;
+    QList<JoystickRcOverride> _rcOverrides;
 
     static const float  _minAxisFrequencyHz;
     static const float  _maxAxisFrequencyHz;
@@ -320,6 +326,8 @@ private:
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionNameKey;
     static const char* _buttonActionRepeatKey;
+    static const char* _buttonActionLowPwmValueKey;
+    static const char* _buttonActionHighPwmValueKey;
     static const char* _throttleModeSettingsKey;
     static const char* _negativeThrustSettingsKey;
     static const char* _exponentialSettingsKey;
@@ -365,4 +373,6 @@ private:
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
+    bool _executeRcOverrideButtonAction(const QString &action, bool buttonDown);
+    int getRcChannelFromAction(QString actionName);
 };
