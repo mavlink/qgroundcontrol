@@ -108,6 +108,7 @@
         <file alias="QGroundControl/Controls/KMLOrSHPFileDialog.qml">src/QmlControls/KMLOrSHPFileDialog.qml</file>
         <file alias="QGroundControl/Controls/LogReplayStatusBar.qml">src/QmlControls/LogReplayStatusBar.qml</file>
         <file alias="QGroundControl/Controls/MainStatusIndicator.qml">src/ui/toolbar/MainStatusIndicator.qml</file>
+        <file alias="QGroundControl/Controls/FlightModeMenuIndicator.qml">src/ui/toolbar/FlightModeMenuIndicator.qml</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/MainWindowSavedState.qml">src/QmlControls/MainWindowSavedState.qml</file>
         <file alias="QGroundControl/Controls/MAVLinkChart.qml">src/QmlControls/MAVLinkChart.qml</file>
