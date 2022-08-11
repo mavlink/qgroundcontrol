@@ -114,12 +114,10 @@ RowLayout {
         visible:                flightModeMenu.visible
     }
 
-    FlightModeMenu {
+    FlightModeMenuIndicator {
         id:                     flightModeMenu
         Layout.preferredHeight: _root.height
-        verticalAlignment:      Text.AlignVCenter
-        font.pointSize:         _vehicleInAir ?  ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
-        mouseAreaLeftMargin:    -(flightModeMenu.x - flightModeIcon.x)
+        fontPointSize:          _vehicleInAir ?  ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
         visible:                _activeVehicle
     }
 
