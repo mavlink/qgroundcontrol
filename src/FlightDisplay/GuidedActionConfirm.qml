@@ -25,7 +25,7 @@ Rectangle {
     visible:                false
 
     property var    guidedController
-    property var    altitudeSlider
+    property var    guidedValueSlider
     property string title                                       // Currently unused
     property alias  message:            messageText.text
     property int    action
@@ -57,7 +57,7 @@ Rectangle {
     }
 
     function confirmCancelled() {
-        altitudeSlider.visible = false
+        guidedValueSlider.visible = false
         visible = false
         hideTrigger = false
         visibleTimer.stop()
@@ -106,13 +106,13 @@ Rectangle {
 
                 onAccept: {
                     _root.visible = false
-                    var altitudeChange = 0
-                    if (altitudeSlider.visible) {
-                        altitudeChange = altitudeSlider.getAltitudeChangeValue()
-                        altitudeSlider.visible = false
+                    var sliderOutputValue = 0
+                    if (guidedValueSlider.visible) {
+                        sliderOutputValue = guidedValueSlider.getOutputValue()
+                        guidedValueSlider.visible = false
                     }
                     hideTrigger = false
-                    guidedController.executeAction(_root.action, _root.actionData, altitudeChange, _root.optionChecked)
+                    guidedController.executeAction(_root.action, _root.actionData, sliderOutputValue, _root.optionChecked)
                     if (mapIndicator) {
                         mapIndicator.actionConfirmed()
                         mapIndicator = undefined

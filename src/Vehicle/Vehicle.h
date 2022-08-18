@@ -271,6 +271,8 @@ public:
     Q_PROPERTY(bool     roiModeSupported        READ roiModeSupported                               CONSTANT)                   ///< Orbit mode is supported by this vehicle
     Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Guided takeoff supported
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
+    Q_PROPERTY(bool     haveMRSpeedLimits       READ haveMRSpeedLimits                              NOTIFY haveMRSpeedLimChanged)
+    Q_PROPERTY(bool     haveFWSpeedLimits       READ haveFWSpeedLimits                              NOTIFY haveFWSpeedLimChanged)
 
     Q_PROPERTY(ParameterManager*        parameterManager    READ parameterManager   CONSTANT)
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
@@ -352,6 +354,15 @@ public:
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     Q_INVOKABLE double minimumTakeoffAltitude();
 
+    /// @return Maximum horizontal speed multirotor.
+    Q_INVOKABLE double maximumHorizontalSpeedMultirotor();
+
+    /// @return Maximum equivalent airspeed.
+    Q_INVOKABLE double maximumEquivalentAirspeed();
+
+    /// @return Minumum equivalent airspeed.
+    Q_INVOKABLE double minimumEquivalentAirspeed();
+
     /// Command vehicle to move to specified location (altitude is included and relative)
     Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
 
@@ -359,6 +370,13 @@ public:
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
     Q_INVOKABLE void guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle);
+
+    /// Command vehicle to change groundspeed
+    ///     @param groundspeed Target horizontal groundspeed
+    Q_INVOKABLE void guidedModeChangeGroundSpeed   (double groundspeed);
+    /// Command vehicle to change equivalent airspeed
+    ///     @param airspeed Target equivalent airspeed
+    Q_INVOKABLE void guidedModeChangeEquivalentAirspeed   (double airspeed);
 
     /// Command vehicle to orbit given center point
     ///     @param centerCoord Orit around this point
@@ -446,6 +464,9 @@ public:
     bool    roiModeSupported        () const;
     bool    takeoffVehicleSupported () const;
     QString gotoFlightMode          () const;
+
+    bool haveMRSpeedLimits() const { return _multirotor_speed_limits_available; }
+    bool haveFWSpeedLimits() const { return _fixed_wing_airspeed_limits_available; }
 
     // Property accessors
 
@@ -898,6 +919,8 @@ signals:
     void readyToFlyChanged              (bool readyToFy);
     void allSensorsHealthyChanged       (bool allSensorsHealthy);
     void requiresGpsFixChanged          ();
+    void haveMRSpeedLimChanged          ();
+    void haveFWSpeedLimChanged          ();
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
@@ -967,6 +990,7 @@ private slots:
     void _updateMissionItemIndex            ();
     void _updateHeadingToNextWP             ();
     void _updateDistanceToGCS               ();
+    void _updateHomepoint                   ();
     void _updateHobbsMeter                  ();
     void _vehicleParamLoaded                (bool ready);
     void _sendQGCTimeToVehicle              ();
@@ -1274,10 +1298,15 @@ private:
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
     bool _sendMavCommandShouldRetry(MAV_CMD command);
+    bool _commandCanBeDuplicated(MAV_CMD command);
 
     QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;
 
     float _altitudeTuningOffset = qQNaN(); // altitude offset, so the plotted value is around 0
+
+    // these flags are used to determine if the speed change action from fly view should be shown
+    bool _multirotor_speed_limits_available = false;
+    bool _fixed_wing_airspeed_limits_available = false;
 
     // FactGroup facts
 

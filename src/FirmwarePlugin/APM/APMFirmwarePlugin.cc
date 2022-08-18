@@ -471,11 +471,11 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         case MAV_TYPE_HELICOPTER:
             vehicle->setFirmwareVersion(3, 6, 0);
             break;
-        case MAV_TYPE_VTOL_DUOROTOR:
-        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
+        case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
         case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_RESERVED2:
-        case MAV_TYPE_VTOL_RESERVED3:
+        case MAV_TYPE_VTOL_FIXEDROTOR:
+        case MAV_TYPE_VTOL_TAILSITTER:
         case MAV_TYPE_VTOL_RESERVED4:
         case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
@@ -671,11 +671,11 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
         }
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
 
-    case MAV_TYPE_VTOL_DUOROTOR:
-    case MAV_TYPE_VTOL_QUADROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
     case MAV_TYPE_VTOL_TILTROTOR:
-    case MAV_TYPE_VTOL_RESERVED2:
-    case MAV_TYPE_VTOL_RESERVED3:
+    case MAV_TYPE_VTOL_FIXEDROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER:
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:

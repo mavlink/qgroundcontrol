@@ -175,7 +175,7 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
             if(id < _logEntriesModel.count()) {
                 QGCLogEntry* entry = _logEntriesModel[id];
                 entry->setSize(size);
-                entry->setTime(QDateTime::fromTime_t(time_utc));
+                entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
                 entry->setReceived(true);
                 entry->setStatus(tr("Available"));
             } else {

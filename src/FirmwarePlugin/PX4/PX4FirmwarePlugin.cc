@@ -11,7 +11,6 @@
 #include "PX4ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "PX4AutoPilotPlugin.h"
-#include "PX4AdvancedFlightModesController.h"
 #include "PX4SimpleFlightModesController.h"
 #include "AirframeComponentController.h"
 #include "SensorsComponentController.h"
@@ -53,7 +52,6 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     , _simpleFlightMode     (tr("Simple"))
     , _orbitFlightMode      (tr("Orbit"))
 {
-    qmlRegisterType<PX4AdvancedFlightModesController>   ("QGroundControl.Controllers", 1, 0, "PX4AdvancedFlightModesController");
     qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
     qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
     qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
@@ -274,6 +272,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_DO_SET_SERVO,
         MAV_CMD_DO_CHANGE_SPEED,
+        MAV_CMD_DO_SET_HOME,
         MAV_CMD_DO_LAND_START,
         MAV_CMD_DO_SET_ROI_LOCATION, MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET, MAV_CMD_DO_SET_ROI_NONE,
         MAV_CMD_DO_MOUNT_CONFIGURE,
@@ -410,6 +409,50 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
         static_cast<float>(takeoffAltAMSL));    // AMSL altitude
 }
 
+double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle)
+{
+    QString speedParam("MPC_XY_VEL_MAX");
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, speedParam)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, speedParam)->rawValue().toDouble();
+    }
+
+    return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
+}
+
+double PX4FirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
+{
+    QString airspeedMax("FW_AIRSPD_MAX");
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMax)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    }
+
+    return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
+}
+
+double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
+{
+    QString airspeedMin("FW_AIRSPD_MIN");
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMin)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    }
+
+    return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
+}
+
+bool PX4FirmwarePlugin::mulirotorSpeedLimitsAvailable(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "MPC_XY_VEL_MAX");
+}
+
+bool PX4FirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MIN") &&
+            vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "FW_AIRSPD_MAX");
+}
+
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
     if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
@@ -526,6 +569,34 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 }
 
+void PX4FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed)
+{
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_DO_CHANGE_SPEED,
+        true,                                   // show error is fails
+        1,                                     // 0: airspeed, 1: groundspeed
+        static_cast<float>(groundspeed),       // groundspeed setpoint
+        -1,                                   // throttle
+        0,                                    // 0: absolute speed, 1: relative to current
+        NAN, NAN,NAN);                        // param 5-7 unused
+}
+
+void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv)
+{
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_DO_CHANGE_SPEED,
+        true,                                   // show error is fails
+        0,                                     // 0: airspeed, 1: groundspeed
+        static_cast<float>(airspeed_equiv),       // groundspeed setpoint
+        -1,                                   // throttle
+        0,                                    // 0: absolute speed, 1: relative to current
+        NAN, NAN,NAN);                        // param 5-7 unused
+}
+
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
     if (_setFlightModeAndValidate(vehicle, missionFlightMode())) {
@@ -634,7 +705,7 @@ bool PX4FirmwarePlugin::supportsNegativeThrust(Vehicle* vehicle)
     return ((vehicle->vehicleType() == MAV_TYPE_GROUND_ROVER) || (vehicle->vehicleType() == MAV_TYPE_SUBMARINE));
 }
 
-QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle) 
+QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
 {
     static const char* HOOBS_HI = "LND_FLIGHT_T_HI";
     static const char* HOOBS_LO = "LND_FLIGHT_T_LO";
@@ -646,7 +717,7 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
         Fact* factLo = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, HOOBS_LO);
         hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
         qCDebug(VehicleLog) << "Hobbs Meter raw PX4:" << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
-    } 
+    }
 
     int hours   = hobbsTimeSeconds / 3600;
     int minutes = (hobbsTimeSeconds % 3600) / 60;
@@ -654,4 +725,4 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
     QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
     qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
     return timeStr;
-} 
+}

@@ -64,11 +64,11 @@ QUrl PX4FlightBehavior::setupSource() const
         case MAV_TYPE_TRICOPTER:
             qmlFile = "qrc:/qml/PX4FlightBehaviorCopter.qml";
             break;
-        case MAV_TYPE_VTOL_DUOROTOR:
-        case MAV_TYPE_VTOL_QUADROTOR:
+        case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
+        case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
         case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_RESERVED2:
-        case MAV_TYPE_VTOL_RESERVED3:
+        case MAV_TYPE_VTOL_FIXEDROTOR:
+        case MAV_TYPE_VTOL_TAILSITTER:
         case MAV_TYPE_VTOL_RESERVED4:
         case MAV_TYPE_VTOL_RESERVED5:
             qmlFile = "";

@@ -184,14 +184,6 @@ Item {
                     }
                 } // Column - Switch settings
             } // Row - Settings
-
-            QGCButton {
-                text: qsTr("Use Multi Channel Mode Selection")
-                onClicked: {
-                    controller.getParameterFact(-1, "RC_MAP_MODE_SW").value = 5
-                    controller.getParameterFact(-1, "RC_MAP_FLTMODE").value = 0
-                }
-            }
         }
     }
 }

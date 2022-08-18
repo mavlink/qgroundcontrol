@@ -258,7 +258,7 @@ Popup {
 
         QGCFlickable {
             id:                     mainFlickable
-            Layout.preferredWidth:  Math.min(marginItem.width, _maxContentWidth)
+            Layout.preferredWidth:  Math.min(Math.max(marginItem.width, mainColumnLayout.width), _maxContentWidth)
             Layout.preferredHeight: Math.min(marginItem.height, _maxContentHeight)
             contentWidth:           marginItem.width
             contentHeight:          marginItem.height

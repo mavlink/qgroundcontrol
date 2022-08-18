@@ -25,7 +25,7 @@ import QGroundControl.FactControls      1.0
 
 Rectangle {
     height:     mainLayout.height + (_margins * 2)
-    color:      "#80000000"
+    color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
     radius:     _margins
     visible:    (_mavlinkCamera || _videoStreamAvailable || _simpleCameraAvailable) && multiVehiclePanelSelector.showSingleVehiclePanel
 
@@ -286,7 +286,7 @@ Rectangle {
                 Layout.alignment:   Qt.AlignHCenter
                 text:               (_mavlinkCameraInVideoMode && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00"
                 font.pointSize:     ScreenTools.largeFontPointSize
-                visible:            _mavlinkCameraInVideoMode
+                visible:            _mavlinkCameraInVideoMode && _mavlinkCamera.capturesVideo
             }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter

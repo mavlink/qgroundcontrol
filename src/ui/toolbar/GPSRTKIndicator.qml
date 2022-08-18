@@ -23,7 +23,7 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property bool showIndicator: QGroundControl.gpsRtk.connected.value
+    property bool showIndicator: QGroundControl.gpsRtk ? QGroundControl.gpsRtk.connected.value : false
 
     Component {
         id: gpsInfo

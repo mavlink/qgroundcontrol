@@ -64,6 +64,8 @@ Vagrant.configure(2) do |config|
      apt-get install -y python3-pip
      su - vagrant -c "pip3 install --user aqtinstall"
 
+     apt-get install -y patchelf
+
      dir="%{qt_deps_unpack_dir}"
      version="5.15.2"
      host="linux"

@@ -50,8 +50,6 @@ add_library(AutoPilotPlugins
 	PX4/PowerComponentController.cc
 	PX4/PowerComponentController.h
 	PX4/PowerComponent.h
-	PX4/PX4AdvancedFlightModesController.cc
-	PX4/PX4AdvancedFlightModesController.h
 	PX4/PX4AirframeLoader.cc
 	PX4/PX4AirframeLoader.h
 	PX4/PX4AutoPilotPlugin.cc

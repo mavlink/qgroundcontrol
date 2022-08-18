@@ -66,6 +66,12 @@
     "units":            "m",
     "default":     1000,
     "min":              1
+},
+{
+    "name":             "updateHomePosition",
+    "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
+    "type":                 "bool",
+    "default":              false
 }
 ]
 }

@@ -47,40 +47,47 @@ find "${SEARCHDIR}" \
     -executable \
     2>/dev/null |
 while IFS='' read -r library; do
-    # Get the library's current RPATH (RUNPATH)
-    # Example output of `readelf -d ./build/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-Debug/staging/QGroundControl`:
-    #  0x000000000000001d (RUNPATH)            Library runpath: [$ORIGIN/Qt/libs:/home/kbennett/storage/Qt/5.15.2/gcc_64/lib]
-    #
-    # It's possible there's no current rpath for a particular library, so turn
-    # off pipefail to avoid grep causing it to die.
-    # If you find a better way to do this, please fix.
-    set +o pipefail
-    current_rpath="$(
-        # read the library, parsing its header
-        # search for the RUNPATH field
-        # filter out the human-readable text to leave only the RUNPATH value
-        readelf -d "${library}" |
-        grep -P '^ 0x[0-9a-f]+ +\(RUNPATH\) ' |
-        sed -r 's/^ 0x[0-9a-f]+ +\(RUNPATH\) +Library runpath: \[(.*)\]$/\1/g'
-    )"
-    set -o pipefail
 
-    # Get the directory containing the library
-    library_dir="$(dirname "${library}")"
+    # readelf is expensive, so keep track of updates with a timestamp file
+    if [ ! -e "$library.stamp" ] || [ "$library" -nt "$library.stamp" ]; then
 
-    # Get the relative path from the library's directory to the Qt/libs directory.
-    our_rpath="$(realpath --relative-to "${library_dir}" "${RPATHDIR}")"
+        # Get the library's current RPATH (RUNPATH)
+        # Example output of `readelf -d ./build/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-Debug/staging/QGroundControl`:
+        #  0x000000000000001d (RUNPATH)            Library runpath: [$ORIGIN/Qt/libs:/home/kbennett/storage/Qt/5.15.2/gcc_64/lib]
+        #
+        # It's possible there's no current rpath for a particular library, so turn
+        # off pipefail to avoid grep causing it to die.
+        # If you find a better way to do this, please fix.
+        set +o pipefail
+        current_rpath="$(
+            # read the library, parsing its header
+            # search for the RUNPATH field
+            # filter out the human-readable text to leave only the RUNPATH value
+            readelf -d "${library}" |
+            grep -P '^ 0x[0-9a-f]+ +\(RUNPATH\) ' |
+            sed -r 's/^ 0x[0-9a-f]+ +\(RUNPATH\) +Library runpath: \[(.*)\]$/\1/g'
+        )"
+        set -o pipefail
 
-    # Calculate a new rpath with our library's rpath prefixed.
-    # Note: '$ORIGIN' must not be expanded by the shell!
-    # shellcheck disable=SC2016
-    new_rpath='$ORIGIN/'"${our_rpath}"
+        # Get the directory containing the library
+        library_dir="$(dirname "${library}")"
 
-    # If the library already had an rpath, then prefix ours to it.
-    if [ -n "${current_rpath}" ]; then
-        new_rpath="${new_rpath}:${current_rpath}"
+        # Get the relative path from the library's directory to the Qt/libs directory.
+        our_rpath="$(realpath --relative-to "${library_dir}" "${RPATHDIR}")"
+
+        # Calculate a new rpath with our library's rpath prefixed.
+        # Note: '$ORIGIN' must not be expanded by the shell!
+        # shellcheck disable=SC2016
+        new_rpath='$ORIGIN/'"${our_rpath}"
+
+        # If the library already had an rpath, then prefix ours to it.
+        if [ -n "${current_rpath}" ]; then
+            new_rpath="${new_rpath}:${current_rpath}"
+        fi
+
+        # patch the library's rpath
+        patchelf --set-rpath "${new_rpath}" "${library}"
+
+        touch "$library.stamp"
     fi
-
-    # patch the library's rpath
-    patchelf --set-rpath "${new_rpath}" "${library}"
 done

@@ -105,7 +105,7 @@ Rectangle {
         GuidedActionConfirm {
             Layout.fillWidth:   true
             guidedController:   _guidedController
-            altitudeSlider:     _guidedAltSlider
+            guidedValueSlider:     _guidedValueSlider
         }
     }
 }

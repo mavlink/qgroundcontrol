@@ -266,13 +266,13 @@ Item {
         QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        _circleMode
-            onTriggered:    mainWindow.showComponentDialog(editCenterPositionDialog, qsTr("Edit Center Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    editCenterPositionDialog.createObject(mainWindow).open()
         }
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        !_circleMode && menu._editingVertexIndex >= 0
-            onTriggered:    mainWindow.showComponentDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    editVertexPositionDialog.createObject(mainWindow).open()
         }
     }
 
@@ -458,6 +458,7 @@ Item {
         id: editCenterPositionDialog
 
         EditPositionDialog {
+            title:      qsTr("Edit Center Position")
             coordinate: mapPolygon.center
             onCoordinateChanged: {
                 // Prevent spamming signals on vertex changes by setting centerDrag = true when changing center position.
@@ -473,7 +474,8 @@ Item {
         id: editVertexPositionDialog
 
         EditPositionDialog {
-            coordinate:             mapPolygon.vertexCoordinate(menu._editingVertexIndex)
+            title:      qsTr("Edit Vertex Position")
+            coordinate: mapPolygon.vertexCoordinate(menu._editingVertexIndex)
             onCoordinateChanged: {
                 mapPolygon.adjustVertex(menu._editingVertexIndex, coordinate)
                 mapPolygon.verifyClockwiseWinding()

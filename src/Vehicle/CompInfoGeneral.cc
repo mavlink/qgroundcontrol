@@ -82,14 +82,12 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
         uris.crcMetaDataFallback = typeValue["fileCrcFallback"].toVariant().toLongLong();
         uris.crcMetaDataFallbackValid = typeValue.toObject().contains("fileCrcFallback");
         uris.uriTranslation = typeValue["translationUri"].toString();
-        uris.crcTranslation = typeValue["translationFileCrc"].toVariant().toLongLong();
-        uris.crcTranslationValid = typeValue.toObject().contains("translationFileCrc");
         uris.uriTranslationFallback = typeValue["translationUriFallback"].toString();
-        uris.crcTranslationFallback = typeValue["translationFileCrcFallback"].toVariant().toLongLong();
-        uris.crcTranslationFallbackValid = typeValue.toObject().contains("translationFileCrcFallback");
 
         if (uris.uriMetaData.isEmpty() || !uris.crcMetaDataValid) {
-            qCWarning(CompInfoGeneralLog) << "Metadata missing required fields: type:uri:crcValid" << type <<
+            // The CRC is optional for dynamically updated metadata, and once we want to support that this logic needs
+            // to be updated.
+            qCDebug(CompInfoGeneralLog) << "Metadata missing fields: type:uri:crcValid" << type <<
                     uris.uriMetaData << uris.crcMetaDataValid;
             continue;
         }

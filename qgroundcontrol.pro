@@ -45,7 +45,10 @@ MacBuild {
 }
 
 LinuxBuild {
-    CONFIG  += qesp_linux_udev
+    CONFIG += qesp_linux_udev
+    system("$$QMAKE_LINK -fuse-ld=gold -Wl,--version &>/dev/null") {
+        CONFIG += use_gold_linker
+    }
 }
 
 WindowsBuild {
@@ -785,6 +788,10 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
+contains(DEFINES, NO_SERIAL_LINK) {
+    CONFIG += NoSerialBuild
+}
+
 !NoSerialBuild {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
@@ -1194,7 +1201,6 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/AirframeComponentController.h \
         src/AutoPilotPlugins/PX4/CameraComponent.h \
         src/AutoPilotPlugins/PX4/FlightModesComponent.h \
-        src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.h \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
         src/AutoPilotPlugins/PX4/PX4FlightBehavior.h \
@@ -1216,7 +1222,6 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
         src/AutoPilotPlugins/PX4/CameraComponent.cc \
         src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
-        src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
         src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc \

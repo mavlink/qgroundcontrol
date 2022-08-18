@@ -71,8 +71,8 @@ Rectangle {
         id: editPositionDialog
 
         EditPositionDialog {
-            coordinate: missionItem.isSurveyItem ?  missionItem.centerCoordinate : missionItem.coordinate
-            onCoordinateChanged: missionItem.isSurveyItem ?  missionItem.centerCoordinate = coordinate : missionItem.coordinate = coordinate
+            coordinate:             missionItem.isSurveyItem ?  missionItem.centerCoordinate : missionItem.coordinate
+            onCoordinateChanged:    missionItem.isSurveyItem ?  missionItem.centerCoordinate = coordinate : missionItem.coordinate = coordinate
         }
     }
 
@@ -152,7 +152,7 @@ Rectangle {
 
             QGCMouseArea {
                 fillItem:   parent
-                onClicked:  mainWindow.showComponentDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+                onClicked:  commandDialog.createObject(mainWindow).open()
             }
 
             Component {
@@ -220,7 +220,7 @@ Rectangle {
                 QGCMenuItem {
                     text:           qsTr("Edit position...")
                     visible:        missionItem.specifiesCoordinate
-                    onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                    onTriggered:    editPositionDialog.createObject(mainWindow).open()
                 }
 
                 QGCMenuSeparator {

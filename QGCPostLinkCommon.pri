@@ -130,9 +130,9 @@ LinuxBuild {
             libicui18n.so \
             libicuuc.so
     }
-
+    # Copy only if non-existing to avoid file timestamp updates
     for(QT_LIB, QT_LIB_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
+        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
     }
 
     # QT_INSTALL_PLUGINS
@@ -152,11 +152,11 @@ LinuxBuild {
     }
 
     for(QT_PLUGIN, QT_PLUGIN_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
+        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
     }
 
     # QT_INSTALL_QML
-    QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
+    QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
 
     # Airmap
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
