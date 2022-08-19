@@ -248,11 +248,14 @@ int main(int argc, char *argv[])
     RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
         // QApplication is necessary to use QMessageBox
-        QApplication errorApp(argc, argv);
-        QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APPLICATION_NAME)
+        QApplication askApp(argc, argv);
+        auto answer = QMessageBox::question(nullptr, QObject::tr("Warning"),
+            QObject::tr("A second instance of %1 is already running. Are you sure that you want to proceed without closing the second instance ?").arg(QGC_APPLICATION_NAME),
+            QMessageBox::Cancel|QMessageBox::Yes, QMessageBox::Cancel
         );
-        return -1;
+        if(answer == QMessageBox::Cancel) {
+            return -1;
+        }
     }
 #endif
 
