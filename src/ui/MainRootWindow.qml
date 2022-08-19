@@ -19,6 +19,8 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -132,16 +134,16 @@ ApplicationWindow {
     }
 
     function showFlyView() {
-        if (!flightView.visible) {
-            mainWindow.showPreFlightChecklistIfNeeded()
-        }
-        viewSwitch(toolbar.flyViewToolbar)
-        flightView.visible = true
+        // if (!flightView.visible) {
+        //     mainWindow.showPreFlightChecklistIfNeeded()
+        // }
+        // viewSwitch(toolbar.flyViewToolbar)
+        flightView.visible = false
     }
 
     function showPlanView() {
-        viewSwitch(toolbar.planViewToolbar)
-        planView.visible = true
+        // viewSwitch(toolbar.planViewToolbar)
+        planView.visible = false
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
@@ -254,6 +256,30 @@ ApplicationWindow {
     background: Item {
         id:             rootBackground
         anchors.fill:   parent
+    }
+
+    Item {
+        id:                 envgo_plot_wrap
+        width:              parent.width
+        anchors.left:       parent.left
+        height:             480
+        z:                  99
+        y:                  mainWindow.height * 0.09 - 10
+
+        property bool _autotuningEnabled: true // used to restore setting when switching between tabs
+
+        Loader {
+            id:                loader2
+            source:            "EnvgoPlotWrapper.qml"
+            active:             QGroundControl.multiVehicleManager.activeVehicle
+            width:             parent.width
+            anchors.fill:       parent
+            onLoaded: {
+                if (typeof loader2.item.autotuningEnabled !== "undefined") {
+                    loader2.item.autotuningEnabled = _autotuningEnabled;
+                }
+            }
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -503,6 +529,8 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Critical Vehicle Message Popup
 
+// Commented out because it shows duplicate message as our message log
+/*
     property var    _vehicleMessageQueue:      []
     property string _vehicleMessage:     ""
 
@@ -619,6 +647,7 @@ ApplicationWindow {
             }
         }
     }
+*/
 
     //-------------------------------------------------------------------------
     //-- Indicator Popups
@@ -664,6 +693,50 @@ ApplicationWindow {
         onClosed: {
             loader.sourceComponent = null
             indicatorPopup.currentIndicator = null
+        }
+    }
+
+    function msgShowIndicatorPopup(item, dropItem) {
+        msgIndicatorPopup.currentIndicator = dropItem
+        msgIndicatorPopup.currentItem = item
+        msgIndicatorPopup.open()
+    }
+
+    function msgHideIndicatorPopup() {
+        msgIndicatorPopup.close()
+        msgIndicatorPopup.currentItem = null
+        msgIndicatorPopup.currentIndicator = null
+    }
+
+    Popup {
+        id:             msgIndicatorPopup
+        padding:        ScreenTools.defaultFontPixelWidth * 0.75
+        modal:          false
+        focus:          false
+        closePolicy:    Popup.NoAutoClose	
+        property var    currentItem:        null
+        property var    currentIndicator:   null
+        background: Rectangle {
+            width:  msgLoader.width
+            height: msgLoader.height
+            color:  Qt.rgba(0,0,0,0)
+        }
+        Loader {
+            id:             msgLoader
+            onLoaded: {
+                var centerX = mainWindow.contentItem.mapFromItem(msgIndicatorPopup.currentItem, 0, 0).x - (msgLoader.width * 0.5)
+                if((centerX + msgIndicatorPopup.width) > (mainWindow.width - ScreenTools.defaultFontPixelWidth)) {
+                    centerX = mainWindow.width - msgIndicatorPopup.width - ScreenTools.defaultFontPixelWidth
+                }
+                msgIndicatorPopup.x = centerX
+            }
+        }
+        onOpened: {
+            msgLoader.sourceComponent = msgIndicatorPopup.currentIndicator
+        }
+        onClosed: {
+            msgLoader.sourceComponent = null
+            msgIndicatorPopup.currentIndicator = null
         }
     }
 }

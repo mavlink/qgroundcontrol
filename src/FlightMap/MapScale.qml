@@ -152,6 +152,7 @@ Item {
         anchors.right:      rightEnd.right
         horizontalAlignment:Text.AlignRight
         text:               "0 m"
+        visible:            false
     }
 
     Rectangle {
@@ -164,6 +165,7 @@ Item {
         width:              2
         height:             ScreenTools.defaultFontPixelHeight
         color:              _color
+        visible:            false
     }
 
     Rectangle {
@@ -173,6 +175,7 @@ Item {
         anchors.left:       leftEnd.right
         height:             2
         color:              _color
+        visible:            false
     }
 
     Rectangle {
@@ -182,6 +185,7 @@ Item {
         width:              2
         height:             ScreenTools.defaultFontPixelHeight
         color:              _color
+        visible:            false
     }
 
     QGCButton {
@@ -206,7 +210,7 @@ Item {
         text:               qsTr("+")
         width:              height
         opacity:            0.75
-        visible:            _zoomButtonsVisible
+        visible:            false
         onClicked:          mapControl.zoomLevel += 0.5
     }
 
@@ -219,7 +223,7 @@ Item {
         text:               qsTr("-")
         width:              height
         opacity:            0.75
-        visible:            _zoomButtonsVisible
+        visible:            false
         onClicked:          mapControl.zoomLevel -= 0.5
     }
 

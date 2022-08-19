@@ -80,7 +80,7 @@ Item {
         anchors.bottom:         parent.bottom
         anchors.left:           parent.left
         anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
-        z:                      _fullItemZorder + 1
+        z:                      _fullItemZorder + 9999
         parentToolInsets:       _toolInsets
         mapControl:             _mapControl
         visible:                !QGroundControl.videoManager.fullScreen

@@ -56,6 +56,8 @@ add_library(Vehicle
 	StateMachine.h
 	SysStatusSensorInfo.cc
 	SysStatusSensorInfo.h
+	EnvgoFactGroup.cc
+	EnvgoFactGroup.h
 	TerrainFactGroup.cc
 	TerrainFactGroup.h
 	TerrainProtocolHandler.cc

@@ -27,48 +27,40 @@ Rectangle {
 
     DeadMouseArea { anchors.fill: parent }
 
-    ColumnLayout {
-        id:                 telemetryLayout
-        anchors.margins:    _toolsMargin
-        anchors.bottom:     parent.bottom
-        anchors.left:       parent.left
+    RowLayout {
 
-         RowLayout {
-            visible: mouseArea.containsMouse || valueArea.settingsUnlocked
+        ColumnLayout {
+            id:                 telemetryLayout
+            anchors.bottom:     parent.bottom
+            anchors.left:       parent.left
 
-            QGCColoredImage {
-                source:             "/res/layout-bottom.svg"
-                mipmap:             true
-                width:              ScreenTools.minTouchPixels * 0.75
-                height:             width
-                sourceSize.width:   width
-                color:              qgcPal.text
-                fillMode:           Image.PreserveAspectFit
-                visible:            !bottomMode
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  bottomMode = true
-                }
+            QGCMouseArea {
+                id:                         mouseArea
+                x:                          telemetryLayout.x
+                y:                          telemetryLayout.y
+                width:                      telemetryLayout.width
+                height:                     telemetryLayout.height
+                hoverEnabled:               true
+                propagateComposedEvents:    true
             }
 
-            QGCColoredImage {
-                source:             "/res/layout-right.svg"
-                mipmap:             true
-                width:              ScreenTools.minTouchPixels * 0.75
-                height:             width
-                sourceSize.width:   width
-                color:              qgcPal.text
-                fillMode:           Image.PreserveAspectFit
-                visible:            bottomMode
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  bottomMode = false
-                }
+            HorizontalFactValueGrid {
+                id:                     valueArea
+                userSettingsGroup:      telemetryBarUserSettingsGroup
+                defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
             }
 
-            QGCColoredImage {
+            GuidedActionConfirm {
+                Layout.fillWidth:   true
+                guidedController:   _guidedController
+                guidedValueSlider:     _guidedValueSlider
+            }
+        }
+
+        QGCColoredImage {
+                id:                 _telemetry_value_bar_id
+                anchors.bottom:     parent.bottom
+                z:                  999
                 source:             valueArea.settingsUnlocked ? "/res/LockOpen.svg" : "/res/pencil.svg"
                 mipmap:             true
                 width:              ScreenTools.minTouchPixels * 0.75
@@ -83,29 +75,6 @@ Rectangle {
                     cursorShape:  Qt.PointingHandCursor
                     onClicked:    valueArea.settingsUnlocked = !valueArea.settingsUnlocked
                 }
-            }
-        }
-
-        QGCMouseArea {
-            id:                         mouseArea
-            x:                          telemetryLayout.x
-            y:                          telemetryLayout.y
-            width:                      telemetryLayout.width
-            height:                     telemetryLayout.height
-            hoverEnabled:               true
-            propagateComposedEvents:    true
-        }
-
-        HorizontalFactValueGrid {
-            id:                     valueArea
-            userSettingsGroup:      telemetryBarUserSettingsGroup
-            defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
-        }
-
-        GuidedActionConfirm {
-            Layout.fillWidth:   true
-            guidedController:   _guidedController
-            guidedValueSlider:     _guidedValueSlider
         }
     }
 }

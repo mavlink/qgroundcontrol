@@ -23,8 +23,9 @@ import QGroundControl.Palette               1.0
 Item {
     id:             _root
     width:          height
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
+    // anchors.top:    parent.top
+    // anchors.bottom: parent.bottom
+    visible:           false
 
     property bool showIndicator: true
 
@@ -49,6 +50,7 @@ Item {
         return qgcPal.colorGrey
     }
 
+/*
     Image {
         id:                 criticalMessageIcon
         anchors.fill:       parent
@@ -70,23 +72,29 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showIndicatorPopup(_root, vehicleMessagesPopup)
+        onClicked:      mainWindow.msgShowIndicatorPopup(_root, vehicleMessagesPopup)
+    }
+*/
+
+    Component.onCompleted: {
+        mainWindow.msgShowIndicatorPopup(_root, vehicleMessagesPopup)
     }
 
     Component {
         id: vehicleMessagesPopup
 
         Rectangle {
-            width:          mainWindow.width  * 0.666
-            height:         mainWindow.height * 0.666
+            width:          mainWindow.width  * 0.99
+            height:         mainWindow.height * 0.15
             radius:         ScreenTools.defaultFontPixelHeight / 2
             color:          qgcPal.window
             border.color:   qgcPal.text
+            visible:        true
 
             function formatMessage(message) {
-                message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-                message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-                message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+                message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0)) + "pt monospace;");
+                message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0)) + "pt monospace;");
+                message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0)) + "pt monospace;");
                 return message;
             }
 
@@ -132,7 +140,7 @@ Item {
                     onClicked: {
                         if (_activeVehicle) {
                             _activeVehicle.clearMessages()
-                            mainWindow.hideIndicatorPopup()
+                            // mainWindow.msgHideIndicatorPopup()
                         }
                     }
                 }

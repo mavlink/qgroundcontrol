@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EnvgoPlot</class>
+ <widget class="QWidget" name="EnvgoPlot">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>EnvgoPlot</string>
+  </property>
+  <widget class="QCustomPlot" name="plot" native="true">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>40</y>
+     <width>430</width>
+     <height>380</height>
+    </rect>
+   </property>
+   <property name="autoFillBackground">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>445</y>
+     <width>320</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Average speed</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Distance Travelled</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Remaining battery</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Height Above Water</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Temperature</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Motor temperature</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Motor controller temperature</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Battery temperature</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Servo temperature</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QPushButton" name="btn_plot">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>445</y>
+     <width>90</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Plot</string>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

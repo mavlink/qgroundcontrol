@@ -30,6 +30,7 @@ Rectangle {
         anchors.fill: parent
     }
 
+    /*
     QGCAttitudeWidget {
         id:                         attitude
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -38,12 +39,13 @@ Rectangle {
         size:                       _innerRadius * 2
         vehicle:                    globals.activeVehicle
     }
+    */
 
     QGCCompassWidget {
         id:                         compass
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.topMargin:          _outerMargin * 2
-        anchors.top:                attitude.bottom
+        anchors.top:                parent.top
         size:                       _innerRadius * 2
         vehicle:                    globals.activeVehicle
     }

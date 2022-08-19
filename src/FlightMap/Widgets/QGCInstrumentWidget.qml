@@ -29,32 +29,15 @@ ColumnLayout {
 
     QGCPalette { id: qgcPal }
 
-    Rectangle {
-        id:                 visualInstrument
-        height:             _outerRadius * 2
-        Layout.fillWidth:   true
-        radius:             _outerRadius
-        color:              qgcPal.window
-
-        DeadMouseArea { anchors.fill: parent }
-
-        QGCAttitudeWidget {
-            id:                     attitude
-            anchors.leftMargin:     _topBottomMargin
-            anchors.left:           parent.left
-            size:                   _innerRadius * 2
-            vehicle:                globals.activeVehicle
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        QGCCompassWidget {
+    QGCCompassWidget {
             id:                     compass
-            anchors.leftMargin:     _spacing
-            anchors.left:           attitude.right
-            size:                   _innerRadius * 2
+            anchors.rightMargin:     _topBottomMargin
+            anchors.right:           parent.right
+
+            size:                   _innerRadius *1.35
             vehicle:                globals.activeVehicle
             anchors.verticalCenter: parent.verticalCenter
-        }
+            
     }
 
     TerrainProgress {

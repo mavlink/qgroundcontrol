@@ -29,6 +29,16 @@
         <file alias="SensorsSetup.qml">../../AutoPilotPlugins/PX4/SensorsSetup.qml</file>
         <file alias="QGroundControl/PX4/qmldir">../../QmlControls/QGroundControl/PX4/qmldir</file>
         <file alias="QGroundControl/PX4/BatteryParams.qml">../../AutoPilotPlugins/PX4/BatteryParams.qml</file>
+        <file alias="AvgSpeed.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/AvgSpeed.qml</file>
+        <file alias="BatteryTemperature.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/BatteryTemperature.qml</file>
+        <file alias="DistanceTraveled.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/DistanceTraveled.qml</file>
+        <file alias="EnvgoPlotWrapper.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/EnvgoPlotWrapper.qml</file>
+        <file alias="HeightAboveWater.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/HeightAboveWater.qml</file>
+        <file alias="MotorControllerTemperature.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/MotorControllerTemperature.qml</file>
+        <file alias="MotorTemperature.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/MotorTemperature.qml</file>
+        <file alias="RemainingBattery.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/RemainingBattery.qml</file>
+        <file alias="ServoTemperature.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/ServoTemperature.qml</file>
+        <file alias="Temperature.qml">../../AutoPilotPlugins/PX4/EnvgoPlot/Temperature.qml</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="PX4-MavCmdInfoCommon.json">PX4-MavCmdInfoCommon.json</file>

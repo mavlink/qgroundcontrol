@@ -85,7 +85,7 @@
     "shortDesc": "Flight Distance",
     "type":             "double",
     "decimalPlaces":    1,
-    "units":            "m"
+    "units":            "km"
 },
 {
     "name":             "distanceToHome",

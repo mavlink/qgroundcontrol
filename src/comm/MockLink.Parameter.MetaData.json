@@ -573,7 +573,7 @@
     {
       "name": "BAT1_N_CELLS",
       "type": "Int32",
-      "default": 0,
+      "default": 36,
       "group": "Battery Calibration",
       "shortDesc": "Number of cells for battery 1",
       "longDesc": "Defines the number of cells the attached battery consists of.",
@@ -638,6 +638,10 @@
         {
           "value": 16,
           "description": "16S Battery"
+        },
+        {
+          "value": 36,
+          "description": "36S Battery"
         }
       ]
     },
@@ -951,7 +955,7 @@
     {
       "name": "BAT_N_CELLS",
       "type": "Int32",
-      "default": 0,
+      "default": 36,
       "group": "Battery Calibration",
       "shortDesc": "This parameter is deprecated. Please use BAT1_N_CELLS instead",
       "longDesc": "Defines the number of cells the attached battery consists of.",
@@ -1021,6 +1025,10 @@
         {
           "value": 16,
           "description": "16S Battery"
+        },
+        {
+          "value": 36,
+          "description": "36S Battery"
         }
       ]
     },

@@ -1,0 +1,141 @@
+{
+    "version":  1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+// Temperature
+{
+    "name":             "curTemperature",
+    "shortDesc":        "Temperature",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "C",
+    "default":          0
+},
+{
+    "name":             "motorTemperature",
+    "shortDesc":        "Motor Temperature",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "C",
+    "default":          0
+},
+{
+    "name":             "motorCtrlTemperature",
+    "shortDesc":        "Motor Controller Temperature",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "C",
+    "default":          0
+},
+{
+    "name":             "batteryTemperature",
+    "shortDesc":        "Battery Temperature",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "C",
+    "default":          0
+},
+{
+    "name":             "servoTemperature",
+    "shortDesc":        "Servo Temperature",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "C",
+    "default":          0
+},
+
+
+// Speed
+{
+    "name":             "simultaneousSpeed",
+    "shortDesc":        "Simultaneous Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "km/h",
+    "default":          0
+},
+{
+    "name":             "averageSpeed",
+    "shortDesc":        "Average Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "km/h",
+    "default":          0
+},
+
+
+// Direction
+{
+    "name":             "travelDirection",
+    "shortDesc":        "Direction",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg",
+    "default":          0
+},
+
+
+// Distance travelled
+{
+    "name":             "distanceTravelled",
+    "shortDesc":        "Distance Travelled",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "km",
+    "default":          0
+},
+
+
+// Remaining battery
+{
+    "name":             "remainBattery",
+    "shortDesc":        "Remaining Battery",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "%",
+    "default":          0
+},
+
+
+// Travel time
+{
+    "name":             "timeTravelled",
+    "shortDesc":        "Time Travelled",
+    "type":             "string",
+    "units":            "hh:mm:ss",
+    "default":          null
+},
+
+
+// Height above water
+{
+    "name":             "heightAboveWater",
+    "shortDesc":        "Height Above Water",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "m",
+    "default":          0
+},
+
+
+// Flight mode
+{
+    "name":             "flightMode",
+    "shortDesc":        "Flight Mode",
+    "type":             "string",
+    "units":            "",
+    "default":          null
+},
+
+
+// Gear
+{
+    "name":             "gear",
+    "shortDesc":        "Gear Mode",
+    "type":             "string",
+    "units":            "",
+    "default":          null
+},
+]
+}

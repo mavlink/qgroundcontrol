@@ -110,6 +110,7 @@ const char* Vehicle::_escStatusFactGroupName =          "escStatus";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
 const char* Vehicle::_terrainFactGroupName =            "terrain";
 const char* Vehicle::_hygrometerFactGroupName =         "hygrometer";
+// const char* Vehicle::_envgoFactGroupName =              "envgo";
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -170,6 +171,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _estimatorStatusFactGroup     (this)
     , _hygrometerFactGroup          (this)
     , _terrainFactGroup             (this)
+    // , _envgoFactGroup               (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
     _linkManager = _toolbox->linkManager();
@@ -318,6 +320,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _distanceSensorFactGroup          (this)
     , _localPositionFactGroup           (this)
     , _localPositionSetpointFactGroup   (this)
+    // , _envgoFactGroup                   (this)
 {
     _linkManager = _toolbox->linkManager();
 
@@ -450,6 +453,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
+    // _addFactGroup(&_envgoFactGroup,             _envgoFactGroupName);
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
@@ -3996,7 +4000,7 @@ void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
 
 void Vehicle::updateFlightDistance(double distance)
 {
-    _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
+    _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance/1000);
 }
 
 void Vehicle::sendParamMapRC(const QString& paramName, double scale, double centerValue, int tuningID, double minValue, double maxValue)

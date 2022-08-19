@@ -15,7 +15,7 @@ import QtQuick.Layouts          1.12
 import QtLocation               5.3
 import QtPositioning            5.3
 import QtQuick.Window           2.2
-import QtQml.Models             2.1
+import QtQml.Models             2.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -29,6 +29,7 @@ import QGroundControl.FlightMap     1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
+import QGroundControl.FactControls  1.0
 
 // This is the ui overlay layer for the widgets/tools for Fly View
 Item {
@@ -51,8 +52,8 @@ Item {
 
     QGCToolInsets {
         id:                     _totalToolInsets
-        leftEdgeTopInset:       toolStrip.leftInset
-        leftEdgeCenterInset:    toolStrip.leftInset
+        // leftEdgeTopInset:       toolStrip.leftInset
+        // leftEdgeCenterInset:    toolStrip.leftInset
         leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
         rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
         rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
@@ -109,7 +110,7 @@ Item {
     FlyViewInstrumentPanel {
         id:                         instrumentPanel
         anchors.margins:            _toolsMargin
-        anchors.top:                multiVehiclePanelSelector.visible ? multiVehiclePanelSelector.bottom : parent.top
+        anchors.bottom:             parent.bottom
         anchors.right:              parent.right
         width:                      _rightPanelWidth
         spacing:                    _toolsMargin
@@ -150,7 +151,9 @@ Item {
     TelemetryValuesBar {
         id:                 telemetryPanel
         x:                  recalcXPosition()
-        anchors.margins:    _toolsMargin
+        anchors.bottom:     parent.bottom
+        anchors.left:       parent.left
+        anchors.right:      parent.right
 
         // States for custom layout support
         states: [
@@ -159,10 +162,11 @@ Item {
                 when: telemetryPanel.bottomMode
 
                 AnchorChanges {
-                    target: telemetryPanel
-                    anchors.top: undefined
-                    anchors.bottom: parent.bottom
-                    anchors.right: undefined
+                    target:                 telemetryPanel
+                    anchors.top:            undefined
+                    anchors.bottom:         parent.bottom
+                    anchors.left:           parent.left
+                    anchors.right:          parent.right
                     anchors.verticalCenter: undefined
                 }
 
@@ -190,10 +194,11 @@ Item {
                 when: !telemetryPanel.bottomMode && !photoVideoControl.visible
 
                 AnchorChanges {
-                    target: telemetryPanel
-                    anchors.top: undefined
-                    anchors.bottom: undefined
-                    anchors.right: parent.right
+                    target:                 telemetryPanel
+                    anchors.top:            undefined
+                    anchors.bottom:         undefined
+                    anchors.left:           parent.left
+                    anchors.right:          parent.right
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -233,6 +238,7 @@ Item {
         property bool _virtualJoystickEnabled: QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue
     }
 
+    /*
     FlyViewToolStrip {
         id:                     toolStrip
         anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
@@ -247,6 +253,7 @@ Item {
 
         property real leftInset: x + width
     }
+    */
 
     FlyViewAirspaceIndicator {
         anchors.top:                parent.top

@@ -16,14 +16,15 @@ import QGroundControl.FlightDisplay 1.0
 ToolStrip {
     id:     _root
     title:  qsTr("Fly")
+    visible: false
 
-    signal displayPreFlightChecklist
+    // signal displayPreFlightChecklist
 
-    FlyViewToolStripActionList {
-        id: flyViewToolStripActionList
+    // FlyViewToolStripActionList {
+    //     id: flyViewToolStripActionList
 
-        onDisplayPreFlightChecklist: _root.displayPreFlightChecklist()
-    }
+    //     onDisplayPreFlightChecklist: _root.displayPreFlightChecklist()
+    // }
 
-    model: flyViewToolStripActionList.model
+    // model: flyViewToolStripActionList.model
 }

@@ -8,14 +8,14 @@
 # - ant
 #----------------------------------------------------------
 # Update with correct location for these
-export ANDROID_HOME=~/Library/Android/sdk
-export ANDROID_SDK_ROOT=~/Library/Android/sdk
-export ANDROID_NDK_ROOT=~/Library/Android/sdk/ndk-bundle
-export ANDROID_NDK_HOST=darwin-x86_64
-export ANDROID_NDK_PLATFORM=/android-9
-export ANDROID_NDK_TOOLCHAIN_PREFIX=arm-linux-androideabi
+export ANDROID_HOME=C:\Users\yoony\AppData\Local\Android\Sdk
+export ANDROID_SDK_ROOT=C:\Users\yoony\AppData\Local\Android\Sdk
+export ANDROID_NDK_ROOT=C:\android-ndk-r20b
+export ANDROID_NDK_HOST=windows-x86_64
+export ANDROID_NDK_PLATFORM=C:\android-ndk-r20b\platforms\android-29
+export ANDROID_NDK_TOOLCHAIN_PREFIX=aarch64-linux-android
 export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
-export ANDROID_NDK_TOOLS_PREFIX=arm-linux-androideabi
+export ANDROID_NDK_TOOLS_PREFIX=aarch64-linux-android
 #----------------------------------------------------------
 # To build it, run (replacing the path with where you have Qt installed)
 #
