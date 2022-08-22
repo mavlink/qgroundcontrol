@@ -822,7 +822,7 @@ Rectangle {
                                     visible:                nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
                                     id:                     nmeaBaudCombo
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    model:                  [4800, 9600, 19200, 38400, 57600, 115200]
+                                    model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 
                                     onActivated: {
                                         if (index != -1) {
