@@ -170,7 +170,7 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         _currentSource = _nmeaSource;
         break;
     case QGCPositionManager::InternalGPS:
-    default:        
+    default:
         _currentSource = _defaultSource;
         break;
     }
