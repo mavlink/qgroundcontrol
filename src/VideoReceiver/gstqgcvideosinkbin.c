@@ -65,7 +65,7 @@ enum {
 
 static GstBinClass *parent_class;
 
-static void _vsb_init(GstQgcVideoSinkBin *vsb);
+static void _vsb_init(GTypeInstance *instanceData, void *vsbVoid);
 static void _vsb_dispose(GObject *object);
 static void _vsb_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
 static void _vsb_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
@@ -112,8 +112,13 @@ _vsb_sink_pad_query(GstPad* pad, GstObject* parent, GstQuery* query)
 }
 
 static void
-_vsb_init(GstQgcVideoSinkBin *vsb)
+_vsb_init(GTypeInstance *instanceData, void *vsbVoid)
 {
+    Q_UNUSED(instanceData);
+
+    GstQgcVideoSinkBin *vsb;
+    vsb = (GstQgcVideoSinkBin *)vsbVoid;
+
     gboolean initialized        = FALSE;
     GstElement* glcolorconvert  = NULL;
     GstPad* pad                 = NULL;
@@ -317,7 +322,7 @@ _vsb_get_type(void)
             NULL,
             sizeof(GstQgcVideoSinkBin),
             0,
-            (GInstanceInitFunc)(void *)_vsb_init,
+            (GInstanceInitFunc)_vsb_init,
             NULL};
 
         _vsb_type = g_type_register_static(GST_TYPE_BIN, "GstQgcVideoSinkBin", &_vsb_info, (GTypeFlags)0);
