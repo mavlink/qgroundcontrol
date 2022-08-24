@@ -33,6 +33,7 @@ JoystickThumbPad                        1.0 JoystickThumbPad.qml
 KMLOrSHPFileDialog                      1.0 KMLOrSHPFileDialog.qml
 LogReplayStatusBar                      1.0 LogReplayStatusBar.qml
 MainStatusIndicator                     1.0 MainStatusIndicator.qml
+FlightModeMenuIndicator                 1.0 FlightModeMenuIndicator.qml
 MainToolBar                             1.0 MainToolBar.qml
 MainWindowSavedState                    1.0 MainWindowSavedState.qml
 MAVLinkMessageButton                    1.0 MAVLinkMessageButton.qml

@@ -350,6 +350,15 @@ SetupPage {
                 }
 
                 ListElement {
+                    text:       qsTr("Navigator w/ Blue Robotics Power Sense Module")
+                    voltPin:    5
+                    currPin:    4
+                    voltMult:   11.000
+                    ampPerVolt: 37.8788
+                    ampOffset:  0.330
+                }
+
+                ListElement {
                     text:       qsTr("Other")
                 }
             }

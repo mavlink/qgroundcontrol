@@ -101,6 +101,8 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
     }
     _nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
     _nmeaSource->setDevice(device);
+    // set equivalent range error to enable position accuracy reporting
+    _nmeaSource->setUserEquivalentRangeError(5.1);
     setPositionSource(QGCPositionManager::NmeaGPS);
 }
 
@@ -168,7 +170,7 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         _currentSource = _nmeaSource;
         break;
     case QGCPositionManager::InternalGPS:
-    default:        
+    default:
         _currentSource = _defaultSource;
         break;
     }

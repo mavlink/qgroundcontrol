@@ -220,9 +220,9 @@ void QmlObjectListModel::insert(int i, QList<QObject*> objects)
                 QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
             }
         }
-        j++;
 
         _objectList.insert(j, object);
+        j++;
     }
 
     insertRows(i, objects.count());
