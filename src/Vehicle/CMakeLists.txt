@@ -107,6 +107,7 @@ target_link_libraries(Vehicle
 		compression
 		libevents_generated
 		libevents_parser
+		libevents_health_and_arming_checks
 	PUBLIC
 		qgc
 )
