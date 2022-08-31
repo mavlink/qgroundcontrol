@@ -61,12 +61,13 @@ void HealthAndArmingCheckReport::update(uint8_t compid, const events::HealthAndA
                 description.replace("\n", "<br/>"), severity));
     }
 
-    _canArm = results.canArmAndRun(flightModeGroup);
+    _canArm = results.canArm(flightModeGroup);
     if (_missionModeGroup != -1) {
-        _canStartMission = results.canArmAndRun(_missionModeGroup);
+        // TODO: use results.canRun(_missionModeGroup) while armed
+        _canStartMission = results.canArm(_missionModeGroup);
     }
     if (_takeoffModeGroup != -1) {
-        _canTakeoff = results.canArmAndRun(_takeoffModeGroup);
+        _canTakeoff = results.canArm(_takeoffModeGroup);
     }
 
     const auto& healthComponents = results.healthComponents().health_components;
