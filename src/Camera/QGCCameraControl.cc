@@ -813,20 +813,24 @@ QGCCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
     QString errorMsg;
     QDomDocument doc;
     if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCritical() << "Unable to parse camera definition file on line:" << errorLine;
-        qCritical() << errorMsg;
+        qCCritical(CameraControlLog) << "Unable to parse camera definition file on line:" << errorLine;
+        qCCritical(CameraControlLog) << errorMsg;
         return false;
     }
     //-- Load camera constants
     QDomNodeList defElements = doc.elementsByTagName(kDefnition);
     if(!defElements.size() || !_loadConstants(defElements)) {
-        qWarning() <<  "Unable to load camera constants from camera definition";
+        qCWarning(CameraControlLog) <<  "Unable to load camera constants from camera definition";
         return false;
     }
     //-- Load camera parameters
     QDomNodeList paramElements = doc.elementsByTagName(kParameters);
-    if(!paramElements.size() || !_loadSettings(paramElements)) {
-        qWarning() <<  "Unable to load camera parameters from camera definition";
+    if(!paramElements.size()) {
+        qCDebug(CameraControlLog) <<  "No parameters to load from camera";
+        return false;
+    }
+    if(!_loadSettings(paramElements)) {
+        qCWarning(CameraControlLog) <<  "Unable to load camera parameters from camera definition";
         return false;
     }
     //-- If this is new, cache it
