@@ -460,6 +460,7 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
         if(service.type().startsWith("_mavlink._udp")) {
             static QString udpName("ZeroConf UDP");
             if (checkIfConnectionLinkExist(LinkConfiguration::TypeUdp, udpName)) {
+                qCDebug(LinkManagerVerboseLog) << "Connection already exist";
                 return;
             }
 
@@ -475,6 +476,7 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
         if(service.type().startsWith("_mavlink._tcp")) {
             static QString tcpName("ZeroConf TCP");
             if (checkIfConnectionLinkExist(LinkConfiguration::TypeTcp, tcpName)) {
+                qCDebug(LinkManagerVerboseLog) << "Connection already exist";
                 return;
             }
 
