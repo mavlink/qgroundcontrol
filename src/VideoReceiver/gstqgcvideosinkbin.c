@@ -114,10 +114,10 @@ _vsb_sink_pad_query(GstPad* pad, GstObject* parent, GstQuery* query)
 static void
 _vsb_init(GTypeInstance *instanceData, void *vsbVoid)
 {
-    Q_UNUSED(instanceData);
+    Q_UNUSED(vsbVoid);
 
     GstQgcVideoSinkBin *vsb;
-    vsb = (GstQgcVideoSinkBin *)vsbVoid;
+    vsb = (GstQgcVideoSinkBin *)instanceData;
 
     gboolean initialized        = FALSE;
     GstElement* glcolorconvert  = NULL;
