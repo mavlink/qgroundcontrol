@@ -11,24 +11,24 @@ airmap::services::RuleSets::RuleSets(const std::shared_ptr<Dispatcher>& dispatch
 }
 
 void airmap::services::RuleSets::search(const Search::Parameters& parameters, const Search::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->rulesets().search(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->rulesets().search(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::RuleSets::for_id(const ForId::Parameters& parameters, const ForId::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->rulesets().for_id(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->rulesets().for_id(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::RuleSets::fetch_rules(const FetchRules::Parameters& parameters, const FetchRules::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->rulesets().fetch_rules(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->rulesets().fetch_rules(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -36,8 +36,8 @@ void airmap::services::RuleSets::fetch_rules(const FetchRules::Parameters& param
 
 void airmap::services::RuleSets::evaluate_rulesets(const EvaluateRules::Parameters& parameters,
                                              const EvaluateRules::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->rulesets().evaluate_rulesets(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->rulesets().evaluate_rulesets(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -45,8 +45,8 @@ void airmap::services::RuleSets::evaluate_rulesets(const EvaluateRules::Paramete
 
 void airmap::services::RuleSets::evaluate_flight_plan(const EvaluateFlightPlan::Parameters& parameters,
                                                 const EvaluateFlightPlan::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->rulesets().evaluate_flight_plan(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->rulesets().evaluate_flight_plan(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
