@@ -38,6 +38,7 @@ public:
     void setMetadata(const QString& metadataJsonFileName);
 
     const events::HealthAndArmingChecks::Results& healthAndArmingCheckResults() const { return _healthAndArmingChecks.results(); }
+    bool healthAndArmingCheckResultsValid() const { return _healthAndArmingChecksValid; }
 
     int getModeGroup(int32_t customMode);
 
@@ -56,6 +57,7 @@ private:
     QTimer _timer;
     events::parser::Parser _parser;
     events::HealthAndArmingChecks _healthAndArmingChecks;
+    bool _healthAndArmingChecksValid{false};
     QVector<mavlink_event_t> _pendingEvents; ///< stores incoming events until we have the metadata loaded
     handle_event_f _handleEventCB;
     send_request_event_message_f _sendRequestCB;
