@@ -11,16 +11,16 @@ airmap::services::Advisory::Advisory(const std::shared_ptr<Dispatcher>& dispatch
 }
 
 void airmap::services::Advisory::for_id(const ForId::Parameters& parameters, const ForId::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->advisory().for_id(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->advisory().for_id(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Advisory::search(const Search::Parameters& parameters, const Search::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->advisory().search(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->advisory().search(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -28,8 +28,8 @@ void airmap::services::Advisory::search(const Search::Parameters& parameters, co
 
 void airmap::services::Advisory::report_weather(const ReportWeather::Parameters& parameters,
                                           const ReportWeather::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->advisory().report_weather(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->advisory().report_weather(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });

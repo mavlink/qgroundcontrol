@@ -11,16 +11,16 @@ airmap::services::Traffic::Monitor::Monitor(const std::shared_ptr<Dispatcher>& d
 }
 
 void airmap::services::Traffic::Monitor::subscribe(const std::shared_ptr<airmap::Traffic::Monitor::Subscriber>& subscriber) {
-  dispatcher_->dispatch_to_qt([this, sp = shared_from_this(), subscriber] { sp->subscribers_.insert(subscriber); });
+  dispatcher_->dispatch_to_qt([sp = shared_from_this(), subscriber] { sp->subscribers_.insert(subscriber); });
 }
 
 void airmap::services::Traffic::Monitor::unsubscribe(
     const std::shared_ptr<airmap::Traffic::Monitor::Subscriber>& subscriber) {
-  dispatcher_->dispatch_to_qt([this, sp = shared_from_this(), subscriber] { sp->subscribers_.erase(subscriber); });
+  dispatcher_->dispatch_to_qt([sp = shared_from_this(), subscriber] { sp->subscribers_.erase(subscriber); });
 }
 
 void airmap::services::Traffic::Monitor::handle_update(Update::Type type, const std::vector<Update>& update) {
-  dispatcher_->dispatch_to_qt([this, sp = shared_from_this(), type, update]() {
+  dispatcher_->dispatch_to_qt([sp = shared_from_this(), type, update]() {
     for (const auto& subscriber : sp->subscribers_)
       subscriber->handle_update(type, update);
   });
@@ -37,8 +37,8 @@ airmap::services::Traffic::Traffic(const std::shared_ptr<Dispatcher>& dispatcher
 }
 
 void airmap::services::Traffic::monitor(const Monitor::Params& parameters, const Monitor::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->traffic().monitor(parameters, [this, sp, parameters, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->traffic().monitor(parameters, [sp, parameters, cb](const auto& result) {
       if (result) {
         auto m  = result.value();
         auto mm = Monitor::create(sp->dispatcher_, m);
