@@ -1596,6 +1596,12 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
                     messageChecks.append(check.message);
                 }
             }
+            if (messageChecks.empty()) {
+                // Add all
+                for (const auto& check : checks) {
+                    messageChecks.append(check.message);
+                }
+            }
             if (!message.empty() && !messageChecks.empty()) {
                 message += "<br/>";
             }
