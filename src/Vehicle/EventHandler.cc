@@ -80,6 +80,7 @@ void EventHandler::gotEvent(const mavlink_event_t& event)
             "name:" << parsed_event->name().c_str() << "msg:" << parsed_event->message().c_str();
 
     if (_healthAndArmingChecks.handleEvent(*parsed_event)) {
+        _healthAndArmingChecksValid = true;
         emit healthAndArmingChecksUpdated();
     }
     _handleEventCB(std::move(parsed_event));

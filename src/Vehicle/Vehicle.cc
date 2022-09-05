@@ -1655,8 +1655,10 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
         });
         connect(this, &Vehicle::flightModeChanged, this, [compid, this]() {
             const QSharedPointer<EventHandler>& eventHandler = _events[compid];
-            _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
-                    eventHandler->getModeGroup(_custom_mode));
+            if (eventHandler->healthAndArmingCheckResultsValid()) {
+                _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
+                                                   eventHandler->getModeGroup(_custom_mode));
+            }
         });
     }
     return *eventData->data();
