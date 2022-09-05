@@ -14,7 +14,7 @@ airmap::services::Telemetry::Telemetry(const std::shared_ptr<Dispatcher>& dispat
 
 void airmap::services::Telemetry::submit_updates(const Flight& flight, const std::string& key,
                                            const std::initializer_list<Update>& updates) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), flight, key, updates]() {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), flight, key, updates]() {
     sp->client_->telemetry().submit_updates(flight, key, updates);
   });
 }
