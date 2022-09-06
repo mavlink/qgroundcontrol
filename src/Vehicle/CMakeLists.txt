@@ -40,8 +40,8 @@ add_library(Vehicle
 	FTPManager.h
 	GPSRTKFactGroup.cc
 	GPSRTKFactGroup.h
-	HealthAndArmingChecks.cc
-	HealthAndArmingChecks.h
+	HealthAndArmingCheckReport.cc
+	HealthAndArmingCheckReport.h
 	ImageProtocolManager.cc
 	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
@@ -107,6 +107,7 @@ target_link_libraries(Vehicle
 		compression
 		libevents_generated
 		libevents_parser
+		libevents_health_and_arming_checks
 	PUBLIC
 		qgc
 )

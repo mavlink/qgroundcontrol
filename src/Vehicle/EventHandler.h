@@ -15,9 +15,8 @@
 
 #include <functional>
 
-#include "HealthAndArmingChecks.h"
-
 #include <libevents/libs/cpp/protocol/receive.h>
+#include <libevents/libs/cpp/parse/health_and_arming_checks.h>
 #include <libevents/libs/cpp/parse/parser.h>
 #include <libevents/libs/cpp/generated/events_generated.h>
 
@@ -36,16 +35,27 @@ public:
 
     void handleEvents(const mavlink_message_t& message);
 
-    void setMetadata(const QString& metadataJsonFileName, const QString& translationJsonFileName);
+    void setMetadata(const QString& metadataJsonFileName);
 
-    HealthAndArmingCheckHandler& healthAndArmingChecks() { return _healthAndArmingChecks; }
+    const events::HealthAndArmingChecks::Results& healthAndArmingCheckResults() const { return _healthAndArmingChecks.results(); }
+
+    int getModeGroup(int32_t customMode);
+
+    bool healthAndArmingChecksSupported() const {
+        const auto& protocols = _parser.supportedProtocols(_compid);
+        return protocols.find("health_and_arming_check") != protocols.end();
+    }
+
+signals:
+    void healthAndArmingChecksUpdated();
+
 private:
     void gotEvent(const mavlink_event_t& event);
 
     events::ReceiveProtocol* _protocol{nullptr};
     QTimer _timer;
     events::parser::Parser _parser;
-    HealthAndArmingCheckHandler _healthAndArmingChecks;
+    events::HealthAndArmingChecks _healthAndArmingChecks;
     QVector<mavlink_event_t> _pendingEvents; ///< stores incoming events until we have the metadata loaded
     handle_event_f _handleEventCB;
     send_request_event_message_f _sendRequestCB;

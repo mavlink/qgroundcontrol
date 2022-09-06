@@ -82,6 +82,12 @@ DECLARE_SETTINGGROUP(Video, "Video")
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
 #endif
+#ifdef Q_OS_ANDROID
+        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+#endif
     };
 
     for(const auto& value : removeForceVideoDecodeList) {
@@ -139,11 +145,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
 #ifdef Q_OS_IOS
             false
 #else
-#ifdef Q_OS_ANDROID
-            false
-#else
             true
-#endif
 #endif
         );
 
