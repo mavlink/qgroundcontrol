@@ -27,7 +27,7 @@ Q_DECLARE_LOGGING_CATEGORY(VideoAllLog) // turns on all individual QGC video log
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a
-/// global list. It's usage is the same as Q_LOGGING_CATEOGRY.
+/// global list. It's usage is the same as Q_LOGGING_CATEGORY.
 #define QGC_LOGGING_CATEGORY(name, ...) \
     static QGCLoggingCategory qgcCategory ## name (__VA_ARGS__); \
     Q_LOGGING_CATEGORY(name, __VA_ARGS__)

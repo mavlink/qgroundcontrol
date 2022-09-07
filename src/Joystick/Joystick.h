@@ -17,7 +17,6 @@
 #include <atomic>
 
 #include "JoystickMavCommand.h"
-#include "JoystickRcOverride.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -30,11 +29,35 @@ Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 class AssignedButtonAction : public QObject {
     Q_OBJECT
 public:
-    AssignedButtonAction(QObject* parent, const QString name);
+    AssignedButtonAction(QObject* parent, const QString action);
     QString action;
     QElapsedTimer buttonTime;
     bool    repeat = false;
 };
+
+/// Action of RC Pwm value override assigned to button
+class AssignedButtonRcPwmOverrideAction : public AssignedButtonAction {
+    Q_OBJECT
+public:
+    AssignedButtonRcPwmOverrideAction(QObject* parent, const QString name,
+                       const uint16_t loPwmValue,
+                       const uint16_t hiPwmValue,
+                       bool latch);
+    void send(Vehicle* vehicle, bool buttonDown);
+    uint8_t channel() const;
+    void setLatchMode(bool latch);
+    bool getLatchMode();
+    static uint8_t getRcChannelFromAction(const QString action);
+
+private:
+    const uint8_t _rcChannel;
+    uint16_t _loPwmValue;
+    uint16_t _hiPwmValue;
+    bool _latchMode;
+    bool _latchButtonDown = false;
+
+};
+
 
 /// Assignable Button Action
 class AssignableButtonAction : public QObject {
@@ -117,11 +140,14 @@ public:
 
     Q_INVOKABLE void    setButtonRepeat     (int button, bool repeat);
     Q_INVOKABLE bool    getButtonRepeat     (int button);
+    Q_INVOKABLE void    setButtonPwmLatch   (int button, bool latch);
+    Q_INVOKABLE bool    getButtonPwmLatch   (int button);
     Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
     Q_INVOKABLE QString getButtonAction     (int button);
-    Q_INVOKABLE bool    assignableActionIsPWM     (int button);
-    Q_INVOKABLE void    setButtonPWM     (int button, bool lowPwm, int value);
-    Q_INVOKABLE int     getButtonPWM     (int button, bool lowPwm);
+    Q_INVOKABLE bool    assignableActionIsPwm   (int button);
+    Q_INVOKABLE bool    assignableActionIsPwm   (QString action);
+    Q_INVOKABLE void    setButtonPwm     (int button, bool lowPwm, int value);
+    Q_INVOKABLE int     getButtonPwm     (int button, bool lowPwm);
 
 
     // Property accessors
@@ -236,7 +262,7 @@ protected:
     void    _saveButtonSettings     ();
     void    _loadSettings           ();
     float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
-    void    _executeButtonAction    (const QString& action, bool buttonDown);
+    void    _executeButtonAction    (const QString &action, int buttonIndex, bool buttonDown);
     int     _findAssignableButtonAction(const QString& action);
     bool    _validAxis              (int axis) const;
     bool    _validButton            (int button) const;
@@ -311,8 +337,7 @@ protected:
     QStringList                     _availableActionTitles;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
-    QList<JoystickMavCommand> _customMavCommands;
-    QList<JoystickRcOverride> _rcOverrides;
+    QList<JoystickMavCommand>  _customMavCommands;
 
     static const float  _minAxisFrequencyHz;
     static const float  _maxAxisFrequencyHz;
@@ -328,6 +353,7 @@ private:
     static const char* _buttonActionRepeatKey;
     static const char* _buttonActionLowPwmValueKey;
     static const char* _buttonActionHighPwmValueKey;
+    static const char* _buttonActionLatchPwmValueKey;
     static const char* _throttleModeSettingsKey;
     static const char* _negativeThrustSettingsKey;
     static const char* _exponentialSettingsKey;
@@ -373,6 +399,5 @@ private:
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
-    bool _executeRcOverrideButtonAction(const QString &action, bool buttonDown);
-    int getRcChannelFromAction(QString actionName);
+    bool _executeRcOverrideButtonAction(int buttonIndex, bool buttonDown);
 };

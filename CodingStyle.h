@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2022 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -31,7 +31,7 @@ Q_DECLARE_LOGGING_CATEGORY(CodingStyleLog)
 
 /// Here is the class documentation. Class names are PascalCase. If you override any of the Qt base classes to provide
 /// generic base implementations for widespread use prefix the class name with QGC. For example:
-///     QGCMessageBox - is a QGC special vesion of Qt MessageBox
+///     QGCMessageBox - is a QGC special version of Qt MessageBox
 ///     QGCPalette - is a QGC special version of Qt Palette
 /// For normal single use classes do no prefix them name with QGC.
 

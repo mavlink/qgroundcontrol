@@ -55,10 +55,10 @@ ColumnLayout {
 
                 Column {
                     spacing: ScreenTools.defaultFontPixelWidth
+                    property bool pressed
 
                     Row {
                         spacing:    ScreenTools.defaultFontPixelWidth
-                        property bool pressed
                         property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
                         Rectangle {
                             anchors.verticalCenter:     parent.verticalCenter
@@ -66,10 +66,10 @@ ColumnLayout {
                             height:                     width
                             border.width:               1
                             border.color:               qgcPal.text
-                            color:                      parent.pressed ? qgcPal.buttonHighlight : qgcPal.button
+                            color:                      parent.parent.pressed ? qgcPal.buttonHighlight : qgcPal.button
                             QGCLabel {
                                 anchors.fill:           parent
-                                color:                  parent.parent.pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                color:                  parent.parent.parent.pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 text:                   modelData
@@ -89,8 +89,8 @@ ColumnLayout {
                                 }
                             }
 
-                            function _isCurrentButtonActionPWM() {
-                                return _activeJoystick ? _activeJoystick.assignableActionIsPWM(modelData) : false
+                            function _isCurrentButtonActionPwm() {
+                                return _activeJoystick ? _activeJoystick.assignableActionIsPwm(modelData) : false
                             }
 
                             Component.onCompleted:  _findCurrentButtonAction()
@@ -119,7 +119,7 @@ ColumnLayout {
 
                     Row {
                         id: pwmSettings
-                        property bool pwmRowVisible: buttonActionCombo._isCurrentButtonActionPWM()
+                        property bool pwmRowVisible: buttonActionCombo._isCurrentButtonActionPwm()
                         spacing:    ScreenTools.defaultFontPixelWidth
                         visible: pwmRowVisible
 
@@ -131,14 +131,14 @@ ColumnLayout {
                                 if (pwm > 2000) {
                                     pwm = 2000;
                                 }
-                                _activeJoystick.setButtonPWM(modelData, isLow, pwm)
+                                _activeJoystick.setButtonPwm(modelData, isLow, pwm)
                             }
                         }
 
                         function _getButtonPwm(button, isLow) {
                             var pwm = -1;
                             if(_activeJoystick) {
-                                pwm = _activeJoystick.getButtonPWM(modelData, isLow)
+                                pwm = _activeJoystick.getButtonPwm(modelData, isLow)
                             }
                             return pwm == -1 ? "" : pwm;
                         }
@@ -185,11 +185,11 @@ ColumnLayout {
                             anchors.verticalCenter:     parent.verticalCenter
 
                             onClicked: {
-                                _activeJoystick.setButtonRepeat(modelData, checked)
+                                _activeJoystick.setButtonPwmLatch(modelData, checked)
                             }
                             Component.onCompleted: {
                                 if(_activeJoystick) {
-                                    checked = _activeJoystick.getButtonRepeat(modelData)
+                                    checked = _activeJoystick.getButtonPwmLatch(modelData)
                                 }
                             }
                         }
