@@ -120,9 +120,7 @@ jobs:
           ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         run:  |
             qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
-            make -j2 apk
-            mkdir ${{ runner.temp }}/shadow_build_dir/package
-            mv ${{ runner.temp }}/shadow_build_dir/android-build/build/outputs/apk/debug/android-build-debug.apk ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.ARTIFACT }}
+            make -j2
 
       - name: ccache post-run
         run:  ccache -s
