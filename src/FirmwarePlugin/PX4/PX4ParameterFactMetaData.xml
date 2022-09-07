@@ -1287,10 +1287,10 @@
     </parameter>
     <parameter name="COM_POSCTL_NAVL" default="0" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
-      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control.</long_desc>
+      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. If Altitude/Manual is selected: assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL. If Land/Terminate is selected: assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</long_desc>
       <values>
-        <value code="0">Altitude/Manual. Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
-        <value code="1">Land/Terminate. Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
+        <value code="0">Altitude/Manual</value>
+        <value code="1">Land/Terminate</value>
       </values>
     </parameter>
     <parameter name="COM_POS_FS_DELAY" default="1" type="INT32">
@@ -1405,7 +1405,7 @@
       <short_desc>Enforced delay between arming and further navigation</short_desc>
       <long_desc>The minimal time from arming the motors until moving the vehicle is possible is COM_SPOOLUP_TIME seconds. Goal: - Motors and propellers spool up to idle speed before getting commanded to spin faster - Timeout for ESCs and smart batteries to successfulyy do failure checks e.g. for stuck rotors before the vehicle is off the ground</long_desc>
       <min>0</min>
-      <max>5</max>
+      <max>30</max>
       <unit>s</unit>
     </parameter>
     <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
@@ -1632,21 +1632,21 @@
       <unit>m/s^2</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_AID_MASK" default="1" type="INT32">
+    <parameter name="EKF2_AID_MASK" default="0" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Set to true to enable GPS yaw fusion. Cannot be used if bit position 4 is true.</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Deprecated, use EKF2_GPS_CTRL instead 8 : Set to true to enable vision velocity fusion</long_desc>
       <min>0</min>
       <max>511</max>
       <reboot_required>true</reboot_required>
       <bitmask>
-        <bit index="0">use GPS</bit>
+        <bit index="0">unused</bit>
         <bit index="1">use optical flow</bit>
         <bit index="2">inhibit IMU bias estimation</bit>
         <bit index="3">vision position fusion</bit>
         <bit index="4">vision yaw fusion</bit>
         <bit index="5">multi-rotor drag fusion</bit>
         <bit index="6">rotate external vision</bit>
-        <bit index="7">GPS yaw fusion</bit>
+        <bit index="7">unused</bit>
         <bit index="8">vision velocity fusion</bit>
       </bitmask>
     </parameter>
@@ -1687,6 +1687,10 @@
       <unit>ms</unit>
       <decimal>1</decimal>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="EKF2_BARO_CTRL" default="1" type="INT32" boolean="true">
+      <short_desc>Barometric sensor height aiding</short_desc>
+      <long_desc>If this parameter is enabled then the estimator will make use of the barometric height measurements to estimate it's height in addition to other height sources (if activated).</long_desc>
     </parameter>
     <parameter name="EKF2_BARO_DELAY" default="0" type="FLOAT">
       <short_desc>Barometer measurement delay relative to IMU measurements</short_desc>
@@ -1871,6 +1875,18 @@
         <bit index="8">Max vertical velocity discrepancy (EKF2_REQ_VDRIFT)</bit>
       </bitmask>
     </parameter>
+    <parameter name="EKF2_GPS_CTRL" default="7" type="INT32">
+      <short_desc>GNSS sensor aiding</short_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Longitude and latitude fusion 1 : Altitude fusion 2 : 3D velocity fusion 3 : Dual antenna heading fusion</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <bitmask>
+        <bit index="0">Lon/lat</bit>
+        <bit index="1">Altitude</bit>
+        <bit index="2">3D velocity</bit>
+        <bit index="3">Dual antenna heading</bit>
+      </bitmask>
+    </parameter>
     <parameter name="EKF2_GPS_DELAY" default="110" type="FLOAT">
       <short_desc>GPS measurement delay relative to IMU measurements</short_desc>
       <min>0</min>
@@ -1958,9 +1974,9 @@
       <unit>rad</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_HGT_MODE" default="0" type="INT32">
-      <short_desc>Determines the primary source of height data used by the EKF</short_desc>
-      <long_desc>The range sensor option should only be used when for operation over a flat surface as the local NED origin will move up and down with ground level.</long_desc>
+    <parameter name="EKF2_HGT_REF" default="1" type="INT32">
+      <short_desc>Determines the reference source of height data used by the EKF</short_desc>
+      <long_desc>When multiple height sources are enabled at the same time, the height estimate will always converge towards the reference height source selected by this parameter. The range sensor and vision options should only be used when for operation over a flat surface as the local NED origin will move up and down with ground level.</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Barometric pressure</value>
@@ -2245,17 +2261,9 @@
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_RNG_AID" default="1" type="INT32">
-      <short_desc>Range sensor aid</short_desc>
-      <long_desc>If this parameter is enabled then the estimator will make use of the range finder measurements to estimate it's height even if range sensor is not the primary height source. It will only do so if conditions for range measurement fusion are met. This enables the range finder to be used during low speed and low altitude operation, eg takeoff and landing, where baro interference from rotor wash is excessive and can corrupt EKF state estimates. It is intended to be used where a vertical takeoff and landing is performed, and horizontal flight does not occur until above EKF2_RNG_A_HMAX. If vehicle motion causes repeated switching between the primary height sensor and range finder, an offset in the local position origin can accumulate. Also range finder measurements are less reliable and can experience unexpected errors. For these reasons, if accurate control of height relative to ground is required, it is recommended to use the MPC_ALT_MODE parameter instead, unless baro errors are severe enough to cause problems with landing and takeoff.</long_desc>
-      <values>
-        <value code="0">Range aid disabled</value>
-        <value code="1">Range aid enabled</value>
-      </values>
-    </parameter>
     <parameter name="EKF2_RNG_A_HMAX" default="5.0" type="FLOAT">
-      <short_desc>Maximum absolute altitude (height above ground level) allowed for range aid mode</short_desc>
-      <long_desc>If the vehicle absolute altitude exceeds this value then the estimator will not fuse range measurements to estimate it's height. This only applies when range aid mode is activated (EKF2_RNG_AID = enabled).</long_desc>
+      <short_desc>Maximum absolute altitude (height above ground level) allowed for conditional range aid mode</short_desc>
+      <long_desc>If the vehicle absolute altitude exceeds this value then the estimator will not fuse range measurements to estimate it's height. This only applies when conditional range aid mode is activated (EKF2_RNG_CTRL = 1).</long_desc>
       <min>1.0</min>
       <max>10.0</max>
       <unit>m</unit>
@@ -2268,11 +2276,20 @@
       <unit>SD</unit>
     </parameter>
     <parameter name="EKF2_RNG_A_VMAX" default="1.0" type="FLOAT">
-      <short_desc>Maximum horizontal velocity allowed for range aid mode</short_desc>
-      <long_desc>If the vehicle horizontal speed exceeds this value then the estimator will not fuse range measurements to estimate it's height. This only applies when range aid mode is activated (EKF2_RNG_AID = enabled).</long_desc>
+      <short_desc>Maximum horizontal velocity allowed for conditional range aid mode</short_desc>
+      <long_desc>If the vehicle horizontal speed exceeds this value then the estimator will not fuse range measurements to estimate it's height. This only applies when conditional range aid mode is activated (EKF2_RNG_CTRL = 1).</long_desc>
       <min>0.1</min>
       <max>2</max>
       <unit>m/s</unit>
+    </parameter>
+    <parameter name="EKF2_RNG_CTRL" default="1" type="INT32">
+      <short_desc>Range sensor height aiding</short_desc>
+      <long_desc>WARNING: Range finder measurements are less reliable and can experience unexpected errors. For these reasons, if accurate control of height relative to ground is required, it is recommended to use the MPC_ALT_MODE parameter instead, unless baro errors are severe enough to cause problems with landing and takeoff. To en-/disable range finder for terrain height estimation, use EKF2_TERR_MASK instead. If this parameter is enabled then the estimator will make use of the range finder measurements to estimate it's height in addition to other height sources (if activated). Range sensor aiding can be enabled (i.e.: always use) or set in "conditional" mode. Conditional mode: This enables the range finder to be used during low speed (&lt; EKF2_RNG_A_VMAX) and low altitude (&lt; EKF2_RNG_A_HMAX) operation, eg takeoff and landing, where baro interference from rotor wash is excessive and can corrupt EKF state estimates. It is intended to be used where a vertical takeoff and landing is performed, and horizontal flight does not occur until above EKF2_RNG_A_HMAX.</long_desc>
+      <values>
+        <value code="0">Disable range fusion</value>
+        <value code="1">Enabled (conditional mode)</value>
+        <value code="2">Enabled</value>
+      </values>
     </parameter>
     <parameter name="EKF2_RNG_DELAY" default="5" type="FLOAT">
       <short_desc>Range finder measurement delay relative to IMU measurements</short_desc>
@@ -2573,7 +2590,7 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_MAN_P_MAX" default="45.0" type="FLOAT">
+    <parameter name="FW_MAN_P_MAX" default="30.0" type="FLOAT">
       <short_desc>Maximum manual pitch angle</short_desc>
       <long_desc>Maximum manual pitch angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
       <min>0.0</min>
@@ -2616,6 +2633,15 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="FW_PR_D" default="0." type="FLOAT">
+      <short_desc>Pitch rate derivative gain</short_desc>
+      <long_desc>Pitch rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
     <parameter name="FW_PR_FF" default="0.5" type="FLOAT">
       <short_desc>Pitch rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
@@ -2644,7 +2670,7 @@
     </parameter>
     <parameter name="FW_PR_P" default="0.08" type="FLOAT">
       <short_desc>Pitch rate proportional gain</short_desc>
-      <long_desc>This defines how much the elevator input will be commanded depending on the current body angular rate error.</long_desc>
+      <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -2694,6 +2720,15 @@
       <decimal>1</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="FW_RR_D" default="0.00" type="FLOAT">
+      <short_desc>Roll rate derivative Gain</short_desc>
+      <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
     <parameter name="FW_RR_FF" default="0.5" type="FLOAT">
       <short_desc>Roll rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
@@ -2722,7 +2757,7 @@
     </parameter>
     <parameter name="FW_RR_P" default="0.05" type="FLOAT">
       <short_desc>Roll rate proportional Gain</short_desc>
-      <long_desc>This defines how much the aileron input will be commanded depending on the current body angular rate error.</long_desc>
+      <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -2819,6 +2854,15 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="FW_YR_D" default="0.0" type="FLOAT">
+      <short_desc>Yaw rate derivative gain</short_desc>
+      <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
     <parameter name="FW_YR_FF" default="0.3" type="FLOAT">
       <short_desc>Yaw rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
@@ -2847,7 +2891,7 @@
     </parameter>
     <parameter name="FW_YR_P" default="0.05" type="FLOAT">
       <short_desc>Yaw rate proportional gain</short_desc>
-      <long_desc>This defines how much the rudder input will be commanded depending on the current body angular rate error.</long_desc>
+      <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -2864,58 +2908,7 @@
       <increment>0.5</increment>
     </parameter>
   </group>
-  <group name="FW Geometry">
-    <parameter name="FW_WING_HEIGHT" default="0.5" type="FLOAT">
-      <short_desc>Height (AGL) of the wings when the aircraft is on the ground</short_desc>
-      <long_desc>This is used to constrain a minimum altitude below which we keep wings level to avoid wing tip strike. It's safer to give a slight margin here (&gt; 0m)</long_desc>
-      <min>0.0</min>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="FW_WING_SPAN" default="3.0" type="FLOAT">
-      <short_desc>The aircraft's wing span (length from tip to tip)</short_desc>
-      <long_desc>This is used for limiting the roll setpoint near the ground. (if multiple wings, take the longest span)</long_desc>
-      <min>0.1</min>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
-    </parameter>
-  </group>
-  <group name="FW L1 Control">
-    <parameter name="FW_CLMBOUT_DIFF" default="10.0" type="FLOAT">
-      <short_desc>Climbout Altitude difference</short_desc>
-      <long_desc>If the altitude error exceeds this parameter, the system will climb out with maximum throttle and minimum airspeed until it is closer than this distance to the desired altitude. Mostly used for takeoff waypoints / modes. Set to 0 to disable climbout mode (not recommended).</long_desc>
-      <min>0.0</min>
-      <max>150.0</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_L1_DAMPING" default="0.75" type="FLOAT">
-      <short_desc>L1 damping</short_desc>
-      <long_desc>Damping factor for L1 control.</long_desc>
-      <min>0.6</min>
-      <max>0.9</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_L1_PERIOD" default="20.0" type="FLOAT">
-      <short_desc>L1 period</short_desc>
-      <long_desc>Used to determine the L1 gain and controller time constant. This parameter is proportional to the L1 distance (which points ahead of the aircraft on the path it is following). A value of 18-25 seconds works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
-      <min>7.0</min>
-      <max>50.0</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_L1_R_SLEW_MAX" default="90.0" type="FLOAT">
-      <short_desc>L1 controller roll slew rate limit</short_desc>
-      <long_desc>The maximum change in roll angle setpoint per second.</long_desc>
-      <min>0</min>
-      <unit>deg/s</unit>
-      <increment>1</increment>
-    </parameter>
+  <group name="FW Auto Landing">
     <parameter name="FW_LND_ABORT" default="3" type="INT32">
       <short_desc>Bit mask to set the automatic landing abort conditions</short_desc>
       <long_desc>Terrain estimation: bit 0: Abort if terrain is not found bit 1: Abort if terrain times out (after a first successful measurement) The last estimate is always used as ground, whether the last valid measurement or the land waypoint, depending on the selected abort criteria, until an abort condition is entered. If FW_LND_USETER == 0, these bits are ignored. TODO: Extend automatic abort conditions e.g. glide slope tracking error (horizontal and vertical)</long_desc>
@@ -3030,6 +3023,59 @@
         <value code="2">Calculate landing glide slope relative to the terrain estimate</value>
       </values>
     </parameter>
+  </group>
+  <group name="FW Geometry">
+    <parameter name="FW_WING_HEIGHT" default="0.5" type="FLOAT">
+      <short_desc>Height (AGL) of the wings when the aircraft is on the ground</short_desc>
+      <long_desc>This is used to constrain a minimum altitude below which we keep wings level to avoid wing tip strike. It's safer to give a slight margin here (&gt; 0m)</long_desc>
+      <min>0.0</min>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="FW_WING_SPAN" default="3.0" type="FLOAT">
+      <short_desc>The aircraft's wing span (length from tip to tip)</short_desc>
+      <long_desc>This is used for limiting the roll setpoint near the ground. (if multiple wings, take the longest span)</long_desc>
+      <min>0.1</min>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+  </group>
+  <group name="FW L1 Control">
+    <parameter name="FW_CLMBOUT_DIFF" default="10.0" type="FLOAT">
+      <short_desc>Climbout Altitude difference</short_desc>
+      <long_desc>If the altitude error exceeds this parameter, the system will climb out with maximum throttle and minimum airspeed until it is closer than this distance to the desired altitude. Mostly used for takeoff waypoints / modes. Set to 0 to disable climbout mode (not recommended).</long_desc>
+      <min>0.0</min>
+      <max>150.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_L1_DAMPING" default="0.75" type="FLOAT">
+      <short_desc>L1 damping</short_desc>
+      <long_desc>Damping factor for L1 control.</long_desc>
+      <min>0.6</min>
+      <max>0.9</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_L1_PERIOD" default="20.0" type="FLOAT">
+      <short_desc>L1 period</short_desc>
+      <long_desc>Used to determine the L1 gain and controller time constant. This parameter is proportional to the L1 distance (which points ahead of the aircraft on the path it is following). A value of 18-25 seconds works for most aircraft. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
+      <min>7.0</min>
+      <max>50.0</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_L1_R_SLEW_MAX" default="90.0" type="FLOAT">
+      <short_desc>L1 controller roll slew rate limit</short_desc>
+      <long_desc>The maximum change in roll angle setpoint per second.</long_desc>
+      <min>0</min>
+      <unit>deg/s</unit>
+      <increment>1</increment>
+    </parameter>
     <parameter name="FW_POS_STK_CONF" default="2" type="INT32">
       <short_desc>RC stick configuration fixed-wing</short_desc>
       <long_desc>Set RC/joystick configuration for fixed-wing manual position and altitude controlled flight.</long_desc>
@@ -3040,24 +3086,6 @@
         <bit index="1">Enable airspeed setpoint via sticks in altitude and position flight mode</bit>
       </bitmask>
     </parameter>
-    <parameter name="FW_P_LIM_MAX" default="45.0" type="FLOAT">
-      <short_desc>Maximum pitch angle</short_desc>
-      <long_desc>The maximum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
-      <min>0.0</min>
-      <max>60.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_P_LIM_MIN" default="-45.0" type="FLOAT">
-      <short_desc>Minimum pitch angle</short_desc>
-      <long_desc>The minimum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
-      <min>-60.0</min>
-      <max>0.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter name="FW_R_LIM" default="50.0" type="FLOAT">
       <short_desc>Maximum roll angle</short_desc>
       <long_desc>The maximum roll angle setpoint for autonomous modes including altitude and position control.</long_desc>
@@ -3066,48 +3094,6 @@
       <unit>deg</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_THR_IDLE" default="0.0" type="FLOAT">
-      <short_desc>Idle throttle</short_desc>
-      <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engines, this parameter should be set above the desired idle rpm. For electric motors, idle should typically be set to zero. Note that in automatic modes, "landed" conditions will engage idle throttle.</long_desc>
-      <min>0.0</min>
-      <max>0.4</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_THR_MAX" default="1.0" type="FLOAT">
-      <short_desc>Throttle limit max</short_desc>
-      <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_THR_MIN" default="0.0" type="FLOAT">
-      <short_desc>Throttle limit min</short_desc>
-      <long_desc>This is the minimum throttle % that can be used by the controller. For electric aircraft this will normally be set to zero, but can be set to a small non-zero value if a folding prop is fitted to prevent the prop from folding and unfolding repeatedly in-flight or to provide some aerodynamic drag from a turning prop to improve the descent rate. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_THR_SLEW_MAX" default="0.0" type="FLOAT">
-      <short_desc>Throttle max slew rate</short_desc>
-      <long_desc>Maximum slew rate for the commanded throttle</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter name="FW_THR_TRIM" default="0.6" type="FLOAT">
-      <short_desc>Trim throttle</short_desc>
-      <long_desc>This is the throttle setting required to achieve FW_AIRSPD_TRIM during level flight. Most airframes have a value of 0.5-0.7.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_TKO_PITCH_MIN" default="10.0" type="FLOAT">
       <short_desc>Minimum pitch during takeoff</short_desc>
@@ -3278,6 +3264,66 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_P_LIM_MAX" default="30.0" type="FLOAT">
+      <short_desc>Maximum pitch angle</short_desc>
+      <long_desc>The maximum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
+      <min>0.0</min>
+      <max>60.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_P_LIM_MIN" default="-30.0" type="FLOAT">
+      <short_desc>Minimum pitch angle</short_desc>
+      <long_desc>The minimum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
+      <min>-60.0</min>
+      <max>0.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_THR_IDLE" default="0.0" type="FLOAT">
+      <short_desc>Idle throttle</short_desc>
+      <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engines, this parameter should be set above the desired idle rpm. For electric motors, idle should typically be set to zero. Note that in automatic modes, "landed" conditions will engage idle throttle.</long_desc>
+      <min>0.0</min>
+      <max>0.4</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_THR_MAX" default="1.0" type="FLOAT">
+      <short_desc>Throttle limit max</short_desc>
+      <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_THR_MIN" default="0.0" type="FLOAT">
+      <short_desc>Throttle limit min</short_desc>
+      <long_desc>This is the minimum throttle % that can be used by the controller. For electric aircraft this will normally be set to zero, but can be set to a small non-zero value if a folding prop is fitted to prevent the prop from folding and unfolding repeatedly in-flight or to provide some aerodynamic drag from a turning prop to improve the descent rate. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_THR_SLEW_MAX" default="0.0" type="FLOAT">
+      <short_desc>Throttle max slew rate</short_desc>
+      <long_desc>Maximum slew rate for the commanded throttle</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+    </parameter>
+    <parameter name="FW_THR_TRIM" default="0.6" type="FLOAT">
+      <short_desc>Trim throttle</short_desc>
+      <long_desc>This is the throttle setting required to achieve FW_AIRSPD_TRIM during level flight. Most airframes have a value of 0.5-0.7.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_T_ALT_TC" default="5.0" type="FLOAT">
       <short_desc>Altitude error time constant</short_desc>
@@ -3518,10 +3564,20 @@
       <increment>1</increment>
     </parameter>
   </group>
+  <group name="FlightTaskOrbit">
+    <parameter name="MC_ORBIT_RAD_MAX" default="1000.0" type="FLOAT">
+      <short_desc>Maximum radius of orbit</short_desc>
+      <min>1.0</min>
+      <max>10000.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+  </group>
   <group name="Follow target">
     <parameter name="FLW_TGT_ALT_M" default="0" type="INT32">
       <short_desc>Altitude control mode</short_desc>
-      <long_desc>Maintain altitude or track target's altitude. When maintaining the altitude, the drone can crash into terrain when the target moves uphill. When tracking the target's altitude, the follow altitude NAV_MIN_FT_HT should be high enough to prevent terrain collisions due to GPS inaccuracies of the target.</long_desc>
+      <long_desc>Maintain altitude or track target's altitude. When maintaining the altitude, the drone can crash into terrain when the target moves uphill. When tracking the target's altitude, the follow altitude FLW_TGT_HT should be high enough to prevent terrain collisions due to GPS inaccuracies of the target.</long_desc>
       <values>
         <value code="0">2D Tracking: Maintain constant altitude relative to home and track XY position only</value>
         <value code="1">2D + Terrain: Maintain constant altitude relative to terrain below and track XY position</value>
@@ -4432,6 +4488,13 @@
         <value code="1">Enable</value>
       </values>
     </parameter>
+    <parameter name="MIS_PD_TO" default="5.0" type="FLOAT">
+      <short_desc>Timeout for a successful payload deployment acknowledgement</short_desc>
+      <min>0</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
     <parameter name="MIS_TAKEOFF_ALT" default="2.5" type="FLOAT">
       <short_desc>Take-off altitude</short_desc>
       <long_desc>This is the minimum altitude the system will take off to.</long_desc>
@@ -5251,7 +5314,7 @@
       <max>3.0</max>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="MPC_Z_VEL_MAX_DN" default="1." type="FLOAT">
+    <parameter name="MPC_Z_VEL_MAX_DN" default="1.5" type="FLOAT">
       <short_desc>Maximum descent velocity</short_desc>
       <long_desc>Descent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_DN</long_desc>
       <min>0.5</min>
@@ -5276,7 +5339,7 @@
       <max>15.0</max>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="MPC_Z_V_AUTO_DN" default="1." type="FLOAT">
+    <parameter name="MPC_Z_V_AUTO_DN" default="1.5" type="FLOAT">
       <short_desc>Automatic descent velocity</short_desc>
       <long_desc>Descent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_DN</long_desc>
       <min>0.5</min>
@@ -6438,6 +6501,32 @@
         <value code="18">Channel 18</value>
       </values>
     </parameter>
+    <parameter name="RC_MAP_ENG_MOT" default="0" type="INT32">
+      <short_desc>RC channel to engage the main motor (for helicopters)</short_desc>
+      <min>0</min>
+      <max>18</max>
+      <values>
+        <value code="0">Unassigned</value>
+        <value code="1">Channel 1</value>
+        <value code="2">Channel 2</value>
+        <value code="3">Channel 3</value>
+        <value code="4">Channel 4</value>
+        <value code="5">Channel 5</value>
+        <value code="6">Channel 6</value>
+        <value code="7">Channel 7</value>
+        <value code="8">Channel 8</value>
+        <value code="9">Channel 9</value>
+        <value code="10">Channel 10</value>
+        <value code="11">Channel 11</value>
+        <value code="12">Channel 12</value>
+        <value code="13">Channel 13</value>
+        <value code="14">Channel 14</value>
+        <value code="15">Channel 15</value>
+        <value code="16">Channel 16</value>
+        <value code="17">Channel 17</value>
+        <value code="18">Channel 18</value>
+      </values>
+    </parameter>
     <parameter name="RC_MAP_FAILSAFE" default="0" type="INT32">
       <short_desc>Failsafe channel mapping</short_desc>
       <long_desc>Configures which RC channel is used by the receiver to indicate the signal was lost (on receivers that use output a fixed signal value to report lost signal). If set to 0, the channel mapped to throttle is used. Use RC_FAILS_THR to set the threshold indicating lost signal. By default it's below the expected range and hence disabled.</long_desc>
@@ -6721,6 +6810,12 @@
   <group name="Radio Switches">
     <parameter name="RC_ARMSWITCH_TH" default="0.75" type="FLOAT">
       <short_desc>Threshold for the arm switch</short_desc>
+      <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
+      <min>-1</min>
+      <max>1</max>
+    </parameter>
+    <parameter name="RC_ENG_MOT_TH" default="0.75" type="FLOAT">
+      <short_desc>Threshold for selecting main motor engage</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
@@ -9063,6 +9158,18 @@
       <min>0</min>
       <max>50</max>
     </parameter>
+    <parameter name="SIM_IGN_HOME_ALT" default="488.0" type="FLOAT">
+      <short_desc>simulator origin altitude</short_desc>
+      <unit>m</unit>
+    </parameter>
+    <parameter name="SIM_IGN_HOME_LAT" default="47.397742" type="FLOAT">
+      <short_desc>simulator origin latitude</short_desc>
+      <unit>deg</unit>
+    </parameter>
+    <parameter name="SIM_IGN_HOME_LON" default="8.545594" type="FLOAT">
+      <short_desc>simulator origin longitude</short_desc>
+      <unit>deg</unit>
+    </parameter>
     <parameter name="SIM_MAG_OFFSET_X" default="0.0" type="FLOAT">
       <short_desc>simulated magnetometer X offset</short_desc>
       <unit>gauss</unit>
@@ -9131,9 +9238,9 @@
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>celcius</unit>
     </parameter>
-    <parameter name="SYS_CTRL_ALLOC" default="0" type="INT32" boolean="true">
+    <parameter name="SYS_CTRL_ALLOC" default="1" type="INT32" boolean="true">
       <short_desc>Enable Dynamic Control Allocation</short_desc>
-      <long_desc>If disabled, the existing mixing implementation is used. If enabled, dynamic control allocation with runtime configuration of the mixing and output functions is used. Note: this is work-in-progress and not all vehicle types are supported yet.</long_desc>
+      <long_desc>If disabled, the existing mixing implementation is used. If enabled, dynamic control allocation with runtime configuration of the mixing and output functions is used.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SYS_DM_BACKEND" default="0" type="INT32" boolean="true">
