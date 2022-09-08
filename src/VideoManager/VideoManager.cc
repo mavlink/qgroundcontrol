@@ -781,7 +781,11 @@ void
 VideoManager::_startReceiver(unsigned id)
 {
 #if defined(QGC_GST_STREAMING)
-    const unsigned timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
+    const QString source = _videoSettings->videoSource()->rawValue().toString();
+    const unsigned rtsptimeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
+    /* The gstreamer rtsp source will switch to tcp if udp is not available after 5 seconds.
+       So we should allow for some negotiation time for rtsp */
+    const unsigned timeout = (source == VideoSettings::videoSourceRTSP ? rtsptimeout : 2 );
 
     if (id > 1) {
         qCDebug(VideoManagerLog) << "Unsupported receiver id" << id;
