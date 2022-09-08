@@ -106,7 +106,7 @@
     "type":             "uint32",
     "min":              1,
     "units":            "s",
-    "default":     2
+    "default":     8
 },
 {
     "name":             "streamEnabled",
