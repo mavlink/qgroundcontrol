@@ -228,7 +228,7 @@ CONFIG += qt \
     thread
 
 #
-# compile in c++14 pls god
+# compile in c++14 for m1 mac or to avoid c++17 eigen deprecated error
 #
 CONFIG += c++14
 CONFIG -= c++17
