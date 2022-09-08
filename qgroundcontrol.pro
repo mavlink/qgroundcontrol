@@ -227,6 +227,12 @@ LinuxBuild {
 CONFIG += qt \
     thread
 
+#
+# compile in c++14 pls god
+#
+CONFIG += c++14
+CONFIG -= c++17
+
 DebugBuild {
     CONFIG -= qtquickcompiler
 } else {
@@ -1550,3 +1556,5 @@ LinuxBuild {
 
     INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
 }
+
+
