@@ -28,12 +28,16 @@ Item {
         width:          parent.width
         anchors.top:    parent.top
         QGCTabButton {
-            text:       qsTr("TECS")
+            text:       qsTr("Rate Controller")
+        }
+        QGCTabButton {
+            text:       qsTr("Attitude Controller")
         }
     }
 
     property var pages:  [
-        "PX4TuningComponentPlaneTECS.qml",
+        "PX4TuningComponentPlaneRate.qml",
+        "PX4TuningComponentPlaneAttitude.qml",
     ]
 
     Loader {
