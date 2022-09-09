@@ -1,0 +1,92 @@
+#
+# QGroundControl android build environment
+#
+
+FROM ubuntu:20.04
+LABEL authors="Tobias Herzog <pasdVn3@gmx.de>"
+
+ARG QT_VERSION=5.15.2
+ARG ANDROID_NDK_VERSION=21.4.7075529
+ARG ANDROID_API_LEVEL=30
+# build tool version is determined by gradle-template file of Qt
+ARG ANDROID_BUILD_TOOLS=28.0.3
+ARG GSTREAMER_VERSION=1.18.5
+
+ENV ANDROID_ABIS armeabi-v7a
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QMAKESPEC android-clang
+
+ENV QT_PATH /opt/Qt
+ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/android
+ENV QT_TARGET android
+
+ENV ANDROID_HOME /opt/android_sdk
+ENV ANDROID_SDK_ROOT ${ANDROID_HOME}
+ENV ANDROID_NDK_ROOT /opt/android_sdk/ndk/${ANDROID_NDK_VERSION}
+ENV GSTREAMER_HOME /opt/gstreamer-1.0-android-universal-${GSTREAMER_VERSION}
+
+
+ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+
+RUN apt update && apt -y --quiet --no-install-recommends install \
+		apt-utils \
+		ca-certificates \
+		ccache \
+		git \
+		locales \
+		make \
+		openssl \
+		openjdk-11-jdk-headless \
+		wget \
+		unzip \
+		xz-utils \
+		zlib1g-dev \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+# Install Qt
+COPY deploy/docker/install-qt-linux.sh /tmp/qt/
+RUN /tmp/qt/install-qt-linux.sh && \
+    rm -rf ~/.cache/pip && \
+    rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+# install android sdk and ndk
+RUN cd /opt && \
+    mkdir -p $ANDROID_HOME/cmdline-tools && cd $ANDROID_HOME/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip && \
+    unzip -q commandlinetools-linux-8512546_latest.zip && \
+    rm *.zip && \
+    mv cmdline-tools latest
+RUN yes Y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
+        "build-tools;${ANDROID_BUILD_TOOLS}" \
+        "platforms;android-${ANDROID_API_LEVEL}" \
+        "ndk;${ANDROID_NDK_VERSION}" && \
+    yes Y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+# dowload gstreamer
+RUN cd /opt && \
+    wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/${GSTREAMER_VERSION}/gstreamer-1.0-android-universal-${GSTREAMER_VERSION}.tar.xz && \
+    mkdir gstreamer-1.0-android-universal-${GSTREAMER_VERSION}
+RUN cd /opt && tar xf gstreamer-1.0-android-universal-${GSTREAMER_VERSION}.tar.xz -C gstreamer-1.0-android-universal-${GSTREAMER_VERSION} && \
+    rm gstreamer-1.0-android-universal-${GSTREAMER_VERSION}.tar.xz
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1000 to not run commands/generate files as root
+RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 1000
+USER user
+
+# pre download gradle and prepare ccache cache dir for mounting volume
+RUN ${QT_DESKTOP}/src/3rdparty/gradle/gradlew --version && \
+    find /home/user/.gradle/ -name "*.zip" -type f -delete && \
+    mkdir /home/user/.ccache
+
+WORKDIR /project/build
+CMD qmake /project/source ANDROID_ABIS="${ANDROID_ABIS}" && make -j$(nproc) apk
+

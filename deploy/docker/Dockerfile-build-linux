@@ -70,5 +70,8 @@ RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 1000
 USER user
 
+# prepare ccache cache dir for mounting volume
+RUN mkdir /home/user/.ccache
+
 WORKDIR /project/build
 CMD qmake /project/source && make -j$(nproc)
