@@ -57,6 +57,7 @@ Rectangle {
         }
     }
 
+    /// Top toolbar thing that houses the Q button, fly/plan view, batt voltage, etc.
     RowLayout {
         id:                     viewButtonRow
         anchors.bottomMargin:   1
@@ -82,6 +83,11 @@ Rectangle {
             text:               qsTr("Disconnect")
             onClicked:          _activeVehicle.closeVehicle()
             visible:            _activeVehicle && _communicationLost && currentToolbar === flyViewToolbar
+        }
+
+        QGCToolBarButton {
+            id:                 hybridViewButton
+            icon.source:        "/res/speedometer.svg"
         }
     }
 
