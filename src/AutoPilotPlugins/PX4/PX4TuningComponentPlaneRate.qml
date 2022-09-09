@@ -58,7 +58,7 @@ ColumnLayout {
                     description:    qsTr("Generally does not need much adjustment, reduce this when seeing slow oscillations.")
                     param:          "FW_RR_I"
                     min:            0.0
-                    max:            0.2
+                    max:            0.5
                     step:           0.005
                 }
                 ListElement {
