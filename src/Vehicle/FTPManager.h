@@ -35,9 +35,15 @@ public:
     ///     @param fromURI  File to download from vehicle, fully qualified path. May be in the format "mftp://[;comp=<id>]..." where the component id is specified.
     ///                     If component id is not specified MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param toDir    Local directory to download file to
+    ///     @param filename (optional)
+    ///     @param checksize (optional, default true) If true compare the filesize indicated in the open
+    ///                     response with the transmitted filesize. If false the transmission is tftp style
+    ///                     and the indicated filesize from MAVFTP fileopen response is ignored.
+    ///                     This is used for the APM parameterdownload where the filesize is wrong due to
+    ///                     a dynamic file creation on the vehicle.
     /// @return true: download has started, false: error, no download
     /// Signals downloadComplete, commandError, commandProgress
-    bool download(const QString& fromURI, const QString& toDir, const QString& fileName="");
+    bool download(const QString& fromURI, const QString& toDir, const QString& fileName="", bool checksize = true);
 
     /// Cancel the current operation
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
@@ -89,6 +95,7 @@ private:
         uint32_t                fileSize;               ///< Size of file being downloaded
         QFile                   file;
         int                     retryCount;
+        bool                    checksize;
 
         bool inProgress() const { return fileSize > 0; }
 
