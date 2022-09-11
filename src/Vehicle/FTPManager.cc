@@ -34,7 +34,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
     Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
 }
 
-bool FTPManager::download(const QString& fromURI, const QString& toDir, const QString& fileName)
+bool FTPManager::download(const QString& fromURI, const QString& toDir, const QString& fileName, bool checksize)
 {
     qCDebug(FTPManagerLog) << "download fromURI:" << fromURI << "to:" << toDir;
 
@@ -56,6 +56,7 @@ bool FTPManager::download(const QString& fromURI, const QString& toDir, const QS
 
     _downloadState.reset();
     _downloadState.toDir.setPath(toDir);
+    _downloadState.checksize = checksize;
 
     if (!_parseURI(fromURI, _downloadState.fullPathOnVehicle, _ftpCompId)) {
         qCWarning(FTPManagerLog) << "_parseURI failed";
@@ -298,7 +299,7 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
         }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         qCDebug(FTPManagerLog) << "_handlOpenFileROAck: Nak -" << _errorMsgFromNak(ackOrNak);
-        _downloadComplete(tr("Download failed"));
+        _downloadComplete(tr("Download failed") + ": " + _errorMsgFromNak(ackOrNak));
     }
 }
 
@@ -446,7 +447,7 @@ void FTPManager::_fillMissingBlocksWorker(bool firstRequest)
         _sendRequestExpectAck(&request);
     } else {
         // We should have the full file now
-        if (_downloadState.bytesWritten == _downloadState.fileSize) {
+        if (_downloadState.checksize == false || _downloadState.bytesWritten == _downloadState.fileSize) {
             _advanceStateMachine();
         } else {
             qCDebug(FTPManagerLog) << "_fillMissingBlocksWorker: no missing blocks but file still incomplete - bytesWritten:fileSize" << _downloadState.bytesWritten << _downloadState.fileSize;
@@ -523,7 +524,7 @@ void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
 
         if (errorCode == MavlinkFTP::kErrEOF) {
             qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak EOF";
-            if (_downloadState.bytesWritten == _downloadState.fileSize) {
+            if (_downloadState.checksize == false || _downloadState.bytesWritten == _downloadState.fileSize) {
                 // We've successfully complete filling in all missing blocks
                 _advanceStateMachine();
                 return;
