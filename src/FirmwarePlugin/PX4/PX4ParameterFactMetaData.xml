@@ -763,22 +763,6 @@
         <value code="4">Distance based, on command (Survey mode)</value>
       </values>
     </parameter>
-    <parameter name="TRIG_PINS" default="56" type="INT32">
-      <short_desc>Camera trigger pin</short_desc>
-      <long_desc>Selects which FMU pin is used (range: AUX1-AUX8 on Pixhawk controllers with an I/O board, MAIN1-MAIN8 on controllers without an I/O board). The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6. For GPIO mode Pin 6 will be triggered followed by 5. With a value of 65 pin 5 will be triggered followed by 6. Pins may be non contiguous. I.E. 16 or 61. In GPIO mode the delay pin to pin is &lt; .2 uS.</long_desc>
-      <min>1</min>
-      <max>12345678</max>
-      <decimal>0</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="TRIG_PINS_EX" default="0" type="INT32">
-      <short_desc>Camera trigger pin extended</short_desc>
-      <long_desc>This Bit mask selects which FMU pin is used (range: AUX9-AUX32) If the value is not 0 it takes precedence over TRIG_PINS. If bits above 8 are set that value is used as the selector for trigger pins. greater then 8. 0x00000300 Would be Pins 9,10. If the value is</long_desc>
-      <min>0</min>
-      <max>2147483647</max>
-      <decimal>0</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="TRIG_POLARITY" default="0" type="INT32">
       <short_desc>Camera trigger polarity</short_desc>
       <long_desc>This parameter sets the polarity of the trigger (0 = active low, 1 = active high )</long_desc>
@@ -4632,14 +4616,6 @@
         <value code="0">Disabled</value>
         <value code="1">Roll/Pitch</value>
         <value code="2">Roll/Pitch/Yaw</value>
-      </values>
-    </parameter>
-    <parameter name="MOT_ORDERING" default="0" type="INT32">
-      <short_desc>Motor Ordering</short_desc>
-      <long_desc>Determines the motor ordering. This can be used for example in combination with a 4-in-1 ESC that assumes a motor ordering which is different from PX4. ONLY supported for Quads. When changing this, make sure to test the motor response without props first.</long_desc>
-      <values>
-        <value code="0">PX4</value>
-        <value code="1">Betaflight / Cleanflight</value>
       </values>
     </parameter>
   </group>
@@ -8933,11 +8909,6 @@
     </parameter>
   </group>
   <group name="Simulation In Hardware">
-    <parameter name="SIH_BARO_OFFSET" default="0.0" type="FLOAT">
-      <short_desc>Barometer offset in meters</short_desc>
-      <long_desc>Absolute value superior to 10000 will disable barometer</long_desc>
-      <unit>m</unit>
-    </parameter>
     <parameter name="SIH_DISTSNSR_MAX" default="100.0" type="FLOAT">
       <short_desc>distance sensor maximum range</short_desc>
       <min>0.0</min>
@@ -8958,11 +8929,6 @@
       <short_desc>if &gt;= 0 the distance sensor measures will be overridden by this value</short_desc>
       <long_desc>Absolute value superior to 10000 will disable distance sensor</long_desc>
       <unit>m</unit>
-    </parameter>
-    <parameter name="SIH_GPS_USED" default="10" type="INT32">
-      <short_desc>Number of GPS satellites used</short_desc>
-      <min>0</min>
-      <max>50</max>
     </parameter>
     <parameter name="SIH_IXX" default="0.025" type="FLOAT">
       <short_desc>Vehicle inertia about X axis</short_desc>
@@ -9048,33 +9014,6 @@
       <max>1800000000</max>
       <unit>deg*1e7</unit>
     </parameter>
-    <parameter name="SIH_LOC_MU_X" default="0.179" type="FLOAT">
-      <short_desc>North magnetic field at the initial location</short_desc>
-      <long_desc>This value represents the North magnetic field at the initial location. A magnetic field calculator can be found on the NOAA website Note, the values need to be converted from nano Tesla to Gauss LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <unit>gauss</unit>
-      <decimal>2</decimal>
-      <increment>0.001</increment>
-    </parameter>
-    <parameter name="SIH_LOC_MU_Y" default="-0.045" type="FLOAT">
-      <short_desc>East magnetic field at the initial location</short_desc>
-      <long_desc>This value represents the East magnetic field at the initial location. A magnetic field calculator can be found on the NOAA website Note, the values need to be converted from nano Tesla to Gauss LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <unit>gauss</unit>
-      <decimal>2</decimal>
-      <increment>0.001</increment>
-    </parameter>
-    <parameter name="SIH_LOC_MU_Z" default="0.504" type="FLOAT">
-      <short_desc>Down magnetic field at the initial location</short_desc>
-      <long_desc>This value represents the Down magnetic field at the initial location. A magnetic field calculator can be found on the NOAA website Note, the values need to be converted from nano Tesla to Gauss LAT0, LON0, H0, MU_X, MU_Y, and MU_Z should ideally be consistent among each others to represent a physical ground location on Earth.</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <unit>gauss</unit>
-      <decimal>2</decimal>
-      <increment>0.001</increment>
-    </parameter>
     <parameter name="SIH_L_PITCH" default="0.2" type="FLOAT">
       <short_desc>Pitch arm length</short_desc>
       <long_desc>This is the arm length generating the pitching moment This value can be measured with a ruler. This corresponds to half the distance between the front and rear motors.</long_desc>
@@ -9090,21 +9029,6 @@
       <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
-    </parameter>
-    <parameter name="SIH_MAG_OFFSET_X" default="0.0" type="FLOAT">
-      <short_desc>magnetometer X offset in Gauss</short_desc>
-      <long_desc>Absolute value superior to 10000 will disable magnetometer</long_desc>
-      <unit>gauss</unit>
-    </parameter>
-    <parameter name="SIH_MAG_OFFSET_Y" default="0.0" type="FLOAT">
-      <short_desc>magnetometer Y offset in Gauss</short_desc>
-      <long_desc>Absolute value superior to 10000 will disable magnetometer</long_desc>
-      <unit>gauss</unit>
-    </parameter>
-    <parameter name="SIH_MAG_OFFSET_Z" default="0.0" type="FLOAT">
-      <short_desc>magnetometer Z offset in Gauss</short_desc>
-      <long_desc>Absolute value superior to 10000 will disable magnetometer</long_desc>
-      <unit>gauss</unit>
     </parameter>
     <parameter name="SIH_MASS" default="1.0" type="FLOAT">
       <short_desc>Vehicle mass</short_desc>
@@ -9238,11 +9162,6 @@
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>celcius</unit>
     </parameter>
-    <parameter name="SYS_CTRL_ALLOC" default="1" type="INT32" boolean="true">
-      <short_desc>Enable Dynamic Control Allocation</short_desc>
-      <long_desc>If disabled, the existing mixing implementation is used. If enabled, dynamic control allocation with runtime configuration of the mixing and output functions is used.</long_desc>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="SYS_DM_BACKEND" default="0" type="INT32" boolean="true">
       <short_desc>Dataman storage backend</short_desc>
       <reboot_required>true</reboot_required>
@@ -9311,7 +9230,7 @@
     <parameter name="SYS_STCK_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable stack checking</short_desc>
     </parameter>
-    <parameter name="SYS_USE_IO" default="1" type="INT32">
+    <parameter name="SYS_USE_IO" default="0" type="INT32">
       <short_desc>Set usage of IO board</short_desc>
       <long_desc>Can be used to use a configure the use of the IO board.</long_desc>
       <reboot_required>true</reboot_required>
@@ -10139,15 +10058,24 @@
       <min>20000</min>
       <max>1000000</max>
     </parameter>
-    <parameter name="CANNODE_GPS_RTCM" default="0" type="INT32" boolean="true">
-      <short_desc>Enable RTCM pub/sub</short_desc>
-      <max>1</max>
-    </parameter>
     <parameter name="CANNODE_NODE_ID" default="120" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
       <min>1</min>
       <max>125</max>
+    </parameter>
+    <parameter name="CANNODE_PUB_MBD" default="0" type="INT32" boolean="true">
+      <short_desc>Enable MovingBaselineData publication</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="CANNODE_SUB_MBD" default="0" type="INT32" boolean="true">
+      <short_desc>Enable MovingBaselineData subscription</short_desc>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="CANNODE_SUB_RTCM" default="0" type="INT32" boolean="true">
+      <short_desc>Enable RTCM subscription</short_desc>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="CANNODE_TERM" default="0" type="INT32" boolean="true">
       <short_desc>CAN built-in bus termination</short_desc>
@@ -10172,10 +10100,6 @@
         <value code="2">Sensors Automatic Config</value>
         <value code="3">Sensors and Actuators (ESCs) Automatic Config</value>
       </values>
-    </parameter>
-    <parameter name="UAVCAN_ESC_IDLT" default="1" type="INT32" boolean="true">
-      <short_desc>UAVCAN ESC will spin at idle throttle when armed, even if the mixer outputs zero setpoints</short_desc>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_LGT_ANTCL" default="2" type="INT32">
       <short_desc>UAVCAN ANTI_COLLISION light operating mode</short_desc>
@@ -10530,13 +10454,6 @@
       <min>0.0</min>
       <max>200.0</max>
     </parameter>
-    <parameter name="VT_FW_MOT_OFFID" default="0" type="INT32">
-      <short_desc>The channel number of motors that must be turned off in fixed wing mode</short_desc>
-      <min>0</min>
-      <max>12345678</max>
-      <decimal>0</decimal>
-      <increment>1</increment>
-    </parameter>
     <parameter name="VT_FW_QC_P" default="0" type="INT32">
       <short_desc>QuadChute Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before QuadChute engages Above this the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
@@ -10573,30 +10490,11 @@
       <max>30.0</max>
       <unit>s</unit>
     </parameter>
-    <parameter name="VT_IDLE_PWM_MC" default="900" type="INT32">
-      <short_desc>Idle speed of VTOL when in multicopter mode</short_desc>
-      <min>900</min>
-      <max>2000</max>
-      <unit>us</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-    </parameter>
     <parameter name="VT_LND_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover landing</short_desc>
       <long_desc>Overrides  VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
-    </parameter>
-    <parameter name="VT_MC_ON_FMU" default="0" type="INT32" boolean="true">
-      <short_desc>Enable the usage of AUX outputs for hover motors</short_desc>
-      <long_desc>Set this parameter to true if the vehicle's hover motors are connected to the FMU (AUX) port. Not required for boards that only have a FMU, and no IO. Only applies for standard VTOL and tiltrotor.</long_desc>
-    </parameter>
-    <parameter name="VT_MOT_ID" default="0" type="INT32">
-      <short_desc>The channel number of motors which provide lift during hover</short_desc>
-      <min>0</min>
-      <max>12345678</max>
-      <decimal>0</decimal>
-      <increment>1</increment>
     </parameter>
     <parameter name="VT_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover</short_desc>
