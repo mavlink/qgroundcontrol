@@ -87,7 +87,7 @@ Rectangle {
 
         QGCToolBarButton {
             id:                 hybridViewButton
-            icon.source:        "/res/speedometer.svg"
+            icon.source:        "/res/engine.svg"
         }
     }
 

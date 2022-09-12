@@ -7,6 +7,7 @@
     </qresource>
     <qresource prefix="/res">
 	<file alias="speedometer.svg">resources/speedometer.svg</file>
+	<file alias="engine.svg">resources/engine.svg</file>
         <file alias="action.svg">resources/action.svg</file>
         <file alias="AntennaRC">resources/Antenna_RC.svg</file>
         <file alias="AntennaT">resources/Antenna_T.svg</file>
