@@ -28,6 +28,7 @@
         { "vendorID": 4104, "productID": 1,         "boardClass": "Pixhawk",    "name": "PX4 FMU UVify Core" },
         { "vendorID": 12643, "productID": 76,       "boardClass": "Pixhawk",    "name": "CUAV Flight Controller" },
         { "vendorID": 1155, "productID": 55,        "boardClass": "Pixhawk",    "name": "PX4 FMU SmartAP AIRLink" },
+        { "vendorID": 12677, "productID": 57,       "boardClass": "Pixhawk",    "name": "ARK FMU V6X" },
 
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
@@ -82,6 +83,8 @@
         { "regExp": "^PX4 OmnibusF4SD",     "boardClass": "Pixhawk" },
         { "regExp": "^fmuv[2345]$",         "boardClass": "Pixhawk" },
         { "regExp": "^mRoControlZeroF7",    "boardClass": "Pixhawk" },
+        { "regExp": "^ARK FMU v6X.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL FMU v6X.x$",   "boardClass": "Pixhawk" },
         { "regExp": "PX4.*Flow",            "boardClass": "PX4 Flow" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
