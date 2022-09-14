@@ -130,7 +130,10 @@ Rectangle {
         QGCButton {
             text:       qsTr("Disconnect")
             enabled:    _currentSelection && _currentSelection.link
-            onClicked:  _currentSelection.link.disconnect()
+            onClicked:  {
+                _currentSelection.link.disconnect()
+                _currentSelection.linkChanged()
+            }
         }
         QGCButton {
             text:       qsTr("MockLink Options")
