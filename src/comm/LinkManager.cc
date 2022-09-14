@@ -160,6 +160,9 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
         _mavlinkProtocol->setVersion(_mavlinkProtocol->getCurrentVersion());
 
         if (!link->_connect()) {
+            link->_freeMavlinkChannel();
+            _rgLinks.removeAt(_rgLinks.indexOf(link));
+            config->setLink(nullptr);
             return false;
         }
 
