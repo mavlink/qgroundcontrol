@@ -91,13 +91,17 @@ const float Joystick::_maxButtonFrequencyHz     = 50.0f;
 
 AssignedButtonAction::AssignedButtonAction(QObject* parent, const QString action)
     : QObject(parent)
-    , action(action)
+    , _action(action)
+    , _isPwmOverrideAction(false)
+    , _rcChannel(0)
 {
 }
 
-AssignedButtonRcPwmOverrideAction::AssignedButtonRcPwmOverrideAction(
+AssignedButtonAction::AssignedButtonAction(
     QObject *parent, const QString action, const uint16_t loPwmValue, const uint16_t hiPwmValue, bool latch)
-    : AssignedButtonAction(parent, action)
+    : QObject(parent)
+    , _action(action)
+    , _isPwmOverrideAction(true)
     , _loPwmValue(loPwmValue)
     , _hiPwmValue(hiPwmValue)
     , _latchMode(latch)
@@ -105,8 +109,13 @@ AssignedButtonRcPwmOverrideAction::AssignedButtonRcPwmOverrideAction(
 {
 }
 
-void AssignedButtonRcPwmOverrideAction::send(Vehicle *vehicle, bool buttonDown)
+void AssignedButtonAction::sendPwm(Vehicle *vehicle, bool buttonDown)
 {
+    if (!_isPwmOverrideAction) {
+        qCWarning(JoystickLog) << "send called on non-pwm action";
+        return;
+    }
+
     uint16_t pwmValue = buttonDown ? _hiPwmValue : _loPwmValue;
     if (_latchMode) {
         qCDebug(JoystickLog) << "Latch mode, current saved button state " << (_latchButtonDown ? "down" : "up");
@@ -124,22 +133,27 @@ void AssignedButtonRcPwmOverrideAction::send(Vehicle *vehicle, bool buttonDown)
     vehicle->rcChannelOverride(_rcChannel, pwmValue);
 }
 
-uint8_t AssignedButtonRcPwmOverrideAction::channel() const
+uint8_t AssignedButtonAction::pwmChannel() const
 {
     return _rcChannel;
 };
 
-void AssignedButtonRcPwmOverrideAction::setLatchMode(bool latch)
+void AssignedButtonAction::pwmLatchMode(bool latch)
 {
     _latchMode = latch;
 }
 
-bool AssignedButtonRcPwmOverrideAction::getLatchMode()
+bool AssignedButtonAction::pwmLatchMode() const
 {
     return _latchMode;
 }
 
-uint8_t AssignedButtonRcPwmOverrideAction::getRcChannelFromAction(const QString action)
+bool AssignedButtonAction::isPwmOverrideAction() const
+{
+    return _isPwmOverrideAction;
+}
+
+uint8_t AssignedButtonAction::getRcChannelFromAction(const QString action)
 {
     QRegularExpression re("^Channel (\\d{1,2}) direct PWM");
     QRegularExpressionMatch match = re.match(action);
@@ -357,10 +371,6 @@ void Joystick::_loadSettings()
     // FunctionAxis mappings are always stored in TX mode 2
     // Remap to stored TX mode in settings
     _remapAxes(2, _transmitterMode, _rgFunctionAxis);
-    //TODO add with real channels
-//    for (int channel = 8; channel <= 16; channel++) {
-//        _rcOverrides.append(nullptr);
-//    }
 
     for (int button = 0; button < _totalButtonCount; button++) {
         QString action = settings.value(QString(_buttonActionNameKey).arg(button), QString()).toString();
@@ -376,21 +386,16 @@ void Joystick::_loadSettings()
                 bool latch = settings.value(QString(_buttonActionLatchPwmValueKey).arg(button), false).toBool();
                 qCDebug(JoystickLog) << "_loadSettings button:action:pwm" << button << action << "L:" << lowPwm
                                      << " H:" << highPwm << " Latch:" << latch;
-//                int idx = channel - 8;
-//                if (_rcOverrides[idx]) {
-//                    delete _rcOverrides[idx];
-//                }
-                ap = new AssignedButtonRcPwmOverrideAction(this, action, lowPwm, highPwm, false);
-                //.append(JoystickRcOverride(channel, lowPwm, highPwm, latch));
+                ap = new AssignedButtonAction(this, action, lowPwm, highPwm, latch);
             } else {
                 ap = new AssignedButtonAction(this, action);
-                ap->repeat = settings.value(QString(_buttonActionRepeatKey).arg(button), false).toBool();
             }
+            ap->repeat(settings.value(QString(_buttonActionRepeatKey).arg(button), false).toBool());
 
             _buttonActionArray[button] = ap;
-            _buttonActionArray[button]->buttonTime.start();
-            qCDebug(JoystickLog) << "_loadSettings button:action" << button << _buttonActionArray[button]->action
-                                 << _buttonActionArray[button]->repeat;
+            _buttonActionArray[button]->buttonTime().start();
+            qCDebug(JoystickLog) << "_loadSettings button:action" << button << _buttonActionArray[button]->action()
+                                 << _buttonActionArray[button]->repeat();
 
         }
     }
@@ -408,11 +413,14 @@ void Joystick::_saveButtonSettings()
     settings.beginGroup(_name);
     for (int button = 0; button < _totalButtonCount; button++) {
         if(_buttonActionArray[button]) {
-            settings.setValue(QString(_buttonActionNameKey).arg(button),        _buttonActionArray[button]->action);
-            settings.setValue(QString(_buttonActionRepeatKey).arg(button),      _buttonActionArray[button]->repeat);
-            qCDebug(JoystickLog) << "_saveButtonSettings button:action" << button <<  _buttonActionArray[button]->action << _buttonActionArray[button]->repeat;
-            if (assignableActionIsPwm(button)) {
-                //TODO finish, but low priority
+            settings.setValue(QString(_buttonActionNameKey).arg(button),        _buttonActionArray[button]->action());
+            settings.setValue(QString(_buttonActionRepeatKey).arg(button),      _buttonActionArray[button]->repeat());
+            qCDebug(JoystickLog) << "_saveButtonSettings button:action" << button <<  _buttonActionArray[button]->action() << _buttonActionArray[button]->repeat();
+            if (_buttonActionArray[button]->isPwmOverrideAction()) {
+                settings.setValue(QString(_buttonActionLowPwmValueKey).arg(button),  _buttonActionArray[button]->lowPwm());
+                settings.setValue(QString(_buttonActionHighPwmValueKey).arg(button), _buttonActionArray[button]->highPwm());
+                settings.setValue(QString(_buttonActionLatchPwmValueKey).arg(button), _buttonActionArray[button]->pwmLatchMode());
+
             }
         }
     }
@@ -570,7 +578,7 @@ void Joystick::run()
     _axisTime.start();
     for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
         if(_buttonActionArray[buttonIndex]) {
-            _buttonActionArray[buttonIndex]->buttonTime.start();
+            _buttonActionArray[buttonIndex]->buttonTime().start();
         }
     }
     while (!_exitThread) {
@@ -621,10 +629,10 @@ void Joystick::_handleButtons()
     for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
         if(_rgButtonValues[buttonIndex] == BUTTON_DOWN || _rgButtonValues[buttonIndex] == BUTTON_REPEAT) {
             if(_buttonActionArray[buttonIndex]) {
-                QString buttonAction = _buttonActionArray[buttonIndex]->action;
+                QString buttonAction = _buttonActionArray[buttonIndex]->action();
                 if(buttonAction.isEmpty() || buttonAction == _buttonActionNone)
                     continue;
-                if(!_buttonActionArray[buttonIndex]->repeat) {
+                if(!_buttonActionArray[buttonIndex]->repeat()) {
                     //-- This button just went down
                     if(_rgButtonValues[buttonIndex] == BUTTON_DOWN) {
                         // Check for a multi-button action
@@ -632,7 +640,7 @@ void Joystick::_handleButtons()
                         bool executeButtonAction = true;
                         for (int multiIndex = 0; multiIndex < _totalButtonCount; multiIndex++) {
                             if (multiIndex != buttonIndex) {
-                                if (_buttonActionArray[multiIndex] && _buttonActionArray[multiIndex]->action == buttonAction) {
+                                if (_buttonActionArray[multiIndex] && _buttonActionArray[multiIndex]->action() == buttonAction) {
                                     // We found a multi-button action
                                     if (_rgButtonValues[multiIndex] == BUTTON_DOWN || _rgButtonValues[multiIndex] == BUTTON_REPEAT) {
                                         // So far so good
@@ -654,8 +662,8 @@ void Joystick::_handleButtons()
                 } else {
                     //-- Process repeat buttons
                     int buttonDelay = static_cast<int>(1000.0f / _buttonFrequencyHz);
-                    if(_buttonActionArray[buttonIndex]->buttonTime.elapsed() > buttonDelay) {
-                        _buttonActionArray[buttonIndex]->buttonTime.start();
+                    if(_buttonActionArray[buttonIndex]->buttonTime().elapsed() > buttonDelay) {
+                        _buttonActionArray[buttonIndex]->buttonTime().start();
                         qCDebug(JoystickLog) << "Repeat button triggered" << buttonIndex << buttonAction;
                         _executeButtonAction(buttonAction, buttonIndex, true);
                     }
@@ -668,7 +676,7 @@ void Joystick::_handleButtons()
             if(buttonIndex < 256) {
                 if(lastBbuttonValues[buttonIndex] == BUTTON_DOWN || lastBbuttonValues[buttonIndex] == BUTTON_REPEAT) {
                     if(_buttonActionArray[buttonIndex]) {
-                        QString buttonAction = _buttonActionArray[buttonIndex]->action;
+                        QString buttonAction = _buttonActionArray[buttonIndex]->action();
                         if(buttonAction.isEmpty() || buttonAction == _buttonActionNone)
                             continue;
                         qCDebug(JoystickLog) << "Button up" << buttonIndex << buttonAction;
@@ -881,13 +889,13 @@ void Joystick::setButtonRepeat(int button, bool repeat)
     if (!_validButton(button) || !_buttonActionArray[button]) {
         return;
     }
-    _buttonActionArray[button]->repeat = repeat;
-    _buttonActionArray[button]->buttonTime.start();
+    _buttonActionArray[button]->repeat(repeat);
+    _buttonActionArray[button]->buttonTime().start();
     //-- Save to settings
     QSettings settings;
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(_name);
-    settings.setValue(QString(_buttonActionRepeatKey).arg(button), _buttonActionArray[button]->repeat);
+    settings.setValue(QString(_buttonActionRepeatKey).arg(button), _buttonActionArray[button]->repeat());
 }
 
 bool Joystick::getButtonRepeat(int button)
@@ -895,7 +903,7 @@ bool Joystick::getButtonRepeat(int button)
     if (!_validButton(button) || !_buttonActionArray[button]) {
         return false;
     }
-    return _buttonActionArray[button]->repeat;
+    return _buttonActionArray[button]->repeat();
 }
 
 void Joystick::setButtonAction(int button, const QString& action)
@@ -909,12 +917,16 @@ void Joystick::setButtonAction(int button, const QString& action)
     settings.beginGroup(_name);
     if(action.isEmpty() || action == _buttonActionNone) {
         if(_buttonActionArray[button]) {
-            _buttonActionArray[button]->deleteLater();
-            _buttonActionArray[button] = nullptr;
             //-- Clear from settings
-            //TODO clear if PWM type
             settings.remove(QString(_buttonActionNameKey).arg(button));
             settings.remove(QString(_buttonActionRepeatKey).arg(button));
+            if (_buttonActionArray[button]->isPwmOverrideAction()) {
+                settings.remove(QString(_buttonActionHighPwmValueKey).arg(button));
+                settings.remove(QString(_buttonActionLowPwmValueKey).arg(button));
+                settings.remove(QString(_buttonActionLatchPwmValueKey).arg(button));
+            }
+            _buttonActionArray[button]->deleteLater();
+            _buttonActionArray[button] = nullptr;
         }
     } else {
         bool isPwmAction = assignableActionIsPwm(action);
@@ -922,7 +934,7 @@ void Joystick::setButtonAction(int button, const QString& action)
 
         if(!_buttonActionArray[button]) {
             if (isPwmAction) {
-                ap = new AssignedButtonRcPwmOverrideAction(this, action, 0, 0, false);
+                ap = new AssignedButtonAction(this, action, 0, 0, false);
             } else {
                 ap = new AssignedButtonAction(this, action);
             }
@@ -931,23 +943,28 @@ void Joystick::setButtonAction(int button, const QString& action)
             if (isPwmAction) {
                 //TODO fix it better, maybe one aciton with PWM values in it
                 _buttonActionArray[button]->deleteLater();
-                ap = new AssignedButtonRcPwmOverrideAction(this, action, 0, 0, false);
+                ap = new AssignedButtonAction(this, action, 0, 0, false);
                 _buttonActionArray[button] = ap;
             }
-            _buttonActionArray[button]->action = action;
+            _buttonActionArray[button]->action(action);
         }
         //-- Make sure repeat is off if this action doesn't support repeats
         int idx = _findAssignableButtonAction(action);
         if(idx >= 0) {
             AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[idx]);
             if(!p->canRepeat()) {
-                _buttonActionArray[button]->repeat = false;
+                _buttonActionArray[button]->repeat(false);
             }
         }
 
         //-- Save to settings
-        settings.setValue(QString(_buttonActionNameKey).arg(button),   _buttonActionArray[button]->action);
-        settings.setValue(QString(_buttonActionRepeatKey).arg(button), _buttonActionArray[button]->repeat);
+        settings.setValue(QString(_buttonActionNameKey).arg(button),   _buttonActionArray[button]->action());
+        settings.setValue(QString(_buttonActionRepeatKey).arg(button), _buttonActionArray[button]->repeat());
+        if (isPwmAction) {
+            settings.setValue(QString(_buttonActionLowPwmValueKey).arg(button), _buttonActionArray[button]->lowPwm());
+            settings.setValue(QString(_buttonActionHighPwmValueKey).arg(button), _buttonActionArray[button]->highPwm());
+            settings.setValue(QString(_buttonActionLatchPwmValueKey).arg(button), _buttonActionArray[button]->pwmLatchMode());
+        }
     }
     emit buttonActionsChanged();
 }
@@ -956,7 +973,7 @@ QString Joystick::getButtonAction(int button)
 {
     if (_validButton(button)) {
         if(_buttonActionArray[button]) {
-            return _buttonActionArray[button]->action;
+            return _buttonActionArray[button]->action();
         }
     }
     return QString(_buttonActionNone);
@@ -977,6 +994,7 @@ bool Joystick::assignableActionIsPwm(QString action) {
 }
 
 void Joystick::setButtonPwm(int button, bool lowPwm, int value) {
+    //TODO czy tutaj przychodzi z GUI i trzeba ustawic tez w _buttonActionArray[button]?
     qDebug(JoystickLog) << "setButtonPwm: " << button << (lowPwm ? "LOW " : "HIGH ") << value;
     if (_validButton(button)) {
         if (assignableActionIsPwm(button)) {
@@ -996,8 +1014,6 @@ int Joystick::getButtonPwm(int button, bool lowPwm) {
     qDebug(JoystickLog) << "getButtonPwm: " << button << (lowPwm ? "LOW " : "HIGH ");
     if (_validButton(button)) {
         if (assignableActionIsPwm(button)) {
-//            const AssignedButtonRcPwmOverrideAction *ap = dynamic_cast<const AssignedButtonRcPwmOverrideAction *>(_buttonActionArray[button]);
-//            int rc = ap->channel();
             QSettings settings;
             settings.beginGroup(_settingsGroup);
             settings.beginGroup(_name);
@@ -1018,16 +1034,15 @@ void Joystick::setButtonPwmLatch(int button, bool latch)
     }
     qCDebug(JoystickLog) << "PWM Latch mode for button " << button << (latch ? " enabled" : " disabled");
     //TODO check is really this class
-    AssignedButtonRcPwmOverrideAction *action = dynamic_cast<AssignedButtonRcPwmOverrideAction *>(_buttonActionArray[button]);
-    action->setLatchMode(latch);
+    auto *action = (_buttonActionArray[button]);
+    action->pwmLatchMode(latch);
 
     //TODO finish saving settings
-/*
+
     QSettings settings;
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(_name);
-    settings.setValue(QString(_buttonActionRepeatKey).arg(button), _buttonActionArray[button]->repeat);
-    */
+    settings.setValue(QString(_buttonActionLatchPwmValueKey).arg(button), action->pwmLatchMode());
 }
 
 bool Joystick::getButtonPwmLatch(int button) {
@@ -1035,8 +1050,8 @@ bool Joystick::getButtonPwmLatch(int button) {
         return false;
     }
     //TODO check is really this class
-    AssignedButtonRcPwmOverrideAction *action = dynamic_cast<AssignedButtonRcPwmOverrideAction *>(_buttonActionArray[button]);
-    return action->getLatchMode();
+    auto *action = (_buttonActionArray[button]);
+    return action->pwmLatchMode();
 }
 
 QStringList Joystick::buttonActions()
@@ -1330,6 +1345,7 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
 
+    // TODO(bzd) take channel nos from config, especially max
     for (int ch = 8; ch <= 16;ch++) {
          _assignableButtonActions.append(new AssignableButtonAction(this, QString("Channel %1 direct PWM").arg(ch)));
     }
@@ -1349,23 +1365,8 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
 bool Joystick::_executeRcOverrideButtonAction(int buttonIndex, bool buttonDown)
 {
     if (_buttonActionArray[buttonIndex]) {
-        AssignedButtonRcPwmOverrideAction* buttonAction =
-            dynamic_cast<AssignedButtonRcPwmOverrideAction *>(_buttonActionArray[buttonIndex]);
-        buttonAction->send(_activeVehicle, buttonDown);
+        _buttonActionArray[buttonIndex]->sendPwm(_activeVehicle, buttonDown);
+        return true;
     }
     return  false;
-/*    int channelNo = getRcChannelFromAction(action);
-    if (channelNo == -1) {
-        return false;
-    }
-    qCDebug(JoystickLog) << "RC override matched for channel " << channelNo;
-    //TODO make a map rcChannel : override (ev null if not set)
-    for (auto& item : _rcOverrides) {
-        if (channelNo == item->channel()) {
-            qCDebug(JoystickLog) << "Sending RC override " << channelNo;
-            item->send(_activeVehicle, buttonDown);
-            return true;
-        }
-    }
-    return false;*/
 }

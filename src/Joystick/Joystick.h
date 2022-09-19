@@ -30,34 +30,38 @@ class AssignedButtonAction : public QObject {
     Q_OBJECT
 public:
     AssignedButtonAction(QObject* parent, const QString action);
-    QString action;
-    QElapsedTimer buttonTime;
-    bool    repeat = false;
-};
 
-/// Action of RC Pwm value override assigned to button
-class AssignedButtonRcPwmOverrideAction : public AssignedButtonAction {
-    Q_OBJECT
-public:
-    AssignedButtonRcPwmOverrideAction(QObject* parent, const QString name,
-                       const uint16_t loPwmValue,
-                       const uint16_t hiPwmValue,
-                       bool latch);
-    void send(Vehicle* vehicle, bool buttonDown);
-    uint8_t channel() const;
-    void setLatchMode(bool latch);
-    bool getLatchMode();
+    AssignedButtonAction(QObject* parent, const QString action,
+                                      const uint16_t loPwmValue,
+                                      const uint16_t hiPwmValue,
+                                      bool latch);
+    QString action() const { return _action; }
+    void action(const QString& action) { _action = action; }
+    QElapsedTimer buttonTime() const { return _buttonTime; }
+    bool repeat() const { return _repeat; }
+    void repeat(bool repeat) { _repeat = repeat; }
+
+    uint16_t lowPwm() const { return _loPwmValue; }
+    uint16_t highPwm() const { return _hiPwmValue; }
+    uint8_t pwmChannel() const;
+    void pwmLatchMode(bool latch);
+    bool pwmLatchMode() const;
+    bool isPwmOverrideAction() const;
+    void sendPwm(Vehicle* vehicle, bool buttonDown);
     static uint8_t getRcChannelFromAction(const QString action);
 
 private:
+    QString _action;
+    QElapsedTimer _buttonTime;
+    bool    _repeat = false;
+/// PWM override related fields
+    const bool _isPwmOverrideAction;
     const uint8_t _rcChannel;
     uint16_t _loPwmValue;
     uint16_t _hiPwmValue;
     bool _latchMode;
     bool _latchButtonDown = false;
-
 };
-
 
 /// Assignable Button Action
 class AssignableButtonAction : public QObject {

@@ -4313,6 +4313,7 @@ void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
 
 void Vehicle::rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue)
 {
+    // TODO(bzd) take from joystick settings
     const int maxRcChannels = 16;
     if (rcChannel > maxRcChannels) {
         qCWarning(VehicleLog) << "Unsupported rc channel " << rcChannel << " to override";
