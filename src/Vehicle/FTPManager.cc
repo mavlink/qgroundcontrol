@@ -391,18 +391,22 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
             emit commandProgress((float)(_downloadState.bytesWritten) / (float)_downloadState.fileSize);
         }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
-        if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
-            qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Disregarding Nak due to incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
-            return;
-        }
-
         MavlinkFTP::ErrorCode_t errorCode = static_cast<MavlinkFTP::ErrorCode_t>(ackOrNak->data[0]);
 
         if (errorCode == MavlinkFTP::kErrEOF) {
             // Burst sequence has gone through the whole file
-            qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak EOF";
-            _advanceStateMachine();
-        } else {
+            if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
+                qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: EOF Nak"
+                    "with incorrect sequence nr actual:expected"
+                    << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+                /* We have received the EOF Nak but out of sequence, i.e. data is missing */
+                _expectedIncomingSeqNumber = ackOrNak->hdr.seqNumber;
+                _burstReadFileWorker(true); /* Retry from last expected offset */
+            } else {
+                qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak EOF";
+                _advanceStateMachine();
+            }
+        } else { /* Don't care is this is out of sequence */
             qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
             _downloadComplete(tr("Download failed"));
         }
