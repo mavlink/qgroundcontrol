@@ -110,7 +110,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 #ifndef QGC_DISABLE_UVC
    // If we are using a UVC camera setup the device name
    _updateUVC();
-   emit isUvcChanged();
 #endif
 
     emit isGStreamerChanged();
