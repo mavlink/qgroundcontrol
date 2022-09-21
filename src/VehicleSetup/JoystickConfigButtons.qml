@@ -89,10 +89,6 @@ ColumnLayout {
                                 }
                             }
 
-                            function _isCurrentButtonActionPwm() {
-                                return _activeJoystick ? _activeJoystick.assignableActionIsPwm(modelData) : false
-                            }
-
                             Component.onCompleted:  _findCurrentButtonAction()
                             onModelChanged:         _findCurrentButtonAction()
                             onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
@@ -119,9 +115,8 @@ ColumnLayout {
 
                     Row {
                         id: pwmSettings
-                        property bool pwmRowVisible: buttonActionCombo._isCurrentButtonActionPwm()
                         spacing:    ScreenTools.defaultFontPixelWidth
-                        visible: pwmRowVisible
+                        visible: _activeJoystick ? _activeJoystick.pwmVisibilities[modelData] : false
 
                         function _setButtonPwm(button, isLow, pwm) {
                             if(_activeJoystick) {

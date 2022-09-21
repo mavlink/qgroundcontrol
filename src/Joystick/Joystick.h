@@ -129,6 +129,7 @@ public:
     Q_PROPERTY(QmlObjectListModel* assignableActions    READ assignableActions          NOTIFY      assignableActionsChanged)
     Q_PROPERTY(QStringList assignableActionTitles       READ assignableActionTitles     NOTIFY      assignableActionsChanged)
     Q_PROPERTY(QString  disabledActionName              READ disabledActionName         CONSTANT)
+    Q_PROPERTY(QList<bool> pwmVisibilities             READ pwmVisibilities            NOTIFY      pwmVisibilitiesChanged)
 
     Q_PROPERTY(int      throttleMode            READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
     Q_PROPERTY(float    axisFrequencyHz         READ axisFrequencyHz        WRITE setAxisFrequency      NOTIFY axisFrequencyHzChanged)
@@ -164,6 +165,7 @@ public:
     QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
     QStringList assignableActionTitles      () { return _availableActionTitles; }
     QString     disabledActionName          () { return _buttonActionNone; }
+    QList<bool> pwmVisibilities             () { return _pwmVisibilities; }
 
     /// Start the polling thread which will in turn emit joystick signals
     void startPolling(Vehicle* vehicle);
@@ -226,6 +228,7 @@ signals:
     void calibratedChanged          (bool calibrated);
     void buttonActionsChanged       ();
     void assignableActionsChanged   ();
+    void pwmVisibilitiesChanged     ();
     void throttleModeChanged        (int mode);
     void negativeThrustChanged      (bool allowNegative);
     void exponentialChanged         (float exponential);
@@ -339,6 +342,8 @@ protected:
     QmlObjectListModel              _assignableButtonActions;
     QList<AssignedButtonAction*>    _buttonActionArray;
     QStringList                     _availableActionTitles;
+    //TODO(bzd) refactor name
+    QList<bool>                     _pwmVisibilities;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
     QList<JoystickMavCommand>  _customMavCommands;

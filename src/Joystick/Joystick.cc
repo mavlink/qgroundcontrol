@@ -372,7 +372,12 @@ void Joystick::_loadSettings()
     // Remap to stored TX mode in settings
     _remapAxes(2, _transmitterMode, _rgFunctionAxis);
 
+    while (_pwmVisibilities.length() < _totalButtonCount) {
+        _pwmVisibilities.push_back(false);
+    }
+
     for (int button = 0; button < _totalButtonCount; button++) {
+        _pwmVisibilities[button] = false;
         QString action = settings.value(QString(_buttonActionNameKey).arg(button), QString()).toString();
         if (!action.isEmpty() && action != _buttonActionNone) {
             if (_buttonActionArray[button]) {
@@ -381,6 +386,7 @@ void Joystick::_loadSettings()
 
             AssignedButtonAction *ap;
             if (assignableActionIsPwm(action)) {
+                _pwmVisibilities[button] = true;
                 int lowPwm = settings.value(QString(_buttonActionLowPwmValueKey).arg(button), -1).toInt();
                 int highPwm = settings.value(QString(_buttonActionHighPwmValueKey).arg(button), -1).toInt();
                 bool latch = settings.value(QString(_buttonActionLatchPwmValueKey).arg(button), false).toBool();
@@ -916,6 +922,7 @@ void Joystick::setButtonAction(int button, const QString& action)
     settings.beginGroup(_settingsGroup);
     settings.beginGroup(_name);
     if(action.isEmpty() || action == _buttonActionNone) {
+        _pwmVisibilities[button] = false;
         if(_buttonActionArray[button]) {
             //-- Clear from settings
             settings.remove(QString(_buttonActionNameKey).arg(button));
@@ -930,8 +937,10 @@ void Joystick::setButtonAction(int button, const QString& action)
         }
     } else {
         bool isPwmAction = assignableActionIsPwm(action);
+        _pwmVisibilities[button] = isPwmAction;
+        qCDebug(JoystickLog) << "setButtonAction: isPwmAction" << isPwmAction;
         AssignedButtonAction *ap;
-
+//TODO(bzd) rethink this section
         if(!_buttonActionArray[button]) {
             if (isPwmAction) {
                 ap = new AssignedButtonAction(this, action, 0, 0, false);
@@ -966,6 +975,7 @@ void Joystick::setButtonAction(int button, const QString& action)
             settings.setValue(QString(_buttonActionLatchPwmValueKey).arg(button), _buttonActionArray[button]->pwmLatchMode());
         }
     }
+    emit pwmVisibilitiesChanged();
     emit buttonActionsChanged();
 }
 
