@@ -4177,3 +4177,14 @@ void Vehicle::triggerSimpleCamera()
                    0.0, 0.0, 0.0, 0.0,          // param 1-4 unused
                    1.0);                        // trigger camera
 }
+
+void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
+{
+    sendMavCommand(
+            _defaultComponentId,
+            MAV_CMD_DO_GRIPPER,
+            false,                               // Don't show errors
+            0,                                   // Param1: Gripper ID (Always set to 0)
+            gripperAction,                       // Param2: Gripper Action
+            0, 0, 0, 0, 0);                      // Param 3 ~ 7 : unused
+}
