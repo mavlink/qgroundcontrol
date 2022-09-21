@@ -46,6 +46,7 @@
         <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/Common/Images/QuadRotorX.svg</file>
         <file alias="AirframeSimulation.png">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
         <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/Common/Images/Plane.svg</file>
+        <file alias="Airframe/PNU_Cargo cox">src/AutoPilotPlugins/Common/Images/PNUCargocox.svg</file>
         <file alias="AlertAircraft.svg">src/FlightMap/Images/AlertAircraft.svg</file>
         <file alias="Analyze.svg">src/ui/toolbar/Images/Analyze.svg</file>
         <file alias="APM/BrandImage">src/FirmwarePlugin/APM/APMBrandImage.png</file>
