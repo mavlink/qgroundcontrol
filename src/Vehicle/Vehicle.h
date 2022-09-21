@@ -517,6 +517,14 @@ public:
     void setFlightMode                      (const QString& flightMode);
 
     bool airship() const;
+
+    /**
+     * @brief Send MAV_CMD_DO_GRIPPER command to trigger specified action in the vehicle
+     * 
+     * @param gripperAction Gripper action to trigger
+     */
+    void setGripperAction(GRIPPER_ACTIONS gripperAction);
+
     bool fixedWing() const;
     bool multiRotor() const;
     bool vtol() const;
