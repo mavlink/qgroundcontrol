@@ -65,6 +65,8 @@ const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left"
 const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
 const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
 const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
+const char* Joystick::_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
+const char* Joystick::_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -106,6 +108,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _totalButtonCount(_buttonCount+_hatButtonCount)
     , _multiVehicleManager(multiVehicleManager)
 {
+    qRegisterMetaType<GRIPPER_ACTIONS>();
+
     _rgAxisValues   = new int[static_cast<size_t>(_axisCount)];
     _rgCalibration  = new Calibration_t[static_cast<size_t>(_axisCount)];
     _rgButtonValues = new uint8_t[static_cast<size_t>(_totalButtonCount)];
@@ -697,6 +701,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
+            disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -719,6 +724,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
+            connect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
         }
     }
     if (!isRunning()) {
@@ -738,6 +744,7 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
         }
         _exitThread = true;
     }
@@ -1027,6 +1034,14 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         }
     } else if(action == _buttonActionEmergencyStop) {
       if(buttonDown) emit emergencyStop();
+    } else if(action == _buttonActionGripperGrab) {
+        if(buttonDown) {
+            emit gripperAction(GRIPPER_ACTION_GRAB);
+        }
+    } else if(action == _buttonActionGripperRelease) {
+        if(buttonDown) {
+            emit gripperAction(GRIPPER_ACTION_RELEASE);
+        }
     } else {
         if (buttonDown && _activeVehicle) {
             for (auto& item : _customMavCommands) {
@@ -1036,7 +1051,6 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
                 }
             }
         }
-        qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
 }
 
@@ -1124,8 +1138,12 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
-    for (auto& item : _customMavCommands)
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
+
+    for (auto& item : _customMavCommands) {
         _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
+    }
 
     for(int i = 0; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
