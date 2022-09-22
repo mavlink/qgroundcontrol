@@ -167,6 +167,7 @@ ColumnLayout {
                             implicitHeight:     ScreenTools.implicitTextFieldHeight
                             visible:                true
                             validator: IntValidator { bottom:1000; top: 2000}
+
                             Component.onCompleted: {
                                 if(_activeJoystick) {
                                     text = parent._getButtonPwm(modelData, false)

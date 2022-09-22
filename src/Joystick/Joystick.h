@@ -28,6 +28,7 @@ Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 /// Action assigned to button
 class AssignedButtonAction : public QObject {
     Q_OBJECT
+
 public:
     AssignedButtonAction(QObject* parent, const QString action);
 
@@ -43,10 +44,11 @@ public:
 
     uint16_t lowPwm() const { return _loPwmValue; }
     uint16_t highPwm() const { return _hiPwmValue; }
-    uint8_t pwmChannel() const;
-    void pwmLatchMode(bool latch);
-    bool pwmLatchMode() const;
-    bool isPwmOverrideAction() const;
+    void lowPwm(uint16_t value) { _loPwmValue = value; }
+    void highPwm(uint16_t value) { _hiPwmValue = value; }
+    void pwmLatchMode(bool latch) { _pwmLatchMode = latch; }
+    bool pwmLatchMode() const { return _pwmLatchMode; }
+    bool isPwmOverrideAction() const { return _isPwmOverrideAction; }
     void sendPwm(Vehicle* vehicle, bool buttonDown);
     static uint8_t getRcChannelFromAction(const QString action);
 
@@ -56,11 +58,11 @@ private:
     bool    _repeat = false;
 /// PWM override related fields
     const bool _isPwmOverrideAction;
-    const uint8_t _rcChannel;
     uint16_t _loPwmValue;
     uint16_t _hiPwmValue;
-    bool _latchMode;
-    bool _latchButtonDown = false;
+    bool _pwmLatchMode;
+    const uint8_t _pwmRcChannel;
+    bool _pwmLatchButtonDown = false;
 };
 
 /// Assignable Button Action
@@ -149,14 +151,12 @@ public:
     Q_INVOKABLE bool    getButtonPwmLatch   (int button);
     Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
     Q_INVOKABLE QString getButtonAction     (int button);
-    Q_INVOKABLE bool    assignableActionIsPwm   (int button);
+    Q_INVOKABLE bool assignableButtonActionIsPwm(int button);
     Q_INVOKABLE bool    assignableActionIsPwm   (QString action);
-    Q_INVOKABLE void    setButtonPwm     (int button, bool lowPwm, int value);
-    Q_INVOKABLE int     getButtonPwm     (int button, bool lowPwm);
-
+    Q_INVOKABLE void    setButtonPwm        (int button, bool lowPwm, int value);
+    Q_INVOKABLE int     getButtonPwm        (int button, bool lowPwm);
 
     // Property accessors
-
     QString     name                () { return _name; }
     int         totalButtonCount    () const{ return _totalButtonCount; }
     int         axisCount           () const{ return _axisCount; }
@@ -165,7 +165,7 @@ public:
     QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
     QStringList assignableActionTitles      () { return _availableActionTitles; }
     QString     disabledActionName          () { return _buttonActionNone; }
-    QList<bool> pwmVisibilities             () { return _pwmVisibilities; }
+    QList<bool> pwmVisibilities             () { return _pwmSettingsVisibilities; }
 
     /// Start the polling thread which will in turn emit joystick signals
     void startPolling(Vehicle* vehicle);
@@ -295,6 +295,12 @@ private:
     int _mapFunctionMode(int mode, int function);
     void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]);
 
+    void removeButtonSettings(int button);
+    void saveButtonSettings(int button);
+    /// if repeat is available for action under button, sets passed repeat flag
+    /// otherwise sets false as safe value
+    void setButtonRepeatIfAvailable(int button, bool repeat);
+
     // Override from QThread
     virtual void run();
 
@@ -342,8 +348,7 @@ protected:
     QmlObjectListModel              _assignableButtonActions;
     QList<AssignedButtonAction*>    _buttonActionArray;
     QStringList                     _availableActionTitles;
-    //TODO(bzd) refactor name
-    QList<bool>                     _pwmVisibilities;
+    QList<bool>                     _pwmSettingsVisibilities;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
     QList<JoystickMavCommand>  _customMavCommands;
