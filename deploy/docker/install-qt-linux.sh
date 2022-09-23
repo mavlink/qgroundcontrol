@@ -10,8 +10,8 @@ QT_MODULES="${QT_MODULES:-qtcharts}"
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-apt update
-apt install python3 python3-pip -y
+apt-get update
+apt-get install python3 python3-pip -y
 pip3 install aqtinstall
 aqt install --outputdir ${QT_PATH} ${QT_VERSION} ${QT_HOST} ${QT_TARGET} -m ${QT_MODULES}
 echo "Remember to export the following to your PATH: ${QT_PATH}/${QT_VERSION}/*/bin"
