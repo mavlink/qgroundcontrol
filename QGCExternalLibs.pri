@@ -296,12 +296,12 @@ contains (DEFINES, DISABLE_AIRMAP) {
             LIBS += -L$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
-    } else {
+    } else:LinuxBuild {
         AIRMAP_PLATFORM_SDK_ARCH = ""
-        LinuxBuild {
-            AIRMAP_PLATFORM_SDK_ARCH = "x86_64"
-        } else:AndroidBuild {
+        contains (QT_ARCH, arm64-v8a) {
             AIRMAP_PLATFORM_SDK_ARCH = "aarch64"
+        } else:contains (QT_ARCH, x86_64) {
+            AIRMAP_PLATFORM_SDK_ARCH = "x86_64"
         }
         isEmpty( AIRMAP_PLATFORM_SDK_ARCH ) {
             message("Skipping support for Airmap (unsupported architecture)")
