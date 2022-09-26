@@ -298,13 +298,13 @@ contains (DEFINES, DISABLE_AIRMAP) {
         }
     } else:LinuxBuild {
         AIRMAP_PLATFORM_SDK_ARCH = ""
-        contains (QT_ARCH, arm64-v8a) {
+        contains (QT_ARCH, arm64) {
             AIRMAP_PLATFORM_SDK_ARCH = "aarch64"
         } else:contains (QT_ARCH, x86_64) {
             AIRMAP_PLATFORM_SDK_ARCH = "x86_64"
         }
         isEmpty( AIRMAP_PLATFORM_SDK_ARCH ) {
-            message("Skipping support for Airmap (unsupported architecture)")
+            message($$sprintf("Skipping support for Airmap (unsupported architecture: '%1')", $$QT_ARCH))
         } else {
             #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
             AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.0.1/airmap-platform-sdk-2.0.1-Linux-$${AIRMAP_PLATFORM_SDK_ARCH}.deb"
