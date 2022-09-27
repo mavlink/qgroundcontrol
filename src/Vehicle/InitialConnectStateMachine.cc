@@ -221,7 +221,7 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
             vehicle->requestMessage(_protocolVersionRequestMessageHandler,
                                     connectMachine,
                                     MAV_COMP_ID_AUTOPILOT1,
-                                    MAVLINK_MSG_ID_AUTOPILOT_VERSION);
+                                    MAVLINK_MSG_ID_PROTOCOL_VERSION);
         }
     }
 }
