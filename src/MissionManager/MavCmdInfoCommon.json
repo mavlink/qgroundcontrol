@@ -630,6 +630,37 @@
                 "decimalPlaces":    0
             }
         },
+        {
+            "id":           187,
+            "rawName":      "MAV_CMD_DO_SET_ACTUATOR",
+            "friendlyName": "Set actuator",
+            "description":  "Set actuator to specified output value (range [-1, 1]).",
+            "friendlyEdit": true,
+            "param1": {
+                "label":            "Actuator 1",
+                "default":          null,
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
+            },
+            "param2": {
+                "label":            "Actuator 2",
+                "default":          null,
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
+            },
+            "param3": {
+                "label":            "Actuator 3",
+                "default":          null,
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
+            },
+            "param4": {
+                "label":            "Actuator 4",
+                "default":          null,
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
+            }
+        },
         { "id": 185, "rawName": "MAV_CMD_DO_FLIGHTTERMINATION", "friendlyName": "Flight termination" },
         {
             "id":                   189,
