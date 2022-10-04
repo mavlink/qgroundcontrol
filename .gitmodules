@@ -15,7 +15,7 @@
 	url = https://github.com/Auterion/xz-embedded.git
 [submodule "libs/libevents/libevents"]
 	path = libs/libevents/libevents
-	url = https://github.com/mavlink/libevents.git
+	url = https://github.com/eyubSalihOzdemir/SearoverQGC-libevents
 [submodule "libs/eigen"]
 	path = libs/eigen
 	url = https://gitlab.com/libeigen/eigen.git
