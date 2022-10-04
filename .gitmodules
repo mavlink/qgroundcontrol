@@ -24,4 +24,4 @@
 	url = https://github.com/patrickelectric/qmdnsengine
 [submodule "libs/json"]
 	path = libs/json
-	url = https://github.com/nlohmann/json
+	url = https://github.com/nlohmann/jsonn
