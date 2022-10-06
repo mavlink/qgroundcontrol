@@ -212,16 +212,17 @@
       <unit>rad</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="ASPD_DO_CHECKS" default="7" type="INT32">
+    <parameter name="ASPD_DO_CHECKS" default="23" type="INT32">
       <short_desc>Enable checks on airspeed sensors</short_desc>
       <long_desc>Controls which checks are run to check airspeed data for validity. Only applied if ASPD_PRIMARY &gt; 0. Note that the data missing check is enabled if any of the options is set.</long_desc>
       <min>0</min>
-      <max>15</max>
+      <max>31</max>
       <bitmask>
         <bit index="0">Only data missing check (triggers if more than 1s no data)</bit>
-        <bit index="1">Data stuck (triggers if data is exactly constant for 2s)</bit>
+        <bit index="1">Data stuck (triggers if data is exactly constant for 2s in FW mode)</bit>
         <bit index="2">Innovation check (see ASPD_FS_INNOV)</bit>
         <bit index="3">Load factor check (triggers if measurement is below stall speed)</bit>
+        <bit index="4">Check for data variation in first 10s after sensor connection</bit>
       </bitmask>
     </parameter>
     <parameter name="ASPD_FALLBACK_GW" default="0" type="INT32" boolean="true">
@@ -568,6 +569,21 @@
         <bit index="1">pitch</bit>
         <bit index="2">yaw</bit>
       </bitmask>
+    </parameter>
+    <parameter name="FW_AT_MAN_AUX" default="0" type="INT32">
+      <short_desc>Enable auto tuning enable on aux input</short_desc>
+      <long_desc>Defines which aux input to enable auto tuning</long_desc>
+      <min>0</min>
+      <max>6</max>
+      <values>
+        <value code="0">Disable</value>
+        <value code="1">Aux1</value>
+        <value code="2">Aux2</value>
+        <value code="3">Aux3</value>
+        <value code="4">Aux4</value>
+        <value code="5">Aux5</value>
+        <value code="6">Aux6</value>
+      </values>
     </parameter>
     <parameter name="FW_AT_START" default="0" type="INT32" boolean="true">
       <short_desc>Start the autotuning sequence</short_desc>
@@ -3462,6 +3478,13 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="FW_WIND_ARSP_SC" default="0." type="FLOAT">
+      <short_desc>Wind-based airspeed scaling factor</short_desc>
+      <long_desc>Multiplying this factor with the current absolute wind estimate gives the airspeed offset added to the minimum airspeed setpoint limit. This helps to make the system more robust against disturbances (turbulence) in high wind. Only applies to AUTO flight mode. airspeed_min_adjusted = FW_AIRSPD_MIN + FW_WIND_ARSP_SC * wind.length()</long_desc>
+      <min>0</min>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
   </group>
   <group name="Failure Detector">
     <parameter name="FD_ACT_EN" default="1" type="INT32" boolean="true">
@@ -3678,6 +3701,13 @@
       <long_desc>Enable publication of satellite info (ORB_ID(satellite_info)) if possible. Not available on MTK.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="GPS_UBX_BAUD2" default="230400" type="INT32">
+      <short_desc>u-blox F9P UART2 Baudrate</short_desc>
+      <long_desc>Select a baudrate for the F9P's UART2 port. In GPS_UBX_MODE 1, 2, and 3, the F9P's UART2 port is configured to send/receive RTCM corrections. Set this to 57600 if you want to attach a telemetry radio on UART2.</long_desc>
+      <min>0</min>
+      <unit>B/s</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="GPS_UBX_DYNMODEL" default="7" type="INT32">
       <short_desc>u-blox GPS dynamic platform model</short_desc>
       <long_desc>u-blox receivers support different dynamic platform models to adjust the navigation engine to the expected application environment.</long_desc>
@@ -3694,7 +3724,7 @@
     </parameter>
     <parameter name="GPS_UBX_MODE" default="0" type="INT32">
       <short_desc>u-blox GPS Mode</short_desc>
-      <long_desc>Select the u-blox configuration setup. Most setups will use the default, including RTK and dual GPS without heading. The Heading mode requires 2 F9P devices to be attached. The main GPS will act as rover and output heading information, whereas the secondary will act as moving base. Modes 1 and 2 require each F9P UART1 to be connected to the Autopilot. In addition, UART2 on the F9P units are connected to each other. Modes 3 and 4 only require UART1 on each F9P connected to the Autopilot or Can Node. UART RX DMA is required. RTK is still possible with this setup.</long_desc>
+      <long_desc>Select the u-blox configuration setup. Most setups will use the default, including RTK and dual GPS without heading. If rover has RTCM corrections from a static base (or other static correction source) coming in on UART2, then select Mode 5. The Heading mode requires 2 F9P devices to be attached. The main GPS will act as rover and output heading information, whereas the secondary will act as moving base. Modes 1 and 2 require each F9P UART1 to be connected to the Autopilot. In addition, UART2 on the F9P units are connected to each other. Modes 3 and 4 only require UART1 on each F9P connected to the Autopilot or Can Node. UART RX DMA is required. RTK is still possible with this setup.</long_desc>
       <min>0</min>
       <max>1</max>
       <reboot_required>true</reboot_required>
@@ -3704,6 +3734,7 @@
         <value code="2">Moving Base (UART1 Connected To Autopilot, UART2 Connected To Rover)</value>
         <value code="3">Heading (Rover With Moving Base UART1 Connected to Autopilot Or Can Node At 921600)</value>
         <value code="4">Moving Base (Moving Base UART1 Connected to Autopilot Or Can Node At 921600)</value>
+        <value code="5">Rover with Static Base on UART2 (similar to Default, except coming in on UART2)</value>
       </values>
     </parameter>
     <parameter name="GPS_YAW_OFFSET" default="0." type="FLOAT">
@@ -7268,11 +7299,10 @@
         <value code="90">Only climb to at least RTL_DESCEND_ALT above destination.</value>
       </values>
     </parameter>
-    <parameter name="RTL_DESCEND_ALT" default="30" type="FLOAT">
+    <parameter name="RTL_DESCEND_ALT" default="30." type="FLOAT">
       <short_desc>Return mode loiter altitude</short_desc>
-      <long_desc>Descend to this altitude (above destination position) after return, and wait for time defined in RTL_LAND_DELAY. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
-      <min>2</min>
-      <max>100</max>
+      <long_desc>Descend to this altitude (above destination position) after return, and wait for time defined in RTL_LAND_DELAY. Land (i.e. slowly descend) from this altitude if autolanding allowed. VTOLs do transition to hover in this altitdue above the landing point.</long_desc>
+      <min>0</min>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -7290,7 +7320,6 @@
       <short_desc>Return mode delay</short_desc>
       <long_desc>Delay before landing (after initial descent) in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
       <min>-1</min>
-      <max>300</max>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -7299,7 +7328,6 @@
       <short_desc>Loiter radius for rtl descend</short_desc>
       <long_desc>Set the radius for loitering to a safe altitude for VTOL transition.</long_desc>
       <min>25</min>
-      <max>1000</max>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -7308,7 +7336,6 @@
       <short_desc>Horizontal radius from return point within which special rules for return mode apply</short_desc>
       <long_desc>The return altitude will be calculated based on RTL_CONE_ANG parameter. The yaw setpoint will switch to the one defined by corresponding waypoint.</long_desc>
       <min>0.5</min>
-      <max>100</max>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -7322,11 +7349,10 @@
         <value code="2">Required precision landing</value>
       </values>
     </parameter>
-    <parameter name="RTL_RETURN_ALT" default="60" type="FLOAT">
+    <parameter name="RTL_RETURN_ALT" default="60." type="FLOAT">
       <short_desc>Return mode return altitude</short_desc>
-      <long_desc>Default minimum altitude above destination (e.g. home, safe point, landing pattern) for return flight. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
+      <long_desc>Default minimum altitude above destination (e.g. home, safe point, landing pattern) for return flight. The vehicle will climb to this altitude when Return mode is enganged, unless it currently is flying higher already. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
       <min>0</min>
-      <max>150</max>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -9082,15 +9108,15 @@
       <min>0</min>
       <max>50</max>
     </parameter>
-    <parameter name="SIM_IGN_HOME_ALT" default="488.0" type="FLOAT">
+    <parameter name="SIM_GZ_HOME_ALT" default="488.0" type="FLOAT">
       <short_desc>simulator origin altitude</short_desc>
       <unit>m</unit>
     </parameter>
-    <parameter name="SIM_IGN_HOME_LAT" default="47.397742" type="FLOAT">
+    <parameter name="SIM_GZ_HOME_LAT" default="47.397742" type="FLOAT">
       <short_desc>simulator origin latitude</short_desc>
       <unit>deg</unit>
     </parameter>
-    <parameter name="SIM_IGN_HOME_LON" default="8.545594" type="FLOAT">
+    <parameter name="SIM_GZ_HOME_LON" default="8.545594" type="FLOAT">
       <short_desc>simulator origin longitude</short_desc>
       <unit>deg</unit>
     </parameter>
@@ -9999,6 +10025,7 @@
         <value code="0">- None</value>
         <value code="1">- Turtle Mode enabled via AUX1</value>
         <value code="2">- Turtle Mode enabled via AUX2</value>
+        <value code="3">- UART Passthrough Mode</value>
       </values>
     </parameter>
     <parameter name="UART_ESC_MOTOR1" default="3" type="INT32">
@@ -10024,32 +10051,52 @@
     <parameter name="UART_ESC_RPM_MAX" default="15000" type="INT32">
       <short_desc>UART ESC RPM Max</short_desc>
       <long_desc>Maximum RPM for ESC</long_desc>
-      <unit>RPM</unit>
     </parameter>
     <parameter name="UART_ESC_RPM_MIN" default="5500" type="INT32">
       <short_desc>UART ESC RPM Min</short_desc>
       <long_desc>Minimum RPM for ESC</long_desc>
-      <unit>RPM</unit>
     </parameter>
-  </group>
-  <group name="UART ESC Mode Deadzone 1">
-    <parameter name="UART_ESC_DEAD1" default="0.30" type="FLOAT">
-      <short_desc>UART ESC Mode Deadzone 1</short_desc>
-      <long_desc>Must be greater than Deadzone 2. Absolute value of stick position needed to activate a motor.</long_desc>
-      <min>0.01</min>
-      <max>0.99</max>
+    <parameter name="UART_ESC_T_COSP" default="0.990" type="FLOAT">
+      <short_desc>UART ESC Turtle Mode Cosphi</short_desc>
+      <min>0.000</min>
+      <max>1.000</max>
       <decimal>10</decimal>
-      <increment>0.01</increment>
+      <increment>0.001</increment>
     </parameter>
-  </group>
-  <group name="UART ESC Mode Deadzone 2">
-    <parameter name="UART_ESC_DEAD2" default="0.02" type="FLOAT">
-      <short_desc>UART ESC Mode Deadzone 2</short_desc>
-      <long_desc>Must be less than Deadzone 1. Absolute value of stick position considered no longer on the X or Y axis, thus targetting a specific motor (single).</long_desc>
-      <min>0.01</min>
-      <max>0.99</max>
+    <parameter name="UART_ESC_T_DEAD" default="20" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor Deadband</short_desc>
+      <min>0</min>
+      <max>100</max>
       <decimal>10</decimal>
-      <increment>0.01</increment>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="UART_ESC_T_EXPO" default="35" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor expo</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="UART_ESC_T_MINF" default="0.15" type="FLOAT">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor STICK_MINF</short_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <decimal>10</decimal>
+      <increment>1.0</increment>
+    </parameter>
+    <parameter name="UART_ESC_T_PERC" default="90" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor Percent</short_desc>
+      <min>1</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="UART_ESC_T_YAWR" default="0" type="INT32">
+      <short_desc>UART ESC Turtle Mode Yaw Reversal</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
     </parameter>
   </group>
   <group name="UAVCAN">
@@ -10409,16 +10456,16 @@
       <long_desc>If set to 1 the control surfaces are locked at the disarmed value in multicopter mode.</long_desc>
     </parameter>
     <parameter name="VT_FWD_THRUST_EN" default="0" type="INT32">
-      <short_desc>Enable/disable usage of fixed-wing actuators in hover to generate forward force (instead of pitching down)</short_desc>
-      <long_desc>This technique can be used to avoid the plane having to pitch down in order to move forward. This prevents large, negative lift values being created when facing strong winds. Fixed-wing forward actuators refers to puller/pusher (standard VTOL), or forward-tilt (tiltrotor VTOL). Only active if demaded down pitch is below VT_PITCH_MIN, and uses VT_FWD_THRUST_SC to get from demanded down pitch to fixed-wing actuation.</long_desc>
+      <short_desc>Enable usage of fixed-wing actuators in hover to generate forward force (instead of pitching down)</short_desc>
+      <long_desc>This feature can be used to avoid the plane having to pitch down in order to move forward, and prevents large, negative lift values being created when facing strong winds. Fixed-wing forward actuators refers to puller/pusher (standard VTOL), or forward-tilt (tiltrotor VTOL). Only active if demanded down pitch is below VT_PITCH_MIN. Use VT_FWD_THRUST_SC to tune it. Only active (if enabled) in Altitude, Position and Auto modes, not in Stabilized.</long_desc>
       <values>
-        <value code="0">Disable FW forward actuation in hover.</value>
-        <value code="1">Enable FW forward actuation in hover in altitude, position and auto modes (except LANDING).</value>
-        <value code="2">Enable FW forward actuation in hover in altitude, position and auto modes if above MPC_LAND_ALT1.</value>
-        <value code="3">Enable FW forward actuation in hover in altitude, position and auto modes if above MPC_LAND_ALT2.</value>
-        <value code="4">Enable FW forward actuation in hover in altitude, position and auto modes.</value>
-        <value code="5">Enable FW forward actuation in hover in altitude, position and auto modes if above MPC_LAND_ALT1 (except LANDING).</value>
-        <value code="6">Enable FW forward actuation in hover in altitude, position and auto modes if above MPC_LAND_ALT2 (except LANDING).</value>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled (except LANDING)</value>
+        <value code="2">Enabled if distance to ground above MPC_LAND_ALT1</value>
+        <value code="3">Enabled if distance to ground above MPC_LAND_ALT2</value>
+        <value code="4">Enabled constantly</value>
+        <value code="5">Enabled if distance to ground above MPC_LAND_ALT1 (except LANDING)</value>
+        <value code="6">Enabled if distance to ground above MPC_LAND_ALT2 (except LANDING)</value>
       </values>
     </parameter>
     <parameter name="VT_FWD_THRUST_SC" default="0.7" type="FLOAT">
@@ -10649,15 +10696,6 @@
     </parameter>
   </group>
   <group name="Miscellaneous">
-    <parameter name="EXFW_HDNG_P" default="0.1" type="FLOAT">
-      <short_desc>EXFW_HDNG_P</short_desc>
-    </parameter>
-    <parameter name="EXFW_PITCH_P" default="0.2" type="FLOAT">
-      <short_desc>EXFW_PITCH_P</short_desc>
-    </parameter>
-    <parameter name="EXFW_ROLL_P" default="0.2" type="FLOAT">
-      <short_desc>EXFW_ROLL_P</short_desc>
-    </parameter>
     <parameter name="MPC_LAND_RC_HELP" default="0" type="INT32">
       <short_desc>Enable user assisted descent speed for autonomous land routine</short_desc>
       <long_desc>When enabled, descent speed will be: stick full up - 0 stick centered - MPC_LAND_SPEED stick full down - 2 * MPC_LAND_SPEED</long_desc>

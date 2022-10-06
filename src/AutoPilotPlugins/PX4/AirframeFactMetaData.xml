@@ -154,7 +154,7 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe name="PX4 Vision DevKit Platform" id="4016" maintainer="John Doe &lt;john@example.com&gt;">
+    <airframe name="PX4 Vision Dev Kit v1" id="4016" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Copter</class>
       <type>Quadrotor x</type>
     </airframe>
@@ -166,6 +166,10 @@
     <airframe name="Holybro X500 V2" id="4019" maintainer="Farhang Naderi &lt;farhang.nba@gmail.com&gt;">
       <class>Copter</class>
       <maintainer>Farhang Naderi &lt;farhang.nba@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
+    <airframe name="PX4 Vision Dev Kit v1.5" id="4020" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Copter</class>
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="Generic 250 Racer" id="4050" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
