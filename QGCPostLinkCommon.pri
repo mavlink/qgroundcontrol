@@ -25,7 +25,7 @@ MacBuild {
     # with the differences between post list command running in a shell script (XCode) versus a makefile (Qt Creator)
     macx-xcode {
         # SDL2 Framework
-        QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.Framework $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.framework $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
         # AirMap
         contains (DEFINES, QGC_AIRMAP_ENABLED) {
@@ -34,7 +34,7 @@ MacBuild {
         }
     } else {
         # SDL2 Framework
-        QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.Framework $${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.framework $${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
         # AirMap
         contains (DEFINES, QGC_AIRMAP_ENABLED) {
