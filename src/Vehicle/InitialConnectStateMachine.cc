@@ -216,6 +216,9 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
         if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to link type";
             connectMachine->advance();
+        } else if (vehicle->apmFirmware()) {
+            qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to Ardupilot firmware";
+            connectMachine->advance();
         } else {
             qCDebug(InitialConnectStateMachineLog) << "Sending REQUEST_MESSAGE:PROTOCOL_VERSION";
             vehicle->requestMessage(_protocolVersionRequestMessageHandler,
