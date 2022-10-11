@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/qmlimages">
+        <file alias="ui/compass_pointer.svg">src/ui/compass_pointer.svg</file>
+        <file alias="ui/thinLine.png">src/ui/thinLine.png</file>
+        <file alias="ui/thickLine.png">src/ui/thickLine.png</file>
         <file alias="adsbVehicle.svg">src/FlightMap/Images/adsbVehicle.svg</file>
         <file alias="Airframe/AirframeSimulation">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
         <file alias="Airframe/AirframeUnknown">src/AutoPilotPlugins/Common/Images/AirframeUnknown.svg</file>
