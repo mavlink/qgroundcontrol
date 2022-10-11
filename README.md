@@ -16,3 +16,4 @@
 ```bash
   git submodule update --init --recursive
 ```
+- Build & Run
