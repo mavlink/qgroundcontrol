@@ -945,7 +945,7 @@
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="COM_ARM_MAG_ANG" default="45" type="INT32">
+    <parameter name="COM_ARM_MAG_ANG" default="60" type="INT32">
       <short_desc>Maximum magnetic field inconsistency between units that will allow arming</short_desc>
       <long_desc>Set -1 to disable the check.</long_desc>
       <min>3</min>
