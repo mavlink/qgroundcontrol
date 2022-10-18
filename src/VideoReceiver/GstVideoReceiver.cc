@@ -785,7 +785,9 @@ GstVideoReceiver::_makeSource(const QString& uri)
         gst_element_foreach_src_pad(source, _padProbe, &probeRes);
 
         if (probeRes & 1) {
+            /* There are static source pads. udpsrc and tcpclientsrc have static source pads. */
             if (probeRes & 2 && _buffer >= 0) {
+                qCDebug(VideoReceiverLog) << "Source: Found static pad. Adding rtpjitterbuffer and link.";
                 if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
@@ -798,12 +800,15 @@ GstVideoReceiver::_makeSource(const QString& uri)
                     break;
                 }
             } else {
+                qCDebug(VideoReceiverLog) << "Source: Found static pad. Trying to link.";
                 if (!gst_element_link(source, parser)) {
                     qCCritical(VideoReceiverLog) << "gst_element_link() failed";
                     break;
                 }
             }
         } else {
+            /* The rtspsrc and the tsdemux create dynamic source pads */
+            qCDebug(VideoReceiverLog) << "Source: No static pad found. Setup delayed dynamic linking.";
             g_signal_connect(source, "pad-added", G_CALLBACK(_linkPad), parser);
         }
 
@@ -1389,21 +1394,71 @@ GstVideoReceiver::_wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer d
     }
 }
 
+/* The rtspsrc and the tsdemux for mpeg-ts have dynamic source pads which are linked later.
+ * rtspsrc will provide application/x-rtp, media=video (and possibly audio...)
+ * tsdemux will provide video/mpeg or video/h-264 or video/h-265 or
+ *     audio/xxx
+ * Check that the source pad provides video data and ignore the pad if audio or other formats
+ * are found. Non video pads are not linked.
+ */
 void
 GstVideoReceiver::_linkPad(GstElement* element, GstPad* pad, gpointer data)
 {
     gchar* name;
+    GstElement* dst = GST_ELEMENT(data);
+    GstPad* sinkpad = nullptr;
+    GstCaps* padcaps = nullptr;
+    GstStructure *padstruct = nullptr;
+    const gchar *padtype = nullptr;
+    const gchar *mediatype = nullptr;
+
+    qCDebug(VideoReceiverLog) << "Source: New source pad. Trying to link";
+
+    if (dst == nullptr) {
+        qCCritical(VideoReceiverLog) << "_linkPad: dst = NULL?";
+        return;
+    }
+    if ((sinkpad = gst_element_get_static_pad(dst, "sink")) == nullptr) {
+        qCCritical(VideoReceiverLog) << "_linkPad: No sink pad found at destination element";
+        return;
+    }
+    if (gst_pad_is_linked(sinkpad)) {
+        qCCritical(VideoReceiverLog) << "_linkPad: Sinkpad at destination is already linked. Not linking.";
+        goto exit;
+    }
+
+    /* Check that the new pad has video*/
+    padcaps = gst_pad_get_current_caps (pad);
+    padstruct = gst_caps_get_structure (padcaps, 0);
+    padtype = gst_structure_get_name (padstruct);
+    if (g_str_has_prefix (padtype, "application/x-rtp")) { /* rtspsrc */
+        if ((mediatype = gst_structure_get_string(padstruct, "media")) == nullptr) {
+            qCDebug(VideoReceiverLog) << "_linkPad: Cannot find media type in caps of rtp source. Ignoring.";
+            goto exit;
+        }
+        if (!g_str_has_prefix (mediatype, "video")) {
+            qCDebug(VideoReceiverLog) << "_linkPad: rtp source pad does have media type video. Ignoring. Type found: " << mediatype;
+            goto exit;
+        }
+    } else if (!g_str_has_prefix (padtype, "video")) { /* MPEG/TS tsdemux */
+        qCDebug(VideoReceiverLog) << "Source pad type does not provide video. Ignoring. Type found: " << padtype;
+        goto exit;
+    }
 
     if ((name = gst_pad_get_name(pad)) != nullptr) {
-        if(gst_element_link_pads(element, name, GST_ELEMENT(data), "sink") == false) {
-            qCCritical(VideoReceiverLog) << "gst_element_link_pads() failed";
+        if(GST_PAD_LINK_FAILED(gst_pad_link(pad, sinkpad))) {
+            qCCritical(VideoReceiverLog) << "gst_pad_link() failed";
         }
-
         g_free(name);
         name = nullptr;
     } else {
         qCCritical(VideoReceiverLog) << "gst_pad_get_name() failed";
     }
+
+exit:
+    if (padcaps != nullptr)
+        gst_caps_unref(padcaps);
+    gst_object_unref(sinkpad);
 }
 
 gboolean
