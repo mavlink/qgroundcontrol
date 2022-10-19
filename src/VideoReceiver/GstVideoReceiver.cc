@@ -990,6 +990,17 @@ GstVideoReceiver::_onNewDecoderPad(GstPad* pad)
     }
 }
 
+
+GstPadProbeReturn
+GstVideoReceiver::_linkValve(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+{
+    GstPad* sink = GST_PAD(user_data);
+    if(GST_PAD_LINK_FAILED(gst_pad_link(pad, sink)))
+        qCDebug(VideoReceiverLog) << "Could not link Decoder to Valve";
+
+    return GST_PAD_PROBE_REMOVE;
+}
+
 bool
 GstVideoReceiver::_addDecoder(GstElement* src)
 {
@@ -1009,9 +1020,6 @@ GstVideoReceiver::_addDecoder(GstElement* src)
         return false;
     }
 
-    gst_object_unref(srcpad);
-    srcpad = nullptr;
-
     if ((_decoder = _makeDecoder(caps, _videoSink)) == nullptr) {
         qCCritical(VideoReceiverLog) << "_makeDecoder() failed";
         gst_caps_unref(caps);
@@ -1030,14 +1038,9 @@ GstVideoReceiver::_addDecoder(GstElement* src)
     gst_bin_add(GST_BIN(_pipeline), _videoSink); // link in callback
 
     if (!gst_element_sync_state_with_parent(_decoder))
-        qCCritical(VideoReceiverLog) << "Could not sync decoder";;
+        qCCritical(VideoReceiverLog) << "Could not sync decoder";
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-decoder");
-
-    if (!gst_element_link(src, _decoder)) {
-        qCCritical(VideoReceiverLog) << "Unable to link decoder";
-        return false;
-    }
 
     GstPad* srcPad = nullptr;
 
@@ -1064,6 +1067,15 @@ GstVideoReceiver::_addDecoder(GstElement* src)
         g_signal_connect(_decoder, "pad-added", G_CALLBACK(_onNewPad), this);
     }
 
+    GstPad* decoderSinkPad = gst_element_get_static_pad(_decoder, "sink");
+    if (decoderSinkPad == nullptr) {
+        qCCritical(VideoReceiverLog) << "Error: No decoder sinkpad";
+        return false;
+    } else
+        gst_pad_add_probe (srcpad, GST_PAD_PROBE_TYPE_IDLE, _linkValve, decoderSinkPad, nullptr);
+
+    gst_object_unref(decoderSinkPad);
+    gst_object_unref(srcpad);
     return true;
 }
 

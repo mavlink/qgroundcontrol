@@ -133,6 +133,7 @@ protected:
     static GstPadProbeReturn _videoSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+    static GstPadProbeReturn _linkValve(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
 
     bool                _streaming;
     bool                _decoding;
