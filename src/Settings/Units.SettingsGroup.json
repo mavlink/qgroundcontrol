@@ -3,5 +3,53 @@
     "fileType":  "FactMetaData",
     "QGC.MetaData.Facts":
 [
+{
+    "name":             "horizontalDistanceUnits",
+    "shortDesc":        "Distance units",
+    "type":             "Uint32",
+    "enumStrings":      "Feet,Meters",
+    "enumValues":       "0,1",
+    "default":          1
+},
+{
+    "name":             "verticalDistanceUnits",
+    "shortDesc":        "Altitude units",
+    "type":             "Uint32",
+    "enumStrings":      "Feet,Meters",
+    "enumValues":       "0,1",
+    "default":          1
+},
+{
+    "name":             "areaUnits",
+    "shortDesc":        "Area units",
+    "type":             "Uint32",
+    "enumStrings":      "SquareFeet,SquareMeters,SquareKilometers,Hectares,Acres,SquareMiles",
+    "enumValues":       "0,1,2,3,4,5",
+    "default":          1
+},
+{
+    "name":             "speedUnits",
+    "shortDesc":        "Speed units",
+    "type":             "Uint32",
+    "enumStrings":      "Feet/second,Meters/second,Miles/hour,Kilometers/hour,Knots",
+    "enumValues":       "0,1,2,3,4",
+    "default":          1
+},
+{
+    "name":             "temperatureUnits",
+    "shortDesc":        "Temperature units",
+    "type":             "Uint32",
+    "enumStrings":      "Celsius,Farenheit",
+    "enumValues":       "0,1",
+    "default":          0
+},
+{
+    "name":             "weightUnits",
+    "shortDesc":        "Weight units",
+    "type":             "Uint32",
+    "enumStrings":      "Grams,Kilograms,Ounces,Pounds",
+    "enumValues":       "0,1,2,3",
+    "default":          0
+}    
 ]
 }
