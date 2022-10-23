@@ -65,7 +65,7 @@ SetupPage {
 
             property Fact _hRscGovComp:     controller.getParameterFact(-1, "H_RSC_GOV_COMP")
             property Fact _hRscGovDroop:    controller.getParameterFact(-1, "H_RSC_GOV_DROOP")
-            property Fact _hRscFf:          controller.getParameterFact(-1, "H_RSC_GOV_FF")
+            property Fact _hRscGovFf:       controller.getParameterFact(-1, "H_RSC_GOV_FF")
             property Fact _hRscGovRange:    controller.getParameterFact(-1, "H_RSC_GOV_RANGE")
             property Fact _hRscGovRpm:      controller.getParameterFact(-1, "H_RSC_GOV_RPM")
             property Fact _hRscGovTorque:   controller.getParameterFact(-1, "H_RSC_GOV_TORQUE")
