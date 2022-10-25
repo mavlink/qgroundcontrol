@@ -19,7 +19,7 @@ installer {
         QMAKE_POST_LINK += && rsync -a --delete /Library/Frameworks/GStreamer.framework $${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && echo libexec
         QMAKE_POST_LINK += && ln -sf $${TARGET}.app/Contents/Frameworks $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/Frameworks
-        QMAKE_POST_LINK += && install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer $${TARGET}.app/Contents/MacOS/QGroundControl
+        QMAKE_POST_LINK += && install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer $${TARGET}.app/Contents/MacOS/$${TARGET}
         QMAKE_POST_LINK += && rm -rf $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/{bin,etc,share,Headers,include,Commands}
         QMAKE_POST_LINK += && rm -rf $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/{*.a,*.la,glib-2.0,gst-validate-launcher,pkgconfig}
 
