@@ -196,6 +196,155 @@
       <unit>us</unit>
     </parameter>
   </group>
+  <group name="ADSB">
+    <parameter name="ADSB_EMERGC" default="0" type="INT32">
+      <short_desc>ADSB-Out Emergency State</short_desc>
+      <long_desc>Sets the vehicle emergency state</long_desc>
+      <min>0</min>
+      <max>6</max>
+      <reboot_required>false</reboot_required>
+      <values>
+        <value code="0">NoEmergency</value>
+        <value code="1">General</value>
+        <value code="2">Medical</value>
+        <value code="3">LowFuel</value>
+        <value code="4">NoCommunications</value>
+        <value code="5">Interference</value>
+        <value code="6">Downed</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_EMIT_TYPE" default="14" type="INT32">
+      <short_desc>ADSB-Out Vehicle Emitter Type</short_desc>
+      <long_desc>Configure the emitter type of the vehicle.</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Unknown</value>
+        <value code="1">Light</value>
+        <value code="2">Small</value>
+        <value code="3">Large</value>
+        <value code="4">HighVortex</value>
+        <value code="5">Heavy</value>
+        <value code="6">Performance</value>
+        <value code="7">Rotorcraft</value>
+        <value code="8">RESERVED</value>
+        <value code="9">Glider</value>
+        <value code="10">LightAir</value>
+        <value code="11">Parachute</value>
+        <value code="12">UltraLight</value>
+        <value code="13">RESERVED</value>
+        <value code="14">UAV</value>
+        <value code="15">Space</value>
+        <value code="16">RESERVED</value>
+        <value code="17">EmergencySurf</value>
+        <value code="18">ServiceSurf</value>
+        <value code="19">PointObstacle</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_GPS_OFF_LAT" default="0" type="INT32">
+      <short_desc>ADSB-Out GPS Offset lat</short_desc>
+      <long_desc>Sets GPS lataral offset encoding</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>false</reboot_required>
+      <values>
+        <value code="0">NoData</value>
+        <value code="1">LatLeft2M</value>
+        <value code="2">LatLeft4M</value>
+        <value code="3">LatLeft6M</value>
+        <value code="4">LatRight0M</value>
+        <value code="5">LatRight2M</value>
+        <value code="6">LatRight4M</value>
+        <value code="7">LatRight6M</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_GPS_OFF_LON" default="0" type="INT32">
+      <short_desc>ADSB-Out GPS Offset lon</short_desc>
+      <long_desc>Sets GPS longitudinal offset encoding</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>false</reboot_required>
+      <values>
+        <value code="0">NoData</value>
+        <value code="1">AppliedBySensor</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_ICAO_ID" default="1194684" type="INT32">
+      <short_desc>ADSB-Out ICAO configuration</short_desc>
+      <long_desc>Defines the ICAO ID of the vehicle</long_desc>
+      <min>-1</min>
+      <max>16777215</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ADSB_ICAO_SPECL" default="0" type="INT32">
+      <short_desc>ADSB-In Special ICAO configuration</short_desc>
+      <long_desc>This vehicle is always tracked. Use 0 to disable.</long_desc>
+      <min>0</min>
+      <max>16777215</max>
+      <reboot_required>false</reboot_required>
+    </parameter>
+    <parameter name="ADSB_IDENT" default="0" type="INT32" boolean="true">
+      <short_desc>ADSB-Out Ident Configuration</short_desc>
+      <long_desc>Enable Identification of Position feature</long_desc>
+      <reboot_required>false</reboot_required>
+    </parameter>
+    <parameter name="ADSB_LEN_WIDTH" default="1" type="INT32">
+      <short_desc>ADSB-Out Vehicle Size Configuration</short_desc>
+      <long_desc>Report the length and width of the vehicle in meters. In most cases, use '1' for the smallest vehicle size.</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">SizeUnknown</value>
+        <value code="1">Len15_Wid23</value>
+        <value code="2">Len25_Wid28</value>
+        <value code="3">Len25_Wid34</value>
+        <value code="4">Len35_Wid33</value>
+        <value code="5">Len35_Wid38</value>
+        <value code="6">Len45_Wid39</value>
+        <value code="7">Len45_Wid45</value>
+        <value code="8">Len55_Wid45</value>
+        <value code="9">Len55_Wid52</value>
+        <value code="10">Len65_Wid59</value>
+        <value code="11">Len65_Wid67</value>
+        <value code="12">Len75_Wid72</value>
+        <value code="13">Len75_Wid80</value>
+        <value code="14">Len85_Wid80</value>
+        <value code="15">Len85_Wid90</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_LIST_MAX" default="25" type="INT32">
+      <short_desc>ADSB-In Vehicle List Size</short_desc>
+      <long_desc>Change number of targets to track</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ADSB_MAX_SPEED" default="0" type="INT32">
+      <short_desc>ADSB-Out Vehicle Max Speed</short_desc>
+      <long_desc>Informs ADSB vehicles of this vehicle's max speed capability</long_desc>
+      <min>0</min>
+      <max>6</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">UnknownMaxSpeed</value>
+        <value code="1">75Kts</value>
+        <value code="2">150Kts</value>
+        <value code="3">300Kts</value>
+        <value code="4">600Kts</value>
+        <value code="5">1200Kts</value>
+        <value code="6">Over1200Kts</value>
+      </values>
+    </parameter>
+    <parameter name="ADSB_SQUAWK" default="1200" type="INT32">
+      <short_desc>ADSB-Out squawk code configuration</short_desc>
+      <long_desc>This parameter defines the squawk code. Value should be between 0000 and 7777.</long_desc>
+      <min>0</min>
+      <max>7777</max>
+      <reboot_required>false</reboot_required>
+    </parameter>
+  </group>
   <group name="Airspeed Validator">
     <parameter name="ASPD_BETA_GATE" default="1" type="INT32">
       <short_desc>Airspeed Selector: Gate size for sideslip angle fusion</short_desc>
@@ -859,7 +1008,7 @@
       <min>0</min>
       <max>3</max>
       <values>
-        <value code="0">Disabled</value>
+        <value code="0">Warning only</value>
         <value code="1">Hold mode</value>
         <value code="2">Land mode</value>
         <value code="3">Return mode</value>
@@ -986,15 +1135,7 @@
         <value code="1">Allow arming without GPS</value>
       </values>
     </parameter>
-    <parameter name="COM_BAT_ACT_T" default="5." type="FLOAT">
-      <short_desc>Delay between battery state change and failsafe reaction</short_desc>
-      <long_desc>Battery state requires action -&gt; wait COM_BAT_ACT_T seconds in Hold mode for the user to realize and take a custom action -&gt; React with failsafe action COM_LOW_BAT_ACT A zero value disables the delay.</long_desc>
-      <min>0.0</min>
-      <max>25.0</max>
-      <unit>s</unit>
-      <decimal>3</decimal>
-    </parameter>
-    <parameter name="COM_CPU_MAX" default="90.0" type="FLOAT">
+    <parameter name="COM_CPU_MAX" default="95.0" type="FLOAT">
       <short_desc>Maximum allowed CPU load to still arm</short_desc>
       <long_desc>A negative value disables the check.</long_desc>
       <min>-1</min>
@@ -1015,13 +1156,21 @@
       <decimal>2</decimal>
     </parameter>
     <parameter name="COM_DL_LOSS_T" default="10" type="INT32">
-      <short_desc>Datalink loss time threshold</short_desc>
-      <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
+      <short_desc>GCS connection loss time threshold</short_desc>
+      <long_desc>After this amount of seconds without datalink, the GCS connection lost mode triggers</long_desc>
       <min>5</min>
       <max>300</max>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
+    </parameter>
+    <parameter name="COM_FAIL_ACT_T" default="5." type="FLOAT">
+      <short_desc>Delay between failsafe condition triggered and failsafe reaction</short_desc>
+      <long_desc>Before entering failsafe (RTL, Land, Hold), wait COM_FAIL_ACT_T seconds in Hold mode for the user to realize. During that time the user cannot take over control. Afterwards the configured failsafe action is triggered and the user may take over. A zero value disables the delay and the user cannot take over via stick movements (switching modes is still allowed).</long_desc>
+      <min>0.0</min>
+      <max>25.0</max>
+      <unit>s</unit>
+      <decimal>3</decimal>
     </parameter>
     <parameter name="COM_FLIGHT_UUID" default="0" type="INT32" volatile="true" category="System">
       <short_desc>Next flight UUID</short_desc>
@@ -1216,7 +1365,7 @@
     </parameter>
     <parameter name="COM_LKDOWN_TKO" default="3.0" type="FLOAT">
       <short_desc>Timeout for detecting a failure after takeoff</short_desc>
-      <long_desc>A non-zero, positive value specifies the timeframe in seconds within failure detector is allowed to put the vehicle into a lockdown state if attitude exceeds the limits defined in FD_FAIL_P and FD_FAIL_R. The check is not executed for flight modes that do support acrobatic maneuvers, e.g: Acro (MC/FW) and Manual (FW). A zero or negative value means that the check is disabled.</long_desc>
+      <long_desc>A non-zero, positive value specifies the timeframe in seconds within failure detector is allowed to disarm the vehicle if attitude exceeds the limits defined in FD_FAIL_P and FD_FAIL_R. The check is not executed for flight modes that do support acrobatic maneuvers, e.g: Acro (MC/FW) and Manual (FW). A zero or negative value means that the check is disabled.</long_desc>
       <min>-1.0</min>
       <max>5.0</max>
       <unit>s</unit>
@@ -1244,23 +1393,10 @@
       <unit>s</unit>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="COM_OBL_ACT" default="0" type="INT32">
+    <parameter name="COM_OBL_RC_ACT" default="0" type="INT32">
       <short_desc>Set offboard loss failsafe mode</short_desc>
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
       <values>
-        <value code="-1">Disabled</value>
-        <value code="0">Land mode</value>
-        <value code="1">Hold mode</value>
-        <value code="2">Return mode</value>
-        <value code="3">Terminate</value>
-        <value code="4">Lockdown</value>
-      </values>
-    </parameter>
-    <parameter name="COM_OBL_RC_ACT" default="0" type="INT32">
-      <short_desc>Set offboard loss failsafe mode when RC is available</short_desc>
-      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
-      <values>
-        <value code="-1">Disabled</value>
         <value code="0">Position mode</value>
         <value code="1">Altitude mode</value>
         <value code="2">Manual</value>
@@ -1268,7 +1404,7 @@
         <value code="4">Land mode</value>
         <value code="5">Hold mode</value>
         <value code="6">Terminate</value>
-        <value code="7">Lockdown</value>
+        <value code="7">Disarm</value>
       </values>
     </parameter>
     <parameter name="COM_OBS_AVOID" default="0" type="INT32" boolean="true">
@@ -1276,7 +1412,7 @@
     </parameter>
     <parameter name="COM_OF_LOSS_T" default="1.0" type="FLOAT">
       <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action</short_desc>
-      <long_desc>See COM_OBL_ACT and COM_OBL_RC_ACT to configure action.</long_desc>
+      <long_desc>See COM_OBL_RC_ACT to configure action.</long_desc>
       <min>0</min>
       <max>60</max>
       <unit>s</unit>
@@ -1287,10 +1423,10 @@
     </parameter>
     <parameter name="COM_POSCTL_NAVL" default="0" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
-      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. If Altitude/Manual is selected: assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL. If Land/Terminate is selected: assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</long_desc>
+      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. If Altitude/Manual is selected: assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL. If Land/Descend is selected: assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to Descend.</long_desc>
       <values>
         <value code="0">Altitude/Manual</value>
-        <value code="1">Land/Terminate</value>
+        <value code="1">Land/Descend</value>
       </values>
     </parameter>
     <parameter name="COM_POS_FS_DELAY" default="1" type="INT32">
@@ -1328,7 +1464,7 @@
     <parameter name="COM_QC_ACT" default="0" type="INT32">
       <short_desc>Set command after a quadchute</short_desc>
       <values>
-        <value code="-1">No action: stay in current flight mode</value>
+        <value code="-1">Warning only</value>
         <value code="0">Return mode</value>
         <value code="1">Land mode</value>
         <value code="2">Hold mode</value>
@@ -1440,8 +1576,8 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="NAV_DLL_ACT" default="0" type="INT32">
-      <short_desc>Set data link loss failsafe mode</short_desc>
-      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed.</long_desc>
+      <short_desc>Set GCS connection loss failsafe mode</short_desc>
+      <long_desc>The GCS connection loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed.</long_desc>
       <min>0</min>
       <max>6</max>
       <values>
@@ -1450,7 +1586,7 @@
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
         <value code="5">Terminate</value>
-        <value code="6">Lockdown</value>
+        <value code="6">Disarm</value>
       </values>
     </parameter>
     <parameter name="NAV_RCL_ACT" default="2" type="INT32">
@@ -1463,7 +1599,7 @@
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
         <value code="5">Terminate</value>
-        <value code="6">Lockdown</value>
+        <value code="6">Disarm</value>
       </values>
     </parameter>
   </group>
@@ -2574,7 +2710,7 @@
     </parameter>
     <parameter name="FW_FLAPS_LND_SCL" default="1.0" type="FLOAT">
       <short_desc>Flaps setting during landing</short_desc>
-      <long_desc>Sets a fraction of full flaps during landing. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
+      <long_desc>Sets a fraction of full flaps during landing.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2583,7 +2719,7 @@
     </parameter>
     <parameter name="FW_FLAPS_TO_SCL" default="0.0" type="FLOAT">
       <short_desc>Flaps setting during take-off</short_desc>
-      <long_desc>Sets a fraction of full flaps during take-off. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
+      <long_desc>Sets a fraction of full flaps during take-off.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2646,7 +2782,7 @@
       <short_desc>Pitch rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
-      <max>10.0</max>
+      <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
@@ -2655,7 +2791,7 @@
       <short_desc>Pitch rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>0.5</max>
+      <max>1</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -2672,7 +2808,7 @@
       <short_desc>Pitch rate proportional gain</short_desc>
       <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>2.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -2733,7 +2869,7 @@
       <short_desc>Roll rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
       <min>0.0</min>
-      <max>10.0</max>
+      <max>1</max>
       <unit>%/rad/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
@@ -2742,12 +2878,12 @@
       <short_desc>Roll rate integrator Gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>0.2</max>
+      <max>1</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
     </parameter>
-    <parameter name="FW_RR_IMAX" default="0.2" type="FLOAT">
+    <parameter name="FW_RR_IMAX" default="0.4" type="FLOAT">
       <short_desc>Roll integrator anti-windup</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value.</long_desc>
       <min>0.0</min>
@@ -2759,7 +2895,7 @@
       <short_desc>Roll rate proportional Gain</short_desc>
       <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>2.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -2776,7 +2912,7 @@
     <parameter name="FW_R_TC" default="0.4" type="FLOAT">
       <short_desc>Attitude Roll Time Constant</short_desc>
       <long_desc>This defines the latency between a roll step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
-      <min>0.4</min>
+      <min>0.2</min>
       <max>1.0</max>
       <unit>s</unit>
       <decimal>2</decimal>
@@ -2811,7 +2947,7 @@
       <short_desc>Wheel steering rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
-      <max>10.0</max>
+      <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
@@ -2825,7 +2961,7 @@
       <decimal>3</decimal>
       <increment>0.005</increment>
     </parameter>
-    <parameter name="FW_WR_IMAX" default="1.0" type="FLOAT">
+    <parameter name="FW_WR_IMAX" default="0.4" type="FLOAT">
       <short_desc>Wheel steering rate integrator limit</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
@@ -2867,7 +3003,7 @@
       <short_desc>Yaw rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
-      <max>10.0</max>
+      <max>1.0</max>
       <unit>%/rad/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
@@ -2876,12 +3012,12 @@
       <short_desc>Yaw rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>50.0</max>
+      <max>1</max>
       <unit>%/rad</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_YR_IMAX" default="0.2" type="FLOAT">
+    <parameter name="FW_YR_IMAX" default="0.4" type="FLOAT">
       <short_desc>Yaw rate integrator limit</short_desc>
       <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
@@ -2893,7 +3029,7 @@
       <short_desc>Yaw rate proportional gain</short_desc>
       <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>2.0</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -7918,6 +8054,7 @@
       <long_desc>Bandwidth per notch filter when using dynamic notch filtering with ESC RPM.</long_desc>
       <min>5</min>
       <max>30</max>
+      <unit>Hz</unit>
     </parameter>
     <parameter name="IMU_GYRO_DNF_EN" default="0" type="INT32">
       <short_desc>IMU gyro dynamic notch filtering</short_desc>
@@ -7934,6 +8071,11 @@
       <long_desc>ESC RPM number of harmonics (multiples of RPM) for ESC RPM dynamic notch filtering.</long_desc>
       <min>1</min>
       <max>7</max>
+    </parameter>
+    <parameter name="IMU_GYRO_DNF_MIN" default="25." type="FLOAT">
+      <short_desc>IMU gyro dynamic notch filter minimum frequency</short_desc>
+      <long_desc>Minimum notch filter frequency in Hz.</long_desc>
+      <unit>Hz</unit>
     </parameter>
     <parameter name="IMU_GYRO_FFT_EN" default="0" type="INT32" boolean="true">
       <short_desc>IMU gyro FFT enable</short_desc>
@@ -9848,125 +9990,6 @@
     </parameter>
   </group>
   <group name="Transponder">
-    <parameter name="ADSB_EMERGC" default="0" type="INT32">
-      <short_desc>ADSB-Out Emergency State</short_desc>
-      <long_desc>Sets the vehicle emergency state</long_desc>
-      <min>0</min>
-      <max>6</max>
-      <reboot_required>false</reboot_required>
-      <values>
-        <value code="0">NoEmergency</value>
-        <value code="1">General</value>
-        <value code="2">Medical</value>
-        <value code="3">LowFuel</value>
-        <value code="4">NoCommunications</value>
-        <value code="5">Interference</value>
-        <value code="6">Downed</value>
-      </values>
-    </parameter>
-    <parameter name="ADSB_EMIT_TYPE" default="14" type="INT32">
-      <short_desc>ADSB-Out Vehicle Emitter Type</short_desc>
-      <long_desc>Configure the emitter type of the vehicle.</long_desc>
-      <min>0</min>
-      <max>15</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Unknown</value>
-        <value code="1">Light</value>
-        <value code="2">Small</value>
-        <value code="3">Large</value>
-        <value code="4">HighVortex</value>
-        <value code="5">Heavy</value>
-        <value code="6">Performance</value>
-        <value code="7">Rotorcraft</value>
-        <value code="8">RESERVED</value>
-        <value code="9">Glider</value>
-        <value code="10">LightAir</value>
-        <value code="11">Parachute</value>
-        <value code="12">UltraLight</value>
-        <value code="13">RESERVED</value>
-        <value code="14">UAV</value>
-        <value code="15">Space</value>
-        <value code="16">RESERVED</value>
-        <value code="17">EmergencySurf</value>
-        <value code="18">ServiceSurf</value>
-        <value code="19">PointObstacle</value>
-      </values>
-    </parameter>
-    <parameter name="ADSB_ICAO_ID" default="1194684" type="INT32">
-      <short_desc>ADSB-Out ICAO configuration</short_desc>
-      <long_desc>Defines the ICAO ID of the vehicle</long_desc>
-      <min>-1</min>
-      <max>16777215</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="ADSB_ICAO_SPECL" default="0" type="INT32">
-      <short_desc>ADSB-In Special ICAO configuration</short_desc>
-      <long_desc>This vehicle is always tracked. Use 0 to disable.</long_desc>
-      <min>0</min>
-      <max>16777215</max>
-      <reboot_required>false</reboot_required>
-    </parameter>
-    <parameter name="ADSB_IDENT" default="0" type="INT32" boolean="true">
-      <short_desc>ADSB-Out Ident Configuration</short_desc>
-      <long_desc>Enable Identification of Position feature</long_desc>
-      <reboot_required>false</reboot_required>
-    </parameter>
-    <parameter name="ADSB_LEN_WIDTH" default="1" type="INT32">
-      <short_desc>ADSB-Out Vehicle Size Configuration</short_desc>
-      <long_desc>Report the length and width of the vehicle in meters. In most cases, use '1' for the smallest vehicle size.</long_desc>
-      <min>0</min>
-      <max>15</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">SizeUnknown</value>
-        <value code="1">Len15_Wid23</value>
-        <value code="2">Len25_Wid28</value>
-        <value code="3">Len25_Wid34</value>
-        <value code="4">Len35_Wid33</value>
-        <value code="5">Len35_Wid38</value>
-        <value code="6">Len45_Wid39</value>
-        <value code="7">Len45_Wid45</value>
-        <value code="8">Len55_Wid45</value>
-        <value code="9">Len55_Wid52</value>
-        <value code="10">Len65_Wid59</value>
-        <value code="11">Len65_Wid67</value>
-        <value code="12">Len75_Wid72</value>
-        <value code="13">Len75_Wid80</value>
-        <value code="14">Len85_Wid80</value>
-        <value code="15">Len85_Wid90</value>
-      </values>
-    </parameter>
-    <parameter name="ADSB_LIST_MAX" default="25" type="INT32">
-      <short_desc>ADSB-In Vehicle List Size</short_desc>
-      <long_desc>Change number of targets to track</long_desc>
-      <min>0</min>
-      <max>50</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="ADSB_MAX_SPEED" default="0" type="INT32">
-      <short_desc>ADSB-Out Vehicle Max Speed</short_desc>
-      <long_desc>Informs ADSB vehicles of this vehicle's max speed capability</long_desc>
-      <min>0</min>
-      <max>6</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">UnknownMaxSpeed</value>
-        <value code="1">75Kts</value>
-        <value code="2">150Kts</value>
-        <value code="3">300Kts</value>
-        <value code="4">600Kts</value>
-        <value code="5">1200Kts</value>
-        <value code="6">Over1200Kts</value>
-      </values>
-    </parameter>
-    <parameter name="ADSB_SQUAWK" default="1200" type="INT32">
-      <short_desc>ADSB-Out squawk code configuration</short_desc>
-      <long_desc>This parameter defines the squawk code. Value should be between 0000 and 7777.</long_desc>
-      <min>0</min>
-      <max>7777</max>
-      <reboot_required>false</reboot_required>
-    </parameter>
     <parameter name="MXS_EXT_CFG" default="0" type="INT32" boolean="true">
       <short_desc>Sagetech External Configuration Mode</short_desc>
       <long_desc>Disables auto-configuration mode enabling MXS config through external software.</long_desc>

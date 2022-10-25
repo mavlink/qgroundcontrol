@@ -283,6 +283,11 @@
       <output name="Motor1">throttle</output>
       <output name="Servo1">steering</output>
     </airframe>
+    <airframe name="Aion Robotics R1 UGV" id="50003" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+      <url>https://www.aionrobotics.com/r1</url>
+    </airframe>
     <airframe name="NXP Cup car: DF Robot GPX" id="50004" maintainer="Katrin Moritz">
       <class>Rover</class>
       <maintainer>Katrin Moritz</maintainer>
