@@ -17,12 +17,12 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
 Rectangle {
-    id:                     _root
-    Layout.minimumWidth:    mainLayout.width + (_margins * 2)
-    Layout.preferredHeight: mainLayout.height + (_margins * 2)
-    radius:                 ScreenTools.defaultFontPixelWidth / 2
-    color:                  qgcPal.windowShadeLight
-    visible:                false
+    id:         _root
+    width:      ScreenTools.defaultFontPixelWidth * 45
+    height:     mainLayout.height + (_margins * 2)
+    radius:     ScreenTools.defaultFontPixelWidth / 2
+    color:      qgcPal.window
+    visible:    false
 
     property var    guidedController
     property var    guidedValueSlider
@@ -77,15 +77,18 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     ColumnLayout {
-        id:                         mainLayout
-        anchors.horizontalCenter:   parent.horizontalCenter
-        spacing:                    _margins
+        id:                 mainLayout
+        anchors.margins:    _margins
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        spacing:            _margins
 
         QGCLabel {
             id:                     messageText
             Layout.fillWidth:       true
             horizontalAlignment:    Text.AlignHCenter
             wrapMode:               Text.WordWrap
+            font.pointSize:         ScreenTools.mediumFontPointSize
         }
 
         QGCCheckBox {
@@ -96,13 +99,13 @@ Rectangle {
         }
 
         RowLayout {
-            Layout.alignment:       Qt.AlignHCenter
-            spacing:                ScreenTools.defaultFontPixelWidth
+            Layout.fillWidth:   true
+            spacing:            ScreenTools.defaultFontPixelWidth
 
             SliderSwitch {
-                id:                     slider
-                confirmText:            qsTr("Slide to confirm")
-                Layout.minimumWidth:    Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 30)
+                id:                 slider
+                confirmText:        qsTr("Slide to confirm")
+                Layout.fillWidth:   true
 
                 onAccept: {
                     _root.visible = false
