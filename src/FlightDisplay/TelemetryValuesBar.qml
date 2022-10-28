@@ -101,11 +101,5 @@ Rectangle {
             userSettingsGroup:      telemetryBarUserSettingsGroup
             defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
         }
-
-        GuidedActionConfirm {
-            Layout.fillWidth:   true
-            guidedController:   _guidedController
-            guidedValueSlider:     _guidedValueSlider
-        }
     }
 }
