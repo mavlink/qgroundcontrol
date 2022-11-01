@@ -49,6 +49,7 @@
 #include "HealthAndArmingCheckReport.h"
 
 class Actuators;
+class Frames;
 class EventHandler;
 class UAS;
 class UASInterface;
@@ -322,6 +323,7 @@ public:
     Q_PROPERTY(FactGroup*           hygrometer      READ hygrometerFactGroup        CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
     Q_PROPERTY(Actuators*           actuators       READ actuators                  CONSTANT)
+    Q_PROPERTY(Frames*              frames          READ frames                     CONSTANT)
     Q_PROPERTY(HealthAndArmingCheckReport* healthAndArmingCheckReport READ healthAndArmingCheckReport CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
@@ -628,6 +630,7 @@ public:
     bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & SysStatusSensorGPS); }
     bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
     Actuators*      actuators                   () const { return _actuators; }
+    Frames*         frames                      () const { return _frames; }
 
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
@@ -862,6 +865,7 @@ public:
 
     void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
     void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
+    void setFramesMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
 
     HealthAndArmingCheckReport* healthAndArmingCheckReport() { return &_healthAndArmingCheckReport; }
 
@@ -1372,6 +1376,7 @@ private:
     ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
+    Frames*                         _frames                     = nullptr;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;

@@ -431,7 +431,10 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
+	src/AutoPilotPlugins/PX4/FrameComponent.h \
     src/QmlControls/QmlUnitsConversion.h \
+    src/Vehicle/CompInfoFrames.h \
+	src/Vehicle/Frames/Frames.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
@@ -445,6 +448,9 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
+	src/AutoPilotPlugins/PX4/FrameComponent.cc \
+    src/Vehicle/CompInfoFrames.cc \
+	src/Vehicle/Frames/Frames.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
@@ -1530,7 +1536,10 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 }
 
 DISTFILES += \
-    src/QmlControls/QGroundControl/Specific/qmldir
+    src/AutoPilotPlugins/PX4/Frame.qml \
+    src/AutoPilotPlugins/PX4/FrameComponentMain.qml \
+    src/QmlControls/QGroundControl/Specific/qmldir \
+    src/Vehicle/Frames/CMakeLists.txt
 
 #
 # Steps for "install" target on Linux
