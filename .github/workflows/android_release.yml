@@ -99,16 +99,10 @@ jobs:
             mkdir gstreamer-1.0-android-universal-1.18.5
             tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
 
-      # This will set GIT_BRANCH_NAME environment variable
-      - name: Git branch name
-        id:   git-branch-name
-        uses: EthanSK/git-branch-name-action@v1
-
       - name: Update android manifest
+        if: github.ref_name != 'Stable'
         run: |
-          if [ $GIT_BRANCH_NAME != "Stable*" ]; then
-            ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${GIT_BRANCH_NAME}
-          fi
+            ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${{ github.ref_name }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -137,7 +131,7 @@ jobs:
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${{ matrix.ARTIFACT }} s3://qgroundcontrol/builds/${GIT_BRANCH_NAME}/${{ matrix.ARTIFACT }} --region us-west-2 --acl public-read
+              aws s3 cp ${{ matrix.ARTIFACT }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ matrix.ARTIFACT }} --region us-west-2 --acl public-read
 
       - name: Upload tagged stable build to S3 latest Bucket
         if:                 github.event_name == 'push' && github.ref_type == 'tag'
