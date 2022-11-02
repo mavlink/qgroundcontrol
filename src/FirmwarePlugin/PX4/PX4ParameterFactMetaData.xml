@@ -4090,9 +4090,9 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="LNDMC_Z_VEL_MAX" default="0.50" type="FLOAT">
-      <short_desc>Multicopter max climb rate</short_desc>
-      <long_desc>Maximum vertical velocity allowed in the landed state</long_desc>
+    <parameter name="LNDMC_Z_VEL_MAX" default="0.25" type="FLOAT">
+      <short_desc>Multicopter vertical velocity threshold</short_desc>
+      <long_desc>Vertical velocity threshold to detect landing. Should be set lower than the expected minimal speed for landing so MPC_LAND_SPEED for autonomous landing and MPC_LAND_CRWL if distance sensor is present and slowing down close to ground.</long_desc>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
@@ -5180,8 +5180,9 @@
       <decimal>1</decimal>
     </parameter>
     <parameter name="MPC_LAND_CRWL" default="0.3" type="FLOAT">
-      <short_desc>Land crawl descend rate. Used below</short_desc>
-      <min>0.3</min>
+      <short_desc>Land crawl descend rate</short_desc>
+      <long_desc>Used below MPC_LAND_ALT3 if distance sensor data is availabe.</long_desc>
+      <min>0.1</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
