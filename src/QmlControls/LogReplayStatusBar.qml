@@ -69,6 +69,7 @@ Rectangle {
                 ListElement { text: "1x";   value: 1 }
                 ListElement { text: "2x";   value: 2 }
                 ListElement { text: "5x";   value: 5 }
+                ListElement { text: "10x";  value: 10 }
             }
 
             onActivated: controller.playbackSpeed = model.get(currentIndex).value
