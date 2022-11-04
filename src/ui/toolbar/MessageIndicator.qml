@@ -147,10 +147,13 @@ Item {
                 pixelAligned:       true
 
                 TextEdit {
-                    id:             messageText
-                    readOnly:       true
-                    textFormat:     TextEdit.RichText
-                    color:          qgcPal.text
+                    id:                 messageText
+                    readOnly:           true
+                    textFormat:         TextEdit.RichText
+                    selectByMouse:      true
+                    color:              qgcPal.text
+                    selectionColor:     qgcPal.text
+                    selectedTextColor:  qgcPal.window
                 }
             }
         }
