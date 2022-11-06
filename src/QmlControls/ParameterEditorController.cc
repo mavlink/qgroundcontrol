@@ -385,10 +385,19 @@ void ParameterEditorController::_searchTextChanged(void)
             // All of the search items must match in order for the parameter to be added to the list
             if (matched) {
                 for (const auto& searchItem : rgSearchStrings) {
-                    if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
-                            !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
-                            !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                        matched = false;
+                    QRegularExpression re = QRegularExpression(searchItem, QRegularExpression::CaseInsensitiveOption);
+                    if (re.isValid()) {
+                        if (!fact->name().contains(re) &&
+                                !fact->shortDescription().contains(re) &&
+                                !fact->longDescription().contains(re)) {
+                            matched = false;
+                        }
+                    } else {
+                        if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+                                !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
+                                !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
+                            matched = false;
+                        }
                     }
                 }
             }
