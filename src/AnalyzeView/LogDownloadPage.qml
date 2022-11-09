@@ -60,6 +60,7 @@ AnalyzePage {
                     width: ScreenTools.defaultFontPixelWidth * 6
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
+                        color: styleData.textColor
                         horizontalAlignment: Text.AlignHCenter
                         text: {
                             var o = logController.model.get(styleData.row)
@@ -73,6 +74,7 @@ AnalyzePage {
                     width: ScreenTools.defaultFontPixelWidth * 34
                     horizontalAlignment: Text.AlignHCenter
                     delegate: Text  {
+                        color: styleData.textColor
                         text: {
                             var o = logController.model.get(styleData.row)
                             if (o) {
@@ -95,6 +97,7 @@ AnalyzePage {
                     width: ScreenTools.defaultFontPixelWidth * 18
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
+                        color: styleData.textColor
                         horizontalAlignment: Text.AlignRight
                         text: {
                             var o = logController.model.get(styleData.row)
@@ -108,6 +111,7 @@ AnalyzePage {
                     width: ScreenTools.defaultFontPixelWidth * 22
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
+                        color: styleData.textColor
                         horizontalAlignment: Text.AlignHCenter
                         text: {
                             var o = logController.model.get(styleData.row)
