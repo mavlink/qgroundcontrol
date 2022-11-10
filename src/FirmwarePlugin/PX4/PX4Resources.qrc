@@ -47,4 +47,12 @@
         <file alias="PX4ParameterFactMetaData.xml">PX4ParameterFactMetaData.xml</file>
         <file alias="PX4.OfflineEditing.params">V1.4.OfflineEditing.params</file>
     </qresource>
+    <qresource prefix="/">
+        <file>../../AutoPilotPlugins/PX4/PX4TuningComponentGroundVehicle.qml</file>
+        <file>../../AutoPilotPlugins/PX4/PX4TuningComponentGroundVehicleAll.qml</file>
+        <file>../../AutoPilotPlugins/PX4/PX4TuningComponentGroundVehicleAttitude.qml</file>
+        <file>../../AutoPilotPlugins/PX4/PX4TuningComponentGroundVehiclePosition.qml</file>
+        <file>../../AutoPilotPlugins/PX4/PX4TuningComponentGroundVehicleRate.qml</file>
+        <file>../../AutoPilotPlugins/PX4/PX4TuningComponentGroundVehicleVelocity.qml</file>
+    </qresource>
 </RCC>

@@ -53,9 +53,18 @@ QUrl PX4TuningComponent::setupSource(void) const
     QString qmlFile;
 
     switch (_vehicle->vehicleType()) {
+        // Ground Vehicle
+        case MAV_TYPE_GROUND_ROVER:
+        case MAV_TYPE_SURFACE_BOAT:
+            qmlFile = "qrc:/qml/PX4TuningComponentGroundVehicle.qml";
+            break;
+
+        // Flying Wing
         case MAV_TYPE_FIXED_WING:
             qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
             break;
+
+        // Multirotor
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
@@ -64,6 +73,8 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_TRICOPTER:
             qmlFile = "qrc:/qml/PX4TuningComponentCopter.qml";
             break;
+
+        // VTOL
         case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
         case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
         case MAV_TYPE_VTOL_TILTROTOR:
@@ -73,6 +84,8 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_VTOL_RESERVED5:
             qmlFile = "qrc:/qml/PX4TuningComponentVTOL.qml";
             break;
+        
+        // Invalid
         default:
             break;
     }
