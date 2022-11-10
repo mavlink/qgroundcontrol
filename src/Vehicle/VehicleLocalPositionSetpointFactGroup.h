@@ -26,12 +26,17 @@ public:
     Q_PROPERTY(Fact* vy    READ vy   CONSTANT)
     Q_PROPERTY(Fact* vz    READ vz   CONSTANT)
 
+    // [m/s] Magnitude of the horizontal (XY) velocity calculated from vx and vy
+    // Note: this field doesn't exist in the Local position message, but is calculated from vx and vy
+    Q_PROPERTY(double vxy READ vxy   CONSTANT)
+
     Fact* x    () { return &_xFact; }
     Fact* y    () { return &_yFact; }
     Fact* z    () { return &_zFact; }
     Fact* vx   () { return &_vxFact; }
     Fact* vy   () { return &_vyFact; }
     Fact* vz   () { return &_vzFact; }
+    double vxy  () { return _vxy; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
@@ -50,4 +55,5 @@ private:
     Fact _vxFact;
     Fact _vyFact;
     Fact _vzFact;
+    double _vxy;
 };

@@ -42,6 +42,8 @@ VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QOb
     _vxFact.setRawValue(qQNaN());
     _vyFact.setRawValue(qQNaN());
     _vzFact.setRawValue(qQNaN());
+
+    _vxy = qQNaN();
 }
 
 void VehicleLocalPositionSetpointFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
@@ -60,6 +62,9 @@ void VehicleLocalPositionSetpointFactGroup::handleMessage(Vehicle* /* vehicle */
     vx()->setRawValue(localPosition.vx);
     vy()->setRawValue(localPosition.vy);
     vz()->setRawValue(localPosition.vz);
+
+    // Calculate horizontal velocity
+    _vxy = qSqrt(localPosition.vx * localPosition.vx + localPosition.vy * localPosition.vy);
 
     _setTelemetryAvailable(true);
 }
