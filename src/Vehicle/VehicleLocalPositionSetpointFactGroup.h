@@ -28,7 +28,13 @@ public:
 
     // [m/s] Magnitude of the horizontal (XY) velocity calculated from vx and vy
     // Note: this field doesn't exist in the Local position message, but is calculated from vx and vy
-    Q_PROPERTY(double vxy READ vxy   CONSTANT)
+    Q_PROPERTY(double vxy  READ vxy  CONSTANT)
+
+    // Magnitude of the throttle command in XY plane, normalized (max thrust == 1.0)
+    // Note: this field doesn't exist in the Local position message
+    // Now I am hack-fully utilizing Acceleration-X field for sending this value,
+    // since vehicle_thrust_setpoint uORB message isn't translated into MAVLink yet.
+    Q_PROPERTY(double throttle  READ throttle  CONSTANT)
 
     Fact* x    () { return &_xFact; }
     Fact* y    () { return &_yFact; }
@@ -36,7 +42,9 @@ public:
     Fact* vx   () { return &_vxFact; }
     Fact* vy   () { return &_vyFact; }
     Fact* vz   () { return &_vzFact; }
+
     double vxy  () { return _vxy; }
+    double throttle  () { return _throttle; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
@@ -55,5 +63,7 @@ private:
     Fact _vxFact;
     Fact _vyFact;
     Fact _vzFact;
+
     double _vxy;
+    double _throttle;
 };

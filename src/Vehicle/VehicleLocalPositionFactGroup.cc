@@ -42,6 +42,8 @@ VehicleLocalPositionFactGroup::VehicleLocalPositionFactGroup(QObject* parent)
     _vxFact.setRawValue(qQNaN());
     _vyFact.setRawValue(qQNaN());
     _vzFact.setRawValue(qQNaN());
+
+    _vxy = qQNaN();
 }
 
 void VehicleLocalPositionFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
@@ -60,6 +62,8 @@ void VehicleLocalPositionFactGroup::handleMessage(Vehicle* /* vehicle */, mavlin
     vx()->setRawValue(localPosition.vx);
     vy()->setRawValue(localPosition.vy);
     vz()->setRawValue(localPosition.vz);
+
+    _vxy = qSqrt(localPosition.vx * localPosition.vx + localPosition.vy * localPosition.vy);
 
     _setTelemetryAvailable(true);
 }

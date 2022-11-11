@@ -44,6 +44,7 @@ VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QOb
     _vzFact.setRawValue(qQNaN());
 
     _vxy = qQNaN();
+    _throttle = qQNaN();
 }
 
 void VehicleLocalPositionSetpointFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
@@ -65,6 +66,9 @@ void VehicleLocalPositionSetpointFactGroup::handleMessage(Vehicle* /* vehicle */
 
     // Calculate horizontal velocity
     _vxy = qSqrt(localPosition.vx * localPosition.vx + localPosition.vy * localPosition.vy);
+
+    // Hack: Use Acceleration X field for relaying the throttle setpoint information for now (Boat tuning debug)
+    _throttle = localPosition.afx;
 
     _setTelemetryAvailable(true);
 }
