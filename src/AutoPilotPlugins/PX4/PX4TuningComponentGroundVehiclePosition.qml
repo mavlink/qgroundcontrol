@@ -22,8 +22,6 @@ ColumnLayout {
     width: availableWidth
     anchors.fill: parent
 
-    
-
     PIDTuning {
         width: availableWidth
         id:    pidTuning
@@ -51,7 +49,7 @@ ColumnLayout {
                     min:            1.0
                     max:            50.0
                     step:           0.1
-                },
+                }
                 ListElement {
                     title:          qsTr("L1 guidance distance (GND_L1_PERIOD)")
                     description:    qsTr("L1 distance definining the tracking point ahead of the ground vehicle it's following")
@@ -59,7 +57,7 @@ ColumnLayout {
                     min:            0.5
                     max:            50.0
                     step:           0.1
-                },
+                }
                 ListElement {
                     title:          qsTr("Cruise throttle (GND_THR_CRUISE)")
                     description:    qsTr("Throttle setting required for achieving desired cruise speed (shouldn't this be automatically be estimated?)")
@@ -67,7 +65,7 @@ ColumnLayout {
                     min:            0.0
                     max:            1.0
                     step:           0.01
-                },
+                }
                 ListElement {
                     title:          qsTr("Minimum throttle (GND_THR_MIN)")
                     description:    qsTr("Minimum throttle outputted by the controller")
@@ -75,7 +73,7 @@ ColumnLayout {
                     min:            0.0
                     max:            1.0
                     step:           0.01
-                },
+                }
                 ListElement {
                     title:          qsTr("Maximum throttle (GND_THR_MAX)")
                     description:    qsTr("Maximum throttle outputted by the controller")

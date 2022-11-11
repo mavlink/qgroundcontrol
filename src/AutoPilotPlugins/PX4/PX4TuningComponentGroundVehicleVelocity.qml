@@ -48,51 +48,37 @@ ColumnLayout {
         title: "Velocity"
         tuningMode: Vehicle.ModeVelocityAndPosition
         unit: "m/s"
-        axis: [ all ]
+        axis: [ velocity ]
 
-        property var all: QtObject {
-            property string name: qsTr("Velocity")
+        property var velocity: QtObject {
+            property string name: qsTr("velocity")
             
             property var plot: [
-                { name: "Vel X Response", value: globals.activeVehicle.localPosition.vx.value },
-                { name: "Vel X Setpoint", value: globals.activeVehicle.localPositionSetpoint.vx.value },
-                { name: "Vel Y Response", value: globals.activeVehicle.localPosition.vy.value },
-                { name: "Vel Y Setpoint", value: globals.activeVehicle.localPositionSetpoint.vy.value }
+                { name: "Vel XY Response", value: globals.activeVehicle.localPosition.vxy },
+                { name: "Vel XY Setpoint", value: globals.activeVehicle.localPositionSetpoint.vxy },
+//                { name: "Vel X Response", value: globals.activeVehicle.localPosition.vx.value },
+//                { name: "Vel X Setpoint", value: globals.activeVehicle.localPositionSetpoint.vx.value }
+//                { name: "Vel Y Response", value: globals.activeVehicle.localPosition.vy.value },
+//                { name: "Vel Y Setpoint", value: globals.activeVehicle.localPositionSetpoint.vy.value }
             ]
 
             property var params: ListModel {
                 ListElement {
                     title:          qsTr("Trim ground speed (GND_SPEED_TRIM)")
-                    description:    qsTr("Trim speed that will be the target speed for missions")
+                    description:    qsTr("Target speed in mission mode (autonomous)")
                     param:          "GND_SPEED_TRIM"
                     min:            0.0
                     max:            20.0
                     step:           0.1
-                },
+                }
                 ListElement {
                     title:          qsTr("Minimum ground speed (GND_SPEED_MIN)")
-                    description:    qsTr("Minimum ground speed")
+                    description:    qsTr("Minimum ground speed, used for velocity saturation in waypoint navigation")
                     param:          "GND_SPEED_MIN"
                     min:            0.0
                     max:            20.0
                     step:           0.1
-                },
-                ListElement {
-                    title:          qsTr("Maximum ground speed (GND_SPEED_MAX)")
-                    description:    qsTr("")
-                    param:          "GND_SPEED_MAX"
-                    min:            0.0
-                    max:            20.0
-                    step:           0.1
-                },
-                ListElement {
-                    title:          qsTr("Speed to throttle scalar (GND_SPEED_THR_SC)")
-                    description:    qsTr("This is a gain to map the speed control output to the throttle linearly.")
-                    param:          "GND_SPEED_THR_SC"
-                    min:            0.0
-                    max:            5.0
-                    step:           0.1
-                },
+                }
                 ListElement {
                     title:          qsTr("Porportional Gain (GND_SPEED_P)")
                     description:    qsTr("Porportional Gain.")
@@ -100,7 +86,7 @@ ColumnLayout {
                     min:            0.0
                     max:            10.0
                     step:           0.01
-                },
+                }
                 ListElement {
                     title:          qsTr("Integral Gain (GND_SPEED_I)")
                     description:    qsTr("Generally does not need much adjustment, reduce this when seeing slow oscillations.")
@@ -108,7 +94,7 @@ ColumnLayout {
                     min:            0.0
                     max:            10.0
                     step:           0.01
-                },
+                }
                 ListElement {
                     title:          qsTr("Derivative Gain (GND_SPEED_D)")
                     description:    qsTr("Derivative gain for velocity controller")
@@ -116,7 +102,7 @@ ColumnLayout {
                     min:            0.0
                     max:            10.0
                     step:           0.01
-                },
+                }
                 ListElement {
                     title:          qsTr("Speed Integral maximum value (GND_SPEED_IMAX)")
                     description:    qsTr("Maximum value integral can reach to prevent wind-up")
@@ -125,8 +111,52 @@ ColumnLayout {
                     max:            1.0
                     step:           0.01
                 }
+                ListElement {
+                    title:          qsTr("Maximum output of velocity PID controller (GND_SPEED_PID_MX)")
+                    description:    qsTr("Maximum output from the velocity PID controller")
+                    param:          "GND_SPEED_PID_MX"
+                    min:            0.0
+                    max:            40.0
+                    step:           0.1
+                }
+                ListElement {
+                    title:          qsTr("Speed to throttle scalar (GND_SPEED_THR_SC)")
+                    description:    qsTr("This is a gain to map the speed control output to the throttle linearly.")
+                    param:          "GND_SPEED_THR_SC"
+                    min:            0.0
+                    max:            2.0
+                    step:           0.01
+                }
             }
         }
-        
+
+//        property var throttle: QtObject {
+//            property string name: qsTr("throttle")
+
+//            property var plot: [
+////                { name: "Vel XY Response", value: globals.activeVehicle.localPosition.vxy },
+////                { name: "Vel XY Setpoint", value: globals.activeVehicle.localPositionSetpoint.vxy },
+//                { name: "Throttle output", value: globals.activeVehicle.localPositionSetpoint.throttle }
+//            ]
+
+//            property var params: ListModel {
+//                ListElement {
+//                    title:          qsTr("Maximum output of velocity PID controller (GND_SPEED_PID_MX)")
+//                    description:    qsTr("Maximum output from the velocity PID controller")
+//                    param:          "GND_SPEED_PID_MX"
+//                    min:            0.0
+//                    max:            40.0
+//                    step:           0.1
+//                }
+//                ListElement {
+//                    title:          qsTr("Speed to throttle scalar (GND_SPEED_THR_SC)")
+//                    description:    qsTr("This is a gain to map the speed control output to the throttle linearly.")
+//                    param:          "GND_SPEED_THR_SC"
+//                    min:            0.0
+//                    max:            2.0
+//                    step:           0.01
+//                }
+//            }
+//        }
     }
 }

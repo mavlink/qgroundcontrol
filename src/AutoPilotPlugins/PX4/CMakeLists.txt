@@ -14,6 +14,7 @@ add_custom_target(PX4AutoPilotPluginQml
 		PX4TuningComponentCopter.qml
 		PX4TuningComponentPlane.qml
 		PX4TuningComponentVTOL.qml
+		PX4TuningComponentGroundVehicle.qml
 		SafetyComponent.qml
 		SafetyComponentSummary.qml
 		SensorsComponent.qml

@@ -23,21 +23,15 @@ ColumnLayout {
     anchors.fill: parent
     property alias autotuningEnabled: pidTuning.autotuningEnabled
 
-    GridLayout {
-        columns: 2
-    }
-
     PIDTuning {
         width: availableWidth
-        id:    PIDTuning
+        id:    pidTuning
 
         title: "Rate"
         tuningMode: Vehicle.ModeRateAndAttitude
         unit: "deg/s"
         axis: [ yaw ]
         chartDisplaySec: 3
-        showAutoModeChange: true
-        showAutoTuning:     true
 
         // Yaw tuning parameters
         property var yaw: QtObject {
@@ -49,6 +43,15 @@ ColumnLayout {
             ]
 
             property var params: ListModel {
+                ListElement {
+                    title:          qsTr("Maximum Yaw rate (GND_RATE_MAX) [rad/s]")
+                    description:    qsTr("Maximum Yaw rate reachable by the vehicle's actuator & body. If in Manual mode, edit `GND_MAN_Y_MAX`")
+                    param:          "GND_RATE_MAX"
+                    min:            0.0
+                    max:            5.0
+                    step:           0.05
+                    // SITL Boat can reach upto ~17 deg/s == 0.25 rad/s | Real Racing Boat can reach upto 6.00 rad/s
+                }
                 ListElement {
                     title:          qsTr("Feedforward Gain (GND_RATE_FF)")
                     description:    qsTr("Feedforward used to compensate for gronds damping. Cruicial for Boats")
@@ -62,7 +65,7 @@ ColumnLayout {
                     description:    qsTr("Porportional Gain.")
                     param:          "GND_RATE_P"
                     min:            0.0
-                    max:            1
+                    max:            5.0
                     step:           0.005
                 }
                 ListElement {
@@ -74,20 +77,20 @@ ColumnLayout {
                     step:           0.005
                 }
                 ListElement {
+                    title:          qsTr("Derivative Gain (GND_RATE_D)")
+                    description:    qsTr("Derivative Gain")
+                    param:          "GND_RATE_D"
+                    min:            0.0
+                    max:            1.0
+                    step:           0.005
+                }
+                ListElement {
                     title:          qsTr("Integral max (GND_RATE_IMAX)")
                     description:    qsTr("Sanity limit to prevent integrator from running away.")
-                    param:          "GND_RATE_D"
+                    param:          "GND_RATE_IMAX"
                     min:            0.0
                     max:            50.0
                     step:           0.5
-                }
-                ListElement {
-                    title:          qsTr("Maximum Yaw rate (GND_RATE_MAX) [rad/s]")
-                    description:    qsTr("Maximum Yaw rate reachable by the vehicle's actuator & body. If in Manual mode, edit `GND_MAN_Y_MAX`")
-                    param:          "GND_RATE_MAX"
-                    min:            0.0
-                    max:            5.0
-                    step:           0.01
                 }
             }
         }
