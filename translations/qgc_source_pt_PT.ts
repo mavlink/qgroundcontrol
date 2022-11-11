@@ -8469,7 +8469,7 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
     <name>JoystickConfigButtons</name>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigButtons.qml" line="45"/>
-      <source>Assigning the same action to multiple buttons requires the press of all those buttons for the action to be taken. This is useful to prevent accidental button presses for critical actions like Arm or Emergency Stop.</source>
+      <source> Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</source>
       <translation>A atribuição da mesma ação para vários botões requer que todos esses botões sejam pressionados para a ação ser tomada. Isso é útil para prevenir acidentes com ações críticas como Armar ou Parada de Emergência.</translation>
     </message>
     <message>
