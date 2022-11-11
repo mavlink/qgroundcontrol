@@ -23,6 +23,8 @@ import QGroundControl.FactControls
 ColumnLayout {
     width:                  availableWidth
     height:                 (globals.activeVehicle.supportsJSButton ? buttonCol.height : flowColumn.height) + (ScreenTools.defaultFontPixelHeight * 2)
+    spacing:                ScreenTools.defaultFontPixelHeight
+    
     Connections {
         target: _activeJoystick
         onRawButtonPressedChanged: {
@@ -34,16 +36,20 @@ ColumnLayout {
             }
         }
     }
+
     ColumnLayout {
         id:         flowColumn
-        y:          ScreenTools.defaultFontPixelHeight / 2
         width:      parent.width
-        spacing:    ScreenTools.defaultFontPixelHeight / 2
+        anchors.centerIn:   parent
+        spacing:    ScreenTools.defaultFontPixelHeight
+
+        // Note for reminding the use of multiple buttons for the same action
         QGCLabel {
             Layout.preferredWidth:  parent.width
             wrapMode:               Text.WordWrap
-            text:                   qsTr("Assigning the same action to multiple buttons requires the press of all those buttons for the action to be taken. This is useful to prevent accidental button presses for critical actions like Arm or Emergency Stop.")
+            text:                   qsTr(" Multiple buttons that have the same action must be pressed simultaneously to invoke the action.")
         }
+        
         Flow {
             id:                     buttonFlow
             Layout.preferredWidth:  parent.width
