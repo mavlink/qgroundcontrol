@@ -264,6 +264,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
+
+    // Hack: set Frames metadata directly in constructor, to test the UI
+    this->setFramesMetadata(MAV_COMP_ID_AUTOPILOT1, ":/AutoPilotPlugins/PX4/Frames_example.json", "");
+    qDebug() << "Setting arbitrary example Frame metadata to vehicle! : " << this;
 }
 
 // Disconnected Vehicle for offline editing
