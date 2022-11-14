@@ -1539,7 +1539,7 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 
 DISTFILES += \
     src/AutoPilotPlugins/PX4/Frame.qml \
-    src/AutoPilotPlugins/PX4/FrameComponentMain.qml \
+    src/AutoPilotPlugins/PX4/FrameComponent.qml \
     src/QmlControls/QGroundControl/Specific/qmldir \
     src/Vehicle/Frames/CMakeLists.txt
 
