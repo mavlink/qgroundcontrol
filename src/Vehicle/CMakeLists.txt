@@ -27,6 +27,8 @@ add_library(Vehicle
 	CompInfoActuators.h
 	CompInfoEvents.cc
 	CompInfoEvents.h
+	CompInfoFrames.h
+	CompInfoFrames.cc
 	CompInfoParam.cc
 	CompInfoParam.h
 	CompInfoGeneral.cc

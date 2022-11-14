@@ -431,11 +431,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
-	src/AutoPilotPlugins/PX4/FrameComponent.h \
     src/QmlControls/QmlUnitsConversion.h \
-    src/Vehicle/CompInfoFrames.h \
-	src/Vehicle/Frames/Frames.h \
-    src/Vehicle/Frames/FramesBase.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
@@ -449,10 +445,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
-	src/AutoPilotPlugins/PX4/FrameComponent.cc \
-    src/Vehicle/CompInfoFrames.cc \
-	src/Vehicle/Frames/Frames.cc \
-    src/Vehicle/Frames/FramesBase.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
@@ -710,11 +702,14 @@ HEADERS += \
     src/Vehicle/CompInfo.h \
     src/Vehicle/CompInfoActuators.h \
     src/Vehicle/CompInfoEvents.h \
+    src/Vehicle/CompInfoFrames.h \
     src/Vehicle/CompInfoParam.h \
     src/Vehicle/CompInfoGeneral.h \
     src/Vehicle/ComponentInformationCache.h \
     src/Vehicle/ComponentInformationManager.h \
     src/Vehicle/EventHandler.h \
+    src/Vehicle/Frames/Frames.h \
+    src/Vehicle/Frames/FramesBase.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/HealthAndArmingCheckReport.h \
@@ -965,11 +960,14 @@ SOURCES += \
     src/Vehicle/CompInfo.cc \
     src/Vehicle/CompInfoActuators.cc \
     src/Vehicle/CompInfoEvents.cc \
+    src/Vehicle/CompInfoFrames.cc \
     src/Vehicle/CompInfoParam.cc \
     src/Vehicle/CompInfoGeneral.cc \
     src/Vehicle/ComponentInformationCache.cc \
     src/Vehicle/ComponentInformationManager.cc \
     src/Vehicle/EventHandler.cc \
+    src/Vehicle/Frames/Frames.cc \
+    src/Vehicle/Frames/FramesBase.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/HealthAndArmingCheckReport.cc \
@@ -1209,6 +1207,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/AirframeComponentController.h \
         src/AutoPilotPlugins/PX4/CameraComponent.h \
         src/AutoPilotPlugins/PX4/FlightModesComponent.h \
+        src/AutoPilotPlugins/PX4/FrameComponent.h \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
         src/AutoPilotPlugins/PX4/PX4FlightBehavior.h \
@@ -1230,6 +1229,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
         src/AutoPilotPlugins/PX4/CameraComponent.cc \
         src/AutoPilotPlugins/PX4/FlightModesComponent.cc \
+        src/AutoPilotPlugins/PX4/FrameComponent.cc \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
         src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc \
@@ -1538,10 +1538,7 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 }
 
 DISTFILES += \
-    src/AutoPilotPlugins/PX4/Frame.qml \
-    src/AutoPilotPlugins/PX4/FrameComponent.qml \
-    src/QmlControls/QGroundControl/Specific/qmldir \
-    src/Vehicle/Frames/CMakeLists.txt
+    src/QmlControls/QGroundControl/Specific/qmldir
 
 #
 # Steps for "install" target on Linux

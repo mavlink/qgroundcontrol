@@ -46,6 +46,8 @@ add_library(AutoPilotPlugins
 	PX4/CameraComponent.h
 	PX4/FlightModesComponent.cc
 	PX4/FlightModesComponent.h
+	PX4/FrameComponent.cc
+	PX4/FrameComponent.h
 	PX4/PowerComponent.cc
 	PX4/PowerComponentController.cc
 	PX4/PowerComponentController.h
