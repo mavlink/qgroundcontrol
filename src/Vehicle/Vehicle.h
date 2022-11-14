@@ -50,6 +50,7 @@
 
 class Actuators;
 class Frames;
+class FramesBase;
 class EventHandler;
 class UAS;
 class UASInterface;
@@ -1376,6 +1377,7 @@ private:
     ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
+    FramesBase*                     _framesBase                 = nullptr;
     Frames*                         _frames                     = nullptr;
 
     static const char* _rollFactName;

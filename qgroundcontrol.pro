@@ -435,6 +435,7 @@ HEADERS += \
     src/QmlControls/QmlUnitsConversion.h \
     src/Vehicle/CompInfoFrames.h \
 	src/Vehicle/Frames/Frames.h \
+    src/Vehicle/Frames/FramesBase.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
@@ -451,6 +452,7 @@ SOURCES += \
 	src/AutoPilotPlugins/PX4/FrameComponent.cc \
     src/Vehicle/CompInfoFrames.cc \
 	src/Vehicle/Frames/Frames.cc \
+    src/Vehicle/Frames/FramesBase.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \

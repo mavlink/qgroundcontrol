@@ -51,6 +51,8 @@
 #include "VehicleBatteryFactGroup.h"
 #include "EventHandler.h"
 #include "Actuators/Actuators.h"
+#include "Frames/Frames.h"
+#include "Frames/FramesBase.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -1701,6 +1703,14 @@ void Vehicle::setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFi
         _actuators = new Actuators(this, this);
     }
     _actuators->load(metadataJsonFileName);
+}
+
+void Vehicle::setFramesMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
+{
+    if (!_framesBase) {
+        _framesBase = new FramesBase(this, this);
+    }
+    _framesBase->load(metadataJsonFileName);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)

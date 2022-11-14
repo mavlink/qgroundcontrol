@@ -24,6 +24,11 @@ static constexpr int FRAME_ID_UNDEFINED = -1; // Used for a Frame Group's ID
 static const QString FRAME_IMEAGES_PATH = ":/images/";
 static const QString FRAME_UNKNOWN_NAME = "AirframeUnknown";
 
+/**
+ * @brief Base Frame class defining a group of frames / or an end node frame
+ *
+ * This defines the recursive Frames metadata structure defined in the JSON schema.
+ */
 class Frames : public QObject
 {
     Q_OBJECT
@@ -115,7 +120,8 @@ private:
     QString _manufacturer;
     QString _productUrl;
 
-    friend class CompInfoFrames;
+    // Allow access to private variables to the superceeding FramesBase class
+    friend class FramesBase;
 };
 
 #endif // FRAMES_H

@@ -2,8 +2,6 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 
-import Junwoo.framecomp 1.0
-
 Window {
     id: mainPage
     visible: true
@@ -17,9 +15,6 @@ Window {
     property real _boxWidth: _defaultFontPixelWidth * 30
     property real _boxHeight: _defaultFontPixelHeight * 30
     property real _boxSpacing: _defaultFontPixelWidth
-
-    // Reference the Singleton
-    property var frameComponent: FrameComponent
 
     // Background Color
     Rectangle {
@@ -61,7 +56,7 @@ Window {
 
         Repeater {
             id: framesRepeater
-            model: frameComponent.selectedFrames
+//            model: frameComponent.selectedFrames
 
 //            onModelChanged: {
 //                framesAnimation.running = true
