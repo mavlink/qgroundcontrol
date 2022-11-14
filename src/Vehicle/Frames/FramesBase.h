@@ -23,8 +23,8 @@ class FramesBase : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QmlObjectListModel* selectedFrames READ selectedFrames NOTIFY selectedFramesChanged)
-    Q_PROPERTY(QString frames_id_param_name READ frames_id_param_name NOTIFY frames_id_param_name_changed)
-    Q_PROPERTY(int finalSelectionFrameID READ finalSelectionFrameID NOTIFY finalSelectionFrameIDChanged)
+    Q_PROPERTY(QList<QString> frame_parameters READ frame_parameters NOTIFY frameParametersChanged)
+    Q_PROPERTY(QList<int> finalSelectionFrameParamValues READ finalSelectionFrameParamValues NOTIFY finalSelectionFrameParamValuesChanged)
 
 public:
     FramesBase(QObject *parent, Vehicle* vehicle);
@@ -66,12 +66,12 @@ public:
     /**
      * @brief Getter for the last user selected Frame Endnode's Frame ID
      */
-    int finalSelectionFrameID() { return _finalSelectionFrameID; } const
+    QList<int> finalSelectionFrameParamValues() { return _finalSelectionFrameParamValues; } const
 
     /**
-     * @brief Getter for the parameter name corresponding to the Frame ID
+     * @brief Getter for the parameters needed for frame selection to come into effect
      */
-    QString frames_id_param_name() const { return _frames_id_param_name; }
+    QList<QString> frame_parameters() const { return _frame_parameter_names; }
 
     /**
      * @brief QML invokable function to process when user selects a frame
@@ -87,8 +87,8 @@ public:
 
 signals:
      void selectedFramesChanged();
-     void frames_id_param_name_changed();
-     void finalSelectionFrameIDChanged();
+     void frameParametersChanged();
+     void finalSelectionFrameParamValuesChanged();
 
 private:
      // Frames root object without a parent, that serves as a container including all the frames defined in the "frames_v1" element of the schema
@@ -105,10 +105,12 @@ private:
 
     // Data from JSON
     int _schema_version{0};
-    QString _frames_id_param_name;
+
+    // Parameters to set for applying frame selection
+    QList<QString> _frame_parameter_names;
 
     // Variables for run time processing
-    int _finalSelectionFrameID{FRAME_ID_INVALID}; // Holds Frame ID of the last selected EndNode frame from the user
+    QList<int> _finalSelectionFrameParamValues; // Holds Frame ID of the last selected EndNode frame from the user
 };
 
 #endif // FRAMESBASE_H

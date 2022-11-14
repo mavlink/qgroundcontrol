@@ -20,6 +20,8 @@ void FramesBase::load(const QString &json_file)
     QString json_data = file.readAll();
     file.close();
 
+//    qDebug() << QString("FramesBase json read complete, total length: %1").arg(json_data.length());
+
     // store the metadata to be loaded later after all params are available
     _jsonMetadata = QJsonDocument::fromJson(json_data.toUtf8());
 
@@ -31,13 +33,18 @@ bool FramesBase::parseJson(const QJsonDocument &json)
 {
     QJsonObject obj = json.object();
 
-    // Get Frame ID Parameter
-    QJsonValue frameIdJson = obj.value("settings").toObject().value("frame_id_parameter");
-    if (!frameIdJson.isNull() && frameIdJson.isString()) {
-        _frames_id_param_name = frameIdJson.toString();
-        emit frames_id_param_name_changed();
+    // Get Frame related parameters
+    QJsonArray frameParameters = obj.value("settings").toObject().value("frame_parameters").toArray();
+    if (!frameParameters.isEmpty()) {
+        for (const auto frame_param : frameParameters) {
+            QString frame_param_str = frame_param.toString();
+            if (!frame_param_str.isNull()) {
+                _frame_parameter_names.append(frame_param_str);
+            }
+        }
+        emit frameParametersChanged();
     } else {
-        qWarning() << "Frames ID Parameter is not set!";
+        qWarning() << "Frame parameters list not set!";
     }
 
     // Get Version
@@ -71,7 +78,14 @@ void FramesBase::print_info() const
     QString str = "";
 
     // Required values
-    str.append(QString("Schema ver: %1 | Frames ID Param name: %2 | ").arg(QString::number(_schema_version), _frames_id_param_name));
+    str.append(QString("Schema ver: %1 | Frame selection params: [ ").arg(QString::number(_schema_version)));
+
+    // Frame parameters
+    for (const QString param_name : _frame_parameter_names) {
+        str.append(QString("%1, ").arg(param_name));
+    }
+    str.append("] | ");
+
     str.append(QString("Framegroups size: %1").arg(QString::number(_frames_root._subgroups.length())));
 
     qDebug() << str;
@@ -108,9 +122,9 @@ bool FramesBase::selectFrame(Frames *frame)
 
     // User selected the end-node, select this item as final selection
     if (frame->_type == FrameType::FrameEndNode) {
-        _finalSelectionFrameID = frame->_frame_id;
-        qDebug() << "Setting final Selection Frame ID to: " << _finalSelectionFrameID;
-        emit finalSelectionFrameIDChanged();
+        _finalSelectionFrameParamValues = frame->_frame_param_values;
+        qDebug() << "Setting final Selection Frame param values to: " << _finalSelectionFrameParamValues;
+        emit finalSelectionFrameParamValuesChanged();
     }
 
     return true;

@@ -95,11 +95,14 @@ bool Frames::parseJson(const QJsonObject &json)
 
     }
 
-    // Frame ID: required only for end nodes
+    // Frame parameter values: required only for end nodes
     if (_type == FrameType::FrameEndNode) {
-        QJsonValue frameID = json.value("frame_id");
-        if (!frameID.isNull()) {
-            _frame_id = frameID.toInt(FRAME_ID_UNDEFINED);
+        QJsonArray frameParamValues = json.value("frame_parameter_values").toArray();
+        if (!frameParamValues.isEmpty()) {
+            for (const auto param_value : frameParamValues) {
+                const int param_value_int = param_value.toInt();
+                _frame_param_values.append(param_value_int);
+            }
         } else {
             qWarning() << "Frame ID not set!" << json;
         }
@@ -158,14 +161,14 @@ void Frames::print_info(QString prefix) const
     // Required values
     str.append(QString("name: %1, type: %2 | ").arg(_name, QString::number((int)_type)));
 
+    // Frame parameter values are required only for end nodes
     if (_type == FrameType::FrameEndNode) {
-        // Frame ID is required only for end nodes
-        str.append(QString("frame ID: %1 | ").arg(QString::number(_frame_id)));
+        str.append(QString("frame parameter values: [ "));
+        for (const int param_value : _frame_param_values) {
+            str.append(QString("%1, ").arg(param_value));
+        }
+        str.append(" ] | ");
     }
-
-    // Debug
-//    qulonglong p = (qulonglong)_parentFrame;
-//    str.append(QString("parentFrame address: %1 | ").arg(p));
 
     // Non-required values
     if (!_description.isEmpty()) {

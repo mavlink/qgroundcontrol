@@ -35,7 +35,7 @@ class Frames : public QObject
 
     // Basic properties
     Q_PROPERTY(QString name READ getName NOTIFY nameChanged)
-    Q_PROPERTY(int frame_id READ getFrameid NOTIFY frameidChanged)
+    Q_PROPERTY(QList<int> frame_param_values READ getFrameParamValues NOTIFY framParamValuesChanged)
 
     // Optional properties
     Q_PROPERTY(QString image_url READ getImageurl NOTIFY imageurlChanged)
@@ -69,7 +69,7 @@ public:
     void print_info(QString prefix = "") const;
 
     QString getName() { return _name; }
-    int getFrameid() { return _frame_id; }
+    QList<int> getFrameParamValues() { return _frame_param_values; }
     QString getImageurl() { return _imageUrl; }
     QString getDescription() { return _description; }
     QString getManufacturer() { return _manufacturer; }
@@ -82,7 +82,7 @@ public:
 
 signals:
     void nameChanged();
-    void frameidChanged();
+    void framParamValuesChanged();
     void imageurlChanged();
     void descriptionChanged();
     void manufacturerChanged();
@@ -108,7 +108,7 @@ private:
     // Required properties
     FrameType _type{FrameType::FrameUndefined};
     QString _name;
-    int _frame_id{FRAME_ID_UNDEFINED};
+    QList<int> _frame_param_values;
 
     // Subgroup that holds many different sub-frames
     QList<Frames*> _subgroups;
