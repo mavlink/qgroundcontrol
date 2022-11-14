@@ -9,6 +9,7 @@
 FramesBase::FramesBase(QObject *parent, Vehicle* vehicle)
     :_frames_root(parent, nullptr), _vehicle(vehicle)
 {
+    qRegisterMetaType<FramesBase*>("FamesBase*");
     // Note: `_frames_root` must have a nullptr as the parent node!
 }
 
@@ -36,7 +37,7 @@ bool FramesBase::parseJson(const QJsonDocument &json)
     // Get Frame related parameters
     QJsonArray frameParameters = obj.value("settings").toObject().value("frame_parameters").toArray();
     if (!frameParameters.isEmpty()) {
-        for (const auto frame_param : frameParameters) {
+        for (const auto &frame_param : frameParameters) {
             QString frame_param_str = frame_param.toString();
             if (!frame_param_str.isNull()) {
                 _frame_parameter_names.append(frame_param_str);
@@ -81,7 +82,7 @@ void FramesBase::print_info() const
     str.append(QString("Schema ver: %1 | Frame selection params: [ ").arg(QString::number(_schema_version)));
 
     // Frame parameters
-    for (const QString param_name : _frame_parameter_names) {
+    for (const QString &param_name : _frame_parameter_names) {
         str.append(QString("%1, ").arg(param_name));
     }
     str.append("] | ");

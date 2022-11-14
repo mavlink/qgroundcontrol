@@ -21,10 +21,10 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         onClicked: {
-            // We directly call the `frameComponent` object that exists in the `Main` QML
+            // We directly call the `framesBase` object that exists in the `FrameComponent.qml`.
             // This is a bad practice, but since having a MouseArea defined in the `Main` QML
             // somehow disables clicking on the product URL, this decision had to be made.
-            frameComponent.selectFrame(modelData)
+            framesBase.selectFrame(modelData)
         }
     }
 

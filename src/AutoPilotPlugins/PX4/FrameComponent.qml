@@ -2,116 +2,67 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 
-Window {
-    id: mainPage
-    visible: true
-    title: qsTr("Main Page")
-    width: 1000; height: 1000
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
 
-    // Properties
-    property real _defaultFontPointSize: 10
-    property real _defaultFontPixelWidth: 10
-    property real _defaultFontPixelHeight: 10
-    property real _boxWidth: _defaultFontPixelWidth * 30
-    property real _boxHeight: _defaultFontPixelHeight * 30
-    property real _boxSpacing: _defaultFontPixelWidth
+SetupPage {
+    id: framePage
+    // This is what the loader 'loads'
+    pageComponent: framePageComponent
 
-    // Background Color
-    Rectangle {
-        anchors.fill: parent
-        objectName: "rect"
-        color: "lightblue"
-    }
+    // Master controller for the frames interface
+    property var framesBase:       globals.activeVehicle.framesBase
 
-    // Toolbar / Debug console
-    Row {
-        id: toolbar
-        width: parent.width; height: _boxHeight / 4 // Hacky
+    // Frames tree structure root node
+    property var frames:       globals.activeVehicle.frames
 
-        Text {
-            id: framesParamName
-            text: frameComponent.frames_id_param_name
-        }
+//    // Background Color
+//    Rectangle {
+//        anchors.fill: parent
+//        objectName: "rect"
+//        color: "lightblue"
+//    }
 
-        Button {
-            id: gotoParentButton
-            text: "Go to parent"
-            onClicked: {
-                frameComponent.gotoParentFrame();
+    // Component that will be loaded via `SetupPage`
+    Component {
+        id: framePageComponent
+
+        // Toolbar / Debug console
+        Row {
+            id: toolbar
+            width: parent.width; height: _boxHeight / 4 // Hacky
+
+            Button {
+                id: gotoParentButton
+                text: "Go to parent"
+                onClicked: {
+                    framesBase.gotoParentFrame();
+                }
+            }
+
+            Text {
+                id: finalSelectedFrameParamValues
+                text: framesBase.finalSelectionFrameParamValues
+            }
+
+            // Frames collage view
+            Flow {
+                id: framesCollageView
+                width: parent.width
+                spacing: _boxSpacing
+
+                Repeater {
+                    id: framesRepeater
+                    model: frames
+
+                    Frame {
+                        id: frameId
+                        frame: modelData
+        //                selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
+                    }
+                }
             }
         }
-
-        Text {
-            id: finalSelectedFrameID
-            text: frameComponent.finalSelectionFrameID
-        }
-    }
-
-    // Frames collage view
-    Flow {
-        id: framesCollageView
-        width: parent.width
-        anchors.top: toolbar.bottom
-        spacing: _boxSpacing
-
-        Repeater {
-            id: framesRepeater
-//            model: frameComponent.selectedFrames
-
-//            onModelChanged: {
-//                framesAnimation.running = true
-//                console.log('onModelChanged called!')
-//            }
-
-//            Connections {
-//                target: frameComponent
-//                function onSelectedFramesChanged() {
-//                    framesAnimation.running = true
-//                    console.log('onModelChanged called!')
-//                }
-//            }
-
-            Frame {
-                id: frameId
-                frame: modelData
-                selected: frame.frame_id == frameComponent.finalSelectionFrameID
-
-                // Click border (don't include the last row)
-//                MouseArea {
-//                    id: mouseArea
-//                    anchors.fill: parent
-////                    anchors {
-////                        top: parent.top
-////                        bottom: frameBottomRow.top
-////                        left: parent.left
-////                        right: parent.right
-////                    }
-
-//                    hoverEnabled: true
-//                    onClicked: {
-//                        frameComponent.selectFrame(modelData)
-//                    }
-//                }
-
-//                mouseArea.onClicked: {
-//                    frameComponent.selectFrame(modelData)
-//                }
-
-//                NumberAnimation {
-//                    id: framesAnimation
-//                    target: frameId
-//                    property: "x"
-//                    duration: 1000
-//                    to: 0; from: framesCollageView.width
-//                    easing.type: Easing.InOutQuad
-//                }
-
-//                Component.onCompleted: {
-//                    framesAnimation.running = true
-//                    console.log('Component.onCompleted called!')
-//                }
-            }
-        }
-
     }
 }

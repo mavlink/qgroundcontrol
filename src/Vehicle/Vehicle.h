@@ -325,6 +325,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
     Q_PROPERTY(Actuators*           actuators       READ actuators                  CONSTANT)
     Q_PROPERTY(Frames*              frames          READ frames                     CONSTANT)
+    Q_PROPERTY(FramesBase*          framesBase      READ framesBase                 CONSTANT)
     Q_PROPERTY(HealthAndArmingCheckReport* healthAndArmingCheckReport READ healthAndArmingCheckReport CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
@@ -632,6 +633,7 @@ public:
     bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
     Actuators*      actuators                   () const { return _actuators; }
     Frames*         frames                      () const { return _frames; }
+    FramesBase*     framesBase                  () const { return _framesBase; }
 
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version

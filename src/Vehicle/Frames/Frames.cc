@@ -8,7 +8,7 @@
 Frames::Frames(QObject* parent, Frames* parent_frame)
     : QObject(parent), _parentFrame(parent_frame)
 {
-
+    qRegisterMetaType<Frames*>("Fames*");
 }
 
 Frames::~Frames()

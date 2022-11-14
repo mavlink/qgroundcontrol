@@ -1718,6 +1718,9 @@ void Vehicle::setFramesMetadata(uint8_t compid, const QString& metadataJsonFileN
         _frames = _framesBase->getRootFrames();
     }
     _framesBase->load(metadataJsonFileName);
+
+    // Debug, print out details
+    _framesBase->print_info();
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
