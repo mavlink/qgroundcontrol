@@ -42,6 +42,8 @@
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="AirframeFactMetaData.xml">../../AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
+        <file alias="Frame.schema.json">../../AutoPilotPlugins/PX4/Frames.schema.json</file>
+        <file alias="Frames_example.json">../../AutoPilotPlugins/PX4/Frames_example.json</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin/PX4">
         <file alias="PX4ParameterFactMetaData.xml">PX4ParameterFactMetaData.xml</file>

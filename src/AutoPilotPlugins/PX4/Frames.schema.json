@@ -1,0 +1,120 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Frames",
+    "description": "List and structure of a Frames supported by the Autopilot",
+    "type": "object",
+
+    "$defs": {
+        "imageTypes": {
+            "description": "Enum representing the image to show for the frame. Convention is to have capital letter on each new phrase",
+            "default": "Undefined",
+            "enum": [
+                "",
+                "Undefined",
+                "Simulation",
+                "Helicopter",
+                    "HelicopterCoaxial",
+                "Multirotor",
+                    "Quadrotor",
+                        "QuadrotorX", "QuadrotorH", "QuadrotorWide", 
+                    "Hexarotor",
+                "FixedWing",
+                    "FixedWingATail", "FixedWingFlyingWing",
+                "VTOL",
+                    "VTOLTiltrotor", "VTOLQuadrotorTailsitter",
+                "Boat",
+                "Rover",
+                "UUV"
+            ]
+        },
+        "frame": {
+            "type": "object",
+            "description": "A group (could be a single frame) of frames",
+
+            "properties": {
+                "type": {
+                    "enum": ["group", "frame"],
+                    "description": "Type of the frame object. If it's a group, it will include other group/frames in `subgroups` property"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "image": {
+                    "$ref": "#/$defs/imageTypes",
+                    "description": "Generic enum value (non GCS specific) representing the frame image. GCS needs to map the value to an appropriate iamge resource. If empty, GCS should use the `image` property in the parent node. If no valid image can be found in parent node, it should show `Undefined` frame image"
+                },
+                "image-custom": {
+                    "type": "string",
+                    "description": "Name of the custom image to load. GCS should have a mechanism to map the string to the appropriate image resource. So compatability with GCS is not guaranteed. It overrides the `image` property if valid"
+                },
+                "manufacturer": {
+                    "type": "string",
+                    "description": "Name of the manufacturer"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Link to the relevant material online about the frame"
+                },
+                "frame_parameter_values": {
+                    "type": "array",
+                    "description": "Values to set for parameters defined in `frame_parameters` settings to make frame selection come into effect",
+                    "minItems": 1
+                },
+                "subgroups": {
+                    "type": "array",
+                    "description": "Sub-group of other frame / frame-groups",
+                    "items": {
+                        "$ref": "#/$defs/frame"
+                    }
+                }
+            },
+
+            "if": {
+                "properties": { "type": { "const": "group" } }
+            },
+            "then": {
+                "description": "For group types, subgroups must be provided",
+                "required": ["subgroups"]
+            },
+            "else": {
+                "description": "For frame types, frame_parameter_values must be provided",
+                "required": ["frame_parameter_values"]
+            },
+
+            "required": ["type", "name"],
+            "additionalProperties": false
+        }
+    },
+
+    "properties": {
+        "version": {
+            "type": "integer",
+            "description": "Version of the Frames JSON Schema"
+        },
+
+        "settings": {
+            "type": "object",
+            "description": "Common settings",
+            "properties": {
+                "frame_parameters": {
+                    "description": "Parameters needed to set & apply the Frame selection changes",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+
+        "frames_v1": {
+            "type": "array",
+            "description": "List of frames as defined in v1 spec",
+            "items": {
+                "$ref": "#/$defs/frame"
+            }
+        }
+    }
+}
