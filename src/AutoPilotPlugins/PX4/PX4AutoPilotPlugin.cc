@@ -30,6 +30,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)
     , _airframeComponent(nullptr)
+    , _frameComponent(nullptr)
     , _radioComponent(nullptr)
     , _esp8266Component(nullptr)
     , _flightModesComponent(nullptr)
@@ -64,9 +65,20 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle) {
             if (_vehicle->parameterManager()->parametersReady()) {
-                _airframeComponent = new AirframeComponent(_vehicle, this, this);
-                _airframeComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_airframeComponent)));
+
+                qDebug() << "Frames UI loading, metadata present: " << _vehicle->frames();
+
+                if (_vehicle->frames()) {
+                    // Frames metadata based UI
+                    _frameComponent = new FrameComponent(_vehicle, this, this);
+                    _frameComponent->setupTriggerSignals(); // Q) Is this necessary?
+                    _components.append(QVariant::fromValue(static_cast<FrameComponent*>(_frameComponent)));
+                } else {
+                    // Show previous Airframe UI instead
+                    _airframeComponent = new AirframeComponent(_vehicle, this, this);
+                    _airframeComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_airframeComponent)));
+                }
 
                 if (!_vehicle->hilMode()) {
                     _sensorsComponent = new SensorsComponent(_vehicle, this, this);

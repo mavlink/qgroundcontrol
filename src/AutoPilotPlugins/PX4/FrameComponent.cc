@@ -25,12 +25,12 @@ QString FrameComponent::name(void) const
 
 QString FrameComponent::description(void) const
 {
-    return "";
+    return "Frames UI visualizes the cascaded frame selection interface";
 }
 
 QString FrameComponent::iconResource(void) const
 {
-    return QStringLiteral("/qmlimages/MotorComponentIcon.svg");
+    return QStringLiteral("/qmlimages/AirframeComponentIcon.png");
 }
 
 bool FrameComponent::requiresSetup(void) const
@@ -40,7 +40,6 @@ bool FrameComponent::requiresSetup(void) const
 
 bool FrameComponent::setupComplete(void) const
 {
-//    return !_frames.hasUnsetRequiredFunctions();
     return true; // TODO: Remove. Temporary
 }
 

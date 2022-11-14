@@ -13,6 +13,7 @@
 
 #include "AutoPilotPlugin.h"
 #include "ActuatorComponent.h"
+#include "FrameComponent.h"
 #include "PX4AirframeLoader.h"
 #include "AirframeComponent.h"
 #include "PX4RadioComponent.h"
@@ -51,6 +52,7 @@ protected:
     bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
     PX4AirframeLoader*      _airframeFacts;
     AirframeComponent*      _airframeComponent;
+    FrameComponent*         _frameComponent;
     PX4RadioComponent*      _radioComponent;
     ESP8266Component*       _esp8266Component;
     FlightModesComponent*   _flightModesComponent;
