@@ -69,7 +69,7 @@
         <file alias="ActuatorComponent.qml">src/AutoPilotPlugins/PX4/ActuatorComponent.qml</file>
         <file alias="ActuatorFact.qml">src/AutoPilotPlugins/PX4/ActuatorFact.qml</file>
         <file alias="ActuatorSlider.qml">src/AutoPilotPlugins/PX4/ActuatorSlider.qml</file>
-        <file alias="Frame.qml">src/AutoPilotPlugins/PX4/Frame.qml</file>
+        <file alias="PX4Frame.qml">src/AutoPilotPlugins/PX4/PX4Frame.qml</file>
         <file alias="FrameComponent.qml">src/AutoPilotPlugins/PX4/FrameComponent.qml</file>
         <file alias="OfflineMap.qml">src/QtLocationPlugin/QMLControl/OfflineMap.qml</file>
         <file alias="PlanToolBar.qml">src/PlanView/PlanToolBar.qml</file>

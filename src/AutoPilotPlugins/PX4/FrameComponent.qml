@@ -14,7 +14,7 @@ SetupPage {
     // Master controller for the frames interface
     property var framesBase:        globals.activeVehicle.framesBase
     // Frames tree structure root node
-    property var frames:            framesBase.rootFrame
+    //property var frames:            framesBase.rootFrame
 
     // Component that will be loaded via `SetupPage`
     Component {
@@ -41,12 +41,12 @@ SetupPage {
 
                 Repeater {
                     id: framesRepeater
-                    model: frames.selectedFrames // show Selected Frames only
+                    model: framesBase.selectedFrames // show Selected Frames only
 
-                    Frame {
+                    PX4Frame {
                         id: frameId
-                        //frame: modelData
-                        //selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
+                        frame: object // why do we call it 'object', not 'modelData'?
+                        selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
                     }
                 }
             }
