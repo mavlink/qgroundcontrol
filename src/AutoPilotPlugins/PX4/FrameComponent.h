@@ -13,7 +13,7 @@
 #include "VehicleComponent.h"
 #include "Fact.h"
 
-#include "Frames/Frames.h"
+#include "Frames/FramesBase.h"
 
 class FrameComponent : public VehicleComponent
 {
@@ -36,5 +36,5 @@ public:
 
 private:
     const QString   _name;
-    //Frames& _frames;
+    FramesBase& _framesBase;
 };

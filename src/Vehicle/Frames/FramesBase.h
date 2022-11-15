@@ -22,6 +22,7 @@ class FramesBase : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(bool frameJSONLoaded READ isFrameJSONLoaded NOTIFY frameJSONLoadedChanged)
     Q_PROPERTY(Frames* rootFrame READ getRootFrame NOTIFY rootFrameChanged)
     Q_PROPERTY(QmlObjectListModel* selectedFrames READ selectedFrames NOTIFY selectedFramesChanged)
     Q_PROPERTY(QList<QString> frame_parameters READ frame_parameters NOTIFY frameParametersChanged)
@@ -44,6 +45,9 @@ public:
      * Should Frames do the same?
      */
     void load(const QString &json_file);
+
+    // Returns whether the Frames JSON metadata was loaded & parsed correctly
+    bool isFrameJSONLoaded() { return _framesJSONLoaded; }
 
     void print_info() const;
 
@@ -87,6 +91,7 @@ public:
     Q_INVOKABLE bool gotoParentFrame();
 
 signals:
+     void frameJSONLoadedChanged();
      void rootFrameChanged();
      void selectedFramesChanged();
      void frameParametersChanged();
@@ -95,6 +100,9 @@ signals:
 private:
      // Root frames object without a parent, that serves as a container including all the frames defined in the "frames_v1" element of the schema
      Frames _frame_root;
+
+     // Flag to indicate if the Frames JSON file was successfully read / loaded without errors
+     bool _framesJSONLoaded{false};
 
      // Pointer to vehicle object this metadata is tied to
      Vehicle *_vehicle{nullptr};

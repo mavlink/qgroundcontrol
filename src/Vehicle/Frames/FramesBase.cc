@@ -28,6 +28,10 @@ void FramesBase::load(const QString &json_file)
 
     // Parse immediately
     parseJson(_jsonMetadata);
+
+    // Set the flag to indicate successful JSON loading
+    _framesJSONLoaded = true;
+    frameJSONLoadedChanged();
 }
 
 bool FramesBase::parseJson(const QJsonDocument &json)

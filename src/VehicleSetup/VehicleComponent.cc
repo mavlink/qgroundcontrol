@@ -64,5 +64,6 @@ void VehicleComponent::setupTriggerSignals(void)
 
 void VehicleComponent::_triggerUpdated(QVariant /*value*/)
 {
+    qDebug() << "VehicleComponent::_triggerUpdated!";
     emit setupCompleteChanged(setupComplete());
 }

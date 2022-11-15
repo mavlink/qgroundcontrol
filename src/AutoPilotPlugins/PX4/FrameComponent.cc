@@ -13,9 +13,10 @@
 
 FrameComponent::FrameComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Frames"))//, _frames(*vehicle->framesBase()->r)
+    _name(tr("Frames")), _framesBase(*vehicle->framesBase())
 {
-//    connect(&_frames, &Frames::hasUnsetRequiredFunctionsChanged, this, [this]() { _triggerUpdated({}); });
+    // Once the condition is met, initialzie (update) the Component UI
+    connect(&_framesBase, &FramesBase::frameJSONLoadedChanged, this, [this]() { _triggerUpdated({}); });
 }
 
 QString FrameComponent::name(void) const
