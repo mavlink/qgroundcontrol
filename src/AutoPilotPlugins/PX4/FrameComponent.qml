@@ -16,14 +16,18 @@ SetupPage {
     // Frames tree structure root node
     //property var frames:            framesBase.rootFrame
 
+    // Design constants
+    property real _boxSpacing:    ScreenTools.defaultFontPixelWidth
+
     // Component that will be loaded via `SetupPage`
     Component {
         id: framePageComponent
 
-        // Toolbar / Debug console
-        Row {
+        // Main Column
+        Column {
             id: toolbar
-            width: parent.width; height: parent.height / 10 // Hacky
+            // Use available w/h specified in `SetupPage.qml`
+            width: availableWidth; height: availableHeight
 
             Button {
                 id: gotoParentButton
@@ -37,7 +41,7 @@ SetupPage {
             Flow {
                 id: framesCollageView
                 width: parent.width
-                //spacing: _boxSpacing
+                spacing: _boxSpacing
 
                 Repeater {
                     id: framesRepeater

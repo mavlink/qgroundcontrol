@@ -109,7 +109,7 @@ void FramesBase::setSelectedFrames(QList<Frames*> frames)
     _selectedFrames->clear();
 
     // Workaround: go through the list and append the frames
-    for (auto frame : frames) {
+    for (Frames *frame : frames) {
         _selectedFrames->append(frame);
     }
 

@@ -2,6 +2,8 @@ import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 
+import QGroundControl.ScreenTools 1.0
+
 // Qml definition of a single Frame/group view
 // It will display the `Frames*` object
 
@@ -11,6 +13,12 @@ Rectangle {
     property var frame
     // Defines whether this frame is selected by the user (if it is an End node)
     property bool selected: false
+
+    // Settings
+    property real _boxWidth:    ScreenTools.defaultFontPixelWidth * 30
+    property real _boxHeight:    ScreenTools.defaultFontPixelWidth * 30
+    property real _boxSpacing:    ScreenTools.defaultFontPixelWidth
+    property real _defaultFontPointSize: ScreenTools.defaultFontPointSize
 
     width: _boxWidth; height: _boxHeight
     color: frame.isEndNode ? "#00000000" : "#20000000" // Transparent if End-node
