@@ -43,7 +43,7 @@ public:
     ///                     a dynamic file creation on the vehicle.
     /// @return true: download has started, false: error, no download
     /// Signals downloadComplete, commandError, commandProgress
-    bool download(const QString& fromURI, const QString& toDir, const QString& fileName="", bool checksize = true);
+    bool download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName="", bool checksize = true);
 
     /// Cancel the current operation
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
@@ -136,7 +136,7 @@ private:
     void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
     void    _fillMissingBlocksWorker    (bool firstRequest);
     void    _burstReadFileWorker        (bool firstRequest);
-    bool    _parseURI                   (const QString& uri, QString& parsedURI, uint8_t& compId);
+    bool    _parseURI                   (uint8_t fromCompId, const QString& uri, QString& parsedURI, uint8_t& compId);
 
     void    _terminateSessionBegin      (void);
     void    _terminateSessionAckOrNak   (const MavlinkFTP::Request* ackOrNak);
