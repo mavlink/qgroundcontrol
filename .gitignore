@@ -64,6 +64,9 @@ localization/qgroundcontrol/
 *.autosave
 .settings/
 
+# Windows MSVC Compiler build artifacts
+.qtc_clangd/
+
 # iOS Generated files
 ios/iOSForAppStore-Info.plist
 
