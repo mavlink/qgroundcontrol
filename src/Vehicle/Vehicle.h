@@ -324,7 +324,6 @@ public:
     Q_PROPERTY(FactGroup*           hygrometer      READ hygrometerFactGroup        CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
     Q_PROPERTY(Actuators*           actuators       READ actuators                  CONSTANT)
-    Q_PROPERTY(Frames*              frames          READ frames                     CONSTANT)
     Q_PROPERTY(FramesBase*          framesBase      READ framesBase                 CONSTANT)
     Q_PROPERTY(HealthAndArmingCheckReport* healthAndArmingCheckReport READ healthAndArmingCheckReport CONSTANT)
 
@@ -632,7 +631,6 @@ public:
     bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & SysStatusSensorGPS); }
     bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
     Actuators*      actuators                   () const { return _actuators; }
-    Frames*         frames                      () const { return _frames; }
     FramesBase*     framesBase                  () const { return _framesBase; }
 
     /// Get the maximum MAVLink protocol version supported
@@ -1380,7 +1378,6 @@ private:
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
     FramesBase*                     _framesBase                 = nullptr;
-    Frames*                         _frames                     = nullptr;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;

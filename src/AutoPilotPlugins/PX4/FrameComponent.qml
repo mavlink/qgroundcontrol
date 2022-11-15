@@ -12,10 +12,9 @@ SetupPage {
     pageComponent: framePageComponent
 
     // Master controller for the frames interface
-    property var framesBase:       globals.activeVehicle.framesBase
-
+    property var framesBase:        globals.activeVehicle.framesBase
     // Frames tree structure root node
-    property var frames:       globals.activeVehicle.frames
+    property var frames:            framesBase.rootFrame
 
 //    // Background Color
 //    Rectangle {

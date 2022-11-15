@@ -7,10 +7,10 @@
 #include <QFile>
 
 FramesBase::FramesBase(QObject *parent, Vehicle* vehicle)
-    :_frames_root(parent, nullptr), _vehicle(vehicle)
+    :_frame_root(parent, nullptr), _vehicle(vehicle)
 {
     qRegisterMetaType<FramesBase*>("FamesBase*");
-    // Note: `_frames_root` must have a nullptr as the parent node!
+    // Note: `_frame_root` must have a nullptr as the parent node!
 }
 
 void FramesBase::load(const QString &json_file)
@@ -62,14 +62,14 @@ bool FramesBase::parseJson(const QJsonDocument &json)
 
     for (const auto &&frameJson : framesArray) {
         // Set the `FramesBase` as parent of subgroup Frames
-        Frames *new_frame = new Frames(this, &_frames_root);
+        Frames *new_frame = new Frames(this, &_frame_root);
         QJsonObject frameObject = frameJson.toObject();
         new_frame->parseJson(frameObject);
-        _frames_root._subgroups.append(new_frame);
+        _frame_root._subgroups.append(new_frame);
     }
 
     // for now, set the selected frames as frames itself!
-    setSelectedFrames(_frames_root._subgroups);
+    setSelectedFrames(_frame_root._subgroups);
 
     return true;
 }
@@ -87,11 +87,11 @@ void FramesBase::print_info() const
     }
     str.append("] | ");
 
-    str.append(QString("Framegroups size: %1").arg(QString::number(_frames_root._subgroups.length())));
+    str.append(QString("Framegroups size: %1").arg(QString::number(_frame_root._subgroups.length())));
 
     qDebug() << str;
 
-    _frames_root.print_info("L--");
+    _frame_root.print_info("L--");
 }
 
 void FramesBase::setSelectedFrames(QList<Frames*> frames)

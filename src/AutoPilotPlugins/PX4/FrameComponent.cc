@@ -13,7 +13,7 @@
 
 FrameComponent::FrameComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Frames")), _frames(*vehicle->frames())
+    _name(tr("Frames"))//, _frames(*vehicle->framesBase()->r)
 {
 //    connect(&_frames, &Frames::hasUnsetRequiredFunctionsChanged, this, [this]() { _triggerUpdated({}); });
 }

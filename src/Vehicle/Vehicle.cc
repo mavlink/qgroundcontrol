@@ -1713,9 +1713,6 @@ void Vehicle::setFramesMetadata(uint8_t compid, const QString& metadataJsonFileN
 {
     if (!_framesBase) {
         _framesBase = new FramesBase(this, this);
-
-        // Set the `_frames` tree structure for the UI to reference to
-        _frames = _framesBase->getRootFrames();
     }
     _framesBase->load(metadataJsonFileName);
 

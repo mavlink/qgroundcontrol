@@ -36,5 +36,5 @@ public:
 
 private:
     const QString   _name;
-    Frames& _frames;
+    //Frames& _frames;
 };

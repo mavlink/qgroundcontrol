@@ -22,6 +22,7 @@ class FramesBase : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY(Frames* rootFrame READ getRootFrame NOTIFY rootFrameChanged)
     Q_PROPERTY(QmlObjectListModel* selectedFrames READ selectedFrames NOTIFY selectedFramesChanged)
     Q_PROPERTY(QList<QString> frame_parameters READ frame_parameters NOTIFY frameParametersChanged)
     Q_PROPERTY(QList<int> finalSelectionFrameParamValues READ finalSelectionFrameParamValues NOTIFY finalSelectionFrameParamValuesChanged)
@@ -51,7 +52,7 @@ public:
      *
      * Needed for Vehicle class' access to the Frames structure
      */
-    Frames *getRootFrames() { return &_frames_root; }
+    Frames *getRootFrame() { return &_frame_root; }
 
     /**
      * @brief Getter for the List of Frames to display
@@ -86,13 +87,14 @@ public:
     Q_INVOKABLE bool gotoParentFrame();
 
 signals:
+     void rootFrameChanged();
      void selectedFramesChanged();
      void frameParametersChanged();
      void finalSelectionFrameParamValuesChanged();
 
 private:
-     // Frames root object without a parent, that serves as a container including all the frames defined in the "frames_v1" element of the schema
-     Frames _frames_root;
+     // Root frames object without a parent, that serves as a container including all the frames defined in the "frames_v1" element of the schema
+     Frames _frame_root;
 
      // Pointer to vehicle object this metadata is tied to
      Vehicle *_vehicle{nullptr};
