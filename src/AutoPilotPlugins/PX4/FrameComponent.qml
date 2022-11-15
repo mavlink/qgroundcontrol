@@ -16,13 +16,6 @@ SetupPage {
     // Frames tree structure root node
     property var frames:            framesBase.rootFrame
 
-//    // Background Color
-//    Rectangle {
-//        anchors.fill: parent
-//        objectName: "rect"
-//        color: "lightblue"
-//    }
-
     // Component that will be loaded via `SetupPage`
     Component {
         id: framePageComponent
@@ -30,7 +23,7 @@ SetupPage {
         // Toolbar / Debug console
         Row {
             id: toolbar
-            width: parent.width; height: _boxHeight / 4 // Hacky
+            width: parent.width; height: parent.height / 10 // Hacky
 
             Button {
                 id: gotoParentButton
@@ -40,25 +33,20 @@ SetupPage {
                 }
             }
 
-            Text {
-                id: finalSelectedFrameParamValues
-                text: framesBase.finalSelectionFrameParamValues
-            }
-
             // Frames collage view
             Flow {
                 id: framesCollageView
                 width: parent.width
-                spacing: _boxSpacing
+                //spacing: _boxSpacing
 
                 Repeater {
                     id: framesRepeater
-                    model: frames
+                    model: frames.selectedFrames // show Selected Frames only
 
                     Frame {
                         id: frameId
-                        frame: modelData
-        //                selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
+                        //frame: modelData
+                        //selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
                     }
                 }
             }
