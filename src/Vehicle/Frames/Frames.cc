@@ -4,7 +4,19 @@
 #include <QJsonArray>
 #include <QDirIterator>
 
-// Frames - Node
+// Definition of the static image Enum to QGC Image name mapper
+// We map only the necessary ones (that doesn't match), but we could
+// map everything one by one as well of course (but waste of time!)
+// Please keep the order as specified in the `Frames.schema.json`.
+QMap<QString, QString> Frames::_schemaImageEnum_to_QGCImageMap = {
+    { "Multirotor", "QuadRotorX" },
+        { "Hexarotor", "HexaRotorX"},
+    { "FixedWing", "Plane"},
+        { "FixedWingATail", "PlaneATail" }, {"FixedWingFlyingWing", "FlyingWing" },
+    { "VTOL", "VTOLPlane" },
+    { "Simulation", "AirframeSimulation" }
+};
+
 Frames::Frames(QObject* parent, Frames* parent_frame)
     : QObject(parent), _parentFrame(parent_frame)
 {
@@ -67,6 +79,15 @@ QString Frames::findClosestParentImageUrl() const
     return "";
 }
 
+QString Frames::mapImageEnumToQGCImage(QString imageEnum) const
+{
+    // We could potentially do a case-insensitive match for the key
+    // (in case we mis-capitalize some characters in the mapping object)
+    // but for now, just does it by default.
+    return _schemaImageEnum_to_QGCImageMap.value(imageEnum, QString());
+
+}
+
 bool Frames::parseJson(const QJsonObject &json)
 {
     // Parse rquired properties
@@ -117,7 +138,15 @@ bool Frames::parseJson(const QJsonObject &json)
     QString imageEnum = json.value("image").toString();
     if (!imageEnum.isEmpty()) {
         _imageEnum = imageEnum;
-        _imageUrl = getImageUrlFromName(_imageEnum, "");
+
+        // If we have a custom mapping (for slight file name differences),
+        // use thta name instaed for getting the Url
+        QString mappedImageName = mapImageEnumToQGCImage(_imageEnum);
+        if (!mappedImageName.isNull()) {
+            _imageUrl = getImageUrlFromName(mappedImageName, "");
+        } else {
+            _imageUrl = getImageUrlFromName(_imageEnum, "");
+        }
     }
 
     QString imageCustom = json.value("image-custom").toString();

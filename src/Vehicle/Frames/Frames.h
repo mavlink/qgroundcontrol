@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QObject>
 #include <QVariantList>
+#include <QMap>
 
 /**
  * @brief The Frames class defining a single frame (could be a group)
@@ -21,7 +22,7 @@ enum class FrameType {
 static constexpr int FRAME_ID_INVALID = -2; // Used for storing intial value of selected final Frame ID in FrameComponent
 static constexpr int FRAME_ID_UNDEFINED = -1; // Used for a Frame Group's ID
 
-static const QString FRAME_IMEAGES_PATH = ":/images/";
+static const QString FRAME_IMEAGES_PATH = ":/qmlimages/Airframe/";
 static const QString FRAME_UNKNOWN_NAME = "AirframeUnknown";
 
 /**
@@ -101,6 +102,22 @@ private:
      * @brief Goes up the parent tree structure to find latest viable image URL to display
      */
     QString findClosestParentImageUrl() const;
+
+    /**
+     * @brief Map ImageEnums (`imageTypes`) in Frames schema to images in QGC
+     * @param imageEnum String from the `image` property of the frame in JSON
+     *
+     * This is added since not all the frames' schema Image Enum strings are
+     * equal to the images in the QGC's image directory (`FRAME_IMEAGES_PATH` above)
+     *
+     * @return If no mapping is found, it will return Null string (QString())
+     *
+     * Note: Custom images are not supported for translation (will return Null String)
+     */
+    QString mapImageEnumToQGCImage(const QString imageEnum) const;
+
+    // Mapping between image Enum string and QGC's image name
+    static QMap<QString, QString> _schemaImageEnum_to_QGCImageMap;
 
     // Parent Frames node
     Frames *_parentFrame{nullptr};
