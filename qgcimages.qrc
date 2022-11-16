@@ -1,5 +1,4 @@
 <RCC>
-    <!-- Airframes -->
     <qresource prefix="/qmlimages/Airframe">
         <file alias="AirframeSimulation">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
         <file alias="AirframeUnknown">src/AutoPilotPlugins/Common/Images/AirframeUnknown.svg</file>
@@ -35,8 +34,6 @@
         <file alias="Y6B">src/AutoPilotPlugins/Common/Images/Y6B.svg</file>
         <file alias="YMinus">src/AutoPilotPlugins/Common/Images/YMinus.svg</file>
         <file alias="YPlus">src/AutoPilotPlugins/Common/Images/YPlus.svg</file>
-
-        <!-- Not sure why these files exist VV -->
         <file alias="AirframeFlyingWing.png">src/AutoPilotPlugins/Common/Images/FlyingWing.svg</file>
         <file alias="AirframeHexaRotorPlus.png">src/AutoPilotPlugins/Common/Images/HexaRotorPlus.svg</file>
         <file alias="AirframeHexaRotorX.png">src/AutoPilotPlugins/Common/Images/HexaRotorX.svg</file>
@@ -47,8 +44,11 @@
         <file alias="AirframeQuadRotorX.png">src/AutoPilotPlugins/Common/Images/QuadRotorX.svg</file>
         <file alias="AirframeSimulation.png">src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg</file>
         <file alias="AirframeStandardPlane.png">src/AutoPilotPlugins/Common/Images/Plane.svg</file>
+        <file alias="convergence-vtol.jpg">src/AutoPilotPlugins/Common/Images/convergence-vtol.jpg</file>
+        <file alias="holybro_x500_v2.jpg">src/AutoPilotPlugins/Common/Images/holybro_x500_v2.jpg</file>
+        <file alias="applied_aeronautics_albatross.gif">src/AutoPilotPlugins/Common/Images/applied_aeronautics_albatross.gif</file>
+        <file alias="eflite_wing_wing.jpg">src/AutoPilotPlugins/Common/Images/eflite_wing_wing.jpg</file>
     </qresource>
-
     <qresource prefix="/qmlimages">
         <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/Common/Images/AirframeComponentIcon.png</file>
         <file alias="adsbVehicle.svg">src/FlightMap/Images/adsbVehicle.svg</file>
