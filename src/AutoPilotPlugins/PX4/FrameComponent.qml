@@ -13,8 +13,6 @@ SetupPage {
 
     // Master controller for the frames interface
     property var framesBase:        globals.activeVehicle.framesBase
-    // Frames tree structure root node
-    //property var frames:            framesBase.rootFrame
 
     // Design constants
     property real _boxSpacing:    ScreenTools.defaultFontPixelWidth

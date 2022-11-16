@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 
 import QGroundControl.ScreenTools 1.0
+import QGroundControl.Controls 1.0
 
 // Qml definition of a single Frame/group view
 // It will display the `Frames*` object
@@ -15,13 +16,15 @@ Rectangle {
     property bool selected: false
 
     // Settings
-    property real _boxWidth:    ScreenTools.defaultFontPixelWidth * 30
-    property real _boxHeight:    ScreenTools.defaultFontPixelWidth * 30
+    property real _boxWidth:    ScreenTools.defaultFontPixelWidth * 40
+    property real _boxHeight:    ScreenTools.defaultFontPixelWidth * 40
     property real _boxSpacing:    ScreenTools.defaultFontPixelWidth
     property real _defaultFontPointSize: ScreenTools.defaultFontPointSize
 
     width: _boxWidth; height: _boxHeight
-    color: frame.isEndNode ? "#00000000" : "#20000000" // Transparent if End-node
+    color:  qgcPal.window
+
+    //frame.isEndNode ? "#00000000" : "#20000000" // Transparent if End-node
 
     // Click border
     MouseArea {
@@ -42,20 +45,19 @@ Rectangle {
         spacing: 0
 
         // Name
-        Rectangle {
-            id: frameNameBackground
-            color: "#00000000" // Transparent
+        QGCLabel {
+//            id: frameNameBackground
+//            color: "#00000000" // Transparent
+//            width: parent.width
+//            height: parent.height * 0.1
+
+            id: frameName
+            text: frame.name
             width: parent.width
             height: parent.height * 0.1
-
-            Text {
-                id: frameName
-                anchors.fill: parent
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: _defaultFontPointSize * 1.5
-                text: frame.name
-            }
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pointSize: _defaultFontPointSize * 1.5
         }
 
         // Everything below the name
