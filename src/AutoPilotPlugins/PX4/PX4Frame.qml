@@ -32,7 +32,7 @@ Rectangle {
             // We directly call the `framesBase` object that exists in the `FrameComponent.qml`.
             // This is a bad practice, but since having a MouseArea defined in the `Main` QML
             // somehow disables clicking on the product URL, this decision had to be made.
-            framesBase.selectFrame(modelData)
+            framesBase.selectFrame(frame)
         }
     }
 
