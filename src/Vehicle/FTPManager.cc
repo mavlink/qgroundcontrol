@@ -34,9 +34,9 @@ FTPManager::FTPManager(Vehicle* vehicle)
     Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
 }
 
-bool FTPManager::download(const QString& fromURI, const QString& toDir, const QString& fileName, bool checksize)
+bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName, bool checksize)
 {
-    qCDebug(FTPManagerLog) << "download fromURI:" << fromURI << "to:" << toDir;
+    qCDebug(FTPManagerLog) << "download fromURI:" << fromURI << "to:" << toDir << "fromCompId:" << fromCompId;
 
     if (!_rgStateMachine.isEmpty()) {
         qCDebug(FTPManagerLog) << "Cannot download. Already in another operation";
@@ -58,7 +58,7 @@ bool FTPManager::download(const QString& fromURI, const QString& toDir, const QS
     _downloadState.toDir.setPath(toDir);
     _downloadState.checksize = checksize;
 
-    if (!_parseURI(fromURI, _downloadState.fullPathOnVehicle, _ftpCompId)) {
+    if (!_parseURI(fromCompId, fromURI, _downloadState.fullPathOnVehicle, _ftpCompId)) {
         qCWarning(FTPManagerLog) << "_parseURI failed";
         return false;
     }
@@ -171,7 +171,8 @@ void FTPManager::_downloadComplete(const QString& errorMsg)
 
 void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL || message.compid != _ftpCompId) {
+    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL ||
+            message.sysid != _vehicle->id() || message.compid != _ftpCompId) {
         return;
     }
 
@@ -626,10 +627,10 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
     }
 }
 
-bool FTPManager::_parseURI(const QString& uri, QString& parsedURI, uint8_t& compId)
+bool FTPManager::_parseURI(uint8_t fromCompId, const QString& uri, QString& parsedURI, uint8_t& compId)
 {
     parsedURI   = uri;
-    compId      = MAV_COMP_ID_AUTOPILOT1;
+    compId      = (fromCompId == MAV_COMP_ID_ALL) ? (uint8_t)MAV_COMP_ID_AUTOPILOT1 : fromCompId;
 
     // Pull scheme off the front if there
     QString ftpPrefix(QStringLiteral("%1://").arg(mavlinkFTPScheme));

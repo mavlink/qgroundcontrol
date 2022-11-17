@@ -1970,7 +1970,7 @@ QGCCameraControl::_handleDefinitionFile(const QString &url)
             ver,
             ext.toStdString().c_str());
         connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &QGCCameraControl::_ftpDownloadComplete);
-        _vehicle->ftpManager()->download(url,
+        _vehicle->ftpManager()->download(_compID, url,
             qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
             fileName);
         return;
