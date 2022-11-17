@@ -33,7 +33,7 @@ void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
     // void downloadComplete   (const QString& file, const QString& errorMsg);
-    ftpManager->download(testCase.file, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, testCase.file, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
     QCOMPARE(spyDownloadComplete.wait(10000), true);
     QCOMPARE(spyDownloadComplete.count(), 1);
@@ -53,7 +53,7 @@ void FTPManagerTest::_sizeTestCaseWorker(int fileSize)
 
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
-    ftpManager->download(filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
     QCOMPARE(spyDownloadComplete.wait(10000), true);
     QCOMPARE(spyDownloadComplete.count(), 1);
@@ -106,7 +106,7 @@ void FTPManagerTest::_testLostPackets(void)
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
     _mockLink->mockLinkFTP()->enableRandromDrops(true);
-    ftpManager->download(filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
     QCOMPARE(spyDownloadComplete.wait(10000), true);
     QCOMPARE(spyDownloadComplete.count(), 1);
