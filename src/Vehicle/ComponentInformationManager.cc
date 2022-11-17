@@ -420,7 +420,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
             qCDebug(ComponentInformationManagerLog) << "Downloading json" << uri;
             if (_uriIsMAVLinkFTP(uri)) {
                 connect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-                if (ftpManager->download(uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1, uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
                     _downloadStartTime.start();
                     connect(ftpManager, &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
                 } else {
