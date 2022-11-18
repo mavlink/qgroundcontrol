@@ -1,10 +1,11 @@
 #include "FramesBase.h"
 
-#include "Frames/Frames.h"
-
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QFile>
+
+#include "ParameterManager.h"
+#include "Fact.h"
 
 FramesBase::FramesBase(QObject *parent, Vehicle* vehicle)
     : QObject(parent), _frame_root(parent, nullptr), _vehicle(vehicle)
@@ -32,6 +33,9 @@ void FramesBase::load(const QString &json_file)
     // Set the flag to indicate successful JSON loading
     _framesJSONLoaded = true;
     frameJSONLoadedChanged();
+
+    // Question: Is vehicle ready for fetching all the parameters yet?
+    getParamFacts();
 }
 
 bool FramesBase::parseJson(const QJsonDocument &json)
@@ -128,9 +132,9 @@ bool FramesBase::selectFrame(Frames *frame)
     // User selected the end-node, select this item as final selection
     if (frame->_type == FrameType::FrameEndNode) {
         _finalSelectedFrame = frame;
-//        _finalSelectionFrameParamValues = frame->_frame_param_values;
-//        qDebug() << "Setting final Selection Frame param values to: " << _finalSelectionFrameParamValues;
-//        emit finalSelectionFrameParamValuesChanged();
+        _finalSelectionFrameParamValues = frame->_frame_param_values;
+        qDebug() << "Setting final Selection Frame param values to: " << _finalSelectionFrameParamValues;
+        emit finalSelectionFrameParamValuesChanged();
     }
 
     return true;
@@ -159,4 +163,46 @@ bool FramesBase::gotoParentFrame()
     }
 
     return true;
+}
+
+void FramesBase::init()
+{
+    if (!_vehicle->parameterManager()->parametersReady()) {
+        qWarning() << "Incorrect calling order, parameters not yet ready";
+        return;
+    }
+
+    getParamFacts();
+}
+
+void FramesBase::getParamFacts()
+{
+    // First clear the facts list
+    _frameSelectionParamFacts.clear();
+
+    // Get the Fact* (ideally, should be done in `init()`, but this function doesn't exist.
+    for (const QString &paramName : _frame_parameter_names) {
+        qDebug() << "Searching for param: " << paramName;
+        // Check if parameter exists
+        if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName)) {
+            Fact* param = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
+            _frameSelectionParamFacts.append(param);
+
+        } else {
+            // If parameter doesn't exist, append `nullptr` instead of pointer to `Fact`
+            _frameSelectionParamFacts.append(nullptr);
+        }
+    }
+
+    qDebug() << "FramesBase::getParamFacts() : " << _frameSelectionParamFacts;
+}
+
+void FramesBase::setFinalFrameParameters()
+{
+    for (int idx = 0; idx < _finalSelectionFrameParamValues.length(); idx++) {
+        if (_frameSelectionParamFacts[idx] != nullptr) {
+            qDebug() << "Setting param " << _frameSelectionParamFacts[idx]->name() << " to : " << _finalSelectionFrameParamValues[idx];
+            _frameSelectionParamFacts[idx]->setRawValue(_finalSelectionFrameParamValues[idx]);
+        }
+    }
 }

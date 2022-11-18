@@ -69,10 +69,14 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 qDebug() << "Frames UI loading, metadata present: " << _vehicle->framesBase();
 
                 if (_vehicle->framesBase()) {
+                    // First init (get parameter facts, etc)
+                    _vehicle->framesBase()->init();
+
                     // Frames metadata based UI
                     _frameComponent = new FrameComponent(_vehicle, this, this);
                     _frameComponent->setupTriggerSignals(); // Q) Is this necessary?
                     _components.append(QVariant::fromValue(static_cast<FrameComponent*>(_frameComponent)));
+
                 } else {
                     // Show previous Airframe UI instead
                     _airframeComponent = new AirframeComponent(_vehicle, this, this);

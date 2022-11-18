@@ -12,7 +12,7 @@ Rectangle {
     id: frameView
     // Frame* pointer we are referencing to
     property var frame
-    // Defines whether this frame is selected by the user (if it is an End node)
+    // Defines whether this frame is selected by the user in `FrameComponent.qml`
     property bool selected: false
 
     // Settings
@@ -22,22 +22,11 @@ Rectangle {
     property real _defaultFontPointSize: ScreenTools.defaultFontPointSize
 
     width: _boxWidth; height: _boxHeight
-    color:  qgcPal.window
+
+    // Change color based on whether it's selected.
+    color: selected ? qgcPal.buttonHighlight : qgcPal.windowShade
 
     //frame.isEndNode ? "#00000000" : "#20000000" // Transparent if End-node
-
-    // Click border
-//    MouseArea {
-//        id: mouseArea
-//        anchors.fill: parent
-//        hoverEnabled: true
-//        onClicked: {
-//            // We directly call the `framesBase` object that exists in the `FrameComponent.qml`.
-//            // This is a bad practice, but since having a MouseArea defined in the `Main` QML
-//            // somehow disables clicking on the product URL, this decision had to be made.
-//            framesBase.selectFrame(frame)
-//        }
-//    }
 
     // Main Column
     Column {

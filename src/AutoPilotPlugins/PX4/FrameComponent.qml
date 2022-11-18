@@ -49,7 +49,7 @@ SetupPage {
                     PX4Frame {
                         id: frameId
                         frame: object // why do we call it 'object', not 'modelData'?
-//                        selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
+                        selected: frame.frame_param_values == framesBase.finalSelectionFrameParamValues
 
                         // Click border
                         MouseArea {
@@ -68,7 +68,6 @@ SetupPage {
                                 }
                             }
                         }
-
                     }
                 }
             }
@@ -83,57 +82,15 @@ SetupPage {
             buttons: StandardButton.Cancel | StandardButton.Apply
 
             onAccepted: {
-                // TODO: Handle frame selection logic
+                // Set the parameter values in the vehicle
+                framesBase.setFinalFrameParameters()
+                console.log("Parameter values set on vehicle!")
             }
 
             PX4Frame {
                 id: finalSelectedFrame
                 frame: framesBase.finalSelectedFrame
             }
-
-//            ColumnLayout {
-//                spacing: ScreenTools.defaultFontPixelHeight
-
-//                QGCLabel {
-//                    Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 50
-//                    Layout.preferredWidth:  innerColumn.width
-//                    wrapMode:               Text.WordWrap
-//                    text:                   preCalibrationDialogHelp
-//                }
-
-//                Column {
-//                    id:         innerColumn
-//                    spacing:    parent.spacing
-
-//                    QGCLabel {
-//                        id:         boardRotationHelp
-//                        wrapMode:   Text.WordWrap
-//                        visible:    !_sensorsHaveFixedOrientation && (preCalibrationDialogType == "accel" || preCalibrationDialogType == "compass")
-//                        text:       qsTr("Set autopilot orientation before calibrating.")
-//                    }
-
-//                    Column {
-//                        visible:    boardRotationHelp.visible
-//                        QGCLabel { text: qsTr("Autopilot Orientation") }
-
-//                        FactComboBox {
-//                            sizeToContents: true
-//                            model:          rotations
-//                            fact:           sens_board_rot
-//                        }
-
-//                        QGCLabel {
-//                            wrapMode:   Text.WordWrap
-//                            text:       qsTr("ROTATION_NONE indicates component points in direction of flight.")
-//                        }
-//                    }
-
-//                    QGCLabel {
-//                        wrapMode:   Text.WordWrap
-//                        text:       qsTr("Click Ok to start calibration.")
-//                    }
-//                }
-//            }
         }
     }
 }
