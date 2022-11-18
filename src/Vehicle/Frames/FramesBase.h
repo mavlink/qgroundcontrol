@@ -30,6 +30,7 @@ class FramesBase : public QObject
 
 public:
     FramesBase(QObject *parent, Vehicle* vehicle);
+    ~FramesBase() = default;
 
     /**
      * @brief Parse provided JsonDocument data struct

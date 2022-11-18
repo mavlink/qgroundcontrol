@@ -7,7 +7,7 @@
 #include <QFile>
 
 FramesBase::FramesBase(QObject *parent, Vehicle* vehicle)
-    :_frame_root(parent, nullptr), _vehicle(vehicle)
+    : QObject(parent), _frame_root(parent, nullptr), _vehicle(vehicle)
 {
     qRegisterMetaType<FramesBase*>("FamesBase*");
     // Note: `_frame_root` must have a nullptr as the parent node!
