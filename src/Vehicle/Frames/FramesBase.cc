@@ -127,9 +127,10 @@ bool FramesBase::selectFrame(Frames *frame)
 
     // User selected the end-node, select this item as final selection
     if (frame->_type == FrameType::FrameEndNode) {
-        _finalSelectionFrameParamValues = frame->_frame_param_values;
-        qDebug() << "Setting final Selection Frame param values to: " << _finalSelectionFrameParamValues;
-        emit finalSelectionFrameParamValuesChanged();
+        _finalSelectedFrame = frame;
+//        _finalSelectionFrameParamValues = frame->_frame_param_values;
+//        qDebug() << "Setting final Selection Frame param values to: " << _finalSelectionFrameParamValues;
+//        emit finalSelectionFrameParamValuesChanged();
     }
 
     return true;

@@ -26,7 +26,8 @@ class FramesBase : public QObject
     Q_PROPERTY(Frames* rootFrame READ getRootFrame NOTIFY rootFrameChanged)
     Q_PROPERTY(QmlObjectListModel* selectedFrames READ selectedFrames NOTIFY selectedFramesChanged)
     Q_PROPERTY(QList<QString> frame_parameters READ frame_parameters NOTIFY frameParametersChanged)
-    Q_PROPERTY(QList<int> finalSelectionFrameParamValues READ finalSelectionFrameParamValues NOTIFY finalSelectionFrameParamValuesChanged)
+//    Q_PROPERTY(QList<int> finalSelectionFrameParamValues READ finalSelectionFrameParamValues NOTIFY finalSelectionFrameParamValuesChanged)
+    Q_PROPERTY(Frames* finalSelectedFrame READ getFinalSelectedFrame NOTIFY finalSelectedFrameChanged)
 
 public:
     FramesBase(QObject *parent, Vehicle* vehicle);
@@ -72,7 +73,13 @@ public:
     /**
      * @brief Getter for the last user selected Frame Endnode's Frame ID
      */
-    QList<int> finalSelectionFrameParamValues() { return _finalSelectionFrameParamValues; } const
+//    QList<int> finalSelectionFrameParamValues() { return _finalSelectionFrameParamValues; } const
+
+    /**
+     * @brief Getter for final selected frames ID
+     * @return
+     */
+    Frames* getFinalSelectedFrame() {return _finalSelectedFrame; }
 
     /**
      * @brief Getter for the parameters needed for frame selection to come into effect
@@ -96,7 +103,8 @@ signals:
      void rootFrameChanged();
      void selectedFramesChanged();
      void frameParametersChanged();
-     void finalSelectionFrameParamValuesChanged();
+//     void finalSelectionFrameParamValuesChanged();
+     void finalSelectedFrameChanged();
 
 private:
      // Root frames object without a parent, that serves as a container including all the frames defined in the "frames_v1" element of the schema
@@ -121,6 +129,7 @@ private:
     QList<QString> _frame_parameter_names;
 
     // Variables for run time processing
+    Frames *_finalSelectedFrame{nullptr};       // Holds pointer for final selected frame for displaying pop-up
     QList<int> _finalSelectionFrameParamValues; // Holds Frame ID of the last selected EndNode frame from the user
 };
 
