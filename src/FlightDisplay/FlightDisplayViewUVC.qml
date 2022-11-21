@@ -54,10 +54,9 @@ Rectangle {
             console.log('UVC Video output visible: ', visible);
             if (visible) {
                 camera.start()
-                }
-            else {
+            } else {
                 camera.stop()
-                }
+            }
         }
     }
 }
