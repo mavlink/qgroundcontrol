@@ -21,6 +21,7 @@ QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "InitialConnectStateMachineL
 const StateMachine::StateFn InitialConnectStateMachine::_rgStates[] = {
     InitialConnectStateMachine::_stateRequestAutopilotVersion,
     InitialConnectStateMachine::_stateRequestProtocolVersion,
+    InitialConnectStateMachine::_stateRequestStandardModes,
     InitialConnectStateMachine::_stateRequestCompInfo,
     InitialConnectStateMachine::_stateRequestParameters,
     InitialConnectStateMachine::_stateRequestMission,
@@ -32,6 +33,7 @@ const StateMachine::StateFn InitialConnectStateMachine::_rgStates[] = {
 const int InitialConnectStateMachine::_rgProgressWeights[] = {
     1, //_stateRequestCapabilities
     1, //_stateRequestProtocolVersion
+    1, //_stateRequestStandardModes
     5, //_stateRequestCompInfo
     5, //_stateRequestParameters
     2, //_stateRequestMission
@@ -280,6 +282,24 @@ void InitialConnectStateMachine::_stateRequestCompInfo(StateMachine* stateMachin
     connect(vehicle->_componentInformationManager, &ComponentInformationManager::progressUpdate, connectMachine,
             &InitialConnectStateMachine::gotProgressUpdate);
     vehicle->_componentInformationManager->requestAllComponentInformation(_stateRequestCompInfoComplete, connectMachine);
+}
+
+void InitialConnectStateMachine::_stateRequestStandardModes(StateMachine *stateMachine)
+{
+    InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
+    Vehicle*                    vehicle         = connectMachine->_vehicle;
+
+    qCDebug(InitialConnectStateMachineLog) << "_stateRequestStandardModes";
+    connect(vehicle->_standardModes, &StandardModes::requestCompleted, connectMachine,
+            &InitialConnectStateMachine::standardModesRequestCompleted);
+    vehicle->_standardModes->request();
+}
+
+void InitialConnectStateMachine::standardModesRequestCompleted()
+{
+    disconnect(_vehicle->_standardModes, &StandardModes::requestCompleted, this,
+               &InitialConnectStateMachine::standardModesRequestCompleted);
+    advance();
 }
 
 void InitialConnectStateMachine::_stateRequestCompInfoComplete(void* requestAllCompleteFnData)

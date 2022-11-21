@@ -56,6 +56,8 @@ add_library(Vehicle
 	MultiVehicleManager.h
 	StateMachine.cc
 	StateMachine.h
+	StandardModes.cc
+	StandardModes.h
 	SysStatusSensorInfo.cc
 	SysStatusSensorInfo.h
 	TerrainFactGroup.cc
