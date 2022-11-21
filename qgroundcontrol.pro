@@ -724,6 +724,7 @@ HEADERS += \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/RemoteIDManager.h \
     src/Vehicle/StateMachine.h \
+    src/Vehicle/StandardModes.h \
     src/Vehicle/SysStatusSensorInfo.h \
     src/Vehicle/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
@@ -979,6 +980,7 @@ SOURCES += \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/RemoteIDManager.cc \
     src/Vehicle/StateMachine.cc \
+    src/Vehicle/StandardModes.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
     src/Vehicle/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \

@@ -372,11 +372,14 @@ void Vehicle::_commonInit()
     connect(_missionManager, &MissionManager::sendComplete,             _trajectoryPoints, &TrajectoryPoints::clear);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, _trajectoryPoints, &TrajectoryPoints::clear);
 
+    _standardModes                  = new StandardModes                 (this, this);
     _componentInformationManager    = new ComponentInformationManager   (this);
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
     _ftpManager                     = new FTPManager                    (this);
     _imageProtocolManager           = new ImageProtocolManager          ();
     _vehicleLinkManager             = new VehicleLinkManager            (this);
+
+    connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
@@ -762,6 +765,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
         break;
+    case MAVLINK_MSG_ID_AVAILABLE_MODES_MONITOR:
+    {
+        // Avoid duplicate requests during initial connection setup
+        if (!_initialConnectStateMachine || !_initialConnectStateMachine->active()) {
+            mavlink_available_modes_monitor_t availableModesMonitor;
+            mavlink_msg_available_modes_monitor_decode(&message, &availableModesMonitor);
+            _standardModes->availableModesMonitorReceived(availableModesMonitor.seq);
+        }
+        break;
+    }
 
         // Following are ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -1682,7 +1695,7 @@ void Vehicle::setEventsMetadata(uint8_t compid, const QString& metadataJsonFileN
     for (size_t i = 0; i < sizeof(modeGroups)/sizeof(modeGroups[0]); ++i) {
         uint8_t     base_mode;
         uint32_t    custom_mode;
-        if (_firmwarePlugin->setFlightMode(modes[i], &base_mode, &custom_mode)) {
+        if (setFlightModeCustom(modes[i], &base_mode, &custom_mode)) {
             modeGroups[i] = _eventHandler(compid).getModeGroup(custom_mode);
             if (modeGroups[i] == -1) {
                 qCDebug(VehicleLog) << "Failed to get mode group for mode" << modes[i] << "(Might not be in metadata)";
@@ -2192,12 +2205,27 @@ bool Vehicle::flightModeSetAvailable()
 
 QStringList Vehicle::flightModes()
 {
+	if (_standardModes->supported()) {
+		return _standardModes->flightModes();
+	}
     return _firmwarePlugin->flightModes(this);
 }
 
 QString Vehicle::flightMode() const
 {
+    if (_standardModes->supported()) {
+        return _standardModes->flightMode(_custom_mode);
+    }
     return _firmwarePlugin->flightMode(_base_mode, _custom_mode);
+}
+
+bool Vehicle::setFlightModeCustom(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode)
+{
+    if (_standardModes->supported()) {
+        *base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+        return _standardModes->setFlightMode(flightMode, custom_mode);
+    }
+    return _firmwarePlugin->setFlightMode(flightMode, base_mode, custom_mode);
 }
 
 void Vehicle::setFlightMode(const QString& flightMode)
@@ -2205,7 +2233,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
     uint8_t     base_mode;
     uint32_t    custom_mode;
 
-    if (_firmwarePlugin->setFlightMode(flightMode, &base_mode, &custom_mode)) {
+    if (setFlightModeCustom(flightMode, &base_mode, &custom_mode)) {
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (!sharedLink) {
             qCDebug(VehicleLog) << "setFlightMode: primary link gone!";
