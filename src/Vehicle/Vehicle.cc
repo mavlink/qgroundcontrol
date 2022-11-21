@@ -2185,11 +2185,6 @@ QStringList Vehicle::flightModes()
     return _firmwarePlugin->flightModes(this);
 }
 
-QStringList Vehicle::extraJoystickFlightModes()
-{
-    return _firmwarePlugin->extraJoystickFlightModes(this);
-}
-
 QString Vehicle::flightMode() const
 {
     return _firmwarePlugin->flightMode(_base_mode, _custom_mode);
