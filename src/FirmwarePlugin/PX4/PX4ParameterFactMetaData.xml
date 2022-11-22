@@ -2990,6 +2990,7 @@
     </parameter>
     <parameter name="FW_W_EN" default="0" type="INT32" boolean="true">
       <short_desc>Enable wheel steering controller</short_desc>
+      <long_desc>Only enabled during automatic runway takeoff and landing. In all manual modes the wheel is directly controlled with yaw stick.</long_desc>
     </parameter>
     <parameter name="FW_W_RMAX" default="30.0" type="FLOAT">
       <short_desc>Maximum wheel steering rate</short_desc>
@@ -3065,14 +3066,13 @@
         <bit index="1">Abort if terrain times out (after a first successful measurement)</bit>
       </bitmask>
     </parameter>
-    <parameter name="FW_LND_AIRSPD_SC" default="1.3" type="FLOAT">
-      <short_desc>Min. airspeed scaling factor for landing</short_desc>
-      <long_desc>Multiplying this factor with the minimum airspeed of the plane gives the target airspeed the landing approach. FW_AIRSPD_MIN * FW_LND_AIRSPD_SC</long_desc>
-      <min>1.0</min>
-      <max>1.5</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
+    <parameter name="FW_LND_AIRSPD" default="-1." type="FLOAT">
+      <short_desc>Landing airspeed</short_desc>
+      <long_desc>The calibrated airspeed setpoint during landing. If set &lt;= 0.0, landing airspeed = FW_AIRSPD_MIN by default.</long_desc>
+      <min>-1.0</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="FW_LND_ANG" default="5.0" type="FLOAT">
       <short_desc>Maximum landing slope angle</short_desc>
@@ -3125,7 +3125,7 @@
     <parameter name="FW_LND_FL_TIME" default="1.0" type="FLOAT">
       <short_desc>Landing flare time</short_desc>
       <long_desc>Multiplied by the descent rate to calculate a dynamic altitude at which to trigger the flare. NOTE: max(FW_LND_FLALT, FW_LND_FL_TIME * descent rate) is taken as the flare altitude</long_desc>
-      <min>0.0</min>
+      <min>0.1</min>
       <max>5.0</max>
       <unit>s</unit>
       <decimal>1</decimal>
@@ -3149,6 +3149,15 @@
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>1</increment>
+    </parameter>
+    <parameter name="FW_LND_TD_TIME" default="-1.0" type="FLOAT">
+      <short_desc>Landing touchdown time (since flare start)</short_desc>
+      <long_desc>This is the time after the start of flaring that we expect the vehicle to touch the runway. At this time, a 0.5s clamp down ramp will engage, constraining the pitch setpoint to RWTO_PSP. If enabled, ensure that RWTO_PSP is configured appropriately for full gear contact on ground roll. Set to -1.0 to disable touchdown clamping. E.g. it may not be desirable to clamp on belly landings. The touchdown time will be constrained to be greater than or equal to the flare time (FW_LND_FL_TIME).</long_desc>
+      <min>-1.0</min>
+      <max>5.0</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="FW_LND_THRTC_SC" default="1.0" type="FLOAT">
       <short_desc>Altitude time constant factor for landing</short_desc>
@@ -3189,15 +3198,6 @@
     </parameter>
   </group>
   <group name="FW L1 Control">
-    <parameter name="FW_CLMBOUT_DIFF" default="10.0" type="FLOAT">
-      <short_desc>Climbout Altitude difference</short_desc>
-      <long_desc>If the altitude error exceeds this parameter, the system will climb out with maximum throttle and minimum airspeed until it is closer than this distance to the desired altitude. Mostly used for takeoff waypoints / modes. Set to 0 to disable climbout mode (not recommended).</long_desc>
-      <min>0.0</min>
-      <max>150.0</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter name="FW_L1_DAMPING" default="0.75" type="FLOAT">
       <short_desc>L1 damping</short_desc>
       <long_desc>Damping factor for L1 control.</long_desc>
@@ -3473,6 +3473,14 @@
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_TKO_AIRSPD" default="-1.0" type="FLOAT">
+      <short_desc>Takeoff Airspeed</short_desc>
+      <long_desc>The calibrated airspeed setpoint TECS will stabilize to during the takeoff climbout. If set &lt;= 0.0, FW_AIRSPD_MIN will be set by default.</long_desc>
+      <min>-1.0</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="FW_T_ALT_TC" default="5.0" type="FLOAT">
       <short_desc>Altitude error time constant</short_desc>
@@ -4633,14 +4641,11 @@
       <decimal>1</decimal>
       <increment>100</increment>
     </parameter>
-    <parameter name="MIS_LTRMIN_ALT" default="-1.0" type="FLOAT">
-      <short_desc>Minimum Loiter altitude</short_desc>
-      <long_desc>This is the minimum altitude the system will always obey. The intent is to stay out of ground effect. set to -1, if there shouldn't be a minimum loiter altitude</long_desc>
-      <min>-1</min>
-      <max>80</max>
+    <parameter name="MIS_LND_ABRT_ALT" default="30" type="INT32">
+      <short_desc>Landing abort min altitude</short_desc>
+      <long_desc>Minimum altitude above landing point that the vehicle will climb to after an aborted landing. Then vehicle will loiter in this altitude until further command is received. Only applies to fixed-wing vehicles.</long_desc>
+      <min>0</min>
       <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
     </parameter>
     <parameter name="MIS_MNT_YAW_CTL" default="0" type="INT32">
       <short_desc>Enable yaw control of the mount. (Only affects multicopters and ROI mission items)</short_desc>
@@ -4752,6 +4757,14 @@
       <long_desc>Acceptance radius for multicopter altitude.</long_desc>
       <min>0.05</min>
       <max>200.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="NAV_MIN_LTR_ALT" default="-1." type="FLOAT">
+      <short_desc>Minimum Loiter altitude</short_desc>
+      <long_desc>This is the minimum altitude above Home the system will always obey in Loiter (Hold) mode if switched into this mode without specifying an altitude (e.g. through Loiter switch on RC). Doesn't affect Loiters that are part of Missions or that are entered through a reposition setpoint ("Go to"). Set to a negative value to disable.</long_desc>
+      <min>-1</min>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -7749,15 +7762,6 @@
     </parameter>
   </group>
   <group name="Runway Takeoff">
-    <parameter name="RWTO_AIRSPD_SCL" default="1.3" type="FLOAT">
-      <short_desc>Min airspeed scaling factor for takeoff</short_desc>
-      <long_desc>Pitch up will be commanded when the following airspeed is reached: FW_AIRSPD_MIN * RWTO_AIRSPD_SCL</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="RWTO_HDG" default="0" type="INT32">
       <short_desc>Specifies which heading should be held during the runway takeoff ground roll</short_desc>
       <long_desc>0: airframe heading when takeoff is initiated 1: position control along runway direction (bearing defined from vehicle position on takeoff initiation to MAV_CMD_TAKEOFF position defined by operator)</long_desc>
@@ -7776,15 +7780,6 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="RWTO_MAX_PITCH" default="20.0" type="FLOAT">
-      <short_desc>Max pitch during takeoff</short_desc>
-      <long_desc>Fixed-wing settings are used if set to 0. Note that there is also a minimum pitch of 10 degrees during takeoff, so this must be larger if set.</long_desc>
-      <min>0.0</min>
-      <max>60.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter name="RWTO_MAX_THR" default="1.0" type="FLOAT">
       <short_desc>Max throttle during runway takeoff</short_desc>
       <long_desc>Can be used to test taxi on runway</long_desc>
@@ -7799,7 +7794,7 @@
       <long_desc>This is useful when map, GNSS, or yaw errors on ground are misaligned with what the operator intends for takeoff course. Particularly useful for skinny runways or if the wheel servo is a bit off trim.</long_desc>
     </parameter>
     <parameter name="RWTO_PSP" default="0.0" type="FLOAT">
-      <short_desc>Pitch setpoint during taxi / before takeoff airspeed is reached</short_desc>
+      <short_desc>Pitch setpoint during taxi / before takeoff rotation airspeed is reached</short_desc>
       <long_desc>A taildragger with steerable wheel might need to pitch up a little to keep its wheel on the ground before airspeed to takeoff is reached.</long_desc>
       <min>-10.0</min>
       <max>20.0</max>
@@ -7813,6 +7808,22 @@
       <max>15.0</max>
       <unit>s</unit>
       <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="RWTO_ROT_AIRSPD" default="-1.0" type="FLOAT">
+      <short_desc>Takeoff rotation airspeed</short_desc>
+      <long_desc>The calibrated airspeed threshold during the takeoff ground roll when the plane should start rotating (pitching up). Must be less than the takeoff airspeed, will otherwise be capped at the takeoff airpeed (see FW_TKO_AIRSPD). If set &lt;= 0.0, defaults to 0.9 * takeoff airspeed (see FW_TKO_AIRSPD)</long_desc>
+      <min>-1.0</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="RWTO_ROT_TIME" default="1.0" type="FLOAT">
+      <short_desc>Takeoff rotation time</short_desc>
+      <long_desc>This is the time desired to linearly ramp in takeoff pitch constraints during the takeoff rotation</long_desc>
+      <min>0.1</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
     <parameter name="RWTO_TKOFF" default="0" type="INT32" boolean="true">
