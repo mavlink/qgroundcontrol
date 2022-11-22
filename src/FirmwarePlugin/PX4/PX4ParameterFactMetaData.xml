@@ -1078,6 +1078,10 @@
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
+    <parameter name="COM_ARM_HFLT_CHK" default="1" type="INT32" boolean="true">
+      <short_desc>Enable FMU SD card hardfault detection check</short_desc>
+      <long_desc>This check detects if there are hardfault files present on the SD card. If so, and the parameter is enabled, arming is prevented.</long_desc>
+    </parameter>
     <parameter name="COM_ARM_IMU_ACC" default="0.7" type="FLOAT">
       <short_desc>Maximum accelerometer inconsistency between IMU units that will allow arming</short_desc>
       <min>0.1</min>
@@ -1147,13 +1151,15 @@
       <short_desc>Time-out for auto disarm after landing</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A zero or negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
       <unit>s</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="COM_DISARM_PRFLT" default="10.0" type="FLOAT">
       <short_desc>Time-out for auto disarm if not taking off</short_desc>
       <long_desc>A non-zero, positive value specifies the time in seconds, within which the vehicle is expected to take off after arming. In case the vehicle didn't takeoff within the timeout it disarms again. A negative value disables autmoatic disarming triggered by a pre-takeoff timeout.</long_desc>
       <unit>s</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="COM_DL_LOSS_T" default="10" type="INT32">
       <short_desc>GCS connection loss time threshold</short_desc>
@@ -1347,7 +1353,6 @@
     <parameter name="COM_IMB_PROP_ACT" default="0" type="INT32">
       <short_desc>Imbalanced propeller failsafe mode</short_desc>
       <long_desc>Action the system takes when an imbalanced propeller is detected by the failure detector. See also FD_IMB_PROP_THR to set the failure threshold.</long_desc>
-      <decimal>0</decimal>
       <increment>1</increment>
       <values>
         <value code="-1">Disabled</value>
@@ -1374,8 +1379,6 @@
     <parameter name="COM_LOW_BAT_ACT" default="0" type="INT32">
       <short_desc>Battery failsafe mode</short_desc>
       <long_desc>Action the system takes at critical battery. See also BAT_CRIT_THR and BAT_EMERGEN_THR for definition of battery states.</long_desc>
-      <decimal>0</decimal>
-      <increment>1</increment>
       <values>
         <value code="0">Warning</value>
         <value code="2">Land mode</value>
@@ -1470,14 +1473,6 @@
         <value code="2">Hold mode</value>
       </values>
     </parameter>
-    <parameter name="COM_RCL_ACT_T" default="15.0" type="FLOAT">
-      <short_desc>Delay between RC loss and configured reaction</short_desc>
-      <long_desc>RC signal not updated -&gt; still use data for COM_RC_LOSS_T seconds Consider RC signal lost -&gt; wait COM_RCL_ACT_T seconds in Hold mode to regain signal React with failsafe action NAV_RCL_ACT A zero value disables the delay.</long_desc>
-      <min>0.0</min>
-      <max>25.0</max>
-      <unit>s</unit>
-      <decimal>3</decimal>
-    </parameter>
     <parameter name="COM_RCL_EXCEPT" default="0" type="INT32">
       <short_desc>RC loss exceptions</short_desc>
       <long_desc>Specify modes in which RC loss is ignored and the failsafe action not triggered.</long_desc>
@@ -1543,6 +1538,8 @@
       <min>0</min>
       <max>30</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
       <short_desc>Action after TAKEOFF has been accepted</short_desc>
@@ -1689,30 +1686,6 @@
       <max>6143</max>
     </parameter>
   </group>
-  <group name="Data Link Loss">
-    <parameter name="NAV_AH_ALT" default="600.0" type="FLOAT">
-      <short_desc>Airfield home alt</short_desc>
-      <long_desc>Altitude of airfield home waypoint</long_desc>
-      <min>-50</min>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="NAV_AH_LAT" default="-265847810" type="INT32">
-      <short_desc>Airfield home Lat</short_desc>
-      <long_desc>Latitude of airfield home waypoint</long_desc>
-      <min>-900000000</min>
-      <max>900000000</max>
-      <unit>deg*1e7</unit>
-    </parameter>
-    <parameter name="NAV_AH_LON" default="1518423250" type="INT32">
-      <short_desc>Airfield home Lon</short_desc>
-      <long_desc>Longitude of airfield home waypoint</long_desc>
-      <min>-1800000000</min>
-      <max>1800000000</max>
-      <unit>deg*1e7</unit>
-    </parameter>
-  </group>
   <group name="EKF2">
     <parameter name="EKF2_ABIAS_INIT" default="0.2" type="FLOAT">
       <short_desc>1-sigma IMU accelerometer switch-on bias</short_desc>
@@ -1770,7 +1743,7 @@
     </parameter>
     <parameter name="EKF2_AID_MASK" default="0" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Deprecated, use EKF2_GPS_CTRL instead 8 : Set to true to enable vision velocity fusion</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Deprecated, use EKF2_GPS_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead</long_desc>
       <min>0</min>
       <max>511</max>
       <reboot_required>true</reboot_required>
@@ -1783,7 +1756,7 @@
         <bit index="5">multi-rotor drag fusion</bit>
         <bit index="6">rotate external vision</bit>
         <bit index="7">unused</bit>
-        <bit index="8">vision velocity fusion</bit>
+        <bit index="8">unused</bit>
       </bitmask>
     </parameter>
     <parameter name="EKF2_ANGERR_INIT" default="0.1" type="FLOAT">
@@ -1939,6 +1912,18 @@
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
+    <parameter name="EKF2_EV_CTRL" default="15" type="INT32">
+      <short_desc>External vision (EV) sensor aiding</short_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Horizontal position fusion 1 : Vertical position fusion 2 : 3D velocity fusion 3 : Yaw</long_desc>
+      <min>0</min>
+      <max>15</max>
+      <bitmask>
+        <bit index="0">Horizontal position</bit>
+        <bit index="1">Vertical position</bit>
+        <bit index="2">3D velocity</bit>
+        <bit index="3">Yaw</bit>
+      </bitmask>
+    </parameter>
     <parameter name="EKF2_EV_DELAY" default="0" type="FLOAT">
       <short_desc>Vision Position Estimator delay relative to IMU measurements</short_desc>
       <min>0</min>
@@ -1947,9 +1932,13 @@
       <decimal>1</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="EKF2_EV_NOISE_MD" default="0" type="INT32" boolean="true">
-      <short_desc>Whether to set the external vision observation noise from the parameter or from vision message</short_desc>
-      <long_desc>If set to true the observation noise is set from the parameters directly, if set to false the measurement noise is taken from the vision message and the parameter are used as a lower bound.</long_desc>
+    <parameter name="EKF2_EV_NOISE_MD" default="0" type="INT32">
+      <short_desc>External vision (EV) noise mode</short_desc>
+      <long_desc>If set to 0 (default) the measurement noise is taken from the vision message and the EV noise parameters are used as a lower bound. If set to 1 the observation noise is set from the parameters directly,</long_desc>
+      <values>
+        <value code="0">EV reported variance (parameter lower bound)</value>
+        <value code="1">EV noise parameters</value>
+      </values>
     </parameter>
     <parameter name="EKF2_EV_POS_X" default="0.0" type="FLOAT">
       <short_desc>X position of VI sensor focal point in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
@@ -1965,6 +1954,13 @@
       <short_desc>Z position of VI sensor focal point in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
+    </parameter>
+    <parameter name="EKF2_EV_QMIN" default="0" type="INT32">
+      <short_desc>External vision (EV) minimum quality (optional)</short_desc>
+      <long_desc>External vision will only be started and fused if the quality metric is above this threshold. The quality metric is a completely optional field provided by some VIO systems.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="EKF2_FUSE_BETA" default="0" type="INT32" boolean="true">
       <short_desc>Boolean determining if synthetic sideslip measurements should fused</short_desc>
@@ -2599,26 +2595,32 @@
     </parameter>
   </group>
   <group name="FW Attitude Control">
-    <parameter name="FW_ACRO_X_MAX" default="90" type="FLOAT">
+    <parameter name="FW_ACRO_X_MAX" default="90." type="FLOAT">
       <short_desc>Acro body x max rate</short_desc>
       <long_desc>This is the rate the controller is trying to achieve if the user applies full roll stick input in acro mode.</long_desc>
       <min>45</min>
       <max>720</max>
-      <unit>deg</unit>
+      <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
-    <parameter name="FW_ACRO_Y_MAX" default="90" type="FLOAT">
+    <parameter name="FW_ACRO_Y_MAX" default="90." type="FLOAT">
       <short_desc>Acro body y max rate</short_desc>
       <long_desc>This is the body y rate the controller is trying to achieve if the user applies full pitch stick input in acro mode.</long_desc>
       <min>45</min>
       <max>720</max>
-      <unit>deg</unit>
+      <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
-    <parameter name="FW_ACRO_Z_MAX" default="45" type="FLOAT">
+    <parameter name="FW_ACRO_Z_MAX" default="45." type="FLOAT">
       <short_desc>Acro body z max rate</short_desc>
       <long_desc>This is the body z rate the controller is trying to achieve if the user applies full yaw stick input in acro mode.</long_desc>
       <min>10</min>
       <max>180</max>
-      <unit>deg</unit>
+      <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
     <parameter name="FW_ARSP_MODE" default="0" type="INT32">
       <short_desc>Airspeed mode</short_desc>
@@ -2760,6 +2762,14 @@
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_MAN_YR_MAX" default="30." type="FLOAT">
+      <short_desc>Maximum manually added yaw rate</short_desc>
+      <long_desc>This is the maximally added yaw rate setpoint from the yaw stick in any attitude controlled flight mode. The controller already generates a yaw rate setpoint to coordinate a turn, and this value is added to it. This is an absolute value, which is applied symmetrically to the negative and positive side.</long_desc>
+      <min>0</min>
+      <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter name="FW_MAN_Y_SC" default="1.0" type="FLOAT">
       <short_desc>Manual yaw scale</short_desc>
@@ -3210,6 +3220,7 @@
       <long_desc>The maximum change in roll angle setpoint per second.</long_desc>
       <min>0</min>
       <unit>deg/s</unit>
+      <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
     <parameter name="FW_POS_STK_CONF" default="2" type="INT32">
@@ -3358,7 +3369,7 @@
   <group name="FW TECS">
     <parameter name="FW_AIRSPD_MAX" default="20.0" type="FLOAT">
       <short_desc>Maximum Airspeed (CAS)</short_desc>
-      <long_desc>If the CAS (calibrated airspeed) is above this value, the TECS controller will try to decrease airspeed more aggressively.</long_desc>
+      <long_desc>The maximal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed is above this value, the TECS controller will try to decrease airspeed more aggressively.</long_desc>
       <min>0.5</min>
       <max>40</max>
       <unit>m/s</unit>
@@ -3367,7 +3378,7 @@
     </parameter>
     <parameter name="FW_AIRSPD_MIN" default="10.0" type="FLOAT">
       <short_desc>Minimum Airspeed (CAS)</short_desc>
-      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively.</long_desc>
+      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively. Has to be set according to the vehicle's stall speed (which should be set in FW_AIRSPD_STALL), with some margin between the stall speed and minimum airspeed. This value corresponds to the desired minimum speed with the default load factor (level flight, default weight), and is automatically adpated to the current load factor (calculated from roll setpoint and WEIGHT_GROSS/WEIGHT_BASE).</long_desc>
       <min>0.5</min>
       <max>40</max>
       <unit>m/s</unit>
@@ -3451,6 +3462,8 @@
       <long_desc>Maximum slew rate for the commanded throttle</long_desc>
       <min>0.0</min>
       <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_THR_TRIM" default="0.6" type="FLOAT">
       <short_desc>Trim throttle</short_desc>
@@ -4092,9 +4105,10 @@
     </parameter>
     <parameter name="LNDMC_Z_VEL_MAX" default="0.25" type="FLOAT">
       <short_desc>Multicopter vertical velocity threshold</short_desc>
-      <long_desc>Vertical velocity threshold to detect landing. Should be set lower than the expected minimal speed for landing so MPC_LAND_SPEED for autonomous landing and MPC_LAND_CRWL if distance sensor is present and slowing down close to ground.</long_desc>
+      <long_desc>Vertical velocity threshold to detect landing. Has to be set lower than the expected minimal speed for landing, which is either MPC_LAND_SPEED or MPC_LAND_CRWL. This is enforced by an automatic check.</long_desc>
+      <min>0</min>
       <unit>m/s</unit>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="LND_FLIGHT_T_HI" default="0" type="INT32" volatile="true" category="System">
       <short_desc>Total flight time in microseconds</short_desc>
@@ -4257,7 +4271,6 @@
       <short_desc>Optical flow minimum quality threshold</short_desc>
       <min>0</min>
       <max>255</max>
-      <decimal>0</decimal>
     </parameter>
     <parameter name="LPE_FLW_R" default="7.0" type="FLOAT">
       <short_desc>Optical flow rotation (roll/pitch) noise gain</short_desc>
@@ -4655,9 +4668,16 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="MIS_TAKEOFF_REQ" default="0" type="INT32" boolean="true">
-      <short_desc>Take-off waypoint required</short_desc>
-      <long_desc>If set, the mission feasibility checker will check for a takeoff waypoint on the mission.</long_desc>
+    <parameter name="MIS_TKO_LAND_REQ" default="0" type="INT32">
+      <short_desc>Mission takeoff/landing required</short_desc>
+      <long_desc>Specifies if a mission has to contain a takeoff and/or mission landing. Validity of configured takeoffs/landings is checked independently of the setting here.</long_desc>
+      <values>
+        <value code="0">No requirements</value>
+        <value code="1">Require a takeoff</value>
+        <value code="2">Require a landing</value>
+        <value code="3">Require a takeoff and a landing</value>
+        <value code="4">Require a takeoff and a landing, or neither of both</value>
+      </values>
     </parameter>
     <parameter name="MIS_YAW_ERR" default="12.0" type="FLOAT">
       <short_desc>Max yaw error in degrees needed for waypoint heading acceptance</short_desc>
@@ -10115,13 +10135,6 @@
       <decimal>10</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="UART_ESC_T_YAWR" default="0" type="INT32">
-      <short_desc>UART ESC Turtle Mode Yaw Reversal</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
   </group>
   <group name="UAVCAN">
     <parameter name="CANNODE_BITRATE" default="1000000" type="INT32">
@@ -10415,7 +10428,7 @@
       <min>0</min>
       <max>0.2</max>
       <unit>rad s^2/m</unit>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_B_DEC_I" default="0.1" type="FLOAT">
@@ -10423,7 +10436,7 @@
       <min>0</min>
       <max>0.3</max>
       <unit>rad s/m</unit>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
     <parameter name="VT_B_DEC_MSS" default="2.0" type="FLOAT">
@@ -10437,9 +10450,10 @@
     </parameter>
     <parameter name="VT_B_REV_DEL" default="0.0" type="FLOAT">
       <short_desc>Delay in seconds before applying back transition throttle</short_desc>
-      <long_desc>Set this to a value greater than 0 to give the motor time to spin down. unit s</long_desc>
+      <long_desc>Set this to a value greater than 0 to give the motor time to spin down.</long_desc>
       <min>0</min>
       <max>10</max>
+      <unit>s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
@@ -10503,19 +10517,42 @@
       <long_desc>Maximum negative altitude error for fixed wing flight. If the altitude drops below this value below the altitude setpoint the vehicle will transition back to MC mode and enter failsafe RTL.</long_desc>
       <min>0.0</min>
       <max>200.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="VT_FW_DIFTHR_EN" default="0" type="INT32">
       <short_desc>Differential thrust in forwards flight</short_desc>
-      <long_desc>Set to 1 to enable differential thrust in fixed-wing flight.</long_desc>
+      <long_desc>Enable differential thrust seperately for roll, pitch, yaw in forward (fixed-wing) mode. The effectiveness of differential thrust around the corresponding axis can be tuned by setting VT_FW_DIFTHR_S_R / VT_FW_DIFTHR_S_P / VT_FW_DIFTHR_S_Y.</long_desc>
       <min>0</min>
-      <max>1</max>
-      <decimal>0</decimal>
+      <max>7</max>
+      <bitmask>
+        <bit index="0">Yaw</bit>
+        <bit index="1">Roll</bit>
+        <bit index="2">Pitch</bit>
+      </bitmask>
     </parameter>
-    <parameter name="VT_FW_DIFTHR_SC" default="0.1" type="FLOAT">
-      <short_desc>Differential thrust scaling factor</short_desc>
-      <long_desc>This factor specifies how the yaw input gets mapped to differential thrust in forwards flight.</long_desc>
+    <parameter name="VT_FW_DIFTHR_S_P" default="1." type="FLOAT">
+      <short_desc>Pitch differential thrust factor in forward flight</short_desc>
+      <long_desc>Maps the pitch control output in forward flight to the actuator differential thrust output. Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="VT_FW_DIFTHR_S_R" default="1." type="FLOAT">
+      <short_desc>Roll differential thrust factor in forward flight</short_desc>
+      <long_desc>Maps the roll control output in forward flight to the actuator differential thrust output. Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="VT_FW_DIFTHR_S_Y" default="0.1" type="FLOAT">
+      <short_desc>Yaw differential thrust factor in forward flight</short_desc>
+      <long_desc>Maps the yaw control output in forward flight to the actuator differential thrust output. Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
       <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
@@ -10524,6 +10561,9 @@
       <long_desc>Minimum altitude for fixed wing flight, when in fixed wing the altitude drops below this altitude the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
       <min>0.0</min>
       <max>200.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="VT_FW_QC_P" default="0" type="INT32">
       <short_desc>QuadChute Max Pitch</short_desc>
@@ -10560,23 +10600,32 @@
       <min>1.0</min>
       <max>30.0</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
     <parameter name="VT_LND_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover landing</short_desc>
       <long_desc>Overrides  VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="VT_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover</short_desc>
       <long_desc>Minimum pitch angle during hover flight. If the desired pitch angle is is lower than this value then the fixed-wing forward actuation can be used to compensate for the missing thrust in forward direction (see VT_FW_TRHUST_EN)</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
+      <unit>deg</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
-    <parameter name="VT_PSHER_RMP_DT" default="3.0" type="FLOAT">
-      <short_desc>Pusher throttle ramp up window</short_desc>
-      <long_desc>Defines the time window during which the pusher throttle will be ramped up linearly to VT_F_TRANS_THR during a transition to fixed wing mode. Zero or negative values will produce an instant throttle rise to VT_F_TRANS_THR.</long_desc>
-      <max>20</max>
+    <parameter name="VT_PSHER_SLEW" default="0.33" type="FLOAT">
+      <short_desc>Pusher throttle ramp up slew rate</short_desc>
+      <long_desc>Defines the slew rate of the puller/pusher throttle during transitions. Zero will deactivate the slew rate limiting and thus produce an instant throttle rise to the transition throttle VT_F_TRANS_THR.</long_desc>
+      <min>0</min>
+      <unit>1/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -10586,7 +10635,7 @@
       <max>1</max>
       <unit>norm</unit>
       <decimal>1</decimal>
-      <increment>0.05</increment>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="VT_TILT_FW" default="1.0" type="FLOAT">
       <short_desc>Position of tilt servo in fw mode</short_desc>
@@ -10623,6 +10672,8 @@
       <min>0.0</min>
       <max>20.0</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="VT_TRANS_P2_DUR" default="0.5" type="FLOAT">
       <short_desc>Duration of front transition phase 2</short_desc>
@@ -10646,7 +10697,6 @@
       <short_desc>VTOL Type (Tailsitter=0, Tiltrotor=1, Standard=2)</short_desc>
       <min>0</min>
       <max>2</max>
-      <decimal>0</decimal>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Tailsitter</value>
