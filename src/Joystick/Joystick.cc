@@ -123,13 +123,13 @@ void AssignedButtonAction::sendPwm(Vehicle *vehicle, bool buttonDown)
         if (buttonDown) {
             _pwmLatchButtonDown = !_pwmLatchButtonDown;
             pwmValue = _pwmLatchButtonDown ? _hiPwmValue : _loPwmValue;
-            qCDebug(JoystickLog) << " calculated new PWM Value " << pwmValue;
         } else {
-            qCDebug(JoystickLog) << "since button up - exiting";
+            qCDebug(JoystickLog) << "since button is up - exiting";
             return;
         }
     }
 
+    qCDebug(JoystickLog) << " Sending PWM Value " << pwmValue;
     vehicle->rcChannelOverride(_pwmRcChannel, pwmValue);
 }
 

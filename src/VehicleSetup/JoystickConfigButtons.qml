@@ -144,10 +144,25 @@ ColumnLayout {
                             anchors.verticalCenter:     parent.verticalCenter
                         }
                         QGCTextField {
+                            id:     lowPwmValue
                             width:  ScreenTools.defaultFontPixelWidth * 10
                             implicitHeight:     ScreenTools.implicitTextFieldHeight
                             visible:                true
                             validator: IntValidator { bottom:1000; top: 2000}
+
+                            Connections {
+                                target: buttonActionCombo
+                                onCurrentIndexChanged: {
+                                    if(_activeJoystick) {
+                                        console.log("index changed, ", buttonActionCombo.currentIndex)
+                                        console.log("index changed, ", modelData)
+                                        console.log("index changed, ", target)
+                                        var pwm = pwmSettings._getButtonPwm(modelData, true)
+                                        console.log("pwm ", pwm)
+                                        lowPwmValue.text = pwm;
+                                    }
+                                }
+                            }
 
                             Component.onCompleted: {
                                 if(_activeJoystick) {
@@ -163,10 +178,26 @@ ColumnLayout {
                             anchors.verticalCenter:     parent.verticalCenter
                         }
                         QGCTextField {
+                            id:     highPwmValue
                             width:  ScreenTools.defaultFontPixelWidth * 10
                             implicitHeight:     ScreenTools.implicitTextFieldHeight
                             visible:                true
                             validator: IntValidator { bottom:1000; top: 2000}
+
+                            Connections {
+                                target: buttonActionCombo
+                                function onCurrentIndexChanged(index) {
+                                    if(_activeJoystick) {
+                                        console.log("index changed, ", buttonActionCombo.currentIndex)
+                                        console.log("index changed, ", modelData)
+                                        console.log("index changed, ", target)
+                                        console.log("text ", target.text)
+                                        var pwm = pwmSettings._getButtonPwm(modelData, false)
+                                        console.log("pwm ", pwm)
+                                        highPwmValue.text = pwm;
+                                    }
+                                }
+                            }
 
                             Component.onCompleted: {
                                 if(_activeJoystick) {

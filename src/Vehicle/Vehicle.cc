@@ -2274,7 +2274,8 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
 void Vehicle::_sendMessageMultipleNext()
 {
     if (_nextSendMessageMultipleIndex < _sendMessageMultipleList.count()) {
-        qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
+//bzd to be enabled but it spams too much
+         //qCDebug(VehicleLog) << "_sendMessageMultipleNext: " << _nextSendMessageMultipleIndex << ", mesg id: " << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
 
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
@@ -4340,7 +4341,9 @@ void Vehicle::rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue)
         override_data[i] = UINT16_MAX;
     }
     override_data[rcChannel - 1] = pwmValue;
-
+    for (int i = 0; i < 18; i++) {
+        qCDebug(VehicleLog) << "Override data " << i << " is " << override_data[i];
+    }
     mavlink_message_t message;
 
     mavlink_msg_rc_channels_override_pack_chan(
