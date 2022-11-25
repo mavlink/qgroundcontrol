@@ -3107,7 +3107,7 @@
     <parameter name="FW_LND_FL_PMIN" default="2.5" type="FLOAT">
       <short_desc>Flare, minimum pitch</short_desc>
       <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once flaring is triggered</long_desc>
-      <min>0</min>
+      <min>-5</min>
       <max>15.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
@@ -3117,9 +3117,9 @@
       <short_desc>Landing flare sink rate</short_desc>
       <long_desc>TECS will attempt to control the aircraft to this sink rate via pitch angle (throttle killed during flare)</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>2</max>
       <unit>m/s</unit>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_LND_FL_TIME" default="1.0" type="FLOAT">
@@ -3252,18 +3252,28 @@
     </parameter>
   </group>
   <group name="FW Launch detection">
-    <parameter name="LAUN_ALL_ON" default="0" type="INT32" boolean="true">
-      <short_desc>Launch detection</short_desc>
+    <parameter name="FW_LAUN_AC_T" default="0.05" type="FLOAT">
+      <short_desc>Trigger time</short_desc>
+      <long_desc>Launch is detected when acceleration in body forward direction is above FW_LAUN_AC_THLD for FW_LAUN_AC_T seconds.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
     </parameter>
-    <parameter name="LAUN_CAT_A" default="30.0" type="FLOAT">
-      <short_desc>Catapult accelerometer threshold</short_desc>
-      <long_desc>LAUN_CAT_A for LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
+    <parameter name="FW_LAUN_AC_THLD" default="30.0" type="FLOAT">
+      <short_desc>Trigger acceleration threshold</short_desc>
+      <long_desc>Launch is detected when acceleration in body forward direction is above FW_LAUN_AC_THLD for FW_LAUN_AC_T seconds.</long_desc>
       <min>0</min>
       <unit>m/s^2</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="LAUN_CAT_MDEL" default="0.0" type="FLOAT">
+    <parameter name="FW_LAUN_DETCN_ON" default="0" type="INT32" boolean="true">
+      <short_desc>FW Launch detection</short_desc>
+      <long_desc>Enables automatic launch detection based on measured acceleration. Use for hand- or catapult-launched vehicles. Only available for fixed-wing vehicles. Not compatible with runway takeoff.</long_desc>
+    </parameter>
+    <parameter name="FW_LAUN_MOT_DEL" default="0.0" type="FLOAT">
       <short_desc>Motor delay</short_desc>
       <long_desc>Delay between starting attitude control and powering up the throttle (giving throttle control to the controller) Before this timespan is up the throttle will be set to FW_THR_IDLE, set to 0 to deactivate</long_desc>
       <min>0.0</min>
@@ -3271,24 +3281,6 @@
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="LAUN_CAT_PMAX" default="30.0" type="FLOAT">
-      <short_desc>Maximum pitch before the throttle is powered up (during motor delay phase)</short_desc>
-      <long_desc>This is an extra limit for the maximum pitch which is imposed in the phase before the throttle turns on. This allows to limit the maximum pitch angle during a bungee launch (make the launch less steep).</long_desc>
-      <min>0.0</min>
-      <max>45.0</max>
-      <unit>deg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="LAUN_CAT_T" default="0.05" type="FLOAT">
-      <short_desc>Catapult time threshold</short_desc>
-      <long_desc>LAUN_CAT_A for LAUN_CAT_T serves as threshold to trigger launch detection.</long_desc>
-      <min>0.0</min>
-      <max>5.0</max>
-      <unit>s</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
     </parameter>
   </group>
   <group name="FW NPFG Control">
@@ -4052,6 +4044,14 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="LNDFW_TRIG_TIME" default="2." type="FLOAT">
+      <short_desc>Fixed-wing land detection trigger time</short_desc>
+      <long_desc>Time the land conditions (speeds and acceleration) have to be satisfied to detect a landing.</long_desc>
+      <min>0.1</min>
+      <unit>s</unit>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="LNDFW_VEL_XY_MAX" default="5.0" type="FLOAT">
       <short_desc>Fixed-wing land detector: Max horizontal velocity threshold</short_desc>
       <long_desc>Maximum horizontal velocity allowed in the landed state. A factor of 0.7 is applied in case of airspeed-less flying (either because no sensor is present or sensor data got invalid in flight).</long_desc>
@@ -4060,9 +4060,9 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="LNDFW_VEL_Z_MAX" default="2.0" type="FLOAT">
+    <parameter name="LNDFW_VEL_Z_MAX" default="1.0" type="FLOAT">
       <short_desc>Fixed-wing land detector: Max vertiacal velocity threshold</short_desc>
-      <long_desc>Maximum vertical velocity allowed in the landed state. A factor of 0.7 is applied in case of airspeed-less flying (either because no sensor is present or sensor data got invalid in flight).</long_desc>
+      <long_desc>Maximum vertical velocity allowed in the landed state.</long_desc>
       <min>0.1</min>
       <max>20</max>
       <unit>m/s</unit>
@@ -8205,6 +8205,41 @@
         <value code="400">400 Hz</value>
       </values>
     </parameter>
+    <parameter name="INA220_CONFIG" default="8607" type="INT32">
+      <short_desc>INA220 Power Monitor Config</short_desc>
+      <min>0</min>
+      <max>65535</max>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="INA220_CUR_BAT" default="164.0" type="FLOAT">
+      <short_desc>INA220 Power Monitor Battery Max Current</short_desc>
+      <min>0.1</min>
+      <max>500.0</max>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="INA220_CUR_REG" default="164.0" type="FLOAT">
+      <short_desc>INA220 Power Monitor Regulator Max Current</short_desc>
+      <min>0.1</min>
+      <max>500.0</max>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="INA220_SHUNT_BAT" default="0.0005" type="FLOAT">
+      <short_desc>INA220 Power Monitor Battery Shunt</short_desc>
+      <min>0.000000001</min>
+      <max>0.1</max>
+      <decimal>10</decimal>
+      <increment>.000000001</increment>
+    </parameter>
+    <parameter name="INA220_SHUNT_REG" default="0.0005" type="FLOAT">
+      <short_desc>INA220 Power Monitor Regulator Shunt</short_desc>
+      <min>0.000000001</min>
+      <max>0.1</max>
+      <decimal>10</decimal>
+      <increment>.000000001</increment>
+    </parameter>
     <parameter name="INA226_CONFIG" default="18139" type="INT32">
       <short_desc>INA226 Power Monitor Config</short_desc>
       <min>0</min>
@@ -8372,6 +8407,11 @@
     </parameter>
     <parameter name="SENS_EN_ETSASPD" default="0" type="INT32" boolean="true">
       <short_desc>Eagle Tree airspeed sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_INA220" default="0" type="INT32" boolean="true">
+      <short_desc>Enable INA220 Power Monitor</short_desc>
+      <long_desc>For systems a INA220 Power Monitor, this should be set to true</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_INA226" default="0" type="INT32" boolean="true">
