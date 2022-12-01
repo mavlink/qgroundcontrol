@@ -5868,7 +5868,7 @@
     </parameter>
     <parameter name="RC10_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 10 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -5905,7 +5905,7 @@
     </parameter>
     <parameter name="RC11_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 11 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -5942,7 +5942,7 @@
     </parameter>
     <parameter name="RC12_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 12 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -5979,7 +5979,7 @@
     </parameter>
     <parameter name="RC13_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 13 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6016,7 +6016,7 @@
     </parameter>
     <parameter name="RC14_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 14 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6053,7 +6053,7 @@
     </parameter>
     <parameter name="RC15_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 15 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6090,7 +6090,7 @@
     </parameter>
     <parameter name="RC16_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 16 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6127,7 +6127,7 @@
     </parameter>
     <parameter name="RC17_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 17 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6164,7 +6164,7 @@
     </parameter>
     <parameter name="RC18_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 18 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6202,7 +6202,7 @@
     </parameter>
     <parameter name="RC1_TRIM" default="1500.0" type="FLOAT">
       <short_desc>RC channel 1 trim</short_desc>
-      <long_desc>Mid point value (same as min for throttle)</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6240,7 +6240,7 @@
     </parameter>
     <parameter name="RC2_TRIM" default="1500.0" type="FLOAT">
       <short_desc>RC channel 2 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6278,7 +6278,7 @@
     </parameter>
     <parameter name="RC3_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 3 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6316,7 +6316,7 @@
     </parameter>
     <parameter name="RC4_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 4 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6353,7 +6353,7 @@
     </parameter>
     <parameter name="RC5_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 5 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6390,7 +6390,7 @@
     </parameter>
     <parameter name="RC6_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 6 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6427,7 +6427,7 @@
     </parameter>
     <parameter name="RC7_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 7 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6464,7 +6464,7 @@
     </parameter>
     <parameter name="RC8_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 8 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -6501,7 +6501,7 @@
     </parameter>
     <parameter name="RC9_TRIM" default="1500" type="FLOAT">
       <short_desc>RC channel 9 trim</short_desc>
-      <long_desc>Mid point value (has to be set to the same as min for throttle channel).</long_desc>
+      <long_desc>Mid point value</long_desc>
       <min>800.0</min>
       <max>2200.0</max>
       <unit>us</unit>
@@ -10830,9 +10830,6 @@
         <value code="0">Fixed descent speed of MPC_LAND_SPEED</value>
         <value code="1">User assisted descent speed</value>
       </values>
-    </parameter>
-    <parameter name="RV_YAW_P" default="0.1" type="FLOAT">
-      <short_desc>RV_YAW_P</short_desc>
     </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
       <short_desc>Skip the controller</short_desc>
