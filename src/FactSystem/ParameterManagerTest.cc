@@ -213,7 +213,7 @@ void ParameterManagerTest::_FTPChangeParam()
     QVERIFY(fact);
     float value = fact->rawValue().toFloat();
     QCOMPARE(value, 0.0);
-    float testvalue = 0.87;
+    float testvalue = 0.87f;
     QVariant sendv = testvalue;
     fact->setRawValue(sendv); // This should trigger a parameter upload to the vehicle
     /* That should set the progress to 0.5 and then back to 0 */
