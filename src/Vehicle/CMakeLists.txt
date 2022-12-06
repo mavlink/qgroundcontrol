@@ -92,6 +92,8 @@ add_library(Vehicle
 	VehicleTemperatureFactGroup.h
 	VehicleVibrationFactGroup.cc
 	VehicleVibrationFactGroup.h
+	VehicleWinchStatusFactGroup.cc
+	VehicleWinchStatusFactGroup.h
 	VehicleWindFactGroup.cc
 	VehicleWindFactGroup.h
         VehicleHygrometerFactGroup.cc

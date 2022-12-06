@@ -1,0 +1,160 @@
+{
+    "version":  1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "lineLength",
+    "shortDesc":        "Line Length",
+    "type":             "float",
+    "units":            "m",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "speed",
+    "shortDesc":        "Speed",
+    "type":             "float",
+    "units":            "m/s",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "tension",
+    "shortDesc":        "Tension",
+    "type":             "float",
+    "units":            "Kg",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "voltage",
+    "shortDesc":        "Voltage",
+    "type":             "float",
+    "units":            "V",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "current",
+    "shortDesc":        "Current",
+    "type":             "float",
+    "units":            "A",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "temperature",
+    "shortDesc":        "Temperature",
+    "type":             "float",
+    "units":            "C",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "healthy",
+    "shortDesc":        "Healthy",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "fullyRetracted",
+    "shortDesc":        "Fully Retracted",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "moving",
+    "shortDesc":        "Moving",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "clutchEngaged",
+    "shortDesc":        "Clutch Engaged",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "locked",
+    "shortDesc":        "Locked",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "dropping",
+    "shortDesc":        "Dropping",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "arresting",
+    "shortDesc":        "Arresting",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "groundSense",
+    "shortDesc":        "Ground Sense",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "retracting",
+    "shortDesc":        "Retracting",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "redeliver",
+    "shortDesc":        "Redeliver",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "abandonLine",
+    "shortDesc":        "Abandon Line",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "locking",
+    "shortDesc":        "Locking",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "loadLine",
+    "shortDesc":        "Load Line",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "loadPayload",
+    "shortDesc":        "Load Payload",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "dropAllowed",
+    "shortDesc":        "Drop Allowed",
+    "type":             "bool",
+    "default":          "false"
+},
+{
+    "name":             "dropBlocker",
+    "shortDesc":        "Drop block reason",
+    "type":             "uint8",
+    "enumStrings":      "unknown,Drop allowed,Winch not at home,Drone not in MR,Distance sensor error,Altitude too low,Altitude too high",
+    "enumValues":       "0,1,2,3,4,5,6",
+    "decimalPlaces":    0,
+    "default":          0
+},
+{
+    "name":             "stale",
+    "shortDesc":        "Stale winch status",
+    "type":             "bool",
+    "default":          "true"
+}
+]
+}
