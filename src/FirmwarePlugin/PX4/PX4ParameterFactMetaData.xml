@@ -3284,7 +3284,7 @@
     </parameter>
   </group>
   <group name="FW NPFG Control">
-    <parameter name="FW_USE_NPFG" default="0" type="INT32" boolean="true">
+    <parameter name="FW_USE_NPFG" default="1" type="INT32" boolean="true">
       <short_desc>Use NPFG as lateral-directional guidance law for fixed-wing vehicles</short_desc>
       <long_desc>Replaces L1.</long_desc>
     </parameter>
