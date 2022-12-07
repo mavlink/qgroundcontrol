@@ -389,9 +389,9 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
     mavlink_mission_item_int_t missionItem;
     mavlink_msg_mission_item_int_decode(&message, &missionItem);
 
-    command =       (MAV_CMD)missionItem.command,
-            frame =         (MAV_FRAME)missionItem.frame,
-            param1 =        missionItem.param1;
+    command =       (MAV_CMD)missionItem.command;
+    frame =         (MAV_FRAME)missionItem.frame;
+    param1 =        missionItem.param1;
     param2 =        missionItem.param2;
     param3 =        missionItem.param3;
     param4 =        missionItem.param4;
