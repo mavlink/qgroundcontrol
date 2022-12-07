@@ -10,7 +10,6 @@
 
 #include "Joystick.h"
 #include "QGC.h"
-#include "AutoPilotPlugin.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
@@ -88,6 +87,7 @@ const float Joystick::_minAxisFrequencyHz       = 0.25f;
 const float Joystick::_maxAxisFrequencyHz       = 200.0f;
 const float Joystick::_minButtonFrequencyHz     = 0.25f;
 const float Joystick::_maxButtonFrequencyHz     = 50.0f;
+const float Joystick::_rcOverrideFrequencyHz    = 0.5f;
 
 AssignedButtonAction::AssignedButtonAction(QObject* parent, const QString action)
     : QObject(parent)
@@ -109,11 +109,11 @@ AssignedButtonAction::AssignedButtonAction(
 {
 }
 
-void AssignedButtonAction::sendPwm(Vehicle *vehicle, bool buttonDown)
+int16_t AssignedButtonAction::calculatePwm(Vehicle *vehicle, bool buttonDown)
 {
     if (!_isPwmOverrideAction) {
         qCWarning(JoystickLog) << "send called on non-pwm action";
-        return;
+        return -1;
     }
 
     uint16_t pwmValue = buttonDown ? _hiPwmValue : _loPwmValue;
@@ -121,16 +121,16 @@ void AssignedButtonAction::sendPwm(Vehicle *vehicle, bool buttonDown)
         qCDebug(JoystickLog) << "Latch mode, current saved button state " << (_pwmLatchButtonDown ? "down" : "up");
 
         if (buttonDown) {
+            // altering latch state
             _pwmLatchButtonDown = !_pwmLatchButtonDown;
-            pwmValue = _pwmLatchButtonDown ? _hiPwmValue : _loPwmValue;
-        } else {
-            qCDebug(JoystickLog) << "since button is up - exiting";
-            return;
         }
+        pwmValue = _pwmLatchButtonDown ? _hiPwmValue : _loPwmValue;
     }
 
-    qCDebug(JoystickLog) << " Sending PWM Value " << pwmValue;
-    vehicle->rcChannelOverride(_pwmRcChannel, pwmValue);
+    qCDebug(JoystickLog) << " Calculated PWM Value " << pwmValue << " for action " << _action;
+    //vehicle->rcChannelOverride(_pwmRcChannel, pwmValue);
+
+    return pwmValue;
 }
 
 uint8_t AssignedButtonAction::getRcChannelFromAction(const QString action)
@@ -162,11 +162,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _totalButtonCount(_buttonCount+_hatButtonCount)
     , _multiVehicleManager(multiVehicleManager)
 {
-<<<<<<< HEAD
     qRegisterMetaType<GRIPPER_ACTIONS>();
 
-=======
->>>>>>> Refactor for clearness
     _rgAxisValues   = new int[static_cast<size_t>(_axisCount)];
     _rgCalibration  = new Calibration_t[static_cast<size_t>(_axisCount)];
     _rgButtonValues = new uint8_t[static_cast<size_t>(_totalButtonCount)];
@@ -177,6 +174,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
         _rgButtonValues[i] = BUTTON_UP;
         _buttonActionArray.append(nullptr);
     }
+
     _buildActionList(_multiVehicleManager->activeVehicle());
     _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
     _loadSettings();
@@ -277,6 +275,7 @@ void Joystick::_activeVehicleChanged(Vehicle* activeVehicle)
         int mode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
         setTXMode(mode);
     }
+    _clearRcOverrideButtonActions();
 }
 
 void Joystick::_loadSettings()
@@ -384,7 +383,7 @@ void Joystick::_loadSettings()
             _buttonActionArray[button]->buttonTime().start();
 
             bool savedRepeatState = settings.value(QString(_buttonActionRepeatKey).arg(button), false).toBool();
-            setButtonRepeatIfAvailable(button, savedRepeatState);
+            _setButtonRepeatIfAvailable(button, savedRepeatState);
 
             qCDebug(JoystickLog) << "_loadSettings button:action" << button << _buttonActionArray[button]->action()
                                  << _buttonActionArray[button]->repeat();
@@ -411,7 +410,6 @@ void Joystick::_saveButtonSettings()
                 settings.setValue(QString(_buttonActionLowPwmValueKey).arg(button),  _buttonActionArray[button]->lowPwm());
                 settings.setValue(QString(_buttonActionHighPwmValueKey).arg(button), _buttonActionArray[button]->highPwm());
                 settings.setValue(QString(_buttonActionLatchPwmValueKey).arg(button), _buttonActionArray[button]->pwmLatchMode());
-
             }
         }
     }
@@ -567,6 +565,7 @@ void Joystick::run()
     _open();
     //-- Reset timers
     _axisTime.start();
+    _rcOverrideTimer.start();
     for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
         if(_buttonActionArray[buttonIndex]) {
             _buttonActionArray[buttonIndex]->buttonTime().start();
@@ -576,6 +575,7 @@ void Joystick::run()
         _update();
         _handleButtons();
         _handleAxis();
+        _handleRcOverride();
         QGC::SLEEP::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
     }
     _close();
@@ -775,6 +775,26 @@ void Joystick::_handleAxis()
     }
 }
 
+void Joystick::_handleRcOverride()
+{
+    if (!_activeVehicle || !_activeVehicle->supportsRcChannelOverride()) {
+        return;
+    }
+    const int rcOverrideInterval = static_cast<int>(1000.0f / _rcOverrideFrequencyHz);
+
+    if (_rcOverrideActive || _rcOverrideTimer.elapsed() > rcOverrideInterval) {
+        _rcOverrideActive = false;
+        _rcOverrideTimer.start();
+        uint16_t overrideData[18] = {UINT16_MAX};
+        overrideData[16] = _mapRcOverrideToRelease(17, 0);
+        overrideData[17] = _mapRcOverrideToRelease(18, 0);
+        for (int i = 0; i < MAX_RC_CHANNELS; i++) {
+            overrideData[i] = _rcOverride[i] == -1 ? _mapRcOverrideToRelease(i + 1, 0) : _rcOverride[i];
+        }
+        _activeVehicle->rcChannelsOverride(overrideData);
+    }
+}
+
 void Joystick::startPolling(Vehicle* vehicle)
 {
     if (vehicle) {
@@ -907,7 +927,7 @@ void Joystick::setButtonAction(int button, const QString& action)
     if (action.isEmpty() || action == _buttonActionNone) {
         _pwmSettingsVisibilities[button] = false;
         if (_buttonActionArray[button]) {
-            removeButtonSettings(button);
+            _removeButtonSettings(button);
             _buttonActionArray[button]->deleteLater();
             _buttonActionArray[button] = nullptr;
         }
@@ -917,7 +937,7 @@ void Joystick::setButtonAction(int button, const QString& action)
         qCDebug(JoystickLog) << "setButtonAction: isPwmAction " << isPwmAction;
 
         if (!_buttonActionArray[button]) {
-            _buttonActionArray[button] = isPwmAction ? new AssignedButtonAction(this, action, 1000, 2000, false)
+            _buttonActionArray[button] = isPwmAction ? new AssignedButtonAction(this, action, 1500, 1500, false)
                                                      : new AssignedButtonAction(this, action);
         } else {
             if (isPwmAction) {
@@ -935,14 +955,14 @@ void Joystick::setButtonAction(int button, const QString& action)
         }
 
         //-- Make sure repeat is off if this action doesn't support repeats
-        setButtonRepeatIfAvailable(button, false);
-        saveButtonSettings(button);
+        _setButtonRepeatIfAvailable(button, false);
+        _saveButtonSettings(button);
     }
     emit pwmVisibilitiesChanged();
     emit buttonActionsChanged();
 }
 
-void Joystick::setButtonRepeatIfAvailable(int button, bool repeat)
+void Joystick::_setButtonRepeatIfAvailable(int button, bool repeat)
 {
     int idx = _findAssignableButtonAction(_buttonActionArray[button]->action());
     if (idx >= 0) {
@@ -955,7 +975,7 @@ void Joystick::setButtonRepeatIfAvailable(int button, bool repeat)
     _buttonActionArray[button]->repeat(false);
 }
 
-void Joystick::saveButtonSettings(int button)
+void Joystick::_saveButtonSettings(int button)
 {
     QSettings settings;
     settings.beginGroup(_settingsGroup);
@@ -970,7 +990,7 @@ void Joystick::saveButtonSettings(int button)
     }
 }
 
-void Joystick::removeButtonSettings(int button)
+void Joystick::_removeButtonSettings(int button)
 {
     QSettings settings;
     settings.beginGroup(_settingsGroup);
@@ -1349,10 +1369,10 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
 
-    // TODO(bzd) take channel nos from config, especially max
-    for (int ch = 8; ch <= 16;ch++) {
-         _assignableButtonActions.append(new AssignableButtonAction(this, QString("Channel %1 direct PWM").arg(ch)));
+    for (int ch = 8; ch <= MAX_RC_CHANNELS; ch++) {
+        _assignableButtonActions.append(new AssignableButtonAction(this, QString("Channel %1 direct PWM").arg(ch)));
     }
+    _clearRcOverrideButtonActions();
 
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     for (auto& item : _customMavCommands) {
@@ -1369,8 +1389,27 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
 bool Joystick::_executeRcOverrideButtonAction(int buttonIndex, bool buttonDown)
 {
     if (_buttonActionArray[buttonIndex]) {
-        _buttonActionArray[buttonIndex]->sendPwm(_activeVehicle, buttonDown);
+        uint8_t channel = _buttonActionArray[buttonIndex]->rcChannel();
+        auto pwm = _buttonActionArray[buttonIndex]->calculatePwm(_activeVehicle, buttonDown);
+        _rcOverride[channel-1] = pwm;
+        _rcOverrideActive = true;
         return true;
     }
     return  false;
+}
+
+void Joystick::_clearRcOverrideButtonActions() {
+    qCDebug(JoystickLog) << "Clearing RC override button actions";
+    for (int i = 0; i < MAX_RC_CHANNELS; i++) {
+        _rcOverride[i] = -1;
+    }
+}
+
+uint16_t Joystick::_mapRcOverrideToRelease(uint8_t rcChannel, uint16_t value) {
+    // UINT16_MAX - ignore
+    // 0 Release
+    if (value == 0) {
+        return rcChannel < 9 ? 0 : UINT16_MAX - 1;
+    }
+    return value;
 }

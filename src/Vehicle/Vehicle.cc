@@ -2534,6 +2534,11 @@ bool Vehicle::supportsTerrainFrame() const
     return !px4Firmware();
 }
 
+bool Vehicle::supportsRcChannelOverride() const
+{
+    return _firmwarePlugin->supportsRcChannelOverride();
+}
+
 QString Vehicle::vehicleTypeName() const {
     static QMap<int, QString> typeNames = {
         { MAV_TYPE_GENERIC,         tr("Generic micro air vehicle" )},
@@ -4314,7 +4319,7 @@ void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
 
 void Vehicle::rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue)
 {
-    // TODO(bzd) take from joystick settings
+    // TODO(bzd) take from joystick settings or from RC settings
     const int maxRcChannels = 16;
     if (rcChannel > maxRcChannels) {
         qCWarning(VehicleLog) << "Unsupported rc channel " << rcChannel << " to override";
@@ -4322,15 +4327,6 @@ void Vehicle::rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue)
     }
     if (pwmValue > 2000 || pwmValue < 1000) {
         qCWarning(VehicleLog) << "Bad PWM override value " << pwmValue << " for channel " << rcChannel;
-        return;
-    }
-    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCDebug(VehicleLog)<< "rcChannelOverride: primary link gone!";
-        return;
-    }
-
-    if (sharedLink->linkConfiguration()->isHighLatency()) {
         return;
     }
 
@@ -4341,9 +4337,27 @@ void Vehicle::rcChannelOverride(uint8_t rcChannel, uint16_t pwmValue)
         override_data[i] = UINT16_MAX;
     }
     override_data[rcChannel - 1] = pwmValue;
+
+    rcChannelsOverride(override_data);
+}
+
+void Vehicle::rcChannelsOverride(uint16_t *override_data) {
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog)<< "rcChannelOverride: primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
     for (int i = 0; i < 18; i++) {
         qCDebug(VehicleLog) << "Override data " << i << " is " << override_data[i];
+        if (override_data[i] > UINT16_MAX - 2 && override_data[i] != 0) {
+        }
     }
+
     mavlink_message_t message;
 
     mavlink_msg_rc_channels_override_pack_chan(

@@ -208,14 +208,23 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     for (int position = 0; position < b.size(); position++) {
         if (mavlink_parse_char(mavlinkChannel, static_cast<uint8_t>(b[position]), &_message, &_status)) {
             // Got a valid message
-            if (!link->decodedFirstMavlinkPacket()) {
+            if (!link->decodedFirstMavlinkPacket() && !_messageIsFromAutopilot(_message)) {
+                qCritical(MAVLinkProtocolLog) << "First message from GCS is not from autopilot!!!"
+                      << " component " << _message.compid << " system "
+                      << _message.sysid << " msgid " << _message.msgid;
+            }
+            if (!link->decodedFirstMavlinkPacket() && _messageIsFromAutopilot(_message)) {
                 link->setDecodedFirstMavlinkPacket(true);
+                qCDebug(MAVLinkProtocolLog) << "proto " << mavlink_get_proto_version(mavlinkChannel)
+                                            << " component " << _message.compid << " system " << _message.sysid << " msgid " << _message.msgid;
                 mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
-                if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
+                if (true || (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1))) {
                     qCDebug(MAVLinkProtocolLog) << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                     mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
                     // Set all links to v2
                     setVersion(200);
+                } else {
+                    qCDebug(MAVLinkProtocolLog) << "Outbound connection is mavlink 1.0 due to incoming mavlink 1.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                 }
             }
 
@@ -536,3 +545,6 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     }
 }
 
+bool MAVLinkProtocol::_messageIsFromAutopilot(mavlink_message_t& message) {
+    return message.compid == MAV_COMP_ID_AUTOPILOT1;
+}

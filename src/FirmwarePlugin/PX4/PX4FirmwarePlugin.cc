@@ -737,3 +737,8 @@ bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
     }
     return false;
 }
+
+bool PX4FirmwarePlugin::supportsRcChannelOverride(void)
+{
+    return false;
+}

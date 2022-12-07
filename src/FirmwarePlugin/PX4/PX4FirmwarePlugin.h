@@ -73,6 +73,7 @@ public:
     bool                supportsNegativeThrust          (Vehicle* vehicle) override;
     QString             getHobbsMeter                   (Vehicle* vehicle) override;
     bool                hasGripper                      (const Vehicle* vehicle) const override;
+    bool                supportsRcChannelOverride       (void) override;
 
 protected:
     typedef struct {

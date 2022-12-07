@@ -159,6 +159,7 @@ private:
     bool _closeLogFile(void);
     void _startLogging(void);
     void _stopLogging(void);
+    bool _messageIsFromAutopilot(mavlink_message_t& message);
 
     bool _logSuspendError;      ///< true: Logging suspended due to error
     bool _logSuspendReplay;     ///< true: Logging suspended due to replay

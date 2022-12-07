@@ -25,6 +25,8 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 
+static const int MAX_RC_CHANNELS = 16;
+
 /// Action assigned to button
 class AssignedButtonAction : public QObject {
     Q_OBJECT
@@ -49,10 +51,12 @@ public:
     void pwmLatchMode(bool latch) { _pwmLatchMode = latch; }
     bool pwmLatchMode() const { return _pwmLatchMode; }
     bool isPwmOverrideAction() const { return _isPwmOverrideAction; }
-    void sendPwm(Vehicle* vehicle, bool buttonDown);
-    static uint8_t getRcChannelFromAction(const QString action);
+    int16_t calculatePwm(Vehicle* vehicle, bool buttonDown);
+    uint8_t rcChannel() const { return _pwmRcChannel; }
 
 private:
+    static uint8_t getRcChannelFromAction(const QString action);
+
     QString _action;
     QElapsedTimer _buttonTime;
     bool    _repeat = false;
@@ -151,8 +155,8 @@ public:
     Q_INVOKABLE bool    getButtonPwmLatch   (int button);
     Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
     Q_INVOKABLE QString getButtonAction     (int button);
-    Q_INVOKABLE bool assignableButtonActionIsPwm(int button);
-    Q_INVOKABLE bool    assignableActionIsPwm   (QString action);
+    Q_INVOKABLE bool 	assignableButtonActionIsPwm	(int button);
+    Q_INVOKABLE bool    assignableActionIsPwm   	(QString action);
     Q_INVOKABLE void    setButtonPwm        (int button, bool lowPwm, int value);
     Q_INVOKABLE int     getButtonPwm        (int button, bool lowPwm);
 
@@ -179,12 +183,6 @@ public:
 
     void stop();
 
-/*
-    // Joystick index used by sdl library
-    // Settable because sdl library remaps indices after certain events
-    virtual int index(void) = 0;
-    virtual void setIndex(int index) = 0;
-*/
 	virtual bool requiresCalibration(void) { return true; }
 
     int   throttleMode      ();
@@ -275,6 +273,7 @@ protected:
     bool    _validButton            (int button) const;
     void    _handleAxis             ();
     void    _handleButtons          ();
+    void    _handleRcOverride       ();
     void    _buildActionList        (Vehicle* activeVehicle);
 
     void    _pitchStep              (int direction);
@@ -295,11 +294,15 @@ private:
     int _mapFunctionMode(int mode, int function);
     void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]);
 
-    void removeButtonSettings(int button);
-    void saveButtonSettings(int button);
+    //TODO(bzd) change private members to use _ prefix
+    void _removeButtonSettings(int button);
+    void _saveButtonSettings(int button);
     /// if repeat is available for action under button, sets passed repeat flag
     /// otherwise sets false as safe value
-    void setButtonRepeatIfAvailable(int button, bool repeat);
+    void _setButtonRepeatIfAvailable(int button, bool repeat);
+    bool _executeRcOverrideButtonAction(int buttonIndex, bool buttonDown);
+    void _clearRcOverrideButtonActions();
+    uint16_t _mapRcOverrideToRelease(uint8_t rcChannel, uint16_t value);
 
     // Override from QThread
     virtual void run();
@@ -330,6 +333,7 @@ protected:
     float   _axisFrequencyHz        = _defaultAxisFrequencyHz;
     float   _buttonFrequencyHz      = _defaultButtonFrequencyHz;
     Vehicle* _activeVehicle         = nullptr;
+    int16_t _rcOverride[MAX_RC_CHANNELS];
 
     bool    _pollingStartedForCalibration = false;
 
@@ -344,6 +348,8 @@ protected:
     static int          _transmitterMode;
     int                 _rgFunctionAxis[maxFunction] = {};
     QElapsedTimer       _axisTime;
+    QElapsedTimer       _rcOverrideTimer;
+    bool _rcOverrideActive = false;
 
     QmlObjectListModel              _assignableButtonActions;
     QList<AssignedButtonAction*>    _buttonActionArray;
@@ -357,6 +363,7 @@ protected:
     static const float  _maxAxisFrequencyHz;
     static const float  _minButtonFrequencyHz;
     static const float  _maxButtonFrequencyHz;
+    static const float  _rcOverrideFrequencyHz;
 
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
@@ -413,5 +420,5 @@ private:
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
-    bool _executeRcOverrideButtonAction(int buttonIndex, bool buttonDown);
+
 };

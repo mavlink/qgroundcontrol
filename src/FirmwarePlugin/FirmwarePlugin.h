@@ -211,6 +211,10 @@ public:
     /// to be assigned via parameters in firmware. Default is false.
     virtual bool supportsJSButton(void);
 
+    /// Returns true if the firmware supports the mavlink RC_CHANNELS_OVERRIDE message
+    /// Default is false.
+    virtual bool supportsRcChannelOverride(void);
+
     /// Returns true if the firmware supports calibrating motor interference offsets for the compass
     /// (CompassMot). Default is true.
     virtual bool supportsMotorInterference(void);

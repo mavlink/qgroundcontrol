@@ -158,6 +158,12 @@ AnalyzePage {
                         QGCLabel {
                             text:       curMessage ? curMessage.count : ""
                         }
+                        QGCLabel {
+                            text:       qsTr("Mavlink ver:")
+                        }
+                        QGCLabel {
+                            text:       curMessage ? curMessage.mavlinkVer : ""
+                        }
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
                     //---------------------------------------------------------

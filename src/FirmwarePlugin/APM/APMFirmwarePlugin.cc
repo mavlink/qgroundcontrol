@@ -260,6 +260,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* /*vehicle*/, mavlink_
     // and lower the severity on them so that they don't pop in the users face.
 
     QString messageText = _getMessageText(message);
+    qDebug(APMFirmwarePluginLog) << "StatusText: " << messageText;
     if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
         _adjustCalibrationMessageSeverity(message);
         return true;
@@ -1072,4 +1073,9 @@ QMutex& APMFirmwarePlugin::_reencodeMavlinkChannelMutex()
 {
     static QMutex _mutex{};
     return _mutex;
+}
+
+bool APMFirmwarePlugin::supportsRcChannelOverride(void)
+{
+    return true;
 }

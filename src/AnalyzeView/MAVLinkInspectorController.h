@@ -95,6 +95,7 @@ public:
     Q_PROPERTY(QString              name            READ name           CONSTANT)
     Q_PROPERTY(qreal                messageHz       READ messageHz      NOTIFY freqChanged)
     Q_PROPERTY(quint64              count           READ count          NOTIFY countChanged)
+    Q_PROPERTY(int                  mavlinkVer      READ mavlinkVer     CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  fields          READ fields         CONSTANT)
     Q_PROPERTY(bool                 fieldSelected   READ fieldSelected  NOTIFY fieldSelectedChanged)
     Q_PROPERTY(bool                 selected        READ selected       NOTIFY selectedChanged)
@@ -107,6 +108,7 @@ public:
     QString             name            () { return _name;  }
     qreal               messageHz       () const{ return _messageHz; }
     quint64             count           () const{ return _count; }
+    int                 mavlinkVer      () const{ return _message.magic == 0xFE ? 1 : 2; }
     quint64             lastCount       () const{ return _lastCount; }
     QmlObjectListModel* fields          () { return &_fields; }
     bool                fieldSelected   () const{ return _fieldSelected; }

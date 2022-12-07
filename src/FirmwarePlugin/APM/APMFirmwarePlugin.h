@@ -77,9 +77,10 @@ public:
     QObject*            _loadParameterMetaData          (const QString& metaDataFile) override;
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
-    QString             getHobbsMeter                   (Vehicle* vehicle) override; 
+    QString             getHobbsMeter                   (Vehicle* vehicle) override;
     bool                hasGripper                      (const Vehicle* vehicle) const override;
     const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
+    bool supportsRcChannelOverride(void) override;
 
 protected:
     /// All access to singleton is through stack specific implementation
