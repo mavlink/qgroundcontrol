@@ -109,7 +109,7 @@ AssignedButtonAction::AssignedButtonAction(
 {
 }
 
-int16_t AssignedButtonAction::calculatePwm(Vehicle *vehicle, bool buttonDown)
+int16_t AssignedButtonAction::calculatePwm(bool buttonDown)
 {
     if (!_isPwmOverrideAction) {
         qCWarning(JoystickLog) << "send called on non-pwm action";
@@ -126,10 +126,7 @@ int16_t AssignedButtonAction::calculatePwm(Vehicle *vehicle, bool buttonDown)
         }
         pwmValue = _pwmLatchButtonDown ? _hiPwmValue : _loPwmValue;
     }
-
     qCDebug(JoystickLog) << " Calculated PWM Value " << pwmValue << " for action " << _action;
-    //vehicle->rcChannelOverride(_pwmRcChannel, pwmValue);
-
     return pwmValue;
 }
 
@@ -626,12 +623,16 @@ void Joystick::_handleButtons()
                 if(!_buttonActionArray[buttonIndex]->repeat()) {
                     //-- This button just went down
                     if(_rgButtonValues[buttonIndex] == BUTTON_DOWN) {
-                        // Check for a multi-button action
+                        // Check for a multi-button action except for PWM actions.
+                        // PWM buttons can produce different PWM values on same channel.
+                        // Therefore low value must be the same for all buttons at the same channel.
                         QList<int> rgButtons = { buttonIndex };
                         bool executeButtonAction = true;
                         for (int multiIndex = 0; multiIndex < _totalButtonCount; multiIndex++) {
                             if (multiIndex != buttonIndex) {
-                                if (_buttonActionArray[multiIndex] && _buttonActionArray[multiIndex]->action() == buttonAction) {
+                                if (_buttonActionArray[multiIndex] && _buttonActionArray[multiIndex]->action() == buttonAction
+                                    && !_buttonActionArray[multiIndex]->isPwmOverrideAction()) {
+                                    qCDebug(JoystickLog) << "Multi-button action:" << buttonAction;
                                     // We found a multi-button action
                                     if (_rgButtonValues[multiIndex] == BUTTON_DOWN || _rgButtonValues[multiIndex] == BUTTON_REPEAT) {
                                         // So far so good
@@ -1390,7 +1391,7 @@ bool Joystick::_executeRcOverrideButtonAction(int buttonIndex, bool buttonDown)
 {
     if (_buttonActionArray[buttonIndex]) {
         uint8_t channel = _buttonActionArray[buttonIndex]->rcChannel();
-        auto pwm = _buttonActionArray[buttonIndex]->calculatePwm(_activeVehicle, buttonDown);
+        auto pwm = _buttonActionArray[buttonIndex]->calculatePwm(buttonDown);
         _rcOverride[channel-1] = pwm;
         _rcOverrideActive = true;
         return true;

@@ -51,7 +51,7 @@ public:
     void pwmLatchMode(bool latch) { _pwmLatchMode = latch; }
     bool pwmLatchMode() const { return _pwmLatchMode; }
     bool isPwmOverrideAction() const { return _isPwmOverrideAction; }
-    int16_t calculatePwm(Vehicle* vehicle, bool buttonDown);
+    int16_t calculatePwm(bool buttonDown);
     uint8_t rcChannel() const { return _pwmRcChannel; }
 
 private:

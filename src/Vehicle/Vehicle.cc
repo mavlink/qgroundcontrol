@@ -4352,9 +4352,11 @@ void Vehicle::rcChannelsOverride(uint16_t *override_data) {
         return;
     }
 
-    for (int i = 0; i < 18; i++) {
-        qCDebug(VehicleLog) << "Override data " << i << " is " << override_data[i];
-        if (override_data[i] > UINT16_MAX - 2 && override_data[i] != 0) {
+    if (VehicleLog().isDebugEnabled()) {
+        for (int i = 0; i < 18; i++) {
+            if (override_data[i] > 0 && override_data[i] < UINT16_MAX - 1) {
+                qCDebug(VehicleLog) << "RC Override ch " << i << " => " << override_data[i];
+            }
         }
     }
 
