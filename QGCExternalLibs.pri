@@ -297,31 +297,39 @@ contains (DEFINES, DISABLE_AIRMAP) {
             DEFINES += QGC_AIRMAP_ENABLED
         }
     } else:LinuxBuild {
-        #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
-        AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.0/airmap-platform-sdk-2.0.0-Linux.deb"
-        AIRMAP_PLATFORM_SDK_FILEPATH = "$${OUT_PWD}/airmap-platform-sdk.deb"
-        AIRMAP_PLATFORM_SDK_INSTALL_DIR = "tmp"
+        AIRMAP_PLATFORM_SDK_ARCH = ""
+        contains (QT_ARCH, arm64) {
+            AIRMAP_PLATFORM_SDK_ARCH = "aarch64"
+        } else:contains (QT_ARCH, x86_64) {
+            AIRMAP_PLATFORM_SDK_ARCH = "x86_64"
+        }
+        isEmpty( AIRMAP_PLATFORM_SDK_ARCH ) {
+            message($$sprintf("Skipping support for Airmap (unsupported architecture: '%1')", $$QT_ARCH))
+        } else {
+            #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
+            AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.0.1/airmap-platform-sdk-2.0.1-Linux-$${AIRMAP_PLATFORM_SDK_ARCH}.deb"
+            AIRMAP_PLATFORM_SDK_FILEPATH = "$${OUT_PWD}/airmap-platform-sdk.deb"
+            AIRMAP_PLATFORM_SDK_INSTALL_DIR = "tmp"
 
-        airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
-        airmap_platform_sdk_install.commands = \
-            rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
-            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
-            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
-            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
-            curl --location --output "$${AIRMAP_PLATFORM_SDK_FILEPATH}" "$${AIRMAP_PLATFORM_SDK_URL}" && \
-            ar p "$${AIRMAP_PLATFORM_SDK_FILEPATH}" data.tar.gz | tar xvz -C "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/" --strip-components=1 && \
-            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
-            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
-            rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
-            rm "$${AIRMAP_PLATFORM_SDK_FILEPATH}"
-        airmap_platform_sdk_install.depends =
-        QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
-        PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
+            airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
+            airmap_platform_sdk_install.commands = \
+                rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
+                mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
+                mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
+                mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
+                curl --location --output "$${AIRMAP_PLATFORM_SDK_FILEPATH}" "$${AIRMAP_PLATFORM_SDK_URL}" && \
+                ar p "$${AIRMAP_PLATFORM_SDK_FILEPATH}" data.tar.gz | tar xvz -C "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/" --strip-components=1 && \
+                mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/lib/$${AIRMAP_PLATFORM_SDK_ARCH}-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
+                mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
+                rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
+                rm "$${AIRMAP_PLATFORM_SDK_FILEPATH}"
+            airmap_platform_sdk_install.depends =
+            QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
+            PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
 
-        LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH} -lairmap-cpp
-        DEFINES += QGC_AIRMAP_ENABLED
-    } else {
-        message("Skipping support for Airmap (unsupported platform)")
+            LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH} -lairmap-cpp
+            DEFINES += QGC_AIRMAP_ENABLED
+        }
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \

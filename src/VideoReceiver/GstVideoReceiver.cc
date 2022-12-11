@@ -1297,6 +1297,7 @@ GstVideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
             gst_message_parse_error(msg, &error, &debug);
 
             if (debug != nullptr) {
+                qCDebug(VideoReceiverLog) << "GStreamer debug: " << debug;
                 g_free(debug);
                 debug = nullptr;
             }

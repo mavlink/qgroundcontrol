@@ -28,3 +28,6 @@
 [submodule "resources/SDL_GameControllerDB"]
 	path = resources/SDL_GameControllerDB
 	url = https://github.com/gabomdq/SDL_GameControllerDB.git
+[submodule "src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository"]
+	path = src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository
+	url = https://github.com/ArduPilot/ArduPilot-Parameter-Repository

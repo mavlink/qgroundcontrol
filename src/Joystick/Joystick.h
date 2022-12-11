@@ -14,15 +14,16 @@
 
 #include <QObject>
 #include <QThread>
+#include <atomic>
 
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 #include "JoystickMavCommand.h"
-#include <atomic>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
+Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 
 /// Action assigned to button
 class AssignedButtonAction : public QObject {
@@ -217,6 +218,12 @@ signals:
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
     void emergencyStop              ();
+    /**
+     * @brief Send MAV_CMD_DO_GRIPPER command to the vehicle
+     * 
+     * @param gripperAction (Open / Close) Gripper action to command
+     */
+    void gripperAction              (GRIPPER_ACTIONS gripperAction);
 
 protected:
     void    _setDefaultCalibration  ();
@@ -352,6 +359,9 @@ private:
     static const char* _buttonActionGimbalRight;
     static const char* _buttonActionGimbalCenter;
     static const char* _buttonActionEmergencyStop;
+    static const char* _buttonActionGripperGrab;
+    static const char* _buttonActionGripperRelease;
+
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

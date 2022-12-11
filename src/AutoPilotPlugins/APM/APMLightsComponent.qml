@@ -43,6 +43,8 @@ SetupPage {
             property Fact _rc12Function:        controller.getParameterFact(-1, "SERVO12_FUNCTION")
             property Fact _rc13Function:        controller.getParameterFact(-1, "SERVO13_FUNCTION")
             property Fact _rc14Function:        controller.getParameterFact(-1, "SERVO14_FUNCTION")
+            property Fact _rc15Function:        controller.getParameterFact(-1, "SERVO15_FUNCTION")
+            property Fact _rc16Function:        controller.getParameterFact(-1, "SERVO16_FUNCTION")
             property Fact _stepSize:            _oldFW ? controller.getParameterFact(-1, "JS_LIGHTS_STEP") : null // v3.5.1 and prior
             property Fact _numSteps:            _oldFW ? null : controller.getParameterFact(-1, "JS_LIGHTS_STEPS") // v3.5.2 and up
 
@@ -51,7 +53,7 @@ SetupPage {
             readonly property int   _rcFunctionRCIN9:               59
             readonly property int   _rcFunctionRCIN10:              60
             readonly property int   _firstLightsOutChannel:         5
-            readonly property int   _lastLightsOutChannel:          14
+            readonly property int   _lastLightsOutChannel:          16
 
             Component.onCompleted: {
                 calcLightOutValues()

@@ -271,6 +271,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_DO_SET_SERVO,
+        MAV_CMD_DO_SET_ACTUATOR,
         MAV_CMD_DO_CHANGE_SPEED,
         MAV_CMD_DO_SET_HOME,
         MAV_CMD_DO_LAND_START,
@@ -282,6 +283,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         MAV_CMD_NAV_DELAY,
         MAV_CMD_CONDITION_YAW,
         MAV_CMD_NAV_LOITER_TO_ALT,
+        MAV_CMD_DO_GRIPPER
     };
 
     QList<MAV_CMD> vtolCommands = {

@@ -23,12 +23,12 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v3
         with:
           version:      ${{ env.QT_VERSION }}
           host:         linux
@@ -51,13 +51,10 @@ jobs:
 
       - name: Prepare ccache timestamp
         id: ccache_cache_timestamp
-        shell: cmake -P {0}
-        run: |
-          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
-          message("::set-output name=timestamp::${current_date}")
+        run: echo "name=timestamp::$(date --utc +'%Y-%m-%d-%H\;%M\;%S')" >> $GITHUB_OUTPUT
 
       - name: ccache cache files
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path:         ~/.ccache
           key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
@@ -92,7 +89,5 @@ jobs:
               export QT_FATAL_WARNINGS=1
 
       - name: Run unit tests
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          working-directory:  ${{ runner.temp }}/shadow_build_dir  
-          run:                ./staging/qgroundcontrol-start.sh --unittest
+        working-directory:  ${{ runner.temp }}/shadow_build_dir  
+        run:                xvfb-run -a ./staging/qgroundcontrol-start.sh --unittest

@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
 
@@ -37,7 +37,7 @@ jobs:
           git fetch --all --tags -f
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v3
         with:
           version:      ${{ env.QT_VERSION }}
           host:         windows
@@ -101,18 +101,13 @@ jobs:
           name: qgroundcontrol.pdb
           path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
 
-      # This will set GIT_BRANCH_NAME environment variable
-      - name: Git branch name
-        id:   git-branch-name
-        uses: EthanSK/git-branch-name-action@v1
-
       - name: Upload build to S3 Bucket
         if:                 github.event_name == 'push'
         working-directory:  ${{ runner.temp }}\shadow_build_dir\staging
         run: |
               aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/builds/${{ env.GIT_BRANCH_NAME }}/${{ env.ARTIFACT }} --region us-west-2 --acl public-read
+              aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ env.ARTIFACT }} --region us-west-2 --acl public-read
 
       - name: Upload tagged stable build to S3 latest Bucket
         if:                 github.event_name == 'push' && github.ref_type == 'tag'

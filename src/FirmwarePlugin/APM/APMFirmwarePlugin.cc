@@ -657,6 +657,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
+        if (vehicle->versionCompare(4, 2, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.2.xml");
+        }
         if (vehicle->versionCompare(4, 1, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.1.xml");
         }
@@ -679,6 +682,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
+        if (vehicle->versionCompare(4, 2, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.2.xml");
+        }
         if (vehicle->versionCompare(4, 1, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.1.xml");
         }
@@ -695,6 +701,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
 
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
+        if (vehicle->versionCompare(4, 2, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.2.xml");
+        }
         if (vehicle->versionCompare(4, 1, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.1.xml");
         }
@@ -881,9 +890,18 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
 
     if (!vehicle->armed()) {
         // First switch to flight mode we can arm from
-        if (!_setFlightModeAndValidate(vehicle, "Guided")) {
-            qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
-            return;
+        // In Ardupilot for vtols and airplanes we need to set the mode to auto and then arm, otherwise if arming in guided
+        // If the vehicle has tilt rotors, it will arm them in forward flight position, being dangerous.
+        if (vehicle->fixedWing()) {
+            if (!_setFlightModeAndValidate(vehicle, "Auto")) {
+                qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+                return;
+            }
+        } else {
+            if (!_setFlightModeAndValidate(vehicle, "Guided")) {
+                qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
+                return;
+            }
         }
 
         if (!_armVehicleAndValidate(vehicle)) {
@@ -892,12 +910,8 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
         }
     }
 
-    if (vehicle->fixedWing()) {
-        if (!_setFlightModeAndValidate(vehicle, "Auto")) {
-            qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
-            return;
-        }
-    } else {
+    // For non aircraft vehicles, we would be in guided mode, so we need to send the mission start command
+    if (!vehicle->fixedWing()) {
         vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
 }

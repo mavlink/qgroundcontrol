@@ -11,16 +11,16 @@ airmap::services::Airspaces::Airspaces(const std::shared_ptr<Dispatcher>& dispat
 }
 
 void airmap::services::Airspaces::search(const Search::Parameters& parameters, const Search::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->airspaces().search(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->airspaces().search(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Airspaces::for_ids(const ForIds::Parameters& parameters, const ForIds::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->airspaces().for_ids(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->airspaces().for_ids(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });

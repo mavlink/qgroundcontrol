@@ -11,16 +11,16 @@ airmap::services::Flights::Flights(const std::shared_ptr<Dispatcher>& dispatcher
 }
 
 void airmap::services::Flights::search(const Search::Parameters& parameters, const Search::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().search(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().search(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Flights::for_id(const ForId::Parameters& parameters, const ForId::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().for_id(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().for_id(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -28,8 +28,8 @@ void airmap::services::Flights::for_id(const ForId::Parameters& parameters, cons
 
 void airmap::services::Flights::create_flight_by_point(const CreateFlight::Parameters& parameters,
                                                  const CreateFlight::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().create_flight_by_point(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().create_flight_by_point(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -37,8 +37,8 @@ void airmap::services::Flights::create_flight_by_point(const CreateFlight::Param
 
 void airmap::services::Flights::create_flight_by_path(const CreateFlight::Parameters& parameters,
                                                 const CreateFlight::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().create_flight_by_path(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().create_flight_by_path(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -46,24 +46,24 @@ void airmap::services::Flights::create_flight_by_path(const CreateFlight::Parame
 
 void airmap::services::Flights::create_flight_by_polygon(const CreateFlight::Parameters& parameters,
                                                    const CreateFlight::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().create_flight_by_polygon(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().create_flight_by_polygon(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Flights::end_flight(const EndFlight::Parameters& parameters, const EndFlight::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().end_flight(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().end_flight(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Flights::delete_flight(const DeleteFlight::Parameters& parameters, const DeleteFlight::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().delete_flight(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().delete_flight(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -71,8 +71,8 @@ void airmap::services::Flights::delete_flight(const DeleteFlight::Parameters& pa
 
 void airmap::services::Flights::start_flight_communications(const StartFlightCommunications::Parameters& parameters,
                                                       const StartFlightCommunications::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().start_flight_communications(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().start_flight_communications(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
@@ -80,8 +80,8 @@ void airmap::services::Flights::start_flight_communications(const StartFlightCom
 
 void airmap::services::Flights::end_flight_communications(const EndFlightCommunications::Parameters& parameters,
                                                     const EndFlightCommunications::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->flights().end_flight_communications(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->flights().end_flight_communications(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });

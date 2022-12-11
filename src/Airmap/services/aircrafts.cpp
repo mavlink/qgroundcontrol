@@ -12,24 +12,24 @@ airmap::services::Aircrafts::Aircrafts(const std::shared_ptr<Dispatcher>& dispat
 
 void airmap::services::Aircrafts::manufacturers(const Manufacturers::Parameters& parameters,
                                           const Manufacturers::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->aircrafts().manufacturers(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->aircrafts().manufacturers(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Aircrafts::models(const Models::Parameters& parameters, const Models::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->aircrafts().models(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->aircrafts().models(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });
 }
 
 void airmap::services::Aircrafts::model_for_id(const ModelForId::Parameters& parameters, const ModelForId::Callback& cb) {
-  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
-    sp->client_->aircrafts().model_for_id(parameters, [this, sp, cb](const auto& result) {
+  dispatcher_->dispatch_to_airmap([sp = shared_from_this(), parameters, cb]() {
+    sp->client_->aircrafts().model_for_id(parameters, [sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
   });

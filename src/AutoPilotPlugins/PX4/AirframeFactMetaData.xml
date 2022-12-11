@@ -154,7 +154,7 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe name="PX4 Vision DevKit Platform" id="4016" maintainer="John Doe &lt;john@example.com&gt;">
+    <airframe name="PX4 Vision Dev Kit v1" id="4016" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Copter</class>
       <type>Quadrotor x</type>
     </airframe>
@@ -166,6 +166,10 @@
     <airframe name="Holybro X500 V2" id="4019" maintainer="Farhang Naderi &lt;farhang.nba@gmail.com&gt;">
       <class>Copter</class>
       <maintainer>Farhang Naderi &lt;farhang.nba@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
+    <airframe name="PX4 Vision Dev Kit v1.5" id="4020" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Copter</class>
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="Generic 250 Racer" id="4050" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
@@ -215,7 +219,7 @@
       <type>Quadrotor x</type>
     </airframe>
   </airframe_group>
-  <airframe_group name="Simulation (Copter)" image="AirframeUnknown">
+  <airframe_group name="Simulation" image="AirframeSimulation">
     <airframe name="HIL Quadcopter X" id="1001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
@@ -258,7 +262,7 @@
       <output name="Servo7">flaps left</output>
     </airframe>
   </airframe_group>
-  <airframe_group name="Simulation (Plane)" image="AirframeUnknown">
+  <airframe_group name="Simulation" image="AirframeSimulation">
     <airframe name="SIH plane AERT" id="1101" maintainer="Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;">
       <class>Plane</class>
       <maintainer>Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;</maintainer>
@@ -278,6 +282,11 @@
       <type>Rover</type>
       <output name="Motor1">throttle</output>
       <output name="Servo1">steering</output>
+    </airframe>
+    <airframe name="Aion Robotics R1 UGV" id="50003" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+      <url>https://www.aionrobotics.com/r1</url>
     </airframe>
     <airframe name="NXP Cup car: DF Robot GPX" id="50004" maintainer="Katrin Moritz">
       <class>Rover</class>
@@ -314,7 +323,7 @@
       <output name="Motor8">motor 8 CCW, stern port vertical, propeller CCW</output>
     </airframe>
   </airframe_group>
-  <airframe_group name="Simulation (VTOL)" image="AirframeUnknown">
+  <airframe_group name="Simulation" image="AirframeSimulation">
     <airframe name="SIH Tailsitter Duo" id="1102" maintainer="Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;">
       <class>VTOL</class>
       <maintainer>Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;</maintainer>

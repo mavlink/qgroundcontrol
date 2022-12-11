@@ -18,7 +18,7 @@ ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
 
 ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
 
-RUN apt update && apt -y --quiet --no-install-recommends install \
+RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
 		apt-utils \
 		binutils \
 		build-essential \

@@ -12,6 +12,7 @@
 #include "QGCMapEngine.h"
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
+#include "QGCLZMA.h"
 
 #include <QDir>
 #include <QStandardPaths>
@@ -1957,21 +1958,26 @@ QGCCameraControl::_handleDefinitionFile(const QString &url)
     QFile xmlFile(_cacheFile);
 
     QString ftpPrefix(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme));
-    if (url.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
+    if (!xmlFile.exists() && url.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
+        qCDebug(CameraControlLog) << "No camera definition file cached, attempt ftp download";
         int ver = static_cast<int>(_info.cam_definition_version);
-        QString fileName = QString::asprintf("%s_%s_%03d.xml",
+        QString ext = "";
+        if (url.endsWith(".lzma", Qt::CaseInsensitive)) { ext = ".lzma"; }
+        if (url.endsWith(".xz", Qt::CaseInsensitive)) { ext = ".xz"; }
+        QString fileName = QString::asprintf("%s_%s_%03d.xml%s",
             _vendor.toStdString().c_str(),
             _modelName.toStdString().c_str(),
-            ver);
+            ver,
+            ext.toStdString().c_str());
         connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &QGCCameraControl::_ftpDownloadComplete);
-        _vehicle->ftpManager()->download(url,
+        _vehicle->ftpManager()->download(_compID, url,
             qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
             fileName);
         return;
     }
 
     if (!xmlFile.exists()) {
-        qCDebug(CameraControlLog) << "No camera definition file cached";
+        qCDebug(CameraControlLog) << "No camera definition file cached, attempt http download";
         _httpRequest(url);
         return;
     }
@@ -2045,7 +2051,20 @@ void QGCCameraControl::_ftpDownloadComplete(const QString& fileName, const QStri
     qCDebug(CameraControlLog) << "FTP Download completed: " << fileName << ", " << errorMsg;
 
     disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &QGCCameraControl::_ftpDownloadComplete);
-    QFile xmlFile(fileName);
+
+    QString outputFileName = fileName;
+
+    if (fileName.endsWith(".lzma", Qt::CaseInsensitive) || fileName.endsWith(".xz", Qt::CaseInsensitive)) {
+        outputFileName = fileName.left(fileName.lastIndexOf("."));
+        if (QGCLZMA::inflateLZMAFile(fileName, outputFileName)) {
+            QFile(fileName).remove();
+        } else {
+            qCWarning(CameraControlLog) << "Inflate of compressed xml failed" << fileName;
+            outputFileName.clear();
+        }
+    }
+
+    QFile xmlFile(outputFileName);
 
     if (!xmlFile.exists()) {
         qCDebug(CameraControlLog) << "No camera definition file present after ftp download completed";

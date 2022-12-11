@@ -138,3 +138,96 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     // User should have been notified
     checkExpectedMessageBox();
 }
+
+void ParameterManagerTest::_FTPnoFailure()
+{
+    Q_ASSERT(!_mockLink);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink->mockLinkFTP()->enableBinParamFile(true);
+    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    QVERIFY(vehicleMgr);
+
+    // Wait for the Vehicle to get created
+    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
+    // When param load is complete we get the param ready signal
+    QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QCOMPARE(spyVehicle.count(), 1);
+    QList<QVariant> arguments = spyVehicle.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toBool(), true);
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+
+    spyParamsReady.wait(5000);
+    QCOMPARE(spyParamsReady.count(), 1);
+    arguments = spyParamsReady.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toBool(), true);
+
+    // Request all parameters again and check the progress bar. The initial parameterdownload
+    // is so fast that I cannot connect to the loadprogress early enough.
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
+    vehicle->parameterManager()->refreshAllParameters();
+    spyParamsReady.wait(5000);
+    QVERIFY(spyProgress.count() > 1);
+    arguments = spyProgress.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QVERIFY(arguments.at(0).toFloat() > 0.0f);
+    // Progress should have been set back to 0
+    arguments = spyProgress.takeLast();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toFloat(), 0.0f);
+}
+
+void ParameterManagerTest::_FTPChangeParam()
+{
+    Q_ASSERT(!_mockLink);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink->mockLinkFTP()->enableBinParamFile(true);
+    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    QVERIFY(vehicleMgr);
+
+    // Wait for the Vehicle to get created
+    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
+    // When param load is complete we get the param ready signal
+    QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QCOMPARE(spyVehicle.count(), 1);
+    QList<QVariant> arguments = spyVehicle.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toBool(), true);
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+
+    if (spyParamsReady.count() == 0)
+        spyParamsReady.wait(5000);
+    QCOMPARE(spyParamsReady.count(), 1);
+    arguments = spyParamsReady.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toBool(), true);
+
+    // Now try to change a parameter and check the progress
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
+    Fact* fact = vehicle->parameterManager()->getParameter(MAV_COMP_ID_AUTOPILOT1, "THR_MIN");
+    QVERIFY(fact);
+    float value = fact->rawValue().toFloat();
+    QCOMPARE(value, 0.0);
+    float testvalue = 0.87f;
+    QVariant sendv = testvalue;
+    fact->setRawValue(sendv); // This should trigger a parameter upload to the vehicle
+    /* That should set the progress to 0.5 and then back to 0 */
+    spyProgress.wait(1000);
+    if (spyProgress.count() < 2)
+        spyProgress.wait(1000);
+    QCOMPARE(spyProgress.count(), 2);
+    arguments = spyProgress.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QVERIFY(arguments.at(0).toFloat() > 0.4f);
+
+    // Progress should have been set back to 0
+    Q_ASSERT(!spyProgress.empty());
+    arguments = spyProgress.takeLast();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toFloat(), 0.0f);
+}
