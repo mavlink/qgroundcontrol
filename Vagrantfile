@@ -1,14 +1,32 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# if you update this file, please consider updating .travis.yml too
-
 require 'yaml'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
 configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
-travisfile     = YAML.load_file("#{current_dir}/.travis.yml")
 yaml_config    = configfile['configs']['dev']
+
+env_global = [
+  'JOBS=4',
+  'SHADOW_BUILD_DIR=/tmp/shadow_build_dir',
+  'CODESIGN=nocodesign',
+  'secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE='
+]
+
+packages = [
+  'build-essential',
+  'fuse',
+  'git',
+  'libgstreamer-plugins-base1.0-dev',
+  'libgstreamer1.0-0:amd64',
+  'libgstreamer1.0-dev',
+  'libsdl2-dev',
+  'libudev-dev',
+  'speech-dispatcher',
+  'wget'
+]
+
 
 Vagrant.configure(2) do |config|
   # This trick is used to prefer a VM box over docker
@@ -114,8 +132,8 @@ MAKE
     :qt_deps_tarball => yaml_config['qt_deps_tarball'],
     :pro => yaml_config['pro'],
     :spec => yaml_config['spec'],
-    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse', 'libsdl2-dev']).join(' '),
-    :build_env => travisfile['env']['global'].select { |item| item.is_a?(String) }.join(' '),
+    :apt_pkgs => (packages).join(' '),
+    :build_env => env_global.select { |item| item.is_a?(String) }.join(' '),
 
     :project_root_dir => yaml_config['project_root_dir'],
     :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],
