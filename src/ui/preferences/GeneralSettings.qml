@@ -36,6 +36,7 @@ Rectangle {
     property Fact _userBrandImageOutdoor:               QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
     property Fact _virtualJoystick:                     QGroundControl.settingsManager.appSettings.virtualJoystick
     property Fact _virtualJoystickAutoCenterThrottle:   QGroundControl.settingsManager.appSettings.virtualJoystickAutoCenterThrottle
+    property Fact _hideAllCameraControl:                QGroundControl.settingsManager.flyViewSettings.hideAllCameraControl
 
     property real   _labelWidth:                ScreenTools.defaultFontPixelWidth * 20
     property real   _comboFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
@@ -175,9 +176,16 @@ Rectangle {
                             }
 
                             FactCheckBox {
+                                text:       qsTr("Hide camera controls")
+                                visible:    _hideAllCameraControl.visible
+                                fact:       _hideAllCameraControl
+                            }
+
+                            FactCheckBox {
                                 text:       qsTr("Show simple camera controls (DIGICAM_CONTROL)")
                                 visible:    _showDumbCameraControl.visible
                                 fact:       _showDumbCameraControl
+                                enabled:    !_hideAllCameraControl.rawValue
 
                                 property Fact _showDumbCameraControl: QGroundControl.settingsManager.flyViewSettings.showSimpleCameraControl
                             }
