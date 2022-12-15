@@ -146,7 +146,7 @@ Item {
             }
         ]
 
-        property bool _verticalCenter: !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue
+        property bool _verticalCenter: !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue && !_showWinchControlMenu
     }
     
     WinchControl {
