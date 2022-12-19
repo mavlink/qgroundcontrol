@@ -496,6 +496,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTestBase.h \
         src/MissionManager/VisualMissionItemTest.h \
         src/qgcunittest/ComponentInformationCacheTest.h \
+        src/qgcunittest/ComponentInformationTranslationTest.h \
         src/qgcunittest/GeoTest.h \
         src/qgcunittest/MavlinkLogTest.h \
         src/qgcunittest/MultiSignalSpy.h \
@@ -544,6 +545,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTestBase.cc \
         src/MissionManager/VisualMissionItemTest.cc \
         src/qgcunittest/ComponentInformationCacheTest.cc \
+        src/qgcunittest/ComponentInformationTranslationTest.cc \
         src/qgcunittest/GeoTest.cc \
         src/qgcunittest/MavlinkLogTest.cc \
         src/qgcunittest/MultiSignalSpy.cc \

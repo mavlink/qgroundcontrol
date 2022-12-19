@@ -33,6 +33,7 @@ if(BUILD_TESTING)
 	add_subdirectory(qgcunittest)
 
 	add_qgc_test(ComponentInformationCacheTest)
+	add_qgc_test(ComponentInformationTranslationTest)
 	add_qgc_test(CameraCalcTest)
 	add_qgc_test(CameraSectionTest)
 	add_qgc_test(CorridorScanComplexItemTest)

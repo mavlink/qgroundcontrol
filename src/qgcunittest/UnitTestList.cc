@@ -12,6 +12,7 @@
 // ones are enabled/disabled
 
 #include "ComponentInformationCacheTest.h"
+#include "ComponentInformationTranslationTest.h"
 #include "FactSystemTestGeneric.h"
 #include "FactSystemTestPX4.h"
 //#include "FileDialogTest.h"
@@ -52,6 +53,7 @@
 #include "InitialConnectTest.h"
 
 UT_REGISTER_TEST(ComponentInformationCacheTest)
+UT_REGISTER_TEST(ComponentInformationTranslationTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 //UT_REGISTER_TEST(FileDialogTest)
