@@ -35,7 +35,7 @@ public:
     void setUris(CompInfo& compInfo) const;
 
     // Overrides from CompInfo
-    void setJson(const QString& metadataJsonFileName, const QString& translationJsonFileName) override;
+    void setJson(const QString& metadataJsonFileName) override;
 
 private:
     QMap<COMP_METADATA_TYPE, Uris>   _supportedTypes;

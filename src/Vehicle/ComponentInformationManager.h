@@ -13,6 +13,7 @@
 #include "QGCMAVLink.h"
 #include "StateMachine.h"
 #include "ComponentInformationCache.h"
+#include "ComponentInformationTranslation.h"
 
 #include <QElapsedTimer>
 
@@ -45,6 +46,7 @@ private slots:
     void    _ftpDownloadProgress                (float progress);
     void    _httpDownloadComplete               (QString remoteFile, QString localFile, QString errorMsg);
     QString _downloadCompleteJsonWorker         (const QString& jsonFileName);
+    void _downloadAndTranslationComplete(QString translatedJsonTempFile, QString errorMsg);
 
 private:
     static void _stateRequestCompInfo           (StateMachine* stateMachine);
@@ -52,6 +54,7 @@ private:
     static void _stateRequestMetaDataJson       (StateMachine* stateMachine);
     static void _stateRequestMetaDataJsonFallback(StateMachine* stateMachine);
     static void _stateRequestTranslationJson    (StateMachine* stateMachine);
+    static void _stateRequestTranslate          (StateMachine* stateMachine);
     static void _stateRequestComplete           (StateMachine* stateMachine);
     static bool _uriIsMAVLinkFTP                (const QString& uri);
 
@@ -60,6 +63,7 @@ private:
     ComponentInformationManager*    _compMgr                    = nullptr;
     CompInfo*                       _compInfo                   = nullptr;
     QString                         _jsonMetadataFileName;
+    QString                         _jsonMetadataTranslatedFileName;
     bool                            _jsonMetadataCrcValid       = false;
     QString                         _jsonTranslationFileName;
     bool                            _jsonTranslationCrcValid    = false;
@@ -79,6 +83,8 @@ class ComponentInformationManager : public StateMachine
     Q_OBJECT
 
 public:
+    static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
+
     ComponentInformationManager(Vehicle* vehicle);
 
     typedef void (*RequestAllCompleteFn)(void* requestAllCompleteFnData);
@@ -93,6 +99,7 @@ public:
     const StateFn*  rgStates    (void) const final;
 
     ComponentInformationCache& fileCache() { return _fileCache; }
+    ComponentInformationTranslation* translation() { return _translation; }
 
     float progress() const;
 
@@ -119,7 +126,9 @@ private:
     RequestMetaDataTypeStateMachine _requestTypeStateMachine;
     RequestAllCompleteFn            _requestAllCompleteFn       = nullptr;
     void*                           _requestAllCompleteFnData   = nullptr;
+    QGCCachedFileDownload*          _cachedFileDownload         = nullptr;
     ComponentInformationCache&      _fileCache;
+    ComponentInformationTranslation* _translation               = nullptr;
 
     QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
 
