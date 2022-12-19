@@ -39,7 +39,7 @@ void CompInfoGeneral::setUris(CompInfo &compInfo) const
     }
 }
 
-void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString& /*translationJsonFileName*/)
+void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
 {
     if (metadataJsonFileName.isEmpty()) {
         return;

@@ -34,6 +34,8 @@ add_library(Vehicle
 	ComponentInformationCache.h
 	ComponentInformationManager.cc
 	ComponentInformationManager.h
+	ComponentInformationTranslation.cc
+	ComponentInformationTranslation.h
 	EventHandler.cc
 	EventHandler.h
 	FTPManager.cc

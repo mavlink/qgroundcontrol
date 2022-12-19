@@ -84,6 +84,8 @@ add_library(qgc
 	QGC.h
 	QGCApplication.cc
 	QGCApplication.h
+	QGCCachedFileDownload.cc
+	QGCCachedFileDownload.h
 	QGCComboBox.cc
 	QGCComboBox.h
 	QGCConfig.h
