@@ -30,9 +30,9 @@ CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
 
 }
 
-void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& translationJsonFileName)
+void CompInfoParam::setJson(const QString& metadataJsonFileName)
 {
-    qCDebug(CompInfoParamLog) << "setJson: metadataJsonFileName:translationJsonFileName" << metadataJsonFileName << translationJsonFileName;
+    qCDebug(CompInfoParamLog) << "setJson: metadataJsonFileName" << metadataJsonFileName;
 
     if (metadataJsonFileName.isEmpty()) {
         // This will fall back to using the old FirmwarePlugin mechanism for parameter meta data.
