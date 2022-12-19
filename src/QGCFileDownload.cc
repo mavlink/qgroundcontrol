@@ -20,9 +20,10 @@ QGCFileDownload::QGCFileDownload(QObject* parent)
 
 }
 
-bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
+bool QGCFileDownload::download(const QString& remoteFile, const QVector<QPair<QNetworkRequest::Attribute, QVariant>>& requestAttributes, bool redirect)
 {
     if (!redirect) {
+        _requestAttributes = requestAttributes;
         _originalRemoteFile = remoteFile;
     }
 
@@ -44,6 +45,10 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
     }
     
     QNetworkRequest networkRequest(remoteUrl);
+
+    for (const auto& attribute : requestAttributes) {
+        networkRequest.setAttribute(attribute.first, attribute.second);
+    }
 
     QNetworkProxy tProxy;
     tProxy.setType(QNetworkProxy::DefaultProxy);
@@ -76,7 +81,7 @@ void QGCFileDownload::_downloadFinished(void)
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (!redirectionTarget.isNull()) {
         QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
-        download(redirectUrl.toString(), true /* redirect */);
+        download(redirectUrl.toString(), _requestAttributes, true /* redirect */);
         reply->deleteLater();
         return;
     }
