@@ -197,6 +197,16 @@
     </parameter>
   </group>
   <group name="ADSB">
+    <parameter name="ADSB_CALLSIGN_1" default="0" type="INT32">
+      <short_desc>First 4 characters of CALLSIGN</short_desc>
+      <long_desc>Sets first 4 characters of a total of 8. Valid characters are A-Z, 0-9, " ". Example "PX4 " -&gt; 1347957792 For CALLSIGN shorter than 8 characters use the null terminator at the end '\0'.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="ADSB_CALLSIGN_2" default="0" type="INT32">
+      <short_desc>Second 4 characters of CALLSIGN</short_desc>
+      <long_desc>Sets second 4 characters of a total of 8. Valid characters are A-Z, 0-9, " " only. Example "TEST" -&gt; 1413829460 For CALLSIGN shorter than 8 characters use the null terminator at the end '\0'.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="ADSB_EMERGC" default="0" type="INT32">
       <short_desc>ADSB-Out Emergency State</short_desc>
       <long_desc>Sets the vehicle emergency state</long_desc>
@@ -361,17 +371,16 @@
       <unit>rad</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="ASPD_DO_CHECKS" default="23" type="INT32">
+    <parameter name="ASPD_DO_CHECKS" default="7" type="INT32">
       <short_desc>Enable checks on airspeed sensors</short_desc>
       <long_desc>Controls which checks are run to check airspeed data for validity. Only applied if ASPD_PRIMARY &gt; 0. Note that the data missing check is enabled if any of the options is set.</long_desc>
       <min>0</min>
-      <max>31</max>
+      <max>15</max>
       <bitmask>
         <bit index="0">Only data missing check (triggers if more than 1s no data)</bit>
         <bit index="1">Data stuck (triggers if data is exactly constant for 2s in FW mode)</bit>
         <bit index="2">Innovation check (see ASPD_FS_INNOV)</bit>
         <bit index="3">Load factor check (triggers if measurement is below stall speed)</bit>
-        <bit index="4">Check for data variation in first 10s after sensor connection</bit>
       </bitmask>
     </parameter>
     <parameter name="ASPD_FALLBACK_GW" default="0" type="INT32" boolean="true">
@@ -493,153 +502,6 @@
       <max>1</max>
       <unit>m/s^2/sqrt(Hz)</unit>
       <decimal>2</decimal>
-    </parameter>
-  </group>
-  <group name="Angular Velocity Control">
-    <parameter name="AVC_X_D" default="0.36" type="FLOAT">
-      <short_desc>Body X axis angular velocity D gain</short_desc>
-      <long_desc>Body X axis angular velocity differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <decimal>4</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_X_FF" default="0.0" type="FLOAT">
-      <short_desc>Body X axis angular velocity feedforward gain</short_desc>
-      <long_desc>Improves tracking performance.</long_desc>
-      <min>0.0</min>
-      <unit>Nm/(rad/s)</unit>
-      <decimal>4</decimal>
-    </parameter>
-    <parameter name="AVC_X_I" default="0.2" type="FLOAT">
-      <short_desc>Body X axis angular velocity I gain</short_desc>
-      <long_desc>Body X axis angular velocity integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
-      <min>0.0</min>
-      <unit>Nm/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_X_I_LIM" default="0.3" type="FLOAT">
-      <short_desc>Body X axis angular velocity integrator limit</short_desc>
-      <long_desc>Body X axis angular velocity integrator limit. Can be set to increase the amount of integrator available to counteract disturbances or reduced to improve settling time after large roll moment trim changes.</long_desc>
-      <min>0.0</min>
-      <unit>Nm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_X_K" default="1.0" type="FLOAT">
-      <short_desc>Body X axis angular velocity controller gain</short_desc>
-      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = AVC_X_K * (AVC_X_P * error + AVC_X_I * error_integral + AVC_X_D * error_derivative) Set AVC_X_P=1 to implement a PID in the ideal form. Set AVC_X_K=1 to implement a PID in the parallel form.</long_desc>
-      <min>0.0</min>
-      <max>5.0</max>
-      <decimal>4</decimal>
-      <increment>0.0005</increment>
-    </parameter>
-    <parameter name="AVC_X_P" default="18." type="FLOAT">
-      <short_desc>Body X axis angular velocity P gain</short_desc>
-      <long_desc>Body X axis angular velocity proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
-      <min>0.0</min>
-      <max>20.0</max>
-      <unit>1/s</unit>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Y_D" default="0.36" type="FLOAT">
-      <short_desc>Body Y axis angular velocity D gain</short_desc>
-      <long_desc>Body Y axis angular velocity differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <decimal>4</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Y_FF" default="0.0" type="FLOAT">
-      <short_desc>Body Y axis angular velocity feedforward</short_desc>
-      <long_desc>Improves tracking performance.</long_desc>
-      <min>0.0</min>
-      <unit>Nm/(rad/s)</unit>
-      <decimal>4</decimal>
-    </parameter>
-    <parameter name="AVC_Y_I" default="0.2" type="FLOAT">
-      <short_desc>Body Y axis angular velocity I gain</short_desc>
-      <long_desc>Body Y axis angular velocity integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
-      <min>0.0</min>
-      <unit>Nm/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Y_I_LIM" default="0.3" type="FLOAT">
-      <short_desc>Body Y axis angular velocity integrator limit</short_desc>
-      <long_desc>Body Y axis angular velocity integrator limit. Can be set to increase the amount of integrator available to counteract disturbances or reduced to improve settling time after large pitch moment trim changes.</long_desc>
-      <min>0.0</min>
-      <unit>Nm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Y_K" default="1.0" type="FLOAT">
-      <short_desc>Body Y axis angular velocity controller gain</short_desc>
-      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = AVC_Y_K * (AVC_Y_P * error + AVC_Y_I * error_integral + AVC_Y_D * error_derivative) Set AVC_Y_P=1 to implement a PID in the ideal form. Set AVC_Y_K=1 to implement a PID in the parallel form.</long_desc>
-      <min>0.0</min>
-      <max>20.0</max>
-      <decimal>4</decimal>
-      <increment>0.0005</increment>
-    </parameter>
-    <parameter name="AVC_Y_P" default="18." type="FLOAT">
-      <short_desc>Body Y axis angular velocity P gain</short_desc>
-      <long_desc>Body Y axis angular velocity proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
-      <min>0.0</min>
-      <max>20.0</max>
-      <unit>1/s</unit>
-      <decimal>3</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Z_D" default="0.0" type="FLOAT">
-      <short_desc>Body Z axis angular velocity D gain</short_desc>
-      <long_desc>Body Z axis angular velocity differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Z_FF" default="0.0" type="FLOAT">
-      <short_desc>Body Z axis angular velocity feedforward</short_desc>
-      <long_desc>Improves tracking performance.</long_desc>
-      <min>0.0</min>
-      <unit>Nm/(rad/s)</unit>
-      <decimal>4</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Z_I" default="0.1" type="FLOAT">
-      <short_desc>Body Z axis angular velocity I gain</short_desc>
-      <long_desc>Body Z axis angular velocity integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
-      <min>0.0</min>
-      <unit>Nm/rad</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Z_I_LIM" default="0.30" type="FLOAT">
-      <short_desc>Body Z axis angular velocity integrator limit</short_desc>
-      <long_desc>Body Z axis angular velocity integrator limit. Can be set to increase the amount of integrator available to counteract disturbances or reduced to improve settling time after large yaw moment trim changes.</long_desc>
-      <min>0.0</min>
-      <unit>Nm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="AVC_Z_K" default="1.0" type="FLOAT">
-      <short_desc>Body Z axis angular velocity controller gain</short_desc>
-      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = AVC_Z_K * (AVC_Z_P * error + AVC_Z_I * error_integral + AVC_Z_D * error_derivative) Set AVC_Z_P=1 to implement a PID in the ideal form. Set AVC_Z_K=1 to implement a PID in the parallel form.</long_desc>
-      <min>0.0</min>
-      <max>5.0</max>
-      <decimal>4</decimal>
-      <increment>0.0005</increment>
-    </parameter>
-    <parameter name="AVC_Z_P" default="7." type="FLOAT">
-      <short_desc>Body Z axis angular velocity P gain</short_desc>
-      <long_desc>Body Z axis angular velocity proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
-      <min>0.0</min>
-      <max>20.0</max>
-      <unit>1/s</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
   </group>
   <group name="Attitude Q estimator">
@@ -1743,7 +1605,7 @@
     </parameter>
     <parameter name="EKF2_AID_MASK" default="0" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Deprecated, use EKF2_GPS_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Deprecated, use EKF2_EV_CTRL instead 4 : Deprecated, use EKF2_EV_CTRL instead 5 : Set to true to enable multi-rotor drag specific force fusion 6 : Deprecated, use EKF2_EV_CTRL instead 7 : Deprecated, use EKF2_GPS_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead</long_desc>
       <min>0</min>
       <max>511</max>
       <reboot_required>true</reboot_required>
@@ -1751,10 +1613,10 @@
         <bit index="0">unused</bit>
         <bit index="1">use optical flow</bit>
         <bit index="2">inhibit IMU bias estimation</bit>
-        <bit index="3">vision position fusion</bit>
-        <bit index="4">vision yaw fusion</bit>
+        <bit index="3">unused</bit>
+        <bit index="4">unused</bit>
         <bit index="5">multi-rotor drag fusion</bit>
-        <bit index="6">rotate external vision</bit>
+        <bit index="6">unused</bit>
         <bit index="7">unused</bit>
         <bit index="8">unused</bit>
       </bitmask>
@@ -1880,7 +1742,7 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="EKF2_EVA_NOISE" default="0.05" type="FLOAT">
+    <parameter name="EKF2_EVA_NOISE" default="0.1" type="FLOAT">
       <short_desc>Measurement noise for vision angle observations used to lower bound or replace the uncertainty included in the message</short_desc>
       <min>0.05</min>
       <unit>rad</unit>
@@ -3857,6 +3719,20 @@
       <unit>B/s</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="GPS_UBX_CFG_INTF" default="0" type="INT32">
+      <short_desc>u-blox protocol configuration for interfaces</short_desc>
+      <min>0</min>
+      <max>32</max>
+      <reboot_required>true</reboot_required>
+      <bitmask>
+        <bit index="0">Enable I2C input protocol UBX</bit>
+        <bit index="1">Enable I2C input protocol NMEA</bit>
+        <bit index="2">Enable I2C input protocol RTCM3X</bit>
+        <bit index="3">Enable I2C output protocol UBX</bit>
+        <bit index="4">Enable I2C output protocol NMEA</bit>
+        <bit index="5">Enable I2C output protocol RTCM3X</bit>
+      </bitmask>
+    </parameter>
     <parameter name="GPS_UBX_DYNMODEL" default="7" type="INT32">
       <short_desc>u-blox GPS dynamic platform model</short_desc>
       <long_desc>u-blox receivers support different dynamic platform models to adjust the navigation engine to the expected application environment.</long_desc>
@@ -4523,10 +4399,6 @@
     <parameter name="MAV_HB_FORW_EN" default="1" type="INT32" boolean="true">
       <short_desc>Heartbeat message forwarding</short_desc>
       <long_desc>The mavlink heartbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
-    </parameter>
-    <parameter name="MAV_ODOM_LP" default="0" type="INT32" boolean="true">
-      <short_desc>Activate ODOMETRY loopback</short_desc>
-      <long_desc>If set, it gets the data from 'vehicle_visual_odometry' instead of 'vehicle_odometry' serving as a loopback of the received ODOMETRY messages on the Mavlink receiver.</long_desc>
     </parameter>
     <parameter name="MAV_PROTO_VER" default="0" type="INT32">
       <short_desc>MAVLink protocol version</short_desc>
@@ -9429,9 +9301,9 @@
       <long_desc>Disable this if the system has no GPS. If disabled, the sensors hub will not process sensor_gps, and GPS will not be available for the rest of the system.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SYS_HAS_MAG" default="1" type="INT32" boolean="true">
+    <parameter name="SYS_HAS_MAG" default="1" type="INT32">
       <short_desc>Control if the vehicle has a magnetometer</short_desc>
-      <long_desc>Disable this if the board has no magnetometer, such as the Omnibus F4 SD. If disabled, the preflight checks will not check for the presence of a magnetometer.</long_desc>
+      <long_desc>Set this to 0 if the board has no magnetometer. If set to 0, the preflight checks will not check for the presence of a magnetometer, otherwise N sensors are required.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SYS_HAS_NUM_DIST" default="0" type="INT32">
@@ -10616,6 +10488,13 @@
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
+    <parameter name="VT_FW_QC_HMAX" default="0" type="INT32">
+      <short_desc>Quadchute maximum height</short_desc>
+      <long_desc>Maximum height above the ground (if available, otherwhise above home if available, otherwise above the local origin) where triggering a quadchute is possible. Triggering a quadchute always means transitioning the vehicle to hover flight in which generally a lot of energy is consumed. At high altitudes there is therefore a big risk to deplete the battery and therefore crash. Currently, there is no automated re-transition to fixed wing mode implemented and therefore this parameter serves and an intermediate measure to increase safety. Setting this value to 0 deactivates the behavior.</long_desc>
+      <min>0</min>
+      <unit>m</unit>
+      <increment>1</increment>
+    </parameter>
     <parameter name="VT_FW_QC_P" default="0" type="INT32">
       <short_desc>QuadChute Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before QuadChute engages Above this the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
@@ -10774,50 +10653,6 @@
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>1</increment>
-    </parameter>
-  </group>
-  <group name="Vehicle Model">
-    <parameter name="VM_INERTIA_XX" default="0.01" type="FLOAT">
-      <short_desc>Inertia matrix, XX component</short_desc>
-      <unit>kg m^2</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
-    </parameter>
-    <parameter name="VM_INERTIA_XY" default="0." type="FLOAT">
-      <short_desc>Inertia matrix, XY component</short_desc>
-      <unit>kg m^2</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
-    </parameter>
-    <parameter name="VM_INERTIA_XZ" default="0." type="FLOAT">
-      <short_desc>Inertia matrix, XZ component</short_desc>
-      <unit>kg m^2</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
-    </parameter>
-    <parameter name="VM_INERTIA_YY" default="0.01" type="FLOAT">
-      <short_desc>Inertia matrix, YY component</short_desc>
-      <unit>kg m^2</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
-    </parameter>
-    <parameter name="VM_INERTIA_YZ" default="0." type="FLOAT">
-      <short_desc>Inertia matrix, YZ component</short_desc>
-      <unit>kg m^2</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
-    </parameter>
-    <parameter name="VM_INERTIA_ZZ" default="0.01" type="FLOAT">
-      <short_desc>Inertia matrix, ZZ component</short_desc>
-      <unit>kg m^2</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
-    </parameter>
-    <parameter name="VM_MASS" default="1." type="FLOAT">
-      <short_desc>Mass</short_desc>
-      <unit>kg</unit>
-      <decimal>5</decimal>
-      <increment>0.00001</increment>
     </parameter>
   </group>
   <group name="Miscellaneous">
