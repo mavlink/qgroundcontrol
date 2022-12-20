@@ -1,0 +1,104 @@
+# The 32 and 64 bit version of these actions should be kept in sync
+name: Android 32/64-bit Release
+
+on:
+  push:
+    branches:
+      - 'aviant/*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+    - '*'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.15.2
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || github.ref == 'aviant/V4.2' ] }}
+
+jobs:
+  build:
+    runs-on:  ubuntu-20.04
+
+    strategy:
+      matrix:
+       include:
+         - architecture: 32bits
+           eabi: armeabi-v7a
+           ARTIFACT: QGroundControl32.apk
+         - architecture: 64bits
+           eabi: arm64-v8a
+           ARTIFACT: QGroundControl64.apk
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         linux
+          target:       android
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts
+          setup-python: true
+
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r21e
+          add-to-path: false
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name:               Install gstreamer
+        working-directory:  ${{ github.workspace }}
+        run: |
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz
+            mkdir gstreamer-1.0-android-universal-1.18.5
+            tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
+
+      - name: Update android manifest
+        if: github.ref_name != 'Stable'
+        run: |
+            ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${{ github.ref_name }}
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_LATEST_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run:  |
+            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
+            make -j2
+
+      - name: Save artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.ARTIFACT }}
+          retention-days: 1
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.ARTIFACT }}
