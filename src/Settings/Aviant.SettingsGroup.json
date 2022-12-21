@@ -11,6 +11,13 @@
     "default":     true
 },
 {
+    "name":             "showWinchControlMenu",
+    "shortDesc": "Show winch control menu",
+    "longDesc":  "Shows the winch control menu buttons and slider",
+    "type":             "bool",
+    "default":     true
+},
+{
     "name":             "horizontalConflictDistance",
     "shortDesc": "Horizontal conflict distance",
     "longDesc":  "The horizontal distance to nearby traffic inside which the situation is considered a conflict, and traffic indicators turn red. Twice this distance is used for proximity detection, meaning that the indicators will turn yellow. ",

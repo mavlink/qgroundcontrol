@@ -719,6 +719,11 @@ Rectangle {
                                 enabled:                promptShowTrafficIndicators.checked
                                 fact:                   _aviantSettings.verticalConflictDistance
                             }
+                            FactCheckBox {
+                                id:         promptShowWinchControlMenu
+                                text:       qsTr("Show winch control menu")
+                                fact:       _aviantSettings.showWinchControlMenu
+                            }
                         }
                     }
 
