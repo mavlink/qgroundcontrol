@@ -48,6 +48,8 @@ Item {
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
+    property var    _aviantSettings:        QGroundControl.settingsManager.aviantSettings
+    property bool   _showWinchControlMenu:  _aviantSettings.showWinchControlMenu.rawValue
 
     QGCToolInsets {
         id:                     _totalToolInsets
@@ -145,6 +147,14 @@ Item {
         ]
 
         property bool _verticalCenter: !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue
+    }
+    
+    WinchControl {
+        id:                     winchControl
+        anchors.margins:        _toolsMargin
+        anchors.right:          parent.right
+        width:                  _rightPanelWidth
+        visible:                _showWinchControlMenu
     }
 
     TelemetryValuesBar {
