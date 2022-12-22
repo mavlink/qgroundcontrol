@@ -27,6 +27,7 @@ QGC_LOGGING_CATEGORY(GeotaggingLog,                 "GeotaggingLog")
 QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
 QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog,         "ADSBVehicleManagerLog")
+QGC_LOGGING_CATEGORY(NTRIPLog,                      "NTRIPLog")
 QGC_LOGGING_CATEGORY(LocalizationLog,               "LocalizationLog")
 QGC_LOGGING_CATEGORY(VideoAllLog,                   kVideoAllLogCategory)
 
