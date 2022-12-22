@@ -23,7 +23,7 @@ RTCMMavlink::RTCMMavlink(QGCToolbox& toolbox)
 
 void RTCMMavlink::RTCMDataUpdate(QByteArray message)
 {
-    /* statistics */
+    qCDebug(NTRIPLog) << "RTCMDataUpdate: " << message.size() << " bytes";   /* statistics */
     _bandwidthByteCounter += message.size();
     qint64 elapsed = _bandwidthTimer.elapsed();
     if (elapsed > 1000) {
