@@ -66,11 +66,6 @@ const QHash<int, QString> _mavlinkCompIdHash {
     { MAV_COMP_ID_GPS2,     "GPS2" }
 };
 
-const char* ParameterManager::_jsonParametersKey =          "parameters";
-const char* ParameterManager::_jsonCompIdKey =              "compId";
-const char* ParameterManager::_jsonParamNameKey =           "name";
-const char* ParameterManager::_jsonParamValueKey =          "value";
-
 ParameterManager::ParameterManager(Vehicle* vehicle)
     : QObject                           (vehicle)
     , _vehicle                          (vehicle)
