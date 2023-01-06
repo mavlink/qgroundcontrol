@@ -1,0 +1,82 @@
+name: Linux Release
+
+on:
+  push:
+    branches:
+      - 'aviant/*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+    - '*'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.15.2
+  ARTIFACT:     QGroundControl.AppImage
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || github.ref == 'aviant/V4.2' ] }}
+
+jobs:
+  build:
+    runs-on:  ubuntu-20.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         linux
+          target:       desktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts
+          setup-python: true
+
+      - name: Install QGC source dependencies
+        run:  sudo apt-get install -y libsdl2-dev
+
+      - name: Install Gstreamer
+        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
+
+      - name: Install post-link dependencies
+        run:  sudo apt-get install -y binutils patchelf
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run:  |
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${BUILD_TYPE}
+              make -j2
+
+      - name: Create AppImage
+        working-directory:  ${{ runner.temp }}/shadow_build_dir
+        run:                ${SOURCE_DIR}/deploy/create_linux_appimage.sh ${SOURCE_DIR} ./staging ./package;
+
+      - name: Save artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
+          retention-days: 1
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ runner.temp }}/shadow_build_dir/package/${{ env.ARTIFACT }}
