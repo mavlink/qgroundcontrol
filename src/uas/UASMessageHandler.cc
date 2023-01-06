@@ -187,7 +187,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }
-    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font><br/>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text));
+    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font><br/>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text.toHtmlEscaped()));
 
     if (message->severityIsError()) {
         _latestError = severityText + " " + text;
@@ -202,7 +202,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
 
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showCriticalVehicleMessage(message->getText());
+        _app->showCriticalVehicleMessage(message->getText().toHtmlEscaped());
     }
 }
 
