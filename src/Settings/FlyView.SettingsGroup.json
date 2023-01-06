@@ -48,6 +48,12 @@
     "default":     false
 },
 {
+    "name":         "hideAllCameraControl",
+    "shortDesc":    "Hide controls for all camera modes.",
+    "type":         "bool",
+    "default":      true
+},
+{
     "name":         "showSimpleCameraControl",
     "shortDesc":    "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
     "type":         "bool",

@@ -1113,6 +1113,20 @@
             }
         },
         {
+            "id":                   42600,
+            "rawName":              "MAV_CMD_DO_WINCH",
+            "friendlyName":         "Perform winch action",
+            "description":          "Perform winch action.",
+            "category":             "Winch",
+            "friendlyEdit":         true,
+            "param2": {
+                "label":            "Winch action",
+                "default":          4,
+                "enumStrings":      "Drop,Retract",
+                "enumValues":       "4,6"
+            }
+        },
+        {
             "id":                   4501,
             "rawName":              "MAV_CMD_CONDITION_GATE",
             "friendlyName":         "Condition Gate",

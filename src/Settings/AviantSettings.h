@@ -22,6 +22,7 @@ public:
     AviantSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
     DEFINE_SETTINGFACT(showTrafficIndicators)
+    DEFINE_SETTINGFACT(showWinchControlMenu)
     DEFINE_SETTINGFACT(horizontalConflictDistance)
     DEFINE_SETTINGFACT(verticalConflictDistance)
 };

@@ -1,0 +1,100 @@
+#
+# QGroundControl linux build environment
+#
+
+FROM ubuntu:20.04
+LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>, Knut Hjorth <knut.hjorth@aviant.no>"
+
+ARG QT_VERSION=5.15.2
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QT_PATH /opt/Qt
+ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/android
+
+ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+
+RUN apt update && apt -y --quiet --no-install-recommends install \
+		apt-utils \
+		binutils \
+		build-essential \
+		ca-certificates \
+		ccache \
+		checkinstall \
+		cmake \
+		curl \
+		espeak \
+		fuse \
+		g++ \
+		gcc \
+		git \
+		gosu \
+		kmod \
+		libespeak-dev \
+		libfontconfig1 \
+		libfuse2 \
+		libgstreamer-plugins-base1.0-dev \
+		libgstreamer1.0-0 \
+		libgstreamer1.0-dev \
+		libsdl2-dev \
+		libssl-dev \
+		libudev-dev \
+		locales \
+		make \
+		ninja-build \
+		openssh-client \
+		openssl \
+		patchelf \
+		pkg-config \
+		rsync \
+		speech-dispatcher \
+		wget \
+		xvfb \
+		zlib1g-dev \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+# Install Qt
+COPY deploy/docker/install-qt-linux.sh /tmp/qt/
+RUN QT_TARGET=android /tmp/qt/install-qt-linux.sh
+
+# Install Android SDK
+RUN apt-get install -y unzip openjdk-11-jdk
+RUN dpkg --add-architecture i386 && apt-get update
+RUN apt-get install -y libstdc++6:i386 libgcc1:i386 zlib1g:i386 libncurses5:i386
+WORKDIR /tmp/asdk
+RUN curl -LO https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
+RUN echo "0bebf59339eaa534f4217f8aa0972d14dc49e7207be225511073c661ae01da0a commandlinetools-linux-9123335_latest.zip" > checksum.txt
+RUN sha256sum -c checksum.txt
+WORKDIR /opt/android/sdk
+RUN unzip /tmp/asdk/commandlinetools-linux-9123335_latest.zip
+WORKDIR /opt/android/sdk/cmdline-tools/bin
+RUN yes | ./sdkmanager --sdk_root=/opt/android/sdk/ --licenses
+RUN ./sdkmanager --sdk_root=/opt/android/sdk/ --install "cmdline-tools;latest"
+RUN ./sdkmanager --sdk_root=/opt/android/sdk/ --install "platform-tools" "ndk;21.3.6528147"
+RUN ./sdkmanager --sdk_root=/opt/android/sdk/ --install "platforms;android-28" "build-tools;28.0.3"
+RUN ./sdkmanager --sdk_root=/opt/android/sdk/ --install "platforms;android-29" "build-tools;29.0.2"
+RUN ./sdkmanager --sdk_root=/opt/android/sdk/ --install "platforms;android-30" "build-tools;30.0.1"
+ENV ANDROID_NDK=/opt/android/sdk/ndk/21.3.6528147/
+ENV ANDROID_NDK_ROOT=/opt/android/sdk/ndk/21.3.6528147/
+ENV ANDROID_NDK_HOME=/opt/android/sdk/ndk/21.3.6528147/
+ENV ANDROID_NDK_LATEST_HOME=/opt/android/sdk/ndk/21.3.6528147/
+
+# Install gstreamer
+WORKDIR /tmp
+RUN wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz
+WORKDIR /opt/gstreamer-1.0-android-universal-1.18.5
+RUN tar xf /tmp/gstreamer-1.0-android-universal-1.18.5.tar.xz -C .
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1000 to not run commands/generate files as root
+RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 1000
+USER user
+
+WORKDIR /project/build
+CMD [ "sh", "-c", "if [ -L /project/source/gstreamer-1.0-android-universal-1.18.5 ]; then rm -f /project/source/gstreamer-1.0-android-universal-1.18.5; fi && ln -fs /opt/gstreamer-1.0-android-universal-1.18.5 /project/source/gstreamer-1.0-android-universal-1.18.5 && qmake -r /project/source/qgroundcontrol.pro -spec android-clang CONFIG+=StableBuild CONFIG+=installer ANDROID_ABIS=\"armeabi-v7a\" && make -j$(nproc) && rm -f /project/source/gstreamer-1.0-android-universal-1.18.5" ]
