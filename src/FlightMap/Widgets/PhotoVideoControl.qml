@@ -85,7 +85,6 @@ Rectangle {
     property bool   _switchToPhotoModeAllowed:                  !_modeIndicatorPhotoMode && (_mavlinkCamera ? !_mavlinkCameraIsShooting : true)
     property bool   _switchToVideoModeAllowed:                  _modeIndicatorPhotoMode && (_mavlinkCamera ? !_mavlinkCameraIsShooting : true)
     property bool   _videoIsRecording:                          _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamRecording
-    property bool   _canShootInCurrentMode:                     _mavlinkCamera ? _mavlinkCameraCanShoot : _videoStreamCanShoot || _simpleCameraAvailable
     property bool   _isShootingInCurrentMode:                   _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamIsShootingInCurrentMode || _simpleCameraIsShootingInCurrentMode
 
     function setCameraMode(photoMode) {
@@ -168,23 +167,23 @@ Rectangle {
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
         Rectangle {
+            id:                 modeSelector
             Layout.alignment:   Qt.AlignHCenter
             width:              ScreenTools.defaultFontPixelWidth * 10
             height:             width / 2
             color:              qgcPal.windowShadeLight
             radius:             height * 0.5
-            visible:            _showModeIndicator
 
             //-- Video Mode
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width:                  parent.height
                 height:                 parent.height
-                color:                  _modeIndicatorPhotoMode ? qgcPal.windowShadeLight : qgcPal.window
+                color:                  _videoStreamInPhotoMode ? qgcPal.windowShadeLight : qgcPal.window
                 radius:                 height * 0.5
                 anchors.left:           parent.left
                 border.color:           qgcPal.text
-                border.width:           _modeIndicatorPhotoMode ? 0 : 1
+                border.width:           _videoStreamInPhotoMode ? 0 : 1
 
                 QGCColoredImage {
                     height:             parent.height * 0.5
@@ -193,24 +192,24 @@ Rectangle {
                     source:             "/qmlimages/camera_video.svg"
                     fillMode:           Image.PreserveAspectFit
                     sourceSize.height:  height
-                    color:              _modeIndicatorPhotoMode ? qgcPal.text : qgcPal.colorGreen
+                    color:              _videoStreamInPhotoMode ? qgcPal.text : qgcPal.colorGreen
                     MouseArea {
                         anchors.fill:   parent
-                        enabled:        _switchToVideoModeAllowed
                         onClicked:      setCameraMode(false)
                     }
                 }
             }
+
             //-- Photo Mode
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width:                  parent.height
                 height:                 parent.height
-                color:                  _modeIndicatorPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
+                color:                  _videoStreamInPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
                 radius:                 height * 0.5
                 anchors.right:          parent.right
                 border.color:           qgcPal.text
-                border.width:           _modeIndicatorPhotoMode ? 1 : 0
+                border.width:           _videoStreamInPhotoMode ? 1 : 0
                 QGCColoredImage {
                     height:             parent.height * 0.5
                     width:              height
@@ -218,10 +217,9 @@ Rectangle {
                     source:             "/qmlimages/camera_photo.svg"
                     fillMode:           Image.PreserveAspectFit
                     sourceSize.height:  height
-                    color:              _modeIndicatorPhotoMode ? qgcPal.colorGreen : qgcPal.text
+                    color:              _videoStreamInPhotoMode ? qgcPal.colorGreen : qgcPal.text
                     MouseArea {
                         anchors.fill:   parent
-                        enabled:        _switchToPhotoModeAllowed
                         onClicked:      setCameraMode(true)
                     }
                 }
@@ -245,10 +243,11 @@ Rectangle {
             }
         }
 
-        // Take Photo, Start/Stop Video button
+        // Start/Stop Video button
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
         Rectangle {
+            id:                 videoRecordbutton
             Layout.alignment:   Qt.AlignHCenter
             color:              Qt.rgba(0,0,0,0)
             width:              ScreenTools.defaultFontPixelWidth * 6
@@ -256,19 +255,62 @@ Rectangle {
             radius:             width * 0.5
             border.color:       qgcPal.buttonText
             border.width:       3
+            visible:            !_videoStreamInPhotoMode
 
             Rectangle {
                 anchors.centerIn:   parent
-                width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                width:              parent.width * (_videoIsRecording ? 0.5 : 0.75)
                 height:             width
-                radius:             _isShootingInCurrentMode ? 0 : width * 0.5
-                color:              _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
+                radius:             _videoIsRecording ? 0 : width * 0.5
+                color:              qgcPal.colorRed
             }
 
             MouseArea {
                 anchors.fill:   parent
-                enabled:        _canShootInCurrentMode
                 onClicked:      toggleShooting()
+            }
+        }
+
+        // Take Photo
+        // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
+        // using the unified properties/functions.
+        Rectangle {
+            id:                 photoCaptureButton
+            Layout.alignment:   Qt.AlignHCenter
+            color:              Qt.rgba(0,0,0,0)
+            width:              ScreenTools.defaultFontPixelWidth * 6
+            height:             width
+            radius:             width * 0.5
+            border.color:       qgcPal.buttonText
+            border.width:       3
+            visible:            _videoStreamInPhotoMode
+
+            Rectangle {
+                id:                 trigger
+                anchors.centerIn:   parent
+                width:              parent.width * 0.75
+                height:             width
+                radius:             width * 0.5
+                color:              qgcPal.colorRed
+            }
+
+            Timer {
+                id: colorTimer
+                running: false; repeat: false; interval: 150
+                onTriggered: trigger.color = qgcPal.colorRed
+            }
+
+            function shoot() {
+                trigger.color = qgcPal.text
+                colorTimer.start()
+            }
+
+            MouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    parent.shoot()
+                    toggleShooting()
+                }
             }
         }
 
