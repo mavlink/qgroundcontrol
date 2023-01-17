@@ -652,6 +652,14 @@ Rectangle {
                                         }
                                     }
                                 }
+
+                                // Check box to show/hide Remote ID submenu in App settings
+                                FactCheckBox {
+                                    text:       qsTr("Enable Remote ID")
+                                    fact:       _remoteIDEnable
+                                    visible:    _remoteIDEnable.visible
+                                    property Fact _remoteIDEnable: QGroundControl.settingsManager.remoteIDSettings.enable
+                                }
                             }
                         }
 
