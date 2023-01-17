@@ -149,6 +149,14 @@
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
         <file alias="Quad.svg">src/ui/toolbar/Images/Quad.svg</file>
         <file alias="RadioComponentIcon.png">src/AutoPilotPlugins/Common/Images/RadioComponentIcon.png</file>
+        <file alias="RidEmergencyBackgroundHighlight.svg">src/ui/toolbar/Images/RidEmergencyBackgroundHighlight.svg</file>
+        <file alias="RidEmergencyBackground.svg">src/ui/toolbar/Images/RidEmergencyBackground.svg</file>
+        <file alias="RidFlagBackgroundGreen.svg">src/ui/toolbar/Images/RidFlagBackgroundGreen.svg</file>
+        <file alias="RidFlagBackgroundRed.svg">src/ui/toolbar/Images/RidFlagBackgroundRed.svg</file>
+        <file alias="RidIconGreen.svg">src/ui/toolbar/Images/RidIconGreen.svg</file>
+        <file alias="RidIconGrey.svg">src/ui/toolbar/Images/RidIconGrey.svg</file>
+        <file alias="RidIconRed.svg">src/ui/toolbar/Images/RidIconRed.svg</file>
+        <file alias="RidIconYellow.svg">src/ui/toolbar/Images/RidIconYellow.svg</file>
         <file alias="RC.svg">src/ui/toolbar/Images/RC.svg</file>
         <file alias="RCLoss.svg">src/AutoPilotPlugins/PX4/Images/RCLoss.svg</file>
         <file alias="RCLossLight.svg">src/AutoPilotPlugins/PX4/Images/RCLossLight.svg</file>
