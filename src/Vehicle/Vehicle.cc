@@ -55,6 +55,7 @@
 #include "MockLink.h"
 #endif
 #include "Autotune.h"
+#include "RemoteIDManager.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -405,6 +406,9 @@ void Vehicle::_commonInit()
     connect(_rallyPointManager, &RallyPointManager::error,          this, &Vehicle::_rallyPointManagerError);
     connect(_rallyPointManager, &RallyPointManager::loadComplete,   this, &Vehicle::_firstRallyPointLoadComplete);
 
+    // Remote ID manager might want to acces parameters so make sure to create it after
+    _remoteIDManager = new RemoteIDManager(this);
+
     // Flight modes can differ based on advanced mode
     connect(_toolbox->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
@@ -657,6 +661,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
     _imageProtocolManager->mavlinkMessageReceived(message);
+    _remoteIDManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);
 
