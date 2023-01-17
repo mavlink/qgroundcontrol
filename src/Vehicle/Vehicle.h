@@ -73,6 +73,7 @@ class LinkInterface;
 class LinkManager;
 class InitialConnectStateMachine;
 class Autotune;
+class RemoteIDManager;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -279,6 +280,7 @@ public:
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
     Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
     Q_PROPERTY(Autotune*                autotune            READ autotune           CONSTANT)
+    Q_PROPERTY(RemoteIDManager*         remoteIDManager     READ remoteIDManager    CONSTANT)
 
     // FactGroup object model properties
 
@@ -708,6 +710,7 @@ public:
     ComponentInformationManager*    compInfoManager     () { return _componentInformationManager; }
     VehicleObjectAvoidance*         objectAvoidance     () { return _objectAvoidance; }
     Autotune*                       autotune            () const { return _autotune; }
+    RemoteIDManager*                remoteIDManager     () { return _remoteIDManager; }
 
     static const int cMaxRcChannels = 18;
 
@@ -1383,6 +1386,7 @@ private:
     ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
+    RemoteIDManager*                _remoteIDManager            = nullptr;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
