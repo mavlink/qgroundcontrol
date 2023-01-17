@@ -14,6 +14,7 @@
         <file alias="ModeIndicator.qml">src/ui/toolbar/ModeIndicator.qml</file>
         <file alias="MultiVehicleSelector.qml">src/ui/toolbar/MultiVehicleSelector.qml</file>
         <file alias="RCRSSIIndicator.qml">src/ui/toolbar/RCRSSIIndicator.qml</file>
+        <file alias="RemoteIDIndicator.qml">src/ui/toolbar/RemoteIDIndicator.qml</file>
         <file alias="ROIIndicator.qml">src/ui/toolbar/ROIIndicator.qml</file>
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="VTOLModeIndicator.qml">src/ui/toolbar/VTOLModeIndicator.qml</file>
@@ -38,6 +39,7 @@
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
         <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
+        <file alias="RemoteIDSettings.qml">src/ui/preferences/RemoteIDSettings.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
         <file alias="ESP8266ComponentSummary.qml">src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml</file>
         <file alias="ExitWithErrorWindow.qml">src/ui/ExitWithErrorWindow.qml</file>
@@ -298,6 +300,7 @@
         <file alias="CameraSection.FactMetaData.json">src/MissionManager/CameraSection.FactMetaData.json</file>
         <file alias="CameraSpec.FactMetaData.json">src/MissionManager/CameraSpec.FactMetaData.json</file>
         <file alias="CorridorScan.SettingsGroup.json">src/MissionManager/CorridorScan.SettingsGroup.json</file>
+        <file alias="RemoteID.SettingsGroup.json">src/Settings/RemoteID.SettingsGroup.json</file>
         <file alias="EditPositionDialog.FactMetaData.json">src/QmlControls/EditPositionDialog.FactMetaData.json</file>
         <file alias="FirmwareUpgrade.SettingsGroup.json">src/Settings/FirmwareUpgrade.SettingsGroup.json</file>
         <file alias="FlightMap.SettingsGroup.json">src/Settings/FlightMap.SettingsGroup.json</file>

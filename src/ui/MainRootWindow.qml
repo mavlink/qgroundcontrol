@@ -86,6 +86,9 @@ ApplicationWindow {
 
         property var                planMasterControllerPlanView:   null
         property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
+
+        // Property to manage RemoteID quick acces to settings page
+        property bool               commingFromRIDIndicator:        false
     }
 
     /// Default color palette used throughout the UI
