@@ -31,6 +31,7 @@
 #include "AirMapSettings.h"
 #endif
 #include <QVariantList>
+#include "RemoteIDSettings.h"
 
 /// Provides access to all app settings
 class SettingsManager : public QGCTool
@@ -58,6 +59,7 @@ public:
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
+    Q_PROPERTY(QObject* remoteIDSettings                READ remoteIDSettings               CONSTANT)
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -79,6 +81,7 @@ public:
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
+    RemoteIDSettings*               remoteIDSettings            (void) { return _remoteIDSettings; }
 private:
 #if defined(QGC_AIRMAP_ENABLED)
     AirMapSettings*         _airMapSettings;
@@ -98,6 +101,7 @@ private:
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif
+    RemoteIDSettings*               _remoteIDSettings;
 };
 
 #endif
