@@ -677,6 +677,7 @@ HEADERS += \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
+    src/Settings/RemoteIDSettings.h \
     src/Settings/FirmwareUpgradeSettings.h \
     src/Settings/FlightMapSettings.h \
     src/Settings/FlyViewSettings.h \
@@ -715,6 +716,7 @@ HEADERS += \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MAVLinkStreamConfig.h \
     src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/RemoteIDManager.h \
     src/Vehicle/StateMachine.h \
     src/Vehicle/SysStatusSensorInfo.h \
     src/Vehicle/TerrainFactGroup.h \
@@ -932,6 +934,7 @@ SOURCES += \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \
+    src/Settings/RemoteIDSettings.cc \
     src/Settings/FirmwareUpgradeSettings.cc \
     src/Settings/FlightMapSettings.cc \
     src/Settings/FlyViewSettings.cc \
@@ -970,6 +973,7 @@ SOURCES += \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MAVLinkStreamConfig.cc \
     src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/RemoteIDManager.cc \
     src/Vehicle/StateMachine.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
     src/Vehicle/TerrainFactGroup.cc \
