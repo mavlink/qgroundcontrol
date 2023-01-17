@@ -30,11 +30,18 @@ Rectangle {
 
     property bool _first: true
 
+    property bool _commingFromRIDSettings:  false
+
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
         //-- Default Settings
-        __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+        if (globals.commingFromRIDIndicator) {
+            __rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
+            globals.commingFromRIDIndicator = false
+        } else {
+            __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+        }
     }
 
     QGCFlickable {
@@ -62,6 +69,7 @@ Rectangle {
                     text:               modelData.title
                     autoExclusive:      true
                     Layout.fillWidth:   true
+                    visible:            modelData.url != "qrc:/qml/RemoteIDSettings.qml" ? true : QGroundControl.settingsManager.remoteIDSettings.enable.rawValue
 
                     onClicked: {
                         if (mainWindow.preventViewSwitch()) {
@@ -74,9 +82,19 @@ Rectangle {
                     }
 
                     Component.onCompleted: {
+                        if (globals.commingFromRIDIndicator) {
+                            _commingFromRIDSettings = true
+                        }
                         if(_first) {
                             _first = false
                             checked = true
+                        }
+                        if (_commingFromRIDSettings) {
+                            checked = false
+                            _commingFromRIDSettings = false
+                            if (modelData.url == "qrc:/qml/RemoteIDSettings.qml") {
+                                checked = true
+                            }
                         }
                     }
                 }
