@@ -1687,7 +1687,7 @@
     </parameter>
     <parameter name="EKF2_BCOEF_X" default="100.0" type="FLOAT">
       <short_desc>X-axis ballistic coefficient used for multi-rotor wind estimation</short_desc>
-      <long_desc>This parameter controls the prediction of drag produced by bluff body drag along the forward/reverse axis when flying a multi-copter which enables estimation of wind drift when enabled by the EKF2_AID_MASK parameter. The EKF2_BCOEF_X paraemter should be set initially to the ratio of mass / projected frontal area and adjusted together with EKF2_MCOEF to minimise variance of the X-axis drag specific force innovation sequence. The drag produced by this effect scales with speed squared. Set this parameter to zero to turn off the bluff body drag model for this axis. The predicted drag from the rotors is specified separately by the EKF2_MCOEF parameter.</long_desc>
+      <long_desc>This parameter controls the prediction of drag produced by bluff body drag along the forward/reverse axis when flying a multi-copter which enables estimation of wind drift when enabled by the EKF2_AID_MASK parameter. The drag produced by this effect scales with speed squared. The predicted drag from the rotors is specified separately by the EKF2_MCOEF parameter. Set this parameter to zero to turn off the bluff body drag model for this axis.</long_desc>
       <min>0.0</min>
       <max>200.0</max>
       <unit>kg/m^2</unit>
@@ -1695,7 +1695,7 @@
     </parameter>
     <parameter name="EKF2_BCOEF_Y" default="100.0" type="FLOAT">
       <short_desc>Y-axis ballistic coefficient used for multi-rotor wind estimation</short_desc>
-      <long_desc>This parameter controls the prediction of drag produced by bluff body drag along the right/left axis when flying a multi-copter, which enables estimation of wind drift when enabled by the EKF2_AID_MASK parameter. The EKF2_BCOEF_Y paraemter should be set initially to the ratio of mass / projected side area and adjusted together with EKF2_MCOEF to minimise variance of the Y-axis drag specific force innovation sequence. The drag produced by this effect scales with speed squared. et this parameter to zero to turn off the bluff body drag model for this axis. The predicted drag from the rotors is specified separately by the EKF2_MCOEF parameter.</long_desc>
+      <long_desc>This parameter controls the prediction of drag produced by bluff body drag along the right/left axis when flying a multi-copter, which enables estimation of wind drift when enabled by the EKF2_AID_MASK parameter. The drag produced by this effect scales with speed squared. The predicted drag from the rotors is specified separately by the EKF2_MCOEF parameter. Set this parameter to zero to turn off the bluff body drag model for this axis.</long_desc>
       <min>0.0</min>
       <max>200.0</max>
       <unit>kg/m^2</unit>
@@ -1940,6 +1940,14 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="EKF2_GYR_B_LIM" default="0.15" type="FLOAT">
+      <short_desc>Gyro bias learning limit</short_desc>
+      <long_desc>The ekf delta angle bias states will be limited to within a range equivalent to +- of this value.</long_desc>
+      <min>0.0</min>
+      <max>0.4</max>
+      <unit>rad/s</unit>
+      <decimal>3</decimal>
+    </parameter>
     <parameter name="EKF2_GYR_B_NOISE" default="1.0e-3" type="FLOAT">
       <short_desc>Process noise for IMU rate gyro bias prediction</short_desc>
       <min>0.0</min>
@@ -2069,8 +2077,8 @@
       <decimal>2</decimal>
     </parameter>
     <parameter name="EKF2_MCOEF" default="0.15" type="FLOAT">
-      <short_desc>propeller momentum drag coefficient used for multi-rotor wind estimation</short_desc>
-      <long_desc>This parameter controls the prediction of drag produced by the propellers when flying a multi-copter, which enables estimation of wind drift when enabled by the EKF2_AID_MASK parameter. The drag produced by this effect scales with speed not speed squared and is produced because some of the air velocity normal to the propeller axis of rotation is lost when passing through the rotor disc. This  changes the momentum of the flow which creates a drag reaction force. When comparing un-ducted propellers of the same diameter, the effect is roughly proportional to the area of the propeller blades when viewed side on and changes with propeller selection. Momentum drag is significantly higher for ducted rotors. For example, if flying at 10 m/s at sea level conditions produces a rotor induced drag deceleration of 1.5 m/s/s when the multi-copter levelled to zero roll/pitch, then EKF2_MCOEF would be set to 0.15 = (1.5/10.0). Set EKF2_MCOEF to a positive value to enable wind estimation using this drag effect. To account for the drag produced by the body which scales with speed squared, see documentation for the EKF2_BCOEF_X and EKF2_BCOEF_Y parameters. The EKF2_MCOEF parameter should be adjusted together with EKF2_BCOEF_X and EKF2_BCOEF_Y to minimise variance of the X and y axis drag specific force innovation sequences.</long_desc>
+      <short_desc>Propeller momentum drag coefficient used for multi-rotor wind estimation</short_desc>
+      <long_desc>This parameter controls the prediction of drag produced by the propellers when flying a multi-copter, which enables estimation of wind drift when enabled by the EKF2_AID_MASK parameter. The drag produced by this effect scales with speed not speed squared and is produced because some of the air velocity normal to the propeller axis of rotation is lost when passing through the rotor disc. This  changes the momentum of the flow which creates a drag reaction force. When comparing un-ducted propellers of the same diameter, the effect is roughly proportional to the area of the propeller blades when viewed side on and changes with propeller selection. Momentum drag is significantly higher for ducted rotors. To account for the drag produced by the body which scales with speed squared, see documentation for the EKF2_BCOEF_X and EKF2_BCOEF_Y parameters. Set this parameter to zero to turn off the momentum drag model for both axis.</long_desc>
       <min>0</min>
       <max>1.0</max>
       <unit>1/s</unit>
@@ -2457,33 +2465,6 @@
     </parameter>
   </group>
   <group name="FW Attitude Control">
-    <parameter name="FW_ACRO_X_MAX" default="90." type="FLOAT">
-      <short_desc>Acro body x max rate</short_desc>
-      <long_desc>This is the rate the controller is trying to achieve if the user applies full roll stick input in acro mode.</long_desc>
-      <min>45</min>
-      <max>720</max>
-      <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>5</increment>
-    </parameter>
-    <parameter name="FW_ACRO_Y_MAX" default="90." type="FLOAT">
-      <short_desc>Acro body y max rate</short_desc>
-      <long_desc>This is the body y rate the controller is trying to achieve if the user applies full pitch stick input in acro mode.</long_desc>
-      <min>45</min>
-      <max>720</max>
-      <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>5</increment>
-    </parameter>
-    <parameter name="FW_ACRO_Z_MAX" default="45." type="FLOAT">
-      <short_desc>Acro body z max rate</short_desc>
-      <long_desc>This is the body z rate the controller is trying to achieve if the user applies full yaw stick input in acro mode.</long_desc>
-      <min>10</min>
-      <max>180</max>
-      <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>5</increment>
-    </parameter>
     <parameter name="FW_ARSP_MODE" default="0" type="INT32">
       <short_desc>Airspeed mode</short_desc>
       <long_desc>For small wings or VTOL without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
@@ -2491,104 +2472,6 @@
         <value code="0">Normal (use airspeed if available)</value>
         <value code="1">Airspeed disabled</value>
       </values>
-    </parameter>
-    <parameter name="FW_ARSP_SCALE_EN" default="1" type="INT32" boolean="true">
-      <short_desc>Enable airspeed scaling</short_desc>
-      <long_desc>This enables a logic that automatically adjusts the output of the rate controller to take into account the real torque produced by an aerodynamic control surface given the current deviation from the trim airspeed (FW_AIRSPD_TRIM). Enable when using aerodynamic control surfaces (e.g.: plane) Disable when using rotor wings (e.g.: autogyro)</long_desc>
-    </parameter>
-    <parameter name="FW_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
-      <short_desc>Whether to scale throttle by battery power level</short_desc>
-      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The fixed wing should constantly behave as if it was fully charged with reduced max thrust at lower battery percentages. i.e. if cruise speed is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
-    </parameter>
-    <parameter name="FW_DTRIM_P_FLPS" default="0.0" type="FLOAT">
-      <short_desc>Pitch trim increment for flaps configuration</short_desc>
-      <long_desc>This increment is added to the pitch trim whenever flaps are fully deployed.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_P_SPOIL" default="0." type="FLOAT">
-      <short_desc>Pitch trim increment for spoiler configuration</short_desc>
-      <long_desc>This increment is added to the pitch trim whenever spoilers are fully deployed.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_P_VMAX" default="0.0" type="FLOAT">
-      <short_desc>Pitch trim increment at maximum airspeed</short_desc>
-      <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MAX.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_P_VMIN" default="0.0" type="FLOAT">
-      <short_desc>Pitch trim increment at minimum airspeed</short_desc>
-      <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_R_FLPS" default="0.0" type="FLOAT">
-      <short_desc>Roll trim increment for flaps configuration</short_desc>
-      <long_desc>This increment is added to TRIM_ROLL whenever flaps are fully deployed.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_R_VMAX" default="0.0" type="FLOAT">
-      <short_desc>Roll trim increment at maximum airspeed</short_desc>
-      <long_desc>This increment is added to TRIM_ROLL when airspeed is FW_AIRSPD_MAX.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_R_VMIN" default="0.0" type="FLOAT">
-      <short_desc>Roll trim increment at minimum airspeed</short_desc>
-      <long_desc>This increment is added to TRIM_ROLL when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_Y_VMAX" default="0.0" type="FLOAT">
-      <short_desc>Yaw trim increment at maximum airspeed</short_desc>
-      <long_desc>This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MAX.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_Y_VMIN" default="0.0" type="FLOAT">
-      <short_desc>Yaw trim increment at minimum airspeed</short_desc>
-      <long_desc>This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_FLAPS_LND_SCL" default="1.0" type="FLOAT">
-      <short_desc>Flaps setting during landing</short_desc>
-      <long_desc>Sets a fraction of full flaps during landing.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_FLAPS_TO_SCL" default="0.0" type="FLOAT">
-      <short_desc>Flaps setting during take-off</short_desc>
-      <long_desc>Sets a fraction of full flaps during take-off.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_MAN_P_MAX" default="30.0" type="FLOAT">
       <short_desc>Maximum manual pitch angle</short_desc>
@@ -2641,50 +2524,6 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_PR_D" default="0." type="FLOAT">
-      <short_desc>Pitch rate derivative gain</short_desc>
-      <long_desc>Pitch rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter name="FW_PR_FF" default="0.5" type="FLOAT">
-      <short_desc>Pitch rate feed forward</short_desc>
-      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_PR_I" default="0.1" type="FLOAT">
-      <short_desc>Pitch rate integrator gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.0</min>
-      <max>1</max>
-      <unit>%/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter name="FW_PR_IMAX" default="0.4" type="FLOAT">
-      <short_desc>Pitch rate integrator limit</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_PR_P" default="0.08" type="FLOAT">
-      <short_desc>Pitch rate proportional gain</short_desc>
-      <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
     <parameter name="FW_PSP_OFF" default="0.0" type="FLOAT">
       <short_desc>Pitch setpoint offset (pitch at level flight)</short_desc>
       <long_desc>An airframe specific offset of the pitch setpoint in degrees, the value is added to the pitch setpoint and should correspond to the pitch at typical cruise speed of the airframe.</long_desc>
@@ -2727,50 +2566,6 @@
       <min>0.0</min>
       <decimal>1</decimal>
       <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_RR_D" default="0.00" type="FLOAT">
-      <short_desc>Roll rate derivative Gain</short_desc>
-      <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter name="FW_RR_FF" default="0.5" type="FLOAT">
-      <short_desc>Roll rate feed forward</short_desc>
-      <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
-      <min>0.0</min>
-      <max>1</max>
-      <unit>%/rad/s</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_RR_I" default="0.1" type="FLOAT">
-      <short_desc>Roll rate integrator Gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.0</min>
-      <max>1</max>
-      <unit>%/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter name="FW_RR_IMAX" default="0.4" type="FLOAT">
-      <short_desc>Roll integrator anti-windup</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_RR_P" default="0.05" type="FLOAT">
-      <short_desc>Roll rate proportional Gain</short_desc>
-      <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
     </parameter>
     <parameter name="FW_R_RMAX" default="70.0" type="FLOAT">
       <short_desc>Maximum roll rate</short_desc>
@@ -2862,50 +2657,6 @@
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_YR_D" default="0.0" type="FLOAT">
-      <short_desc>Yaw rate derivative gain</short_desc>
-      <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter name="FW_YR_FF" default="0.3" type="FLOAT">
-      <short_desc>Yaw rate feed forward</short_desc>
-      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_YR_I" default="0.1" type="FLOAT">
-      <short_desc>Yaw rate integrator gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.0</min>
-      <max>1</max>
-      <unit>%/rad</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_YR_IMAX" default="0.4" type="FLOAT">
-      <short_desc>Yaw rate integrator limit</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_YR_P" default="0.05" type="FLOAT">
-      <short_desc>Yaw rate proportional gain</short_desc>
-      <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
     </parameter>
     <parameter name="FW_Y_RMAX" default="50.0" type="FLOAT">
       <short_desc>Maximum yaw rate</short_desc>
@@ -3218,6 +2969,259 @@
     <parameter name="NPFG_WIND_REG" default="1" type="INT32" boolean="true">
       <short_desc>Enable wind excess regulation</short_desc>
       <long_desc>Disabling this parameter further disables all other airspeed incrementation options.</long_desc>
+    </parameter>
+  </group>
+  <group name="FW Rate Control">
+    <parameter name="FW_ACRO_X_MAX" default="90" type="FLOAT">
+      <short_desc>Acro body x max rate</short_desc>
+      <long_desc>This is the rate the controller is trying to achieve if the user applies full roll stick input in acro mode.</long_desc>
+      <min>45</min>
+      <max>720</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter name="FW_ACRO_Y_MAX" default="90" type="FLOAT">
+      <short_desc>Acro body y max rate</short_desc>
+      <long_desc>This is the body y rate the controller is trying to achieve if the user applies full pitch stick input in acro mode.</long_desc>
+      <min>45</min>
+      <max>720</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter name="FW_ACRO_Z_MAX" default="45" type="FLOAT">
+      <short_desc>Acro body z max rate</short_desc>
+      <long_desc>This is the body z rate the controller is trying to achieve if the user applies full yaw stick input in acro mode.</long_desc>
+      <min>10</min>
+      <max>180</max>
+      <unit>deg</unit>
+    </parameter>
+    <parameter name="FW_ARSP_SCALE_EN" default="1" type="INT32" boolean="true">
+      <short_desc>Enable airspeed scaling</short_desc>
+      <long_desc>This enables a logic that automatically adjusts the output of the rate controller to take into account the real torque produced by an aerodynamic control surface given the current deviation from the trim airspeed (FW_AIRSPD_TRIM). Enable when using aerodynamic control surfaces (e.g.: plane) Disable when using rotor wings (e.g.: autogyro)</long_desc>
+    </parameter>
+    <parameter name="FW_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Whether to scale throttle by battery power level</short_desc>
+      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The fixed wing should constantly behave as if it was fully charged with reduced max thrust at lower battery percentages. i.e. if cruise speed is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
+    </parameter>
+    <parameter name="FW_DTRIM_P_FLPS" default="0.0" type="FLOAT">
+      <short_desc>Pitch trim increment for flaps configuration</short_desc>
+      <long_desc>This increment is added to the pitch trim whenever flaps are fully deployed.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_P_SPOIL" default="0." type="FLOAT">
+      <short_desc>Pitch trim increment for spoiler configuration</short_desc>
+      <long_desc>This increment is added to the pitch trim whenever spoilers are fully deployed.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_P_VMAX" default="0.0" type="FLOAT">
+      <short_desc>Pitch trim increment at maximum airspeed</short_desc>
+      <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MAX.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_P_VMIN" default="0.0" type="FLOAT">
+      <short_desc>Pitch trim increment at minimum airspeed</short_desc>
+      <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MIN.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_R_FLPS" default="0.0" type="FLOAT">
+      <short_desc>Roll trim increment for flaps configuration</short_desc>
+      <long_desc>This increment is added to TRIM_ROLL whenever flaps are fully deployed.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_R_VMAX" default="0.0" type="FLOAT">
+      <short_desc>Roll trim increment at maximum airspeed</short_desc>
+      <long_desc>This increment is added to TRIM_ROLL when airspeed is FW_AIRSPD_MAX.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_R_VMIN" default="0.0" type="FLOAT">
+      <short_desc>Roll trim increment at minimum airspeed</short_desc>
+      <long_desc>This increment is added to TRIM_ROLL when airspeed is FW_AIRSPD_MIN.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_Y_VMAX" default="0.0" type="FLOAT">
+      <short_desc>Yaw trim increment at maximum airspeed</short_desc>
+      <long_desc>This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MAX.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_DTRIM_Y_VMIN" default="0.0" type="FLOAT">
+      <short_desc>Yaw trim increment at minimum airspeed</short_desc>
+      <long_desc>This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MIN.</long_desc>
+      <min>-0.25</min>
+      <max>0.25</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_FLAPS_LND_SCL" default="1.0" type="FLOAT">
+      <short_desc>Flaps setting during landing</short_desc>
+      <long_desc>Sets a fraction of full flaps during landing. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_FLAPS_TO_SCL" default="0.0" type="FLOAT">
+      <short_desc>Flaps setting during take-off</short_desc>
+      <long_desc>Sets a fraction of full flaps during take-off. Also applies to flaperons if enabled in the mixer/allocation.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_PR_D" default="0." type="FLOAT">
+      <short_desc>Pitch rate derivative gain</short_desc>
+      <long_desc>Pitch rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_PR_FF" default="0.5" type="FLOAT">
+      <short_desc>Pitch rate feed forward</short_desc>
+      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_PR_I" default="0.1" type="FLOAT">
+      <short_desc>Pitch rate integrator gain</short_desc>
+      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
+      <min>0.0</min>
+      <max>0.5</max>
+      <unit>%/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_PR_IMAX" default="0.4" type="FLOAT">
+      <short_desc>Pitch rate integrator limit</short_desc>
+      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_PR_P" default="0.08" type="FLOAT">
+      <short_desc>Pitch rate proportional gain</short_desc>
+      <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_RR_D" default="0.00" type="FLOAT">
+      <short_desc>Roll rate derivative Gain</short_desc>
+      <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_RR_FF" default="0.5" type="FLOAT">
+      <short_desc>Roll rate feed forward</short_desc>
+      <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_RR_I" default="0.1" type="FLOAT">
+      <short_desc>Roll rate integrator Gain</short_desc>
+      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
+      <min>0.0</min>
+      <max>0.2</max>
+      <unit>%/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_RR_IMAX" default="0.2" type="FLOAT">
+      <short_desc>Roll integrator anti-windup</short_desc>
+      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_RR_P" default="0.05" type="FLOAT">
+      <short_desc>Roll rate proportional Gain</short_desc>
+      <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_YR_D" default="0.0" type="FLOAT">
+      <short_desc>Yaw rate derivative gain</short_desc>
+      <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_YR_FF" default="0.3" type="FLOAT">
+      <short_desc>Yaw rate feed forward</short_desc>
+      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_YR_I" default="0.1" type="FLOAT">
+      <short_desc>Yaw rate integrator gain</short_desc>
+      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+      <unit>%/rad</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_YR_IMAX" default="0.2" type="FLOAT">
+      <short_desc>Yaw rate integrator limit</short_desc>
+      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_YR_P" default="0.05" type="FLOAT">
+      <short_desc>Yaw rate proportional gain</short_desc>
+      <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>%/rad/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
     </parameter>
   </group>
   <group name="FW TECS">
@@ -4467,6 +4471,108 @@
       <long_desc>If set to 1 incoming HIL GPS messages are parsed.</long_desc>
     </parameter>
   </group>
+  <group name="MODAL IO">
+    <parameter name="MODAL_IO_BAUD" default="250000" type="INT32">
+      <short_desc>UART ESC baud rate</short_desc>
+      <long_desc>Default rate is 250Kbps, which is used in off-the-shelf MoadalAI ESC products.</long_desc>
+      <unit>bit/s</unit>
+    </parameter>
+    <parameter name="MODAL_IO_CONFIG" default="0" type="INT32">
+      <short_desc>UART ESC configuration</short_desc>
+      <long_desc>Selects what type of UART ESC, if any, is being used.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+        <value code="1">- VOXL ESC</value>
+      </values>
+    </parameter>
+    <parameter name="MODAL_IO_MODE" default="0" type="INT32">
+      <short_desc>UART ESC Mode</short_desc>
+      <long_desc>Selects what type of mode is enabled, if any</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- None</value>
+        <value code="1">- Turtle Mode enabled via AUX1</value>
+        <value code="2">- Turtle Mode enabled via AUX2</value>
+        <value code="3">- UART Passthrough Mode</value>
+      </values>
+    </parameter>
+    <parameter name="MODAL_IO_RPM_MAX" default="15000" type="INT32">
+      <short_desc>UART ESC RPM Max</short_desc>
+      <long_desc>Maximum RPM for ESC</long_desc>
+    </parameter>
+    <parameter name="MODAL_IO_RPM_MIN" default="5500" type="INT32">
+      <short_desc>UART ESC RPM Min</short_desc>
+      <long_desc>Minimum RPM for ESC</long_desc>
+    </parameter>
+    <parameter name="MODAL_IO_SDIR1" default="0" type="INT32">
+      <short_desc>UART ESC ID 1 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="MODAL_IO_SDIR2" default="0" type="INT32">
+      <short_desc>UART ESC ID 2 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="MODAL_IO_SDIR3" default="0" type="INT32">
+      <short_desc>UART ESC ID 3 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="MODAL_IO_SDIR4" default="0" type="INT32">
+      <short_desc>UART ESC ID 4 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="MODAL_IO_T_COSP" default="0.990" type="FLOAT">
+      <short_desc>UART ESC Turtle Mode Cosphi</short_desc>
+      <min>0.000</min>
+      <max>1.000</max>
+      <decimal>10</decimal>
+      <increment>0.001</increment>
+    </parameter>
+    <parameter name="MODAL_IO_T_DEAD" default="20" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor Deadband</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="MODAL_IO_T_EXPO" default="35" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor expo</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="MODAL_IO_T_MINF" default="0.15" type="FLOAT">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor STICK_MINF</short_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <decimal>10</decimal>
+      <increment>1.0</increment>
+    </parameter>
+    <parameter name="MODAL_IO_T_PERC" default="90" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor Percent</short_desc>
+      <min>1</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+  </group>
   <group name="Magnetometer Bias Estimator">
     <parameter name="MBE_ENABLE" default="1" type="INT32" boolean="true">
       <short_desc>Enable online mag bias calibration</short_desc>
@@ -4563,7 +4669,7 @@
         <value code="1">Require a takeoff</value>
         <value code="2">Require a landing</value>
         <value code="3">Require a takeoff and a landing</value>
-        <value code="4">Require a takeoff and a landing, or neither of both</value>
+        <value code="4">Require both a takeoff and a landing, or neither</value>
       </values>
     </parameter>
     <parameter name="MIS_YAW_ERR" default="12.0" type="FLOAT">
@@ -7765,6 +7871,7 @@
         <value code="1">from boot until disarm</value>
         <value code="2">from boot until shutdown</value>
         <value code="3">depending on AUX1 RC channel</value>
+        <value code="4">from 1st armed until shutdown</value>
       </values>
     </parameter>
     <parameter name="SDLOG_PROFILE" default="1" type="INT32">
@@ -7920,20 +8027,9 @@
       <max>2.00</max>
       <unit>m</unit>
     </parameter>
-    <parameter name="CAL_MAG_ROT_AUTO" default="1" type="INT32" boolean="true">
-      <short_desc>Automatically set external rotations</short_desc>
-      <long_desc>During calibration attempt to automatically determine the rotation of external magnetometers.</long_desc>
-    </parameter>
-    <parameter name="CAL_MAG_SIDES" default="63" type="INT32">
-      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
-      <long_desc>If set to two side calibration, only the offsets are estimated, the scale calibration is left unchanged. Thus an initial six side calibration is recommended. Bits: ORIENTATION_TAIL_DOWN = 1 ORIENTATION_NOSE_DOWN = 2 ORIENTATION_LEFT = 4 ORIENTATION_RIGHT = 8 ORIENTATION_UPSIDE_DOWN = 16 ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
-      <min>34</min>
-      <max>63</max>
-      <values>
-        <value code="34">Two side calibration</value>
-        <value code="38">Three side calibration</value>
-        <value code="63">Six side calibration</value>
-      </values>
+    <parameter name="CAL_MAG_SIDES" default="63" type="INT32" category="Developer">
+      <short_desc>For legacy QGC support only</short_desc>
+      <long_desc>Use SENS_MAG_SIDES instead</long_desc>
     </parameter>
     <parameter name="IMU_ACCEL_CUTOFF" default="30.0" type="FLOAT">
       <short_desc>Low pass filter cutoff frequency for accel</short_desc>
@@ -8428,6 +8524,10 @@
       <short_desc>HY-SRF05 / HC-SR05</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="SENS_EN_TF02PRO" default="0" type="INT32" boolean="true">
+      <short_desc>TF02 Pro Distance Sensor (i2c)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_THERMAL" default="-1" type="INT32" category="System">
       <short_desc>Thermal control of sensor temperature</short_desc>
       <values>
@@ -8449,6 +8549,10 @@
         <value code="4">TREvo600Hz</value>
         <value code="5">TREvo3m</value>
       </values>
+    </parameter>
+    <parameter name="SENS_EN_VL53L0X" default="0" type="INT32" boolean="true">
+      <short_desc>VL53L0X Distance Sensor</short_desc>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_VL53L1X" default="0" type="INT32" boolean="true">
       <short_desc>VL53L1X Distance Sensor</short_desc>
@@ -8554,6 +8658,10 @@
       <short_desc>Magnetometer auto calibration</short_desc>
       <long_desc>Automatically initialize magnetometer calibration from bias estimate if available.</long_desc>
     </parameter>
+    <parameter name="SENS_MAG_AUTOROT" default="1" type="INT32" boolean="true">
+      <short_desc>Automatically set external rotations</short_desc>
+      <long_desc>During calibration attempt to automatically determine the rotation of external magnetometers.</long_desc>
+    </parameter>
     <parameter name="SENS_MAG_MODE" default="1" type="INT32" category="System">
       <short_desc>Sensors hub mag mode</short_desc>
       <reboot_required>true</reboot_required>
@@ -8569,6 +8677,17 @@
       <max>200</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_MAG_SIDES" default="63" type="INT32">
+      <short_desc>Bitfield selecting mag sides for calibration</short_desc>
+      <long_desc>If set to two side calibration, only the offsets are estimated, the scale calibration is left unchanged. Thus an initial six side calibration is recommended. Bits: ORIENTATION_TAIL_DOWN = 1 ORIENTATION_NOSE_DOWN = 2 ORIENTATION_LEFT = 4 ORIENTATION_RIGHT = 8 ORIENTATION_UPSIDE_DOWN = 16 ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
+      <min>34</min>
+      <max>63</max>
+      <values>
+        <value code="34">Two side calibration</value>
+        <value code="38">Three side calibration</value>
+        <value code="63">Six side calibration</value>
+      </values>
     </parameter>
     <parameter name="SENS_MB12_0_ROT" default="0" type="INT32">
       <short_desc>MaxBotix MB12XX Sensor 0 Rotation</short_desc>
@@ -9975,100 +10094,6 @@
       </values>
     </parameter>
   </group>
-  <group name="UART ESC">
-    <parameter name="UART_ESC_BAUD" default="250000" type="INT32">
-      <short_desc>UART ESC baud rate</short_desc>
-      <long_desc>Default rate is 250Kbps, which is used in off-the-shelf MoadalAI ESC products.</long_desc>
-      <unit>bit/s</unit>
-    </parameter>
-    <parameter name="UART_ESC_CONFIG" default="0" type="INT32">
-      <short_desc>UART ESC configuration</short_desc>
-      <long_desc>Selects what type of UART ESC, if any, is being used.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">- Disabled</value>
-        <value code="1">- VOXL ESC</value>
-      </values>
-    </parameter>
-    <parameter name="UART_ESC_MODE" default="0" type="INT32">
-      <short_desc>UART ESC Mode</short_desc>
-      <long_desc>Selects what type of mode is enabled, if any</long_desc>
-      <min>0</min>
-      <max>2</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">- None</value>
-        <value code="1">- Turtle Mode enabled via AUX1</value>
-        <value code="2">- Turtle Mode enabled via AUX2</value>
-        <value code="3">- UART Passthrough Mode</value>
-      </values>
-    </parameter>
-    <parameter name="UART_ESC_MOTOR1" default="3" type="INT32">
-      <short_desc>UART ESC Motor 1 Mapping.  1-4 (negative for reversal)</short_desc>
-      <min>-4</min>
-      <max>4</max>
-    </parameter>
-    <parameter name="UART_ESC_MOTOR2" default="2" type="INT32">
-      <short_desc>UART ESC Motor 2 Mapping.  1-4 (negative for reversal)</short_desc>
-      <min>-4</min>
-      <max>4</max>
-    </parameter>
-    <parameter name="UART_ESC_MOTOR3" default="4" type="INT32">
-      <short_desc>UART ESC Motor 3 Mapping.  1-4 (negative for reversal)</short_desc>
-      <min>-4</min>
-      <max>4</max>
-    </parameter>
-    <parameter name="UART_ESC_MOTOR4" default="1" type="INT32">
-      <short_desc>UART ESC Motor 4 Mapping.  1-4 (negative for reversal)</short_desc>
-      <min>-4</min>
-      <max>4</max>
-    </parameter>
-    <parameter name="UART_ESC_RPM_MAX" default="15000" type="INT32">
-      <short_desc>UART ESC RPM Max</short_desc>
-      <long_desc>Maximum RPM for ESC</long_desc>
-    </parameter>
-    <parameter name="UART_ESC_RPM_MIN" default="5500" type="INT32">
-      <short_desc>UART ESC RPM Min</short_desc>
-      <long_desc>Minimum RPM for ESC</long_desc>
-    </parameter>
-    <parameter name="UART_ESC_T_COSP" default="0.990" type="FLOAT">
-      <short_desc>UART ESC Turtle Mode Cosphi</short_desc>
-      <min>0.000</min>
-      <max>1.000</max>
-      <decimal>10</decimal>
-      <increment>0.001</increment>
-    </parameter>
-    <parameter name="UART_ESC_T_DEAD" default="20" type="INT32">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor Deadband</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="UART_ESC_T_EXPO" default="35" type="INT32">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor expo</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="UART_ESC_T_MINF" default="0.15" type="FLOAT">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor STICK_MINF</short_desc>
-      <min>0.0</min>
-      <max>100.0</max>
-      <decimal>10</decimal>
-      <increment>1.0</increment>
-    </parameter>
-    <parameter name="UART_ESC_T_PERC" default="90" type="INT32">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor Percent</short_desc>
-      <min>1</min>
-      <max>100</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
-  </group>
   <group name="UAVCAN">
     <parameter name="CANNODE_BITRATE" default="1000000" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
@@ -10097,6 +10122,10 @@
     <parameter name="CANNODE_TERM" default="0" type="INT32" boolean="true">
       <short_desc>CAN built-in bus termination</short_desc>
       <max>1</max>
+    </parameter>
+    <parameter name="SIM_GZ_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Simulator Gazebo bridge enable</short_desc>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_BITRATE" default="1000000" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
@@ -10445,15 +10474,6 @@
       <min>0.0</min>
       <max>2.0</max>
     </parameter>
-    <parameter name="VT_FW_ALT_ERR" default="0.0" type="FLOAT">
-      <short_desc>Adaptive QuadChute</short_desc>
-      <long_desc>Maximum negative altitude error for fixed wing flight. If the altitude drops below this value below the altitude setpoint the vehicle will transition back to MC mode and enter failsafe RTL.</long_desc>
-      <min>0.0</min>
-      <max>200.0</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>1</increment>
-    </parameter>
     <parameter name="VT_FW_DIFTHR_EN" default="0" type="INT32">
       <short_desc>Differential thrust in forwards flight</short_desc>
       <long_desc>Enable differential thrust seperately for roll, pitch, yaw in forward (fixed-wing) mode. The effectiveness of differential thrust around the corresponding axis can be tuned by setting VT_FW_DIFTHR_S_R / VT_FW_DIFTHR_S_P / VT_FW_DIFTHR_S_Y.</long_desc>
@@ -10499,23 +10519,25 @@
       <increment>1</increment>
     </parameter>
     <parameter name="VT_FW_QC_HMAX" default="0" type="INT32">
-      <short_desc>Quadchute maximum height</short_desc>
-      <long_desc>Maximum height above the ground (if available, otherwhise above home if available, otherwise above the local origin) where triggering a quadchute is possible. Triggering a quadchute always means transitioning the vehicle to hover flight in which generally a lot of energy is consumed. At high altitudes there is therefore a big risk to deplete the battery and therefore crash. Currently, there is no automated re-transition to fixed wing mode implemented and therefore this parameter serves and an intermediate measure to increase safety. Setting this value to 0 deactivates the behavior.</long_desc>
+      <short_desc>Quad-chute maximum height</short_desc>
+      <long_desc>Maximum height above the ground (if available, otherwhise above home if available, otherwise above the local origin) where triggering a quadchute is possible. Triggering a quadchute always means transitioning the vehicle to hover flight in which generally a lot of energy is consumed. At high altitudes there is therefore a big risk to deplete the battery and therefore crash. Currently, there is no automated re-transition to fixed wing mode implemented and therefore this parameter serves and an intermediate measure to increase safety. Setting this value to 0 deactivates the behavior (always enable quad-chute independently of altitude).</long_desc>
       <min>0</min>
       <unit>m</unit>
       <increment>1</increment>
     </parameter>
     <parameter name="VT_FW_QC_P" default="0" type="INT32">
-      <short_desc>QuadChute Max Pitch</short_desc>
-      <long_desc>Maximum pitch angle before QuadChute engages Above this the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
+      <short_desc>Quad-chute max pitch threshold</short_desc>
+      <long_desc>Absolute pitch threshold for quad-chute triggering in FW mode. Above this the vehicle will transition back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
       <min>0</min>
       <max>180</max>
+      <unit>deg</unit>
     </parameter>
     <parameter name="VT_FW_QC_R" default="0" type="INT32">
-      <short_desc>QuadChute Max Roll</short_desc>
-      <long_desc>Maximum roll angle before QuadChute engages Above this the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
+      <short_desc>Quad-chute max roll threshold</short_desc>
+      <long_desc>Absolute roll threshold for quad-chute triggering in FW mode. Above this the vehicle will transition back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
       <min>0</min>
       <max>180</max>
+      <unit>deg</unit>
     </parameter>
     <parameter name="VT_F_TRANS_DUR" default="5.0" type="FLOAT">
       <short_desc>Duration of a front transition</short_desc>
@@ -10568,6 +10590,24 @@
       <unit>1/s</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter name="VT_QC_HR_ERROR_I" default="0.0" type="FLOAT">
+      <short_desc>Quad-chute uncommanded descent threshold</short_desc>
+      <long_desc>Threshold for integrated height rate error to trigger a uncommanded-descent quad-chute. Only checked in altitude-controlled fixed-wing flight. Additional conditions that have to be met for uncommanded descent detection are a positive (climbing) height rate setpoint and a negative (sinking) current height rate estimate. Set to 0 do disable this threshold.</long_desc>
+      <min>0.0</min>
+      <max>200.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="VT_QC_T_ALT_LOSS" default="10.0" type="FLOAT">
+      <short_desc>Quad-chute transition altitude loss threshold</short_desc>
+      <long_desc>Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight. If the current altitude is more than this value below the altitude at the beginning of the transition, it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
+      <min>0</min>
+      <max>50</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="VT_SPOILER_MC_LD" default="0." type="FLOAT">
       <short_desc>Spoiler setting while landing (hover)</short_desc>
