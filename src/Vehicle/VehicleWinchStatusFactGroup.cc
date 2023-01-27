@@ -136,7 +136,7 @@ void VehicleWinchStatusFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_
     loadLine()->setRawValue        (!!(winchStatus.status & MAV_WINCH_STATUS_LOAD_LINE));
     loadPayload()->setRawValue     (!!(winchStatus.status & MAV_WINCH_STATUS_LOAD_PAYLOAD));
     uint8_t custom_aviant_status = static_cast<uint8_t>(winchStatus.status >> CUSTOM_AVIANT_STATUS_SHIFT & CUSTOM_AVIANT_STATUS_MASK);
-    dropAllowed()->setRawValue     (!!(custom_aviant_status & CUSTOM_AVIANT_STATUS_DROP_ALLOWED));
+    dropAllowed()->setRawValue     (custom_aviant_status == CUSTOM_AVIANT_STATUS_DROP_ALLOWED);
     dropBlocker()->setRawValue     (custom_aviant_status);
     stale()->setRawValue           (false);
     _staleCounter = 0;
