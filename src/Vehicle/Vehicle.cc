@@ -80,6 +80,7 @@ const char* Vehicle::_yawRateFactName =             "yawRate";
 const char* Vehicle::_airSpeedFactName =            "airSpeed";
 const char* Vehicle::_airSpeedSetpointFactName =    "airSpeedSetpoint";
 const char* Vehicle::_xTrackErrorFactName =         "xTrackError";
+const char* Vehicle::_rangeFinderDistFactName =     "rangeFinderDist";
 const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
@@ -147,6 +148,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _altitudeTuningFact           (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
     , _altitudeTuningSetpointFact   (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
     , _xTrackErrorFact              (0, _xTrackErrorFactName,       FactMetaData::valueTypeDouble)
+    , _rangeFinderDistFact          (0, _rangeFinderDistFactName,   FactMetaData::valueTypeFloat)
     , _flightDistanceFact           (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact               (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact           (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
@@ -301,6 +303,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _altitudeTuningFact               (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
     , _altitudeTuningSetpointFact       (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
     , _xTrackErrorFact                  (0, _xTrackErrorFactName,       FactMetaData::valueTypeDouble)
+    , _rangeFinderDistFact              (0, _rangeFinderDistFactName,   FactMetaData::valueTypeFloat)
     , _flightDistanceFact               (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact                   (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact               (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
@@ -424,6 +427,7 @@ void Vehicle::_commonInit()
     _addFact(&_altitudeTuningFact,       _altitudeTuningFactName);
     _addFact(&_altitudeTuningSetpointFact, _altitudeTuningSetpointFactName);
     _addFact(&_xTrackErrorFact,         _xTrackErrorFactName);
+    _addFact(&_rangeFinderDistFact,     _rangeFinderDistFactName);
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
@@ -719,6 +723,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
+    case MAVLINK_MSG_ID_RANGEFINDER:
+        _handleRangefinder(message);
+        break;
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         _handleNavControllerOutput(message);
         break;
@@ -1000,6 +1007,14 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     }
     _altitudeTuningFact.setRawValue(vfrHud.alt - _altitudeTuningOffset);
 }
+
+void Vehicle::_handleRangefinder(mavlink_message_t& message)
+{
+    mavlink_rangefinder_t rangefinder;
+    mavlink_msg_rangefinder_decode(&message, &rangefinder);
+    _rangeFinderDistFact.setRawValue(qIsNaN(rangefinder.distance) ? 0 : rangefinder.distance);
+}
+
 
 void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
 {
