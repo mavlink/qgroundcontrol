@@ -463,8 +463,8 @@
             },
             "param3": {
                 "label":            "Direction",
-                "enumStrings":      "Clockwise,Counter-Clockwise",
-                "enumValues":       "1,-1",
+                "enumStrings":      "Clockwise,Shortest,Counter-Clockwise",
+                "enumValues":       "1,0,-1",
                 "default":          1
             },
             "param4": {
