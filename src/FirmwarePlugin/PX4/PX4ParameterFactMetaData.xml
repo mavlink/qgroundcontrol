@@ -582,8 +582,8 @@
       </bitmask>
     </parameter>
     <parameter name="FW_AT_MAN_AUX" default="0" type="INT32">
-      <short_desc>Enable auto tuning enable on aux input</short_desc>
-      <long_desc>Defines which aux input to enable auto tuning</long_desc>
+      <short_desc>Enable/disable auto tuning using an RC AUX input</short_desc>
+      <long_desc>Defines which RC_MAP_AUXn parameter maps the RC channel used to enable/disable auto tuning.</long_desc>
       <min>0</min>
       <max>6</max>
       <values>
@@ -1611,14 +1611,14 @@
     </parameter>
     <parameter name="EKF2_AID_MASK" default="0" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Deprecated, use EKF2_EV_CTRL instead 4 : Deprecated, use EKF2_EV_CTRL instead 5 : Set to true to enable multi-rotor drag specific force fusion 6 : Deprecated, use EKF2_EV_CTRL instead 7 : Deprecated, use EKF2_GPS_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Set to true to use optical flow data if available 2 : Deprecated, use EKF2_IMU_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead 4 : Deprecated, use EKF2_EV_CTRL instead 5 : Set to true to enable multi-rotor drag specific force fusion 6 : Deprecated, use EKF2_EV_CTRL instead 7 : Deprecated, use EKF2_GPS_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead</long_desc>
       <min>0</min>
       <max>511</max>
       <reboot_required>true</reboot_required>
       <bitmask>
         <bit index="0">unused</bit>
         <bit index="1">use optical flow</bit>
-        <bit index="2">inhibit IMU bias estimation</bit>
+        <bit index="2">unused</bit>
         <bit index="3">unused</bit>
         <bit index="4">unused</bit>
         <bit index="5">multi-rotor drag fusion</bit>
@@ -1938,6 +1938,13 @@
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
+    <parameter name="EKF2_GRAV_NOISE" default="1.0" type="FLOAT">
+      <short_desc>Accelerometer measurement noise for gravity based observations</short_desc>
+      <min>0.1</min>
+      <max>10.0</max>
+      <unit>m/s^2</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter name="EKF2_GSF_TAS" default="15.0" type="FLOAT">
       <short_desc>Default value of true airspeed used in EKF-GSF AHRS calculation</short_desc>
       <long_desc>If no airspeed measurements are available, the EKF-GSF AHRS calculation will assume this value of true airspeed when compensating for centripetal acceleration during turns. Set to zero to disable centripetal acceleration compensation during fixed wing flight modes.</long_desc>
@@ -1992,6 +1999,16 @@
         <value code="2">Range sensor</value>
         <value code="3">Vision</value>
       </values>
+    </parameter>
+    <parameter name="EKF2_IMU_CTRL" default="3" type="INT32">
+      <short_desc>IMU control</short_desc>
+      <min>0</min>
+      <max>7</max>
+      <bitmask>
+        <bit index="0">Gyro Bias</bit>
+        <bit index="1">Accel Bias</bit>
+        <bit index="2">Gravity vector fusion</bit>
+      </bitmask>
     </parameter>
     <parameter name="EKF2_IMU_POS_X" default="0.0" type="FLOAT">
       <short_desc>X position of IMU in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
@@ -5212,6 +5229,16 @@
       <min>0.1</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
+    </parameter>
+    <parameter name="MPC_LAND_RC_HELP" default="0" type="INT32">
+      <short_desc>Enable user assisted descent for autonomous land routine</short_desc>
+      <long_desc>When enabled, descent speed will be: stick full up - 0 stick centered - MPC_LAND_SPEED stick full down - 2 * MPC_LAND_SPEED Additionally, the vehicle can be yawed and moved laterally using the other sticks. Manual override during auto modes has to be disabled to use this feature (see COM_RC_OVERRIDE).</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <values>
+        <value code="0">Fixed descent speed of MPC_LAND_SPEED</value>
+        <value code="1">User assisted descent speed</value>
+      </values>
     </parameter>
     <parameter name="MPC_LAND_SPEED" default="0.7" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
@@ -10712,16 +10739,6 @@
     </parameter>
   </group>
   <group name="Miscellaneous">
-    <parameter name="MPC_LAND_RC_HELP" default="0" type="INT32">
-      <short_desc>Enable user assisted descent speed for autonomous land routine</short_desc>
-      <long_desc>When enabled, descent speed will be: stick full up - 0 stick centered - MPC_LAND_SPEED stick full down - 2 * MPC_LAND_SPEED</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Fixed descent speed of MPC_LAND_SPEED</value>
-        <value code="1">User assisted descent speed</value>
-      </values>
-    </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
       <short_desc>Skip the controller</short_desc>
       <values>
