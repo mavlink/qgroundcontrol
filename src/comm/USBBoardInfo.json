@@ -36,7 +36,7 @@
 
         { "vendorID": 12642, "productID": 0,        "boardClass": "Pixhawk",    "name": "Holybro" },
 
-        { "vendorID": 11694, "productID": 0,        "boardClass": "Pixhawk",    "name": "Hex/ProfiCNC" },
+        { "vendorID": 11694, "productID": 0,        "boardClass": "Pixhawk",    "name": "CubePilot" },
 
         { "vendorID": 13735, "productID": 1,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-K1" },
         { "vendorID": 13735, "productID": 2,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-R1" },
