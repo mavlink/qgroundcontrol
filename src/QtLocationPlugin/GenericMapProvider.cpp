@@ -65,6 +65,14 @@ QString StatkartMapProvider::_getURL(const int x, const int y, const int zoom, Q
     return StatkartMapUrl.arg(zoom).arg(x).arg(y);
 }
 
+static const QString StatkartBaseMapUrl = QStringLiteral("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=norgeskart_bakgrunn&zoom=%1&x=%2&y=%3");
+
+QString StatkartBaseMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return StatkartBaseMapUrl.arg(zoom).arg(x).arg(y);
+}
+
+
 static const QString EniroMapUrl = QStringLiteral("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.png");
 
 QString EniroMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
