@@ -50,6 +50,7 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Bing Hybrid"]    = new BingHybridMapProvider(this);
 
     _providersTable["Statkart Topo"] = new StatkartMapProvider(this);
+    _providersTable["Statkart Basemap"] = new StatkartBaseMapProvider(this);
 
     _providersTable["Eniro Topo"] = new EniroMapProvider(this);
 
