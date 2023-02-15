@@ -2978,7 +2978,7 @@ bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
     }
 }
 
-void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int targetCompId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int targetCompId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
 {
     if ((targetCompId == MAV_COMP_ID_ALL) || (isMavCommandPending(targetCompId, command) && !_commandCanBeDuplicated(command))) {
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
@@ -3016,13 +3016,13 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResul
     entry.showError         = showError;
     entry.resultHandler     = resultHandler;
     entry.resultHandlerData = resultHandlerData;
-    entry.rgParam[0]        = param1;
-    entry.rgParam[1]        = param2;
-    entry.rgParam[2]        = param3;
-    entry.rgParam[3]        = param4;
-    entry.rgParam[4]        = param5;
-    entry.rgParam[5]        = param6;
-    entry.rgParam[6]        = param7;
+    entry.rgParam1          = param1;
+    entry.rgParam2          = param2;
+    entry.rgParam3          = param3;
+    entry.rgParam4          = param4;
+    entry.rgParam5          = param5;
+    entry.rgParam6          = param6;
+    entry.rgParam7          = param7;
     entry.maxTries          = _sendMavCommandShouldRetry(command) ? _mavCommandMaxRetryCount : 1;
     entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
     entry.elapsedTimer.start();
@@ -3075,13 +3075,13 @@ void Vehicle::_sendMavCommandFromList(int index)
         cmd.target_component =  commandEntry.targetCompId;
         cmd.command =           commandEntry.command;
         cmd.frame =             commandEntry.frame;
-        cmd.param1 =            commandEntry.rgParam[0];
-        cmd.param2 =            commandEntry.rgParam[1];
-        cmd.param3 =            commandEntry.rgParam[2];
-        cmd.param4 =            commandEntry.rgParam[3];
-        cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam[4] : commandEntry.rgParam[4] * 1e7;
-        cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam[5] : commandEntry.rgParam[5] * 1e7;
-        cmd.z =                 commandEntry.rgParam[6];
+        cmd.param1 =            commandEntry.rgParam1;
+        cmd.param2 =            commandEntry.rgParam2;
+        cmd.param3 =            commandEntry.rgParam3;
+        cmd.param4 =            commandEntry.rgParam4;
+        cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam5 : commandEntry.rgParam5 * 1e7;
+        cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam6 : commandEntry.rgParam6 * 1e7;
+        cmd.z =                 commandEntry.rgParam7;
         mavlink_msg_command_int_encode_chan(_mavlink->getSystemId(),
                                             _mavlink->getComponentId(),
                                             sharedLink->mavlinkChannel(),
@@ -3095,13 +3095,13 @@ void Vehicle::_sendMavCommandFromList(int index)
         cmd.target_component =  commandEntry.targetCompId;
         cmd.command =           commandEntry.command;
         cmd.confirmation =      0;
-        cmd.param1 =            commandEntry.rgParam[0];
-        cmd.param2 =            commandEntry.rgParam[1];
-        cmd.param3 =            commandEntry.rgParam[2];
-        cmd.param4 =            commandEntry.rgParam[3];
-        cmd.param5 =            commandEntry.rgParam[4];
-        cmd.param6 =            commandEntry.rgParam[5];
-        cmd.param7 =            commandEntry.rgParam[6];
+        cmd.param1 =            commandEntry.rgParam1;
+        cmd.param2 =            commandEntry.rgParam2;
+        cmd.param3 =            commandEntry.rgParam3;
+        cmd.param4 =            commandEntry.rgParam4;
+        cmd.param5 =            static_cast<float>(commandEntry.rgParam5);
+        cmd.param6 =            static_cast<float>(commandEntry.rgParam6);
+        cmd.param7 =            commandEntry.rgParam7;
         mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
                                              _mavlink->getComponentId(),
                                              sharedLink->mavlinkChannel(),
