@@ -150,7 +150,7 @@ MAVLinkLogProcessor::valid()
 bool
 MAVLinkLogProcessor::create(MAVLinkLogManager* manager, const QString path, uint8_t id)
 {
-    _fileName.asprintf("%s/%03d-%s%s",
+    _fileName = _fileName.asprintf("%s/%03d-%s%s",
                       path.toLatin1().data(),
                       id,
                       QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLocal8Bit().data(),
