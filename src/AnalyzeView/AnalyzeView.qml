@@ -127,43 +127,8 @@ Rectangle {
         property string title
 
         Connections {
-            target: panelLoader.item
-            onPopout: {
-                var windowedPage = windowedAnalyzePage.createObject(mainWindow)
-                windowedPage.title = panelLoader.title
-                windowedPage.source = panelLoader.source
-                _root.popout()
-            }
+            target:     panelLoader.item
+            onPopout:   mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source)
         }
-
-    }
-
-    Component {
-        id: windowedAnalyzePage
-
-        Window {
-            width:      ScreenTools.defaultFontPixelWidth  * 100
-            height:     ScreenTools.defaultFontPixelHeight * 40
-            visible:    true
-
-            property alias source: loader.source
-
-            Rectangle {
-                color:          QGroundControl.globalPalette.window
-                anchors.fill:   parent
-
-                Loader {
-                    id:             loader
-                    anchors.fill:   parent
-                    onLoaded:       item.popped = true
-                }
-            }
-
-            onClosing: {
-                visible = false
-                source = ""
-            }
-        }
-
     }
 }
