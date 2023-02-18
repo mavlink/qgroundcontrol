@@ -666,4 +666,42 @@ ApplicationWindow {
             indicatorPopup.currentIndicator = null
         }
     }
+
+    // We have to create the popup windows for the Analyze pages here so that the creation context is rooted
+    // to mainWindow. Otherwise if they are rooted to the AnalyzeView itself they will die when the analyze viewSwitch
+    // closes.
+
+    function createrWindowedAnalyzePage(title, source) {
+        var windowedPage = windowedAnalyzePage.createObject(mainWindow)
+        windowedPage.title = title
+        windowedPage.source = source
+    }
+
+    Component {
+        id: windowedAnalyzePage
+
+        Window {
+            width:      ScreenTools.defaultFontPixelWidth  * 100
+            height:     ScreenTools.defaultFontPixelHeight * 40
+            visible:    true
+
+            property alias source: loader.source
+
+            Rectangle {
+                color:          QGroundControl.globalPalette.window
+                anchors.fill:   parent
+
+                Loader {
+                    id:             loader
+                    anchors.fill:   parent
+                    onLoaded:       item.popped = true
+                }
+            }
+
+            onClosing: {
+                visible = false
+                source = ""
+            }
+        }
+    }
 }
