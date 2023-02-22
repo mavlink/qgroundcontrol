@@ -2698,7 +2698,7 @@
       <min>0</min>
       <max>3</max>
       <bitmask>
-        <bit index="0">Abort if terrain is not found</bit>
+        <bit index="0">Abort if terrain is not found (only applies to mission landings)</bit>
         <bit index="1">Abort if terrain times out (after a first successful measurement)</bit>
       </bitmask>
     </parameter>
@@ -8401,6 +8401,16 @@
         <value code="1">Enabled</value>
       </values>
     </parameter>
+    <parameter name="SENS_EN_BAROSIM" default="0" type="INT32">
+      <short_desc>Enable simulated barometer sensor instance</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
+      </values>
+    </parameter>
     <parameter name="SENS_EN_BATT" default="0" type="INT32" boolean="true">
       <short_desc>SMBUS Smart battery driver BQ40Z50 and BQ40Z80</short_desc>
       <reboot_required>true</reboot_required>
@@ -8408,6 +8418,16 @@
     <parameter name="SENS_EN_ETSASPD" default="0" type="INT32" boolean="true">
       <short_desc>Eagle Tree airspeed sensor (external I2C)</short_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_EN_GPSSIM" default="0" type="INT32">
+      <short_desc>Enable simulated GPS sinstance</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
+      </values>
     </parameter>
     <parameter name="SENS_EN_INA220" default="0" type="INT32" boolean="true">
       <short_desc>Enable INA220 Power Monitor</short_desc>
@@ -8442,6 +8462,16 @@
         <value code="0">Disabled</value>
         <value code="1">PWM</value>
         <value code="2">I2C</value>
+      </values>
+    </parameter>
+    <parameter name="SENS_EN_MAGSIM" default="0" type="INT32">
+      <short_desc>Enable simulated magnetometer sensor instance</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
       </values>
     </parameter>
     <parameter name="SENS_EN_MB12XX" default="0" type="INT32" boolean="true">
