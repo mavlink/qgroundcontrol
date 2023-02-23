@@ -91,4 +91,4 @@ jobs:
 
       - name: Run unit tests
         working-directory:  ${{ runner.temp }}/shadow_build_dir  
-        run:                ./staging/qgroundcontrol-start.sh --unittest
+        run:                xvfb-run -a ./staging/qgroundcontrol-start.sh --unittest
