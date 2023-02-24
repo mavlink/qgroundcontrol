@@ -119,6 +119,7 @@ ColumnLayout {
                         visible: _activeJoystick ? _activeJoystick.pwmVisibilities[modelData] : false
 
                         function _setButtonPwm(button, isLow, pwm) {
+                            var pwmValue = -1;
                             if(_activeJoystick) {
                                 if (pwm < 1000) {
                                     pwm = 1000;
@@ -126,16 +127,17 @@ ColumnLayout {
                                 if (pwm > 2000) {
                                     pwm = 2000;
                                 }
-                                _activeJoystick.setButtonPwm(modelData, isLow, pwm)
+                                pwmValue = _activeJoystick.setButtonPwm(modelData, isLow, pwm)
                             }
+                            return pwmValue == -1 ? "" : pwmValue;
                         }
 
                         function _getButtonPwm(button, isLow) {
-                            var pwm = -1;
+                            var pwmValue = -1;
                             if(_activeJoystick) {
-                                pwm = _activeJoystick.getButtonPwm(modelData, isLow)
+                                pwmValue = _activeJoystick.getButtonPwm(modelData, isLow)
                             }
-                            return pwm == -1 ? "" : pwm;
+                            return pwmValue == -1 ? "" : pwmValue;
                         }
 
                         QGCLabel {
@@ -143,6 +145,7 @@ ColumnLayout {
                             text:       qsTr("Low")
                             anchors.verticalCenter:     parent.verticalCenter
                         }
+
                         QGCTextField {
                             id:     lowPwmValue
                             width:  ScreenTools.defaultFontPixelWidth * 10
@@ -153,7 +156,7 @@ ColumnLayout {
                             Connections {
                                 target: buttonActionCombo
                                 onCurrentIndexChanged: {
-                                    if(_activeJoystick) {
+                                    if (_activeJoystick) {
                                         console.log("index changed, ", buttonActionCombo.currentIndex)
                                         console.log("index changed, ", modelData)
                                         console.log("index changed, ", target)
@@ -166,10 +169,14 @@ ColumnLayout {
 
                             Component.onCompleted: {
                                 if(_activeJoystick) {
-                                    text = parent._getButtonPwm(modelData, true)
+                                    text = pwmSettings._getButtonPwm(modelData, true)
                                 }
                             }
-                            onEditingFinished: parent._setButtonPwm(modelData, true, text)
+                            onEditingFinished: {
+                                // setButtonPwm calculates proper value and we set it back
+                                var pwm = pwmSettings._setButtonPwm(modelData, true, text)
+                                lowPwmValue.text = pwm;
+                            }
 
                         }
                         QGCLabel {
@@ -201,15 +208,21 @@ ColumnLayout {
 
                             Component.onCompleted: {
                                 if(_activeJoystick) {
-                                    text = parent._getButtonPwm(modelData, false)
+                                    text = pwmSettings._getButtonPwm(modelData, false)
                                 }
                             }
-                            onEditingFinished: parent._setButtonPwm(modelData, false, text)
+                            onEditingFinished: {
+                                // setButtonPwm calculates proper value and we set it back
+                                var pwm = pwmSettings._setButtonPwm(modelData, false, text)
+                                highPwmValue.text = pwm;
+                            }
                         }
+
                         QGCCheckBox {
                             id:                         latchCheck
                             text:                       qsTr("Latch")
                             anchors.verticalCenter:     parent.verticalCenter
+                            enabled:                    pwmSettings._latchEnabled(modelData)
 
                             onClicked: {
                                 _activeJoystick.setButtonPwmLatch(modelData, checked)

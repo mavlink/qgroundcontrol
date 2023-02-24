@@ -998,7 +998,7 @@ void Joystick::_removeButtonSettings(int button)
     settings.beginGroup(_name);
     settings.remove(QString(_buttonActionNameKey).arg(button));
     settings.remove(QString(_buttonActionRepeatKey).arg(button));
-    if (_buttonActionArray[button]->isPwmOverrideAction()) {
+    if (assignableButtonActionIsPwm(button)) {
         settings.remove(QString(_buttonActionHighPwmValueKey).arg(button));
         settings.remove(QString(_buttonActionLowPwmValueKey).arg(button));
         settings.remove(QString(_buttonActionLatchPwmValueKey).arg(button));
@@ -1016,43 +1016,53 @@ QString Joystick::getButtonAction(int button)
 }
 
 bool Joystick::assignableButtonActionIsPwm(int button) {
-    return (_validButton(button) && _buttonActionArray[button]) ? _buttonActionArray[button]->isPwmOverrideAction() : false;
+    return _validButton(button) && _buttonActionArray[button] && _buttonActionArray[button]->isPwmOverrideAction();
 }
 
 bool Joystick::assignableActionIsPwm(QString action) {
     return action.contains("PWM");
 }
 
-void Joystick::setButtonPwm(int button, bool lowPwm, int value) {
+int Joystick::setButtonPwm(int button, bool lowPwm, int value) {
     qDebug(JoystickLog) << "setButtonPwm: " << button << (lowPwm ? "LOW " : "HIGH ") << value;
     if (assignableButtonActionIsPwm(button)) {
         QSettings settings;
         settings.beginGroup(_settingsGroup);
         settings.beginGroup(_name);
         if (lowPwm) {
+            /// finds first other button with same action and sets low value to same value, emits error
+            int anyOtherButtonWithSameAction = _getOtherMultiButtonPWMOverrideButtonIndex(button);
+            if (anyOtherButtonWithSameAction != -1) {
+                if (value != _buttonActionArray[anyOtherButtonWithSameAction]->lowPwm()) {
+                    value = _buttonActionArray[anyOtherButtonWithSameAction]->lowPwm();
+                    qCDebug(JoystickLog) << "setButtonPwm: " << button << " has same action as " << anyOtherButtonWithSameAction << " setting low pwm to " << value;
+                    //TODO(bzd) emit error
+                }
+            }
             _buttonActionArray[button]->lowPwm(value);
             settings.setValue(QString(_buttonActionLowPwmValueKey).arg(button), value);
         } else {
             _buttonActionArray[button]->highPwm(value);
             settings.setValue(QString(_buttonActionHighPwmValueKey).arg(button), value);
         }
+        return value;
     }
 
+    return -1;
 }
 
 int Joystick::getButtonPwm(int button, bool lowPwm) {
-    if (_validButton(button)) {
-        if (assignableButtonActionIsPwm(button)) {
-            QSettings settings;
-            settings.beginGroup(_settingsGroup);
-            settings.beginGroup(_name);
-            if (lowPwm) {
-                return settings.value(QString(_buttonActionLowPwmValueKey).arg(button), -1).toInt();
-            } else {
-                return settings.value(QString(_buttonActionHighPwmValueKey).arg(button), -1).toInt();
-            }
+    if (_validButton(button) && assignableButtonActionIsPwm(button)) {
+        QSettings settings;
+        settings.beginGroup(_settingsGroup);
+        settings.beginGroup(_name);
+        if (lowPwm) {
+            return settings.value(QString(_buttonActionLowPwmValueKey).arg(button), -1).toInt();
+        } else {
+            return settings.value(QString(_buttonActionHighPwmValueKey).arg(button), -1).toInt();
         }
     }
+
     return -1;
 }
 
@@ -1413,4 +1423,17 @@ uint16_t Joystick::_mapRcOverrideToRelease(uint8_t rcChannel, uint16_t value) {
         return rcChannel < 9 ? 0 : UINT16_MAX - 1;
     }
     return value;
+}
+
+int Joystick::_getOtherMultiButtonPWMOverrideButtonIndex(int button) {
+    if (_buttonActionArray[button] && _buttonActionArray[button]->isPwmOverrideAction()) {
+        auto action = _buttonActionArray[button]->action();
+        // check if there is another button with the same action
+        for (int i = 0; i < _buttonActionArray.count(); i++) {
+            if (i != button && _buttonActionArray[i] && _buttonActionArray[i]->action() == action) {
+                return i;
+            }
+        }
+    }
+    return -1;
 }

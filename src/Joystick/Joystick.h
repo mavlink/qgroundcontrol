@@ -157,7 +157,7 @@ public:
     Q_INVOKABLE QString getButtonAction     (int button);
     Q_INVOKABLE bool 	assignableButtonActionIsPwm	(int button);
     Q_INVOKABLE bool    assignableActionIsPwm   	(QString action);
-    Q_INVOKABLE void    setButtonPwm        (int button, bool lowPwm, int value);
+    Q_INVOKABLE int     setButtonPwm        (int button, bool lowPwm, int value);
     Q_INVOKABLE int     getButtonPwm        (int button, bool lowPwm);
 
     // Property accessors
@@ -294,7 +294,6 @@ private:
     int _mapFunctionMode(int mode, int function);
     void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]);
 
-    //TODO(bzd) change private members to use _ prefix
     void _removeButtonSettings(int button);
     void _saveButtonSettings(int button);
     /// if repeat is available for action under button, sets passed repeat flag
@@ -303,6 +302,18 @@ private:
     bool _executeRcOverrideButtonAction(int buttonIndex, bool buttonDown);
     void _clearRcOverrideButtonActions();
     uint16_t _mapRcOverrideToRelease(uint8_t rcChannel, uint16_t value);
+//    bool _isButtonOfMultiButtonPWMOverride(int button);
+    /**
+     * @brief Checks if the button is a multi-button PWM override, returns any other button if it is
+     *
+     * Searches for other buttons that are part of the same multi-button PWM override Action and returns the first one found that is different from the passed button.
+     * If the passed button is not part of a multi-button PWM override, returns -1.
+     *
+     * @param button
+     * @return
+     */
+    int _getOtherMultiButtonPWMOverrideButtonIndex(int button);
+    bool _isActionMultiButtonPWMOverride(const QString& action);
 
     // Override from QThread
     virtual void run();
