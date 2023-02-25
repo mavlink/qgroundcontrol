@@ -343,7 +343,8 @@ public:
     Q_INVOKABLE void resetCounters  ();
 
     // Called when the message drop-down is invoked to clear current count
-    Q_INVOKABLE void resetMessages();
+    Q_INVOKABLE void resetAllMessages();
+    Q_INVOKABLE void resetErrorLevelMessages();
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
 
