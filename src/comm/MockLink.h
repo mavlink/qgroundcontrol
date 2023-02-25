@@ -189,10 +189,11 @@ private slots:
     // LinkInterface overrides
     void _writeBytes(const QByteArray bytes) final;
 
-    void _writeBytesQueued(const QByteArray bytes);
-    void _run1HzTasks(void);
-    void _run10HzTasks(void);
-    void _run500HzTasks(void);
+    void _writeBytesQueued      (const QByteArray bytes);
+    void _run1HzTasks           (void);
+    void _run10HzTasks          (void);
+    void _run500HzTasks         (void);
+    void _sendStatusTextMessages(void);
 
 private:
     // LinkInterface overrides
@@ -232,7 +233,6 @@ private:
     void _sendVibration                 (void);
     void _sendSysStatus                 (void);
     void _sendBatteryStatus             (void);
-    void _sendStatusTextMessages        (void);
     void _sendChunkedStatusText         (uint16_t chunkId, bool missingChunks);
     void _respondWithAutopilotVersion   (void);
     void _sendRCChannels                (void);

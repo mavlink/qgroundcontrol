@@ -199,14 +199,22 @@ void MockLink::run(void)
     QTimer  timer1HzTasks;
     QTimer  timer10HzTasks;
     QTimer  timer500HzTasks;
+    QTimer  timerStatusText;
 
-    QObject::connect(&timer1HzTasks,  &QTimer::timeout, this, &MockLink::_run1HzTasks);
-    QObject::connect(&timer10HzTasks, &QTimer::timeout, this, &MockLink::_run10HzTasks);
+    QObject::connect(&timer1HzTasks,   &QTimer::timeout, this, &MockLink::_run1HzTasks);
+    QObject::connect(&timer10HzTasks,  &QTimer::timeout, this, &MockLink::_run10HzTasks);
     QObject::connect(&timer500HzTasks, &QTimer::timeout, this, &MockLink::_run500HzTasks);
+    QObject::connect(&timerStatusText, &QTimer::timeout, this, &MockLink::_sendStatusTextMessages);
 
     timer1HzTasks.start(1000);
     timer10HzTasks.start(100);
     timer500HzTasks.start(2);
+
+    // Wait a little bit for the ui to finish loading up before sending out status text messages
+    if (_sendStatusText) {
+        timerStatusText.setSingleShot(true);
+        timerStatusText.start(10000);
+    }
 
     // Send first set right away
     _run1HzTasks();
@@ -241,10 +249,6 @@ void MockLink::_run1HzTasks(void)
                 _sendHomePositionDelayCount--;
             } else {
                 _sendHomePosition();
-            }
-            if (_sendStatusText) {
-                _sendStatusText = false;
-                _sendStatusTextMessages();
             }
         }
     }
