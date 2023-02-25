@@ -2056,7 +2056,7 @@ void Vehicle::_handleTextMessage(int newCount)
     }
 }
 
-void Vehicle::resetMessages()
+void Vehicle::resetAllMessages()
 {
     // Reset Counts
     int count = _currentMessageCount;
@@ -2070,6 +2070,31 @@ void Vehicle::resetMessages()
         emit newMessageCountChanged();
     }
     if(type != _currentMessageType) {
+        emit messageTypeChanged();
+    }
+}
+
+// Reset warning counts only
+void Vehicle::resetErrorLevelMessages()
+{
+    int prevMessageCount = _currentMessageCount;
+    MessageType_t prevMessagetype = _currentMessageType;
+
+    _currentMessageCount -= _currentErrorCount;
+    _currentErrorCount   = 0;
+
+    if (_currentWarningCount > 0) {
+        _currentMessageType = MessageWarning;
+    } else if (_currentNormalCount > 0) {
+        _currentMessageType = MessageNormal;
+    } else {
+        _currentMessageType = MessageNone;
+    }
+
+    if (prevMessageCount != _currentMessageCount) {
+        emit newMessageCountChanged();
+    }
+    if (prevMessagetype != _currentMessageType) {
         emit messageTypeChanged();
     }
 }
