@@ -40,6 +40,9 @@ jobs:
       - name: Install QGC source dependencies
         run:  sudo apt-get install -y libsdl2-dev
 
+      - name: Install source dependencies required to run unit tests in workflow container
+        run:  sudo apt-get install -y libxkbcommon-x11-0
+
       - name: Install Gstreamer dev packages
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
