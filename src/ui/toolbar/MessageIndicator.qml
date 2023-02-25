@@ -31,6 +31,10 @@ Item {
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isMessageImportant:    _activeVehicle ? !_activeVehicle.messageTypeNormal && !_activeVehicle.messageTypeNone : false
 
+    function dropMessageIndicator() {
+        mainWindow.showIndicatorPopup(_root, vehicleMessagesPopup);
+    }
+
     function getMessageColor() {
         if (_activeVehicle) {
             if (_activeVehicle.messageTypeNone)
@@ -70,7 +74,7 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showIndicatorPopup(_root, vehicleMessagesPopup)
+        onClicked:      dropMessageIndicator()
     }
 
     Component {
@@ -95,7 +99,7 @@ Item {
                 //-- Hack to scroll to last message
                 for (var i = 0; i < _activeVehicle.messageCount; i++)
                     messageFlick.flick(0,-5000)
-                _activeVehicle.resetMessages()
+                _activeVehicle.resetAllMessages()
             }
 
             Connections {

@@ -24,6 +24,10 @@ Row {
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66
 
+    function dropMessageIndicatorTool() {
+        toolIndicatorsRepeater.dropMessageIndicatorTool();
+    }
+
     Repeater {
         id:     appRepeater
         model:  QGroundControl.corePlugin.toolBarIndicators
@@ -36,7 +40,18 @@ Row {
     }
 
     Repeater {
-        model: _activeVehicle ? _activeVehicle.toolIndicators : []
+        id:     toolIndicatorsRepeater
+        model:  _activeVehicle ? _activeVehicle.toolIndicators : []
+
+        function dropMessageIndicatorTool() {
+            for (var i=0; i<count; i++) {
+                var thisTool = itemAt(i);
+                if (thisTool.item.dropMessageIndicator) {
+                    thisTool.item.dropMessageIndicator();
+                }
+            }
+        }
+
         Loader {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
