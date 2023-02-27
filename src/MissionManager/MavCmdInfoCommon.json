@@ -300,7 +300,7 @@
                 "default":          0,
                 "decimalPlaces":    0,
                 "min":              0
-            }        
+            }
         },
         { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
         {
@@ -463,8 +463,8 @@
             },
             "param3": {
                 "label":            "Direction",
-                "enumStrings":      "Clockwise,Counter-Clockwise",
-                "enumValues":       "1,-1",
+                "enumStrings":      "Clockwise,Shortest,Counter-Clockwise",
+                "enumValues":       "1,0,-1",
                 "default":          1
             },
             "param4": {
