@@ -465,7 +465,7 @@
                 "label":            "Direction",
                 "enumStrings":      "Clockwise,Shortest,Counter-Clockwise",
                 "enumValues":       "1,0,-1",
-                "default":          1
+                "default":          0
             },
             "param4": {
                 "label":            "Offset",
