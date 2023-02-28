@@ -60,6 +60,20 @@
     "units":            "m/s"
 },
 {
+    "name":             "ascendspeed",
+    "shortDesc": "Ascend Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "descendspeed",
+    "shortDesc": "Descend Speed",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
     "name":             "climbRate",
     "shortDesc": "Climb Rate",
     "type":             "double",
