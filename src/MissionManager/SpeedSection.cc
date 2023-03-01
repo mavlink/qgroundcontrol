@@ -93,7 +93,7 @@ void SpeedSection::appendSectionItems(QList<MissionItem*>& items, QObject* missi
                                             MAV_CMD_DO_CHANGE_SPEED,
                                             MAV_FRAME_MISSION,
                                             _masterController->controllerVehicle()->multiRotor() ? 1 /* groundspeed */ : 0 /* airspeed */,    // Change airspeed or groundspeed
-                                             _flightSpeedFact.rawValue().toDouble(),
+                                            _flightSpeedFact.rawValue().toDouble(),
                                             -1,                                                                 // No throttle change
                                             0,                                                                  // Absolute speed change
                                             0, 0, 0,                                                            // param 5-7 not used
