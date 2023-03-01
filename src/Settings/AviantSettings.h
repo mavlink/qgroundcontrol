@@ -25,4 +25,6 @@ public:
     DEFINE_SETTINGFACT(showWinchControlMenu)
     DEFINE_SETTINGFACT(horizontalConflictDistance)
     DEFINE_SETTINGFACT(verticalConflictDistance)
+    DEFINE_SETTINGFACT(rssiWarning)
+    DEFINE_SETTINGFACT(rssiAlert)
 };

@@ -26,8 +26,30 @@ Item {
 
     property bool showIndicator: _hasTelemetry
 
-    property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
-    property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
+    property var  _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
+    property bool _hasTelemetry:     _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
+    property var   _aviantSettings:  QGroundControl.settingsManager.aviantSettings
+    property bool _pulser:           false  // Switches on/off at 1Hz, used to flash rssi icon on alert
+
+    function linkColor() {
+        if(!_activeVehicle || _activeVehicle.telemetryLRSSI > -2) {
+            // -1 is used for invalid/missing data,
+            // and positive numbers are not expected/valid here,
+            // so for these number we use default/old colour.
+            return qgcPal.buttonText
+        } else if (_activeVehicle.telemetryLRSSI > _aviantSettings.rssiWarning.rawValue) {
+            return qgcPal.colorGreen
+        } else if (_activeVehicle.telemetryLRSSI > _aviantSettings.rssiAlert.rawValue) {
+            return qgcPal.colorOrange
+        } else {
+            return _pulser ? qgcPal.colorRed : qgcPal.buttonText
+        }
+    }
+
+    Timer {
+        interval: 500; running: true; repeat: true
+        onTriggered: _pulser = !_pulser
+    }
 
     Component {
         id: telemRSSIInfo
@@ -81,7 +103,7 @@ Item {
         sourceSize.height:  height
         source:             "/qmlimages/TelemRSSI.svg"
         fillMode:           Image.PreserveAspectFit
-        color:              qgcPal.buttonText
+        color:              linkColor()
     }
     MouseArea {
         anchors.fill: parent
