@@ -92,8 +92,8 @@ void SpeedSection::appendSectionItems(QList<MissionItem*>& items, QObject* missi
         MissionItem* item = new MissionItem(seqNum++,
                                             MAV_CMD_DO_CHANGE_SPEED,
                                             MAV_FRAME_MISSION,
-                                            _masterController->controllerVehicle()->multiRotor() ? (_isascend ? 2 /* ascend speed */ : (_isdescend ? 3 /* descent speed */ : 1 /* ground speed */)) : 0 /* airspeed */,
-                                            _flightSpeedFact.rawValue().toDouble(),
+                                            _masterController->controllerVehicle()->multiRotor() ? 1 /* groundspeed */ : 0 /* airspeed */,    // Change airspeed or groundspeed
+                                             _flightSpeedFact.rawValue().toDouble(),
                                             -1,                                                                 // No throttle change
                                             0,                                                                  // Absolute speed change
                                             0, 0, 0,                                                            // param 5-7 not used
