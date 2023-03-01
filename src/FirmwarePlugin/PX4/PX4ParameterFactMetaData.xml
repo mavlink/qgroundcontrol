@@ -1304,13 +1304,6 @@
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="COM_POS_FS_EPV" default="10." type="FLOAT">
-      <short_desc>Vertical position error threshold</short_desc>
-      <long_desc>This is the vertical position error (EPV) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing. If the previous position error was below this threshold, there is an additional factor of 2.5 applied (threshold for invalidation 2.5 times the one for validation).</long_desc>
-      <min>0</min>
-      <unit>m</unit>
-      <decimal>1</decimal>
-    </parameter>
     <parameter name="COM_POS_LOW_EPH" default="-1.0" type="FLOAT">
       <short_desc>EPH threshold for RTL</short_desc>
       <long_desc>Specify the threshold for triggering a warning for low local position accuracy. Additionally triggers a RTL if currently in Mission or Loiter mode. Local position has to be still declared valid, which is most of all depending on COM_POS_FS_EPH. Use this feature on systems with dead-reckoning capabilites (e.g. fixed-wing vehicles with airspeed sensor) to improve the user notification and failure mitigation when flying in GNSS-denied areas. Set to -1 to disable.</long_desc>
