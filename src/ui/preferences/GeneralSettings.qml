@@ -746,6 +746,24 @@ Rectangle {
                                 Layout.preferredWidth:  _valueFieldWidth
                                 fact:                   _aviantSettings.rssiAlert
                             }
+                            QGCLabel {
+                                text:              _aviantSettings.missionToolsUrl.shortDescription
+                            }
+                            FactTextField {
+                                fact:              _aviantSettings.missionToolsUrl
+                                Layout.fillWidth:  true
+                            }
+                            QGCLabel {
+                                text:              _aviantSettings.missionToolsToken.shortDescription
+                            }
+                            FactTextField {
+                                fact:              _aviantSettings.missionToolsToken
+                                Layout.fillWidth:  true
+                            }
+                            FactCheckBox {
+                                text:       _aviantSettings.missionToolsInsecureHttps.shortDescription
+                                fact:       _aviantSettings.missionToolsInsecureHttps
+                            }
                         }
                     }
 

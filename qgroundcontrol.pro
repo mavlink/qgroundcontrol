@@ -588,6 +588,7 @@ HEADERS += \
     src/KMLDomDocument.h \
     src/KMLHelper.h \
     src/LogCompressor.h \
+    src/MissionManager/AviantMissionTools.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
@@ -844,6 +845,7 @@ SOURCES += \
     src/KMLDomDocument.cc \
     src/KMLHelper.cc \
     src/LogCompressor.cc \
+    src/MissionManager/AviantMissionTools.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
