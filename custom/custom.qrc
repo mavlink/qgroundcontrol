@@ -1,7 +1,7 @@
 <RCC>
     
     <qresource prefix="/res">
-	<file alias="PaperPlane.svg">res/Images/CustomVehicleIcon.svg</file
+	<file alias="PaperPlane.svg">res/Images/CustomVehicleIcon.svg</file>
     <file alias="QGCLogoBlack">res/Images/Aero-360-Logo.png</file>
     <file alias="QGCLogoFull">res/Images/Aero-360-Logo.png</file>
     <file alias="QGCLogoWhite">res/Images/Aero-360-Logo.png</file>
