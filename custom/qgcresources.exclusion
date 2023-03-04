@@ -1,0 +1,5 @@
+        <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="QGCLogoBlack">../resources/QGCLogoBlack.svg</file>
+        <file alias="QGCLogoFull">../resources/QGCLogoFull.svg</file>
+        <file alias="QGCLogoWhite">../resources/QGCLogoWhite.svg</file>
+        <file alias="QGCLogoArrow">../resources/QGCLogoArrow.svg</file>
