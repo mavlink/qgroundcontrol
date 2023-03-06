@@ -618,6 +618,24 @@ FlightMap {
     }
 
     onMapClicked: (mouse) => {
+        if (_activeVehicle) {
+            if (_activeVehicle.GimbalClickOnMapActive) {
+                var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+                _activeVehicle.gimbalTargetSetLatitude.rawValue =  clickCoord.latitude
+                _activeVehicle.gimbalTargetSetLongitude.rawValue = clickCoord.longitude
+                _activeVehicle.gimbalTargetSetAltitude.rawValue =  clickCoord.altitude
+                roiLocationItem.show(clickCoord) // Show indicator on map
+                return
+            }
+        }
+        if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
+            orbitMapCircle.hide()
+            gotoLocationItem.hide()
+            var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            clickMenu.coord = clickCoord
+            clickMenu.setCoordinates(mouse.x, mouse.y)
+            clickMenu.open()
+        }
         if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
             orbitMapCircle.hide()
             gotoLocationItem.hide()
