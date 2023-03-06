@@ -10,12 +10,15 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
+import QGroundControl.SettingsManager
 
 SetupPage {
     id:             cameraPage
@@ -523,6 +526,108 @@ SetupPage {
             Loader {
                 id: gimbalSettingsLoader
             }
+
+            // Gimbal control settings
+            QGCLabel {
+                id:         gimbalControlSettingsLabel
+                text:       qsTr("Gimbal Control settings")
+                font.family: ScreenTools.demiboldFontFamily
+            }
+
+            Rectangle {
+                id:                 rectangle
+                anchors.topMargin:  _margins / 2
+                anchors.left:       parent.left
+                anchors.top:        gimbalOutModel.bottom
+                width:              gimbalControlSettingsColumn.width + _margins * 3
+                height:             ScreenTools.defaultFontPixelHeight * 40
+                color:              palette.windowShade
+
+                property var _margins: ScreenTools.defaultFontPixelWidth * 2
+
+                GridLayout {
+                    id:                         gimbalControlSettingsColumn
+                    anchors.margins:            _margins
+                    anchors.top:                parent.top
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    rowSpacing:                 _margins
+                    columns:                    2
+
+                    FactCheckBox {
+                        id:                 enableOnScreenControlCheckbox
+                        Layout.fillWidth:   true
+                        Layout.columnSpan:  2
+                        text:               "  " + QGroundControl.settingsManager.cameraControlSettings.EnableOnScreenControl.shortDescription
+                        fact:               QGroundControl.settingsManager.cameraControlSettings.EnableOnScreenControl
+                        checkedValue:       1
+                        uncheckedValue:     0
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        Layout.columnSpan:  2
+                        height:             4
+                        width:              parent.width * 0.85
+                        color:              qgcPal.window
+                    }
+
+                    QGCLabel {
+                        id:                 controlTypeLabel
+                        text:               qsTr("On screen control type: ")
+                        Layout.fillWidth:   true
+                    }
+
+                    FactComboBox {
+                        id:                 controlTypeCombo
+                        Layout.fillWidth:   true
+                        fact:               QGroundControl.settingsManager.cameraControlSettings.ControlType
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        Layout.columnSpan:  2
+                        height:             4
+                        width:              parent.width * 0.85
+                        color:              qgcPal.window
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Horizontal FOV")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.cameraControlSettings.CameraHFov
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Vertical FOV")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.cameraControlSettings.CameraVFov
+                        Layout.fillWidth:   true
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        Layout.columnSpan:  2
+                        height:             4
+                        width:              parent.width * 0.85
+                        color:              qgcPal.window
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Max speed for click and slide")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.cameraControlSettings.CameraSlideSpeed
+                        Layout.fillWidth:   true
+                    }
+                }
+
+            } // Rectangle
         } // Column
     } // Component
 } // SetupPage
