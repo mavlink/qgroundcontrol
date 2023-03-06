@@ -7,6 +7,15 @@ if(BUILD_TESTING)
 	)
 endif()
 
+if (NOT QGC_DISABLE_MAVLINK_INSPECTOR)
+	set(MAVLINK_INSPECTOR_SRC
+		MAVLinkInspectorController.cc
+		MAVLinkInspectorController.h
+	)
+	set(MAVLINK_INSPECTOR_QML
+		MAVLinkInspectorPage.qml)
+endif()
+
 add_library(AnalyzeView
 	ExifParser.cc
 	ExifParser.h
@@ -16,8 +25,7 @@ add_library(AnalyzeView
 	LogDownloadController.h
 	MavlinkConsoleController.cc
 	MavlinkConsoleController.h
-	MAVLinkInspectorController.cc
-	MAVLinkInspectorController.h
+	${MAVLINK_INSPECTOR_SRC}
 	PX4LogParser.cc
 	PX4LogParser.h
 	ULogParser.cc
@@ -33,7 +41,7 @@ add_custom_target(AnalyzeViewQml
 		GeoTagPage.qml
 		LogDownloadPage.qml
 		MavlinkConsolePage.qml
-		MAVLinkInspectorPage.qml
+		${MAVLINK_INSPECTOR_QML}
 		VibrationPage.qml
 )
 

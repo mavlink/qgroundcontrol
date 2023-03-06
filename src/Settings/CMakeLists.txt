@@ -1,9 +1,15 @@
+if (NOT QGC_DISABLE_APM_MAVLINK)
+	set(APM_MAVLINK_SR_SETTINGS_SRC
+		APMMavlinkStreamRateSettings.cc
+		APMMavlinkStreamRateSettings.h
+
+			)
+endif()
 
 add_library(Settings
 	ADSBVehicleManagerSettings.cc
 	ADSBVehicleManagerSettings.h
-	APMMavlinkStreamRateSettings.cc
-	APMMavlinkStreamRateSettings.h
+	${APM_MAVLINK_SR_SETTINGS_SRC}
 	AppSettings.cc
 	AppSettings.h
 	AutoConnectSettings.cc
@@ -37,8 +43,12 @@ add_library(Settings
 target_link_libraries(Settings
 	PUBLIC
 		qgc
-		Qt5::Multimedia
 )
-
+if (NOT QGC_DISABLE_UVC)
+	target_link_libraries(Settings
+			PUBLIC
+			Qt5::Multimedia
+			)
+endif ()
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

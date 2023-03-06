@@ -21,14 +21,21 @@ add_library(VideoReceiver
 
 target_link_libraries(VideoReceiver
     PUBLIC
-        Qt5::Multimedia
         Qt5::OpenGL
         Qt5::Quick
         ${EXTRA_LIBRARIES}
         Settings
 )
 
+if (NOT QGC_DISABLE_UVC)
+	target_link_libraries(VideoReceiver
+			PUBLIC
+			Qt5::Multimedia
+			)
+endif ()
+
 target_include_directories(VideoReceiver INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 if (GST_FOUND)
 	target_include_directories(VideoReceiver PUBLIC ${GST_INCLUDE_DIRS})
+	set(VideoEnabled TRUE PARENT_SCOPE)
 endif()

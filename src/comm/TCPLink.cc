@@ -50,7 +50,7 @@ void TCPLink::_writeDebugBytes(const QByteArray data)
             ascii.append(219);
         }
     }
-    qDebug() << "Sent" << size << "bytes to" << _tcpConfig->host() << ":" << _tcpConfig->port() << "data:";
+    qDebug() << "Sent" << data.size() << "bytes to" << _tcpConfig->host() << ":" << _tcpConfig->port() << "data:";
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 }

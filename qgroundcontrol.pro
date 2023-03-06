@@ -153,7 +153,7 @@ iOSBuild {
 # disable both the Plugin and PluginFactory entries. To include custom support
 # for an existing plugin type disable PluginFactory only. Then provide you own
 # implementation of FirmwarePluginFactory and use the FirmwarePlugin and
-# AutoPilotPlugin classes as the base clase for your derived plugin
+# AutoPilotPlugin classes as the base class for your derived plugin
 # implementation.
 
 contains (CONFIG, QGC_DISABLE_APM_PLUGIN) {
@@ -1376,6 +1376,9 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 }
 
 !VideoEnabled {
+# TODO bzd here propably should go:
+#    DEFINES -= QGC_GST_STREAMING
+
     INCLUDEPATH += \
         src/VideoReceiver
 
