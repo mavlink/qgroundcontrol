@@ -32,8 +32,9 @@ Button {
     property alias  imageSource:        innerImage.source
     property alias  contentWidth:       innerText.contentWidth
 
-    property real imageScale:       0.6
-    property real contentMargins:   innerText.height * 0.1
+    property bool forceImageScale11: false
+    property real imageScale:        forceImageScale11 && (text == "") ? 0.8 : 0.6
+    property real contentMargins:    innerText.height * 0.1
 
     property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
 
