@@ -99,6 +99,9 @@ const char* Vehicle::_distanceToGCSFactName =       "distanceToGCS";
 const char* Vehicle::_hobbsFactName =               "hobbs";
 const char* Vehicle::_throttlePctFactName =         "throttlePct";
 const char* Vehicle::_imuTempFactName =             "imuTemp";
+const char* Vehicle::_gimbalTargetSetLatitudeFactName = "gimbalTargetSetLatitude";
+const char* Vehicle::_gimbalTargetSetLongitudeFactName ="gimbalTargetSetLongitude";
+const char* Vehicle::_gimbalTargetSetAltitudeFactName = "gimbalTargetSetAltitude";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
 const char* Vehicle::_gps2FactGroupName =               "gps2";
@@ -167,6 +170,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hobbsFact                    (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact              (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _imuTempFact                  (0, _imuTempFactName,           FactMetaData::valueTypeInt16)
+    , _gimbalTargetSetLatitudeFact  (0, _gimbalTargetSetLatitudeFactName,   FactMetaData::valueTypeDouble)
+    , _gimbalTargetSetLongitudeFact (0, _gimbalTargetSetLongitudeFactName,  FactMetaData::valueTypeDouble)
+    , _gimbalTargetSetAltitudeFact  (0, _gimbalTargetSetAltitudeFactName,   FactMetaData::valueTypeDouble)
     , _gpsFactGroup                 (this)
     , _gps2FactGroup                (this)
     , _windFactGroup                (this)
@@ -319,6 +325,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _hobbsFact                        (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact                  (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _imuTempFact                      (0, _imuTempFactName,           FactMetaData::valueTypeInt16)
+    , _gimbalTargetSetLatitudeFact      (0, _gimbalTargetSetLatitudeFactName,   FactMetaData::valueTypeDouble)
+    , _gimbalTargetSetLongitudeFact     (0, _gimbalTargetSetLongitudeFactName,  FactMetaData::valueTypeDouble)
+    , _gimbalTargetSetAltitudeFact      (0, _gimbalTargetSetAltitudeFactName,   FactMetaData::valueTypeDouble)
     , _gpsFactGroup                     (this)
     , _gps2FactGroup                    (this)
     , _windFactGroup                    (this)
@@ -456,6 +465,9 @@ void Vehicle::_commonInit()
     _addFact(&_distanceToGCSFact,       _distanceToGCSFactName);
     _addFact(&_throttlePctFact,         _throttlePctFactName);
     _addFact(&_imuTempFact,             _imuTempFactName);
+    _addFact(&_gimbalTargetSetLatitudeFact,  _gimbalTargetSetLatitudeFactName);
+    _addFact(&_gimbalTargetSetLongitudeFact, _gimbalTargetSetLongitudeFactName);
+    _addFact(&_gimbalTargetSetAltitudeFact,  _gimbalTargetSetAltitudeFactName);
 
     _hobbsFact.setRawValue(QVariant(QString("0000:00:00")));
     _addFact(&_hobbsFact,               _hobbsFactName);
@@ -764,8 +776,13 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
         break;
+<<<<<<< HEAD
     case MAVLINK_MSG_ID_FENCE_STATUS:
         _handleFenceStatus(message);
+=======
+    case MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS:
+        _handleGimbalDeviceAttitudeStatus(message);
+>>>>>>> 85fc5400e (Improve gimbal support: Vehicle backend work)
         break;
 
     case MAVLINK_MSG_ID_EVENT:
@@ -2850,6 +2867,15 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
 
 void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
 {
+    if (!centerCoord.isValid()) {
+        return;
+    }
+    // Sanity check Ardupilot. Max altitude processed is 83000
+    if (apmFirmware()) { 
+        if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000  )) {
+            return;
+        }
+    }
     if (!roiModeSupported()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
@@ -2858,7 +2884,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
         sendMavCommandInt(
                     defaultComponentId(),
                     MAV_CMD_DO_SET_ROI_LOCATION,
-                    MAV_FRAME_GLOBAL,
+                    apmFirmware() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
                     true,                           // show error if fails
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
@@ -2883,36 +2909,58 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
 }
 
 void Vehicle::stopGuidedModeROI()
-{
+{ 
     if (!roiModeSupported()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
     }
-    if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+    // Ardupilot manages differently here, command with lat,long and alt to 0
+    if (apmFirmware()) {
+        if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        _isROIEnabled = false; // remove map indicator
+        _roiApmCancelSent = true; // workaround until ardupilot implements MAV_CMD_DO_SET_ROI_NONE, to hide properly map item
+        emit isROIEnabledChanged();
+
         sendMavCommandInt(
                     defaultComponentId(),
-                    MAV_CMD_DO_SET_ROI_NONE,
-                    MAV_FRAME_GLOBAL,
+                    MAV_CMD_DO_SET_ROI_LOCATION,
+                    MAV_FRAME_GLOBAL_RELATIVE_ALT,
                     true,                           // show error if fails
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
-                    static_cast<double>(qQNaN()),   // Empty
-                    static_cast<double>(qQNaN()),   // Empty
-                    static_cast<float>(qQNaN()));   // Empty
+                    0.0f,   // Empty
+                    0.0f,   // Empty
+                    0.0f);  // Empty
+        }
     } else {
-        sendMavCommand(
-                    defaultComponentId(),
-                    MAV_CMD_DO_SET_ROI_NONE,
-                    true,                           // show error if fails
-                    static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(qQNaN()));   // Empty
+        if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+            sendMavCommandInt(
+                        defaultComponentId(),
+                        MAV_CMD_DO_SET_ROI_NONE,
+                        MAV_FRAME_GLOBAL,
+                        true,                           // show error if fails
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<double>(qQNaN()),   // Empty
+                        static_cast<double>(qQNaN()),   // Empty
+                        static_cast<float>(qQNaN()));   // Empty
+        } else {
+            sendMavCommand(
+                        defaultComponentId(),
+                        MAV_CMD_DO_SET_ROI_NONE,
+                        true,                           // show error if fails
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()),    // Empty
+                        static_cast<float>(qQNaN()));   // Empty
+        }
     }
 }
 
@@ -3273,8 +3321,12 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
         if (ack.result == MAV_RESULT_ACCEPTED) {
-            _isROIEnabled = true;
-            emit isROIEnabledChanged();
+            if (!_roiApmCancelSent) {
+                _isROIEnabled = true;
+                emit isROIEnabledChanged();
+            } else {
+                _roiApmCancelSent = false;
+            }
         }
     }
 
@@ -4322,6 +4374,115 @@ void Vehicle::centerGimbal()
     }
 }
 
+// Pan and tilt comes as +-(0-1)
+void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract, bool neutral, bool yawlock)
+{
+    if(_haveGimbalData) {
+
+        // click and point, based on FOV
+        if (clickAndPoint) {
+            float hFov = _settingsManager->cameraControlSettings()->CameraHFov()->rawValue().toFloat();
+            float vFov = _settingsManager->cameraControlSettings()->CameraVFov()->rawValue().toFloat();
+
+            float panIncDesired =  panPct  * hFov;
+            float tiltIncDesired = tiltPct * vFov;
+
+            float panDesired = panIncDesired + _curGimbalYaw;
+            float tiltDesired = tiltIncDesired + _curGimbalPitch;
+            sendMavCommand(
+                _defaultComponentId,
+                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+                true,
+                tiltDesired,
+                panDesired,
+                0,
+                0,
+                0,
+                0,
+                0);                              // Main mount instance
+        // click and drag, based on maximum speed
+        } else if (clickAndDrag) {
+            // Should send rate commands, but it seems for some reason it is not working on AP side. 
+            // Pitch works ok but yaw doesn't stop, it keeps like inertia, like if it was buffering the messages.
+            // So we do a workaround with angle targets
+            float maxSpeed = _settingsManager->cameraControlSettings()->CameraSlideSpeed()->rawValue().toFloat();
+            
+            float panIncDesired  = panPct * maxSpeed  * 0.1f;
+            float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
+
+            float panDesired = panIncDesired + _curGimbalYaw;
+            float tiltDesired = tiltIncDesired + _curGimbalPitch;
+
+            qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
+            
+            sendMavCommand(
+                _defaultComponentId,
+                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+                false,
+                tiltDesired,
+                panDesired,
+                0,
+                0,
+                0,
+                0,
+                0); 
+
+        //     This is how it should be
+
+        //     float maxSpeed = _settingsManager->cameraControlSettings()->CameraSlideSpeed()->rawValue().toFloat();
+            
+        //     float panDesired  = panPct * maxSpeed;
+        //     float tiltDesired = tiltPct * maxSpeed;
+
+        //     qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
+            
+        //     sendMavCommand(
+        //         _defaultComponentId,
+        //         MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+        //         false,
+        //         static_cast<float>(qQNaN()),
+        //         static_cast<float>(qQNaN()),
+        //         tiltDesired,
+        //         panDesired,
+        //         0,
+        //         0,
+        //         0); 
+        }
+    }
+}
+
+void Vehicle::sendGimbalManagerPitchYaw(float pan, float tilt) {
+    // setup flags
+    uint32_t flags = _gimbalStatusFlags;
+
+    sendMavCommand(
+                _defaultComponentId,
+                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+                true,
+                tilt,
+                pan,
+                0,
+                0,
+                flags,
+                0,
+                0);
+}
+
+void Vehicle::setGimbalHomeTargeting()
+{
+    sendMavCommand(
+                _defaultComponentId,
+                MAV_CMD_DO_MOUNT_CONTROL,
+                false,                               // show errors
+                0,                                   // Pitch 0 - 90
+                0,                                   // Roll (not used)
+                0,                                   // Yaw -180 - 180
+                0,                                   // Altitude (not used)
+                0,                                   // Latitude (not used)
+                0,                                   // Longitude (not used)
+                MAV_MOUNT_MODE_HOME_LOCATION);       // MAVLink Roll,Pitch,Yaw
+}
+
 void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
 {
     mavlink_mount_orientation_t o;
@@ -4387,6 +4548,143 @@ void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
         lastUpdate = now;
     }
 }
+void Vehicle::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message)
+{
+    if (message.compid != _compID) {
+        return;
+    }
+    
+    mavlink_gimbal_device_attitude_status_t o;
+    mavlink_msg_gimbal_device_attitude_status_decode(&message, &o);
+
+    _gimbalStatusFlags = o.flags;
+    _gimbalNeutral = false;
+    _gimbalYawLock = false;
+    _isROIEnabled = false;
+
+    if ((_gimbalStatusFlags & GIMBAL_MANAGER_FLAGS_RETRACT) > 0) {
+        _gimbalRetracted = true;
+    }
+    if ((_gimbalStatusFlags & GIMBAL_MANAGER_FLAGS_NEUTRAL) > 0) {
+        _gimbalNeutral = true;
+    }
+    if ((_gimbalStatusFlags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) > 0) {
+        _gimbalYawLock = true;
+    }
+
+    float roll, pitch, yaw;
+    mavlink_quaternion_to_euler(o.q, &roll, &pitch, &yaw);
+
+    _curGimbalPitch = pitch * (180.0f / 3.141592653589793);
+    _curGimbalRoll  = roll * (180.0f / 3.141592653589793);
+    _curGimbalYaw   = yaw * (180.0f / 3.141592653589793);
+    
+    emit gimbalPitchChanged();
+    emit gimbalRollChanged();
+    emit gimbalYawChanged();
+    emit gimbalStatusFlagsChanged();
+    emit gimbalRetractedChanged();
+    emit gimbalNeutralChanged();
+    emit gimbalYawLockChanged();
+
+    if (!_haveGimbalData) {
+        _haveGimbalData = true;
+        emit gimbalDataChanged();
+    }
+}
+
+void Vehicle::toggleGimbalRetracted(bool force, bool set) 
+{
+    bool setDesired;
+    if (force) {
+        setDesired = set;
+    } else {
+        setDesired = !_gimbalRetracted;
+    }
+
+
+    uint32_t flags = 0;
+    qDebug() << "flags before: " << flags;
+    if (setDesired) {
+        flags |= GIMBAL_DEVICE_FLAGS_RETRACT;
+    } else 
+        flags &= ~GIMBAL_DEVICE_FLAGS_RETRACT;
+
+    qDebug() << "flags after: " << flags;
+    sendGimbalManagerPitchYawFlags(flags);
+}
+
+void Vehicle::toggleGimbalNeutral(bool force, bool set) 
+{
+    bool setDesired;
+    if (force) {
+        setDesired = set;
+    } else {
+        setDesired = !_gimbalNeutral;
+    }
+
+    uint32_t flags = 0;
+    if (setDesired) {
+        flags |= GIMBAL_DEVICE_FLAGS_NEUTRAL;
+    } else 
+        flags &= ~GIMBAL_DEVICE_FLAGS_NEUTRAL;
+
+    sendGimbalManagerPitchYawFlags(flags);
+}
+
+// Not implemented in Ardupilot yet
+void Vehicle::toggleGimbalYawLock(bool force, bool set) 
+{
+    sendMavCommand(_defaultComponentId,
+        MAV_CMD_DO_AUX_FUNCTION,
+        true,    // show errors
+        163,     // yaw lock
+        set ? 2 : 0);  // Switch position
+
+    // This is how it should be...  
+    //
+    // bool setDesired;
+    // if (force) {
+    //     setDesired = set;
+    // } else {
+    //     setDesired = !_gimbalYawLock;
+    // }
+
+    // uint32_t flags = 0;
+    // if (setDesired) {
+    //     flags |= GIMBAL_DEVICE_FLAGS_YAW_LOCK;
+    // } else 
+    //     flags &= ~GIMBAL_DEVICE_FLAGS_YAW_LOCK;
+
+    // sendGimbalManagerPitchYawFlags(flags);
+}
+
+void Vehicle::setGimbalRcTargeting() 
+{
+    sendMavCommand(_defaultComponentId,
+        MAV_CMD_DO_AUX_FUNCTION,
+        true,    // show errors
+        27,      // retract mount
+        0);      // low switch, sets it to default rc mode
+}
+
+void Vehicle::sendGimbalManagerPitchYawFlags(uint32_t flags)
+{
+    qDebug() << "flags to send: " << flags;
+
+    sendMavCommand(
+                _defaultComponentId,
+                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+                true,
+                static_cast<float>(qQNaN()),
+                static_cast<float>(qQNaN()),
+                static_cast<float>(qQNaN()),
+                static_cast<float>(qQNaN()),
+                flags,
+                0,
+                0);
+}
+
 void Vehicle::updateFlightDistance(double distance)
 {
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
