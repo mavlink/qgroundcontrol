@@ -108,4 +108,18 @@
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>
     </qresource>
+    <qresource prefix="/HA_Icons">
+        <file alias="ACTIONS.png">resources/HA_Icons/payload/ACTIONS.png</file>
+        <file alias="MAP_CLICK.png">resources/HA_Icons/payload/MAP_CLICK.png</file>
+        <file alias="RETRACT_OFF.png">resources/HA_Icons/payload/RETRACT_OFF.png</file>
+        <file alias="YAW_LOCK.png">resources/HA_Icons/payload/YAW_LOCK.png</file>
+        <file alias="NEUTRAL.png">resources/HA_Icons/payload/NEUTRAL.png</file>
+        <file alias="CAMERA_90.png">resources/HA_Icons/payload/CAMERA_90.png</file>
+        <file alias="MAP_COORDINATES.png">resources/HA_Icons/payload/MAP_COORDINATES.png</file>
+        <file alias="PAYLOAD.png">resources/HA_Icons/payload/PAYLOAD.png</file>
+        <file alias="RETRACT_ON.png">resources/HA_Icons/payload/RETRACT_ON.png</file>
+        <file alias="YAW_UNLOCK.png">resources/HA_Icons/payload/YAW_UNLOCK.png</file>
+        <file alias="HOME.png">resources/HA_Icons/payload/HOME.png</file>
+        <file alias="MODES.png">resources/HA_Icons/payload/MODES.png</file>
+    </qresource>
 </RCC>
