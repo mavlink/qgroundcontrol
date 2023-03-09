@@ -509,8 +509,8 @@
             "category":     "Flight control",
             "param1": {
                 "label":            "Type",
-                "enumStrings":      "Airspeed,Ground Speed",
-                "enumValues":       "0,1",
+                "enumStrings":      "Airspeed,Ground Speed,Ascend Speed,Descend Speed",
+                "enumValues":       "0,1,2,3",
                 "default":          0
             },
             "param2": {
