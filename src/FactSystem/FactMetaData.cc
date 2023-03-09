@@ -1337,7 +1337,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         }
     }
 
-    metaData->setDecimalPlaces(json[_decimalPlacesJsonKey].toInt(0));
+    metaData->setDecimalPlaces(json[_decimalPlacesJsonKey].toInt(kUnknownDecimalPlaces));
     metaData->setShortDescription(json[_shortDescriptionJsonKey].toString());
     metaData->setLongDescription(json[_longDescriptionJsonKey].toString());
 
