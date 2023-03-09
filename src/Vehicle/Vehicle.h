@@ -1291,7 +1291,13 @@ private:
         bool                useCommandInt       = false;
         MAV_CMD             command;
         MAV_FRAME           frame;
-        float               rgParam[7]          = { 0 };
+        float               rgParam1            = 0;
+        float               rgParam2            = 0;
+        float               rgParam3            = 0;
+        float               rgParam4            = 0;
+        double              rgParam5            = 0;
+        double              rgParam6            = 0;
+        float               rgParam7            = 0;
         bool                showError           = true;
         MavCmdResultHandler resultHandler;
         void*               resultHandlerData   = nullptr;
@@ -1308,7 +1314,7 @@ private:
     static const int                _mavCommandAckTimeoutMSecs              = 3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
-    void _sendMavCommandWorker  (bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+    void _sendMavCommandWorker  (bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
     bool _sendMavCommandShouldRetry(MAV_CMD command);

@@ -80,12 +80,21 @@ class CustomURLMapProvider : public MapProvider {
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
-
 class StatkartMapProvider : public MapProvider {
     Q_OBJECT
   public:
     StatkartMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://www.norgeskart.no/"), QStringLiteral("png"),
+        : MapProvider(QStringLiteral("https://norgeskart.no/"), QStringLiteral("png"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
+class StatkartBaseMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    StatkartBaseMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("https://norgeskart.no/"), QStringLiteral("png"),
                       AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
