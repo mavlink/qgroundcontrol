@@ -2483,10 +2483,10 @@
   <group name="FW Attitude Control">
     <parameter name="FW_ARSP_MODE" default="0" type="INT32">
       <short_desc>Airspeed mode</short_desc>
-      <long_desc>For small wings or VTOL without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
+      <long_desc>On vehicles without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
       <values>
-        <value code="0">Normal (use airspeed if available)</value>
-        <value code="1">Airspeed disabled</value>
+        <value code="0">Use airspeed in controller</value>
+        <value code="1">Do not use airspeed in controller</value>
       </values>
     </parameter>
     <parameter name="FW_MAN_P_MAX" default="30.0" type="FLOAT">
@@ -2550,8 +2550,7 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_P_RMAX_NEG" default="60.0" type="FLOAT">
-      <short_desc>Maximum negative / down pitch rate</short_desc>
-      <long_desc>This limits the maximum pitch down up angular rate the controller will output (in degrees per second).</long_desc>
+      <short_desc>Maximum negative / down pitch rate setpoint</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
@@ -2559,8 +2558,7 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_P_RMAX_POS" default="60.0" type="FLOAT">
-      <short_desc>Maximum positive / up pitch rate</short_desc>
-      <long_desc>This limits the maximum pitch up angular rate the controller will output (in degrees per second).</long_desc>
+      <short_desc>Maximum positive / up pitch rate setpoint</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
@@ -2578,14 +2576,13 @@
     </parameter>
     <parameter name="FW_RLL_TO_YAW_FF" default="0.0" type="FLOAT">
       <short_desc>Roll control to yaw control feedforward gain</short_desc>
-      <long_desc>This gain can be used to counteract the "adverse yaw" effect for fixed wings. When the plane enters a roll it will tend to yaw the nose out of the turn. This gain enables the use of a yaw actuator (rudder, airbrakes, ...) to counteract this effect.</long_desc>
+      <long_desc>This gain can be used to counteract the "adverse yaw" effect for fixed wings. When the plane enters a roll it will tend to yaw the nose out of the turn. This gain enables the use of a yaw actuator to counteract this effect.</long_desc>
       <min>0.0</min>
       <decimal>1</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_R_RMAX" default="70.0" type="FLOAT">
-      <short_desc>Maximum roll rate</short_desc>
-      <long_desc>This limits the maximum roll rate the controller will output (in degrees per second).</long_desc>
+      <short_desc>Maximum roll rate setpoint</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
@@ -2675,8 +2672,7 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_Y_RMAX" default="50.0" type="FLOAT">
-      <short_desc>Maximum yaw rate</short_desc>
-      <long_desc>This limits the maximum yaw rate the controller will output (in degrees per second).</long_desc>
+      <short_desc>Maximum yaw rate setpoint</short_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg/s</unit>
@@ -2790,7 +2786,7 @@
     </parameter>
     <parameter name="FW_LND_THRTC_SC" default="1.0" type="FLOAT">
       <short_desc>Altitude time constant factor for landing</short_desc>
-      <long_desc>Set this parameter to less than 1.0 to make TECS react faster to altitude errors during landing than during normal flight (i.e. giving efficiency and low motor wear at high altitudes but control accuracy during landing). During landing, the TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
+      <long_desc>Set this parameter to less than 1.0 to make TECS react faster to altitude errors during landing than during normal flight. During landing, the TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
       <unit />
@@ -2850,7 +2846,7 @@
     </parameter>
     <parameter name="FW_LAUN_MOT_DEL" default="0.0" type="FLOAT">
       <short_desc>Motor delay</short_desc>
-      <long_desc>Delay between starting attitude control and powering up the throttle (giving throttle control to the controller) Before this timespan is up the throttle will be set to FW_THR_IDLE, set to 0 to deactivate</long_desc>
+      <long_desc>Start the motor(s) this amount of seconds after launch is detected.</long_desc>
       <min>0.0</min>
       <max>10.0</max>
       <unit>s</unit>
@@ -2950,7 +2946,7 @@
     </parameter>
     <parameter name="FW_R_LIM" default="50.0" type="FLOAT">
       <short_desc>Maximum roll angle</short_desc>
-      <long_desc>The maximum roll angle setpoint for autonomous modes including altitude and position control.</long_desc>
+      <long_desc>The maximum roll angle setpoint for setpoint for a height-rate or altitude controlled mode.</long_desc>
       <min>35.0</min>
       <max>65.0</max>
       <unit>deg</unit>
@@ -2975,15 +2971,13 @@
       <unit>deg</unit>
     </parameter>
     <parameter name="FW_ACRO_Y_MAX" default="90" type="FLOAT">
-      <short_desc>Acro body y max rate</short_desc>
-      <long_desc>This is the body y rate the controller is trying to achieve if the user applies full pitch stick input in acro mode.</long_desc>
+      <short_desc>Acro body pitch max rate setpoint</short_desc>
       <min>45</min>
       <max>720</max>
       <unit>deg</unit>
     </parameter>
     <parameter name="FW_ACRO_Z_MAX" default="45" type="FLOAT">
-      <short_desc>Acro body z max rate</short_desc>
-      <long_desc>This is the body z rate the controller is trying to achieve if the user applies full yaw stick input in acro mode.</long_desc>
+      <short_desc>Acro body yaw max rate setpoint</short_desc>
       <min>10</min>
       <max>180</max>
       <unit>deg</unit>
@@ -2993,24 +2987,8 @@
       <long_desc>This enables a logic that automatically adjusts the output of the rate controller to take into account the real torque produced by an aerodynamic control surface given the current deviation from the trim airspeed (FW_AIRSPD_TRIM). Enable when using aerodynamic control surfaces (e.g.: plane) Disable when using rotor wings (e.g.: autogyro)</long_desc>
     </parameter>
     <parameter name="FW_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
-      <short_desc>Whether to scale throttle by battery power level</short_desc>
-      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The fixed wing should constantly behave as if it was fully charged with reduced max thrust at lower battery percentages. i.e. if cruise speed is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
-    </parameter>
-    <parameter name="FW_DTRIM_P_FLPS" default="0.0" type="FLOAT">
-      <short_desc>Pitch trim increment for flaps configuration</short_desc>
-      <long_desc>This increment is added to the pitch trim whenever flaps are fully deployed.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_P_SPOIL" default="0." type="FLOAT">
-      <short_desc>Pitch trim increment for spoiler configuration</short_desc>
-      <long_desc>This increment is added to the pitch trim whenever spoilers are fully deployed.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
+      <short_desc>Enable throttle scale by battery level</short_desc>
+      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery.</long_desc>
     </parameter>
     <parameter name="FW_DTRIM_P_VMAX" default="0.0" type="FLOAT">
       <short_desc>Pitch trim increment at maximum airspeed</short_desc>
@@ -3023,14 +3001,6 @@
     <parameter name="FW_DTRIM_P_VMIN" default="0.0" type="FLOAT">
       <short_desc>Pitch trim increment at minimum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_DTRIM_R_FLPS" default="0.0" type="FLOAT">
-      <short_desc>Roll trim increment for flaps configuration</short_desc>
-      <long_desc>This increment is added to TRIM_ROLL whenever flaps are fully deployed.</long_desc>
       <min>-0.25</min>
       <max>0.25</max>
       <decimal>2</decimal>
@@ -3088,7 +3058,7 @@
     </parameter>
     <parameter name="FW_PR_D" default="0." type="FLOAT">
       <short_desc>Pitch rate derivative gain</short_desc>
-      <long_desc>Pitch rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <long_desc>Pitch rate differential gain.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -3123,7 +3093,6 @@
     </parameter>
     <parameter name="FW_PR_P" default="0.08" type="FLOAT">
       <short_desc>Pitch rate proportional gain</short_desc>
-      <long_desc>Pitch rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -3167,7 +3136,6 @@
     </parameter>
     <parameter name="FW_RR_P" default="0.05" type="FLOAT">
       <short_desc>Roll rate proportional Gain</short_desc>
-      <long_desc>Roll rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -3211,7 +3179,6 @@
     </parameter>
     <parameter name="FW_YR_P" default="0.05" type="FLOAT">
       <short_desc>Yaw rate proportional gain</short_desc>
-      <long_desc>Yaw rate proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>%/rad/s</unit>
@@ -3222,7 +3189,7 @@
   <group name="FW TECS">
     <parameter name="FW_AIRSPD_MAX" default="20.0" type="FLOAT">
       <short_desc>Maximum Airspeed (CAS)</short_desc>
-      <long_desc>The maximal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed is above this value, the TECS controller will try to decrease airspeed more aggressively.</long_desc>
+      <long_desc>The maximal airspeed (calibrated airspeed) the user is able to command.</long_desc>
       <min>0.5</min>
       <max>40</max>
       <unit>m/s</unit>
@@ -3248,8 +3215,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_AIRSPD_TRIM" default="15.0" type="FLOAT">
-      <short_desc>Cruise Airspeed (CAS)</short_desc>
-      <long_desc>The trim CAS (calibrated airspeed) of the vehicle. If an airspeed controller is active, this is the default airspeed setpoint that the controller will try to achieve if no other airspeed setpoint sources are present (e.g. through non-centered RC sticks).</long_desc>
+      <short_desc>Trim (Cruise) Airspeed</short_desc>
+      <long_desc>The trim CAS (calibrated airspeed) of the vehicle. If an airspeed controller is active, this is the default airspeed setpoint that the controller will try to achieve.</long_desc>
       <min>0.5</min>
       <max>40</max>
       <unit>m/s</unit>
@@ -3267,7 +3234,7 @@
     </parameter>
     <parameter name="FW_P_LIM_MAX" default="30.0" type="FLOAT">
       <short_desc>Maximum pitch angle</short_desc>
-      <long_desc>The maximum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
+      <long_desc>The maximum pitch angle setpoint setpoint for a height-rate or altitude controlled mode.</long_desc>
       <min>0.0</min>
       <max>60.0</max>
       <unit>deg</unit>
@@ -3276,7 +3243,7 @@
     </parameter>
     <parameter name="FW_P_LIM_MIN" default="-30.0" type="FLOAT">
       <short_desc>Minimum pitch angle</short_desc>
-      <long_desc>The minimum pitch angle setpoint for autonomous modes including altitude and position control.</long_desc>
+      <long_desc>The minimum pitch angle setpoint for a height-rate or altitude controlled mode.</long_desc>
       <min>-60.0</min>
       <max>0.0</max>
       <unit>deg</unit>
@@ -3320,7 +3287,7 @@
     </parameter>
     <parameter name="FW_THR_TRIM" default="0.6" type="FLOAT">
       <short_desc>Trim throttle</short_desc>
-      <long_desc>This is the throttle setting required to achieve FW_AIRSPD_TRIM during level flight. Most airframes have a value of 0.5-0.7.</long_desc>
+      <long_desc>This is the throttle setting required to achieve FW_AIRSPD_TRIM during level flight.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -3343,7 +3310,7 @@
     </parameter>
     <parameter name="FW_T_CLMB_MAX" default="5.0" type="FLOAT">
       <short_desc>Maximum climb rate</short_desc>
-      <long_desc>This is the best climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the default value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced. The setting of this parameter can be checked by commanding a positive altitude change of 100m in loiter, RTL or guided mode. If the throttle required to climb is close to THR_MAX and the aircraft is maintaining airspeed, then this parameter is set correctly. If the airspeed starts to reduce, then the parameter is set to high, and if the throttle demand required to climb and maintain speed is noticeably less than FW_THR_MAX, then either FW_T_CLMB_MAX should be increased or FW_THR_MAX reduced.</long_desc>
+      <long_desc>This is the maximum climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the trim value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced.</long_desc>
       <min>1.0</min>
       <max>15.0</max>
       <unit>m/s</unit>
@@ -3434,7 +3401,7 @@
     </parameter>
     <parameter name="FW_T_SPDWEIGHT" default="1.0" type="FLOAT">
       <short_desc>Speed &lt;--&gt; Altitude priority</short_desc>
-      <long_desc>This parameter adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. This will normally improve height accuracy but give larger airspeed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. This will normally reduce airspeed errors, but give larger height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Note to Glider Pilots - set this parameter to 2.0 (The glider will adjust its pitch angle to maintain airspeed, ignoring changes in height).</long_desc>
+      <long_desc>This parameter adjusts the amount of weighting that the pitch control applies to speed vs height errors. Setting it to 0.0 will cause the pitch control to control height and ignore speed errors. This will normally improve height accuracy but give larger airspeed errors. Setting it to 2.0 will cause the pitch control loop to control speed and ignore height errors. This will normally reduce airspeed errors, but give larger height errors. The default value of 1.0 allows the pitch control to simultaneously control height and speed. Set to 2 for gliders.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>1</decimal>
@@ -4567,6 +4534,16 @@
       <decimal>10</decimal>
       <increment>1</increment>
     </parameter>
+    <parameter name="MODAL_IO_VLOG" default="0" type="INT32">
+      <short_desc>UART ESC verbose logging</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+        <value code="1">- Enabled</value>
+      </values>
+    </parameter>
   </group>
   <group name="Magnetometer Bias Estimator">
     <parameter name="MBE_ENABLE" default="1" type="INT32" boolean="true">
@@ -4599,7 +4576,7 @@
     </parameter>
     <parameter name="FW_GPSF_R" default="15.0" type="FLOAT">
       <short_desc>GPS failure fixed roll angle</short_desc>
-      <long_desc>Roll in degrees during the loiter after the vehicle has lost GPS in an auto mode (e.g. mission or loiter). Does only apply for fixed-wing vehicles or VTOLs with NAV_FORCE_VT set to 0.</long_desc>
+      <long_desc>Roll in degrees during the loiter after the vehicle has lost GPS in an auto mode (e.g. mission or loiter).</long_desc>
       <min>0.0</min>
       <max>30.0</max>
       <unit>deg</unit>
@@ -7550,60 +7527,6 @@
       <increment>1</increment>
     </parameter>
   </group>
-  <group name="Roboclaw driver">
-    <parameter name="RBCLW_ADDRESS" default="128" type="INT32">
-      <short_desc>Address of the Roboclaw</short_desc>
-      <long_desc>The Roboclaw can be configured to have an address from 0x80 to 0x87, inclusive. It must be configured to match this parameter.</long_desc>
-      <min>128</min>
-      <max>135</max>
-      <values>
-        <value code="128">0x80</value>
-        <value code="129">0x81</value>
-        <value code="130">0x82</value>
-        <value code="131">0x83</value>
-        <value code="132">0x84</value>
-        <value code="133">0x85</value>
-        <value code="134">0x86</value>
-        <value code="135">0x87</value>
-      </values>
-    </parameter>
-    <parameter name="RBCLW_BAUD" default="2400" type="INT32">
-      <short_desc>Roboclaw serial baud rate</short_desc>
-      <long_desc>Baud rate of the serial communication with the Roboclaw. The Roboclaw must be configured to match this rate.</long_desc>
-      <min>2400</min>
-      <max>460800</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="2400">2400 baud</value>
-        <value code="9600">9600 baud</value>
-        <value code="19200">19200 baud</value>
-        <value code="38400">38400 baud</value>
-        <value code="57600">57600 baud</value>
-        <value code="115200">115200 baud</value>
-        <value code="230400">230400 baud</value>
-        <value code="460800">460800 baud</value>
-      </values>
-    </parameter>
-    <parameter name="RBCLW_COUNTS_REV" default="1200" type="INT32">
-      <short_desc>Encoder counts per revolution</short_desc>
-      <long_desc>Number of encoder counts for one revolution. The roboclaw treats analog encoders (potentiometers) as having 2047 counts per rev. The default value of 1200 corresponds to the default configuration of the Aion R1 rover.</long_desc>
-      <min>1</min>
-    </parameter>
-    <parameter name="RBCLW_READ_PER" default="10" type="INT32">
-      <short_desc>Encoder read period</short_desc>
-      <long_desc>How long to wait, in Milliseconds, between reading wheel encoder values over Uart from the Roboclaw</long_desc>
-      <min>1</min>
-      <max>1000</max>
-      <unit>ms</unit>
-    </parameter>
-    <parameter name="RBCLW_WRITE_PER" default="10" type="INT32">
-      <short_desc>Uart write period</short_desc>
-      <long_desc>How long to wait, in Milliseconds, between writing actuator controls over Uart to the Roboclaw</long_desc>
-      <min>1</min>
-      <max>1000</max>
-      <unit>ms</unit>
-    </parameter>
-  </group>
   <group name="Rover Position Control">
     <parameter name="GND_L1_DAMPING" default="0.75" type="FLOAT">
       <short_desc>L1 damping</short_desc>
@@ -7767,7 +7690,6 @@
     </parameter>
     <parameter name="RWTO_MAX_THR" default="1.0" type="FLOAT">
       <short_desc>Max throttle during runway takeoff</short_desc>
-      <long_desc>Can be used to test taxi on runway</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -10458,29 +10380,12 @@
     </parameter>
     <parameter name="VT_B_DEC_MSS" default="2.0" type="FLOAT">
       <short_desc>Approximate deceleration during back transition</short_desc>
-      <long_desc>The approximate deceleration during a back transition in m/s/s Used to calculate back transition distance in mission mode. A lower value will make the VTOL transition further from the destination waypoint. For standard vtol and tiltrotors a controller is used to track this value during the transition.</long_desc>
+      <long_desc>The approximate deceleration during a back transition in m/s/s Used to calculate back transition distance in an auto mode. For standard vtol and tiltrotors a controller is used to track this value during the transition.</long_desc>
       <min>0.5</min>
       <max>10</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
       <increment>0.1</increment>
-    </parameter>
-    <parameter name="VT_B_REV_DEL" default="0.0" type="FLOAT">
-      <short_desc>Delay in seconds before applying back transition throttle</short_desc>
-      <long_desc>Set this to a value greater than 0 to give the motor time to spin down.</long_desc>
-      <min>0</min>
-      <max>10</max>
-      <unit>s</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="VT_B_REV_OUT" default="0.0" type="FLOAT">
-      <short_desc>Output on airbrakes channel during back transition</short_desc>
-      <long_desc>Used for airbrakes or with ESCs that have reverse thrust enabled on a separate channel. Airbrakes need to be enabled for your selected model/mixer.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="VT_B_TRANS_DUR" default="4.0" type="FLOAT">
       <short_desc>Duration of a back transition</short_desc>
@@ -10500,7 +10405,7 @@
     </parameter>
     <parameter name="VT_B_TRANS_THR" default="0.0" type="FLOAT">
       <short_desc>Target throttle value for the transition to hover flight</short_desc>
-      <long_desc>standard vtol: pusher tailsitter, tiltrotor: main throttle Note for standard vtol: For ESCs and mixers that support reverse thrust on low PWM values set this to a negative value to apply active breaking For ESCs that support thrust reversal with a control channel please set VT_B_REV_OUT and set this to a positive value to apply active breaking</long_desc>
+      <long_desc>standard vtol: pusher tailsitter, tiltrotor: main throttle</long_desc>
       <min>-1</min>
       <max>1</max>
       <decimal>2</decimal>
@@ -10511,8 +10416,8 @@
       <long_desc>If set to 1 the control surfaces are locked at the disarmed value in multicopter mode.</long_desc>
     </parameter>
     <parameter name="VT_FWD_THRUST_EN" default="0" type="INT32">
-      <short_desc>Enable usage of fixed-wing actuators in hover to generate forward force (instead of pitching down)</short_desc>
-      <long_desc>This feature can be used to avoid the plane having to pitch down in order to move forward, and prevents large, negative lift values being created when facing strong winds. Fixed-wing forward actuators refers to puller/pusher (standard VTOL), or forward-tilt (tiltrotor VTOL). Only active if demanded down pitch is below VT_PITCH_MIN. Use VT_FWD_THRUST_SC to tune it. Only active (if enabled) in Altitude, Position and Auto modes, not in Stabilized.</long_desc>
+      <short_desc>Use fixed-wing actuation in hover to accelerate forward</short_desc>
+      <long_desc>This feature can be used to avoid the plane having to pitch nose down in order to move forward. Prevents large, negative lift from pitching nose down into wind. Fixed-wing forward actuators refers to puller/pusher (standard VTOL), or forward-tilt (tiltrotor VTOL). Only active if demanded down pitch is below VT_PITCH_MIN. Use VT_FWD_THRUST_SC to tune it. Only active (if enabled) in Altitude, Position and Auto modes, not in Stabilized.</long_desc>
       <values>
         <value code="0">Disabled</value>
         <value code="1">Enabled (except LANDING)</value>
@@ -10524,8 +10429,8 @@
       </values>
     </parameter>
     <parameter name="VT_FWD_THRUST_SC" default="0.7" type="FLOAT">
-      <short_desc>Fixed-wing actuator thrust scale for hover forward flight</short_desc>
-      <long_desc>Scale applied to the demanded down-pitch to get the fixed-wing forward actuation in hover mode. Only active if demaded down pitch is below VT_PITCH_MIN. Enabled via VT_FWD_THRUST_EN.</long_desc>
+      <short_desc>Fixed-wing actuation thrust scale for hover forward flight</short_desc>
+      <long_desc>Scale applied to the demanded down-pitch to get the fixed-wing forward actuation in hover mode. Enabled via VT_FWD_THRUST_EN.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
     </parameter>
@@ -10542,7 +10447,7 @@
     </parameter>
     <parameter name="VT_FW_DIFTHR_S_P" default="1." type="FLOAT">
       <short_desc>Pitch differential thrust factor in forward flight</short_desc>
-      <long_desc>Maps the pitch control output in forward flight to the actuator differential thrust output. Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
+      <long_desc>Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
@@ -10550,7 +10455,7 @@
     </parameter>
     <parameter name="VT_FW_DIFTHR_S_R" default="1." type="FLOAT">
       <short_desc>Roll differential thrust factor in forward flight</short_desc>
-      <long_desc>Maps the roll control output in forward flight to the actuator differential thrust output. Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
+      <long_desc>Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
@@ -10558,7 +10463,7 @@
     </parameter>
     <parameter name="VT_FW_DIFTHR_S_Y" default="0.1" type="FLOAT">
       <short_desc>Yaw differential thrust factor in forward flight</short_desc>
-      <long_desc>Maps the yaw control output in forward flight to the actuator differential thrust output. Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
+      <long_desc>Differential thrust in forward flight is enabled via VT_FW_DIFTHR_EN.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
@@ -10575,7 +10480,7 @@
     </parameter>
     <parameter name="VT_FW_QC_HMAX" default="0" type="INT32">
       <short_desc>Quad-chute maximum height</short_desc>
-      <long_desc>Maximum height above the ground (if available, otherwhise above home if available, otherwise above the local origin) where triggering a quadchute is possible. Triggering a quadchute always means transitioning the vehicle to hover flight in which generally a lot of energy is consumed. At high altitudes there is therefore a big risk to deplete the battery and therefore crash. Currently, there is no automated re-transition to fixed wing mode implemented and therefore this parameter serves and an intermediate measure to increase safety. Setting this value to 0 deactivates the behavior (always enable quad-chute independently of altitude).</long_desc>
+      <long_desc>Maximum height above the ground (if available, otherwhise above home if available, otherwise above the local origin) where triggering a quadchute is possible. At high altitudes there is a big risk to deplete the battery and therefore crash if quad-chuting there.</long_desc>
       <min>0</min>
       <unit>m</unit>
       <increment>1</increment>
@@ -10622,7 +10527,7 @@
     </parameter>
     <parameter name="VT_LND_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover landing</short_desc>
-      <long_desc>Overrides  VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
+      <long_desc>Overrides VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
       <unit>deg</unit>
@@ -10687,11 +10592,11 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_TILT_SPINUP" default="0.0" type="FLOAT">
-      <short_desc>Tilt actuator control value commanded when disarmed and during the first second after arming</short_desc>
+      <short_desc>Tilt when disarmed and in the first second after arming</short_desc>
       <long_desc>This specific tilt during spin-up is necessary for some systems whose motors otherwise don't spin-up freely.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <decimal>3</decimal>
+      <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_TILT_TRANS" default="0.3" type="FLOAT">
@@ -10712,7 +10617,7 @@
     </parameter>
     <parameter name="VT_TRANS_P2_DUR" default="0.5" type="FLOAT">
       <short_desc>Duration of front transition phase 2</short_desc>
-      <long_desc>Time in seconds it should take for the rotors to rotate forward completely from the point when the plane has picked up enough airspeed and is ready to go into fixed wind mode.</long_desc>
+      <long_desc>Time in seconds it takes to tilt form VT_TILT_TRANS to VT_TILT_FW.</long_desc>
       <min>0.1</min>
       <max>5.0</max>
       <unit>s</unit>
