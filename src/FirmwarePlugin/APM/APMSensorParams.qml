@@ -100,7 +100,7 @@ Item {
     property bool ins2IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC2_ID")
     property bool ins3IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC3_ID")
 
-    property Fact ins1Id:                           insIdParamsAvailable ? factPanelController.getParameterFact(-1, "INS_ACC_ID") : _noFact
+    property Fact ins1Id:                           ins1IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC_ID") : _noFact
     property Fact ins2Id:                           ins2IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC2_ID") : _noFact
     property Fact ins3Id:                           ins3IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC3_ID") : _noFact
     property var  rgInsId:                          [ ins1Id, ins2Id, ins3Id ]
