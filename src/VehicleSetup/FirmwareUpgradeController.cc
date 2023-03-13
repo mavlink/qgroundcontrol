@@ -85,6 +85,8 @@ static QMap<int, QString> px4_board_name_map {
     {1063, "cubepilot_cubeorangeplus_default"},
     {141, "mro_ctrl-zero-f7_default"},
     {142, "mro_ctrl-zero-f7-oem_default"},
+    {212, "thepeach_k1_default"},
+    {213, "thepeach_r1_default"},
     {1009, "cuav_nora_default"},
     {1010, "cuav_x7pro_default"},
     {1017, "mro_pixracerpro_default"},
