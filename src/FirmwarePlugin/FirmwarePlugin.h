@@ -382,7 +382,7 @@ protected:
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
 
-private:
+protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
 

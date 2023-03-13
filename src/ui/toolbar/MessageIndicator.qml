@@ -25,6 +25,7 @@ Item {
     width:          height
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
+    enabled:        _activeVehicle && _activeVehicle.messageCount
 
     property bool showIndicator: true
 
@@ -70,18 +71,18 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showIndicatorPopup(_root, vehicleMessagesPopup)
+        onClicked:      mainWindow.showIndicatorDrawer(vehicleMessagesPopup)
     }
 
     Component {
         id: vehicleMessagesPopup
 
-        Rectangle {
-            width:          mainWindow.width  * 0.666
-            height:         mainWindow.height * 0.666
-            radius:         ScreenTools.defaultFontPixelHeight / 2
-            color:          qgcPal.window
-            border.color:   qgcPal.text
+        ColumnLayout {
+            spacing: 0
+
+            property bool showExpand: false
+
+            property bool _noMessages: messageText.length === 0
 
             function formatMessage(message) {
                 message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
@@ -108,51 +109,42 @@ Item {
             }
 
             QGCLabel {
-                anchors.centerIn:   parent
-                text:               qsTr("No Messages")
-                visible:            messageText.length === 0
+                text:       qsTr("No Messages")
+                visible:    _noMessages
             }
 
-            //-- Clear Messages
-            QGCColoredImage {
-                anchors.bottom:     parent.bottom
-                anchors.right:      parent.right
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
-                height:             ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
-                width:              height
-                sourceSize.height:   height
-                source:             "/res/TrashDelete.svg"
-                fillMode:           Image.PreserveAspectFit
-                mipmap:             true
-                smooth:             true
-                color:              qgcPal.text
-                visible:            messageText.length !== 0
-                MouseArea {
-                    anchors.fill:   parent
-                    onClicked: {
-                        if (_activeVehicle) {
-                            _activeVehicle.clearMessages()
-                            mainWindow.hideIndicatorPopup()
+            TextEdit {
+                id:             messageText
+                readOnly:       true
+                textFormat:     TextEdit.RichText
+                color:          qgcPal.text
+                visible:        !_noMessages
+            }
+
+                //-- Clear Messages
+                /*QGCColoredImage {
+                    anchors.bottom:     parent.bottom
+                    anchors.right:      parent.right
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                    height:             ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
+                    width:              height
+                    sourceSize.height:   height
+                    source:             "/res/TrashDelete.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    color:              qgcPal.text
+                    visible:            messageText.length !== 0
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            if (_activeVehicle) {
+                                _activeVehicle.clearMessages()
+                                mainWindow.hideIndicatorPopup()
+                            }
                         }
                     }
-                }
-            }
-
-            QGCFlickable {
-                id:                 messageFlick
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                anchors.fill:       parent
-                contentHeight:      messageText.height
-                contentWidth:       messageText.width
-                pixelAligned:       true
-
-                TextEdit {
-                    id:             messageText
-                    readOnly:       true
-                    textFormat:     TextEdit.RichText
-                    color:          qgcPal.text
-                }
-            }
+                }*/
         }
     }
 }

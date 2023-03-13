@@ -91,6 +91,7 @@
         <file alias="QGroundControl/Controls/DropPanel.qml">src/QmlControls/DropPanel.qml</file>
         <file alias="QGroundControl/Controls/EditPositionDialog.qml">src/QmlControls/EditPositionDialog.qml</file>
         <file alias="QGroundControl/Controls/ExclusiveGroupItem.qml">src/QmlControls/ExclusiveGroupItem.qml</file>
+        <file alias="QGroundControl/Controls/FactSlider.qml">src/QmlControls/FactSlider.qml</file>
         <file alias="QGroundControl/Controls/FactSliderPanel.qml">src/QmlControls/FactSliderPanel.qml</file>
         <file alias="QGroundControl/Controls/FirstRunPrompt.qml">src/FirstRunPromptDialogs/FirstRunPrompt.qml</file>
         <file alias="QGroundControl/Controls/FileButton.qml">src/QmlControls/FileButton.qml</file>
@@ -301,6 +302,7 @@
         <file alias="EditPositionDialog.FactMetaData.json">src/QmlControls/EditPositionDialog.FactMetaData.json</file>
         <file alias="FirmwareUpgrade.SettingsGroup.json">src/Settings/FirmwareUpgrade.SettingsGroup.json</file>
         <file alias="FlightMap.SettingsGroup.json">src/Settings/FlightMap.SettingsGroup.json</file>
+        <file alias="FlightMode.SettingsGroup.json">src/Settings/FlightMode.SettingsGroup.json</file>
         <file alias="FlyView.SettingsGroup.json">src/Settings/FlyView.SettingsGroup.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="MavCmdInfoCommon.json">src/MissionManager/MavCmdInfoCommon.json</file>

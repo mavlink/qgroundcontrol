@@ -91,6 +91,19 @@ Rectangle {
         }
     }
 
+    function showNamedComponentPanel(panelButtonName) {
+        if (mainWindow.preventViewSwitch()) {
+            return
+        }
+        for (var i=0; i<componentRepeater.count; i++) {
+            var panelButton = componentRepeater.itemAt(i)
+            if (panelButton.text === panelButtonName) {
+                showVehicleComponentPanel(panelButton.componentUrl)
+                break;
+            }
+        }
+    }
+
     Component.onCompleted: _showSummaryPanel()
 
     Connections {
@@ -280,7 +293,9 @@ Rectangle {
                     text:               modelData.name
                     visible:            modelData.setupSource.toString() !== ""
                     Layout.fillWidth:   true
-                    onClicked:          showVehicleComponentPanel(modelData)
+                    onClicked:          showVehicleComponentPanel(componentUrl)
+
+                    property var componentUrl: modelData
                 }
             }
 

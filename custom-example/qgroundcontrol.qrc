@@ -294,6 +294,7 @@
 		<file alias="EditPositionDialog.FactMetaData.json">../src/QmlControls/EditPositionDialog.FactMetaData.json</file>
 		<file alias="FirmwareUpgrade.SettingsGroup.json">../src/Settings/FirmwareUpgrade.SettingsGroup.json</file>
 		<file alias="FlightMap.SettingsGroup.json">../src/Settings/FlightMap.SettingsGroup.json</file>
+		<file alias="FlightMode.SettingsGroup.json">../src/Settings/FlightMode.SettingsGroup.json</file>
 		<file alias="FlyView.SettingsGroup.json">../src/Settings/FlyView.SettingsGroup.json</file>
 		<file alias="FWLandingPattern.FactMetaData.json">../src/MissionManager/FWLandingPattern.FactMetaData.json</file>
 		<file alias="MavCmdInfoCommon.json">../src/MissionManager/MavCmdInfoCommon.json</file>
