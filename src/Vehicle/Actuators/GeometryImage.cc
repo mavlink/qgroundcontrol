@@ -15,7 +15,6 @@
 
 using namespace GeometryImage;
 
-
 static void generateTestGeometries(VehicleGeometryImageProvider& provider)
 {
 #if 0 // enable this to generate a set of test geometry images on startup in the current working directory
@@ -104,18 +103,19 @@ static void generateTestGeometries(VehicleGeometryImageProvider& provider)
 }
 
 VehicleGeometryImageProvider::VehicleGeometryImageProvider()
-: QQuickImageProvider(QQuickImageProvider::Pixmap)
+    : QQuickImageProvider(QQuickImageProvider::Pixmap)
 {
     generateTestGeometries(*this);
 }
 
-void VehicleGeometryImageProvider::drawAxisIndicator(QPainter& p, const QPointF& origin, float fontSize, const QColor& color)
+void VehicleGeometryImageProvider::drawAxisIndicator(
+    QPainter& p, const QPointF& origin, float fontSize, const QColor& color)
 {
     const float lineLength = fontSize * 2.f;
     const float arrowWidth = 6.f;
     const float arrowHeight = 8.f;
 
-    p.setPen(QPen{color, 1.5f});
+    p.setPen(QPen {color, 1.5f});
     p.setBrush(color);
 
     QFont font = p.font();
@@ -123,16 +123,16 @@ void VehicleGeometryImageProvider::drawAxisIndicator(QPainter& p, const QPointF&
     p.setFont(font);
 
     auto drawArrow = [&](const QPointF& start, const QPointF& end) {
-        float lineLength = QLineF{start, end}.length();
+        float lineLength = QLineF {start, end}.length();
         p.save();
         p.translate(end);
-        float angle = atan2f(end.y()-start.y(), end.x()-start.x());
+        float angle = atan2f(end.y() - start.y(), end.x() - start.x());
         p.rotate(angle * (180.f / M_PI) + 90.f);
-        p.drawLine(QPointF{0, arrowHeight/2}, QPointF{0, lineLength});
+        p.drawLine(QPointF {0, arrowHeight / 2}, QPointF {0, lineLength});
         QPointF arrow[3] = {
-            QPointF{0.f - arrowWidth/2.f, arrowHeight},
-            QPointF{0.f, 0.f},
-            QPointF{0.f + arrowWidth/2.f, arrowHeight},
+            QPointF {0.f - arrowWidth / 2.f, arrowHeight},
+            QPointF {0.f, 0.f},
+            QPointF {0.f + arrowWidth / 2.f, arrowHeight},
         };
         p.drawConvexPolygon(arrow, sizeof(arrow) / sizeof(arrow[0]));
         p.restore();
@@ -140,24 +140,24 @@ void VehicleGeometryImageProvider::drawAxisIndicator(QPainter& p, const QPointF&
 
     // upwards
     {
-        QPointF endPos{origin.x(), origin.y() - lineLength};
+        QPointF endPos {origin.x(), origin.y() - lineLength};
         drawArrow(origin, endPos);
 
         p.save();
         p.translate(endPos);
-        QRectF textRect{-lineLength, -lineLength, lineLength * 2.f, lineLength};
+        QRectF textRect {-lineLength, -lineLength, lineLength * 2.f, lineLength};
         p.drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, "x");
         p.restore();
     }
 
     // rightwards
     {
-        QPointF endPos{origin.x() + lineLength, origin.y()};
+        QPointF endPos {origin.x() + lineLength, origin.y()};
         drawArrow(origin, endPos);
 
         p.save();
         p.translate(endPos);
-        QRectF textRect{0, -lineLength / 2, lineLength, lineLength};
+        QRectF textRect {0, -lineLength / 2, lineLength, lineLength};
         p.drawText(textRect, Qt::AlignLeft | Qt::AlignBaseline, " y");
         p.restore();
     }
@@ -176,8 +176,8 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
     _actuatorImagePositions.clear();
 
     // get the dimensions
-    QVector3D min{1e10f, 1e10f, 1e10f};
-    QVector3D max{-1e10f, -1e10f, -1e10f};
+    QVector3D min {1e10f, 1e10f, 1e10f};
+    QVector3D max {-1e10f, -1e10f, -1e10f};
     for (const auto& actuator : _actuators) {
         for (int i = 0; i < 3; ++i) {
             if (actuator.position[i] < min[i]) {
@@ -189,7 +189,7 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
         }
     }
 
-    if (_actuators.size() <= 1 || max.x() - min.x() < 0.0001f || max.y() - min.y() < 0.0001f ) {
+    if (_actuators.size() <= 1 || max.x() - min.x() < 0.0001f || max.y() - min.y() < 0.0001f) {
         return pixmap;
     }
 
@@ -247,60 +247,59 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
     const float offsetY = margin + (usableHeight - extraYMargin) / 2.f + (max.x() + min.x()) / 2.f * scale;
 
     // style
-    const QColor clockWiseColor{ 21, 158, 31, 200 };
-    const QColor counterClockWiseColor{ 78, 195, 232, 200 };
-    const QColor frameArrowColor{ 255, 68, 43, 200 };
-    const QColor frameColor{ 150, 150, 150 };
-    const float frameWidth{ 6.f };
-    const float rotorFontSize{ rotorDiameter * 0.4f };
-    const QColor rotorHighlightColor{ frameArrowColor };
-    const QColor fontColor{ _palette.text() };
+    const QColor clockWiseColor {21, 158, 31, 200};
+    const QColor counterClockWiseColor {78, 195, 232, 200};
+    const QColor frameArrowColor {255, 68, 43, 200};
+    const QColor frameColor {150, 150, 150};
+    const float frameWidth {6.f};
+    const float rotorFontSize {rotorDiameter * 0.4f};
+    const QColor rotorHighlightColor {frameArrowColor};
+    const QColor fontColor {_palette.text()};
 
-    auto iterateMotors = [scale, offsetX, offsetY](const QList<ActuatorGeometry> &actuators,
-            std::function<void(const ActuatorGeometry&, QPointF)> draw) {
-                for (const auto& actuator : actuators) {
-                    if (actuator.type == ActuatorGeometry::Type::Motor) {
-                        QPointF pos{
-                            offsetX + actuator.position.y()*scale,
-                            offsetY - actuator.position.x()*scale
-                        };
-                        draw(actuator, pos);
-                    }
-                }
-            };
+    auto iterateMotors = [scale, offsetX, offsetY](const QList<ActuatorGeometry>& actuators,
+                             std::function<void(const ActuatorGeometry&, QPointF)> draw) {
+        for (const auto& actuator : actuators) {
+            if (actuator.type == ActuatorGeometry::Type::Motor) {
+                QPointF pos {offsetX + actuator.position.y() * scale, offsetY - actuator.position.x() * scale};
+                draw(actuator, pos);
+            }
+        }
+    };
 
     // draw line from center to actuators first
     iterateMotors(actuators, [&](const ActuatorGeometry& actuator, QPointF pos) {
-        p.setPen(QPen{frameColor, frameWidth});
-        p.drawLine(QPointF{offsetX, offsetY}, pos);
+        p.setPen(QPen {frameColor, frameWidth});
+        p.drawLine(QPointF {offsetX, offsetY}, pos);
     });
 
     // frame body
     p.setPen(frameColor);
-    p.setBrush(QBrush{frameColor});
+    p.setBrush(QBrush {frameColor});
     float centerSize = rotorDiameter * 0.8f;
-    p.drawRoundedRect(QRectF{offsetX - centerSize / 2.f, offsetY - centerSize / 2.f, centerSize, centerSize}, frameWidth, frameWidth);
+    p.drawRoundedRect(QRectF {offsetX - centerSize / 2.f, offsetY - centerSize / 2.f, centerSize, centerSize},
+        frameWidth, frameWidth);
     p.setPen(frameArrowColor);
     p.setBrush(frameArrowColor);
     float arrowWidth = rotorDiameter / 4.f;
     float arrowHeight = rotorDiameter / 2.f;
     QPointF arrow[3] = {
-            QPointF{offsetX - arrowWidth / 2.f, offsetY + arrowHeight / 2.f},
-            QPointF{offsetX,                    offsetY - arrowHeight / 2.f},
-            QPointF{offsetX + arrowWidth / 2.f, offsetY + arrowHeight / 2.f},
+        QPointF {offsetX - arrowWidth / 2.f, offsetY + arrowHeight / 2.f},
+        QPointF {offsetX, offsetY - arrowHeight / 2.f},
+        QPointF {offsetX + arrowWidth / 2.f, offsetY + arrowHeight / 2.f},
     };
     p.drawConvexPolygon(arrow, sizeof(arrow) / sizeof(arrow[0]));
 
-    drawAxisIndicator(p, QPointF{axisIndicatorSize / 2.f, height - axisIndicatorSize / 2.f}, axisIndicatorSize, fontColor);
+    drawAxisIndicator(
+        p, QPointF {axisIndicatorSize / 2.f, height - axisIndicatorSize / 2.f}, axisIndicatorSize, fontColor);
 
     auto drawMotor = [&](const ActuatorGeometry& actuator, QPointF pos, float yPosOffset, bool labelAtBottom) {
         p.setPen(Qt::NoPen);
         QColor arrowColor;
         if (actuator.spinDirection == ActuatorGeometry::SpinDirection::ClockWise) {
-            p.setBrush(QBrush{clockWiseColor});
+            p.setBrush(QBrush {clockWiseColor});
             arrowColor = clockWiseColor;
         } else {
-            p.setBrush(QBrush{counterClockWiseColor});
+            p.setBrush(QBrush {counterClockWiseColor});
             arrowColor = counterClockWiseColor;
         }
         arrowColor.setAlpha(255);
@@ -312,13 +311,15 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
 
         pos.setY(pos.y() + yPosOffset);
 
-        p.drawEllipse(pos, rotorDiameter/2, rotorDiameter/2);
+        p.drawEllipse(pos, rotorDiameter / 2, rotorDiameter / 2);
 
         QRectF textRect;
         if (labelAtBottom) {
-            textRect = QRectF{pos.x()-rotorDiameter/2.f, pos.y()+rotorDiameter/2.f-yPosOffset, rotorDiameter, yPosOffset};
+            textRect = QRectF {
+                pos.x() - rotorDiameter / 2.f, pos.y() + rotorDiameter / 2.f - yPosOffset, rotorDiameter, yPosOffset};
         } else {
-            textRect = QRectF{pos.x()-rotorDiameter/2.f, pos.y()-rotorDiameter/2.f, rotorDiameter, rotorDiameter};
+            textRect
+                = QRectF {pos.x() - rotorDiameter / 2.f, pos.y() - rotorDiameter / 2.f, rotorDiameter, rotorDiameter};
         }
         if (actuator.renderOptions.highlight) {
             p.setPen(rotorHighlightColor);
@@ -330,7 +331,7 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
                 radius = rotorDiameter / 2.f;
             }
             p.drawEllipse(textRect.center(), radius, radius);
-            _actuatorImagePositions.append(ImagePosition{actuator.type, actuator.index, textRect.center(), radius});
+            _actuatorImagePositions.append(ImagePosition {actuator.type, actuator.index, textRect.center(), radius});
         }
         p.setPen(fontColor);
         QFont font = p.font();
@@ -339,15 +340,15 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
         p.drawText(textRect, Qt::AlignCenter, QString::number(actuator.index + actuator.labelIndexOffset));
 
         // spin direction arrows
-        int angle = 50;// angle for the whole arc
+        int angle = 50; // angle for the whole arc
         float arrowWidth = frameWidth;
         float arrowHeight = frameWidth * 1.25f;
         float arrowPosition = rotorDiameter / 2.f;
-        p.setPen(QPen{arrowColor, 2.5f});
+        p.setPen(QPen {arrowColor, 2.5f});
         p.setBrush(arrowColor);
         std::array<int, 2> angleOffsets;
         if (labelAtBottom) {
-            angleOffsets = {30, 180-30}; // bottom right + left sides
+            angleOffsets = {30, 180 - 30}; // bottom right + left sides
         } else {
             angleOffsets = {0, 180}; // right + left sides
         }
@@ -361,12 +362,12 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
             } else {
                 p.rotate(-angle / 2.f + angleOffset);
             }
-            QRectF arrowRect{-arrowPosition, -arrowPosition, arrowPosition * 2.f, arrowPosition * 2.f};
+            QRectF arrowRect {-arrowPosition, -arrowPosition, arrowPosition * 2.f, arrowPosition * 2.f};
             p.drawArc(arrowRect, 0, -ySign * 16 * angle);
             QPointF arrow[3] = {
-                QPointF{arrowPosition - arrowWidth/2.f, ySign*arrowHeight/2.f},
-                QPointF{arrowPosition,                  -ySign*arrowHeight/2.f},
-                QPointF{arrowPosition + arrowWidth/2.f, ySign*arrowHeight/2.f},
+                QPointF {arrowPosition - arrowWidth / 2.f, ySign * arrowHeight / 2.f},
+                QPointF {arrowPosition, -ySign * arrowHeight / 2.f},
+                QPointF {arrowPosition + arrowWidth / 2.f, ySign * arrowHeight / 2.f},
             };
             p.drawConvexPolygon(arrow, sizeof(arrow) / sizeof(arrow[0]));
             p.restore();
@@ -374,14 +375,12 @@ QPixmap VehicleGeometryImageProvider::requestPixmap(const QString& id, QSize* si
     };
 
     // draw coax motors
-    iterateMotors(coaxActuators, [&](const ActuatorGeometry& actuator, QPointF pos) {
-        drawMotor(actuator, pos, extraYMargin, true);
-    });
+    iterateMotors(coaxActuators,
+        [&](const ActuatorGeometry& actuator, QPointF pos) { drawMotor(actuator, pos, extraYMargin, true); });
 
     // draw the rest of the motors
-    iterateMotors(actuators, [&](const ActuatorGeometry& actuator, QPointF pos) {
-        drawMotor(actuator, pos, 0.f, false);
-    });
+    iterateMotors(
+        actuators, [&](const ActuatorGeometry& actuator, QPointF pos) { drawMotor(actuator, pos, 0.f, false); });
 
     return pixmap;
 }
@@ -395,13 +394,13 @@ VehicleGeometryImageProvider* VehicleGeometryImageProvider::instance()
     return instance;
 }
 
-int VehicleGeometryImageProvider::getHighlightedMotorIndexAtPos(const QPointF &position)
+int VehicleGeometryImageProvider::getHighlightedMotorIndexAtPos(const QPointF& position)
 {
     int foundIdx = -1;
     for (int i = 0; i < _actuatorImagePositions.size(); ++i) {
         if (_actuatorImagePositions[i].type == ActuatorGeometry::Type::Motor) {
             float radius = _actuatorImagePositions[i].radius;
-            if (QLineF{_actuatorImagePositions[i].position, position}.length() < radius) {
+            if (QLineF {_actuatorImagePositions[i].position, position}.length() < radius) {
                 // in case of multiple matches (overlaps), be safe and do not return any match
                 if (foundIdx != -1) {
                     return -1;

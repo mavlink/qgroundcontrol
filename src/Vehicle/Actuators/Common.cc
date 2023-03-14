@@ -13,7 +13,6 @@
 
 QGC_LOGGING_CATEGORY(ActuatorsConfigLog, "ActuatorsConfigLog")
 
-
 void Parameter::parse(const QJsonValue& jsonValue)
 {
     label = jsonValue["label"].toString();
@@ -31,8 +30,9 @@ void Parameter::parse(const QJsonValue& jsonValue)
 }
 
 FactBitset::FactBitset(QObject* parent, Fact* integerFact, int offset)
-    : Fact("", new FactMetaData(FactMetaData::valueTypeBool, "", parent), parent),
-      _integerFact(integerFact), _offset(offset)
+    : Fact("", new FactMetaData(FactMetaData::valueTypeBool, "", parent), parent)
+    , _integerFact(integerFact)
+    , _offset(offset)
 {
     forceSetRawValue(false); // need to force set an initial bool value so the type is correct
     onIntegerFactChanged();
@@ -67,10 +67,9 @@ void FactBitset::onThisFactChanged()
     _ignoreChange = false;
 }
 
-
 FactFloatAsBool::FactFloatAsBool(QObject* parent, Fact* floatFact)
-    : Fact("", new FactMetaData(FactMetaData::valueTypeBool, "", parent), parent),
-      _floatFact(floatFact)
+    : Fact("", new FactMetaData(FactMetaData::valueTypeBool, "", parent), parent)
+    , _floatFact(floatFact)
 {
     onFloatFactChanged();
     connect(this, &Fact::rawValueChanged, this, &FactFloatAsBool::onThisFactChanged);
@@ -104,7 +103,7 @@ void FactFloatAsBool::onThisFactChanged()
     _ignoreChange = false;
 }
 
-Condition::Condition(const QString &condition, ParameterManager* parameterManager)
+Condition::Condition(const QString& condition, ParameterManager* parameterManager)
 {
     QRegularExpression re("^([0-9A-Za-z_-]+)([\\!=<>]+)(-?\\d+)$");
     QRegularExpressionMatch match = re.match(condition);
@@ -136,8 +135,8 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
 
         if (parameterManager->parameterExists(FactSystem::defaultComponentId, _parameter)) {
             Fact* param = parameterManager->getParameter(FactSystem::defaultComponentId, _parameter);
-            if (param->type() == FactMetaData::ValueType_t::valueTypeBool ||
-                    param->type() == FactMetaData::ValueType_t::valueTypeInt32) {
+            if (param->type() == FactMetaData::ValueType_t::valueTypeBool
+                || param->type() == FactMetaData::ValueType_t::valueTypeInt32) {
                 _fact = param;
             } else {
                 qCDebug(ActuatorsConfigLog) << "Condition: Unsupported param type:" << (int)param->type();
@@ -146,7 +145,6 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
             qCDebug(ActuatorsConfigLog) << "Condition: Param does not exist:" << _parameter;
         }
     }
-
 }
 
 bool Condition::evaluate() const
@@ -165,19 +163,27 @@ bool Condition::evaluate() const
 
     int32_t paramValue = _fact->rawValue().toInt();
     switch (_operation) {
-        case Operation::AlwaysTrue: return true;
-        case Operation::AlwaysFalse: return false;
-        case Operation::GreaterThan: return paramValue > _value;
-        case Operation::GreaterEqual: return paramValue >= _value;
-        case Operation::Equal: return paramValue == _value;
-        case Operation::NotEqual: return paramValue != _value;
-        case Operation::LessThan: return paramValue < _value;
-        case Operation::LessEqual: return paramValue <= _value;
+    case Operation::AlwaysTrue:
+        return true;
+    case Operation::AlwaysFalse:
+        return false;
+    case Operation::GreaterThan:
+        return paramValue > _value;
+    case Operation::GreaterEqual:
+        return paramValue >= _value;
+    case Operation::Equal:
+        return paramValue == _value;
+    case Operation::NotEqual:
+        return paramValue != _value;
+    case Operation::LessThan:
+        return paramValue < _value;
+    case Operation::LessEqual:
+        return paramValue <= _value;
     }
     return false;
 }
 
-ActuatorGeometry::Type ActuatorGeometry::typeFromStr(const QString &type)
+ActuatorGeometry::Type ActuatorGeometry::typeFromStr(const QString& type)
 {
     if (type == "motor") {
         return ActuatorGeometry::Type::Motor;
@@ -186,4 +192,3 @@ ActuatorGeometry::Type ActuatorGeometry::typeFromStr(const QString &type)
     }
     return ActuatorGeometry::Type::Other;
 }
-

@@ -21,8 +21,7 @@
  * Handles automatic motor ordering assignment by spinning individual motors, and then having the user
  * to select the corresponding motor.
  */
-class MotorAssignment : public QObject
-{
+class MotorAssignment : public QObject {
     Q_OBJECT
 public:
     MotorAssignment(QObject* parent, Vehicle* vehicle, QmlObjectListModel* actuators);
@@ -60,32 +59,28 @@ private slots:
 
 private:
     static constexpr int _spinTimeoutDefaultSec = 1000;
-    static constexpr int _spinTimeoutHighSec = 3000; ///< wait a bit longer after assigning motors, so ESCs can initialize
+    static constexpr int _spinTimeoutHighSec
+        = 3000; ///< wait a bit longer after assigning motors, so ESCs can initialize
 
     static void ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
-            Vehicle::MavCmdResultFailureCode_t failureCode);
+        Vehicle::MavCmdResultFailureCode_t failureCode);
     void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
     void sendMavlinkRequest(int function, float value);
 
-    enum class State {
-        Idle,
-        Init,
-        Running
-    };
+    enum class State { Idle, Init, Running };
 
-    Vehicle* _vehicle{nullptr};
-    QmlObjectListModel* _actuators{nullptr}; ///< list of ActuatorOutput*
+    Vehicle* _vehicle {nullptr};
+    QmlObjectListModel* _actuators {nullptr}; ///< list of ActuatorOutput*
 
-    int _selectedActuatorIdx{-1};
-    int _firstMotorsFunction{};
-    int _numMotors{};
+    int _selectedActuatorIdx {-1};
+    int _firstMotorsFunction {};
+    int _numMotors {};
     QTimer _spinTimer;
 
-    State _state{State::Idle};
-    bool _assignMotors{false};
-    QList<int> _selectedMotors{};
-    bool _commandInProgress{false};
+    State _state {State::Idle};
+    bool _assignMotors {false};
+    QList<int> _selectedMotors {};
+    bool _commandInProgress {false};
     QList<QList<Fact*>> _functionFacts;
     QString _message; ///< current message to show to the user after initializing
 };
-

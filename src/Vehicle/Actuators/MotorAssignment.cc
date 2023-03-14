@@ -15,7 +15,9 @@
 #include <vector>
 
 MotorAssignment::MotorAssignment(QObject* parent, Vehicle* vehicle, QmlObjectListModel* actuators)
-        : QObject(parent), _vehicle(vehicle), _actuators(actuators)
+    : QObject(parent)
+    , _vehicle(vehicle)
+    , _actuators(actuators)
 {
     _spinTimer.setInterval(_spinTimeoutDefaultSec);
     _spinTimer.setSingleShot(true);
@@ -32,7 +34,7 @@ bool MotorAssignment::initAssignment(int selectedActuatorIdx, int firstMotorsFun
     _functionFacts.clear();
     for (int groupIdx = 0; groupIdx < _actuators->count(); groupIdx++) {
         auto group = qobject_cast<ActuatorOutputs::ActuatorOutput*>(_actuators->get(groupIdx));
-        _functionFacts.append(QList<Fact*>{});
+        _functionFacts.append(QList<Fact*> {});
         group->getAllChannelFunctions(_functionFacts.last());
     }
 
@@ -66,32 +68,38 @@ bool MotorAssignment::initAssignment(int selectedActuatorIdx, int firstMotorsFun
         numAssignedToSelected += selectedAssignment[i];
     }
 
-    QString selectedActuatorOutputName = qobject_cast<ActuatorOutputs::ActuatorOutput*>(_actuators->get(selectedActuatorIdx))->label();
+    QString selectedActuatorOutputName
+        = qobject_cast<ActuatorOutputs::ActuatorOutput*>(_actuators->get(selectedActuatorIdx))->label();
 
     _assignMotors = false;
     QString extraMessage;
     if (numAssigned == 0 && _functionFacts[selectedActuatorIdx].size() >= numMotors) {
         _assignMotors = true;
         extraMessage = tr(
-R"(<br />No motors are assigned yet.
+            R"(<br />No motors are assigned yet.
 By saying yes, all motors will be assigned to the first %1 channels of the selected output (%2)
- (you can also first assign all motors, then start the identification).<br />)").arg(numMotors).arg(selectedActuatorOutputName);
+ (you can also first assign all motors, then start the identification).<br />)")
+                           .arg(numMotors)
+                           .arg(selectedActuatorOutputName);
 
-    } else if (numAssigned > 0 && numAssignedToSelected == 0 && _functionFacts[selectedActuatorIdx].size() >= numMotors) {
+    } else if (numAssigned > 0 && numAssignedToSelected == 0
+        && _functionFacts[selectedActuatorIdx].size() >= numMotors) {
         _assignMotors = true;
         extraMessage = tr(
-R"(<br />Motors are currently assigned to a different output.
+            R"(<br />Motors are currently assigned to a different output.
 By saying yes, all motors will be reassigned to the first %1 channels of the selected output (%2).<br />)")
-            .arg(numMotors).arg(selectedActuatorOutputName);
+                           .arg(numMotors)
+                           .arg(selectedActuatorOutputName);
 
     } else if (numAssigned < numMotors) {
-        _message = tr("Not all motors are assigned yet. Either clear all existing assignments or assign all motors to an output.");
+        _message = tr("Not all motors are assigned yet. Either clear all existing assignments or assign all motors to "
+                      "an output.");
         emit messageChanged();
         return false;
     }
 
     _message = tr(
-R"(This will automatically spin individual motors at 15% thrust.<br /><br />
+        R"(This will automatically spin individual motors at 15% thrust.<br /><br />
 <b>Warning: Only proceed if you removed all propellers</b>.<br />
 %1
 <br />
@@ -101,7 +109,8 @@ The procedure is as following:<br />
 - The above steps are repeated for all motors.<br />
 - The motor output functions will automatically be reassigned by the selected order.<br />
 <br />
-Do you wish to proceed?)").arg(extraMessage);
+Do you wish to proceed?)")
+                   .arg(extraMessage);
     emit messageChanged();
 
     _selectedActuatorIdx = selectedActuatorIdx;
@@ -192,13 +201,10 @@ void MotorAssignment::abort()
     emit onAbort();
 }
 
-void MotorAssignment::spinTimeout()
-{
-    spinCurrentMotor();
-}
+void MotorAssignment::spinTimeout() { spinCurrentMotor(); }
 
 void MotorAssignment::ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
-        Vehicle::MavCmdResultFailureCode_t failureCode)
+    Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     MotorAssignment* motorAssignment = (MotorAssignment*)resultHandlerData;
     motorAssignment->ackHandler(commandResult, failureCode);
@@ -217,17 +223,16 @@ void MotorAssignment::sendMavlinkRequest(int function, float value)
 {
     qCDebug(ActuatorsConfigLog) << "Sending actuator test function:" << function << "value:" << value;
 
-    _vehicle->sendMavCommandWithHandler(
-            ackHandlerEntry,                  // Ack callback
-            this,                             // Ack callback data
-            MAV_COMP_ID_AUTOPILOT1,           // the ID of the autopilot
-            MAV_CMD_ACTUATOR_TEST,            // the mavlink command
-            value,                            // value
-            0.5f,                             // timeout
-            0,                                // unused parameter
-            0,                                // unused parameter
-            1000+function,                    // function
-            0,                                // unused parameter
-            0);
+    _vehicle->sendMavCommandWithHandler(ackHandlerEntry, // Ack callback
+        this, // Ack callback data
+        MAV_COMP_ID_AUTOPILOT1, // the ID of the autopilot
+        MAV_CMD_ACTUATOR_TEST, // the mavlink command
+        value, // value
+        0.5f, // timeout
+        0, // unused parameter
+        0, // unused parameter
+        1000 + function, // function
+        0, // unused parameter
+        0);
     _commandInProgress = true;
 }

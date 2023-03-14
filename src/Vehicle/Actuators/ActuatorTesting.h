@@ -14,26 +14,33 @@
 
 #include <QmlObjectListModel.h>
 
-#include <QTimer>
-#include "Vehicle.h"
 #include "MAVLinkProtocol.h"
+#include "Vehicle.h"
+#include <QTimer>
 
 namespace ActuatorTesting {
 
-class Actuator : public QObject
-{
+class Actuator : public QObject {
     Q_OBJECT
 public:
-    Actuator(QObject* parent, const QString& label, float min, float max, float defaultValue, int function, bool isMotor)
-        : QObject(parent), _label(label), _min(min), _max(max), _defaultValue(defaultValue), _function(function),
-          _isMotor(isMotor) {}
+    Actuator(
+        QObject* parent, const QString& label, float min, float max, float defaultValue, int function, bool isMotor)
+        : QObject(parent)
+        , _label(label)
+        , _min(min)
+        , _max(max)
+        , _defaultValue(defaultValue)
+        , _function(function)
+        , _isMotor(isMotor)
+    {
+    }
 
-    Q_PROPERTY(QString label              READ label                             CONSTANT)
-    Q_PROPERTY(float min                  READ min                               CONSTANT)
-    Q_PROPERTY(float max                  READ max                               CONSTANT)
-    Q_PROPERTY(float defaultValue         READ defaultValue                      CONSTANT)
-    Q_PROPERTY(int function               READ function                          CONSTANT)
-    Q_PROPERTY(bool isMotor               READ isMotor                           CONSTANT)
+    Q_PROPERTY(QString label READ label CONSTANT)
+    Q_PROPERTY(float min READ min CONSTANT)
+    Q_PROPERTY(float max READ max CONSTANT)
+    Q_PROPERTY(float defaultValue READ defaultValue CONSTANT)
+    Q_PROPERTY(int function READ function CONSTANT)
+    Q_PROPERTY(bool isMotor READ isMotor CONSTANT)
 
     const QString& label() const { return _label; }
     float min() const { return _min; }
@@ -51,17 +58,16 @@ private:
     const bool _isMotor;
 };
 
-class ActuatorTest : public QObject
-{
+class ActuatorTest : public QObject {
     Q_OBJECT
 public:
     ActuatorTest(Vehicle* vehicle);
 
     ~ActuatorTest();
 
-    Q_PROPERTY(QmlObjectListModel* actuators         READ actuators                NOTIFY actuatorsChanged)
-    Q_PROPERTY(Actuator* allMotorsActuator           READ allMotorsActuator        NOTIFY actuatorsChanged)
-    Q_PROPERTY(bool hadFailure                       READ hadFailure               NOTIFY hadFailureChanged)
+    Q_PROPERTY(QmlObjectListModel* actuators READ actuators NOTIFY actuatorsChanged)
+    Q_PROPERTY(Actuator* allMotorsActuator READ allMotorsActuator NOTIFY actuatorsChanged)
+    Q_PROPERTY(bool hadFailure READ hadFailure NOTIFY hadFailureChanged)
 
     QmlObjectListModel* actuators() { return _actuators; }
     Actuator* allMotorsActuator() { return _allMotorsActuator; }
@@ -95,39 +101,33 @@ signals:
     void hadFailureChanged();
 
 private:
-
     struct ActuatorState {
-        enum class State {
-            NotActive,
-            Active,
-            StopRequest,
-            Stopping
-        };
-        State state{State::NotActive};
-        float value{0.f};
+        enum class State { NotActive, Active, StopRequest, Stopping };
+        State state {State::NotActive};
+        float value {0.f};
         QElapsedTimer lastUpdated;
     };
 
     void resetStates();
 
     static void ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
-            Vehicle::MavCmdResultFailureCode_t failureCode);
+        Vehicle::MavCmdResultFailureCode_t failureCode);
     void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
     void sendMavlinkRequest(int function, float value, float timeout);
 
     void sendNext();
     void watchdogTimeout();
 
-    QmlObjectListModel* _actuators{new QmlObjectListModel(this)}; ///< list of Actuator*
-    Vehicle* _vehicle{nullptr};
-    Actuator* _allMotorsActuator{nullptr};
-    bool _active{false};
-    bool _commandInProgress{false};
+    QmlObjectListModel* _actuators {new QmlObjectListModel(this)}; ///< list of Actuator*
+    Vehicle* _vehicle {nullptr};
+    Actuator* _allMotorsActuator {nullptr};
+    bool _active {false};
+    bool _commandInProgress {false};
 
     QList<ActuatorState> _states;
-    int _currentState{-1};
+    int _currentState {-1};
     QTimer _watchdogTimer;
-    bool _hadFailure{false};
+    bool _hadFailure {false};
 };
 
 } // namespace ActuatorTesting

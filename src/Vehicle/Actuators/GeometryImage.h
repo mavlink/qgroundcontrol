@@ -12,27 +12,24 @@
 #include <QObject>
 #include <QString>
 
-#include <functional>
 #include <cmath>
+#include <functional>
 
+#include <QPainter>
 #include <QQuickImageProvider>
 #include <QVector2D>
-#include <QPainter>
 
 #include <QGCPalette.h>
 
 #include "Common.h"
-
 
 namespace GeometryImage {
 
 /**
  * Renders an image of an airframe geometry (currently only multirotor)
  */
-class VehicleGeometryImageProvider : public QQuickImageProvider
-{
+class VehicleGeometryImageProvider : public QQuickImageProvider {
 public:
-
     struct ImagePosition {
         ActuatorGeometry::Type type;
         int index;
@@ -56,11 +53,10 @@ private:
     VehicleGeometryImageProvider();
     ~VehicleGeometryImageProvider() = default;
 
-    QList<ActuatorGeometry> _actuators{};
+    QList<ActuatorGeometry> _actuators {};
 
-    QList<ImagePosition> _actuatorImagePositions{}; ///< highlighted actuators image positions
-    QGCPalette           _palette;
+    QList<ImagePosition> _actuatorImagePositions {}; ///< highlighted actuators image positions
+    QGCPalette _palette;
 };
 
 } // namespace GeometryImage
-

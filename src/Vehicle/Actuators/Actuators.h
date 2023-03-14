@@ -9,36 +9,35 @@
 
 #pragma once
 
+#include <QJsonDocument>
 #include <QObject>
 #include <QString>
-#include <QJsonDocument>
 
 #include "ActuatorOutputs.h"
 #include "ActuatorTesting.h"
-#include "Mixer.h"
 #include "GeometryImage.h"
+#include "Mixer.h"
 #include "MotorAssignment.h"
 
-
-class Actuators : public QObject
-{
+class Actuators : public QObject {
     Q_OBJECT
 public:
     Actuators(QObject* parent, Vehicle* vehicle);
     ~Actuators() = default;
 
-    Q_PROPERTY(QmlObjectListModel* actuatorOutputs         READ actuatorOutputs           NOTIFY actuatorOutputsChanged)
-    Q_PROPERTY(QmlObjectListModel* actuatorActions         READ actuatorActions           NOTIFY actuatorActionsChanged)
-    Q_PROPERTY(bool isMultirotor                           READ isMultirotor              CONSTANT)
-    Q_PROPERTY(bool imageRefreshFlag                       READ imageRefreshFlag          NOTIFY imageRefreshFlagChanged)
-    Q_PROPERTY(bool hasUnsetRequiredFunctions              READ hasUnsetRequiredFunctions NOTIFY hasUnsetRequiredFunctionsChanged)
-    Q_PROPERTY(bool motorAssignmentActive                  READ motorAssignmentActive     NOTIFY motorAssignmentActiveChanged)
-    Q_PROPERTY(bool motorAssignmentEnabled                 READ motorAssignmentEnabled    NOTIFY motorAssignmentEnabledChanged)
-    Q_PROPERTY(QString motorAssignmentMessage              READ motorAssignmentMessage    NOTIFY motorAssignmentMessageChanged)
+    Q_PROPERTY(QmlObjectListModel* actuatorOutputs READ actuatorOutputs NOTIFY actuatorOutputsChanged)
+    Q_PROPERTY(QmlObjectListModel* actuatorActions READ actuatorActions NOTIFY actuatorActionsChanged)
+    Q_PROPERTY(bool isMultirotor READ isMultirotor CONSTANT)
+    Q_PROPERTY(bool imageRefreshFlag READ imageRefreshFlag NOTIFY imageRefreshFlagChanged)
+    Q_PROPERTY(bool hasUnsetRequiredFunctions READ hasUnsetRequiredFunctions NOTIFY hasUnsetRequiredFunctionsChanged)
+    Q_PROPERTY(bool motorAssignmentActive READ motorAssignmentActive NOTIFY motorAssignmentActiveChanged)
+    Q_PROPERTY(bool motorAssignmentEnabled READ motorAssignmentEnabled NOTIFY motorAssignmentEnabledChanged)
+    Q_PROPERTY(QString motorAssignmentMessage READ motorAssignmentMessage NOTIFY motorAssignmentMessageChanged)
 
-    Q_PROPERTY(ActuatorTesting::ActuatorTest* actuatorTest                      READ actuatorTest              CONSTANT)
-    Q_PROPERTY(Mixer::Mixers* mixer                                             READ mixer                     CONSTANT)
-    Q_PROPERTY(ActuatorOutputs::ActuatorOutput* selectedActuatorOutput          READ selectedActuatorOutput    NOTIFY selectedActuatorOutputChanged)
+    Q_PROPERTY(ActuatorTesting::ActuatorTest* actuatorTest READ actuatorTest CONSTANT)
+    Q_PROPERTY(Mixer::Mixers* mixer READ mixer CONSTANT)
+    Q_PROPERTY(ActuatorOutputs::ActuatorOutput* selectedActuatorOutput READ selectedActuatorOutput NOTIFY
+            selectedActuatorOutputChanged)
 
     Q_INVOKABLE void imageClicked(float x, float y);
 
@@ -108,20 +107,19 @@ private:
 
     void updateFunctionMetadata();
 
-    QSet<Fact*> _subscribedFacts{};
+    QSet<Fact*> _subscribedFacts {};
     QJsonDocument _jsonMetadata;
-    bool _init{false};
+    bool _init {false};
     Condition _showUi;
     QmlObjectListModel* _actuatorOutputs = new QmlObjectListModel(this); ///< list of ActuatorOutputs::ActuatorOutput*
     QmlObjectListModel* _actuatorActions = new QmlObjectListModel(this); ///< list of ActuatorActionGroup*
     ActuatorTesting::ActuatorTest _actuatorTest;
     Mixer::Mixers _mixer;
     MotorAssignment _motorAssignment;
-    bool _motorAssignmentEnabled{false};
-    bool _hasUnsetRequiredFunctions{false};
-    bool _imageRefreshFlag{false}; ///< indicator to QML to reload the image
-    int _selectedActuatorOutput{0};
-    Vehicle* _vehicle{nullptr};
+    bool _motorAssignmentEnabled {false};
+    bool _hasUnsetRequiredFunctions {false};
+    bool _imageRefreshFlag {false}; ///< indicator to QML to reload the image
+    int _selectedActuatorOutput {0};
+    Vehicle* _vehicle {nullptr};
     QMap<int, QString> _usedMixerLabels;
 };
-

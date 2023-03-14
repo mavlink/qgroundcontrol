@@ -33,13 +33,13 @@ ActuatorTest::~ActuatorTest()
     delete _allMotorsActuator;
 }
 
-void ActuatorTest::updateFunctions(const QList<Actuator*> &actuators)
+void ActuatorTest::updateFunctions(const QList<Actuator*>& actuators)
 {
     _actuators->clearAndDeleteContents();
     _allMotorsActuator->deleteLater();
     _allMotorsActuator = nullptr;
 
-    Actuator* motorActuator{nullptr};
+    Actuator* motorActuator {nullptr};
     for (const auto& actuator : actuators) {
         if (actuator->isMotor()) {
             motorActuator = actuator;
@@ -47,8 +47,8 @@ void ActuatorTest::updateFunctions(const QList<Actuator*> &actuators)
         _actuators->append(actuator);
     }
     if (motorActuator) {
-        _allMotorsActuator = new Actuator(this, tr("All Motors"), motorActuator->min(), motorActuator->max(), motorActuator->defaultValue(),
-                motorActuator->function(), true);
+        _allMotorsActuator = new Actuator(this, tr("All Motors"), motorActuator->min(), motorActuator->max(),
+            motorActuator->defaultValue(), motorActuator->function(), true);
     }
     resetStates();
 
@@ -60,7 +60,7 @@ void ActuatorTest::resetStates()
     _states.clear();
     _currentState = -1;
     for (int i = 0; i < _actuators->count(); ++i) {
-        _states.append(ActuatorState{});
+        _states.append(ActuatorState {});
     }
 }
 
@@ -121,7 +121,7 @@ void ActuatorTest::setActive(bool active)
 }
 
 void ActuatorTest::ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
-        Vehicle::MavCmdResultFailureCode_t failureCode)
+    Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     ActuatorTest* actuatorTest = (ActuatorTest*)resultHandlerData;
     actuatorTest->ackHandler(commandResult, failureCode);
@@ -190,17 +190,16 @@ void ActuatorTest::sendMavlinkRequest(int function, float value, float timeout)
 
     // TODO: consider using a lower command timeout
 
-    _vehicle->sendMavCommandWithHandler(
-            ackHandlerEntry,                  // Ack callback
-            this,                             // Ack callback data
-            MAV_COMP_ID_AUTOPILOT1,           // the ID of the autopilot
-            MAV_CMD_ACTUATOR_TEST,            // the mavlink command
-            value,                            // value
-            timeout,                          // timeout
-            0,                                // unused parameter
-            0,                                // unused parameter
-            1000+function,                    // function
-            0,                                // unused parameter
-            0);
+    _vehicle->sendMavCommandWithHandler(ackHandlerEntry, // Ack callback
+        this, // Ack callback data
+        MAV_COMP_ID_AUTOPILOT1, // the ID of the autopilot
+        MAV_CMD_ACTUATOR_TEST, // the mavlink command
+        value, // value
+        timeout, // timeout
+        0, // unused parameter
+        0, // unused parameter
+        1000 + function, // function
+        0, // unused parameter
+        0);
     _commandInProgress = true;
 }

@@ -16,7 +16,7 @@
 using namespace Mixer;
 
 ChannelConfigInstance* ChannelConfig::instantiate(int paramIndex, int actuatorTypeIndex,
-        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
+    ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
 {
     QString param = _parameter.param.name;
     int usedParamIndex;
@@ -62,8 +62,7 @@ ChannelConfigInstance* ChannelConfig::instantiate(int paramIndex, int actuatorTy
 void ChannelConfig::channelInstanceCreated(ChannelConfigInstance* instance)
 {
     _instances.append(instance);
-    connect(instance, &ChannelConfigInstance::visibleChanged,
-            this, &ChannelConfig::instanceVisibleChanged);
+    connect(instance, &ChannelConfigInstance::visibleChanged, this, &ChannelConfig::instanceVisibleChanged);
 }
 
 void ChannelConfig::instanceVisibleChanged()
@@ -82,7 +81,7 @@ void ChannelConfig::instanceVisibleChanged()
 }
 
 ChannelConfigInstance* ChannelConfigVirtualAxis::instantiate(int paramIndex, int actuatorTypeIndex,
-        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
+    ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
 {
     ChannelConfigInstance* instance = new ChannelConfigInstanceVirtualAxis(this, *this);
     channelInstanceCreated(instance);
@@ -109,24 +108,24 @@ void ChannelConfigInstanceVirtualAxis::allInstancesInitialized(QmlObjectListMode
     }
 
     // Initialize fact
-    QStringList enumStrings{tr("Custom"), tr("Upwards"), tr("Downwards"), tr("Forwards"), tr("Backwards"),
+    QStringList enumStrings {tr("Custom"), tr("Upwards"), tr("Downwards"), tr("Forwards"), tr("Backwards"),
         tr("Leftwards"), tr("Rightwards")};
-    QVariantList enumValues{0, 1, 2, 3, 4, 5, 6};
+    QVariantList enumValues {0, 1, 2, 3, 4, 5, 6};
     FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
     metaData->setEnumInfo(enumStrings, enumValues);
     _fact = new Fact("", metaData, this);
     setFactFromAxes();
 
     connect(_fact, &Fact::rawValueChanged, this, &ChannelConfigInstanceVirtualAxis::setAxesFromFact);
-    for (int i=0; i < 3; ++i) {
-        connect(_axes[i]->fact(), &Fact::rawValueChanged,
-                this, [this](){ ChannelConfigInstanceVirtualAxis::setFactFromAxes(true); });
+    for (int i = 0; i < 3; ++i) {
+        connect(_axes[i]->fact(), &Fact::rawValueChanged, this,
+            [this]() { ChannelConfigInstanceVirtualAxis::setFactFromAxes(true); });
     }
     // Inherit visibility & enabled from the first axis
-    connect(_axes[0], &ChannelConfigInstance::visibleChanged,
-            this, &ChannelConfigInstanceVirtualAxis::axisVisibleChanged);
-    connect(_axes[0], &ChannelConfigInstance::enabledChanged,
-            this, &ChannelConfigInstanceVirtualAxis::axisEnableChanged);
+    connect(
+        _axes[0], &ChannelConfigInstance::visibleChanged, this, &ChannelConfigInstanceVirtualAxis::axisVisibleChanged);
+    connect(
+        _axes[0], &ChannelConfigInstance::enabledChanged, this, &ChannelConfigInstanceVirtualAxis::axisEnableChanged);
     axisVisibleChanged();
     axisEnableChanged();
 }
@@ -154,7 +153,7 @@ void ChannelConfigInstanceVirtualAxis::setFactFromAxes(bool keepVisible)
     float x = _axes[0]->fact()->rawValue().toFloat();
     float y = _axes[1]->fact()->rawValue().toFloat();
     float z = _axes[2]->fact()->rawValue().toFloat();
-    Direction direction{Direction::Custom}; // set to custom if no match
+    Direction direction {Direction::Custom}; // set to custom if no match
     const float eps = 0.00001f;
     if (fabsf(x) < eps && fabsf(y) < eps && fabsf(z + 1.f) < eps) {
         direction = Direction::Upwards;
@@ -172,7 +171,7 @@ void ChannelConfigInstanceVirtualAxis::setFactFromAxes(bool keepVisible)
     _fact->setRawValue((uint32_t)direction);
 
     bool visible = direction == Direction::Custom || keepVisible;
-    for(int i=0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         _axes[i]->setVisibleAxis(visible);
     }
     _ignoreChange = false;
@@ -188,52 +187,68 @@ void ChannelConfigInstanceVirtualAxis::setAxesFromFact()
 
     if (directionIdx > 0) {
         Direction direction = (Direction)directionIdx;
-        float x{}, y{}, z{};
+        float x {}, y {}, z {};
         switch (direction) {
-            case Direction::Upwards:
-                x = 0.f; y = 0.f; z = -1.f;
-                break;
-            case Direction::Downwards:
-                x = 0.f; y = 0.f; z = 1.f;
-                break;
-            case Direction::Forwards:
-                x = 1.f; y = 0.f; z = 0.f;
-                break;
-            case Direction::Backwards:
-                x = -1.f; y = 0.f; z = 0.f;
-                break;
-            case Direction::Leftwards:
-                x = 0.f; y = -1.f; z = 0.f;
-                break;
-            case Direction::Rightwards:
-                x = 0.f; y = 1.f; z = 0.f;
-                break;
-            case Direction::Custom:
-                break;
+        case Direction::Upwards:
+            x = 0.f;
+            y = 0.f;
+            z = -1.f;
+            break;
+        case Direction::Downwards:
+            x = 0.f;
+            y = 0.f;
+            z = 1.f;
+            break;
+        case Direction::Forwards:
+            x = 1.f;
+            y = 0.f;
+            z = 0.f;
+            break;
+        case Direction::Backwards:
+            x = -1.f;
+            y = 0.f;
+            z = 0.f;
+            break;
+        case Direction::Leftwards:
+            x = 0.f;
+            y = -1.f;
+            z = 0.f;
+            break;
+        case Direction::Rightwards:
+            x = 0.f;
+            y = 1.f;
+            z = 0.f;
+            break;
+        case Direction::Custom:
+            break;
         }
         _axes[0]->fact()->setRawValue(x);
         _axes[1]->fact()->setRawValue(y);
         _axes[2]->fact()->setRawValue(z);
     }
 
-
     bool visible = directionIdx == 0;
-    for(int i=0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         _axes[i]->setVisibleAxis(visible);
     }
     _ignoreChange = false;
 }
 
-MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFunction, int paramIndex, int actuatorTypeIndex,
-        QmlObjectListModel &channelConfigs, ParameterManager* parameterManager, const Rule* rule,
-        std::function<void(Function, Fact*)> factAddedCb)
-    : QObject(parent), _label(label), _actuatorFunction(actuatorFunction), _paramIndex(paramIndex),
-      _actuatorTypeIndex(actuatorTypeIndex), _rule(rule)
+MixerChannel::MixerChannel(QObject* parent, const QString& label, int actuatorFunction, int paramIndex,
+    int actuatorTypeIndex, QmlObjectListModel& channelConfigs, ParameterManager* parameterManager, const Rule* rule,
+    std::function<void(Function, Fact*)> factAddedCb)
+    : QObject(parent)
+    , _label(label)
+    , _actuatorFunction(actuatorFunction)
+    , _paramIndex(paramIndex)
+    , _actuatorTypeIndex(actuatorTypeIndex)
+    , _rule(rule)
 {
     for (int i = 0; i < channelConfigs.count(); ++i) {
         auto channelConfig = channelConfigs.value<ChannelConfig*>(i);
 
-        ChannelConfigInstance* instance = channelConfig->instantiate(paramIndex, actuatorTypeIndex, parameterManager, factAddedCb);
+        ChannelConfigInstance* instance
+            = channelConfig->instantiate(paramIndex, actuatorTypeIndex, parameterManager, factAddedCb);
         Fact* fact = instance->fact();
 
         // if we have a valid rule, check the identifiers
@@ -320,8 +335,8 @@ void MixerChannel::applyRule(bool noConstraints)
     _applyingRule = false;
 }
 
-bool MixerChannel::getGeometry(const ActuatorTypes& actuatorTypes, const MixerOption::ActuatorGroup& group,
-        ActuatorGeometry& geometry) const
+bool MixerChannel::getGeometry(
+    const ActuatorTypes& actuatorTypes, const MixerOption::ActuatorGroup& group, ActuatorGeometry& geometry) const
 {
     geometry.type = ActuatorGeometry::typeFromStr(group.actuatorType);
     const auto iter = actuatorTypes.find(group.actuatorType);
@@ -338,28 +353,29 @@ bool MixerChannel::getGeometry(const ActuatorTypes& actuatorTypes, const MixerOp
             continue;
         }
         switch (configInstance->channelConfig()->function()) {
-            case Function::PositionX:
-                geometry.position.setX(configInstance->fact()->rawValue().toFloat());
-                ++numPositionAxis;
-                break;
-            case Function::PositionY:
-                geometry.position.setY(configInstance->fact()->rawValue().toFloat());
-                ++numPositionAxis;
-                break;
-            case Function::PositionZ:
-                geometry.position.setZ(configInstance->fact()->rawValue().toFloat());
-                ++numPositionAxis;
-                break;
-            case Function::SpinDirection:
-                geometry.spinDirection = configInstance->fact()->rawValue().toBool() ?
-					ActuatorGeometry::SpinDirection::CounterClockWise : ActuatorGeometry::SpinDirection::ClockWise;
-                break;
-            case Function::AxisX:
-            case Function::AxisY:
-            case Function::AxisZ:
-            case Function::Type:
-            case Function::Unspecified:
-                break;
+        case Function::PositionX:
+            geometry.position.setX(configInstance->fact()->rawValue().toFloat());
+            ++numPositionAxis;
+            break;
+        case Function::PositionY:
+            geometry.position.setY(configInstance->fact()->rawValue().toFloat());
+            ++numPositionAxis;
+            break;
+        case Function::PositionZ:
+            geometry.position.setZ(configInstance->fact()->rawValue().toFloat());
+            ++numPositionAxis;
+            break;
+        case Function::SpinDirection:
+            geometry.spinDirection = configInstance->fact()->rawValue().toBool()
+                ? ActuatorGeometry::SpinDirection::CounterClockWise
+                : ActuatorGeometry::SpinDirection::ClockWise;
+            break;
+        case Function::AxisX:
+        case Function::AxisY:
+        case Function::AxisZ:
+        case Function::Type:
+        case Function::Unspecified:
+            break;
         }
     }
 
@@ -389,13 +405,10 @@ void MixerConfigGroup::addChannel(MixerChannel* channel)
     emit channelsChanged();
 }
 
-void MixerConfigGroup::addConfigParam(ConfigParameter* param)
-{
-    _params->append(param);
-}
+void MixerConfigGroup::addConfigParam(ConfigParameter* param) { _params->append(param); }
 
 void Mixers::reset(const ActuatorTypes& actuatorTypes, const MixerOptions& mixerOptions,
-        const QMap<int, OutputFunction>& functions, const Rules& rules)
+    const QMap<int, OutputFunction>& functions, const Rules& rules)
 {
     _groups->clearAndDeleteContents();
     _actuatorTypes = actuatorTypes;
@@ -427,7 +440,6 @@ void Mixers::update()
         }
     }
 
-
     if (_selectedMixer != -1) {
 
         subscribeFact(_mixerConditions[_selectedMixer].fact());
@@ -436,7 +448,7 @@ void Mixers::update()
 
         const auto& actuatorGroups = _mixerOptions[_selectedMixer].actuators;
         QMap<QString, int> actuatorTypeCount;
-        for (const auto &actuatorGroup : actuatorGroups) {
+        for (const auto& actuatorGroup : actuatorGroups) {
             int count = actuatorGroup.fixedCount;
             if (actuatorGroup.count != "") {
                 Fact* countFact = getFact(actuatorGroup.count);
@@ -453,14 +465,14 @@ void Mixers::update()
             const auto actuatorType = _actuatorTypes.find(actuatorGroup.actuatorType);
             if (actuatorType != _actuatorTypes.end()) {
                 for (const auto& perItemParam : actuatorType->perItemParams) {
-                    MixerParameter param{};
+                    MixerParameter param {};
                     param.param = perItemParam;
                     currentMixerGroup->addChannelConfig(new ChannelConfig(currentMixerGroup, param, true));
                 }
             }
 
-            const Rule* selectedRule{nullptr}; // at most 1 rule can be applied
-            int axisIdx[3]{-1, -1, -1};
+            const Rule* selectedRule {nullptr}; // at most 1 rule can be applied
+            int axisIdx[3] {-1, -1, -1};
             for (const auto& perItemParam : actuatorGroup.perItemParameters) {
                 currentMixerGroup->addChannelConfig(new ChannelConfig(currentMixerGroup, perItemParam, false));
 
@@ -495,8 +507,8 @@ void Mixers::update()
 
             // 'count' param
             if (actuatorGroup.count != "") {
-                currentMixerGroup->setCountParam(new ConfigParameter(currentMixerGroup, getFact(actuatorGroup.count),
-                        "", false));
+                currentMixerGroup->setCountParam(
+                    new ConfigParameter(currentMixerGroup, getFact(actuatorGroup.count), "", false));
             }
 
             for (int actuatorIdx = 0; actuatorIdx < count; ++actuatorIdx) {
@@ -508,7 +520,7 @@ void Mixers::update()
                     if (label == "") {
                         qCWarning(ActuatorsConfigLog) << "No label for output function" << actuatorFunction;
                     }
-                    QString itemLabelPrefix{};
+                    QString itemLabelPrefix {};
                     if (actuatorGroup.itemLabelPrefix.size() == 1) {
                         QString paramIndex = QString::number(actuatorIdx + 1);
                         itemLabelPrefix = actuatorGroup.itemLabelPrefix[0];
@@ -525,7 +537,8 @@ void Mixers::update()
                     // Type might change more than the geometry
                     subscribeFact(fact, function != Function::Type);
                 };
-                MixerChannel* channel = new MixerChannel(currentMixerGroup, label, actuatorFunction, actuatorIdx, actuatorTypeIndex,
+                MixerChannel* channel
+                    = new MixerChannel(currentMixerGroup, label, actuatorFunction, actuatorIdx, actuatorTypeIndex,
                         *currentMixerGroup->channelConfigs(), _parameterManager, selectedRule, factAdded);
                 currentMixerGroup->addChannel(channel);
                 ++actuatorTypeIndex;
@@ -533,8 +546,8 @@ void Mixers::update()
 
             // config params
             for (const auto& parameter : actuatorGroup.parameters) {
-                currentMixerGroup->addConfigParam(new ConfigParameter(currentMixerGroup, getFact(parameter.name),
-                        parameter.label, parameter.advanced));
+                currentMixerGroup->addConfigParam(new ConfigParameter(
+                    currentMixerGroup, getFact(parameter.name), parameter.label, parameter.advanced));
             }
 
             _groups->append(currentMixerGroup);
@@ -543,7 +556,6 @@ void Mixers::update()
     }
 
     emit groupsChanged();
-
 }
 
 QString Mixers::getSpecificLabelForFunction(int function) const
@@ -552,7 +564,8 @@ QString Mixers::getSpecificLabelForFunction(int function) const
     Fact* typeFact = nullptr;
     for (int mixerGroupIdx = 0; !typeFact && mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
         Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
-        for (int mixerChannelIdx = 0; !typeFact && mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
+        for (int mixerChannelIdx = 0; !typeFact && mixerChannelIdx < mixerGroup->channels()->count();
+             ++mixerChannelIdx) {
             Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
 
             if (mixerChannel->actuatorFunction() != function) {
@@ -568,14 +581,15 @@ QString Mixers::getSpecificLabelForFunction(int function) const
         for (int mixerGroupIdx = 0; mixerGroupIdx < _groups->count(); ++mixerGroupIdx) {
             Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
             for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
-                Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
+                Mixer::MixerChannel* mixerChannel
+                    = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
 
                 if (mixerChannel->actuatorFunction() == function) {
                     continue;
                 }
                 Fact* typeFactOther = mixerChannel->getFact(Function::Type);
                 if (typeFactOther && typeFactOther->rawValue() == typeFact->rawValue()) {
-                    return typeFact->enumOrValueString() + " (" + _functions.value(function).label +")";
+                    return typeFact->enumOrValueString() + " (" + _functions.value(function).label + ")";
                 }
             }
         }
@@ -596,7 +610,8 @@ QSet<int> Mixers::getFunctions(bool requiredOnly) const
         Mixer::MixerConfigGroup* mixerGroup = _groups->value<Mixer::MixerConfigGroup*>(mixerGroupIdx);
         if (!requiredOnly || mixerGroup->group().required) {
             for (int mixerChannelIdx = 0; mixerChannelIdx < mixerGroup->channels()->count(); ++mixerChannelIdx) {
-                const Mixer::MixerChannel* mixerChannel = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
+                const Mixer::MixerChannel* mixerChannel
+                    = mixerGroup->channels()->value<Mixer::MixerChannel*>(mixerChannelIdx);
                 if (mixerChannel->actuatorFunction() != 0) {
                     ret.insert(mixerChannel->actuatorFunction());
                 }
@@ -637,8 +652,8 @@ Fact* Mixers::getFact(const QString& paramName)
         return nullptr;
     }
     Fact* fact = _parameterManager->getParameter(FactSystem::defaultComponentId, paramName);
-	subscribeFact(fact);
-	return fact;
+    subscribeFact(fact);
+    return fact;
 }
 
 void Mixers::subscribeFact(Fact* fact, bool geometry)
