@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 #include "SyslinkComponentController.h"
+#include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "UAS.h"
-#include "ParameterManager.h"
 
 #include <QHostAddress>
 #include <QtEndian>
@@ -35,43 +35,36 @@ SyslinkComponentController::SyslinkComponentController()
 }
 
 //-----------------------------------------------------------------------------
-SyslinkComponentController::~SyslinkComponentController()
-{
-
-}
+SyslinkComponentController::~SyslinkComponentController() { }
 
 //-----------------------------------------------------------------------------
-int
-SyslinkComponentController::radioChannel()
+int SyslinkComponentController::radioChannel()
 {
     return getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_CHAN"))->rawValue().toUInt();
 }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::setRadioChannel(int num)
+void SyslinkComponentController::setRadioChannel(int num)
 {
     Fact* f = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_CHAN"));
     f->setRawValue(QVariant(num));
 }
 
 //-----------------------------------------------------------------------------
-QString
-SyslinkComponentController::radioAddress()
+QString SyslinkComponentController::radioAddress()
 {
     uint32_t val_uh = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_ADDR1"))->rawValue().toUInt();
     uint32_t val_lh = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_ADDR2"))->rawValue().toUInt();
-    uint64_t val = (((uint64_t) val_uh) << 32) | ((uint64_t) val_lh);
+    uint64_t val = (((uint64_t)val_uh) << 32) | ((uint64_t)val_lh);
 
     return QString().number(val, 16);
 }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::setRadioAddress(QString str)
+void SyslinkComponentController::setRadioAddress(QString str)
 {
-    Fact *uh = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_ADDR1"));
-    Fact *lh = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_ADDR2"));
+    Fact* uh = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_ADDR1"));
+    Fact* lh = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_ADDR2"));
 
     uint64_t val = str.toULongLong(0, 16);
 
@@ -83,25 +76,22 @@ SyslinkComponentController::setRadioAddress(QString str)
 }
 
 //-----------------------------------------------------------------------------
-int
-SyslinkComponentController::radioRate()
+int SyslinkComponentController::radioRate()
 {
     return getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_RATE"))->rawValue().toInt();
 }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::setRadioRate(int idx)
+void SyslinkComponentController::setRadioRate(int idx)
 {
-    if(idx >= 0 && idx <= 2 && idx != radioRate()) {
+    if (idx >= 0 && idx <= 2 && idx != radioRate()) {
         Fact* r = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_RATE"));
         r->setRawValue(idx);
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::resetDefaults()
+void SyslinkComponentController::resetDefaults()
 {
     Fact* chan = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_CHAN"));
     Fact* rate = getParameterFact(_vehicle->id(), QStringLiteral("SLNK_RADIO_RATE"));
@@ -115,23 +105,10 @@ SyslinkComponentController::resetDefaults()
 }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::_channelChanged(QVariant)
-{
-    emit radioChannelChanged();
-}
+void SyslinkComponentController::_channelChanged(QVariant) { emit radioChannelChanged(); }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::_addressChanged(QVariant)
-{
-    emit radioAddressChanged();
-}
+void SyslinkComponentController::_addressChanged(QVariant) { emit radioAddressChanged(); }
 
 //-----------------------------------------------------------------------------
-void
-SyslinkComponentController::_rateChanged(QVariant)
-{
-    emit radioRateChanged();
-}
-
+void SyslinkComponentController::_rateChanged(QVariant) { emit radioRateChanged(); }

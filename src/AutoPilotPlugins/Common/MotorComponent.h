@@ -7,23 +7,21 @@
  *
  ****************************************************************************/
 
-
 #ifndef MotorComponent_H
 #define MotorComponent_H
 
-#include "VehicleComponent.h"
 #include "Fact.h"
+#include "VehicleComponent.h"
 
-class MotorComponent : public VehicleComponent
-{
+class MotorComponent : public VehicleComponent {
     Q_OBJECT
-    
+
 public:
     MotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
-    
+
     // Virtuals from VehicleComponent
     QString name(void) const final;
     QString description(void) const final;
@@ -34,7 +32,7 @@ public:
     QUrl summaryQmlSource(void) const final;
 
 private:
-    const QString   _name;
+    const QString _name;
 };
 
 #endif
