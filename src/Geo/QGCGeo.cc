@@ -13,9 +13,9 @@
 #include <cmath>
 #include <limits>
 
+#include "MGRS.hpp"
 #include "QGCGeo.h"
 #include "UTMUPS.hpp"
-#include "MGRS.hpp"
 
 // These defines are private
 #define M_DEG_TO_RAD (M_PI / 180.0)
@@ -54,7 +54,8 @@ void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, dou
     *z = -(coord.altitude() - origin.altitude());
 }
 
-void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord) {
+void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate* coord)
+{
     double x_rad = x / CONSTANTS_RADIUS_OF_EARTH;
     double y_rad = y / CONSTANTS_RADIUS_OF_EARTH;
     double c = sqrt(x_rad * x_rad + y_rad * y_rad);
@@ -92,7 +93,7 @@ int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northi
         bool northp;
         GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
         return zone;
-    } catch(...) {
+    } catch (...) {
         return 0;
     }
 }
@@ -102,7 +103,7 @@ bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, 
     double lat, lon;
     try {
         GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
-    } catch(...) {
+    } catch (...) {
         return false;
     }
     coord.setLatitude(lat);
@@ -121,7 +122,7 @@ QString convertGeoToMGRS(const QGeoCoordinate& coord)
     try {
         GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
         GeographicLib::MGRS::Forward(zone, northp, x, y, coord.latitude(), 5, mgrs);
-    } catch(...) {
+    } catch (...) {
         mgrs = "";
     }
 
@@ -146,7 +147,7 @@ bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord)
     try {
         GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
-    } catch(...) {
+    } catch (...) {
         return false;
     }
     coord.setLatitude(lat);

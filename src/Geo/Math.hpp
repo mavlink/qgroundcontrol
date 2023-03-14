@@ -25,23 +25,22 @@
 // might define __ANDROID__ or ANDROID; so need to check both.  With OSX the
 // version is GNUC version 4.2 and __cplusplus is set to 201103, so remove the
 // version check on GNUC.
-#  if defined(__GNUC__) && __cplusplus >= 201103 && \
-  !(defined(__ANDROID__) || defined(ANDROID) || defined(__CYGWIN__))
-#    define GEOGRAPHICLIB_CXX11_MATH 1
+#if defined(__GNUC__) && __cplusplus >= 201103 && !(defined(__ANDROID__) || defined(ANDROID) || defined(__CYGWIN__))
+#define GEOGRAPHICLIB_CXX11_MATH 1
 // Visual C++ 12 supports these functions
-#  elif defined(_MSC_VER) && _MSC_VER >= 1800
-#    define GEOGRAPHICLIB_CXX11_MATH 1
-#  else
-#    define GEOGRAPHICLIB_CXX11_MATH 0
-#  endif
+#elif defined(_MSC_VER) && _MSC_VER >= 1800
+#define GEOGRAPHICLIB_CXX11_MATH 1
+#else
+#define GEOGRAPHICLIB_CXX11_MATH 0
+#endif
 #endif
 
 #if !defined(GEOGRAPHICLIB_WORDS_BIGENDIAN)
-#  define GEOGRAPHICLIB_WORDS_BIGENDIAN 0
+#define GEOGRAPHICLIB_WORDS_BIGENDIAN 0
 #endif
 
 #if !defined(GEOGRAPHICLIB_HAVE_LONG_DOUBLE)
-#  define GEOGRAPHICLIB_HAVE_LONG_DOUBLE 0
+#define GEOGRAPHICLIB_HAVE_LONG_DOUBLE 0
 #endif
 
 #if !defined(GEOGRAPHICLIB_PRECISION)
@@ -54,17 +53,17 @@
  * defined.  Note that with Microsoft Visual Studio, long double is the same as
  * double.
  **********************************************************************/
-#  define GEOGRAPHICLIB_PRECISION 2
+#define GEOGRAPHICLIB_PRECISION 2
 #endif
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #if GEOGRAPHICLIB_PRECISION == 4
-#include <boost/version.hpp>
-#include <boost/multiprecision/float128.hpp>
 #include <boost/math/special_functions.hpp>
+#include <boost/multiprecision/float128.hpp>
+#include <boost/version.hpp>
 #elif GEOGRAPHICLIB_PRECISION == 5
 #include <mpreal.h>
 #endif
@@ -74,8 +73,7 @@
 #define GEOGRAPHICLIB_VOLATILE
 // Signal a convergence failure with multiprec types by throwing an exception
 // at loop exit.
-#define GEOGRAPHICLIB_PANIC \
-  (throw GeographicLib::GeographicErr("Convergence failure"), false)
+#define GEOGRAPHICLIB_PANIC (throw GeographicLib::GeographicErr("Convergence failure"), false)
 #else
 #define GEOGRAPHICLIB_VOLATILE volatile
 // Ignore convergence failures with standard floating points types by allowing
@@ -85,22 +83,21 @@
 
 namespace GeographicLib {
 
-  /**
-   * \brief Mathematical functions needed by %GeographicLib
-   *
-   * Define mathematical functions in order to localize system dependencies and
-   * to provide generic versions of the functions.  In addition define a real
-   * type to be used by %GeographicLib.
-   *
-   * Example of use:
-   * \include example-Math.cpp
-   **********************************************************************/
-  class Math {
-  private:
-    void dummy();               // Static check for GEOGRAPHICLIB_PRECISION
-    Math();                     // Disable constructor
-  public:
-
+/**
+ * \brief Mathematical functions needed by %GeographicLib
+ *
+ * Define mathematical functions in order to localize system dependencies and
+ * to provide generic versions of the functions.  In addition define a real
+ * type to be used by %GeographicLib.
+ *
+ * Example of use:
+ * \include example-Math.cpp
+ **********************************************************************/
+class Math {
+private:
+    void dummy(); // Static check for GEOGRAPHICLIB_PRECISION
+    Math(); // Disable constructor
+public:
 #if GEOGRAPHICLIB_HAVE_LONG_DOUBLE
     /**
      * The extended precision type for real numbers, used for some testing.
@@ -168,10 +165,11 @@ namespace GeographicLib {
      * @tparam T the type of the returned value.
      * @return &pi;.
      **********************************************************************/
-    template<typename T> static T pi() {
-      using std::atan2;
-      static const T pi = atan2(T(0), T(-1));
-      return pi;
+    template <typename T> static T pi()
+    {
+        using std::atan2;
+        static const T pi = atan2(T(0), T(-1));
+        return pi;
     }
     /**
      * A synonym for pi<real>().
@@ -182,9 +180,10 @@ namespace GeographicLib {
      * @tparam T the type of the returned value.
      * @return the number of radians in a degree.
      **********************************************************************/
-    template<typename T> static T degree() {
-      static const T degree = pi<T>() / 180;
-      return degree;
+    template <typename T> static T degree()
+    {
+        static const T degree = pi<T>() / 180;
+        return degree;
     }
     /**
      * A synonym for degree<real>().
@@ -198,8 +197,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return <i>x</i><sup>2</sup>.
      **********************************************************************/
-    template<typename T> static T sq(T x)
-    { return x * x; }
+    template <typename T> static T sq(T x) { return x * x; }
 
     /**
      * The hypotenuse function avoiding underflow and overflow.
@@ -209,7 +207,7 @@ namespace GeographicLib {
      * @param[in] y
      * @return sqrt(<i>x</i><sup>2</sup> + <i>y</i><sup>2</sup>).
      **********************************************************************/
-    template<typename T> static T hypot(T x, T y);
+    template <typename T> static T hypot(T x, T y);
 
     /**
      * exp(\e x) &minus; 1 accurate near \e x = 0.
@@ -218,7 +216,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return exp(\e x) &minus; 1.
      **********************************************************************/
-    template<typename T> static T expm1(T x);
+    template <typename T> static T expm1(T x);
 
     /**
      * log(1 + \e x) accurate near \e x = 0.
@@ -227,7 +225,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return log(1 + \e x).
      **********************************************************************/
-    template<typename T> static T log1p(T x);
+    template <typename T> static T log1p(T x);
 
     /**
      * The inverse hyperbolic sine function.
@@ -236,7 +234,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return asinh(\e x).
      **********************************************************************/
-    template<typename T> static T asinh(T x);
+    template <typename T> static T asinh(T x);
 
     /**
      * The inverse hyperbolic tangent function.
@@ -245,7 +243,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return atanh(\e x).
      **********************************************************************/
-    template<typename T> static T atanh(T x);
+    template <typename T> static T atanh(T x);
 
     /**
      * Copy the sign.
@@ -258,7 +256,7 @@ namespace GeographicLib {
      * This routine correctly handles the case \e y = &minus;0, returning
      * &minus|<i>x</i>|.
      **********************************************************************/
-    template<typename T> static T copysign(T x, T y);
+    template <typename T> static T copysign(T x, T y);
 
     /**
      * The cube root function.
@@ -267,7 +265,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return the real cube root of \e x.
      **********************************************************************/
-    template<typename T> static T cbrt(T x);
+    template <typename T> static T cbrt(T x);
 
     /**
      * The remainder function.
@@ -277,7 +275,7 @@ namespace GeographicLib {
      * @param[in] y
      * @return the remainder of \e x/\e y in the range [&minus;\e y/2, \e y/2].
      **********************************************************************/
-    template<typename T> static T remainder(T x, T y);
+    template <typename T> static T remainder(T x, T y);
 
     /**
      * The remquo function.
@@ -288,7 +286,7 @@ namespace GeographicLib {
      * @param[out] n the low 3 bits of the quotient
      * @return the remainder of \e x/\e y in the range [&minus;\e y/2, \e y/2].
      **********************************************************************/
-    template<typename T> static T remquo(T x, T y, int* n);
+    template <typename T> static T remquo(T x, T y, int* n);
 
     /**
      * The round function.
@@ -297,7 +295,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return \e x round to the nearest integer (ties round away from 0).
      **********************************************************************/
-    template<typename T> static T round(T x);
+    template <typename T> static T round(T x);
 
     /**
      * The lround function.
@@ -309,7 +307,7 @@ namespace GeographicLib {
      *
      * If the result does not fit in a long int, the return value is undefined.
      **********************************************************************/
-    template<typename T> static long lround(T x);
+    template <typename T> static long lround(T x);
 
     /**
      * Fused multiply and add.
@@ -325,7 +323,7 @@ namespace GeographicLib {
      * made to improve on the result of a rounded multiplication followed by a
      * rounded addition.
      **********************************************************************/
-    template<typename T> static T fma(T x, T y, T z);
+    template <typename T> static T fma(T x, T y, T z);
 
     /**
      * Normalize a two-vector.
@@ -334,8 +332,12 @@ namespace GeographicLib {
      * @param[in,out] x on output set to <i>x</i>/hypot(<i>x</i>, <i>y</i>).
      * @param[in,out] y on output set to <i>y</i>/hypot(<i>x</i>, <i>y</i>).
      **********************************************************************/
-    template<typename T> static void norm(T& x, T& y)
-    { T h = hypot(x, y); x /= h; y /= h; }
+    template <typename T> static void norm(T& x, T& y)
+    {
+        T h = hypot(x, y);
+        x /= h;
+        y /= h;
+    }
 
     /**
      * The error-free sum of two numbers.
@@ -349,7 +351,7 @@ namespace GeographicLib {
      * See D. E. Knuth, TAOCP, Vol 2, 4.2.2, Theorem B.  (Note that \e t can be
      * the same as one of the first two arguments.)
      **********************************************************************/
-    template<typename T> static T sum(T u, T v, T& t);
+    template <typename T> static T sum(T u, T v, T& t);
 
     /**
      * Evaluate a polynomial.
@@ -365,11 +367,16 @@ namespace GeographicLib {
      * Return 0 if \e N &lt; 0.  Return <i>p</i><sub>0</sub>, if \e N = 0 (even
      * if \e x is infinite or a nan).  The evaluation uses Horner's method.
      **********************************************************************/
-    template<typename T> static T polyval(int N, const T p[], T x)
+    template <typename T> static T polyval(int N, const T p[], T x)
     // This used to employ Math::fma; but that's too slow and it seemed not to
     // improve the accuracy noticeably.  This might change when there's direct
     // hardware support for fma.
-    { T y = N < 0 ? 0 : *p++; while (--N >= 0) y = y * x + *p++; return y; }
+    {
+        T y = N < 0 ? 0 : *p++;
+        while (--N >= 0)
+            y = y * x + *p++;
+        return y;
+    }
 
     /**
      * Normalize an angle.
@@ -380,8 +387,10 @@ namespace GeographicLib {
      *
      * The range of \e x is unrestricted.
      **********************************************************************/
-    template<typename T> static T AngNormalize(T x) {
-      x = remainder(x, T(360)); return x != -180 ? x : 180;
+    template <typename T> static T AngNormalize(T x)
+    {
+        x = remainder(x, T(360));
+        return x != -180 ? x : 180;
     }
 
     /**
@@ -392,8 +401,11 @@ namespace GeographicLib {
      * @return x if it is in the range [&minus;90&deg;, 90&deg;], otherwise
      *   return NaN.
      **********************************************************************/
-    template<typename T> static T LatFix(T x)
-    { using std::abs; return abs(x) > 90 ? NaN<T>() : x; }
+    template <typename T> static T LatFix(T x)
+    {
+        using std::abs;
+        return abs(x) > 90 ? NaN<T>() : x;
+    }
 
     /**
      * The exact difference of two angles reduced to
@@ -411,16 +423,16 @@ namespace GeographicLib {
      * error.  If \e d = &minus;180, then \e e &gt; 0; If \e d = 180, then \e e
      * &le; 0.
      **********************************************************************/
-    template<typename T> static T AngDiff(T x, T y, T& e) {
-      T t, d = AngNormalize(sum(remainder(-x, T(360)),
-                                remainder( y, T(360)), t));
-      // Here y - x = d + t (mod 360), exactly, where d is in (-180,180] and
-      // abs(t) <= eps (eps = 2^-45 for doubles).  The only case where the
-      // addition of t takes the result outside the range (-180,180] is d = 180
-      // and t > 0.  The case, d = -180 + eps, t = -eps, can't happen, since
-      // sum would have returned the exact result in such a case (i.e., given t
-      // = 0).
-      return sum(d == 180 && t > 0 ? -180 : d, t, e);
+    template <typename T> static T AngDiff(T x, T y, T& e)
+    {
+        T t, d = AngNormalize(sum(remainder(-x, T(360)), remainder(y, T(360)), t));
+        // Here y - x = d + t (mod 360), exactly, where d is in (-180,180] and
+        // abs(t) <= eps (eps = 2^-45 for doubles).  The only case where the
+        // addition of t takes the result outside the range (-180,180] is d = 180
+        // and t > 0.  The case, d = -180 + eps, t = -eps, can't happen, since
+        // sum would have returned the exact result in such a case (i.e., given t
+        // = 0).
+        return sum(d == 180 && t > 0 ? -180 : d, t, e);
     }
 
     /**
@@ -437,8 +449,11 @@ namespace GeographicLib {
      * this prescription allows &minus;180&deg; to be returned (e.g., if \e x
      * is tiny and negative and \e y = 180&deg;).
      **********************************************************************/
-    template<typename T> static T AngDiff(T x, T y)
-    { T e; return AngDiff(x, y, e); }
+    template <typename T> static T AngDiff(T x, T y)
+    {
+        T e;
+        return AngDiff(x, y, e);
+    }
 
     /**
      * Coarsen a value close to zero.
@@ -455,7 +470,7 @@ namespace GeographicLib {
      * 10<sup>&minus;200</sup>).  This converts &minus;0 to +0; however tiny
      * negative numbers get converted to &minus;0.
      **********************************************************************/
-    template<typename T> static T AngRound(T x);
+    template <typename T> static T AngRound(T x);
 
     /**
      * Evaluate the sine and cosine function with the argument in degrees
@@ -470,7 +485,7 @@ namespace GeographicLib {
      * If x = &minus;0, then \e sinx = &minus;0; this is the only case where
      * &minus;0 is returned.
      **********************************************************************/
-    template<typename T> static void sincosd(T x, T& sinx, T& cosx);
+    template <typename T> static void sincosd(T x, T& sinx, T& cosx);
 
     /**
      * Evaluate the sine function with the argument in degrees
@@ -479,7 +494,7 @@ namespace GeographicLib {
      * @param[in] x in degrees.
      * @return sin(<i>x</i>).
      **********************************************************************/
-    template<typename T> static T sind(T x);
+    template <typename T> static T sind(T x);
 
     /**
      * Evaluate the cosine function with the argument in degrees
@@ -488,7 +503,7 @@ namespace GeographicLib {
      * @param[in] x in degrees.
      * @return cos(<i>x</i>).
      **********************************************************************/
-    template<typename T> static T cosd(T x);
+    template <typename T> static T cosd(T x);
 
     /**
      * Evaluate the tangent function with the argument in degrees
@@ -500,7 +515,7 @@ namespace GeographicLib {
      * If \e x = &plusmn;90&deg;, then a suitably large (but finite) value is
      * returned.
      **********************************************************************/
-    template<typename T> static T tand(T x);
+    template <typename T> static T tand(T x);
 
     /**
      * Evaluate the atan2 function with the result in degrees
@@ -515,7 +530,7 @@ namespace GeographicLib {
      * &minus;1) = &minus;180&deg;, for &epsilon; positive and tiny;
      * atan2d(&plusmn;0, +1) = &plusmn;0&deg;.
      **********************************************************************/
-    template<typename T> static T atan2d(T y, T x);
+    template <typename T> static T atan2d(T y, T x);
 
     /**
      * Evaluate the atan function with the result in degrees
@@ -524,7 +539,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return atan(<i>x</i>) in degrees.
      **********************************************************************/
-   template<typename T> static T atand(T x);
+    template <typename T> static T atand(T x);
 
     /**
      * Evaluate <i>e</i> atanh(<i>e x</i>)
@@ -538,7 +553,7 @@ namespace GeographicLib {
      * If <i>e</i><sup>2</sup> is negative (<i>e</i> is imaginary), the
      * expression is evaluated in terms of atan.
      **********************************************************************/
-    template<typename T> static T eatanhe(T x, T es);
+    template <typename T> static T eatanhe(T x, T es);
 
     /**
      * tan&chi; in terms of tan&phi;
@@ -557,7 +572,7 @@ namespace GeographicLib {
      * (preprint
      * <a href="https://arxiv.org/abs/1002.1417">arXiv:1002.1417</a>).
      **********************************************************************/
-    template<typename T> static T taupf(T tau, T es);
+    template <typename T> static T taupf(T tau, T es);
 
     /**
      * tan&phi; in terms of tan&chi;
@@ -576,7 +591,7 @@ namespace GeographicLib {
      * (preprint
      * <a href="https://arxiv.org/abs/1002.1417">arXiv:1002.1417</a>).
      **********************************************************************/
-    template<typename T> static T tauf(T taup, T es);
+    template <typename T> static T tauf(T taup, T es);
 
     /**
      * Test for finiteness.
@@ -585,7 +600,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return true if number is finite, false if NaN or infinite.
      **********************************************************************/
-    template<typename T> static bool isfinite(T x);
+    template <typename T> static bool isfinite(T x);
 
     /**
      * The NaN (not a number)
@@ -593,7 +608,7 @@ namespace GeographicLib {
      * @tparam T the type of the returned value.
      * @return NaN if available, otherwise return the max real of type T.
      **********************************************************************/
-    template<typename T> static T NaN();
+    template <typename T> static T NaN();
 
     /**
      * A synonym for NaN<real>().
@@ -607,7 +622,7 @@ namespace GeographicLib {
      * @param[in] x
      * @return true if argument is a NaN.
      **********************************************************************/
-    template<typename T> static bool isnan(T x);
+    template <typename T> static bool isnan(T x);
 
     /**
      * Infinity
@@ -615,7 +630,7 @@ namespace GeographicLib {
      * @tparam T the type of the returned value.
      * @return infinity if available, otherwise return the max real.
      **********************************************************************/
-    template<typename T> static T infinity();
+    template <typename T> static T infinity();
 
     /**
      * A synonym for infinity<real>().
@@ -629,19 +644,19 @@ namespace GeographicLib {
      * @param[in] x
      * @return x with its bytes swapped.
      **********************************************************************/
-    template<typename T> static T swab(T x) {
-      union {
-        T r;
-        unsigned char c[sizeof(T)];
-      } b;
-      b.r = x;
-      for (int i = sizeof(T)/2; i--; )
-        std::swap(b.c[i], b.c[sizeof(T) - 1 - i]);
-      return b.r;
+    template <typename T> static T swab(T x)
+    {
+        union {
+            T r;
+            unsigned char c[sizeof(T)];
+        } b;
+        b.r = x;
+        for (int i = sizeof(T) / 2; i--;)
+            std::swap(b.c[i], b.c[sizeof(T) - 1 - i]);
+        return b.r;
     }
-
-  };
+};
 
 } // namespace GeographicLib
 
-#endif  // GEOGRAPHICLIB_MATH_HPP
+#endif // GEOGRAPHICLIB_MATH_HPP

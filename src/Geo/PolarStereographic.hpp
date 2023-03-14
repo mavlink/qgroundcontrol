@@ -14,32 +14,32 @@
 
 namespace GeographicLib {
 
-  /**
-   * \brief Polar stereographic projection
-   *
-   * Implementation taken from the report,
-   * - J. P. Snyder,
-   *   <a href="http://pubs.er.usgs.gov/usgspubs/pp/pp1395"> Map Projections: A
-   *   Working Manual</a>, USGS Professional Paper 1395 (1987),
-   *   pp. 160--163.
-   *
-   * This is a straightforward implementation of the equations in Snyder except
-   * that Newton's method is used to invert the projection.
-   *
-   * This class also returns the meridian convergence \e gamma and scale \e k.
-   * The meridian convergence is the bearing of grid north (the \e y axis)
-   * measured clockwise from true north.
-   *
-   * Example of use:
-   * \include example-PolarStereographic.cpp
-   **********************************************************************/
-  class GEOGRAPHICLIB_EXPORT PolarStereographic {
-  private:
+/**
+ * \brief Polar stereographic projection
+ *
+ * Implementation taken from the report,
+ * - J. P. Snyder,
+ *   <a href="http://pubs.er.usgs.gov/usgspubs/pp/pp1395"> Map Projections: A
+ *   Working Manual</a>, USGS Professional Paper 1395 (1987),
+ *   pp. 160--163.
+ *
+ * This is a straightforward implementation of the equations in Snyder except
+ * that Newton's method is used to invert the projection.
+ *
+ * This class also returns the meridian convergence \e gamma and scale \e k.
+ * The meridian convergence is the bearing of grid north (the \e y axis)
+ * measured clockwise from true north.
+ *
+ * Example of use:
+ * \include example-PolarStereographic.cpp
+ **********************************************************************/
+class GEOGRAPHICLIB_EXPORT PolarStereographic {
+private:
     typedef Math::real real;
     real _a, _f, _e2, _es, _e2m, _c;
     real _k0;
-  public:
 
+public:
     /**
      * Constructor for a ellipsoid with
      *
@@ -79,8 +79,7 @@ namespace GeographicLib {
      * (&minus;90&deg;, 90&deg;] for \e northp = true and in the range
      * [&minus;90&deg;, 90&deg;) for \e northp = false.
      **********************************************************************/
-    void Forward(bool northp, real lat, real lon,
-                 real& x, real& y, real& gamma, real& k) const;
+    void Forward(bool northp, real lat, real lon, real& x, real& y, real& gamma, real& k) const;
 
     /**
      * Reverse projection, from polar stereographic to geographic.
@@ -97,25 +96,24 @@ namespace GeographicLib {
      * No false easting or northing is added.  The value of \e lon returned is
      * in the range [&minus;180&deg;, 180&deg;].
      **********************************************************************/
-    void Reverse(bool northp, real x, real y,
-                 real& lat, real& lon, real& gamma, real& k) const;
+    void Reverse(bool northp, real x, real y, real& lat, real& lon, real& gamma, real& k) const;
 
     /**
      * PolarStereographic::Forward without returning the convergence and scale.
      **********************************************************************/
-    void Forward(bool northp, real lat, real lon,
-                 real& x, real& y) const {
-      real gamma, k;
-      Forward(northp, lat, lon, x, y, gamma, k);
+    void Forward(bool northp, real lat, real lon, real& x, real& y) const
+    {
+        real gamma, k;
+        Forward(northp, lat, lon, x, y, gamma, k);
     }
 
     /**
      * PolarStereographic::Reverse without returning the convergence and scale.
      **********************************************************************/
-    void Reverse(bool northp, real x, real y,
-                 real& lat, real& lon) const {
-      real gamma, k;
-      Reverse(northp, x, y, lat, lon, gamma, k);
+    void Reverse(bool northp, real x, real y, real& lat, real& lon) const
+    {
+        real gamma, k;
+        Reverse(northp, x, y, lat, lon, gamma, k);
     }
 
     /** \name Inspector functions
@@ -141,8 +139,8 @@ namespace GeographicLib {
     Math::real CentralScale() const { return _k0; }
 
     /**
-      * \deprecated An old name for EquatorialRadius().
-      **********************************************************************/
+     * \deprecated An old name for EquatorialRadius().
+     **********************************************************************/
     // GEOGRAPHICLIB_DEPRECATED("Use EquatorialRadius()")
     Math::real MajorRadius() const { return EquatorialRadius(); }
     ///@}
@@ -153,8 +151,8 @@ namespace GeographicLib {
      * northing is added.
      **********************************************************************/
     static const PolarStereographic& UPS();
-  };
+};
 
 } // namespace GeographicLib
 
-#endif  // GEOGRAPHICLIB_POLARSTEREOGRAPHIC_HPP
+#endif // GEOGRAPHICLIB_POLARSTEREOGRAPHIC_HPP

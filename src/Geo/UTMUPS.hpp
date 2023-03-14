@@ -14,66 +14,66 @@
 
 namespace GeographicLib {
 
-  /**
-   * \brief Convert between geographic coordinates and UTM/UPS
-   *
-   * UTM and UPS are defined
-   * - J. W. Hager, J. F. Behensky, and B. W. Drew,
-   *   <a href="http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf">
-   *   The Universal Grids: Universal Transverse Mercator (UTM) and Universal
-   *   Polar Stereographic (UPS)</a>, Defense Mapping Agency, Technical Manual
-   *   TM8358.2 (1989).
-   * .
-   * Section 2-3 defines UTM and section 3-2.4 defines UPS.  This document also
-   * includes approximate algorithms for the computation of the underlying
-   * transverse Mercator and polar stereographic projections.  Here we
-   * substitute much more accurate algorithms given by
-   * GeographicLib:TransverseMercator and GeographicLib:PolarStereographic.
-   * These are the algorithms recommended by the NGA document
-   * - <a href="http://earth-info.nga.mil/GandG/publications/NGA_SIG_0012_2_0_0_UTMUPS/NGA.SIG.0012_2.0.0_UTMUPS.pdf">
-   *   The Universal Grids and the Transverse Mercator and Polar Stereographic
-   *   Map Projections</a>, NGA.SIG.0012_2.0.0_UTMUPS (2014).
-   *
-   * In this implementation, the conversions are closed, i.e., output from
-   * Forward is legal input for Reverse and vice versa.  The error is about 5nm
-   * in each direction.  However, the conversion from legal UTM/UPS coordinates
-   * to geographic coordinates and back might throw an error if the initial
-   * point is within 5nm of the edge of the allowed range for the UTM/UPS
-   * coordinates.
-   *
-   * The simplest way to guarantee the closed property is to define allowed
-   * ranges for the eastings and northings for UTM and UPS coordinates.  The
-   * UTM boundaries are the same for all zones.  (The only place the
-   * exceptional nature of the zone boundaries is evident is when converting to
-   * UTM/UPS coordinates requesting the standard zone.)  The MGRS lettering
-   * scheme imposes natural limits on UTM/UPS coordinates which may be
-   * converted into MGRS coordinates.  For the conversion to/from geographic
-   * coordinates these ranges have been extended by 100km in order to provide a
-   * generous overlap between UTM and UPS and between UTM zones.
-   *
-   * The <a href="http://www.nga.mil">NGA</a> software package
-   * <a href="http://earth-info.nga.mil/GandG/geotrans/index.html">geotrans</a>
-   * also provides conversions to and from UTM and UPS.  Version 2.4.2 (and
-   * earlier) suffers from some drawbacks:
-   * - Inconsistent rules are used to determine the whether a particular UTM or
-   *   UPS coordinate is legal.  A more systematic approach is taken here.
-   * - The underlying projections are not very accurately implemented.
-   *
-   * The GeographicLib::UTMUPS::EncodeZone encodes the UTM zone and hemisphere
-   * to allow UTM/UPS coordinated to be displayed as, for example, "38N 444500
-   * 3688500".  According to NGA.SIG.0012_2.0.0_UTMUPS the use of "N" to denote
-   * "north" in the context is not allowed (since a upper case letter in this
-   * context denotes the MGRS latitude band).  Consequently, as of version
-   * 1.36, EncodeZone uses the lower case letters "n" and "s" to denote the
-   * hemisphere.  In addition EncodeZone accepts an optional final argument \e
-   * abbrev, which, if false, results in the hemisphere being spelled out as in
-   * "38north".
-   *
-   * Example of use:
-   * \include example-UTMUPS.cpp
-   **********************************************************************/
-  class GEOGRAPHICLIB_EXPORT UTMUPS {
-  private:
+/**
+ * \brief Convert between geographic coordinates and UTM/UPS
+ *
+ * UTM and UPS are defined
+ * - J. W. Hager, J. F. Behensky, and B. W. Drew,
+ *   <a href="http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf">
+ *   The Universal Grids: Universal Transverse Mercator (UTM) and Universal
+ *   Polar Stereographic (UPS)</a>, Defense Mapping Agency, Technical Manual
+ *   TM8358.2 (1989).
+ * .
+ * Section 2-3 defines UTM and section 3-2.4 defines UPS.  This document also
+ * includes approximate algorithms for the computation of the underlying
+ * transverse Mercator and polar stereographic projections.  Here we
+ * substitute much more accurate algorithms given by
+ * GeographicLib:TransverseMercator and GeographicLib:PolarStereographic.
+ * These are the algorithms recommended by the NGA document
+ * - <a href="http://earth-info.nga.mil/GandG/publications/NGA_SIG_0012_2_0_0_UTMUPS/NGA.SIG.0012_2.0.0_UTMUPS.pdf">
+ *   The Universal Grids and the Transverse Mercator and Polar Stereographic
+ *   Map Projections</a>, NGA.SIG.0012_2.0.0_UTMUPS (2014).
+ *
+ * In this implementation, the conversions are closed, i.e., output from
+ * Forward is legal input for Reverse and vice versa.  The error is about 5nm
+ * in each direction.  However, the conversion from legal UTM/UPS coordinates
+ * to geographic coordinates and back might throw an error if the initial
+ * point is within 5nm of the edge of the allowed range for the UTM/UPS
+ * coordinates.
+ *
+ * The simplest way to guarantee the closed property is to define allowed
+ * ranges for the eastings and northings for UTM and UPS coordinates.  The
+ * UTM boundaries are the same for all zones.  (The only place the
+ * exceptional nature of the zone boundaries is evident is when converting to
+ * UTM/UPS coordinates requesting the standard zone.)  The MGRS lettering
+ * scheme imposes natural limits on UTM/UPS coordinates which may be
+ * converted into MGRS coordinates.  For the conversion to/from geographic
+ * coordinates these ranges have been extended by 100km in order to provide a
+ * generous overlap between UTM and UPS and between UTM zones.
+ *
+ * The <a href="http://www.nga.mil">NGA</a> software package
+ * <a href="http://earth-info.nga.mil/GandG/geotrans/index.html">geotrans</a>
+ * also provides conversions to and from UTM and UPS.  Version 2.4.2 (and
+ * earlier) suffers from some drawbacks:
+ * - Inconsistent rules are used to determine the whether a particular UTM or
+ *   UPS coordinate is legal.  A more systematic approach is taken here.
+ * - The underlying projections are not very accurately implemented.
+ *
+ * The GeographicLib::UTMUPS::EncodeZone encodes the UTM zone and hemisphere
+ * to allow UTM/UPS coordinated to be displayed as, for example, "38N 444500
+ * 3688500".  According to NGA.SIG.0012_2.0.0_UTMUPS the use of "N" to denote
+ * "north" in the context is not allowed (since a upper case letter in this
+ * context denotes the MGRS latitude band).  Consequently, as of version
+ * 1.36, EncodeZone uses the lower case letters "n" and "s" to denote the
+ * hemisphere.  In addition EncodeZone accepts an optional final argument \e
+ * abbrev, which, if false, results in the hemisphere being spelled out as in
+ * "38north".
+ *
+ * Example of use:
+ * \include example-UTMUPS.cpp
+ **********************************************************************/
+class GEOGRAPHICLIB_EXPORT UTMUPS {
+private:
     typedef Math::real real;
     static const int falseeasting_[4];
     static const int falsenorthing_[4];
@@ -83,20 +83,17 @@ namespace GeographicLib {
     static const int maxnorthing_[4];
     static const int epsg01N = 32601; // EPSG code for UTM 01N
     static const int epsg60N = 32660; // EPSG code for UTM 60N
-    static const int epsgN   = 32661; // EPSG code for UPS   N
+    static const int epsgN = 32661; // EPSG code for UPS   N
     static const int epsg01S = 32701; // EPSG code for UTM 01S
     static const int epsg60S = 32760; // EPSG code for UTM 60S
-    static const int epsgS   = 32761; // EPSG code for UPS   S
-    static real CentralMeridian(int zone)
-    { return real(6 * zone - 183); }
+    static const int epsgS = 32761; // EPSG code for UPS   S
+    static real CentralMeridian(int zone) { return real(6 * zone - 183); }
     // Throw an error if easting or northing are outside standard ranges.  If
     // throwp = false, return bool instead.
-    static bool CheckCoords(bool utmp, bool northp, real x, real y,
-                            bool msgrlimits = false, bool throwp = true);
-    UTMUPS();                   // Disable constructor
+    static bool CheckCoords(bool utmp, bool northp, real x, real y, bool msgrlimits = false, bool throwp = true);
+    UTMUPS(); // Disable constructor
 
-  public:
-
+public:
     /**
      * In this class we bring together the UTM and UPS coordinates systems.
      * The UTM divides the earth between latitudes &minus;80&deg; and 84&deg;
@@ -107,59 +104,59 @@ namespace GeographicLib {
      * physical zones.
      **********************************************************************/
     enum zonespec {
-      /**
-       * The smallest pseudo-zone number.
-       **********************************************************************/
-      MINPSEUDOZONE = -4,
-      /**
-       * A marker for an undefined or invalid zone.  Equivalent to NaN.
-       **********************************************************************/
-      INVALID = -4,
-      /**
-       * If a coordinate already include zone information (e.g., it is an MGRS
-       * coordinate), use that, otherwise apply the UTMUPS::STANDARD rules.
-       **********************************************************************/
-      MATCH = -3,
-      /**
-       * Apply the standard rules for UTM zone assigment extending the UTM zone
-       * to each pole to give a zone number in [1, 60].  For example, use UTM
-       * zone 38 for longitude in [42&deg;, 48&deg;).  The rules include the
-       * Norway and Svalbard exceptions.
-       **********************************************************************/
-      UTM = -2,
-      /**
-       * Apply the standard rules for zone assignment to give a zone number in
-       * [0, 60].  If the latitude is not in [&minus;80&deg;, 84&deg;), then
-       * use UTMUPS::UPS = 0, otherwise apply the rules for UTMUPS::UTM.  The
-       * tests on latitudes and longitudes are all closed on the lower end open
-       * on the upper.  Thus for UTM zone 38, latitude is in [&minus;80&deg;,
-       * 84&deg;) and longitude is in [42&deg;, 48&deg;).
-       **********************************************************************/
-      STANDARD = -1,
-      /**
-       * The largest pseudo-zone number.
-       **********************************************************************/
-      MAXPSEUDOZONE = -1,
-      /**
-       * The smallest physical zone number.
-       **********************************************************************/
-      MINZONE = 0,
-      /**
-       * The zone number used for UPS
-       **********************************************************************/
-      UPS = 0,
-      /**
-       * The smallest UTM zone number.
-       **********************************************************************/
-      MINUTMZONE = 1,
-      /**
-       * The largest UTM zone number.
-       **********************************************************************/
-      MAXUTMZONE = 60,
-      /**
-       * The largest physical zone number.
-       **********************************************************************/
-      MAXZONE = 60,
+        /**
+         * The smallest pseudo-zone number.
+         **********************************************************************/
+        MINPSEUDOZONE = -4,
+        /**
+         * A marker for an undefined or invalid zone.  Equivalent to NaN.
+         **********************************************************************/
+        INVALID = -4,
+        /**
+         * If a coordinate already include zone information (e.g., it is an MGRS
+         * coordinate), use that, otherwise apply the UTMUPS::STANDARD rules.
+         **********************************************************************/
+        MATCH = -3,
+        /**
+         * Apply the standard rules for UTM zone assigment extending the UTM zone
+         * to each pole to give a zone number in [1, 60].  For example, use UTM
+         * zone 38 for longitude in [42&deg;, 48&deg;).  The rules include the
+         * Norway and Svalbard exceptions.
+         **********************************************************************/
+        UTM = -2,
+        /**
+         * Apply the standard rules for zone assignment to give a zone number in
+         * [0, 60].  If the latitude is not in [&minus;80&deg;, 84&deg;), then
+         * use UTMUPS::UPS = 0, otherwise apply the rules for UTMUPS::UTM.  The
+         * tests on latitudes and longitudes are all closed on the lower end open
+         * on the upper.  Thus for UTM zone 38, latitude is in [&minus;80&deg;,
+         * 84&deg;) and longitude is in [42&deg;, 48&deg;).
+         **********************************************************************/
+        STANDARD = -1,
+        /**
+         * The largest pseudo-zone number.
+         **********************************************************************/
+        MAXPSEUDOZONE = -1,
+        /**
+         * The smallest physical zone number.
+         **********************************************************************/
+        MINZONE = 0,
+        /**
+         * The zone number used for UPS
+         **********************************************************************/
+        UPS = 0,
+        /**
+         * The smallest UTM zone number.
+         **********************************************************************/
+        MINUTMZONE = 1,
+        /**
+         * The largest UTM zone number.
+         **********************************************************************/
+        MAXUTMZONE = 60,
+        /**
+         * The largest physical zone number.
+         **********************************************************************/
+        MAXZONE = 60,
     };
 
     /**
@@ -217,10 +214,8 @@ namespace GeographicLib {
      northp = true;
      \endcode
      **********************************************************************/
-    static void Forward(real lat, real lon,
-                        int& zone, bool& northp, real& x, real& y,
-                        real& gamma, real& k,
-                        int setzone = STANDARD, bool mgrslimits = false);
+    static void Forward(real lat, real lon, int& zone, bool& northp, real& x, real& y, real& gamma, real& k,
+        int setzone = STANDARD, bool mgrslimits = false);
 
     /**
      * Reverse projection, from  UTM/UPS to geographic.
@@ -259,27 +254,26 @@ namespace GeographicLib {
      * performed besides these (e.g., to limit the distance outside the
      * standard zone boundaries).
      **********************************************************************/
-    static void Reverse(int zone, bool northp, real x, real y,
-                        real& lat, real& lon, real& gamma, real& k,
-                        bool mgrslimits = false);
+    static void Reverse(
+        int zone, bool northp, real x, real y, real& lat, real& lon, real& gamma, real& k, bool mgrslimits = false);
 
     /**
      * UTMUPS::Forward without returning convergence and scale.
      **********************************************************************/
-    static void Forward(real lat, real lon,
-                        int& zone, bool& northp, real& x, real& y,
-                        int setzone = STANDARD, bool mgrslimits = false) {
-      real gamma, k;
-      Forward(lat, lon, zone, northp, x, y, gamma, k, setzone, mgrslimits);
+    static void Forward(
+        real lat, real lon, int& zone, bool& northp, real& x, real& y, int setzone = STANDARD, bool mgrslimits = false)
+    {
+        real gamma, k;
+        Forward(lat, lon, zone, northp, x, y, gamma, k, setzone, mgrslimits);
     }
 
     /**
      * UTMUPS::Reverse without returning convergence and scale.
      **********************************************************************/
-    static void Reverse(int zone, bool northp, real x, real y,
-                        real& lat, real& lon, bool mgrslimits = false) {
-      real gamma, k;
-      Reverse(zone, northp, x, y, lat, lon, gamma, k, mgrslimits);
+    static void Reverse(int zone, bool northp, real x, real y, real& lat, real& lon, bool mgrslimits = false)
+    {
+        real gamma, k;
+        Reverse(zone, northp, x, y, lat, lon, gamma, k, mgrslimits);
     }
 
     /**
@@ -315,9 +309,8 @@ namespace GeographicLib {
      *
      * (\e xout, \e yout) can overlap with (\e xin, \e yin).
      **********************************************************************/
-    static void Transfer(int zonein, bool northpin, real xin, real yin,
-                         int zoneout, bool northpout, real& xout, real& yout,
-                         int& zone);
+    static void Transfer(
+        int zonein, bool northpin, real xin, real yin, int zoneout, bool northpout, real& xout, real& yout, int& zone);
 
     /**
      * Decode a UTM/UPS zone string.
@@ -337,8 +330,7 @@ namespace GeographicLib {
      * south, 3north are legal.  0n, 001s, +3n, 61n, 38P are illegal.  INV is a
      * special value for which the returned value of \e is UTMUPS::INVALID.
      **********************************************************************/
-    static void DecodeZone(const std::string& zonestr,
-                           int& zone, bool& northp);
+    static void DecodeZone(const std::string& zonestr, int& zone, bool& northp);
 
     /**
      * Encode a UTM/UPS zone string.
@@ -402,8 +394,7 @@ namespace GeographicLib {
      * (The WGS84 value is returned because the UTM and UPS projections are
      * based on this ellipsoid.)
      **********************************************************************/
-    static Math::real EquatorialRadius()
-    { return Constants::WGS84_a(); }
+    static Math::real EquatorialRadius() { return Constants::WGS84_a(); }
 
     /**
      * @return \e f the flattening of the WGS84 ellipsoid.
@@ -411,18 +402,16 @@ namespace GeographicLib {
      * (The WGS84 value is returned because the UTM and UPS projections are
      * based on this ellipsoid.)
      **********************************************************************/
-    static Math::real Flattening()
-    { return Constants::WGS84_f(); }
+    static Math::real Flattening() { return Constants::WGS84_f(); }
 
     /**
-      * \deprecated An old name for EquatorialRadius().
-      **********************************************************************/
+     * \deprecated An old name for EquatorialRadius().
+     **********************************************************************/
     // GEOGRAPHICLIB_DEPRECATED("Use EquatorialRadius()")
     static Math::real MajorRadius() { return EquatorialRadius(); }
     ///@}
-
-  };
+};
 
 } // namespace GeographicLib
 
-#endif  // GEOGRAPHICLIB_UTMUPS_HPP
+#endif // GEOGRAPHICLIB_UTMUPS_HPP

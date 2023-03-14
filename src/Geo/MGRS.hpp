@@ -15,64 +15,64 @@
 
 #if defined(_MSC_VER)
 // Squelch warnings about dll vs string
-#  pragma warning (push)
-#  pragma warning (disable: 4251)
+#pragma warning(push)
+#pragma warning(disable : 4251)
 #endif
 
 namespace GeographicLib {
 
-  /**
-   * \brief Convert between UTM/UPS and %MGRS
-   *
-   * MGRS is defined in Chapter 3 of
-   * - J. W. Hager, L. L. Fry, S. S. Jacks, D. R. Hill,
-   *   <a href="http://earth-info.nga.mil/GandG/publications/tm8358.1/pdf/TM8358_1.pdf">
-   *   Datums, Ellipsoids, Grids, and Grid Reference Systems</a>,
-   *   Defense Mapping Agency, Technical Manual TM8358.1 (1990).
-   * .
-   * This document has been updated by the two NGA documents
-   * - <a href="http://earth-info.nga.mil/GandG/publications/NGA_STND_0037_2_0_0_GRIDS/NGA.STND.0037_2.0.0_GRIDS.pdf">
-   *   Universal Grids and Grid Reference Systems</a>,
-   *   NGA.STND.0037_2.0.0_GRIDS (2014).
-   * - <a href="http://earth-info.nga.mil/GandG/publications/NGA_SIG_0012_2_0_0_UTMUPS/NGA.SIG.0012_2.0.0_UTMUPS.pdf">
-   *   The Universal Grids and the Transverse Mercator and Polar Stereographic
-   *   Map Projections</a>, NGA.SIG.0012_2.0.0_UTMUPS (2014).
-   *
-   * This implementation has the following properties:
-   * - The conversions are closed, i.e., output from Forward is legal input for
-   *   Reverse and vice versa.  Conversion in both directions preserve the
-   *   UTM/UPS selection and the UTM zone.
-   * - Forward followed by Reverse and vice versa is approximately the
-   *   identity.  (This is affected in predictable ways by errors in
-   *   determining the latitude band and by loss of precision in the MGRS
-   *   coordinates.)
-   * - The trailing digits produced by Forward are consistent as the precision
-   *   is varied.  Specifically, the digits are obtained by operating on the
-   *   easting with &lfloor;10<sup>6</sup> <i>x</i>&rfloor; and extracting the
-   *   required digits from the resulting number (and similarly for the
-   *   northing).
-   * - All MGRS coordinates truncate to legal 100 km blocks.  All MGRS
-   *   coordinates with a legal 100 km block prefix are legal (even though the
-   *   latitude band letter may now belong to a neighboring band).
-   * - The range of UTM/UPS coordinates allowed for conversion to MGRS
-   *   coordinates is the maximum consistent with staying within the letter
-   *   ranges of the MGRS scheme.
-   * - All the transformations are implemented as static methods in the MGRS
-   *   class.
-   *
-   * The <a href="http://www.nga.mil">NGA</a> software package
-   * <a href="http://earth-info.nga.mil/GandG/geotrans/index.html">geotrans</a>
-   * also provides conversions to and from MGRS.  Version 3.0 (and earlier)
-   * suffers from some drawbacks:
-   * - Inconsistent rules are used to determine the whether a particular MGRS
-   *   coordinate is legal.  A more systematic approach is taken here.
-   * - The underlying projections are not very accurately implemented.
-   *
-   * Example of use:
-   * \include example-MGRS.cpp
-   **********************************************************************/
-  class GEOGRAPHICLIB_EXPORT MGRS {
-  private:
+/**
+ * \brief Convert between UTM/UPS and %MGRS
+ *
+ * MGRS is defined in Chapter 3 of
+ * - J. W. Hager, L. L. Fry, S. S. Jacks, D. R. Hill,
+ *   <a href="http://earth-info.nga.mil/GandG/publications/tm8358.1/pdf/TM8358_1.pdf">
+ *   Datums, Ellipsoids, Grids, and Grid Reference Systems</a>,
+ *   Defense Mapping Agency, Technical Manual TM8358.1 (1990).
+ * .
+ * This document has been updated by the two NGA documents
+ * - <a href="http://earth-info.nga.mil/GandG/publications/NGA_STND_0037_2_0_0_GRIDS/NGA.STND.0037_2.0.0_GRIDS.pdf">
+ *   Universal Grids and Grid Reference Systems</a>,
+ *   NGA.STND.0037_2.0.0_GRIDS (2014).
+ * - <a href="http://earth-info.nga.mil/GandG/publications/NGA_SIG_0012_2_0_0_UTMUPS/NGA.SIG.0012_2.0.0_UTMUPS.pdf">
+ *   The Universal Grids and the Transverse Mercator and Polar Stereographic
+ *   Map Projections</a>, NGA.SIG.0012_2.0.0_UTMUPS (2014).
+ *
+ * This implementation has the following properties:
+ * - The conversions are closed, i.e., output from Forward is legal input for
+ *   Reverse and vice versa.  Conversion in both directions preserve the
+ *   UTM/UPS selection and the UTM zone.
+ * - Forward followed by Reverse and vice versa is approximately the
+ *   identity.  (This is affected in predictable ways by errors in
+ *   determining the latitude band and by loss of precision in the MGRS
+ *   coordinates.)
+ * - The trailing digits produced by Forward are consistent as the precision
+ *   is varied.  Specifically, the digits are obtained by operating on the
+ *   easting with &lfloor;10<sup>6</sup> <i>x</i>&rfloor; and extracting the
+ *   required digits from the resulting number (and similarly for the
+ *   northing).
+ * - All MGRS coordinates truncate to legal 100 km blocks.  All MGRS
+ *   coordinates with a legal 100 km block prefix are legal (even though the
+ *   latitude band letter may now belong to a neighboring band).
+ * - The range of UTM/UPS coordinates allowed for conversion to MGRS
+ *   coordinates is the maximum consistent with staying within the letter
+ *   ranges of the MGRS scheme.
+ * - All the transformations are implemented as static methods in the MGRS
+ *   class.
+ *
+ * The <a href="http://www.nga.mil">NGA</a> software package
+ * <a href="http://earth-info.nga.mil/GandG/geotrans/index.html">geotrans</a>
+ * also provides conversions to and from MGRS.  Version 3.0 (and earlier)
+ * suffers from some drawbacks:
+ * - Inconsistent rules are used to determine the whether a particular MGRS
+ *   coordinate is legal.  A more systematic approach is taken here.
+ * - The underlying projections are not very accurately implemented.
+ *
+ * Example of use:
+ * \include example-MGRS.cpp
+ **********************************************************************/
+class GEOGRAPHICLIB_EXPORT MGRS {
+private:
     typedef Math::real real;
     static const char* const hemispheres_;
     static const char* const utmcols_[3];
@@ -88,77 +88,78 @@ namespace GeographicLib {
     static const int minnorthing_[4];
     static const int maxnorthing_[4];
     enum {
-      base_ = 10,
-      // Top-level tiles are 10^5 m = 100 km on a side
-      tilelevel_ = 5,
-      // Period of UTM row letters
-      utmrowperiod_ = 20,
-      // Row letters are shifted by 5 for even zones
-      utmevenrowshift_ = 5,
-      // Maximum precision is um
-      maxprec_ = 5 + 6,
-      // For generating digits at maxprec
-      mult_ = 1000000,
+        base_ = 10,
+        // Top-level tiles are 10^5 m = 100 km on a side
+        tilelevel_ = 5,
+        // Period of UTM row letters
+        utmrowperiod_ = 20,
+        // Row letters are shifted by 5 for even zones
+        utmevenrowshift_ = 5,
+        // Maximum precision is um
+        maxprec_ = 5 + 6,
+        // For generating digits at maxprec
+        mult_ = 1000000,
     };
     static void CheckCoords(bool utmp, bool& northp, real& x, real& y);
     static int UTMRow(int iband, int icol, int irow);
 
-    friend class UTMUPS;        // UTMUPS::StandardZone calls LatitudeBand
+    friend class UTMUPS; // UTMUPS::StandardZone calls LatitudeBand
     // Return latitude band number [-10, 10) for the given latitude (degrees).
     // The bands are reckoned in include their southern edges.
-    static int LatitudeBand(real lat) {
-      using std::floor;
-      int ilat = int(floor(lat));
-      return (std::max)(-10, (std::min)(9, (ilat + 80)/8 - 10));
+    static int LatitudeBand(real lat)
+    {
+        using std::floor;
+        int ilat = int(floor(lat));
+        return (std::max)(-10, (std::min)(9, (ilat + 80) / 8 - 10));
     }
     // Return approximate latitude band number [-10, 10) for the given northing
     // (meters).  With this rule, each 100km tile would have a unique band
     // letter corresponding to the latitude at the center of the tile.  This
     // function isn't currently used.
-    static int ApproxLatitudeBand(real y) {
-      // northing at tile center in units of tile = 100km
-      using std::floor; using std::abs;
-      real ya = floor( (std::min)(real(88), abs(y/tile_)) ) +
-        real(0.5);
-      // convert to lat (mult by 90/100) and then to band (divide by 8)
-      // the +1 fine tunes the boundary between bands 3 and 4
-      int b = int(floor( ((ya * 9 + 1) / 10) / 8 ));
-      // For the northern hemisphere we have
-      // band rows  num
-      // N 0   0:8    9
-      // P 1   9:17   9
-      // Q 2  18:26   9
-      // R 3  27:34   8
-      // S 4  35:43   9
-      // T 5  44:52   9
-      // U 6  53:61   9
-      // V 7  62:70   9
-      // W 8  71:79   9
-      // X 9  80:94  15
-      return y >= 0 ? b : -(b + 1);
+    static int ApproxLatitudeBand(real y)
+    {
+        // northing at tile center in units of tile = 100km
+        using std::abs;
+        using std::floor;
+        real ya = floor((std::min)(real(88), abs(y / tile_))) + real(0.5);
+        // convert to lat (mult by 90/100) and then to band (divide by 8)
+        // the +1 fine tunes the boundary between bands 3 and 4
+        int b = int(floor(((ya * 9 + 1) / 10) / 8));
+        // For the northern hemisphere we have
+        // band rows  num
+        // N 0   0:8    9
+        // P 1   9:17   9
+        // Q 2  18:26   9
+        // R 3  27:34   8
+        // S 4  35:43   9
+        // T 5  44:52   9
+        // U 6  53:61   9
+        // V 7  62:70   9
+        // W 8  71:79   9
+        // X 9  80:94  15
+        return y >= 0 ? b : -(b + 1);
     }
     // UTMUPS access these enums
     enum {
-      tile_ = 100000,            // Size MGRS blocks
-      minutmcol_ = 1,
-      maxutmcol_ = 9,
-      minutmSrow_ = 10,
-      maxutmSrow_ = 100,         // Also used for UTM S false northing
-      minutmNrow_ = 0,           // Also used for UTM N false northing
-      maxutmNrow_ = 95,
-      minupsSind_ = 8,           // These 4 ind's apply to easting and northing
-      maxupsSind_ = 32,
-      minupsNind_ = 13,
-      maxupsNind_ = 27,
-      upseasting_ = 20,          // Also used for UPS false northing
-      utmeasting_ = 5,           // UTM false easting
-      // Difference between S hemisphere northing and N hemisphere northing
-      utmNshift_ = (maxutmSrow_ - minutmNrow_) * tile_
+        tile_ = 100000, // Size MGRS blocks
+        minutmcol_ = 1,
+        maxutmcol_ = 9,
+        minutmSrow_ = 10,
+        maxutmSrow_ = 100, // Also used for UTM S false northing
+        minutmNrow_ = 0, // Also used for UTM N false northing
+        maxutmNrow_ = 95,
+        minupsSind_ = 8, // These 4 ind's apply to easting and northing
+        maxupsSind_ = 32,
+        minupsNind_ = 13,
+        maxupsNind_ = 27,
+        upseasting_ = 20, // Also used for UPS false northing
+        utmeasting_ = 5, // UTM false easting
+        // Difference between S hemisphere northing and N hemisphere northing
+        utmNshift_ = (maxutmSrow_ - minutmNrow_) * tile_
     };
-    MGRS();                     // Disable constructor
+    MGRS(); // Disable constructor
 
-  public:
-
+public:
     /**
      * Convert UTM or UPS coordinate to an MGRS coordinate.
      *
@@ -240,8 +241,7 @@ namespace GeographicLib {
      * allocating a potentially large number of small strings.  If an error is
      * thrown, then \e mgrs is unchanged.
      **********************************************************************/
-    static void Forward(int zone, bool northp, real x, real y,
-                        int prec, std::string& mgrs);
+    static void Forward(int zone, bool northp, real x, real y, int prec, std::string& mgrs);
 
     /**
      * Convert UTM or UPS coordinate to an MGRS coordinate when the latitude is
@@ -264,8 +264,7 @@ namespace GeographicLib {
      * used to determine the latitude band and this is checked for consistency
      * using the same tests as Reverse.
      **********************************************************************/
-    static void Forward(int zone, bool northp, real x, real y, real lat,
-                        int prec, std::string& mgrs);
+    static void Forward(int zone, bool northp, real x, real y, real lat, int prec, std::string& mgrs);
 
     /**
      * Convert a MGRS coordinate to UTM or UPS coordinates.
@@ -312,9 +311,8 @@ namespace GeographicLib {
      *
      * If an exception is thrown, then the arguments are unchanged.
      **********************************************************************/
-    static void Reverse(const std::string& mgrs,
-                        int& zone, bool& northp, real& x, real& y,
-                        int& prec, bool centerp = true);
+    static void Reverse(
+        const std::string& mgrs, int& zone, bool& northp, real& x, real& y, int& prec, bool centerp = true);
 
     /** \name Inspector functions
      **********************************************************************/
@@ -336,8 +334,8 @@ namespace GeographicLib {
     static Math::real Flattening() { return UTMUPS::Flattening(); }
 
     /**
-      * \deprecated An old name for EquatorialRadius().
-      **********************************************************************/
+     * \deprecated An old name for EquatorialRadius().
+     **********************************************************************/
     // GEOGRAPHICLIB_DEPRECATED("Use EquatorialRadius()")
     static Math::real MajorRadius() { return EquatorialRadius(); }
     ///@}
@@ -349,13 +347,12 @@ namespace GeographicLib {
      * UTM/UPS scales) are ever changed.
      **********************************************************************/
     static void Check();
-
-  };
+};
 
 } // namespace GeographicLib
 
 #if defined(_MSC_VER)
-#  pragma warning (pop)
+#pragma warning(pop)
 #endif
 
-#endif  // GEOGRAPHICLIB_MGRS_HPP
+#endif // GEOGRAPHICLIB_MGRS_HPP

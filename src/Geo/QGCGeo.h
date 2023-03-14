@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief Coordinate transformation math functions.
 ///     @link https://github.com/PX4/Firmware/blob/master/src/lib/geo/geo.c
@@ -39,7 +38,7 @@ void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, dou
  * @param[in] origin Geoedetic origin for LTP.
  * @param[out] coord Geodetic coordinate to hold result.
  */
-void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord);
+void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate* coord);
 
 // LatLonToUTMXY
 // Converts a latitude/longitude pair to x and y coordinates in the
@@ -63,7 +62,8 @@ int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northi
 
 // UTMXYToLatLon
 //
-// Converts x and y coordinates in the Universal Transverse Mercator//   The UTM zone parameter should be in the range [1,60].
+// Converts x and y coordinates in the Universal Transverse Mercator//   The UTM zone parameter should be in the range
+// [1,60].
 
 // projection to a latitude/longitude pair.
 //
