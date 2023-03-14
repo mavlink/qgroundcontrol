@@ -9,9 +9,9 @@
 
 #include "FactPanelController.h"
 #include "MultiVehicleManager.h"
-#include "UAS.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
+#include "QGCApplication.h"
+#include "UAS.h"
 
 #include <QQmlEngine>
 
@@ -49,7 +49,7 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
 {
     bool noMissingFacts = true;
 
-    foreach (const QString &name, names) {
+    foreach (const QString& name, names) {
         if (_vehicle && !_vehicle->parameterManager()->parameterExists(componentId, name)) {
             _reportMissingParameter(componentId, name);
             noMissingFacts = false;
@@ -58,7 +58,6 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
 
     return noMissingFacts;
 }
-
 
 Fact* FactPanelController::getParameterFact(int componentId, const QString& name, bool reportMissing)
 {
@@ -81,7 +80,7 @@ bool FactPanelController::parameterExists(int componentId, const QString& name)
 
 void FactPanelController::getMissingParameters(QStringList rgNames)
 {
-    for (const QString& name: rgNames) {
+    for (const QString& name : rgNames) {
         _missingParameterWaitList.append(name);
         _vehicle->parameterManager()->refreshParameter(MAV_COMP_ID_AUTOPILOT1, name);
     }
@@ -92,7 +91,7 @@ void FactPanelController::getMissingParameters(QStringList rgNames)
 void FactPanelController::_checkForMissingParameters(void)
 {
     QStringList waitList = _missingParameterWaitList;
-    for (const QString& name: waitList) {
+    for (const QString& name : waitList) {
         if (_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1, name)) {
             _missingParameterWaitList.removeOne(name);
         }
