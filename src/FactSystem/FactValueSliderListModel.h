@@ -14,10 +14,9 @@
 #include "Fact.h"
 
 /// Provides a list model of values for incrementing/decrementing the value of a Fact
-class FactValueSliderListModel : public QAbstractListModel
-{
+class FactValueSliderListModel : public QAbstractListModel {
     Q_OBJECT
-    
+
 public:
     FactValueSliderListModel(Fact& fact, QObject* parent = nullptr);
     ~FactValueSliderListModel();
@@ -38,20 +37,20 @@ private:
     double _valueAtPrecision(double value) const;
 
     // Overrides from QAbstractListModel
-    int	rowCount(const QModelIndex & parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames(void) const override;
 
-    Fact&   _fact;
-    int     _cValues;
-    int     _firstValueIndexInWindow;
-    int     _initialValueIndex;
-    int     _cPrevValues;
-    int     _cNextValues;
-    int     _windowSize;
-    double  _initialValue;
-    double  _initialValueAtPrecision;
-    double  _increment;
+    Fact& _fact;
+    int _cValues;
+    int _firstValueIndexInWindow;
+    int _initialValueIndex;
+    int _cPrevValues;
+    int _cNextValues;
+    int _windowSize;
+    double _initialValue;
+    double _initialValueAtPrecision;
+    double _increment;
 
     static const int _valueRole;
     static const int _valueIndexRole;

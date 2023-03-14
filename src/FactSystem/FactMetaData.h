@@ -9,18 +9,17 @@
 
 #pragma once
 
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
 #include <QVariant>
-#include <QJsonObject>
 
 /// Holds the meta data associated with a Fact.
 ///
 /// Holds the meta data associated with a Fact. This is kept in a separate object from the Fact itself
 /// since you may have multiple instances of the same Fact. But there is only ever one FactMetaData
 /// instance or each Fact.
-class FactMetaData : public QObject
-{
+class FactMetaData : public QObject {
     Q_OBJECT
 
 public:
@@ -37,8 +36,8 @@ public:
         valueTypeDouble,
         valueTypeString,
         valueTypeBool,
-        valueTypeElapsedTimeInSeconds,  // Internally stored as double, valueString displays as HH:MM:SS
-        valueTypeCustom,                // Internally stored as a QByteArray
+        valueTypeElapsedTimeInSeconds, // Internally stored as double, valueString displays as HH:MM:SS
+        valueTypeCustom, // Internally stored as a QByteArray
     } ValueType_t;
 
     typedef QVariant (*Translator)(const QVariant& from);
@@ -57,9 +56,11 @@ public:
     typedef QMap<QString, QString> DefineMap_t;
 
     static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
-    static QMap<QString, FactMetaData*> createMapFromJsonArray(const QJsonArray jsonArray, DefineMap_t& defineMap, QObject* metaDataParent);
+    static QMap<QString, FactMetaData*> createMapFromJsonArray(
+        const QJsonArray jsonArray, DefineMap_t& defineMap, QObject* metaDataParent);
 
-    static FactMetaData* createFromJsonObject(const QJsonObject& json, QMap<QString, QString>& defineMap, QObject* metaDataParent);
+    static FactMetaData* createFromJsonObject(
+        const QJsonObject& json, QMap<QString, QString>& defineMap, QObject* metaDataParent);
 
     const FactMetaData& operator=(const FactMetaData& other);
 
@@ -102,45 +103,45 @@ public:
     /// Returns the string for speed units which has configued by user
     static QString appSettingsSpeedUnitsString();
 
-    static const QString defaultCategory    ();
-    static const QString defaultGroup       ();
+    static const QString defaultCategory();
+    static const QString defaultGroup();
 
-    int             decimalPlaces           (void) const;
-    QVariant        rawDefaultValue         (void) const;
-    QVariant        cookedDefaultValue      (void) const { return _rawTranslator(rawDefaultValue()); }
-    bool            defaultValueAvailable   (void) const { return _defaultValueAvailable; }
-    QStringList     bitmaskStrings          (void) const { return _bitmaskStrings; }
-    QVariantList    bitmaskValues           (void) const { return _bitmaskValues; }
-    QStringList     enumStrings             (void) const { return _enumStrings; }
-    QVariantList    enumValues              (void) const { return _enumValues; }
-    QString         category                (void) const { return _category; }
-    QString         group                   (void) const { return _group; }
-    QString         longDescription         (void) const { return _longDescription;}
-    QVariant        rawMax                  (void) const { return _rawMax; }
-    QVariant        cookedMax               (void) const;
-    bool            maxIsDefaultForType     (void) const { return _maxIsDefaultForType; }
-    QVariant        rawMin                  (void) const { return _rawMin; }
-    QVariant        cookedMin               (void) const;
-    bool            minIsDefaultForType     (void) const { return _minIsDefaultForType; }
-    QString         name                    (void) const { return _name; }
-    QString         shortDescription        (void) const { return _shortDescription; }
-    ValueType_t     type                    (void) const { return _type; }
-    QString         rawUnits                (void) const { return _rawUnits; }
-    QString         cookedUnits             (void) const { return _cookedUnits; }
-    bool            vehicleRebootRequired   (void) const { return _vehicleRebootRequired; }
-    bool            qgcRebootRequired       (void) const { return _qgcRebootRequired; }
-    bool            hasControl              (void) const { return _hasControl; }
-    bool            readOnly                (void) const { return _readOnly; }
-    bool            writeOnly               (void) const { return _writeOnly; }
-    bool            volatileValue           (void) const { return _volatile; }
+    int decimalPlaces(void) const;
+    QVariant rawDefaultValue(void) const;
+    QVariant cookedDefaultValue(void) const { return _rawTranslator(rawDefaultValue()); }
+    bool defaultValueAvailable(void) const { return _defaultValueAvailable; }
+    QStringList bitmaskStrings(void) const { return _bitmaskStrings; }
+    QVariantList bitmaskValues(void) const { return _bitmaskValues; }
+    QStringList enumStrings(void) const { return _enumStrings; }
+    QVariantList enumValues(void) const { return _enumValues; }
+    QString category(void) const { return _category; }
+    QString group(void) const { return _group; }
+    QString longDescription(void) const { return _longDescription; }
+    QVariant rawMax(void) const { return _rawMax; }
+    QVariant cookedMax(void) const;
+    bool maxIsDefaultForType(void) const { return _maxIsDefaultForType; }
+    QVariant rawMin(void) const { return _rawMin; }
+    QVariant cookedMin(void) const;
+    bool minIsDefaultForType(void) const { return _minIsDefaultForType; }
+    QString name(void) const { return _name; }
+    QString shortDescription(void) const { return _shortDescription; }
+    ValueType_t type(void) const { return _type; }
+    QString rawUnits(void) const { return _rawUnits; }
+    QString cookedUnits(void) const { return _cookedUnits; }
+    bool vehicleRebootRequired(void) const { return _vehicleRebootRequired; }
+    bool qgcRebootRequired(void) const { return _qgcRebootRequired; }
+    bool hasControl(void) const { return _hasControl; }
+    bool readOnly(void) const { return _readOnly; }
+    bool writeOnly(void) const { return _writeOnly; }
+    bool volatileValue(void) const { return _volatile; }
 
     /// Amount to increment value when used in controls such as spin button or slider with detents.
     /// NaN for no increment available.
-    double          rawIncrement            (void) const { return _rawIncrement; }
-    double          cookedIncrement         (void) const;
+    double rawIncrement(void) const { return _rawIncrement; }
+    double cookedIncrement(void) const;
 
-    Translator      rawTranslator           (void) const { return _rawTranslator; }
-    Translator      cookedTranslator        (void) const { return _cookedTranslator; }
+    Translator rawTranslator(void) const { return _rawTranslator; }
+    Translator cookedTranslator(void) const { return _cookedTranslator; }
 
     /// Used to add new values to the bitmask lists after the meta data has been loaded
     void addBitmaskInfo(const QString& name, const QVariant& value);
@@ -151,25 +152,25 @@ public:
     /// Used to remove values from the enum lists after the meta data has been loaded
     void removeEnumInfo(const QVariant& value);
 
-    void setDecimalPlaces           (int decimalPlaces)                 { _decimalPlaces = decimalPlaces; }
-    void setRawDefaultValue         (const QVariant& rawDefaultValue);
-    void setBitmaskInfo             (const QStringList& strings, const QVariantList& values);
-    void setEnumInfo                (const QStringList& strings, const QVariantList& values);
-    void setCategory                (const QString& category)           { _category = category; }
-    void setGroup                   (const QString& group)              { _group = group; }
-    void setLongDescription         (const QString& longDescription)    { _longDescription = longDescription;}
-    void setRawMax                  (const QVariant& rawMax);
-    void setRawMin                  (const QVariant& rawMin);
-    void setName                    (const QString& name)               { _name = name; }
-    void setShortDescription        (const QString& shortDescription)   { _shortDescription = shortDescription; }
-    void setRawUnits                (const QString& rawUnits);
-    void setVehicleRebootRequired   (bool rebootRequired)               { _vehicleRebootRequired = rebootRequired; }
-    void setQGCRebootRequired       (bool rebootRequired)               { _qgcRebootRequired = rebootRequired; }
-    void setRawIncrement            (double increment)                  { _rawIncrement = increment; }
-    void setHasControl              (bool bValue)                       { _hasControl = bValue; }
-    void setReadOnly                (bool bValue)                       { _readOnly = bValue; }
-    void setWriteOnly               (bool bValue)                       { _writeOnly = bValue; }
-    void setVolatileValue           (bool bValue);
+    void setDecimalPlaces(int decimalPlaces) { _decimalPlaces = decimalPlaces; }
+    void setRawDefaultValue(const QVariant& rawDefaultValue);
+    void setBitmaskInfo(const QStringList& strings, const QVariantList& values);
+    void setEnumInfo(const QStringList& strings, const QVariantList& values);
+    void setCategory(const QString& category) { _category = category; }
+    void setGroup(const QString& group) { _group = group; }
+    void setLongDescription(const QString& longDescription) { _longDescription = longDescription; }
+    void setRawMax(const QVariant& rawMax);
+    void setRawMin(const QVariant& rawMin);
+    void setName(const QString& name) { _name = name; }
+    void setShortDescription(const QString& shortDescription) { _shortDescription = shortDescription; }
+    void setRawUnits(const QString& rawUnits);
+    void setVehicleRebootRequired(bool rebootRequired) { _vehicleRebootRequired = rebootRequired; }
+    void setQGCRebootRequired(bool rebootRequired) { _qgcRebootRequired = rebootRequired; }
+    void setRawIncrement(double increment) { _rawIncrement = increment; }
+    void setHasControl(bool bValue) { _hasControl = bValue; }
+    void setReadOnly(bool bValue) { _readOnly = bValue; }
+    void setWriteOnly(bool bValue) { _writeOnly = bValue; }
+    void setVolatileValue(bool bValue);
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -185,7 +186,8 @@ public:
     bool convertAndValidateRaw(const QVariant& rawValue, bool convertOnly, QVariant& typedValue, QString& errorString);
 
     /// Same as convertAndValidateRaw except for cookedValue input
-    bool convertAndValidateCooked(const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString);
+    bool convertAndValidateCooked(
+        const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString);
 
     /// Converts the specified cooked value and clamps it (max/min)
     ///     @param cookedValue: Value to convert, can be string
@@ -197,7 +199,7 @@ public:
     /// prior to the standard validator when convertAndValidateCooked is called.
     void setCustomCookedValidator(CustomCookedValidator customValidator) { _customCookedValidator = customValidator; }
 
-    static const int kDefaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
+    static const int kDefaultDecimalPlaces = 3; ///< Default value for decimal places if not specified/known
     static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
     static const char* kDefaultCategory;
     static const char* kDefaultGroup;
@@ -209,36 +211,39 @@ public:
     static const char* qgcFileType;
 
 private:
-    QVariant _minForType                (void) const;
-    QVariant _maxForType                (void) const;
-    void    _setAppSettingsTranslators  (void);
+    QVariant _minForType(void) const;
+    QVariant _maxForType(void) const;
+    void _setAppSettingsTranslators(void);
 
     /// Clamp a value to be within cookedMin and cookedMax
-    template<class T>
-    void clamp(QVariant& variantValue) const {
+    template <class T> void clamp(QVariant& variantValue) const
+    {
         if (cookedMin().value<T>() > variantValue.value<T>()) {
             variantValue = cookedMin();
-        } else if(variantValue.value<T>() > cookedMax().value<T>()) {
+        } else if (variantValue.value<T>() > cookedMax().value<T>()) {
             variantValue = cookedMax();
         }
     }
 
-    template<class T>
-    bool isInCookedLimit(const QVariant& variantValue) const {
+    template <class T> bool isInCookedLimit(const QVariant& variantValue) const
+    {
         return cookedMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() <= cookedMax().value<T>();
     }
 
-    template<class T>
-    bool isInRawLimit(const QVariant& variantValue) const {
+    template <class T> bool isInRawLimit(const QVariant& variantValue) const
+    {
         return rawMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() <= rawMax().value<T>();
     }
 
     bool isInRawMinLimit(const QVariant& variantValue) const;
     bool isInRawMaxLimit(const QVariant& variantValue) const;
 
-    static bool _parseEnum          (const QJsonObject& jsonObject, DefineMap_t defineMap, QStringList& rgDescriptions, QStringList& rgValues, QString& errorString);
-    static bool _parseValuesArray   (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString);
-    static bool _parseBitmaskArray  (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<int>& rgValues, QString& errorString);
+    static bool _parseEnum(const QJsonObject& jsonObject, DefineMap_t defineMap, QStringList& rgDescriptions,
+        QStringList& rgValues, QString& errorString);
+    static bool _parseValuesArray(
+        const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString);
+    static bool _parseBitmaskArray(
+        const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<int>& rgValues, QString& errorString);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -279,7 +284,6 @@ private:
     static QVariant _gramsToOunces(const QVariant& g);
     static QVariant _gramsToPunds(const QVariant& g);
 
-
     enum UnitTypes {
         UnitHorizontalDistance = 0,
         UnitVerticalDistance,
@@ -290,46 +294,46 @@ private:
     };
 
     struct AppSettingsTranslation_s {
-        QString       rawUnits;
-        const char*   cookedUnits;
-        UnitTypes     unitType;
-        uint32_t      unitOption;
-        Translator    rawTranslator;
-        Translator    cookedTranslator;
+        QString rawUnits;
+        const char* cookedUnits;
+        UnitTypes unitType;
+        uint32_t unitOption;
+        Translator rawTranslator;
+        Translator cookedTranslator;
     };
 
     static const AppSettingsTranslation_s* _findAppSettingsUnitsTranslation(const QString& rawUnits, UnitTypes type);
 
     static void _loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap);
 
-    ValueType_t     _type;                  // must be first for correct constructor init
-    int             _decimalPlaces;
-    QVariant        _rawDefaultValue;
-    bool            _defaultValueAvailable;
-    QStringList     _bitmaskStrings;
-    QVariantList    _bitmaskValues;
-    QStringList     _enumStrings;
-    QVariantList    _enumValues;
-    QString         _category;
-    QString         _group;
-    QString         _longDescription;
-    QVariant        _rawMax;
-    bool            _maxIsDefaultForType;
-    QVariant        _rawMin;
-    bool            _minIsDefaultForType;
-    QString         _name;
-    QString         _shortDescription;
-    QString         _rawUnits;
-    QString         _cookedUnits;
-    Translator      _rawTranslator;
-    Translator      _cookedTranslator;
-    bool            _vehicleRebootRequired;
-    bool            _qgcRebootRequired;
-    double          _rawIncrement;
-    bool            _hasControl;
-    bool            _readOnly;
-    bool            _writeOnly;
-    bool            _volatile;
+    ValueType_t _type; // must be first for correct constructor init
+    int _decimalPlaces;
+    QVariant _rawDefaultValue;
+    bool _defaultValueAvailable;
+    QStringList _bitmaskStrings;
+    QVariantList _bitmaskValues;
+    QStringList _enumStrings;
+    QVariantList _enumValues;
+    QString _category;
+    QString _group;
+    QString _longDescription;
+    QVariant _rawMax;
+    bool _maxIsDefaultForType;
+    QVariant _rawMin;
+    bool _minIsDefaultForType;
+    QString _name;
+    QString _shortDescription;
+    QString _rawUnits;
+    QString _cookedUnits;
+    Translator _rawTranslator;
+    Translator _cookedTranslator;
+    bool _vehicleRebootRequired;
+    bool _qgcRebootRequired;
+    double _rawIncrement;
+    bool _hasControl;
+    bool _readOnly;
+    bool _writeOnly;
+    bool _volatile;
     CustomCookedValidator _customCookedValidator = nullptr;
 
     // Exact conversion constants
@@ -346,17 +350,16 @@ private:
     struct BuiltInTranslation_s {
         QString rawUnits;
         const char* cookedUnits;
-        Translator  rawTranslator;
-        Translator  cookedTranslator;
-
+        Translator rawTranslator;
+        Translator cookedTranslator;
     };
 
     static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
 
-    static const char*          _rgKnownTypeStrings[];
-    static const ValueType_t    _rgKnownValueTypes[];
+    static const char* _rgKnownTypeStrings[];
+    static const ValueType_t _rgKnownValueTypes[];
 
     static const char* _nameJsonKey;
     static const char* _decimalPlacesJsonKey;

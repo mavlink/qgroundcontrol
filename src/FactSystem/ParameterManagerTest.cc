@@ -7,11 +7,10 @@
  *
  ****************************************************************************/
 
-
 #include "ParameterManagerTest.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
+#include "QGCApplication.h"
 
 /// Test failure modes which should still lead to param load success
 void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
@@ -53,11 +52,7 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     QCOMPARE(arguments.at(0).toFloat(), 0.0f);
 }
 
-
-void ParameterManagerTest::_noFailure(void)
-{
-    _noFailureWorker(MockConfiguration::FailNone);
-}
+void ParameterManagerTest::_noFailure(void) { _noFailureWorker(MockConfiguration::FailNone); }
 
 void ParameterManagerTest::_requestListMissingParamSuccess(void)
 {

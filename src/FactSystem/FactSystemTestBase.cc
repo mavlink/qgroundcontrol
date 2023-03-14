@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -17,16 +16,13 @@
 #include "MockLink.h"
 #endif
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
 #include "ParameterManager.h"
+#include "QGCApplication.h"
 
 #include <QQuickItem>
 
 /// FactSystem Unit Test
-FactSystemTestBase::FactSystemTestBase(void)
-{
-
-}
+FactSystemTestBase::FactSystemTestBase(void) { }
 
 void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
 {
@@ -38,10 +34,7 @@ void FactSystemTestBase::_init(MAV_AUTOPILOT autopilot)
     Q_ASSERT(_plugin);
 }
 
-void FactSystemTestBase::_cleanup(void)
-{
-    UnitTest::cleanup();
-}
+void FactSystemTestBase::_cleanup(void) { UnitTest::cleanup(); }
 
 /// Basic test of parameter values in Fact System
 void FactSystemTestBase::_parameter_default_component_id_test(void)
@@ -115,4 +108,3 @@ void FactSystemTestBase::_qmlUpdate_test(void)
     delete widget;
 #endif
 }
-

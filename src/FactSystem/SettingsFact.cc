@@ -7,23 +7,22 @@
  *
  ****************************************************************************/
 
-
 #include "SettingsFact.h"
-#include "QGCCorePlugin.h"
 #include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 
 #include <QSettings>
 
 SettingsFact::SettingsFact(QObject* parent)
     : Fact(parent)
-{    
+{
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObject* parent)
-    : Fact          (0, metaData->name(), metaData->type(), parent)
+    : Fact(0, metaData->name(), metaData->type(), parent)
     , _settingsGroup(settingsGroup)
-    , _visible      (true)
+    , _visible(true)
 {
     QSettings settings;
 
@@ -44,7 +43,8 @@ SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObjec
             if (_visible) {
                 QVariant typedValue;
                 QString errorString;
-                metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
+                metaData->convertAndValidateRaw(
+                    settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
                 _rawValue = typedValue;
             } else {
                 // Setting is not visible, force to default value always
@@ -66,7 +66,7 @@ SettingsFact::SettingsFact(const SettingsFact& other, QObject* parent)
 const SettingsFact& SettingsFact::operator=(const SettingsFact& other)
 {
     Fact::operator=(other);
-    
+
     _settingsGroup = other._settingsGroup;
 
     return *this;

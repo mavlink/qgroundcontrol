@@ -7,15 +7,14 @@
  *
  ****************************************************************************/
 
-
 #include "FactGroup.h"
 #include "JsonHelper.h"
 
-#include <QJsonDocument>
-#include <QJsonParseError>
-#include <QJsonArray>
 #include <QDebug>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonParseError>
 #include <QQmlEngine>
 
 FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent, bool ignoreCamelCase)
@@ -62,7 +61,7 @@ bool FactGroup::factExists(const QString& name)
             return false;
         }
 
-        FactGroup * factGroup = getFactGroup(parts[0]);
+        FactGroup* factGroup = getFactGroup(parts[0]);
         if (!factGroup) {
             qWarning() << "Unknown FactGroup" << parts[0];
             return false;
@@ -85,7 +84,7 @@ Fact* FactGroup::getFact(const QString& name)
             return nullptr;
         }
 
-        FactGroup * factGroup = getFactGroup(parts[0]);
+        FactGroup* factGroup = getFactGroup(parts[0]);
         if (!factGroup) {
             qWarning() << "Unknown FactGroup" << parts[0];
             return nullptr;
@@ -94,7 +93,7 @@ Fact* FactGroup::getFact(const QString& name)
         return factGroup->getFact(parts[1]);
     }
 
-    Fact*   fact =          nullptr;
+    Fact* fact = nullptr;
     QString camelCaseName = _ignoreCamelCase ? name : _camelCase(name);
 
     if (_nameToFactMap.contains(camelCaseName)) {
@@ -109,8 +108,8 @@ Fact* FactGroup::getFact(const QString& name)
 
 FactGroup* FactGroup::getFactGroup(const QString& name)
 {
-    FactGroup*  factGroup = nullptr;
-    QString     camelCaseName = _ignoreCamelCase ? name : _camelCase(name);
+    FactGroup* factGroup = nullptr;
+    QString camelCaseName = _ignoreCamelCase ? name : _camelCase(name);
 
     if (_nameToFactGroupMap.contains(camelCaseName)) {
         factGroup = _nameToFactGroupMap[camelCaseName];
@@ -153,7 +152,7 @@ void FactGroup::_addFactGroup(FactGroup* factGroup, const QString& name)
 
 void FactGroup::_updateAllValues(void)
 {
-    for(Fact* fact: _nameToFactMap) {
+    for (Fact* fact : _nameToFactMap) {
         fact->sendDeferredValueChangedSignal();
     }
 }
@@ -169,23 +168,19 @@ void FactGroup::setLiveUpdates(bool liveUpdates)
     } else {
         _updateTimer.start();
     }
-    for(Fact* fact: _nameToFactMap) {
+    for (Fact* fact : _nameToFactMap) {
         fact->setSendValueChangedSignals(liveUpdates);
     }
 }
 
-
-QString FactGroup::_camelCase(const QString& text)
-{
-    return text[0].toLower() + text.right(text.length() - 1);
-}
+QString FactGroup::_camelCase(const QString& text) { return text[0].toLower() + text.right(text.length() - 1); }
 
 void FactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& /* message */)
 {
     // Default implementation does nothing
 }
 
-void FactGroup::_setTelemetryAvailable (bool telemetryAvailable)
+void FactGroup::_setTelemetryAvailable(bool telemetryAvailable)
 {
     if (telemetryAvailable != _telemetryAvailable) {
         _telemetryAvailable = telemetryAvailable;

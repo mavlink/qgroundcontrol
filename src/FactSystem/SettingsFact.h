@@ -12,10 +12,9 @@
 #include "Fact.h"
 
 /// @brief A SettingsFact is Fact which holds a QSettings value.
-class SettingsFact : public Fact
-{
+class SettingsFact : public Fact {
     Q_OBJECT
-    
+
 public:
     SettingsFact(QObject* parent = nullptr);
     SettingsFact(QString settingsGroup, FactMetaData* metaData, QObject* parent = nullptr);
@@ -33,5 +32,5 @@ private slots:
 
 private:
     QString _settingsGroup;
-    bool    _visible;
+    bool _visible;
 };

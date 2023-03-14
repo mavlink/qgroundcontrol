@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -15,10 +14,7 @@
 #include "QGCMAVLink.h"
 
 /// FactSystem Unit Test for PX4 autpilot
-FactSystemTestGeneric::FactSystemTestGeneric(void)
-{
-    
-}
+FactSystemTestGeneric::FactSystemTestGeneric(void) { }
 
 void FactSystemTestGeneric::init(void)
 {

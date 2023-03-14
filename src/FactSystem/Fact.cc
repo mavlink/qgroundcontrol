@@ -9,26 +9,26 @@
 
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
-#include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "QGCMAVLink.h"
 
-#include <QtQml>
 #include <QQmlEngine>
+#include <QtQml>
 
 static const char* kMissingMetadata = "Meta data pointer missing";
 
 Fact::Fact(QObject* parent)
-    : QObject                   (parent)
-    , _componentId              (-1)
-    , _rawValue                 (0)
-    , _type                     (FactMetaData::valueTypeInt32)
-    , _metaData                 (nullptr)
-    , _sendValueChangedSignals  (true)
+    : QObject(parent)
+    , _componentId(-1)
+    , _rawValue(0)
+    , _type(FactMetaData::valueTypeInt32)
+    , _metaData(nullptr)
+    , _sendValueChangedSignals(true)
     , _deferredValueChangeSignal(false)
-    , _valueSliderModel         (nullptr)
-    , _ignoreQGCRebootRequired  (false)
-{    
+    , _valueSliderModel(nullptr)
+    , _ignoreQGCRebootRequired(false)
+{
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
 
@@ -36,16 +36,16 @@ Fact::Fact(QObject* parent)
 }
 
 Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent)
-    : QObject                   (parent)
-    , _name                     (name)
-    , _componentId              (componentId)
-    , _rawValue                 (0)
-    , _type                     (type)
-    , _metaData                 (nullptr)
-    , _sendValueChangedSignals  (true)
+    : QObject(parent)
+    , _name(name)
+    , _componentId(componentId)
+    , _rawValue(0)
+    , _type(type)
+    , _metaData(nullptr)
+    , _sendValueChangedSignals(true)
     , _deferredValueChangeSignal(false)
-    , _valueSliderModel         (nullptr)
-    , _ignoreQGCRebootRequired  (false)
+    , _valueSliderModel(nullptr)
+    , _ignoreQGCRebootRequired(false)
 {
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -55,15 +55,15 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
 
 Fact::Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent)
     : QObject(parent)
-    , _name                     (metaData->name())
-    , _componentId              (0)
-    , _rawValue                 (0)
-    , _type                     (metaData->type())
-    , _metaData                 (nullptr)
-    , _sendValueChangedSignals  (true)
+    , _name(metaData->name())
+    , _componentId(0)
+    , _rawValue(0)
+    , _type(metaData->type())
+    , _metaData(nullptr)
+    , _sendValueChangedSignals(true)
     , _deferredValueChangeSignal(false)
-    , _valueSliderModel         (nullptr)
-    , _ignoreQGCRebootRequired  (false)
+    , _valueSliderModel(nullptr)
+    , _ignoreQGCRebootRequired(false)
 {
     qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
@@ -87,29 +87,29 @@ void Fact::_init(void)
 
 const Fact& Fact::operator=(const Fact& other)
 {
-    _name                       = other._name;
-    _componentId                = other._componentId;
-    _rawValue                   = other._rawValue;
-    _type                       = other._type;
-    _sendValueChangedSignals    = other._sendValueChangedSignals;
-    _deferredValueChangeSignal  = other._deferredValueChangeSignal;
-    _valueSliderModel           = nullptr;
-    _ignoreQGCRebootRequired    = other._ignoreQGCRebootRequired;
+    _name = other._name;
+    _componentId = other._componentId;
+    _rawValue = other._rawValue;
+    _type = other._type;
+    _sendValueChangedSignals = other._sendValueChangedSignals;
+    _deferredValueChangeSignal = other._deferredValueChangeSignal;
+    _valueSliderModel = nullptr;
+    _ignoreQGCRebootRequired = other._ignoreQGCRebootRequired;
     if (_metaData && other._metaData) {
         *_metaData = *other._metaData;
     } else {
         _metaData = nullptr;
     }
-    
+
     return *this;
 }
 
 void Fact::forceSetRawValue(const QVariant& value)
 {
     if (_metaData) {
-        QVariant    typedValue;
-        QString     errorString;
-        
+        QVariant typedValue;
+        QString errorString;
+
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             _rawValue.setValue(typedValue);
             _sendValueChangedSignal(cookedValue());
@@ -125,9 +125,9 @@ void Fact::forceSetRawValue(const QVariant& value)
 void Fact::setRawValue(const QVariant& value)
 {
     if (_metaData) {
-        QVariant    typedValue;
-        QString     errorString;
-        
+        QVariant typedValue;
+        QString errorString;
+
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
             if (typedValue != _rawValue) {
                 _rawValue.setValue(typedValue);
@@ -179,7 +179,7 @@ void Fact::setEnumIndex(int index)
 
 void Fact::_containerSetRawValue(const QVariant& value)
 {
-    if(_rawValue != value) {
+    if (_rawValue != value) {
         _rawValue = value;
         _sendValueChangedSignal(cookedValue());
         emit rawValueChanged(_rawValue);
@@ -189,15 +189,9 @@ void Fact::_containerSetRawValue(const QVariant& value)
     emit vehicleUpdated(_rawValue);
 }
 
-QString Fact::name(void) const
-{
-    return _name;
-}
+QString Fact::name(void) const { return _name; }
 
-int Fact::componentId(void) const
-{
-    return _componentId;
-}
+int Fact::componentId(void) const { return _componentId; }
 
 QVariant Fact::cookedValue(void) const
 {
@@ -228,20 +222,20 @@ int Fact::enumIndex(void)
     static const double accuracy = 1.0 / 1000000.0;
     if (_metaData) {
         //-- Only enums have an index
-        if(_metaData->enumValues().count()) {
+        if (_metaData->enumValues().count()) {
             int index = 0;
-            for (QVariant enumValue: _metaData->enumValues()) {
+            for (QVariant enumValue : _metaData->enumValues()) {
                 if (enumValue == rawValue()) {
                     return index;
                 }
                 //-- Float comparissons don't always work
-                if(type() == FactMetaData::valueTypeFloat || type() == FactMetaData::valueTypeDouble) {
+                if (type() == FactMetaData::valueTypeFloat || type() == FactMetaData::valueTypeDouble) {
                     double diff = fabs(enumValue.toDouble() - rawValue().toDouble());
-                    if(diff < accuracy) {
+                    if (diff < accuracy) {
                         return index;
                     }
                 }
-                index ++;
+                index++;
             }
             // Current value is not in list, add it manually
             _metaData->addEnumInfo(tr("Unknown: %1").arg(rawValue().toString()), rawValue());
@@ -314,19 +308,19 @@ QStringList Fact::selectedBitmaskStrings(void) const
     if (_metaData) {
         const auto values = _metaData->bitmaskValues();
         const auto strings = _metaData->bitmaskStrings();
-        if(values.size() != strings.size()) {
-            qWarning() << "Size of bitmask value and string is different."  << name();
+        if (values.size() != strings.size()) {
+            qWarning() << "Size of bitmask value and string is different." << name();
             return {};
         }
 
         QStringList selected;
-        for(int i = 0; i < values.size(); i++) {
-            if(rawValue().toInt() & values[i].toInt()) {
+        for (int i = 0; i < values.size(); i++) {
+            if (rawValue().toInt() & values[i].toInt()) {
                 selected += strings[i];
             }
         }
 
-        if(selected.isEmpty()) {
+        if (selected.isEmpty()) {
             selected += "Not value selected";
         }
 
@@ -342,31 +336,26 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
     QString valueString;
 
     switch (type()) {
-    case FactMetaData::valueTypeFloat:
-    {
+    case FactMetaData::valueTypeFloat: {
         float fValue = variant.toFloat();
         if (qIsNaN(fValue)) {
             valueString = QStringLiteral("--.--");
         } else {
             valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces);
         }
-    }
-        break;
-    case FactMetaData::valueTypeDouble:
-    {
+    } break;
+    case FactMetaData::valueTypeDouble: {
         double dValue = variant.toDouble();
         if (qIsNaN(dValue)) {
             valueString = QStringLiteral("--.--");
         } else {
             valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces);
         }
-    }
-        break;
+    } break;
     case FactMetaData::valueTypeBool:
         valueString = variant.toBool() ? tr("true") : tr("false");
         break;
-    case FactMetaData::valueTypeElapsedTimeInSeconds:
-    {
+    case FactMetaData::valueTypeElapsedTimeInSeconds: {
         double dValue = variant.toDouble();
         if (qIsNaN(dValue)) {
             valueString = QStringLiteral("--:--:--");
@@ -375,8 +364,7 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
             time = time.addSecs(dValue);
             valueString = time.toString(QStringLiteral("hh:mm:ss"));
         }
-    }
-        break;
+    } break;
     default:
         valueString = variant.toString();
         break;
@@ -385,21 +373,11 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
     return valueString;
 }
 
-QString Fact::rawValueStringFullPrecision(void) const
-{
-    return _variantToString(rawValue(), 18);
-}
+QString Fact::rawValueStringFullPrecision(void) const { return _variantToString(rawValue(), 18); }
 
+QString Fact::rawValueString(void) const { return _variantToString(rawValue(), decimalPlaces()); }
 
-QString Fact::rawValueString(void) const
-{
-    return _variantToString(rawValue(), decimalPlaces());
-}
-
-QString Fact::cookedValueString(void) const
-{
-    return _variantToString(cookedValue(), decimalPlaces());
-}
+QString Fact::cookedValueString(void) const { return _variantToString(cookedValue(), decimalPlaces()); }
 
 QVariant Fact::rawDefaultValue(void) const
 {
@@ -427,15 +405,9 @@ QVariant Fact::cookedDefaultValue(void) const
     }
 }
 
-QString Fact::cookedDefaultValueString(void) const
-{
-    return _variantToString(cookedDefaultValue(), decimalPlaces());
-}
+QString Fact::cookedDefaultValueString(void) const { return _variantToString(cookedDefaultValue(), decimalPlaces()); }
 
-FactMetaData::ValueType_t Fact::type(void) const
-{
-    return _type;
-}
+FactMetaData::ValueType_t Fact::type(void) const { return _type; }
 
 QString Fact::shortDescription(void) const
 {
@@ -497,10 +469,7 @@ QVariant Fact::cookedMin(void) const
     }
 }
 
-QString Fact::cookedMinString(void) const
-{
-    return _variantToString(cookedMin(), decimalPlaces());
-}
+QString Fact::cookedMinString(void) const { return _variantToString(cookedMin(), decimalPlaces()); }
 
 QVariant Fact::rawMax(void) const
 {
@@ -522,10 +491,7 @@ QVariant Fact::cookedMax(void) const
     }
 }
 
-QString Fact::cookedMaxString(void) const
-{
-    return _variantToString(cookedMax(), decimalPlaces());
-}
+QString Fact::cookedMaxString(void) const { return _variantToString(cookedMax(), decimalPlaces()); }
 
 bool Fact::minIsDefaultForType(void) const
 {
@@ -613,11 +579,11 @@ bool Fact::defaultValueAvailable(void) const
 QString Fact::validate(const QString& cookedValue, bool convertOnly)
 {
     if (_metaData) {
-        QVariant    typedValue;
-        QString     errorString;
-        
+        QVariant typedValue;
+        QString errorString;
+
         _metaData->convertAndValidateCooked(cookedValue, convertOnly, typedValue, errorString);
-        
+
         return errorString;
     } else {
         qWarning() << kMissingMetadata << name();
@@ -629,7 +595,7 @@ QVariant Fact::clamp(const QString& cookedValue)
 {
     if (_metaData) {
         QVariant typedValue;
-        if(_metaData->clampValue(cookedValue, typedValue)) {
+        if (_metaData->clampValue(cookedValue, typedValue)) {
             return typedValue;
         } else {
             //-- If conversion failed, return current value
@@ -663,7 +629,7 @@ bool Fact::qgcRebootRequired(void) const
     }
 }
 
-void Fact::setSendValueChangedSignals (bool sendValueChangedSignals)
+void Fact::setSendValueChangedSignals(bool sendValueChangedSignals)
 {
     if (sendValueChangedSignals != _sendValueChangedSignals) {
         _sendValueChangedSignals = sendValueChangedSignals;
@@ -773,18 +739,18 @@ FactValueSliderListModel* Fact::valueSliderModel(void)
 
 void Fact::_checkForRebootMessaging(void)
 {
-    if(qgcApp()) {
+    if (qgcApp()) {
         if (!qgcApp()->runningUnitTests()) {
             if (vehicleRebootRequired()) {
-                qgcApp()->showRebootAppMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
+                qgcApp()->showRebootAppMessage(
+                    tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
             } else if (qgcRebootRequired()) {
-                qgcApp()->showRebootAppMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
+                qgcApp()->showRebootAppMessage(tr("Change of '%1' value requires restart of %2 to take effect.")
+                                                   .arg(shortDescription())
+                                                   .arg(qgcApp()->applicationName()));
             }
         }
     }
 }
 
-void Fact::_setIgnoreQGCRebootRequired(bool ignore)
-{
-    _ignoreQGCRebootRequired = ignore;
-}
+void Fact::_setIgnoreQGCRebootRequired(bool ignore) { _ignoreQGCRebootRequired = ignore; }

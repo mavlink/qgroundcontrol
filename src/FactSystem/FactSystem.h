@@ -16,22 +16,21 @@
 /// The components of the FactSystem are a Fact which holds an individual value. FactMetaData holds
 /// additional meta data associated with a Fact such as description, min/max ranges and so forth.
 
-class FactSystem : public QGCTool
-{
+class FactSystem : public QGCTool {
     Q_OBJECT
-    
+
 public:
     FactSystem(QGCApplication* app, QGCToolbox* toolbox);
 
     // Override from QGCTool
-    virtual void setToolbox(QGCToolbox *toolbox);
+    virtual void setToolbox(QGCToolbox* toolbox);
 
     typedef enum {
         ParameterProvider,
     } Provider_t;
-    
+
     static const int defaultComponentId = -1;
-    
+
 private:
-    static const char* _factSystemQmlUri;   ///< URI for FactSystem QML imports
+    static const char* _factSystemQmlUri; ///< URI for FactSystem QML imports
 };
