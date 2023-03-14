@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -19,26 +18,20 @@ struct SwitchListItem {
     const char* name;
 };
 
-FlightModesComponent::FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Flight Modes"))
+FlightModesComponent::FlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, parent)
+    , _name(tr("Flight Modes"))
 {
 }
 
-QString FlightModesComponent::name(void) const
-{
-    return _name;
-}
+QString FlightModesComponent::name(void) const { return _name; }
 
 QString FlightModesComponent::description(void) const
 {
     return tr("Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.");
 }
 
-QString FlightModesComponent::iconResource(void) const
-{
-    return "/qmlimages/FlightModesComponentIcon.png";
-}
+QString FlightModesComponent::iconResource(void) const { return "/qmlimages/FlightModesComponentIcon.png"; }
 
 bool FlightModesComponent::requiresSetup(void) const
 {
@@ -51,7 +44,12 @@ bool FlightModesComponent::setupComplete(void) const
         return true;
     }
 
-    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0) {
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")
+        && _vehicle->parameterManager()
+                ->getParameter(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")
+                ->rawValue()
+                .toInt()
+            != 0) {
         return true;
     }
 
@@ -67,10 +65,7 @@ QStringList FlightModesComponent::setupCompleteChangedTriggerList(void) const
     return list;
 }
 
-QUrl FlightModesComponent::setupSource(void) const
-{
-    return QUrl::fromUserInput("qrc:/qml/PX4FlightModes.qml");
-}
+QUrl FlightModesComponent::setupSource(void) const { return QUrl::fromUserInput("qrc:/qml/PX4FlightModes.qml"); }
 
 QUrl FlightModesComponent::summaryQmlSource(void) const
 {

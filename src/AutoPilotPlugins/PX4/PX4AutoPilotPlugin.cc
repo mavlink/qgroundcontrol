@@ -7,20 +7,19 @@
  *
  ****************************************************************************/
 
-
 #include "PX4AutoPilotPlugin.h"
-#include "PX4AirframeLoader.h"
 #include "AirframeComponentController.h"
-#include "UAS.h"
-#include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
-#include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
-#include "QGCApplication.h"
+#include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h" // FIXME: Hack
+#include "FirmwarePlugin/PX4/PX4ParameterMetaData.h" // FIXME: Hack
 #include "FlightModesComponent.h"
+#include "PX4AirframeLoader.h"
 #include "PX4RadioComponent.h"
 #include "PX4TuningComponent.h"
 #include "PowerComponent.h"
+#include "QGCApplication.h"
 #include "SafetyComponent.h"
 #include "SensorsComponent.h"
+#include "UAS.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
@@ -54,10 +53,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     PX4AirframeLoader::loadAirframeMetaData();
 }
 
-PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
-{
-    delete _airframeFacts;
-}
+PX4AutoPilotPlugin::~PX4AutoPilotPlugin() { delete _airframeFacts; }
 
 const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 {
@@ -108,21 +104,21 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _tuningComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_tuningComponent)));
 
-                if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SYS_VEHICLE_RESP")) {
+                if (_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SYS_VEHICLE_RESP")) {
                     _flightBehavior = new PX4FlightBehavior(_vehicle, this, this);
                     _flightBehavior->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_flightBehavior)));
                 }
 
                 //-- Is there support for cameras?
-                if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
+                if (_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
                     _cameraComponent = new CameraComponent(_vehicle, this, this);
                     _cameraComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_cameraComponent)));
                 }
 
                 //-- Is there an ESP8266 Connected?
-                if(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
+                if (_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
                     _esp8266Component = new ESP8266Component(_vehicle, this, this);
                     _esp8266Component->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_esp8266Component)));
@@ -131,7 +127,7 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
             }
 
-            if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SLNK_RADIO_CHAN")) {
+            if (_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SLNK_RADIO_CHAN")) {
                 _syslinkComponent = new SyslinkComponent(_vehicle, this, this);
                 _syslinkComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_syslinkComponent)));
@@ -150,8 +146,8 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     AutoPilotPlugin::parametersReadyPreChecks();
 
     QString hitlParam("SYS_HITL");
-    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hitlParam) &&
-            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hitlParam)->rawValue().toBool()) {
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hitlParam)
+        && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hitlParam)->rawValue().toBool()) {
         qgcApp()->showAppMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
     }
 }

@@ -7,22 +7,20 @@
  *
  ****************************************************************************/
 
-
 #ifndef PX4TuningComponent_H
 #define PX4TuningComponent_H
 
 #include "VehicleComponent.h"
 
-class PX4TuningComponent : public VehicleComponent
-{
+class PX4TuningComponent : public VehicleComponent {
     Q_OBJECT
-    
+
 public:
     PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
-    
+
     // Virtuals from VehicleComponent
     QString name(void) const final;
     QString description(void) const final;
@@ -35,7 +33,7 @@ public:
     bool allowSetupWhileFlying(void) const final { return true; }
 
 private:
-    const QString   _name;
+    const QString _name;
 };
 
 #endif

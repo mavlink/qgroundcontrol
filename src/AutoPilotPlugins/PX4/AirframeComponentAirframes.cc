@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -15,7 +14,8 @@
 
 QMap<QString, AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirframes::rgAirframeTypes;
 
-QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAirframes::get() {
+QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAirframes::get()
+{
 
 #if 0
     // Set a single airframe to prevent the UI from going crazy
@@ -40,7 +40,7 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAir
 
 void AirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id)
 {
-    AirframeType_t *g;
+    AirframeType_t* g;
     if (!rgAirframeTypes.contains(group)) {
         g = new AirframeType_t;
         g->name = group;
@@ -63,14 +63,15 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         g = rgAirframeTypes.value(group);
     }
 
-    AirframeInfo_t *i = new AirframeInfo_t;
+    AirframeInfo_t* i = new AirframeInfo_t;
     i->name = name;
     i->autostartId = id;
 
     g->rgAirframeInfo.append(i);
 }
 
-void AirframeComponentAirframes::clear() {
+void AirframeComponentAirframes::clear()
+{
 
     // Run through all and delete them
     for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {

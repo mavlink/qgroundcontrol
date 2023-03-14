@@ -7,38 +7,25 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SafetyComponent.h"
 #include "PX4AutoPilotPlugin.h"
 
-SafetyComponent::SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Safety"))
+SafetyComponent::SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, parent)
+    , _name(tr("Safety"))
 {
 }
 
-QString SafetyComponent::name(void) const
-{
-    return _name;
-}
+QString SafetyComponent::name(void) const { return _name; }
 
-QString SafetyComponent::description(void) const
-{
-    return QString();
-}
+QString SafetyComponent::description(void) const { return QString(); }
 
-QString SafetyComponent::iconResource(void) const
-{
-    return "/qmlimages/SafetyComponentIcon.png";
-}
+QString SafetyComponent::iconResource(void) const { return "/qmlimages/SafetyComponentIcon.png"; }
 
-bool SafetyComponent::requiresSetup(void) const
-{
-    return false;
-}
+bool SafetyComponent::requiresSetup(void) const { return false; }
 
 bool SafetyComponent::setupComplete(void) const
 {
@@ -46,15 +33,9 @@ bool SafetyComponent::setupComplete(void) const
     return true;
 }
 
-QStringList SafetyComponent::setupCompleteChangedTriggerList(void) const
-{
-    return QStringList();
-}
+QStringList SafetyComponent::setupCompleteChangedTriggerList(void) const { return QStringList(); }
 
-QUrl SafetyComponent::setupSource(void) const
-{
-    return QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml");
-}
+QUrl SafetyComponent::setupSource(void) const { return QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml"); }
 
 QUrl SafetyComponent::summaryQmlSource(void) const
 {

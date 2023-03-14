@@ -7,12 +7,11 @@
  *
  ****************************************************************************/
 
-
 #include "PX4SimpleFlightModesController.h"
 #include "QGCMAVLink.h"
 
-#include <QVariant>
 #include <QQmlProperty>
+#include <QVariant>
 
 PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
     : _activeFlightMode(0)
@@ -34,13 +33,13 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
 void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
     _rcChannelValues.clear();
-    for (int i=0; i<channelCount; i++) {
+    for (int i = 0; i < channelCount; i++) {
         _rcChannelValues.append(pwmValues[i]);
     }
     emit rcChannelValuesChanged();
 
     Fact* pFact = getParameterFact(-1, "RC_MAP_FLTMODE");
-    if(!pFact) {
+    if (!pFact) {
 #if defined _MSC_VER
         qCritical() << "RC_MAP_FLTMODE Fact is NULL in" << __FILE__ << __LINE__;
 #else
@@ -58,11 +57,12 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     }
 
     pFact = getParameterFact(-1, QString("RC%1_REV").arg(flightModeChannel + 1));
-    if(!pFact) {
+    if (!pFact) {
 #if defined _MSC_VER
         qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
 #else
-        qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+        qCritical() << QString("RC%1_REV").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__
+                    << __LINE__;
 #endif
         return;
     }
@@ -70,11 +70,12 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     int pwmRev = pFact->rawValue().toInt();
 
     pFact = getParameterFact(-1, QString("RC%1_MIN").arg(flightModeChannel + 1));
-    if(!pFact) {
+    if (!pFact) {
 #if defined _MSC_VER
         qCritical() << QString("RC%1_MIN").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
 #else
-        qCritical() << QString("RC%1_MIN").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+        qCritical() << QString("RC%1_MIN").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__
+                    << __LINE__;
 #endif
         return;
     }
@@ -82,11 +83,12 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     int pwmMin = pFact->rawValue().toInt();
 
     pFact = getParameterFact(-1, QString("RC%1_MAX").arg(flightModeChannel + 1));
-    if(!pFact) {
+    if (!pFact) {
 #if defined _MSC_VER
         qCritical() << QString("RC%1_MAX").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
 #else
-        qCritical() << QString("RC%1_MAX").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+        qCritical() << QString("RC%1_MAX").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__
+                    << __LINE__;
 #endif
         return;
     }
@@ -94,11 +96,12 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     int pwmMax = pFact->rawValue().toInt();
 
     pFact = getParameterFact(-1, QString("RC%1_TRIM").arg(flightModeChannel + 1));
-    if(!pFact) {
+    if (!pFact) {
 #if defined _MSC_VER
         qCritical() << QString("RC%1_TRIM").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
 #else
-        qCritical() << QString("RC%1_TRIM").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+        qCritical() << QString("RC%1_TRIM").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__
+                    << __LINE__;
 #endif
         return;
     }
@@ -106,11 +109,12 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
     int pwmTrim = pFact->rawValue().toInt();
 
     pFact = getParameterFact(-1, QString("RC%1_DZ").arg(flightModeChannel + 1));
-    if(!pFact) {
+    if (!pFact) {
 #if defined _MSC_VER
         qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
 #else
-        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
+        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__
+                    << __LINE__;
 #endif
         return;
     }
@@ -146,12 +150,10 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
         float calibrated_value;
 
         if (channelValue > (pwmTrim + pwmDz)) {
-            calibrated_value = (channelValue - pwmTrim - pwmDz) / (float)(
-                          pwmMax - pwmTrim - pwmDz);
+            calibrated_value = (channelValue - pwmTrim - pwmDz) / (float)(pwmMax - pwmTrim - pwmDz);
 
         } else if (channelValue < (pwmTrim - pwmDz)) {
-            calibrated_value = (channelValue - pwmTrim + pwmDz) / (float)(
-                          pwmTrim - pwmMin - pwmDz);
+            calibrated_value = (channelValue - pwmTrim + pwmDz) / (float)(pwmTrim - pwmMin - pwmDz);
 
         } else {
             /* in the configured dead zone, output zero */
@@ -160,8 +162,8 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
         calibrated_value *= pwmRev;
 
-        _activeFlightMode = (((((calibrated_value - slot_min) * num_slots) + slot_width_half) /
-                     (slot_max - slot_min)) + (1.0f / num_slots));
+        _activeFlightMode = (((((calibrated_value - slot_min) * num_slots) + slot_width_half) / (slot_max - slot_min))
+            + (1.0f / num_slots));
 
         if (_activeFlightMode >= static_cast<int>(num_slots)) {
             _activeFlightMode = num_slots - 1;

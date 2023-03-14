@@ -7,30 +7,28 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #ifndef AIRFRAMECOMPONENTAIRFRAMES_H
 #define AIRFRAMECOMPONENTAIRFRAMES_H
 
-#include <QObject>
-#include <QQuickItem>
 #include <QList>
 #include <QMap>
+#include <QObject>
+#include <QQuickItem>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "UASInterface.h"
 
 /// MVC Controller for AirframeComponent.qml.
-class AirframeComponentAirframes
-{
+class AirframeComponentAirframes {
 public:
     typedef struct {
         QString name;
-        int         autostartId;
+        int autostartId;
     } AirframeInfo_t;
-    
+
     typedef struct {
         QString name;
         QString imageResource;
@@ -40,10 +38,10 @@ public:
     static QMap<QString, AirframeComponentAirframes::AirframeType_t*>& get();
     static void clear();
     static void insert(QString& group, QString& image, QString& name, int id);
-    
+
 protected:
     static QMap<QString, AirframeType_t*> rgAirframeTypes;
-    
+
 private:
 };
 

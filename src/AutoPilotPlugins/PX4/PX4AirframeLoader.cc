@@ -7,19 +7,18 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4AirframeLoader.h"
+#include "AirframeComponentAirframes.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "AirframeComponentAirframes.h"
 
+#include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
-#include <QDebug>
 
 QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "PX4AirframeLoaderLog")
 
@@ -88,9 +87,9 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
         return;
     }
 
-    QString         airframeGroup;
-    QString         image;
-    int             xmlState = XmlStateNone;
+    QString airframeGroup;
+    QString image;
+    int xmlState = XmlStateNone;
 
     while (!xml.atEnd()) {
         if (xml.isStartElement()) {
@@ -119,7 +118,8 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
                 }
                 if (intVersion < 1) {
                     // We can't read these old files
-                    qDebug() << "Airframe version stamp too old, skipping load. Found:" << intVersion << "Want: 3 File:" << airframeFilename;
+                    qDebug() << "Airframe version stamp too old, skipping load. Found:" << intVersion
+                             << "Want: 3 File:" << airframeFilename;
                     return;
                 }
 
@@ -159,7 +159,8 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
                 QString name = xml.attributes().value("name").toString();
                 QString id = xml.attributes().value("id").toString();
 
-                qCDebug(PX4AirframeLoaderLog) << "Found airframe name:" << name << " type:" << airframeGroup << " id:" << id;
+                qCDebug(PX4AirframeLoaderLog)
+                    << "Found airframe name:" << name << " type:" << airframeGroup << " id:" << id;
 
                 // Now that we know type we can airframe meta data object and add it to the system
                 AirframeComponentAirframes::insert(airframeGroup, image, name, id.toInt());

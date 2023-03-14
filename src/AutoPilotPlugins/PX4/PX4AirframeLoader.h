@@ -7,19 +7,18 @@
  *
  ****************************************************************************/
 
-
 #ifndef PX4AIRFRAMELOADER_H
 #define PX4AIRFRAMELOADER_H
 
-#include <QObject>
-#include <QMap>
-#include <QXmlStreamReader>
 #include <QLoggingCategory>
+#include <QMap>
+#include <QObject>
+#include <QXmlStreamReader>
 
-#include "ParameterManager.h"
-#include "FactSystem.h"
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "FactSystem.h"
+#include "ParameterManager.h"
+#include "UASInterface.h"
 
 /// @file PX4AirframeLoader.h
 ///     @author Lorenz Meier <lm@qgroundcontrol.org>
@@ -28,13 +27,12 @@ Q_DECLARE_LOGGING_CATEGORY(PX4AirframeLoaderLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
-class PX4AirframeLoader : QObject
-{
+class PX4AirframeLoader : QObject {
     Q_OBJECT
 
 public:
     /// @param uas Uas which this set of facts is associated with
-    PX4AirframeLoader(AutoPilotPlugin* autpilot,UASInterface* uas, QObject* parent = nullptr);
+    PX4AirframeLoader(AutoPilotPlugin* autpilot, UASInterface* uas, QObject* parent = nullptr);
 
     static void loadAirframeMetaData(void);
 
@@ -51,7 +49,7 @@ private:
         XmlStateDone
     };
 
-    static bool _airframeMetaDataLoaded;   ///< true: parameter meta data already loaded
+    static bool _airframeMetaDataLoaded; ///< true: parameter meta data already loaded
     static QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData
 };
 
