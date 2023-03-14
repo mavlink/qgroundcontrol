@@ -10,14 +10,14 @@
 #ifndef AUTOPILOTPLUGIN_H
 #define AUTOPILOTPLUGIN_H
 
-#include <QObject>
 #include <QList>
-#include <QString>
+#include <QObject>
 #include <QQmlContext>
+#include <QString>
 
-#include "VehicleComponent.h"
 #include "FactSystem.h"
 #include "Vehicle.h"
+#include "VehicleComponent.h"
 
 class Vehicle;
 class FirmwarePlugin;
@@ -29,16 +29,17 @@ class FirmwarePlugin;
 /// code should reside in QGroundControl. The remainder of the QGroundControl source is
 /// generic to a common mavlink implementation.
 
-class AutoPilotPlugin : public QObject
-{
+class AutoPilotPlugin : public QObject {
     Q_OBJECT
 
 public:
     AutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     ~AutoPilotPlugin();
 
-    Q_PROPERTY(QVariantList vehicleComponents   READ vehicleComponents  NOTIFY vehicleComponentsChanged)    ///< List of VehicleComponent objects
-    Q_PROPERTY(bool         setupComplete       READ setupComplete      NOTIFY setupCompleteChanged)        ///< false: One or more vehicle components require setup
+    Q_PROPERTY(QVariantList vehicleComponents READ vehicleComponents NOTIFY
+            vehicleComponentsChanged) ///< List of VehicleComponent objects
+    Q_PROPERTY(bool setupComplete READ setupComplete NOTIFY
+            setupCompleteChanged) ///< false: One or more vehicle components require setup
 
     /// Called when parameters are ready for the first time. Note that parameters may still be missing.
     /// Overrides must call base class.
@@ -59,11 +60,14 @@ signals:
 
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
-    AutoPilotPlugin(QObject* parent = nullptr) : QObject(parent) { }
+    AutoPilotPlugin(QObject* parent = nullptr)
+        : QObject(parent)
+    {
+    }
 
-    Vehicle*        _vehicle;
+    Vehicle* _vehicle;
     FirmwarePlugin* _firmwarePlugin;
-    bool            _setupComplete;
+    bool _setupComplete;
 
 private slots:
     void _recalcSetupComplete(void);
