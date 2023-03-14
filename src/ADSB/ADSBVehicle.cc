@@ -8,30 +8,33 @@
  ****************************************************************************/
 
 #include "ADSBVehicle.h"
-#include "QGCLoggingCategory.h"
 #include "QGC.h"
+#include "QGCLoggingCategory.h"
 
 #include <QDebug>
 #include <QtMath>
 
-ADSBVehicle::ADSBVehicle(const ADSBVehicleInfo_t & vehicleInfo, QObject* parent)
-    : QObject       (parent)
-    , _icaoAddress  (vehicleInfo.icaoAddress)
-    , _coordinate   (QGeoCoordinate(qQNaN(),qQNaN()))
-    , _altitude     (qQNaN())
-    , _heading      (qQNaN())
-    , _alert        (false)
+ADSBVehicle::ADSBVehicle(const ADSBVehicleInfo_t& vehicleInfo, QObject* parent)
+    : QObject(parent)
+    , _icaoAddress(vehicleInfo.icaoAddress)
+    , _coordinate(QGeoCoordinate(qQNaN(), qQNaN()))
+    , _altitude(qQNaN())
+    , _heading(qQNaN())
+    , _alert(false)
 {
     update(vehicleInfo);
 }
 
-void ADSBVehicle::update(const ADSBVehicleInfo_t & vehicleInfo)
+void ADSBVehicle::update(const ADSBVehicleInfo_t& vehicleInfo)
 {
     if (_icaoAddress != vehicleInfo.icaoAddress) {
-        qCWarning(ADSBVehicleManagerLog) << "ICAO address mismatch expected:actual" << _icaoAddress << vehicleInfo.icaoAddress;
+        qCWarning(ADSBVehicleManagerLog) << "ICAO address mismatch expected:actual" << _icaoAddress
+                                         << vehicleInfo.icaoAddress;
         return;
     }
-    qCDebug(ADSBVehicleManagerLog) << "Updating" << QStringLiteral("%1 Flags: %2").arg(vehicleInfo.icaoAddress, 0, 16).arg(vehicleInfo.availableFlags, 0, 2);
+    qCDebug(ADSBVehicleManagerLog)
+        << "Updating"
+        << QStringLiteral("%1 Flags: %2").arg(vehicleInfo.icaoAddress, 0, 16).arg(vehicleInfo.availableFlags, 0, 2);
 
     if (vehicleInfo.availableFlags & CallsignAvailable) {
         if (vehicleInfo.callsign != _callsign) {
@@ -66,7 +69,4 @@ void ADSBVehicle::update(const ADSBVehicleInfo_t & vehicleInfo)
     _lastUpdateTimer.restart();
 }
 
-bool ADSBVehicle::expired()
-{
-    return _lastUpdateTimer.hasExpired(expirationTimeoutMs);
-}
+bool ADSBVehicle::expired() { return _lastUpdateTimer.hasExpired(expirationTimeoutMs); }
