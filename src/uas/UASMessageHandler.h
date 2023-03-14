@@ -9,9 +9,9 @@
 
 #pragma once
 
+#include <QMutex>
 #include <QObject>
 #include <QVector>
-#include <QMutex>
 
 #include "QGCToolbox.h"
 
@@ -24,26 +24,26 @@ class QGCApplication;
  * @class UASMessage
  * @brief Message element
  */
-class UASMessage
-{
+class UASMessage {
     friend class UASMessageHandler;
+
 public:
     /**
      * @brief Get message source component ID
      */
-    int getComponentID() const       { return _compId; }
+    int getComponentID() const { return _compId; }
     /**
      * @brief Get message severity (from MAV_SEVERITY_XXX enum)
      */
-    int getSeverity() const          { return _severity; }
+    int getSeverity() const { return _severity; }
     /**
      * @brief Get message text (e.g. "[pm] sending list")
      */
-    QString getText()           { return _text; }
+    QString getText() { return _text; }
     /**
      * @brief Get (html) formatted text (in the form: "[11:44:21.137 - COMP:50] Info: [pm] sending list")
      */
-    QString getFormatedText()   { return _formatedText; }
+    QString getFormatedText() { return _formatedText; }
     /**
      * @return true: This message is a of a severity which is considered an error
      */
@@ -58,8 +58,7 @@ private:
     QString _formatedText;
 };
 
-class UASMessageHandler : public QGCTool
-{
+class UASMessageHandler : public QGCTool {
     Q_OBJECT
 
 public:
@@ -69,11 +68,11 @@ public:
     /**
      * @brief Locks access to the message list
      */
-    void lockAccess()   {_mutex.lock(); }
+    void lockAccess() { _mutex.lock(); }
     /**
      * @brief Unlocks access to the message list
      */
-    void unlockAccess() {_mutex.unlock(); }
+    void unlockAccess() { _mutex.unlock(); }
     /**
      * @brief Access to the message list
      */
@@ -101,13 +100,13 @@ public:
     /**
      * @brief Get latest error message
      */
-    QString getLatestError()   { return _latestError; }
+    QString getLatestError() { return _latestError; }
 
     /// Begin to show message which are errors in the toolbar
     void showErrorsInToolbar(void) { _showErrorsInToolbar = true; }
 
     // Override from QGCTool
-    virtual void setToolbox(QGCToolbox *toolbox);
+    virtual void setToolbox(QGCToolbox* toolbox);
 
 public slots:
     /**
@@ -135,17 +134,16 @@ private slots:
     void _activeVehicleChanged(Vehicle* vehicle);
 
 private:
-    Vehicle*                _activeVehicle;
-    int                     _activeComponent;
-    bool                    _multiComp;
-    QVector<UASMessage*>    _messages;
-    QMutex                  _mutex;
-    int                     _errorCount;
-    int                     _errorCountTotal;
-    int                     _warningCount;
-    int                     _normalCount;
-    QString                 _latestError;
-    bool                    _showErrorsInToolbar;
-    MultiVehicleManager*    _multiVehicleManager;
+    Vehicle* _activeVehicle;
+    int _activeComponent;
+    bool _multiComp;
+    QVector<UASMessage*> _messages;
+    QMutex _mutex;
+    int _errorCount;
+    int _errorCountTotal;
+    int _warningCount;
+    int _normalCount;
+    QString _latestError;
+    bool _showErrorsInToolbar;
+    MultiVehicleManager* _multiVehicleManager;
 };
-

@@ -13,10 +13,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QList>
 #include <QAction>
 #include <QColor>
+#include <QList>
+#include <QObject>
 #include <QPointer>
 
 #include "LinkInterface.h"
@@ -27,11 +27,10 @@
  * This interface is abstract and thus cannot be instantiated. It serves only as type definition.
  * It represents an unmanned aerial vehicle, e.g. a micro air vehicle.
  **/
-class UASInterface : public QObject
-{
+class UASInterface : public QObject {
     Q_OBJECT
 public:
-    virtual ~UASInterface() {}
+    virtual ~UASInterface() { }
 
     /* MANAGEMENT */
 
@@ -87,10 +86,9 @@ signals:
     void systemSpecsChanged(int uasId);
 
     // Log Download Signals
-    void logEntry   (UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
-    void logData    (UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
-
+    void logEntry(
+        UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
+    void logData(UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
-

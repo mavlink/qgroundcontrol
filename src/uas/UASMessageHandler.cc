@@ -7,35 +7,34 @@
  *
  ****************************************************************************/
 
-
 /*!
  * @file
  *   @brief Message Handler
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-#include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "MultiVehicleManager.h"
+#include "QGCApplication.h"
 #include "Vehicle.h"
 
 UASMessage::UASMessage(int componentid, int severity, QString text)
 {
-    _compId   = componentid;
+    _compId = componentid;
     _severity = severity;
-    _text     = text;
+    _text = text;
 }
 
 bool UASMessage::severityIsError() const
 {
     switch (_severity) {
-        case MAV_SEVERITY_EMERGENCY:
-        case MAV_SEVERITY_ALERT:
-        case MAV_SEVERITY_CRITICAL:
-        case MAV_SEVERITY_ERROR:
-            return true;
-        default:
-            return false;
+    case MAV_SEVERITY_EMERGENCY:
+    case MAV_SEVERITY_ALERT:
+    case MAV_SEVERITY_CRITICAL:
+    case MAV_SEVERITY_ERROR:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -51,35 +50,32 @@ UASMessageHandler::UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox)
     , _showErrorsInToolbar(false)
     , _multiVehicleManager(nullptr)
 {
-
 }
 
-UASMessageHandler::~UASMessageHandler()
+UASMessageHandler::~UASMessageHandler() { clearMessages(); }
+
+void UASMessageHandler::setToolbox(QGCToolbox* toolbox)
 {
-    clearMessages();
-}
+    QGCTool::setToolbox(toolbox);
 
-void UASMessageHandler::setToolbox(QGCToolbox *toolbox)
-{
-   QGCTool::setToolbox(toolbox);
+    _multiVehicleManager = _toolbox->multiVehicleManager();
 
-   _multiVehicleManager = _toolbox->multiVehicleManager();
-
-   connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &UASMessageHandler::_activeVehicleChanged);
-   emit textMessageReceived(nullptr);
-   emit textMessageCountChanged(0);
+    connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this,
+        &UASMessageHandler::_activeVehicleChanged);
+    emit textMessageReceived(nullptr);
+    emit textMessageCountChanged(0);
 }
 
 void UASMessageHandler::clearMessages()
 {
     _mutex.lock();
-    while(_messages.count()) {
+    while (_messages.count()) {
         delete _messages.last();
         _messages.pop_back();
     }
-    _errorCount   = 0;
+    _errorCount = 0;
     _warningCount = 0;
-    _normalCount  = 0;
+    _normalCount = 0;
     _mutex.unlock();
     emit textMessageCountChanged(0);
 }
@@ -127,8 +123,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
 
     // So first determine the styling based on the severity.
     QString style;
-    switch (severity)
-    {
+    switch (severity) {
     case MAV_SEVERITY_EMERGENCY:
     case MAV_SEVERITY_ALERT:
     case MAV_SEVERITY_CRITICAL:
@@ -150,8 +145,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
 
     // And determine the text for the severitie
     QString severityText;
-    switch (severity)
-    {
+    switch (severity) {
     case MAV_SEVERITY_EMERGENCY:
         severityText = tr(" EMERGENCY:");
         break;
@@ -187,7 +181,12 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }
-    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font><br/>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text.toHtmlEscaped()));
+    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font><br/>")
+                                  .arg(style)
+                                  .arg(dateString)
+                                  .arg(compString)
+                                  .arg(severityText)
+                                  .arg(text.toHtmlEscaped()));
 
     if (message->severityIsError()) {
         _latestError = severityText + " " + text;
@@ -206,14 +205,16 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     }
 }
 
-int UASMessageHandler::getErrorCountTotal() {
+int UASMessageHandler::getErrorCountTotal()
+{
     _mutex.lock();
     int c = _errorCountTotal;
     _mutex.unlock();
     return c;
 }
 
-int UASMessageHandler::getErrorCount() {
+int UASMessageHandler::getErrorCount()
+{
     _mutex.lock();
     int c = _errorCount;
     _errorCount = 0;
@@ -221,7 +222,8 @@ int UASMessageHandler::getErrorCount() {
     return c;
 }
 
-int UASMessageHandler::getWarningCount() {
+int UASMessageHandler::getWarningCount()
+{
     _mutex.lock();
     int c = _warningCount;
     _warningCount = 0;
@@ -229,7 +231,8 @@ int UASMessageHandler::getWarningCount() {
     return c;
 }
 
-int UASMessageHandler::getNormalCount() {
+int UASMessageHandler::getNormalCount()
+{
     _mutex.lock();
     int c = _normalCount;
     _normalCount = 0;
