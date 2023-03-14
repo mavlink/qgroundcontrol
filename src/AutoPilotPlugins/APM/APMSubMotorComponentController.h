@@ -7,23 +7,21 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMSubMotorComponentController_H
 #define APMSubMotorComponentController_H
 
-#include <QObject>
 #include "FactPanelController.h"
 #include "Vehicle.h"
+#include <QObject>
 
 /// MVC Controller for APMSubMotorComponent.qml.
-class APMSubMotorComponentController : public FactPanelController
-{
+class APMSubMotorComponentController : public FactPanelController {
     Q_OBJECT
 
 public:
     APMSubMotorComponentController(void);
     Q_PROPERTY(QString motorDetectionMessages READ motorDetectionMessages NOTIFY motorDetectionMessagesChanged);
-    QString motorDetectionMessages() const {return _motorDetectionMessages;};
+    QString motorDetectionMessages() const { return _motorDetectionMessages; };
 
 signals:
     void motorDetectionMessagesChanged();

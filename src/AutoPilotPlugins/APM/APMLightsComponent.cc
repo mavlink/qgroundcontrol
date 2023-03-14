@@ -7,14 +7,13 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 ///     @author Rustom Jehangir <rusty@bluerobotics.com>
 
 #include "APMLightsComponent.h"
-#include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "APMAutoPilotPlugin.h"
 
 APMLightsComponent::APMLightsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
@@ -22,35 +21,20 @@ APMLightsComponent::APMLightsComponent(Vehicle* vehicle, AutoPilotPlugin* autopi
 {
 }
 
-QString APMLightsComponent::name(void) const
-{
-    return _name;
-}
+QString APMLightsComponent::name(void) const { return _name; }
 
 QString APMLightsComponent::description(void) const
 {
     return tr("Lights setup is used to adjust light output channels.");
 }
 
-QString APMLightsComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/LightsComponentIcon.png");
-}
+QString APMLightsComponent::iconResource(void) const { return QStringLiteral("/qmlimages/LightsComponentIcon.png"); }
 
-bool APMLightsComponent::requiresSetup(void) const
-{
-    return false;
-}
+bool APMLightsComponent::requiresSetup(void) const { return false; }
 
-bool APMLightsComponent::setupComplete(void) const
-{
-    return true;
-}
+bool APMLightsComponent::setupComplete(void) const { return true; }
 
-QStringList APMLightsComponent::setupCompleteChangedTriggerList(void) const
-{
-    return QStringList();
-}
+QStringList APMLightsComponent::setupCompleteChangedTriggerList(void) const { return QStringList(); }
 
 QUrl APMLightsComponent::setupSource(void) const
 {

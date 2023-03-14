@@ -7,13 +7,11 @@
  *
  ****************************************************************************/
 
-
 #include "APMSubMotorComponentController.h"
 #include "ParameterManager.h"
 
-
 APMSubMotorComponentController::APMSubMotorComponentController(void)
-{   
+{
     connect(_vehicle, &Vehicle::textMessageReceived, this, &APMSubMotorComponentController::handleNewMessages);
 }
 

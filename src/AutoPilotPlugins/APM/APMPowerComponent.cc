@@ -7,32 +7,25 @@
  *
  ****************************************************************************/
 
-
 #include "APMPowerComponent.h"
-#include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"
 
 APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Power"))
+    : VehicleComponent(vehicle, autopilot, parent)
+    , _name(tr("Power"))
 {
 }
 
-QString APMPowerComponent::name(void) const
-{
-    return _name;
-}
+QString APMPowerComponent::name(void) const { return _name; }
 
 QString APMPowerComponent::description(void) const
 {
     return tr("The Power Component is used to setup battery parameters.");
 }
 
-QString APMPowerComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/PowerComponentIcon.png");
-}
+QString APMPowerComponent::iconResource(void) const { return QStringLiteral("/qmlimages/PowerComponentIcon.png"); }
 
 QUrl APMPowerComponent::setupSource(void) const
 {

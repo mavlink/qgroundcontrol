@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMAutoPilotPlugin_H
 #define APMAutoPilotPlugin_H
 
@@ -30,8 +29,7 @@ class APMHeliComponent;
 class APMFollowComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
-class APMAutoPilotPlugin : public AutoPilotPlugin
-{
+class APMAutoPilotPlugin : public AutoPilotPlugin {
     Q_OBJECT
 
 public:
@@ -43,20 +41,20 @@ public:
     QString prerequisiteSetup(VehicleComponent* component) const override;
 
 protected:
-    bool                        _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
-    APMAirframeComponent*       _airframeComponent;
-    APMCameraComponent*         _cameraComponent;
-    APMLightsComponent*         _lightsComponent;
-    APMSubFrameComponent*       _subFrameComponent;
-    APMFlightModesComponent*    _flightModesComponent;
-    APMPowerComponent*          _powerComponent;
-    APMMotorComponent*          _motorComponent;
-    APMRadioComponent*          _radioComponent;
-    APMSafetyComponent*         _safetyComponent;
-    APMSensorsComponent*        _sensorsComponent;
-    APMTuningComponent*         _tuningComponent;
-    ESP8266Component*           _esp8266Component;
-    APMHeliComponent*           _heliComponent;
+    bool _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
+    APMAirframeComponent* _airframeComponent;
+    APMCameraComponent* _cameraComponent;
+    APMLightsComponent* _lightsComponent;
+    APMSubFrameComponent* _subFrameComponent;
+    APMFlightModesComponent* _flightModesComponent;
+    APMPowerComponent* _powerComponent;
+    APMMotorComponent* _motorComponent;
+    APMRadioComponent* _radioComponent;
+    APMSafetyComponent* _safetyComponent;
+    APMSensorsComponent* _sensorsComponent;
+    APMTuningComponent* _tuningComponent;
+    ESP8266Component* _esp8266Component;
+    APMHeliComponent* _heliComponent;
 #if 0
     // Follow me not ready for Stable
     APMFollowComponent*         _followComponent;
@@ -68,7 +66,7 @@ private slots:
 #endif
 
 private:
-    QVariantList                _components;
+    QVariantList _components;
 };
 
 #endif

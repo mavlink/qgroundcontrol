@@ -7,23 +7,21 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMRadioComponent_H
 #define APMRadioComponent_H
 
-#include "VehicleComponent.h"
 #include "Fact.h"
+#include "VehicleComponent.h"
 
-class APMRadioComponent : public VehicleComponent
-{
+class APMRadioComponent : public VehicleComponent {
     Q_OBJECT
-    
+
 public:
     APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
-    
+
     // Virtuals from VehicleComponent
     QString name(void) const final;
     QString description(void) const final;
@@ -35,13 +33,13 @@ public:
 
 private slots:
     void _triggerChanged(void);
-    
+
 private:
     void _connectSetupTriggers(void);
 
-    const QString   _name;
-    QStringList     _mapParams;
-    QList<Fact*>    _triggerFacts;
+    const QString _name;
+    QStringList _mapParams;
+    QList<Fact*> _triggerFacts;
 };
 
 #endif

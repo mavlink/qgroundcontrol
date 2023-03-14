@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "APMCompassCal.h"
 #include "AutoPilotPlugin.h"
 #include "ParameterManager.h"
@@ -20,9 +19,9 @@ const unsigned int CalWorkerThread::calibration_total_points = 240;
 const unsigned int CalWorkerThread::calibraton_duration_seconds = CalWorkerThread::calibration_sides * 10;
 
 const char* CalWorkerThread::rgCompassParams[3][4] = {
-    { "COMPASS_OFS_X", "COMPASS_OFS_Y", "COMPASS_OFS_Z", "COMPASS_DEV_ID" },
-    { "COMPASS_OFS2_X", "COMPASS_OFS2_Y", "COMPASS_OFS2_Z", "COMPASS_DEV_ID2" },
-    { "COMPASS_OFS3_X", "COMPASS_OFS3_Y", "COMPASS_OFS3_Z", "COMPASS_DEV_ID3" },
+    {"COMPASS_OFS_X", "COMPASS_OFS_Y", "COMPASS_OFS_Z", "COMPASS_DEV_ID"},
+    {"COMPASS_OFS2_X", "COMPASS_OFS2_Y", "COMPASS_OFS2_Z", "COMPASS_DEV_ID2"},
+    {"COMPASS_OFS3_X", "COMPASS_OFS3_Y", "COMPASS_OFS3_Z", "COMPASS_DEV_ID3"},
 };
 
 CalWorkerThread::CalWorkerThread(Vehicle* vehicle, QObject* parent)
@@ -30,7 +29,6 @@ CalWorkerThread::CalWorkerThread(Vehicle* vehicle, QObject* parent)
     , _vehicle(vehicle)
     , _cancel(false)
 {
-
 }
 
 void CalWorkerThread::run(void)
@@ -64,14 +62,14 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
     worker_data.calibration_interval_perside_useconds = worker_data.calibration_interval_perside_seconds * 1000 * 1000;
 
     // Collect data for all sides
-    worker_data.side_data_collected[DETECT_ORIENTATION_RIGHTSIDE_UP] =  false;
-    worker_data.side_data_collected[DETECT_ORIENTATION_LEFT] =          false;
-    worker_data.side_data_collected[DETECT_ORIENTATION_NOSE_DOWN] =     false;
-    worker_data.side_data_collected[DETECT_ORIENTATION_TAIL_DOWN] =     false;
-    worker_data.side_data_collected[DETECT_ORIENTATION_UPSIDE_DOWN] =   false;
-    worker_data.side_data_collected[DETECT_ORIENTATION_RIGHT] =         false;
+    worker_data.side_data_collected[DETECT_ORIENTATION_RIGHTSIDE_UP] = false;
+    worker_data.side_data_collected[DETECT_ORIENTATION_LEFT] = false;
+    worker_data.side_data_collected[DETECT_ORIENTATION_NOSE_DOWN] = false;
+    worker_data.side_data_collected[DETECT_ORIENTATION_TAIL_DOWN] = false;
+    worker_data.side_data_collected[DETECT_ORIENTATION_UPSIDE_DOWN] = false;
+    worker_data.side_data_collected[DETECT_ORIENTATION_RIGHT] = false;
 
-    for (size_t cur_mag=0; cur_mag<max_mags; cur_mag++) {
+    for (size_t cur_mag = 0; cur_mag < max_mags; cur_mag++) {
         // Initialize to no memory allocated
         worker_data.x[cur_mag] = nullptr;
         worker_data.y[cur_mag] = nullptr;
@@ -81,12 +79,13 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
 
     const unsigned int calibration_points_maxcount = calibration_sides * worker_data.calibration_points_perside;
 
-    for (size_t cur_mag=0; cur_mag<max_mags; cur_mag++) {
+    for (size_t cur_mag = 0; cur_mag < max_mags; cur_mag++) {
         if (rgCompassAvailable[cur_mag]) {
-            worker_data.x[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
-            worker_data.y[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
-            worker_data.z[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
-            if (worker_data.x[cur_mag] == nullptr || worker_data.y[cur_mag] == nullptr || worker_data.z[cur_mag] == nullptr) {
+            worker_data.x[cur_mag] = reinterpret_cast<float*>(malloc(sizeof(float) * calibration_points_maxcount));
+            worker_data.y[cur_mag] = reinterpret_cast<float*>(malloc(sizeof(float) * calibration_points_maxcount));
+            worker_data.z[cur_mag] = reinterpret_cast<float*>(malloc(sizeof(float) * calibration_points_maxcount));
+            if (worker_data.x[cur_mag] == nullptr || worker_data.y[cur_mag] == nullptr
+                || worker_data.z[cur_mag] == nullptr) {
                 _emitVehicleTextMessage(QStringLiteral("[cal] ERROR: out of memory"));
                 result = calibrate_return_error;
             }
@@ -94,9 +93,8 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
     }
 
     if (result == calibrate_return_ok) {
-        result = calibrate_from_orientation(
-                    worker_data.side_data_collected,    // Sides to calibrate
-                    &worker_data);                      // Opaque data for calibration worked
+        result = calibrate_from_orientation(worker_data.side_data_collected, // Sides to calibrate
+            &worker_data); // Opaque data for calibration worked
     }
 
     // Calculate calibration values for each mag
@@ -108,13 +106,11 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
 
     // Sphere fit the data to get calibration values
     if (result == calibrate_return_ok) {
-        for (unsigned cur_mag=0; cur_mag<max_mags; cur_mag++) {
+        for (unsigned cur_mag = 0; cur_mag < max_mags; cur_mag++) {
             if (rgCompassAvailable[cur_mag]) {
                 sphere_fit_least_squares(worker_data.x[cur_mag], worker_data.y[cur_mag], worker_data.z[cur_mag],
-                                         worker_data.calibration_counter_total[cur_mag],
-                                         100, 0.0f,
-                                         &sphere_x[cur_mag], &sphere_y[cur_mag], &sphere_z[cur_mag],
-                                         &sphere_radius[cur_mag]);
+                    worker_data.calibration_counter_total[cur_mag], 100, 0.0f, &sphere_x[cur_mag], &sphere_y[cur_mag],
+                    &sphere_z[cur_mag], &sphere_radius[cur_mag]);
 
                 if (qIsNaN(sphere_x[cur_mag]) || qIsNaN(sphere_y[cur_mag]) || qIsNaN(sphere_z[cur_mag])) {
                     _emitVehicleTextMessage(QStringLiteral("[cal] ERROR: NaN in sphere fit for mag %1").arg(cur_mag));
@@ -125,16 +121,20 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
     }
 
     // Data points are no longer needed
-    for (size_t cur_mag=0; cur_mag<max_mags; cur_mag++) {
+    for (size_t cur_mag = 0; cur_mag < max_mags; cur_mag++) {
         free(worker_data.x[cur_mag]);
         free(worker_data.y[cur_mag]);
         free(worker_data.z[cur_mag]);
     }
 
     if (result == calibrate_return_ok) {
-        for (unsigned cur_mag=0; cur_mag<max_mags; cur_mag++) {
+        for (unsigned cur_mag = 0; cur_mag < max_mags; cur_mag++) {
             if (rgCompassAvailable[cur_mag]) {
-                _emitVehicleTextMessage(QStringLiteral("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
+                _emitVehicleTextMessage(QStringLiteral("[cal] mag #%1 off: x:%2 y:%3 z:%4")
+                                            .arg(cur_mag)
+                                            .arg(-sphere_x[cur_mag])
+                                            .arg(-sphere_y[cur_mag])
+                                            .arg(-sphere_z[cur_mag]));
 
                 float sensorId = 0.0f;
                 if (cur_mag == 0) {
@@ -145,10 +145,9 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
                     sensorId = 6.0f;
                 }
                 if (sensorId != 0.0f) {
-                    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),
-                                             MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS,
-                                             true, /* showErrors */
-                                             sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
+                    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS,
+                        true, /* showErrors */
+                        sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
                 }
             }
         }
@@ -157,7 +156,8 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
     return result;
 }
 
-CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect_orientation_return orientation, void* data)
+CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(
+    detect_orientation_return orientation, void* data)
 {
     calibrate_return result = calibrate_return_ok;
 
@@ -166,21 +166,24 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
     mag_worker_data_t* worker_data = (mag_worker_data_t*)(data);
 
     _emitVehicleTextMessage(QStringLiteral("[cal] Rotate vehicle around the detected orientation"));
-    _emitVehicleTextMessage(QStringLiteral("[cal] Continue rotation for %1 seconds").arg(worker_data->calibration_interval_perside_seconds));
+    _emitVehicleTextMessage(QStringLiteral("[cal] Continue rotation for %1 seconds")
+                                .arg(worker_data->calibration_interval_perside_seconds));
 
     uint64_t calibration_deadline = QGC::groundTimeUsecs() + worker_data->calibration_interval_perside_useconds;
 
-    unsigned int loop_interval_usecs = (worker_data->calibration_interval_perside_seconds * 1000000) / worker_data->calibration_points_perside;
+    unsigned int loop_interval_usecs
+        = (worker_data->calibration_interval_perside_seconds * 1000000) / worker_data->calibration_points_perside;
 
     calibration_counter_side = 0;
 
-    while (QGC::groundTimeUsecs() < calibration_deadline && calibration_counter_side < worker_data->calibration_points_perside) {
+    while (QGC::groundTimeUsecs() < calibration_deadline
+        && calibration_counter_side < worker_data->calibration_points_perside) {
         if (_cancel) {
             result = calibrate_return_cancelled;
             break;
         }
 
-        for (size_t cur_mag=0; cur_mag<max_mags; cur_mag++) {
+        for (size_t cur_mag = 0; cur_mag < max_mags; cur_mag++) {
             if (!rgCompassAvailable[cur_mag]) {
                 continue;
             }
@@ -198,14 +201,19 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
         calibration_counter_side++;
 
         // Progress indicator for side
-        _emitVehicleTextMessage(QStringLiteral("[cal] %1 side calibration: progress <%2>").arg(detect_orientation_str(orientation)).arg(progress_percentage(worker_data) +
-                                                                                                                                        (unsigned)((100 / calibration_sides) * ((float)calibration_counter_side / (float)worker_data->calibration_points_perside))));
+        _emitVehicleTextMessage(
+            QStringLiteral("[cal] %1 side calibration: progress <%2>")
+                .arg(detect_orientation_str(orientation))
+                .arg(progress_percentage(worker_data)
+                    + (unsigned)((100 / calibration_sides)
+                        * ((float)calibration_counter_side / (float)worker_data->calibration_points_perside))));
 
         usleep(loop_interval_usecs);
     }
 
     if (result == calibrate_return_ok) {
-        _emitVehicleTextMessage(QStringLiteral("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orientation)));
+        _emitVehicleTextMessage(
+            QStringLiteral("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orientation)));
 
         worker_data->done_count++;
         _emitVehicleTextMessage(QStringLiteral("[cal] progress <%1>").arg(progress_percentage(worker_data)));
@@ -215,8 +223,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
 }
 
 CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
-        bool	side_data_collected[detect_orientation_side_count],
-        void*	worker_data)
+    bool side_data_collected[detect_orientation_side_count], void* worker_data)
 {
     calibrate_return result = calibrate_return_ok;
 
@@ -247,7 +254,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
         char pendingStr[256];
         pendingStr[0] = 0;
 
-        for (unsigned int cur_orientation=0; cur_orientation<detect_orientation_side_count; cur_orientation++) {
+        for (unsigned int cur_orientation = 0; cur_orientation < detect_orientation_side_count; cur_orientation++) {
             if (!side_data_collected[cur_orientation]) {
                 strcat(pendingStr, " ");
                 strcat(pendingStr, detect_orientation_str((enum detect_orientation_return)cur_orientation));
@@ -277,11 +284,12 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
 
         // Call worker routine
         result = mag_calibration_worker(orient, worker_data);
-        if (result != calibrate_return_ok ) {
+        if (result != calibrate_return_ok) {
             break;
         }
 
-        _emitVehicleTextMessage(QStringLiteral("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orient)));
+        _emitVehicleTextMessage(
+            QStringLiteral("[cal] %1 side done, rotate to a different side").arg(detect_orientation_str(orient)));
 
         // Note that this side is complete
         side_data_collected[orient] = true;
@@ -293,7 +301,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
 
 enum CalWorkerThread::detect_orientation_return CalWorkerThread::detect_orientation(void)
 {
-    bool    stillDetected = false;
+    bool stillDetected = false;
     quint64 stillDetectTime;
 
     int16_t lastX = 0;
@@ -302,7 +310,7 @@ enum CalWorkerThread::detect_orientation_return CalWorkerThread::detect_orientat
 
     while (true) {
         lastScaledImuMutex.lock();
-        mavlink_raw_imu_t   copyLastRawImu = lastRawImu;
+        mavlink_raw_imu_t copyLastRawImu = lastRawImu;
         lastScaledImuMutex.unlock();
 
         int16_t xDelta = abs(lastX - copyLastRawImu.xacc);
@@ -339,52 +347,48 @@ enum CalWorkerThread::detect_orientation_return CalWorkerThread::detect_orientat
     static const uint16_t rawImuNoGThreshold = 200;
 
     if (lastX > rawImuOneG && abs(lastY) < rawImuNoGThreshold && abs(lastZ) < rawImuNoGThreshold) {
-        return DETECT_ORIENTATION_TAIL_DOWN;        // [ g, 0, 0 ]
+        return DETECT_ORIENTATION_TAIL_DOWN; // [ g, 0, 0 ]
     }
 
     if (lastX < -rawImuOneG && abs(lastY) < rawImuNoGThreshold && abs(lastZ) < rawImuNoGThreshold) {
-        return DETECT_ORIENTATION_NOSE_DOWN;        // [ -g, 0, 0 ]
+        return DETECT_ORIENTATION_NOSE_DOWN; // [ -g, 0, 0 ]
     }
 
     if (lastY > rawImuOneG && abs(lastX) < rawImuNoGThreshold && abs(lastZ) < rawImuNoGThreshold) {
-        return DETECT_ORIENTATION_LEFT;        // [ 0, g, 0 ]
+        return DETECT_ORIENTATION_LEFT; // [ 0, g, 0 ]
     }
 
     if (lastY < -rawImuOneG && abs(lastX) < rawImuNoGThreshold && abs(lastZ) < rawImuNoGThreshold) {
-        return DETECT_ORIENTATION_RIGHT;        // [ 0, -g, 0 ]
+        return DETECT_ORIENTATION_RIGHT; // [ 0, -g, 0 ]
     }
 
     if (lastZ > rawImuOneG && abs(lastX) < rawImuNoGThreshold && abs(lastY) < rawImuNoGThreshold) {
-        return DETECT_ORIENTATION_UPSIDE_DOWN;        // [ 0, 0, g ]
+        return DETECT_ORIENTATION_UPSIDE_DOWN; // [ 0, 0, g ]
     }
 
     if (lastZ < -rawImuOneG && abs(lastX) < rawImuNoGThreshold && abs(lastY) < rawImuNoGThreshold) {
-        return DETECT_ORIENTATION_RIGHTSIDE_UP;        // [ 0, 0, -g ]
+        return DETECT_ORIENTATION_RIGHTSIDE_UP; // [ 0, 0, -g ]
     }
 
     _emitVehicleTextMessage(QStringLiteral("[cal] ERROR: invalid orientation"));
 
-    return DETECT_ORIENTATION_ERROR;	// Can't detect orientation
+    return DETECT_ORIENTATION_ERROR; // Can't detect orientation
 }
 
 const char* CalWorkerThread::detect_orientation_str(enum detect_orientation_return orientation)
 {
-    static const char* rgOrientationStrs[] = {
-        "back",		// tail down
-        "front",	// nose down
-        "left",
-        "right",
-        "up",		// upside-down
-        "down",		// right-side up
-        "error"
-    };
+    static const char* rgOrientationStrs[] = {"back", // tail down
+        "front", // nose down
+        "left", "right",
+        "up", // upside-down
+        "down", // right-side up
+        "error"};
 
     return rgOrientationStrs[orientation];
 }
 
-int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], const float z[],
-                                              unsigned int size, unsigned int max_iterations, float delta, float *sphere_x, float *sphere_y, float *sphere_z,
-                                              float *sphere_radius)
+int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], const float z[], unsigned int size,
+    unsigned int max_iterations, float delta, float* sphere_x, float* sphere_y, float* sphere_z, float* sphere_radius)
 {
 
     float x_sumplain = 0.0f;
@@ -443,7 +447,7 @@ int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], 
     }
 
     //
-    //Least Squares Fit a sphere A,B,C with radius squared Rsq to 3D data
+    // Least Squares Fit a sphere A,B,C with radius squared Rsq to 3D data
     //
     //    P is a structure that has been computed with the data earlier.
     //    P.npoints is the number of elements; the length of X,Y,Z are identical.
@@ -458,66 +462,66 @@ int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], 
     //    C is the z coordiante of the sphere
     //    Rsq is the radius squared of the sphere.
     //
-    //This method should converge; maybe 5-100 iterations or more.
+    // This method should converge; maybe 5-100 iterations or more.
     //
-    float x_sum = x_sumplain / size;        //sum( X[n] )
-    float x_sum2 = x_sumsq / size;    //sum( X[n]^2 )
-    float x_sum3 = x_sumcube / size;    //sum( X[n]^3 )
-    float y_sum = y_sumplain / size;        //sum( Y[n] )
-    float y_sum2 = y_sumsq / size;    //sum( Y[n]^2 )
-    float y_sum3 = y_sumcube / size;    //sum( Y[n]^3 )
-    float z_sum = z_sumplain / size;        //sum( Z[n] )
-    float z_sum2 = z_sumsq / size;    //sum( Z[n]^2 )
-    float z_sum3 = z_sumcube / size;    //sum( Z[n]^3 )
+    float x_sum = x_sumplain / size; // sum( X[n] )
+    float x_sum2 = x_sumsq / size; // sum( X[n]^2 )
+    float x_sum3 = x_sumcube / size; // sum( X[n]^3 )
+    float y_sum = y_sumplain / size; // sum( Y[n] )
+    float y_sum2 = y_sumsq / size; // sum( Y[n]^2 )
+    float y_sum3 = y_sumcube / size; // sum( Y[n]^3 )
+    float z_sum = z_sumplain / size; // sum( Z[n] )
+    float z_sum2 = z_sumsq / size; // sum( Z[n]^2 )
+    float z_sum3 = z_sumcube / size; // sum( Z[n]^3 )
 
-    float XY = xy_sum / size;        //sum( X[n] * Y[n] )
-    float XZ = xz_sum / size;        //sum( X[n] * Z[n] )
-    float YZ = yz_sum / size;        //sum( Y[n] * Z[n] )
-    float X2Y = x2y_sum / size;    //sum( X[n]^2 * Y[n] )
-    float X2Z = x2z_sum / size;    //sum( X[n]^2 * Z[n] )
-    float Y2X = y2x_sum / size;    //sum( Y[n]^2 * X[n] )
-    float Y2Z = y2z_sum / size;    //sum( Y[n]^2 * Z[n] )
-    float Z2X = z2x_sum / size;    //sum( Z[n]^2 * X[n] )
-    float Z2Y = z2y_sum / size;    //sum( Z[n]^2 * Y[n] )
+    float XY = xy_sum / size; // sum( X[n] * Y[n] )
+    float XZ = xz_sum / size; // sum( X[n] * Z[n] )
+    float YZ = yz_sum / size; // sum( Y[n] * Z[n] )
+    float X2Y = x2y_sum / size; // sum( X[n]^2 * Y[n] )
+    float X2Z = x2z_sum / size; // sum( X[n]^2 * Z[n] )
+    float Y2X = y2x_sum / size; // sum( Y[n]^2 * X[n] )
+    float Y2Z = y2z_sum / size; // sum( Y[n]^2 * Z[n] )
+    float Z2X = z2x_sum / size; // sum( Z[n]^2 * X[n] )
+    float Z2Y = z2y_sum / size; // sum( Z[n]^2 * Y[n] )
 
-    //Reduction of multiplications
+    // Reduction of multiplications
     float F0 = x_sum2 + y_sum2 + z_sum2;
-    float F1 =  0.5f * F0;
+    float F1 = 0.5f * F0;
     float F2 = -8.0f * (x_sum3 + Y2X + Z2X);
     float F3 = -8.0f * (X2Y + y_sum3 + Z2Y);
     float F4 = -8.0f * (X2Z + Y2Z + z_sum3);
 
-    //Set initial conditions:
+    // Set initial conditions:
     float A = x_sum;
     float B = y_sum;
     float C = z_sum;
 
-    //First iteration computation:
+    // First iteration computation:
     float A2 = A * A;
     float B2 = B * B;
     float C2 = C * C;
     float QS = A2 + B2 + C2;
     float QB = -2.0f * (A * x_sum + B * y_sum + C * z_sum);
 
-    //Set initial conditions:
+    // Set initial conditions:
     float Rsq = F0 + QB + QS;
 
-    //First iteration computation:
+    // First iteration computation:
     float Q0 = 0.5f * (QS - Rsq);
     float Q1 = F1 + Q0;
     float Q2 = 8.0f * (QS - Rsq + QB + F0);
     float aA, aB, aC, nA, nB, nC, dA, dB, dC;
 
-    //Iterate N times, ignore stop condition.
+    // Iterate N times, ignore stop condition.
     unsigned int n = 0;
 
-#undef  FLT_EPSILON
-#define FLT_EPSILON 1.1920929e-07F  /* 1E-5 */
+#undef FLT_EPSILON
+#define FLT_EPSILON 1.1920929e-07F /* 1E-5 */
 
     while (n < max_iterations) {
         n++;
 
-        //Compute denominator:
+        // Compute denominator:
         aA = Q2 + 16.0f * (A2 - 2.0f * A * x_sum + x_sum2);
         aB = Q2 + 16.0f * (B2 - 2.0f * B * y_sum + y_sum2);
         aC = Q2 + 16.0f * (C2 - 2.0f * C * z_sum + z_sum2);
@@ -525,19 +529,24 @@ int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], 
         aB = (fabsf(aB) < FLT_EPSILON) ? 1.0f : aB;
         aC = (fabsf(aC) < FLT_EPSILON) ? 1.0f : aC;
 
-        //Compute next iteration
-        nA = A - ((F2 + 16.0f * (B * XY + C * XZ + x_sum * (-A2 - Q0) + A * (x_sum2 + Q1 - C * z_sum - B * y_sum))) / aA);
-        nB = B - ((F3 + 16.0f * (A * XY + C * YZ + y_sum * (-B2 - Q0) + B * (y_sum2 + Q1 - A * x_sum - C * z_sum))) / aB);
-        nC = C - ((F4 + 16.0f * (A * XZ + B * YZ + z_sum * (-C2 - Q0) + C * (z_sum2 + Q1 - A * x_sum - B * y_sum))) / aC);
+        // Compute next iteration
+        nA = A
+            - ((F2 + 16.0f * (B * XY + C * XZ + x_sum * (-A2 - Q0) + A * (x_sum2 + Q1 - C * z_sum - B * y_sum))) / aA);
+        nB = B
+            - ((F3 + 16.0f * (A * XY + C * YZ + y_sum * (-B2 - Q0) + B * (y_sum2 + Q1 - A * x_sum - C * z_sum))) / aB);
+        nC = C
+            - ((F4 + 16.0f * (A * XZ + B * YZ + z_sum * (-C2 - Q0) + C * (z_sum2 + Q1 - A * x_sum - B * y_sum))) / aC);
 
-        //Check for stop condition
+        // Check for stop condition
         dA = (nA - A);
         dB = (nB - B);
         dC = (nC - C);
 
-        if ((dA * dA + dB * dB + dC * dC) <= delta) { break; }
+        if ((dA * dA + dB * dB + dC * dC) <= delta) {
+            break;
+        }
 
-        //Compute next iteration's values
+        // Compute next iteration's values
         A = nA;
         B = nB;
         C = nC;
@@ -564,7 +573,6 @@ APMCompassCal::APMCompassCal(void)
     : _vehicle(nullptr)
     , _calWorkerThread(nullptr)
 {
-
 }
 
 APMCompassCal::~APMCompassCal()
@@ -588,9 +596,9 @@ void APMCompassCal::setVehicle(Vehicle* vehicle)
 void APMCompassCal::startCalibration(void)
 {
     _setSensorTransmissionSpeed(true /* fast */);
-    connect (_vehicle, &Vehicle::mavlinkRawImu,     this, &APMCompassCal::_handleMavlinkRawImu);
-    connect (_vehicle, &Vehicle::mavlinkScaledImu2, this, &APMCompassCal::_handleMavlinkScaledImu2);
-    connect (_vehicle, &Vehicle::mavlinkScaledImu3, this, &APMCompassCal::_handleMavlinkScaledImu3);
+    connect(_vehicle, &Vehicle::mavlinkRawImu, this, &APMCompassCal::_handleMavlinkRawImu);
+    connect(_vehicle, &Vehicle::mavlinkScaledImu2, this, &APMCompassCal::_handleMavlinkScaledImu2);
+    connect(_vehicle, &Vehicle::mavlinkScaledImu3, this, &APMCompassCal::_handleMavlinkScaledImu3);
 
     // Simulate a start message
     _emitVehicleTextMessage(QStringLiteral("[cal] calibration started: mag"));
@@ -599,13 +607,14 @@ void APMCompassCal::startCalibration(void)
     connect(_calWorkerThread, &CalWorkerThread::vehicleTextMessage, this, &APMCompassCal::vehicleTextMessage);
 
     // Clear the offset parameters so we get raw data
-    for (int i=0; i<3; i++) {
+    for (int i = 0; i < 3; i++) {
         _calWorkerThread->rgCompassAvailable[i] = true;
 
         const char* deviceIdParam = CalWorkerThread::rgCompassParams[i][3];
         if (_vehicle->parameterManager()->parameterExists(-1, deviceIdParam)) {
-            _calWorkerThread->rgCompassAvailable[i] = _vehicle->parameterManager()->getParameter(-1, deviceIdParam)->rawValue().toInt() > 0;
-            for (int j=0; j<3; j++) {
+            _calWorkerThread->rgCompassAvailable[i]
+                = _vehicle->parameterManager()->getParameter(-1, deviceIdParam)->rawValue().toInt() > 0;
+            for (int j = 0; j < 3; j++) {
                 const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
                 Fact* paramFact = _vehicle->parameterManager()->getParameter(-1, offsetParam);
 
@@ -615,7 +624,8 @@ void APMCompassCal::startCalibration(void)
         } else {
             _calWorkerThread->rgCompassAvailable[i] = false;
         }
-        qCDebug(APMCompassCalLog) << QStringLiteral("Compass %1 available: %2").arg(i).arg(_calWorkerThread->rgCompassAvailable[i]);
+        qCDebug(APMCompassCalLog)
+            << QStringLiteral("Compass %1 available: %2").arg(i).arg(_calWorkerThread->rgCompassAvailable[i]);
     }
 
     _calWorkerThread->start();
@@ -626,11 +636,11 @@ void APMCompassCal::cancelCalibration(void)
     _stopCalibration();
 
     // Put the original offsets back
-    for (int i=0; i<3; i++) {
-        for (int j=0; j<3; j++) {
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
             const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
             if (_vehicle->parameterManager()->parameterExists(-1, offsetParam)) {
-                _vehicle->parameterManager()->getParameter(-1, offsetParam)-> setRawValue(_rgSavedCompassOffsets[i][j]);
+                _vehicle->parameterManager()->getParameter(-1, offsetParam)->setRawValue(_rgSavedCompassOffsets[i][j]);
             }
         }
     }
@@ -677,9 +687,9 @@ void APMCompassCal::_setSensorTransmissionSpeed(bool fast)
 void APMCompassCal::_stopCalibration(void)
 {
     _calWorkerThread->cancel();
-    disconnect (_vehicle, &Vehicle::mavlinkRawImu,      this, &APMCompassCal::_handleMavlinkRawImu);
-    disconnect (_vehicle, &Vehicle::mavlinkScaledImu2,  this, &APMCompassCal::_handleMavlinkScaledImu2);
-    disconnect (_vehicle, &Vehicle::mavlinkScaledImu3,  this, &APMCompassCal::_handleMavlinkScaledImu3);
+    disconnect(_vehicle, &Vehicle::mavlinkRawImu, this, &APMCompassCal::_handleMavlinkRawImu);
+    disconnect(_vehicle, &Vehicle::mavlinkScaledImu2, this, &APMCompassCal::_handleMavlinkScaledImu2);
+    disconnect(_vehicle, &Vehicle::mavlinkScaledImu3, this, &APMCompassCal::_handleMavlinkScaledImu3);
     _setSensorTransmissionSpeed(false /* fast */);
 }
 

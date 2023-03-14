@@ -14,9 +14,9 @@
 const char* APMAirframeComponent::_frameClassParam = "FRAME_CLASS";
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent      (vehicle, autopilot, parent)
-    , _requiresFrameSetup   (false)
-    , _name                 (tr("Frame"))
+    : VehicleComponent(vehicle, autopilot, parent)
+    , _requiresFrameSetup(false)
+    , _name(tr("Frame"))
 {
     ParameterManager* paramMgr = vehicle->parameterManager();
 
@@ -30,10 +30,7 @@ APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* au
     }
 }
 
-QString APMAirframeComponent::name(void) const
-{
-    return _name;
-}
+QString APMAirframeComponent::name(void) const { return _name; }
 
 QString APMAirframeComponent::description(void) const
 {
@@ -45,10 +42,7 @@ QString APMAirframeComponent::iconResource(void) const
     return QStringLiteral("/qmlimages/AirframeComponentIcon.png");
 }
 
-bool APMAirframeComponent::requiresSetup(void) const
-{
-    return _requiresFrameSetup;
-}
+bool APMAirframeComponent::requiresSetup(void) const { return _requiresFrameSetup; }
 
 bool APMAirframeComponent::setupComplete(void) const
 {

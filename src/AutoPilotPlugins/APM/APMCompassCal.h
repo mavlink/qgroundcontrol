@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMCompassCal_H
 #define APMCompassCal_H
 
@@ -21,8 +20,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(APMCompassCalLog)
 
-class CalWorkerThread : public QThread
-{
+class CalWorkerThread : public QThread {
     Q_OBJECT
 
 public:
@@ -36,12 +34,12 @@ public:
 
     static const unsigned max_mags = 3;
 
-    bool                    rgCompassAvailable[max_mags];
-    QMutex                  lastScaledImuMutex;
-    mavlink_raw_imu_t       lastRawImu;
-    mavlink_scaled_imu_t    rgLastScaledImu[max_mags];
+    bool rgCompassAvailable[max_mags];
+    QMutex lastScaledImuMutex;
+    mavlink_raw_imu_t lastRawImu;
+    mavlink_scaled_imu_t rgLastScaledImu[max_mags];
 
-    static const char*      rgCompassParams[3][4];
+    static const char* rgCompassParams[3][4];
 
 signals:
     void vehicleTextMessage(int vehicleId, int compId, int severity, QString text);
@@ -53,9 +51,9 @@ private:
     // the PX4 Flight Stack coding style to maintain some level of code movement.
 
     static const float mag_sphere_radius;
-    static const unsigned int calibration_sides;			///< The total number of sides
-    static const unsigned int calibration_total_points;     ///< The total points per magnetometer
-    static const unsigned int calibraton_duration_seconds;  ///< The total duration the routine is allowed to take
+    static const unsigned int calibration_sides; ///< The total number of sides
+    static const unsigned int calibration_total_points; ///< The total points per magnetometer
+    static const unsigned int calibraton_duration_seconds; ///< The total duration the routine is allowed to take
 
     // The order of these cannot change since the calibration calculations depend on them in this order
     enum detect_orientation_return {
@@ -70,23 +68,19 @@ private:
     static const unsigned detect_orientation_side_count = 6;
 
     // Data passed to calibration worker routine
-    typedef struct  {
-        unsigned        done_count;
-        unsigned int	calibration_points_perside;
-        unsigned int	calibration_interval_perside_seconds;
-        uint64_t        calibration_interval_perside_useconds;
-        unsigned int	calibration_counter_total[max_mags];
-        bool            side_data_collected[detect_orientation_side_count];
-        float*          x[max_mags];
-        float*          y[max_mags];
-        float*          z[max_mags];
+    typedef struct {
+        unsigned done_count;
+        unsigned int calibration_points_perside;
+        unsigned int calibration_interval_perside_seconds;
+        uint64_t calibration_interval_perside_useconds;
+        unsigned int calibration_counter_total[max_mags];
+        bool side_data_collected[detect_orientation_side_count];
+        float* x[max_mags];
+        float* y[max_mags];
+        float* z[max_mags];
     } mag_worker_data_t;
 
-    enum calibrate_return {
-        calibrate_return_ok,
-        calibrate_return_error,
-        calibrate_return_cancelled
-    };
+    enum calibrate_return { calibrate_return_ok, calibrate_return_error, calibrate_return_cancelled };
 
     /**
      * Least-squares fit of a sphere to a set of points.
@@ -106,9 +100,9 @@ private:
      *
      * @return 0 on success, 1 on failure
      */
-    int sphere_fit_least_squares(const float x[], const float y[], const float z[],
-                     unsigned int size, unsigned int max_iterations, float delta, float *sphere_x, float *sphere_y, float *sphere_z,
-                     float *sphere_radius);
+    int sphere_fit_least_squares(const float x[], const float y[], const float z[], unsigned int size,
+        unsigned int max_iterations, float delta, float* sphere_x, float* sphere_y, float* sphere_z,
+        float* sphere_radius);
 
     /// Wait for vehicle to become still and detect it's orientation
     ///	@return Returns detect_orientation_return according to orientation of still vehicle
@@ -121,23 +115,22 @@ private:
     /// Perform calibration sequence which require a rest orientation detection prior to calibration.
     ///	@return OK: Calibration succeeded, ERROR: Calibration failed
     calibrate_return calibrate_from_orientation(
-                            bool	side_data_collected[detect_orientation_side_count],	///< Sides for which data still needs calibration
-                            void*	worker_data);                                       ///< Opaque data passed to worker routine
+        bool side_data_collected[detect_orientation_side_count], ///< Sides for which data still needs calibration
+        void* worker_data); ///< Opaque data passed to worker routine
 
     calibrate_return calibrate(void);
     calibrate_return mag_calibration_worker(detect_orientation_return orientation, void* data);
     unsigned progress_percentage(mag_worker_data_t* worker_data);
 
-    Vehicle*    _vehicle;
-    bool        _cancel;
+    Vehicle* _vehicle;
+    bool _cancel;
 };
 
 // Used to calibrate APM Stack compass by simulating PX4 Flight Stack firmware compass cal
 // on the ground station side of things.
-class APMCompassCal : public QObject
-{
+class APMCompassCal : public QObject {
     Q_OBJECT
-    
+
 public:
     APMCompassCal(void);
     ~APMCompassCal();
@@ -145,7 +138,7 @@ public:
     void setVehicle(Vehicle* vehicle);
     void startCalibration(void);
     void cancelCalibration(void);
-    
+
 signals:
     void vehicleTextMessage(int vehicleId, int compId, int severity, QString text);
 
@@ -159,10 +152,9 @@ private:
     void _stopCalibration(void);
     void _emitVehicleTextMessage(const QString& message);
 
-    Vehicle*            _vehicle;
-    CalWorkerThread*    _calWorkerThread;
-    float               _rgSavedCompassOffsets[3][3];
+    Vehicle* _vehicle;
+    CalWorkerThread* _calWorkerThread;
+    float _rgSavedCompassOffsets[3][3];
 };
 
 #endif
-

@@ -7,22 +7,18 @@
  *
  ****************************************************************************/
 
-
 #include "APMFlightModesComponent.h"
-#include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "APMAutoPilotPlugin.h"
 #include "APMRadioComponent.h"
 
-APMFlightModesComponent::APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    VehicleComponent(vehicle, autopilot, parent),
-    _name(tr("Flight Modes"))
+APMFlightModesComponent::APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : VehicleComponent(vehicle, autopilot, parent)
+    , _name(tr("Flight Modes"))
 {
 }
 
-QString APMFlightModesComponent::name(void) const
-{
-    return _name;
-}
+QString APMFlightModesComponent::name(void) const { return _name; }
 
 QString APMFlightModesComponent::description(void) const
 {
@@ -34,20 +30,11 @@ QString APMFlightModesComponent::iconResource(void) const
     return QStringLiteral("/qmlimages/FlightModesComponentIcon.png");
 }
 
-bool APMFlightModesComponent::requiresSetup(void) const
-{
-    return true;
-}
+bool APMFlightModesComponent::requiresSetup(void) const { return true; }
 
-bool APMFlightModesComponent::setupComplete(void) const
-{
-    return true;
-}
+bool APMFlightModesComponent::setupComplete(void) const { return true; }
 
-QStringList APMFlightModesComponent::setupCompleteChangedTriggerList(void) const
-{
-    return QStringList();
-}
+QStringList APMFlightModesComponent::setupCompleteChangedTriggerList(void) const { return QStringList(); }
 
 QUrl APMFlightModesComponent::setupSource(void) const
 {

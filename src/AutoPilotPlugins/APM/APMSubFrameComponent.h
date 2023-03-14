@@ -7,14 +7,12 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMSubFrameComponent_H
 #define APMSubFrameComponent_H
 
 #include "VehicleComponent.h"
 
-class APMSubFrameComponent : public VehicleComponent
-{
+class APMSubFrameComponent : public VehicleComponent {
     Q_OBJECT
 
 public:
@@ -33,7 +31,7 @@ public:
     QUrl summaryQmlSource(void) const final;
 
 private:
-    const QString   _name;
+    const QString _name;
 };
 
 #endif

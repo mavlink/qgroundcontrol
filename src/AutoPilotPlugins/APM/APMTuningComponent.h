@@ -7,22 +7,20 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMTuningComponent_H
 #define APMTuningComponent_H
 
 #include "VehicleComponent.h"
 
-class APMTuningComponent : public VehicleComponent
-{
+class APMTuningComponent : public VehicleComponent {
     Q_OBJECT
-    
+
 public:
     APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;
-    
+
     // Virtuals from VehicleComponent
     QString name(void) const final;
     QString description(void) const final;
@@ -34,8 +32,8 @@ public:
     bool allowSetupWhileArmed(void) const final { return true; }
 
 private:
-    const QString   _name;
-    QVariantList    _summaryItems;
+    const QString _name;
+    QVariantList _summaryItems;
 };
 
 #endif

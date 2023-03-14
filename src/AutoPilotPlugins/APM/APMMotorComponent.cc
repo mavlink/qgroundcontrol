@@ -10,11 +10,10 @@
 #include "APMMotorComponent.h"
 #include "APMSubMotorComponentController.h"
 
-APMMotorComponent::APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
-    MotorComponent(vehicle, autopilot, parent),
-    _name(tr("Motors"))
+APMMotorComponent::APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
+    : MotorComponent(vehicle, autopilot, parent)
+    , _name(tr("Motors"))
 {
-
 }
 
 QUrl APMMotorComponent::setupSource(void) const

@@ -7,19 +7,17 @@
  *
  ****************************************************************************/
 
-
 #ifndef APMAirframeComponent_H
 #define APMAirframeComponent_H
 
 #include "VehicleComponent.h"
 
-class APMAirframeComponent : public VehicleComponent
-{
+class APMAirframeComponent : public VehicleComponent {
     Q_OBJECT
-    
+
 public:
     APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;
 
@@ -33,9 +31,9 @@ public:
     QUrl summaryQmlSource(void) const override;
 
 private:
-    bool            _requiresFrameSetup; ///< true: FRAME parameter must be set
-    const QString   _name;
-    Fact*           _frameClassFact;
+    bool _requiresFrameSetup; ///< true: FRAME parameter must be set
+    const QString _name;
+    Fact* _frameClassFact;
 
     static const char* _frameClassParam;
 };

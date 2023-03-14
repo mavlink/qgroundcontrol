@@ -7,13 +7,12 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "APMSafetyComponent.h"
-#include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "APMAutoPilotPlugin.h"
 
 APMSafetyComponent::APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
@@ -21,10 +20,7 @@ APMSafetyComponent::APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopi
 {
 }
 
-QString APMSafetyComponent::name(void) const
-{
-    return _name;
-}
+QString APMSafetyComponent::name(void) const { return _name; }
 
 QString APMSafetyComponent::description(void) const
 {
@@ -41,20 +37,15 @@ QString APMSafetyComponent::description(void) const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     default:
-        return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+        return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to "
+                  "Land itself.");
         break;
     }
 }
 
-QString APMSafetyComponent::iconResource(void) const
-{
-    return QStringLiteral("/qmlimages/SafetyComponentIcon.png");
-}
+QString APMSafetyComponent::iconResource(void) const { return QStringLiteral("/qmlimages/SafetyComponentIcon.png"); }
 
-bool APMSafetyComponent::requiresSetup(void) const
-{
-    return false;
-}
+bool APMSafetyComponent::requiresSetup(void) const { return false; }
 
 bool APMSafetyComponent::setupComplete(void) const
 {
@@ -62,10 +53,7 @@ bool APMSafetyComponent::setupComplete(void) const
     return true;
 }
 
-QStringList APMSafetyComponent::setupCompleteChangedTriggerList(void) const
-{
-    return QStringList();
-}
+QStringList APMSafetyComponent::setupCompleteChangedTriggerList(void) const { return QStringList(); }
 
 QUrl APMSafetyComponent::setupSource(void) const
 {
