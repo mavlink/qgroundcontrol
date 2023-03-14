@@ -7,17 +7,16 @@
  *
  ****************************************************************************/
 
-
-#include "AirspaceManager.h"
 #include "AirspaceVehicleManager.h"
-#include "Vehicle.h"
+#include "AirspaceManager.h"
 #include "MissionItem.h"
+#include "Vehicle.h"
 
 AirspaceVehicleManager::AirspaceVehicleManager(const Vehicle& vehicle)
     : _vehicle(vehicle)
 {
     qCDebug(AirspaceManagementLog) << "Instatiating AirspaceVehicleManager";
-    connect(&_vehicle, &Vehicle::armedChanged,           this, &AirspaceVehicleManager::_vehicleArmedChanged);
+    connect(&_vehicle, &Vehicle::armedChanged, this, &AirspaceVehicleManager::_vehicleArmedChanged);
     connect(&_vehicle, &Vehicle::mavlinkMessageReceived, this, &AirspaceVehicleManager::vehicleMavlinkMessageReceived);
 }
 
@@ -37,4 +36,3 @@ void AirspaceVehicleManager::_vehicleArmedChanged(bool armed)
         }
     }
 }
-

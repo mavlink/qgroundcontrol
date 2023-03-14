@@ -14,7 +14,7 @@ AirspaceRuleFeature::AirspaceRuleFeature(QObject* parent)
 {
 }
 
-AirspaceRule::AirspaceRule(QObject *parent)
+AirspaceRule::AirspaceRule(QObject* parent)
     : QObject(parent)
 {
 }
@@ -24,7 +24,7 @@ AirspaceRuleSet::AirspaceRuleSet(QObject* parent)
 {
 }
 
-AirspaceRulesetsProvider::AirspaceRulesetsProvider(QObject *parent)
+AirspaceRulesetsProvider::AirspaceRulesetsProvider(QObject* parent)
     : QObject(parent)
 {
 }

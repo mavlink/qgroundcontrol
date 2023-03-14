@@ -9,7 +9,8 @@
 
 #include "AirspaceRestriction.h"
 
-AirspaceRestriction::AirspaceRestriction(QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent)
+AirspaceRestriction::AirspaceRestriction(
+    QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent)
     : QObject(parent)
     , _advisoryID(advisoryID)
     , _color(color)
@@ -18,18 +19,17 @@ AirspaceRestriction::AirspaceRestriction(QString advisoryID, QColor color, QColo
 {
 }
 
-AirspacePolygonRestriction::AirspacePolygonRestriction(const QVariantList& polygon, QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent)
+AirspacePolygonRestriction::AirspacePolygonRestriction(
+    const QVariantList& polygon, QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent)
     : AirspaceRestriction(advisoryID, color, lineColor, lineWidth, parent)
     , _polygon(polygon)
 {
-
 }
 
-AirspaceCircularRestriction::AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent)
+AirspaceCircularRestriction::AirspaceCircularRestriction(const QGeoCoordinate& center, double radius,
+    QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent)
     : AirspaceRestriction(advisoryID, color, lineColor, lineWidth, parent)
     , _center(center)
     , _radius(radius)
 {
-
 }
-

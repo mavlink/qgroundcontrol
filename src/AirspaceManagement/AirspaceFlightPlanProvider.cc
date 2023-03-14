@@ -7,38 +7,36 @@
  *
  ****************************************************************************/
 
-#include "AirspaceManager.h"
 #include "AirspaceFlightPlanProvider.h"
+#include "AirspaceManager.h"
 #include <QQmlEngine>
 
 //-----------------------------------------------------------------------------
-AirspaceFlightAuthorization::AirspaceFlightAuthorization(QObject *parent)
+AirspaceFlightAuthorization::AirspaceFlightAuthorization(QObject* parent)
     : QObject(parent)
 {
 }
 
 //-----------------------------------------------------------------------------
-AirspaceFlightInfo::AirspaceFlightInfo(QObject *parent)
+AirspaceFlightInfo::AirspaceFlightInfo(QObject* parent)
     : QObject(parent)
 {
 }
 
 //-----------------------------------------------------------------------------
-AirspaceFlightPlanProvider::AirspaceFlightPlanProvider(QObject *parent)
+AirspaceFlightPlanProvider::AirspaceFlightPlanProvider(QObject* parent)
     : QObject(parent)
 {
 }
 
 //-----------------------------------------------------------------------------
-AirspaceFlightModel::AirspaceFlightModel(QObject *parent)
+AirspaceFlightModel::AirspaceFlightModel(QObject* parent)
     : QAbstractListModel(parent)
 {
-
 }
 
 //-----------------------------------------------------------------------------
-AirspaceFlightInfo*
-AirspaceFlightModel::get(int index)
+AirspaceFlightInfo* AirspaceFlightModel::get(int index)
 {
     if (index < 0 || index >= _flightEntries.count()) {
         return nullptr;
@@ -47,11 +45,10 @@ AirspaceFlightModel::get(int index)
 }
 
 //-----------------------------------------------------------------------------
-int
-AirspaceFlightModel::findFlightID(QString flightID)
+int AirspaceFlightModel::findFlightID(QString flightID)
 {
-    for(int i = 0; i < _flightEntries.count(); i++) {
-        if(_flightEntries[i]->flightID() == flightID) {
+    for (int i = 0; i < _flightEntries.count(); i++) {
+        if (_flightEntries[i]->flightID() == flightID) {
             return i;
         }
     }
@@ -59,15 +56,10 @@ AirspaceFlightModel::findFlightID(QString flightID)
 }
 
 //-----------------------------------------------------------------------------
-int
-AirspaceFlightModel::count() const
-{
-    return _flightEntries.count();
-}
+int AirspaceFlightModel::count() const { return _flightEntries.count(); }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceFlightModel::append(AirspaceFlightInfo* object)
+void AirspaceFlightModel::append(AirspaceFlightInfo* object)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
@@ -77,20 +69,15 @@ AirspaceFlightModel::append(AirspaceFlightInfo* object)
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceFlightModel::remove(const QString& flightID)
-{
-    remove(findFlightID(flightID));
-}
+void AirspaceFlightModel::remove(const QString& flightID) { remove(findFlightID(flightID)); }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceFlightModel::remove(int index)
+void AirspaceFlightModel::remove(int index)
 {
     if (index >= 0 && index < _flightEntries.count()) {
         beginRemoveRows(QModelIndex(), index, index);
         AirspaceFlightInfo* entry = _flightEntries[index];
-        if(entry) {
+        if (entry) {
             qCDebug(AirspaceManagementLog) << "Deleting flight plan" << entry->flightPlanID();
             entry->deleteLater();
         }
@@ -101,14 +88,14 @@ AirspaceFlightModel::remove(int index)
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceFlightModel::clear(void)
+void AirspaceFlightModel::clear(void)
 {
-    if(!_flightEntries.isEmpty()) {
+    if (!_flightEntries.isEmpty()) {
         beginResetModel();
         while (_flightEntries.count()) {
             AirspaceFlightInfo* entry = _flightEntries.last();
-            if(entry) entry->deleteLater();
+            if (entry)
+                entry->deleteLater();
             _flightEntries.removeLast();
         }
         endResetModel();
@@ -117,42 +104,32 @@ AirspaceFlightModel::clear(void)
 }
 
 //-----------------------------------------------------------------------------
-static bool
-flight_sort(QObject* a, QObject* b)
+static bool flight_sort(QObject* a, QObject* b)
 {
     AirspaceFlightInfo* aa = qobject_cast<AirspaceFlightInfo*>(a);
     AirspaceFlightInfo* bb = qobject_cast<AirspaceFlightInfo*>(b);
-    if(!aa || !bb) return false;
+    if (!aa || !bb)
+        return false;
     return aa->qStartTime() > bb->qStartTime();
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceFlightModel::sortStartFlight()
+void AirspaceFlightModel::sortStartFlight()
 {
     beginResetModel();
     std::sort(_flightEntries.begin(), _flightEntries.end(), flight_sort);
     endResetModel();
 }
 
+//-----------------------------------------------------------------------------
+AirspaceFlightInfo* AirspaceFlightModel::operator[](int index) { return get(index); }
 
 //-----------------------------------------------------------------------------
-AirspaceFlightInfo*
-AirspaceFlightModel::operator[](int index)
+int AirspaceFlightModel::rowCount(const QModelIndex& /*parent*/) const { return _flightEntries.count(); }
+
+//-----------------------------------------------------------------------------
+QVariant AirspaceFlightModel::data(const QModelIndex& index, int role) const
 {
-    return get(index);
-}
-
-//-----------------------------------------------------------------------------
-int
-AirspaceFlightModel::rowCount(const QModelIndex& /*parent*/) const
-{
-    return _flightEntries.count();
-}
-
-//-----------------------------------------------------------------------------
-QVariant
-AirspaceFlightModel::data(const QModelIndex & index, int role) const {
     if (index.row() < 0 || index.row() >= _flightEntries.count())
         return QVariant();
     if (role == ObjectRole)
@@ -161,8 +138,8 @@ AirspaceFlightModel::data(const QModelIndex & index, int role) const {
 }
 
 //-----------------------------------------------------------------------------
-QHash<int, QByteArray>
-AirspaceFlightModel::roleNames() const {
+QHash<int, QByteArray> AirspaceFlightModel::roleNames() const
+{
     QHash<int, QByteArray> roles;
     roles[ObjectRole] = "flightEntry";
     return roles;

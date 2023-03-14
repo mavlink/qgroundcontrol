@@ -9,7 +9,7 @@
 
 #include "AirspaceWeatherInfoProvider.h"
 
-AirspaceWeatherInfoProvider::AirspaceWeatherInfoProvider(QObject *parent)
+AirspaceWeatherInfoProvider::AirspaceWeatherInfoProvider(QObject* parent)
     : QObject(parent)
 {
 }

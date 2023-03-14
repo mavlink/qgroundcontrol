@@ -7,18 +7,17 @@
  *
  ****************************************************************************/
 
-
+#include "AirspaceManager.h"
 #include "AirspaceAdvisoryProvider.h"
 #include "AirspaceFlightPlanProvider.h"
-#include "AirspaceManager.h"
 #include "AirspaceRestriction.h"
 #include "AirspaceRestrictionProvider.h"
 #include "AirspaceRulesetsProvider.h"
 #include "AirspaceVehicleManager.h"
 #include "AirspaceWeatherInfoProvider.h"
 
-#include "Vehicle.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 
@@ -31,18 +30,26 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     _updateTimer.setInterval(1000);
     _updateTimer.setSingleShot(true);
     connect(&_ruleUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateRulesTimeout);
-    connect(&_updateTimer,     &QTimer::timeout, this, &AirspaceManager::_updateTimeout);
-    qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
-    qmlRegisterUncreatableType<AirspaceFlightPlanProvider>  ("QGroundControl.Airspace",      1, 0, "AirspaceFlightPlanProvider",     "Reference only");
-    qmlRegisterUncreatableType<AirspaceManager>             ("QGroundControl.Airspace",      1, 0, "AirspaceManager",                "Reference only");
-    qmlRegisterUncreatableType<AirspaceRestrictionProvider> ("QGroundControl.Airspace",      1, 0, "AirspaceRestrictionProvider",    "Reference only");
-    qmlRegisterUncreatableType<AirspaceRule>                ("QGroundControl.Airspace",      1, 0, "AirspaceRule",                   "Reference only");
-    qmlRegisterUncreatableType<AirspaceRuleFeature>         ("QGroundControl.Airspace",      1, 0, "AirspaceRuleFeature",            "Reference only");
-    qmlRegisterUncreatableType<AirspaceRuleSet>             ("QGroundControl.Airspace",      1, 0, "AirspaceRuleSet",                "Reference only");
-    qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceRulesetsProvider",       "Reference only");
-    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Airspace",      1, 0, "AirspaceWeatherInfoProvider",    "Reference only");
-    qmlRegisterUncreatableType<AirspaceFlightAuthorization> ("QGroundControl.Airspace",      1, 0, "AirspaceFlightAuthorization",    "Reference only");
-    qmlRegisterUncreatableType<AirspaceFlightInfo>          ("QGroundControl.Airspace",      1, 0, "AirspaceFlightInfo",             "Reference only");
+    connect(&_updateTimer, &QTimer::timeout, this, &AirspaceManager::_updateTimeout);
+    qmlRegisterUncreatableType<AirspaceAdvisoryProvider>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceAdvisoryProvider", "Reference only");
+    qmlRegisterUncreatableType<AirspaceFlightPlanProvider>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceFlightPlanProvider", "Reference only");
+    qmlRegisterUncreatableType<AirspaceManager>("QGroundControl.Airspace", 1, 0, "AirspaceManager", "Reference only");
+    qmlRegisterUncreatableType<AirspaceRestrictionProvider>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceRestrictionProvider", "Reference only");
+    qmlRegisterUncreatableType<AirspaceRule>("QGroundControl.Airspace", 1, 0, "AirspaceRule", "Reference only");
+    qmlRegisterUncreatableType<AirspaceRuleFeature>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceRuleFeature", "Reference only");
+    qmlRegisterUncreatableType<AirspaceRuleSet>("QGroundControl.Airspace", 1, 0, "AirspaceRuleSet", "Reference only");
+    qmlRegisterUncreatableType<AirspaceRulesetsProvider>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceRulesetsProvider", "Reference only");
+    qmlRegisterUncreatableType<AirspaceWeatherInfoProvider>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceWeatherInfoProvider", "Reference only");
+    qmlRegisterUncreatableType<AirspaceFlightAuthorization>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceFlightAuthorization", "Reference only");
+    qmlRegisterUncreatableType<AirspaceFlightInfo>(
+        "QGroundControl.Airspace", 1, 0, "AirspaceFlightInfo", "Reference only");
 }
 
 //-----------------------------------------------------------------------------
@@ -61,32 +68,31 @@ AirspaceManager::~AirspaceManager()
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceManager::setToolbox(QGCToolbox* toolbox)
+void AirspaceManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     // We should not call virtual methods in the constructor, so we instantiate the restriction provider here
-    _ruleSetsProvider   = _instantiateRulesetsProvider();
-    _weatherProvider    = _instatiateAirspaceWeatherInfoProvider();
-    _advisories         = _instatiateAirspaceAdvisoryProvider();
-    _airspaces          = _instantiateAirspaceRestrictionProvider();
-    _flightPlan         = _instantiateAirspaceFlightPlanProvider();
+    _ruleSetsProvider = _instantiateRulesetsProvider();
+    _weatherProvider = _instatiateAirspaceWeatherInfoProvider();
+    _advisories = _instatiateAirspaceAdvisoryProvider();
+    _airspaces = _instantiateAirspaceRestrictionProvider();
+    _flightPlan = _instantiateAirspaceFlightPlanProvider();
     //-- Keep track of rule changes
-    if(_ruleSetsProvider) {
-        connect(_ruleSetsProvider, &AirspaceRulesetsProvider::selectedRuleSetsChanged, this, &AirspaceManager::_rulesChanged);
+    if (_ruleSetsProvider) {
+        connect(_ruleSetsProvider, &AirspaceRulesetsProvider::selectedRuleSetsChanged, this,
+            &AirspaceManager::_rulesChanged);
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset)
+void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset)
 {
-    if(planView) {
+    if (planView) {
         //-- Is there a mission?
-        if(_flightPlan->flightPermitStatus() != AirspaceFlightPlanProvider::PermitNone) {
+        if (_flightPlan->flightPermitStatus() != AirspaceFlightPlanProvider::PermitNone) {
             //-- Is there a polygon to work with?
-            if(_flightPlan->missionArea()->isValid() && _flightPlan->missionArea()->area() > 0.0) {
-                if(reset) {
+            if (_flightPlan->missionArea()->isValid() && _flightPlan->missionArea()->area() > 0.0) {
+                if (reset) {
                     _roi = *_flightPlan->missionArea();
                     _updateToROI(true);
                 } else {
@@ -97,7 +103,7 @@ AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& poi
         }
     }
     //-- Use screen coordinates (what you see is what you get)
-    if(reset) {
+    if (reset) {
         _roi = QGCGeoBoundingCube(pointNW, pointSE);
         _updateToROI(true);
     } else {
@@ -106,48 +112,36 @@ AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& poi
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
+void AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 {
-    if(_roi != roi) {
+    if (_roi != roi) {
         _roi = roi;
         _updateTimer.start();
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceManager::_updateToROI(bool reset)
+void AirspaceManager::_updateToROI(bool reset)
 {
-    if(_airspaces) {
+    if (_airspaces) {
         _airspaces->setROI(_roi, reset);
     }
-    if(_ruleSetsProvider) {
+    if (_ruleSetsProvider) {
         _ruleSetsProvider->setROI(_roi, reset);
     }
-    if(_weatherProvider) {
+    if (_weatherProvider) {
         _weatherProvider->setROI(_roi, reset);
     }
 }
 
+//-----------------------------------------------------------------------------
+void AirspaceManager::_updateTimeout() { _updateToROI(false); }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceManager::_updateTimeout()
-{
-    _updateToROI(false);
-}
+void AirspaceManager::_rulesChanged() { _ruleUpdateTimer.start(); }
 
 //-----------------------------------------------------------------------------
-void
-AirspaceManager::_rulesChanged()
-{
-    _ruleUpdateTimer.start();
-}
-
-//-----------------------------------------------------------------------------
-void
-AirspaceManager::_updateRulesTimeout()
+void AirspaceManager::_updateRulesTimeout()
 {
     if (_advisories) {
         _advisories->setROI(_roi, true);

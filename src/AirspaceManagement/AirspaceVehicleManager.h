@@ -12,9 +12,9 @@
 #include "AirspaceFlightPlanProvider.h"
 #include "QGCMAVLink.h"
 
-#include <QObject>
-#include <QList>
 #include <QGeoCoordinate>
+#include <QList>
+#include <QObject>
 
 class Vehicle;
 
@@ -27,22 +27,22 @@ class Vehicle;
 class AirspaceVehicleManager : public QObject {
     Q_OBJECT
 public:
-    AirspaceVehicleManager           (const Vehicle& vehicle);
-    virtual ~AirspaceVehicleManager  () = default;
+    AirspaceVehicleManager(const Vehicle& vehicle);
+    virtual ~AirspaceVehicleManager() = default;
 
     /**
      * Setup the connection and start sending telemetry
      */
-    virtual void startTelemetryStream   () = 0;
-    virtual void stopTelemetryStream    () = 0;
-    virtual bool isTelemetryStreaming   () = 0;
+    virtual void startTelemetryStream() = 0;
+    virtual void stopTelemetryStream() = 0;
+    virtual bool isTelemetryStreaming() = 0;
 
 public slots:
-    virtual void endFlight              () = 0;
+    virtual void endFlight() = 0;
 
 signals:
-    void trafficUpdate                  (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
-    void flightPermitStatusChanged      ();
+    void trafficUpdate(bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void flightPermitStatusChanged();
 
 protected slots:
     virtual void vehicleMavlinkMessageReceived(const mavlink_message_t& message) = 0;
@@ -51,7 +51,7 @@ protected:
     const Vehicle& _vehicle;
 
 private slots:
-    void _vehicleArmedChanged           (bool armed);
+    void _vehicleArmedChanged(bool armed);
 
 private:
     bool _vehicleWasInMissionMode = false; ///< true if the vehicle was in mission mode when arming

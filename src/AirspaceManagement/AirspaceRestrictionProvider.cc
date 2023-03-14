@@ -9,7 +9,7 @@
 
 #include "AirspaceRestrictionProvider.h"
 
-AirspaceRestrictionProvider::AirspaceRestrictionProvider(QObject *parent)
+AirspaceRestrictionProvider::AirspaceRestrictionProvider(QObject* parent)
     : QObject(parent)
 {
 }
