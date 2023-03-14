@@ -11,8 +11,7 @@
 
 #include "UnitTest.h"
 
-class AudioOutputTest : public UnitTest
-{
+class AudioOutputTest : public UnitTest {
     Q_OBJECT
 
 public:
