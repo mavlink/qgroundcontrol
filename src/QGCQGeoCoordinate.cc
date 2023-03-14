@@ -12,9 +12,9 @@
 #include <QQmlEngine>
 
 QGCQGeoCoordinate::QGCQGeoCoordinate(const QGeoCoordinate& coord, QObject* parent)
-    : QObject       (parent)
-    , _coordinate   (coord)
-    , _dirty        (false)
+    : QObject(parent)
+    , _coordinate(coord)
+    , _dirty(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }

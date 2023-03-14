@@ -7,50 +7,50 @@
  *
  ****************************************************************************/
 
-#include <QtGlobal>
 #include <QApplication>
+#include <QHostAddress>
 #include <QIcon>
-#include <QSslSocket>
 #include <QMessageBox>
 #include <QProcessEnvironment>
-#include <QHostAddress>
-#include <QUdpSocket>
-#include <QtPlugin>
+#include <QSslSocket>
 #include <QStringListModel>
+#include <QUdpSocket>
+#include <QtGlobal>
+#include <QtPlugin>
 
+#include "AppMessages.h"
 #include "QGC.h"
 #include "QGCApplication.h"
-#include "AppMessages.h"
 
 #ifndef NO_SERIAL_LINK
-    #include "SerialLink.h"
+#include "SerialLink.h"
 #endif
 
 #ifndef __mobile__
-    #include "QGCSerialPortInfo.h"
-    #include "RunGuard.h"
+#include "QGCSerialPortInfo.h"
+#include "RunGuard.h"
 #ifndef NO_SERIAL_LINK
-    #include <QSerialPort>
+#include <QSerialPort>
 #endif
 #endif
 
 #ifdef UNITTEST_BUILD
-    #include "UnitTest.h"
+#include "UnitTest.h"
 #endif
 
 #ifdef QT_DEBUG
-    #include "CmdLineOptParser.h"
-    #ifdef Q_OS_WIN
-        #include <crtdbg.h>
-    #endif
+#include "CmdLineOptParser.h"
+#ifdef Q_OS_WIN
+#include <crtdbg.h>
+#endif
 #endif
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothSocket>
 #endif
 
-#include <iostream>
 #include "QGCMapEngine.h"
+#include <iostream>
 
 /* SDL does ugly things to main() */
 #ifdef main
@@ -59,7 +59,7 @@
 
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
-    Q_DECLARE_METATYPE(QGCSerialPortInfo)
+Q_DECLARE_METATYPE(QGCSerialPortInfo)
 #endif
 #endif
 
@@ -73,16 +73,16 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
     Q_UNUSED(reportType);
 
-    std::cerr << message << std::endl;  // Output message to stderr
-    *returnValue = 0;                   // Don't break into debugger
-    return true;                        // We handled this fully ourselves
+    std::cerr << message << std::endl; // Output message to stderr
+    *returnValue = 0; // Don't break into debugger
+    return true; // We handled this fully ourselves
 }
 
 #endif
 
 #if defined(__android__)
-#include <jni.h>
 #include "JoystickAndroid.h"
+#include <jni.h>
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
@@ -95,17 +95,13 @@ static jobject _context = nullptr;
 
 //-----------------------------------------------------------------------------
 extern "C" {
-    void gst_amc_jni_set_java_vm(JavaVM *java_vm);
+void gst_amc_jni_set_java_vm(JavaVM* java_vm);
 
-    jobject gst_android_get_application_class_loader(void)
-    {
-        return _class_loader;
-    }
+jobject gst_android_get_application_class_loader(void) { return _class_loader; }
 }
 
 //-----------------------------------------------------------------------------
-static void
-gst_android_init(JNIEnv* env, jobject context)
+static void gst_android_init(JNIEnv* env, jobject context)
 {
     jobject class_loader = nullptr;
 
@@ -129,7 +125,7 @@ gst_android_init(JNIEnv* env, jobject context)
     }
 
     _context = env->NewGlobalRef(context);
-    _class_loader = env->NewGlobalRef (class_loader);
+    _class_loader = env->NewGlobalRef(class_loader);
 }
 
 //-----------------------------------------------------------------------------
@@ -137,9 +133,7 @@ static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
 void setNativeMethods(void)
 {
-    JNINativeMethod javaMethods[] {
-        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
-    };
+    JNINativeMethod javaMethods[] {{"nativeInit", "()V", reinterpret_cast<void*>(gst_android_init)}};
 
     QAndroidJniEnvironment jniEnv;
     if (jniEnv->ExceptionCheck()) {
@@ -148,7 +142,7 @@ void setNativeMethods(void)
     }
 
     jclass objectClass = jniEnv->FindClass(kJniClassName);
-    if(!objectClass) {
+    if (!objectClass) {
         qWarning() << "Couldn't find class:" << kJniClassName;
         return;
     }
@@ -184,9 +178,9 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     gst_amc_jni_set_java_vm(vm);
 #endif
 
- #if !defined(NO_SERIAL_LINK)
+#if !defined(NO_SERIAL_LINK)
     QSerialPort::setNativeMethods();
- #endif
+#endif
 
     JoystickAndroid::setNativeMethods();
 
@@ -201,16 +195,17 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 //-----------------------------------------------------------------------------
 #ifdef __android__
 #include <QtAndroid>
-bool checkAndroidWritePermission() {
+bool checkAndroidWritePermission()
+{
     QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-    if(r == QtAndroid::PermissionResult::Denied) {
-        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+    if (r == QtAndroid::PermissionResult::Denied) {
+        QtAndroid::requestPermissionsSync(QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE");
         r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-        if(r == QtAndroid::PermissionResult::Denied) {
-             return false;
+        if (r == QtAndroid::PermissionResult::Denied) {
+            return false;
         }
-   }
-   return true;
+    }
+    return true;
 }
 #endif
 
@@ -235,7 +230,7 @@ void sigHandler(int s)
  * @return exit code, 0 for normal exit and !=0 for error cases
  */
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 #ifndef __mobile__
     // We make the runguard key different for custom and non custom
@@ -250,8 +245,8 @@ int main(int argc, char *argv[])
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APPLICATION_NAME)
-        );
+            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.")
+                .arg(QGC_APPLICATION_NAME));
         return -1;
     }
 #endif
@@ -260,7 +255,7 @@ int main(int argc, char *argv[])
     QGC::initTimer();
 
 #ifdef Q_OS_UNIX
-    //Force writing to the console on UNIX/BSD devices
+    // Force writing to the console on UNIX/BSD devices
     if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE"))
         qputenv("QT_LOGGING_TO_CONSOLE", "1");
 #endif
@@ -322,29 +317,28 @@ int main(int argc, char *argv[])
 
 #ifdef Q_OS_WIN
     // In Windows, the compiler doesn't see the use of the class created by Q_IMPORT_PLUGIN
-#pragma warning( disable : 4930 4101 )
+#pragma warning(disable : 4930 4101)
 #endif
 
     Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
-    bool runUnitTests = false;          // Run unit tests
+    bool runUnitTests = false; // Run unit tests
 
 #ifdef QT_DEBUG
     // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
     // which need to be handled before a QApplication object is started.
 
-    bool stressUnitTests = false;       // Stress test unit tests
-    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
+    bool stressUnitTests = false; // Stress test unit tests
+    bool quietWindowsAsserts = false; // Don't let asserts pop dialog boxes
 
     QString unitTestOptions;
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--unittest",             &runUnitTests,          &unitTestOptions },
-        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
-        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
+        {"--unittest", &runUnitTests, &unitTestOptions}, {"--unittest-stress", &stressUnitTests, &unitTestOptions},
+        {"--no-windows-assert-ui", &quietWindowsAsserts, nullptr},
         // Add additional command line option flags here
     };
 
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions) / sizeof(rgCmdLineOptions[0]), false);
     if (stressUnitTests) {
         runUnitTests = true;
     }
@@ -368,7 +362,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
-    if(app->isErrorState()) {
+    if (app->isErrorState()) {
         app->exec();
         return -1;
     }
@@ -382,7 +376,7 @@ int main(int argc, char *argv[])
     // with them on tracking down the bug. For now we register the type which is giving us problems here
     // while we only have the main thread. That should prevent it from hitting the race condition later
     // on in the code.
-    qRegisterMetaType<QList<QPair<QByteArray,QByteArray> > >();
+    qRegisterMetaType<QList<QPair<QByteArray, QByteArray>>>();
 
     app->_initCommon();
     //-- Initialize Cache System
@@ -392,7 +386,7 @@ int main(int argc, char *argv[])
 
 #ifdef UNITTEST_BUILD
     if (runUnitTests) {
-        for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
+        for (int i = 0; i < (stressUnitTests ? 20 : 1); i++) {
             if (!app->_initForUnitTests()) {
                 return -1;
             }

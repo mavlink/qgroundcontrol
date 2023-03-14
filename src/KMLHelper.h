@@ -9,15 +9,14 @@
 
 #pragma once
 
-#include <QObject>
 #include <QDomDocument>
-#include <QList>
 #include <QGeoCoordinate>
+#include <QList>
+#include <QObject>
 
 #include "ShapeFileHelper.h"
 
-class KMLHelper : public QObject
-{
+class KMLHelper : public QObject {
     Q_OBJECT
 
 public:

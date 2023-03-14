@@ -7,12 +7,11 @@
  *
  ****************************************************************************/
 
-
 #ifndef QGCMapPalette_h
 #define QGCMapPalette_h
 
-#include <QObject>
 #include <QColor>
+#include <QObject>
 
 /*!
  QGCMapPalette is a variant of QGCPalette which is used to hold colors used for display over
@@ -36,29 +35,28 @@
         }
 **/
 
-class QGCMapPalette : public QObject
-{
+class QGCMapPalette : public QObject {
     Q_OBJECT
-    
+
     Q_PROPERTY(bool lightColors READ lightColors WRITE setLightColors NOTIFY paletteChanged)
 
-    Q_PROPERTY(QColor text          READ text          NOTIFY paletteChanged)
-    Q_PROPERTY(QColor textOutline   READ textOutline   NOTIFY paletteChanged)
+    Q_PROPERTY(QColor text READ text NOTIFY paletteChanged)
+    Q_PROPERTY(QColor textOutline READ textOutline NOTIFY paletteChanged)
 
-public:    
+public:
     QGCMapPalette(QObject* parent = nullptr);
-    
+
     /// Text color
-    QColor text(void)           const { return _text[_lightColors ? 0 : 1]; }
-    QColor textOutline(void)    const { return _textOutline[_lightColors ? 0 : 1]; }
+    QColor text(void) const { return _text[_lightColors ? 0 : 1]; }
+    QColor textOutline(void) const { return _textOutline[_lightColors ? 0 : 1]; }
 
     bool lightColors(void) const { return _lightColors; }
-    void setLightColors(bool lightColors);    
+    void setLightColors(bool lightColors);
 
 signals:
     void paletteChanged(void);
     void lightColorsChanged(bool lightColors);
-    
+
 private:
     bool _lightColors = false;
 

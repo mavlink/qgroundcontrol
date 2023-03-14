@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief This class mimics QTemporaryFile. We have our own implementation due to the fact that
 ///				QTemporaryFile implemenation differs cross platform making it unusable for our use-case.
@@ -21,11 +20,10 @@
 #include <QRandomGenerator>
 #include <QStandardPaths>
 
-QGCTemporaryFile::QGCTemporaryFile(const QString& fileTemplate, QObject* parent) :
-    QFile(parent),
-    _template(fileTemplate)
+QGCTemporaryFile::QGCTemporaryFile(const QString& fileTemplate, QObject* parent)
+    : QFile(parent)
+    , _template(fileTemplate)
 {
-
 }
 
 QGCTemporaryFile::~QGCTemporaryFile()
@@ -38,7 +36,7 @@ QGCTemporaryFile::~QGCTemporaryFile()
 bool QGCTemporaryFile::open(QFile::OpenMode openMode)
 {
     setFileName(_newTempFileFullyQualifiedName(_template));
-    
+
     return QFile::open(openMode);
 }
 
@@ -55,7 +53,7 @@ QString QGCTemporaryFile::_newTempFileFullyQualifiedName(const QString& fileTemp
 
     do {
         QString uniqueStr;
-        for (int i=0; i<6; i++) {
+        for (int i = 0; i < 6; i++) {
             uniqueStr += rgDigits[QRandomGenerator::global()->generate() % 10];
         }
 

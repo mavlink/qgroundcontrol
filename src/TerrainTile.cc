@@ -9,27 +9,27 @@
 
 #include "TerrainTile.h"
 #include "JsonHelper.h"
-#include "QGCMapEngine.h"
 #include "QGC.h"
+#include "QGCMapEngine.h"
 
+#include <QDataStream>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QDataStream>
 #include <QtMath>
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog");
 
-const char*  TerrainTile::_jsonStatusKey        = "status";
-const char*  TerrainTile::_jsonDataKey          = "data";
-const char*  TerrainTile::_jsonBoundsKey        = "bounds";
-const char*  TerrainTile::_jsonSouthWestKey     = "sw";
-const char*  TerrainTile::_jsonNorthEastKey     = "ne";
-const char*  TerrainTile::_jsonStatsKey         = "stats";
-const char*  TerrainTile::_jsonMaxElevationKey  = "max";
-const char*  TerrainTile::_jsonMinElevationKey  = "min";
-const char*  TerrainTile::_jsonAvgElevationKey  = "avg";
-const char*  TerrainTile::_jsonCarpetKey        = "carpet";
+const char* TerrainTile::_jsonStatusKey = "status";
+const char* TerrainTile::_jsonDataKey = "data";
+const char* TerrainTile::_jsonBoundsKey = "bounds";
+const char* TerrainTile::_jsonSouthWestKey = "sw";
+const char* TerrainTile::_jsonNorthEastKey = "ne";
+const char* TerrainTile::_jsonStatsKey = "stats";
+const char* TerrainTile::_jsonMaxElevationKey = "max";
+const char* TerrainTile::_jsonMinElevationKey = "min";
+const char* TerrainTile::_jsonAvgElevationKey = "avg";
+const char* TerrainTile::_jsonCarpetKey = "carpet";
 
 TerrainTile::TerrainTile()
     : _minElevation(-1.0)
@@ -40,7 +40,6 @@ TerrainTile::TerrainTile()
     , _gridSizeLon(-1)
     , _isValid(false)
 {
-
 }
 
 TerrainTile::~TerrainTile()
@@ -83,7 +82,8 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     _gridSizeLon = tileInfo->gridSizeLon;
 
     qCDebug(TerrainTileLog) << "Loading terrain tile: " << _southWest << " - " << _northEast;
-    qCDebug(TerrainTileLog) << "min:max:avg:sizeLat:sizeLon" << _minElevation << _maxElevation << _avgElevation << _gridSizeLat << _gridSizeLon;
+    qCDebug(TerrainTileLog) << "min:max:avg:sizeLat:sizeLon" << _minElevation << _maxElevation << _avgElevation
+                            << _gridSizeLat << _gridSizeLon;
 
     int cTileDataBytes = static_cast<int>(sizeof(int16_t)) * _gridSizeLat * _gridSizeLon;
     if (cTileBytesAvailable < cTileHeaderBytes + cTileDataBytes) {
@@ -97,7 +97,8 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     }
 
     int valueIndex = 0;
-    const int16_t* pTileData = reinterpret_cast<const int16_t*>(&reinterpret_cast<const uint8_t*>(byteArray.constData())[cTileHeaderBytes]);
+    const int16_t* pTileData
+        = reinterpret_cast<const int16_t*>(&reinterpret_cast<const uint8_t*>(byteArray.constData())[cTileHeaderBytes]);
     for (int i = 0; i < _gridSizeLat; i++) {
         for (int j = 0; j < _gridSizeLon; j++) {
             _data[i][j] = pTileData[valueIndex++];
@@ -115,8 +116,8 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
 
         // The lat/lon values in _northEast and _southWest coordinates can have rounding errors such that the coordinate
-        // request may be slightly outside the tile box specified by these values. So we clamp the incoming values to the
-        // edges of the tile if needed.
+        // request may be slightly outside the tile box specified by these values. So we clamp the incoming values to
+        // the edges of the tile if needed.
 
         double clampedLon = qMax(coordinate.longitude(), _southWest.longitude());
         double clampedLat = qMax(coordinate.latitude(), _southWest.latitude());
@@ -126,19 +127,19 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         int latIndex = qFloor((clampedLat - _southWest.latitude()) / tileValueSpacingDegrees);
 
         // Calc how far along in between the known values the requested lat/lon is fractionally
-        double lonIndexLongitude    = _southWest.longitude() + (static_cast<double>(lonIndex) * tileValueSpacingDegrees);
-        double lonFraction          = (clampedLon - lonIndexLongitude) / tileValueSpacingDegrees;
-        double latIndexLatitude     = _southWest.latitude() + (static_cast<double>(latIndex) * tileValueSpacingDegrees);
-        double latFraction          = (clampedLat - latIndexLatitude) / tileValueSpacingDegrees;
+        double lonIndexLongitude = _southWest.longitude() + (static_cast<double>(lonIndex) * tileValueSpacingDegrees);
+        double lonFraction = (clampedLon - lonIndexLongitude) / tileValueSpacingDegrees;
+        double latIndexLatitude = _southWest.latitude() + (static_cast<double>(latIndex) * tileValueSpacingDegrees);
+        double latFraction = (clampedLat - latIndexLatitude) / tileValueSpacingDegrees;
 
         // Calc the elevation as the average across the four known points
-        double known00      = _data[latIndex][lonIndex];
-        double known01      = _data[latIndex][lonIndex+1];
-        double known10      = _data[latIndex+1][lonIndex];
-        double known11      = _data[latIndex+1][lonIndex+1];
-        double lonValue1    = known00 + ((known01 - known00) * lonFraction);
-        double lonValue2    = known10 + ((known11 - known10) * lonFraction);
-        double latValue     = lonValue1 + ((lonValue2 - lonValue1) * latFraction);
+        double known00 = _data[latIndex][lonIndex];
+        double known01 = _data[latIndex][lonIndex + 1];
+        double known10 = _data[latIndex + 1][lonIndex];
+        double known11 = _data[latIndex + 1][lonIndex + 1];
+        double lonValue1 = known00 + ((known01 - known00) * lonFraction);
+        double lonValue2 = known10 + ((known11 - known10) * lonFraction);
+        double latValue = lonValue1 + ((lonValue2 - lonValue1) * latFraction);
 
         return latValue;
     } else {
@@ -170,8 +171,8 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
 
     QString errorString;
     QList<JsonHelper::KeyValidateInfo> rootVersionKeyInfoList = {
-        { _jsonStatusKey, QJsonValue::String, true },
-        { _jsonDataKey,   QJsonValue::Object, true },
+        {_jsonStatusKey, QJsonValue::String, true},
+        {_jsonDataKey, QJsonValue::Object, true},
     };
     if (!JsonHelper::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
@@ -186,9 +187,9 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
     }
     const QJsonObject& dataObject = rootObject[_jsonDataKey].toObject();
     QList<JsonHelper::KeyValidateInfo> dataVersionKeyInfoList = {
-        { _jsonBoundsKey, QJsonValue::Object, true },
-        { _jsonStatsKey,  QJsonValue::Object, true },
-        { _jsonCarpetKey, QJsonValue::Array, true },
+        {_jsonBoundsKey, QJsonValue::Object, true},
+        {_jsonStatsKey, QJsonValue::Object, true},
+        {_jsonCarpetKey, QJsonValue::Array, true},
     };
     if (!JsonHelper::validateKeys(dataObject, dataVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
@@ -199,8 +200,8 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
     // Bounds
     const QJsonObject& boundsObject = dataObject[_jsonBoundsKey].toObject();
     QList<JsonHelper::KeyValidateInfo> boundsVersionKeyInfoList = {
-        { _jsonSouthWestKey, QJsonValue::Array, true },
-        { _jsonNorthEastKey, QJsonValue::Array, true },
+        {_jsonSouthWestKey, QJsonValue::Array, true},
+        {_jsonNorthEastKey, QJsonValue::Array, true},
     };
     if (!JsonHelper::validateKeys(boundsObject, boundsVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
@@ -209,7 +210,7 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
     }
     const QJsonArray& swArray = boundsObject[_jsonSouthWestKey].toArray();
     const QJsonArray& neArray = boundsObject[_jsonNorthEastKey].toArray();
-    if (swArray.count() < 2 || neArray.count() < 2 ) {
+    if (swArray.count() < 2 || neArray.count() < 2) {
         qCDebug(TerrainTileLog) << "Incomplete bounding location";
         QByteArray emptyArray;
         return emptyArray;
@@ -218,9 +219,9 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
     // Stats
     const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
     QList<JsonHelper::KeyValidateInfo> statsVersionKeyInfoList = {
-        { _jsonMinElevationKey, QJsonValue::Double, true },
-        { _jsonMaxElevationKey, QJsonValue::Double, true },
-        { _jsonAvgElevationKey, QJsonValue::Double, true },
+        {_jsonMinElevationKey, QJsonValue::Double, true},
+        {_jsonMaxElevationKey, QJsonValue::Double, true},
+        {_jsonAvgElevationKey, QJsonValue::Double, true},
     };
     if (!JsonHelper::validateKeys(statsObject, statsVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
@@ -248,9 +249,18 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
     // We require 1-arc second value spacing
     double neCornerLatExpected = tileInfo.swLat + ((tileInfo.gridSizeLat - 1) * tileValueSpacingDegrees);
     double neCornerLonExpected = tileInfo.swLon + ((tileInfo.gridSizeLon - 1) * tileValueSpacingDegrees);
-    if (!QGC::fuzzyCompare(tileInfo.neLat, neCornerLatExpected) || !QGC::fuzzyCompare(tileInfo.neLon, neCornerLonExpected)) {
-        qCWarning(TerrainTileLog) << QStringLiteral("serialize: Internal error - distance between values incorrect neExpected(%1, %2) neActual(%3, %4) sw(%5, %6) gridSize(%7, %8)")
-                                     .arg(neCornerLatExpected).arg(neCornerLonExpected).arg(tileInfo.neLat).arg(tileInfo.neLon).arg(tileInfo.swLat).arg(tileInfo.swLon).arg(tileInfo.gridSizeLat).arg(tileInfo.gridSizeLon);
+    if (!QGC::fuzzyCompare(tileInfo.neLat, neCornerLatExpected)
+        || !QGC::fuzzyCompare(tileInfo.neLon, neCornerLonExpected)) {
+        qCWarning(TerrainTileLog) << QStringLiteral("serialize: Internal error - distance between values incorrect "
+                                                    "neExpected(%1, %2) neActual(%3, %4) sw(%5, %6) gridSize(%7, %8)")
+                                         .arg(neCornerLatExpected)
+                                         .arg(neCornerLonExpected)
+                                         .arg(tileInfo.neLat)
+                                         .arg(tileInfo.neLon)
+                                         .arg(tileInfo.swLat)
+                                         .arg(tileInfo.swLon)
+                                         .arg(tileInfo.gridSizeLat)
+                                         .arg(tileInfo.gridSizeLon);
         QByteArray emptyArray;
         return emptyArray;
     }
@@ -261,7 +271,7 @@ QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
     QByteArray byteArray(cTileHeaderBytes + cTileDataBytes, 0);
 
     TileInfo_t* pTileInfo = reinterpret_cast<TileInfo_t*>(byteArray.data());
-    int16_t*    pTileData = reinterpret_cast<int16_t*>(&reinterpret_cast<uint8_t*>(byteArray.data())[cTileHeaderBytes]);
+    int16_t* pTileData = reinterpret_cast<int16_t*>(&reinterpret_cast<uint8_t*>(byteArray.data())[cTileHeaderBytes]);
 
     *pTileInfo = tileInfo;
 

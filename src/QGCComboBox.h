@@ -19,10 +19,10 @@
 
 class QGCComboBox : public QComboBox {
     Q_OBJECT
-    
+
 public:
     QGCComboBox(QWidget* parent = nullptr);
-    
-	/// @brief Sets the current index on the combo. Signals activated, as well as currentIndexChanged.
-	void simulateUserSetCurrentIndex(int index);
+
+    /// @brief Sets the current index on the combo. Signals activated, as well as currentIndexChanged.
+    void simulateUserSetCurrentIndex(int index);
 };

@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QList>
 #include <QGeoCoordinate>
+#include <QList>
+#include <QObject>
 #include <QScopedPointer>
 
 #include "ShapeFileHelper.h"
@@ -20,8 +20,7 @@
 
 /// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
-class SHPFileHelper : public QObject
-{
+class SHPFileHelper : public QObject {
     Q_OBJECT
 
 public:
@@ -29,8 +28,10 @@ public:
     static bool loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordinate>& vertices, QString& errorString);
 
 private:
-    static bool         _validateSHPFiles(const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString);
-    static SHPHandle    _loadShape(const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString);
+    static bool _validateSHPFiles(
+        const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString);
+    static SHPHandle _loadShape(
+        const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString);
 
     static const char* _errorPrefix;
 };

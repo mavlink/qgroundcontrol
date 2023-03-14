@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -18,17 +17,17 @@
 static const char* kVideoAllLogCategory = "VideoAllLog";
 
 // Add Global logging categories (not class specific) here using QGC_LOGGING_CATEGORY
-QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,            "FirmwareUpgradeLog")
-QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog,     "FirmwareUpgradeVerboseLog")
-QGC_LOGGING_CATEGORY(MissionCommandsLog,            "MissionCommandsLog")
-QGC_LOGGING_CATEGORY(MissionItemLog,                "MissionItemLog")
-QGC_LOGGING_CATEGORY(ParameterManagerLog,           "ParameterManagerLog")
-QGC_LOGGING_CATEGORY(GeotaggingLog,                 "GeotaggingLog")
-QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
-QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
-QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog,         "ADSBVehicleManagerLog")
-QGC_LOGGING_CATEGORY(LocalizationLog,               "LocalizationLog")
-QGC_LOGGING_CATEGORY(VideoAllLog,                   kVideoAllLogCategory)
+QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "FirmwareUpgradeLog")
+QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "FirmwareUpgradeVerboseLog")
+QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
+QGC_LOGGING_CATEGORY(MissionItemLog, "MissionItemLog")
+QGC_LOGGING_CATEGORY(ParameterManagerLog, "ParameterManagerLog")
+QGC_LOGGING_CATEGORY(GeotaggingLog, "GeotaggingLog")
+QGC_LOGGING_CATEGORY(RTKGPSLog, "RTKGPSLog")
+QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "GuidedActionsControllerLog")
+QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog, "ADSBVehicleManagerLog")
+QGC_LOGGING_CATEGORY(LocalizationLog, "LocalizationLog")
+QGC_LOGGING_CATEGORY(VideoAllLog, kVideoAllLogCategory)
 
 QGCLoggingCategoryRegister* _instance = nullptr;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";
@@ -39,7 +38,7 @@ QGCLoggingCategoryRegister* QGCLoggingCategoryRegister::instance(void)
         _instance = new QGCLoggingCategoryRegister();
         Q_CHECK_PTR(_instance);
     }
-    
+
     return _instance;
 }
 
@@ -69,7 +68,7 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
 {
     QString filterRules;
     QString filterRuleFormat("%1.debug=true\n");
-    bool    videoAllLogSet = false;
+    bool videoAllLogSet = false;
 
     if (!commandLineLoggingOptions.isEmpty()) {
         _commandLineLoggingOptions = commandLineLoggingOptions;
@@ -93,11 +92,11 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
 
         if (logList[0] == "full") {
             filterRules += "*Log.debug=true\n";
-            for(int i=1; i<logList.count(); i++) {
+            for (int i = 1; i < logList.count(); i++) {
                 filterRules += filterRuleFormat.arg(logList[i]);
             }
         } else {
-            for (auto& category: logList) {
+            for (auto& category : logList) {
                 filterRules += filterRuleFormat.arg(category);
                 if (category == kVideoAllLogCategory) {
                     videoAllLogSet = true;

@@ -37,7 +37,10 @@ bool ShapeFileHelper::_fileIsKML(const QString& file, QString& errorString)
     } else if (file.endsWith(AppSettings::shpFileExtension)) {
         return false;
     } else {
-        errorString = QString(_errorPrefix).arg(tr("Unsupported file type. Only .%1 and .%2 are supported.").arg(AppSettings::kmlFileExtension).arg(AppSettings::shpFileExtension));
+        errorString = QString(_errorPrefix)
+                          .arg(tr("Unsupported file type. Only .%1 and .%2 are supported.")
+                                   .arg(AppSettings::kmlFileExtension)
+                                   .arg(AppSettings::shpFileExtension));
     }
 
     return true;
@@ -104,5 +107,6 @@ QStringList ShapeFileHelper::fileDialogKMLFilters(void) const
 
 QStringList ShapeFileHelper::fileDialogKMLOrSHPFilters(void) const
 {
-    return QStringList(tr("KML/SHP Files (*.%1 *.%2)").arg(AppSettings::kmlFileExtension).arg(AppSettings::shpFileExtension));
+    return QStringList(
+        tr("KML/SHP Files (*.%1 *.%2)").arg(AppSettings::kmlFileExtension).arg(AppSettings::shpFileExtension));
 }

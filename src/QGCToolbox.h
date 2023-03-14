@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef QGCToolbox_h
 #define QGCToolbox_h
 
@@ -51,72 +50,71 @@ class QGCToolbox : public QObject {
 public:
     QGCToolbox(QGCApplication* app);
 
-    FirmwarePluginManager*      firmwarePluginManager   () { return _firmwarePluginManager; }
-    AudioOutput*                audioOutput             () { return _audioOutput; }
-    JoystickManager*            joystickManager         () { return _joystickManager; }
-    LinkManager*                linkManager             () { return _linkManager; }
-    MAVLinkProtocol*            mavlinkProtocol         () { return _mavlinkProtocol; }
-    MissionCommandTree*         missionCommandTree      () { return _missionCommandTree; }
-    MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
-    QGCMapEngineManager*        mapEngineManager        () { return _mapEngineManager; }
-    QGCImageProvider*           imageProvider           () { return _imageProvider; }
-    UASMessageHandler*          uasMessageHandler       () { return _uasMessageHandler; }
-    FollowMe*                   followMe                () { return _followMe; }
-    QGCPositionManager*         qgcPositionManager      () { return _qgcPositionManager; }
-    VideoManager*               videoManager            () { return _videoManager; }
-    MAVLinkLogManager*          mavlinkLogManager       () { return _mavlinkLogManager; }
-    QGCCorePlugin*              corePlugin              () { return _corePlugin; }
-    SettingsManager*            settingsManager         () { return _settingsManager; }
-    AirspaceManager*            airspaceManager         () { return _airspaceManager; }
-    ADSBVehicleManager*         adsbVehicleManager      () { return _adsbVehicleManager; }
+    FirmwarePluginManager* firmwarePluginManager() { return _firmwarePluginManager; }
+    AudioOutput* audioOutput() { return _audioOutput; }
+    JoystickManager* joystickManager() { return _joystickManager; }
+    LinkManager* linkManager() { return _linkManager; }
+    MAVLinkProtocol* mavlinkProtocol() { return _mavlinkProtocol; }
+    MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
+    MultiVehicleManager* multiVehicleManager() { return _multiVehicleManager; }
+    QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
+    QGCImageProvider* imageProvider() { return _imageProvider; }
+    UASMessageHandler* uasMessageHandler() { return _uasMessageHandler; }
+    FollowMe* followMe() { return _followMe; }
+    QGCPositionManager* qgcPositionManager() { return _qgcPositionManager; }
+    VideoManager* videoManager() { return _videoManager; }
+    MAVLinkLogManager* mavlinkLogManager() { return _mavlinkLogManager; }
+    QGCCorePlugin* corePlugin() { return _corePlugin; }
+    SettingsManager* settingsManager() { return _settingsManager; }
+    AirspaceManager* airspaceManager() { return _airspaceManager; }
+    ADSBVehicleManager* adsbVehicleManager() { return _adsbVehicleManager; }
 #if defined(QGC_ENABLE_PAIRING)
-    PairingManager*             pairingManager          () { return _pairingManager; }
+    PairingManager* pairingManager() { return _pairingManager; }
 #endif
 #ifndef __mobile__
-    GPSManager*                 gpsManager              () { return _gpsManager; }
+    GPSManager* gpsManager() { return _gpsManager; }
 #endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
-    TaisyncManager*             taisyncManager          () { return _taisyncManager; }
+    TaisyncManager* taisyncManager() { return _taisyncManager; }
 #endif
 #if defined(QGC_GST_MICROHARD_ENABLED)
-    MicrohardManager*           microhardManager        () { return _microhardManager; }
+    MicrohardManager* microhardManager() { return _microhardManager; }
 #endif
 
 private:
     void setChildToolboxes(void);
-    void _scanAndLoadPlugins(QGCApplication *app);
+    void _scanAndLoadPlugins(QGCApplication* app);
 
-
-    AudioOutput*                _audioOutput            = nullptr;
-    FactSystem*                 _factSystem             = nullptr;
-    FirmwarePluginManager*      _firmwarePluginManager  = nullptr;
+    AudioOutput* _audioOutput = nullptr;
+    FactSystem* _factSystem = nullptr;
+    FirmwarePluginManager* _firmwarePluginManager = nullptr;
 #ifndef __mobile__
-    GPSManager*                 _gpsManager             = nullptr;
+    GPSManager* _gpsManager = nullptr;
 #endif
-    QGCImageProvider*           _imageProvider          = nullptr;
-    JoystickManager*            _joystickManager        = nullptr;
-    LinkManager*                _linkManager            = nullptr;
-    MAVLinkProtocol*            _mavlinkProtocol        = nullptr;
-    MissionCommandTree*         _missionCommandTree     = nullptr;
-    MultiVehicleManager*        _multiVehicleManager    = nullptr;
-    QGCMapEngineManager*        _mapEngineManager       = nullptr;
-    UASMessageHandler*          _uasMessageHandler      = nullptr;
-    FollowMe*                   _followMe               = nullptr;
-    QGCPositionManager*         _qgcPositionManager     = nullptr;
-    VideoManager*               _videoManager           = nullptr;
-    MAVLinkLogManager*          _mavlinkLogManager      = nullptr;
-    QGCCorePlugin*              _corePlugin             = nullptr;
-    SettingsManager*            _settingsManager        = nullptr;
-    AirspaceManager*            _airspaceManager        = nullptr;
-    ADSBVehicleManager*         _adsbVehicleManager     = nullptr;
+    QGCImageProvider* _imageProvider = nullptr;
+    JoystickManager* _joystickManager = nullptr;
+    LinkManager* _linkManager = nullptr;
+    MAVLinkProtocol* _mavlinkProtocol = nullptr;
+    MissionCommandTree* _missionCommandTree = nullptr;
+    MultiVehicleManager* _multiVehicleManager = nullptr;
+    QGCMapEngineManager* _mapEngineManager = nullptr;
+    UASMessageHandler* _uasMessageHandler = nullptr;
+    FollowMe* _followMe = nullptr;
+    QGCPositionManager* _qgcPositionManager = nullptr;
+    VideoManager* _videoManager = nullptr;
+    MAVLinkLogManager* _mavlinkLogManager = nullptr;
+    QGCCorePlugin* _corePlugin = nullptr;
+    SettingsManager* _settingsManager = nullptr;
+    AirspaceManager* _airspaceManager = nullptr;
+    ADSBVehicleManager* _adsbVehicleManager = nullptr;
 #if defined(QGC_ENABLE_PAIRING)
-    PairingManager*             _pairingManager         = nullptr;
+    PairingManager* _pairingManager = nullptr;
 #endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
-    TaisyncManager*             _taisyncManager         = nullptr;
+    TaisyncManager* _taisyncManager = nullptr;
 #endif
 #if defined(QGC_GST_MICROHARD_ENABLED)
-    MicrohardManager*           _microhardManager       = nullptr;
+    MicrohardManager* _microhardManager = nullptr;
 #endif
     friend class QGCApplication;
 };
@@ -136,7 +134,7 @@ public:
 
 protected:
     QGCApplication* _app;
-    QGCToolbox*     _toolbox;
+    QGCToolbox* _toolbox;
 };
 
 #endif

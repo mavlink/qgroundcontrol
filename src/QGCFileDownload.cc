@@ -7,17 +7,15 @@
  *
  ****************************************************************************/
 
-
 #include "QGCFileDownload.h"
 
 #include <QFileInfo>
-#include <QStandardPaths>
 #include <QNetworkProxy>
+#include <QStandardPaths>
 
 QGCFileDownload::QGCFileDownload(QObject* parent)
     : QNetworkAccessManager(parent)
 {
-
 }
 
 bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
@@ -30,7 +28,6 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
         qWarning() << "downloadFile empty";
         return false;
     }
-    
 
     QUrl remoteUrl;
     if (remoteFile.startsWith("http:") || remoteFile.startsWith("https:")) {
@@ -42,13 +39,13 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
         qWarning() << "Remote URL is invalid" << remoteFile;
         return false;
     }
-    
+
     QNetworkRequest networkRequest(remoteUrl);
 
     QNetworkProxy tProxy;
     tProxy.setType(QNetworkProxy::DefaultProxy);
     setProxy(tProxy);
-    
+
     QNetworkReply* networkReply = get(networkRequest);
     if (!networkReply) {
         qWarning() << "QNetworkAccessManager::get failed";
@@ -91,7 +88,7 @@ void QGCFileDownload::_downloadFinished(void)
     // Strip out http parameters from remote filename
     int parameterIndex = remoteFileName.indexOf("?");
     if (parameterIndex != -1) {
-        remoteFileName  = remoteFileName.left(parameterIndex);
+        remoteFileName = remoteFileName.left(parameterIndex);
     }
 
     // Determine location to download file to
@@ -99,17 +96,19 @@ void QGCFileDownload::_downloadFinished(void)
     if (downloadFilename.isEmpty()) {
         downloadFilename = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
         if (downloadFilename.isEmpty()) {
-            emit downloadComplete(_originalRemoteFile, QString(), tr("Unabled to find writable download location. Tried downloads and temp directory."));
+            emit downloadComplete(_originalRemoteFile, QString(),
+                tr("Unabled to find writable download location. Tried downloads and temp directory."));
             return;
         }
     }
-    downloadFilename += "/"  + remoteFileName;
+    downloadFilename += "/" + remoteFileName;
 
     if (!downloadFilename.isEmpty()) {
         // Store downloaded file in download location
         QFile file(downloadFilename);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            emit downloadComplete(_originalRemoteFile, downloadFilename, tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+            emit downloadComplete(_originalRemoteFile, downloadFilename,
+                tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
             return;
         }
 
@@ -130,7 +129,7 @@ void QGCFileDownload::_downloadFinished(void)
 void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
 {
     QString errorMsg;
-    
+
     if (code == QNetworkReply::OperationCanceledError) {
         errorMsg = tr("Download cancelled");
 

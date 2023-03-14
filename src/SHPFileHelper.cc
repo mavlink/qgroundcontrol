@@ -11,9 +11,9 @@
 #include "QGCGeo.h"
 
 #include <QFile>
+#include <QRegularExpression>
 #include <QVariant>
 #include <QtDebug>
-#include <QRegularExpression>
 
 const char* SHPFileHelper::_errorPrefix = QT_TR_NOOP("SHP file load failed. %1");
 
@@ -21,7 +21,8 @@ const char* SHPFileHelper::_errorPrefix = QT_TR_NOOP("SHP file load failed. %1")
 ///     @param utmZone[out] Zone for UTM shape, 0 for lat/lon shape
 ///     @param utmSouthernHemisphere[out] true/false for UTM hemisphere
 /// @return true: Valid supported SHP file found, false: Invalid or unsupported file found
-bool SHPFileHelper::_validateSHPFiles(const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString)
+bool SHPFileHelper::_validateSHPFiles(
+    const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString)
 {
     *utmZone = 0;
     errorString.clear();
@@ -48,7 +49,9 @@ bool SHPFileHelper::_validateSHPFiles(const QString& shpFile, int* utmZone, bool
                         }
                     }
                     if (*utmZone == 0) {
-                        errorString = QString(_errorPrefix).arg(tr("UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
+                        errorString = QString(_errorPrefix)
+                                          .arg(tr("UTM projection is not in supported format. Must be "
+                                                  "PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
                     }
                 } else {
                     errorString = QString(_errorPrefix).arg(tr("Only WGS84 or UTM projections are supported."));
@@ -68,7 +71,8 @@ bool SHPFileHelper::_validateSHPFiles(const QString& shpFile, int* utmZone, bool
 
 /// @param utmZone[out] Zone for UTM shape, 0 for lat/lon shape
 /// @param utmSouthernHemisphere[out] true/false for UTM hemisphere
-SHPHandle SHPFileHelper::_loadShape(const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString)
+SHPHandle SHPFileHelper::_loadShape(
+    const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString)
 {
     SHPHandle shpHandle = Q_NULLPTR;
 
@@ -95,7 +99,8 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString& shpF
     if (errorString.isEmpty()) {
         int cEntities, type;
 
-        SHPGetInfo(shpHandle, &cEntities /* pnEntities */, &type, Q_NULLPTR /* padfMinBound */, Q_NULLPTR /* padfMaxBound */);
+        SHPGetInfo(
+            shpHandle, &cEntities /* pnEntities */, &type, Q_NULLPTR /* padfMinBound */, Q_NULLPTR /* padfMaxBound */);
         qDebug() << "SHPGetInfo" << shpHandle << cEntities << type;
         if (cEntities != 1) {
             errorString = QString(_errorPrefix).arg(tr("More than one entity found."));
@@ -113,11 +118,11 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString& shpF
 
 bool SHPFileHelper::loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordinate>& vertices, QString& errorString)
 {
-    int         utmZone = 0;
-    bool        utmSouthernHemisphere;
-    double      vertexFilterMeters = 5;
-    SHPHandle   shpHandle = Q_NULLPTR;
-    SHPObject*  shpObject = Q_NULLPTR;
+    int utmZone = 0;
+    bool utmSouthernHemisphere;
+    double vertexFilterMeters = 5;
+    SHPHandle shpHandle = Q_NULLPTR;
+    SHPObject* shpObject = Q_NULLPTR;
 
     errorString.clear();
     vertices.clear();
@@ -140,9 +145,10 @@ bool SHPFileHelper::loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordi
         goto Error;
     }
 
-    for (int i=0; i<shpObject->nVertices; i++) {
+    for (int i = 0; i < shpObject->nVertices; i++) {
         QGeoCoordinate coord;
-        if (!utmZone || !convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
+        if (!utmZone
+            || !convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
             coord.setLatitude(shpObject->padfY[i]);
             coord.setLongitude(shpObject->padfX[i]);
         }
@@ -162,8 +168,8 @@ bool SHPFileHelper::loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordi
     {
         int i = 0;
         while (i < vertices.count() - 2) {
-            if (vertices[i].distanceTo(vertices[i+1]) < vertexFilterMeters) {
-                vertices.removeAt(i+1);
+            if (vertices[i].distanceTo(vertices[i + 1]) < vertexFilterMeters) {
+                vertices.removeAt(i + 1);
             } else {
                 i++;
             }

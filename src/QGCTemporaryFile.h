@@ -20,23 +20,23 @@
 
 class QGCTemporaryFile : public QFile {
     Q_OBJECT
-    
+
 public:
-	/// @brief Creates a new temp file object. QGC temp files are always created in the
-	//			QStandardPaths::TempLocation directory.
-	//		@param template Template for file name following QTemporaryFile rules. Template should NOT include
-	//							directory path, only file name.
+    /// @brief Creates a new temp file object. QGC temp files are always created in the
+    //			QStandardPaths::TempLocation directory.
+    //		@param template Template for file name following QTemporaryFile rules. Template should NOT include
+    //							directory path, only file name.
     QGCTemporaryFile(const QString& fileTemplate, QObject* parent = nullptr);
 
     ~QGCTemporaryFile();
 
-	bool open(OpenMode openMode = ReadWrite);
+    bool open(OpenMode openMode = ReadWrite);
 
     void setAutoRemove(bool autoRemove) { _autoRemove = autoRemove; }
-    
+
 private:
     static QString _newTempFileFullyQualifiedName(const QString& fileTemplate);
 
     QString _template;
-    bool    _autoRemove = false;
+    bool _autoRemove = false;
 };

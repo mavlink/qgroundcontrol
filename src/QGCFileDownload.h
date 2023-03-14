@@ -11,13 +11,12 @@
 
 #include <QNetworkReply>
 
-class QGCFileDownload : public QNetworkAccessManager
-{
+class QGCFileDownload : public QNetworkAccessManager {
     Q_OBJECT
-    
+
 public:
     QGCFileDownload(QObject* parent = nullptr);
-    
+
     /// Download the specified remote file.
     ///     @param remoteFile   File to download. Can be http address or file system path.
     ///     @param redirect     true: call is internal due to redirect

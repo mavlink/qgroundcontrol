@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include <QDateTime>
 #include <QColor>
+#include <QDateTime>
 #include <QThread>
 
 #include "QGCConfig.h"
 
-namespace QGC
-{
+namespace QGC {
 
 /**
  * @brief Get the current ground time in microseconds.
@@ -25,7 +24,7 @@ namespace QGC
 quint64 groundTimeUsecs();
 /** @brief Get the current ground time in milliseconds */
 quint64 groundTimeMilliseconds();
-/** 
+/**
  * @brief Get the current ground time in fractional seconds
  * @note Precision is limited to milliseconds.
  */
@@ -43,15 +42,14 @@ quint64 bootTimeMilliseconds();
 /// Returns true if the two values are equal or close. Correctly handles 0 and NaN values.
 bool fuzzyCompare(double value1, double value2);
 
-class SLEEP : public QThread
-{
+class SLEEP : public QThread {
     Q_OBJECT
 public:
-    using QThread::sleep;
     using QThread::msleep;
+    using QThread::sleep;
     using QThread::usleep;
 };
 
-quint32 crc32(const quint8 *src, unsigned len, unsigned state);
+quint32 crc32(const quint8* src, unsigned len, unsigned state);
 
 }
