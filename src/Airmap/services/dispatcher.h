@@ -11,43 +11,43 @@
 namespace airmap {
 namespace services {
 
-class Dispatcher : public QObject {
- public:
-  class Event : public QEvent {
-   public:
-    static Type registered_type();
+    class Dispatcher : public QObject {
+    public:
+        class Event : public QEvent {
+        public:
+            static Type registered_type();
 
-    explicit Event(const std::function<void()>& task);
-    void dispatch();
+            explicit Event(const std::function<void()>& task);
+            void dispatch();
 
-   private:
-    std::function<void()> task_;
-  };
+        private:
+            std::function<void()> task_;
+        };
 
-  using Task = std::function<void()>;
+        using Task = std::function<void()>;
 
-  class ToQt : public QObject, public std::enable_shared_from_this<ToQt> {
-   public:
-    static std::shared_ptr<ToQt> create();
-    void dispatch(const Task& task);
+        class ToQt : public QObject, public std::enable_shared_from_this<ToQt> {
+        public:
+            static std::shared_ptr<ToQt> create();
+            void dispatch(const Task& task);
 
-   private:
-    ToQt();
-    // From QObject
-    bool event(QEvent* event) override;
-  };
+        private:
+            ToQt();
+            // From QObject
+            bool event(QEvent* event) override;
+        };
 
-  explicit Dispatcher(const std::shared_ptr<Context>& context);
+        explicit Dispatcher(const std::shared_ptr<Context>& context);
 
-  void dispatch_to_qt(const Task& task);
-  void dispatch_to_airmap(const Task& task);
+        void dispatch_to_qt(const Task& task);
+        void dispatch_to_airmap(const Task& task);
 
- private:
-  std::shared_ptr<ToQt> to_qt_;
-  std::shared_ptr<Context> context_;
-};
+    private:
+        std::shared_ptr<ToQt> to_qt_;
+        std::shared_ptr<Context> context_;
+    };
 
-}  // namespace qt
-}  // namespace airmap
+} // namespace qt
+} // namespace airmap
 
-#endif  // AIRMAP_QT_DISPATCHER_H_
+#endif // AIRMAP_QT_DISPATCHER_H_
