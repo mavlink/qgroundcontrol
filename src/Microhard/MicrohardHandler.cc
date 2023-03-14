@@ -8,30 +8,26 @@
  ****************************************************************************/
 
 #include "MicrohardHandler.h"
-#include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 #include "VideoManager.h"
 
-QGC_LOGGING_CATEGORY(MicrohardLog,     "MicrohardLog")
+QGC_LOGGING_CATEGORY(MicrohardLog, "MicrohardLog")
 
 //-----------------------------------------------------------------------------
 MicrohardHandler::MicrohardHandler(QObject* parent)
-    : QObject (parent)
+    : QObject(parent)
 {
 }
 
 //-----------------------------------------------------------------------------
-MicrohardHandler::~MicrohardHandler()
-{
-    close();
-}
+MicrohardHandler::~MicrohardHandler() { close(); }
 
 //-----------------------------------------------------------------------------
-bool
-MicrohardHandler::close()
+bool MicrohardHandler::close()
 {
     bool res = false;
-    if(_tcpSocket) {
+    if (_tcpSocket) {
         qCDebug(MicrohardLog) << "Close Microhard TCP socket on port" << _tcpSocket->localPort();
         _tcpSocket->close();
         _tcpSocket->deleteLater();
@@ -42,8 +38,7 @@ MicrohardHandler::close()
 }
 
 //-----------------------------------------------------------------------------
-void
-MicrohardHandler::_start(uint16_t port, QHostAddress addr)
+void MicrohardHandler::_start(uint16_t port, QHostAddress addr)
 {
     close();
     _tcpSocket = new QTcpSocket();
@@ -54,11 +49,10 @@ MicrohardHandler::_start(uint16_t port, QHostAddress addr)
 }
 
 //-----------------------------------------------------------------------------
-void
-MicrohardHandler::_testConnection()
+void MicrohardHandler::_testConnection()
 {
-    if(_tcpSocket) {
-        if(_tcpSocket->state() == QAbstractSocket::ConnectedState) {
+    if (_tcpSocket) {
+        if (_tcpSocket->state() == QAbstractSocket::ConnectedState) {
             qCDebug(MicrohardLog) << "Connected";
             return;
         }

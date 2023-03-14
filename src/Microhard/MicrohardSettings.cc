@@ -9,8 +9,8 @@
 
 #include "MicrohardSettings.h"
 #include "MicrohardManager.h"
-#include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 #include "VideoManager.h"
 
 //-----------------------------------------------------------------------------
@@ -22,8 +22,7 @@ MicrohardSettings::MicrohardSettings(QString address_, QObject* parent, bool set
 }
 
 //-----------------------------------------------------------------------------
-bool
-MicrohardSettings::start()
+bool MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
     _loggedIn = false;
@@ -32,8 +31,7 @@ MicrohardSettings::start()
 }
 
 //-----------------------------------------------------------------------------
-void
-MicrohardSettings::getStatus()
+void MicrohardSettings::getStatus()
 {
     if (_loggedIn && _tcpSocket) {
         _tcpSocket->write("AT+MWSTATUS\n");
@@ -41,8 +39,7 @@ MicrohardSettings::getStatus()
 }
 
 //-----------------------------------------------------------------------------
-void
-MicrohardSettings::setEncryptionKey(QString key)
+void MicrohardSettings::setEncryptionKey(QString key)
 {
     if (!_tcpSocket) {
         return;
@@ -56,15 +53,14 @@ MicrohardSettings::setEncryptionKey(QString key)
 }
 
 //-----------------------------------------------------------------------------
-void
-MicrohardSettings::_readBytes()
+void MicrohardSettings::_readBytes()
 {
     if (!_tcpSocket) {
         return;
     }
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
 
-    //qCDebug(MicrohardLog) << "Read bytes: " << bytesIn;
+    // qCDebug(MicrohardLog) << "Read bytes: " << bytesIn;
 
     if (_loggedIn) {
         int i1 = bytesIn.indexOf("RSSI (dBm)");
@@ -97,4 +93,3 @@ MicrohardSettings::_readBytes()
 
     emit rssiUpdated(_rssiVal);
 }
-

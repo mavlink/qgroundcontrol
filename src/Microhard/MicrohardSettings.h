@@ -11,25 +11,24 @@
 
 #include "MicrohardHandler.h"
 
-class MicrohardSettings : public MicrohardHandler
-{
+class MicrohardSettings : public MicrohardHandler {
     Q_OBJECT
 public:
-    explicit MicrohardSettings          (QString address, QObject* parent = nullptr, bool setEncryptionKey = false);
-    bool    start                       () override;
-    void    getStatus                   ();
-    void    setEncryptionKey            (QString key);
-    bool    loggedIn                    () { return _loggedIn; }
+    explicit MicrohardSettings(QString address, QObject* parent = nullptr, bool setEncryptionKey = false);
+    bool start() override;
+    void getStatus();
+    void setEncryptionKey(QString key);
+    bool loggedIn() { return _loggedIn; }
 
 protected slots:
-    void    _readBytes                  () override;
+    void _readBytes() override;
 
 signals:
-    void    updateRSSI                  (int rssi);
+    void updateRSSI(int rssi);
 
 private:
-    bool    _loggedIn;
-    int     _rssiVal;
+    bool _loggedIn;
+    int _rssiVal;
     QString _address;
-    bool    _setEncryptionKey;
+    bool _setEncryptionKey;
 };
