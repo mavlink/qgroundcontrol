@@ -11,8 +11,7 @@
 
 #include "SettingsGroup.h"
 
-class OfflineMapsSettings : public SettingsGroup
-{
+class OfflineMapsSettings : public SettingsGroup {
     Q_OBJECT
 
 public:

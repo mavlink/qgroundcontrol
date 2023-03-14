@@ -15,8 +15,7 @@
 #include "SettingsGroup.h"
 
 /// Simple branding. Allows to define icon to use on main toolbar.
-class BrandImageSettings : public SettingsGroup
-{
+class BrandImageSettings : public SettingsGroup {
     Q_OBJECT
 public:
     BrandImageSettings(QObject* parent = nullptr);

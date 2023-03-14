@@ -12,22 +12,15 @@
 
 #include "SettingsGroup.h"
 
-class UnitsSettings : public SettingsGroup
-{
+class UnitsSettings : public SettingsGroup {
     Q_OBJECT
-    
+
 public:
     UnitsSettings(QObject* parent = nullptr);
 
-    enum HorizontalDistanceUnits {
-        HorizontalDistanceUnitsFeet = 0,
-        HorizontalDistanceUnitsMeters
-    };
+    enum HorizontalDistanceUnits { HorizontalDistanceUnitsFeet = 0, HorizontalDistanceUnitsMeters };
 
-    enum VerticalDistanceUnits {
-        VerticalDistanceUnitsFeet = 0,
-        VerticalDistanceUnitsMeters
-    };
+    enum VerticalDistanceUnits { VerticalDistanceUnitsFeet = 0, VerticalDistanceUnitsMeters };
 
     enum AreaUnits {
         AreaUnitsSquareFeet = 0,
@@ -51,12 +44,7 @@ public:
         TemperatureUnitsFarenheit,
     };
 
-    enum WeightUnits {
-        WeightUnitsGrams = 0,
-        WeightUnitsKg,
-        WeightUnitsOz,
-        WeightUnitsLbs
-    };
+    enum WeightUnits { WeightUnitsGrams = 0, WeightUnitsKg, WeightUnitsOz, WeightUnitsLbs };
 
     Q_ENUM(HorizontalDistanceUnits)
     Q_ENUM(VerticalDistanceUnits)

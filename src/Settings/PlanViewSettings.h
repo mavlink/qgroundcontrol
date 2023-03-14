@@ -11,8 +11,7 @@
 
 #include "SettingsGroup.h"
 
-class PlanViewSettings : public SettingsGroup
-{
+class PlanViewSettings : public SettingsGroup {
     Q_OBJECT
 public:
     PlanViewSettings(QObject* parent = nullptr);

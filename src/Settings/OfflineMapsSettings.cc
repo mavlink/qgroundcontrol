@@ -14,7 +14,8 @@
 
 DECLARE_SETTINGGROUP(OfflineMaps, "OfflineMaps")
 {
-    qmlRegisterUncreatableType<OfflineMapsSettings>("QGroundControl.SettingsManager", 1, 0, "OfflineMapsSettings", "Reference only");
+    qmlRegisterUncreatableType<OfflineMapsSettings>(
+        "QGroundControl.SettingsManager", 1, 0, "OfflineMapsSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(OfflineMapsSettings, minZoomLevelDownload)

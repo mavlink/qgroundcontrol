@@ -15,15 +15,20 @@
 
 DECLARE_SETTINGGROUP(APMMavlinkStreamRate, "APMMavlinkStreamRate")
 {
-    qmlRegisterUncreatableType<APMMavlinkStreamRateSettings>("QGroundControl.SettingsManager", 1, 0, "APMMavlinkStreamRateSettings", "Reference only");
+    qmlRegisterUncreatableType<APMMavlinkStreamRateSettings>(
+        "QGroundControl.SettingsManager", 1, 0, "APMMavlinkStreamRateSettings", "Reference only");
 
-    connect(streamRateRawSensors(),     &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateRawSensors);
-    connect(streamRateExtendedStatus(), &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtendedStatus);
-    connect(streamRateRCChannels(),     &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateRCChannels);
-    connect(streamRatePosition(),       &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRatePosition);
-    connect(streamRateExtra1(),         &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtra1);
-    connect(streamRateExtra2(),         &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtra2);
-    connect(streamRateExtra3(),         &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtra3);
+    connect(streamRateRawSensors(), &Fact::rawValueChanged, this,
+        &APMMavlinkStreamRateSettings::_updateStreamRateRawSensors);
+    connect(streamRateExtendedStatus(), &Fact::rawValueChanged, this,
+        &APMMavlinkStreamRateSettings::_updateStreamRateExtendedStatus);
+    connect(streamRateRCChannels(), &Fact::rawValueChanged, this,
+        &APMMavlinkStreamRateSettings::_updateStreamRateRCChannels);
+    connect(
+        streamRatePosition(), &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRatePosition);
+    connect(streamRateExtra1(), &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtra1);
+    connect(streamRateExtra2(), &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtra2);
+    connect(streamRateExtra3(), &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateExtra3);
 }
 
 DECLARE_SETTINGSFACT(APMMavlinkStreamRateSettings, streamRateRawSensors)

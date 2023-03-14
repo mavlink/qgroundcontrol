@@ -12,8 +12,7 @@
 
 #include "SettingsGroup.h"
 
-class VideoSettings : public SettingsGroup
-{
+class VideoSettings : public SettingsGroup {
     Q_OBJECT
 
 public:
@@ -47,21 +46,21 @@ public:
     };
     Q_ENUM(VideoDecoderOptions)
 
-    Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
-    Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
-    Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
-    Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
-    Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
-    Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
-    Q_PROPERTY(QString  disabledVideoSource     READ disabledVideoSource    CONSTANT)
+    Q_PROPERTY(bool streamConfigured READ streamConfigured NOTIFY streamConfiguredChanged)
+    Q_PROPERTY(QString rtspVideoSource READ rtspVideoSource CONSTANT)
+    Q_PROPERTY(QString udp264VideoSource READ udp264VideoSource CONSTANT)
+    Q_PROPERTY(QString udp265VideoSource READ udp265VideoSource CONSTANT)
+    Q_PROPERTY(QString tcpVideoSource READ tcpVideoSource CONSTANT)
+    Q_PROPERTY(QString mpegtsVideoSource READ mpegtsVideoSource CONSTANT)
+    Q_PROPERTY(QString disabledVideoSource READ disabledVideoSource CONSTANT)
 
-    bool     streamConfigured       ();
-    QString  rtspVideoSource        () { return videoSourceRTSP; }
-    QString  udp264VideoSource      () { return videoSourceUDPH264; }
-    QString  udp265VideoSource      () { return videoSourceUDPH265; }
-    QString  tcpVideoSource         () { return videoSourceTCP; }
-    QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
-    QString  disabledVideoSource    () { return videoDisabled; }
+    bool streamConfigured();
+    QString rtspVideoSource() { return videoSourceRTSP; }
+    QString udp264VideoSource() { return videoSourceUDPH264; }
+    QString udp265VideoSource() { return videoSourceUDPH265; }
+    QString tcpVideoSource() { return videoSourceTCP; }
+    QString mpegtsVideoSource() { return videoSourceMPEGTS; }
+    QString disabledVideoSource() { return videoDisabled; }
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
@@ -75,17 +74,16 @@ public:
     static const char* videoSourceYuneecMantisG;
 
 signals:
-    void streamConfiguredChanged    (bool configured);
+    void streamConfiguredChanged(bool configured);
 
 private slots:
-    void _configChanged             (QVariant value);
+    void _configChanged(QVariant value);
 
 private:
-    void _setDefaults               ();
+    void _setDefaults();
 
 private:
     bool _noVideo = false;
-
 };
 
 #endif

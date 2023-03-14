@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-#include "QGCApplication.h"
 #include "FlightMapSettings.h"
-#include "QGCMapEngine.h"
 #include "AppSettings.h"
+#include "QGCApplication.h"
+#include "QGCMapEngine.h"
 #include "SettingsManager.h"
 
 #include <QQmlEngine>
@@ -18,7 +18,8 @@
 
 DECLARE_SETTINGGROUP(FlightMap, "FlightMap")
 {
-    qmlRegisterUncreatableType<FlightMapSettings>("QGroundControl.SettingsManager", 1, 0, "FlightMapSettings", "Reference only");
+    qmlRegisterUncreatableType<FlightMapSettings>(
+        "QGroundControl.SettingsManager", 1, 0, "FlightMapSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(FlightMapSettings, mapProvider)

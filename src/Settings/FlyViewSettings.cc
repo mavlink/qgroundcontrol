@@ -14,7 +14,8 @@
 
 DECLARE_SETTINGGROUP(FlyView, "FlyView")
 {
-    qmlRegisterUncreatableType<FlyViewSettings>("QGroundControl.SettingsManager", 1, 0, "FlyViewSettings", "Reference only"); \
+    qmlRegisterUncreatableType<FlyViewSettings>(
+        "QGroundControl.SettingsManager", 1, 0, "FlyViewSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(FlyViewSettings, guidedMinimumAltitude)
@@ -28,4 +29,3 @@ DECLARE_SETTINGSFACT(FlyViewSettings, keepMapCenteredOnVehicle)
 DECLARE_SETTINGSFACT(FlyViewSettings, showSimpleCameraControl)
 DECLARE_SETTINGSFACT(FlyViewSettings, showObstacleDistanceOverlay)
 DECLARE_SETTINGSFACT(FlyViewSettings, updateHomePosition)
-

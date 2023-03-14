@@ -11,8 +11,7 @@
 
 #include "SettingsGroup.h"
 
-class ADSBVehicleManagerSettings : public SettingsGroup
-{
+class ADSBVehicleManagerSettings : public SettingsGroup {
     Q_OBJECT
 public:
     ADSBVehicleManagerSettings(QObject* parent = nullptr);

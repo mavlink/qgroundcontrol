@@ -14,7 +14,8 @@
 
 DECLARE_SETTINGGROUP(ADSBVehicleManager, "ADSBVehicleManager")
 {
-    qmlRegisterUncreatableType<ADSBVehicleManagerSettings>("QGroundControl.SettingsManager", 1, 0, "ADSBVehicleManagerSettings", "Reference only");
+    qmlRegisterUncreatableType<ADSBVehicleManagerSettings>(
+        "QGroundControl.SettingsManager", 1, 0, "ADSBVehicleManagerSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(ADSBVehicleManagerSettings, adsbServerConnectEnabled)

@@ -16,8 +16,7 @@
 
 /// Auto connect settings
 /// Defines which links should be automatically created and started at runtime
-class AutoConnectSettings : public SettingsGroup
-{
+class AutoConnectSettings : public SettingsGroup {
     Q_OBJECT
 
 public:

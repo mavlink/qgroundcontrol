@@ -8,11 +8,10 @@
  ****************************************************************************/
 #pragma once
 
-#include "SettingsGroup.h"
 #include "QGCMAVLink.h"
+#include "SettingsGroup.h"
 
-class FirmwareUpgradeSettings : public SettingsGroup
-{
+class FirmwareUpgradeSettings : public SettingsGroup {
     Q_OBJECT
 
 public:

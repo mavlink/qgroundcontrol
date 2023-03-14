@@ -11,8 +11,7 @@
 
 #include "SettingsGroup.h"
 
-class RTKSettings : public SettingsGroup
-{
+class RTKSettings : public SettingsGroup {
     Q_OBJECT
 public:
     RTKSettings(QObject* parent = nullptr);
