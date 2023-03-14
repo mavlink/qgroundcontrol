@@ -18,10 +18,12 @@
  * A subclass can take a weak pointer from _instance and then check if the object was deleted.
  * This is used in callbacks that access 'this', but the instance might already be deleted (e.g. vehicle disconnect).
  */
-class LifetimeChecker
-{
+class LifetimeChecker {
 public:
-    LifetimeChecker() : _instance(this, [](void*){}) { }
+    LifetimeChecker()
+        : _instance(this, [](void*) {})
+    {
+    }
     virtual ~LifetimeChecker() = default;
 
 protected:

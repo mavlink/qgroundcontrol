@@ -15,7 +15,8 @@
 
 DECLARE_SETTINGGROUP(AirMap, "AirMap")
 {
-    qmlRegisterUncreatableType<AirMapSettings>("QGroundControl.SettingsManager", 1, 0, "AirMapSettings", "Reference only");
+    qmlRegisterUncreatableType<AirMapSettings>(
+        "QGroundControl.SettingsManager", 1, 0, "AirMapSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(AirMapSettings, usePersonalApiKey)

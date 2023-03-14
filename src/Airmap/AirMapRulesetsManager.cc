@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-#include "AirspaceFlightPlanProvider.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapManager.h"
+#include "AirspaceFlightPlanProvider.h"
 #include "QGCApplication.h"
 #include <QSettings>
 
@@ -31,17 +31,20 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
     //-- Restore persisted value (if it exists)
     QSettings settings;
     settings.beginGroup(kAirMapFeatureGroup);
-    switch(_feature.type) {
+    switch (_feature.type) {
     case RuleSet::Feature::Type::boolean:
         //-- For boolean, we have 3 states: 0 - false, 1 - true and 2 - not set
         _value = settings.value(name(), 2);
-        break;;
+        break;
+        ;
     case RuleSet::Feature::Type::floating_point:
         _value = settings.value(name(), NAN);
-        break;;
+        break;
+        ;
     case RuleSet::Feature::Type::string:
         _value = settings.value(name(), QString());
-        break;;
+        break;
+        ;
     default:
         break;
     }
@@ -49,18 +52,16 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
 }
 
 //-----------------------------------------------------------------------------
-QVariant
-AirMapRuleFeature::value()
+QVariant AirMapRuleFeature::value()
 {
-    //qCDebug(AirMapManagerLog) << "Value of" << name() << "==>" << _value << type();
+    // qCDebug(AirMapManagerLog) << "Value of" << name() << "==>" << _value << type();
     return _value;
 }
 
 //-----------------------------------------------------------------------------
-AirspaceRuleFeature::Type
-AirMapRuleFeature::type()
+AirspaceRuleFeature::Type AirMapRuleFeature::type()
 {
-    switch(_feature.type) {
+    switch (_feature.type) {
     case RuleSet::Feature::Type::boolean:
         return AirspaceRuleFeature::Boolean;
     case RuleSet::Feature::Type::floating_point:
@@ -74,10 +75,9 @@ AirMapRuleFeature::type()
 }
 
 //-----------------------------------------------------------------------------
-AirspaceRuleFeature::Unit
-AirMapRuleFeature::unit()
+AirspaceRuleFeature::Unit AirMapRuleFeature::unit()
 {
-    switch(_feature.unit) {
+    switch (_feature.unit) {
     case RuleSet::Feature::Unit::kilograms:
         return AirspaceRuleFeature::Kilogram;
     case RuleSet::Feature::Unit::meters:
@@ -91,10 +91,9 @@ AirMapRuleFeature::unit()
 }
 
 //-----------------------------------------------------------------------------
-AirspaceRuleFeature::Measurement
-AirMapRuleFeature::measurement()
+AirspaceRuleFeature::Measurement AirMapRuleFeature::measurement()
 {
-    switch(_feature.measurement) {
+    switch (_feature.measurement) {
     case RuleSet::Feature::Measurement::speed:
         return AirspaceRuleFeature::Speed;
     case RuleSet::Feature::Measurement::weight:
@@ -108,25 +107,26 @@ AirMapRuleFeature::measurement()
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapRuleFeature::setValue(const QVariant val)
+void AirMapRuleFeature::setValue(const QVariant val)
 {
-    switch(_feature.type) {
+    switch (_feature.type) {
     case RuleSet::Feature::Type::boolean:
-        if(val.toInt() != 0 && val.toInt() != 1) {
+        if (val.toInt() != 0 && val.toInt() != 1) {
             return;
         }
         break;
     case RuleSet::Feature::Type::floating_point:
-        if(!std::isfinite(val.toDouble())) {
+        if (!std::isfinite(val.toDouble())) {
             return;
         }
-        break;;
+        break;
+        ;
     case RuleSet::Feature::Type::string:
-        if(val.toString().isEmpty()) {
+        if (val.toString().isEmpty()) {
             return;
         }
-        break;;
+        break;
+        ;
     default:
         return;
     }
@@ -154,16 +154,12 @@ AirMapRule::AirMapRule(const airmap::RuleSet::Rule& rule, QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-AirMapRule::~AirMapRule()
-{
-    _features.deleteListAndContents();
-}
+AirMapRule::~AirMapRule() { _features.deleteListAndContents(); }
 
 //-----------------------------------------------------------------------------
-AirspaceRule::Status
-AirMapRule::status()
+AirspaceRule::Status AirMapRule::status()
 {
-    switch(_rule.status) {
+    switch (_rule.status) {
     case RuleSet::Rule::Status::conflicting:
         return AirspaceRule::Conflicting;
     case RuleSet::Rule::Status::not_conflicting:
@@ -186,22 +182,18 @@ AirMapRuleSet::AirMapRuleSet(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-AirMapRuleSet::~AirMapRuleSet()
-{
-    _rules.deleteListAndContents();
-}
+AirMapRuleSet::~AirMapRuleSet() { _rules.deleteListAndContents(); }
 
 //-----------------------------------------------------------------------------
-void
-AirMapRuleSet::setSelected(bool sel)
+void AirMapRuleSet::setSelected(bool sel)
 {
-    if(_selectionType != AirspaceRuleSet::Required) {
-        if(_selected != sel) {
+    if (_selectionType != AirspaceRuleSet::Required) {
+        if (_selected != sel) {
             _selected = sel;
             emit selectedChanged();
         }
     } else {
-        if(!_selected) {
+        if (!_selected) {
             _selected = true;
             emit selectedChanged();
         }
@@ -215,12 +207,12 @@ AirMapRulesetsManager::AirMapRulesetsManager(AirMapSharedState& shared)
 }
 
 //-----------------------------------------------------------------------------
-static bool
-rules_sort(QObject* a, QObject* b)
+static bool rules_sort(QObject* a, QObject* b)
 {
     AirMapRule* aa = qobject_cast<AirMapRule*>(a);
     AirMapRule* bb = qobject_cast<AirMapRule*>(b);
-    if(!aa || !bb) return false;
+    if (!aa || !bb)
+        return false;
     return static_cast<int>(aa->order()) > static_cast<int>(bb->order());
 }
 
@@ -240,7 +232,7 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     _valid = false;
     //-- Save current selection state
     QMap<QString, bool> selectionSet;
-    for(int rs = 0; rs < ruleSets()->count(); rs++) {
+    for (int rs = 0; rs < ruleSets()->count(); rs++) {
         AirMapRuleSet* ruleSet = qobject_cast<AirMapRuleSet*>(ruleSets()->get(rs));
         selectionSet[ruleSet->id()] = ruleSet->selected();
     }
@@ -252,36 +244,37 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     //-- Get ROI bounding box, clipping to max area of interest
     for (const auto& qcoord : roi.polygon2D(qgcApp()->toolbox()->airspaceManager()->maxAreaOfInterest())) {
         Geometry::Coordinate coord;
-        coord.latitude  = qcoord.latitude();
+        coord.latitude = qcoord.latitude();
         coord.longitude = qcoord.longitude();
         polygon.outer_ring.coordinates.push_back(coord);
     }
     params.geometry = Geometry(polygon);
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
-    _shared.client()->rulesets().search(params,
-            [this, isAlive, selectionSet](const RuleSets::Search::Result& result) {
-        if (!isAlive.lock()) return;
-        if (_state != State::RetrieveItems) return;
+    _shared.client()->rulesets().search(params, [this, isAlive, selectionSet](const RuleSets::Search::Result& result) {
+        if (!isAlive.lock())
+            return;
+        if (_state != State::RetrieveItems)
+            return;
         if (result) {
             const std::vector<RuleSet> rulesets = result.value();
             qCDebug(AirMapManagerLog) << "Successful rulesets search. Items:" << rulesets.size();
             for (const auto& ruleset : rulesets) {
                 AirMapRuleSet* pRuleSet = new AirMapRuleSet(this);
                 connect(pRuleSet, &AirspaceRuleSet::selectedChanged, this, &AirMapRulesetsManager::_selectedChanged);
-                pRuleSet->_id          = QString::fromStdString(ruleset.id);
-                pRuleSet->_name        = QString::fromStdString(ruleset.name);
-                pRuleSet->_shortName   = QString::fromStdString(ruleset.short_name);
+                pRuleSet->_id = QString::fromStdString(ruleset.id);
+                pRuleSet->_name = QString::fromStdString(ruleset.name);
+                pRuleSet->_shortName = QString::fromStdString(ruleset.short_name);
                 pRuleSet->_description = QString::fromStdString(ruleset.description);
-                pRuleSet->_isDefault   = ruleset.is_default;
+                pRuleSet->_isDefault = ruleset.is_default;
                 //-- Restore selection set (if any)
-                if(selectionSet.contains(pRuleSet->id())) {
+                if (selectionSet.contains(pRuleSet->id())) {
                     pRuleSet->_selected = selectionSet[pRuleSet->id()];
                 } else {
-                    if(pRuleSet->_isDefault) {
+                    if (pRuleSet->_isDefault) {
                         pRuleSet->_selected = true;
                     }
                 }
-                switch(ruleset.selection_type) {
+                switch (ruleset.selection_type) {
                 case RuleSet::SelectionType::pickone:
                     pRuleSet->_selectionType = AirspaceRuleSet::Pickone;
                     break;
@@ -340,7 +333,8 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
             }
             _valid = true;
         } else {
-            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            QString description
+                = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
             emit error("Failed to retrieve RuleSets", QString::fromStdString(result.error().message()), description);
         }
         _state = State::Idle;
@@ -350,38 +344,34 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 }
 
 //-----------------------------------------------------------------------------
-QString
-AirMapRulesetsManager::selectedRuleSets()
+QString AirMapRulesetsManager::selectedRuleSets()
 {
     QString selection;
-    for(int i = 0; i < _ruleSets.count(); i++) {
+    for (int i = 0; i < _ruleSets.count(); i++) {
         AirMapRuleSet* rule = qobject_cast<AirMapRuleSet*>(_ruleSets.get(i));
-        if(rule && rule->selected()) {
+        if (rule && rule->selected()) {
             selection += rule->shortName() + ", ";
         }
     }
     int idx = selection.lastIndexOf(", ");
-    if(idx >= 0) {
+    if (idx >= 0) {
         selection = selection.left(idx);
     }
     return selection;
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapRulesetsManager::_selectedChanged()
+void AirMapRulesetsManager::_selectedChanged()
 {
     emit selectedRuleSetsChanged();
     //-- TODO: Do whatever it is you do to select a rule
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapRulesetsManager::clearAllFeatures()
+void AirMapRulesetsManager::clearAllFeatures()
 {
     QSettings settings;
     settings.beginGroup(kAirMapFeatureGroup);
     settings.remove("");
     settings.endGroup();
 }
-

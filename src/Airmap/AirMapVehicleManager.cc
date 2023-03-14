@@ -7,15 +7,14 @@
  *
  ****************************************************************************/
 
-#include "AirspaceFlightPlanProvider.h"
-#include "AirMapFlightPlanManager.h"
 #include "AirMapVehicleManager.h"
+#include "AirMapFlightPlanManager.h"
 #include "AirMapManager.h"
+#include "AirspaceFlightPlanProvider.h"
 
 #include "QGCApplication.h"
-#include "Vehicle.h"
-#include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
 
 //-----------------------------------------------------------------------------
 AirMapVehicleManager::AirMapVehicleManager(AirMapSharedState& shared, const Vehicle& vehicle)
@@ -25,25 +24,27 @@ AirMapVehicleManager::AirMapVehicleManager(AirMapSharedState& shared, const Vehi
     , _telemetry(shared)
     , _trafficMonitor(shared)
 {
-    connect(&_flightManager,  &AirMapFlightManager::error,                      this, &AirMapVehicleManager::error);
-    connect(&_telemetry,      &AirMapTelemetry::error,                          this, &AirMapVehicleManager::error);
-    connect(&_trafficMonitor, &AirMapTrafficMonitor::error,                     this, &AirMapVehicleManager::error);
-    connect(&_trafficMonitor, &AirMapTrafficMonitor::trafficUpdate,             this, &AirspaceVehicleManager::trafficUpdate);
-    AirMapFlightPlanManager* planMgr = qobject_cast<AirMapFlightPlanManager*>(qgcApp()->toolbox()->airspaceManager()->flightPlan());
-    if(planMgr) {
-        connect(planMgr,      &AirMapFlightPlanManager::flightIDChanged,        this, &AirMapVehicleManager::_flightIDChanged);
+    connect(&_flightManager, &AirMapFlightManager::error, this, &AirMapVehicleManager::error);
+    connect(&_telemetry, &AirMapTelemetry::error, this, &AirMapVehicleManager::error);
+    connect(&_trafficMonitor, &AirMapTrafficMonitor::error, this, &AirMapVehicleManager::error);
+    connect(&_trafficMonitor, &AirMapTrafficMonitor::trafficUpdate, this, &AirspaceVehicleManager::trafficUpdate);
+    AirMapFlightPlanManager* planMgr
+        = qobject_cast<AirMapFlightPlanManager*>(qgcApp()->toolbox()->airspaceManager()->flightPlan());
+    if (planMgr) {
+        connect(planMgr, &AirMapFlightPlanManager::flightIDChanged, this, &AirMapVehicleManager::_flightIDChanged);
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapVehicleManager::startTelemetryStream()
+void AirMapVehicleManager::startTelemetryStream()
 {
-    AirMapFlightPlanManager* planMgr = qobject_cast<AirMapFlightPlanManager*>(qgcApp()->toolbox()->airspaceManager()->flightPlan());
+    AirMapFlightPlanManager* planMgr
+        = qobject_cast<AirMapFlightPlanManager*>(qgcApp()->toolbox()->airspaceManager()->flightPlan());
     if (!planMgr->flightID().isEmpty()) {
         //-- Is telemetry enabled?
-        if(qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableTelemetry()->rawValue().toBool()) {
-            //-- TODO: This will start telemetry using the current flight ID in memory (current flight in AirMapFlightPlanManager)
+        if (qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableTelemetry()->rawValue().toBool()) {
+            //-- TODO: This will start telemetry using the current flight ID in memory (current flight in
+            // AirMapFlightPlanManager)
             qCDebug(AirMapManagerLog) << "AirMap telemetry stream enabled";
             _telemetry.startTelemetryStream(planMgr->flightID());
         }
@@ -53,24 +54,16 @@ AirMapVehicleManager::startTelemetryStream()
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapVehicleManager::stopTelemetryStream()
-{
-    _telemetry.stopTelemetryStream();
-}
+void AirMapVehicleManager::stopTelemetryStream() { _telemetry.stopTelemetryStream(); }
 
 //-----------------------------------------------------------------------------
-bool
-AirMapVehicleManager::isTelemetryStreaming()
-{
-    return _telemetry.isTelemetryStreaming();
-}
+bool AirMapVehicleManager::isTelemetryStreaming() { return _telemetry.isTelemetryStreaming(); }
 
 //-----------------------------------------------------------------------------
-void
-AirMapVehicleManager::endFlight()
+void AirMapVehicleManager::endFlight()
 {
-    AirMapFlightPlanManager* planMgr = qobject_cast<AirMapFlightPlanManager*>(qgcApp()->toolbox()->airspaceManager()->flightPlan());
+    AirMapFlightPlanManager* planMgr
+        = qobject_cast<AirMapFlightPlanManager*>(qgcApp()->toolbox()->airspaceManager()->flightPlan());
     if (!planMgr->flightID().isEmpty()) {
         _flightManager.endFlight(planMgr->flightID());
     }
@@ -78,8 +71,7 @@ AirMapVehicleManager::endFlight()
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapVehicleManager::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
+void AirMapVehicleManager::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
 {
     if (isTelemetryStreaming()) {
         _telemetry.vehicleMessageReceived(message);
@@ -87,12 +79,11 @@ AirMapVehicleManager::vehicleMavlinkMessageReceived(const mavlink_message_t& mes
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapVehicleManager::_flightIDChanged(QString flightID)
+void AirMapVehicleManager::_flightIDChanged(QString flightID)
 {
     qCDebug(AirMapManagerLog) << "Flight ID Changed:" << flightID;
     //-- Handle traffic monitor
-    if(flightID.isEmpty()) {
+    if (flightID.isEmpty()) {
         _trafficMonitor.stop();
     } else {
         _trafficMonitor.startConnection(flightID);

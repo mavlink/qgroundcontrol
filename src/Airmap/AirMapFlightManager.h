@@ -9,33 +9,31 @@
 
 #pragma once
 
-#include "LifetimeChecker.h"
 #include "AirMapSharedState.h"
 #include "AirspaceFlightPlanProvider.h"
+#include "LifetimeChecker.h"
 
-#include <QTimer>
-#include <QObject>
-#include <QList>
 #include <QGeoCoordinate>
+#include <QList>
+#include <QObject>
+#include <QTimer>
 
 //-----------------------------------------------------------------------------
 /// class to upload a flight
-class AirMapFlightManager : public QObject, public LifetimeChecker
-{
+class AirMapFlightManager : public QObject, public LifetimeChecker {
     Q_OBJECT
 public:
-    AirMapFlightManager             (AirMapSharedState& shared);
+    AirMapFlightManager(AirMapSharedState& shared);
 
-    void    findFlight              (const QGCGeoBoundingCube& bc);
-    void    endFlight               (const QString& id);
-    QString flightID                () { return _flightID; }
+    void findFlight(const QGCGeoBoundingCube& bc);
+    void endFlight(const QString& id);
+    QString flightID() { return _flightID; }
 
 signals:
-    void    error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
-    void    flightIDChanged         ();
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void flightIDChanged();
 
 private:
-
     enum class State {
         Idle,
         GetPilotID,
@@ -43,9 +41,8 @@ private:
         FlightEnd,
     };
 
-    State                               _state = State::Idle;
-    AirMapSharedState&                  _shared;
-    QString                             _flightID;
-    QGCGeoBoundingCube                  _searchArea;
+    State _state = State::Idle;
+    AirMapSharedState& _shared;
+    QString _flightID;
+    QGCGeoBoundingCube _searchArea;
 };
-

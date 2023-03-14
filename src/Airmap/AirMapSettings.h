@@ -11,8 +11,7 @@
 
 #include "SettingsGroup.h"
 
-class AirMapSettings : public SettingsGroup
-{
+class AirMapSettings : public SettingsGroup {
     Q_OBJECT
 public:
     AirMapSettings(QObject* parent = nullptr);
@@ -27,5 +26,4 @@ public:
     DEFINE_SETTINGFACT(enableAirMap)
     DEFINE_SETTINGFACT(enableAirspace)
     DEFINE_SETTINGFACT(enableTelemetry)
-
 };

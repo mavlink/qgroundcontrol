@@ -10,37 +10,35 @@
 #include "AirMapWeatherInfoManager.h"
 #include "AirMapManager.h"
 
-#define WEATHER_UPDATE_DISTANCE     50000           //-- 50km threshold for weather updates
-#define WEATHER_UPDATE_TIME_MSECS   30 * 60 * 1000  //-- 30 minutes threshold for weather updates
+#define WEATHER_UPDATE_DISTANCE 50000 //-- 50km threshold for weather updates
+#define WEATHER_UPDATE_TIME_MSECS 30 * 60 * 1000 //-- 30 minutes threshold for weather updates
 
 using namespace airmap;
 
-AirMapWeatherInfoManager::AirMapWeatherInfoManager(AirMapSharedState& shared, QObject *parent)
+AirMapWeatherInfoManager::AirMapWeatherInfoManager(AirMapSharedState& shared, QObject* parent)
     : AirspaceWeatherInfoProvider(parent)
     , _valid(false)
     , _shared(shared)
 {
 }
 
-void
-AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
+void AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
     //-- If first time or we've moved more than WEATHER_UPDATE_DISTANCE, ask for weather updates.
-    if(reset || (!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(roi.center()) > WEATHER_UPDATE_DISTANCE)) {
+    if (reset || (!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(roi.center()) > WEATHER_UPDATE_DISTANCE)) {
         _lastRoiCenter = roi.center();
         _requestWeatherUpdate(_lastRoiCenter);
         _weatherTimeElapsed.start();
     } else {
         //-- Check weather once every WEATHER_UPDATE_TIME
-        if(_weatherTimeElapsed.elapsed() > WEATHER_UPDATE_TIME_MSECS) {
+        if (_weatherTimeElapsed.elapsed() > WEATHER_UPDATE_TIME_MSECS) {
             _requestWeatherUpdate(roi.center());
             _weatherTimeElapsed.start();
         }
     }
 }
 
-void
-AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate)
+void AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate)
 {
     qCDebug(AirMapManagerLog) << "Weather Request (ROI Changed)";
     if (!_shared.client()) {
@@ -50,23 +48,29 @@ AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate
         return;
     }
     Advisory::ReportWeather::Parameters params;
-    params.longitude= static_cast<float>(coordinate.longitude());
+    params.longitude = static_cast<float>(coordinate.longitude());
     params.latitude = static_cast<float>(coordinate.latitude());
-    _shared.client()->advisory().report_weather(params, [this, coordinate](const Advisory::ReportWeather::Result& result) {
-        if (result) {
-            _weather = result.value();
-            _valid  = true;
-            if(_weather.icon.empty()) {
-                _icon = QStringLiteral("qrc:/airmapweather/unknown.svg");
+    _shared.client()->advisory().report_weather(
+        params, [this, coordinate](const Advisory::ReportWeather::Result& result) {
+            if (result) {
+                _weather = result.value();
+                _valid = true;
+                if (_weather.icon.empty()) {
+                    _icon = QStringLiteral("qrc:/airmapweather/unknown.svg");
+                } else {
+                    _icon = QStringLiteral("qrc:/airmapweather/")
+                        + QString::fromStdString(_weather.icon).replace("-", "_") + QStringLiteral(".svg");
+                }
+                qCDebug(AirMapManagerLog)
+                    << "Weather Info: " << _valid << "Icon:" << QString::fromStdString(_weather.icon)
+                    << "Condition:" << QString::fromStdString(_weather.condition) << "Temp:" << _weather.temperature;
             } else {
-                _icon = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(_weather.icon).replace("-", "_") + QStringLiteral(".svg");
+                _valid = false;
+                QString description
+                    = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                qCDebug(AirMapManagerLog)
+                    << "Request Weather Failed" << QString::fromStdString(result.error().message()) << description;
             }
-            qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << "Icon:" << QString::fromStdString(_weather.icon) << "Condition:" << QString::fromStdString(_weather.condition) << "Temp:" << _weather.temperature;
-        } else {
-            _valid  = false;
-            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            qCDebug(AirMapManagerLog) << "Request Weather Failed" << QString::fromStdString(result.error().message()) << description;
-        }
-        emit weatherChanged();
-    });
+            emit weatherChanged();
+        });
 }

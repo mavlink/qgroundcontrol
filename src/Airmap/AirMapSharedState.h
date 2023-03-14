@@ -21,8 +21,7 @@
  * Contains state & settings that need to be shared (such as login)
  */
 
-class AirMapSharedState : public QObject
-{
+class AirMapSharedState : public QObject {
     Q_OBJECT
 public:
     struct Settings {
@@ -33,20 +32,20 @@ public:
         QString password;
     };
 
-    void                setSettings         (const Settings& settings);
-    const Settings&     settings            () const { return _settings; }
-    void                setClient           (airmap::services::Client* client) { _client = client; }
+    void setSettings(const Settings& settings);
+    const Settings& settings() const { return _settings; }
+    void setClient(airmap::services::Client* client) { _client = client; }
 
-    QString             pilotID             () { return _pilotID; }
-    void                setPilotID          (const QString& pilotID) { _pilotID = pilotID; }
+    QString pilotID() { return _pilotID; }
+    void setPilotID(const QString& pilotID) { _pilotID = pilotID; }
 
     /**
      * Get the current client instance. It can be NULL. If not NULL, it implies
      * there's an API key set.
      */
-    airmap::services::Client*   client              () const { return _client; }
-    bool                        hasAPIKey           () const { return _settings.apiKey != ""; }
-    bool                        isLoggedIn          () const { return _loginToken != ""; }
+    airmap::services::Client* client() const { return _client; }
+    bool hasAPIKey() const { return _settings.apiKey != ""; }
+    bool isLoggedIn() const { return _loginToken != ""; }
 
     using Callback = std::function<void(const QString& /* login_token */)>;
 
@@ -54,24 +53,23 @@ public:
      * Do a request that requires user login: if not yet logged in, the request is queued and
      * processed after successful login, otherwise it's executed directly.
      */
-    void                doRequestWithLogin  (const Callback& callback);
-    void                login               ();
-    void                logout              ();
-    const QString&      loginToken          () const { return _loginToken; }
+    void doRequestWithLogin(const Callback& callback);
+    void login();
+    void logout();
+    const QString& loginToken() const { return _loginToken; }
 
 signals:
-    void    error       (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
-    void    authStatus  (AirspaceManager::AuthStatus status);
+    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void authStatus(AirspaceManager::AuthStatus status);
 
 private:
-    void _processPendingRequests            ();
+    void _processPendingRequests();
 
 private:
-    bool                        _isLoginInProgress = false;
-    QString                     _loginToken;        ///< login token: empty when not logged in
-    QString                     _pilotID;
-    airmap::services::Client*   _client = nullptr;
-    Settings                    _settings;
-    QQueue<Callback>            _pendingRequests;   ///< pending requests that are processed after a successful login
+    bool _isLoginInProgress = false;
+    QString _loginToken; ///< login token: empty when not logged in
+    QString _pilotID;
+    airmap::services::Client* _client = nullptr;
+    Settings _settings;
+    QQueue<Callback> _pendingRequests; ///< pending requests that are processed after a successful login
 };
-

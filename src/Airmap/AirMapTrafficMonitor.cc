@@ -19,41 +19,38 @@ AirMapTrafficMonitor::AirMapTrafficMonitor(AirMapSharedState& shared)
 }
 
 //-----------------------------------------------------------------------------
-AirMapTrafficMonitor::~AirMapTrafficMonitor()
-{
-    stop();
-}
+AirMapTrafficMonitor::~AirMapTrafficMonitor() { stop(); }
 
 //-----------------------------------------------------------------------------
-void
-AirMapTrafficMonitor::startConnection(const QString& flightID)
+void AirMapTrafficMonitor::startConnection(const QString& flightID)
 {
-    if(flightID.isEmpty() || _flightID == flightID) {
+    if (flightID.isEmpty() || _flightID == flightID) {
         return;
     }
     _flightID = flightID;
     qCDebug(AirMapManagerLog) << "Traffic update started for" << flightID;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     auto handler = [this, isAlive](const Traffic::Monitor::Result& result) {
-        if (!isAlive.lock()) return;
+        if (!isAlive.lock())
+            return;
         if (result) {
             _monitor = result.value();
             _subscriber = std::make_shared<Traffic::Monitor::FunctionalSubscriber>(
-                    std::bind(&AirMapTrafficMonitor::_update, this, std::placeholders::_1,  std::placeholders::_2));
+                std::bind(&AirMapTrafficMonitor::_update, this, std::placeholders::_1, std::placeholders::_2));
             _monitor->subscribe(_subscriber);
         } else {
-            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            emit error("Failed to start Traffic Monitoring",
-                    QString::fromStdString(result.error().message()), description);
+            QString description
+                = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error(
+                "Failed to start Traffic Monitoring", QString::fromStdString(result.error().message()), description);
         }
     };
-    Traffic::Monitor::Params params{flightID.toStdString(), _shared.loginToken().toStdString()};
+    Traffic::Monitor::Params params {flightID.toStdString(), _shared.loginToken().toStdString()};
     _shared.client()->traffic().monitor(params, handler);
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traffic::Update>& update)
+void AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traffic::Update>& update)
 {
     qCDebug(AirMapManagerLog) << "Traffic update with" << update.size() << "elements";
     if (type != Traffic::Update::Type::situational_awareness)
@@ -67,8 +64,7 @@ AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traf
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapTrafficMonitor::stop()
+void AirMapTrafficMonitor::stop()
 {
     if (_monitor) {
         _monitor->unsubscribe(_subscriber);
@@ -76,4 +72,3 @@ AirMapTrafficMonitor::stop()
         _monitor.reset();
     }
 }
-
