@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-#include <QTimer>
-#include <QList>
-#include <QDebug>
-#include <QMutexLocker>
-#include <iostream>
 #include "TCPLink.h"
 #include "LinkManager.h"
 #include "QGC.h"
+#include <QDebug>
 #include <QHostInfo>
+#include <QList>
+#include <QMutexLocker>
 #include <QSignalSpy>
+#include <QTimer>
+#include <iostream>
 
 TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)
@@ -27,26 +27,19 @@ TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     Q_ASSERT(_tcpConfig);
 }
 
-TCPLink::~TCPLink()
-{
-    disconnect();
-}
+TCPLink::~TCPLink() { disconnect(); }
 
 #ifdef TCPLINK_READWRITE_DEBUG
 void TCPLink::_writeDebugBytes(const QByteArray data)
 {
     QString bytes;
     QString ascii;
-    for (int i=0, size = data.size(); i<size; i++)
-    {
+    for (int i = 0, size = data.size(); i < size; i++) {
         unsigned char v = data[i];
         bytes.append(QString::asprintf("%02x ", v));
-        if (data[i] > 31 && data[i] < 127)
-        {
+        if (data[i] > 31 && data[i] < 127) {
             ascii.append(data[i]);
-        }
-        else
-        {
+        } else {
             ascii.append(219);
         }
     }
@@ -72,8 +65,7 @@ void TCPLink::_readBytes()
 {
     if (_socket) {
         qint64 byteCount = _socket->bytesAvailable();
-        if (byteCount)
-        {
+        if (byteCount) {
             QByteArray buffer;
             buffer.resize(byteCount);
             _socket->read(buffer.data(), buffer.size());
@@ -120,8 +112,7 @@ bool TCPLink::_hardwareConnect()
     _socket->connectToHost(_tcpConfig->host(), _tcpConfig->port());
 
     // Give the socket a second to connect to the other side otherwise error out
-    if (!_socket->waitForConnected(1000))
-    {
+    if (!_socket->waitForConnected(1000)) {
         // Whether a failed connection emits an error signal or not is platform specific.
         // So in cases where it is not emitted, we emit one ourselves.
         if (errorSpy.count() == 0) {
@@ -139,7 +130,8 @@ bool TCPLink::_hardwareConnect()
 void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 {
     Q_UNUSED(socketError);
-    emit communicationError(tr("Link Error"), tr("Error on link %1. Error on socket: %2.").arg(_config->name()).arg(_socket->errorString()));
+    emit communicationError(tr("Link Error"),
+        tr("Error on link %1. Error on socket: %2.").arg(_config->name()).arg(_socket->errorString()));
 }
 
 /**
@@ -147,44 +139,37 @@ void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
  *
  * @return True if link is connected, false otherwise.
  **/
-bool TCPLink::isConnected() const
-{
-    return _socketIsConnected;
-}
+bool TCPLink::isConnected() const { return _socketIsConnected; }
 
 //--------------------------------------------------------------------------
 //-- TCPConfiguration
 
-TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name)
+TCPConfiguration::TCPConfiguration(const QString& name)
+    : LinkConfiguration(name)
 {
-    _port    = QGC_TCP_PORT;
-    _host    = QLatin1String("0.0.0.0");
+    _port = QGC_TCP_PORT;
+    _host = QLatin1String("0.0.0.0");
 }
 
-TCPConfiguration::TCPConfiguration(TCPConfiguration* source) : LinkConfiguration(source)
+TCPConfiguration::TCPConfiguration(TCPConfiguration* source)
+    : LinkConfiguration(source)
 {
-    _port    = source->port();
-    _host    = source->host();
+    _port = source->port();
+    _host = source->host();
 }
 
-void TCPConfiguration::copyFrom(LinkConfiguration *source)
+void TCPConfiguration::copyFrom(LinkConfiguration* source)
 {
     LinkConfiguration::copyFrom(source);
     auto* usource = qobject_cast<TCPConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
-    _port    = usource->port();
+    _port = usource->port();
     _host = usource->host();
 }
 
-void TCPConfiguration::setPort(quint16 port)
-{
-    _port = port;
-}
+void TCPConfiguration::setPort(quint16 port) { _port = port; }
 
-void TCPConfiguration::setHost(const QString host)
-{
-    _host = host;
-}
+void TCPConfiguration::setHost(const QString host) { _host = host; }
 
 void TCPConfiguration::saveSettings(QSettings& settings, const QString& root)
 {

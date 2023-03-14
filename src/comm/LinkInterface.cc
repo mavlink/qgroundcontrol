@@ -14,11 +14,12 @@
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
 
 // The LinkManager is only forward declared in the header, so the static_assert is here instead.
-static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update LinkInterface::_mavlinkChannel");
+static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(),
+    "update LinkInterface::_mavlinkChannel");
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
-    : QThread   (0)
-    , _config   (config)
+    : QThread(0)
+    , _config(config)
     , _isPX4Flow(isPX4Flow)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -80,15 +81,12 @@ void LinkInterface::_freeMavlinkChannel()
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
 
-void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
+void LinkInterface::writeBytesThreadSafe(const char* bytes, int length)
 {
     emit _invokeWriteBytes(QByteArray(bytes, length));
 }
 
-void LinkInterface::addVehicleReference(void)
-{
-    _vehicleReferenceCount++;
-}
+void LinkInterface::addVehicleReference(void) { _vehicleReferenceCount++; }
 
 void LinkInterface::removeVehicleReference(void)
 {
@@ -108,14 +106,12 @@ void LinkInterface::_connectionRemoved(void)
         // Since there are no vehicles on the link we can disconnect it right now
         disconnect();
     } else {
-        // If there are still vehicles on this link we allow communication lost to trigger and don't automatically disconect until all the vehicles go away
+        // If there are still vehicles on this link we allow communication lost to trigger and don't automatically
+        // disconect until all the vehicles go away
     }
 }
 
 #ifdef UNITTEST_BUILD
 #include "MockLink.h"
-bool LinkInterface::isMockLink(void)
-{
-    return dynamic_cast<MockLink*>(this);
-}
+bool LinkInterface::isMockLink(void) { return dynamic_cast<MockLink*>(this); }
 #endif

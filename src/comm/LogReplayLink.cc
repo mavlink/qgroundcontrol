@@ -7,21 +7,19 @@
  *
  ****************************************************************************/
 
-
 #include "LogReplayLink.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"
 
 #include <QFileInfo>
-#include <QtEndian>
 #include <QSignalSpy>
+#include <QtEndian>
 
-const char*  LogReplayLinkConfiguration::_logFilenameKey = "logFilename";
+const char* LogReplayLinkConfiguration::_logFilenameKey = "logFilename";
 
 LogReplayLinkConfiguration::LogReplayLinkConfiguration(const QString& name)
     : LinkConfiguration(name)
 {
-    
 }
 
 LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguration* copy)
@@ -30,7 +28,7 @@ LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguratio
     _logFilename = copy->logFilename();
 }
 
-void LogReplayLinkConfiguration::copyFrom(LinkConfiguration *source)
+void LogReplayLinkConfiguration::copyFrom(LinkConfiguration* source)
 {
     LinkConfiguration::copyFrom(source);
     auto* ssource = qobject_cast<LogReplayLinkConfiguration*>(source);
@@ -62,40 +60,37 @@ QString LogReplayLinkConfiguration::logFilenameShort(void)
 }
 
 LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr& config)
-    : LinkInterface              (config)
-    , _logReplayConfig           (qobject_cast<LogReplayLinkConfiguration*>(config.get()))
-    , _connected                 (false)
-    , _mavlinkChannel            (0)
-    , _logCurrentTimeUSecs       (0)
-    , _logStartTimeUSecs         (0)
-    , _logEndTimeUSecs           (0)
-    , _logDurationUSecs          (0)
-    , _playbackSpeed             (1)
-    , _playbackStartTimeMSecs    (0)
-    , _playbackStartLogTimeUSecs (0)
-    , _mavlink                   (nullptr)
-    , _logFileSize               (0)
+    : LinkInterface(config)
+    , _logReplayConfig(qobject_cast<LogReplayLinkConfiguration*>(config.get()))
+    , _connected(false)
+    , _mavlinkChannel(0)
+    , _logCurrentTimeUSecs(0)
+    , _logStartTimeUSecs(0)
+    , _logEndTimeUSecs(0)
+    , _logDurationUSecs(0)
+    , _playbackSpeed(1)
+    , _playbackStartTimeMSecs(0)
+    , _playbackStartLogTimeUSecs(0)
+    , _mavlink(nullptr)
+    , _logFileSize(0)
 {
     if (!_logReplayConfig) {
         qWarning() << "Internal error";
     }
 
     _errorTitle = tr("Log Replay Error");
-    
+
     _readTickTimer.moveToThread(this);
-    
-    QObject::connect(&_readTickTimer, &QTimer::timeout,                 this, &LogReplayLink::_readNextLogEntry);
-    QObject::connect(this, &LogReplayLink::_playOnThread,               this, &LogReplayLink::_play);
-    QObject::connect(this, &LogReplayLink::_pauseOnThread,              this, &LogReplayLink::_pause);
-    QObject::connect(this, &LogReplayLink::_setPlaybackSpeedOnThread,   this, &LogReplayLink::_setPlaybackSpeed);
-    
+
+    QObject::connect(&_readTickTimer, &QTimer::timeout, this, &LogReplayLink::_readNextLogEntry);
+    QObject::connect(this, &LogReplayLink::_playOnThread, this, &LogReplayLink::_play);
+    QObject::connect(this, &LogReplayLink::_pauseOnThread, this, &LogReplayLink::_pause);
+    QObject::connect(this, &LogReplayLink::_setPlaybackSpeedOnThread, this, &LogReplayLink::_setPlaybackSpeed);
+
     moveToThread(this);
 }
 
-LogReplayLink::~LogReplayLink(void)
-{
-    disconnect();
-}
+LogReplayLink::~LogReplayLink(void) { disconnect(); }
 
 bool LogReplayLink::_connect(void)
 {
@@ -129,16 +124,16 @@ void LogReplayLink::run(void)
     if (!_loadLogFile()) {
         return;
     }
-    
+
     _connected = true;
     emit connected();
-    
+
     // Start playback
     _play();
 
     // Run normal event loop until exit
     exec();
-    
+
     _readTickTimer.stop();
 }
 
@@ -149,10 +144,7 @@ void LogReplayLink::_replayError(const QString& errorMsg)
 }
 
 /// Since this is log replay, we just drops writes on the floor
-void LogReplayLink::_writeBytes(const QByteArray bytes)
-{
-    Q_UNUSED(bytes);
-}
+void LogReplayLink::_writeBytes(const QByteArray bytes) { Q_UNUSED(bytes); }
 
 /// Parses a BigEndian quint64 timestamp
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
@@ -160,13 +152,13 @@ quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
 {
     quint64 timestamp = qFromBigEndian(*((quint64*)(bytes.constData())));
     quint64 currentTimestamp = ((quint64)QDateTime::currentMSecsSinceEpoch()) * 1000;
-    
+
     // Now if the parsed timestamp is in the future, it must be an old file where the timestamp was stored as
     // little endian, so switch it.
     if (timestamp > currentTimestamp) {
         timestamp = qbswap(timestamp);
     }
-    
+
     return timestamp;
 }
 
@@ -175,8 +167,8 @@ quint64 LogReplayLink::_parseTimestamp(const QByteArray& bytes)
 /// @return Unix timestamp in microseconds UTC for NEXT mavlink message or 0 if no message found
 quint64 LogReplayLink::_readNextMavlinkMessage(QByteArray& bytes)
 {
-    char                nextByte;
-    mavlink_status_t    status;
+    char nextByte;
+    mavlink_status_t status;
 
     bytes.clear();
 
@@ -205,9 +197,9 @@ quint64 LogReplayLink::_readNextMavlinkMessage(QByteArray& bytes)
 /// @return A Unix timestamp in microseconds UTC for found message or 0 if parsing failed
 quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
 {
-    char                nextByte;
-    mavlink_status_t    status;
-    qint64              messageStartPos = -1;
+    char nextByte;
+    mavlink_status_t status;
+    qint64 messageStartPos = -1;
 
     mavlink_reset_channel_status(_mavlinkChannel);
 
@@ -218,7 +210,7 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
             // This is the possible beginning of a mavlink message
             messageStartPos = _logFile.pos() - 1;
         }
-        
+
         // If we've found a message, jump back to the start of the message, grab the timestamp,
         // and go back to the end of this file.
         if (messageFound && messageStartPos != -1) {
@@ -227,19 +219,20 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
             return _parseTimestamp(rawTime);
         }
     }
-    
+
     return 0;
 }
 
 quint64 LogReplayLink::_findLastTimestamp(void)
 {
-    char                nextByte;
-    mavlink_status_t    status;
-    quint64             lastTimestamp = 0;
-    mavlink_message_t   msg;
+    char nextByte;
+    mavlink_status_t status;
+    quint64 lastTimestamp = 0;
+    mavlink_message_t msg;
 
-    // We read through the entire file looking for the last good timestamp. This can be somewhat slow, but trying to work from the
-    // end of the file can be way slower due to all the seeking back and forth required. So instead we take the simple reliable approach.
+    // We read through the entire file looking for the last good timestamp. This can be somewhat slow, but trying to
+    // work from the end of the file can be way slower due to all the seeking back and forth required. So instead we
+    // take the simple reliable approach.
 
     _logFile.reset();
     mavlink_reset_channel_status(_mavlinkChannel);
@@ -269,7 +262,7 @@ bool LogReplayLink::_loadLogFile(void)
         errorMsg = tr("Attempt to load new log while log being played");
         goto Error;
     }
-    
+
     _logFile.setFileName(logFilename);
     if (!_logFile.open(QFile::ReadOnly)) {
         errorMsg = tr("Unable to open log file: '%1', error: %2").arg(logFilename).arg(_logFile.errorString());
@@ -277,7 +270,7 @@ bool LogReplayLink::_loadLogFile(void)
     }
     logFileInfo.setFile(logFilename);
     _logFileSize = logFileInfo.size();
-    
+
     startTimeUSecs = _parseTimestamp(_logFile.read(cbTimestamp));
     endTimeUSecs = _findLastTimestamp();
 
@@ -296,11 +289,11 @@ bool LogReplayLink::_loadLogFile(void)
     _logFile.reset();
 
     logDurationSecondsTotal = (_logDurationUSecs) / 1000000;
-    
+
     emit logFileStats(logDurationSecondsTotal);
-    
+
     return true;
-    
+
 Error:
     if (_logFile.isOpen()) {
         _logFile.close();
@@ -328,7 +321,8 @@ void LogReplayLink::_readNextLogEntry(void)
         // Read the next mavlink message from the log
         qint64 nextTimeUSecs = _readNextMavlinkMessage(bytes);
         emit bytesReceived(this, bytes);
-        emit playbackPercentCompleteChanged(((float)(_logCurrentTimeUSecs - _logStartTimeUSecs) / (float)_logDurationUSecs) * 100);
+        emit playbackPercentCompleteChanged(
+            ((float)(_logCurrentTimeUSecs - _logStartTimeUSecs) / (float)_logDurationUSecs) * 100);
 
         if (_logFile.atEnd()) {
             _finishPlayback();
@@ -340,9 +334,10 @@ void LogReplayLink::_readNextLogEntry(void)
         // Calculate how long we should wait in real time until parsing this message.
         // We pace ourselves relative to the start time of playback to fix any drift (initially set in play())
 
-        quint64 currentTimeMSecs =                  (quint64)QDateTime::currentMSecsSinceEpoch();
-        quint64 desiredPlayheadMovementTimeMSecs =  ((_logCurrentTimeUSecs - _playbackStartLogTimeUSecs) / 1000) / _playbackSpeed;
-        quint64 desiredCurrentTimeMSecs =           _playbackStartTimeMSecs + desiredPlayheadMovementTimeMSecs;
+        quint64 currentTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
+        quint64 desiredPlayheadMovementTimeMSecs
+            = ((_logCurrentTimeUSecs - _playbackStartLogTimeUSecs) / 1000) / _playbackSpeed;
+        quint64 desiredCurrentTimeMSecs = _playbackStartTimeMSecs + desiredPlayheadMovementTimeMSecs;
 
         timeToNextExecutionMSecs = desiredCurrentTimeMSecs - currentTimeMSecs;
     }
@@ -359,16 +354,16 @@ void LogReplayLink::_play(void)
 #ifndef __mobile__
     qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(true);
 #endif
-    
+
     // Make sure we aren't at the end of the file, if we are, reset to the beginning and play from there.
     if (_logFile.atEnd()) {
         _resetPlaybackToBeginning();
     }
-    
+
     _playbackStartTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
     _playbackStartLogTimeUSecs = _logCurrentTimeUSecs;
     _readTickTimer.start(1);
-    
+
     emit playbackStarted();
 }
 
@@ -378,9 +373,9 @@ void LogReplayLink::_pause(void)
 #ifndef __mobile__
     qgcApp()->toolbox()->mavlinkProtocol()->suspendLogForReplay(false);
 #endif
-    
+
     _readTickTimer.stop();
-    
+
     emit playbackPaused();
 }
 
@@ -389,7 +384,7 @@ void LogReplayLink::_resetPlaybackToBeginning(void)
     if (_logFile.isOpen()) {
         _logFile.reset();
     }
-    
+
     // And since we haven't starting playback, clear the time of initial playback and the current timestamp.
     _playbackStartTimeMSecs = 0;
     _playbackStartLogTimeUSecs = 0;
@@ -413,9 +408,9 @@ void LogReplayLink::movePlayhead(qreal percentComplete)
     if (percentComplete > 100) {
         percentComplete = 100;
     }
-    
+
     qreal percentCompleteMult = percentComplete / 100.0;
-    
+
     // But if we have a timestamped MAVLink log, then actually aim to hit that percentage in terms of
     // time through the file.
     qint64 newFilePos = (qint64)(percentCompleteMult * (qreal)_logFile.size());
@@ -460,7 +455,7 @@ void LogReplayLink::movePlayhead(qreal percentComplete)
 void LogReplayLink::_setPlaybackSpeed(qreal playbackSpeed)
 {
     _playbackSpeed = playbackSpeed;
-    
+
     // Let _readNextLogEntry update to correct speed
     _playbackStartTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
     _playbackStartLogTimeUSecs = _logCurrentTimeUSecs;
@@ -471,7 +466,7 @@ void LogReplayLink::_setPlaybackSpeed(qreal playbackSpeed)
 void LogReplayLink::_finishPlayback(void)
 {
     _pause();
-    
+
     emit playbackAtEnd();
 }
 
@@ -481,11 +476,11 @@ void LogReplayLink::_signalCurrentLogTimeSecs(void)
 }
 
 LogReplayLinkController::LogReplayLinkController(void)
-    : _link             (nullptr)
-    , _isPlaying        (false)
-    , _percentComplete  (0)
-    , _playheadSecs     (0)
-    , _playbackSpeed    (1)
+    : _link(nullptr)
+    , _isPlaying(false)
+    , _percentComplete(0)
+    , _playheadSecs(0)
+    , _playbackSpeed(1)
 {
 }
 
@@ -506,16 +501,16 @@ void LogReplayLinkController::setLink(LogReplayLink* link)
         emit linkChanged(nullptr);
     }
 
-
     if (link) {
         _link = link;
 
-        connect(_link, &LogReplayLink::logFileStats,                      this, &LogReplayLinkController::_logFileStats);
-        connect(_link, &LogReplayLink::playbackStarted,                   this, &LogReplayLinkController::_playbackStarted);
-        connect(_link, &LogReplayLink::playbackPaused,                    this, &LogReplayLinkController::_playbackPaused);
-        connect(_link, &LogReplayLink::playbackPercentCompleteChanged,    this, &LogReplayLinkController::_playbackPercentCompleteChanged);
-        connect(_link, &LogReplayLink::currentLogTimeSecs,                this, &LogReplayLinkController::_currentLogTimeSecs);
-        connect(_link, &LogReplayLink::disconnected,                      this, &LogReplayLinkController::_linkDisconnected);
+        connect(_link, &LogReplayLink::logFileStats, this, &LogReplayLinkController::_logFileStats);
+        connect(_link, &LogReplayLink::playbackStarted, this, &LogReplayLinkController::_playbackStarted);
+        connect(_link, &LogReplayLink::playbackPaused, this, &LogReplayLinkController::_playbackPaused);
+        connect(_link, &LogReplayLink::playbackPercentCompleteChanged, this,
+            &LogReplayLinkController::_playbackPercentCompleteChanged);
+        connect(_link, &LogReplayLink::currentLogTimeSecs, this, &LogReplayLinkController::_currentLogTimeSecs);
+        connect(_link, &LogReplayLink::disconnected, this, &LogReplayLinkController::_linkDisconnected);
 
         connect(this, &LogReplayLinkController::playbackSpeedChanged, _link, &LogReplayLink::setPlaybackSpeed);
 
@@ -532,10 +527,7 @@ void LogReplayLinkController::setIsPlaying(bool isPlaying)
     }
 }
 
-void LogReplayLinkController::setPercentComplete(qreal percentComplete)
-{
-    _link->movePlayhead(percentComplete);
-}
+void LogReplayLinkController::setPercentComplete(qreal percentComplete) { _link->movePlayhead(percentComplete); }
 
 void LogReplayLinkController::_logFileStats(int logDurationSecs)
 {
@@ -576,22 +568,22 @@ void LogReplayLinkController::_currentLogTimeSecs(int secs)
     }
 }
 
-void LogReplayLinkController::_linkDisconnected(void)
-{
-    setLink(nullptr);
-}
+void LogReplayLinkController::_linkDisconnected(void) { setLink(nullptr); }
 
 QString LogReplayLinkController::_secondsToHMS(int seconds)
 {
-    int secondsPart  = seconds;
-    int minutesPart  = secondsPart / 60;
-    int hoursPart    = minutesPart / 60;
+    int secondsPart = seconds;
+    int minutesPart = secondsPart / 60;
+    int hoursPart = minutesPart / 60;
     secondsPart -= 60 * minutesPart;
     minutesPart -= 60 * hoursPart;
 
     if (hoursPart == 0) {
         return tr("%2m:%3s").arg(minutesPart, 2, 10, QLatin1Char('0')).arg(secondsPart, 2, 10, QLatin1Char('0'));
     } else {
-        return tr("%1h:%2m:%3s").arg(hoursPart, 2, 10, QLatin1Char('0')).arg(minutesPart, 2, 10, QLatin1Char('0')).arg(secondsPart, 2, 10, QLatin1Char('0'));
+        return tr("%1h:%2m:%3s")
+            .arg(hoursPart, 2, 10, QLatin1Char('0'))
+            .arg(minutesPart, 2, 10, QLatin1Char('0'))
+            .arg(secondsPart, 2, 10, QLatin1Char('0'));
     }
 }

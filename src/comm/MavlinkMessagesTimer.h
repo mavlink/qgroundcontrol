@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QTimer>
 #include <QObject>
+#include <QTimer>
 
 /**
  * @brief The MavlinkMessagesTimer class
@@ -20,8 +20,7 @@
  * status is set to inactive. On any status change the activeChanged signal is emitted.
  * If high_latency is true then active is always true.
  */
-class MavlinkMessagesTimer : public QObject
-{
+class MavlinkMessagesTimer : public QObject {
     Q_OBJECT
 
 public:
@@ -99,6 +98,5 @@ private:
     int _vehicleID = -1; // Vehicle ID for which the heartbeat is tracked.
     bool _high_latency = false; // Indicates if the link is a high latency link or not.
 
-    static const int    _messageReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
+    static const int _messageReceivedTimeoutMSecs = 3500; // Signal connection lost after 3.5 seconds of no messages
 };
-

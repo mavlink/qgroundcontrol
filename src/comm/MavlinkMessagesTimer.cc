@@ -11,11 +11,11 @@
 
 #include <QDebug>
 
-MavlinkMessagesTimer::MavlinkMessagesTimer(int vehicle_id, bool high_latency) :
-    _active(true),
-    _timer(new QTimer),
-    _vehicleID(vehicle_id),
-    _high_latency(high_latency)
+MavlinkMessagesTimer::MavlinkMessagesTimer(int vehicle_id, bool high_latency)
+    : _active(true)
+    , _timer(new QTimer)
+    , _vehicleID(vehicle_id)
+    , _high_latency(high_latency)
 {
 }
 
@@ -29,7 +29,6 @@ void MavlinkMessagesTimer::init()
     emit activeChanged(true, _vehicleID);
     QObject::connect(_timer, &QTimer::timeout, this, &MavlinkMessagesTimer::timerTimeout);
 }
-
 
 MavlinkMessagesTimer::~MavlinkMessagesTimer()
 {
