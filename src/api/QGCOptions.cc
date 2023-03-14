@@ -21,15 +21,9 @@ QGCOptions::QGCOptions(QObject* parent)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QColor QGCOptions::toolbarBackgroundLight() const
-{
-    return QColor(255,255,255);
-}
+QColor QGCOptions::toolbarBackgroundLight() const { return QColor(255, 255, 255); }
 
-QColor QGCOptions::toolbarBackgroundDark() const
-{
-    return QColor(0,0,0);
-}
+QColor QGCOptions::toolbarBackgroundDark() const { return QColor(0, 0, 0); }
 
 QGCFlyViewOptions* QGCOptions::flyViewOptions(void)
 {
@@ -40,8 +34,8 @@ QGCFlyViewOptions* QGCOptions::flyViewOptions(void)
 }
 
 QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions* options, QObject* parent)
-    : QObject   (parent)
-    , _options  (options)
+    : QObject(parent)
+    , _options(options)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }

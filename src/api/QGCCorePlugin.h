@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "QGCToolbox.h"
-#include "QGCPalette.h"
 #include "QGCMAVLink.h"
+#include "QGCPalette.h"
+#include "QGCToolbox.h"
 #include "QmlObjectListModel.h"
 
 #include <QObject>
@@ -39,26 +39,25 @@ class QGCCameraControl;
 class QQuickItem;
 class InstrumentValueAreaController;
 
-class QGCCorePlugin : public QGCTool
-{
+class QGCCorePlugin : public QGCTool {
     Q_OBJECT
 public:
     QGCCorePlugin(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList         settingsPages                   READ settingsPages                                  NOTIFY settingsPagesChanged)
-    Q_PROPERTY(QVariantList         analyzePages                    READ analyzePages                                   NOTIFY analyzePagesChanged)
-    Q_PROPERTY(int                  defaultSettings                 READ defaultSettings                                CONSTANT)
-    Q_PROPERTY(QGCOptions*          options                         READ options                                        CONSTANT)
-    Q_PROPERTY(bool                 showTouchAreas                  READ showTouchAreas         WRITE setShowTouchAreas NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool                 showAdvancedUI                  READ showAdvancedUI         WRITE setShowAdvancedUI NOTIFY showAdvancedUIChanged)
-    Q_PROPERTY(QString              showAdvancedUIMessage           READ showAdvancedUIMessage                          CONSTANT)
-    Q_PROPERTY(QString              brandImageIndoor                READ brandImageIndoor                               CONSTANT)
-    Q_PROPERTY(QString              brandImageOutdoor               READ brandImageOutdoor                              CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  customMapItems                  READ customMapItems                                 CONSTANT)
-    Q_PROPERTY(QVariantList         toolBarIndicators               READ toolBarIndicators                              NOTIFY toolBarIndicatorsChanged)
-    Q_PROPERTY(int                  unitsFirstRunPromptId           MEMBER unitsFirstRunPromptId                        CONSTANT)
-    Q_PROPERTY(int                  offlineVehicleFirstRunPromptId  MEMBER offlineVehicleFirstRunPromptId               CONSTANT)
+    Q_PROPERTY(QVariantList settingsPages READ settingsPages NOTIFY settingsPagesChanged)
+    Q_PROPERTY(QVariantList analyzePages READ analyzePages NOTIFY analyzePagesChanged)
+    Q_PROPERTY(int defaultSettings READ defaultSettings CONSTANT)
+    Q_PROPERTY(QGCOptions* options READ options CONSTANT)
+    Q_PROPERTY(bool showTouchAreas READ showTouchAreas WRITE setShowTouchAreas NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool showAdvancedUI READ showAdvancedUI WRITE setShowAdvancedUI NOTIFY showAdvancedUIChanged)
+    Q_PROPERTY(QString showAdvancedUIMessage READ showAdvancedUIMessage CONSTANT)
+    Q_PROPERTY(QString brandImageIndoor READ brandImageIndoor CONSTANT)
+    Q_PROPERTY(QString brandImageOutdoor READ brandImageOutdoor CONSTANT)
+    Q_PROPERTY(QmlObjectListModel* customMapItems READ customMapItems CONSTANT)
+    Q_PROPERTY(QVariantList toolBarIndicators READ toolBarIndicators NOTIFY toolBarIndicatorsChanged)
+    Q_PROPERTY(int unitsFirstRunPromptId MEMBER unitsFirstRunPromptId CONSTANT)
+    Q_PROPERTY(int offlineVehicleFirstRunPromptId MEMBER offlineVehicleFirstRunPromptId CONSTANT)
 
     Q_INVOKABLE bool guidedActionsControllerLogging() const;
 
@@ -126,28 +125,29 @@ public:
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
     virtual bool mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message);
 
-    /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel should derive from QmlComponentInfo and set the url property.
+    /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel should derive
+    /// from QmlComponentInfo and set the url property.
     virtual QmlObjectListModel* customMapItems();
 
     /// Allows custom builds to add custom items to the plan file before the document is created.
-    virtual void    preSaveToJson           (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
+    virtual void preSaveToJson(PlanMasterController* /*pController*/, QJsonObject& /*json*/) { }
     /// Allows custom builds to add custom items to the plan file after the document is created.
-    virtual void    postSaveToJson          (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
+    virtual void postSaveToJson(PlanMasterController* /*pController*/, QJsonObject& /*json*/) { }
 
     /// Allows custom builds to add custom items to the mission section of the plan file before the item is created.
-    virtual void    preSaveToMissionJson    (PlanMasterController* /*pController*/, QJsonObject& /*missionJson*/) {}
+    virtual void preSaveToMissionJson(PlanMasterController* /*pController*/, QJsonObject& /*missionJson*/) { }
     /// Allows custom builds to add custom items to the mission section of the plan file after the item is created.
-    virtual void    postSaveToMissionJson   (PlanMasterController* /*pController*/, QJsonObject& /*missionJson*/) {}
+    virtual void postSaveToMissionJson(PlanMasterController* /*pController*/, QJsonObject& /*missionJson*/) { }
 
     /// Allows custom builds to load custom items from the plan file before the document is parsed.
-    virtual void    preLoadFromJson     (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
+    virtual void preLoadFromJson(PlanMasterController* /*pController*/, QJsonObject& /*json*/) { }
     /// Allows custom builds to load custom items from the plan file after the document is parsed.
-    virtual void    postLoadFromJson    (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
+    virtual void postLoadFromJson(PlanMasterController* /*pController*/, QJsonObject& /*json*/) { }
 
-    /// Returns the url to download the stable version check file. Return QString() to indicate no version check should be performed.
-    /// Default QGC mainline implemenentation returns QGC Stable file location. Default QGC custom build code returns QString().
-    /// Custom builds can override to turn on and provide their own location.
-    /// The contents of this file should be a single line in the form:
+    /// Returns the url to download the stable version check file. Return QString() to indicate no version check should
+    /// be performed. Default QGC mainline implemenentation returns QGC Stable file location. Default QGC custom build
+    /// code returns QString(). Custom builds can override to turn on and provide their own location. The contents of
+    /// this file should be a single line in the form:
     ///     v3.4.4
     /// This indicates the latest stable version number.
     virtual QString stableVersionCheckFileUrl() const;
@@ -159,7 +159,10 @@ public:
     /// Returns the complex mission items to display in the Plan UI
     /// @param complexMissionItemNames Default set of complex items
     /// @return Complex items to be made available to user
-    virtual QStringList complexMissionItemNames(Vehicle* /*vehicle*/, const QStringList& complexMissionItemNames) { return complexMissionItemNames; }
+    virtual QStringList complexMissionItemNames(Vehicle* /*vehicle*/, const QStringList& complexMissionItemNames)
+    {
+        return complexMissionItemNames;
+    }
 
     /// Returns the standard list of first run prompt ids for possible display. Actual display is based on the
     /// current AppSettings::firstRunPromptIds value. The order of this list also determines the order the prompts
@@ -188,30 +191,30 @@ public:
     void setShowAdvancedUI(bool show);
 
     // Override from QGCTool
-    void                            setToolbox              (QGCToolbox* toolbox);
+    void setToolbox(QGCToolbox* toolbox);
 
     // Standard first run prompt ids
-    static const int unitsFirstRunPromptId =            1;
-    static const int offlineVehicleFirstRunPromptId =   2;
+    static const int unitsFirstRunPromptId = 1;
+    static const int offlineVehicleFirstRunPromptId = 2;
 
     // Custom builds can start there first run prompt ids from here
     static const int firstRunPromptIdsFirstCustomId = 10000;
 
 signals:
-    void settingsPagesChanged       ();
-    void analyzePagesChanged        ();
-    void showTouchAreasChanged      (bool showTouchAreas);
-    void showAdvancedUIChanged      (bool showAdvancedUI);
-    void toolBarIndicatorsChanged   ();
+    void settingsPagesChanged();
+    void analyzePagesChanged();
+    void showTouchAreasChanged(bool showTouchAreas);
+    void showAdvancedUIChanged(bool showAdvancedUI);
+    void toolBarIndicatorsChanged();
 
 protected:
-    bool                _showTouchAreas;
-    bool                _showAdvancedUI;
-    Vehicle*            _activeVehicle  = nullptr;
-    QGCCameraManager*   _cameraManager  = nullptr;
-    QGCCameraControl*   _currentCamera  = nullptr;
-    QVariantList        _toolBarIndicatorList;
+    bool _showTouchAreas;
+    bool _showAdvancedUI;
+    Vehicle* _activeVehicle = nullptr;
+    QGCCameraManager* _cameraManager = nullptr;
+    QGCCameraControl* _currentCamera = nullptr;
+    QVariantList _toolBarIndicatorList;
 
 private:
-    QGCCorePlugin_p*    _p;
+    QGCCorePlugin_p* _p;
 };

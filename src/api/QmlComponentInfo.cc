@@ -10,10 +10,9 @@
 #include "QmlComponentInfo.h"
 
 QmlComponentInfo::QmlComponentInfo(QString title, QUrl url, QUrl icon, QObject* parent)
-    : QObject   (parent)
-    , _title    (title)
-    , _url      (url)
-    , _icon     (icon)
+    : QObject(parent)
+    , _title(title)
+    , _url(url)
+    , _icon(icon)
 {
-
 }

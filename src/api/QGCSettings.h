@@ -16,22 +16,21 @@
 /// @brief Core Plugin Interface for QGroundControl. Settings element.
 /// @author Gus Grubba <gus@auterion.com>
 
-class QGCSettings : public QObject
-{
+class QGCSettings : public QObject {
     Q_OBJECT
 public:
     QGCSettings(QString title, QUrl url, QUrl icon = QUrl());
 
-    Q_PROPERTY(QString  title       READ title      CONSTANT)
-    Q_PROPERTY(QUrl     url         READ url        CONSTANT)
-    Q_PROPERTY(QUrl     icon        READ icon       CONSTANT)
+    Q_PROPERTY(QString title READ title CONSTANT)
+    Q_PROPERTY(QUrl url READ url CONSTANT)
+    Q_PROPERTY(QUrl icon READ icon CONSTANT)
 
-    virtual QString     title       () { return _title; }
-    virtual QUrl        url         () { return _url;   }
-    virtual QUrl        icon        () { return _icon;  }
+    virtual QString title() { return _title; }
+    virtual QUrl url() { return _url; }
+    virtual QUrl icon() { return _icon; }
 
 protected:
     QString _title;
-    QUrl    _url;
-    QUrl    _icon;
+    QUrl _url;
+    QUrl _icon;
 };
