@@ -7,19 +7,18 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #ifndef FirmwarePlugin_H
 #define FirmwarePlugin_H
 
-#include "QGCMAVLink.h"
-#include "VehicleComponent.h"
 #include "AutoPilotPlugin.h"
-#include "GeoFenceManager.h"
-#include "RallyPointManager.h"
 #include "FollowMe.h"
+#include "GeoFenceManager.h"
+#include "QGCMAVLink.h"
+#include "RallyPointManager.h"
+#include "VehicleComponent.h"
 
 #include <QList>
 #include <QString>
@@ -37,21 +36,20 @@ class Autotune;
 /// QGroundControl source is generic to a common mavlink implementation. The implementation in the base class supports
 /// mavlink generic firmware. Override the base clase virtuals to create your own firmware specific plugin.
 
-class FirmwarePlugin : public QObject
-{
+class FirmwarePlugin : public QObject {
     Q_OBJECT
 
 public:
-    FirmwarePlugin ();
+    FirmwarePlugin();
 
     /// Set of optional capabilites which firmware may support
     typedef enum {
-        SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
-        PauseVehicleCapability =            1 << 1, ///< Vehicle supports pausing at current location
-        GuidedModeCapability =              1 << 2, ///< Vehicle supports guided mode commands
-        OrbitModeCapability =               1 << 3, ///< Vehicle supports orbit mode
-        TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
-        ROIModeCapability =                 1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
+        SetFlightModeCapability = 1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
+        PauseVehicleCapability = 1 << 1, ///< Vehicle supports pausing at current location
+        GuidedModeCapability = 1 << 2, ///< Vehicle supports guided mode commands
+        OrbitModeCapability = 1 << 3, ///< Vehicle supports orbit mode
+        TakeoffVehicleCapability = 1 << 4, ///< Vehicle supports guided takeoff
+        ROIModeCapability = 1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
@@ -76,7 +74,7 @@ public:
     virtual void initializeVehicle(Vehicle* vehicle);
 
     /// @return true: Firmware supports all specified capabilites
-    virtual bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities);
+    virtual bool isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities);
 
     /// Returns VehicleComponents for specified Vehicle
     ///     @param vehicle Vehicle  to associate with components
@@ -176,7 +174,7 @@ public:
     ///     @param pauseVehicle true: pause vehicle prior to altitude change
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
 
-        /// Command vehicle to change groundspeed
+    /// Command vehicle to change groundspeed
     ///     @param groundspeed Groundspeed in m/s
     virtual void guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed);
 
@@ -195,7 +193,7 @@ public:
 
     /// Returns true if the vehicle and firmware supports the use of negative thrust
     /// Typically supported rover.
-    virtual bool supportsNegativeThrust(Vehicle *);
+    virtual bool supportsNegativeThrust(Vehicle*);
 
     /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
     /// setup page. Returns true by default.
@@ -226,7 +224,8 @@ public:
     ///     @param vehicle Vehicle message came from
     ///     @param outgoingLink Link that messae is going out on
     ///     @param message[in,out] Mavlink message to adjust if needed.
-    virtual void adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
+    virtual void adjustOutgoingMavlinkMessageThreadSafe(
+        Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
 
     /// Determines how to handle the first item of the mission item list. Internally to QGC the first item
     /// is always the home position.
@@ -254,13 +253,18 @@ public:
     /// Returns the FactMetaData associated with the parameter name
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
     /// Important: Only CompInfoParam code should use this method
-    virtual FactMetaData* _getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/) { return nullptr; }
+    virtual FactMetaData* _getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/,
+        FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/)
+    {
+        return nullptr;
+    }
 
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass);
 
     /// Returns the name of the mission command json override file for the specified vehicle type.
-    ///     @param vehicleClass Vehicle class to return file for, VehicleClassGeneric is a request for overrides for all vehicle types
+    ///     @param vehicleClass Vehicle class to return file for, VehicleClassGeneric is a request for overrides for all
+    ///     vehicle types
     virtual QString missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const;
 
     /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
@@ -284,10 +288,12 @@ public:
     /// Return the resource file which contains the brand image for the vehicle for Outdoor theme.
     virtual QString brandImageOutdoor(const Vehicle* /*vehicle*/) const { return QString(); }
 
-    /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark
+    /// (Satellite for instance)
     virtual QString vehicleImageOpaque(const Vehicle* vehicle) const;
 
-    /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
+    /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for
+    /// instance)
     virtual QString vehicleImageOutline(const Vehicle* vehicle) const;
 
     /// Return the resource file which contains the vehicle icon used in the compass
@@ -308,10 +314,11 @@ public:
     virtual const QVariantList& cameraList(const Vehicle* vehicle);
 
     /// Creates vehicle camera manager.
-    virtual QGCCameraManager* createCameraManager(Vehicle *vehicle);
+    virtual QGCCameraManager* createCameraManager(Vehicle* vehicle);
 
     /// Camera control.
-    virtual QGCCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
+    virtual QGCCameraControl* createCameraControl(
+        const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
 
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*>* factGroups(void);
@@ -346,19 +353,24 @@ public:
     /// Allows the Firmware plugin to override the facts meta data.
     ///     @param vehicleType - Type of current vehicle
     ///     @param metaData - MetaData for fact
-    virtual void adjustMetaData(MAV_TYPE /*vehicleType*/, FactMetaData* /*metaData*/) {}
+    virtual void adjustMetaData(MAV_TYPE /*vehicleType*/, FactMetaData* /*metaData*/) { }
 
     /// Sends the appropriate mavlink message for follow me support
-    virtual void sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
+    virtual void sendGCSMotionReport(
+        Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
 
     // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
-    virtual QString getHobbsMeter(Vehicle* vehicle) { Q_UNUSED(vehicle); return "Not Supported"; }
+    virtual QString getHobbsMeter(Vehicle* vehicle)
+    {
+        Q_UNUSED(vehicle);
+        return "Not Supported";
+    }
 
     /// Creates Autotune object.
-    virtual Autotune* createAutotune(Vehicle *vehicle);
+    virtual Autotune* createAutotune(Vehicle* vehicle);
 
 signals:
     void toolIndicatorsChanged(void);
@@ -386,11 +398,10 @@ private:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
 
-    static QVariantList _cameraList;    ///< Standard QGC camera list
+    static QVariantList _cameraList; ///< Standard QGC camera list
 };
 
-class FirmwarePluginFactory : public QObject
-{
+class FirmwarePluginFactory : public QObject {
     Q_OBJECT
 
 public:
@@ -409,8 +420,7 @@ public:
     virtual QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses(void) const;
 };
 
-class FirmwarePluginFactoryRegister : public QObject
-{
+class FirmwarePluginFactoryRegister : public QObject {
     Q_OBJECT
 
 public:

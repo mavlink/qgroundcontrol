@@ -19,8 +19,7 @@ class QGCApplication;
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
 
-class FirmwarePluginManager : public QGCTool
-{
+class FirmwarePluginManager : public QGCTool {
     Q_OBJECT
 
 public:
@@ -42,6 +41,6 @@ public:
 private:
     FirmwarePluginFactory* _findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass);
 
-    FirmwarePlugin*                     _genericFirmwarePlugin;
-    QList<QGCMAVLink::FirmwareClass_t>  _supportedFirmwareClasses;
+    FirmwarePlugin* _genericFirmwarePlugin;
+    QList<QGCMAVLink::FirmwareClass_t> _supportedFirmwareClasses;
 };
