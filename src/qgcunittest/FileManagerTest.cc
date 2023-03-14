@@ -7,38 +7,36 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FileManagerTest.h"
 #include "MultiVehicleManager.h"
-#include "UAS.h"
 #include "QGCApplication.h"
+#include "UAS.h"
 
 FileManagerTest::FileManagerTest(void)
     : _fileServer(NULL)
     , _fileManager(NULL)
     , _multiSpy(NULL)
 {
-
 }
 
 // Called before every test case
 void FileManagerTest::init(void)
 {
     UnitTest::init();
-    
+
     _connectMockLink();
 
     _fileServer = _mockLink->getFileServer();
     QVERIFY(_fileServer != NULL);
-    
+
     _fileManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->uas()->getFileManager();
     QVERIFY(_fileManager != NULL);
-    
+
     Q_ASSERT(_multiSpy == NULL);
-    
+
     // Reset any internal state back to normal
     _fileServer->setErrorMode(MockLinkFileServer::errModeNone);
     _fileListReceived.clear();
@@ -59,18 +57,18 @@ void FileManagerTest::cleanup(void)
 {
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_fileManager);
-    
+
     // Disconnecting the link will prompt for log file save
     setExpectedFileDialog(getSaveFileName, QStringList());
     _disconnectMockLink();
 
     _fileServer = NULL;
     _fileManager = NULL;
-    
+
     delete _multiSpy;
-    
+
     _multiSpy = NULL;
-    
+
     UnitTest::cleanup();
 }
 
@@ -81,20 +79,19 @@ void FileManagerTest::listEntry(const QString& entry)
     _fileListReceived += entry;
 }
 
-
 void FileManagerTest::_ackTest(void)
 {
     Q_ASSERT(_fileManager);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
-    
+
     // If the file manager doesn't receive an ack it will timeout and emit an error. So make sure
     // we don't get any error signals.
-    //TODO: FIX
-    //QVERIFY(_fileManager->_sendCmdTestAck());
-    //QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
-    //QVERIFY(_multiSpy->checkNoSignals());
-    
+    // TODO: FIX
+    // QVERIFY(_fileManager->_sendCmdTestAck());
+    // QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
+    // QVERIFY(_multiSpy->checkNoSignals());
+
     // Setup for no response from ack. This should cause a timeout error
     _fileServer->setErrorMode(MockLinkFileServer::errModeNoResponse);
     QVERIFY(_fileManager->_sendCmdTestAck());
@@ -115,7 +112,7 @@ void FileManagerTest::_noAckTest(void)
     Q_ASSERT(_fileManager);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
-    
+
     // This should not get the ack back and timeout.
     QVERIFY(_fileManager->_sendCmdTestNoAck());
     QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
@@ -130,7 +127,7 @@ void FileManagerTest::_listTest(void)
 
     // test the automatic retry behavior by enabling random drops
     _fileServer->enableRandromDrops(true);
-    
+
     // FileManager::listDirectory signalling as follows:
     //  Emits a listEntry signal for each list entry
     //  Emits an commandError signal if:
@@ -141,7 +138,7 @@ void FileManagerTest::_listTest(void)
     //  It is possible to get a number of good listEntry signals, followed by an commandError signal
     //  Emits commandComplete after it receives the final list entry
     //      If an commandError signal is signalled no listComplete is signalled
-    
+
     // Send a bogus path
     //  We should get a single commandError signal
     _fileManager->listDirectory("/bogus");
@@ -151,9 +148,11 @@ void FileManagerTest::_listTest(void)
 
     // Setup the mock file server with a valid directory list
     QStringList fileList;
-    fileList << "Ddir" << "Ffoo" << "Fbar";
+    fileList << "Ddir"
+             << "Ffoo"
+             << "Fbar";
     _fileServer->setFileList(fileList);
-    
+
     // Send a list command at the root of the directory tree which should succeed
     _fileManager->listDirectory("/");
     QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
@@ -161,32 +160,33 @@ void FileManagerTest::_listTest(void)
     QCOMPARE(_multiSpy->checkNoSignalByMask(commandErrorSignalMask), true);
     QCOMPARE(_multiSpy->getSpyByIndex(listEntrySignalIndex)->count(), fileList.count());
     QVERIFY(_fileListReceived == fileList);
-    
+
     // Set everything back to initial state
     _fileListReceived.clear();
     _multiSpy->clearAllSignals();
-    
+
     // Run through the various server side failure modes
-    for (size_t i=0; i<MockLinkFileServer::cFailureModes; i++) {
+    for (size_t i = 0; i < MockLinkFileServer::cFailureModes; i++) {
         MockLinkFileServer::ErrorMode_t errMode = MockLinkFileServer::rgFailureModes[i];
         qDebug() << "Testing failure mode:" << errMode;
         _fileServer->setErrorMode(errMode);
-        
+
         _fileManager->listDirectory("/");
         QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
-        
-        if (errMode == MockLinkFileServer::errModeNoSecondResponse || errMode == MockLinkFileServer::errModeNakSecondResponse) {
-            // For simulated server errors on subsequent Acks, the first Ack will go through. This means we should have gotten some
-            // partial results. In the case of the directory list test set, all entries fit into the first ack, so we should have
-            // gotten back all of them.
+
+        if (errMode == MockLinkFileServer::errModeNoSecondResponse
+            || errMode == MockLinkFileServer::errModeNakSecondResponse) {
+            // For simulated server errors on subsequent Acks, the first Ack will go through. This means we should have
+            // gotten some partial results. In the case of the directory list test set, all entries fit into the first
+            // ack, so we should have gotten back all of them.
             QCOMPARE(_multiSpy->getSpyByIndex(listEntrySignalIndex)->count(), fileList.count());
             _multiSpy->clearSignalByIndex(listEntrySignalIndex);
-            
+
             // And then it should have errored out because the next list Request would have failed.
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandErrorSignalMask), true);
         } else {
-            // For the simulated errors which failed the initial response we should not have gotten any results back at all.
-            // Just an error.
+            // For the simulated errors which failed the initial response we should not have gotten any results back at
+            // all. Just an error.
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandErrorSignalMask), true);
         }
 

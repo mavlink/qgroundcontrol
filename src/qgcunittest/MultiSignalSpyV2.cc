@@ -8,20 +8,19 @@
  ****************************************************************************/
 
 #include "MultiSignalSpyV2.h"
-#include <QEventLoop>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QEventLoop>
 #include <QTest>
 
 MultiSignalSpyV2::MultiSignalSpyV2(QObject* parent)
     : QObject(parent)
 {
-
 }
 
 MultiSignalSpyV2::~MultiSignalSpyV2()
 {
-    for (QSignalSpy* spy: _rgSpys) {
+    for (QSignalSpy* spy : _rgSpys) {
         delete spy;
     }
 }
@@ -37,7 +36,7 @@ bool MultiSignalSpyV2::init(QObject* signalEmitter)
         qWarning() << "No signalEmitter specified";
         return false;
     }
-    
+
     _signalEmitter = signalEmitter;
 
     const QMetaObject* metaObject = signalEmitter->metaObject();
@@ -56,7 +55,8 @@ bool MultiSignalSpyV2::init(QObject* signalEmitter)
 #endif
             _rgSignalNames.append(signalName);
 
-            QSignalSpy* spy = new QSignalSpy(_signalEmitter, QStringLiteral("2%1").arg(method.methodSignature().data()).toLocal8Bit().data());
+            QSignalSpy* spy = new QSignalSpy(
+                _signalEmitter, QStringLiteral("2%1").arg(method.methodSignature().data()).toLocal8Bit().data());
             if (spy->isValid()) {
                 _rgSpys.append(spy);
             } else {
@@ -68,7 +68,7 @@ bool MultiSignalSpyV2::init(QObject* signalEmitter)
     }
 
     if (error) {
-        for (QSignalSpy* spy: _rgSpys) {
+        for (QSignalSpy* spy : _rgSpys) {
             delete spy;
         }
         _rgSignalNames.clear();
@@ -81,30 +81,30 @@ bool MultiSignalSpyV2::init(QObject* signalEmitter)
 
 bool MultiSignalSpyV2::_checkSignalByMaskWorker(quint64 mask, bool multipleSignalsAllowed)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
-            
-            if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
+
+            if ((multipleSignalsAllowed && spy->count() == 0) || (!multipleSignalsAllowed && spy->count() != 1)) {
                 qWarning() << "Failed index:" << i;
                 _printSignalState(mask);
                 return false;
             }
         }
     }
-    
+
     return true;
 }
 
 bool MultiSignalSpyV2::_checkOnlySignalByMaskWorker(quint64 mask, bool multipleSignalsAllowed)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         QSignalSpy* spy = _rgSpys[i];
         Q_ASSERT(spy != nullptr);
 
         if ((1ll << i) & mask) {
-            if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
+            if ((multipleSignalsAllowed && spy->count() == 0) || (!multipleSignalsAllowed && spy->count() != 1)) {
                 _printSignalState(mask);
                 return false;
             }
@@ -115,7 +115,7 @@ bool MultiSignalSpyV2::_checkOnlySignalByMaskWorker(quint64 mask, bool multipleS
             }
         }
     }
-    
+
     return true;
 }
 
@@ -142,7 +142,7 @@ bool MultiSignalSpyV2::checkOnlySignalsByMask(quint64 mask)
 /// @return true if signal count = 0 for specified signals
 bool MultiSignalSpyV2::checkNoSignalByMask(quint64 mask)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
@@ -153,20 +153,17 @@ bool MultiSignalSpyV2::checkNoSignalByMask(quint64 mask)
             }
         }
     }
-    
+
     return true;
 }
 
 /// @return true if signal count = 0 on all signals
-bool MultiSignalSpyV2::checkNoSignals(void)
-{
-    return checkNoSignalByMask(~0);
-}
+bool MultiSignalSpyV2::checkNoSignals(void) { return checkNoSignalByMask(~0); }
 
 /// @return QSignalSpy for the specified signal
 QSignalSpy* MultiSignalSpyV2::getSpy(const char* signalName)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         if (_rgSignalNames[i] == signalName) {
             return _rgSpys[i];
         }
@@ -177,15 +174,12 @@ QSignalSpy* MultiSignalSpyV2::getSpy(const char* signalName)
 }
 
 /// Sets the signal count to 0 for the specified signal
-void MultiSignalSpyV2::clearSignal(const char* signalName)
-{
-    getSpy(signalName)->clear();
-}
+void MultiSignalSpyV2::clearSignal(const char* signalName) { getSpy(signalName)->clear(); }
 
 /// Sets the signal count to 0 for all specified signals
 void MultiSignalSpyV2::clearSignalsByMask(quint64 mask)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
@@ -198,12 +192,12 @@ void MultiSignalSpyV2::clearSignalsByMask(quint64 mask)
 /// Sets the signal count to 0 for all signals
 void MultiSignalSpyV2::clearAllSignals(void)
 {
-    for (QSignalSpy* spy: _rgSpys) {
+    for (QSignalSpy* spy : _rgSpys) {
         spy->clear();
     }
 }
 
-void MultiSignalSpyV2::timerEvent(QTimerEvent * event)
+void MultiSignalSpyV2::timerEvent(QTimerEvent* event)
 {
     Q_UNUSED(event);
     _timeout = true;
@@ -216,7 +210,7 @@ bool MultiSignalSpyV2::waitForSignal(const char* signalName, int msecs)
     // Check input parameters
     if (msecs < -1 || msecs == 0)
         return false;
-    
+
     // activate the timeout
     _timeout = false;
     int timerId;
@@ -226,15 +220,15 @@ bool MultiSignalSpyV2::waitForSignal(const char* signalName, int msecs)
     } else {
         timerId = 0;
     }
-    
+
     // Begin waiting
     QSignalSpy* spy = getSpy(signalName);
     Q_ASSERT(spy);
-    
+
     while (spy->count() == 0 && !_timeout) {
         QTest::qWait(100);
     }
-    
+
     // Clean up and return status
     if (timerId) {
         killTimer(timerId);
@@ -245,7 +239,7 @@ bool MultiSignalSpyV2::waitForSignal(const char* signalName, int msecs)
 
 void MultiSignalSpyV2::_printSignalState(quint64 mask)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         bool expected = (1ll << i) & mask;
 
         QSignalSpy* spy = _rgSpys[i];
@@ -274,7 +268,7 @@ QGeoCoordinate MultiSignalSpyV2::pullQGeoCoordinateFromSignal(const char* signal
 
 quint64 MultiSignalSpyV2::signalNameToMask(const char* signalName)
 {
-    for (int i=0; i<_rgSignalNames.count(); i++) {
+    for (int i = 0; i < _rgSignalNames.count(); i++) {
         if (_rgSignalNames[i] == signalName) {
             return 1ll << i;
         }

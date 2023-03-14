@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 #include "UnitTest.h"
-#include "QGCApplication.h"
-#include "MAVLinkProtocol.h"
-#include "Vehicle.h"
 #include "AppSettings.h"
-#include "SettingsManager.h"
-#include "MockLink.h"
 #include "LinkManager.h"
+#include "MAVLinkProtocol.h"
+#include "MockLink.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
 
 #include <QRandomGenerator>
 #include <QTemporaryFile>
@@ -31,10 +31,7 @@ QStringList UnitTest::_fileDialogResponse;
 enum UnitTest::FileDialogType UnitTest::_fileDialogExpectedType = getOpenFileName;
 int UnitTest::_missedFileDialogCount = 0;
 
-UnitTest::UnitTest(void)
-{
-
-}
+UnitTest::UnitTest(void) { }
 
 UnitTest::~UnitTest()
 {
@@ -54,10 +51,7 @@ void UnitTest::_addTest(UnitTest* test)
     tests.append(test);
 }
 
-void UnitTest::_unitTestCalled(void)
-{
-    _unitTestRun = true;
-}
+void UnitTest::_unitTestCalled(void) { _unitTestRun = true; }
 
 /// @brief Returns the list of unit tests.
 QList<UnitTest*>& UnitTest::_testList(void)
@@ -70,13 +64,15 @@ int UnitTest::run(QString& singleTest)
 {
     int ret = 0;
 
-    for (UnitTest* test: _testList()) {
+    for (UnitTest* test : _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
             if (test->standalone() && singleTest.isEmpty()) {
                 continue;
             }
             QStringList args;
-            args << "*" << "-maxwarnings" << "0";
+            args << "*"
+                 << "-maxwarnings"
+                 << "0";
             ret += QTest::qExec(test, args);
         }
     }
@@ -98,8 +94,10 @@ void UnitTest::init(void)
 
     // Force offline vehicle back to defaults
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
-    appSettings->offlineEditingFirmwareClass()->setRawValue(appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
-    appSettings->offlineEditingVehicleClass()->setRawValue(appSettings->offlineEditingVehicleClass()->rawDefaultValue());
+    appSettings->offlineEditingFirmwareClass()->setRawValue(
+        appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
+    appSettings->offlineEditingVehicleClass()->setRawValue(
+        appSettings->offlineEditingVehicleClass()->rawDefaultValue());
 
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;
@@ -232,7 +230,8 @@ void UnitTest::checkExpectedFileDialog(int expectFailFlags)
     QCOMPARE(fileDialogRespondedTo, true);
 }
 
-QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const QString& title, const QString& text, QMessageBox::StandardButtons buttons, QMessageBox::StandardButton defaultButton)
+QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const QString& title, const QString& text,
+    QMessageBox::StandardButtons buttons, QMessageBox::StandardButton defaultButton)
 {
     QMessageBox::StandardButton retButton;
 
@@ -268,8 +267,8 @@ QString UnitTest::_fileDialogResponseSingle(enum FileDialogType type)
     QString retFile;
 
     if (!_fileDialogResponseSet || _fileDialogExpectedType != type) {
-        // If no response is set or the type does not match what we expected it means we were not expecting this file dialog.
-        // Respond with no selection.
+        // If no response is set or the type does not match what we expected it means we were not expecting this file
+        // dialog. Respond with no selection.
         _missedFileDialogCount++;
     } else {
         Q_ASSERT(_fileDialogResponse.count() <= 1);
@@ -287,10 +286,7 @@ QString UnitTest::_fileDialogResponseSingle(enum FileDialogType type)
 }
 
 QString UnitTest::_getExistingDirectory(
-    QWidget* parent,
-    const QString& caption,
-    const QString& dir,
-    QFileDialog::Options options)
+    QWidget* parent, const QString& caption, const QString& dir, QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -301,11 +297,7 @@ QString UnitTest::_getExistingDirectory(
 }
 
 QString UnitTest::_getOpenFileName(
-    QWidget* parent,
-    const QString& caption,
-    const QString& dir,
-    const QString& filter,
-    QFileDialog::Options options)
+    QWidget* parent, const QString& caption, const QString& dir, const QString& filter, QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -317,11 +309,7 @@ QString UnitTest::_getOpenFileName(
 }
 
 QStringList UnitTest::_getOpenFileNames(
-    QWidget* parent,
-    const QString& caption,
-    const QString& dir,
-    const QString& filter,
-    QFileDialog::Options options)
+    QWidget* parent, const QString& caption, const QString& dir, const QString& filter, QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -332,8 +320,8 @@ QStringList UnitTest::_getOpenFileNames(
     QStringList retFiles;
 
     if (!_fileDialogResponseSet || _fileDialogExpectedType != getOpenFileNames) {
-        // If no response is set or the type does not match what we expected it means we were not expecting this file dialog.
-        // Respond with no selection.
+        // If no response is set or the type does not match what we expected it means we were not expecting this file
+        // dialog. Respond with no selection.
         _missedFileDialogCount++;
         retFiles.clear();
     } else {
@@ -348,13 +336,8 @@ QStringList UnitTest::_getOpenFileNames(
     return retFiles;
 }
 
-QString UnitTest::_getSaveFileName(
-    QWidget* parent,
-    const QString& caption,
-    const QString& dir,
-    const QString& filter,
-    const QString& defaultSuffix,
-    QFileDialog::Options options)
+QString UnitTest::_getSaveFileName(QWidget* parent, const QString& caption, const QString& dir, const QString& filter,
+    const QString& defaultSuffix, QFileDialog::Options options)
 {
     Q_UNUSED(parent);
     Q_UNUSED(caption);
@@ -362,7 +345,7 @@ QString UnitTest::_getSaveFileName(
     Q_UNUSED(filter);
     Q_UNUSED(options);
 
-    if(!defaultSuffix.isEmpty()) {
+    if (!defaultSuffix.isEmpty()) {
         Q_ASSERT(defaultSuffix.startsWith(".") == false);
     }
 
@@ -436,9 +419,9 @@ QString UnitTest::createRandomFile(uint32_t byteCount)
 
     tempFile.setAutoRemove(false);
     if (tempFile.open()) {
-        for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
+        for (uint32_t bytesWritten = 0; bytesWritten < byteCount; bytesWritten++) {
             unsigned char byte = (QRandomGenerator::global()->generate() * 0xFF) / RAND_MAX;
-            tempFile.write((char *)&byte, 1);
+            tempFile.write((char*)&byte, 1);
         }
         tempFile.close();
         return tempFile.fileName();
@@ -454,7 +437,8 @@ bool UnitTest::fileCompare(const QString& file1, const QString& file2)
     QFile f2(file2);
 
     if (QFileInfo(file1).size() != QFileInfo(file2).size()) {
-        qWarning() << "UnitTest::fileCompare file sizes differ size1:size2" << QFileInfo(file1).size() << QFileInfo(file2).size();
+        qWarning() << "UnitTest::fileCompare file sizes differ size1:size2" << QFileInfo(file1).size()
+                   << QFileInfo(file2).size();
         return false;
     }
 
@@ -495,7 +479,7 @@ bool UnitTest::fileCompare(const QString& file1, const QString& file2)
     return true;
 }
 
-void UnitTest::changeFactValue(Fact* fact,double increment)
+void UnitTest::changeFactValue(Fact* fact, double increment)
 {
     if (fact->typeIsBool()) {
         fact->setRawValue(!fact->rawValue().toBool());
@@ -509,9 +493,9 @@ void UnitTest::changeFactValue(Fact* fact,double increment)
 
 void UnitTest::_missionItemsEqual(MissionItem& actual, MissionItem& expected)
 {
-    QCOMPARE(static_cast<int>(actual.command()),    static_cast<int>(expected.command()));
-    QCOMPARE(static_cast<int>(actual.frame()),      static_cast<int>(expected.frame()));
-    QCOMPARE(actual.autoContinue(),                 expected.autoContinue());
+    QCOMPARE(static_cast<int>(actual.command()), static_cast<int>(expected.command()));
+    QCOMPARE(static_cast<int>(actual.frame()), static_cast<int>(expected.frame()));
+    QCOMPARE(actual.autoContinue(), expected.autoContinue());
 
     QVERIFY(QGC::fuzzyCompare(actual.param1(), expected.param1()));
     QVERIFY(QGC::fuzzyCompare(actual.param2(), expected.param2()));

@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "ComponentInformationCache.h"
@@ -16,8 +15,7 @@
 
 #include <QString>
 
-class ComponentInformationCacheTest : public UnitTest
-{
+class ComponentInformationCacheTest : public UnitTest {
     Q_OBJECT
 
 public:
@@ -28,6 +26,7 @@ private slots:
     void _basic_test();
     void _lru_test();
     void _multi_test();
+
 private:
     void _setup();
     void _cleanup();
@@ -44,4 +43,3 @@ private:
     QString _cacheDir;
     QString _tmpFilesDir;
 };
-

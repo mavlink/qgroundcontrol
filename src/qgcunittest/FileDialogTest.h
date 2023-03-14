@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief Unit test for QGCQFileDialog catching mechanism.
 ///
@@ -17,13 +16,12 @@
 
 #include "UnitTest.h"
 
-class FileDialogTest : public UnitTest
-{
+class FileDialogTest : public UnitTest {
     Q_OBJECT
-    
+
 public:
     FileDialogTest(void);
-    
+
 private slots:
     void _fileDialogExpected_test(void);
     void _fileDialogUnexpected_test(void);
@@ -31,4 +29,3 @@ private slots:
     void _noFileDialog_test(void);
     void _fileDialogExpectedIncorrect_test(void);
 };
-

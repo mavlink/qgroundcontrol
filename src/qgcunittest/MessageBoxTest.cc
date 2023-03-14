@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief Unit test for QGCMessageBox catching mechanism.
 ///
@@ -16,17 +15,14 @@
 #include "MessageBoxTest.h"
 #include "QGCMessageBox.h"
 
-MessageBoxTest::MessageBoxTest(void)
-{
-    
-}
+MessageBoxTest::MessageBoxTest(void) { }
 
 void MessageBoxTest::_messageBoxExpected_test(void)
 {
     setExpectedMessageBox(QMessageBox::Ok);
-    
+
     QCOMPARE(QGCMessageBox::information(QString(), QString()), QMessageBox::Ok);
-    
+
     checkExpectedMessageBox();
 }
 
@@ -41,7 +37,7 @@ void MessageBoxTest::_previousMessageBox_test(void)
 {
     // This is the previous unexpected message box
     QGCMessageBox::information(QString(), QString());
-    
+
     // Setup for an expected message box.
     QEXPECT_FAIL("", "Expecting failure due to previous message boxes", Continue);
     setExpectedMessageBox(QMessageBox::Ok);
@@ -59,7 +55,6 @@ void MessageBoxTest::_badResponseButton_test(void)
 
     // Will return Ok even though Cancel was specified, since that was wrong
     QCOMPARE(QGCMessageBox::information(QString(), QString()), QMessageBox::Ok);
-    
+
     checkExpectedMessageBox(expectFailBadResponseButton);
 }
-

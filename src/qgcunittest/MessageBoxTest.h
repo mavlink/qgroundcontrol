@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief Unit test for QGCMessageBox catching mechanism.
 ///
@@ -17,13 +16,12 @@
 
 #include "UnitTest.h"
 
-class MessageBoxTest : public UnitTest
-{
+class MessageBoxTest : public UnitTest {
     Q_OBJECT
-    
+
 public:
     MessageBoxTest(void);
-    
+
 private slots:
     void _messageBoxExpected_test(void);
     void _messageBoxUnexpected_test(void);
@@ -31,4 +29,3 @@ private slots:
     void _noMessageBox_test(void);
     void _badResponseButton_test(void);
 };
-

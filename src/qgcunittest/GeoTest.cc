@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief Unit test fpr QGCGeo coordinate project math.
 ///

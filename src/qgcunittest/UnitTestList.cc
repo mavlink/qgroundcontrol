@@ -7,57 +7,56 @@
  *
  ****************************************************************************/
 
-
 // We keep the list of all unit tests in a global location so it's easier to see which
 // ones are enabled/disabled
 
 #include "ComponentInformationCacheTest.h"
 #include "FactSystemTestGeneric.h"
 #include "FactSystemTestPX4.h"
-//#include "FileDialogTest.h"
+// #include "FileDialogTest.h"
 #include "GeoTest.h"
-//#include "MessageBoxTest.h"
+// #include "MessageBoxTest.h"
+#include "MissionControllerTest.h"
 #include "MissionItemTest.h"
+#include "MissionManagerTest.h"
 #include "SimpleMissionItemTest.h"
 #include "SurveyComplexItemTest.h"
-#include "MissionControllerTest.h"
-#include "MissionManagerTest.h"
-//#include "RadioConfigTest.h"
+// #include "RadioConfigTest.h"
 #include "MavlinkLogTest.h"
-//#include "MainWindowTest.h"
-//#include "FileManagerTest.h"
-#include "ParameterManagerTest.h"
+// #include "MainWindowTest.h"
+// #include "FileManagerTest.h"
 #include "MissionCommandTreeTest.h"
-//#include "LogDownloadTest.h"
-#include "SendMavCommandWithSignallingTest.h"
-#include "SendMavCommandWithHandlerTest.h"
-#include "VisualMissionItemTest.h"
-#include "CameraSectionTest.h"
-#include "SpeedSectionTest.h"
-#include "PlanMasterControllerTest.h"
-#include "MissionSettingsTest.h"
-#include "QGCMapPolygonTest.h"
+#include "ParameterManagerTest.h"
+// #include "LogDownloadTest.h"
 #include "AudioOutputTest.h"
-#include "StructureScanComplexItemTest.h"
-#include "QGCMapPolylineTest.h"
-#include "CorridorScanComplexItemTest.h"
-#include "TransectStyleComplexItemTest.h"
 #include "CameraCalcTest.h"
-#include "FWLandingPatternTest.h"
-#include "RequestMessageTest.h"
+#include "CameraSectionTest.h"
+#include "CorridorScanComplexItemTest.h"
 #include "FTPManagerTest.h"
-#include "MissionCommandTreeEditorTest.h"
-#include "VehicleLinkManagerTest.h"
-#include "LandingComplexItemTest.h"
+#include "FWLandingPatternTest.h"
 #include "InitialConnectTest.h"
+#include "LandingComplexItemTest.h"
+#include "MissionCommandTreeEditorTest.h"
+#include "MissionSettingsTest.h"
+#include "PlanMasterControllerTest.h"
+#include "QGCMapPolygonTest.h"
+#include "QGCMapPolylineTest.h"
+#include "RequestMessageTest.h"
+#include "SendMavCommandWithHandlerTest.h"
+#include "SendMavCommandWithSignallingTest.h"
+#include "SpeedSectionTest.h"
+#include "StructureScanComplexItemTest.h"
+#include "TransectStyleComplexItemTest.h"
+#include "VehicleLinkManagerTest.h"
+#include "VisualMissionItemTest.h"
 
 UT_REGISTER_TEST(ComponentInformationCacheTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
-//UT_REGISTER_TEST(FileDialogTest)
+// UT_REGISTER_TEST(FileDialogTest)
 UT_REGISTER_TEST(GeoTest)
 UT_REGISTER_TEST(VehicleLinkManagerTest)
-//UT_REGISTER_TEST(MessageBoxTest)
+// UT_REGISTER_TEST(MessageBoxTest)
 UT_REGISTER_TEST(SendMavCommandWithSignallingTest)
 UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
 UT_REGISTER_TEST(RequestMessageTest)
@@ -67,11 +66,11 @@ UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(SimpleMissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionManagerTest)
-//UT_REGISTER_TEST(RadioConfigTest)
-//UT_REGISTER_TEST(FileManagerTest)
+// UT_REGISTER_TEST(RadioConfigTest)
+// UT_REGISTER_TEST(FileManagerTest)
 UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
-//UT_REGISTER_TEST(LogDownloadTest)
+// UT_REGISTER_TEST(LogDownloadTest)
 UT_REGISTER_TEST(SurveyComplexItemTest)
 UT_REGISTER_TEST(CameraSectionTest)
 UT_REGISTER_TEST(SpeedSectionTest)
@@ -93,7 +92,7 @@ UT_REGISTER_TEST_STANDALONE(MissionCommandTreeEditorTest)
 // If disabling a new test, include reason in comment.
 
 // FIXME: Temporarily disabled until this can be stabilized
-//UT_REGISTER_TEST(MainWindowTest)
+// UT_REGISTER_TEST(MainWindowTest)
 
 // Needs to be update for latest updates
-//UT_REGISTER_TEST(MavlinkLogTest)
+// UT_REGISTER_TEST(MavlinkLogTest)

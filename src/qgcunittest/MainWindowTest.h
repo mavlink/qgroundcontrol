@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @brief Simple MainWindow unit test
 ///
@@ -15,13 +14,12 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "MainWindow.h"
+#include "UnitTest.h"
 
-class MainWindowTest : public UnitTest
-{
+class MainWindowTest : public UnitTest {
     Q_OBJECT
-    
+
 private slots:
     void _connectWindowClosePX4_test(void);
     void _connectWindowCloseGeneric_test(void);
@@ -29,4 +27,3 @@ private slots:
 private:
     void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
 };
-
