@@ -1,16 +1,15 @@
 #ifndef ULOGPARSER_H
 #define ULOGPARSER_H
 
-#include <QGeoCoordinate>
-#include <QDebug>
 #include <QCoreApplication>
+#include <QDebug>
+#include <QGeoCoordinate>
 
 #include "GeoTagController.h"
 
 #define ULOG_FILE_HEADER_LEN 16
 
-class ULogParser
-{
+class ULogParser {
     Q_DECLARE_TR_FUNCTIONS(ULogParser)
 
 public:
@@ -18,17 +17,17 @@ public:
     ~ULogParser();
 
     /// @return true: failed, errorMessage set
-    bool getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage);
+    bool getTagsFromLog(
+        QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage);
 
 private:
-
     QMap<QString, int> _cameraCaptureOffsets; // <fieldName, fieldOffset>
     int _cameraCaptureMsgID;
 
     const char _ULogMagic[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35};
 
     int sizeOfType(QString& typeName);
-    int sizeOfFullType(QString &typeNameFull);
+    int sizeOfFullType(QString& typeNameFull);
     QString extractArraySize(QString& typeNameFull, int& arraySize);
 
     bool parseFieldFormat(QString& fields);
@@ -45,7 +44,7 @@ private:
         LOGGING = 'L',
     };
 
-    #define ULOG_MSG_HEADER_LEN 3
+#define ULOG_MSG_HEADER_LEN 3
     struct ULogMessageHeader {
         uint16_t msgSize;
         uint8_t msgType;
@@ -59,14 +58,13 @@ private:
     };
 
     struct ULogMessageAddLogged {
-	  uint16_t msgSize;
-      uint8_t msgType;
+        uint16_t msgSize;
+        uint8_t msgType;
 
-	  uint8_t multiID;
-	  uint16_t msgID;
-	  char msgName[255];
-	};
-
+        uint8_t multiID;
+        uint16_t msgID;
+        char msgName[255];
+    };
 };
 
 #endif // ULOGPARSER_H

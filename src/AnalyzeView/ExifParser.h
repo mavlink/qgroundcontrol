@@ -1,13 +1,12 @@
 #ifndef EXIFPARSER_H
 #define EXIFPARSER_H
 
-#include <QGeoCoordinate>
 #include <QDebug>
+#include <QGeoCoordinate>
 
 #include "GeoTagController.h"
 
-class ExifParser
-{
+class ExifParser {
 public:
     ExifParser();
     ~ExifParser();

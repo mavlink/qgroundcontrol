@@ -9,21 +9,20 @@
 
 #pragma once
 
-#include "QmlObjectListModel.h"
-#include "QGCPalette.h"
 #include "Fact.h"
 #include "FactMetaData.h"
+#include "QGCPalette.h"
+#include "QmlObjectListModel.h"
+#include <QMetaObject>
 #include <QObject>
 #include <QString>
-#include <QMetaObject>
 #include <QStringListModel>
 
 // Fordward decls
 class Vehicle;
 
 /// Controller for MavlinkConsole.qml.
-class MavlinkConsoleController : public QStringListModel
-{
+class MavlinkConsoleController : public QStringListModel {
     Q_OBJECT
 
 public:
@@ -42,27 +41,27 @@ public:
      */
     Q_INVOKABLE QString handleClipboard(const QString& command_pre);
 
-    Q_PROPERTY(QString text                     READ getText                    CONSTANT)
+    Q_PROPERTY(QString text READ getText CONSTANT)
 
 private slots:
-    void _setActiveVehicle  (Vehicle* vehicle);
+    void _setActiveVehicle(Vehicle* vehicle);
     void _receiveData(uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, QByteArray data);
 
 private:
-    bool _processANSItext(QByteArray &line);
+    bool _processANSItext(QByteArray& line);
     void _sendSerialData(QByteArray, bool close = false);
-    void writeLine(int line, const QByteArray &text);
+    void writeLine(int line, const QByteArray& text);
 
     QString transformLineForRichText(const QString& line) const;
 
     QString getText() const;
 
-    class CommandHistory
-    {
+    class CommandHistory {
     public:
         void append(const QString& command);
         QString up(const QString& current);
         QString down(const QString& current);
+
     private:
         static constexpr int maxHistoryLength = 100;
         QList<QString> _history;
@@ -71,12 +70,12 @@ private:
 
     static constexpr int _max_num_lines = 500; ///< history size (affects CPU load)
 
-    int           _cursor_home_pos{-1};
-    int           _cursorY{0};
-    int           _cursorX{0};
-    QByteArray    _incoming_buffer;
-    Vehicle*      _vehicle{nullptr};
+    int _cursor_home_pos {-1};
+    int _cursorY {0};
+    int _cursorX {0};
+    QByteArray _incoming_buffer;
+    Vehicle* _vehicle {nullptr};
     QList<QMetaObject::Connection> _uas_connections;
     CommandHistory _history;
-    QGCPalette     _palette;
+    QGCPalette _palette;
 };

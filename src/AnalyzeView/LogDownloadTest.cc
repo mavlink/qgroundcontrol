@@ -13,10 +13,7 @@
 
 #include <QDir>
 
-LogDownloadTest::LogDownloadTest(void)
-{
-
-}
+LogDownloadTest::LogDownloadTest(void) { }
 
 void LogDownloadTest::downloadTest(void)
 {
@@ -25,12 +22,13 @@ void LogDownloadTest::downloadTest(void)
 
     LogDownloadController* controller = new LogDownloadController();
 
-    _rgLogDownloadControllerSignals[requestingListChangedSignalIndex] =     SIGNAL(requestingListChanged());
-    _rgLogDownloadControllerSignals[downloadingLogsChangedSignalIndex] =    SIGNAL(downloadingLogsChanged());
-    _rgLogDownloadControllerSignals[modelChangedSignalIndex] =              SIGNAL(modelChanged());
+    _rgLogDownloadControllerSignals[requestingListChangedSignalIndex] = SIGNAL(requestingListChanged());
+    _rgLogDownloadControllerSignals[downloadingLogsChangedSignalIndex] = SIGNAL(downloadingLogsChanged());
+    _rgLogDownloadControllerSignals[modelChangedSignalIndex] = SIGNAL(modelChanged());
 
     _multiSpyLogDownloadController = new MultiSignalSpy();
-    QVERIFY(_multiSpyLogDownloadController->init(controller, _rgLogDownloadControllerSignals, _cLogDownloadControllerSignals));
+    QVERIFY(_multiSpyLogDownloadController->init(
+        controller, _rgLogDownloadControllerSignals, _cLogDownloadControllerSignals));
 
     controller->refresh();
     QVERIFY(_multiSpyLogDownloadController->waitForSignalByIndex(requestingListChangedSignalIndex, 10000));
