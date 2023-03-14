@@ -14,12 +14,12 @@
 
 #include <cmath>
 
-#include "QGCTileSet.h" 
+#include "QGCTileSet.h"
 #include <QtLocation/private/qgeomaptype_p.h>
 
-static const unsigned char pngSignature[]  = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
+static const unsigned char pngSignature[] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
 static const unsigned char jpegSignature[] = {0xFF, 0xD8, 0xFF, 0x00};
-static const unsigned char gifSignature[]  = {0x47, 0x49, 0x46, 0x38, 0x00};
+static const unsigned char gifSignature[] = {0x47, 0x49, 0x46, 0x38, 0x00};
 
 static const quint32 AVERAGE_TILE_SIZE = 13652;
 
@@ -48,9 +48,8 @@ public:
     virtual bool _isElevationProvider() const { return false; }
     virtual bool _isBingProvider() const { return false; }
 
-    virtual QGCTileSet getTileCount(const int zoom, const double topleftLon,
-                                     const double topleftLat, const double bottomRightLon,
-                                     const double bottomRightLat) const;
+    virtual QGCTileSet getTileCount(const int zoom, const double topleftLon, const double topleftLat,
+        const double bottomRightLon, const double bottomRightLat) const;
 
 protected:
     QString _tileXYToQuadKey(const int tileX, const int tileY, const int levelOfDetail) const;
@@ -59,11 +58,10 @@ protected:
     virtual QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) = 0;
 
     // Define Referrer for Request RawHeader
-    QString     _referrer;
-    QString     _imageFormat;
-    quint32     _averageSize;
-    QByteArray  _userAgent;
-    QString     _language;
+    QString _referrer;
+    QString _imageFormat;
+    quint32 _averageSize;
+    QByteArray _userAgent;
+    QString _language;
     QGeoMapType::MapStyle _mapType;
-
 };

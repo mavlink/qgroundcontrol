@@ -14,18 +14,21 @@
 class EsriMapProvider : public MapProvider {
     Q_OBJECT
 
-  public:
+public:
     EsriMapProvider(const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
 
-    QNetworkRequest getTileURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+    QNetworkRequest getTileURL(
+        const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class EsriWorldStreetMapProvider : public EsriMapProvider {
     Q_OBJECT
 
-  public:
+public:
     EsriWorldStreetMapProvider(QObject* parent = nullptr)
-        : EsriMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+        : EsriMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
@@ -33,9 +36,11 @@ class EsriWorldStreetMapProvider : public EsriMapProvider {
 class EsriWorldSatelliteMapProvider : public EsriMapProvider {
     Q_OBJECT
 
-  public:
+public:
     EsriWorldSatelliteMapProvider(QObject* parent = nullptr)
-        : EsriMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
+        : EsriMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
@@ -43,9 +48,11 @@ class EsriWorldSatelliteMapProvider : public EsriMapProvider {
 class EsriTerrainMapProvider : public EsriMapProvider {
     Q_OBJECT
 
-  public:
+public:
     EsriTerrainMapProvider(QObject* parent = nullptr)
-        : EsriMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::TerrainMap, parent) {}
+        : EsriMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::TerrainMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };

@@ -47,15 +47,14 @@
 #ifndef QGEOCODEREPLYQGC_H
 #define QGEOCODEREPLYQGC_H
 
-#include <QtNetwork/QNetworkReply>
 #include <QtLocation/QGeoCodeReply>
+#include <QtNetwork/QNetworkReply>
 
-class QGeoCodeReplyQGC : public QGeoCodeReply
-{
+class QGeoCodeReplyQGC : public QGeoCodeReply {
     Q_OBJECT
 
 public:
-    explicit QGeoCodeReplyQGC(QNetworkReply *reply, QObject *parent = 0);
+    explicit QGeoCodeReplyQGC(QNetworkReply* reply, QObject* parent = 0);
     ~QGeoCodeReplyQGC();
 
     void abort();
@@ -65,7 +64,7 @@ private Q_SLOTS:
     void networkReplyError(QNetworkReply::NetworkError error);
 
 private:
-    QNetworkReply *m_reply;
+    QNetworkReply* m_reply;
 };
 
 #endif // QGEOCODEREPLYQGC_H

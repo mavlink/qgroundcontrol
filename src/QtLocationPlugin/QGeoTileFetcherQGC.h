@@ -47,26 +47,27 @@
 #ifndef QGEOTILEFETCHERQGC_H
 #define QGEOTILEFETCHERQGC_H
 
-#include <QtLocation/private/qgeotilefetcher_p.h>
-#include <QTimer>
 #include "QGCMapUrlEngine.h"
+#include <QTimer>
+#include <QtLocation/private/qgeotilefetcher_p.h>
 
 class QGeoTiledMappingManagerEngine;
 class QNetworkAccessManager;
 
-class QGeoTileFetcherQGC : public QGeoTileFetcher
-{
+class QGeoTileFetcherQGC : public QGeoTileFetcher {
     Q_OBJECT
 public:
-    explicit QGeoTileFetcherQGC             (QGeoTiledMappingManagerEngine *parent = 0);
+    explicit QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine* parent = 0);
     ~QGeoTileFetcherQGC();
 public slots:
-    void                    timeout         ();
+    void timeout();
+
 private:
-    QGeoTiledMapReply*      getTileImage    (const QGeoTileSpec &spec);
+    QGeoTiledMapReply* getTileImage(const QGeoTileSpec& spec);
+
 private:
-    QNetworkAccessManager*  _networkManager;
-    QTimer                  _timer;
+    QNetworkAccessManager* _networkManager;
+    QTimer _timer;
 };
 
 #endif // QGEOTILEFETCHERQGC_H

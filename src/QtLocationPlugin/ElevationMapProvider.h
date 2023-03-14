@@ -14,9 +14,9 @@ static const quint32 AVERAGE_AIRMAP_ELEV_SIZE = 2786;
 
 class ElevationProvider : public MapProvider {
     Q_OBJECT
-  public:
-    ElevationProvider(const QString& imageFormat, quint32 averageSize,
-                      QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
+public:
+    ElevationProvider(
+        const QString& imageFormat, quint32 averageSize, QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
 
     virtual bool _isElevationProvider() const override { return true; }
 };
@@ -26,20 +26,19 @@ class ElevationProvider : public MapProvider {
 
 class AirmapElevationProvider : public ElevationProvider {
     Q_OBJECT
-  public:
+public:
     AirmapElevationProvider(QObject* parent = nullptr)
-        : ElevationProvider(QStringLiteral("bin"), AVERAGE_AIRMAP_ELEV_SIZE,
-                            QGeoMapType::StreetMap, parent) {}
+        : ElevationProvider(QStringLiteral("bin"), AVERAGE_AIRMAP_ELEV_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     int long2tileX(const double lon, const int z) const override;
 
     int lat2tileY(const double lat, const int z) const override;
 
-    QGCTileSet getTileCount(const int zoom, const double topleftLon,
-                            const double topleftLat, const double bottomRightLon,
-                            const double bottomRightLat) const override;
+    QGCTileSet getTileCount(const int zoom, const double topleftLon, const double topleftLat,
+        const double bottomRightLon, const double bottomRightLat) const override;
 
-  protected:
+protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
-

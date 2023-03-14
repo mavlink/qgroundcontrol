@@ -12,146 +12,173 @@
 
 class JapanStdMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     JapanStdMapProvider(QObject* parent = nullptr)
         : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+            AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class JapanSeamlessMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     JapanSeamlessMapProvider(QObject* parent = nullptr)
         : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto"), QStringLiteral("jpg"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+            AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class JapanAnaglyphMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     JapanAnaglyphMapProvider(QObject* parent = nullptr)
         : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/anaglyphmap_color"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+            AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class JapanSlopeMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     JapanSlopeMapProvider(QObject* parent = nullptr)
         : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/slopemap"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+            AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class JapanReliefMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     JapanReliefMapProvider(QObject* parent = nullptr)
         : MapProvider(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/relief"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+            AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class LINZBasemapMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     LINZBasemapMapProvider(QObject* parent = nullptr)
         : MapProvider(QStringLiteral("https://basemaps.linz.govt.nz/v1/tiles/aerial"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
+            AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class CustomURLMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     CustomURLMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral(""), QStringLiteral(""),
-                      AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent) {}
+        : MapProvider(QStringLiteral(""), QStringLiteral(""), AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class StatkartMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     StatkartMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://norgeskart.no/"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+        : MapProvider(QStringLiteral("https://norgeskart.no/"), QStringLiteral("png"), AVERAGE_TILE_SIZE,
+            QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class StatkartBaseMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     StatkartBaseMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://norgeskart.no/"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+        : MapProvider(QStringLiteral("https://norgeskart.no/"), QStringLiteral("png"), AVERAGE_TILE_SIZE,
+            QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class EniroMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     EniroMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://www.eniro.se/"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+        : MapProvider(QStringLiteral("https://www.eniro.se/"), QStringLiteral("png"), AVERAGE_TILE_SIZE,
+            QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class MapQuestMapMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     MapQuestMapMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://mapquest.com"), QStringLiteral("jpg"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+        : MapProvider(QStringLiteral("https://mapquest.com"), QStringLiteral("jpg"), AVERAGE_TILE_SIZE,
+            QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class MapQuestSatMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     MapQuestSatMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("https://mapquest.com"), QStringLiteral("jpg"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
+        : MapProvider(QStringLiteral("https://mapquest.com"), QStringLiteral("jpg"), AVERAGE_TILE_SIZE,
+            QGeoMapType::SatelliteMapDay, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 class VWorldStreetMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     VWorldStreetMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("www.vworld.kr"), QStringLiteral("png"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
+        : MapProvider(
+            QStringLiteral("www.vworld.kr"), QStringLiteral("png"), AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 
-  private:
+private:
     const QString _versionBingMaps = QStringLiteral("563");
 };
 
 class VWorldSatMapProvider : public MapProvider {
     Q_OBJECT
-  public:
+public:
     VWorldSatMapProvider(QObject* parent = nullptr)
-        : MapProvider(QStringLiteral("www.vworld.kr"), QStringLiteral("jpeg"),
-                      AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
+        : MapProvider(QStringLiteral("www.vworld.kr"), QStringLiteral("jpeg"), AVERAGE_TILE_SIZE,
+            QGeoMapType::SatelliteMapDay, parent)
+    {
+    }
 
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 
-  private:
+private:
     const QString _versionBingMaps = QStringLiteral("563");
 };

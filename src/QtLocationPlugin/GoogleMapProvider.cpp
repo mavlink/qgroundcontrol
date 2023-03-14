@@ -16,38 +16,42 @@
 
 #include "QGCMapEngine.h"
 
-GoogleMapProvider::GoogleMapProvider(const QString &imageFormat, const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent)
+GoogleMapProvider::GoogleMapProvider(
+    const QString& imageFormat, const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent)
     : MapProvider(QStringLiteral("https://www.google.com/maps/preview"), imageFormat, averageSize, mapType, parent)
     , _googleVersionRetrieved(false)
     , _googleReply(nullptr)
 {
     // Google version strings
-    _versionGoogleMap       = QStringLiteral("m@354000000");
+    _versionGoogleMap = QStringLiteral("m@354000000");
     _versionGoogleSatellite = QStringLiteral("692");
-    _versionGoogleLabels    = QStringLiteral("h@336");
-    _versionGoogleTerrain   = QStringLiteral("t@354,r@354000000");
-    _versionGoogleHybrid    = QStringLiteral("y");
-    _secGoogleWord          = QStringLiteral("Galileo");
+    _versionGoogleLabels = QStringLiteral("h@336");
+    _versionGoogleTerrain = QStringLiteral("t@354,r@354000000");
+    _versionGoogleHybrid = QStringLiteral("y");
+    _secGoogleWord = QStringLiteral("Galileo");
 }
 
-GoogleMapProvider::~GoogleMapProvider() {
+GoogleMapProvider::~GoogleMapProvider()
+{
     if (_googleReply)
         _googleReply->deleteLater();
 }
 
 //-----------------------------------------------------------------------------
-void GoogleMapProvider::_getSecGoogleWords(const int x, const int y, QString& sec1, QString& sec2) const {
-    sec1       = QStringLiteral(""); // after &x=...
-    sec2       = QStringLiteral(""); // after &zoom=...
+void GoogleMapProvider::_getSecGoogleWords(const int x, const int y, QString& sec1, QString& sec2) const
+{
+    sec1 = QStringLiteral(""); // after &x=...
+    sec2 = QStringLiteral(""); // after &zoom=...
     int seclen = ((x * 3) + y) % 8;
-    sec2       = _secGoogleWord.left(seclen);
+    sec2 = _secGoogleWord.left(seclen);
     if (y >= 10000 && y < 100000) {
         sec1 = QStringLiteral("&s=");
     }
 }
 
 //-----------------------------------------------------------------------------
-void GoogleMapProvider::_networkReplyError(QNetworkReply::NetworkError error) {
+void GoogleMapProvider::_networkReplyError(QNetworkReply::NetworkError error)
+{
     qWarning() << "Could not connect to google maps. Error:" << error;
     if (_googleReply) {
         _googleReply->deleteLater();
@@ -55,11 +59,10 @@ void GoogleMapProvider::_networkReplyError(QNetworkReply::NetworkError error) {
     }
 }
 //-----------------------------------------------------------------------------
-void GoogleMapProvider::_replyDestroyed() {
-    _googleReply = nullptr;
-}
+void GoogleMapProvider::_replyDestroyed() { _googleReply = nullptr; }
 
-void GoogleMapProvider::_googleVersionCompleted() {
+void GoogleMapProvider::_googleVersionCompleted()
+{
     if (!_googleReply || (_googleReply->error() != QNetworkReply::NoError)) {
         qDebug() << "Error collecting Google maps version info";
         return;
@@ -86,14 +89,15 @@ void GoogleMapProvider::_googleVersionCompleted() {
     }
     reg = QRegExp(QStringLiteral("\"*https?://mt\\D?\\d..*/vt\\?lyrs=t@(\\d*),r@(\\d*)"), Qt::CaseInsensitive);
     if (reg.indexIn(html) != -1) {
-        const QStringList gc  = reg.capturedTexts();
+        const QStringList gc = reg.capturedTexts();
         _versionGoogleTerrain = QString(QStringLiteral("t@%1,r@%2")).arg(gc.value(1), gc.value(2));
     }
     _googleReply->deleteLater();
     _googleReply = nullptr;
 }
 
-void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager) {
+void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
+{
     QMutexLocker locker(&_googleVersionMutex);
     if (_googleVersionRetrieved) {
         return;
@@ -101,8 +105,8 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* network
     _googleVersionRetrieved = true;
     if (networkManager) {
         QNetworkRequest qheader;
-        QNetworkProxy   proxy = networkManager->proxy();
-        QNetworkProxy   tProxy;
+        QNetworkProxy proxy = networkManager->proxy();
+        QNetworkProxy tProxy;
         tProxy.setType(QNetworkProxy::DefaultProxy);
         networkManager->setProxy(tProxy);
         QSslConfiguration conf = qheader.sslConfiguration();
@@ -121,9 +125,11 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* network
     }
 }
 
-QString GoogleStreetMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+QString GoogleStreetMapProvider::_getURL(
+    const int x, const int y, const int zoom, QNetworkAccessManager* networkManager)
+{
     // http://mt1.google.com/vt/lyrs=m
-    QString server  = QStringLiteral("mt");
+    QString server = QStringLiteral("mt");
     QString request = QStringLiteral("vt");
     QString sec1; // after &x=...
     QString sec2; // after &zoom=...
@@ -142,9 +148,11 @@ QString GoogleStreetMapProvider::_getURL(const int x, const int y, const int zoo
         .arg(sec2);
 }
 
-QString GoogleSatelliteMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+QString GoogleSatelliteMapProvider::_getURL(
+    const int x, const int y, const int zoom, QNetworkAccessManager* networkManager)
+{
     // http://mt1.google.com/vt/lyrs=s
-    QString server  = QStringLiteral("khm");
+    QString server = QStringLiteral("khm");
     QString request = QStringLiteral("kh");
     QString sec1; // after &x=...
     QString sec2; // after &zoom=...
@@ -163,8 +171,10 @@ QString GoogleSatelliteMapProvider::_getURL(const int x, const int y, const int 
         .arg(sec2);
 }
 
-QString GoogleLabelsMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
-    QString server  = "mts";
+QString GoogleLabelsMapProvider::_getURL(
+    const int x, const int y, const int zoom, QNetworkAccessManager* networkManager)
+{
+    QString server = "mts";
     QString request = "vt";
     QString sec1; // after &x=...
     QString sec2; // after &zoom=...
@@ -183,8 +193,10 @@ QString GoogleLabelsMapProvider::_getURL(const int x, const int y, const int zoo
         .arg(sec2);
 }
 
-QString GoogleTerrainMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
-    QString server  = QStringLiteral("mt");
+QString GoogleTerrainMapProvider::_getURL(
+    const int x, const int y, const int zoom, QNetworkAccessManager* networkManager)
+{
+    QString server = QStringLiteral("mt");
     QString request = QStringLiteral("vt");
     QString sec1; // after &x=...
     QString sec2; // after &zoom=...
@@ -203,7 +215,9 @@ QString GoogleTerrainMapProvider::_getURL(const int x, const int y, const int zo
         .arg(sec2);
 }
 
-QString GoogleHybridMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+QString GoogleHybridMapProvider::_getURL(
+    const int x, const int y, const int zoom, QNetworkAccessManager* networkManager)
+{
     QString server = QStringLiteral("mt");
     QString request = QStringLiteral("vt");
     QString sec1; // after &x=...

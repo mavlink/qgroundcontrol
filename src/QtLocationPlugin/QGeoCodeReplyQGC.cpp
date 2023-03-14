@@ -46,15 +46,15 @@
 
 #include "QGeoCodeReplyQGC.h"
 
+#include <QDebug>
+#include <QSet>
+#include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QJsonArray>
-#include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoAddress>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoLocation>
 #include <QtPositioning/QGeoRectangle>
-#include <QSet>
-#include <QDebug>
 
 enum QGCGeoCodeType {
     GeoCodeTypeUnknown,
@@ -62,13 +62,19 @@ enum QGCGeoCodeType {
     Route, // indicates a named route (such as "US 101").
     Intersection, // indicates a major intersection, usually of two major roads.
     Political, // indicates a political entity. Usually, this type indicates a polygon of some civil administration.
-    Country, // indicates the national political entity, and is typically the highest order type returned by the Geocoder.
-    AdministrativeAreaLevel1, // indicates a first-order civil entity below the country level. Within the United States, these administrative levels are states.
-    AdministrativeAreaLevel2, // indicates a second-order civil entity below the country level. Within the United States, these administrative levels are counties.
-    AdministrativeAreaLevel3, // indicates a third-order civil entity below the country level. This type indicates a minor civil division.
+    Country, // indicates the national political entity, and is typically the highest order type returned by the
+             // Geocoder.
+    AdministrativeAreaLevel1, // indicates a first-order civil entity below the country level. Within the United States,
+                              // these administrative levels are states.
+    AdministrativeAreaLevel2, // indicates a second-order civil entity below the country level. Within the United
+                              // States, these administrative levels are counties.
+    AdministrativeAreaLevel3, // indicates a third-order civil entity below the country level. This type indicates a
+                              // minor civil division.
     ColloquialArea, // indicates a commonly-used alternative name for the entity.
     Locality, // indicates an incorporated city or town political entity.
-    Sublocality, // indicates a first-order civil entity below a locality. For some locations may receive one of the additional types: sublocality_level_1 through to sublocality_level_5. Each sublocality level is a civil entity. Larger numbers indicate a smaller geographic area.
+    Sublocality, // indicates a first-order civil entity below a locality. For some locations may receive one of the
+                 // additional types: sublocality_level_1 through to sublocality_level_5. Each sublocality level is a
+                 // civil entity. Larger numbers indicate a smaller geographic area.
     SublocalityLevel1,
     SublocalityLevel2,
     SublocalityLevel3,
@@ -76,17 +82,20 @@ enum QGCGeoCodeType {
     SublocalityLevel5,
     Neighborhood, // indicates a named neighborhood
     Premise, // indicates a named location, usually a building or collection of buildings with a common name
-    Subpremise, // indicates a first-order entity below a named location, usually a singular building within a collection of buildings with a common name
+    Subpremise, // indicates a first-order entity below a named location, usually a singular building within a
+                // collection of buildings with a common name
     PostalCode, // indicates a postal code as used to address postal mail within the country.
     NaturalFeature, // indicates a prominent natural feature.
     Airport, // indicates an airport.
     Park, // indicates a named park.
-    PointOfInterest, // indicates a named point of interest. Typically, these "POI"s are prominent local entities that don't easily fit in another category such as "Empire State Building" or "Statue of Liberty."
+    PointOfInterest, // indicates a named point of interest. Typically, these "POI"s are prominent local entities that
+                     // don't easily fit in another category such as "Empire State Building" or "Statue of Liberty."
     Floor, // indicates the floor of a building address.
     Establishment, // typically indicates a place that has not yet been categorized.
     Parking, // indicates a parking lot or parking structure.
     PostBox, // indicates a specific postal box.
-    PostalTown, // indicates a grouping of geographic areas, such as locality and sublocality, used for mailing addresses in some countries.
+    PostalTown, // indicates a grouping of geographic areas, such as locality and sublocality, used for mailing
+                // addresses in some countries.
     RoomIndicates, // the room of a building address.
     StreetNumber, // indicates the precise street number.
     BusStation, //  indicate the location of a bus stop.
@@ -97,9 +106,10 @@ enum QGCGeoCodeType {
 class JasonMonger {
 public:
     JasonMonger();
-    QSet<int> json2QGCGeoCodeType(const QJsonArray &types);
+    QSet<int> json2QGCGeoCodeType(const QJsonArray& types);
+
 private:
-    int _getCode(const QString &key);
+    int _getCode(const QString& key);
     QMap<QString, int> _m;
 };
 
@@ -141,13 +151,12 @@ JasonMonger::JasonMonger()
     _m[QStringLiteral("transit_station")] = TransitStation;
 }
 
-int JasonMonger::_getCode(const QString &key) {
-    return _m.value(key, GeoCodeTypeUnknown);
-}
+int JasonMonger::_getCode(const QString& key) { return _m.value(key, GeoCodeTypeUnknown); }
 
-QSet<int> JasonMonger::json2QGCGeoCodeType(const QJsonArray &types) {
+QSet<int> JasonMonger::json2QGCGeoCodeType(const QJsonArray& types)
+{
     QSet<int> result;
-    for (int i=0; i<types.size(); ++i) {
+    for (int i = 0; i < types.size(); ++i) {
         result |= _getCode(types[i].toString());
     }
     return result;
@@ -155,12 +164,13 @@ QSet<int> JasonMonger::json2QGCGeoCodeType(const QJsonArray &types) {
 
 JasonMonger kMonger;
 
-QGeoCodeReplyQGC::QGeoCodeReplyQGC(QNetworkReply *reply, QObject *parent)
-:   QGeoCodeReply(parent), m_reply(reply)
+QGeoCodeReplyQGC::QGeoCodeReplyQGC(QNetworkReply* reply, QObject* parent)
+    : QGeoCodeReply(parent)
+    , m_reply(reply)
 {
     connect(m_reply, &QNetworkReply::finished, this, &QGeoCodeReplyQGC::networkReplyFinished);
-    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)),
-            this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
+    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this,
+        SLOT(networkReplyError(QNetworkReply::NetworkError)));
 
     setLimit(1);
     setOffset(0);
@@ -205,7 +215,7 @@ void QGeoCodeReplyQGC::networkReplyFinished()
 
     QList<QGeoLocation> locations;
     QJsonArray results = object.value(QStringLiteral("results")).toArray();
-    for (int i=0; i<results.size(); ++i) {
+    for (int i = 0; i < results.size(); ++i) {
         if (!results[i].isObject())
             continue;
 
@@ -216,11 +226,10 @@ void QGeoCodeReplyQGC::networkReplyFinished()
             address.setText(geocode.value(QStringLiteral("formatted_address")).toString());
         }
 
-
         if (geocode.contains(QStringLiteral("address_components"))) {
             QJsonArray ac = geocode.value(QStringLiteral("address_components")).toArray();
 
-            for (int j=0; j<ac.size(); ++j) {
+            for (int j = 0; j < ac.size(); ++j) {
                 if (!ac[j].isObject())
                     continue;
 
@@ -264,9 +273,9 @@ void QGeoCodeReplyQGC::networkReplyFinished()
                 QJsonObject northeast = bounds.value(QStringLiteral("northeast")).toObject();
                 QJsonObject southwest = bounds.value(QStringLiteral("southwest")).toObject();
                 QGeoCoordinate topRight(northeast.value(QStringLiteral("lat")).toDouble(),
-                                        northeast.value(QStringLiteral("lng")).toDouble());
+                    northeast.value(QStringLiteral("lng")).toDouble());
                 QGeoCoordinate bottomLeft(southwest.value(QStringLiteral("lat")).toDouble(),
-                                          southwest.value(QStringLiteral("lng")).toDouble());
+                    southwest.value(QStringLiteral("lng")).toDouble());
                 boundingBox.setTopRight(topRight);
                 boundingBox.setBottomLeft(bottomLeft);
             }

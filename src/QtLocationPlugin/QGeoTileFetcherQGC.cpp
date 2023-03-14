@@ -44,16 +44,16 @@
 **
 ****************************************************************************/
 
-#include "QGCMapEngine.h"
 #include "QGeoTileFetcherQGC.h"
+#include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
 
 #include <QtCore/QLocale>
-#include <QtNetwork/QNetworkRequest>
 #include <QtLocation/private/qgeotilespec_p.h>
+#include <QtNetwork/QNetworkRequest>
 
 //-----------------------------------------------------------------------------
-QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
+QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine* parent)
     : QGeoTileFetcher(parent)
     , _networkManager(new QNetworkAccessManager(this))
 {
@@ -64,28 +64,20 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
 }
 
 //-----------------------------------------------------------------------------
-QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
-{
-
-}
+QGeoTileFetcherQGC::~QGeoTileFetcherQGC() { }
 
 //-----------------------------------------------------------------------------
-QGeoTiledMapReply*
-QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
+QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec& spec)
 {
     //-- Build URL
-    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(spec.mapId(), spec.x(), spec.y(), spec.zoom(), _networkManager);
-    if ( ! request.url().isEmpty() ) {
+    QNetworkRequest request
+        = getQGCMapEngine()->urlFactory()->getTileURL(spec.mapId(), spec.x(), spec.y(), spec.zoom(), _networkManager);
+    if (!request.url().isEmpty()) {
         return new QGeoTiledMapReplyQGC(_networkManager, request, spec);
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-QGeoTileFetcherQGC::timeout()
-{
-    getQGCMapEngine()->testInternet();
-}
+void QGeoTileFetcherQGC::timeout() { getQGCMapEngine()->testInternet(); }

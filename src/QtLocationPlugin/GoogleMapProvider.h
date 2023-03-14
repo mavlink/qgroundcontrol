@@ -11,15 +11,15 @@
 
 #include "MapProvider.h"
 
-#include <QNetworkReply>
 #include <QMutex>
+#include <QNetworkReply>
 
 class GoogleMapProvider : public MapProvider {
     Q_OBJECT
 
 public:
-    GoogleMapProvider(const QString& imageFormat, const quint32 averageSize,
-                      const QGeoMapType::MapStyle _mapType, QObject* parent = nullptr);
+    GoogleMapProvider(const QString& imageFormat, const quint32 averageSize, const QGeoMapType::MapStyle _mapType,
+        QObject* parent = nullptr);
 
     ~GoogleMapProvider();
 
@@ -35,15 +35,15 @@ protected:
     void _tryCorrectGoogleVersions(QNetworkAccessManager* networkManager);
 
     // Google Specific attributes
-    bool           _googleVersionRetrieved;
+    bool _googleVersionRetrieved;
     QNetworkReply* _googleReply;
-    QMutex         _googleVersionMutex;
-    QString        _versionGoogleMap;
-    QString        _versionGoogleSatellite;
-    QString        _versionGoogleLabels;
-    QString        _versionGoogleTerrain;
-    QString        _versionGoogleHybrid;
-    QString        _secGoogleWord;
+    QMutex _googleVersionMutex;
+    QString _versionGoogleMap;
+    QString _versionGoogleSatellite;
+    QString _versionGoogleLabels;
+    QString _versionGoogleTerrain;
+    QString _versionGoogleHybrid;
+    QString _secGoogleWord;
 };
 
 // NoMap = 0,
@@ -59,8 +59,8 @@ protected:
 // CycleMap,
 // CustomMap = 100
 
-static const quint32 AVERAGE_GOOGLE_STREET_MAP  = 4913;
-static const quint32 AVERAGE_GOOGLE_SAT_MAP     = 56887;
+static const quint32 AVERAGE_GOOGLE_STREET_MAP = 4913;
+static const quint32 AVERAGE_GOOGLE_SAT_MAP = 56887;
 static const quint32 AVERAGE_GOOGLE_TERRAIN_MAP = 19391;
 
 // -----------------------------------------------------------
@@ -71,10 +71,12 @@ class GoogleStreetMapProvider : public GoogleMapProvider {
 
 public:
     GoogleStreetMapProvider(QObject* parent = nullptr)
-        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_GOOGLE_STREET_MAP, QGeoMapType::StreetMap, parent) {}
+        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_GOOGLE_STREET_MAP, QGeoMapType::StreetMap, parent)
+    {
+    }
 
 protected:
-     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 // -----------------------------------------------------------
@@ -85,8 +87,9 @@ class GoogleSatelliteMapProvider : public GoogleMapProvider {
 
 public:
     GoogleSatelliteMapProvider(QObject* parent = nullptr)
-        : GoogleMapProvider(QStringLiteral("jpg"), AVERAGE_GOOGLE_SAT_MAP,
-                            QGeoMapType::SatelliteMapDay, parent) {}
+        : GoogleMapProvider(QStringLiteral("jpg"), AVERAGE_GOOGLE_SAT_MAP, QGeoMapType::SatelliteMapDay, parent)
+    {
+    }
 
 protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
@@ -100,7 +103,9 @@ class GoogleLabelsMapProvider : public GoogleMapProvider {
 
 public:
     GoogleLabelsMapProvider(QObject* parent = nullptr)
-        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent) {}
+        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent)
+    {
+    }
 
 protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
@@ -114,7 +119,9 @@ class GoogleTerrainMapProvider : public GoogleMapProvider {
 
 public:
     GoogleTerrainMapProvider(QObject* parent = nullptr)
-        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_GOOGLE_TERRAIN_MAP, QGeoMapType::TerrainMap, parent) {}
+        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_GOOGLE_TERRAIN_MAP, QGeoMapType::TerrainMap, parent)
+    {
+    }
 
 protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
@@ -128,7 +135,9 @@ class GoogleHybridMapProvider : public GoogleMapProvider {
 
 public:
     GoogleHybridMapProvider(QObject* parent = nullptr)
-        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_GOOGLE_SAT_MAP, QGeoMapType::HybridMap, parent) {}
+        : GoogleMapProvider(QStringLiteral("png"), AVERAGE_GOOGLE_SAT_MAP, QGeoMapType::HybridMap, parent)
+    {
+    }
 
 protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
