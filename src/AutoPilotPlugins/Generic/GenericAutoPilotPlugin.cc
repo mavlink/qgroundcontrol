@@ -7,14 +7,13 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "GenericAutoPilotPlugin.h"
 
-GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent) :
-    AutoPilotPlugin(vehicle, parent)
+GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
+    : AutoPilotPlugin(vehicle, parent)
 {
     if (!vehicle) {
         qWarning() << "Internal error";
@@ -24,11 +23,11 @@ GenericAutoPilotPlugin::GenericAutoPilotPlugin(Vehicle* vehicle, QObject* parent
 const QVariantList& GenericAutoPilotPlugin::vehicleComponents(void)
 {
     static QVariantList emptyList;
-    
+
     return emptyList;
 }
 
-QString GenericAutoPilotPlugin:: prerequisiteSetup(VehicleComponent* component) const
+QString GenericAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
 {
     Q_UNUSED(component);
     return QString();
