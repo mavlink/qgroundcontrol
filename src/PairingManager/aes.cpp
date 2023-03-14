@@ -16,11 +16,9 @@ AES::AES(std::string password, unsigned long long salt)
      * nrounds is the number of times the we hash the material. More rounds are more secure but
      * slower.
      */
-    EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(),
-                   reinterpret_cast<const unsigned char*>(&salt),
-                   reinterpret_cast<const unsigned char*>(password.c_str()),
-                   static_cast<int>(password.length()),
-                   nrounds, key, iv);
+    EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), reinterpret_cast<const unsigned char*>(&salt),
+        reinterpret_cast<const unsigned char*>(password.c_str()), static_cast<int>(password.length()), nrounds, key,
+        iv);
 
 #if OPENSSL_VERSION_NUMBER >= 0x1010000fL
     encCipherContext = EVP_CIPHER_CTX_new();
@@ -51,15 +49,12 @@ AES::~AES()
 }
 
 //-----------------------------------------------------------------------------
-std::string
-AES::encrypt(std::string plainText)
+std::string AES::encrypt(std::string plainText)
 {
     unsigned long sourceLen = static_cast<unsigned long>(plainText.length() + 1);
     unsigned long destLen = sourceLen * 2;
     unsigned char* compressed = new unsigned char[destLen];
-    int err = compress2(compressed, &destLen,
-                        reinterpret_cast<const unsigned char *>(plainText.c_str()),
-                        sourceLen, 9);
+    int err = compress2(compressed, &destLen, reinterpret_cast<const unsigned char*>(plainText.c_str()), sourceLen, 9);
     if (err != Z_OK) {
         return {};
     }
@@ -87,8 +82,7 @@ AES::encrypt(std::string plainText)
     return res;
 }
 //-----------------------------------------------------------------------------
-std::string
-AES::decrypt(std::string cipherText)
+std::string AES::decrypt(std::string cipherText)
 {
     int fLen = 0;
     std::vector<unsigned char> text = base64Decode(cipherText);
@@ -119,10 +113,11 @@ AES::decrypt(std::string cipherText)
 }
 
 //-----------------------------------------------------------------------------
-struct BIOFreeAll { void operator()(BIO* p) { BIO_free_all(p); } };
+struct BIOFreeAll {
+    void operator()(BIO* p) { BIO_free_all(p); }
+};
 
-std::string
-AES::base64Encode(const std::vector<unsigned char>& binary)
+std::string AES::base64Encode(const std::vector<unsigned char>& binary)
 {
     std::unique_ptr<BIO, BIOFreeAll> b64(BIO_new(BIO_f_base64()));
     BIO_set_flags(b64.get(), BIO_FLAGS_BASE64_NO_NL);
@@ -137,8 +132,7 @@ AES::base64Encode(const std::vector<unsigned char>& binary)
 }
 
 //-----------------------------------------------------------------------------
-std::vector<unsigned char>
-AES::base64Decode(std::string encoded)
+std::vector<unsigned char> AES::base64Decode(std::string encoded)
 {
     std::unique_ptr<BIO, BIOFreeAll> b64(BIO_new(BIO_f_base64()));
     BIO_set_flags(b64.get(), BIO_FLAGS_BASE64_NO_NL);

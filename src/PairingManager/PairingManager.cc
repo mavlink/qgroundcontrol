@@ -8,30 +8,27 @@
  ****************************************************************************/
 
 #include "PairingManager.h"
-#include "SettingsManager.h"
 #include "MicrohardManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "SettingsManager.h"
 
-#include <QSettings>
 #include <QJsonObject>
-#include <QStandardPaths>
 #include <QMutexLocker>
+#include <QSettings>
+#include <QStandardPaths>
 
 QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 
 static const char* jsonFileName = "pairing.json";
 
 //-----------------------------------------------------------------------------
-static QString
-random_string(uint length)
+static QString random_string(uint length)
 {
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
+    auto randchar = []() -> char {
+        const char charset[] = "0123456789"
+                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                               "abcdefghijklmnopqrstuvwxyz";
         const uint max_index = (sizeof(charset) - 1);
         return charset[static_cast<uint>(rand()) % max_index];
     };
@@ -52,14 +49,11 @@ PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
 }
 
 //-----------------------------------------------------------------------------
-PairingManager::~PairingManager()
-{
-}
+PairingManager::~PairingManager() { }
 
 //-----------------------------------------------------------------------------
 
-void
-PairingManager::setToolbox(QGCToolbox *toolbox)
+void PairingManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     _updatePairedDeviceNameList();
@@ -67,8 +61,7 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_pairingCompleted(QString name)
+void PairingManager::_pairingCompleted(QString name)
 {
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
@@ -81,18 +74,16 @@ PairingManager::_pairingCompleted(QString name)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_connectionCompleted(QString /*name*/)
+void PairingManager::_connectionCompleted(QString /*name*/)
 {
-    //QString pwd = _remotePairingMap["PWD"].toString();
+    // QString pwd = _remotePairingMap["PWD"].toString();
     //_toolbox->microhardManager()->switchToConnectionEncryptionKey(pwd);
     //_app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc)
+void PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc)
 {
     QMutexLocker lock(&_uploadMutex);
     if (_uploadManager != nullptr) {
@@ -108,19 +99,17 @@ PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_startUploadRequest()
+void PairingManager::_startUploadRequest()
 {
     QNetworkRequest req;
     req.setUrl(QUrl(_uploadURL));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    QNetworkReply *reply = _uploadManager->post(req, _uploadData.toUtf8());
+    QNetworkReply* reply = _uploadManager->post(req, _uploadData.toUtf8());
     connect(reply, &QNetworkReply::finished, this, &PairingManager::_uploadFinished);
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_stopUpload()
+void PairingManager::_stopUpload()
 {
     QMutexLocker lock(&_uploadMutex);
     if (_uploadManager != nullptr) {
@@ -130,8 +119,7 @@ PairingManager::_stopUpload()
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_uploadFinished()
+void PairingManager::_uploadFinished()
 {
     QMutexLocker lock(&_uploadMutex);
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
@@ -157,7 +145,7 @@ PairingManager::_uploadFinished()
                 _uploadManager->deleteLater();
                 _uploadManager = nullptr;
             } else {
-                if(++_pairRetryCount > 3) {
+                if (++_pairRetryCount > 3) {
                     qCDebug(PairingManagerLog) << "Giving up";
                     setPairingStatus(PairingError, tr("No Response From Vehicle"));
                     _uploadManager->deleteLater();
@@ -172,8 +160,7 @@ PairingManager::_uploadFinished()
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_parsePairingJsonFile()
+void PairingManager::_parsePairingJsonFile()
 {
     QFile file(_jsonFileName);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -185,8 +172,7 @@ PairingManager::_parsePairingJsonFile()
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::connectToPairedDevice(QString name)
+void PairingManager::connectToPairedDevice(QString name)
 {
     setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     QFile file(_pairingCacheFile(name));
@@ -196,8 +182,7 @@ PairingManager::connectToPairedDevice(QString name)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::removePairedDevice(QString name)
+void PairingManager::removePairedDevice(QString name)
 {
     QFile file(_pairingCacheFile(name));
     file.remove();
@@ -206,8 +191,7 @@ PairingManager::removePairedDevice(QString name)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_updatePairedDeviceNameList()
+void PairingManager::_updatePairedDeviceNameList()
 {
     _deviceList.clear();
     QDirIterator it(_pairingCacheDir().absolutePath(), QDir::Files);
@@ -219,26 +203,24 @@ PairingManager::_updatePairedDeviceNameList()
 }
 
 //-----------------------------------------------------------------------------
-QString
-PairingManager::_assumeMicrohardPairingJson()
+QString PairingManager::_assumeMicrohardPairingJson()
 {
     QJsonDocument json;
-    QJsonObject   jsonObject;
+    QJsonObject jsonObject;
 
     jsonObject.insert("LT", "MH");
     jsonObject.insert("IP", "192.168.168.10");
     jsonObject.insert("AIP", _toolbox->microhardManager()->remoteIPAddr());
-    jsonObject.insert("CU",  _toolbox->microhardManager()->configUserName());
-    jsonObject.insert("CP",  _toolbox->microhardManager()->configPassword());
-    jsonObject.insert("EK",  _toolbox->microhardManager()->encryptionKey());
+    jsonObject.insert("CU", _toolbox->microhardManager()->configUserName());
+    jsonObject.insert("CP", _toolbox->microhardManager()->configPassword());
+    jsonObject.insert("EK", _toolbox->microhardManager()->encryptionKey());
     json.setObject(jsonObject);
 
     return QString(json.toJson(QJsonDocument::Compact));
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_parsePairingJson(QString jsonEnc)
+void PairingManager::_parsePairingJson(QString jsonEnc)
 {
     QString json = QString::fromStdString(_aes.decrypt(jsonEnc.toStdString()));
     if (json == "") {
@@ -268,13 +250,13 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     }
 
     _remotePairingMap = jsonObj.toVariantMap();
-    QString linkType  = _remotePairingMap["LT"].toString();
-    QString pport     = _remotePairingMap["PP"].toString();
-    if (pport.length()==0) {
+    QString linkType = _remotePairingMap["LT"].toString();
+    QString pport = _remotePairingMap["PP"].toString();
+    if (pport.length() == 0) {
         pport = "29351";
     }
 
-    if (linkType.length()==0) {
+    if (linkType.length() == 0) {
         setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON is malformed.";
         return;
@@ -287,7 +269,7 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     QJsonDocument jsonDoc;
 
     if (!connecting) {
-        pairURL +=  + "/pair";
+        pairURL += +"/pair";
         QString pwd = random_string(8);
         // TODO generate certificates
         QString cert1 = "";
@@ -302,7 +284,7 @@ PairingManager::_parsePairingJson(QString jsonEnc)
             jsonDoc = _createMicrohardPairingJson(pwd, cert1);
         }
     } else {
-        pairURL +=  + "/connect";
+        pairURL += +"/connect";
         QString cert2 = _remotePairingMap["CERT2"].toString();
         if (linkType == "ZT") {
             jsonDoc = _createZeroTierConnectJson(cert2);
@@ -336,17 +318,16 @@ PairingManager::_parsePairingJson(QString jsonEnc)
 }
 
 //-----------------------------------------------------------------------------
-QString
-PairingManager::_getLocalIPInNetwork(QString remoteIP, int num)
+QString PairingManager::_getLocalIPInNetwork(QString remoteIP, int num)
 {
     QStringList pieces = remoteIP.split(".");
     QString ipPrefix = "";
-    for (int i = 0; i<num && i<pieces.length(); i++) {
+    for (int i = 0; i < num && i < pieces.length(); i++) {
         ipPrefix += pieces[i] + ".";
     }
 
-    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
+    const QHostAddress& localhost = QHostAddress(QHostAddress::LocalHost);
+    for (const QHostAddress& address : QNetworkInterface::allAddresses()) {
         if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost) {
             if (address.toString().startsWith(ipPrefix)) {
                 return address.toString();
@@ -358,8 +339,7 @@ PairingManager::_getLocalIPInNetwork(QString remoteIP, int num)
 }
 
 //-----------------------------------------------------------------------------
-QDir
-PairingManager::_pairingCacheDir()
+QDir PairingManager::_pairingCacheDir()
 {
     const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
     QDir dir = spath + QDir::separator() + "PairingCache";
@@ -371,15 +351,10 @@ PairingManager::_pairingCacheDir()
 }
 
 //-----------------------------------------------------------------------------
-QString
-PairingManager::_pairingCacheFile(QString uavName)
-{
-    return _pairingCacheDir().filePath(uavName);
-}
+QString PairingManager::_pairingCacheFile(QString uavName) { return _pairingCacheDir().filePath(uavName); }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_writeJson(QJsonDocument &jsonDoc, QString fileName)
+void PairingManager::_writeJson(QJsonDocument& jsonDoc, QString fileName)
 {
     QString val = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
     qCDebug(PairingManagerLog) << "Write json " << val;
@@ -392,8 +367,7 @@ PairingManager::_writeJson(QJsonDocument &jsonDoc, QString fileName)
 }
 
 //-----------------------------------------------------------------------------
-QJsonDocument
-PairingManager::_createZeroTierPairingJson(QString cert1)
+QJsonDocument PairingManager::_createZeroTierPairingJson(QString cert1)
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 2);
 
@@ -406,8 +380,7 @@ PairingManager::_createZeroTierPairingJson(QString cert1)
 }
 
 //-----------------------------------------------------------------------------
-QJsonDocument
-PairingManager::_createMicrohardPairingJson(QString pwd, QString cert1)
+QJsonDocument PairingManager::_createMicrohardPairingJson(QString pwd, QString cert1)
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 3);
 
@@ -421,8 +394,7 @@ PairingManager::_createMicrohardPairingJson(QString pwd, QString cert1)
 }
 
 //-----------------------------------------------------------------------------
-QJsonDocument
-PairingManager::_createZeroTierConnectJson(QString cert2)
+QJsonDocument PairingManager::_createZeroTierConnectJson(QString cert2)
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 2);
 
@@ -435,8 +407,7 @@ PairingManager::_createZeroTierConnectJson(QString cert2)
 }
 
 //-----------------------------------------------------------------------------
-QJsonDocument
-PairingManager::_createMicrohardConnectJson(QString cert2)
+QJsonDocument PairingManager::_createMicrohardConnectJson(QString cert2)
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 3);
 
@@ -450,8 +421,7 @@ PairingManager::_createMicrohardConnectJson(QString cert2)
 
 //-----------------------------------------------------------------------------
 
-QStringList
-PairingManager::pairingLinkTypeStrings()
+QStringList PairingManager::pairingLinkTypeStrings()
 {
     //-- Must follow same order as enum LinkType in LinkConfiguration.h
     static QStringList list;
@@ -470,8 +440,7 @@ PairingManager::pairingLinkTypeStrings()
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_setPairingStatus(PairingStatus status, QString statusStr)
+void PairingManager::_setPairingStatus(PairingStatus status, QString statusStr)
 {
     _status = status;
     _statusString = statusStr;
@@ -479,16 +448,11 @@ PairingManager::_setPairingStatus(PairingStatus status, QString statusStr)
 }
 
 //-----------------------------------------------------------------------------
-QString
-PairingManager::pairingStatusStr() const
-{
-    return _statusString;
-}
+QString PairingManager::pairingStatusStr() const { return _statusString; }
 
 #if QGC_GST_MICROHARD_ENABLED
 //-----------------------------------------------------------------------------
-void
-PairingManager::startMicrohardPairing()
+void PairingManager::startMicrohardPairing()
 {
     stopPairing();
     _pairRetryCount = 0;
@@ -498,8 +462,7 @@ PairingManager::startMicrohardPairing()
 #endif
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::stopPairing()
+void PairingManager::stopPairing()
 {
 #if defined QGC_ENABLE_QTNFC
     pairingNFC.stop();
@@ -510,8 +473,7 @@ PairingManager::stopPairing()
 
 #if defined QGC_ENABLE_QTNFC
 //-----------------------------------------------------------------------------
-void
-PairingManager::startNFCScan()
+void PairingManager::startNFCScan()
 {
     stopPairing();
     setPairingStatus(PairingActive, tr("Pairing..."));
@@ -525,11 +487,11 @@ PairingManager::startNFCScan()
 static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
 //-----------------------------------------------------------------------------
-static void jniNFCTagReceived(JNIEnv *envA, jobject thizA, jstring messageA)
+static void jniNFCTagReceived(JNIEnv* envA, jobject thizA, jstring messageA)
 {
     Q_UNUSED(thizA);
 
-    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
+    const char* stringL = envA->GetStringUTFChars(messageA, nullptr);
     QString ndef = QString::fromUtf8(stringL);
     envA->ReleaseStringUTFChars(messageA, stringL);
     if (envA->ExceptionCheck())
@@ -543,8 +505,7 @@ void PairingManager::setNativeMethods(void)
 {
     //  REGISTER THE C++ FUNCTION WITH JNI
     JNINativeMethod javaMethods[] {
-        {"nativeNFCTagReceived", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniNFCTagReceived)}
-    };
+        {"nativeNFCTagReceived", "(Ljava/lang/String;)V", reinterpret_cast<void*>(jniNFCTagReceived)}};
 
     QAndroidJniEnvironment jniEnv;
     if (jniEnv->ExceptionCheck()) {
@@ -553,7 +514,7 @@ void PairingManager::setNativeMethods(void)
     }
 
     jclass objectClass = jniEnv->FindClass(kJniClassName);
-    if(!objectClass) {
+    if (!objectClass) {
         qWarning() << "Couldn't find class:" << kJniClassName;
         return;
     }

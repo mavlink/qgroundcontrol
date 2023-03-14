@@ -9,17 +9,16 @@
 
 #pragma once
 
-#include <QObject>
 #include <QNdefMessage>
 #include <QNearFieldManager>
 #include <QNearFieldTarget>
+#include <QObject>
 
 #include "QGCLoggingCategory.h"
 
 Q_DECLARE_LOGGING_CATEGORY(PairingNFCLog)
 
-class PairingNFC : public QObject
-{
+class PairingNFC : public QObject {
     Q_OBJECT
 
 public:
@@ -33,13 +32,13 @@ signals:
     void parsePairingJson(QString json);
 
 public slots:
-    void targetDetected(QNearFieldTarget *target);
-    void targetLost(QNearFieldTarget *target);
+    void targetDetected(QNearFieldTarget* target);
+    void targetLost(QNearFieldTarget* target);
     void handlePolledNdefMessage(QNdefMessage message);
     void targetError(QNearFieldTarget::Error error, const QNearFieldTarget::RequestId& id);
     void handleRequestCompleted(const QNearFieldTarget::RequestId& id);
 
 private:
-    bool _exitThread = false;    ///< true: signal thread to exit
-    QNearFieldManager *manager = nullptr;
+    bool _exitThread = false; ///< true: signal thread to exit
+    QNearFieldManager* manager = nullptr;
 };

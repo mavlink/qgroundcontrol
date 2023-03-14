@@ -3,12 +3,11 @@
 
 #pragma once
 
+#include <openssl/evp.h>
 #include <string>
 #include <vector>
-#include <openssl/evp.h>
 
-class AES
-{
+class AES {
 public:
     AES(std::string password, unsigned long long salt);
 
@@ -20,8 +19,8 @@ public:
 
 private:
 #if OPENSSL_VERSION_NUMBER >= 0x1010000fL
-    EVP_CIPHER_CTX *encCipherContext = nullptr;
-    EVP_CIPHER_CTX *decCipherContext = nullptr;
+    EVP_CIPHER_CTX* encCipherContext = nullptr;
+    EVP_CIPHER_CTX* decCipherContext = nullptr;
 #else
     EVP_CIPHER_CTX encCipherContext;
     EVP_CIPHER_CTX decCipherContext;

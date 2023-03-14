@@ -6,8 +6,8 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-#include "PairingManager.h"
 #include "QtNFC.h"
+#include "PairingManager.h"
 #include "QGCApplication.h"
 #include <QSoundEffect>
 
@@ -16,13 +16,10 @@ QGC_LOGGING_CATEGORY(PairingNFCLog, "PairingNFCLog")
 #include <QNdefNfcTextRecord>
 
 //-----------------------------------------------------------------------------
-PairingNFC::PairingNFC()
-{
-}
+PairingNFC::PairingNFC() { }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::start()
+void PairingNFC::start()
 {
     if (manager != nullptr) {
         return;
@@ -44,7 +41,8 @@ PairingNFC::start()
     // type parameter cannot specify substring so filter for "image/" below
     filter.appendRecord(QNdefRecord::Mime, QByteArray(), 0, 1);
 
-    int result = manager->registerNdefMessageHandler(filter, this, SLOT(handleMessage(QNdefMessage, QNearFieldTarget*)));
+    int result
+        = manager->registerNdefMessageHandler(filter, this, SLOT(handleMessage(QNdefMessage, QNearFieldTarget*)));
 
     if (result < 0)
         qWarning() << "Platform does not support NDEF message handler registration";
@@ -55,8 +53,7 @@ PairingNFC::start()
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::stop()
+void PairingNFC::stop()
 {
     if (manager != nullptr) {
         qgcApp()->toolbox()->pairingManager()->setStatusMessage("");
@@ -68,8 +65,7 @@ PairingNFC::stop()
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::targetDetected(QNearFieldTarget *target)
+void PairingNFC::targetDetected(QNearFieldTarget* target)
 {
     if (!target) {
         return;
@@ -78,8 +74,8 @@ PairingNFC::targetDetected(QNearFieldTarget *target)
     qgcApp()->toolbox()->pairingManager()->setStatusMessage(tr("Device detected"));
     qCDebug(PairingNFCLog) << "NFC: Device detected";
     connect(target, &QNearFieldTarget::ndefMessageRead, this, &PairingNFC::handlePolledNdefMessage);
-    connect(target, SIGNAL(error(QNearFieldTarget::Error,QNearFieldTarget::RequestId)),
-            this, SLOT(targetError(QNearFieldTarget::Error,QNearFieldTarget::RequestId)));
+    connect(target, SIGNAL(error(QNearFieldTarget::Error, QNearFieldTarget::RequestId)), this,
+        SLOT(targetError(QNearFieldTarget::Error, QNearFieldTarget::RequestId)));
     connect(target, &QNearFieldTarget::requestCompleted, this, &PairingNFC::handleRequestCompleted);
 
     manager->setTargetAccessModes(QNearFieldManager::NdefReadTargetAccess);
@@ -92,24 +88,21 @@ PairingNFC::targetDetected(QNearFieldTarget *target)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::handleRequestCompleted(const QNearFieldTarget::RequestId& id)
+void PairingNFC::handleRequestCompleted(const QNearFieldTarget::RequestId& id)
 {
     Q_UNUSED(id);
     qCDebug(PairingNFCLog) << "handleRequestCompleted ";
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::targetError(QNearFieldTarget::Error error, const QNearFieldTarget::RequestId& id)
+void PairingNFC::targetError(QNearFieldTarget::Error error, const QNearFieldTarget::RequestId& id)
 {
     Q_UNUSED(id);
     qCDebug(PairingNFCLog) << "Error: " << error;
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::targetLost(QNearFieldTarget *target)
+void PairingNFC::targetLost(QNearFieldTarget* target)
 {
     qgcApp()->toolbox()->pairingManager()->setStatusMessage(tr("Device removed"));
     qCDebug(PairingNFCLog) << "NFC: Device removed";
@@ -119,12 +112,11 @@ PairingNFC::targetLost(QNearFieldTarget *target)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingNFC::handlePolledNdefMessage(QNdefMessage message)
+void PairingNFC::handlePolledNdefMessage(QNdefMessage message)
 {
     qCDebug(PairingNFCLog) << "NFC: Handle NDEF message";
-//    QNearFieldTarget *target = qobject_cast<QNearFieldTarget *>(sender());
-    for (const QNdefRecord &record : message) {
+    //    QNearFieldTarget *target = qobject_cast<QNearFieldTarget *>(sender());
+    for (const QNdefRecord& record : message) {
         if (record.isRecordType<QNdefNfcTextRecord>()) {
             QNdefNfcTextRecord textRecord(record);
             qgcApp()->toolbox()->pairingManager()->jsonReceived(textRecord.text());
