@@ -10,14 +10,14 @@
 #include <QElapsedTimer>
 #include <cmath>
 
-#include "MultiVehicleManager.h"
+#include "AppSettings.h"
 #include "FirmwarePlugin.h"
-#include "MAVLinkProtocol.h"
 #include "FollowMe.h"
-#include "Vehicle.h"
+#include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(FollowMeLog, "FollowMeLog")
 
@@ -31,8 +31,9 @@ void FollowMe::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    connect(&_gcsMotionReportTimer,                                     &QTimer::timeout,       this, &FollowMe::_sendGCSMotionReport);
-    connect(toolbox->settingsManager()->appSettings()->followTarget(),  &Fact::rawValueChanged, this, &FollowMe::_settingsChanged);
+    connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
+    connect(toolbox->settingsManager()->appSettings()->followTarget(), &Fact::rawValueChanged, this,
+        &FollowMe::_settingsChanged);
 
     _settingsChanged();
 }
@@ -43,18 +44,21 @@ void FollowMe::_settingsChanged()
 
     switch (_currentMode) {
     case MODE_NEVER:
-        disconnect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,     this, &FollowMe::_vehicleAdded);
-        disconnect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,   this, &FollowMe::_vehicleRemoved);
+        disconnect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
+        disconnect(
+            _toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
         _disableFollowSend();
         break;
     case MODE_ALWAYS:
-        connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,    this, &FollowMe::_vehicleAdded);
-        connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,  this, &FollowMe::_vehicleRemoved);
+        connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
+        connect(
+            _toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
         _enableFollowSend();
         break;
     case MODE_FOLLOWME:
-        connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleAdded,    this, &FollowMe::_vehicleAdded);
-        connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved,  this, &FollowMe::_vehicleRemoved);
+        connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &FollowMe::_vehicleAdded);
+        connect(
+            _toolbox->multiVehicleManager(), &MultiVehicleManager::vehicleRemoved, this, &FollowMe::_vehicleRemoved);
         _enableIfVehicleInFollow();
         break;
     }
@@ -77,8 +81,8 @@ void FollowMe::_disableFollowSend()
 
 void FollowMe::_sendGCSMotionReport()
 {
-    QGeoPositionInfo    geoPositionInfo =   _toolbox->qgcPositionManager()->geoPositionInfo();
-    QGeoCoordinate      gcsCoordinate =     geoPositionInfo.coordinate();
+    QGeoPositionInfo geoPositionInfo = _toolbox->qgcPositionManager()->geoPositionInfo();
+    QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
 
     if (!geoPositionInfo.isValid()) {
         return;
@@ -90,7 +94,7 @@ void FollowMe::_sendGCSMotionReport()
         needFollowMe = true;
     } else if (_currentMode == MODE_FOLLOWME) {
         QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
-        for (int i=0; i<vehicles->count(); i++) {
+        for (int i = 0; i < vehicles->count(); i++) {
             Vehicle* vehicle = vehicles->value<Vehicle*>(i);
             if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
                 needFollowMe = true;
@@ -102,14 +106,14 @@ void FollowMe::_sendGCSMotionReport()
     }
 
     GCSMotionReport motionReport = {};
-    uint8_t         estimatation_capabilities = 0;
+    uint8_t estimatation_capabilities = 0;
 
     // get the current location coordinates
 
-    motionReport.lat_int =          static_cast<int>(gcsCoordinate.latitude()  * 1e7);
-    motionReport.lon_int =          static_cast<int>(gcsCoordinate.longitude() * 1e7);
-    motionReport.altMetersAMSL =    gcsCoordinate.altitude();
-    estimatation_capabilities |=    (1 << POS);
+    motionReport.lat_int = static_cast<int>(gcsCoordinate.latitude() * 1e7);
+    motionReport.lon_int = static_cast<int>(gcsCoordinate.longitude() * 1e7);
+    motionReport.altMetersAMSL = gcsCoordinate.altitude();
+    estimatation_capabilities |= (1 << POS);
 
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction) == true) {
         estimatation_capabilities |= (1 << HEADING);
@@ -119,7 +123,8 @@ void FollowMe::_sendGCSMotionReport()
     // get the current eph and epv
 
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
-        motionReport.pos_std_dev[0] = motionReport.pos_std_dev[1] = geoPositionInfo.attribute(QGeoPositionInfo::HorizontalAccuracy);
+        motionReport.pos_std_dev[0] = motionReport.pos_std_dev[1]
+            = geoPositionInfo.attribute(QGeoPositionInfo::HorizontalAccuracy);
     }
 
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
@@ -134,14 +139,15 @@ void FollowMe::_sendGCSMotionReport()
 
     // calculate x,y velocity if it's available
 
-    if (geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction) && geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true) {
+    if (geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)
+        && geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed) == true) {
         estimatation_capabilities |= (1 << VEL);
 
         qreal direction = _degreesToRadian(geoPositionInfo.attribute(QGeoPositionInfo::Direction));
-        qreal velocity  = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
+        qreal velocity = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
 
-        motionReport.vxMetersPerSec = cos(direction)*velocity;
-        motionReport.vyMetersPerSec = sin(direction)*velocity;
+        motionReport.vxMetersPerSec = cos(direction) * velocity;
+        motionReport.vyMetersPerSec = sin(direction) * velocity;
     } else {
         motionReport.vxMetersPerSec = 0;
         motionReport.vyMetersPerSec = 0;
@@ -149,19 +155,17 @@ void FollowMe::_sendGCSMotionReport()
 
     QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
 
-    for (int i=0; i<vehicles->count(); i++) {
+    for (int i = 0; i < vehicles->count(); i++) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
         if (_currentMode == MODE_ALWAYS || _isFollowFlightMode(vehicle, vehicle->flightMode())) {
-            qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int << motionReport.lon_int << motionReport.altMetersAMSL;
+            qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int
+                                 << motionReport.lon_int << motionReport.altMetersAMSL;
             vehicle->firmwarePlugin()->sendGCSMotionReport(vehicle, motionReport, estimatation_capabilities);
         }
     }
 }
 
-double FollowMe::_degreesToRadian(double deg)
-{
-    return deg * M_PI / 180.0;
-}
+double FollowMe::_degreesToRadian(double deg) { return deg * M_PI / 180.0; }
 
 void FollowMe::_vehicleAdded(Vehicle* vehicle)
 {
@@ -185,7 +189,7 @@ void FollowMe::_enableIfVehicleInFollow(void)
     // Any vehicle in follow mode will enable the system
     QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
 
-    for (int i=0; i< vehicles->count(); i++) {
+    for (int i = 0; i < vehicles->count(); i++) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
         if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
             _enableFollowSend();
@@ -196,7 +200,7 @@ void FollowMe::_enableIfVehicleInFollow(void)
     _disableFollowSend();
 }
 
-bool FollowMe::_isFollowFlightMode (Vehicle* vehicle, const QString& flightMode)
+bool FollowMe::_isFollowFlightMode(Vehicle* vehicle, const QString& flightMode)
 {
     return flightMode.compare(vehicle->followFlightMode()) == 0;
 }
