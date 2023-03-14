@@ -21,7 +21,6 @@ APMFirmwarePluginFactory::APMFirmwarePluginFactory(void)
     , _arduRoverPluginInstance(nullptr)
     , _arduSubPluginInstance(nullptr)
 {
-
 }
 
 QList<QGCMAVLink::FirmwareClass_t> APMFirmwarePluginFactory::supportedFirmwareClasses(void) const
