@@ -1,0 +1,17 @@
+name: Check code style
+
+on: [push, pull_request]
+
+jobs:
+  check-code:
+    runs-on:  ubuntu-20.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Run clang-format style check for C/C++/Protobuf programs.
+      uses: jidicula/clang-format-action@v4.10.2
+      with:
+        clang-format-version: '15'
+        check-path: 'src'
