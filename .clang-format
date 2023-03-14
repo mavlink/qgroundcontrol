@@ -1,0 +1,7 @@
+Language: Cpp
+Standard: Cpp11
+BasedOnStyle: WebKit
+
+ColumnLimit: '120'
+PointerAlignment: Left
+Cpp11BracedListStyle: true
