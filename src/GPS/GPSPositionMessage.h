@@ -7,27 +7,23 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
-#include "vehicle_gps_position.h"
 #include "satellite_info.h"
+#include "vehicle_gps_position.h"
 #include <QMetaType>
 
 /**
  ** struct GPSPositionMessage
  * wrapper that can be used for Qt signal/slots
  */
-struct GPSPositionMessage
-{
+struct GPSPositionMessage {
     sensor_gps_s position_data;
 };
 
 Q_DECLARE_METATYPE(GPSPositionMessage);
 
-
-struct GPSSatelliteMessage
-{
+struct GPSSatelliteMessage {
     satellite_info_s satellite_data;
 };
 Q_DECLARE_METATYPE(GPSSatelliteMessage);

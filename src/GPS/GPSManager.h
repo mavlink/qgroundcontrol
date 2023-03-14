@@ -7,35 +7,34 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "GPSProvider.h"
 #include "RTCM/RTCMMavlink.h"
 #include <QGCToolbox.h>
 
-#include <QString>
 #include <QObject>
+#include <QString>
 
 /**
  ** class GPSManager
  * handles a GPS provider and RTK
  */
-class GPSManager : public QGCTool
-{
+class GPSManager : public QGCTool {
     Q_OBJECT
 public:
     GPSManager(QGCApplication* app, QGCToolbox* toolbox);
     ~GPSManager();
 
-    void connectGPS     (const QString& device, const QString& gps_type);
-    void disconnectGPS  (void);
-    bool connected      (void) const { return _gpsProvider && _gpsProvider->isRunning(); }
+    void connectGPS(const QString& device, const QString& gps_type);
+    void disconnectGPS(void);
+    bool connected(void) const { return _gpsProvider && _gpsProvider->isRunning(); }
 
 signals:
     void onConnect();
     void onDisconnect();
-    void surveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void surveyInStatus(
+        float duration, float accuracyMM, double latitude, double longitude, float altitude, bool valid, bool active);
     void satelliteUpdate(int numSats);
 
 private slots:
