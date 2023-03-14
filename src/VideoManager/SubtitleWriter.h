@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /**
  * @file
  *   @brief QGC Video Subtitle Writer
@@ -16,17 +15,16 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
 #include "Fact.h"
-#include <QObject>
-#include <QTimer>
+#include "QGCLoggingCategory.h"
 #include <QDateTime>
 #include <QFile>
+#include <QObject>
+#include <QTimer>
 
 Q_DECLARE_LOGGING_CATEGORY(SubtitleWriterLog)
 
-class SubtitleWriter : public QObject
-{
+class SubtitleWriter : public QObject {
     Q_OBJECT
 
 public:
@@ -47,5 +45,6 @@ private:
     QTime _lastEndTime;
     QFile _file;
 
-    static const int _sampleRate; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
+    static const int
+        _sampleRate; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
 };

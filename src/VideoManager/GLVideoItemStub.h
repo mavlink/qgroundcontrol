@@ -2,8 +2,7 @@
 
 #include <QtQuick/QQuickItem>
 
-class GLVideoItemStub : public QQuickItem
-{
+class GLVideoItemStub : public QQuickItem {
     Q_OBJECT
 
 public:
@@ -11,7 +10,5 @@ public:
     ~GLVideoItemStub();
 
 protected:
-
 private:
-
 };
