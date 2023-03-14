@@ -10,24 +10,21 @@
 #pragma once
 
 #include "TaisyncHandler.h"
-#include <QUdpSocket>
 #include <QTimer>
+#include <QUdpSocket>
 
-class TaisyncTelemetry : public TaisyncHandler
-{
+class TaisyncTelemetry : public TaisyncHandler {
     Q_OBJECT
 public:
-
-    explicit TaisyncTelemetry           (QObject* parent = nullptr);
-    bool    close                       () override;
-    bool    start                       () override;
-    void    writeBytes                  (QByteArray bytes);
+    explicit TaisyncTelemetry(QObject* parent = nullptr);
+    bool close() override;
+    bool start() override;
+    void writeBytes(QByteArray bytes);
 
 signals:
-    void    bytesReady                   (QByteArray bytes);
+    void bytesReady(QByteArray bytes);
 
 private slots:
-    void    _newConnection              () override;
-    void    _readBytes                  () override;
-
+    void _newConnection() override;
+    void _readBytes() override;
 };

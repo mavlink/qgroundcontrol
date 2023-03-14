@@ -12,18 +12,16 @@
 #include "TaisyncHandler.h"
 #include <QUdpSocket>
 
-class TaisyncVideoReceiver : public TaisyncHandler
-{
+class TaisyncVideoReceiver : public TaisyncHandler {
     Q_OBJECT
 public:
-
-    explicit TaisyncVideoReceiver       (QObject* parent = nullptr);
-    bool start                          () override;
-    bool close                          () override;
+    explicit TaisyncVideoReceiver(QObject* parent = nullptr);
+    bool start() override;
+    bool close() override;
 
 private slots:
-    void    _readBytes                  () override;
+    void _readBytes() override;
 
 private:
-    QUdpSocket*     _udpVideoSocket     = nullptr;
+    QUdpSocket* _udpVideoSocket = nullptr;
 };

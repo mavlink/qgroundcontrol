@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "TaisyncTelemetry.h"
-#include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 #include "VideoManager.h"
 
 //-----------------------------------------------------------------------------
@@ -19,10 +19,9 @@ TaisyncTelemetry::TaisyncTelemetry(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-bool
-TaisyncTelemetry::close()
+bool TaisyncTelemetry::close()
 {
-    if(TaisyncHandler::close()) {
+    if (TaisyncHandler::close()) {
         qCDebug(TaisyncLog) << "Close Taisync Telemetry";
         return true;
     }
@@ -37,27 +36,24 @@ bool TaisyncTelemetry::start()
 }
 
 //-----------------------------------------------------------------------------
-void
-TaisyncTelemetry::writeBytes(QByteArray bytes)
+void TaisyncTelemetry::writeBytes(QByteArray bytes)
 {
-    if(_tcpSocket) {
+    if (_tcpSocket) {
         _tcpSocket->write(bytes);
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-TaisyncTelemetry::_newConnection()
+void TaisyncTelemetry::_newConnection()
 {
     TaisyncHandler::_newConnection();
     qCDebug(TaisyncLog) << "New Taisync Temeletry Connection";
 }
 
 //-----------------------------------------------------------------------------
-void
-TaisyncTelemetry::_readBytes()
+void TaisyncTelemetry::_readBytes()
 {
-    while(_tcpSocket->bytesAvailable()) {
+    while (_tcpSocket->bytesAvailable()) {
         QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
         emit bytesReady(bytesIn);
     }

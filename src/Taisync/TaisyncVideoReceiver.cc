@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "TaisyncVideoReceiver.h"
-#include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 #include "VideoManager.h"
 
 //-----------------------------------------------------------------------------
@@ -19,12 +19,11 @@ TaisyncVideoReceiver::TaisyncVideoReceiver(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-bool
-TaisyncVideoReceiver::close()
+bool TaisyncVideoReceiver::close()
 {
-    if(TaisyncHandler::close() || _udpVideoSocket) {
+    if (TaisyncHandler::close() || _udpVideoSocket) {
         qCDebug(TaisyncLog) << "Close Taisync Video Receiver";
-        if(_udpVideoSocket) {
+        if (_udpVideoSocket) {
             _udpVideoSocket->close();
             _udpVideoSocket->deleteLater();
             _udpVideoSocket = nullptr;
@@ -35,11 +34,10 @@ TaisyncVideoReceiver::close()
 }
 
 //-----------------------------------------------------------------------------
-bool
-TaisyncVideoReceiver::start()
+bool TaisyncVideoReceiver::start()
 {
     qCDebug(TaisyncLog) << "Start Taisync Video Receiver";
-    if(_start(TAISYNC_VIDEO_TCP_PORT)) {
+    if (_start(TAISYNC_VIDEO_TCP_PORT)) {
         _udpVideoSocket = new QUdpSocket(this);
         return true;
     }
@@ -47,10 +45,9 @@ TaisyncVideoReceiver::start()
 }
 
 //-----------------------------------------------------------------------------
-void
-TaisyncVideoReceiver::_readBytes()
+void TaisyncVideoReceiver::_readBytes()
 {
-    if(_udpVideoSocket) {
+    if (_udpVideoSocket) {
         QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
         _udpVideoSocket->writeDatagram(bytesIn, QHostAddress::LocalHost, TAISYNC_VIDEO_UDP_PORT);
     }
