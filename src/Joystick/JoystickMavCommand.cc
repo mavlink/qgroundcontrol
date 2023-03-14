@@ -10,9 +10,9 @@
 #include "JoystickMavCommand.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonParseError>
-#include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(JoystickMavCommandLog, "JoystickMavCommandLog")
 
@@ -57,7 +57,7 @@ QList<JoystickMavCommand> JoystickMavCommand::load(const QString& jsonFilename)
     }
 
     QJsonArray jsonArray = jsonValue.toArray();
-    for (QJsonValue info: jsonArray) {
+    for (QJsonValue info : jsonArray) {
         if (!info.isObject()) {
             qWarning() << jsonFilename << ": 'commands' should contain objects";
             return result;
@@ -94,8 +94,6 @@ QList<JoystickMavCommand> JoystickMavCommand::load(const QString& jsonFilename)
 
 void JoystickMavCommand::send(Vehicle* vehicle)
 {
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            static_cast<MAV_CMD>(_id),
-                            _showError,
-                            _param1, _param2, _param3, _param4, _param5, _param6, _param7);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), static_cast<MAV_CMD>(_id), _showError, _param1, _param2,
+        _param3, _param4, _param5, _param6, _param7);
 }

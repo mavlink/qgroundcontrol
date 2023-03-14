@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
 #include "Joystick.h"
 #include "MultiVehicleManager.h"
+#include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
 
 #include <QVariantList>
@@ -22,8 +22,7 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 /// Joystick Manager
-class JoystickManager : public QGCTool
-{
+class JoystickManager : public QGCTool {
     Q_OBJECT
 
 public:
@@ -31,10 +30,11 @@ public:
     ~JoystickManager();
 
     Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
-    Q_PROPERTY(QStringList  joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
+    Q_PROPERTY(QStringList joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
 
     Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
-    Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
+    Q_PROPERTY(
+        QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
 
     /// List of available joysticks
     QVariantList joysticks();
@@ -52,7 +52,7 @@ public:
     void restartJoystickCheckTimer(void);
 
     // Override from QGCTool
-    virtual void setToolbox(QGCToolbox *toolbox);
+    virtual void setToolbox(QGCToolbox* toolbox);
 
 public slots:
     void init();
@@ -70,12 +70,12 @@ private:
     void _setActiveJoystickFromSettings(void);
 
 private:
-    Joystick*                   _activeJoystick;
-    QMap<QString, Joystick*>    _name2JoystickMap;
-    MultiVehicleManager*        _multiVehicleManager;
+    Joystick* _activeJoystick;
+    QMap<QString, Joystick*> _name2JoystickMap;
+    MultiVehicleManager* _multiVehicleManager;
 
-    static const char * _settingsGroup;
-    static const char * _settingsKeyActiveJoystick;
+    static const char* _settingsGroup;
+    static const char* _settingsKeyActiveJoystick;
 
     int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;

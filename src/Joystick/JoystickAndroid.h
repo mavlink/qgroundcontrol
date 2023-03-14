@@ -2,24 +2,25 @@
 #define JOYSTICKANDROID_H
 
 #include "Joystick.h"
-#include "Vehicle.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
-#include <jni.h>
+#include <QtAndroidExtras/QAndroidJniObject>
+#include <QtAndroidExtras/QtAndroidExtras>
 #include <QtCore/private/qjni_p.h>
 #include <QtCore/private/qjnihelpers_p.h>
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
+#include <jni.h>
 
-
-class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
-{
+class JoystickAndroid : public Joystick,
+                        public QtAndroidPrivate::GenericMotionEventListener,
+                        public QtAndroidPrivate::KeyEventListener {
 public:
-    JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
+    JoystickAndroid(
+        const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
 
     ~JoystickAndroid();
 
-    static bool init(JoystickManager *manager);
+    static bool init(JoystickManager* manager);
 
     static void setNativeMethods();
 
@@ -29,20 +30,20 @@ private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
 
-    virtual bool _open          ();
-    virtual void _close         ();
-    virtual bool _update        ();
+    virtual bool _open();
+    virtual void _close();
+    virtual bool _update();
 
-    virtual bool _getButton     (int i);
-    virtual int  _getAxis       (int i);
-    virtual bool _getHat        (int hat,int i);
+    virtual bool _getButton(int i);
+    virtual int _getAxis(int i);
+    virtual bool _getHat(int hat, int i);
 
-    int *btnCode;
-    int *axisCode;
-    bool *btnValue;
-    int *axisValue;
+    int* btnCode;
+    int* axisCode;
+    bool* btnValue;
+    int* axisValue;
 
-    static int * _androidBtnList; //list of all possible android buttons
+    static int* _androidBtnList; // list of all possible android buttons
     static int _androidBtnListCount;
 
     static int ACTION_DOWN, ACTION_UP;

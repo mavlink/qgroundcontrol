@@ -12,19 +12,19 @@
 
 #pragma once
 
-#include <QString>
 #include <QList>
+#include <QString>
 
 class Vehicle;
 
 /// Custom MAV command
-class JoystickMavCommand
-{
+class JoystickMavCommand {
 public:
     static QList<JoystickMavCommand> load(const QString& jsonFilename);
     QString name() const { return _name; }
 
     void send(Vehicle* vehicle);
+
 private:
     QString _name;
     int _id = 0;
@@ -37,4 +37,3 @@ private:
     float _param6 = 0.0f;
     float _param7 = 0.0f;
 };
-
