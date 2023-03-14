@@ -18,16 +18,16 @@
 #include <QObject>
 #include <QSize>
 
-class VideoReceiver : public QObject
-{
+class VideoReceiver : public QObject {
     Q_OBJECT
 
 public:
     explicit VideoReceiver(QObject* parent = nullptr)
         : QObject(parent)
-    {}
+    {
+    }
 
-    virtual ~VideoReceiver(void) {}
+    virtual ~VideoReceiver(void) { }
 
     typedef enum {
         FILE_FORMAT_MIN = 0,

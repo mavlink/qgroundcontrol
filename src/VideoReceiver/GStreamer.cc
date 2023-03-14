@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /**
  * @file
  *   @brief QGC Video Streaming Initialization
@@ -22,14 +21,8 @@
 QGC_LOGGING_CATEGORY(GStreamerLog, "GStreamerLog")
 QGC_LOGGING_CATEGORY(GStreamerAPILog, "GStreamerAPILog")
 
-static void qt_gst_log(GstDebugCategory * category,
-                       GstDebugLevel      level,
-                       const gchar      * file,
-                       const gchar      * function,
-                       gint               line,
-                       GObject          * object,
-                       GstDebugMessage  * message,
-                       gpointer           data)
+static void qt_gst_log(GstDebugCategory* category, GstDebugLevel level, const gchar* file, const gchar* function,
+    gint line, GObject* object, GstDebugMessage* message, gpointer data)
 {
     Q_UNUSED(data);
 
@@ -74,28 +67,28 @@ static void qt_gst_log(GstDebugCategory * category,
 G_BEGIN_DECLS
 // The static plugins we use
 #if defined(__android__) || defined(__ios__)
-    GST_PLUGIN_STATIC_DECLARE(coreelements);
-    GST_PLUGIN_STATIC_DECLARE(playback);
-    GST_PLUGIN_STATIC_DECLARE(libav);
-    GST_PLUGIN_STATIC_DECLARE(rtp);
-    GST_PLUGIN_STATIC_DECLARE(rtsp);
-    GST_PLUGIN_STATIC_DECLARE(udp);
-    GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
-    GST_PLUGIN_STATIC_DECLARE(x264);
-    GST_PLUGIN_STATIC_DECLARE(rtpmanager);
-    GST_PLUGIN_STATIC_DECLARE(isomp4);
-    GST_PLUGIN_STATIC_DECLARE(matroska);
-    GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
-    GST_PLUGIN_STATIC_DECLARE(opengl);
-    GST_PLUGIN_STATIC_DECLARE(tcp);
+GST_PLUGIN_STATIC_DECLARE(coreelements);
+GST_PLUGIN_STATIC_DECLARE(playback);
+GST_PLUGIN_STATIC_DECLARE(libav);
+GST_PLUGIN_STATIC_DECLARE(rtp);
+GST_PLUGIN_STATIC_DECLARE(rtsp);
+GST_PLUGIN_STATIC_DECLARE(udp);
+GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
+GST_PLUGIN_STATIC_DECLARE(x264);
+GST_PLUGIN_STATIC_DECLARE(rtpmanager);
+GST_PLUGIN_STATIC_DECLARE(isomp4);
+GST_PLUGIN_STATIC_DECLARE(matroska);
+GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
+GST_PLUGIN_STATIC_DECLARE(opengl);
+GST_PLUGIN_STATIC_DECLARE(tcp);
 #if defined(__android__)
-    GST_PLUGIN_STATIC_DECLARE(androidmedia);
+GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(__ios__)
-    GST_PLUGIN_STATIC_DECLARE(applemedia);
+GST_PLUGIN_STATIC_DECLARE(applemedia);
 #endif
 #endif
-    GST_PLUGIN_STATIC_DECLARE(qmlgl);
-    GST_PLUGIN_STATIC_DECLARE(qgc);
+GST_PLUGIN_STATIC_DECLARE(qmlgl);
+GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
 #if (defined(Q_OS_MAC) && defined(QGC_INSTALL_RELEASE)) || defined(Q_OS_WIN)
@@ -106,8 +99,7 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 }
 #endif
 
-void
-GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
+void GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
 {
     GstRegistry* registry = gst_registry_get();
 
@@ -133,50 +125,53 @@ GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
     changeRank("bcmdec", GST_RANK_NONE);
 
     switch (option) {
-        case VideoSettings::ForceVideoDecoderDefault:
-            break;
-        case VideoSettings::ForceVideoDecoderSoftware:
-            changeRank("avdec_h264", GST_RANK_PRIMARY + 1);
-            break;
-        case VideoSettings::ForceVideoDecoderVAAPI:
-            for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapivc1dec"}) {
-                changeRank(name, GST_RANK_PRIMARY + 1);
-            }
-            break;
-        case VideoSettings::ForceVideoDecoderNVIDIA:
-            for(auto name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
-                changeRank(name, GST_RANK_PRIMARY + 1);
-            }
-            break;
-        case VideoSettings::ForceVideoDecoderDirectX3D:
-            for(auto name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
-                changeRank(name, GST_RANK_PRIMARY + 1);
-            }
-            break;
-        case VideoSettings::ForceVideoDecoderVideoToolbox:
-            changeRank("vtdec", GST_RANK_PRIMARY + 1);
-            break;
-        default:
-            qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
+    case VideoSettings::ForceVideoDecoderDefault:
+        break;
+    case VideoSettings::ForceVideoDecoderSoftware:
+        changeRank("avdec_h264", GST_RANK_PRIMARY + 1);
+        break;
+    case VideoSettings::ForceVideoDecoderVAAPI:
+        for (auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapivc1dec"}) {
+            changeRank(name, GST_RANK_PRIMARY + 1);
+        }
+        break;
+    case VideoSettings::ForceVideoDecoderNVIDIA:
+        for (auto name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
+            changeRank(name, GST_RANK_PRIMARY + 1);
+        }
+        break;
+    case VideoSettings::ForceVideoDecoderDirectX3D:
+        for (auto name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
+            changeRank(name, GST_RANK_PRIMARY + 1);
+        }
+        break;
+    case VideoSettings::ForceVideoDecoderVideoToolbox:
+        changeRank("vtdec", GST_RANK_PRIMARY + 1);
+        break;
+    default:
+        qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
     }
 }
 
-void
-GStreamer::initialize(int argc, char* argv[], int debuglevel)
+void GStreamer::initialize(int argc, char* argv[], int debuglevel)
 {
     qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
 #ifdef Q_OS_MAC
-    #ifdef QGC_INSTALL_RELEASE
-        QString currentDir = QCoreApplication::applicationDirPath();
-        qgcputenv("GST_PLUGIN_SCANNER",           currentDir, "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
-        qgcputenv("GTK_PATH",                     currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
-        qgcputenv("GIO_EXTRA_MODULES",            currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
-        qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0",   currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-        qgcputenv("GST_PLUGIN_SYSTEM_PATH",       currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-        qgcputenv("GST_PLUGIN_PATH_1_0",          currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-        qgcputenv("GST_PLUGIN_PATH",              currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
-    #endif
+#ifdef QGC_INSTALL_RELEASE
+    QString currentDir = QCoreApplication::applicationDirPath();
+    qgcputenv("GST_PLUGIN_SCANNER", currentDir,
+        "/../Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0/gst-plugin-scanner");
+    qgcputenv("GTK_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/Current");
+    qgcputenv("GIO_EXTRA_MODULES", currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gio/modules");
+    qgcputenv("GST_PLUGIN_SYSTEM_PATH_1_0", currentDir,
+        "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+    qgcputenv(
+        "GST_PLUGIN_SYSTEM_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+    qgcputenv(
+        "GST_PLUGIN_PATH_1_0", currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+    qgcputenv("GST_PLUGIN_PATH", currentDir, "/../Frameworks/GStreamer.framework/Versions/Current/lib/gstreamer-1.0");
+#endif
 #elif defined(Q_OS_WIN)
     QString currentDir = QCoreApplication::applicationDirPath();
     qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
@@ -233,7 +228,7 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
      * GstGLVideoItem qml item
      * FIXME Add a QQmlExtensionPlugin into qmlglsink to register GstGLVideoItem
      * with the QML engine, then remove this */
-    GstElement *sink = gst_element_factory_make("qmlglsink", nullptr);
+    GstElement* sink = gst_element_factory_make("qmlglsink", nullptr);
 
     if (sink == nullptr) {
         GST_PLUGIN_STATIC_REGISTER(qmlgl);
@@ -244,14 +239,14 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
         gst_object_unref(sink);
         sink = nullptr;
     } else {
-        qCCritical(GStreamerLog) << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
+        qCCritical(GStreamerLog)
+            << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 
-void*
-GStreamer::createVideoSink(QObject* parent, QQuickItem* widget)
+void* GStreamer::createVideoSink(QObject* parent, QQuickItem* widget)
 {
     Q_UNUSED(parent)
 
@@ -266,16 +261,14 @@ GStreamer::createVideoSink(QObject* parent, QQuickItem* widget)
     return sink;
 }
 
-void
-GStreamer::releaseVideoSink(void* sink)
+void GStreamer::releaseVideoSink(void* sink)
 {
     if (sink != nullptr) {
         gst_object_unref(GST_ELEMENT(sink));
     }
 }
 
-VideoReceiver*
-GStreamer::createVideoReceiver(QObject* parent)
+VideoReceiver* GStreamer::createVideoReceiver(QObject* parent)
 {
     Q_UNUSED(parent)
     return new GstVideoReceiver(nullptr);
