@@ -11,8 +11,7 @@
 
 #include <QString>
 
-class QGCLZMA
-{
+class QGCLZMA {
 public:
     /// Decompresses the specified file to the specified directory
     ///     @param lzmaFilename         Fully qualified path to lzma file

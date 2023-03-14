@@ -9,14 +9,13 @@
 
 #include "QGCLZMA.h"
 
-#include <QFile>
 #include <QDir>
+#include <QFile>
 #include <QtDebug>
 
 #include <mutex>
 
 #include "xz.h"
-
 
 static std::once_flag crc_init;
 
@@ -30,18 +29,17 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
 
     QFile outputFile(decompressedFilename);
     if (!outputFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qWarning() << "QGCLZMA::inflateLZMAFile: open input file failed" << outputFile.fileName() << outputFile.errorString();
+        qWarning() << "QGCLZMA::inflateLZMAFile: open input file failed" << outputFile.fileName()
+                   << outputFile.errorString();
         return false;
     }
-
 
     std::call_once(crc_init, []() {
         xz_crc32_init();
         xz_crc64_init();
     });
 
-
-    xz_dec *s = xz_dec_init(XZ_DYNALLOC, (uint32_t)-1);
+    xz_dec* s = xz_dec_init(XZ_DYNALLOC, (uint32_t)-1);
     if (s == nullptr) {
         qWarning() << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
         return false;
@@ -70,7 +68,8 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
         if (b.out_pos == sizeof(out)) {
             size_t cBytesWritten = (size_t)outputFile.write((char*)out, static_cast<int>(b.out_pos));
             if (cBytesWritten != b.out_pos) {
-                qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
+                qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName()
+                           << outputFile.errorString();
                 goto error;
             }
 
@@ -87,7 +86,8 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
 
         size_t cBytesWritten = (size_t)outputFile.write((char*)out, static_cast<int>(b.out_pos));
         if (cBytesWritten != b.out_pos) {
-            qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
+            qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName()
+                       << outputFile.errorString();
             goto error;
         }
 
@@ -129,5 +129,4 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
 error:
     xz_dec_end(s);
     return false;
-
 }

@@ -11,8 +11,7 @@
 
 #include <QString>
 
-class QGCZlib
-{
+class QGCZlib {
 public:
     /// Decompresses the specified file to the specified directory
     ///     @param gzipFilename         Fully qualified path to gzip file
