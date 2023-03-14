@@ -7,14 +7,13 @@
  *
  ****************************************************************************/
 
-
 /// @file
 /// @author Gus Grubba <gus@auterion.com>
 
 #include "ScreenToolsController.h"
 #include <QFontDatabase>
-#include <QScreen>
 #include <QFontMetrics>
+#include <QScreen>
 
 #include "SettingsManager.h"
 
@@ -22,19 +21,11 @@
 #include <sys/utsname.h>
 #endif
 
-ScreenToolsController::ScreenToolsController()
-{
+ScreenToolsController::ScreenToolsController() { }
 
-}
+bool ScreenToolsController::hasTouch() const { return QTouchDevice::devices().count() > 0 || isMobile(); }
 
-bool
-ScreenToolsController::hasTouch() const
-{
-    return QTouchDevice::devices().count() > 0 || isMobile();
-}
-
-QString
-ScreenToolsController::iOSDevice() const
+QString ScreenToolsController::iOSDevice() const
 {
 #if defined(__ios__)
     struct utsname systemInfo;
@@ -45,30 +36,27 @@ ScreenToolsController::iOSDevice() const
 #endif
 }
 
-QString
-ScreenToolsController::fixedFontFamily() const
+QString ScreenToolsController::fixedFontFamily() const
 {
     return QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
 }
 
-QString
-ScreenToolsController::normalFontFamily() const
+QString ScreenToolsController::normalFontFamily() const
 {
     //-- See App.SettinsGroup.json for index
     int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->qLocaleLanguage()->rawValue().toInt();
-    if(langID == QLocale::Korean) {
+    if (langID == QLocale::Korean) {
         return QString("NanumGothic");
     } else {
         return QString("Open Sans");
     }
 }
 
-QString
-ScreenToolsController::boldFontFamily() const
+QString ScreenToolsController::boldFontFamily() const
 {
     //-- See App.SettinsGroup.json for index
     int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->qLocaleLanguage()->rawValue().toInt();
-    if(langID == QLocale::Korean) {
+    if (langID == QLocale::Korean) {
         return QString("NanumGothic");
     } else {
         return QString("Open Sans Semibold");

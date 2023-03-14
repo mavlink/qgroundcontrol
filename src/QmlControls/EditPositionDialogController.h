@@ -9,35 +9,34 @@
 
 #pragma once
 
-#include <QObject>
 #include <QGeoCoordinate>
+#include <QObject>
 
 #include "FactSystem.h"
 
-class EditPositionDialogController : public QObject
-{
+class EditPositionDialogController : public QObject {
     Q_OBJECT
-    
+
 public:
     EditPositionDialogController(void);
-    
-    Q_PROPERTY(QGeoCoordinate   coordinate  READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
-    Q_PROPERTY(Fact*            latitude    READ latitude                       CONSTANT)
-    Q_PROPERTY(Fact*            longitude   READ longitude                      CONSTANT)
-    Q_PROPERTY(Fact*            zone        READ zone                           CONSTANT)
-    Q_PROPERTY(Fact*            hemisphere  READ hemisphere                     CONSTANT)
-    Q_PROPERTY(Fact*            easting     READ easting                        CONSTANT)
-    Q_PROPERTY(Fact*            northing    READ northing                       CONSTANT)
-    Q_PROPERTY(Fact*            mgrs        READ mgrs                           CONSTANT)
 
-    QGeoCoordinate  coordinate(void) const { return _coordinate; }
-    Fact* latitude  (void) { return &_latitudeFact; }
-    Fact* longitude (void) { return &_longitudeFact; }
-    Fact* zone      (void) { return &_zoneFact; }
+    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
+    Q_PROPERTY(Fact* latitude READ latitude CONSTANT)
+    Q_PROPERTY(Fact* longitude READ longitude CONSTANT)
+    Q_PROPERTY(Fact* zone READ zone CONSTANT)
+    Q_PROPERTY(Fact* hemisphere READ hemisphere CONSTANT)
+    Q_PROPERTY(Fact* easting READ easting CONSTANT)
+    Q_PROPERTY(Fact* northing READ northing CONSTANT)
+    Q_PROPERTY(Fact* mgrs READ mgrs CONSTANT)
+
+    QGeoCoordinate coordinate(void) const { return _coordinate; }
+    Fact* latitude(void) { return &_latitudeFact; }
+    Fact* longitude(void) { return &_longitudeFact; }
+    Fact* zone(void) { return &_zoneFact; }
     Fact* hemisphere(void) { return &_hemisphereFact; }
-    Fact* easting   (void) { return &_eastingFact; }
-    Fact* northing  (void) { return &_northingFact; }
-    Fact* mgrs      (void) { return &_mgrsFact; }
+    Fact* easting(void) { return &_eastingFact; }
+    Fact* northing(void) { return &_northingFact; }
+    Fact* mgrs(void) { return &_mgrsFact; }
 
     void setCoordinate(QGeoCoordinate coordinate);
 
@@ -63,11 +62,11 @@ private:
     Fact _northingFact;
     Fact _mgrsFact;
 
-    static const char*  _latitudeFactName;
-    static const char*  _longitudeFactName;
-    static const char*  _zoneFactName;
-    static const char*  _hemisphereFactName;
-    static const char*  _eastingFactName;
-    static const char*  _northingFactName;
-    static const char*  _mgrsFactName;
+    static const char* _latitudeFactName;
+    static const char* _longitudeFactName;
+    static const char* _zoneFactName;
+    static const char* _hemisphereFactName;
+    static const char* _eastingFactName;
+    static const char* _northingFactName;
+    static const char* _mgrsFactName;
 };

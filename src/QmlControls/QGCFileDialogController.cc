@@ -7,15 +7,14 @@
  *
  ****************************************************************************/
 
-
 #include "QGCFileDialogController.h"
+#include "AppSettings.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
 
-#include <QStandardPaths>
 #include <QDebug>
 #include <QDir>
+#include <QStandardPaths>
 
 QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QGCFileDialogControllerLog")
 
@@ -26,9 +25,9 @@ QStringList QGCFileDialogController::getFiles(const QString& directoryPath, cons
 
     QDir fileDir(directoryPath);
 
-    QFileInfoList fileInfoList = fileDir.entryInfoList(nameFilters,  QDir::Files, QDir::Name);
+    QFileInfoList fileInfoList = fileDir.entryInfoList(nameFilters, QDir::Files, QDir::Name);
 
-    for (const QFileInfo& fileInfo: fileInfoList) {
+    for (const QFileInfo& fileInfo : fileInfoList) {
         qCDebug(QGCFileDialogControllerLog) << "getFiles found" << fileInfo.fileName();
         files << fileInfo.fileName();
     }
@@ -36,12 +35,10 @@ QStringList QGCFileDialogController::getFiles(const QString& directoryPath, cons
     return files;
 }
 
-bool QGCFileDialogController::fileExists(const QString& filename)
-{
-    return QFile(filename).exists();
-}
+bool QGCFileDialogController::fileExists(const QString& filename) { return QFile(filename).exists(); }
 
-QString QGCFileDialogController::fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QStringList& nameFilters)
+QString QGCFileDialogController::fullyQualifiedFilename(
+    const QString& directoryPath, const QString& filename, const QStringList& nameFilters)
 {
     QString firstFileExtention;
 
@@ -50,7 +47,7 @@ QString QGCFileDialogController::fullyQualifiedFilename(const QString& directory
     bool extensionFound = true;
     if (nameFilters.count()) {
         extensionFound = false;
-        for (const QString& nameFilter: nameFilters) {
+        for (const QString& nameFilter : nameFilters) {
             if (nameFilter.startsWith("*.")) {
                 QString fileExtension = nameFilter.right(nameFilter.length() - 2);
                 if (fileExtension != "*") {
@@ -77,10 +74,7 @@ QString QGCFileDialogController::fullyQualifiedFilename(const QString& directory
     return directoryPath + QStringLiteral("/") + filenameWithExtension;
 }
 
-void QGCFileDialogController::deleteFile(const QString& filename)
-{
-    QFile::remove(filename);
-}
+void QGCFileDialogController::deleteFile(const QString& filename) { QFile::remove(filename); }
 
 QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString& fullFolderPath)
 {
@@ -88,7 +82,8 @@ QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString& 
     QString defaultSavePath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValueString();
     if (fullFolderPath.startsWith(defaultSavePath)) {
         int lastDirSepIndex = fullFolderPath.lastIndexOf(QStringLiteral("/"));
-        return qgcApp()->applicationName() + QStringLiteral("/") + fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex);
+        return qgcApp()->applicationName() + QStringLiteral("/")
+            + fullFolderPath.right(fullFolderPath.length() - lastDirSepIndex);
     } else {
         return fullFolderPath;
     }

@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "RCChannelMonitorController.h"
 
 RCChannelMonitorController::RCChannelMonitorController(void)
@@ -18,7 +17,7 @@ RCChannelMonitorController::RCChannelMonitorController(void)
 
 void RCChannelMonitorController::_rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels])
 {
-    for (int channel=0; channel<channelCount; channel++) {
+    for (int channel = 0; channel < channelCount; channel++) {
         int channelValue = pwmValues[channel];
 
         if (_chanCount != channelCount) {

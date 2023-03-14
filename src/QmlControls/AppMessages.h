@@ -7,21 +7,19 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
+#include <QFile>
 #include <QObject>
 #include <QStringListModel>
 #include <QUrl>
-#include <QFile>
 
 // Hackish way to force only this translation unit to have public ctor access
 #ifndef _LOG_CTOR_ACCESS_
 #define _LOG_CTOR_ACCESS_ private
 #endif
 
-class AppLogModel : public QStringListModel
-{
+class AppLogModel : public QStringListModel {
     Q_OBJECT
 public:
     Q_INVOKABLE void writeMessages(const QString dest_file);
@@ -38,13 +36,10 @@ private slots:
 private:
     QFile _logFile;
 
-_LOG_CTOR_ACCESS_:
-    AppLogModel();
+    _LOG_CTOR_ACCESS_ : AppLogModel();
 };
 
-
-class AppMessages
-{
+class AppMessages {
 public:
     static void installHandler();
     static AppLogModel* getModel();

@@ -7,27 +7,25 @@
  *
  ****************************************************************************/
 
-
-
 // Allows QGlobalStatic to work on this translation unit
 #define _LOG_CTOR_ACCESS_ public
 
 #include "AppMessages.h"
+#include "AppSettings.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
 
 #include <QStringListModel>
-#include <QtConcurrent>
 #include <QTextStream>
+#include <QtConcurrent>
 
 Q_GLOBAL_STATIC(AppLogModel, debug_model)
 
 static QtMessageHandler old_handler;
 
-static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void msgHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-    const char symbols[] = { 'D', 'E', '!', 'X', 'I' };
+    const char symbols[] = {'D', 'E', '!', 'X', 'I'};
     QString output = QString("[%1] at %2:%3 - \"%4\"").arg(symbols[type]).arg(context.file).arg(context.line).arg(msg);
 
     // Avoid recursion
@@ -38,7 +36,8 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
     if (old_handler != nullptr) {
         old_handler(type, context, msg);
     }
-    if( type == QtFatalMsg ) abort();
+    if (type == QtFatalMsg)
+        abort();
 }
 
 void AppMessages::installHandler()
@@ -49,12 +48,10 @@ void AppMessages::installHandler()
     Q_UNUSED(*debug_model);
 }
 
-AppLogModel *AppMessages::getModel()
-{
-    return debug_model;
-}
+AppLogModel* AppMessages::getModel() { return debug_model; }
 
-AppLogModel::AppLogModel() : QStringListModel()
+AppLogModel::AppLogModel()
+    : QStringListModel()
 {
 #ifdef __mobile__
     Qt::ConnectionType contype = Qt::QueuedConnection;
@@ -83,10 +80,7 @@ void AppLogModel::writeMessages(const QString dest_file)
     });
 }
 
-void AppLogModel::log(const QString message)
-{
-    emit debug_model->emitLog(message);
-}
+void AppLogModel::log(const QString message) { emit debug_model->emitLog(message); }
 
 void AppLogModel::threadsafeLog(const QString message)
 {
@@ -105,7 +99,9 @@ void AppLogModel::threadsafeLog(const QString message)
 
             _logFile.setFileName(saveFilePath);
             if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
+                qgcApp()->showAppMessage(tr("Open console log output file failed %1 : %2")
+                                             .arg(_logFile.fileName())
+                                             .arg(_logFile.errorString()));
             }
         }
     }

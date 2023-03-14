@@ -7,19 +7,17 @@
  *
  ****************************************************************************/
 
-
 #ifndef RCChannelMonitorController_H
 #define RCChannelMonitorController_H
 
 #include <QTimer>
 
-#include "FactPanelController.h"
-#include "UASInterface.h"
-#include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
+#include "FactPanelController.h"
+#include "QGCLoggingCategory.h"
+#include "UASInterface.h"
 
-class RCChannelMonitorController : public FactPanelController
-{
+class RCChannelMonitorController : public FactPanelController {
     Q_OBJECT
 
 public:
@@ -27,7 +25,7 @@ public:
 
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
 
-    int channelCount(void) const{ return _chanCount; }
+    int channelCount(void) const { return _chanCount; }
 
 signals:
     void channelCountChanged(int channelCount);

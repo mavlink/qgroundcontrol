@@ -12,7 +12,6 @@
 ToolStripAction::ToolStripAction(QObject* parent)
     : QObject(parent)
 {
-
 }
 
 void ToolStripAction::setEnabled(bool enabled)
@@ -29,7 +28,6 @@ void ToolStripAction::setVisible(bool visible)
         _visible = visible;
         emit visibleChanged(visible);
     }
-
 }
 
 void ToolStripAction::setCheckable(bool checkable)
@@ -38,7 +36,6 @@ void ToolStripAction::setCheckable(bool checkable)
         _checkable = checkable;
         emit checkableChanged(checkable);
     }
-
 }
 
 void ToolStripAction::setChecked(bool checked)
@@ -47,7 +44,6 @@ void ToolStripAction::setChecked(bool checked)
         _checked = checked;
         emit checkedChanged(checked);
     }
-
 }
 
 void ToolStripAction::setShowAlternateIcon(bool showAlternateIcon)
@@ -56,7 +52,6 @@ void ToolStripAction::setShowAlternateIcon(bool showAlternateIcon)
         _showAlternateIcon = showAlternateIcon;
         emit showAlternateIconChanged(showAlternateIcon);
     }
-
 }
 
 void ToolStripAction::setText(const QString& text)
@@ -65,7 +60,6 @@ void ToolStripAction::setText(const QString& text)
         _text = text;
         emit textChanged(text);
     }
-
 }
 
 void ToolStripAction::setIconSource(const QString& iconSource)
@@ -74,7 +68,6 @@ void ToolStripAction::setIconSource(const QString& iconSource)
         _iconSource = iconSource;
         emit iconSourceChanged(iconSource);
     }
-
 }
 
 void ToolStripAction::setAlternateIconSource(const QString& alternateIconSource)

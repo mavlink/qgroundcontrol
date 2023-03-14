@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef QGCFileDialogController_H
 #define QGCFileDialogController_H
 
@@ -18,8 +17,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCFileDialogControllerLog)
 
-class QGCFileDialogController : public QObject
-{
+class QGCFileDialogController : public QObject {
     Q_OBJECT
 
 public:
@@ -28,11 +26,12 @@ public:
 
     /// Returns the fully qualified file name from the specified parts.
     /// If filename has no file extension the first file extension is nameFilters is added to the filename.
-    Q_INVOKABLE QString fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QStringList& nameFilters = QStringList());
+    Q_INVOKABLE QString fullyQualifiedFilename(
+        const QString& directoryPath, const QString& filename, const QStringList& nameFilters = QStringList());
 
     /// Check for file existence of specified fully qualified file name
     Q_INVOKABLE bool fileExists(const QString& filename);
-    
+
     /// Deletes the file specified by the fully qualified file name
     Q_INVOKABLE void deleteFile(const QString& filename);
 

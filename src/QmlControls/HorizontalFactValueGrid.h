@@ -10,22 +10,21 @@
 #pragma once
 
 #include "FactSystem.h"
-#include "QmlObjectListModel.h"
-#include "QGCApplication.h"
 #include "FactValueGrid.h"
+#include "QGCApplication.h"
+#include "QmlObjectListModel.h"
 
 class InstrumentValueData;
 
-class HorizontalFactValueGrid : public FactValueGrid
-{
+class HorizontalFactValueGrid : public FactValueGrid {
     Q_OBJECT
 
 public:
-    HorizontalFactValueGrid(QQuickItem *parent = nullptr);
+    HorizontalFactValueGrid(QQuickItem* parent = nullptr);
     HorizontalFactValueGrid(const QString& defaultSettingsGroup);
 
     Q_PROPERTY(QString telemetryBarDefaultSettingsGroup MEMBER telemetryBarDefaultSettingsGroup CONSTANT)
-    Q_PROPERTY(QString telemetryBarUserSettingsGroup    MEMBER telemetryBarUserSettingsGroup    CONSTANT)
+    Q_PROPERTY(QString telemetryBarUserSettingsGroup MEMBER telemetryBarUserSettingsGroup CONSTANT)
 
     static const QString telemetryBarDefaultSettingsGroup;
     static const QString telemetryBarUserSettingsGroup;

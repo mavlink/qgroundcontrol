@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -20,18 +19,14 @@ const int QmlObjectListModel::ObjectRole = Qt::UserRole;
 const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
-    : QAbstractListModel        (parent)
-    , _dirty                    (false)
-    , _skipDirtyFirstItem       (false)
-    , _externalBeginResetModel  (false)
+    : QAbstractListModel(parent)
+    , _dirty(false)
+    , _skipDirtyFirstItem(false)
+    , _externalBeginResetModel(false)
 {
-
 }
 
-QmlObjectListModel::~QmlObjectListModel()
-{
-    
-}
+QmlObjectListModel::~QmlObjectListModel() { }
 
 QObject* QmlObjectListModel::get(int index)
 {
@@ -44,20 +39,20 @@ QObject* QmlObjectListModel::get(int index)
 int QmlObjectListModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
-    
+
     return _objectList.count();
 }
 
-QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
+QVariant QmlObjectListModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid()) {
         return QVariant();
     }
-    
+
     if (index.row() < 0 || index.row() >= _objectList.count()) {
         return QVariant();
     }
-    
+
     if (role == ObjectRole) {
         return QVariant::fromValue(_objectList[index.row()]);
     } else if (role == TextRole) {
@@ -70,10 +65,10 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> QmlObjectListModel::roleNames(void) const
 {
     QHash<int, QByteArray> hash;
-    
+
     hash[ObjectRole] = "object";
     hash[TextRole] = "text";
-    
+
     return hash;
 }
 
@@ -84,55 +79,55 @@ bool QmlObjectListModel::setData(const QModelIndex& index, const QVariant& value
         emit dataChanged(index, index);
         return true;
     }
-    
+
     return false;
 }
 
 bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& parent)
 {
     Q_UNUSED(parent);
-    
+
     if (position < 0 || position > _objectList.count() + 1) {
         qWarning() << "Invalid position position:count" << position << _objectList.count();
     }
-    
+
     beginInsertRows(QModelIndex(), position, position + rows - 1);
     endInsertRows();
-    
+
     emit countChanged(count());
-    
+
     return true;
 }
 
 bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& parent)
 {
     Q_UNUSED(parent);
-    
+
     if (position < 0 || position >= _objectList.count()) {
         qWarning() << "Invalid position position:count" << position << _objectList.count();
     } else if (position + rows > _objectList.count()) {
         qWarning() << "Invalid rows position:rows:count" << position << rows << _objectList.count();
     }
-    
+
     beginRemoveRows(QModelIndex(), position, position + rows - 1);
-    for (int row=0; row<rows; row++) {
+    for (int row = 0; row < rows; row++) {
         _objectList.removeAt(position);
     }
     endRemoveRows();
-    
+
     emit countChanged(count());
-    
+
     return true;
 }
 
 void QmlObjectListModel::move(int from, int to)
 {
-    if(0 <= from && from < count() && 0 <= to && to < count() && from != to) {
+    if (0 <= from && from < count() && 0 <= to && to < count() && from != to) {
         // Workaround to allow move item to the bottom. Done according to
         // beginMoveRows() documentation and implementation specificity:
         // https://doc.qt.io/qt-5/qabstractitemmodel.html#beginMoveRows
         // (see 3rd picture explanation there)
-        if(from == to - 1) {
+        if (from == to - 1) {
             to = from++;
         }
         beginMoveRows(QModelIndex(), from, from, QModelIndex(), to);
@@ -172,7 +167,7 @@ void QmlObjectListModel::clear()
 QObject* QmlObjectListModel::removeAt(int i)
 {
     QObject* removedObject = _objectList[i];
-    if(removedObject) {
+    if (removedObject) {
         // Look for a dirtyChanged signal on the object
         if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
             if (!_skipDirtyFirstItem || i != 0) {
@@ -190,7 +185,7 @@ void QmlObjectListModel::insert(int i, QObject* object)
     if (i < 0 || i > _objectList.count()) {
         qWarning() << "Invalid index index:count" << i << _objectList.count();
     }
-    if(object) {
+    if (object) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
         // Look for a dirtyChanged signal on the object
         if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
@@ -211,7 +206,7 @@ void QmlObjectListModel::insert(int i, QList<QObject*> objects)
     }
 
     int j = i;
-    for (QObject* object: objects) {
+    for (QObject* object : objects) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
 
         // Look for a dirtyChanged signal on the object
@@ -230,15 +225,9 @@ void QmlObjectListModel::insert(int i, QList<QObject*> objects)
     setDirty(true);
 }
 
-void QmlObjectListModel::append(QObject* object)
-{
-    insert(_objectList.count(), object);
-}
+void QmlObjectListModel::append(QObject* object) { insert(_objectList.count(), object); }
 
-void QmlObjectListModel::append(QList<QObject*> objects)
-{
-    insert(_objectList.count(), objects);
-}
+void QmlObjectListModel::append(QList<QObject*> objects) { insert(_objectList.count(), objects); }
 
 QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
@@ -254,10 +243,7 @@ QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
     return oldlist;
 }
 
-int QmlObjectListModel::count() const
-{
-    return rowCount();
-}
+int QmlObjectListModel::count() const { return rowCount(); }
 
 void QmlObjectListModel::setDirty(bool dirty)
 {
@@ -265,7 +251,7 @@ void QmlObjectListModel::setDirty(bool dirty)
         _dirty = dirty;
         if (!dirty) {
             // Need to clear dirty from all children
-            for(QObject* object: _objectList) {
+            for (QObject* object : _objectList) {
                 if (object->property("dirty").isValid()) {
                     object->setProperty("dirty", false);
                 }
@@ -285,7 +271,7 @@ void QmlObjectListModel::_childDirtyChanged(bool dirty)
 
 void QmlObjectListModel::deleteListAndContents()
 {
-    for (int i=0; i<_objectList.count(); i++) {
+    for (int i = 0; i < _objectList.count(); i++) {
         _objectList[i]->deleteLater();
     }
     deleteLater();
@@ -294,7 +280,7 @@ void QmlObjectListModel::deleteListAndContents()
 void QmlObjectListModel::clearAndDeleteContents()
 {
     beginResetModel();
-    for (int i=0; i<_objectList.count(); i++) {
+    for (int i = 0; i < _objectList.count(); i++) {
         _objectList[i]->deleteLater();
     }
     clear();

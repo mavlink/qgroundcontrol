@@ -11,12 +11,12 @@
 #include <QDebug>
 #include <cmath>
 
-double QGCGeoBoundingCube::MaxAlt    =  1000000.0;
-double QGCGeoBoundingCube::MinAlt    = -1000000.0;
-double QGCGeoBoundingCube::MaxNorth  =  90.0;
-double QGCGeoBoundingCube::MaxSouth  = -90.0;
-double QGCGeoBoundingCube::MaxWest   = -180.0;
-double QGCGeoBoundingCube::MaxEast   =  180.0;
+double QGCGeoBoundingCube::MaxAlt = 1000000.0;
+double QGCGeoBoundingCube::MinAlt = -1000000.0;
+double QGCGeoBoundingCube::MaxNorth = 90.0;
+double QGCGeoBoundingCube::MaxSouth = -90.0;
+double QGCGeoBoundingCube::MaxWest = -180.0;
+double QGCGeoBoundingCube::MaxEast = 180.0;
 
 //-----------------------------------------------------------------------------
 QGCGeoBoundingCube::QGCGeoBoundingCube(QObject* parent)
@@ -26,41 +26,38 @@ QGCGeoBoundingCube::QGCGeoBoundingCube(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-bool
-QGCGeoBoundingCube::isValid() const
+bool QGCGeoBoundingCube::isValid() const
 {
-    return pointNW.isValid() && pointSE.isValid() && pointNW.latitude() != MaxSouth && pointSE.latitude() != MaxNorth && \
-           pointNW.longitude() != MaxEast && pointSE.longitude() != MaxWest && pointNW.altitude() < MaxAlt && pointSE.altitude() > MinAlt;
+    return pointNW.isValid() && pointSE.isValid() && pointNW.latitude() != MaxSouth && pointSE.latitude() != MaxNorth
+        && pointNW.longitude() != MaxEast && pointSE.longitude() != MaxWest && pointNW.altitude() < MaxAlt
+        && pointSE.altitude() > MinAlt;
 }
 
 //-----------------------------------------------------------------------------
-void
-QGCGeoBoundingCube::reset()
+void QGCGeoBoundingCube::reset()
 {
     pointNW = QGeoCoordinate(MaxSouth, MaxEast, MaxAlt);
     pointSE = QGeoCoordinate(MaxNorth, MaxWest, MinAlt);
 }
 
 //-----------------------------------------------------------------------------
-QGeoCoordinate
-QGCGeoBoundingCube::center() const
+QGeoCoordinate QGCGeoBoundingCube::center() const
 {
-    if(!isValid())
+    if (!isValid())
         return QGeoCoordinate();
-    double lat = (((pointNW.latitude()  + 90.0)  + (pointSE.latitude()  + 90.0))  / 2.0) - 90.0;
+    double lat = (((pointNW.latitude() + 90.0) + (pointSE.latitude() + 90.0)) / 2.0) - 90.0;
     double lon = (((pointNW.longitude() + 180.0) + (pointSE.longitude() + 180.0)) / 2.0) - 180.0;
     double alt = (pointNW.altitude() + pointSE.altitude()) / 2.0;
     return QGeoCoordinate(lat, lon, alt);
 }
 
 //-----------------------------------------------------------------------------
-QList<QGeoCoordinate>
-QGCGeoBoundingCube::polygon2D(double clipTo) const
+QList<QGeoCoordinate> QGCGeoBoundingCube::polygon2D(double clipTo) const
 {
     QList<QGeoCoordinate> coords;
-    if(isValid()) {
+    if (isValid()) {
         //-- Should we clip it?
-        if(clipTo > 0.0 && area() > clipTo) {
+        if (clipTo > 0.0 && area() > clipTo) {
             //-- Clip it to a square of given area centered on current bounding box center.
             double side = sqrt(clipTo);
             QGeoCoordinate c = center();
@@ -85,42 +82,40 @@ QGCGeoBoundingCube::polygon2D(double clipTo) const
 }
 
 //-----------------------------------------------------------------------------
-bool
-QGCGeoBoundingCube::operator ==(const QList<QGeoCoordinate>& coords) const
+bool QGCGeoBoundingCube::operator==(const QList<QGeoCoordinate>& coords) const
 {
     QList<QGeoCoordinate> c = polygon2D();
-    if(c.size() != coords.size()) return false;
-    for(int i = 0; i < c.size(); i++) {
-        if(c[i] != coords[i]) return false;
+    if (c.size() != coords.size())
+        return false;
+    for (int i = 0; i < c.size(); i++) {
+        if (c[i] != coords[i])
+            return false;
     }
     return true;
 }
 
 //-----------------------------------------------------------------------------
-double
-QGCGeoBoundingCube::width() const
+double QGCGeoBoundingCube::width() const
 {
-    if(!isValid())
+    if (!isValid())
         return 0.0;
     QGeoCoordinate ne = QGeoCoordinate(pointNW.latitude(), pointSE.longitude());
     return pointNW.distanceTo(ne);
 }
 
 //-----------------------------------------------------------------------------
-double
-QGCGeoBoundingCube::height() const
+double QGCGeoBoundingCube::height() const
 {
-    if(!isValid())
+    if (!isValid())
         return 0.0;
     QGeoCoordinate sw = QGeoCoordinate(pointSE.latitude(), pointNW.longitude());
     return pointNW.distanceTo(sw);
 }
 
 //-----------------------------------------------------------------------------
-double
-QGCGeoBoundingCube::area() const
+double QGCGeoBoundingCube::area() const
 {
-    if(!isValid())
+    if (!isValid())
         return 0.0;
     // Area in km^2
     double a = (height() / 1000.0) * (width() / 1000.0);
@@ -128,10 +123,9 @@ QGCGeoBoundingCube::area() const
 }
 
 //-----------------------------------------------------------------------------
-double
-QGCGeoBoundingCube::radius() const
+double QGCGeoBoundingCube::radius() const
 {
-    if(!isValid())
+    if (!isValid())
         return 0.0;
     return pointNW.distanceTo(pointSE) / 2.0;
 }
