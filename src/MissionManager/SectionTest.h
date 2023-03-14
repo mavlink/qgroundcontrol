@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include "VisualMissionItemTest.h"
 #include "SimpleMissionItemTest.h"
+#include "VisualMissionItemTest.h"
 
 /// Unit test for Sections
-class SectionTest : public VisualMissionItemTest
-{
+class SectionTest : public VisualMissionItemTest {
     Q_OBJECT
-    
+
 public:
     SectionTest(void);
 
@@ -36,14 +35,14 @@ protected:
     };
 
     enum {
-        availableChangedMask =          1 << availableChangedIndex,
-        settingsSpecifiedChangedMask =  1 << settingsSpecifiedChangedIndex,
-        dirtyChangedMask =              1 << dirtyChangedIndex,
-        itemCountChangedMask =          1 << itemCountChangedIndex
+        availableChangedMask = 1 << availableChangedIndex,
+        settingsSpecifiedChangedMask = 1 << settingsSpecifiedChangedIndex,
+        dirtyChangedMask = 1 << dirtyChangedIndex,
+        itemCountChangedMask = 1 << itemCountChangedIndex
     };
 
     static const size_t cSectionSignals = maxSignalIndex;
-    const char*         rgSectionSignals[cSectionSignals];
+    const char* rgSectionSignals[cSectionSignals];
 
-    SimpleMissionItem*  _simpleItem;
+    SimpleMissionItem* _simpleItem;
 };

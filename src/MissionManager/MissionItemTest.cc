@@ -7,13 +7,12 @@
  *
  ****************************************************************************/
 
-
 #include "MissionItemTest.h"
 #include "LinkManager.h"
-#include "MultiVehicleManager.h"
 #include "MissionItem.h"
-#include "SimpleMissionItem.h"
+#include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "SimpleMissionItem.h"
 
 #if 0
 const MissionItemTest::TestCase_t MissionItemTest::_rgTestCases[] = {
@@ -95,29 +94,25 @@ void MissionItemTest::_testSetGet(void)
 // Test basic signalling
 void MissionItemTest::_testSignals(void)
 {
-    MissionItem missionItem(1,                                  // sequenceNumber
-                            MAV_CMD_NAV_WAYPOINT,               // command
-                            MAV_FRAME_GLOBAL_RELATIVE_ALT,      // MAV_FRAME
-                            1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // params
-                            true,                               // autoContinue
-                            true);                              // isCurrentItem
+    MissionItem missionItem(1, // sequenceNumber
+        MAV_CMD_NAV_WAYPOINT, // command
+        MAV_FRAME_GLOBAL_RELATIVE_ALT, // MAV_FRAME
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, // params
+        true, // autoContinue
+        true); // isCurrentItem
+
+    enum { isCurrentItemChangedIndex = 0, sequenceNumberChangedIndex, maxSignalIndex };
 
     enum {
-        isCurrentItemChangedIndex = 0,
-        sequenceNumberChangedIndex,
-        maxSignalIndex
-    };
-
-    enum {
-        isCurrentItemChangedMask =          1 << isCurrentItemChangedIndex,
-        sequenceNumberChangedIndexMask =    1 << sequenceNumberChangedIndex
+        isCurrentItemChangedMask = 1 << isCurrentItemChangedIndex,
+        sequenceNumberChangedIndexMask = 1 << sequenceNumberChangedIndex
     };
 
     static const size_t cMissionItemSignals = maxSignalIndex;
-    const char*         rgMissionItemSignals[cMissionItemSignals];
+    const char* rgMissionItemSignals[cMissionItemSignals];
 
-    rgMissionItemSignals[isCurrentItemChangedIndex] =   SIGNAL(isCurrentItemChanged(bool));
-    rgMissionItemSignals[sequenceNumberChangedIndex] =  SIGNAL(sequenceNumberChanged(int));
+    rgMissionItemSignals[isCurrentItemChangedIndex] = SIGNAL(isCurrentItemChanged(bool));
+    rgMissionItemSignals[sequenceNumberChangedIndex] = SIGNAL(sequenceNumberChanged(int));
 
     MultiSignalSpy* multiSpyMissionItem = new MultiSignalSpy();
     Q_CHECK_PTR(multiSpyMissionItem);
@@ -149,13 +144,12 @@ void MissionItemTest::_testSignals(void)
 // Test signalling associated with contained facts
 void MissionItemTest::_testFactSignals(void)
 {
-    MissionItem missionItem(1,                                  // sequenceNumber
-                            MAV_CMD_NAV_WAYPOINT,               // command
-                            MAV_FRAME_GLOBAL_RELATIVE_ALT,      // MAV_FRAME
-                            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,  // params
-                            true,                               // autoContinue
-                            true);                              // isCurrentItem
-
+    MissionItem missionItem(1, // sequenceNumber
+        MAV_CMD_NAV_WAYPOINT, // command
+        MAV_FRAME_GLOBAL_RELATIVE_ALT, // MAV_FRAME
+        1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, // params
+        true, // autoContinue
+        true); // isCurrentItem
 
     // command
     QSignalSpy commandSpy(&missionItem._commandFact, SIGNAL(valueChanged(QVariant)));
@@ -291,14 +285,15 @@ void MissionItemTest::_testSimpleLoadFromStream(void)
 void MissionItemTest::_testLoadFromJsonV1(void)
 {
     MissionItem missionItem;
-    QString     errorString;
+    QString errorString;
     QJsonObject jsonObject = _createV1Json();
 
     // V1 format has param 1-4 in separate items instead of in params array
 
     QStringList removeKeys;
-    removeKeys << MissionItem::_jsonParam1Key << MissionItem::_jsonParam2Key << MissionItem::_jsonParam3Key << MissionItem::_jsonParam4Key;
-    for (const QString& removeKey: removeKeys) {
+    removeKeys << MissionItem::_jsonParam1Key << MissionItem::_jsonParam2Key << MissionItem::_jsonParam3Key
+               << MissionItem::_jsonParam4Key;
+    for (const QString& removeKey : removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
@@ -319,14 +314,14 @@ void MissionItemTest::_testLoadFromJsonV1(void)
 void MissionItemTest::_testLoadFromJsonV2(void)
 {
     MissionItem missionItem;
-    QString     errorString;
+    QString errorString;
     QJsonObject jsonObject = _createV2Json();
 
     // Test missing key detection
 
     QStringList removeKeys;
     removeKeys << MissionItem::_jsonCoordinateKey;
-    for(const QString& removeKey: removeKeys) {
+    for (const QString& removeKey : removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
@@ -343,8 +338,8 @@ void MissionItemTest::_testLoadFromJsonV2(void)
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
 
-    QJsonArray  badCoordinateArray;
-    badCoordinateArray << -10.0 << -20.0 ;
+    QJsonArray badCoordinateArray;
+    badCoordinateArray << -10.0 << -20.0;
     badObject = jsonObject;
     badObject.remove("coordinate");
     badObject["coordinate"] = badCoordinateArray;
@@ -361,7 +356,7 @@ void MissionItemTest::_testLoadFromJsonV2(void)
     QVERIFY(!errorString.isEmpty());
     qDebug() << errorString;
 
-    QJsonArray  badCoordinateArray2;
+    QJsonArray badCoordinateArray2;
     badCoordinateArray2 << 1 << 2;
     QJsonArray badCoordinateArray_third;
     badCoordinateArray_third << -10.0 << -20.0 << badCoordinateArray2;
@@ -385,18 +380,15 @@ void MissionItemTest::_testLoadFromJsonV2(void)
 void MissionItemTest::_testLoadFromJsonV3(void)
 {
     MissionItem missionItem;
-    QString     errorString;
+    QString errorString;
     QJsonObject jsonObject = _createV3Json();
 
     // Test missing key detection
 
     QStringList removeKeys;
-    removeKeys << MissionItem::_jsonAutoContinueKey <<
-                  MissionItem::_jsonCommandKey <<
-                  MissionItem::_jsonFrameKey <<
-                  MissionItem::_jsonParamsKey <<
-                  VisualMissionItem::jsonTypeKey;
-    for(const QString& removeKey: removeKeys) {
+    removeKeys << MissionItem::_jsonAutoContinueKey << MissionItem::_jsonCommandKey << MissionItem::_jsonFrameKey
+               << MissionItem::_jsonParamsKey << VisualMissionItem::jsonTypeKey;
+    for (const QString& removeKey : removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
@@ -433,7 +425,7 @@ void MissionItemTest::_testLoadFromJsonV3(void)
 void MissionItemTest::_testLoadFromJsonV3NaN(void)
 {
     MissionItem missionItem;
-    QString     errorString;
+    QString errorString;
     QJsonObject jsonObject = _createV3Json(true /* allNaNs */);
 
     bool result = missionItem.load(jsonObject, _seq, errorString);
@@ -450,18 +442,18 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
     // signalling which can affect values.
 
     SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, false /* forLoad */);
-    QString     errorString;
-    QJsonArray  coordinateArray;
+    QString errorString;
+    QJsonArray coordinateArray;
     QJsonObject jsonObject;
 
-    coordinateArray << -10.0 << -20.0 <<-30.0;
+    coordinateArray << -10.0 << -20.0 << -30.0;
     jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
     jsonObject.insert(MissionItem::_jsonCommandKey, 80);
     jsonObject.insert(MissionItem::_jsonFrameKey, 3);
     jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
     jsonObject.insert(MissionItem::_jsonCoordinateKey, coordinateArray);
 
-    QJsonArray rgParams =  { 10, 20, 30, 40 };
+    QJsonArray rgParams = {10, 20, 30, 40};
     jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
 
     QVERIFY(simpleMissionItem.load(jsonObject, _seq, errorString));
@@ -471,7 +463,7 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
 void MissionItemTest::_testSaveToJson(void)
 {
     MissionItem missionItem;
-    QString     errorString;
+    QString errorString;
 
     QJsonObject jsonObject = _createV3Json(false /* allNaNs */);
     QVERIFY(missionItem.load(jsonObject, _seq, errorString));
@@ -490,9 +482,9 @@ void MissionItemTest::_testSaveToJson(void)
 QJsonObject MissionItemTest::_createV1Json(void)
 {
     QJsonObject jsonObject;
-    QJsonArray  coordinateArray;
+    QJsonArray coordinateArray;
 
-    coordinateArray << -10.0 << -20.0 <<-30.0;
+    coordinateArray << -10.0 << -20.0 << -30.0;
     jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
     jsonObject.insert(MissionItem::_jsonCommandKey, 80);
     jsonObject.insert(MissionItem::_jsonFrameKey, 3);
@@ -509,16 +501,16 @@ QJsonObject MissionItemTest::_createV1Json(void)
 QJsonObject MissionItemTest::_createV2Json(void)
 {
     QJsonObject jsonObject;
-    QJsonArray  coordinateArray;
+    QJsonArray coordinateArray;
 
-    coordinateArray << -10.0 << -20.0 <<-30.0;
+    coordinateArray << -10.0 << -20.0 << -30.0;
     jsonObject.insert(MissionItem::_jsonAutoContinueKey, true);
     jsonObject.insert(MissionItem::_jsonCommandKey, 80);
     jsonObject.insert(MissionItem::_jsonFrameKey, 3);
     jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
     jsonObject.insert(MissionItem::_jsonCoordinateKey, coordinateArray);
 
-    QJsonArray rgParams =  { 10, 20, 30, 40 };
+    QJsonArray rgParams = {10, 20, 30, 40};
     jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
 
     return jsonObject;
@@ -534,10 +526,10 @@ QJsonObject MissionItemTest::_createV3Json(bool allNaNs)
     jsonObject.insert(VisualMissionItem::jsonTypeKey, VisualMissionItem::jsonTypeSimpleItemValue);
 
     if (allNaNs) {
-        QJsonArray rgParams =  { NAN, NAN, NAN, NAN, NAN, NAN, NAN };
+        QJsonArray rgParams = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};
         jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
     } else {
-        QJsonArray rgParams =  { 10, 20, 30, 40, -10, -20, -30 };
+        QJsonArray rgParams = {10, 20, 30, 40, -10, -20, -30};
         jsonObject.insert(MissionItem::_jsonParamsKey, rgParams);
     }
 

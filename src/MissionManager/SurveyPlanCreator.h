@@ -11,10 +11,9 @@
 
 #include "PlanCreator.h"
 
-class SurveyPlanCreator : public PlanCreator
-{
+class SurveyPlanCreator : public PlanCreator {
     Q_OBJECT
-    
+
 public:
     SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
 

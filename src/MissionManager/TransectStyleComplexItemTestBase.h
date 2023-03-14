@@ -9,26 +9,25 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "CorridorScanComplexItem.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
+#include "UnitTest.h"
 
 /// Base class for all TransectStyleComplexItem unit tests
-class TransectStyleComplexItemTestBase : public UnitTest
-{
+class TransectStyleComplexItemTestBase : public UnitTest {
     Q_OBJECT
-    
+
 public:
     TransectStyleComplexItemTestBase(void);
 
 protected:
-    void init   (void) override;
+    void init(void) override;
     void cleanup(void) override;
 
     void _printItemCommands(QList<MissionItem*> items);
 
-    PlanMasterController*   _masterController =     nullptr;
-    Vehicle*                _controllerVehicle =    nullptr;
-    PlanViewSettings*       _planViewSettings =     nullptr;
+    PlanMasterController* _masterController = nullptr;
+    Vehicle* _controllerVehicle = nullptr;
+    PlanViewSettings* _planViewSettings = nullptr;
 };

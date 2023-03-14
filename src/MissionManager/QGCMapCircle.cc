@@ -8,36 +8,37 @@
  ****************************************************************************/
 
 #include "QGCMapCircle.h"
-#include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "QGCGeo.h"
 #include "QGCQGeoCoordinate.h"
 
-#include <QGeoRectangle>
 #include <QDebug>
+#include <QGeoRectangle>
 #include <QJsonArray>
 
-const char* QGCMapCircle::jsonCircleKey =   "circle";
-const char* QGCMapCircle::_jsonCenterKey =  "center";
-const char* QGCMapCircle::_jsonRadiusKey =  "radius";
+const char* QGCMapCircle::jsonCircleKey = "circle";
+const char* QGCMapCircle::_jsonCenterKey = "center";
+const char* QGCMapCircle::_jsonRadiusKey = "radius";
 const char* QGCMapCircle::_radiusFactName = "Radius";
 
 QGCMapCircle::QGCMapCircle(QObject* parent)
-    : QObject           (parent)
-    , _dirty            (false)
-    , _interactive      (false)
-    , _showRotation     (false)
+    : QObject(parent)
+    , _dirty(false)
+    , _interactive(false)
+    , _showRotation(false)
     , _clockwiseRotation(true)
 {
     _init();
 }
 
-QGCMapCircle::QGCMapCircle(const QGeoCoordinate& center, double radius, bool showRotation, bool clockwiseRotation, QObject* parent)
-    : QObject           (parent)
-    , _dirty            (false)
-    , _center           (center)
-    , _radius           (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
-    , _interactive      (false)
-    , _showRotation     (showRotation)
+QGCMapCircle::QGCMapCircle(
+    const QGeoCoordinate& center, double radius, bool showRotation, bool clockwiseRotation, QObject* parent)
+    : QObject(parent)
+    , _dirty(false)
+    , _center(center)
+    , _radius(FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
+    , _interactive(false)
+    , _showRotation(showRotation)
     , _clockwiseRotation(clockwiseRotation)
 {
     _radius.setRawValue(radius);
@@ -45,12 +46,12 @@ QGCMapCircle::QGCMapCircle(const QGeoCoordinate& center, double radius, bool sho
 }
 
 QGCMapCircle::QGCMapCircle(const QGCMapCircle& other, QObject* parent)
-    : QObject           (parent)
-    , _dirty            (false)
-    , _center           (other._center)
-    , _radius           (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
-    , _interactive      (false)
-    , _showRotation     (other._showRotation)
+    : QObject(parent)
+    , _dirty(false)
+    , _center(other._center)
+    , _radius(FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
+    , _interactive(false)
+    , _showRotation(other._showRotation)
     , _clockwiseRotation(other._clockwiseRotation)
 {
     _radius.setRawValue(other._radius.rawValue());
@@ -71,8 +72,8 @@ void QGCMapCircle::_init(void)
     _nameToMetaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/QGCMapCircle.Facts.json"), this);
     _radius.setMetaData(_nameToMetaDataMap[_radiusFactName]);
 
-    connect(this,       &QGCMapCircle::centerChanged,   this, &QGCMapCircle::_setDirty);
-    connect(&_radius,   &Fact::rawValueChanged,         this, &QGCMapCircle::_setDirty);
+    connect(this, &QGCMapCircle::centerChanged, this, &QGCMapCircle::_setDirty);
+    connect(&_radius, &Fact::rawValueChanged, this, &QGCMapCircle::_setDirty);
 }
 
 void QGCMapCircle::setDirty(bool dirty)
@@ -100,7 +101,7 @@ bool QGCMapCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     errorString.clear();
 
     QList<JsonHelper::KeyValidateInfo> circleKeyInfo = {
-        { jsonCircleKey, QJsonValue::Object, true },
+        {jsonCircleKey, QJsonValue::Object, true},
     };
     if (!JsonHelper::validateKeys(json, circleKeyInfo, errorString)) {
         return false;
@@ -109,23 +110,24 @@ bool QGCMapCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     QJsonObject circleObject = json[jsonCircleKey].toObject();
 
     QList<JsonHelper::KeyValidateInfo> circleObjectKeyInfo = {
-        { _jsonCenterKey, QJsonValue::Array,    true },
-        { _jsonRadiusKey, QJsonValue::Double,   true },
+        {_jsonCenterKey, QJsonValue::Array, true},
+        {_jsonRadiusKey, QJsonValue::Double, true},
     };
     if (!JsonHelper::validateKeys(circleObject, circleObjectKeyInfo, errorString)) {
         return false;
     }
 
     QGeoCoordinate center;
-    if (!JsonHelper::loadGeoCoordinate(circleObject[_jsonCenterKey], false /* altitudeRequired */, center, errorString)) {
+    if (!JsonHelper::loadGeoCoordinate(
+            circleObject[_jsonCenterKey], false /* altitudeRequired */, center, errorString)) {
         return false;
     }
     setCenter(center);
     _radius.setRawValue(circleObject[_jsonRadiusKey].toDouble());
 
-    _interactive =          false;
-    _showRotation =         false;
-    _clockwiseRotation =    true;
+    _interactive = false;
+    _showRotation = false;
+    _clockwiseRotation = true;
 
     return true;
 }
@@ -139,10 +141,7 @@ void QGCMapCircle::setCenter(QGeoCoordinate newCenter)
     }
 }
 
-void QGCMapCircle::_setDirty(void)
-{
-    setDirty(true);
-}
+void QGCMapCircle::_setDirty(void) { setDirty(true); }
 
 void QGCMapCircle::setInteractive(bool interactive)
 {

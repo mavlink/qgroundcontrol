@@ -13,14 +13,13 @@
 
 Q_DECLARE_LOGGING_CATEGORY(MissionManagerLog)
 
-class MissionManager : public PlanManager
-{
+class MissionManager : public PlanManager {
     Q_OBJECT
-    
+
 public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
-        
+
     /// Current mission item as reported by MISSION_CURRENT
     int currentIndex(void) const { return _currentMissionIndex; }
 

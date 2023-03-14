@@ -8,17 +8,14 @@
  ****************************************************************************/
 
 #include "BlankPlanCreator.h"
-#include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "FixedWingLandingComplexItem.h"
+#include "MissionSettingsItem.h"
+#include "PlanMasterController.h"
 
 BlankPlanCreator::BlankPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, tr("Blank"), QStringLiteral("/qmlimages/PlanCreator/BlankPlanCreator.png"), parent)
+    : PlanCreator(
+        planMasterController, tr("Blank"), QStringLiteral("/qmlimages/PlanCreator/BlankPlanCreator.png"), parent)
 {
-
 }
 
-void BlankPlanCreator::createPlan(const QGeoCoordinate& /*mapCenterCoord*/)
-{
-    _planMasterController->removeAll();
-}
+void BlankPlanCreator::createPlan(const QGeoCoordinate& /*mapCenterCoord*/) { _planMasterController->removeAll(); }

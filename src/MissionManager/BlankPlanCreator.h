@@ -11,10 +11,9 @@
 
 #include "PlanCreator.h"
 
-class BlankPlanCreator : public PlanCreator
-{
+class BlankPlanCreator : public PlanCreator {
     Q_OBJECT
-    
+
 public:
     BlankPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
 

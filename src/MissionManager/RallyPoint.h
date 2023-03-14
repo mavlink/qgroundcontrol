@@ -10,17 +10,16 @@
 #ifndef RallyPoint_H
 #define RallyPoint_H
 
-#include <QObject>
 #include <QGeoCoordinate>
+#include <QObject>
 
 #include "FactSystem.h"
 
 /// This class is used to encapsulate the QGeoCoordinate associated with a Rally Point into a QObject such
 /// that it can be used in a QmlObjectListMode for Qml.
-class RallyPoint : public QObject
-{
+class RallyPoint : public QObject {
     Q_OBJECT
-    
+
 public:
     RallyPoint(const QGeoCoordinate& coordinate, QObject* parent = nullptr);
     RallyPoint(const RallyPoint& other, QObject* parent = nullptr);
@@ -28,10 +27,10 @@ public:
     ~RallyPoint();
 
     const RallyPoint& operator=(const RallyPoint& other);
-    
-    Q_PROPERTY(QGeoCoordinate   coordinate      READ coordinate     WRITE setCoordinate     NOTIFY coordinateChanged)
-    Q_PROPERTY(bool             dirty           READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
-    Q_PROPERTY(QVariantList     textFieldFacts  MEMBER _textFieldFacts                      CONSTANT)
+
+    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
+    Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
+    Q_PROPERTY(QVariantList textFieldFacts MEMBER _textFieldFacts CONSTANT)
 
     QGeoCoordinate coordinate(void) const;
     void setCoordinate(const QGeoCoordinate& coordinate);
@@ -42,8 +41,8 @@ public:
     static double getDefaultFactAltitude();
 
 signals:
-    void coordinateChanged      (const QGeoCoordinate& coordinate);
-    void dirtyChanged           (bool dirty);
+    void coordinateChanged(const QGeoCoordinate& coordinate);
+    void dirtyChanged(bool dirty);
 
 private slots:
     void _sendCoordinateChanged(void);

@@ -13,30 +13,23 @@
 SectionTest::SectionTest(void)
     : _simpleItem(nullptr)
 {
-    
 }
 
 void SectionTest::init(void)
 {
     VisualMissionItemTest::init();
 
-    rgSectionSignals[availableChangedIndex] =           SIGNAL(availableChanged(bool));
-    rgSectionSignals[settingsSpecifiedChangedIndex] =   SIGNAL(settingsSpecifiedChanged(bool));
-    rgSectionSignals[dirtyChangedIndex] =               SIGNAL(dirtyChanged(bool));
-    rgSectionSignals[itemCountChangedIndex] =           SIGNAL(itemCountChanged(int));
+    rgSectionSignals[availableChangedIndex] = SIGNAL(availableChanged(bool));
+    rgSectionSignals[settingsSpecifiedChangedIndex] = SIGNAL(settingsSpecifiedChanged(bool));
+    rgSectionSignals[dirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
+    rgSectionSignals[itemCountChangedIndex] = SIGNAL(itemCountChanged(int));
 
-    MissionItem missionItem(1,              // sequence number
-                            MAV_CMD_NAV_WAYPOINT,
-                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
-                            10.1234567,     // param 1-7
-                            20.1234567,
-                            30.1234567,
-                            40.1234567,
-                            50.1234567,
-                            60.1234567,
-                            70.1234567,
-                            true,           // autoContinue
-                            false);         // isCurrentItem
+    MissionItem missionItem(1, // sequence number
+        MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT,
+        10.1234567, // param 1-7
+        20.1234567, 30.1234567, 40.1234567, 50.1234567, 60.1234567, 70.1234567,
+        true, // autoContinue
+        false); // isCurrentItem
     _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem);
 }
 

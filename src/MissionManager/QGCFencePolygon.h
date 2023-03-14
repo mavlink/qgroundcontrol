@@ -12,8 +12,7 @@
 #include "QGCMapPolygon.h"
 
 /// The QGCFencePolygon class provides a polygon used by GeoFence support.
-class QGCFencePolygon : public QGCMapPolygon
-{
+class QGCFencePolygon : public QGCMapPolygon {
     Q_OBJECT
 
 public:
@@ -37,11 +36,11 @@ public:
 
     // Property methods
 
-    bool inclusion      (void) const { return _inclusion; }
-    void setInclusion   (bool inclusion);
+    bool inclusion(void) const { return _inclusion; }
+    void setInclusion(bool inclusion);
 
 signals:
-    void inclusionChanged   (bool inclusion);
+    void inclusionChanged(bool inclusion);
 
 private slots:
     void _setDirty(void);

@@ -10,17 +10,16 @@
 #ifndef MissionCommandTreeTest_H
 #define MissionCommandTreeTest_H
 
-#include "UnitTest.h"
 #include "MissionCommandTree.h"
+#include "UnitTest.h"
 
 /// Unit test for the MissionItem Object
-class MissionCommandTreeTest : public UnitTest
-{
+class MissionCommandTreeTest : public UnitTest {
     Q_OBJECT
-    
+
 public:
     MissionCommandTreeTest(void);
-    
+
 private slots:
     void init(void);
     void cleanup(void);

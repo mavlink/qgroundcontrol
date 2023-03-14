@@ -9,9 +9,9 @@
 
 #pragma once
 
+#include "Fact.h"
 #include "LandingComplexItem.h"
 #include "MissionItem.h"
-#include "Fact.h"
 #include "QGCLoggingCategory.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VTOLLandingComplexItemLog)
@@ -19,8 +19,7 @@ Q_DECLARE_LOGGING_CATEGORY(VTOLLandingComplexItemLog)
 class VTOLLandingPatternTest;
 class PlanMasterController;
 
-class VTOLLandingComplexItem : public LandingComplexItem
-{
+class VTOLLandingComplexItem : public LandingComplexItem {
     Q_OBJECT
 
 public:
@@ -30,12 +29,12 @@ public:
     static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController);
 
     // Overrides from ComplexMissionItem
-    QString patternName         (void) const final { return name; }
-    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    QString mapVisualQML        (void) const final { return QStringLiteral("VTOLLandingPatternMapVisual.qml"); }
+    QString patternName(void) const final { return name; }
+    bool load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    QString mapVisualQML(void) const final { return QStringLiteral("VTOLLandingPatternMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-    void                save                        (QJsonArray&  missionItems) final;
+    void save(QJsonArray& missionItems) final;
 
     static const QString name;
 
@@ -47,33 +46,36 @@ private slots:
     void _updateFlightPathSegmentsDontCallDirectly(void) override;
 
 private:
-    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView) { return new VTOLLandingComplexItem(masterController, flyView); }
-    static bool                 _isValidLandItem(const MissionItem& missionItem);
+    static LandingComplexItem* _createItem(PlanMasterController* masterController, bool flyView)
+    {
+        return new VTOLLandingComplexItem(masterController, flyView);
+    }
+    static bool _isValidLandItem(const MissionItem& missionItem);
 
     // Overrides from LandingComplexItem
-    const Fact*     _finalApproachAltitude  (void) const final { return &_finalApproachAltitudeFact; }
-    const Fact*     _loiterRadius           (void) const final { return &_loiterRadiusFact; }
-    const Fact*     _loiterClockwise        (void) const final { return &_loiterClockwiseFact; }
-    const Fact*     _landingAltitude        (void) const final { return &_landingAltitudeFact; }
-    const Fact*     _landingDistance        (void) const final { return &_landingDistanceFact; }
-    const Fact*     _landingHeading         (void) const final { return &_landingHeadingFact; }
-    const Fact*     _useLoiterToAlt         (void) const final { return &_useLoiterToAltFact; }
-    const Fact*     _stopTakingPhotos       (void) const final { return &_stopTakingPhotosFact; }
-    const Fact*     _stopTakingVideo        (void) const final { return &_stopTakingVideoFact; }
-    void            _calcGlideSlope         (void) final;
-    MissionItem*    _createLandItem         (int seqNum, bool altRel, double lat, double lon, double alt, QObject* parent) final;
+    const Fact* _finalApproachAltitude(void) const final { return &_finalApproachAltitudeFact; }
+    const Fact* _loiterRadius(void) const final { return &_loiterRadiusFact; }
+    const Fact* _loiterClockwise(void) const final { return &_loiterClockwiseFact; }
+    const Fact* _landingAltitude(void) const final { return &_landingAltitudeFact; }
+    const Fact* _landingDistance(void) const final { return &_landingDistanceFact; }
+    const Fact* _landingHeading(void) const final { return &_landingHeadingFact; }
+    const Fact* _useLoiterToAlt(void) const final { return &_useLoiterToAltFact; }
+    const Fact* _stopTakingPhotos(void) const final { return &_stopTakingPhotosFact; }
+    const Fact* _stopTakingVideo(void) const final { return &_stopTakingVideoFact; }
+    void _calcGlideSlope(void) final;
+    MissionItem* _createLandItem(int seqNum, bool altRel, double lat, double lon, double alt, QObject* parent) final;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    Fact            _landingDistanceFact;
-    Fact            _finalApproachAltitudeFact;
-    Fact            _loiterRadiusFact;
-    Fact            _loiterClockwiseFact;
-    Fact            _landingHeadingFact;
-    Fact            _landingAltitudeFact;
-    Fact            _useLoiterToAltFact;
-    Fact            _stopTakingPhotosFact;
-    Fact            _stopTakingVideoFact;
+    Fact _landingDistanceFact;
+    Fact _finalApproachAltitudeFact;
+    Fact _loiterRadiusFact;
+    Fact _loiterClockwiseFact;
+    Fact _landingHeadingFact;
+    Fact _landingAltitudeFact;
+    Fact _useLoiterToAltFact;
+    Fact _stopTakingPhotosFact;
+    Fact _stopTakingVideoFact;
 
     friend VTOLLandingPatternTest;
 };

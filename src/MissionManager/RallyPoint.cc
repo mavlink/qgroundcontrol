@@ -7,15 +7,14 @@
  *
  ****************************************************************************/
 
-
-#include <QStringList>
 #include <QDebug>
+#include <QStringList>
 
 #include "RallyPoint.h"
 
-const char* RallyPoint::_longitudeFactName =    "Longitude";
-const char* RallyPoint::_latitudeFactName =     "Latitude";
-const char* RallyPoint::_altitudeFactName =     "RelativeAltitude";
+const char* RallyPoint::_longitudeFactName = "Longitude";
+const char* RallyPoint::_latitudeFactName = "Latitude";
+const char* RallyPoint::_altitudeFactName = "RelativeAltitude";
 
 QMap<QString, FactMetaData*> RallyPoint::_metaDataMap;
 
@@ -56,10 +55,7 @@ const RallyPoint& RallyPoint::operator=(const RallyPoint& other)
     return *this;
 }
 
-RallyPoint::~RallyPoint()
-{    
-
-}
+RallyPoint::~RallyPoint() { }
 
 void RallyPoint::_factSetup(void)
 {
@@ -78,9 +74,11 @@ void RallyPoint::_factSetup(void)
     connect(&_altitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
 }
 
-void RallyPoint::_cacheFactMetadata() {
+void RallyPoint::_cacheFactMetadata()
+{
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/RallyPoint.FactMetaData.json"), nullptr /* metaDataParent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(
+            QStringLiteral(":/json/RallyPoint.FactMetaData.json"), nullptr /* metaDataParent */);
     }
 }
 
@@ -103,10 +101,11 @@ void RallyPoint::setDirty(bool dirty)
     }
 }
 
-double RallyPoint::getDefaultFactAltitude() {
+double RallyPoint::getDefaultFactAltitude()
+{
     _cacheFactMetadata();
     auto it = _metaDataMap.find(QString(_altitudeFactName));
-    if(it != _metaDataMap.end() && (*it)->defaultValueAvailable()) {
+    if (it != _metaDataMap.end() && (*it)->defaultValueAvailable()) {
         return (*it)->rawDefaultValue().toDouble();
     }
     return 0.0;
@@ -114,10 +113,8 @@ double RallyPoint::getDefaultFactAltitude() {
 
 QGeoCoordinate RallyPoint::coordinate(void) const
 {
-    return QGeoCoordinate(_latitudeFact.rawValue().toDouble(), _longitudeFact.rawValue().toDouble(), _altitudeFact.rawValue().toDouble());
+    return QGeoCoordinate(
+        _latitudeFact.rawValue().toDouble(), _longitudeFact.rawValue().toDouble(), _altitudeFact.rawValue().toDouble());
 }
 
-void RallyPoint::_sendCoordinateChanged(void)
-{
-    emit coordinateChanged(coordinate());
-}
+void RallyPoint::_sendCoordinateChanged(void) { emit coordinateChanged(coordinate()); }

@@ -8,13 +8,15 @@
  ****************************************************************************/
 
 #include "StructureScanComplexItemTest.h"
-#include "QGCApplication.h"
 #include "PlanMasterController.h"
+#include "QGCApplication.h"
 
 StructureScanComplexItemTest::StructureScanComplexItemTest(void)
 {
-    _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<
-                   QGeoCoordinate(47.633619320000001, -122.08811074) << QGeoCoordinate(47.633189139999999, -122.08900124);
+    _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199)
+                << QGeoCoordinate(47.634129020000003, -122.08887249)
+                << QGeoCoordinate(47.633619320000001, -122.08811074)
+                << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
 
 void StructureScanComplexItemTest::init(void)
@@ -37,9 +39,9 @@ void StructureScanComplexItemTest::cleanup(void)
     delete _masterController;
     delete _multiSpy;
 
-    _masterController   = nullptr;
-    _structureScanItem  = nullptr;  // Deleted when _masterController is deleted
-    _multiSpy           = nullptr;
+    _masterController = nullptr;
+    _structureScanItem = nullptr; // Deleted when _masterController is deleted
+    _multiSpy = nullptr;
 
     UnitTest::cleanup();
 }
@@ -66,7 +68,7 @@ void StructureScanComplexItemTest::_testDirty(void)
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
     rgFacts << _structureScanItem->entranceAlt() << _structureScanItem->layers();
-    for(Fact* fact: rgFacts) {
+    for (Fact* fact : rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_structureScanItem->dirty());
         if (fact->typeIsBool()) {
@@ -86,7 +88,7 @@ void StructureScanComplexItemTest::_initItem(void)
 {
     QGCMapPolygon* mapPolygon = _structureScanItem->structurePolygon();
 
-    for (int i=0; i<_polyPoints.count(); i++) {
+    for (int i = 0; i < _polyPoints.count(); i++) {
         QGeoCoordinate& vertex = _polyPoints[i];
         mapPolygon->appendVertex(vertex);
     }
@@ -102,7 +104,7 @@ void StructureScanComplexItemTest::_validateItem(StructureScanComplexItem* item)
 {
     QGCMapPolygon* mapPolygon = item->structurePolygon();
 
-    for (int i=0; i<_polyPoints.count(); i++) {
+    for (int i = 0; i < _polyPoints.count(); i++) {
         QGeoCoordinate& expectedVertex = _polyPoints[i];
         QGeoCoordinate actualVertex = mapPolygon->vertexCoordinate(i);
         QCOMPARE(expectedVertex, actualVertex);
@@ -116,11 +118,12 @@ void StructureScanComplexItemTest::_testSaveLoad(void)
 {
     _initItem();
 
-    QJsonArray  items;
+    QJsonArray items;
     _structureScanItem->save(items);
 
     QString errorString;
-    StructureScanComplexItem* newItem = new StructureScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
+    StructureScanComplexItem* newItem
+        = new StructureScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
     QVERIFY(newItem->load(items[0].toObject(), 10, errorString));
     QVERIFY(errorString.isEmpty());
     _validateItem(newItem);
@@ -134,5 +137,4 @@ void StructureScanComplexItemTest::_testItemCount(void)
     _initItem();
     _structureScanItem->appendMissionItems(items, this);
     QCOMPARE(items.count() - 1, _structureScanItem->lastSequenceNumber());
-
 }

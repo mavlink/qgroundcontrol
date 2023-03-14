@@ -9,22 +9,21 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "MultiSignalSpy.h"
-#include "StructureScanComplexItem.h"
 #include "PlanMasterController.h"
+#include "StructureScanComplexItem.h"
+#include "UnitTest.h"
 
-class StructureScanComplexItemTest : public UnitTest
-{
+class StructureScanComplexItemTest : public UnitTest {
     Q_OBJECT
-    
+
 public:
     StructureScanComplexItemTest(void);
 
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
     void _testDirty(void);
     void _testSaveLoad(void);
@@ -34,20 +33,15 @@ private:
     void _initItem(void);
     void _validateItem(StructureScanComplexItem* item);
 
-    enum {
-        dirtyChangedIndex,
-        maxSignalIndex
-    };
+    enum { dirtyChangedIndex, maxSignalIndex };
 
-    enum {
-        dirtyChangedMask = 1 << dirtyChangedIndex
-    };
+    enum { dirtyChangedMask = 1 << dirtyChangedIndex };
 
     static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
+    const char* _rgSignals[_cSignals];
 
-    PlanMasterController*       _masterController =     nullptr;
-    MultiSignalSpy*             _multiSpy =             nullptr;
-    StructureScanComplexItem*   _structureScanItem =    nullptr;
-    QList<QGeoCoordinate>       _polyPoints;
+    PlanMasterController* _masterController = nullptr;
+    MultiSignalSpy* _multiSpy = nullptr;
+    StructureScanComplexItem* _structureScanItem = nullptr;
+    QList<QGeoCoordinate> _polyPoints;
 };

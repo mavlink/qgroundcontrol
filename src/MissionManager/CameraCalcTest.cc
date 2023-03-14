@@ -8,13 +8,10 @@
  ****************************************************************************/
 
 #include "CameraCalcTest.h"
-#include "QGCApplication.h"
 #include "PlanMasterController.h"
+#include "QGCApplication.h"
 
-CameraCalcTest::CameraCalcTest(void)
-{
-
-}
+CameraCalcTest::CameraCalcTest(void) { }
 
 void CameraCalcTest::init(void)
 {
@@ -36,15 +33,15 @@ void CameraCalcTest::cleanup(void)
     delete _cameraCalc;
     delete _multiSpy;
 
-    _masterController   = nullptr;
-    _cameraCalc         = nullptr;
-    _multiSpy           = nullptr;
+    _masterController = nullptr;
+    _cameraCalc = nullptr;
+    _multiSpy = nullptr;
 }
 
 void CameraCalcTest::_testDirty(void)
 {
-    const char* dirtyChangedSignal  = "dirtyChanged";
-    auto        dirtyChangedMask    = _multiSpy->signalNameToMask(dirtyChangedSignal);
+    const char* dirtyChangedSignal = "dirtyChanged";
+    auto dirtyChangedMask = _multiSpy->signalNameToMask(dirtyChangedSignal);
 
     QVERIFY(!_cameraCalc->dirty());
     _cameraCalc->setDirty(false);
@@ -64,14 +61,10 @@ void CameraCalcTest::_testDirty(void)
 
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
-    rgFacts << _cameraCalc->valueSetIsDistance()
-            << _cameraCalc->distanceToSurface()
-            << _cameraCalc->imageDensity()
-            << _cameraCalc->frontalOverlap ()
-            << _cameraCalc->sideOverlap ()
-            << _cameraCalc->adjustedFootprintSide()
+    rgFacts << _cameraCalc->valueSetIsDistance() << _cameraCalc->distanceToSurface() << _cameraCalc->imageDensity()
+            << _cameraCalc->frontalOverlap() << _cameraCalc->sideOverlap() << _cameraCalc->adjustedFootprintSide()
             << _cameraCalc->adjustedFootprintFrontal();
-    for(Fact* fact: rgFacts) {
+    for (Fact* fact : rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_cameraCalc->dirty());
         if (fact->typeIsBool()) {
@@ -85,8 +78,9 @@ void CameraCalcTest::_testDirty(void)
     }
     rgFacts.clear();
 
-
-    _cameraCalc->setDistanceMode(_cameraCalc->distanceMode() == QGroundControlQmlGlobal::AltitudeModeRelative ? QGroundControlQmlGlobal::AltitudeModeAbsolute : QGroundControlQmlGlobal::AltitudeModeRelative);
+    _cameraCalc->setDistanceMode(_cameraCalc->distanceMode() == QGroundControlQmlGlobal::AltitudeModeRelative
+            ? QGroundControlQmlGlobal::AltitudeModeAbsolute
+            : QGroundControlQmlGlobal::AltitudeModeRelative);
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
 

@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 #include "MissionSettingsItem.h"
-#include "JsonHelper.h"
-#include "MissionController.h"
-#include "QGCGeo.h"
-#include "SimpleMissionItem.h"
-#include "SettingsManager.h"
 #include "AppSettings.h"
+#include "JsonHelper.h"
 #include "MissionCommandUIInfo.h"
+#include "MissionController.h"
 #include "PlanMasterController.h"
+#include "QGCGeo.h"
+#include "SettingsManager.h"
+#include "SimpleMissionItem.h"
 
 #include <QPolygonF>
 
@@ -26,41 +26,49 @@ const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHome
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
 MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController, bool flyView)
-    : ComplexMissionItem                (masterController, flyView)
-    , _managerVehicle                   (masterController->managerVehicle())
-    , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
-    , _cameraSection                    (masterController)
-    , _speedSection                     (masterController)
+    : ComplexMissionItem(masterController, flyView)
+    , _managerVehicle(masterController->managerVehicle())
+    , _plannedHomePositionAltitudeFact(0, _plannedHomePositionAltitudeName, FactMetaData::valueTypeDouble)
+    , _cameraSection(masterController)
+    , _speedSection(masterController)
 {
     _isIncomplete = false;
     _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
 
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), nullptr /* metaDataParent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(
+            QStringLiteral(":/json/MissionSettings.FactMetaData.json"), nullptr /* metaDataParent */);
     }
 
-    _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
-    _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
+    _plannedHomePositionAltitudeFact.setMetaData(_metaDataMap[_plannedHomePositionAltitudeName]);
+    _plannedHomePositionAltitudeFact.setRawValue(_plannedHomePositionAltitudeFact.rawDefaultValue());
     setHomePositionSpecialCase(true);
 
     _cameraSection.setAvailable(true);
     _speedSection.setAvailable(true);
 
-    connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(this,               &MissionSettingsItem::terrainAltitudeChanged,           this, &MissionSettingsItem::_setHomeAltFromTerrain);
-    connect(&_cameraSection,    &CameraSection::dirtyChanged,                           this, &MissionSettingsItem::_sectionDirtyChanged);
-    connect(&_speedSection,     &SpeedSection::dirtyChanged,                            this, &MissionSettingsItem::_sectionDirtyChanged);
-    connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,              this, &MissionSettingsItem::specifiedGimbalYawChanged);
-    connect(&_cameraSection,    &CameraSection::specifiedGimbalPitchChanged,            this, &MissionSettingsItem::specifiedGimbalPitchChanged);
-    connect(&_speedSection,     &SpeedSection::specifiedFlightSpeedChanged,             this, &MissionSettingsItem::specifiedFlightSpeedChanged);
-    connect(this,               &MissionSettingsItem::coordinateChanged,                this, &MissionSettingsItem::_amslEntryAltChanged);
-    connect(this,               &MissionSettingsItem::amslEntryAltChanged,              this, &MissionSettingsItem::amslExitAltChanged);
-    connect(this,               &MissionSettingsItem::amslEntryAltChanged,              this, &MissionSettingsItem::minAMSLAltitudeChanged);
-    connect(this,               &MissionSettingsItem::amslEntryAltChanged,              this, &MissionSettingsItem::maxAMSLAltitudeChanged);
+    connect(this, &MissionSettingsItem::specifyMissionFlightSpeedChanged, this,
+        &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_cameraSection, &CameraSection::itemCountChanged, this,
+        &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(&_speedSection, &CameraSection::itemCountChanged, this,
+        &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
+    connect(this, &MissionSettingsItem::terrainAltitudeChanged, this, &MissionSettingsItem::_setHomeAltFromTerrain);
+    connect(&_cameraSection, &CameraSection::dirtyChanged, this, &MissionSettingsItem::_sectionDirtyChanged);
+    connect(&_speedSection, &SpeedSection::dirtyChanged, this, &MissionSettingsItem::_sectionDirtyChanged);
+    connect(&_cameraSection, &CameraSection::specifiedGimbalYawChanged, this,
+        &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection, &CameraSection::specifiedGimbalPitchChanged, this,
+        &MissionSettingsItem::specifiedGimbalPitchChanged);
+    connect(&_speedSection, &SpeedSection::specifiedFlightSpeedChanged, this,
+        &MissionSettingsItem::specifiedFlightSpeedChanged);
+    connect(this, &MissionSettingsItem::coordinateChanged, this, &MissionSettingsItem::_amslEntryAltChanged);
+    connect(this, &MissionSettingsItem::amslEntryAltChanged, this, &MissionSettingsItem::amslExitAltChanged);
+    connect(this, &MissionSettingsItem::amslEntryAltChanged, this, &MissionSettingsItem::minAMSLAltitudeChanged);
+    connect(this, &MissionSettingsItem::amslEntryAltChanged, this, &MissionSettingsItem::maxAMSLAltitudeChanged);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::rawValueChanged,                 this, &MissionSettingsItem::_updateAltitudeInCoordinate);
+    connect(&_plannedHomePositionAltitudeFact, &Fact::rawValueChanged, this,
+        &MissionSettingsItem::_updateAltitudeInCoordinate);
 
     connect(_managerVehicle, &Vehicle::homePositionChanged, this, &MissionSettingsItem::_updateHomePosition);
     _updateHomePosition(_managerVehicle->homePosition());
@@ -88,7 +96,7 @@ void MissionSettingsItem::setDirty(bool dirty)
     }
 }
 
-void MissionSettingsItem::save(QJsonArray&  missionItems)
+void MissionSettingsItem::save(QJsonArray& missionItems)
 {
     QList<MissionItem*> items;
 
@@ -96,7 +104,7 @@ void MissionSettingsItem::save(QJsonArray&  missionItems)
 
     // First item should be planned home position, we are not responsible for save/load
     // Remaining items we just output as is
-    for (int i=1; i<items.count(); i++) {
+    for (int i = 1; i < items.count(); i++) {
         MissionItem* item = items[i];
         QJsonObject saveObject;
         item->save(saveObject);
@@ -119,16 +127,13 @@ bool MissionSettingsItem::load(const QJsonObject& /*complexObject*/, int /*seque
     return true;
 }
 
-double MissionSettingsItem::greatestDistanceTo(const QGeoCoordinate &other) const
+double MissionSettingsItem::greatestDistanceTo(const QGeoCoordinate& other) const
 {
     Q_UNUSED(other);
     return 0;
 }
 
-bool MissionSettingsItem::specifiesCoordinate(void) const
-{
-    return true;
-}
+bool MissionSettingsItem::specifiesCoordinate(void) const { return true; }
 
 void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
@@ -137,26 +142,23 @@ void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject
     // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 
     // Planned home position
-    MissionItem* item = new MissionItem(seqNum++,
-                                        MAV_CMD_NAV_WAYPOINT,
-                                        MAV_FRAME_GLOBAL,
-                                        0,                      // Hold time
-                                        0,                      // Acceptance radius
-                                        0,                      // Not sure?
-                                        0,                      // Yaw
-                                        coordinate().latitude(),
-                                        coordinate().longitude(),
-                                        _plannedHomePositionAltitudeFact.rawValue().toDouble(),
-                                        true,                   // autoContinue
-                                        false,                  // isCurrentItem
-                                        missionItemParent);
+    MissionItem* item = new MissionItem(seqNum++, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL,
+        0, // Hold time
+        0, // Acceptance radius
+        0, // Not sure?
+        0, // Yaw
+        coordinate().latitude(), coordinate().longitude(), _plannedHomePositionAltitudeFact.rawValue().toDouble(),
+        true, // autoContinue
+        false, // isCurrentItem
+        missionItemParent);
     items.append(item);
 
     _cameraSection.appendSectionItems(items, missionItemParent, seqNum);
     _speedSection.appendSectionItems(items, missionItemParent, seqNum);
 }
 
-bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& /*items*/, int /*seqNum*/, QObject* /*missionItemParent*/)
+bool MissionSettingsItem::addMissionEndAction(
+    QList<MissionItem*>& /*items*/, int /*seqNum*/, QObject* /*missionItemParent*/)
 {
     return false;
 }
@@ -166,7 +168,8 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     bool foundSpeedSection = false;
     bool foundCameraSection = false;
 
-    qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
+    qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex"
+                                    << visualItems->count() << scanIndex;
 
     // Scan through the initial mission items for possible mission settings
     foundCameraSection = _cameraSection.scanForSection(visualItems, scanIndex);
@@ -175,15 +178,9 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     return foundSpeedSection || foundCameraSection;
 }
 
-double MissionSettingsItem::complexDistance(void) const
-{
-    return 0;
-}
+double MissionSettingsItem::complexDistance(void) const { return 0; }
 
-void MissionSettingsItem::_setDirty(void)
-{
-    setDirty(true);
-}
+void MissionSettingsItem::_setDirty(void) { setDirty(true); }
 
 void MissionSettingsItem::_setCoordinateWorker(const QGeoCoordinate& coordinate)
 {
@@ -224,7 +221,6 @@ void MissionSettingsItem::setInitialHomePositionFromUser(const QGeoCoordinate& c
     _setCoordinateWorker(coordinate);
 }
 
-
 void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (coordinate != this->coordinate()) {
@@ -250,12 +246,14 @@ void MissionSettingsItem::_sectionDirtyChanged(bool dirty)
 
 double MissionSettingsItem::specifiedGimbalYaw(void)
 {
-    return _cameraSection.specifyGimbal() ? _cameraSection.gimbalYaw()->rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
+    return _cameraSection.specifyGimbal() ? _cameraSection.gimbalYaw()->rawValue().toDouble()
+                                          : std::numeric_limits<double>::quiet_NaN();
 }
 
 double MissionSettingsItem::specifiedGimbalPitch(void)
 {
-    return _cameraSection.specifyGimbal() ? _cameraSection.gimbalPitch()->rawValue().toDouble() : std::numeric_limits<double>::quiet_NaN();
+    return _cameraSection.specifyGimbal() ? _cameraSection.gimbalPitch()->rawValue().toDouble()
+                                          : std::numeric_limits<double>::quiet_NaN();
 }
 
 void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
@@ -287,10 +285,7 @@ void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
     }
 }
 
-QString MissionSettingsItem::abbreviation(void) const
-{
-    return _flyView ? tr("L") : tr("Launch");
-}
+QString MissionSettingsItem::abbreviation(void) const { return _flyView ? tr("L") : tr("Launch"); }
 
 void MissionSettingsItem::_updateHomePosition(const QGeoCoordinate& homePosition)
 {

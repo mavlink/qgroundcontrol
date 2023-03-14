@@ -9,26 +9,25 @@
 
 #pragma once
 
-#include "TransectStyleComplexItemTestBase.h"
 #include "MultiSignalSpy.h"
-#include "SurveyComplexItem.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
+#include "SurveyComplexItem.h"
+#include "TransectStyleComplexItemTestBase.h"
 
 #include <QGeoCoordinate>
 
 /// Unit test for SurveyComplexItem
-class SurveyComplexItemTest : public TransectStyleComplexItemTestBase
-{
+class SurveyComplexItemTest : public TransectStyleComplexItemTestBase {
     Q_OBJECT
-    
+
 public:
     SurveyComplexItemTest(void);
 
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 #if 1
 private slots:
     void _testDirty(void);
@@ -41,6 +40,7 @@ private slots:
     // Handy mechanism to to a single test
 private slots:
     void _testItemCount(void);
+
 private:
     void _testDirty(void);
     void _testGridAngle(void);
@@ -50,9 +50,10 @@ private:
 #endif
 
 private:
-    double          _clampGridAngle180(double gridAngle);
-    QList<MAV_CMD>  _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
-    void            _testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate, const QList<MAV_CMD>& expectedCommands);
+    double _clampGridAngle180(double gridAngle);
+    QList<MAV_CMD> _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
+    void _testItemGenerationWorker(
+        bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate, const QList<MAV_CMD>& expectedCommands);
 
     // SurveyComplexItem signals
 
@@ -68,20 +69,20 @@ private:
 
     enum {
         surveyVisualTransectPointsChangedMask = 1 << surveyVisualTransectPointsChangedIndex,
-        surveyCameraShotsChangedMask =          1 << surveyCameraShotsChangedIndex,
-        surveyCoveredAreaChangedMask =          1 << surveyCoveredAreaChangedIndex,
-        surveyTimeBetweenShotsChangedMask =     1 << surveyTimeBetweenShotsChangedIndex,
-        surveyRefly90DegreesChangedMask =       1 << surveyRefly90DegreesChangedIndex,
-        surveyDirtyChangedMask =                1 << surveyDirtyChangedIndex
+        surveyCameraShotsChangedMask = 1 << surveyCameraShotsChangedIndex,
+        surveyCoveredAreaChangedMask = 1 << surveyCoveredAreaChangedIndex,
+        surveyTimeBetweenShotsChangedMask = 1 << surveyTimeBetweenShotsChangedIndex,
+        surveyRefly90DegreesChangedMask = 1 << surveyRefly90DegreesChangedIndex,
+        surveyDirtyChangedMask = 1 << surveyDirtyChangedIndex
     };
 
     static const size_t _cSurveySignals = surveyMaxSignalIndex;
-    const char*         _rgSurveySignals[_cSurveySignals];
+    const char* _rgSurveySignals[_cSurveySignals];
 
-    MultiSignalSpy*         _multiSpy =             nullptr;
-    SurveyComplexItem*      _surveyItem =           nullptr;
-    QGCMapPolygon*          _mapPolygon =           nullptr;
-    QList<QGeoCoordinate>   _polyVertices;
+    MultiSignalSpy* _multiSpy = nullptr;
+    SurveyComplexItem* _surveyItem = nullptr;
+    QGCMapPolygon* _mapPolygon = nullptr;
+    QList<QGeoCoordinate> _polyVertices;
 
     static const int _expectedTransectCount = 2;
 };

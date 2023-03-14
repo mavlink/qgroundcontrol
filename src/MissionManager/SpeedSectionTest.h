@@ -13,10 +13,9 @@
 #include "SpeedSection.h"
 
 /// Unit test for CameraSection
-class SpeedSectionTest : public SectionTest
-{
+class SpeedSectionTest : public SectionTest {
     Q_OBJECT
-    
+
 public:
     SpeedSectionTest(void);
 
@@ -24,13 +23,13 @@ public:
     void cleanup(void) override;
 
 private slots:
-    void _testDirty                         (void);
-    void _testSettingsAvailable             (void);
-    void _checkAvailable                    (void);
-    void _testItemCount                     (void);
-    void _testAppendSectionItems            (void);
-    void _testScanForSection                (void);
-    void _testSpecifiedFlightSpeedChanged   (void);
+    void _testDirty(void);
+    void _testSettingsAvailable(void);
+    void _checkAvailable(void);
+    void _testItemCount(void);
+    void _testAppendSectionItems(void);
+    void _testScanForSection(void);
+    void _testSpecifiedFlightSpeedChanged(void);
 
 private:
     void _createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy);
@@ -40,14 +39,12 @@ private:
         maxSignalIndex,
     };
 
-    enum {
-        specifyFlightSpeedChangedMask = 1 << specifyFlightSpeedChangedIndex
-    };
+    enum { specifyFlightSpeedChangedMask = 1 << specifyFlightSpeedChangedIndex };
 
     static const size_t cSpeedSignals = maxSignalIndex;
-    const char*         rgSpeedSignals[cSpeedSignals];
+    const char* rgSpeedSignals[cSpeedSignals];
 
     MultiSignalSpy* _spySpeed;
     MultiSignalSpy* _spySection;
-    SpeedSection*   _speedSection;
+    SpeedSection* _speedSection;
 };

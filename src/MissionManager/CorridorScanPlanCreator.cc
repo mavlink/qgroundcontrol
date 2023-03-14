@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 #include "CorridorScanPlanCreator.h"
-#include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "CorridorScanComplexItem.h"
+#include "MissionSettingsItem.h"
+#include "PlanMasterController.h"
 
 CorridorScanPlanCreator::CorridorScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, CorridorScanComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/CorridorScanPlanCreator.png"), parent)
+    : PlanCreator(planMasterController, CorridorScanComplexItem::name,
+        QStringLiteral("/qmlimages/PlanCreator/CorridorScanPlanCreator.png"), parent)
 {
-
 }
 
 void CorridorScanPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)

@@ -9,13 +9,12 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "MultiSignalSpy.h"
 #include "QGCMapPolyline.h"
 #include "QmlObjectListModel.h"
+#include "UnitTest.h"
 
-class QGCMapPolylineTest : public UnitTest
-{
+class QGCMapPolylineTest : public UnitTest {
     Q_OBJECT
 
 public:
@@ -28,33 +27,23 @@ protected:
 private slots:
     void _testDirty(void);
     void _testVertexManipulation(void);
-//    void _testKMLLoad(void);
+    //    void _testKMLLoad(void);
     void _testSelectVertex(void);
 
 private:
-    enum {
-        countChangedIndex = 0,
-        pathChangedIndex,
-        dirtyChangedIndex,
-        clearedIndex,
-        maxSignalIndex
-    };
+    enum { countChangedIndex = 0, pathChangedIndex, dirtyChangedIndex, clearedIndex, maxSignalIndex };
 
     enum {
-        countChangedMask =  1 << countChangedIndex,
-        pathChangedMask =   1 << pathChangedIndex,
-        dirtyChangedMask =  1 << dirtyChangedIndex,
-        clearedMask =       1 << clearedIndex,
+        countChangedMask = 1 << countChangedIndex,
+        pathChangedMask = 1 << pathChangedIndex,
+        dirtyChangedMask = 1 << dirtyChangedIndex,
+        clearedMask = 1 << clearedIndex,
     };
 
     static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
+    const char* _rgSignals[_cSignals];
 
-    enum {
-        modelCountChangedIndex = 0,
-        modelDirtyChangedIndex,
-        maxModelSignalIndex
-    };
+    enum { modelCountChangedIndex = 0, modelDirtyChangedIndex, maxModelSignalIndex };
 
     enum {
         modelCountChangedMask = 1 << modelCountChangedIndex,
@@ -62,11 +51,11 @@ private:
     };
 
     static const size_t _cModelSignals = maxModelSignalIndex;
-    const char*         _rgModelSignals[_cModelSignals];
+    const char* _rgModelSignals[_cModelSignals];
 
-    MultiSignalSpy*         _multiSpyPolyline;
-    MultiSignalSpy*         _multiSpyModel;
-    QGCMapPolyline*         _mapPolyline;
-    QmlObjectListModel*     _pathModel;
-    QList<QGeoCoordinate>   _linePoints;
+    MultiSignalSpy* _multiSpyPolyline;
+    MultiSignalSpy* _multiSpyModel;
+    QGCMapPolyline* _mapPolyline;
+    QmlObjectListModel* _pathModel;
+    QList<QGeoCoordinate> _linePoints;
 };

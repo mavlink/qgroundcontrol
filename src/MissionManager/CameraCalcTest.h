@@ -9,32 +9,31 @@
 
 #pragma once
 
-#include "UnitTest.h"
-#include "MultiSignalSpyV2.h"
 #include "CameraCalc.h"
+#include "MultiSignalSpyV2.h"
 #include "PlanMasterController.h"
+#include "UnitTest.h"
 
 #include <QGeoCoordinate>
 
-class CameraCalcTest : public UnitTest
-{
+class CameraCalcTest : public UnitTest {
     Q_OBJECT
-    
+
 public:
     CameraCalcTest(void);
 
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
-    void _testDirty             (void);
-    void _testAdjustedFootprint (void);
-    void _testAltDensityRecalc  (void);
+    void _testDirty(void);
+    void _testAdjustedFootprint(void);
+    void _testAltDensityRecalc(void);
 
 private:
-    PlanMasterController*   _masterController   = nullptr;
-    Vehicle*                _controllerVehicle  = nullptr;
-    MultiSignalSpyV2*       _multiSpy           = nullptr;
-    CameraCalc*             _cameraCalc         = nullptr;
+    PlanMasterController* _masterController = nullptr;
+    Vehicle* _controllerVehicle = nullptr;
+    MultiSignalSpyV2* _multiSpy = nullptr;
+    CameraCalc* _cameraCalc = nullptr;
 };

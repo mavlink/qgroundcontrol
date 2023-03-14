@@ -8,26 +8,23 @@
  ****************************************************************************/
 
 #include "MissionManager.h"
-#include "Vehicle.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
-#include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
+#include "QGCApplication.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
 
 MissionManager::MissionManager(Vehicle* vehicle)
-    : PlanManager               (vehicle, MAV_MISSION_TYPE_MISSION)
-    , _cachedLastCurrentIndex   (-1)
+    : PlanManager(vehicle, MAV_MISSION_TYPE_MISSION)
+    , _cachedLastCurrentIndex(-1)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &MissionManager::_mavlinkMessageReceived);
 }
 
-MissionManager::~MissionManager()
-{
-
-}
+MissionManager::~MissionManager() { }
 void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
 {
     if (inProgress()) {
@@ -43,31 +40,28 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     if (!weakLink.expired()) {
         SharedLinkInterfacePtr sharedLink = weakLink.lock();
 
-
-        mavlink_message_t       messageOut;
-        mavlink_mission_item_t  missionItem;
+        mavlink_message_t messageOut;
+        mavlink_mission_item_t missionItem;
 
         memset(&missionItem, 0, sizeof(missionItem));
-        missionItem.target_system =     _vehicle->id();
-        missionItem.target_component =  _vehicle->defaultComponentId();
-        missionItem.seq =               0;
-        missionItem.command =           MAV_CMD_NAV_WAYPOINT;
-        missionItem.param1 =            0;
-        missionItem.param2 =            0;
-        missionItem.param3 =            0;
-        missionItem.param4 =            0;
-        missionItem.x =                 gotoCoord.latitude();
-        missionItem.y =                 gotoCoord.longitude();
-        missionItem.z =                 gotoCoord.altitude();
-        missionItem.frame =             MAV_FRAME_GLOBAL_RELATIVE_ALT;
-        missionItem.current =           altChangeOnly ? 3 : 2;
-        missionItem.autocontinue =      true;
+        missionItem.target_system = _vehicle->id();
+        missionItem.target_component = _vehicle->defaultComponentId();
+        missionItem.seq = 0;
+        missionItem.command = MAV_CMD_NAV_WAYPOINT;
+        missionItem.param1 = 0;
+        missionItem.param2 = 0;
+        missionItem.param3 = 0;
+        missionItem.param4 = 0;
+        missionItem.x = gotoCoord.latitude();
+        missionItem.y = gotoCoord.longitude();
+        missionItem.z = gotoCoord.altitude();
+        missionItem.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+        missionItem.current = altChangeOnly ? 3 : 2;
+        missionItem.autocontinue = true;
 
         mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                             sharedLink->mavlinkChannel(),
-                                             &messageOut,
-                                             &missionItem);
+            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), sharedLink->mavlinkChannel(), &messageOut,
+            &missionItem);
 
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
     }
@@ -86,7 +80,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
         return;
     }
 
-    for (int i=0; i<_missionItems.count(); i++) {
+    for (int i = 0; i < _missionItems.count(); i++) {
         MissionItem* item = _missionItems[i];
         if (item->command() == MAV_CMD_DO_JUMP) {
             qgcApp()->showAppMessage(tr("Unable to generate resume mission due to MAV_CMD_DO_JUMP command."));
@@ -98,16 +92,17 @@ void MissionManager::generateResumeMission(int resumeIndex)
     resumeIndex = qMax(0, qMin(resumeIndex, _missionItems.count() - 1));
 
     // Adjust resume index to be a location based command
-    const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
+    const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(
+        _vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
     if (!uiInfo || uiInfo->isStandaloneCoordinate() || !uiInfo->specifiesCoordinate()) {
         // We have to back up to the last command which the vehicle flies through
         while (--resumeIndex > 0) {
-            uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
+            uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(
+                _vehicle, _vehicle->vehicleClass(), _missionItems[resumeIndex]->command());
             if (uiInfo && (uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate())) {
                 // Found it
                 break;
             }
-
         }
     }
     resumeIndex = qMax(0, resumeIndex);
@@ -117,28 +112,21 @@ void MissionManager::generateResumeMission(int resumeIndex)
     QList<MAV_CMD> includedResumeCommands;
 
     // If any command in this list occurs before the resumeIndex it will be added to the front of the mission
-    includedResumeCommands << MAV_CMD_DO_CONTROL_VIDEO
-                           << MAV_CMD_DO_SET_ROI
-                           << MAV_CMD_DO_DIGICAM_CONFIGURE
-                           << MAV_CMD_DO_DIGICAM_CONTROL
-                           << MAV_CMD_DO_MOUNT_CONFIGURE
-                           << MAV_CMD_DO_MOUNT_CONTROL
-                           << MAV_CMD_DO_SET_CAM_TRIGG_DIST
-                           << MAV_CMD_DO_FENCE_ENABLE
-                           << MAV_CMD_IMAGE_START_CAPTURE
-                           << MAV_CMD_IMAGE_STOP_CAPTURE
-                           << MAV_CMD_VIDEO_START_CAPTURE
-                           << MAV_CMD_VIDEO_STOP_CAPTURE
-                           << MAV_CMD_DO_CHANGE_SPEED
-                           << MAV_CMD_SET_CAMERA_MODE;
+    includedResumeCommands << MAV_CMD_DO_CONTROL_VIDEO << MAV_CMD_DO_SET_ROI << MAV_CMD_DO_DIGICAM_CONFIGURE
+                           << MAV_CMD_DO_DIGICAM_CONTROL << MAV_CMD_DO_MOUNT_CONFIGURE << MAV_CMD_DO_MOUNT_CONTROL
+                           << MAV_CMD_DO_SET_CAM_TRIGG_DIST << MAV_CMD_DO_FENCE_ENABLE << MAV_CMD_IMAGE_START_CAPTURE
+                           << MAV_CMD_IMAGE_STOP_CAPTURE << MAV_CMD_VIDEO_START_CAPTURE << MAV_CMD_VIDEO_STOP_CAPTURE
+                           << MAV_CMD_DO_CHANGE_SPEED << MAV_CMD_SET_CAMERA_MODE;
 
     bool addHomePosition = _vehicle->firmwarePlugin()->sendHomePositionToVehicle();
 
     int prefixCommandCount = 0;
-    for (int i=0; i<_missionItems.count(); i++) {
+    for (int i = 0; i < _missionItems.count(); i++) {
         MissionItem* oldItem = _missionItems[i];
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, _vehicle->vehicleClass(), oldItem->command());
-        if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command()) || (uiInfo && uiInfo->isTakeoffCommand())) {
+        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(
+            _vehicle, _vehicle->vehicleClass(), oldItem->command());
+        if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command())
+            || (uiInfo && uiInfo->isTakeoffCommand())) {
             if (i < resumeIndex) {
                 prefixCommandCount++;
             }
@@ -147,13 +135,13 @@ void MissionManager::generateResumeMission(int resumeIndex)
             resumeMission.append(newItem);
         }
     }
-    prefixCommandCount = qMax(0, qMin(prefixCommandCount, resumeMission.count()));  // Anal prevention against crashes
+    prefixCommandCount = qMax(0, qMin(prefixCommandCount, resumeMission.count())); // Anal prevention against crashes
 
     // De-dup and remove no-ops from the commands which were added to the front of the mission
     bool foundROI = false;
     bool foundCameraSetMode = false;
     bool foundCameraStartStop = false;
-    prefixCommandCount--;   // Change from count to array index
+    prefixCommandCount--; // Change from count to array index
     while (prefixCommandCount >= 0) {
         MissionItem* resumeItem = resumeMission[prefixCommandCount];
         switch (resumeItem->command()) {
@@ -202,7 +190,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
 
     // Adjust sequence numbers and current item
     int seqNum = 0;
-    for (int i=0; i<resumeMission.count(); i++) {
+    for (int i = 0; i < resumeMission.count(); i++) {
         resumeMission[i]->setSequenceNumber(seqNum++);
     }
     int setCurrentIndex = addHomePosition ? 1 : 0;
@@ -210,7 +198,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
 
     // Send to vehicle
     _clearAndDeleteWriteMissionItems();
-    for (int i=0; i<resumeMission.count(); i++) {
+    for (int i = 0; i < resumeMission.count(); i++) {
         _writeMissionItems.append(new MissionItem(*resumeMission[i], this));
     }
     _resumeMission = true;
@@ -248,25 +236,26 @@ void MissionManager::_updateMissionIndex(int index)
     }
 
     if (_currentMissionIndex != _lastCurrentIndex && _cachedLastCurrentIndex != _currentMissionIndex) {
-        // We have to be careful of an RTL sequence causing a change of index to the DO_LAND_START sequence. This also triggers
-        // a flight mode change away from mission flight mode. So we only update _lastCurrentIndex when the flight mode is mission.
-        // But we can run into problems where we may get the MISSION_CURRENT message for the RTL/DO_LAND_START sequenc change prior
-        // to the HEARTBEAT message which contains the flight mode change which will cause things to work incorrectly. To fix this
-        // We force the sequencing of HEARTBEAT following by MISSION_CURRENT by caching the possible _lastCurrentIndex update until
-        // the next HEARTBEAT comes through.
-        qCDebug(MissionManagerLog) << "_updateMissionIndex caching _lastCurrentIndex for possible update:" << _currentMissionIndex;
+        // We have to be careful of an RTL sequence causing a change of index to the DO_LAND_START sequence. This also
+        // triggers a flight mode change away from mission flight mode. So we only update _lastCurrentIndex when the
+        // flight mode is mission. But we can run into problems where we may get the MISSION_CURRENT message for the
+        // RTL/DO_LAND_START sequenc change prior to the HEARTBEAT message which contains the flight mode change which
+        // will cause things to work incorrectly. To fix this We force the sequencing of HEARTBEAT following by
+        // MISSION_CURRENT by caching the possible _lastCurrentIndex update until the next HEARTBEAT comes through.
+        qCDebug(MissionManagerLog) << "_updateMissionIndex caching _lastCurrentIndex for possible update:"
+                                   << _currentMissionIndex;
         _cachedLastCurrentIndex = _currentMissionIndex;
     }
 }
 
-void MissionManager::_handleHighLatency(const mavlink_message_t& message) 
+void MissionManager::_handleHighLatency(const mavlink_message_t& message)
 {
     mavlink_high_latency_t highLatency;
     mavlink_msg_high_latency_decode(&message, &highLatency);
     _updateMissionIndex(highLatency.wp_num);
 }
 
-void MissionManager::_handleHighLatency2(const mavlink_message_t& message) 
+void MissionManager::_handleHighLatency2(const mavlink_message_t& message)
 {
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
@@ -284,11 +273,11 @@ void MissionManager::_handleHeartbeat(const mavlink_message_t& message)
 {
     Q_UNUSED(message);
 
-    if (_cachedLastCurrentIndex != -1 &&  _vehicle->flightMode() == _vehicle->missionFlightMode()) {
-        qCDebug(MissionManagerLog) << "_handleHeartbeat updating lastCurrentIndex from cached value:" << _cachedLastCurrentIndex;
+    if (_cachedLastCurrentIndex != -1 && _vehicle->flightMode() == _vehicle->missionFlightMode()) {
+        qCDebug(MissionManagerLog) << "_handleHeartbeat updating lastCurrentIndex from cached value:"
+                                   << _cachedLastCurrentIndex;
         _lastCurrentIndex = _cachedLastCurrentIndex;
         _cachedLastCurrentIndex = -1;
         emit lastCurrentIndexChanged(_lastCurrentIndex);
     }
 }
-

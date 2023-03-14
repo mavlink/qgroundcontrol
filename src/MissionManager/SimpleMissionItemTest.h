@@ -9,49 +9,48 @@
 
 #pragma once
 
-#include "VisualMissionItemTest.h"
 #include "SimpleMissionItem.h"
+#include "VisualMissionItemTest.h"
 
 /// Unit test for SimpleMissionItem
 
 typedef struct {
-    MAV_CMD        command;
-    MAV_FRAME      frame;
+    MAV_CMD command;
+    MAV_FRAME frame;
 } ItemInfo_t;
 
 typedef struct {
-    const char*                 name;
-    QGCMAVLink::VehicleClass_t  vehicleClass;
-    bool                        nanValue;
-    int                         paramIndex;
+    const char* name;
+    QGCMAVLink::VehicleClass_t vehicleClass;
+    bool nanValue;
+    int paramIndex;
 } FactValue_t;
 
 typedef struct {
-    size_t                          cFactValues;
-    const FactValue_t*              rgFactValues;
-    double                          altValue;
+    size_t cFactValues;
+    const FactValue_t* rgFactValues;
+    double altValue;
     QGroundControlQmlGlobal::AltMode altMode;
 } ItemExpected_t;
 
-class SimpleMissionItemTest : public VisualMissionItemTest
-{
+class SimpleMissionItemTest : public VisualMissionItemTest {
     Q_OBJECT
-    
+
 public:
     SimpleMissionItemTest(void);
 
-    void init   (void) override;
+    void init(void) override;
     void cleanup(void) override;
 
 private slots:
-    void _testSignals               (void);
-    void _testEditorFacts           (void);
-    void _testDefaultValues         (void);
-    void _testCameraSectionDirty    (void);
-    void _testSpeedSectionDirty     (void);
-    void _testCameraSection         (void);
-    void _testSpeedSection          (void);
-    void _testAltitudePropogation   (void);
+    void _testSignals(void);
+    void _testEditorFacts(void);
+    void _testDefaultValues(void);
+    void _testCameraSectionDirty(void);
+    void _testSpeedSectionDirty(void);
+    void _testCameraSection(void);
+    void _testSpeedSection(void);
+    void _testAltitudePropogation(void);
 
 private:
     enum {
@@ -66,22 +65,23 @@ private:
     };
 
     enum {
-        commandChangedMask =                        1 << commandChangedIndex,
-        altitudeModeChangedMask =                  1 << altitudeModeChangedIndex,
-        friendlyEditAllowedChangedMask =            1 << friendlyEditAllowedChangedIndex,
-        headingDegreesChangedMask =                 1 << headingDegreesChangedIndex,
-        rawEditChangedMask =                        1 << rawEditChangedIndex,
-        cameraSectionChangedMask =                  1 << cameraSectionChangedIndex,
-        speedSectionChangedMask =                   1 << speedSectionChangedIndex,
+        commandChangedMask = 1 << commandChangedIndex,
+        altitudeModeChangedMask = 1 << altitudeModeChangedIndex,
+        friendlyEditAllowedChangedMask = 1 << friendlyEditAllowedChangedIndex,
+        headingDegreesChangedMask = 1 << headingDegreesChangedIndex,
+        rawEditChangedMask = 1 << rawEditChangedIndex,
+        cameraSectionChangedMask = 1 << cameraSectionChangedIndex,
+        speedSectionChangedMask = 1 << speedSectionChangedIndex,
     };
 
     static const size_t cSimpleItemSignals = maxSignalIndex;
-    const char*         rgSimpleItemSignals[cSimpleItemSignals];
+    const char* rgSimpleItemSignals[cSimpleItemSignals];
 
-    void _testEditorFactsWorker (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode, const ItemExpected_t* rgExpected);
-    bool _classMatch            (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
+    void _testEditorFactsWorker(
+        QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode, const ItemExpected_t* rgExpected);
+    bool _classMatch(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
 
-    SimpleMissionItem*  _simpleItem;
-    MultiSignalSpy*     _spySimpleItem;
-    MultiSignalSpy*     _spyVisualItem;
+    SimpleMissionItem* _simpleItem;
+    MultiSignalSpy* _spySimpleItem;
+    MultiSignalSpy* _spyVisualItem;
 };

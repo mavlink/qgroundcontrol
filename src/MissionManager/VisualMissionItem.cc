@@ -7,28 +7,28 @@
  *
  ****************************************************************************/
 
-#include <QStringList>
 #include <QDebug>
+#include <QStringList>
 
-#include "VisualMissionItem.h"
 #include "FirmwarePluginManager.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
-#include "TerrainQuery.h"
-#include "TakeoffMissionItem.h"
 #include "PlanMasterController.h"
 #include "QGC.h"
+#include "QGCApplication.h"
+#include "TakeoffMissionItem.h"
+#include "TerrainQuery.h"
+#include "VisualMissionItem.h"
 
-const char* VisualMissionItem::jsonTypeKey =                "type";
-const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
-const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
+const char* VisualMissionItem::jsonTypeKey = "type";
+const char* VisualMissionItem::jsonTypeSimpleItemValue = "SimpleItem";
+const char* VisualMissionItem::jsonTypeComplexItemValue = "ComplexItem";
 
 // All VisualMissionItem derived classes are parented to masterController in order to tie their lifecycles together.
 
 VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, bool flyView)
-    : QObject           (masterController)
-    , _flyView          (flyView)
-    , _masterController (masterController)
+    : QObject(masterController)
+    , _flyView(flyView)
+    , _masterController(masterController)
     , _missionController(masterController->missionController())
     , _controllerVehicle(masterController->controllerVehicle())
 {
@@ -36,8 +36,8 @@ VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, boo
 }
 
 VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView)
-    : QObject                   (other._masterController)
-    , _flyView                  (flyView)
+    : QObject(other._masterController)
+    , _flyView(flyView)
 {
     *this = other;
 
@@ -48,7 +48,8 @@ void VisualMissionItem::_commonInit(void)
 {
     // Don't get terrain altitude information for submarines or boats
     Vehicle* controllerVehicle = _masterController->controllerVehicle();
-    if (controllerVehicle->vehicleType() != MAV_TYPE_SUBMARINE && controllerVehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
+    if (controllerVehicle->vehicleType() != MAV_TYPE_SUBMARINE
+        && controllerVehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
         _updateTerrainTimer.setInterval(500);
         _updateTerrainTimer.setSingleShot(true);
         connect(&_updateTerrainTimer, &QTimer::timeout, this, &VisualMissionItem::_reallyUpdateTerrainAltitude);
@@ -78,9 +79,7 @@ const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& o
     return *this;
 }
 
-VisualMissionItem::~VisualMissionItem()
-{    
-}
+VisualMissionItem::~VisualMissionItem() { }
 
 void VisualMissionItem::setIsCurrentItem(bool isCurrentItem)
 {
@@ -193,15 +192,19 @@ void VisualMissionItem::_updateTerrainAltitude(void)
 void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 {
     QGeoCoordinate coord = coordinate();
-    if (specifiesCoordinate() && coord.isValid() && (qIsNaN(_terrainAltitude) || !QGC::fuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || !QGC::fuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
+    if (specifiesCoordinate() && coord.isValid()
+        && (qIsNaN(_terrainAltitude) || !QGC::fuzzyCompare(_lastLatTerrainQuery, coord.latitude())
+            || !QGC::fuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
         if (_currentTerrainAtCoordinateQuery) {
-            disconnect(_currentTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &VisualMissionItem::_terrainDataReceived);
+            disconnect(_currentTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this,
+                &VisualMissionItem::_terrainDataReceived);
             _currentTerrainAtCoordinateQuery = nullptr;
         }
         _currentTerrainAtCoordinateQuery = new TerrainAtCoordinateQuery(true /* autoDelet */);
-        connect(_currentTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &VisualMissionItem::_terrainDataReceived);
+        connect(_currentTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this,
+            &VisualMissionItem::_terrainDataReceived);
         QList<QGeoCoordinate> rgCoord;
         rgCoord.append(coordinate());
         _currentTerrainAtCoordinateQuery->requestData(rgCoord);
@@ -239,12 +242,6 @@ void VisualMissionItem::setParentItem(VisualMissionItem* parentItem)
     }
 }
 
-void VisualMissionItem::_amslEntryAltChanged(void)
-{
-    emit amslEntryAltChanged(amslEntryAlt());
-}
+void VisualMissionItem::_amslEntryAltChanged(void) { emit amslEntryAltChanged(amslEntryAlt()); }
 
-void VisualMissionItem::_amslExitAltChanged(void)
-{
-    emit amslExitAltChanged(amslExitAlt());
-}
+void VisualMissionItem::_amslExitAltChanged(void) { emit amslExitAltChanged(amslExitAlt()); }

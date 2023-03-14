@@ -9,20 +9,19 @@
 
 #pragma once
 
-#include "UnitTest.h"
-#include "MultiSignalSpy.h"
 #include "MissionItem.h"
-#include "Vehicle.h"
+#include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
+#include "UnitTest.h"
+#include "Vehicle.h"
 
 /// Unit test for the MissionItem Object
-class MissionItemTest : public UnitTest
-{
+class MissionItemTest : public UnitTest {
     Q_OBJECT
-    
+
 public:
     MissionItemTest(void);
-    
+
     void init(void) override;
     void cleanup(void) override;
 
@@ -45,6 +44,6 @@ private:
     QJsonObject _createV2Json(void);
     QJsonObject _createV3Json(bool allNaNs = false);
 
-    int                     _seq = 10;
-    PlanMasterController*   _masterController = nullptr;
+    int _seq = 10;
+    PlanMasterController* _masterController = nullptr;
 };

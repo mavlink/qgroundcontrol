@@ -7,44 +7,43 @@
  *
  ****************************************************************************/
 
-
-#include <QStringList>
 #include <QDebug>
+#include <QStringList>
 
-#include "MissionItem.h"
 #include "FirmwarePluginManager.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
+#include "MissionItem.h"
+#include "QGCApplication.h"
 #include "VisualMissionItem.h"
 
-const char*  MissionItem::_jsonFrameKey =           "frame";
-const char*  MissionItem::_jsonCommandKey =         "command";
-const char*  MissionItem::_jsonAutoContinueKey =    "autoContinue";
-const char*  MissionItem::_jsonCoordinateKey =      "coordinate";
-const char*  MissionItem::_jsonParamsKey =          "params";
-const char*  MissionItem::_jsonDoJumpIdKey =        "doJumpId";
+const char* MissionItem::_jsonFrameKey = "frame";
+const char* MissionItem::_jsonCommandKey = "command";
+const char* MissionItem::_jsonAutoContinueKey = "autoContinue";
+const char* MissionItem::_jsonCoordinateKey = "coordinate";
+const char* MissionItem::_jsonParamsKey = "params";
+const char* MissionItem::_jsonDoJumpIdKey = "doJumpId";
 
 // Deprecated V1 format keys
-const char*  MissionItem::_jsonParam1Key =          "param1";
-const char*  MissionItem::_jsonParam2Key =          "param2";
-const char*  MissionItem::_jsonParam3Key =          "param3";
-const char*  MissionItem::_jsonParam4Key =          "param4";
+const char* MissionItem::_jsonParam1Key = "param1";
+const char* MissionItem::_jsonParam2Key = "param2";
+const char* MissionItem::_jsonParam3Key = "param3";
+const char* MissionItem::_jsonParam4Key = "param4";
 
 MissionItem::MissionItem(QObject* parent)
     : QObject(parent)
     , _sequenceNumber(0)
     , _doJumpId(-1)
     , _isCurrentItem(false)
-    , _autoContinueFact             (0, "AutoContinue",                 FactMetaData::valueTypeUint32)
-    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
-    , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
-    , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
-    , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
-    , _param4Fact                   (0, "Param4:",                      FactMetaData::valueTypeDouble)
-    , _param5Fact                   (0, "Latitude:",                    FactMetaData::valueTypeDouble)
-    , _param6Fact                   (0, "Longitude:",                   FactMetaData::valueTypeDouble)
-    , _param7Fact                   (0, "Altitude:",                    FactMetaData::valueTypeDouble)
+    , _autoContinueFact(0, "AutoContinue", FactMetaData::valueTypeUint32)
+    , _commandFact(0, "", FactMetaData::valueTypeUint32)
+    , _frameFact(0, "", FactMetaData::valueTypeUint32)
+    , _param1Fact(0, "Param1:", FactMetaData::valueTypeDouble)
+    , _param2Fact(0, "Param2:", FactMetaData::valueTypeDouble)
+    , _param3Fact(0, "Param3:", FactMetaData::valueTypeDouble)
+    , _param4Fact(0, "Param4:", FactMetaData::valueTypeDouble)
+    , _param5Fact(0, "Latitude:", FactMetaData::valueTypeDouble)
+    , _param6Fact(0, "Longitude:", FactMetaData::valueTypeDouble)
+    , _param7Fact(0, "Altitude:", FactMetaData::valueTypeDouble)
 {
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
@@ -57,32 +56,22 @@ MissionItem::MissionItem(QObject* parent)
     connect(&_param3Fact, &Fact::rawValueChanged, this, &MissionItem::_param3Changed);
 }
 
-MissionItem::MissionItem(int             sequenceNumber,
-                         MAV_CMD         command,
-                         MAV_FRAME       frame,
-                         double          param1,
-                         double          param2,
-                         double          param3,
-                         double          param4,
-                         double          param5,
-                         double          param6,
-                         double          param7,
-                         bool            autoContinue,
-                         bool            isCurrentItem,
-                         QObject*        parent)
+MissionItem::MissionItem(int sequenceNumber, MAV_CMD command, MAV_FRAME frame, double param1, double param2,
+    double param3, double param4, double param5, double param6, double param7, bool autoContinue, bool isCurrentItem,
+    QObject* parent)
     : QObject(parent)
     , _sequenceNumber(sequenceNumber)
     , _doJumpId(-1)
     , _isCurrentItem(isCurrentItem)
-    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
-    , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
-    , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
-    , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
-    , _param4Fact                   (0, "Param4:",                      FactMetaData::valueTypeDouble)
-    , _param5Fact                   (0, "Lat/X:",                       FactMetaData::valueTypeDouble)
-    , _param6Fact                   (0, "Lon/Y:",                       FactMetaData::valueTypeDouble)
-    , _param7Fact                   (0, "Alt/Z:",                       FactMetaData::valueTypeDouble)
+    , _commandFact(0, "", FactMetaData::valueTypeUint32)
+    , _frameFact(0, "", FactMetaData::valueTypeUint32)
+    , _param1Fact(0, "Param1:", FactMetaData::valueTypeDouble)
+    , _param2Fact(0, "Param2:", FactMetaData::valueTypeDouble)
+    , _param3Fact(0, "Param3:", FactMetaData::valueTypeDouble)
+    , _param4Fact(0, "Param4:", FactMetaData::valueTypeDouble)
+    , _param5Fact(0, "Lat/X:", FactMetaData::valueTypeDouble)
+    , _param6Fact(0, "Lon/Y:", FactMetaData::valueTypeDouble)
+    , _param7Fact(0, "Alt/Z:", FactMetaData::valueTypeDouble)
 {
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
@@ -109,15 +98,15 @@ MissionItem::MissionItem(const MissionItem& other, QObject* parent)
     , _sequenceNumber(0)
     , _doJumpId(-1)
     , _isCurrentItem(false)
-    , _commandFact                  (0, "",                             FactMetaData::valueTypeUint32)
-    , _frameFact                    (0, "",                             FactMetaData::valueTypeUint32)
-    , _param1Fact                   (0, "Param1:",                      FactMetaData::valueTypeDouble)
-    , _param2Fact                   (0, "Param2:",                      FactMetaData::valueTypeDouble)
-    , _param3Fact                   (0, "Param3:",                      FactMetaData::valueTypeDouble)
-    , _param4Fact                   (0, "Param4:",                      FactMetaData::valueTypeDouble)
-    , _param5Fact                   (0, "Lat/X:",                       FactMetaData::valueTypeDouble)
-    , _param6Fact                   (0, "Lon/Y:",                       FactMetaData::valueTypeDouble)
-    , _param7Fact                   (0, "Alt/Z:",                       FactMetaData::valueTypeDouble)
+    , _commandFact(0, "", FactMetaData::valueTypeUint32)
+    , _frameFact(0, "", FactMetaData::valueTypeUint32)
+    , _param1Fact(0, "Param1:", FactMetaData::valueTypeDouble)
+    , _param2Fact(0, "Param2:", FactMetaData::valueTypeDouble)
+    , _param3Fact(0, "Param3:", FactMetaData::valueTypeDouble)
+    , _param4Fact(0, "Param4:", FactMetaData::valueTypeDouble)
+    , _param5Fact(0, "Lat/X:", FactMetaData::valueTypeDouble)
+    , _param6Fact(0, "Lon/Y:", FactMetaData::valueTypeDouble)
+    , _param7Fact(0, "Alt/Z:", FactMetaData::valueTypeDouble)
 {
     // Need a good command and frame before we start passing signals around
     _commandFact.setRawValue(MAV_CMD_NAV_WAYPOINT);
@@ -150,10 +139,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
     return *this;
 }
 
-MissionItem::~MissionItem()
-{    
-
-}
+MissionItem::~MissionItem() { }
 
 void MissionItem::save(QJsonObject& json) const
 {
@@ -163,15 +149,16 @@ void MissionItem::save(QJsonObject& json) const
     json[_jsonAutoContinueKey] = autoContinue();
     json[_jsonDoJumpIdKey] = _sequenceNumber;
 
-    QJsonArray rgParams =  { param1(), param2(), param3(), param4(), param5(), param6(), param7() };
+    QJsonArray rgParams = {param1(), param2(), param3(), param4(), param5(), param6(), param7()};
     json[_jsonParamsKey] = rgParams;
 }
 
-bool MissionItem::load(QTextStream &loadStream)
+bool MissionItem::load(QTextStream& loadStream)
 {
-    const QStringList &wpParams = loadStream.readLine().split("\t");
+    const QStringList& wpParams = loadStream.readLine().split("\t");
     if (wpParams.size() == 12) {
-        setCommand((MAV_CMD)wpParams[3].toInt());   // Has to be first since it triggers defaults to be set, which are then override by below set calls
+        setCommand((MAV_CMD)wpParams[3].toInt()); // Has to be first since it triggers defaults to be set, which are
+                                                  // then override by below set calls
         setSequenceNumber(wpParams[0].toInt());
         setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
         setFrame((MAV_FRAME)wpParams[2].toInt());
@@ -199,14 +186,14 @@ bool MissionItem::_convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Jso
     if (json.contains(_jsonParamsKey)) {
         // Already V2 format
         return true;
-    }        
+    }
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },
-        { _jsonParam1Key,                   QJsonValue::Double, true },
-        { _jsonParam2Key,                   QJsonValue::Double, true },
-        { _jsonParam3Key,                   QJsonValue::Double, true },
-        { _jsonParam4Key,                   QJsonValue::Double, true },
+        {VisualMissionItem::jsonTypeKey, QJsonValue::String, true},
+        {_jsonParam1Key, QJsonValue::Double, true},
+        {_jsonParam2Key, QJsonValue::Double, true},
+        {_jsonParam3Key, QJsonValue::Double, true},
+        {_jsonParam4Key, QJsonValue::Double, true},
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;
@@ -216,7 +203,8 @@ bool MissionItem::_convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Jso
         v2Json[VisualMissionItem::jsonTypeKey] = VisualMissionItem::jsonTypeSimpleItemValue;
     }
 
-    QJsonArray rgParams =  { json[_jsonParam1Key].toDouble(),  json[_jsonParam2Key].toDouble(), json[_jsonParam3Key].toDouble(), json[_jsonParam4Key].toDouble() };
+    QJsonArray rgParams = {json[_jsonParam1Key].toDouble(), json[_jsonParam2Key].toDouble(),
+        json[_jsonParam3Key].toDouble(), json[_jsonParam4Key].toDouble()};
     v2Json[_jsonParamsKey] = rgParams;
     v2Json.remove(_jsonParam1Key);
     v2Json.remove(_jsonParam2Key);
@@ -237,14 +225,15 @@ bool MissionItem::_convertJsonV2ToV3(QJsonObject& json, QString& errorString)
     }
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { _jsonCoordinateKey, QJsonValue::Array, true },
+        {_jsonCoordinateKey, QJsonValue::Array, true},
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
     QGeoCoordinate coordinate;
-    if (!JsonHelper::loadGeoCoordinate(json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
+    if (!JsonHelper::loadGeoCoordinate(
+            json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;
     }
 
@@ -270,19 +259,21 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
     }
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },
-        { _jsonFrameKey,                    QJsonValue::Double, true },
-        { _jsonCommandKey,                  QJsonValue::Double, true },
-        { _jsonParamsKey,                   QJsonValue::Array,  true },
-        { _jsonAutoContinueKey,             QJsonValue::Bool,   true },
-        { _jsonDoJumpIdKey,                 QJsonValue::Double, false },
+        {VisualMissionItem::jsonTypeKey, QJsonValue::String, true},
+        {_jsonFrameKey, QJsonValue::Double, true},
+        {_jsonCommandKey, QJsonValue::Double, true},
+        {_jsonParamsKey, QJsonValue::Array, true},
+        {_jsonAutoContinueKey, QJsonValue::Bool, true},
+        {_jsonDoJumpIdKey, QJsonValue::Double, false},
     };
     if (!JsonHelper::validateKeys(convertedJson, keyInfoList, errorString)) {
         return false;
     }
 
     if (convertedJson[VisualMissionItem::jsonTypeKey] != VisualMissionItem::jsonTypeSimpleItemValue) {
-        errorString = tr("Type found: %1 must be: %2").arg(convertedJson[VisualMissionItem::jsonTypeKey].toString()).arg(VisualMissionItem::jsonTypeSimpleItemValue);
+        errorString = tr("Type found: %1 must be: %2")
+                          .arg(convertedJson[VisualMissionItem::jsonTypeKey].toString())
+                          .arg(VisualMissionItem::jsonTypeSimpleItemValue);
         return false;
     }
 
@@ -292,9 +283,9 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
         return false;
     }
 
-    for (int i=0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
         if (rgParams[i].type() != QJsonValue::Double && rgParams[i].type() != QJsonValue::Null) {
-            errorString = tr("Param %1 incorrect type %2, must be double or null").arg(i+1).arg(rgParams[i].type());
+            errorString = tr("Param %1 incorrect type %2, must be double or null").arg(i + 1).arg(rgParams[i].type());
             return false;
         }
     }
@@ -321,7 +312,6 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
 
     return true;
 }
-
 
 void MissionItem::setSequenceNumber(int sequenceNumber)
 {
@@ -411,7 +401,7 @@ void MissionItem::setParam7(double param)
 
 QGeoCoordinate MissionItem::coordinate(void) const
 {
-    if(!std::isfinite(param5()) || !std::isfinite(param6())) {
+    if (!std::isfinite(param5()) || !std::isfinite(param6())) {
         //-- If either of these are NAN, return an invalid (QGeoCoordinate::isValid() == false) coordinate
         return QGeoCoordinate();
     }
@@ -433,7 +423,8 @@ double MissionItem::specifiedGimbalYaw(void) const
 {
     double gimbalYaw = std::numeric_limits<double>::quiet_NaN();
 
-    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_MOUNT_CONTROL && _param7Fact.rawValue().toInt() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_MOUNT_CONTROL
+        && _param7Fact.rawValue().toInt() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
         gimbalYaw = _param3Fact.rawValue().toDouble();
     }
 
@@ -444,7 +435,8 @@ double MissionItem::specifiedGimbalPitch(void) const
 {
     double gimbalPitch = std::numeric_limits<double>::quiet_NaN();
 
-    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_MOUNT_CONTROL && _param7Fact.rawValue().toInt() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_MOUNT_CONTROL
+        && _param7Fact.rawValue().toInt() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
         gimbalPitch = _param1Fact.rawValue().toDouble();
     }
 

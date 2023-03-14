@@ -13,10 +13,10 @@
 
 QGCMapPolylineTest::QGCMapPolylineTest(void)
 {
-    _linePoints << QGeoCoordinate(47.635638361473475, -122.09269407980834 ) <<
-                   QGeoCoordinate(47.635638361473475, -122.08545246602667) <<
-                   QGeoCoordinate(47.63057923872075, -122.08545246602667) <<
-                   QGeoCoordinate(47.63057923872075, -122.09269407980834);
+    _linePoints << QGeoCoordinate(47.635638361473475, -122.09269407980834)
+                << QGeoCoordinate(47.635638361473475, -122.08545246602667)
+                << QGeoCoordinate(47.63057923872075, -122.08545246602667)
+                << QGeoCoordinate(47.63057923872075, -122.09269407980834);
 }
 
 void QGCMapPolylineTest::init(void)
@@ -24,9 +24,9 @@ void QGCMapPolylineTest::init(void)
     UnitTest::init();
 
     _rgSignals[countChangedIndex] = SIGNAL(countChanged(int));
-    _rgSignals[pathChangedIndex] =  SIGNAL(pathChanged());
+    _rgSignals[pathChangedIndex] = SIGNAL(pathChanged());
     _rgSignals[dirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
-    _rgSignals[clearedIndex] =      SIGNAL(cleared());
+    _rgSignals[clearedIndex] = SIGNAL(cleared());
 
     _rgModelSignals[modelCountChangedIndex] = SIGNAL(countChanged(int));
     _rgModelSignals[modelDirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
@@ -103,25 +103,25 @@ void QGCMapPolylineTest::_testVertexManipulation(void)
 {
     // Vertex addition testing
 
-    for (int i=0; i<_linePoints.count(); i++) {
+    for (int i = 0; i < _linePoints.count(); i++) {
         QCOMPARE(_mapPolyline->count(), i);
 
         _mapPolyline->appendVertex(_linePoints[i]);
         QVERIFY(_multiSpyPolyline->checkOnlySignalByMask(pathChangedMask | dirtyChangedMask | countChangedMask));
         QVERIFY(_multiSpyModel->checkOnlySignalByMask(modelDirtyChangedMask | modelCountChangedMask));
-        QCOMPARE(_multiSpyPolyline->pullIntFromSignalIndex(countChangedIndex), i+1);
-        QCOMPARE(_multiSpyModel->pullIntFromSignalIndex(modelCountChangedIndex), i+1);
+        QCOMPARE(_multiSpyPolyline->pullIntFromSignalIndex(countChangedIndex), i + 1);
+        QCOMPARE(_multiSpyModel->pullIntFromSignalIndex(modelCountChangedIndex), i + 1);
 
         QVERIFY(_mapPolyline->dirty());
         QVERIFY(_pathModel->dirty());
 
-        QCOMPARE(_mapPolyline->count(), i+1);
+        QCOMPARE(_mapPolyline->count(), i + 1);
 
         QVariantList vertexList = _mapPolyline->path();
-        QCOMPARE(vertexList.count(), i+1);
+        QCOMPARE(vertexList.count(), i + 1);
         QCOMPARE(vertexList[i].value<QGeoCoordinate>(), _linePoints[i]);
 
-        QCOMPARE(_pathModel->count(), i+1);
+        QCOMPARE(_pathModel->count(), i + 1);
         QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(i)->coordinate(), _linePoints[i]);
 
         _mapPolyline->setDirty(false);
@@ -172,7 +172,8 @@ void QGCMapPolylineTest::_testVertexManipulation(void)
     // Clear testing
 
     _mapPolyline->clear();
-    QVERIFY(_multiSpyPolyline->checkOnlySignalsByMask(pathChangedMask | dirtyChangedMask | countChangedMask | clearedMask));
+    QVERIFY(
+        _multiSpyPolyline->checkOnlySignalsByMask(pathChangedMask | dirtyChangedMask | countChangedMask | clearedMask));
     QVERIFY(_multiSpyModel->checkOnlySignalsByMask(modelDirtyChangedMask | modelCountChangedMask));
     QVERIFY(_mapPolyline->dirty());
     QVERIFY(_pathModel->dirty());

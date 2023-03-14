@@ -11,10 +11,9 @@
 
 #include "PlanCreator.h"
 
-class StructureScanPlanCreator : public PlanCreator
-{
+class StructureScanPlanCreator : public PlanCreator {
     Q_OBJECT
-    
+
 public:
     StructureScanPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
 

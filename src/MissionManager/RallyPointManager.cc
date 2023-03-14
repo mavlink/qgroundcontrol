@@ -16,18 +16,14 @@ QGC_LOGGING_CATEGORY(RallyPointManagerLog, "RallyPointManagerLog")
 RallyPointManager::RallyPointManager(Vehicle* vehicle)
     : PlanManager(vehicle, MAV_MISSION_TYPE_RALLY)
 {
-    connect(this, &PlanManager::inProgressChanged,          this, &RallyPointManager::inProgressChanged);
-    connect(this, &PlanManager::error,                      this, &RallyPointManager::error);
-    connect(this, &PlanManager::removeAllComplete,          this, &RallyPointManager::removeAllComplete);
-    connect(this, &PlanManager::sendComplete,               this, &RallyPointManager::_sendComplete);
-    connect(this, &PlanManager::newMissionItemsAvailable,   this, &RallyPointManager::_planManagerLoadComplete);
+    connect(this, &PlanManager::inProgressChanged, this, &RallyPointManager::inProgressChanged);
+    connect(this, &PlanManager::error, this, &RallyPointManager::error);
+    connect(this, &PlanManager::removeAllComplete, this, &RallyPointManager::removeAllComplete);
+    connect(this, &PlanManager::sendComplete, this, &RallyPointManager::_sendComplete);
+    connect(this, &PlanManager::newMissionItemsAvailable, this, &RallyPointManager::_planManagerLoadComplete);
 }
 
-
-RallyPointManager::~RallyPointManager()
-{
-
-}
+RallyPointManager::~RallyPointManager() { }
 
 void RallyPointManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)
 {
@@ -39,23 +35,19 @@ void RallyPointManager::_sendError(ErrorCode_t errorCode, const QString& errorMs
 void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 {
     _rgSendPoints.clear();
-    for (const QGeoCoordinate& rallyPoint: rgPoints) {
+    for (const QGeoCoordinate& rallyPoint : rgPoints) {
         _rgSendPoints.append(rallyPoint);
     }
 
     QList<MissionItem*> rallyItems;
-    for (int i=0; i<rgPoints.count(); i++) {
+    for (int i = 0; i < rgPoints.count(); i++) {
 
-        MissionItem* item = new MissionItem(0,
-                                            MAV_CMD_NAV_RALLY_POINT,
-                                            MAV_FRAME_GLOBAL_RELATIVE_ALT,
-                                            0, 0, 0, 0,                 // param 1-4 unused
-                                            rgPoints[i].latitude(),
-                                            rgPoints[i].longitude(),
-                                            rgPoints[i].altitude(),
-                                            false,                      // autocontinue
-                                            false,                      // isCurrentItem
-                                            this);                      // parent
+        MissionItem* item
+            = new MissionItem(0, MAV_CMD_NAV_RALLY_POINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, // param 1-4 unused
+                rgPoints[i].latitude(), rgPoints[i].longitude(), rgPoints[i].altitude(),
+                false, // autocontinue
+                false, // isCurrentItem
+                this); // parent
         rallyItems.append(item);
     }
 
@@ -82,7 +74,7 @@ void RallyPointManager::_planManagerLoadComplete(bool removeAllRequested)
 
     const QList<MissionItem*>& rallyItems = missionItems();
 
-    for (int i=0; i<rallyItems.count(); i++) {
+    for (int i = 0; i < rallyItems.count(); i++) {
         MissionItem* item = rallyItems[i];
 
         MAV_CMD command = item->command();
@@ -94,7 +86,6 @@ void RallyPointManager::_planManagerLoadComplete(bool removeAllRequested)
             break;
         }
     }
-
 
     emit loadComplete();
 }

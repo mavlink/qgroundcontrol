@@ -10,9 +10,7 @@
 #include "TransectStyleComplexItemTestBase.h"
 #include "QGCApplication.h"
 
-TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void)
-{
-}
+TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void) { }
 
 void TransectStyleComplexItemTestBase::init(void)
 {
@@ -27,9 +25,9 @@ void TransectStyleComplexItemTestBase::cleanup(void)
 {
     delete _masterController;
 
-    _planViewSettings   = nullptr;
-    _masterController   = nullptr;
-    _controllerVehicle  = nullptr;
+    _planViewSettings = nullptr;
+    _masterController = nullptr;
+    _controllerVehicle = nullptr;
 
     UnitTest::cleanup();
 }
@@ -37,7 +35,7 @@ void TransectStyleComplexItemTestBase::cleanup(void)
 void TransectStyleComplexItemTestBase::_printItemCommands(QList<MissionItem*> items)
 {
     // Handy for debugging failures
-    for (int i=0; i<items.count(); i++) {
+    for (int i = 0; i < items.count(); i++) {
         MissionItem* item = items[i];
         qDebug() << "Index:Cmd" << i << item->command();
     }

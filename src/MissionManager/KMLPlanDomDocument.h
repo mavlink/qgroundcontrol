@@ -16,8 +16,7 @@ class Vehicle;
 class QmlObjectListModel;
 
 /// Used to convert a Plan to a KML document
-class KMLPlanDomDocument : public KMLDomDocument
-{
+class KMLPlanDomDocument : public KMLDomDocument {
 
 public:
     KMLPlanDomDocument();
@@ -27,9 +26,9 @@ public:
     static const char* surveyPolygonStyleName;
 
 private:
-    void _addStyles         (void);
-    void _addFlightPath     (Vehicle* vehicle, QList<MissionItem*> rgMissionItems);
-    void _addComplexItems   (QmlObjectListModel* visualItems);
+    void _addStyles(void);
+    void _addFlightPath(Vehicle* vehicle, QList<MissionItem*> rgMissionItems);
+    void _addComplexItems(QmlObjectListModel* visualItems);
 
     static const char* _missionLineStyleName;
 };

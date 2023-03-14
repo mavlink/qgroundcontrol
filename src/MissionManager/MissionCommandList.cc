@@ -9,22 +9,22 @@
 
 #include "MissionCommandList.h"
 #include "FactMetaData.h"
-#include "Vehicle.h"
 #include "FirmwarePluginManager.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionCommandUIInfo.h"
+#include "QGCApplication.h"
+#include "Vehicle.h"
 
-#include <QStringList>
-#include <QJsonDocument>
-#include <QJsonParseError>
-#include <QJsonArray>
 #include <QDebug>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QStringList>
 
-const char* MissionCommandList::qgcFileType =           "MavCmdInfo";
-const char* MissionCommandList::_versionJsonKey =       "version";
-const char* MissionCommandList::_mavCmdInfoJsonKey =    "mavCmdInfo";
+const char* MissionCommandList::qgcFileType = "MavCmdInfo";
+const char* MissionCommandList::_versionJsonKey = "version";
+const char* MissionCommandList::_mavCmdInfoJsonKey = "mavCmdInfo";
 
 MissionCommandList::MissionCommandList(const QString& jsonFilename, bool baseCommandList, QObject* parent)
     : QObject(parent)
@@ -56,7 +56,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
 
     // Iterate over MissionCommandUIInfo objects
     QJsonArray jsonArray = jsonValue.toArray();
-    for(QJsonValue info: jsonArray) {
+    for (QJsonValue info : jsonArray) {
         if (!info.isObject()) {
             qWarning() << jsonFilename << "mavCmdArray should contain objects";
             return;
@@ -81,7 +81,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
     }
 
     // Build id list
-    for (MAV_CMD id: _infoMap.keys()) {
+    for (MAV_CMD id : _infoMap.keys()) {
         _ids << id;
     }
 }

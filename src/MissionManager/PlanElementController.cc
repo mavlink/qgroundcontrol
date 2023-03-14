@@ -8,26 +8,19 @@
  ****************************************************************************/
 
 #include "PlanElementController.h"
+#include "AppSettings.h"
+#include "MultiVehicleManager.h"
 #include "PlanMasterController.h"
 #include "QGCApplication.h"
-#include "MultiVehicleManager.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
 
 PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
-    : QObject           (parent)
-    , _masterController (masterController)
-    , _flyView          (false)
+    : QObject(parent)
+    , _masterController(masterController)
+    , _flyView(false)
 {
-
 }
 
-PlanElementController::~PlanElementController()
-{
+PlanElementController::~PlanElementController() { }
 
-}
-
-void PlanElementController::start(bool flyView)
-{
-    _flyView = flyView;
-}
+void PlanElementController::start(bool flyView) { _flyView = flyView; }

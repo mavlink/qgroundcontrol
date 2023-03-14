@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 #include "SurveyPlanCreator.h"
-#include "PlanMasterController.h"
 #include "MissionSettingsItem.h"
+#include "PlanMasterController.h"
 #include "SurveyComplexItem.h"
 
 SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, SurveyComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/SurveyPlanCreator.png"), parent)
+    : PlanCreator(planMasterController, SurveyComplexItem::name,
+        QStringLiteral("/qmlimages/PlanCreator/SurveyPlanCreator.png"), parent)
 {
-
 }
 
 void SurveyPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)

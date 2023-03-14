@@ -9,17 +9,16 @@
 
 #pragma once
 
-#include "TransectStyleComplexItem.h"
 #include "MissionItem.h"
-#include "SettingsFact.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsFact.h"
+#include "TransectStyleComplexItem.h"
 
 Q_DECLARE_LOGGING_CATEGORY(SurveyComplexItemLog)
 
 class PlanMasterController;
 
-class SurveyComplexItem : public TransectStyleComplexItem
-{
+class SurveyComplexItem : public TransectStyleComplexItem {
     Q_OBJECT
 
 public:
@@ -27,39 +26,39 @@ public:
     /// @param kmlOrShpFile Polygon comes from this file, empty for default polygon
     SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile);
 
-    Q_PROPERTY(Fact*            gridAngle              READ gridAngle              CONSTANT)
-    Q_PROPERTY(Fact*            flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
-    Q_PROPERTY(Fact*            splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
-    Q_PROPERTY(QGeoCoordinate   centerCoordinate       READ centerCoordinate       WRITE setCenterCoordinate)
+    Q_PROPERTY(Fact* gridAngle READ gridAngle CONSTANT)
+    Q_PROPERTY(Fact* flyAlternateTransects READ flyAlternateTransects CONSTANT)
+    Q_PROPERTY(Fact* splitConcavePolygons READ splitConcavePolygons CONSTANT)
+    Q_PROPERTY(QGeoCoordinate centerCoordinate READ centerCoordinate WRITE setCenterCoordinate)
 
-    Fact* gridAngle             (void) { return &_gridAngleFact; }
-    Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
-    Fact* splitConcavePolygons  (void) { return &_splitConcavePolygonsFact; }
+    Fact* gridAngle(void) { return &_gridAngleFact; }
+    Fact* flyAlternateTransects(void) { return &_flyAlternateTransectsFact; }
+    Fact* splitConcavePolygons(void) { return &_splitConcavePolygonsFact; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-    QString         patternName         (void) const final { return name; }
-    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    QString         mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
-    QString         presetsSettingsGroup(void) { return settingsGroup; }
-    void            savePreset          (const QString& name);
-    void            loadPreset          (const QString& name);
-    bool            isSurveyItem        (void) const final { return true; }
-    QGeoCoordinate  centerCoordinate    (void) const { return _surveyAreaPolygon.center(); }
-    void            setCenterCoordinate (const QGeoCoordinate& coordinate) { _surveyAreaPolygon.setCenter(coordinate); }
+    QString patternName(void) const final { return name; }
+    bool load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    QString mapVisualQML(void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
+    QString presetsSettingsGroup(void) { return settingsGroup; }
+    void savePreset(const QString& name);
+    void loadPreset(const QString& name);
+    bool isSurveyItem(void) const final { return true; }
+    QGeoCoordinate centerCoordinate(void) const { return _surveyAreaPolygon.center(); }
+    void setCenterCoordinate(const QGeoCoordinate& coordinate) { _surveyAreaPolygon.setCenter(coordinate); }
 
     // Overrides from TransectStyleComplexItem
-    void    save                (QJsonArray&  planItems) final;
-    bool    specifiesCoordinate (void) const final { return true; }
-    double  timeBetweenShots    (void) final;
+    void save(QJsonArray& planItems) final;
+    bool specifiesCoordinate(void) const final { return true; }
+    double timeBetweenShots(void) final;
 
     // Overrides from VisualMissionionItem
-    QString             commandDescription  (void) const final { return tr("Survey"); }
-    QString             commandName         (void) const final { return tr("Survey"); }
-    QString             abbreviation        (void) const final { return tr("S"); }
-    ReadyForSaveState   readyForSaveState    (void) const final;
-    double              additionalTimeDelay (void) const final;
+    QString commandDescription(void) const final { return tr("Survey"); }
+    QString commandName(void) const final { return tr("Survey"); }
+    QString abbreviation(void) const final { return tr("S"); }
+    ReadyForSaveState readyForSaveState(void) const final;
+    double additionalTimeDelay(void) const final;
 
     // Must match json spec for GridEntryLocation
     enum EntryLocation {
@@ -86,27 +85,25 @@ signals:
     void refly90DegreesChanged(bool refly90Degrees);
 
 private slots:
-    void _updateWizardMode              (void);
+    void _updateWizardMode(void);
 
     // Overrides from TransectStyleComplexItem
-    void _rebuildTransectsPhase1        (void) final;
-    void _recalcCameraShots             (void) final;
+    void _rebuildTransectsPhase1(void) final;
+    void _recalcCameraShots(void) final;
 
 private:
-    enum CameraTriggerCode {
-        CameraTriggerNone,
-        CameraTriggerOn,
-        CameraTriggerOff,
-        CameraTriggerHoverAndCapture
-    };
+    enum CameraTriggerCode { CameraTriggerNone, CameraTriggerOn, CameraTriggerOff, CameraTriggerHoverAndCapture };
 
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
-    void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
+    void _intersectLinesWithPolygon(
+        const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
     void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
     bool _nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord);
-    bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
-    void _optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects);
+    bool _appendMissionItemsWorker(
+        QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
+    void _optimizeTransectsForShortestDistance(
+        const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects);
     qreal _ccw(QPointF pt1, QPointF pt2, QPointF pt3);
     qreal _dp(QPointF pt1, QPointF pt2);
     void _swapPoints(QList<QPointF>& points, int index1, int index2);
@@ -121,13 +118,15 @@ private:
     double _turnaroundDistance(void) const;
     bool _hoverAndCaptureEnabled(void) const;
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
-    bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets);
+    bool _loadV4V5(
+        const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets);
     void _saveCommon(QJsonObject& complexObject);
     void _rebuildTransectsPhase1Worker(bool refly);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
     void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
     /// Adds to the _transects array from one polygon
-    void _rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
+    void _rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin,
+        const QPointF* const transitionPoint);
     // Decompose polygon into list of convex sub polygons
     void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons);
     // return true if vertex a can see vertex b
@@ -136,10 +135,10 @@ private:
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    SettingsFact    _gridAngleFact;
-    SettingsFact    _flyAlternateTransectsFact;
-    SettingsFact    _splitConcavePolygonsFact;
-    int             _entryPoint;
+    SettingsFact _gridAngleFact;
+    SettingsFact _flyAlternateTransectsFact;
+    SettingsFact _splitConcavePolygonsFact;
+    int _entryPoint;
 
     static const char* _jsonGridAngleKey;
     static const char* _jsonEntryPointKey;

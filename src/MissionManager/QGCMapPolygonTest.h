@@ -9,13 +9,12 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "MultiSignalSpy.h"
 #include "QGCMapPolygon.h"
 #include "QmlObjectListModel.h"
+#include "UnitTest.h"
 
-class QGCMapPolygonTest : public UnitTest
-{
+class QGCMapPolygonTest : public UnitTest {
     Q_OBJECT
 
 public:
@@ -43,24 +42,20 @@ private:
     };
 
     enum {
-        polygonCountChangedMask =   1 << polygonCountChangedIndex,
-        pathChangedMask =           1 << pathChangedIndex,
-        polygonDirtyChangedMask =   1 << polygonDirtyChangedIndex,
-        clearedMask =               1 << clearedIndex,
-        centerChangedMask =         1 << centerChangedIndex,
+        polygonCountChangedMask = 1 << polygonCountChangedIndex,
+        pathChangedMask = 1 << pathChangedIndex,
+        polygonDirtyChangedMask = 1 << polygonDirtyChangedIndex,
+        clearedMask = 1 << clearedIndex,
+        centerChangedMask = 1 << centerChangedIndex,
     };
 
     static const size_t _cPolygonSignals = maxPolygonSignalIndex;
-    const char*         _rgPolygonSignals[_cPolygonSignals];
+    const char* _rgPolygonSignals[_cPolygonSignals];
 
     void countChanged(int count);
     void dirtyChanged(bool dirtyChanged);
 
-    enum {
-        modelCountChangedIndex = 0,
-        modelDirtyChangedIndex,
-        maxModelSignalIndex
-    };
+    enum { modelCountChangedIndex = 0, modelDirtyChangedIndex, maxModelSignalIndex };
 
     enum {
         modelCountChangedMask = 1 << modelCountChangedIndex,
@@ -68,11 +63,11 @@ private:
     };
 
     static const size_t _cModelSignals = maxModelSignalIndex;
-    const char*         _rgModelSignals[_cModelSignals];
+    const char* _rgModelSignals[_cModelSignals];
 
-    MultiSignalSpy*         _multiSpyPolygon;
-    MultiSignalSpy*         _multiSpyModel;
-    QGCMapPolygon*          _mapPolygon;
-    QmlObjectListModel*     _pathModel;
-    QList<QGeoCoordinate>   _polyPoints;
+    MultiSignalSpy* _multiSpyPolygon;
+    MultiSignalSpy* _multiSpyModel;
+    QGCMapPolygon* _mapPolygon;
+    QmlObjectListModel* _pathModel;
+    QList<QGeoCoordinate> _polyPoints;
 };

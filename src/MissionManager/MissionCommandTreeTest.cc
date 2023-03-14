@@ -8,15 +8,12 @@
  ****************************************************************************/
 
 #include "MissionCommandTreeTest.h"
-#include "QGCApplication.h"
-#include "MissionCommandUIInfo.h"
-#include "MissionCommandList.h"
 #include "FactMetaData.h"
+#include "MissionCommandList.h"
+#include "MissionCommandUIInfo.h"
+#include "QGCApplication.h"
 
-MissionCommandTreeTest::MissionCommandTreeTest(void)
-{
-    
-}
+MissionCommandTreeTest::MissionCommandTreeTest(void) { }
 
 void MissionCommandTreeTest::init(void)
 {
@@ -24,25 +21,13 @@ void MissionCommandTreeTest::init(void)
     _commandTree->setToolbox(qgcApp()->toolbox());
 }
 
-void MissionCommandTreeTest::cleanup(void)
-{
-    delete _commandTree;
-}
+void MissionCommandTreeTest::cleanup(void) { delete _commandTree; }
 
-QString MissionCommandTreeTest::_rawName(int id)
-{
-    return QString("UNITTEST_%1").arg(id);
-}
+QString MissionCommandTreeTest::_rawName(int id) { return QString("UNITTEST_%1").arg(id); }
 
-QString MissionCommandTreeTest::_friendlyName(int id)
-{
-    return QString("Unit Test %1").arg(id);
-}
+QString MissionCommandTreeTest::_friendlyName(int id) { return QString("Unit Test %1").arg(id); }
 
-QString MissionCommandTreeTest::_paramLabel(int index)
-{
-    return QString("param%1").arg(index);
-}
+QString MissionCommandTreeTest::_paramLabel(int index) { return QString("param%1").arg(index); }
 
 /// Verifies that all values have been set
 void MissionCommandTreeTest::_checkFullInfoMap(const MissionCommandUIInfo* uiInfo)
@@ -69,7 +54,7 @@ void MissionCommandTreeTest::_checkBaseValues(const MissionCommandUIInfo* uiInfo
     QCOMPARE(uiInfo->friendlyName(), _friendlyName(command));
     QCOMPARE(uiInfo->isStandaloneCoordinate(), true);
     QCOMPARE(uiInfo->specifiesCoordinate(), true);
-    for (int i=1; i<=7; i++) {
+    for (int i = 1; i <= 7; i++) {
         bool showUI;
         const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
         QVERIFY(showUI);
@@ -157,7 +142,7 @@ void MissionCommandTreeTest::testJsonLoad(void)
     QCOMPARE(uiInfo->friendlyName(), uiInfo->rawName());
     QCOMPARE(uiInfo->isStandaloneCoordinate(), false);
     QCOMPARE(uiInfo->specifiesCoordinate(), false);
-    for (int i=1; i<=7; i++) {
+    for (int i = 1; i <= 7; i++) {
         QVERIFY(uiInfo->getParamInfo(i, showUI) == nullptr);
         QCOMPARE(showUI, false);
     }
@@ -175,7 +160,7 @@ void MissionCommandTreeTest::testJsonLoad(void)
     QCOMPARE(paramInfo->label(), _paramLabel(1));
     QCOMPARE(paramInfo->param(), 1);
     QVERIFY(paramInfo->units().isEmpty());
-    for (int i=2; i<=7; i++) {
+    for (int i = 2; i <= 7; i++) {
         QVERIFY(uiInfo->getParamInfo(i, showUI) == nullptr);
         QCOMPARE(showUI, false);
     }
@@ -187,7 +172,8 @@ void MissionCommandTreeTest::testJsonLoad(void)
 void MissionCommandTreeTest::testOverride(void)
 {
     // Generic/Generic should not have any overrides
-    Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC, qgcApp()->toolbox()->firmwarePluginManager());
+    Vehicle* vehicle
+        = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC, qgcApp()->toolbox()->firmwarePluginManager());
     _checkBaseValues(_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)4), 4);
     delete vehicle;
 
@@ -199,25 +185,26 @@ void MissionCommandTreeTest::testOverride(void)
 
 void MissionCommandTreeTest::testAllTrees(void)
 {
-    QList<MAV_AUTOPILOT>    firmwareList;
-    QList<MAV_TYPE>         vehicleList;
+    QList<MAV_AUTOPILOT> firmwareList;
+    QList<MAV_TYPE> vehicleList;
 
     firmwareList << MAV_AUTOPILOT_GENERIC << MAV_AUTOPILOT_PX4 << MAV_AUTOPILOT_ARDUPILOTMEGA;
-    vehicleList << MAV_TYPE_GENERIC << MAV_TYPE_QUADROTOR << MAV_TYPE_FIXED_WING << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE << MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
+    vehicleList << MAV_TYPE_GENERIC << MAV_TYPE_QUADROTOR << MAV_TYPE_FIXED_WING << MAV_TYPE_GROUND_ROVER
+                << MAV_TYPE_SUBMARINE << MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
 
     // This will cause all of the variants of collapsed trees to be built
-    for(MAV_AUTOPILOT firmwareType: firmwareList) {
-        for (MAV_TYPE vehicleType: vehicleList) {
+    for (MAV_AUTOPILOT firmwareType : firmwareList) {
+        for (MAV_TYPE vehicleType : vehicleList) {
             if (firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA && vehicleType == MAV_TYPE_VTOL_TAILSITTER_QUADROTOR) {
                 // VTOL in ArduPilot shows up as plane so we can test this pair
                 continue;
             }
             qDebug() << firmwareType << vehicleType;
             Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager());
-            QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassMultiRotor, MAV_CMD_NAV_WAYPOINT) != nullptr);
+            QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(
+                        vehicle, QGCMAVLink::VehicleClassMultiRotor, MAV_CMD_NAV_WAYPOINT)
+                != nullptr);
             delete vehicle;
         }
     }
-
 }
-

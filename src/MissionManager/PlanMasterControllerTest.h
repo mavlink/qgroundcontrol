@@ -9,19 +9,18 @@
 
 #pragma once
 
-#include "UnitTest.h"
-#include "MockLink.h"
-#include "MissionManager.h"
-#include "MultiSignalSpy.h"
-#include "MissionControllerManagerTest.h"
-#include "PlanMasterController.h"
 #include "MissionController.h"
+#include "MissionControllerManagerTest.h"
+#include "MissionManager.h"
+#include "MockLink.h"
+#include "MultiSignalSpy.h"
+#include "PlanMasterController.h"
 #include "SimpleMissionItem.h"
+#include "UnitTest.h"
 
 #include <QGeoCoordinate>
 
-class PlanMasterControllerTest : public UnitTest
-{
+class PlanMasterControllerTest : public UnitTest {
     Q_OBJECT
 
 public:
@@ -36,5 +35,5 @@ private slots:
     void _testActiveVehicleChanged(void);
 
 private:
-    PlanMasterController*   _masterController;
+    PlanMasterController* _masterController;
 };

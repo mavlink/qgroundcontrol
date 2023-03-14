@@ -12,8 +12,7 @@
 #include "QGCMapCircle.h"
 
 /// The QGCFenceCircle class provides a cicle used by GeoFence support.
-class QGCFenceCircle : public QGCMapCircle
-{
+class QGCFenceCircle : public QGCMapCircle {
     Q_OBJECT
 
 public:
@@ -37,8 +36,8 @@ public:
 
     // Property methods
 
-    bool inclusion      (void) const { return _inclusion; }
-    void setInclusion   (bool inclusion);
+    bool inclusion(void) const { return _inclusion; }
+    void setInclusion(bool inclusion);
 
 signals:
     void inclusionChanged(bool inclusion);

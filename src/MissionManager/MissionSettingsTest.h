@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include "VisualMissionItemTest.h"
 #include "MissionSettingsItem.h"
+#include "VisualMissionItemTest.h"
 
 /// Unit test for SimpleMissionItem
-class MissionSettingsTest : public VisualMissionItemTest
-{
+class MissionSettingsTest : public VisualMissionItemTest {
     Q_OBJECT
-    
+
 public:
     MissionSettingsTest(void);
 

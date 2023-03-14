@@ -13,30 +13,27 @@
 const char* QGCFenceCircle::_jsonInclusionKey = "inclusion";
 
 QGCFenceCircle::QGCFenceCircle(QObject* parent)
-    : QGCMapCircle  (parent)
-    , _inclusion    (true)
+    : QGCMapCircle(parent)
+    , _inclusion(true)
 {
     _init();
 }
 
 QGCFenceCircle::QGCFenceCircle(const QGeoCoordinate& center, double radius, bool inclusion, QObject* parent)
-    : QGCMapCircle  (center, radius, false /* showRotation */, true /* clockwiseRotation */, parent)
-    , _inclusion    (inclusion)
+    : QGCMapCircle(center, radius, false /* showRotation */, true /* clockwiseRotation */, parent)
+    , _inclusion(inclusion)
 {
     _init();
 }
 
 QGCFenceCircle::QGCFenceCircle(const QGCFenceCircle& other, QObject* parent)
-    : QGCMapCircle  (other, parent)
-    , _inclusion    (other._inclusion)
+    : QGCMapCircle(other, parent)
+    , _inclusion(other._inclusion)
 {
     _init();
 }
 
-void QGCFenceCircle::_init(void)
-{
-    connect(this, &QGCFenceCircle::inclusionChanged, this, &QGCFenceCircle::_setDirty);
-}
+void QGCFenceCircle::_init(void) { connect(this, &QGCFenceCircle::inclusionChanged, this, &QGCFenceCircle::_setDirty); }
 
 const QGCFenceCircle& QGCFenceCircle::operator=(const QGCFenceCircle& other)
 {
@@ -47,10 +44,7 @@ const QGCFenceCircle& QGCFenceCircle::operator=(const QGCFenceCircle& other)
     return *this;
 }
 
-void QGCFenceCircle::_setDirty(void)
-{
-    setDirty(true);
-}
+void QGCFenceCircle::_setDirty(void) { setDirty(true); }
 
 void QGCFenceCircle::saveToJson(QJsonObject& json)
 {
@@ -64,8 +58,8 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     errorString.clear();
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
-        { _jsonInclusionKey,            QJsonValue::Bool,   true },
+        {JsonHelper::jsonVersionKey, QJsonValue::Double, true},
+        {_jsonInclusionKey, QJsonValue::Bool, true},
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;

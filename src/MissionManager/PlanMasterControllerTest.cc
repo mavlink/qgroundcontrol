@@ -8,19 +8,18 @@
  ****************************************************************************/
 
 #include "PlanMasterControllerTest.h"
+#include "AppSettings.h"
 #include "LinkManager.h"
-#include "MultiVehicleManager.h"
-#include "SimpleMissionItem.h"
 #include "MissionSettingsItem.h"
+#include "MultiSignalSpyV2.h"
+#include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
-#include "MultiSignalSpyV2.h"
+#include "SimpleMissionItem.h"
 
 PlanMasterControllerTest::PlanMasterControllerTest(void)
     : _masterController(nullptr)
 {
-
 }
 
 void PlanMasterControllerTest::init(void)
@@ -45,14 +44,14 @@ void PlanMasterControllerTest::_testMissionFileLoad(void)
     QCOMPARE(_masterController->missionController()->visualItems()->count(), 7);
 }
 
-
 void PlanMasterControllerTest::_testMissionPlannerFileLoad(void)
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
     QCOMPARE(_masterController->missionController()->visualItems()->count(), 6);
 }
 
-void PlanMasterControllerTest::_testActiveVehicleChanged(void) {
+void PlanMasterControllerTest::_testActiveVehicleChanged(void)
+{
     // There was a defect where the PlanMasterController would, upon a new active vehicle,
     // overzelously disconnect all subscribers interested in the outgoing active vechicle.
     Vehicle* outgoingManagerVehicle = _masterController->managerVehicle();
@@ -66,7 +65,7 @@ void PlanMasterControllerTest::_testActiveVehicleChanged(void) {
 
     // Since MissionManager works with actual vehicles (which we don't have in the test cycle)
     // we have to be a bit creative emulating a signal emitted by a MissionManager.
-    emit outgoingManagerVehicle->missionManager()->error(0,"");
+    emit outgoingManagerVehicle->missionManager()->error(0, "");
     auto missionManagerErrorSignalMask = spyMissionManager.signalNameToMask("error");
     QVERIFY(spyMissionManager.checkOnlySignalByMask(missionManagerErrorSignalMask));
     spyMissionManager.clearSignal("error");
@@ -76,7 +75,7 @@ void PlanMasterControllerTest::_testActiveVehicleChanged(void) {
     auto masterControllerMgrVehicleChanged = spyMasterController.signalNameToMask("managerVehicleChanged");
     QVERIFY(spyMasterController.checkSignalByMask(masterControllerMgrVehicleChanged));
 
-    emit outgoingManagerVehicle->missionManager()->error(0,"");
+    emit outgoingManagerVehicle->missionManager()->error(0, "");
     // This signal was affected by the defect - it wouldn't reach the subscriber. Here
     // we make sure it does.
     QVERIFY(spyMissionManager.checkOnlySignalByMask(missionManagerErrorSignalMask));

@@ -8,19 +8,19 @@
  ****************************************************************************/
 
 #include "KMLPlanDomDocument.h"
-#include "QGCPalette.h"
-#include "QGCApplication.h"
+#include "ComplexMissionItem.h"
+#include "FactMetaData.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-#include "FactMetaData.h"
-#include "ComplexMissionItem.h"
+#include "QGCApplication.h"
+#include "QGCPalette.h"
 #include "QmlObjectListModel.h"
 
 #include <QDomDocument>
 #include <QStringList>
 
-const char* KMLPlanDomDocument::_missionLineStyleName =     "MissionLineStyle";
-const char* KMLPlanDomDocument::surveyPolygonStyleName =   "SurveyPolygonStyle";
+const char* KMLPlanDomDocument::_missionLineStyleName = "MissionLineStyle";
+const char* KMLPlanDomDocument::surveyPolygonStyleName = "SurveyPolygonStyle";
 
 KMLPlanDomDocument::KMLPlanDomDocument()
     : KMLDomDocument(QStringLiteral("%1 Plan KML").arg(qgcApp()->applicationName()))
@@ -42,18 +42,20 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
     QDomElement flightPathElement = createElement("Placemark");
     _rootDocumentElement.appendChild(flightPathElement);
 
-    addTextElement(flightPathElement, "styleUrl",     QStringLiteral("#%1").arg(_missionLineStyleName));
-    addTextElement(flightPathElement, "name",         "Flight Path");
-    addTextElement(flightPathElement, "visibility",   "1");
+    addTextElement(flightPathElement, "styleUrl", QStringLiteral("#%1").arg(_missionLineStyleName));
+    addTextElement(flightPathElement, "name", "Flight Path");
+    addTextElement(flightPathElement, "visibility", "1");
     addLookAt(flightPathElement, rgMissionItems[0]->coordinate());
 
     // Build up the mission trajectory line coords
     QList<QGeoCoordinate> rgFlightCoords;
     QGeoCoordinate homeCoord = rgMissionItems[0]->coordinate();
     for (const MissionItem* item : rgMissionItems) {
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(
+            vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
         if (uiInfo) {
-            double altAdjustment = item->frame() == MAV_FRAME_GLOBAL ? 0 : homeCoord.altitude(); // Used to convert to amsl
+            double altAdjustment
+                = item->frame() == MAV_FRAME_GLOBAL ? 0 : homeCoord.altitude(); // Used to convert to amsl
             if (uiInfo->isTakeoffCommand() && !vehicle->fixedWing()) {
                 // These takeoff items go straight up from home position to specified altitude
                 QGeoCoordinate coord = homeCoord;
@@ -72,20 +74,33 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
                 // Add a place mark for each WP
 
                 QDomElement wpPlacemarkElement = createElement("Placemark");
-                addTextElement(wpPlacemarkElement, "name",     QStringLiteral("%1 %2").arg(QString::number(item->sequenceNumber())).arg(item->command() == MAV_CMD_NAV_WAYPOINT ? "" : uiInfo->friendlyName()));
+                addTextElement(wpPlacemarkElement, "name",
+                    QStringLiteral("%1 %2")
+                        .arg(QString::number(item->sequenceNumber()))
+                        .arg(item->command() == MAV_CMD_NAV_WAYPOINT ? "" : uiInfo->friendlyName()));
                 addTextElement(wpPlacemarkElement, "styleUrl", QStringLiteral("#%1").arg(balloonStyleName));
 
                 QDomElement wpPointElement = createElement("Point");
                 addTextElement(wpPointElement, "altitudeMode", "absolute");
-                addTextElement(wpPointElement, "coordinates",  kmlCoordString(coord));
-                addTextElement(wpPointElement, "extrude",      "1");
+                addTextElement(wpPointElement, "coordinates", kmlCoordString(coord));
+                addTextElement(wpPointElement, "extrude", "1");
 
                 QDomElement descriptionElement = createElement("description");
                 QString htmlString;
                 htmlString += QStringLiteral("Index: %1\n").arg(item->sequenceNumber());
                 htmlString += uiInfo->friendlyName() + "\n";
-                htmlString += QStringLiteral("Alt AMSL: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(coord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
-                htmlString += QStringLiteral("Alt Rel: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(coord.altitude() - homeCoord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
+                htmlString
+                    += QStringLiteral("Alt AMSL: %1 %2\n")
+                           .arg(QString::number(
+                               FactMetaData::metersToAppSettingsHorizontalDistanceUnits(coord.altitude()).toDouble(),
+                               'f', 2))
+                           .arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
+                htmlString += QStringLiteral("Alt Rel: %1 %2\n")
+                                  .arg(QString::number(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(
+                                                           coord.altitude() - homeCoord.altitude())
+                                                           .toDouble(),
+                                      'f', 2))
+                                  .arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
                 htmlString += QStringLiteral("Lat: %1\n").arg(QString::number(coord.latitude(), 'f', 7));
                 htmlString += QStringLiteral("Lon: %1\n").arg(QString::number(coord.longitude(), 'f', 7));
                 QDomCDATASection cdataSection = createCDATASection(htmlString);
@@ -103,9 +118,9 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
     QDomElement lineStringElement = createElement("LineString");
     flightPathElement.appendChild(lineStringElement);
 
-    addTextElement(lineStringElement, "extruder",      "1");
-    addTextElement(lineStringElement, "tessellate",    "1");
-    addTextElement(lineStringElement, "altitudeMode",  "absolute");
+    addTextElement(lineStringElement, "extruder", "1");
+    addTextElement(lineStringElement, "tessellate", "1");
+    addTextElement(lineStringElement, "altitudeMode", "absolute");
 
     QString coordString;
     for (const QGeoCoordinate& coord : rgFlightCoords) {
@@ -116,7 +131,7 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
 
 void KMLPlanDomDocument::_addComplexItems(QmlObjectListModel* visualItems)
 {
-    for (int i=0; i<visualItems->count(); i++) {
+    for (int i = 0; i < visualItems->count(); i++) {
         ComplexMissionItem* complexItem = visualItems->value<ComplexMissionItem*>(i);
         if (complexItem) {
             complexItem->addKMLVisuals(*this);
@@ -124,7 +139,8 @@ void KMLPlanDomDocument::_addComplexItems(QmlObjectListModel* visualItems)
     }
 }
 
-void KMLPlanDomDocument::addMission(Vehicle* vehicle, QmlObjectListModel* visualItems, QList<MissionItem*> rgMissionItems)
+void KMLPlanDomDocument::addMission(
+    Vehicle* vehicle, QmlObjectListModel* visualItems, QList<MissionItem*> rgMissionItems)
 {
     _addFlightPath(vehicle, rgMissionItems);
     _addComplexItems(visualItems);

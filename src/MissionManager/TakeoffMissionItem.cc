@@ -7,45 +7,45 @@
  *
  ****************************************************************************/
 
-#include <QStringList>
 #include <QDebug>
+#include <QStringList>
 
-#include "TakeoffMissionItem.h"
 #include "FirmwarePluginManager.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
+#include "PlanMasterController.h"
+#include "QGCApplication.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
-#include "PlanMasterController.h"
+#include "TakeoffMissionItem.h"
 
-TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
-    : SimpleMissionItem (masterController, flyView, forLoad)
-    , _settingsItem     (settingsItem)
+TakeoffMissionItem::TakeoffMissionItem(
+    PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem(masterController, flyView, forLoad)
+    , _settingsItem(settingsItem)
 {
     _init(forLoad);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
-    : SimpleMissionItem (masterController, flyView, false /* forLoad */)
-    , _settingsItem     (settingsItem)
+TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView,
+    MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem(masterController, flyView, false /* forLoad */)
+    , _settingsItem(settingsItem)
 {
     setCommand(takeoffCmd);
     _init(forLoad);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
-    : SimpleMissionItem (masterController, flyView, missionItem)
-    , _settingsItem     (settingsItem)
+TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController,
+    bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem(masterController, flyView, missionItem)
+    , _settingsItem(settingsItem)
 {
     _init(forLoad);
 }
 
-TakeoffMissionItem::~TakeoffMissionItem()
-{
-
-}
+TakeoffMissionItem::~TakeoffMissionItem() { }
 
 void TakeoffMissionItem::_init(bool forLoad)
 {
@@ -122,22 +122,22 @@ void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
         if (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) {
             setLaunchTakeoffAtSameLocation(false);
         } else {
-            // PX4 specifies a coordinate for takeoff even for multi-rotor. But it makes more sense to not have a coordinate
-            // from and end user standpoint. So even for PX4 we try to keep launch and takeoff at the same position. Unless the
-            // user has moved/loaded launch at a different location than takeoff.
+            // PX4 specifies a coordinate for takeoff even for multi-rotor. But it makes more sense to not have a
+            // coordinate from and end user standpoint. So even for PX4 we try to keep launch and takeoff at the same
+            // position. Unless the user has moved/loaded launch at a different location than takeoff.
             if (coordinate().isValid() && _settingsItem->coordinate().isValid()) {
-                setLaunchTakeoffAtSameLocation(coordinate().latitude() == _settingsItem->coordinate().latitude() && coordinate().longitude() == _settingsItem->coordinate().longitude());
+                setLaunchTakeoffAtSameLocation(coordinate().latitude() == _settingsItem->coordinate().latitude()
+                    && coordinate().longitude() == _settingsItem->coordinate().longitude());
             } else {
                 setLaunchTakeoffAtSameLocation(true);
             }
-
         }
     } else {
         setLaunchTakeoffAtSameLocation(true);
     }
 }
 
-bool TakeoffMissionItem::load(QTextStream &loadStream)
+bool TakeoffMissionItem::load(QTextStream& loadStream)
 {
     bool success = SimpleMissionItem::load(loadStream);
     if (success) {
@@ -170,7 +170,13 @@ void TakeoffMissionItem::setLaunchCoordinate(const QGeoCoordinate& launchCoordin
         if (_launchTakeoffAtSameLocation) {
             takeoffCoordinate = launchCoordinate;
         } else {
-            double distance = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance()->rawValue().toDouble(); // Default distance is VTOL transition to takeoff point distance
+            double distance = qgcApp()
+                                  ->toolbox()
+                                  ->settingsManager()
+                                  ->planViewSettings()
+                                  ->vtolTransitionDistance()
+                                  ->rawValue()
+                                  .toDouble(); // Default distance is VTOL transition to takeoff point distance
             if (_controllerVehicle->fixedWing()) {
                 double altitude = this->altitude()->rawValue().toDouble();
 

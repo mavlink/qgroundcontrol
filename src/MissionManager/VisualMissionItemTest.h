@@ -9,18 +9,17 @@
 
 #pragma once
 
-#include "UnitTest.h"
-#include "TCPLink.h"
 #include "MultiSignalSpy.h"
 #include "SimpleMissionItem.h"
+#include "TCPLink.h"
+#include "UnitTest.h"
 
 #include <QGeoCoordinate>
 
 class PlanMasterController;
 
 /// Unit test for SimpleMissionItem
-class VisualMissionItemTest : public UnitTest
-{
+class VisualMissionItemTest : public UnitTest {
     Q_OBJECT
 
 public:
@@ -60,34 +59,34 @@ protected:
     };
 
     enum {
-        altDifferenceChangedMask =                      1 << altDifferenceChangedIndex,
-        altPercentChangedMask =                         1 << altPercentChangedIndex,
-        azimuthChangedMask =                            1 << azimuthChangedIndex,
-        commandDescriptionChangedMask =                 1 << commandDescriptionChangedIndex,
-        commandNameChangedMask =                        1 << commandNameChangedIndex,
-        abbreviationChangedMask =                       1 << abbreviationChangedIndex,
-        coordinateChangedMask =                         1 << coordinateChangedIndex,
-        exitCoordinateChangedMask =                     1 << exitCoordinateChangedIndex,
-        dirtyChangedMask =                              1 << dirtyChangedIndex,
-        distanceChangedMask =                           1 << distanceChangedIndex,
-        isCurrentItemChangedMask =                      1 << isCurrentItemChangedIndex,
-        sequenceNumberChangedMask =                     1 << sequenceNumberChangedIndex,
-        isSimpleItemChangedMask =                       1 << isSimpleItemChangedIndex,
-        specifiesCoordinateChangedMask =                1 << specifiesCoordinateChangedIndex,
-        isStandaloneCoordinateChangedMask =             1 << isStandaloneCoordinateChangedIndex,
-        specifiesAltitudeOnlyChangedMask =              1 << specifiesAltitudeOnlyChangedIndex,
-        specifiedFlightSpeedChangedMask =               1 << specifiedFlightSpeedChangedIndex,
-        specifiedGimbalYawChangedMask =                 1 << specifiedGimbalYawChangedIndex,
-        specifiedGimbalPitchChangedMask =               1 << specifiedGimbalPitchChangedIndex,
-        lastSequenceNumberChangedMask =                 1 << lastSequenceNumberChangedIndex,
-        missionGimbalYawChangedMask =                   1 << missionGimbalYawChangedIndex,
-        missionVehicleYawChangedMask =                  1 << missionVehicleYawChangedIndex,
-        exitCoordinateSameAsEntryChangedMask =          1 << exitCoordinateSameAsEntryChangedIndex,
+        altDifferenceChangedMask = 1 << altDifferenceChangedIndex,
+        altPercentChangedMask = 1 << altPercentChangedIndex,
+        azimuthChangedMask = 1 << azimuthChangedIndex,
+        commandDescriptionChangedMask = 1 << commandDescriptionChangedIndex,
+        commandNameChangedMask = 1 << commandNameChangedIndex,
+        abbreviationChangedMask = 1 << abbreviationChangedIndex,
+        coordinateChangedMask = 1 << coordinateChangedIndex,
+        exitCoordinateChangedMask = 1 << exitCoordinateChangedIndex,
+        dirtyChangedMask = 1 << dirtyChangedIndex,
+        distanceChangedMask = 1 << distanceChangedIndex,
+        isCurrentItemChangedMask = 1 << isCurrentItemChangedIndex,
+        sequenceNumberChangedMask = 1 << sequenceNumberChangedIndex,
+        isSimpleItemChangedMask = 1 << isSimpleItemChangedIndex,
+        specifiesCoordinateChangedMask = 1 << specifiesCoordinateChangedIndex,
+        isStandaloneCoordinateChangedMask = 1 << isStandaloneCoordinateChangedIndex,
+        specifiesAltitudeOnlyChangedMask = 1 << specifiesAltitudeOnlyChangedIndex,
+        specifiedFlightSpeedChangedMask = 1 << specifiedFlightSpeedChangedIndex,
+        specifiedGimbalYawChangedMask = 1 << specifiedGimbalYawChangedIndex,
+        specifiedGimbalPitchChangedMask = 1 << specifiedGimbalPitchChangedIndex,
+        lastSequenceNumberChangedMask = 1 << lastSequenceNumberChangedIndex,
+        missionGimbalYawChangedMask = 1 << missionGimbalYawChangedIndex,
+        missionVehicleYawChangedMask = 1 << missionVehicleYawChangedIndex,
+        exitCoordinateSameAsEntryChangedMask = 1 << exitCoordinateSameAsEntryChangedIndex,
     };
 
     static const size_t cVisualItemSignals = maxSignalIndex;
-    const char*         rgVisualItemSignals[cVisualItemSignals];
+    const char* rgVisualItemSignals[cVisualItemSignals];
 
-    PlanMasterController*   _masterController =     nullptr;
-    Vehicle*                _controllerVehicle =    nullptr;
+    PlanMasterController* _masterController = nullptr;
+    Vehicle* _controllerVehicle = nullptr;
 };
