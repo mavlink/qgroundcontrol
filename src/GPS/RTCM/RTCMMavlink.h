@@ -7,25 +7,23 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
-#include <QObject>
 #include <QElapsedTimer>
+#include <QObject>
 
-#include "QGCToolbox.h"
 #include "MAVLinkProtocol.h"
+#include "QGCToolbox.h"
 
 /**
  ** class RTCMMavlink
  * Receives RTCM updates and sends them via MAVLINK to the device
  */
-class RTCMMavlink : public QObject
-{
+class RTCMMavlink : public QObject {
     Q_OBJECT
 public:
     RTCMMavlink(QGCToolbox& toolbox);
-    //TODO: API to select device(s)?
+    // TODO: API to select device(s)?
 
 public slots:
     void RTCMDataUpdate(QByteArray message);

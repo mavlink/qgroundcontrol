@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "RTCMMavlink.h"
 
 #include "MultiVehicleManager.h"
@@ -27,7 +26,7 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
     _bandwidthByteCounter += message.size();
     qint64 elapsed = _bandwidthTimer.elapsed();
     if (elapsed > 1000) {
-        printf("RTCM bandwidth: %.2f kB/s\n", (float) _bandwidthByteCounter / elapsed * 1000.f / 1024.f);
+        printf("RTCM bandwidth: %.2f kB/s\n", (float)_bandwidthByteCounter / elapsed * 1000.f / 1024.f);
         _bandwidthTimer.restart();
         _bandwidthByteCounter = 0;
     }
@@ -44,13 +43,13 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
     } else {
         // We need to fragment
 
-        uint8_t fragmentId = 0;         // Fragment id indicates the fragment within a set
+        uint8_t fragmentId = 0; // Fragment id indicates the fragment within a set
         int start = 0;
         while (start < message.size()) {
             int length = std::min(message.size() - start, maxMessageLength);
-            mavlinkRtcmData.flags = 1;                      // LSB set indicates message is fragmented
-            mavlinkRtcmData.flags |= fragmentId++ << 1;     // Next 2 bits are fragment id
-            mavlinkRtcmData.flags |= (_sequenceId & 0x1F) << 3;     // Next 5 bits are sequence id
+            mavlinkRtcmData.flags = 1; // LSB set indicates message is fragmented
+            mavlinkRtcmData.flags |= fragmentId++ << 1; // Next 2 bits are fragment id
+            mavlinkRtcmData.flags |= (_sequenceId & 0x1F) << 3; // Next 5 bits are sequence id
             mavlinkRtcmData.len = length;
             memcpy(&mavlinkRtcmData.data, message.data() + start, length);
             sendMessageToVehicle(mavlinkRtcmData);
@@ -65,18 +64,15 @@ void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
     QmlObjectListModel& vehicles = *_toolbox.multiVehicleManager()->vehicles();
     MAVLinkProtocol* mavlinkProtocol = _toolbox.mavlinkProtocol();
     for (int i = 0; i < vehicles.count(); i++) {
-        Vehicle*                vehicle     = qobject_cast<Vehicle*>(vehicles[i]);
-        WeakLinkInterfacePtr    weakLink    = vehicle->vehicleLinkManager()->primaryLink();
+        Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
+        WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
 
         if (!weakLink.expired()) {
-            mavlink_message_t       message;
-            SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+            mavlink_message_t message;
+            SharedLinkInterfacePtr sharedLink = weakLink.lock();
 
-            mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(),
-                                                  mavlinkProtocol->getComponentId(),
-                                                  sharedLink->mavlinkChannel(),
-                                                  &message,
-                                                  &msg);
+            mavlink_msg_gps_rtcm_data_encode_chan(mavlinkProtocol->getSystemId(), mavlinkProtocol->getComponentId(),
+                sharedLink->mavlinkChannel(), &message, &msg);
             vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
         }
     }
