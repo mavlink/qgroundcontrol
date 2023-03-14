@@ -8,32 +8,30 @@
  ****************************************************************************/
 
 #include "FTPManagerTest.h"
+#include "FTPManager.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "MockLink.h"
-#include "FTPManager.h"
 
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
-    {  "/general.json" },
+    {"/general.json"},
 };
 
-void FTPManagerTest::cleanup(void)
-{
-    _disconnectMockLink();
-}
+void FTPManagerTest::cleanup(void) { _disconnectMockLink(); }
 
 void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
-    Vehicle*                vehicle     = vehicleMgr->activeVehicle();
-    FTPManager*             ftpManager  = vehicle->ftpManager();
+    MultiVehicleManager* vehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    FTPManager* ftpManager = vehicle->ftpManager();
 
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
     // void downloadComplete   (const QString& file, const QString& errorMsg);
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, testCase.file, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    ftpManager->download(
+        MAV_COMP_ID_AUTOPILOT1, testCase.file, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
     QCOMPARE(spyDownloadComplete.wait(10000), true);
     QCOMPARE(spyDownloadComplete.count(), 1);
@@ -48,12 +46,13 @@ void FTPManagerTest::_sizeTestCaseWorker(int fileSize)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    FTPManager* ftpManager  = _vehicle->ftpManager();
-    QString     filename    = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
 
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    ftpManager->download(
+        MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
     QCOMPARE(spyDownloadComplete.wait(10000), true);
     QCOMPARE(spyDownloadComplete.count(), 1);
@@ -81,7 +80,7 @@ void FTPManagerTest::_performSizeBasedTestCases(void)
         3 * 1024,
     };
 
-    for (int fileSize: rgSizeTestCases) {
+    for (int fileSize : rgSizeTestCases) {
         _sizeTestCaseWorker(fileSize);
     }
 }
@@ -89,7 +88,7 @@ void FTPManagerTest::_performSizeBasedTestCases(void)
 void FTPManagerTest::_performTestCases(void)
 {
     int index = 0;
-    for (const TestCase_t& testCase: _rgTestCases) {
+    for (const TestCase_t& testCase : _rgTestCases) {
         qDebug() << "Testing case" << index++;
         _testCaseWorker(testCase);
     }
@@ -99,14 +98,15 @@ void FTPManagerTest::_testLostPackets(void)
 {
     _connectMockLinkNoInitialConnectSequence();
 
-    FTPManager* ftpManager  = _vehicle->ftpManager();
-    int         fileSize    = 4 * 1024;
-    QString     filename    = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    int fileSize = 4 * 1024;
+    QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
 
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
     _mockLink->mockLinkFTP()->enableRandromDrops(true);
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    ftpManager->download(
+        MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 
     QCOMPARE(spyDownloadComplete.wait(10000), true);
     QCOMPARE(spyDownloadComplete.count(), 1);
@@ -129,7 +129,7 @@ void FTPManagerTest::_verifyFileSizeAndDelete(const QString& filename, int expec
 
     QFile file(filename);
     QVERIFY(file.open(QFile::ReadOnly));
-    for (int i=0; i<expectedSize; i++) {
+    for (int i = 0; i < expectedSize; i++) {
         QByteArray bytes = file.read(1);
         QCOMPARE(bytes[0], (char)(i % 255));
     }

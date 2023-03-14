@@ -9,36 +9,38 @@
 
 #include "ComponentInformationCache.h"
 
-#include <QFile>
 #include <QDirIterator>
+#include <QFile>
 #include <QStandardPaths>
 
 QGC_LOGGING_CATEGORY(ComponentInformationCacheLog, "ComponentInformationCacheLog")
 
 ComponentInformationCache::ComponentInformationCache(const QDir& path, int maxNumFiles)
-    : _path(path), _maxNumFiles(maxNumFiles)
+    : _path(path)
+    , _maxNumFiles(maxNumFiles)
 {
     initializeDirectory();
 }
 
 ComponentInformationCache& ComponentInformationCache::defaultInstance()
 {
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
+    QString cacheDir
+        = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
     static ComponentInformationCache instance(cacheDir, 50);
     return instance;
 }
 
 QString ComponentInformationCache::metaFileName(const QString& fileTag)
 {
-    return _path.filePath(fileTag+_metaExtension);
+    return _path.filePath(fileTag + _metaExtension);
 }
 
 QString ComponentInformationCache::dataFileName(const QString& fileTag)
 {
-    return _path.filePath(fileTag+_cacheExtension);
+    return _path.filePath(fileTag + _cacheExtension);
 }
 
-QString ComponentInformationCache::access(const QString &fileTag)
+QString ComponentInformationCache::access(const QString& fileTag)
 {
     QFile meta(metaFileName(fileTag));
     QFile data(dataFileName(fileTag));
@@ -50,7 +52,7 @@ QString ComponentInformationCache::access(const QString &fileTag)
     qCDebug(ComponentInformationCacheLog) << "Cache hit for" << fileTag;
 
     // mark access
-    Meta m{};
+    Meta m {};
     AccessCounterType previousCounter = -1;
     if (meta.open(QIODevice::ReadWrite)) {
         if (meta.read((char*)&m, sizeof(m)) == sizeof(m)) {
@@ -75,7 +77,7 @@ QString ComponentInformationCache::access(const QString &fileTag)
     return data.fileName();
 }
 
-QString ComponentInformationCache::insert(const QString &fileTag, const QString &fileName)
+QString ComponentInformationCache::insert(const QString& fileTag, const QString& fileName)
 {
     QFile meta(metaFileName(fileTag));
     QFile data(dataFileName(fileTag));
@@ -93,7 +95,7 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
     }
 
     // write meta data
-    Meta m{};
+    Meta m {};
     m.accessCounter = _nextAccessCounter;
     if (meta.open(QIODevice::WriteOnly)) {
         if (meta.write((const char*)&m, sizeof(m)) != sizeof(m)) {
@@ -128,14 +130,14 @@ void ComponentInformationCache::initializeDirectory()
 
         if (path.endsWith(_metaExtension)) {
             QFile meta(path);
-            QFile data(path.mid(0, path.length()-strlen(_metaExtension))+_cacheExtension);
+            QFile data(path.mid(0, path.length() - strlen(_metaExtension)) + _cacheExtension);
             bool validationFailed = false;
             if (!data.exists()) {
                 validationFailed = true;
             }
 
             // read meta + validate
-            Meta m{};
+            Meta m {};
             const uint32_t expectedMagic = m.magic;
             const uint32_t expectedVersion = m.version;
             if (meta.open(QIODevice::ReadOnly)) {
@@ -158,10 +160,11 @@ void ComponentInformationCache::initializeDirectory()
             } else {
                 // extract the tag
                 QString tag = it.fileName();
-                tag = tag.mid(0, tag.length()-strlen(_metaExtension));
+                tag = tag.mid(0, tag.length() - strlen(_metaExtension));
                 _cachedFiles[m.accessCounter] = tag;
 
-                qCDebug(ComponentInformationCacheLog) << "Found cached file:counter" << meta.fileName() << m.accessCounter;
+                qCDebug(ComponentInformationCacheLog)
+                    << "Found cached file:counter" << meta.fileName() << m.accessCounter;
 
                 if (m.accessCounter >= _nextAccessCounter) {
                     _nextAccessCounter = m.accessCounter + 1;
@@ -182,7 +185,8 @@ void ComponentInformationCache::removeOldEntries()
         auto iter = _cachedFiles.begin();
         QFile meta(metaFileName(iter.value()));
         QFile data(dataFileName(iter.value()));
-        qCDebug(ComponentInformationCacheLog) << "Removing cache entry num:counter:file" << _numFiles << iter.key() << iter.value();
+        qCDebug(ComponentInformationCacheLog)
+            << "Removing cache entry num:counter:file" << _numFiles << iter.key() << iter.value();
         meta.remove();
         data.remove();
 

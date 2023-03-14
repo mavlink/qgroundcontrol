@@ -11,26 +11,25 @@
 
 #include "UnitTest.h"
 
-class FTPManagerTest : public UnitTest
-{
+class FTPManagerTest : public UnitTest {
     Q_OBJECT
 
 private slots:
-    void _testLostPackets           (void);
+    void _testLostPackets(void);
 
     // Overrides from UnitTest
     void cleanup(void) override;
 
 private:
-    void _performSizeBasedTestCases (void);
-    void _performTestCases          (void);
+    void _performSizeBasedTestCases(void);
+    void _performTestCases(void);
     typedef struct {
         const char* file;
     } TestCase_t;
 
-    void _testCaseWorker            (const TestCase_t& testCase);
-    void _sizeTestCaseWorker        (int fileSize);
-    void _verifyFileSizeAndDelete   (const QString& filename, int expectedSize);
+    void _testCaseWorker(const TestCase_t& testCase);
+    void _sizeTestCaseWorker(int fileSize);
+    void _verifyFileSizeAndDelete(const QString& filename, int expectedSize);
 
     static const TestCase_t _rgTestCases[];
 };

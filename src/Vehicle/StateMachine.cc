@@ -9,10 +9,7 @@
 
 #include "StateMachine.h"
 
-StateMachine::StateMachine(void)
-{
-
-}
+StateMachine::StateMachine(void) { }
 
 void StateMachine::start(void)
 {
@@ -36,7 +33,7 @@ void StateMachine::advance(void)
 void StateMachine::move(StateFn stateFn)
 {
     if (_active) {
-        for (int i=0; i<stateCount(); i++) {
+        for (int i = 0; i < stateCount(); i++) {
             if (rgStates()[i] == stateFn) {
                 _stateIndex = i;
                 (*rgStates()[_stateIndex])(this);
@@ -46,10 +43,7 @@ void StateMachine::move(StateFn stateFn)
     }
 }
 
-void StateMachine::statesCompleted(void) const
-{
-
-}
+void StateMachine::statesCompleted(void) const { }
 
 StateMachine::StateFn StateMachine::currentState(void) const
 {

@@ -9,11 +9,10 @@
 
 #pragma once
 
-#include "VehicleGPSFactGroup.h"
 #include "QGCMAVLink.h"
+#include "VehicleGPSFactGroup.h"
 
-class VehicleGPS2FactGroup : public VehicleGPSFactGroup
-{
+class VehicleGPS2FactGroup : public VehicleGPSFactGroup {
     Q_OBJECT
 
 public:

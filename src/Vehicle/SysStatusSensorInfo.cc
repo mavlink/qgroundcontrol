@@ -14,7 +14,6 @@
 SysStatusSensorInfo::SysStatusSensorInfo(QObject* parent)
     : QObject(parent)
 {
-
 }
 
 void SysStatusSensorInfo::update(const mavlink_sys_status_t& sysStatus)
@@ -22,7 +21,7 @@ void SysStatusSensorInfo::update(const mavlink_sys_status_t& sysStatus)
     bool dirty = false;
 
     // Walk the bits
-    for (int bitPosition=0; bitPosition<32; bitPosition++) {
+    for (int bitPosition = 0; bitPosition < 32; bitPosition++) {
         MAV_SYS_STATUS_SENSOR sensorBitMask = static_cast<MAV_SYS_STATUS_SENSOR>(1 << bitPosition);
         if (sysStatus.onboard_control_sensors_present & sensorBitMask) {
             if (_sensorInfoMap.contains(sensorBitMask)) {
@@ -41,7 +40,8 @@ void SysStatusSensorInfo::update(const mavlink_sys_status_t& sysStatus)
                 }
             } else {
                 dirty = true;
-                SensorInfo_t sensorInfo = { !!(sysStatus.onboard_control_sensors_enabled & sensorBitMask), !!(sysStatus.onboard_control_sensors_health & sensorBitMask) };
+                SensorInfo_t sensorInfo = {!!(sysStatus.onboard_control_sensors_enabled & sensorBitMask),
+                    !!(sysStatus.onboard_control_sensors_health & sensorBitMask)};
                 _sensorInfoMap[sensorBitMask] = sensorInfo;
             }
         } else {
@@ -57,30 +57,30 @@ void SysStatusSensorInfo::update(const mavlink_sys_status_t& sysStatus)
     }
 }
 
-QStringList SysStatusSensorInfo::sensorNames (void) const
+QStringList SysStatusSensorInfo::sensorNames(void) const
 {
     QStringList rgNames;
 
     // List ordering is unhealthy, healthy, disabled
-    for (int i=0; i<_sensorInfoMap.keys().count(); i++) {
-        const MAV_SYS_STATUS_SENSOR sensorBitMask   = _sensorInfoMap.keys()[i];
-        const SensorInfo_t&         sensorInfo      = _sensorInfoMap[sensorBitMask];
+    for (int i = 0; i < _sensorInfoMap.keys().count(); i++) {
+        const MAV_SYS_STATUS_SENSOR sensorBitMask = _sensorInfoMap.keys()[i];
+        const SensorInfo_t& sensorInfo = _sensorInfoMap[sensorBitMask];
 
         if (sensorInfo.enabled && !sensorInfo.healthy) {
             rgNames.append(QGCMAVLink::mavSysStatusSensorToString(sensorBitMask));
         }
     }
-    for (int i=0; i<_sensorInfoMap.keys().count(); i++) {
-        const MAV_SYS_STATUS_SENSOR sensorBitMask   = _sensorInfoMap.keys()[i];
-        const SensorInfo_t&         sensorInfo      = _sensorInfoMap[sensorBitMask];
+    for (int i = 0; i < _sensorInfoMap.keys().count(); i++) {
+        const MAV_SYS_STATUS_SENSOR sensorBitMask = _sensorInfoMap.keys()[i];
+        const SensorInfo_t& sensorInfo = _sensorInfoMap[sensorBitMask];
 
         if (sensorInfo.enabled && sensorInfo.healthy) {
             rgNames.append(QGCMAVLink::mavSysStatusSensorToString(sensorBitMask));
         }
     }
-    for (int i=0; i<_sensorInfoMap.keys().count(); i++) {
-        const MAV_SYS_STATUS_SENSOR sensorBitMask   = _sensorInfoMap.keys()[i];
-        const SensorInfo_t&         sensorInfo      = _sensorInfoMap[sensorBitMask];
+    for (int i = 0; i < _sensorInfoMap.keys().count(); i++) {
+        const MAV_SYS_STATUS_SENSOR sensorBitMask = _sensorInfoMap.keys()[i];
+        const SensorInfo_t& sensorInfo = _sensorInfoMap[sensorBitMask];
 
         if (!sensorInfo.enabled) {
             rgNames.append(QGCMAVLink::mavSysStatusSensorToString(sensorBitMask));
@@ -95,25 +95,25 @@ QStringList SysStatusSensorInfo::sensorStatus(void) const
     QStringList rgStatus;
 
     // List ordering is unhealthy, healthy, disabled
-    for (int i=0; i<_sensorInfoMap.keys().count(); i++) {
-        const MAV_SYS_STATUS_SENSOR sensorBitMask   = _sensorInfoMap.keys()[i];
-        const SensorInfo_t&         sensorInfo      = _sensorInfoMap[sensorBitMask];
+    for (int i = 0; i < _sensorInfoMap.keys().count(); i++) {
+        const MAV_SYS_STATUS_SENSOR sensorBitMask = _sensorInfoMap.keys()[i];
+        const SensorInfo_t& sensorInfo = _sensorInfoMap[sensorBitMask];
 
         if (sensorInfo.enabled && !sensorInfo.healthy) {
             rgStatus.append(tr("Error"));
         }
     }
-    for (int i=0; i<_sensorInfoMap.keys().count(); i++) {
-        const MAV_SYS_STATUS_SENSOR sensorBitMask   = _sensorInfoMap.keys()[i];
-        const SensorInfo_t&         sensorInfo      = _sensorInfoMap[sensorBitMask];
+    for (int i = 0; i < _sensorInfoMap.keys().count(); i++) {
+        const MAV_SYS_STATUS_SENSOR sensorBitMask = _sensorInfoMap.keys()[i];
+        const SensorInfo_t& sensorInfo = _sensorInfoMap[sensorBitMask];
 
         if (sensorInfo.enabled && sensorInfo.healthy) {
             rgStatus.append(tr("Normal"));
         }
     }
-    for (int i=0; i<_sensorInfoMap.keys().count(); i++) {
-        const MAV_SYS_STATUS_SENSOR sensorBitMask   = _sensorInfoMap.keys()[i];
-        const SensorInfo_t&         sensorInfo      = _sensorInfoMap[sensorBitMask];
+    for (int i = 0; i < _sensorInfoMap.keys().count(); i++) {
+        const MAV_SYS_STATUS_SENSOR sensorBitMask = _sensorInfoMap.keys()[i];
+        const SensorInfo_t& sensorInfo = _sensorInfoMap[sensorBitMask];
 
         if (!sensorInfo.enabled) {
             rgStatus.append(tr("Disabled"));

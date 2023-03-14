@@ -12,26 +12,25 @@
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
 
-class VehicleSetpointFactGroup : public FactGroup
-{
+class VehicleSetpointFactGroup : public FactGroup {
     Q_OBJECT
 
 public:
     VehicleSetpointFactGroup(QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact* roll       READ roll       CONSTANT)
-    Q_PROPERTY(Fact* pitch      READ pitch      CONSTANT)
-    Q_PROPERTY(Fact* yaw        READ yaw        CONSTANT)
-    Q_PROPERTY(Fact* rollRate   READ rollRate   CONSTANT)
-    Q_PROPERTY(Fact* pitchRate  READ pitchRate  CONSTANT)
-    Q_PROPERTY(Fact* yawRate    READ yawRate    CONSTANT)
+    Q_PROPERTY(Fact* roll READ roll CONSTANT)
+    Q_PROPERTY(Fact* pitch READ pitch CONSTANT)
+    Q_PROPERTY(Fact* yaw READ yaw CONSTANT)
+    Q_PROPERTY(Fact* rollRate READ rollRate CONSTANT)
+    Q_PROPERTY(Fact* pitchRate READ pitchRate CONSTANT)
+    Q_PROPERTY(Fact* yawRate READ yawRate CONSTANT)
 
-    Fact* roll      () { return &_rollFact; }
-    Fact* pitch     () { return &_pitchFact; }
-    Fact* yaw       () { return &_yawFact; }
-    Fact* rollRate  () { return &_rollRateFact; }
-    Fact* pitchRate () { return &_pitchRateFact; }
-    Fact* yawRate   () { return &_yawRateFact; }
+    Fact* roll() { return &_rollFact; }
+    Fact* pitch() { return &_pitchFact; }
+    Fact* yaw() { return &_yawFact; }
+    Fact* rollRate() { return &_rollRateFact; }
+    Fact* pitchRate() { return &_pitchRateFact; }
+    Fact* yawRate() { return &_yawRateFact; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;

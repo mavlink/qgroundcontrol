@@ -7,26 +7,25 @@
  *
  ****************************************************************************/
 
-#include "Vehicle.h"
 #include "VehicleObjectAvoidance.h"
 #include "ParameterManager.h"
+#include "Vehicle.h"
 #include <cmath>
 
 static const char* kColPrevParam = "CP_DIST";
 
 //-----------------------------------------------------------------------------
-VehicleObjectAvoidance::VehicleObjectAvoidance(Vehicle *vehicle, QObject* parent)
+VehicleObjectAvoidance::VehicleObjectAvoidance(Vehicle* vehicle, QObject* parent)
     : QObject(parent)
     , _vehicle(vehicle)
 {
 }
 
 //-----------------------------------------------------------------------------
-void
-VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
+void VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
 {
     //-- Collect raw data
-    if(std::isfinite(message->increment_f) && message->increment_f > 0) {
+    if (std::isfinite(message->increment_f) && message->increment_f > 0) {
         _increment = static_cast<qreal>(message->increment_f);
     } else {
         _increment = static_cast<qreal>(message->increment);
@@ -34,12 +33,12 @@ VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
     _minDistance = message->min_distance;
     _maxDistance = message->max_distance;
     _angleOffset = static_cast<qreal>(message->angle_offset);
-    if(_distances.count() == 0) {
-        for(int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
+    if (_distances.count() == 0) {
+        for (int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
             _distances.append(static_cast<int>(message->distances[i]));
         }
     } else {
-        for(int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
+        for (int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
             _distances[i] = static_cast<int>(message->distances[i]);
         }
     }
@@ -48,12 +47,13 @@ VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
     _objDistance.clear();
     auto* sp = qobject_cast<VehicleSetpointFactGroup*>(_vehicle->setpointFactGroup());
     qreal startAngle = sp->yaw()->rawValue().toDouble() + _angleOffset;
-    for(int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
-        if(_distances[i] < _maxDistance && message->distances[i] != UINT16_MAX) {
+    for (int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
+        if (_distances[i] < _maxDistance && message->distances[i] != UINT16_MAX) {
             qreal d = static_cast<qreal>(_distances[i]);
             d = d / static_cast<qreal>(_maxDistance);
             qreal a = (_increment * i) - startAngle;
-            if(a < 0) a = a + 360;
+            if (a < 0)
+                a = a + 360;
             qreal rd = (M_PI / 180.0) * a;
             QPointF p = QPointF(d * cos(rd), d * sin(rd));
             _objGrid.append(p);
@@ -64,53 +64,48 @@ VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
 }
 
 //-----------------------------------------------------------------------------
-bool
-VehicleObjectAvoidance::enabled()
+bool VehicleObjectAvoidance::enabled()
 {
     uint8_t id = static_cast<uint8_t>(_vehicle->id());
-    if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
+    if (_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         return _vehicle->parameterManager()->getParameter(id, kColPrevParam)->rawValue().toInt() >= 0;
     }
     return false;
 }
 
 //-----------------------------------------------------------------------------
-void
-VehicleObjectAvoidance::start(int minDistance)
+void VehicleObjectAvoidance::start(int minDistance)
 {
     uint8_t id = static_cast<uint8_t>(_vehicle->id());
-    if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
+    if (_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         _vehicle->parameterManager()->getParameter(id, kColPrevParam)->setRawValue(minDistance);
         emit objectAvoidanceChanged();
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-VehicleObjectAvoidance::stop()
+void VehicleObjectAvoidance::stop()
 {
     uint8_t id = static_cast<uint8_t>(_vehicle->id());
-    if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
+    if (_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         _vehicle->parameterManager()->getParameter(id, kColPrevParam)->setRawValue(-1);
         emit objectAvoidanceChanged();
     }
 }
 
 //-----------------------------------------------------------------------------
-QPointF
-VehicleObjectAvoidance::grid(int i)
+QPointF VehicleObjectAvoidance::grid(int i)
 {
-    if(i < _objGrid.count() && i >= 0) {
+    if (i < _objGrid.count() && i >= 0) {
         return _objGrid[i];
     }
-    return QPointF(0,0);
+    return QPointF(0, 0);
 }
 
 //-----------------------------------------------------------------------------
-qreal
-VehicleObjectAvoidance::distance(int i)
+qreal VehicleObjectAvoidance::distance(int i)
 {
-    if(i < _objDistance.count() && i >= 0) {
+    if (i < _objDistance.count() && i >= 0) {
         return _objDistance[i];
     }
     return 0;

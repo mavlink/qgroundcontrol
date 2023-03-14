@@ -9,17 +9,16 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "MockLink.h"
+#include "UnitTest.h"
 #include "Vehicle.h"
 
-class RequestMessageTest : public UnitTest
-{
+class RequestMessageTest : public UnitTest {
     Q_OBJECT
 
 signals:
     void resultHandlerCalled(void);
-    
+
 private slots:
     void _performTestCases(void);
     void _compIdAllFailure(void);
@@ -27,17 +26,19 @@ private slots:
 
 private:
     typedef struct {
-        MockLink::RequestMessageFailureMode_t               failureMode;
-        MAV_RESULT                                          expectedCommandResult;
-        Vehicle::RequestMessageResultHandlerFailureCode_t   expectedFailureCode;
-        int                                                 expectedSendCount;
-        bool                                                resultHandlerCalled;
+        MockLink::RequestMessageFailureMode_t failureMode;
+        MAV_RESULT expectedCommandResult;
+        Vehicle::RequestMessageResultHandlerFailureCode_t expectedFailureCode;
+        int expectedSendCount;
+        bool resultHandlerCalled;
     } TestCase_t;
 
     void _testCaseWorker(TestCase_t& testCase);
 
-    static void _requestMessageResultHandler            (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
-    static void _compIdAllRequestMessageResultHandler   (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
+        Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    static void _compIdAllRequestMessageResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
+        Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
     bool _resultHandlerCalled;
 

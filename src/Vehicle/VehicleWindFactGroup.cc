@@ -12,24 +12,24 @@
 
 #include <QtMath>
 
-const char* VehicleWindFactGroup::_directionFactName =      "direction";
-const char* VehicleWindFactGroup::_speedFactName =          "speed";
-const char* VehicleWindFactGroup::_verticalSpeedFactName =  "verticalSpeed";
+const char* VehicleWindFactGroup::_directionFactName = "direction";
+const char* VehicleWindFactGroup::_speedFactName = "speed";
+const char* VehicleWindFactGroup::_verticalSpeedFactName = "verticalSpeed";
 
 VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/WindFact.json", parent)
-    , _directionFact    (0, _directionFactName,     FactMetaData::valueTypeDouble)
-    , _speedFact        (0, _speedFactName,         FactMetaData::valueTypeDouble)
+    , _directionFact(0, _directionFactName, FactMetaData::valueTypeDouble)
+    , _speedFact(0, _speedFactName, FactMetaData::valueTypeDouble)
     , _verticalSpeedFact(0, _verticalSpeedFactName, FactMetaData::valueTypeDouble)
 {
-    _addFact(&_directionFact,       _directionFactName);
-    _addFact(&_speedFact,           _speedFactName);
-    _addFact(&_verticalSpeedFact,   _verticalSpeedFactName);
+    _addFact(&_directionFact, _directionFactName);
+    _addFact(&_speedFact, _speedFactName);
+    _addFact(&_verticalSpeedFact, _verticalSpeedFactName);
 
     // Start out as not available "--.--"
-    _directionFact.setRawValue      (qQNaN());
-    _speedFact.setRawValue          (qQNaN());
-    _verticalSpeedFact.setRawValue  (qQNaN());
+    _directionFact.setRawValue(qQNaN());
+    _speedFact.setRawValue(qQNaN());
+    _verticalSpeedFact.setRawValue(qQNaN());
 }
 
 void VehicleWindFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)

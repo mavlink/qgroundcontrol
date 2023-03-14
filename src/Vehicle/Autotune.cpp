@@ -9,16 +9,15 @@
 
 #include <QtGlobal>
 
-#include "QGCApplication.h"
 #include "Autotune.h"
-
+#include "QGCApplication.h"
 
 //-----------------------------------------------------------------------------
-Autotune::Autotune(Vehicle *vehicle) :
-    QObject(vehicle)
+Autotune::Autotune(Vehicle* vehicle)
+    : QObject(vehicle)
     , _vehicle(vehicle)
 {
-    connect(_vehicle, &Vehicle::flyingChanged,  this, &Autotune::handleEnabled);
+    connect(_vehicle, &Vehicle::flyingChanged, this, &Autotune::handleEnabled);
     connect(_vehicle, &Vehicle::landingChanged, this, &Autotune::handleEnabled);
 
     _pollTimer.setInterval(1000); // 1s for the polling interval
@@ -26,90 +25,71 @@ Autotune::Autotune(Vehicle *vehicle) :
     connect(&_pollTimer, &QTimer::timeout, this, &Autotune::sendMavlinkRequest);
 }
 
-
 //-----------------------------------------------------------------------------
 void Autotune::autotuneRequest()
 {
     sendMavlinkRequest();
 
     startTimers();
-    _autotuneInProgress  = true;
+    _autotuneInProgress = true;
     _autotuneStatus = tr("Autotune: In progress");
 
     emit autotuneChanged();
 }
 
-
 //-----------------------------------------------------------------------------
-void Autotune::ackHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode)
+void Autotune::ackHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
+    Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     Q_UNUSED(compId);
     Q_UNUSED(failureCode);
 
-    auto * autotune = static_cast<Autotune *>(resultHandlerData);
+    auto* autotune = static_cast<Autotune*>(resultHandlerData);
 
     if (autotune->_autotuneInProgress) {
         if ((commandResult == MAV_RESULT_IN_PROGRESS) || (commandResult == MAV_RESULT_ACCEPTED)) {
             autotune->handleAckStatus(progress);
-        }
-        else if (commandResult == MAV_RESULT_FAILED) {
+        } else if (commandResult == MAV_RESULT_FAILED) {
             autotune->handleAckFailure();
-        }
-        else {
+        } else {
             autotune->handleAckError(commandResult);
         }
 
         emit autotune->autotuneChanged();
-    }
-    else {
+    } else {
         qWarning() << "Ack received for a command different from MAV_CMD_DO_AUTOTUNE_ENABLE ot wrong UI state.";
     }
 }
 
+//-----------------------------------------------------------------------------
+bool Autotune::autotuneEnabled() { return _vehicle->flying() || _autotuneInProgress; }
 
 //-----------------------------------------------------------------------------
-bool Autotune::autotuneEnabled()
-{
-    return _vehicle->flying() || _autotuneInProgress;
-}
-
-
-//-----------------------------------------------------------------------------
-void Autotune::handleEnabled()
-{
-    emit autotuneChanged();
-}
-
+void Autotune::handleEnabled() { emit autotuneChanged(); }
 
 //-----------------------------------------------------------------------------
 void Autotune::handleAckStatus(uint8_t ackProgress)
 {
-    _autotuneProgress = ackProgress/100.f;
+    _autotuneProgress = ackProgress / 100.f;
 
     if (ackProgress < 20) {
         _autotuneStatus = tr("Autotune: initializing");
-    }
-    else if (ackProgress < 40) {
+    } else if (ackProgress < 40) {
         _autotuneStatus = tr("Autotune: roll");
-    }
-    else if (ackProgress < 60) {
+    } else if (ackProgress < 60) {
         _autotuneStatus = tr("Autotune: pitch");
-    }
-    else if (ackProgress < 80) {
+    } else if (ackProgress < 80) {
         _autotuneStatus = tr("Autotune: yaw");
-    }
-    else if (ackProgress == 95) {
+    } else if (ackProgress == 95) {
         _autotuneStatus = tr("Wait for disarm");
 
-        if(!_disarmMessageDisplayed) {
+        if (!_disarmMessageDisplayed) {
             qgcApp()->showAppMessage(tr("Land and disarm the vehicle in order to apply the parameters."));
             _disarmMessageDisplayed = true;
         }
-    }
-    else if (ackProgress < 100) {
+    } else if (ackProgress < 100) {
         _autotuneStatus = tr("Autotune: in progress");
-    }
-    else { // success or unknown error
+    } else { // success or unknown error
         stopTimers();
         _autotuneInProgress = false;
 
@@ -117,13 +97,11 @@ void Autotune::handleAckStatus(uint8_t ackProgress)
             _autotuneStatus = tr("Autotune: Success");
 
             qgcApp()->showAppMessage(tr("Autotune successful."));
-        }
-        else {
+        } else {
             _autotuneStatus = tr("Autotune: Unknown error");
         }
     }
 }
-
 
 //-----------------------------------------------------------------------------
 void Autotune::handleAckFailure()
@@ -134,7 +112,6 @@ void Autotune::handleAckFailure()
     _autotuneStatus = tr("Autotune: Failed");
 }
 
-
 //-----------------------------------------------------------------------------
 void Autotune::handleAckError(uint8_t ackError)
 {
@@ -144,34 +121,24 @@ void Autotune::handleAckError(uint8_t ackError)
     _autotuneStatus = tr("Autotune: Ack error %1").arg(ackError);
 }
 
+//-----------------------------------------------------------------------------
+void Autotune::startTimers() { _pollTimer.start(); }
 
 //-----------------------------------------------------------------------------
-void Autotune::startTimers()
-{
-    _pollTimer.start();
-}
-
-
-//-----------------------------------------------------------------------------
-void Autotune::stopTimers()
-{
-    _pollTimer.stop();
-}
-
+void Autotune::stopTimers() { _pollTimer.stop(); }
 
 //-----------------------------------------------------------------------------
 void Autotune::sendMavlinkRequest()
 {
-    _vehicle->sendMavCommandWithHandler(
-            ackHandler,                       // Ack callback
-            this,                             // Ack callback data
-            MAV_COMP_ID_AUTOPILOT1,           // the ID of the autopilot
-            MAV_CMD_DO_AUTOTUNE_ENABLE,       // the mavlink command
-            1,                                // request autotune
-            0,                                // unused parameter
-            0,                                // unused parameter
-            0,                                // unused parameter
-            0,                                // unused parameter
-            0,                                // unused parameter
-            0);
+    _vehicle->sendMavCommandWithHandler(ackHandler, // Ack callback
+        this, // Ack callback data
+        MAV_COMP_ID_AUTOPILOT1, // the ID of the autopilot
+        MAV_CMD_DO_AUTOTUNE_ENABLE, // the mavlink command
+        1, // request autotune
+        0, // unused parameter
+        0, // unused parameter
+        0, // unused parameter
+        0, // unused parameter
+        0, // unused parameter
+        0);
 }

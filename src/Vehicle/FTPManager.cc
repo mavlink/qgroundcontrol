@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 #include "FTPManager.h"
-#include "QGC.h"
 #include "MAVLinkProtocol.h"
-#include "Vehicle.h"
+#include "QGC.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
 
-#include <QFile>
 #include <QDir>
+#include <QFile>
 #include <string>
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "FTPManagerLog")
@@ -22,19 +22,20 @@ QGC_LOGGING_CATEGORY(FTPManagerLog, "FTPManagerLog")
 const char* FTPManager::mavlinkFTPScheme = "mftp";
 
 FTPManager::FTPManager(Vehicle* vehicle)
-    : QObject   (vehicle)
-    , _vehicle  (vehicle)
+    : QObject(vehicle)
+    , _vehicle(vehicle)
 {
     _ackOrNakTimeoutTimer.setSingleShot(true);
     // Mock link responds immediately if at all, speed up unit tests with faster timoue
     _ackOrNakTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 10 : _ackOrNakTimeoutMsecs);
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
-    
+
     // Make sure we don't have bad structure packing
     Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
 }
 
-bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName, bool checksize)
+bool FTPManager::download(
+    uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName, bool checksize)
 {
     qCDebug(FTPManagerLog) << "download fromURI:" << fromURI << "to:" << toDir << "fromCompId:" << fromCompId;
 
@@ -44,13 +45,14 @@ bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QStr
     }
 
     static const StateFunctions_t rgDownloadStateMachine[] = {
-        { &FTPManager::_openFileROBegin,            &FTPManager::_openFileROAckOrNak,           &FTPManager::_openFileROTimeout },
-        { &FTPManager::_burstReadFileBegin,         &FTPManager::_burstReadFileAckOrNak,        &FTPManager::_burstReadFileTimeout },
-        { &FTPManager::_fillMissingBlocksBegin,     &FTPManager::_fillMissingBlocksAckOrNak,    &FTPManager::_fillMissingBlocksTimeout },
-        { &FTPManager::_resetSessionsBegin,         &FTPManager::_resetSessionsAckOrNak,        &FTPManager::_resetSessionsTimeout },
-        { &FTPManager::_downloadCompleteNoError,    nullptr,                                    nullptr },
+        {&FTPManager::_openFileROBegin, &FTPManager::_openFileROAckOrNak, &FTPManager::_openFileROTimeout},
+        {&FTPManager::_burstReadFileBegin, &FTPManager::_burstReadFileAckOrNak, &FTPManager::_burstReadFileTimeout},
+        {&FTPManager::_fillMissingBlocksBegin, &FTPManager::_fillMissingBlocksAckOrNak,
+            &FTPManager::_fillMissingBlocksTimeout},
+        {&FTPManager::_resetSessionsBegin, &FTPManager::_resetSessionsAckOrNak, &FTPManager::_resetSessionsTimeout},
+        {&FTPManager::_downloadCompleteNoError, nullptr, nullptr},
     };
-    for (size_t i=0; i<sizeof(rgDownloadStateMachine)/sizeof(rgDownloadStateMachine[0]); i++) {
+    for (size_t i = 0; i < sizeof(rgDownloadStateMachine) / sizeof(rgDownloadStateMachine[0]); i++) {
         _rgStateMachine.append(rgDownloadStateMachine[i]);
     }
 
@@ -66,7 +68,7 @@ bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QStr
     // We need to strip off the file name from the fully qualified path. We can't use the usual QDir
     // routines because this path does not exist locally.
     int lastDirSlashIndex;
-    for (lastDirSlashIndex=_downloadState.fullPathOnVehicle.size()-1; lastDirSlashIndex>=0; lastDirSlashIndex--) {
+    for (lastDirSlashIndex = _downloadState.fullPathOnVehicle.size() - 1; lastDirSlashIndex >= 0; lastDirSlashIndex--) {
         if (_downloadState.fullPathOnVehicle[lastDirSlashIndex] == '/') {
             break;
         }
@@ -74,12 +76,14 @@ bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QStr
     lastDirSlashIndex++; // move past slash
 
     if (fileName.isEmpty()) {
-        _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
+        _downloadState.fileName
+            = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
     } else {
         _downloadState.fileName = fileName;
     }
 
-    qCDebug(FTPManagerLog) << "_downloadState.fullPathOnVehicle:_downloadState.fileName" << _downloadState.fullPathOnVehicle << _downloadState.fileName;
+    qCDebug(FTPManagerLog) << "_downloadState.fullPathOnVehicle:_downloadState.fileName"
+                           << _downloadState.fullPathOnVehicle << _downloadState.fileName;
 
     _startStateMachine();
 
@@ -95,10 +99,11 @@ void FTPManager::cancel()
     _ackOrNakTimeoutTimer.stop();
     _rgStateMachine.clear();
     static const StateFunctions_t rgTerminateStateMachine[] = {
-        { &FTPManager::_terminateSessionBegin,       &FTPManager::_terminateSessionAckOrNak,     &FTPManager::_terminateSessionTimeout },
-        { &FTPManager::_terminateComplete,               nullptr,                                    nullptr },
+        {&FTPManager::_terminateSessionBegin, &FTPManager::_terminateSessionAckOrNak,
+            &FTPManager::_terminateSessionTimeout},
+        {&FTPManager::_terminateComplete, nullptr, nullptr},
     };
-    for (size_t i=0; i<sizeof(rgTerminateStateMachine)/sizeof(rgTerminateStateMachine[0]); i++) {
+    for (size_t i = 0; i < sizeof(rgTerminateStateMachine) / sizeof(rgTerminateStateMachine[0]); i++) {
         _rgStateMachine.append(rgTerminateStateMachine[i]);
     }
     _downloadState.retryCount = 0;
@@ -107,21 +112,24 @@ void FTPManager::cancel()
 
 void FTPManager::_terminateSessionBegin(void)
 {
-    MavlinkFTP::Request request{};
+    MavlinkFTP::Request request {};
     request.hdr.session = _downloadState.sessionId;
-    request.hdr.opcode  = MavlinkFTP::kCmdTerminateSession;
+    request.hdr.opcode = MavlinkFTP::kCmdTerminateSession;
     _sendRequestExpectAck(&request);
 }
 
-void FTPManager::_terminateSessionAckOrNak(const MavlinkFTP::Request *ackOrNak)
+void FTPManager::_terminateSessionAckOrNak(const MavlinkFTP::Request* ackOrNak)
 {
     MavlinkFTP::OpCode_t requestOpCode = static_cast<MavlinkFTP::OpCode_t>(ackOrNak->hdr.req_opcode);
     if (requestOpCode != MavlinkFTP::kCmdTerminateSession) {
-        qCDebug(FTPManagerLog) << "_terminateSessionAckOrNak: Ack disregarding ack for incorrect requestOpCode" << MavlinkFTP::opCodeToString(requestOpCode);
+        qCDebug(FTPManagerLog) << "_terminateSessionAckOrNak: Ack disregarding ack for incorrect requestOpCode"
+                               << MavlinkFTP::opCodeToString(requestOpCode);
         return;
     }
     if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
-        qCDebug(FTPManagerLog) << "_terminateSessionAckOrNak: Ack disregarding ack for incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+        qCDebug(FTPManagerLog)
+            << "_terminateSessionAckOrNak: Ack disregarding ack for incorrect sequence actual:expected"
+            << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
         return;
     }
 
@@ -136,25 +144,22 @@ void FTPManager::_terminateSessionTimeout(void)
         _downloadComplete(tr("Download failed"));
     } else {
         // Try again
-        qCDebug(FTPManagerLog) << QString("_terminateSessionTimeout: retrying - retryCount(%1)").arg(_downloadState.retryCount);
+        qCDebug(FTPManagerLog)
+            << QString("_terminateSessionTimeout: retrying - retryCount(%1)").arg(_downloadState.retryCount);
         _terminateSessionBegin();
     }
-
 }
 
-void FTPManager::_terminateComplete(void)
-{
-    _downloadComplete("Aborted");
-}
+void FTPManager::_terminateComplete(void) { _downloadComplete("Aborted"); }
 
 /// Closes out a download session by writing the file and doing cleanup.
 ///     @param errorMsg Error message, empty if no error
 void FTPManager::_downloadComplete(const QString& errorMsg)
 {
     qCDebug(FTPManagerLog) << QString("_downloadComplete: errorMsg(%1)").arg(errorMsg);
-    
-    QString downloadFilePath    = _downloadState.toDir.absoluteFilePath(_downloadState.fileName);
-    QString error               = errorMsg;
+
+    QString downloadFilePath = _downloadState.toDir.absoluteFilePath(_downloadState.fileName);
+    QString error = errorMsg;
 
     _ackOrNakTimeoutTimer.stop();
     _rgStateMachine.clear();
@@ -171,8 +176,8 @@ void FTPManager::_downloadComplete(const QString& errorMsg)
 
 void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL ||
-            message.sysid != _vehicle->id() || message.compid != _ftpCompId) {
+    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL || message.sysid != _vehicle->id()
+        || message.compid != _ftpCompId) {
         return;
     }
 
@@ -188,20 +193,25 @@ void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     if (data.target_system != qgcId) {
         return;
     }
-    
+
     MavlinkFTP::Request* request = (MavlinkFTP::Request*)&data.payload[0];
 
     // Ignore old/reordered packets (handle wrap-around properly)
     uint16_t actualIncomingSeqNumber = request->hdr.seqNumber;
-    if ((uint16_t)((_expectedIncomingSeqNumber - 1) - actualIncomingSeqNumber) < (std::numeric_limits<uint16_t>::max()/2)) {
-        qCDebug(FTPManagerLog) << "_mavlinkMessageReceived: Received old packet seqNum expected:actual" << _expectedIncomingSeqNumber << actualIncomingSeqNumber
-                               << "hdr.opcode:hdr.req_opcode" << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode)) <<  MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.req_opcode));
+    if ((uint16_t)((_expectedIncomingSeqNumber - 1) - actualIncomingSeqNumber)
+        < (std::numeric_limits<uint16_t>::max() / 2)) {
+        qCDebug(FTPManagerLog) << "_mavlinkMessageReceived: Received old packet seqNum expected:actual"
+                               << _expectedIncomingSeqNumber << actualIncomingSeqNumber << "hdr.opcode:hdr.req_opcode"
+                               << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode))
+                               << MavlinkFTP::opCodeToString(
+                                      static_cast<MavlinkFTP::OpCode_t>(request->hdr.req_opcode));
 
         return;
     }
 
     qCDebug(FTPManagerLog) << "_mavlinkMessageReceived: hdr.opcode:hdr.req_opcode:seqNumber"
-                           << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode)) <<  MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.req_opcode))
+                           << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode))
+                           << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.req_opcode))
                            << request->hdr.seqNumber;
 
     (this->*_rgStateMachine[_currentStateMachineIndex].ackNakFn)(request);
@@ -219,15 +229,12 @@ void FTPManager::_advanceStateMachine(void)
     (this->*_rgStateMachine[_currentStateMachineIndex].beginFn)();
 }
 
-void FTPManager::_ackOrNakTimeout(void)
-{
-    (this->*_rgStateMachine[_currentStateMachineIndex].timeoutFn)();
-}
+void FTPManager::_ackOrNakTimeout(void) { (this->*_rgStateMachine[_currentStateMachineIndex].timeoutFn)(); }
 
 void FTPManager::_fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str)
 {
-    strncpy((char *)&request->data[0], str.toStdString().c_str(), sizeof(request->data));
-    request->hdr.size = static_cast<uint8_t>(strnlen((const char *)&request->data[0], sizeof(request->data)));
+    strncpy((char*)&request->data[0], str.toStdString().c_str(), sizeof(request->data));
+    request->hdr.size = static_cast<uint8_t>(strnlen((const char*)&request->data[0], sizeof(request->data)));
 }
 
 QString FTPManager::_errorMsgFromNak(const MavlinkFTP::Request* nak)
@@ -235,8 +242,10 @@ QString FTPManager::_errorMsgFromNak(const MavlinkFTP::Request* nak)
     QString errorMsg;
     MavlinkFTP::ErrorCode_t errorCode = static_cast<MavlinkFTP::ErrorCode_t>(nak->data[0]);
 
-    // Nak's normally have 1 byte of data for error code, except for MavlinkFTP::kErrFailErrno which has additional byte for errno
-    if ((errorCode == MavlinkFTP::kErrFailErrno && nak->hdr.size != 2) || ((errorCode != MavlinkFTP::kErrFailErrno) && nak->hdr.size != 1)) {
+    // Nak's normally have 1 byte of data for error code, except for MavlinkFTP::kErrFailErrno which has additional byte
+    // for errno
+    if ((errorCode == MavlinkFTP::kErrFailErrno && nak->hdr.size != 2)
+        || ((errorCode != MavlinkFTP::kErrFailErrno) && nak->hdr.size != 1)) {
         errorMsg = tr("Invalid Nak format");
     } else if (errorCode == MavlinkFTP::kErrFailErrno) {
         errorMsg = tr("errno %1").arg(nak->data[1]);
@@ -249,11 +258,11 @@ QString FTPManager::_errorMsgFromNak(const MavlinkFTP::Request* nak)
 
 void FTPManager::_openFileROBegin(void)
 {
-    MavlinkFTP::Request request{};
+    MavlinkFTP::Request request {};
     request.hdr.session = 0;
-    request.hdr.opcode  = MavlinkFTP::kCmdOpenFileRO;
-    request.hdr.offset  = 0;
-    request.hdr.size    = 0;
+    request.hdr.opcode = MavlinkFTP::kCmdOpenFileRO;
+    request.hdr.offset = 0;
+    request.hdr.size = 0;
     _fillRequestDataWithString(&request, _downloadState.fullPathOnVehicle);
     _sendRequestExpectAck(&request);
 }
@@ -268,34 +277,39 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
 {
     MavlinkFTP::OpCode_t requestOpCode = static_cast<MavlinkFTP::OpCode_t>(ackOrNak->hdr.req_opcode);
     if (requestOpCode != MavlinkFTP::kCmdOpenFileRO) {
-        qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack disregarding ack for incorrect requestOpCode" << MavlinkFTP::opCodeToString(requestOpCode);
+        qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack disregarding ack for incorrect requestOpCode"
+                               << MavlinkFTP::opCodeToString(requestOpCode);
         return;
     }
     if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
-        qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack disregarding ack for incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+        qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack disregarding ack for incorrect sequence actual:expected"
+                               << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
         return;
     }
 
     _ackOrNakTimeoutTimer.stop();
 
     if (ackOrNak->hdr.opcode == MavlinkFTP::kRspAck) {
-        qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack  - sessionId:openFileLength" << ackOrNak->hdr.session << ackOrNak->openFileLength;
+        qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack  - sessionId:openFileLength" << ackOrNak->hdr.session
+                               << ackOrNak->openFileLength;
 
         if (ackOrNak->hdr.size != sizeof(uint32_t)) {
-            qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack ack->hdr.size != sizeof(uint32_t)" << ackOrNak->hdr.size << sizeof(uint32_t);
+            qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack ack->hdr.size != sizeof(uint32_t)" << ackOrNak->hdr.size
+                                   << sizeof(uint32_t);
             _downloadComplete(tr("Download failed"));
             return;
         }
 
-        _downloadState.sessionId        = ackOrNak->hdr.session;
-        _downloadState.fileSize         = ackOrNak->openFileLength;
-        _downloadState.expectedOffset   = 0;
+        _downloadState.sessionId = ackOrNak->hdr.session;
+        _downloadState.fileSize = ackOrNak->openFileLength;
+        _downloadState.expectedOffset = 0;
 
         _downloadState.file.setFileName(_downloadState.toDir.filePath(_downloadState.fileName));
         if (_downloadState.file.open(QFile::WriteOnly | QFile::Truncate)) {
             _advanceStateMachine();
         } else {
-            qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack _downloadState.file open failed" << _downloadState.file.errorString();
+            qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack _downloadState.file open failed"
+                                   << _downloadState.file.errorString();
             _downloadComplete(tr("Download failed"));
         }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
@@ -306,13 +320,14 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
 
 void FTPManager::_burstReadFileWorker(bool firstRequest)
 {
-    qCDebug(FTPManagerLog) << "_burstReadFileWorker: starting burst at offset:firstRequest:retryCount" << _downloadState.expectedOffset << firstRequest << _downloadState.retryCount;
+    qCDebug(FTPManagerLog) << "_burstReadFileWorker: starting burst at offset:firstRequest:retryCount"
+                           << _downloadState.expectedOffset << firstRequest << _downloadState.retryCount;
 
-    MavlinkFTP::Request request{};
+    MavlinkFTP::Request request {};
     request.hdr.session = _downloadState.sessionId;
-    request.hdr.opcode  = MavlinkFTP::kCmdBurstReadFile;
-    request.hdr.offset  = _downloadState.expectedOffset;
-    request.hdr.size    = sizeof(request.data);
+    request.hdr.opcode = MavlinkFTP::kCmdBurstReadFile;
+    request.hdr.offset = _downloadState.expectedOffset;
+    request.hdr.size = sizeof(request.data);
 
     if (firstRequest) {
         _downloadState.retryCount = 0;
@@ -324,21 +339,20 @@ void FTPManager::_burstReadFileWorker(bool firstRequest)
     _sendRequestExpectAck(&request);
 }
 
-void FTPManager::_burstReadFileBegin(void)
-{
-    _burstReadFileWorker(true /* firstRequestr */);
-}
+void FTPManager::_burstReadFileBegin(void) { _burstReadFileWorker(true /* firstRequestr */); }
 
 void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
 {
     MavlinkFTP::OpCode_t requestOpCode = static_cast<MavlinkFTP::OpCode_t>(ackOrNak->hdr.req_opcode);
 
     if (requestOpCode != MavlinkFTP::kCmdBurstReadFile) {
-        qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Disregarding due to incorrect requestOpCode" << MavlinkFTP::opCodeToString(requestOpCode);
+        qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Disregarding due to incorrect requestOpCode"
+                               << MavlinkFTP::opCodeToString(requestOpCode);
         return;
     }
     if (ackOrNak->hdr.session != _downloadState.sessionId) {
-        qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Disregarding due to incorrect session id actual:expected" << ackOrNak->hdr.session << _downloadState.sessionId;
+        qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Disregarding due to incorrect session id actual:expected"
+                               << ackOrNak->hdr.session << _downloadState.sessionId;
         return;
     }
 
@@ -346,24 +360,32 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
 
     if (ackOrNak->hdr.opcode == MavlinkFTP::kRspAck) {
         if (ackOrNak->hdr.seqNumber < _expectedIncomingSeqNumber) {
-            qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Disregarding Ack due to incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+            qCDebug(FTPManagerLog)
+                << "_burstReadFileAckOrNak: Disregarding Ack due to incorrect sequence actual:expected"
+                << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
             return;
         }
 
-        qCDebug(FTPManagerLog) << QString("_burstReadFileAckOrNak: Ack offset(%1) size(%2) burstComplete(%3)").arg(ackOrNak->hdr.offset).arg(ackOrNak->hdr.size).arg(ackOrNak->hdr.burstComplete);
+        qCDebug(FTPManagerLog) << QString("_burstReadFileAckOrNak: Ack offset(%1) size(%2) burstComplete(%3)")
+                                      .arg(ackOrNak->hdr.offset)
+                                      .arg(ackOrNak->hdr.size)
+                                      .arg(ackOrNak->hdr.burstComplete);
 
         if (ackOrNak->hdr.offset != _downloadState.expectedOffset) {
             if (ackOrNak->hdr.offset > _downloadState.expectedOffset) {
                 // There is a hole in our data, record it as missing and continue on
                 MissingData_t missingData;
-                missingData.offset          = _downloadState.expectedOffset;
-                missingData.cBytesMissing   = ackOrNak->hdr.offset - _downloadState.expectedOffset;
+                missingData.offset = _downloadState.expectedOffset;
+                missingData.cBytesMissing = ackOrNak->hdr.offset - _downloadState.expectedOffset;
                 _downloadState.rgMissingData.append(missingData);
-                qCDebug(FTPManagerLog) << "_handleBurstReadFileAck: adding missing data offset:cBytesMissing" << missingData.offset << missingData.cBytesMissing;
+                qCDebug(FTPManagerLog) << "_handleBurstReadFileAck: adding missing data offset:cBytesMissing"
+                                       << missingData.offset << missingData.cBytesMissing;
             } else {
                 // Offset is past what we have already seen, disregard and wait for something usefule
                 _ackOrNakTimeoutTimer.start();
-                qCDebug(FTPManagerLog) << "_handleBurstReadFileAck: received offset less than expected offset received:expected" << ackOrNak->hdr.offset << _downloadState.expectedOffset;
+                qCDebug(FTPManagerLog)
+                    << "_handleBurstReadFileAck: received offset less than expected offset received:expected"
+                    << ackOrNak->hdr.offset << _downloadState.expectedOffset;
                 return;
             }
         }
@@ -398,8 +420,8 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
             // Burst sequence has gone through the whole file
             if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
                 qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: EOF Nak"
-                    "with incorrect sequence nr actual:expected"
-                    << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+                                          "with incorrect sequence nr actual:expected"
+                                       << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
                 /* We have received the EOF Nak but out of sequence, i.e. data is missing */
                 _expectedIncomingSeqNumber = ackOrNak->hdr.seqNumber;
                 _burstReadFileWorker(true); /* Retry from last expected offset */
@@ -421,7 +443,9 @@ void FTPManager::_burstReadFileTimeout(void)
         _downloadComplete(tr("Download failed"));
     } else {
         // Try again
-        qCDebug(FTPManagerLog) << QString("_burstReadFileTimeout: retrying - retryCount(%1) offset(%2)").arg(_downloadState.retryCount).arg(_downloadState.expectedOffset);
+        qCDebug(FTPManagerLog) << QString("_burstReadFileTimeout: retrying - retryCount(%1) offset(%2)")
+                                      .arg(_downloadState.retryCount)
+                                      .arg(_downloadState.expectedOffset);
         _burstReadFileWorker(false /* firstReqeust */);
     }
 }
@@ -429,17 +453,17 @@ void FTPManager::_burstReadFileTimeout(void)
 void FTPManager::_fillMissingBlocksWorker(bool firstRequest)
 {
     if (_downloadState.rgMissingData.count()) {
-        MavlinkFTP::Request request{};
-        MissingData_t&      missingData = _downloadState.rgMissingData.first();
+        MavlinkFTP::Request request {};
+        MissingData_t& missingData = _downloadState.rgMissingData.first();
 
         uint32_t cBytesToRead = qMin((uint32_t)sizeof(request.data), missingData.cBytesMissing);
 
         qCDebug(FTPManagerLog) << "_fillMissingBlocksBegin: offset:cBytesToRead" << missingData.offset << cBytesToRead;
 
-        request.hdr.session                 = _downloadState.sessionId;
-        request.hdr.opcode                  = MavlinkFTP::kCmdReadFile;
-        request.hdr.offset                  = missingData.offset;
-        request.hdr.size                    = cBytesToRead;
+        request.hdr.session = _downloadState.sessionId;
+        request.hdr.opcode = MavlinkFTP::kCmdReadFile;
+        request.hdr.offset = missingData.offset;
+        request.hdr.size = cBytesToRead;
 
         if (firstRequest) {
             _downloadState.retryCount = 0;
@@ -455,38 +479,41 @@ void FTPManager::_fillMissingBlocksWorker(bool firstRequest)
         if (_downloadState.checksize == false || _downloadState.bytesWritten == _downloadState.fileSize) {
             _advanceStateMachine();
         } else {
-            qCDebug(FTPManagerLog) << "_fillMissingBlocksWorker: no missing blocks but file still incomplete - bytesWritten:fileSize" << _downloadState.bytesWritten << _downloadState.fileSize;
+            qCDebug(FTPManagerLog)
+                << "_fillMissingBlocksWorker: no missing blocks but file still incomplete - bytesWritten:fileSize"
+                << _downloadState.bytesWritten << _downloadState.fileSize;
             _downloadComplete(tr("Download failed"));
         }
     }
 }
 
-void FTPManager::_fillMissingBlocksBegin(void)
-{
-    _fillMissingBlocksWorker(true /* firstRequest */);
-}
+void FTPManager::_fillMissingBlocksBegin(void) { _fillMissingBlocksWorker(true /* firstRequest */); }
 
 void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
 {
     MavlinkFTP::OpCode_t requestOpCode = static_cast<MavlinkFTP::OpCode_t>(ackOrNak->hdr.req_opcode);
 
     if (requestOpCode != MavlinkFTP::kCmdReadFile) {
-        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect requestOpCode" << MavlinkFTP::opCodeToString(requestOpCode);
+        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect requestOpCode"
+                               << MavlinkFTP::opCodeToString(requestOpCode);
         return;
     }
     if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
-        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect sequence actual:expected"
+                               << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
         return;
     }
     if (ackOrNak->hdr.session != _downloadState.sessionId) {
-        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect session id actual:expected" << ackOrNak->hdr.session << _downloadState.sessionId;
+        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect session id actual:expected"
+                               << ackOrNak->hdr.session << _downloadState.sessionId;
         return;
     }
 
     _ackOrNakTimeoutTimer.stop();
 
     if (ackOrNak->hdr.opcode == MavlinkFTP::kRspAck) {
-        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Ack offset:size" << ackOrNak->hdr.offset << ackOrNak->hdr.size;
+        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Ack offset:size" << ackOrNak->hdr.offset
+                               << ackOrNak->hdr.size;
 
         if (ackOrNak->hdr.offset != _downloadState.expectedOffset) {
             if (++_downloadState.retryCount > _maxRetry) {
@@ -496,7 +523,10 @@ void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
             }
 
             // Ask for current offset again
-            qCDebug(FTPManagerLog) << QString("_fillMissingBlocksAckOrNak: Ack offset mismatch retry, retryCount(%1) offset(%2)").arg(_downloadState.retryCount).arg(_downloadState.expectedOffset);
+            qCDebug(FTPManagerLog) << QString(
+                "_fillMissingBlocksAckOrNak: Ack offset mismatch retry, retryCount(%1) offset(%2)")
+                                          .arg(_downloadState.retryCount)
+                                          .arg(_downloadState.expectedOffset);
             _fillMissingBlocksWorker(false /* firstReqeust */);
             return;
         }
@@ -539,7 +569,6 @@ void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
         qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
         _downloadComplete(tr("Download failed"));
     }
-
 }
 
 void FTPManager::_fillMissingBlocksTimeout(void)
@@ -549,16 +578,18 @@ void FTPManager::_fillMissingBlocksTimeout(void)
         _downloadComplete(tr("Download failed"));
     } else {
         // Ask for current offset again
-        qCDebug(FTPManagerLog) << QString("_fillMissingBlocksTimeout: retrying - retryCount(%1) offset(%2)").arg(_downloadState.retryCount).arg(_downloadState.expectedOffset);
+        qCDebug(FTPManagerLog) << QString("_fillMissingBlocksTimeout: retrying - retryCount(%1) offset(%2)")
+                                      .arg(_downloadState.retryCount)
+                                      .arg(_downloadState.expectedOffset);
         _fillMissingBlocksWorker(false /* firstReqeust */);
     }
 }
 
 void FTPManager::_resetSessionsBegin(void)
 {
-    MavlinkFTP::Request request{};
-    request.hdr.opcode  = MavlinkFTP::kCmdResetSessions;
-    request.hdr.size    = 0;
+    MavlinkFTP::Request request {};
+    request.hdr.opcode = MavlinkFTP::kCmdResetSessions;
+    request.hdr.size = 0;
     _sendRequestExpectAck(&request);
 }
 
@@ -567,11 +598,13 @@ void FTPManager::_resetSessionsAckOrNak(const MavlinkFTP::Request* ackOrNak)
     MavlinkFTP::OpCode_t requestOpCode = static_cast<MavlinkFTP::OpCode_t>(ackOrNak->hdr.req_opcode);
 
     if (requestOpCode != MavlinkFTP::kCmdResetSessions) {
-        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect requestOpCode" << MavlinkFTP::opCodeToString(requestOpCode);
+        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Disregarding due to incorrect requestOpCode"
+                               << MavlinkFTP::opCodeToString(requestOpCode);
         return;
     }
     if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
-        qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Disregarding due to incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+        qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Disregarding due to incorrect sequence actual:expected"
+                               << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
         return;
     }
 
@@ -601,7 +634,7 @@ void FTPManager::_emitErrorMessage(const QString& msg)
 void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
 {
     _ackOrNakTimeoutTimer.start();
-    
+
     WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
 
     if (weakLink.expired()) {
@@ -609,28 +642,27 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
     } else {
         SharedLinkInterfacePtr sharedLink = weakLink.lock();
 
-        request->hdr.seqNumber = _expectedIncomingSeqNumber + 1;    // Outgoing is 1 past last incoming
+        request->hdr.seqNumber = _expectedIncomingSeqNumber + 1; // Outgoing is 1 past last incoming
         _expectedIncomingSeqNumber += 2;
 
-        qCDebug(FTPManagerLog) << "_sendRequestExpectAck opcode:" << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode)) << "seqNumber:" << request->hdr.seqNumber;
+        qCDebug(FTPManagerLog) << "_sendRequestExpectAck opcode:"
+                               << MavlinkFTP::opCodeToString(static_cast<MavlinkFTP::OpCode_t>(request->hdr.opcode))
+                               << "seqNumber:" << request->hdr.seqNumber;
 
         mavlink_message_t message;
         mavlink_msg_file_transfer_protocol_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                                     qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                                     sharedLink->mavlinkChannel(),
-                                                     &message,
-                                                     0,                                                     // Target network, 0=broadcast?
-                                                     _vehicle->id(),
-                                                     _ftpCompId,
-                                                     (uint8_t*)request);                                    // Payload
+            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(), sharedLink->mavlinkChannel(), &message,
+            0, // Target network, 0=broadcast?
+            _vehicle->id(), _ftpCompId,
+            (uint8_t*)request); // Payload
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
 }
 
 bool FTPManager::_parseURI(uint8_t fromCompId, const QString& uri, QString& parsedURI, uint8_t& compId)
 {
-    parsedURI   = uri;
-    compId      = (fromCompId == MAV_COMP_ID_ALL) ? (uint8_t)MAV_COMP_ID_AUTOPILOT1 : fromCompId;
+    parsedURI = uri;
+    compId = (fromCompId == MAV_COMP_ID_ALL) ? (uint8_t)MAV_COMP_ID_AUTOPILOT1 : fromCompId;
 
     // Pull scheme off the front if there
     QString ftpPrefix(QStringLiteral("%1://").arg(mavlinkFTPScheme));
@@ -643,7 +675,7 @@ bool FTPManager::_parseURI(uint8_t fromCompId, const QString& uri, QString& pars
     }
 
     // Pull component id off the front if there
-    QRegularExpression      regEx("^/??\\[\\;comp\\=(\\d+)\\]");
+    QRegularExpression regEx("^/??\\[\\;comp\\=(\\d+)\\]");
     QRegularExpressionMatch match = regEx.match(parsedURI);
     if (match.hasMatch()) {
         bool ok;

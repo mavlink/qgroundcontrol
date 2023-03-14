@@ -8,40 +8,40 @@
  ****************************************************************************/
 
 #include "ImageProtocolManager.h"
-#include "QGC.h"
 #include "MAVLinkProtocol.h"
-#include "Vehicle.h"
+#include "QGC.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
 
-#include <QFile>
 #include <QDir>
+#include <QFile>
 #include <string>
 
 QGC_LOGGING_CATEGORY(ImageProtocolManagerLog, "ImageProtocolManagerLog")
 
-ImageProtocolManager::ImageProtocolManager(void)
-{
-    memset(&_imageHandshake, 0, sizeof(_imageHandshake));
-}
+ImageProtocolManager::ImageProtocolManager(void) { memset(&_imageHandshake, 0, sizeof(_imageHandshake)); }
 
 void ImageProtocolManager::mavlinkMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
-    case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
-    {
+    case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE: {
         if (_imageHandshake.packets) {
-            qCWarning(ImageProtocolManagerLog) << "DATA_TRANSMISSION_HANDSHAKE: Previous image transmission incomplete.";
+            qCWarning(ImageProtocolManagerLog)
+                << "DATA_TRANSMISSION_HANDSHAKE: Previous image transmission incomplete.";
         }
         _imageBytes.clear();
         mavlink_msg_data_transmission_handshake_decode(&message, &_imageHandshake);
-        qCDebug(ImageProtocolManagerLog) << QStringLiteral("DATA_TRANSMISSION_HANDSHAKE: type(%1) width(%2) height (%3)").arg(_imageHandshake.type).arg(_imageHandshake.width).arg(_imageHandshake.height);
-    }
-        break;
+        qCDebug(ImageProtocolManagerLog) << QStringLiteral(
+            "DATA_TRANSMISSION_HANDSHAKE: type(%1) width(%2) height (%3)")
+                                                .arg(_imageHandshake.type)
+                                                .arg(_imageHandshake.width)
+                                                .arg(_imageHandshake.height);
+    } break;
 
-    case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
-    {
+    case MAVLINK_MSG_ID_ENCAPSULATED_DATA: {
         if (_imageHandshake.packets == 0) {
-            qCWarning(ImageProtocolManagerLog) << "ENCAPSULATED_DATA: received with no prior DATA_TRANSMISSION_HANDSHAKE.";
+            qCWarning(ImageProtocolManagerLog)
+                << "ENCAPSULATED_DATA: received with no prior DATA_TRANSMISSION_HANDSHAKE.";
             break;
         }
 
@@ -50,11 +50,13 @@ void ImageProtocolManager::mavlinkMessageReceived(const mavlink_message_t& messa
 
         int bytePosition = encapsulatedData.seqnr * _imageHandshake.payload;
         if (bytePosition >= static_cast<int>(_imageHandshake.size)) {
-            qCWarning(ImageProtocolManagerLog) << "ENCAPSULATED_DATA: seqnr is past end of image size. seqnr:" << encapsulatedData.seqnr << "_imageHandshake.size" << _imageHandshake.size;
+            qCWarning(ImageProtocolManagerLog)
+                << "ENCAPSULATED_DATA: seqnr is past end of image size. seqnr:" << encapsulatedData.seqnr
+                << "_imageHandshake.size" << _imageHandshake.size;
             break;
         }
 
-        for (uint8_t i=0; i<_imageHandshake.payload; i++) {
+        for (uint8_t i = 0; i < _imageHandshake.payload; i++) {
             _imageBytes[bytePosition] = encapsulatedData.data[i];
             bytePosition++;
         }
@@ -66,8 +68,7 @@ void ImageProtocolManager::mavlinkMessageReceived(const mavlink_message_t& messa
             // We have all the packets
             emit imageReady();
         }
-    }
-        break;
+    } break;
 
     default:
         break;
@@ -81,12 +82,12 @@ QImage ImageProtocolManager::getImage(void)
     if (_imageBytes.isEmpty()) {
         qCWarning(ImageProtocolManagerLog) << "getImage: Called when no image available";
     } else if (_imageHandshake.packets) {
-        qCWarning(ImageProtocolManagerLog) << "getImage: Called when image is imcomplete. _imageHandshake.packets:" << _imageHandshake.packets;
+        qCWarning(ImageProtocolManagerLog)
+            << "getImage: Called when image is imcomplete. _imageHandshake.packets:" << _imageHandshake.packets;
     } else {
         switch (_imageHandshake.type) {
         case MAVLINK_DATA_STREAM_IMG_RAW8U:
-        case MAVLINK_DATA_STREAM_IMG_RAW32U:
-        {
+        case MAVLINK_DATA_STREAM_IMG_RAW32U: {
             // Construct PGM header
             QString header("P5\n%1 %2\n%3\n");
             header = header.arg(_imageHandshake.width).arg(_imageHandshake.height).arg(255 /* image colors */);
@@ -97,8 +98,7 @@ QImage ImageProtocolManager::getImage(void)
             if (!image.loadFromData(tmpImage, "PGM")) {
                 qCWarning(ImageProtocolManagerLog) << "getImage: IMG_RAW8U QImage::loadFromData failed";
             }
-        }
-            break;
+        } break;
 
         case MAVLINK_DATA_STREAM_IMG_BMP:
         case MAVLINK_DATA_STREAM_IMG_JPEG:

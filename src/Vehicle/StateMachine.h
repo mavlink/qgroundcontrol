@@ -11,8 +11,7 @@
 
 #include <QObject>
 
-class StateMachine : public QObject
-{
+class StateMachine : public QObject {
     Q_OBJECT
 
 public:
@@ -43,6 +42,6 @@ public:
     bool active() const { return _active; }
 
 protected:
-    bool    _active = false;
-    int     _stateIndex  = -1;
+    bool _active = false;
+    int _stateIndex = -1;
 };

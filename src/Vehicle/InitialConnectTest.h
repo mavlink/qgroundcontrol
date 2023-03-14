@@ -9,12 +9,11 @@
 
 #pragma once
 
-#include "UnitTest.h"
 #include "MockLink.h"
+#include "UnitTest.h"
 #include "Vehicle.h"
 
-class InitialConnectTest : public UnitTest
-{
+class InitialConnectTest : public UnitTest {
     Q_OBJECT
 
 private slots:

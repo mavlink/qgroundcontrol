@@ -9,15 +9,15 @@
 
 #include "CompInfoGeneral.h"
 
-#include "JsonHelper.h"
 #include "FactMetaData.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
+#include "JsonHelper.h"
 #include "QGCApplication.h"
 
-#include <QStandardPaths>
-#include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QStandardPaths>
 
 QGC_LOGGING_CATEGORY(CompInfoGeneralLog, "CompInfoGeneralLog")
 
@@ -26,10 +26,9 @@ const char* CompInfoGeneral::_jsonMetadataTypesKey = "metadataTypes";
 CompInfoGeneral::CompInfoGeneral(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_GENERAL, compId, vehicle, parent)
 {
-
 }
 
-void CompInfoGeneral::setUris(CompInfo &compInfo) const
+void CompInfoGeneral::setUris(CompInfo& compInfo) const
 {
     const auto& metadataTypeIter = _supportedTypes.constFind(compInfo.type);
     if (metadataTypeIter == _supportedTypes.constEnd()) {
@@ -45,8 +44,8 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
         return;
     }
 
-    QString         errorString;
-    QJsonDocument   jsonDoc;
+    QString errorString;
+    QJsonDocument jsonDoc;
 
     if (!JsonHelper::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
         qCWarning(CompInfoGeneralLog) << "Metadata json file open failed: compid:" << compId << errorString;
@@ -55,8 +54,8 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
     QJsonObject jsonObj = jsonDoc.object();
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,           QJsonValue::Double, true },
-        { _jsonMetadataTypesKey,   QJsonValue::Array,  true },
+        {JsonHelper::jsonVersionKey, QJsonValue::Double, true},
+        {_jsonMetadataTypesKey, QJsonValue::Array, true},
     };
     if (!JsonHelper::validateKeys(jsonObj, keyInfoList, errorString)) {
         qCWarning(CompInfoGeneralLog) << "Metadata json validation failed: compid:" << compId << errorString;
@@ -76,7 +75,9 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
             continue;
         Uris uris;
         uris.uriMetaData = typeValue["uri"].toString();
-        uris.crcMetaData = typeValue["fileCrc"].toVariant().toLongLong(); // Note: can't use toInt(), as it returns 0 when exceeding 2^31
+        uris.crcMetaData = typeValue["fileCrc"]
+                               .toVariant()
+                               .toLongLong(); // Note: can't use toInt(), as it returns 0 when exceeding 2^31
         uris.crcMetaDataValid = typeValue.toObject().contains("fileCrc");
         uris.uriMetaDataFallback = typeValue["uriFallback"].toString();
         uris.crcMetaDataFallback = typeValue["fileCrcFallback"].toVariant().toLongLong();
@@ -87,8 +88,8 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
         if (uris.uriMetaData.isEmpty() || !uris.crcMetaDataValid) {
             // The CRC is optional for dynamically updated metadata, and once we want to support that this logic needs
             // to be updated.
-            qCDebug(CompInfoGeneralLog) << "Metadata missing fields: type:uri:crcValid" << type <<
-                    uris.uriMetaData << uris.crcMetaDataValid;
+            qCDebug(CompInfoGeneralLog) << "Metadata missing fields: type:uri:crcValid" << type << uris.uriMetaData
+                                        << uris.crcMetaDataValid;
             continue;
         }
 

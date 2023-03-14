@@ -27,13 +27,10 @@ HealthAndArmingCheckReport::HealthAndArmingCheckReport()
 #endif
 }
 
-HealthAndArmingCheckReport::~HealthAndArmingCheckReport()
-{
-    _problemsForCurrentMode->clearAndDeleteContents();
-}
+HealthAndArmingCheckReport::~HealthAndArmingCheckReport() { _problemsForCurrentMode->clearAndDeleteContents(); }
 
-void HealthAndArmingCheckReport::update(uint8_t compid, const events::HealthAndArmingChecks::Results& results,
-        int flightModeGroup)
+void HealthAndArmingCheckReport::update(
+    uint8_t compid, const events::HealthAndArmingChecks::Results& results, int flightModeGroup)
 {
     if (compid != MAV_COMP_ID_AUTOPILOT1) {
         // only autopilot supported atm
@@ -57,8 +54,8 @@ void HealthAndArmingCheckReport::update(uint8_t compid, const events::HealthAndA
             _hasWarningsOrErrors = true;
         }
         QString description = QString::fromStdString(check.description);
-        _problemsForCurrentMode->append(new HealthAndArmingCheckProblem(QString::fromStdString(check.message),
-                description.replace("\n", "<br/>"), severity));
+        _problemsForCurrentMode->append(new HealthAndArmingCheckProblem(
+            QString::fromStdString(check.message), description.replace("\n", "<br/>"), severity));
     }
 
     _canArm = results.canArm(flightModeGroup);

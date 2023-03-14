@@ -12,26 +12,25 @@
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
 
-class VehicleLocalPositionFactGroup : public FactGroup
-{
+class VehicleLocalPositionFactGroup : public FactGroup {
     Q_OBJECT
 
 public:
     VehicleLocalPositionFactGroup(QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact* x     READ x    CONSTANT)
-    Q_PROPERTY(Fact* y     READ y    CONSTANT)
-    Q_PROPERTY(Fact* z     READ z    CONSTANT)
-    Q_PROPERTY(Fact* vx    READ vx   CONSTANT)
-    Q_PROPERTY(Fact* vy    READ vy   CONSTANT)
-    Q_PROPERTY(Fact* vz    READ vz   CONSTANT)
+    Q_PROPERTY(Fact* x READ x CONSTANT)
+    Q_PROPERTY(Fact* y READ y CONSTANT)
+    Q_PROPERTY(Fact* z READ z CONSTANT)
+    Q_PROPERTY(Fact* vx READ vx CONSTANT)
+    Q_PROPERTY(Fact* vy READ vy CONSTANT)
+    Q_PROPERTY(Fact* vz READ vz CONSTANT)
 
-    Fact* x    () { return &_xFact; }
-    Fact* y    () { return &_yFact; }
-    Fact* z    () { return &_zFact; }
-    Fact* vx   () { return &_vxFact; }
-    Fact* vy   () { return &_vyFact; }
-    Fact* vz   () { return &_vzFact; }
+    Fact* x() { return &_xFact; }
+    Fact* y() { return &_yFact; }
+    Fact* z() { return &_zFact; }
+    Fact* vx() { return &_vxFact; }
+    Fact* vy() { return &_vyFact; }
+    Fact* vz() { return &_vzFact; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;

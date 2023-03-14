@@ -9,41 +9,41 @@
 
 #pragma once
 
-#include "UnitTest.h"
-#include "LinkInterface.h"
 #include "LinkConfiguration.h"
+#include "LinkInterface.h"
+#include "UnitTest.h"
 
 class LinkManager;
 class MultiVehicleManager;
 class VehicleLinkManager;
 
-class VehicleLinkManagerTest : public UnitTest
-{
+class VehicleLinkManagerTest : public UnitTest {
     Q_OBJECT
 
 public:
     VehicleLinkManagerTest(void);
 
 protected:
-    void init   (void) final;
+    void init(void) final;
     void cleanup(void) final;
 
 private slots:
-    void _simpleLinkTest            (void);
-    void _simpleCommLossTest        (void);
+    void _simpleLinkTest(void);
+    void _simpleCommLossTest(void);
     void _multiLinkSingleVehicleTest(void);
-    void _connectionRemovedTest     (void);
-    void _highLatencyLinkTest       (void);
+    void _connectionRemovedTest(void);
+    void _highLatencyLinkTest(void);
 
 private:
-    void _startMockLink(int mockIndex, bool highLatency, bool incrementVehicleId, SharedLinkConfigurationPtr& sharedConfig, SharedLinkInterfacePtr& mockLink);
+    void _startMockLink(int mockIndex, bool highLatency, bool incrementVehicleId,
+        SharedLinkConfigurationPtr& sharedConfig, SharedLinkInterfacePtr& mockLink);
 
-    //void _simpleLinkTest            (void);
-    //void _simpleCommLossTest        (void);
-    //void _multiLinkSingleVehicleTest(void);
-    //void _connectionRemovedTest     (void);
-    //void _highLatencyLinkTest       (void);
-    MultiVehicleManager*    _multiVehicleMgr = nullptr;
+    // void _simpleLinkTest            (void);
+    // void _simpleCommLossTest        (void);
+    // void _multiLinkSingleVehicleTest(void);
+    // void _connectionRemovedTest     (void);
+    // void _highLatencyLinkTest       (void);
+    MultiVehicleManager* _multiVehicleMgr = nullptr;
 
     static const char* _primaryLinkChangedSignalName;
     static const char* _allLinksRemovedSignalName;

@@ -11,9 +11,9 @@
 
 #include "QGCLoggingCategory.h"
 
-#include <QString>
 #include <QDir>
 #include <QMap>
+#include <QString>
 
 #include <cstdint>
 
@@ -26,8 +26,7 @@ Q_DECLARE_LOGGING_CATEGORY(ComponentInformationCacheLog)
  * - only one instance per directory must exist
  * - not thread-safe
  */
-class ComponentInformationCache : public QObject
-{
+class ComponentInformationCache : public QObject {
     Q_OBJECT
 public:
     ComponentInformationCache(const QDir& path, int maxNumFiles);
@@ -47,19 +46,18 @@ public:
      * @param fileName file to insert, will be moved (or deleted if already exists)
      * @return cached file name if inserted or already exists, "" on error
      */
-    QString insert(const QString &fileTag, const QString& fileName);
+    QString insert(const QString& fileTag, const QString& fileName);
 
 private:
-
     static constexpr const char* _metaExtension = ".meta";
     static constexpr const char* _cacheExtension = ".cache";
 
     using AccessCounterType = uint64_t;
 
     struct Meta {
-        uint32_t magic{0x9a9cad0e};
-        uint32_t version{0};
-        AccessCounterType accessCounter{0};
+        uint32_t magic {0x9a9cad0e};
+        uint32_t version {0};
+        AccessCounterType accessCounter {0};
     };
 
     void initializeDirectory();
@@ -71,7 +69,7 @@ private:
     const QDir _path;
     const int _maxNumFiles;
 
-    AccessCounterType _nextAccessCounter{0};
-    int _numFiles{0};
+    AccessCounterType _nextAccessCounter {0};
+    int _numFiles {0};
     QMap<AccessCounterType, QString> _cachedFiles;
 };

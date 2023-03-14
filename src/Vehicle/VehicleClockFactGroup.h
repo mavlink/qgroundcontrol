@@ -14,8 +14,7 @@
 
 class Vehicle;
 
-class VehicleClockFactGroup : public FactGroup
-{
+class VehicleClockFactGroup : public FactGroup {
     Q_OBJECT
 
 public:
@@ -25,9 +24,9 @@ public:
     Q_PROPERTY(Fact* currentUTCTime READ currentUTCTime CONSTANT)
     Q_PROPERTY(Fact* currentDate READ currentDate CONSTANT)
 
-    Fact* currentTime () { return &_currentTimeFact; }
-    Fact* currentUTCTime () { return &_currentUTCTimeFact; }
-    Fact* currentDate () { return &_currentDateFact; }
+    Fact* currentTime() { return &_currentTimeFact; }
+    Fact* currentUTCTime() { return &_currentUTCTimeFact; }
+    Fact* currentDate() { return &_currentDateFact; }
 
     static const char* _currentTimeFactName;
     static const char* _currentUTCTimeFactName;
@@ -39,7 +38,7 @@ private slots:
     void _updateAllValues() override;
 
 private:
-    Fact            _currentTimeFact;
-    Fact            _currentUTCTimeFact;
-    Fact            _currentDateFact;
+    Fact _currentTimeFact;
+    Fact _currentUTCTimeFact;
+    Fact _currentDateFact;
 };

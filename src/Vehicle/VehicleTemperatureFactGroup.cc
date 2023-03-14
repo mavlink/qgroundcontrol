@@ -7,27 +7,27 @@
  *
  ****************************************************************************/
 
-#include "VehicleSetpointFactGroup.h"
 #include "Vehicle.h"
+#include "VehicleSetpointFactGroup.h"
 
-const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
-const char* VehicleTemperatureFactGroup::_temperature2FactName =      "temperature2";
-const char* VehicleTemperatureFactGroup::_temperature3FactName =      "temperature3";
+const char* VehicleTemperatureFactGroup::_temperature1FactName = "temperature1";
+const char* VehicleTemperatureFactGroup::_temperature2FactName = "temperature2";
+const char* VehicleTemperatureFactGroup::_temperature3FactName = "temperature3";
 
 VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/TemperatureFact.json", parent)
-    , _temperature1Fact    (0, _temperature1FactName,     FactMetaData::valueTypeDouble)
-    , _temperature2Fact    (0, _temperature2FactName,     FactMetaData::valueTypeDouble)
-    , _temperature3Fact    (0, _temperature3FactName,     FactMetaData::valueTypeDouble)
+    , _temperature1Fact(0, _temperature1FactName, FactMetaData::valueTypeDouble)
+    , _temperature2Fact(0, _temperature2FactName, FactMetaData::valueTypeDouble)
+    , _temperature3Fact(0, _temperature3FactName, FactMetaData::valueTypeDouble)
 {
-    _addFact(&_temperature1Fact,       _temperature1FactName);
-    _addFact(&_temperature2Fact,       _temperature2FactName);
-    _addFact(&_temperature3Fact,       _temperature3FactName);
+    _addFact(&_temperature1Fact, _temperature1FactName);
+    _addFact(&_temperature2Fact, _temperature2FactName);
+    _addFact(&_temperature3Fact, _temperature3FactName);
 
     // Start out as not available "--.--"
-    _temperature1Fact.setRawValue      (qQNaN());
-    _temperature2Fact.setRawValue      (qQNaN());
-    _temperature3Fact.setRawValue      (qQNaN());
+    _temperature1Fact.setRawValue(qQNaN());
+    _temperature2Fact.setRawValue(qQNaN());
+    _temperature3Fact.setRawValue(qQNaN());
 }
 
 void VehicleTemperatureFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)

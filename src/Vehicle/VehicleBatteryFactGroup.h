@@ -14,38 +14,37 @@
 
 class Vehicle;
 
-class VehicleBatteryFactGroup : public FactGroup
-{
+class VehicleBatteryFactGroup : public FactGroup {
     Q_OBJECT
 
 public:
     VehicleBatteryFactGroup(uint8_t batteryId, QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact* id                 READ id                 CONSTANT)
-    Q_PROPERTY(Fact* function           READ function           CONSTANT)
-    Q_PROPERTY(Fact* type               READ type               CONSTANT)
-    Q_PROPERTY(Fact* temperature        READ temperature        CONSTANT)
-    Q_PROPERTY(Fact* voltage            READ voltage            CONSTANT)
-    Q_PROPERTY(Fact* current            READ current            CONSTANT)
-    Q_PROPERTY(Fact* mahConsumed        READ mahConsumed        CONSTANT)
-    Q_PROPERTY(Fact* percentRemaining   READ percentRemaining   CONSTANT)
-    Q_PROPERTY(Fact* timeRemaining      READ timeRemaining      CONSTANT)
-    Q_PROPERTY(Fact* timeRemainingStr   READ timeRemainingStr   CONSTANT)
-    Q_PROPERTY(Fact* chargeState        READ chargeState        CONSTANT)
-    Q_PROPERTY(Fact* instantPower       READ instantPower       CONSTANT)
+    Q_PROPERTY(Fact* id READ id CONSTANT)
+    Q_PROPERTY(Fact* function READ function CONSTANT)
+    Q_PROPERTY(Fact* type READ type CONSTANT)
+    Q_PROPERTY(Fact* temperature READ temperature CONSTANT)
+    Q_PROPERTY(Fact* voltage READ voltage CONSTANT)
+    Q_PROPERTY(Fact* current READ current CONSTANT)
+    Q_PROPERTY(Fact* mahConsumed READ mahConsumed CONSTANT)
+    Q_PROPERTY(Fact* percentRemaining READ percentRemaining CONSTANT)
+    Q_PROPERTY(Fact* timeRemaining READ timeRemaining CONSTANT)
+    Q_PROPERTY(Fact* timeRemainingStr READ timeRemainingStr CONSTANT)
+    Q_PROPERTY(Fact* chargeState READ chargeState CONSTANT)
+    Q_PROPERTY(Fact* instantPower READ instantPower CONSTANT)
 
-    Fact* id                        () { return &_batteryIdFact; }
-    Fact* function                  () { return &_batteryFunctionFact; }
-    Fact* type                      () { return &_batteryTypeFact; }
-    Fact* voltage                   () { return &_voltageFact; }
-    Fact* percentRemaining          () { return &_percentRemainingFact; }
-    Fact* mahConsumed               () { return &_mahConsumedFact; }
-    Fact* current                   () { return &_currentFact; }
-    Fact* temperature               () { return &_temperatureFact; }
-    Fact* instantPower              () { return &_instantPowerFact; }
-    Fact* timeRemaining             () { return &_timeRemainingFact; }
-    Fact* timeRemainingStr          () { return &_timeRemainingStrFact; }
-    Fact* chargeState               () { return &_chargeStateFact; }
+    Fact* id() { return &_batteryIdFact; }
+    Fact* function() { return &_batteryFunctionFact; }
+    Fact* type() { return &_batteryTypeFact; }
+    Fact* voltage() { return &_voltageFact; }
+    Fact* percentRemaining() { return &_percentRemainingFact; }
+    Fact* mahConsumed() { return &_mahConsumedFact; }
+    Fact* current() { return &_currentFact; }
+    Fact* temperature() { return &_temperatureFact; }
+    Fact* instantPower() { return &_instantPowerFact; }
+    Fact* timeRemaining() { return &_timeRemainingFact; }
+    Fact* timeRemainingStr() { return &_timeRemainingStrFact; }
+    Fact* chargeState() { return &_chargeStateFact; }
 
     static const char* _batteryIdFactName;
     static const char* _batteryFunctionFactName;
@@ -72,23 +71,23 @@ private slots:
     void _timeRemainingChanged(QVariant value);
 
 private:
-    static void                     _handleHighLatency          (Vehicle* vehicle, mavlink_message_t& message);
-    static void                     _handleHighLatency2         (Vehicle* vehicle, mavlink_message_t& message);
-    static void                     _handleBatteryStatus        (Vehicle* vehicle, mavlink_message_t& message);
-    static VehicleBatteryFactGroup* _findOrAddBatteryGroupById  (Vehicle* vehicle, uint8_t batteryId);
+    static void _handleHighLatency(Vehicle* vehicle, mavlink_message_t& message);
+    static void _handleHighLatency2(Vehicle* vehicle, mavlink_message_t& message);
+    static void _handleBatteryStatus(Vehicle* vehicle, mavlink_message_t& message);
+    static VehicleBatteryFactGroup* _findOrAddBatteryGroupById(Vehicle* vehicle, uint8_t batteryId);
 
-    Fact            _batteryIdFact;
-    Fact            _batteryFunctionFact;
-    Fact            _batteryTypeFact;
-    Fact            _voltageFact;
-    Fact            _currentFact;
-    Fact            _mahConsumedFact;
-    Fact            _temperatureFact;
-    Fact            _percentRemainingFact;
-    Fact            _timeRemainingFact;
-    Fact            _timeRemainingStrFact;
-    Fact            _chargeStateFact;
-    Fact            _instantPowerFact;
+    Fact _batteryIdFact;
+    Fact _batteryFunctionFact;
+    Fact _batteryTypeFact;
+    Fact _voltageFact;
+    Fact _currentFact;
+    Fact _mahConsumedFact;
+    Fact _temperatureFact;
+    Fact _percentRemainingFact;
+    Fact _timeRemainingFact;
+    Fact _timeRemainingStrFact;
+    Fact _chargeStateFact;
+    Fact _instantPowerFact;
 
     static const char* _batteryFactGroupNamePrefix;
 };

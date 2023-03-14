@@ -10,9 +10,9 @@
 #pragma once
 
 #include "CompInfo.h"
-#include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 #include "FactMetaData.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 
 #include <QObject>
 
@@ -22,8 +22,7 @@ class FirmwarePlugin;
 
 Q_DECLARE_LOGGING_CATEGORY(CompInfoParamLog)
 
-class CompInfoParam : public CompInfo
-{
+class CompInfoParam : public CompInfo {
     Q_OBJECT
 
 public:
@@ -39,15 +38,16 @@ public:
 private:
     QObject* _getOpaqueParameterMetaData(void);
 
-    static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin   (MAV_AUTOPILOT firmwareType);
-    static QString          _parameterMetaDataFile          (Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int& majorVersion, int& minorVersion);
+    static FirmwarePlugin* _anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType);
+    static QString _parameterMetaDataFile(
+        Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int& majorVersion, int& minorVersion);
 
     typedef QPair<QString /* indexed name */, FactMetaData*> RegexFactMetaDataPair_t;
 
-    bool                                _noJsonMetadata             = true;
-    FactMetaData::NameToMetaDataMap_t   _nameToMetaDataMap;
-    QList<RegexFactMetaDataPair_t>      _indexedNameMetaDataList;
-    QObject*                            _opaqueParameterMetaData    = nullptr;
+    bool _noJsonMetadata = true;
+    FactMetaData::NameToMetaDataMap_t _nameToMetaDataMap;
+    QList<RegexFactMetaDataPair_t> _indexedNameMetaDataList;
+    QObject* _opaqueParameterMetaData = nullptr;
 
     static const char* _cachedMetaDataFilePrefix;
     static const char* _jsonParametersKey;

@@ -8,22 +8,22 @@
  ****************************************************************************/
 
 #include "VehicleHygrometerFactGroup.h"
-#include "Vehicle.h"
 #include "QGCGeo.h"
+#include "Vehicle.h"
 
-const char* VehicleHygrometerFactGroup::_hygroHumiFactName =      "humidity";
-const char* VehicleHygrometerFactGroup::_hygroTempFactName =    "temperature";
-const char* VehicleHygrometerFactGroup::_hygroIDFactName =    "hygrometerid";
+const char* VehicleHygrometerFactGroup::_hygroHumiFactName = "humidity";
+const char* VehicleHygrometerFactGroup::_hygroTempFactName = "temperature";
+const char* VehicleHygrometerFactGroup::_hygroIDFactName = "hygrometerid";
 
 VehicleHygrometerFactGroup::VehicleHygrometerFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/HygrometerFact.json", parent)
-    , _hygroTempFact             (0, _hygroTempFactName,         FactMetaData::valueTypeDouble)
-    , _hygroHumiFact             (0, _hygroHumiFactName,         FactMetaData::valueTypeDouble)
-    , _hygroIDFact               (0, _hygroIDFactName,           FactMetaData::valueTypeUint16)
-{   
-    _addFact(&_hygroTempFact,               _hygroTempFactName);
-    _addFact(&_hygroHumiFact,               _hygroHumiFactName);
-    _addFact(&_hygroIDFact,                 _hygroIDFactName);
+    , _hygroTempFact(0, _hygroTempFactName, FactMetaData::valueTypeDouble)
+    , _hygroHumiFact(0, _hygroHumiFactName, FactMetaData::valueTypeDouble)
+    , _hygroIDFact(0, _hygroIDFactName, FactMetaData::valueTypeUint16)
+{
+    _addFact(&_hygroTempFact, _hygroTempFactName);
+    _addFact(&_hygroHumiFact, _hygroHumiFactName);
+    _addFact(&_hygroIDFact, _hygroIDFactName);
 
     _hygroTempFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _hygroHumiFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -34,8 +34,8 @@ void VehicleHygrometerFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_m
 {
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HYGROMETER_SENSOR:
-       _handleHygrometerSensor(message);
-       break;
+        _handleHygrometerSensor(message);
+        break;
     default:
         break;
     }

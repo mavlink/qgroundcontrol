@@ -9,23 +9,22 @@
 
 #pragma once
 
-#include "Vehicle.h"
-#include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
+#include "Vehicle.h"
 
-#include <QObject>
 #include <QGeoCoordinate>
+#include <QObject>
 
 class TerrainFactGroup;
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainProtocolHandlerLog)
 
-class TerrainProtocolHandler : public QObject
-{
+class TerrainProtocolHandler : public QObject {
     Q_OBJECT
 
 public:
-    explicit TerrainProtocolHandler(Vehicle* vehicle, TerrainFactGroup* terrainFactGroup, QObject *parent = nullptr);
+    explicit TerrainProtocolHandler(Vehicle* vehicle, TerrainFactGroup* terrainFactGroup, QObject* parent = nullptr);
 
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
     bool mavlinkMessageReceived(const mavlink_message_t message);
@@ -34,13 +33,13 @@ private slots:
     void _sendNextTerrainData(void);
 
 private:
-    void _handleTerrainRequest  (const mavlink_message_t& message);
-    void _handleTerrainReport   (const mavlink_message_t& message);
-    void _sendTerrainData       (const QGeoCoordinate& swCorner, uint8_t gridBit);
+    void _handleTerrainRequest(const mavlink_message_t& message);
+    void _handleTerrainReport(const mavlink_message_t& message);
+    void _sendTerrainData(const QGeoCoordinate& swCorner, uint8_t gridBit);
 
-    Vehicle*                    _vehicle;
-    TerrainFactGroup*           _terrainFactGroup;
-    bool                        _terrainRequestActive =             false;
-    mavlink_terrain_request_t   _currentTerrainRequest;
-    QTimer                      _terrainDataSendTimer;
+    Vehicle* _vehicle;
+    TerrainFactGroup* _terrainFactGroup;
+    bool _terrainRequestActive = false;
+    mavlink_terrain_request_t _currentTerrainRequest;
+    QTimer _terrainDataSendTimer;
 };

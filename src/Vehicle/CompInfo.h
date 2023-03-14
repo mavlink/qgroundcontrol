@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 #include "FactMetaData.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 
 #include <QObject>
 
@@ -21,8 +21,7 @@ class FirmwarePlugin;
 class CompInfoGeneral;
 
 /// Base class for all CompInfo types
-class CompInfo : public QObject
-{
+class CompInfo : public QObject {
     Q_OBJECT
 
 public:
@@ -43,24 +42,24 @@ public:
 
     bool available() const { return !_uris.uriMetaData.isEmpty(); }
 
-    const COMP_METADATA_TYPE  type;
-    Vehicle* const      vehicle                = nullptr;
-    const uint8_t       compId                 = MAV_COMP_ID_ALL;
+    const COMP_METADATA_TYPE type;
+    Vehicle* const vehicle = nullptr;
+    const uint8_t compId = MAV_COMP_ID_ALL;
 
 private:
     friend class CompInfoGeneral;
 
     struct Uris {
-        bool                crcMetaDataValid            = false;
-        bool                crcMetaDataFallbackValid    = false;
+        bool crcMetaDataValid = false;
+        bool crcMetaDataFallbackValid = false;
 
-        uint32_t            crcMetaData            = 0;
-        uint32_t            crcMetaDataFallback    = 0;
+        uint32_t crcMetaData = 0;
+        uint32_t crcMetaDataFallback = 0;
 
-        QString             uriMetaData;
-        QString             uriMetaDataFallback;
-        QString             uriTranslation;
-        QString             uriTranslationFallback;
+        QString uriMetaData;
+        QString uriMetaDataFallback;
+        QString uriTranslation;
+        QString uriTranslationFallback;
     };
 
     Uris _uris;

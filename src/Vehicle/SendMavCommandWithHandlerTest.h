@@ -12,10 +12,9 @@
 #include "UnitTest.h"
 #include "Vehicle.h"
 
-class SendMavCommandWithHandlerTest : public UnitTest
-{
+class SendMavCommandWithHandlerTest : public UnitTest {
     Q_OBJECT
-    
+
 private slots:
     void _performTestCases(void);
     void _compIdAllFailure(void);
@@ -23,17 +22,19 @@ private slots:
 
 private:
     typedef struct {
-        MAV_CMD                             command;
-        MAV_RESULT                          expectedCommandResult;
-        uint8_t                             progress;
-        Vehicle::MavCmdResultFailureCode_t  expectedFailureCode;
-        int                                 expectedSendCount;
+        MAV_CMD command;
+        MAV_RESULT expectedCommandResult;
+        uint8_t progress;
+        Vehicle::MavCmdResultFailureCode_t expectedFailureCode;
+        int expectedSendCount;
     } TestCase_t;
 
     void _testCaseWorker(TestCase_t& testCase);
 
-    static void _mavCmdResultHandler            (void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode);
-    static void _compIdAllMavCmdResultHandler   (void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _mavCmdResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
+        Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _compIdAllMavCmdResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult,
+        uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode);
 
     static bool _handlerCalled;
 

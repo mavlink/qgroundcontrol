@@ -11,9 +11,9 @@
 #include "Vehicle.h"
 
 TrajectoryPoints::TrajectoryPoints(Vehicle* vehicle, QObject* parent)
-    : QObject       (parent)
-    , _vehicle      (vehicle)
-    , _lastAzimuth  (qQNaN())
+    : QObject(parent)
+    , _vehicle(vehicle)
+    , _lastAzimuth(qQNaN())
 {
 }
 

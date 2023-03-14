@@ -19,8 +19,7 @@
  * and restore back to default.
  * Note that only one set is active at a time.
  */
-class MAVLinkStreamConfig
-{
+class MAVLinkStreamConfig {
 public:
     using SetMessageIntervalCb = std::function<void(int messageId, int rate)>;
 
@@ -33,12 +32,9 @@ public:
     void restoreDefaults();
 
     void gotSetMessageIntervalAck();
+
 private:
-    enum class State {
-        Idle,
-        RestoringDefaults,
-        Configuring
-    };
+    enum class State { Idle, RestoringDefaults, Configuring };
 
     struct DesiredStreamRate {
         int messageId;
@@ -49,11 +45,11 @@ private:
     void nextDesiredRate();
     void setNextState(State state);
 
-    State _state{State::Idle};
+    State _state {State::Idle};
     QVector<DesiredStreamRate> _desiredRates;
     QVector<int> _changedIds;
 
-    State _nextState{State::Idle};
+    State _nextState {State::Idle};
     QVector<DesiredStreamRate> _nextDesiredRates;
 
     const SetMessageIntervalCb _messageIntervalCb;

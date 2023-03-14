@@ -17,8 +17,7 @@ class FactMetaData;
 class Vehicle;
 class FirmwarePlugin;
 
-class CompInfoEvents : public CompInfo
-{
+class CompInfoEvents : public CompInfo {
     Q_OBJECT
 
 public:

@@ -9,14 +9,14 @@
 
 #include "TerrainFactGroup.h"
 
-const char* TerrainFactGroup::_blocksPendingFactName =  "blocksPending";
-const char* TerrainFactGroup::_blocksLoadedFactName =   "blocksLoaded";
+const char* TerrainFactGroup::_blocksPendingFactName = "blocksPending";
+const char* TerrainFactGroup::_blocksLoadedFactName = "blocksLoaded";
 
 TerrainFactGroup::TerrainFactGroup(QObject* parent)
-    : FactGroup         (1000, ":/json/Vehicle/TerrainFactGroup.json", parent)
+    : FactGroup(1000, ":/json/Vehicle/TerrainFactGroup.json", parent)
     , _blocksPendingFact(0, _blocksPendingFactName, FactMetaData::valueTypeDouble)
-    , _blocksLoadedFact (0, _blocksLoadedFactName,  FactMetaData::valueTypeDouble)
+    , _blocksLoadedFact(0, _blocksLoadedFactName, FactMetaData::valueTypeDouble)
 {
-    _addFact(&_blocksPendingFact,        _blocksPendingFactName);
-    _addFact(&_blocksLoadedFact,       _blocksLoadedFactName);
+    _addFact(&_blocksPendingFact, _blocksPendingFactName);
+    _addFact(&_blocksLoadedFact, _blocksLoadedFactName);
 }
