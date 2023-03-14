@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-#include <QtCore>
-#include <QDateTime>
 #include <QDate>
+#include <QDateTime>
+#include <QtCore>
 
-#include "SimulatedPosition.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "QGCApplication.h"
+#include "SimulatedPosition.h"
 
 SimulatedPosition::SimulatedPosition()
     : QGeoPositionInfoSource(nullptr)
@@ -28,7 +28,8 @@ SimulatedPosition::SimulatedPosition()
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::VerticalSpeed, _verticalVelocityMetersPerSec);
 
     // When a vehicle shows up we switch location to the vehicle home position
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this,
+        &SimulatedPosition::_vehicleAdded);
 
     connect(&_updateTimer, &QTimer::timeout, this, &SimulatedPosition::_updatePosition);
 }
@@ -43,38 +44,26 @@ SimulatedPosition::PositioningMethods SimulatedPosition::supportedPositioningMet
     return AllPositioningMethods;
 }
 
-void SimulatedPosition::startUpdates(void)
-{
-    _updateTimer.start(qMax(updateInterval(), minimumUpdateInterval()));
-}
+void SimulatedPosition::startUpdates(void) { _updateTimer.start(qMax(updateInterval(), minimumUpdateInterval())); }
 
-void SimulatedPosition::stopUpdates(void)
-{
-    _updateTimer.stop();
-}
+void SimulatedPosition::stopUpdates(void) { _updateTimer.stop(); }
 
-void SimulatedPosition::requestUpdate(int /*timeout*/)
-{
-    emit updateTimeout();
-}
+void SimulatedPosition::requestUpdate(int /*timeout*/) { emit updateTimeout(); }
 
 void SimulatedPosition::_updatePosition(void)
 {
     int intervalMsecs = _updateTimer.interval();
 
-    QGeoCoordinate  coord =                 _lastPosition.coordinate();
-    double          horizontalDistance =    _horizontalVelocityMetersPerSec * (1000.0 / static_cast<double>(intervalMsecs));
-    double          verticalDistance =      _verticalVelocityMetersPerSec * (1000.0 / static_cast<double>(intervalMsecs));
+    QGeoCoordinate coord = _lastPosition.coordinate();
+    double horizontalDistance = _horizontalVelocityMetersPerSec * (1000.0 / static_cast<double>(intervalMsecs));
+    double verticalDistance = _verticalVelocityMetersPerSec * (1000.0 / static_cast<double>(intervalMsecs));
 
     _lastPosition.setCoordinate(coord.atDistanceAndAzimuth(horizontalDistance, _heading, verticalDistance));
 
     emit positionUpdated(_lastPosition);
 }
 
-QGeoPositionInfoSource::Error SimulatedPosition::error() const
-{
-    return QGeoPositionInfoSource::NoError;
-}
+QGeoPositionInfoSource::Error SimulatedPosition::error() const { return QGeoPositionInfoSource::NoError; }
 
 void SimulatedPosition::_vehicleAdded(Vehicle* vehicle)
 {
