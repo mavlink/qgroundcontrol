@@ -34,6 +34,24 @@
     "min":              0,
     "units":            "m",
     "default":          600
+},
+{
+    "name":         "rssiWarning",
+    "shortDesc":    "Local (drone) RSSI below this value will trigger a warning",
+    "type":         "double",
+    "default":      -90,
+    "units":        "dBm",
+    "min":          -128.0,
+    "max":          0.0
+},
+{
+    "name":         "rssiAlert",
+    "shortDesc":    "Local (drone) RSSI below this value will trigger an alert",
+    "type":         "double",
+    "default":      -105,
+    "units":        "dBm",
+    "min":          -128.0,
+    "max":          0.0
 }
 ]
 }

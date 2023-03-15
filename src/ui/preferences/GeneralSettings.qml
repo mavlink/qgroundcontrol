@@ -732,6 +732,20 @@ Rectangle {
                                 text:       qsTr("Show winch control menu")
                                 fact:       _aviantSettings.showWinchControlMenu
                             }
+                            QGCLabel {
+                                text:       qsTr("RSSI warning level")
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _valueFieldWidth
+                                fact:                   _aviantSettings.rssiWarning
+                            }
+                            QGCLabel {
+                                text:       qsTr("RSSI alert level")
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _valueFieldWidth
+                                fact:                   _aviantSettings.rssiAlert
+                            }
                         }
                     }
 
