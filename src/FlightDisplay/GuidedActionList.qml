@@ -14,6 +14,7 @@ import QtQuick.Layouts  1.2
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.Controllers   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.Palette       1.0
 
@@ -71,6 +72,11 @@ Rectangle {
         }
     ]
 
+    property var _customManager: CustomActionManager {
+        id: customManager
+    }
+    readonly property bool hasCustomActions: QGroundControl.settingsManager.flyViewSettings.enableCustomActions.rawValue && customManager.hasActions
+
     QGCPalette { id: qgcPal }
 
     DeadMouseArea {
@@ -102,6 +108,7 @@ Rectangle {
                 id:         actionRow
                 spacing:    _actionHorizSpacing
 
+                // These are the pre-defined Actions
                 Repeater {
                     id:     actionRepeater
                     model:  _model
@@ -119,8 +126,6 @@ Rectangle {
                             Layout.minimumWidth:    _actionWidth
                             Layout.maximumWidth:    _actionWidth
                             Layout.fillHeight:      true
-
-                            property real _width: ScreenTools.defaultFontPixelWidth * 25
                         }
 
                         QGCButton {
@@ -133,8 +138,41 @@ Rectangle {
                                 guidedController.confirmAction(modelData.action)
                             }
                         }
-                    }
-                }
+                    } // ColumnLayout
+                } // Repeater
+
+                // These are the user-defined Custom Actions
+                Repeater {
+                    id:     customRepeater
+                    model:  customManager.actions
+
+                    ColumnLayout {
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
+                        visible:            _root.hasCustomActions
+                        Layout.fillHeight:  true
+
+                        QGCLabel {
+                            id:                     customMessage
+                            text:                   "Custom Action #" + (index + 1)
+                            horizontalAlignment:    Text.AlignHCenter
+                            wrapMode:               Text.WordWrap
+                            Layout.minimumWidth:    _actionWidth
+                            Layout.maximumWidth:    _actionWidth
+                            Layout.fillHeight:      true
+                        }
+
+                        QGCButton {
+                            id:                 customButton
+                            text:               object.label
+                            Layout.alignment:   Qt.AlignCenter
+
+                            onClicked: {
+                                var vehicle = QGroundControl.multiVehicleManager.activeVehicle
+                                object.sendTo(vehicle)
+                            }
+                        }
+                    } // ColumnLayout
+                } // Repeater
             }
         }
     }
