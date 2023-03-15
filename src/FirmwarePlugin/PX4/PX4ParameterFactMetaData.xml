@@ -2084,7 +2084,7 @@
         <value code="5">None</value>
       </values>
     </parameter>
-    <parameter name="EKF2_MAG_YAWLIM" default="0.25" type="FLOAT">
+    <parameter name="EKF2_MAG_YAWLIM" default="0.20" type="FLOAT">
       <short_desc>Yaw rate threshold used by automatic selection of magnetometer fusion method</short_desc>
       <long_desc>This parameter is used when the magnetometer fusion method is set automatically (EKF2_MAG_TYPE = 0). If the filtered yaw rate is greater than this parameter value, then the EKF will use 3-axis magnetometer fusion.</long_desc>
       <min>0.0</min>
