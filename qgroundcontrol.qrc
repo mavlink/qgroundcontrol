@@ -81,6 +81,7 @@
         <file alias="QGroundControl/Controls/AppMessages.qml">src/QmlControls/AppMessages.qml</file>
         <file alias="QGroundControl/Controls/AltModeDialog.qml">src/QmlControls/AltModeDialog.qml</file>
         <file alias="QGroundControl/Controls/AxisMonitor.qml">src/QmlControls/AxisMonitor.qml</file>
+        <file alias="QGroundControl/Controls/BatteryIndicatorContentItem.qml">src/ui/toolbar/BatteryIndicatorContentItem.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcCamera.qml">src/PlanView/CameraCalcCamera.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcGrid.qml">src/PlanView/CameraCalcGrid.qml</file>
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
@@ -95,6 +96,7 @@
         <file alias="QGroundControl/Controls/FactSliderPanel.qml">src/QmlControls/FactSliderPanel.qml</file>
         <file alias="QGroundControl/Controls/FirstRunPrompt.qml">src/FirstRunPromptDialogs/FirstRunPrompt.qml</file>
         <file alias="QGroundControl/Controls/FileButton.qml">src/QmlControls/FileButton.qml</file>
+        <file alias="QGroundControl/Controls/FlightModeToolIndicatorContentItem.qml">src/ui/toolbar/FlightModeToolIndicatorContentItem.qml</file>
         <file alias="QGroundControl/Controls/FlightModeDropdown.qml">src/QmlControls/FlightModeDropdown.qml</file>
         <file alias="QGroundControl/Controls/FlightModeMenu.qml">src/QmlControls/FlightModeMenu.qml</file>
         <file alias="QGroundControl/Controls/FWLandingPatternMapVisual.qml">src/PlanView/FWLandingPatternMapVisual.qml</file>
@@ -102,6 +104,7 @@
         <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/PlanView/GeoFenceMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/HorizontalFactValueGrid.qml">src/QmlControls/HorizontalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
+        <file alias="QGroundControl/Controls/IndicatorPageGroup.qml">src/QmlControls/IndicatorPageGroup.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueValue.qml">src/QmlControls/InstrumentValueValue.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueEditDialog.qml">src/QmlControls/InstrumentValueEditDialog.qml</file>

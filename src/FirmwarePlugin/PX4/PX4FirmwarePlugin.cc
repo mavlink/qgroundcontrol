@@ -729,6 +729,11 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
     return timeStr;
 }
 
+QVariant PX4FirmwarePlugin::mainStatusIndicatorExpandedItem(const Vehicle*) const
+{
+    return QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/MainStatusIndicatorExpandedItem.qml"));
+}
+
 const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle*)
 {
     //-- Default list of indicators for all vehicles.

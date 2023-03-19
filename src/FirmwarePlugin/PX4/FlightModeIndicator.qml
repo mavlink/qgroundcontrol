@@ -54,12 +54,11 @@ RowLayout {
     }
 
     Component {
-        id:             drawerComponent
+        id: drawerComponent
 
         ToolIndicatorPage {
             id:         mainLayout
             showExpand: true
-            spacing:    margins
 
             property var  activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
@@ -70,78 +69,11 @@ RowLayout {
             property Fact mpc_z_vel_all:            controller.getParameterFact(-1, "MPC_Z_VEL_ALL", false)
             property var  qgcPal:                   QGroundControl.globalPalette
             property real margins:                  ScreenTools.defaultFontPixelHeight
-            property var  flightModeSettings:       QGroundControl.settingsManager.flightModeSettings
-            property var  hiddenFlightModesFact:    null
-            property var  hiddenFlightModesList:    [] 
 
             FactPanelController { id: controller }
 
-            Component.onCompleted: {
-                if (activeVehicle.px4Firmware) {
-                    hiddenFlightModesFact = flightModeSettings.px4HiddenFlightModes
-                } else if (activeVehicle.apmFirmware) {
-                    hiddenFlightModesFact = flightModeSettings.apmHiddenFlightModes
-                } else {
-                    modeEditCheckBox.enabled = false
-                }
-                // Split string into list of flight modes
-                if (hiddenFlightModesFact) {
-                    hiddenFlightModesList = hiddenFlightModesFact.value.split(",")
-                }
-            }
-
             // Mode list
-            contentItem: ColumnLayout {
-                id:         modeColumn
-                spacing:    ScreenTools.defaultFontPixelWidth / 2
-
-                QGCCheckBox {
-                    id:                 modeEditCheckBox
-                    Layout.alignment:   Qt.AlignHCenter
-                    text:               qsTr("Edit")
-                    visible:            enabled && expanded
-
-                    onClicked: {
-                        for (var i=0; i<modeRepeater.count; i++) {
-                            var button = modeRepeater.itemAt(i)
-                            if (modeEditCheckBox.checked) {
-                                button.checked = !hiddenFlightModesList.find(item => { return item === button.text } )
-                            } else {
-                                button.checked = false
-                            }
-                        }
-                    }
-                }
-
-                Repeater {
-                    id:     modeRepeater
-                    model:  activeVehicle ? activeVehicle.flightModes : []
-
-                    QGCButton {
-                        id:                 modeButton
-                        text:               modelData
-                        Layout.fillWidth:   true
-                        checkable:          modeEditCheckBox.checked
-                        visible:            modeEditCheckBox.checked || !hiddenFlightModesList.find(item => { return item === modelData } )
-
-                        onClicked: {
-                            if (modeEditCheckBox.checked) {
-                                hiddenFlightModesList = []
-                                for (var i=0; i<modeRepeater.count; i++) {
-                                    var button = modeRepeater.itemAt(i)
-                                    if (!button.checked) {
-                                        hiddenFlightModesList.push(button.text)
-                                    }
-                                }
-                                hiddenFlightModesFact.value = hiddenFlightModesList.join(",")
-                            } else {
-                                activeVehicle.flightMode = modelData
-                                indicatorDrawer.close()
-                            }
-                        }
-                    }
-                }
-            }
+            contentItem: FlightModeToolIndicatorContentItem { }
 
             // Settings
             expandedItem: Column {
@@ -345,7 +277,7 @@ RowLayout {
                         text: qsTr("Configure")
                         onClicked: {                            
                             mainWindow.showVehicleSetupTool(qsTr("Radio"))
-                            indicatorDrawer.close()
+                            drawer.close()
                         }
                     }
                 }

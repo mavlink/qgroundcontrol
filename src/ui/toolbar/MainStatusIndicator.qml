@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
-import QtQuick.Layouts  1.11
+import QtQuick          2.15
+import QtQuick.Layouts  1.15
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -113,7 +113,7 @@ RowLayout {
             anchors.verticalCenter: parent.verticalCenter
             height:                 _root.height
             enabled:                _activeVehicle
-            onClicked:              mainWindow.showIndicatorPopup(mainStatusLabel, sensorStatusInfoComponent)
+            onClicked:              mainWindow.showIndicatorDrawer(sensorStatusIndicatorPage)
         }
     }
 
@@ -138,231 +138,168 @@ RowLayout {
 
         QGCMouseArea {
             anchors.fill:   parent
-            onClicked:      mainWindow.showIndicatorPopup(vtolModeLabel, vtolTransitionComponent)
+            onClicked:      mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
         }
     }
 
     Component {
-        id: sensorStatusInfoComponent
+        id: sensorStatusIndicatorPage
 
-        Rectangle {
-            width:          flickable.width + (_margins * 2)
-            height:         flickable.height + (_margins * 2)
-            radius:         ScreenTools.defaultFontPixelHeight * 0.5
-            color:          qgcPal.window
-            border.color:   qgcPal.text
+        ToolIndicatorPage {
+            showExpand: _activeVehicle.mainStatusIndicatorExpandedItem ? true : false
 
-            QGCFlickable {
-                id:                 flickable
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                width:              mainLayout.width
-                height:             mainWindow.contentItem.height - (indicatorPopup.padding * 2) - (_margins * 2)
-                flickableDirection: Flickable.VerticalFlick
-                contentHeight:      mainLayout.height
-                contentWidth:       mainLayout.width
+            contentItem: Column {
+                id:         mainLayout
+                spacing:    _spacing
 
-                ColumnLayout {
-                    id:         mainLayout
-                    spacing:    _spacing
+                QGCButton {
+                    // FIXME: forceArm is not possible anymore if _healthAndArmingChecksSupported == true
+                    enabled:    _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
+                    text:       _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
 
-                    QGCButton {
-                        Layout.leftMargin:  _healthAndArmingChecksSupported ? width / 2 : 0
-                        Layout.alignment:   _healthAndArmingChecksSupported ? Qt.AlignLeft : Qt.AlignHCenter
-                        // FIXME: forceArm is not possible anymore if _healthAndArmingChecksSupported == true
-                        enabled:            _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
-                        text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
+                    property bool forceArm: false
 
-                        property bool forceArm: false
+                    onPressAndHold: forceArm = true
 
-                        onPressAndHold: forceArm = true
-
-                        onClicked: {
-                            if (_armed) {
-                                mainWindow.disarmVehicleRequest()
+                    onClicked: {
+                        if (_armed) {
+                            mainWindow.disarmVehicleRequest()
+                        } else {
+                            if (forceArm) {
+                                mainWindow.forceArmVehicleRequest()
                             } else {
-                                if (forceArm) {
-                                    mainWindow.forceArmVehicleRequest()
-                                } else {
-                                    mainWindow.armVehicleRequest()
-                                }
-                            }
-                            forceArm = false
-                            mainWindow.hideIndicatorPopup()
-                        }
-                    }
-
-                    QGCLabel {
-                        Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Sensor Status")
-                        visible:            !_healthAndArmingChecksSupported
-                    }
-
-                    GridLayout {
-                        rowSpacing:     _spacing
-                        columnSpacing:  _spacing
-                        rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
-                        flow:           GridLayout.TopToBottom
-                        visible:        !_healthAndArmingChecksSupported
-
-                        Repeater {
-                            model: _activeVehicle.sysStatusSensorInfo.sensorNames
-
-                            QGCLabel {
-                                text: modelData
+                                mainWindow.armVehicleRequest()
                             }
                         }
-
-                        Repeater {
-                            model: _activeVehicle.sysStatusSensorInfo.sensorStatus
-
-                            QGCLabel {
-                                text: modelData
-                            }
-                        }
+                        forceArm = false
+                        drawer.close()()
                     }
-
-
-                    QGCLabel {
-                        text:               qsTr("Arming Check Report:")
-                        visible:            _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
-                    }
-                    // List health and arming checks
-                    QGCListView {
-                        visible:            _healthAndArmingChecksSupported
-                        anchors.margins:    ScreenTools.defaultFontPixelHeight
-                        spacing:            ScreenTools.defaultFontPixelWidth
-                        width:              mainWindow.width * 0.66666
-                        height:             contentHeight
-                        model:              _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
-                        delegate:           listdelegate
-                    }
-
-                    FactPanelController {
-                        id: controller
-                    }
-
-                    Component {
-                        id: listdelegate
-
-                        Column {
-                            width:      parent ? parent.width : 0
-                            Row {
-                                width:  parent.width
-                                QGCLabel {
-                                    id:           message
-                                    text:         object.message
-                                    wrapMode:     Text.WordWrap
-                                    textFormat:   TextEdit.RichText
-                                    width:        parent.width - arrowDownIndicator.width
-                                    color:        object.severity == 'error' ? qgcPal.colorRed : object.severity == 'warning' ? qgcPal.colorOrange : qgcPal.text
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: {
-                                            if (object.description != "")
-                                                object.expanded = !object.expanded
-                                        }
-                                    }
-                                }
-
-                                QGCColoredImage {
-                                    id:                     arrowDownIndicator
-                                    height:                 1.5 * ScreenTools.defaultFontPixelWidth
-                                    width:                  height
-                                    source:                 "/qmlimages/arrow-down.png"
-                                    color:                  qgcPal.text
-                                    visible:                object.description != ""
-                                    MouseArea {
-                                        anchors.fill:       parent
-                                        onClicked:          object.expanded = !object.expanded
-                                    }
-                                }
-                            }
-                            Rectangle {
-                                property var margin:      ScreenTools.defaultFontPixelWidth
-                                id:                       descriptionRect
-                                width:                    parent.width
-                                height:                   description.height + margin
-                                color:                    qgcPal.windowShade
-                                visible:                  false
-                                Connections {
-                                    target:               object
-                                    function onExpandedChanged() {
-                                        if (object.expanded) {
-                                            description.height = description.preferredHeight
-                                        } else {
-                                            description.height = 0
-                                        }
-                                    }
-                                }
-
-                                Behavior on height {
-                                    NumberAnimation {
-                                        id: animation
-                                        duration: 150
-                                        onRunningChanged: {
-                                            descriptionRect.visible = animation.running || object.expanded
-                                        }
-                                    }
-                                }
-                                QGCLabel {
-                                    id:                 description
-                                    anchors.centerIn:   parent
-                                    width:              parent.width - parent.margin * 2
-                                    height:             0
-                                    text:               object.description
-                                    textFormat:         TextEdit.RichText
-                                    wrapMode:           Text.WordWrap
-                                    clip:               true
-                                    property var fact:  null
-                                    onLinkActivated: {
-                                        if (link.startsWith('param://')) {
-                                            var paramName = link.substr(8);
-                                            fact = controller.getParameterFact(-1, paramName, true)
-                                            if (fact != null) {
-                                                paramEditorDialogComponent.createObject(mainWindow).open()
-                                            }
-                                        } else {
-                                            Qt.openUrlExternally(link);
-                                        }
-                                    }
-                                }
-
-                                Component {
-                                    id: paramEditorDialogComponent
-
-                                    ParameterEditorDialog {
-                                        title:          qsTr("Edit Parameter")
-                                        fact:           description.fact
-                                        destroyOnClose: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-
                 }
+
+                QGCLabel {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    text:                       qsTr("Sensor Status")
+                    visible:                    !_healthAndArmingChecksSupported
+                }
+
+                GridLayout {
+                    rowSpacing:     _spacing
+                    columnSpacing:  _spacing
+                    rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
+                    flow:           GridLayout.TopToBottom
+                    visible:        !_healthAndArmingChecksSupported
+
+                    Repeater {
+                        model: _activeVehicle.sysStatusSensorInfo.sensorNames
+                        QGCLabel { text: modelData }
+                    }
+
+                    Repeater {
+                        model: _activeVehicle.sysStatusSensorInfo.sensorStatus
+                        QGCLabel { text: modelData }
+                    }
+                }
+
+
+                QGCLabel {
+                    text:       qsTr("Overall Status")
+                    visible:    _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
+                }
+                // List health and arming checks
+                Repeater {
+                    visible:    _healthAndArmingChecksSupported
+                    model:      _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
+                    delegate:   listdelegate
+                }
+
+                FactPanelController {
+                    id: controller
+                }
+
+                Component {
+                    id: listdelegate
+
+                    Column {
+                        Row {
+                            spacing: ScreenTools.defaultFontPixelHeight
+
+                            QGCLabel {
+                                id:           message
+                                text:         object.message
+                                textFormat:   TextEdit.RichText
+                                color:        object.severity == 'error' ? qgcPal.colorRed : object.severity == 'warning' ? qgcPal.colorOrange : qgcPal.text
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        if (object.description != "")
+                                            object.expanded = !object.expanded
+                                    }
+                                }
+                            }
+
+                            QGCColoredImage {
+                                id:                     arrowDownIndicator
+                                anchors.verticalCenter: parent.verticalCenter
+                                height:                 1.5 * ScreenTools.defaultFontPixelWidth
+                                width:                  height
+                                source:                 "/qmlimages/arrow-down.png"
+                                color:                  qgcPal.text
+                                visible:                object.description != ""
+                                MouseArea {
+                                    anchors.fill:       parent
+                                    onClicked:          object.expanded = !object.expanded
+                                }
+                            }
+                        }
+
+                        QGCLabel {
+                            id:                 description
+                            text:               object.description
+                            textFormat:         TextEdit.RichText
+                            clip:               true
+                            visible:            object.expanded
+                            
+                            property var fact:  null
+
+                            onLinkActivated: {
+                                if (link.startsWith('param://')) {
+                                    var paramName = link.substr(8);
+                                    fact = controller.getParameterFact(-1, paramName, true)
+                                    if (fact != null) {
+                                        paramEditorDialogComponent.createObject(mainWindow).open()
+                                    }
+                                } else {
+                                    Qt.openUrlExternally(link);
+                                }
+                            }
+
+                            Component {
+                                id: paramEditorDialogComponent
+
+                                ParameterEditorDialog {
+                                    title:          qsTr("Edit Parameter")
+                                    fact:           description.fact
+                                    destroyOnClose: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            expandedItem: Loader {
+                id:     expandedItemLoader
+                source: _activeVehicle.mainStatusIndicatorExpandedItem
             }
         }
     }
 
     Component {
-        id: vtolTransitionComponent
+        id: vtolTransitionIndicatorPage
 
-        Rectangle {
-            width:          mainLayout.width   + (_margins * 2)
-            height:         mainLayout.height  + (_margins * 2)
-            radius:         ScreenTools.defaultFontPixelHeight * 0.5
-            color:          qgcPal.window
-            border.color:   qgcPal.text
-
-            QGCButton {
-                id:                 mainLayout
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                text:               _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
+        ToolIndicatorPage {
+            contentItem: QGCButton {
+                text: _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
 
                 onClicked: {
                     if (_vtolInFWDFlight) {
@@ -370,7 +307,7 @@ RowLayout {
                     } else {
                         mainWindow.vtolTransitionToFwdFlightRequest()
                     }
-                    mainWindow.hideIndicatorPopup()
+                    drawer.close()
                 }
             }
         }

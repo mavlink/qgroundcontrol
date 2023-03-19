@@ -75,8 +75,6 @@ Item {
         ToolIndicatorPage {
             showExpand: true
 
-            spacing: _margins
-
             property real _margins: ScreenTools.defaultFontPixelHeight
             property real _editFieldWidth
 

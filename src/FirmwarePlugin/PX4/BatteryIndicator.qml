@@ -61,132 +61,61 @@ Item {
         ToolIndicatorPage {
             showExpand: true
 
-            spacing: _margins
-
             property real _margins: ScreenTools.defaultFontPixelHeight
 
             FactPanelController { id: controller }
 
-            contentItem: ColumnLayout {
-                id:         mainLayout
-                spacing:    ScreenTools.defaultFontPixelHeight
-
-                QGCLabel {
-                    Layout.alignment:   Qt.AlignCenter
-                    text:               qsTr("Battery Status")
-                    font.family:        ScreenTools.demiboldFontFamily
-                }
-
-                RowLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    ColumnLayout {
-                        Repeater {
-                            model: _activeVehicle ? _activeVehicle.batteries : 0
-
-                            ColumnLayout {
-                                spacing: 0
-
-                                property var batteryValuesAvailable: nameAvailableLoader.item
-
-                                Loader {
-                                    id:                 nameAvailableLoader
-                                    sourceComponent:    batteryValuesAvailableComponent
-
-                                    property var battery: object
-                                }
-
-                                QGCLabel { text: qsTr("Battery %1").arg(object.id.rawValue) }
-                                QGCLabel { text: qsTr("Charge State");                          visible: batteryValuesAvailable.chargeStateAvailable }
-                                QGCLabel { text: qsTr("Remaining");                             visible: batteryValuesAvailable.timeRemainingAvailable }
-                                QGCLabel { text: qsTr("Remaining") }
-                                QGCLabel { text: qsTr("Voltage") }
-                                QGCLabel { text: qsTr("Consumed");                              visible: batteryValuesAvailable.mahConsumedAvailable }
-                                QGCLabel { text: qsTr("Temperature");                           visible: batteryValuesAvailable.temperatureAvailable }
-                                QGCLabel { text: qsTr("Function");                              visible: batteryValuesAvailable.functionAvailable }
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        Repeater {
-                            model: _activeVehicle ? _activeVehicle.batteries : 0
-
-                            ColumnLayout {
-                                spacing: 0
-
-                                property var batteryValuesAvailable: valueAvailableLoader.item
-
-                                Loader {
-                                    id:                 valueAvailableLoader
-                                    sourceComponent:    batteryValuesAvailableComponent
-
-                                    property var battery: object
-                                }
-
-                                QGCLabel { text: "" }
-                                QGCLabel { text: object.chargeState.enumStringValue;                                        visible: batteryValuesAvailable.chargeStateAvailable }
-                                QGCLabel { text: object.timeRemainingStr.value;                                             visible: batteryValuesAvailable.timeRemainingAvailable }
-                                QGCLabel { text: object.percentRemaining.valueString + " " + object.percentRemaining.units }
-                                QGCLabel { text: object.voltage.valueString + " " + object.voltage.units }
-                                QGCLabel { text: object.mahConsumed.valueString + " " + object.mahConsumed.units;           visible: batteryValuesAvailable.mahConsumedAvailable }
-                                QGCLabel { text: object.temperature.valueString + " " + object.temperature.units;           visible: batteryValuesAvailable.temperatureAvailable }
-                                QGCLabel { text: object.function.enumStringValue;                                           visible: batteryValuesAvailable.functionAvailable }
-                            }
-                        }
-                    }
-                }
-            }
-
+            contentItem: BatteryIndicatorContentItem { }
+            
             expandedItem: ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                QGCLabel { text: qsTr("Low Battery Failsafe") }
+                IndicatorPageGroup {
+                    heading: qsTr("Low Battery Failsafe")
 
-                GridLayout {
-                    columns: 2
-                    columnSpacing: ScreenTools.defaultFontPixelHeight
+                    GridLayout {
+                        columns: 2
+                        columnSpacing: ScreenTools.defaultFontPixelHeight
 
-                    QGCLabel { text: qsTr("Battery Warn Level") }
-                    FactTextField {
-                        fact: controller.getParameterFact(-1, "BAT_LOW_THR")
-                    }
+                        QGCLabel { text: qsTr("Battery Warn Level") }
+                        FactTextField {
+                            fact: controller.getParameterFact(-1, "BAT_LOW_THR")
+                        }
 
-                    QGCLabel { text: qsTr("Battery Failsafe Level") }
-                    FactTextField {
-                        Layout.fillWidth:   true
-                        fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
-                    }
+                        QGCLabel { text: qsTr("Battery Failsafe Level") }
+                        FactTextField {
+                            Layout.fillWidth:   true
+                            fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
+                        }
 
-                    QGCLabel { text: qsTr("Failsafe Action") }
-                    FactComboBox {
-                        Layout.fillWidth:   true
-                        fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-                        indexModel:         false
-                    }
+                        QGCLabel { text: qsTr("Failsafe Action") }
+                        FactComboBox {
+                            Layout.fillWidth:   true
+                            fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+                            indexModel:         false
+                        }
 
-                    QGCLabel { text: qsTr("Battery Emergency Level") }
-                    FactTextField {
-                        fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
-                        Layout.fillWidth:   true
+                        QGCLabel { text: qsTr("Battery Emergency Level") }
+                        FactTextField {
+                            fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
+                            Layout.fillWidth:   true
+                        }
                     }
                 }
 
-                Rectangle {
-                    height:             1
-                    Layout.fillWidth:   true
-                    color:              QGroundControl.globalPalette.text
-                }
-
-                RowLayout {
+                IndicatorPageGroup {
                     Layout.fillWidth: true
+                    
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                    QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Power") }
-                    QGCButton {
-                        text: qsTr("Configure")
-                        onClicked: {                            
-                            mainWindow.showVehicleSetupTool(qsTr("Power"))
-                            indicatorDrawer.close()
+                        QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Power") }
+                        QGCButton {
+                            text: qsTr("Configure")
+                            onClicked: {                            
+                                mainWindow.showVehicleSetupTool(qsTr("Power"))
+                                indicatorDrawer.close()
+                            }
                         }
                     }
                 }

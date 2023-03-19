@@ -4,6 +4,7 @@ AnalyzePage                             1.0 AnalyzePage.qml
 AppMessages                             1.0 AppMessages.qml
 AltModeDialog                           1.0 AltModeDialog.qml
 AxisMonitor                             1.0 AxisMonitor.qml
+BatteryIndicatorContentItem             1.0 BatteryIndicatorContentItem.qml
 CameraCalcCamera                        1.0 CameraCalcCamera.qml
 CameraCalcGrid                          1.0 CameraCalcGrid.qml
 ContentAreaCalc                         1.0 ContentAreaCalc.qml
@@ -19,6 +20,7 @@ FactSlider                              1.0 FactSlider.qml
 FactSliderPanel                         1.0 FactSliderPanel.qml
 FirstRunPrompt                          1.0 FirstRunPrompt.qml
 FileButton                              1.0 FileButton.qml
+FlightModeToolIndicatorContentItem      1.0 FlightModeToolIndicatorContentItem.qml
 FlightModeDropdown                      1.0 FlightModeDropdown.qml
 FlightModeMenu                          1.0 FlightModeMenu.qml
 GeoFenceEditor                          1.0 GeoFenceEditor.qml
@@ -27,6 +29,7 @@ HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
 IndicatorButton                         1.0 IndicatorButton.qml
+IndicatorPageGroup                      1.0 IndicatorPageGroup.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml
 InstrumentValueValue                    1.0 InstrumentValueValue.qml
 InstrumentValueEditDialog               1.0 InstrumentValueEditDialog.qml

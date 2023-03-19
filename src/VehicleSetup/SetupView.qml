@@ -102,6 +102,9 @@ Rectangle {
                 break;
             }
         }
+        if (panelButtonName === parametersButton.text) {
+            parametersButton.clicked()
+        }
     }
 
     Component.onCompleted: _showSummaryPanel()
@@ -300,6 +303,7 @@ Rectangle {
             }
 
             SubMenuButton {
+                id:                 parametersButton
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
                 visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&

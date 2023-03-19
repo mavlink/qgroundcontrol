@@ -273,22 +273,21 @@ ApplicationWindow {
 
     function showToolSelectDialog() {
         if (!mainWindow.preventViewSwitch()) {
-            toolSelectDialogComponent.createObject(mainWindow).open()
+            mainWindow.showIndicatorDrawer(toolSelectComponent)
         }
     }
 
     Component {
-        id: toolSelectDialogComponent
+        id: toolSelectComponent
 
-        QGCPopupDialog {
+        ToolIndicatorPage {
             id:         toolSelectDialog
-            title:      qsTr("Select Tool")
-            buttons:    StandardButton.Close
+            showExpand: false
 
             property real _toolButtonHeight:    ScreenTools.defaultFontPixelHeight * 3
             property real _margins:             ScreenTools.defaultFontPixelWidth
 
-            ColumnLayout {
+            contentItem: ColumnLayout {
                 width:  innerLayout.width + (toolSelectDialog._margins * 2)
                 height: innerLayout.height + (toolSelectDialog._margins * 2)
 
@@ -306,7 +305,7 @@ ApplicationWindow {
                         imageResource:      "/qmlimages/Gears.svg"
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
-                                toolSelectDialog.close()
+                                drawer.close()
                                 mainWindow.showVehicleSetupTool()
                             }
                         }
@@ -322,7 +321,7 @@ ApplicationWindow {
                         visible:            QGroundControl.corePlugin.showAdvancedUI
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
-                                toolSelectDialog.close()
+                                drawer.close()
                                 mainWindow.showAnalyzeTool()
                             }
                         }
@@ -338,7 +337,7 @@ ApplicationWindow {
                         visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
-                                toolSelectDialog.close()
+                                drawer.close()
                                 mainWindow.showSettingsTool()
                             }
                         }
