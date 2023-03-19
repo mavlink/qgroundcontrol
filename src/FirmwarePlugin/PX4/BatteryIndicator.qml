@@ -58,19 +58,18 @@ Item {
     Component {
         id: batteryPopup
 
-        RowLayout {
-            spacing: _margins
+        ToolIndicatorPage {
+            showExpand: true
 
-            property bool showExpand: true
+            spacing: _margins
 
             property real _margins: ScreenTools.defaultFontPixelHeight
 
             FactPanelController { id: controller }
 
-            ColumnLayout {
-                id:                 mainLayout
-                Layout.alignment:   Qt.AlignTop
-                spacing:            ScreenTools.defaultFontPixelHeight
+            contentItem: ColumnLayout {
+                id:         mainLayout
+                spacing:    ScreenTools.defaultFontPixelHeight
 
                 QGCLabel {
                     Layout.alignment:   Qt.AlignCenter
@@ -139,17 +138,8 @@ Item {
                 }
             }
 
-            Rectangle {
-                Layout.fillHeight:  true
-                width:              1
-                color:              QGroundControl.globalPalette.text
-                visible:            expanded
-            }
-
-            ColumnLayout {
-                Layout.alignment:   Qt.AlignTop
-                visible:            expanded
-                spacing:            ScreenTools.defaultFontPixelHeight / 2
+            expandedItem: ColumnLayout {
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
                 QGCLabel { text: qsTr("Low Battery Failsafe") }
 

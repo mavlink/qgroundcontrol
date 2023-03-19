@@ -29,20 +29,59 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
+    QGCColoredImage {
+        id:                 gpsIcon
+        width:              height
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        source:             "/qmlimages/Gps.svg"
+        fillMode:           Image.PreserveAspectFit
+        sourceSize.height:  height
+        opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+        color:              qgcPal.buttonText
+    }
+
+    Column {
+        id:                     gpsValuesColumn
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+        anchors.left:           gpsIcon.right
+
+        QGCLabel {
+            anchors.horizontalCenter:   hdopValue.horizontalCenter
+            visible:                    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
+            color:                      qgcPal.buttonText
+            text:                       _activeVehicle ? _activeVehicle.gps.count.valueString : ""
+        }
+
+        QGCLabel {
+            id:         hdopValue
+            visible:    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
+            color:      qgcPal.buttonText
+            text:       _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
+        }
+    }
+
+    MouseArea {
+        anchors.fill:   parent
+        onClicked: {
+            mainWindow.showIndicatorDrawer(gpsInfo)
+        }
+    }
+
     Component {
         id: gpsInfo
 
-        RowLayout {
-            spacing: _margins
+        ToolIndicatorPage {
+            showExpand: true
 
-            property bool showExpand: true
+            spacing: _margins
 
             property real _margins: ScreenTools.defaultFontPixelHeight
             property real _editFieldWidth
 
-            Column {
-                Layout.alignment:   Qt.AlignTop
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+            contentItem: Column {
+                spacing:   ScreenTools.defaultFontPixelHeight * 0.5
 
                 QGCLabel {
                     id:             gpsLabel
@@ -71,19 +110,10 @@ Item {
                     QGCLabel { text: _activeVehicle ? _activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
                 }
             }
-
-            Rectangle {
-                Layout.fillHeight:  true
-                width:              1
-                color:              QGroundControl.globalPalette.text
-                visible:            expanded
-            }
-
-            GridLayout {
-                id:                 rtkGrid
-                Layout.alignment:   Qt.AlignTop
-                columns:            3
-                visible:            expanded
+                
+            expandedItem: GridLayout {
+                id:         rtkGrid
+                columns:    3
 
                 property var  rtkSettings:      QGroundControl.settingsManager.rtkSettings
                 property bool useFixedPosition: rtkSettings.useFixedBasePosition.rawValue
@@ -202,46 +232,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    QGCColoredImage {
-        id:                 gpsIcon
-        width:              height
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        source:             "/qmlimages/Gps.svg"
-        fillMode:           Image.PreserveAspectFit
-        sourceSize.height:  height
-        opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
-        color:              qgcPal.buttonText
-    }
-
-    Column {
-        id:                     gpsValuesColumn
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
-        anchors.left:           gpsIcon.right
-
-        QGCLabel {
-            anchors.horizontalCenter:   hdopValue.horizontalCenter
-            visible:                    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
-            color:                      qgcPal.buttonText
-            text:                       _activeVehicle ? _activeVehicle.gps.count.valueString : ""
-        }
-
-        QGCLabel {
-            id:         hdopValue
-            visible:    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
-            color:      qgcPal.buttonText
-            text:       _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
-        }
-    }
-
-    MouseArea {
-        anchors.fill:   parent
-        onClicked: {
-            mainWindow.showIndicatorDrawer(gpsInfo)
         }
     }
 }

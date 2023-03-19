@@ -56,11 +56,10 @@ RowLayout {
     Component {
         id:             drawerComponent
 
-        RowLayout {
+        ToolIndicatorPage {
             id:         mainLayout
+            showExpand: true
             spacing:    margins
-
-            property bool showExpand: true // Tells main window to show the expand widget
 
             property var  activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
@@ -92,10 +91,9 @@ RowLayout {
             }
 
             // Mode list
-            ColumnLayout {
-                id:                 modeColumn
-                Layout.alignment:   Qt.AlignTop
-                spacing:            ScreenTools.defaultFontPixelWidth / 2
+            contentItem: ColumnLayout {
+                id:         modeColumn
+                spacing:    ScreenTools.defaultFontPixelWidth / 2
 
                 QGCCheckBox {
                     id:                 modeEditCheckBox
@@ -145,18 +143,10 @@ RowLayout {
                 }
             }
 
-            Rectangle {
-                Layout.fillHeight:  true
-                width:              1
-                color:              QGroundControl.globalPalette.text
-                visible:            expanded
-            }
-
             // Settings
-            Column {
+            expandedItem: Column {
                 width:      ScreenTools.defaultFontPixelWidth * 80
                 spacing:    margins / 2
-                visible:    expanded
 
                 RowLayout {
                     width: parent.width

@@ -704,8 +704,8 @@ ApplicationWindow {
             indicatorDrawerLoader.sourceComponent   = indicatorDrawer.sourceComponent
         }
         onClosed: {
-            indicatorDrawerLoader.sourceComponent   = null
             _expanded                               = false
+            indicatorDrawerLoader.sourceComponent   = undefined
         }
 
         background: Item {
@@ -746,13 +746,23 @@ ApplicationWindow {
             height:         Math.min(mainWindow.contentItem.height - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.height)
             contentWidth:   indicatorDrawerLoader.width
             contentHeight:  indicatorDrawerLoader.height
+            implicitWidth:  width
+            implicitHeight: height
 
             Loader {
                 id: indicatorDrawerLoader
 
-                property var  drawer:           indicatorDrawer
-                property bool expanded:         indicatorDrawer._expanded
-                property var  editFieldWidth:   ScreenTools.defaultFontPixelWidth * 13
+                Binding {
+                    target:     indicatorDrawerLoader.item
+                    property:   "expanded"
+                    value:      indicatorDrawer._expanded
+                }
+
+                Binding {
+                    target:     indicatorDrawerLoader.item
+                    property:   "drawer"
+                    value:      indicatorDrawer
+                }
             }
         }
     }
