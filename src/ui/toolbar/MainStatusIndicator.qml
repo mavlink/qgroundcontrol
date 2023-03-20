@@ -29,15 +29,16 @@ RowLayout {
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
 
-    QGCLabel {
+    QGCMarqueeLabel {
         id:             mainStatusLabel
         text:           mainStatusText()
         font.pointSize: _vehicleInAir ? ScreenTools.defaultFontPointSize : ScreenTools.largeFontPointSize
+        maxWidth:       ScreenTools.defaultFontPixelWidth *(_vehicleInAir ? 1 : ScreenTools.largeFontPointRatio) * 10
 
         property string _commLostText:      qsTr("Communication Lost")
         property string _readyToFlyText:    qsTr("Ready To Fly")
         property string _notReadyToFlyText: qsTr("Not Ready")
-        property string _disconnectedText:  qsTr("Disconnected")
+        property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
         property string _armedText:         qsTr("Armed")
         property string _flyingText:        qsTr("Flying")
         property string _landingText:       qsTr("Landing")
@@ -112,8 +113,9 @@ RowLayout {
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             height:                 _root.height
-            enabled:                _activeVehicle
-            onClicked:              mainWindow.showIndicatorDrawer(sensorStatusIndicatorPage)
+            onClicked:              mainWindow.showIndicatorDrawer(overallStatusComponent)
+
+            property Component overallStatusComponent: _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
         }
     }
 
@@ -143,7 +145,15 @@ RowLayout {
     }
 
     Component {
-        id: sensorStatusIndicatorPage
+        id: overallStatusOfflineIndicatorPage
+
+        MainStatusIndicatorOfflinePage {
+
+        }
+    }
+
+    Component {
+        id: overallStatusIndicatorPage
 
         ToolIndicatorPage {
             showExpand: _activeVehicle.mainStatusIndicatorExpandedItem ? true : false

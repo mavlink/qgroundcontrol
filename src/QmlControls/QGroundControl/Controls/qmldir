@@ -25,6 +25,7 @@ FlightModeDropdown                      1.0 FlightModeDropdown.qml
 FlightModeMenu                          1.0 FlightModeMenu.qml
 GeoFenceEditor                          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals                      1.0 GeoFenceMapVisuals.qml
+GPSIndicatorPage                        1.0 GPSIndicatorPage.qml
 HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
@@ -39,6 +40,7 @@ LogReplayStatusBar                      1.0 LogReplayStatusBar.qml
 MainStatusIndicator                     1.0 MainStatusIndicator.qml
 FlightModeMenuIndicator                 1.0 FlightModeMenuIndicator.qml
 MainToolBar                             1.0 MainToolBar.qml
+MainStatusIndicatorOfflinePage          1.0 MainStatusIndicatorOfflinePage.qml
 MainWindowSavedState                    1.0 MainWindowSavedState.qml
 MAVLinkMessageButton                    1.0 MAVLinkMessageButton.qml
 MissionCommandDialog                    1.0 MissionCommandDialog.qml
@@ -75,6 +77,7 @@ QGCMapCircleVisuals                     1.0 QGCMapCircleVisuals.qml
 QGCMapLabel                             1.0 QGCMapLabel.qml
 QGCMapPolygonVisuals                    1.0 QGCMapPolygonVisuals.qml
 QGCMapPolylineVisuals                   1.0 QGCMapPolylineVisuals.qml
+QGCMarqueeLabel                         1.0 QGCMarqueeLabel.qml
 QGCMenu                                 1.0 QGCMenu.qml
 QGCMenuItem                             1.0 QGCMenuItem.qml
 QGCMenuSeparator                        1.0 QGCMenuSeparator.qml

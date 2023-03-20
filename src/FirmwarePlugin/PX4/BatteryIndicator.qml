@@ -111,7 +111,8 @@ Item {
                 }
 
                 IndicatorPageGroupLayout {
-                    Layout.fillWidth: true
+                    Layout.fillWidth:   true
+                    showDivider:        false
                     
                     RowLayout {
                         Layout.fillWidth: true

@@ -16,7 +16,7 @@ import QGroundControl.ScreenTools   1.0
 // ToolIndicatorPage 
 //      The base control for all Toolbar Indicator drop down pages. It supports a normal and expanded view.
 
-Item {
+RowLayout {
     property bool showExpand:       false   // Controls whether the expand widget is shown or not
     property Item contentItem               // Item for the normal view portion of the page
     property Item expandedItem              // Item for the expanded portion of the page
@@ -26,9 +26,8 @@ Item {
     property bool expanded: false            
     property var  drawer
 
-    id:     _root
-    width:  expanded ? _expandedItemHolder.x + _expandedItemHolder.width : _contentItemHolder.width
-    height: expanded ? Math.max(_contentItemHolder.height, _expandedItemHolder.height) : _contentItemHolder.height
+    id:         _root
+    spacing:    _margins
 
     property real _margins: ScreenTools.defaultFontPixelHeight
 
@@ -44,28 +43,23 @@ Item {
         }
     }
 
-    Item {
+    ColumnLayout {
         id:                 _contentItemHolder
-        width:              childrenRect.width
-        height:             childrenRect.height
+        Layout.alignment:   Qt.AlignTop
     }
 
     Rectangle {
-        id:                 divider
-        anchors.margins:    _margins
-        anchors.left:       _contentItemHolder.right
-        width:              1
-        height:             Math.max(_contentItemHolder.height, _expandedItemHolder.height)
-        color:              QGroundControl.globalPalette.text
-        visible:            expanded
+        id:                     divider
+        Layout.preferredWidth:  visible ? 1 : -1
+        Layout.fillHeight:      true
+        color:                  QGroundControl.globalPalette.text
+        visible:                expanded
     }
 
-    Item {
-        id:                 _expandedItemHolder
-        anchors.margins:    _margins
-        anchors.left:       divider.right
-        width:              childrenRect.width
-        height:             childrenRect.height
-        visible:            expanded
+    ColumnLayout {
+        id:                     _expandedItemHolder
+        Layout.alignment:       Qt.AlignTop
+        Layout.preferredWidth:  visible ? -1 : 0
+        visible:                expanded
     }
 }

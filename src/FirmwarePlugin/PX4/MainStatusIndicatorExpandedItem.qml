@@ -20,7 +20,8 @@ import QGroundControl.FactSystem            1.0
 import QGroundControl.FactControls          1.0
 
 IndicatorPageGroupLayout {
-    spacing: ScreenTools.defaultFontPixelHeight / 2
+    spacing:        ScreenTools.defaultFontPixelHeight / 2
+    showDivider:    false
 
     GridLayout {
         columns:        2

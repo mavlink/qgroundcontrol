@@ -163,8 +163,11 @@ ApplicationWindow {
         }
     }
 
-    function showSettingsTool() {
+    function showSettingsTool(settingsPage = "") {
         showTool(qsTr("Application Settings"), "AppSettings.qml", "/res/QGCLogoWhite")
+        if (settingsPage !== "") {
+            toolDrawerLoader.item.showSettingsPage(settingsPage)
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -686,8 +689,6 @@ ApplicationWindow {
         topInset:       0
         bottomInset:    0
         padding:        _margins * 2
-        contentWidth:   indicatorDrawerLoader.width
-        contentHeight:  indicatorDrawerLoader.height
         visible:        false
         modal:          true
         focus:          true
@@ -741,12 +742,10 @@ ApplicationWindow {
 
         contentItem: QGCFlickable {
             id:             indicatorDrawerLoaderFlickable
-            width:          Math.min(mainWindow.contentItem.width - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.width)
-            height:         Math.min(mainWindow.contentItem.height - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.height)
+            implicitWidth:  Math.min(mainWindow.contentItem.width - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.width)
+            implicitHeight: Math.min(mainWindow.contentItem.height - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.height)
             contentWidth:   indicatorDrawerLoader.width
             contentHeight:  indicatorDrawerLoader.height
-            implicitWidth:  width
-            implicitHeight: height
 
             Loader {
                 id: indicatorDrawerLoader

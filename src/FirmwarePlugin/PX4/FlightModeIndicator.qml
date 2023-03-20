@@ -77,8 +77,8 @@ RowLayout {
 
             // Settings
             expandedItem: ColumnLayout {
-                width:      ScreenTools.defaultFontPixelWidth * 60
-                spacing:    margins / 2
+                Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 60
+                spacing:                margins / 2
 
                 IndicatorPageGroupLayout {
                     Layout.fillWidth: true

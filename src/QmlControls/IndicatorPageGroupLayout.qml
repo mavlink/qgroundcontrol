@@ -28,5 +28,6 @@ ColumnLayout {
         height:             1
         Layout.fillWidth:   true
         color:              QGroundControl.globalPalette.text
+        visible:            showDivider
     }
 }
