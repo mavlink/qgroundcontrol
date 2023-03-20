@@ -25,62 +25,6 @@ Item {
 
     property bool showIndicator: QGroundControl.gpsRtk ? QGroundControl.gpsRtk.connected.value : false
 
-    Component {
-        id: gpsInfo
-
-        Rectangle {
-            width:  gpsCol.width   + ScreenTools.defaultFontPixelWidth  * 3
-            height: gpsCol.height  + ScreenTools.defaultFontPixelHeight * 2
-            radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
-            border.color:   qgcPal.text
-
-            Column {
-                id:                 gpsCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(gpsGrid.width, gpsLabel.width)
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                anchors.centerIn:   parent
-
-                QGCLabel {
-                    id:             gpsLabel
-                    text: (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
-                    font.family:    ScreenTools.demiboldFontFamily
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                GridLayout {
-                    id:                 gpsGrid
-                    visible:            true
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    columns: 2
-
-                    QGCLabel {
-                        text: qsTr("Duration:")
-                        visible: QGroundControl.gpsRtk.active.value
-                        }
-                    QGCLabel {
-                        text: QGroundControl.gpsRtk.currentDuration.value + ' s'
-                        visible: QGroundControl.gpsRtk.active.value
-                        }
-                    QGCLabel {
-                        // during survey-in show the current accuracy, after that show the final accuracy
-                        text: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy:") : qsTr("Current Accuracy:")
-                        visible: QGroundControl.gpsRtk.currentAccuracy.value > 0
-                        }
-                    QGCLabel {
-                        text: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-                        visible: QGroundControl.gpsRtk.currentAccuracy.value > 0
-                        }
-                    QGCLabel { text: qsTr("Satellites:") }
-                    QGCLabel { text: QGroundControl.gpsRtk.numSatellites.value }
-                }
-            }
-        }
-    }
-
     QGCColoredImage {
         id:                 gpsIcon
         width:              height
@@ -108,8 +52,14 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked: {
-            mainWindow.showIndicatorPopup(_root, gpsInfo)
+        onClicked:      mainWindow.showIndicatorDrawer(gpsIndicatorPage)
+    }
+
+    Component {
+        id: gpsIndicatorPage
+
+        GPSIndicatorPage {
+
         }
     }
 }

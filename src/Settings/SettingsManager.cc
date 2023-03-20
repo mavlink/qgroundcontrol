@@ -22,6 +22,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _autoConnectSettings          (nullptr)
     , _videoSettings                (nullptr)
     , _flightMapSettings            (nullptr)
+    , _flightModeSettings           (nullptr)
     , _rtkSettings                  (nullptr)
     , _flyViewSettings              (nullptr)
     , _planViewSettings             (nullptr)
@@ -47,6 +48,7 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _autoConnectSettings =          new AutoConnectSettings         (this);
     _videoSettings =                new VideoSettings               (this);
     _flightMapSettings =            new FlightMapSettings           (this);
+    _flightModeSettings =           new FlightModeSettings          (this);
     _rtkSettings =                  new RTKSettings                 (this);
     _flyViewSettings =              new FlyViewSettings             (this);
     _planViewSettings =             new PlanViewSettings            (this);

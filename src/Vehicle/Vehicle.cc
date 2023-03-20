@@ -3673,6 +3673,14 @@ QString Vehicle::vehicleImageCompass() const
         return QString();
 }
 
+QVariant Vehicle::mainStatusIndicatorExpandedItem()
+{
+    if(_firmwarePlugin) {
+        return _firmwarePlugin->mainStatusIndicatorExpandedItem(this);
+    }
+    return QVariant();
+}
+
 const QVariantList& Vehicle::toolIndicators()
 {
     if(_firmwarePlugin) {

@@ -156,12 +156,18 @@ ApplicationWindow {
         showTool(qsTr("Analyze Tools"), "AnalyzeView.qml", "/qmlimages/Analyze.svg")
     }
 
-    function showSetupTool() {
+    function showVehicleSetupTool(setupPage = "") {
         showTool(qsTr("Vehicle Setup"), "SetupView.qml", "/qmlimages/Gears.svg")
+        if (setupPage !== "") {
+            toolDrawerLoader.item.showNamedComponentPanel(setupPage)
+        }
     }
 
-    function showSettingsTool() {
+    function showSettingsTool(settingsPage = "") {
         showTool(qsTr("Application Settings"), "AppSettings.qml", "/res/QGCLogoWhite")
+        if (settingsPage !== "") {
+            toolDrawerLoader.item.showSettingsPage(settingsPage)
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -270,22 +276,21 @@ ApplicationWindow {
 
     function showToolSelectDialog() {
         if (!mainWindow.preventViewSwitch()) {
-            toolSelectDialogComponent.createObject(mainWindow).open()
+            mainWindow.showIndicatorDrawer(toolSelectComponent)
         }
     }
 
     Component {
-        id: toolSelectDialogComponent
+        id: toolSelectComponent
 
-        QGCPopupDialog {
+        ToolIndicatorPage {
             id:         toolSelectDialog
-            title:      qsTr("Select Tool")
-            buttons:    StandardButton.Close
+            showExpand: false
 
             property real _toolButtonHeight:    ScreenTools.defaultFontPixelHeight * 3
             property real _margins:             ScreenTools.defaultFontPixelWidth
 
-            ColumnLayout {
+            contentItem: ColumnLayout {
                 width:  innerLayout.width + (toolSelectDialog._margins * 2)
                 height: innerLayout.height + (toolSelectDialog._margins * 2)
 
@@ -303,8 +308,8 @@ ApplicationWindow {
                         imageResource:      "/qmlimages/Gears.svg"
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
-                                toolSelectDialog.close()
-                                mainWindow.showSetupTool()
+                                drawer.close()
+                                mainWindow.showVehicleSetupTool()
                             }
                         }
                     }
@@ -319,7 +324,7 @@ ApplicationWindow {
                         visible:            QGroundControl.corePlugin.showAdvancedUI
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
-                                toolSelectDialog.close()
+                                drawer.close()
                                 mainWindow.showAnalyzeTool()
                             }
                         }
@@ -335,7 +340,7 @@ ApplicationWindow {
                         visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                         onClicked: {
                             if (!mainWindow.preventViewSwitch()) {
-                                toolSelectDialog.close()
+                                drawer.close()
                                 mainWindow.showSettingsTool()
                             }
                         }
@@ -621,7 +626,7 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //-- Indicator Popups
+    //-- Indicator Popups - deprecated, use Indicator Drawer instead
 
     function showIndicatorPopup(item, dropItem) {
         indicatorPopup.currentIndicator = dropItem
@@ -664,6 +669,99 @@ ApplicationWindow {
         onClosed: {
             loader.sourceComponent = null
             indicatorPopup.currentIndicator = null
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Indicator Drawer
+
+    function showIndicatorDrawer(drawerComponent) {
+        indicatorDrawer.sourceComponent = drawerComponent
+        indicatorDrawer.open()
+    }
+
+    Popup {
+        id:             indicatorDrawer
+        x:              _margins
+        y:              _margins
+        leftInset:      0
+        rightInset:     0
+        topInset:       0
+        bottomInset:    0
+        padding:        _margins * 2
+        visible:        false
+        modal:          true
+        focus:          true
+        closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        property var sourceComponent
+
+        property bool _expanded:    false
+        property real _margins:     ScreenTools.defaultFontPixelHeight / 4
+
+        onOpened: {
+            _expanded                               = false;
+            indicatorDrawerLoader.sourceComponent   = indicatorDrawer.sourceComponent
+        }
+        onClosed: {
+            _expanded                               = false
+            indicatorDrawerLoader.sourceComponent   = undefined
+        }
+
+        background: Item {
+            Rectangle {
+                id:             backgroundRect
+                anchors.fill:   parent
+                color:          QGroundControl.globalPalette.window
+                radius:         indicatorDrawer._margins
+                opacity:        0.85
+            }
+
+            Rectangle {
+                anchors.horizontalCenter:   backgroundRect.right
+                anchors.verticalCenter:     backgroundRect.top
+                width:                      ScreenTools.defaultFontPixelHeight
+                height:                     width
+                radius:                     width / 2
+                color:                      QGroundControl.globalPalette.button
+                border.color:               QGroundControl.globalPalette.buttonText
+                visible:                    indicatorDrawerLoader.item && indicatorDrawerLoader.item.showExpand && !indicatorDrawer._expanded
+
+                QGCLabel {
+                    anchors.centerIn:   parent
+                    text:               ">"
+                    color:              QGroundControl.globalPalette.buttonText
+                }  
+
+                QGCMouseArea {
+                    fillItem: parent
+                    onClicked: indicatorDrawer._expanded = true
+                }
+            }
+        }
+
+        contentItem: QGCFlickable {
+            id:             indicatorDrawerLoaderFlickable
+            implicitWidth:  Math.min(mainWindow.contentItem.width - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.width)
+            implicitHeight: Math.min(mainWindow.contentItem.height - (2 * indicatorDrawer._margins) - (indicatorDrawer.padding * 2), indicatorDrawerLoader.height)
+            contentWidth:   indicatorDrawerLoader.width
+            contentHeight:  indicatorDrawerLoader.height
+
+            Loader {
+                id: indicatorDrawerLoader
+
+                Binding {
+                    target:     indicatorDrawerLoader.item
+                    property:   "expanded"
+                    value:      indicatorDrawer._expanded
+                }
+
+                Binding {
+                    target:     indicatorDrawerLoader.item
+                    property:   "drawer"
+                    value:      indicatorDrawer
+                }
+            }
         }
     }
 
