@@ -9,7 +9,7 @@
 
 import QtQuick          2.15
 import QtQuick.Controls 2.15
-import QtQuick.Layouts  1.11
+import QtQuick.Layouts  1.15
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -46,19 +46,19 @@ ColumnLayout {
         }
     }
 
-    QGCCheckBox {
+    QGCCheckBoxSlider {
         id:                 modeEditCheckBox
-        Layout.alignment:   Qt.AlignHCenter
+        Layout.fillWidth:   true
         text:               qsTr("Edit")
         visible:            enabled && expanded
 
         onClicked: {
             for (var i=0; i<modeRepeater.count; i++) {
-                var button = modeRepeater.itemAt(i)
-                if (modeEditCheckBox.checked) {
-                    button.checked = !hiddenFlightModesList.find(item => { return item === button.text } )
-                } else {
-                    button.checked = false
+                var button      = modeRepeater.itemAt(i).children[0]
+                var checkBox    = modeRepeater.itemAt(i).children[1]
+
+                if (checked) {
+                    checkBox.checked = !hiddenFlightModesList.find(item => { return item === button.text } )
                 }
             }
         }
@@ -68,26 +68,38 @@ ColumnLayout {
         id:     modeRepeater
         model:  activeVehicle ? activeVehicle.flightModes : []
 
-        QGCButton {
-            id:                 modeButton
-            text:               modelData
-            Layout.fillWidth:   true
-            checkable:          modeEditCheckBox.checked
-            visible:            modeEditCheckBox.checked || !hiddenFlightModesList.find(item => { return item === modelData } )
+        RowLayout {
+            spacing: ScreenTools.defaultFontPixelWidth
+            visible: modeEditCheckBox.checked || !hiddenFlightModesList.find(item => { return item === modelData } )
 
-            onClicked: {
-                if (modeEditCheckBox.checked) {
+            QGCButton {
+                id:                 modeButton
+                text:               modelData
+                Layout.fillWidth:   true
+
+                onClicked: {
+                    if (modeEditCheckBox.checked) {
+                        parent.children[1].toggle()
+                        parent.children[1].clicked()
+                    } else {
+                        activeVehicle.flightMode = modelData
+                        drawer.close()
+                    }
+                }
+            }
+
+            QGCCheckBoxSlider {
+                visible: modeEditCheckBox.checked
+
+                onClicked: {
                     hiddenFlightModesList = []
                     for (var i=0; i<modeRepeater.count; i++) {
-                        var button = modeRepeater.itemAt(i)
-                        if (!button.checked) {
-                            hiddenFlightModesList.push(button.text)
+                        var checkBox = modeRepeater.itemAt(i).children[1]
+                        if (!checkBox.checked) {
+                            hiddenFlightModesList.push(modeRepeater.model[i])
                         }
                     }
                     hiddenFlightModesFact.value = hiddenFlightModesList.join(",")
-                } else {
-                    activeVehicle.flightMode = modelData
-                    drawer.close()
                 }
             }
         }

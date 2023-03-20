@@ -19,24 +19,13 @@ import QGroundControl.Palette               1.0
 import QGroundControl.FactSystem            1.0
 import QGroundControl.FactControls          1.0
 
-Column {
-    width:      ScreenTools.defaultFontPixelWidth * 80
-    spacing:    margins / 2
+IndicatorPageGroupLayout {
+    spacing: ScreenTools.defaultFontPixelHeight / 2
 
-    property var  activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-    property Fact mpcLandSpeedFact:         controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
-    property Fact precisionLandingFact:     controller.getParameterFact(-1, "RTL_PLD_MD", false)
-    property Fact sys_vehicle_resp:         controller.getParameterFact(-1, "SYS_VEHICLE_RESP", false)
-    property Fact mpc_xy_vel_all:           controller.getParameterFact(-1, "MPC_XY_VEL_ALL", false)
-    property Fact mpc_z_vel_all:            controller.getParameterFact(-1, "MPC_Z_VEL_ALL", false)
-    property var  qgcPal:                   QGroundControl.globalPalette
-    property real margins:                  ScreenTools.defaultFontPixelHeight
-
-    FactPanelController { id: controller }
-
-    RowLayout {
-        width: parent.width
+    GridLayout {
+        columns:        2
+        rowSpacing:     ScreenTools.defaultFontPixelHeight / 2
+        columnSpacing:  ScreenTools.defaultFontPixelWidth *2
 
         QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Parameters") }
         QGCButton {
@@ -46,10 +35,6 @@ Column {
                 drawer.close()
             }
         }
-    }
-
-    RowLayout {
-        width: parent.width
 
         QGCLabel { Layout.fillWidth: true; text: qsTr("Initial Vehicle Setup") }
         QGCButton {

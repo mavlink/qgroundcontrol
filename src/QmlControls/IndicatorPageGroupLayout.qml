@@ -5,9 +5,11 @@ import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 
 ColumnLayout {
-    spacing: ScreenTools.defaultFontPixelHeight / 2
+    id:         _root
+    spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-    property alias heading: headingLabel.text
+    property alias heading:     headingLabel.text
+    property bool  showDivider: true
 
     default property alias contentItem: _contentItem.data
 
@@ -16,12 +18,10 @@ ColumnLayout {
         visible:    heading !== ""
     }
 
-    Item {
+    ColumnLayout {
         id:                 _contentItem
-        Layout.fillWidth:   true
-        Layout.leftMargin:  heading === "" ? 0 : ScreenTools.defaultFontPixelWidth * 5
-        implicitWidth:      childrenRect.width
-        implicitHeight:     childrenRect.height
+        Layout.fillWidth:   children[0].Layout.fillWidth
+        Layout.leftMargin:  heading === "" ? 0 : ScreenTools.defaultFontPixelWidth * 2
     }
 
     Rectangle {

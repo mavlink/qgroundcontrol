@@ -29,7 +29,7 @@ HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
 IndicatorButton                         1.0 IndicatorButton.qml
-IndicatorPageGroup                      1.0 IndicatorPageGroup.qml
+IndicatorPageGroupLayout                      1.0 IndicatorPageGroupLayout.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml
 InstrumentValueValue                    1.0 InstrumentValueValue.qml
 InstrumentValueEditDialog               1.0 InstrumentValueEditDialog.qml
@@ -61,6 +61,7 @@ PreFlightCheckModel                     1.0 PreFlightCheckModel.qml
 QGCButton                               1.0 QGCButton.qml
 AutotuneUI                              1.0 AutotuneUI.qml
 QGCCheckBox                             1.0 QGCCheckBox.qml
+QGCCheckBoxSlider                       1.0 QGCCheckBoxSlider.qml
 QGCColoredImage                         1.0 QGCColoredImage.qml
 QGCComboBox                             1.0 QGCComboBox.qml
 QGCControlDebug                         1.0 QGCControlDebug.qml

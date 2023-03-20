@@ -70,8 +70,9 @@ Item {
             expandedItem: ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                IndicatorPageGroup {
-                    heading: qsTr("Low Battery Failsafe")
+                IndicatorPageGroupLayout {
+                    Layout.fillWidth:   true
+                    heading:            qsTr("Low Battery Failsafe")
 
                     GridLayout {
                         columns: 2
@@ -79,31 +80,37 @@ Item {
 
                         QGCLabel { text: qsTr("Battery Warn Level") }
                         FactTextField {
-                            fact: controller.getParameterFact(-1, "BAT_LOW_THR")
+                            Layout.fillWidth:       true
+                            Layout.preferredWidth:  editFieldWidth
+                            fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
                         }
 
                         QGCLabel { text: qsTr("Battery Failsafe Level") }
                         FactTextField {
-                            Layout.fillWidth:   true
-                            fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
+                            Layout.fillWidth:       true
+                            Layout.preferredWidth:  editFieldWidth
+                            fact:                   controller.getParameterFact(-1, "BAT_CRIT_THR")
                         }
 
                         QGCLabel { text: qsTr("Failsafe Action") }
                         FactComboBox {
-                            Layout.fillWidth:   true
-                            fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-                            indexModel:         false
+                            Layout.fillWidth:       true
+                            Layout.preferredWidth:  editFieldWidth
+                            fact:                   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+                            indexModel:             false
+                            sizeToContents:         true
                         }
 
                         QGCLabel { text: qsTr("Battery Emergency Level") }
                         FactTextField {
-                            fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
-                            Layout.fillWidth:   true
+                            Layout.fillWidth:       true
+                            Layout.preferredWidth:  editFieldWidth
+                            fact:                   controller.getParameterFact(-1, "BAT_EMERGEN_THR")
                         }
                     }
                 }
 
-                IndicatorPageGroup {
+                IndicatorPageGroupLayout {
                     Layout.fillWidth: true
                     
                     RowLayout {
