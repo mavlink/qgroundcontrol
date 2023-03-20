@@ -22,9 +22,10 @@ import QGroundControl.FactControls          1.0
 ToolIndicatorPage {
     showExpand: true
 
-    property var    linkConfigs:    QGroundControl.linkManager.linkConfigurations
-    property bool   noLinks:        true
-    property var    editingConfig:  null
+    property var    linkConfigs:            QGroundControl.linkManager.linkConfigurations
+    property bool   noLinks:                true
+    property var    editingConfig:          null
+    property var    autoConnectSettings:    QGroundControl.settingsManager.autoConnectSettings
 
     Component.onCompleted: {
         for (var i = 0; i < linkConfigs.count; i++) {
@@ -82,18 +83,19 @@ ToolIndicatorPage {
 
         IndicatorPageGroupLayout {
             heading:        qsTr("AutoConnect")
+            visible:        autoConnectSettings.visible
             showDivider:    false
 
             Repeater {
                 id: autoConnectRepeater
 
                 model: [ 
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectPixhawk,
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectSiKRadio,
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow,
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot,
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP,
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectZeroConf,
+                    autoConnectSettings.autoConnectPixhawk,
+                    autoConnectSettings.autoConnectSiKRadio,
+                    autoConnectSettings.autoConnectPX4Flow,
+                    autoConnectSettings.autoConnectLibrePilot,
+                    autoConnectSettings.autoConnectUDP,
+                    autoConnectSettings.autoConnectZeroConf,
                 ]
 
                 property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("Zero-Conf") ]

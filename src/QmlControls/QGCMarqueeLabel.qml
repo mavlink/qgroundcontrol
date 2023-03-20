@@ -18,7 +18,7 @@ Item {
     font.pointSize: ScreenTools.defaultFontPointSize
     font.family:    ScreenTools.normalFontFamily
 
-    property bool _scrollMarguee:       _measureText.implicitWidth > maxWidth
+    property bool _scrollMarquee:       _measureText.implicitWidth > maxWidth
     property real _scrollWidth:         _measureText.implicitWidth + _measureBlanks.implicitWidth
     property int  _scrollDuration:      _root.text.length * 500
     property real _innerText1StartX:    0
@@ -27,7 +27,7 @@ Item {
 
     Component.onCompleted: {
         _componentCompleted = true
-        if (_scrollMarguee) {
+        if (_scrollMarquee) {
             _innerText1Animation.start()
             _innerText2Animation.start()
         }
@@ -93,6 +93,7 @@ Item {
         color:                 _root.color
         antialiasing:           true
         text:                   _root.text
+        visible:                _scrollMarquee
 
         property real startX: _innerText2StartX
 

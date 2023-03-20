@@ -32,8 +32,9 @@ RowLayout {
     QGCMarqueeLabel {
         id:             mainStatusLabel
         text:           mainStatusText()
-        font.pointSize: _vehicleInAir ? ScreenTools.defaultFontPointSize : ScreenTools.largeFontPointSize
-        maxWidth:       ScreenTools.defaultFontPixelWidth *(_vehicleInAir ? 1 : ScreenTools.largeFontPointRatio) * 10
+        font.pointSize: ScreenTools.largeFontPointSize
+        implicitWidth:  maxWidth
+        maxWidth:       ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 10
 
         property string _commLostText:      qsTr("Communication Lost")
         property string _readyToFlyText:    qsTr("Ready To Fly")
@@ -120,23 +121,19 @@ RowLayout {
     }
 
     Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        height:                 1
-    }
-
-    Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        height:                 1
-        visible:                vtolModeLabel.visible
+        implicitWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        implicitHeight: 1
+        visible:        vtolModeLabel.visible
     }
 
     QGCLabel {
         id:                     vtolModeLabel
-        Layout.preferredHeight: _root.height
-        verticalAlignment:      Text.AlignVCenter
+        Layout.alignment:       Qt.AlignVCenter
         text:                   _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        font.pointSize:         ScreenTools.largeFontPointSize
-        visible:                _activeVehicle ? _activeVehicle.vtol && _vehicleInAir : false
+        font.pointSize:         enabled ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * text.length
+        visible:                _activeVehicle && _activeVehicle.vtol
+        enabled:                _activeVehicle && _activeVehicle.vtol && _vehicleInAir
 
         QGCMouseArea {
             anchors.fill:   parent

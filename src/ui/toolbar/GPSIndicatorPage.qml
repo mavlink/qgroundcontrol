@@ -214,9 +214,14 @@ ToolIndicatorPage {
             RowLayout {
                 Layout.columnSpan:  2
 
-                QGCLabel { Layout.fillWidth: true; text: qsTr("Current Base Position") }
+                QGCLabel { 
+                    Layout.fillWidth:   true; 
+                    text:               qsTr("Current Base Position") 
+                    enabled:            saveBasePositionButton.enabled
+                }
 
                 QGCButton {
+                    id:         saveBasePositionButton
                     text:       enabled ? qsTr("Save") : qsTr("Not Yet Valid")
                     enabled:    QGroundControl.gpsRtk.valid.value
 
