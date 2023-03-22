@@ -30,4 +30,6 @@ public:
     DEFINE_SETTINGFACT(showSimpleCameraControl)
     DEFINE_SETTINGFACT(showObstacleDistanceOverlay)
     DEFINE_SETTINGFACT(updateHomePosition)
+    DEFINE_SETTINGFACT(enableCustomActions)
+    DEFINE_SETTINGFACT(customActionDefinitions)
 };
