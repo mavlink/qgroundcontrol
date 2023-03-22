@@ -3740,7 +3740,7 @@
     </parameter>
     <parameter name="GPS_YAW_OFFSET" default="0." type="FLOAT">
       <short_desc>Heading/Yaw offset for dual antenna GPS</short_desc>
-      <long_desc>Heading offset angle for dual antenna GPS setups that support heading estimation. Set this to 0 if the antennas are parallel to the forward-facing direction of the vehicle and the rover antenna is in front. The offset angle increases clockwise. Set this to 90 if the rover antenna is placed on the right side of the vehicle and the moving base antenna is on the left side.</long_desc>
+      <long_desc>Heading offset angle for dual antenna GPS setups that support heading estimation. Set this to 0 if the antennas are parallel to the forward-facing direction of the vehicle and the rover (or Unicore primary) antenna is in front. The offset angle increases clockwise. Set this to 90 if the rover (or Unicore primary) antenna is placed on the right side of the vehicle and the moving base antenna is on the left side. (Note: the Unicore primary antenna is the one connected on the right as seen from the top).</long_desc>
       <min>0</min>
       <max>360</max>
       <unit>deg</unit>
@@ -4740,18 +4740,24 @@
         <value code="4">Position Hold mode</value>
       </values>
     </parameter>
-    <parameter name="NAV_TRAFF_A_RADM" default="500" type="FLOAT">
-      <short_desc>Set NAV TRAFFIC AVOID RADIUS MANNED</short_desc>
-      <long_desc>Defines the Radius where NAV TRAFFIC AVOID is Called For Manned Aviation</long_desc>
+    <parameter name="NAV_TRAFF_A_HOR" default="500" type="FLOAT">
+      <short_desc>Set NAV TRAFFIC AVOID horizontal distance</short_desc>
+      <long_desc>Defines a crosstrack horizontal distance</long_desc>
       <min>500</min>
       <unit>m</unit>
     </parameter>
-    <parameter name="NAV_TRAFF_A_RADU" default="10" type="FLOAT">
-      <short_desc>Set NAV TRAFFIC AVOID RADIUS</short_desc>
-      <long_desc>Defines the Radius where NAV TRAFFIC AVOID is Called For Unmanned Aviation</long_desc>
+    <parameter name="NAV_TRAFF_A_VER" default="500" type="FLOAT">
+      <short_desc>Set NAV TRAFFIC AVOID vertical distance</short_desc>
       <min>10</min>
       <max>500</max>
       <unit>m</unit>
+    </parameter>
+    <parameter name="NAV_TRAFF_COLL_T" default="60" type="INT32">
+      <short_desc>Estimated time until collision</short_desc>
+      <long_desc>Minimum acceptable time until collsion. Assumes constant speed over 3d distance.</long_desc>
+      <min>1</min>
+      <max>900000000</max>
+      <unit>s</unit>
     </parameter>
     <parameter name="WEIGHT_BASE" default="-1.0" type="FLOAT">
       <short_desc>Vehicle base weight</short_desc>
@@ -10181,6 +10187,11 @@
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
       <min>1</min>
       <max>125</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="UAVCAN_PUB_ARM" default="0" type="INT32" boolean="true">
+      <short_desc>publish Arming Status stream</short_desc>
+      <long_desc>Enable UAVCAN Arming Status stream publication uavcan::equipment::safety::ArmingStatus</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="UAVCAN_PUB_MBD" default="0" type="INT32" boolean="true">
