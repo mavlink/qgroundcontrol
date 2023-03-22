@@ -775,6 +775,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
         break;
     }
+    case MAVLINK_MSG_ID_CURRENT_MODE:
+        _handleCurrentMode(message);
+        break;
 
         // Following are ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -1664,16 +1667,15 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
 
         // connect health and arming check updates
         connect(eventHandler.data(), &EventHandler::healthAndArmingChecksUpdated, this, [compid, this]() {
-            // TODO: use user-intended mode instead of currently set mode
             const QSharedPointer<EventHandler>& eventHandler = _events[compid];
             _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
-                    eventHandler->getModeGroup(_custom_mode));
+                    eventHandler->getModeGroup(_has_custom_mode_user_intention ? _custom_mode_user_intention : _custom_mode));
         });
         connect(this, &Vehicle::flightModeChanged, this, [compid, this]() {
             const QSharedPointer<EventHandler>& eventHandler = _events[compid];
             if (eventHandler->healthAndArmingCheckResultsValid()) {
                 _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
-                                                   eventHandler->getModeGroup(_custom_mode));
+                                                   eventHandler->getModeGroup(_has_custom_mode_user_intention ? _custom_mode_user_intention : _custom_mode));
             }
         });
     }
@@ -1748,6 +1750,20 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         _base_mode   = heartbeat.base_mode;
         _custom_mode = heartbeat.custom_mode;
         if (previousFlightMode != flightMode()) {
+            emit flightModeChanged(flightMode());
+        }
+    }
+}
+
+void Vehicle::_handleCurrentMode(mavlink_message_t& message)
+{
+    mavlink_current_mode_t currentMode;
+    mavlink_msg_current_mode_decode(&message, &currentMode);
+    if (currentMode.intended_custom_mode != 0) { // 0 == unknown/not supplied
+        _has_custom_mode_user_intention = true;
+        bool changed = _custom_mode_user_intention != currentMode.intended_custom_mode;
+        _custom_mode_user_intention = currentMode.intended_custom_mode;
+        if (changed) {
             emit flightModeChanged(flightMode());
         }
     }
