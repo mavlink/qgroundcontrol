@@ -1036,6 +1036,7 @@ private:
     void _handlePing                    (LinkInterface* link, mavlink_message_t& message);
     void _handleHomePosition            (mavlink_message_t& message);
     void _handleHeartbeat               (mavlink_message_t& message);
+    void _handleCurrentMode             (mavlink_message_t& message);
     void _handleRadioStatus             (mavlink_message_t& message);
     void _handleRCChannels              (mavlink_message_t& message);
     void _handleBatteryStatus           (mavlink_message_t& message);
@@ -1181,6 +1182,8 @@ private:
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode = 0;  ///< custom_mode from HEARTBEAT
+    uint32_t _custom_mode_user_intention = 0;  ///< custom_mode_user_intention from CURRENT_MODE
+    bool _has_custom_mode_user_intention = false;
 
     /// Used to store a message being sent by sendMessageMultiple
     typedef struct {
