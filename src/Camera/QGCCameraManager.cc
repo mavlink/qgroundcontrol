@@ -45,7 +45,11 @@ QGCCameraManager::setCurrentCamera(int sel)
     if(sel != _currentCamera && sel >= 0 && sel < _cameras.count()) {
         _currentCamera = sel;
         emit currentCameraChanged();
-        emit streamChanged();
+        if (QGCCameraControl* pCamera = currentCameraInstance()) {
+            // automatically enable stream 0 to update the stream status
+            // this will trigger the streamChanged() event
+            pCamera->setCurrentStream(0);
+        }
     }
 }
 

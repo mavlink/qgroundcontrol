@@ -45,6 +45,7 @@ public:
     int     type            () const{ return _streamInfo.type; }
     int     streamID        () const{ return _streamInfo.stream_id; }
     bool    isThermal       () const{ return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
+    bool    isRunning       () const{ return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_RUNNING; }
 
     bool    update          (const mavlink_video_stream_status_t* vs);
 
@@ -420,7 +421,7 @@ protected:
     QStringList                         _updatesToRequest;
     //-- Video Streams
     int                                 _requestCount       = 0;
-    int                                 _currentStream      = 0;
+    int                                 _currentStream      = -1;
     int                                 _expectedCount      = 1;
     QTimer                              _streamInfoTimer;
     QTimer                              _streamStatusTimer;
