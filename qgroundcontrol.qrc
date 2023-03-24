@@ -104,6 +104,7 @@
         <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/PlanView/GeoFenceMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/HorizontalFactValueGrid.qml">src/QmlControls/HorizontalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
+        <file alias="QGroundControl/Controls/IndicatorPageButtonRow.qml">src/QmlControls/IndicatorPageButtonRow.qml</file>
         <file alias="QGroundControl/Controls/IndicatorPageGroupLayout.qml">src/QmlControls/IndicatorPageGroupLayout.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueValue.qml">src/QmlControls/InstrumentValueValue.qml</file>
@@ -208,6 +209,7 @@
         <file alias="QGroundControl/FactControls/FactTextFieldRow.qml">src/FactSystem/FactControls/FactTextFieldRow.qml</file>
         <file alias="QGroundControl/FactControls/FactTextFieldSlider.qml">src/FactSystem/FactControls/FactTextFieldSlider.qml</file>
         <file alias="QGroundControl/FactControls/FactValueSlider.qml">src/FactSystem/FactControls/FactValueSlider.qml</file>
+        <file alias="QGroundControl/FactControls/IndicatorPageFactTextFieldRow.qml">src/FactSystem/FactControls/IndicatorPageFactTextFieldRow.qml</file>
         <file alias="QGroundControl/FactControls/qmldir">src/QmlControls/QGroundControl/FactControls/qmldir</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">src/FlightDisplay/FlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">src/FlightDisplay/FlightDisplayViewWidgets.qml</file>

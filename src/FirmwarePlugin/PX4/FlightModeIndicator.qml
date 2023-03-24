@@ -83,35 +83,29 @@ RowLayout {
                 IndicatorPageGroupLayout {
                     Layout.fillWidth: true
 
-                    GridLayout {
-                        Layout.fillWidth:   true
-                        columns:            2
+                    IndicatorPageFactTextFieldRow {
+                        Layout.fillWidth:           true;
+                        label:                      qsTr("RTL Altitude")
+                        fact:                       controller.getParameterFact(-1, "RTL_RETURN_ALT")
+                        textFieldPreferredWidth:    valueColumnWidth
+                    }
 
-                        QGCLabel {
-                            Layout.fillWidth:   true;
-                            text:               qsTr("RTL Altitude")
-                        }
-                        FactTextField {
-                            fact:                   controller.getParameterFact(-1, "RTL_RETURN_ALT")
-                            Layout.preferredWidth:  valueColumnWidth
-                        }
+                    IndicatorPageFactTextFieldRow {
+                        Layout.fillWidth:           true;
+                        label:                      qsTr("Land Descent Rate")
+                        fact:                       mpcLandSpeedFact
+                        textFieldPreferredWidth:    valueColumnWidth
+                        visible:                    mpcLandSpeedFact && controller.vehicle && !controller.vehicle.fixedWing
+                    }
 
-                        QGCLabel {
-                            id:                 landDescentLabel
-                            Layout.fillWidth:   true
-                            text:               qsTr("Land Descent Rate")
-                            visible:            mpcLandSpeedFact && controller.vehicle && !controller.vehicle.fixedWing
-                        }
-                        FactTextField {
-                            fact:                   mpcLandSpeedFact
-                            Layout.preferredWidth:  valueColumnWidth
-                            visible:                landDescentLabel.visible
-                        }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing:          ScreenTools.defaultFontPixelWidth * 2
+                        visible:          precisionLandingFact
 
                         QGCLabel {
                             Layout.fillWidth:   true;
                             text:               qsTr("Precision Landing")
-                            visible:            precisionLandingCombo.visible
                         }
                         FactComboBox {
                             id:                     precisionLandingCombo
@@ -119,7 +113,6 @@ RowLayout {
                             fact:                   precisionLandingFact
                             indexModel:             false
                             sizeToContents:         true
-                            visible:                precisionLandingFact
                         }
                     }
                 }
@@ -267,16 +260,14 @@ RowLayout {
                     Layout.fillWidth:   true
                     showDivider:        false
 
-                    RowLayout {
-                        Layout.fillWidth:  true
+                    IndicatorPageButtonRow {
+                        Layout.fillWidth:   true
+                        label:              qsTr("RC Transmitter Flight Modes")
+                        buttonText:         qsTr("Configure")
 
-                        QGCLabel { Layout.fillWidth: true; text: qsTr("RC Transmitter Flight Modes") }
-                        QGCButton {
-                            text: qsTr("Configure")
-                            onClicked: {
-                                mainWindow.showVehicleSetupTool(qsTr("Radio"))
-                                drawer.close()
-                            }
+                        onClicked: {
+                            mainWindow.showVehicleSetupTool(qsTr("Radio"))
+                            drawer.close()
                         }
                     }
                 }
