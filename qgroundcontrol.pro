@@ -431,6 +431,8 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
+    src/QmlControls/CustomAction.h \
+    src/QmlControls/CustomActionManager.h \
     src/QmlControls/QmlUnitsConversion.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
     src/api/QGCCorePlugin.h \
@@ -445,6 +447,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
+    src/QmlControls/CustomActionManager.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
@@ -496,6 +499,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTestBase.h \
         src/MissionManager/VisualMissionItemTest.h \
         src/qgcunittest/ComponentInformationCacheTest.h \
+        src/qgcunittest/ComponentInformationTranslationTest.h \
         src/qgcunittest/GeoTest.h \
         src/qgcunittest/MavlinkLogTest.h \
         src/qgcunittest/MultiSignalSpy.h \
@@ -544,6 +548,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTestBase.cc \
         src/MissionManager/VisualMissionItemTest.cc \
         src/qgcunittest/ComponentInformationCacheTest.cc \
+        src/qgcunittest/ComponentInformationTranslationTest.cc \
         src/qgcunittest/GeoTest.cc \
         src/qgcunittest/MavlinkLogTest.cc \
         src/qgcunittest/MultiSignalSpy.cc \
@@ -645,6 +650,7 @@ HEADERS += \
     src/Geo/PolarStereographic.hpp \
     src/QGC.h \
     src/QGCApplication.h \
+    src/QGCCachedFileDownload.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCFileDownload.h \
@@ -677,6 +683,7 @@ HEADERS += \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
+    src/Settings/RemoteIDSettings.h \
     src/Settings/FirmwareUpgradeSettings.h \
     src/Settings/FlightMapSettings.h \
     src/Settings/FlyViewSettings.h \
@@ -706,6 +713,7 @@ HEADERS += \
     src/Vehicle/CompInfoGeneral.h \
     src/Vehicle/ComponentInformationCache.h \
     src/Vehicle/ComponentInformationManager.h \
+    src/Vehicle/ComponentInformationTranslation.h \
     src/Vehicle/EventHandler.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
@@ -715,6 +723,7 @@ HEADERS += \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MAVLinkStreamConfig.h \
     src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/RemoteIDManager.h \
     src/Vehicle/StateMachine.h \
     src/Vehicle/SysStatusSensorInfo.h \
     src/Vehicle/TerrainFactGroup.h \
@@ -901,6 +910,7 @@ SOURCES += \
     src/Geo/PolarStereographic.cpp \
     src/QGC.cc \
     src/QGCApplication.cc \
+    src/QGCCachedFileDownload.cc \
     src/QGCComboBox.cc \
     src/QGCFileDownload.cc \
     src/QGCLoggingCategory.cc \
@@ -932,6 +942,7 @@ SOURCES += \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \
+    src/Settings/RemoteIDSettings.cc \
     src/Settings/FirmwareUpgradeSettings.cc \
     src/Settings/FlightMapSettings.cc \
     src/Settings/FlyViewSettings.cc \
@@ -961,6 +972,7 @@ SOURCES += \
     src/Vehicle/CompInfoGeneral.cc \
     src/Vehicle/ComponentInformationCache.cc \
     src/Vehicle/ComponentInformationManager.cc \
+    src/Vehicle/ComponentInformationTranslation.cc \
     src/Vehicle/EventHandler.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
@@ -970,6 +982,7 @@ SOURCES += \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MAVLinkStreamConfig.cc \
     src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/RemoteIDManager.cc \
     src/Vehicle/StateMachine.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
     src/Vehicle/TerrainFactGroup.cc \

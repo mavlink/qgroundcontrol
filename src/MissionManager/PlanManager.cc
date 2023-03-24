@@ -373,25 +373,27 @@ void PlanManager::_requestNextMissionItem(void)
 
 void PlanManager::_handleMissionItem(const mavlink_message_t& message)
 {
-    MAV_CMD     command;
-    MAV_FRAME   frame;
-    double      param1;
-    double      param2;
-    double      param3;
-    double      param4;
-    double      param5;
-    double      param6;
-    double      param7;
-    bool        autoContinue;
-    bool        isCurrentItem;
-    int         seq;
+    MAV_CMD          command;
+    MAV_FRAME        frame;
+    MAV_MISSION_TYPE missionType;
+    double           param1;
+    double           param2;
+    double           param3;
+    double           param4;
+    double           param5;
+    double           param6;
+    double           param7;
+    bool             autoContinue;
+    bool             isCurrentItem;
+    int              seq;
 
     mavlink_mission_item_int_t missionItem;
     mavlink_msg_mission_item_int_decode(&message, &missionItem);
 
-    command =       (MAV_CMD)missionItem.command,
-            frame =         (MAV_FRAME)missionItem.frame,
-            param1 =        missionItem.param1;
+    command =       (MAV_CMD)missionItem.command;
+    frame =         (MAV_FRAME)missionItem.frame;
+    missionType =   (MAV_MISSION_TYPE)missionItem.mission_type;
+    param1 =        missionItem.param1;
     param2 =        missionItem.param2;
     param3 =        missionItem.param3;
     param4 =        missionItem.param4;
@@ -401,6 +403,13 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
     autoContinue =  missionItem.autocontinue;
     isCurrentItem = missionItem.current;
     seq =           missionItem.seq;
+
+    // Check the mission_type field. It can happen that we receive a late duplicate message for a
+    // different mission_type request.
+    if (missionType != _planType) {
+       qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionItem %1 dropping spurious item seq:command:missionType").arg(_planTypeString()) << seq << command << missionType;
+       return;
+    }
 
     // We don't support editing ALT_INT frames so change on the way in.
     if (frame == MAV_FRAME_GLOBAL_INT) {

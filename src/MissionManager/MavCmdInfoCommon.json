@@ -457,7 +457,7 @@
                 "label":            "Offset",
                 "enumStrings":      "Relative,Absolute",
                 "enumValues":       "1,0",
-                "default":          1
+                "default":          0
             }
         },
         { "id": 176, "rawName": "MAV_CMD_DO_SET_MODE", "friendlyName": "Set mode" },
@@ -509,8 +509,8 @@
             "category":     "Flight control",
             "param1": {
                 "label":            "Type",
-                "enumStrings":      "Airspeed,Ground Speed",
-                "enumValues":       "0,1",
+                "enumStrings":      "Airspeed,Ground Speed,Ascend Speed,Descend Speed",
+                "enumValues":       "0,1,2,3",
                 "default":          0
             },
             "param2": {

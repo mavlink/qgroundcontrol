@@ -11,17 +11,13 @@
 #include "Vehicle.h"
 #include "FTPManager.h"
 #include "QGCLZMA.h"
-#include "JsonHelper.h"
 #include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
 #include "CompInfoEvents.h"
 #include "CompInfoActuators.h"
-#include "QGCFileDownload.h"
 #include "QGCApplication.h"
 
 #include <QStandardPaths>
-#include <QJsonDocument>
-#include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
 
@@ -42,6 +38,7 @@ const RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::
     RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson,
     RequestMetaDataTypeStateMachine::_stateRequestMetaDataJsonFallback,
     RequestMetaDataTypeStateMachine::_stateRequestTranslationJson,
+    RequestMetaDataTypeStateMachine::_stateRequestTranslate,
     RequestMetaDataTypeStateMachine::_stateRequestComplete,
 };
 
@@ -50,7 +47,9 @@ const int RequestMetaDataTypeStateMachine::_cStates = sizeof(RequestMetaDataType
 ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _requestTypeStateMachine  (this)
+    , _cachedFileDownload(new QGCCachedFileDownload(this, QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache")))
     , _fileCache(ComponentInformationCache::defaultInstance())
+    , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
@@ -392,7 +391,7 @@ void RequestMetaDataTypeStateMachine::_httpDownloadComplete(QString remoteFile, 
 {
     qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadComplete remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
 
-    disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
+    disconnect(qobject_cast<QGCCachedFileDownload*>(sender()), &QGCCachedFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
     if (errorMsg.isEmpty()) {
         if (_currentFileName) {
             *_currentFileName = _downloadCompleteJsonWorker(localFile);
@@ -429,13 +428,14 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
                     advance();
                 }
             } else {
-                QGCFileDownload* download = new QGCFileDownload(this);
-                connect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
-                if (download->download(uri)) {
+                connect(_compMgr->_cachedFileDownload, &QGCCachedFileDownload::downloadComplete, this,
+                        &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
+                if (_compMgr->_cachedFileDownload->download(uri, crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec)) {
                     _downloadStartTime.start();
                 } else {
-                    qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile QGCFileDownload::download returned failure";
-                    disconnect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
+                    qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile QGCCachedFileDownload::download returned failure";
+                    disconnect(_compMgr->_cachedFileDownload, &QGCCachedFileDownload::downloadComplete, this,
+                               &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
                     advance();
                 }
             }
@@ -484,8 +484,38 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     CompInfo*                           compInfo        = requestMachine->compInfo();
     const QString                       uri             = compInfo->uriTranslation();
-    // TODO: enable caching for translations
     requestMachine->_requestFile("", false, uri, requestMachine->_jsonTranslationFileName);
+}
+
+void RequestMetaDataTypeStateMachine::_stateRequestTranslate(StateMachine* stateMachine)
+{
+    RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
+    requestMachine->_jsonMetadataTranslatedFileName = "";
+    if (requestMachine->_jsonTranslationFileName.isEmpty()) {
+        requestMachine->advance();
+    } else {
+        connect(requestMachine->_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
+                requestMachine, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
+        if (!requestMachine->_compMgr->translation()->downloadAndTranslate(requestMachine->_jsonTranslationFileName,
+                                                                           requestMachine->_jsonMetadataFileName,
+                                                                           ComponentInformationManager::cachedFileMaxAgeSec)) {
+            disconnect(requestMachine->_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
+                       requestMachine, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
+            qCDebug(ComponentInformationManagerLog) << "downloadAndTranslate() failed";
+            requestMachine->advance();
+        }
+    }
+}
+
+void RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete(QString translatedJsonTempFile, QString errorMsg)
+{
+    disconnect(_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
+               this, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
+    _jsonMetadataTranslatedFileName = translatedJsonTempFile;
+    if (!errorMsg.isEmpty()) {
+        qCWarning(ComponentInformationManagerLog) << "Metadata translation failed:" << errorMsg;
+    }
+    advance();
 }
 
 void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateMachine)
@@ -493,7 +523,12 @@ void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateM
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     CompInfo*                           compInfo        = requestMachine->compInfo();
 
-    compInfo->setJson(requestMachine->_jsonMetadataFileName, requestMachine->_jsonTranslationFileName);
+    if (requestMachine->_jsonMetadataTranslatedFileName.isEmpty()) {
+        compInfo->setJson(requestMachine->_jsonMetadataFileName);
+    } else {
+        compInfo->setJson(requestMachine->_jsonMetadataTranslatedFileName);
+        QFile(requestMachine->_jsonMetadataTranslatedFileName).remove();
+    }
 
     // if we don't have a CRC we didn't cache the file and we need to delete it
     if (!requestMachine->_jsonMetadataCrcValid && !requestMachine->_jsonMetadataFileName.isEmpty()) {

@@ -73,6 +73,7 @@ class LinkInterface;
 class LinkManager;
 class InitialConnectStateMachine;
 class Autotune;
+class RemoteIDManager;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -279,6 +280,7 @@ public:
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
     Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
     Q_PROPERTY(Autotune*                autotune            READ autotune           CONSTANT)
+    Q_PROPERTY(RemoteIDManager*         remoteIDManager     READ remoteIDManager    CONSTANT)
 
     // FactGroup object model properties
 
@@ -482,6 +484,7 @@ public:
 
     // Property accesors
     int id() const{ return _id; }
+    int compId() const{ return _compID; }
     MAV_AUTOPILOT firmwareType() const { return _firmwareType; }
     MAV_TYPE vehicleType() const { return _vehicleType; }
     QGCMAVLink::VehicleClass_t vehicleClass(void) const { return QGCMAVLink::vehicleClass(_vehicleType); }
@@ -707,6 +710,7 @@ public:
     ComponentInformationManager*    compInfoManager     () { return _componentInformationManager; }
     VehicleObjectAvoidance*         objectAvoidance     () { return _objectAvoidance; }
     Autotune*                       autotune            () const { return _autotune; }
+    RemoteIDManager*                remoteIDManager     () { return _remoteIDManager; }
 
     static const int cMaxRcChannels = 18;
 
@@ -862,8 +866,8 @@ public:
 
     double loadProgress                 () const { return _loadProgress; }
 
-    void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
-    void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
+    void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName);
+    void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName);
 
     HealthAndArmingCheckReport* healthAndArmingCheckReport() { return &_healthAndArmingCheckReport; }
 
@@ -1013,7 +1017,6 @@ private slots:
     void _gotProgressUpdate                 (float progressValue);
 
 private:
-    void _joystickChanged               (Joystick* joystick);
     void _loadSettings                  ();
     void _saveSettings                  ();
     void _startJoystick                 (bool start);
@@ -1382,6 +1385,7 @@ private:
     ImageProtocolManager*           _imageProtocolManager       = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
+    RemoteIDManager*                _remoteIDManager            = nullptr;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;

@@ -39,7 +39,7 @@ public:
 
     void setUriMetaData(const QString& uri, uint32_t crc);
 
-    virtual void setJson(const QString& metaDataJsonFileName, const QString& translationJsonFileName) = 0;
+    virtual void setJson(const QString& metaDataJsonFileName) = 0;
 
     bool available() const { return !_uris.uriMetaData.isEmpty(); }
 
