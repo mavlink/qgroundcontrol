@@ -40,6 +40,12 @@ Rectangle {
 
     Component.onCompleted: guidedController.confirmDialog = this
 
+    onVisibleChanged: {
+        if (visible) {
+            slider.focus = true
+        }
+    }
+
     onHideTriggerChanged: {
         if (hideTrigger) {
             confirmCancelled()
@@ -104,7 +110,7 @@ Rectangle {
 
             SliderSwitch {
                 id:                 slider
-                confirmText:        qsTr("Slide to confirm")
+                confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
                 Layout.fillWidth:   true
 
                 onAccept: {
