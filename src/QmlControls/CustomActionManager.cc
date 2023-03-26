@@ -20,7 +20,12 @@ CustomActionManager::CustomActionManager(void) {
     Fact* customActionsFact = flyViewSettings->customActionDefinitions();
 
     connect(customActionsFact, &Fact::valueChanged, this, &CustomActionManager::_loadFromJson);
-    _loadFromJson(customActionsFact->rawValue());
+
+    // On construction, we only load the Custom Actions if we have a path
+    // defined, to prevent spurious warnings.
+    if (!customActionsFact->rawValue().toString().isEmpty()) {
+        _loadFromJson(customActionsFact->rawValue());
+    }
 }
 
 void CustomActionManager::_loadFromJson(QVariant fact) {
@@ -35,7 +40,7 @@ void CustomActionManager::_loadFromJson(QVariant fact) {
     int version;
     QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(path, kQgcFileType, 1, 1, version, errorString);
     if (!errorString.isEmpty()) {
-        qWarning() << "Custom Actions Internal Error: " << errorString;
+        qCWarning(GuidedActionsControllerLog) << "Custom Actions Internal Error: " << errorString;
         emit actionsChanged();
         return;
     }
@@ -44,7 +49,7 @@ void CustomActionManager::_loadFromJson(QVariant fact) {
         { kActionListKey, QJsonValue::Array, /* required= */ true },
     };
     if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
-        qWarning() << "Custom Actions JSON document incorrect format:" << errorString;
+        qCWarning(GuidedActionsControllerLog) << "Custom Actions JSON document incorrect format:" << errorString;
         emit actionsChanged();
         return;
     }
@@ -52,7 +57,7 @@ void CustomActionManager::_loadFromJson(QVariant fact) {
     QJsonArray actionList = jsonObject[kActionListKey].toArray();
     for (auto actionJson: actionList) {
         if (!actionJson.isObject()) {
-            qWarning() << "Custom Actions JsonValue not an object: " << actionJson;
+            qCWarning(GuidedActionsControllerLog) << "Custom Actions JsonValue not an object: " << actionJson;
             continue;
         }
 
@@ -72,7 +77,7 @@ void CustomActionManager::_loadFromJson(QVariant fact) {
             { "param7", QJsonValue::Double, /* required= */ false },
         };
         if (!JsonHelper::validateKeys(actionObj, actionKeyInfoList, errorString)) {
-            qWarning() << "Custom Actions JSON document incorrect format:" << errorString;
+            qCWarning(GuidedActionsControllerLog) << "Custom Actions JSON document incorrect format:" << errorString;
             continue;
         }
 
