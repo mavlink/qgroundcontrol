@@ -191,6 +191,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &Vehicle::_vehicleParamLoaded);
 
+    connect(_settingsManager->firmwareCapabilitiesSettings()->enableROI(), &Fact::rawValueChanged, this, &Vehicle::capabilitiesChanged);
+
     _uas = new UAS(_mavlink, this, _firmwarePluginManager);
     _uas->setParent(this);
 
@@ -2596,7 +2598,10 @@ bool Vehicle::orbitModeSupported() const
 
 bool Vehicle::roiModeSupported() const
 {
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::ROIModeCapability);
+    Fact* capabilityFact  = _settingsManager->firmwareCapabilitiesSettings()->enableROI();
+    bool userEnabled = capabilityFact && capabilityFact->rawValue().toBool();
+    bool firmwareEnabled = _firmwarePlugin->isCapable(this, FirmwarePlugin::ROIModeCapability);
+    return userEnabled || firmwareEnabled;
 }
 
 bool Vehicle::takeoffVehicleSupported() const

@@ -1,0 +1,13 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":      "enableROI",
+    "shortDesc": "Force enable the ROI features in Fly and Plan Views",
+    "type":      "bool",
+    "default":   false
+}
+]
+}

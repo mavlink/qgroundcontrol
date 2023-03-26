@@ -189,6 +189,14 @@ Rectangle {
                             }
 
                             FactCheckBox {
+                                text:       qsTr("Force enable \"ROI at Location\"")
+                                visible:    _enableROI.visible
+                                fact:       _enableROI
+
+                                property Fact _enableROI: QGroundControl.settingsManager.firmwareCapabilitiesSettings.enableROI
+                            }
+
+                            FactCheckBox {
                                 text:       qsTr("Enable Custom Actions")
                                 visible:    _enableCustomActions.visible
                                 fact:       _enableCustomActions

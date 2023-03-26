@@ -21,6 +21,7 @@
 #include "FlightMapSettings.h"
 #include "RTKSettings.h"
 #include "FlyViewSettings.h"
+#include "FirmwareCapabilitiesSettings.h"
 #include "PlanViewSettings.h"
 #include "BrandImageSettings.h"
 #include "OfflineMapsSettings.h"
@@ -51,6 +52,7 @@ public:
     Q_PROPERTY(QObject* flightMapSettings               READ flightMapSettings              CONSTANT)
     Q_PROPERTY(QObject* rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject* flyViewSettings                 READ flyViewSettings                CONSTANT)
+    Q_PROPERTY(QObject* firmwareCapabilitiesSettings    READ firmwareCapabilitiesSettings   CONSTANT)
     Q_PROPERTY(QObject* planViewSettings                READ planViewSettings               CONSTANT)
     Q_PROPERTY(QObject* brandImageSettings              READ brandImageSettings             CONSTANT)
     Q_PROPERTY(QObject* offlineMapsSettings             READ offlineMapsSettings            CONSTANT)
@@ -73,6 +75,7 @@ public:
     FlightMapSettings*              flightMapSettings           (void) { return _flightMapSettings; }
     RTKSettings*                    rtkSettings                 (void) { return _rtkSettings; }
     FlyViewSettings*                flyViewSettings             (void) { return _flyViewSettings; }
+    FirmwareCapabilitiesSettings*   firmwareCapabilitiesSettings(void) { return _firmwareCapabilitiesSettings; }
     PlanViewSettings*               planViewSettings            (void) { return _planViewSettings; }
     BrandImageSettings*             brandImageSettings          (void) { return _brandImageSettings; }
     OfflineMapsSettings*            offlineMapsSettings         (void) { return _offlineMapsSettings; }
@@ -93,6 +96,7 @@ private:
     FlightMapSettings*              _flightMapSettings;
     RTKSettings*                    _rtkSettings;
     FlyViewSettings*                _flyViewSettings;
+    FirmwareCapabilitiesSettings*   _firmwareCapabilitiesSettings;
     PlanViewSettings*               _planViewSettings;
     BrandImageSettings*             _brandImageSettings;
     OfflineMapsSettings*            _offlineMapsSettings;
