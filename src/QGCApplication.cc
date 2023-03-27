@@ -466,7 +466,7 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<LinkInterface>           (kQGCVehicle,                       1, 0, "LinkInterface",              kRefOnly);
     qmlRegisterUncreatableType<VehicleLinkManager>      (kQGCVehicle,                       1, 0, "VehicleLinkManager",         kRefOnly);
     qmlRegisterUncreatableType<Autotune>                (kQGCVehicle,                       1, 0, "Autotune",                   kRefOnly);
-    qmlRegisterUncreatableType<RemoteIDManager>         (kQGCVehicle,                       1, 0, "remoteIDManager",            kRefOnly);
+    qmlRegisterUncreatableType<RemoteIDManager>         (kQGCVehicle,                       1, 0, "RemoteIDManager",            kRefOnly);
 
     qmlRegisterUncreatableType<MissionController>       (kQGCControllers,                   1, 0, "MissionController",          kRefOnly);
     qmlRegisterUncreatableType<GeoFenceController>      (kQGCControllers,                   1, 0, "GeoFenceController",         kRefOnly);
