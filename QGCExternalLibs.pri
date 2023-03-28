@@ -58,6 +58,11 @@ isEmpty(MAVLINK_CONF) {
     }
 }
 
+equals (MAVLINK_CONF, ardupilotmega) {
+    MAVLINK_CONF_ARDUPILOTMEGA = 1
+    DEFINES += MAVLINK_CONF_ARDUPILOTMEGA=$$MAVLINK_CONF_ARDUPILOTMEGA
+}
+
 # If defined, all APM specific MAVLink messages are disabled
 contains (CONFIG, QGC_DISABLE_APM_MAVLINK) {
     message("Disable APM MAVLink support")
