@@ -337,15 +337,15 @@ void RemoteIDManager::_sendSystem()
                                                     _id_or_mac_unknown,
                                                     _settings->locationType()->rawValue().toUInt(),
                                                     _settings->classificationType()->rawValue().toUInt(),
-                                                    geoPositionInfo.isValid() ? ( gcsPosition.latitude()  * 1.0e7 ) : 0, // If position not valid, send a 0
-                                                    geoPositionInfo.isValid() ? ( gcsPosition.longitude() * 1.0e7 ) : 0, // If position not valid, send a 0
+                                                    _gcsGPSGood ? ( gcsPosition.latitude()  * 1.0e7 ) : 0, // If position not valid, send a 0
+                                                    _gcsGPSGood ? ( gcsPosition.longitude() * 1.0e7 ) : 0, // If position not valid, send a 0
                                                     AREA_COUNT,
                                                     AREA_RADIUS,
                                                     -1000.0f,
                                                     -1000.0f,
                                                     _settings->categoryEU()->rawValue().toUInt(),
                                                     _settings->classEU()->rawValue().toUInt(),
-                                                    geoPositionInfo.isValid() ? gcsPosition.altitude() : 0, // If position not valid, send a 0
+                                                    _gcsGPSGood ? gcsPosition.altitude() : 0, // If position not valid, send a 0
                                                     _timestamp2019()), // Time stamp needs to be since 00:00:00 1/1/2019
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
