@@ -178,7 +178,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     _linkManager = _toolbox->linkManager();
 
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadSettings);
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_loadSettings);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_activeVehicleAvailableChanged);
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
     _mavlink = _toolbox->mavlinkProtocol();
     qCDebug(VehicleLog) << "Link started with Mavlink " << (_mavlink->getCurrentVersion() >= 200 ? "V2" : "V1");
@@ -2081,6 +2082,22 @@ void Vehicle::_loadSettings()
     if (_toolbox->joystickManager()->joysticks().count()) {
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
         _startJoystick(true);
+    }
+}
+
+void Vehicle::_activeVehicleAvailableChanged(bool isActiveVehicleAvailable)
+{
+    // if there is no longer an active vehicle, disconnect the joystick
+    if(!isActiveVehicleAvailable) {
+        setJoystickEnabled(false);
+    }
+}
+
+void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
+{
+    if(newActiveVehicle == this) {
+        // this vehicle is the newly active vehicle
+        setJoystickEnabled(true);
     }
 }
 
