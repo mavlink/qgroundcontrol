@@ -1624,8 +1624,9 @@ QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
 void
 QGCCameraControl::setCurrentStream(int stream)
 {
-    if (stream != _currentStream && 0 <= stream && stream < _streamLabels.count()) {
-        if(QGCVideoStreamInfo* pInfo = currentStreamInstance()) {
+    if (stream != _currentStream && (stream == -1 || (0 <= stream && stream < _streamLabels.count()))) {
+        // stop the old stream if possible
+        if (QGCVideoStreamInfo* pInfo = currentStreamInstance()) {
             qCDebug(CameraControlLog) << "Stopping stream: " << modelName() << " uri=" << pInfo->uri();
             //-- Stop current stream
             _vehicle->sendMavCommand(
@@ -1634,8 +1635,10 @@ QGCCameraControl::setCurrentStream(int stream)
                 false,                                  // ShowError
                 pInfo->streamID());                     // Stream ID
         }
+
+        // start the new stream, unless it's -1, in which case currentStreamInstance() is null
         _currentStream = stream;
-        if(QGCVideoStreamInfo* pInfo = currentStreamInstance()) {
+        if (QGCVideoStreamInfo* pInfo = currentStreamInstance()) {
             qCDebug(CameraControlLog) << "Starting stream: " << modelName() << " uri=" << pInfo->uri();
             //-- Start new stream
             _vehicle->sendMavCommand(

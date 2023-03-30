@@ -43,6 +43,10 @@ void
 QGCCameraManager::setCurrentCamera(int sel)
 {
     if(sel != _currentCamera && sel >= 0 && sel < _cameras.count()) {
+        // stop the old camera stream
+        if (QGCCameraControl* pOldCamera = currentCameraInstance()) {
+            pOldCamera->setCurrentStream(-1);
+        }
         _currentCamera = sel;
         emit currentCameraChanged();
         if (QGCCameraControl* pCamera = currentCameraInstance()) {
