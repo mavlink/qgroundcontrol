@@ -1630,7 +1630,7 @@
     </parameter>
     <parameter name="EKF2_ARSP_THR" default="0.0" type="FLOAT">
       <short_desc>Airspeed fusion threshold</short_desc>
-      <long_desc>A value of zero will deactivate airspeed fusion. Any other positive value will determine the minimum airspeed which will still be fused. Set to about 90% of the vehicles stall speed. Both airspeed fusion and sideslip fusion must be active for the EKF to continue navigating after loss of GPS. Use EKF2_FUSE_BETA to activate sideslip fusion.</long_desc>
+      <long_desc>A value of zero will deactivate airspeed fusion. Any other positive value will determine the minimum airspeed which will still be fused. Set to about 90% of the vehicles stall speed. Both airspeed fusion and sideslip fusion must be active for the EKF to continue navigating after loss of GPS. Use EKF2_FUSE_BETA to activate sideslip fusion. Note: side slip fusion is currently not supported for tailsitters.</long_desc>
       <min>0.0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -3341,7 +3341,7 @@
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="FW_T_I_GAIN_THR" default="0.3" type="FLOAT">
+    <parameter name="FW_T_I_GAIN_THR" default="0.1" type="FLOAT">
       <short_desc>Integrator gain throttle</short_desc>
       <long_desc>This is the integrator gain on the throttle part of the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
       <min>0.0</min>
@@ -3630,7 +3630,7 @@
       <short_desc>Protocol for Main GPS</short_desc>
       <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
       <min>0</min>
-      <max>5</max>
+      <max>6</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto detect</value>
@@ -3660,7 +3660,7 @@
       <short_desc>Protocol for Secondary GPS</short_desc>
       <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
       <min>0</min>
-      <max>5</max>
+      <max>6</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto detect</value>
@@ -4584,18 +4584,9 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
-      <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
-      <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIST_1WP from the home position.</long_desc>
-      <min>0</min>
-      <max>10000</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>100</increment>
-    </parameter>
-    <parameter name="MIS_DIST_WPS" default="900" type="FLOAT">
-      <short_desc>Maximal horizontal distance between waypoint</short_desc>
-      <long_desc>Failsafe check to prevent running missions which are way too big. Set a value of zero or less to disable. The mission will not be started if any distance between two subsequent waypoints is greater than MIS_DIST_WPS.</long_desc>
-      <min>0</min>
+      <short_desc>Maximal horizontal distance from current position to first waypoint</short_desc>
+      <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIST_1WP from the current position.</long_desc>
+      <min>-1</min>
       <max>10000</max>
       <unit>m</unit>
       <decimal>1</decimal>
@@ -4888,20 +4879,6 @@
         <value code="2">MAVLink gimbal protocol v2</value>
       </values>
     </parameter>
-    <parameter name="MNT_OB_LOCK_MODE" default="0.0" type="FLOAT">
-      <short_desc>Mixer value for selecting a locking mode</short_desc>
-      <long_desc>if required for the gimbal (only in AUX output mode)</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <decimal>3</decimal>
-    </parameter>
-    <parameter name="MNT_OB_NORM_MODE" default="-1.0" type="FLOAT">
-      <short_desc>Mixer value for selecting normal mode</short_desc>
-      <long_desc>if required by the gimbal (only in AUX output mode)</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <decimal>3</decimal>
-    </parameter>
     <parameter name="MNT_OFF_PITCH" default="0.0" type="FLOAT">
       <short_desc>Offset for pitch channel output in degrees</short_desc>
       <min>-360.0</min>
@@ -5183,6 +5160,13 @@
       <long_desc>Used below MPC_LAND_ALT3 if distance sensor data is availabe.</long_desc>
       <min>0.1</min>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="MPC_LAND_RADIUS" default="1000." type="FLOAT">
+      <short_desc>User assisted landing radius</short_desc>
+      <long_desc>When user assisted descent is enabled (see MPC_LAND_RC_HELP), this parameter controls the maximum position adjustment allowed from the original landing point.</long_desc>
+      <min>0</min>
+      <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="MPC_LAND_RC_HELP" default="0" type="INT32">
@@ -10481,8 +10465,8 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="VT_FW_MIN_ALT" default="0.0" type="FLOAT">
-      <short_desc>QuadChute Altitude</short_desc>
-      <long_desc>Minimum altitude for fixed wing flight, when in fixed wing the altitude drops below this altitude the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
+      <short_desc>Quad-chute altitude</short_desc>
+      <long_desc>Minimum altitude for fixed-wing flight. When the vehicle is in fixed-wing mode and the altitude drops below this altitude (relative altitude above local origin), it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT.</long_desc>
       <min>0.0</min>
       <max>200.0</max>
       <unit>m</unit>
@@ -10491,7 +10475,7 @@
     </parameter>
     <parameter name="VT_FW_QC_HMAX" default="0" type="INT32">
       <short_desc>Quad-chute maximum height</short_desc>
-      <long_desc>Maximum height above the ground (if available, otherwhise above home if available, otherwise above the local origin) where triggering a quadchute is possible. At high altitudes there is a big risk to deplete the battery and therefore crash if quad-chuting there.</long_desc>
+      <long_desc>Maximum height above the ground (if available, otherwise above Home if available, otherwise above the local origin) where triggering a quad-chute is possible. At high altitudes there is a big risk to deplete the battery and therefore crash if quad-chuting there.</long_desc>
       <min>0</min>
       <unit>m</unit>
       <increment>1</increment>
@@ -10520,7 +10504,7 @@
       <increment>1</increment>
     </parameter>
     <parameter name="VT_F_TRANS_THR" default="1.0" type="FLOAT">
-      <short_desc>Target throttle value for the transition to fixed wing flight</short_desc>
+      <short_desc>Target throttle value for the transition to fixed-wing flight</short_desc>
       <long_desc>standard vtol: pusher tailsitter, tiltrotor: main throttle</long_desc>
       <min>0.0</min>
       <max>1.0</max>
@@ -10528,7 +10512,7 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_F_TR_OL_TM" default="6.0" type="FLOAT">
-      <short_desc>Airspeed less front transition time (open loop)</short_desc>
+      <short_desc>Airspeed-less front transition time (open loop)</short_desc>
       <long_desc>The duration of the front transition when there is no airspeed feedback available.</long_desc>
       <min>1.0</min>
       <max>30.0</max>
@@ -10571,7 +10555,7 @@
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="VT_QC_T_ALT_LOSS" default="10.0" type="FLOAT">
+    <parameter name="VT_QC_T_ALT_LOSS" default="20.0" type="FLOAT">
       <short_desc>Quad-chute transition altitude loss threshold</short_desc>
       <long_desc>Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight. If the current altitude is more than this value below the altitude at the beginning of the transition, it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
       <min>0</min>
