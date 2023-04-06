@@ -598,7 +598,6 @@ ApplicationWindow {
             anchors.fill: parent
             onClicked: {
                 criticalVehicleMessagePopup.close()
-                console.log("Clicked", criticalVehicleMessagePopup.dropMessageIndicatorOnClose);
                 if (criticalVehicleMessagePopup.dropMessageIndicatorOnClose) {
                     criticalVehicleMessagePopup.dropMessageIndicatorOnClose = false;
                     QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages();
