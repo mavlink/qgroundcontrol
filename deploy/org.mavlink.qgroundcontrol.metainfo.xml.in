@@ -24,6 +24,10 @@
 
   <content_rating type="oars-1.1" />
 
+  <releases>
+    <release date="@REL_DATE@" version="@REL_VERSION@"/>
+  </releases>
+
   <launchable type="desktop-id">org.mavlink.qgroundcontrol.desktop</launchable>
   <screenshots>
     <screenshot type="default">
