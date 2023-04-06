@@ -3250,6 +3250,22 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="FW_THR_ASPD_MAX" default="0." type="FLOAT">
+      <short_desc>Throttle at max airspeed</short_desc>
+      <long_desc>Required throttle for level flight at maximum airspeed FW_AIRSPD_MAX (sea level, standard atmosphere) Set to 0 to disable mapping of airspeed to trim throttle.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_THR_ASPD_MIN" default="0." type="FLOAT">
+      <short_desc>Throttle at min airspeed</short_desc>
+      <long_desc>Required throttle for level flight at minimum airspeed FW_AIRSPD_MIN (sea level, standard atmosphere) Set to 0 to disable mapping of airspeed to trim throttle below FW_AIRSPD_TRIM.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="FW_THR_IDLE" default="0.0" type="FLOAT">
       <short_desc>Idle throttle</short_desc>
       <long_desc>This is the minimum throttle while on the ground For aircraft with internal combustion engines, this parameter should be set above the desired idle rpm. For electric motors, idle should typically be set to zero. Note that in automatic modes, "landed" conditions will engage idle throttle.</long_desc>
