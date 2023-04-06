@@ -23,3 +23,13 @@ execute_process(COMMAND ${GIT_EXECUTABLE} describe --always --tags
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                 OUTPUT_VARIABLE APP_VERSION_STR
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+execute_process(COMMAND ${GIT_EXECUTABLE} describe --abbrev=0
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE REL_VERSION
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format=%aI ${REL_VERSION}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE REL_DATE
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
