@@ -52,6 +52,8 @@ if(BUILD_TESTING)
 endif()
 
 add_library(MissionManager
+	AviantMissionTools.cc
+	AviantMissionTools.h
 	BlankPlanCreator.cc
 	BlankPlanCreator.h
 	CameraCalc.cc

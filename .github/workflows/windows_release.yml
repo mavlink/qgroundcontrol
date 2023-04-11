@@ -1,0 +1,108 @@
+name: Windows Release
+
+on:
+  push:
+    branches:
+      - 'aviant/*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+    - '*'
+
+defaults:
+  run:
+    shell: cmd
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.15.2
+  ARTIFACT:     QGroundControl-installer.exe
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || github.ref == 'aviant/V4.2' ] }}
+
+jobs:
+  build:
+    runs-on:  windows-2019
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win64_msvc2019_64
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts
+          setup-python: false
+
+      - name: Download JOM
+        uses: suisei-cn/actions-download-file@v1
+        with:
+          url:    http://download.qt.io/official_releases/jom/jom.zip
+          target: ${{ runner.temp }}\
+
+      - name: Unzip JOM
+        working-directory: ${{ runner.temp }}
+        run:  |
+              7z x jom.zip -ojom
+
+      - name: Download Gstreamer
+        uses: suisei-cn/actions-download-file@v1
+        with:
+          url:    https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-msvc-x86_64-1.18.1.msi
+          target: ${{ runner.temp }}\
+
+      - name: Download Gstreamer dev
+        uses: suisei-cn/actions-download-file@v1
+        with:
+          url:    https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi
+          target: ${{ runner.temp }}\
+
+      - name: Install Gstreamer
+        run:  |
+            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
+            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}\shadow_build_dir
+
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
+
+      - name: Build
+        working-directory: ${{ runner.temp }}\shadow_build_dir
+        run:  |
+              qmake -r ${{ env.SOURCE_DIR }}\qgroundcontrol.pro CONFIG+=installer CONFIG+=${{ env. BUILD_TYPE }}
+              ${{ runner.temp }}\jom\jom -j2
+
+      - name: Save installer artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}\shadow_build_dir\staging\${{ env.ARTIFACT }}
+
+      - name: Save PDB artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: qgroundcontrol.pdb
+          path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ runner.temp }}\shadow_build_dir\staging\${{ env.ARTIFACT }}

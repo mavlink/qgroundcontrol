@@ -37,6 +37,8 @@ Item {
     readonly property real  _toolsMargin:               ScreenTools.defaultFontPixelWidth * 0.75
     readonly property real  _radius:                    ScreenTools.defaultFontPixelWidth  * 0.5
     readonly property real  _rightPanelWidth:           Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
+    readonly property real  _validationPanelMinWidth:   _rightPanelWidth
+    readonly property real  _validationPanelMaxWidth:   2 * parent.width / 3
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
@@ -44,6 +46,7 @@ Item {
     property var    _missionController:                 _planMasterController.missionController
     property var    _geoFenceController:                _planMasterController.geoFenceController
     property var    _rallyPointController:              _planMasterController.rallyPointController
+    property var    _aviantMissionTools:                _planMasterController.aviantMissionTools
     property var    _visualItems:                       _missionController.visualItems
     property bool   _lightWidgetBorders:                editorMap.isSatelliteMap
     property bool   _addROIOnClick:                     false
@@ -52,6 +55,7 @@ Item {
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
+    property var    _aviantSettings:                    QGroundControl.settingsManager.aviantSettings
     property bool   _promptForPlanUsageShowing:         false
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
@@ -618,14 +622,16 @@ Item {
             maxHeight:          parent.height - toolStrip.y
             title:              qsTr("Plan")
 
-            readonly property int flyButtonIndex:       0
-            readonly property int fileButtonIndex:      1
-            readonly property int takeoffButtonIndex:   2
-            readonly property int waypointButtonIndex:  3
-            readonly property int roiButtonIndex:       4
-            readonly property int patternButtonIndex:   5
-            readonly property int landButtonIndex:      6
-            readonly property int centerButtonIndex:    7
+            readonly property int flyButtonIndex:                0
+            readonly property int fileButtonIndex:               1
+            readonly property int takeoffButtonIndex:            2
+            readonly property int waypointButtonIndex:           3
+            readonly property int roiButtonIndex:                4
+            readonly property int patternButtonIndex:            5
+            readonly property int landButtonIndex:               6
+            readonly property int centerButtonIndex:             7
+            readonly property int missionToolButtonIndex:        8
+            readonly property int missionValidationButtonIndex:  9
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
@@ -710,6 +716,20 @@ Item {
                         enabled:            true
                         visible:            true
                         dropPanelComponent: centerMapDropPanel
+                    },
+                    ToolStripAction {
+                        text:               qsTr("Tools")
+                        iconSource:         "/qmlimages/MissionTools.svg"
+                        enabled:            _aviantSettings.missionToolsUrl.rawValue != ""
+                        visible:            true
+                        dropPanelComponent: missionToolsDropPanel
+                    },
+                    ToolStripAction {
+                        text:               qsTr("Validate")
+                        iconSource:         "/qmlimages/MissionValidation.svg"
+                        enabled:            _aviantSettings.missionToolsUrl.rawValue != "" && !_planMasterController.syncInProgress && _planMasterController.containsItems
+                        visible:            true
+                        dropPanelComponent: missionValidationDropPanel
                     }
                 ]
             }
@@ -1233,6 +1253,133 @@ Item {
                     onClicked: {
                         dropPanel.hide()
                         mainWindow.showComponentDialog(clearVehicleMissionDialog, text, mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: missionValidationDropPanel
+
+        ColumnLayout {
+            id:         columnHolder
+            spacing:    _margin
+            width:      Math.min(_validationPanelMaxWidth, Math.max(_validationPanelMinWidth, validationSummaryLabel.implicitWidth))
+
+            Component.onCompleted: {
+                if (_aviantMissionTools.missionType != AviantMissionTools.NotSet) {
+                    _aviantMissionTools.requestOperation(AviantMissionTools.MissionValidation)
+                }
+            }
+
+            SectionHeader {
+                id:                 missionValidationSection
+                Layout.fillWidth:   true
+                text:               qsTr("Mission Validation")
+            }
+
+            ColumnLayout { 
+                visible:            missionValidationSection.checked
+                spacing:    _margin
+            
+                RowLayout {
+                    Layout.fillWidth:   true
+                    spacing:            _margin
+
+                    QGCLabel {
+                        text:               qsTr("Mission type:")
+                    }
+
+                    QGCComboBox {
+                        sizeToContents:     true
+                        model:              _aviantMissionTools.missionTypeList
+                        currentIndex:       _aviantMissionTools.missionType
+                        onActivated: {
+                            _aviantMissionTools.missionType = index
+                             if (_aviantMissionTools.missionType != AviantMissionTools.NotSet) {
+                                 _aviantMissionTools.requestOperation(AviantMissionTools.MissionValidation)
+                             }
+                        }
+                    }
+                }
+                
+                QGCLabel {
+                    id:                 validationSummaryLabel
+                    Layout.fillWidth:   true
+                    text:               _aviantMissionTools.validationResult
+                }
+
+                QGCButton {
+                    text:               qsTr("Cancel")
+                    Layout.fillWidth:   true
+                    visible:            _aviantMissionTools.currentOperation == AviantMissionTools.MissionValidation
+                    onClicked: {
+                        _aviantMissionTools.cancelOperation(AviantMissionTools.MissionValidation)
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: missionToolsDropPanel
+
+        ColumnLayout {
+            id:                  columnHolder
+            spacing:             _margin
+
+            SectionHeader {
+                id:                 missionToolsSettingsSection
+                Layout.fillWidth:   true
+                Layout.minimumWidth: _validationPanelMinWidth
+                text:               qsTr("Mission settings")
+            }
+            
+            RowLayout {
+                Layout.fillWidth:   true
+                spacing:            _margin
+                visible:            missionToolsSettingsSection.checked
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Mission type:")
+                }
+
+                QGCComboBox {
+                    Layout.fillWidth:   true
+                    sizeToContents:     true
+                    model:              _aviantMissionTools.missionTypeList
+                    currentIndex:       _aviantMissionTools.missionType
+                    onActivated:        _aviantMissionTools.missionType = index
+                }
+            }
+
+            SectionHeader {
+                id:                 missionToolsRallyPointSection
+                Layout.fillWidth:   true
+                text:               qsTr("Rally point")
+            }
+            
+            RowLayout {
+                Layout.fillWidth:   true
+                spacing:            _margin
+                visible:            missionToolsRallyPointSection.checked
+            
+                QGCButton {
+                    text:               qsTr("Set height")
+                    Layout.fillWidth:   true
+                    visible:            !_aviantMissionTools.requestInProgress
+                    onClicked: {
+                        _aviantMissionTools.requestOperation(AviantMissionTools.RallyPointHeight)
+                    }
+                }
+                QGCButton {
+                    text:               qsTr("Cancel")
+                    Layout.fillWidth:   true
+                    visible:            _aviantMissionTools.currentOperation == AviantMissionTools.RallyPointHeight
+                    onClicked: {
+                        _aviantMissionTools.cancelOperation(AviantMissionTools.RallyPointHeight)
                     }
                 }
             }

@@ -44,6 +44,7 @@ PlanMasterController::PlanMasterController(QObject* parent)
     , _missionController    (this)
     , _geoFenceController   (this)
     , _rallyPointController (this)
+    , _aviantMissionTools   (this, this)
 {
     _commonInit();
 }
@@ -454,6 +455,47 @@ QJsonDocument PlanMasterController::saveToJson()
     planJson[kJsonRallyPointsObjectKey] = rallyJson;
     qgcApp()->toolbox()->corePlugin()->postSaveToJson(this, planJson);
     return QJsonDocument(planJson);
+}
+
+bool  PlanMasterController::loadFromJson(QJsonDocument jsonDoc, QString &errorString)
+{
+    QJsonObject json = jsonDoc.object();
+    //-- Allow plugins to pre process the load
+    qgcApp()->toolbox()->corePlugin()->preLoadFromJson(this, json);
+
+    int version;
+    if (!JsonHelper::validateExternalQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
+        return false;
+    }
+
+    QList<JsonHelper::KeyValidateInfo> rgKeyInfo = {
+        { kJsonMissionObjectKey,        QJsonValue::Object, true },
+        { kJsonGeoFenceObjectKey,       QJsonValue::Object, true },
+        { kJsonRallyPointsObjectKey,    QJsonValue::Object, true },
+    };
+    if (!JsonHelper::validateKeys(json, rgKeyInfo, errorString)) {
+        return false;
+    }
+
+    if (!_missionController.load(json[kJsonMissionObjectKey].toObject(), errorString) ||
+            !_geoFenceController.load(json[kJsonGeoFenceObjectKey].toObject(), errorString) ||
+            !_rallyPointController.load(json[kJsonRallyPointsObjectKey].toObject(), errorString)) {
+        // Plan is in unkowns state if we get an error here, try to clean up as much as possible
+        errorString = "Unknown error loading received plan file";
+        _missionController.removeAll();
+        _geoFenceController.removeAll();
+        _rallyPointController.removeAll();
+        if (!offline()) setDirty(true);
+        _currentPlanFile.clear();
+        emit currentPlanFileChanged();
+        return false;
+    } else {
+        //-- Allow plugins to post process the load
+        qgcApp()->toolbox()->corePlugin()->postLoadFromJson(this, json);
+    }
+
+    if (!offline()) setDirty(true);
+    return true;
 }
 
 void

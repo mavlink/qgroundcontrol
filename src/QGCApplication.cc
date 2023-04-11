@@ -62,6 +62,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "FlightMapSettings.h"
 #include "FlightPathSegment.h"
+#include "AviantMissionTools.h"
 #include "PlanMasterController.h"
 #include "VideoManager.h"
 #include "VideoReceiver.h"
@@ -503,6 +504,7 @@ void QGCApplication::_initCommon()
     qmlRegisterType<ParameterEditorController>      (kQGCControllers,                       1, 0, "ParameterEditorController");
     qmlRegisterType<ESP8266ComponentController>     (kQGCControllers,                       1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>          (kQGCControllers,                       1, 0, "ScreenToolsController");
+    qmlRegisterType<AviantMissionTools>             (kQGCControllers,                       1, 0, "AviantMissionTools");
     qmlRegisterType<PlanMasterController>           (kQGCControllers,                       1, 0, "PlanMasterController");
     qmlRegisterType<QGCFileDialogController>        (kQGCControllers,                       1, 0, "QGCFileDialogController");
     qmlRegisterType<RCChannelMonitorController>     (kQGCControllers,                       1, 0, "RCChannelMonitorController");
