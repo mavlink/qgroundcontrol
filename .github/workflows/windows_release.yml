@@ -100,9 +100,15 @@ jobs:
         with:
           name: qgroundcontrol.pdb
           path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
-
+      - name: Convert windows path
+        id: corrected_path
+        shell: pwsh
+        run: |
+          $CORRECTED_PATH = "${{ runner.temp }}\shadow_build_dir\staging\${{ env.ARTIFACT }}"
+          $CORRECTED_PATH = $CORRECTED_PATH -replace '\\','/'
+          echo CORRECTED_PATH=$CORRECTED_PATH >> "$env:GITHUB_OUTPUT"
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ runner.temp }}\shadow_build_dir\staging\${{ env.ARTIFACT }}
+          files: ${{ steps.corrected_path.outputs.CORRECTED_PATH }}
