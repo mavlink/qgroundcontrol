@@ -3646,7 +3646,7 @@
       <short_desc>Protocol for Main GPS</short_desc>
       <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
       <min>0</min>
-      <max>6</max>
+      <max>7</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto detect</value>
@@ -3656,6 +3656,7 @@
         <value code="4">Emlid Reach</value>
         <value code="5">Femtomes</value>
         <value code="6">NMEA (generic)</value>
+        <value code="7">Septentrio (SBF)</value>
       </values>
     </parameter>
     <parameter name="GPS_2_GNSS" default="0" type="INT32">
@@ -3698,6 +3699,15 @@
         <value code="1">Full communication</value>
         <value code="2">RTCM output (PPK)</value>
       </values>
+    </parameter>
+    <parameter name="GPS_PITCH_OFFSET" default="0." type="FLOAT">
+      <short_desc>Pitch offset for dual antenna GPS</short_desc>
+      <long_desc>Vertical offsets can be compensated for by adjusting the Pitch offset (Septentrio). Note that this can be interpreted as the "roll" angle in case the antennas are aligned along the perpendicular axis. This occurs in situations where the two antenna ARPs may not be exactly at the same height in the vehicle reference frame. Since pitch is defined as the right-handed rotation about the vehicle Y axis, a situation where the main antenna is mounted lower than the aux antenna (assuming the default antenna setup) will result in a positive pitch.</long_desc>
+      <min>-90</min>
+      <max>90</max>
+      <unit>deg</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="GPS_SAT_INFO" default="0" type="INT32" boolean="true">
       <short_desc>Enable sat info (if available)</short_desc>
@@ -3760,7 +3770,7 @@
       <min>0</min>
       <max>360</max>
       <unit>deg</unit>
-      <decimal>0</decimal>
+      <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="PPS_CAP_ENABLE" default="0" type="INT32" boolean="true">
