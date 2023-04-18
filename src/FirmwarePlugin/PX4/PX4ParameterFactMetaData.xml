@@ -4492,10 +4492,12 @@
     <parameter name="MODAL_IO_RPM_MAX" default="15000" type="INT32">
       <short_desc>UART ESC RPM Max</short_desc>
       <long_desc>Maximum RPM for ESC</long_desc>
+      <unit>rpm</unit>
     </parameter>
     <parameter name="MODAL_IO_RPM_MIN" default="5500" type="INT32">
       <short_desc>UART ESC RPM Min</short_desc>
       <long_desc>Minimum RPM for ESC</long_desc>
+      <unit>rpm</unit>
     </parameter>
     <parameter name="MODAL_IO_SDIR1" default="0" type="INT32">
       <short_desc>UART ESC ID 1 Spin Direction Flag</short_desc>
