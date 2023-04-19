@@ -10410,9 +10410,9 @@
       <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="VT_B_TRANS_DUR" default="4.0" type="FLOAT">
-      <short_desc>Duration of a back transition</short_desc>
-      <long_desc>Time in seconds used for a back transition</long_desc>
+    <parameter name="VT_B_TRANS_DUR" default="10.0" type="FLOAT">
+      <short_desc>Maximum duration of a back transition</short_desc>
+      <long_desc>Time in seconds used for a back transition maximally. Transition is also declared over if the groundspeed drops below MPC_XY_CRUISE.</long_desc>
       <min>0.1</min>
       <max>20.00</max>
       <unit>s</unit>
@@ -10425,14 +10425,6 @@
       <min>0.0</min>
       <max>20.0</max>
       <unit>s</unit>
-    </parameter>
-    <parameter name="VT_B_TRANS_THR" default="0.0" type="FLOAT">
-      <short_desc>Target throttle value for the transition to hover flight</short_desc>
-      <long_desc>standard vtol: pusher tailsitter, tiltrotor: main throttle</long_desc>
-      <min>-1</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32" boolean="true">
       <short_desc>Lock control surfaces in hover</short_desc>
