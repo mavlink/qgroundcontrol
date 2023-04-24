@@ -4553,10 +4553,6 @@ void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
 }
 void Vehicle::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message)
 {
-    if (message.compid != _compID) {
-        return;
-    }
-    
     mavlink_gimbal_device_attitude_status_t o;
     mavlink_msg_gimbal_device_attitude_status_decode(&message, &o);
 
