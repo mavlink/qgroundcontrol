@@ -4574,9 +4574,9 @@ void Vehicle::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message
     float roll, pitch, yaw;
     mavlink_quaternion_to_euler(o.q, &roll, &pitch, &yaw);
 
-    _curGimbalPitch = pitch * (180.0f / 3.141592653589793);
-    _curGimbalRoll  = roll * (180.0f / 3.141592653589793);
-    _curGimbalYaw   = yaw * (180.0f / 3.141592653589793);
+    _curGimbalPitch = pitch * (180.0f / M_PI);
+    _curGimbalRoll  = roll * (180.0f / M_PI);
+    _curGimbalYaw   = yaw * (180.0f / M_PI);
     
     emit gimbalPitchChanged();
     emit gimbalRollChanged();
