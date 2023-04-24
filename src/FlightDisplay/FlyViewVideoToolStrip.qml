@@ -1,6 +1,7 @@
 import QtQml.Models                 2.12
 import QtQuick                      2.12
 import QtQuick.Layouts              1.11
+import QtQuick.Dialogs              1.2
 import QtPositioning                5.3
 
 import QGroundControl               1.0
@@ -20,6 +21,8 @@ Item {
     property bool  _actionsPanelVisible:    actionsToolStripAction.checked
     property bool  _actionsMapPanelVisible: mapToolsToolStripAction.checked
     property var   _activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
+    property bool  _haveGimbalControl:      _activeVehicle ? _activeVehicle.gimbalHaveControl : false
+    property bool  _othersHaveGimbalControl: _activeVehicle ? _activeVehicle.gimbalOthersHaveControl : false
 
     ToolStripHorizontal {
         id:                toolStripPanelVideo
@@ -147,8 +150,24 @@ Item {
                         iconSource:         "/HA_Icons/CAMERA_90.png"
                         onTriggered: { 
                             if (_activeVehicle) {
-                                _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                if (_activeVehicle.gimbalOthersHaveControl) {
+                                     // TODO: we should mention who is currently in control
+                                     mainWindow.showMessageDialog(title,
+                                         qsTr("Do you want to take over gimbal control?"),
+                                         StandardButton.Yes | StandardButton.Cancel,
+                                         function() {
+                                            _activeVehicle.acquireGimbalControl()
+                                            _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                            _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                         })
+                                } else if (!_activeVehicle.othersHaveControl) {
+                                    _activeVehicle.acquireGimbalControl()
+                                    _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                    _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                } else {
+                                    _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                    _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                }
                             }
                         }
                     },

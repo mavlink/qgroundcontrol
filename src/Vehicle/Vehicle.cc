@@ -784,6 +784,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleGimbalDeviceAttitudeStatus(message);
 >>>>>>> 85fc5400e (Improve gimbal support: Vehicle backend work)
         break;
+    case MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS:
+        _handleGimbalManagerStatus(message);
+        break;
 
     case MAVLINK_MSG_ID_EVENT:
     case MAVLINK_MSG_ID_CURRENT_EVENT_SEQUENCE:
@@ -4593,6 +4596,31 @@ void Vehicle::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message
     }
 }
 
+void Vehicle::_handleGimbalManagerStatus(const mavlink_message_t& message)
+{
+    mavlink_gimbal_manager_status_t status;
+    mavlink_msg_gimbal_manager_status_decode(&message, &status);
+
+    // TODO: use flags
+
+    const bool haveGimbalControl =
+        (status.primary_control_sysid == _mavlink->getSystemId()) &&
+        (status.primary_control_compid == _mavlink->getComponentId());
+
+    const bool othersHaveGimbalControl = !haveGimbalControl &&
+        (status.primary_control_sysid != 0 && status.primary_control_compid != 0); 
+
+    if (_haveGimbalControl != haveGimbalControl) {
+        _haveGimbalControl = haveGimbalControl;
+        emit gimbalHaveControlChanged();
+    }
+
+    if (_othersHaveGimbalControl != othersHaveGimbalControl) {
+        _othersHaveGimbalControl = othersHaveGimbalControl;
+        emit gimbalOthersHaveControlChanged();
+    }
+}
+
 void Vehicle::toggleGimbalRetracted(bool force, bool set) 
 {
     bool setDesired;
@@ -4683,6 +4711,36 @@ void Vehicle::sendGimbalManagerPitchYawFlags(uint32_t flags)
                 flags,
                 0,
                 0);
+}
+
+void Vehicle::acquireGimbalControl()
+{
+    sendMavCommand(
+        _defaultComponentId,
+        MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+        true,
+        _mavlink->getSystemId(), // Set us in primary control.
+        _mavlink->getComponentId(), // Set us in primary control
+        -1.f, // Leave secondary unchanged
+        -1.f, // Leave secondary unchanged
+        NAN, // Reserved
+        NAN, // Reserved
+        0); // All gimbal IDs, TODO: make gimbal specific
+}
+
+void Vehicle::releaseGimbalControl()
+{
+    sendMavCommand(
+        _defaultComponentId,
+        MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+        true,
+        -3.f, // Release primary control if we have control
+        -3.f, // Release primary control if we have control
+        -1.f, // Leave secondary control unchanged
+        -1.f, // Leave secondary control unchanged
+        NAN, // Reserved
+        NAN, // Reserved
+        0); // All gimbal IDs, TODO: make gimbal specific
 }
 
 void Vehicle::updateFlightDistance(double distance)

@@ -268,6 +268,8 @@ public:
     Q_PROPERTY(bool                 gimbalYawLock               READ gimbalYawLock                                                  NOTIFY gimbalYawLockChanged)
     Q_PROPERTY(bool                 gimbalClickOnMapActive      READ gimbalClickOnMapActive     WRITE setGimbalClickOnMapActive     NOTIFY gimbalClickOnMapActiveChanged)
     Q_PROPERTY(bool                 isROIEnabled                READ isROIEnabled                                                   NOTIFY isROIEnabledChanged)
+    Q_PROPERTY(bool                 gimbalHaveControl           READ gimbalHaveControl                                              NOTIFY gimbalHaveControlChanged)
+    Q_PROPERTY(bool                 gimbalOthersHaveControl     READ gimbalOthersHaveControl                                        NOTIFY gimbalOthersHaveControlChanged)
     Q_PROPERTY(CheckList            checkListState              READ checkListState             WRITE setCheckListState             NOTIFY checkListStateChanged)
     Q_PROPERTY(bool                 readyToFlyAvailable         READ readyToFlyAvailable                                            NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
     Q_PROPERTY(bool                 readyToFly                  READ readyToFly                                                     NOTIFY readyToFlyChanged)
@@ -476,6 +478,8 @@ public:
     Q_INVOKABLE void toggleGimbalRetracted   (bool force = false, bool set = false);
     Q_INVOKABLE void toggleGimbalNeutral     (bool force = false, bool set = false);
     Q_INVOKABLE void toggleGimbalYawLock     (bool force = false, bool set = false);
+    Q_INVOKABLE void acquireGimbalControl();
+    Q_INVOKABLE void releaseGimbalControl();
     Q_INVOKABLE void setGimbalRcTargeting();
     Q_INVOKABLE void setGimbalHomeTargeting();
     
@@ -942,6 +946,8 @@ public:
     qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGimbalYaw); }
     bool        gimbalData              () const{ return _haveGimbalData; }
     bool        isROIEnabled            () const{ return _isROIEnabled; }
+    bool        gimbalHaveControl       () const{ return _haveGimbalControl; }
+    bool        gimbalOthersHaveControl () const{ return _othersHaveGimbalControl; }
 
     uint32_t    gimbalStatusFlags         ()   const{ return _gimbalStatusFlags; }
     bool        gimbalRetracted           ()   const{ return _gimbalRetracted; }
@@ -1073,6 +1079,8 @@ signals:
     void gimbalYawLockChanged           ();
     void gimbalClickOnMapActiveChanged  ();
     void isROIEnabledChanged            ();
+    void gimbalHaveControlChanged       ();
+    void gimbalOthersHaveControlChanged ();
     void initialConnectComplete         ();
 
     void sensorsParametersResetAck      (bool success);
@@ -1141,6 +1149,7 @@ private:
     void _handleObstacleDistance        (const mavlink_message_t& message);
     void _handleFenceStatus             (const mavlink_message_t& message);
     void _handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message);
+    void _handleGimbalManagerStatus     (const mavlink_message_t& message);
     void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -1303,6 +1312,8 @@ private:
     float               _curGimbalYaw  = 0.0f;
     bool                _haveGimbalData = false;
     bool                _isROIEnabled   = false;
+    bool                _haveGimbalControl = false;
+    bool                _othersHaveGimbalControl = false;
     Joystick*           _activeJoystick = nullptr;
     uint32_t            _gimbalStatusFlags = 0;
     bool                _gimbalRetracted = false;
