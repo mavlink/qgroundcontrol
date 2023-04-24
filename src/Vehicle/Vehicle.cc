@@ -4659,11 +4659,14 @@ void Vehicle::toggleGimbalNeutral(bool force, bool set)
 // Not implemented in Ardupilot yet
 void Vehicle::toggleGimbalYawLock(bool force, bool set) 
 {
-    sendMavCommand(_defaultComponentId,
-        MAV_CMD_DO_AUX_FUNCTION,
-        true,    // show errors
-        163,     // yaw lock
-        set ? 2 : 0);  // Switch position
+
+    if (apmFirmware()) {
+        sendMavCommand(_defaultComponentId,
+            MAV_CMD_DO_AUX_FUNCTION,
+            true,    // show errors
+            163,     // yaw lock
+            set ? 2 : 0);  // Switch position
+    }
 
     // This is how it should be...  
     //
@@ -4685,11 +4688,15 @@ void Vehicle::toggleGimbalYawLock(bool force, bool set)
 
 void Vehicle::setGimbalRcTargeting() 
 {
-    sendMavCommand(_defaultComponentId,
-        MAV_CMD_DO_AUX_FUNCTION,
-        true,    // show errors
-        27,      // retract mount
-        0);      // low switch, sets it to default rc mode
+    if (apmFirmware()) {
+        sendMavCommand(_defaultComponentId,
+            MAV_CMD_DO_AUX_FUNCTION,
+            true,    // show errors
+            27,      // retract mount
+            0);      // low switch, sets it to default rc mode
+    } else {
+        // Do the standard thing for PX4.
+    }
 }
 
 void Vehicle::sendGimbalManagerPitchYawFlags(uint32_t flags)
