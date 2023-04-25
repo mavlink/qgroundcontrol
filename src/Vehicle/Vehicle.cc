@@ -51,6 +51,7 @@
 #include "VehicleBatteryFactGroup.h"
 #include "EventHandler.h"
 #include "Actuators/Actuators.h"
+#include "Gimbal/Gimbal.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -513,6 +514,20 @@ void Vehicle::_commonInit()
 
     // enable Joystick if appropriate
     _loadJoystickSettings();
+    
+    _gimbal = new Gimbal(this);
+
+    // Try to request the GIMBAL_MANAGER_INFORMATION message as it tells us that there is a gimbal manager to talk to.
+    requestMessage(
+            [](void* , MAV_RESULT commandResult, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message) {
+                printf("Got result: %d\n", commandResult);
+            },
+                    nullptr,
+                    MAV_COMP_ID_AUTOPILOT1,
+                    MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION);
+
+    // 
+    sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS, 1000000 /* 1 second interval in usec */);
 }
 
 Vehicle::~Vehicle()
@@ -776,13 +791,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
         break;
-<<<<<<< HEAD
     case MAVLINK_MSG_ID_FENCE_STATUS:
         _handleFenceStatus(message);
-=======
+        break;
     case MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS:
         _handleGimbalDeviceAttitudeStatus(message);
->>>>>>> 85fc5400e (Improve gimbal support: Vehicle backend work)
         break;
     case MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS:
         _handleGimbalManagerStatus(message);

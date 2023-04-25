@@ -396,6 +396,7 @@ INCLUDEPATH += \
     src/FlightMap/Widgets \
     src/FollowMe \
     src/Geo \
+    src/Gimbal \
     src/GPS \
     src/Joystick \
     src/PlanView \
@@ -648,6 +649,7 @@ HEADERS += \
     src/Geo/MGRS.hpp \
     src/Geo/TransverseMercator.hpp \
     src/Geo/PolarStereographic.hpp \
+    src/Gimbal/Gimbal.h \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCCachedFileDownload.h \
@@ -913,6 +915,7 @@ SOURCES += \
     src/Geo/MGRS.cpp \
     src/Geo/TransverseMercator.cpp \
     src/Geo/PolarStereographic.cpp \
+    src/Gimbal/Gimbal.cc \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCCachedFileDownload.cc \
