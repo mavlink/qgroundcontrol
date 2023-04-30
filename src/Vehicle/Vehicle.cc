@@ -51,7 +51,7 @@
 #include "VehicleBatteryFactGroup.h"
 #include "EventHandler.h"
 #include "Actuators/Actuators.h"
-#include "Gimbal/Gimbal.h"
+#include "Gimbal/GimbalController.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -515,7 +515,7 @@ void Vehicle::_commonInit()
     // enable Joystick if appropriate
     _loadJoystickSettings();
     
-    _gimbal = new Gimbal(this);
+    _gimbalController = new GimbalController(this);
 
     // Try to request the GIMBAL_MANAGER_INFORMATION message as it tells us that there is a gimbal manager to talk to.
     requestMessage(

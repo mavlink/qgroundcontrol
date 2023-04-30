@@ -1,4 +1,4 @@
-/// @file Gimbal.h
+/// @file GimbalController.h
 /// @brief Class talking to gimbal managers based on the MAVLink gimbal v2 protocol.
 
 #pragma once
@@ -10,11 +10,11 @@ Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 
 class Vehicle;
 
-class Gimbal : public QObject
+class GimbalController : public QObject
 {
     Q_OBJECT
 public:
-    Gimbal(Vehicle* vehicle);
+    GimbalController(Vehicle* vehicle);
 
     Q_PROPERTY(QmlObjectListModel*  gimbals                 READ gimbals                                        NOTIFY gimbalsChanged)
     Q_PROPERTY(QStringList          gimbalLabels            READ gimbalLabels                                   NOTIFY gimbalLabelsChanged)

@@ -1,17 +1,17 @@
-#include "Gimbal.h"
+#include "GimbalController.h"
 
 QGC_LOGGING_CATEGORY(GimbalLog, "GimbalLog")
 
 
-Gimbal::Gimbal(Vehicle *vehicle)
+GimbalController::GimbalController(Vehicle *vehicle)
     : _vehicle(vehicle)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &Gimbal::_mavlinkMessageReceived);
+    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
 }
 
 void
-Gimbal::_mavlinkMessageReceived(const mavlink_message_t& message)
+GimbalController::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT:
@@ -24,7 +24,7 @@ Gimbal::_mavlinkMessageReceived(const mavlink_message_t& message)
 }
 
 void    
-Gimbal::_handleHeartbeat(const mavlink_message_t& message)
+GimbalController::_handleHeartbeat(const mavlink_message_t& message)
 {
     for (auto& gimbal : _potentialGimbals) {
         if (gimbal.compID == message.compid) {
@@ -42,7 +42,7 @@ Gimbal::_handleHeartbeat(const mavlink_message_t& message)
 }
 
 void
-Gimbal::_handleGimbalInformation(const mavlink_message_t& message)
+GimbalController::_handleGimbalInformation(const mavlink_message_t& message)
 {
     qCDebug(GimbalLog) << "_handleGimbalInformation(" << message.compid << ")";
     // TODO: 
@@ -51,7 +51,7 @@ Gimbal::_handleGimbalInformation(const mavlink_message_t& message)
 }
 
 void
-Gimbal::_requestGimbalInformation(GimbalItem& item)
+GimbalController::_requestGimbalInformation(GimbalItem& item)
 {
     qCDebug(GimbalLog) << "_requestGimbalInformation(" << item.compID << ")";
     if(_vehicle) {
@@ -60,7 +60,7 @@ Gimbal::_requestGimbalInformation(GimbalItem& item)
     }
 }
 
-void Gimbal::_requestMessageHandler(void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t&)
+void GimbalController::_requestMessageHandler(void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t&)
 {
     GimbalItem* item = (GimbalItem*)resultHandlerData;
 
@@ -85,7 +85,7 @@ void Gimbal::_requestMessageHandler(void* resultHandlerData, MAV_RESULT commandR
     }
 }
 
-Gimbal::GimbalItem::GimbalItem(uint8_t compID_) :
+GimbalController::GimbalItem::GimbalItem(uint8_t compID_) :
     compID(compID_)
 {
 }
