@@ -32,14 +32,20 @@ private slots:
 private:
     class GimbalItem {
     public:
-        GimbalItem(uint8_t compID_);
-        uint8_t compID       = 0;
-        bool    shouldRetry  = false;
+        unsigned requestInformationRetries = 3;
+        unsigned requestStatusRetries = 3;
+        unsigned requestAttitudeRetries = 3;
+        uint8_t responsibleCompid = 0;
+        bool receivedInformation = false;
+        bool receivedStatus = false;
+        bool receivedAttitude = false;
     };
 
-    void    _requestGimbalInformation(GimbalItem& item);
-    void    _handleHeartbeat         (const mavlink_message_t& message);
-    void    _handleGimbalInformation (const mavlink_message_t& message);
+    void    _requestGimbalInformation        (uint8_t compid);
+    void    _handleHeartbeat                 (const mavlink_message_t& message);
+    void    _handleGimbalManagerInformation  (const mavlink_message_t& message);
+    void    _handleGimbalManagerStatus       (const mavlink_message_t& message);
+    void    _handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message);
 
     static void _requestMessageHandler(void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
@@ -47,5 +53,5 @@ private:
     QmlObjectListModel  _gimbals;
     QStringList         _gimbalLabels;
 
-    QVector<GimbalItem> _potentialGimbals;
+    QMap<uint8_t, GimbalItem> _potentialGimbals;
 };
