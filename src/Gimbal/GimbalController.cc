@@ -1,10 +1,14 @@
 #include "GimbalController.h"
 
+#include "MAVLinkProtocol.h"
+#include "Vehicle.h"
+
 QGC_LOGGING_CATEGORY(GimbalLog, "GimbalLog")
 
 
-GimbalController::GimbalController(Vehicle *vehicle)
-    : _vehicle(vehicle)
+GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
+    : _mavlink(mavlink)
+    , _vehicle(vehicle)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
@@ -70,7 +74,7 @@ GimbalController::_handleHeartbeat(const mavlink_message_t& message)
 void
 GimbalController::_handleGimbalManagerInformation(const mavlink_message_t& message)
 {
-    qCDebug(GimbalLog) << "_handleGimbalManagerInformation for component" << message.compid;
+    qCDebug(GimbalLog) << "_handleGimbalManagerInformation for component " << message.compid;
 
     auto& gimbal = _potentialGimbals[message.compid];
 
@@ -78,17 +82,57 @@ GimbalController::_handleGimbalManagerInformation(const mavlink_message_t& messa
     mavlink_msg_gimbal_manager_information_decode(&message, &information);
 
     gimbal.receivedInformation = true;
-    gimbal.responsibleCompid = information.gimbal_device_id;
+    if (information.gimbal_device_id != 0) {
+        gimbal.responsibleCompid = information.gimbal_device_id;
+        qCDebug(GimbalLog) << "gimbal manager " << message.compid
+            << " is responsible for gimbal device " << information.gimbal_device_id;
+    }
+
+    _checkComplete(gimbal);
 }
 
 void
 GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
 {
-    qCDebug(GimbalLog) << "_handleGimbalManagerStatus for component" << message.compid;
+    qCDebug(GimbalLog) << "_handleGimbalManagerStatus for component " << message.compid;
 
     auto& gimbal = _potentialGimbals[message.compid];
 
+    mavlink_gimbal_manager_status_t status;
+    mavlink_msg_gimbal_manager_status_decode(&message, &status);
+
     gimbal.receivedStatus = true;
+
+    if (status.gimbal_device_id != 0) {
+        gimbal.responsibleCompid = status.gimbal_device_id;
+        qCDebug(GimbalLog) << "gimbal manager " << message.compid
+            << " is responsible for gimbal device " << status.gimbal_device_id;
+    }
+
+    const bool haveControl =
+        (status.primary_control_sysid == _mavlink->getSystemId()) &&
+        (status.primary_control_compid == _mavlink->getComponentId());
+
+    const bool othersHaveControl = !haveControl &&
+        (status.primary_control_sysid != 0 && status.primary_control_compid != 0); 
+
+    bool hasChanged = false;
+
+    if (gimbal.haveControl != haveControl) {
+        gimbal.haveControl = haveControl;
+        hasChanged = true;
+    }
+
+    if (gimbal.othersHaveControl != othersHaveControl) {
+        gimbal.othersHaveControl = othersHaveControl;
+        hasChanged = true;
+    }
+
+    if (hasChanged) {
+        //emit gimbalsChanged();
+    }
+
+    _checkComplete(gimbal);
 }
 
 void
@@ -96,11 +140,29 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 {
     // We do a reverse lookup here because the gimbal device might have a
     // different component ID than the gimbal manager.
-    for (auto& gimbal : _potentialGimbals) {
-        if (gimbal.responsibleCompid == message.compid) {
-            gimbal.receivedAttitude = true;
-        }
+    auto gimbal_it = std::find_if(_potentialGimbals.begin(), _potentialGimbals.end(),
+                 [&](auto& gimbal) { return gimbal.responsibleCompid == message.compid; });
+
+    if (gimbal_it == _potentialGimbals.end()) {
+        qCDebug(GimbalLog) << "_handleGimbalDeviceAttitudeStatus for unknown device with component " << message.compid;
     }
+
+    mavlink_gimbal_device_attitude_status_t attitude_status;
+    mavlink_msg_gimbal_device_attitude_status_decode(&message, &attitude_status);
+
+    gimbal_it->retracted = (attitude_status.flags & GIMBAL_MANAGER_FLAGS_RETRACT) > 0;
+    gimbal_it->neutral = (attitude_status.flags & GIMBAL_MANAGER_FLAGS_NEUTRAL) > 0;
+    gimbal_it->yawLock = (attitude_status.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) > 0;
+
+    // TODO: use more appropriate conversion
+    float roll, pitch, yaw;
+    mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
+
+    gimbal_it->curPitch = pitch * (180.0f / M_PI);
+    gimbal_it->curRoll  = roll * (180.0f / M_PI);
+    gimbal_it->curYaw   = yaw * (180.0f / M_PI);
+
+    _checkComplete(*gimbal_it);
 }
 
 void
@@ -125,4 +187,21 @@ void GimbalController::_requestMessageHandler(void* resultHandlerData,
 
     // Not sure what to do here, we already subscribed to GimbalInformation in general in case it
     // arrives without us asking for it.
+}
+
+void GimbalController::_checkComplete(Gimbal& gimbal)
+{
+    if (gimbal.isComplete) {
+        // Already complete, nothing to do.
+        return;
+    }
+
+    if (!gimbal.receivedInformation || !gimbal.receivedStatus || !gimbal.receivedAttitude) {
+        // Not complete yet.
+        return;
+    }
+
+    gimbal.isComplete = true;
+
+    _gimbals.push_back(&gimbal);
 }

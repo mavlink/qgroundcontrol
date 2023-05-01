@@ -515,7 +515,7 @@ void Vehicle::_commonInit()
     // enable Joystick if appropriate
     _loadJoystickSettings();
     
-    _gimbalController = new GimbalController(this);
+    _gimbalController = new GimbalController(_mavlink, this);
 }
 
 Vehicle::~Vehicle()
@@ -773,20 +773,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
         break;
-    case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
-        _handleGimbalOrientation(message);
-        break;
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
         break;
     case MAVLINK_MSG_ID_FENCE_STATUS:
         _handleFenceStatus(message);
-        break;
-    case MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS:
-        _handleGimbalDeviceAttitudeStatus(message);
-        break;
-    case MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS:
-        _handleGimbalManagerStatus(message);
         break;
 
     case MAVLINK_MSG_ID_EVENT:
@@ -4274,6 +4265,42 @@ void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
     _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
     _doSetHomeCoordinate = QGeoCoordinate(); // So isValid() will no longer return true, for extra safety
 }
+    
+qreal
+Vehicle::gimbalRoll() const
+{
+    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curRoll : NAN);
+}
+
+qreal
+Vehicle::gimbalPitch() const
+{
+    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curPitch : NAN);
+}
+
+qreal
+Vehicle::gimbalYaw() const
+{
+    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curYaw : NAN);
+}
+
+bool
+Vehicle::gimbalData() const
+{
+    return _gimbalController->gimbals().size() > 0;
+}
+
+bool
+Vehicle::gimbalHaveControl() const
+{
+    return gimbalData() ? _gimbalController->gimbals()[0]->haveControl : false;
+}
+
+bool
+Vehicle::gimbalOthersHaveControl() const
+{
+    return gimbalData() ? _gimbalController->gimbals()[0]->othersHaveControl : false;
+}
 
 void Vehicle::_updateAltAboveTerrain()
 {
@@ -4356,25 +4383,24 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
 
 void Vehicle::gimbalPitchStep(int direction)
 {
-    if(_haveGimbalData) {
+    if(gimbalData()) {
         //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
-        double p = static_cast<double>(_curGimbalPitch + direction);
-        gimbalControlValue(p, static_cast<double>(_curGimbalYaw));
+        double p = static_cast<double>(_gimbalController->gimbals()[0]->curPitch + direction);
+        gimbalControlValue(p, static_cast<double>(_gimbalController->gimbals()[0]->curYaw));
     }
 }
 
 void Vehicle::gimbalYawStep(int direction)
 {
-    if(_haveGimbalData) {
+    if(gimbalData()) {
         //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
-        double y = static_cast<double>(_curGimbalYaw + direction);
-        gimbalControlValue(static_cast<double>(_curGimbalPitch), y);
+        double y = static_cast<double>(_gimbalController->gimbals()[0]->curYaw + direction);
+        gimbalControlValue(static_cast<double>(_gimbalController->gimbals()[0]->curPitch), y);
     }
 }
-
 void Vehicle::centerGimbal()
 {
-    if(_haveGimbalData) {
+    if(gimbalData()) {
         gimbalControlValue(0.0, 0.0);
     }
 }
@@ -4382,7 +4408,7 @@ void Vehicle::centerGimbal()
 // Pan and tilt comes as +-(0-1)
 void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract, bool neutral, bool yawlock)
 {
-    if(_haveGimbalData) {
+    if (_gimbalController->gimbals().size() > 0) {
 
         // click and point, based on FOV
         if (clickAndPoint) {
@@ -4392,8 +4418,10 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
             float panIncDesired =  panPct  * hFov;
             float tiltIncDesired = tiltPct * vFov;
 
-            float panDesired = panIncDesired + _curGimbalYaw;
-            float tiltDesired = tiltIncDesired + _curGimbalPitch;
+            // TODO: move this into GimbalController and add gimbal selection.
+            // For now, we just use the first gimbal.
+            float panDesired = panIncDesired + _gimbalController->gimbals()[0]->curYaw;
+            float tiltDesired = tiltIncDesired + _gimbalController->gimbals()[0]->curPitch;
             sendMavCommand(
                 _defaultComponentId,
                 MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
@@ -4415,8 +4443,8 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
             float panIncDesired  = panPct * maxSpeed  * 0.1f;
             float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
 
-            float panDesired = panIncDesired + _curGimbalYaw;
-            float tiltDesired = tiltIncDesired + _curGimbalPitch;
+            float panDesired = panIncDesired + _gimbalController->gimbals()[0]->curYaw;
+            float tiltDesired = tiltIncDesired + _gimbalController->gimbals()[0]->curPitch;
 
             qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
             
@@ -4457,8 +4485,10 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
 }
 
 void Vehicle::sendGimbalManagerPitchYaw(float pan, float tilt) {
-    // setup flags
-    uint32_t flags = _gimbalStatusFlags;
+
+    unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
+        | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
+        | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
 
     sendMavCommand(
                 _defaultComponentId,
@@ -4486,28 +4516,6 @@ void Vehicle::setGimbalHomeTargeting()
                 0,                                   // Latitude (not used)
                 0,                                   // Longitude (not used)
                 MAV_MOUNT_MODE_HOME_LOCATION);       // MAVLink Roll,Pitch,Yaw
-}
-
-void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
-{
-    mavlink_mount_orientation_t o;
-    mavlink_msg_mount_orientation_decode(&message, &o);
-    if(fabsf(_curGimbalRoll - o.roll) > 0.5f) {
-        _curGimbalRoll = o.roll;
-        emit gimbalRollChanged();
-    }
-    if(fabsf(_curGimbalPitch - o.pitch) > 0.5f) {
-        _curGimbalPitch = o.pitch;
-        emit gimbalPitchChanged();
-    }
-    if(fabsf(_curGimbalYaw - o.yaw) > 0.5f) {
-        _curGimbalYaw = o.yaw;
-        emit gimbalYawChanged();
-    }
-    if(!_haveGimbalData) {
-        _haveGimbalData = true;
-        emit gimbalDataChanged();
-    }
 }
 
 void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
@@ -4551,71 +4559,6 @@ void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
         }
     } else {
         lastUpdate = now;
-    }
-}
-void Vehicle::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message)
-{
-    mavlink_gimbal_device_attitude_status_t o;
-    mavlink_msg_gimbal_device_attitude_status_decode(&message, &o);
-
-    _gimbalStatusFlags = o.flags;
-    _gimbalNeutral = false;
-    _gimbalYawLock = false;
-    _isROIEnabled = false;
-
-    if ((_gimbalStatusFlags & GIMBAL_MANAGER_FLAGS_RETRACT) > 0) {
-        _gimbalRetracted = true;
-    }
-    if ((_gimbalStatusFlags & GIMBAL_MANAGER_FLAGS_NEUTRAL) > 0) {
-        _gimbalNeutral = true;
-    }
-    if ((_gimbalStatusFlags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) > 0) {
-        _gimbalYawLock = true;
-    }
-
-    float roll, pitch, yaw;
-    mavlink_quaternion_to_euler(o.q, &roll, &pitch, &yaw);
-
-    _curGimbalPitch = pitch * (180.0f / M_PI);
-    _curGimbalRoll  = roll * (180.0f / M_PI);
-    _curGimbalYaw   = yaw * (180.0f / M_PI);
-    
-    emit gimbalPitchChanged();
-    emit gimbalRollChanged();
-    emit gimbalYawChanged();
-    emit gimbalStatusFlagsChanged();
-    emit gimbalRetractedChanged();
-    emit gimbalNeutralChanged();
-    emit gimbalYawLockChanged();
-
-    if (!_haveGimbalData) {
-        _haveGimbalData = true;
-        emit gimbalDataChanged();
-    }
-}
-
-void Vehicle::_handleGimbalManagerStatus(const mavlink_message_t& message)
-{
-    mavlink_gimbal_manager_status_t status;
-    mavlink_msg_gimbal_manager_status_decode(&message, &status);
-
-    // TODO: use flags
-
-    const bool haveGimbalControl =
-        (status.primary_control_sysid == _mavlink->getSystemId()) &&
-        (status.primary_control_compid == _mavlink->getComponentId());
-
-    const bool othersHaveGimbalControl = !haveGimbalControl &&
-        (status.primary_control_sysid != 0 && status.primary_control_compid != 0); 
-
-    if (_haveGimbalControl != haveGimbalControl) {
-        _haveGimbalControl = haveGimbalControl;
-        emit gimbalHaveControlChanged();
-    }
-
-    if (_othersHaveGimbalControl != othersHaveGimbalControl) {
-        _othersHaveGimbalControl = othersHaveGimbalControl;
-        emit gimbalOthersHaveControlChanged();
     }
 }
 

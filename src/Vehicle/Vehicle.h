@@ -264,7 +264,6 @@ public:
     Q_PROPERTY(qreal                gimbalYaw                   READ gimbalYaw                                                      NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData                  READ gimbalData                                                     NOTIFY gimbalDataChanged)
     Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
-    Q_PROPERTY(uint32_t             gimbalStatusFlags           READ gimbalStatusFlags                                              NOTIFY gimbalStatusFlagsChanged)
     Q_PROPERTY(bool                 gimbalRetracted             READ gimbalRetracted                                                NOTIFY gimbalRetractedChanged)
     Q_PROPERTY(bool                 gimbalNeutral               READ gimbalNeutral                                                  NOTIFY gimbalNeutralChanged)
     Q_PROPERTY(bool                 gimbalYawLock               READ gimbalYawLock                                                  NOTIFY gimbalYawLockChanged)
@@ -943,15 +942,15 @@ public:
     quint64     mavlinkLossCount        () const{ return _mavlinkLossCount; }        /// Total number of lost messages
     float       mavlinkLossPercent      () const{ return _mavlinkLossPercent; }      /// Running loss rate
 
-    qreal       gimbalRoll              () const{ return static_cast<qreal>(_curGimbalRoll);}
-    qreal       gimbalPitch             () const{ return static_cast<qreal>(_curGimbalPitch); }
-    qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGimbalYaw); }
-    bool        gimbalData              () const{ return _haveGimbalData; }
+    qreal       gimbalRoll              () const;
+    qreal       gimbalPitch             () const;
+    qreal       gimbalYaw               () const;
+    bool        gimbalData              () const;
     bool        isROIEnabled            () const{ return _isROIEnabled; }
-    bool        gimbalHaveControl       () const{ return _haveGimbalControl; }
-    bool        gimbalOthersHaveControl () const{ return _othersHaveGimbalControl; }
+    bool        gimbalHaveControl       () const;
+    bool        gimbalOthersHaveControl () const;
 
-    uint32_t    gimbalStatusFlags         ()   const{ return _gimbalStatusFlags; }
+    //uint32_t    gimbalStatusFlags         ()   const{ return _gimbalStatusFlags; }
     bool        gimbalRetracted           ()   const{ return _gimbalRetracted; }
     bool        gimbalNeutral             ()   const{ return _gimbalNeutral; }
     bool        gimbalYawLock             ()   const{ return _gimbalYawLock; }
@@ -1076,7 +1075,6 @@ signals:
     void gimbalPitchChanged             ();
     void gimbalYawChanged               ();
     void gimbalDataChanged              ();
-    void gimbalStatusFlagsChanged       ();
     void gimbalRetractedChanged         ();
     void gimbalNeutralChanged           ();
     void gimbalYawLockChanged           ();
@@ -1152,8 +1150,6 @@ private:
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
     void _handleFenceStatus             (const mavlink_message_t& message);
-    void _handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message);
-    void _handleGimbalManagerStatus     (const mavlink_message_t& message);
     void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -1207,7 +1203,7 @@ private:
 
     bool            _joystickEnabled = false;
 
-    UAS* _uas = nullptr;
+    UAS*            _uas = nullptr;
 
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;
@@ -1312,15 +1308,8 @@ private:
     uint8_t             _compID = 0;
     bool                _heardFrom = false;
 
-    float               _curGimbalRoll  = 0.0f;
-    float               _curGimbalPitch = 0.0f;
-    float               _curGimbalYaw  = 0.0f;
-    bool                _haveGimbalData = false;
     bool                _isROIEnabled   = false;
-    bool                _haveGimbalControl = false;
-    bool                _othersHaveGimbalControl = false;
     Joystick*           _activeJoystick = nullptr;
-    uint32_t            _gimbalStatusFlags = 0;
     bool                _gimbalRetracted = false;
     bool                _gimbalNeutral = false;
     bool                _gimbalYawLock = false;
