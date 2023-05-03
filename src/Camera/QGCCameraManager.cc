@@ -109,8 +109,6 @@ QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 void
 QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
-    mavlink_heartbeat_t heartbeat;
-    mavlink_msg_heartbeat_decode(&message, &heartbeat);
     //-- First time hearing from this one?
     QString sCompID = QString::number(message.compid);
     if(!_cameraInfoRequest.contains(sCompID)) {
