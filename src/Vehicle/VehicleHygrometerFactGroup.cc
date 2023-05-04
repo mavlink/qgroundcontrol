@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -46,7 +46,7 @@ void VehicleHygrometerFactGroup::_handleHygrometerSensor(mavlink_message_t& mess
     mavlink_hygrometer_sensor_t hygrometer;
     mavlink_msg_hygrometer_sensor_decode(&message, &hygrometer);
 
-    _hygroTempFact.setRawValue(hygrometer.temperature);
+    _hygroTempFact.setRawValue(hygrometer.temperature/100.f);
     _hygroHumiFact.setRawValue(hygrometer.humidity);
     _hygroIDFact.setRawValue(hygrometer.id);
 }
