@@ -8332,6 +8332,10 @@
         <value code="1">Enabled</value>
       </values>
     </parameter>
+    <parameter name="SENS_EN_ADIS165X" default="0" type="INT32" boolean="true">
+      <short_desc>Analog Devices ADIS16507 IMU (external SPI)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_ARSPDSIM" default="0" type="INT32">
       <short_desc>Enable simulated airspeed sensor instance</short_desc>
       <min>0</min>
