@@ -15,10 +15,10 @@ Item {
     property var screenXrateInitCoocked
     property var screenYrateInitCoocked
 
-    property var _cameraControlSettings: QGroundControl.settingsManager.cameraControlSettings
+    property var _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
     property var _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     
-    property bool shouldProcessClicks:   QGroundControl.videoManager.fullScreen || flyViewVideoWidgetLayer._cameraControlSettings.EnableOnScreenControl.value ||
+    property bool shouldProcessClicks:   QGroundControl.videoManager.fullScreen || flyViewVideoWidgetLayer._gimbalControllerSettings.EnableOnScreenControl.value ||
                                          _activeVehicle
 
     // Functions for on screen gimbal control
@@ -26,7 +26,7 @@ Item {
         if (!shouldProcessClicks) {
             return
         }
-        if (!_cameraControlSettings.ControlType.rawValue == 0) {
+        if (!_gimbalControllerSettings.ControlType.rawValue == 0) {
             return
         }
         clickAndPoint(x, y)
@@ -45,7 +45,7 @@ Item {
         if (!shouldProcessClicks) {
             return
         }
-        if (!_cameraControlSettings.ControlType.rawValue == 1) {
+        if (!_gimbalControllerSettings.ControlType.rawValue == 1) {
             return
         }
         sendRateTimer.start()
@@ -57,7 +57,7 @@ Item {
         if (!shouldProcessClicks) {
             return
         }
-        if (!_cameraControlSettings.ControlType.rawValue == 1) {
+        if (!_gimbalControllerSettings.ControlType.rawValue == 1) {
             return
         }
         sendRateTimer.stop()

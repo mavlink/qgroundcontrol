@@ -557,8 +557,8 @@ SetupPage {
                         id:                 enableOnScreenControlCheckbox
                         Layout.fillWidth:   true
                         Layout.columnSpan:  2
-                        text:               "  " + QGroundControl.settingsManager.cameraControlSettings.EnableOnScreenControl.shortDescription
-                        fact:               QGroundControl.settingsManager.cameraControlSettings.EnableOnScreenControl
+                        text:               "  " + QGroundControl.settingsManager.gimbalControllerSettings.EnableOnScreenControl.shortDescription
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.EnableOnScreenControl
                         checkedValue:       1
                         uncheckedValue:     0
                     }
@@ -580,7 +580,7 @@ SetupPage {
                     FactComboBox {
                         id:                 controlTypeCombo
                         Layout.fillWidth:   true
-                        fact:               QGroundControl.settingsManager.cameraControlSettings.ControlType
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.ControlType
                     }
 
                     Rectangle {
@@ -596,7 +596,7 @@ SetupPage {
                         Layout.fillWidth:   true
                     }
                     FactTextField {
-                        fact:               QGroundControl.settingsManager.cameraControlSettings.CameraHFov
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.CameraHFov
                         Layout.fillWidth:   true
                     }
 
@@ -605,7 +605,7 @@ SetupPage {
                         Layout.fillWidth:   true
                     }
                     FactTextField {
-                        fact:               QGroundControl.settingsManager.cameraControlSettings.CameraVFov
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.CameraVFov
                         Layout.fillWidth:   true
                     }
 
@@ -622,7 +622,7 @@ SetupPage {
                         Layout.fillWidth:   true
                     }
                     FactTextField {
-                        fact:               QGroundControl.settingsManager.cameraControlSettings.CameraSlideSpeed
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.CameraSlideSpeed
                         Layout.fillWidth:   true
                     }
                 }

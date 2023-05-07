@@ -4412,8 +4412,8 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
 
         // click and point, based on FOV
         if (clickAndPoint) {
-            float hFov = _settingsManager->cameraControlSettings()->CameraHFov()->rawValue().toFloat();
-            float vFov = _settingsManager->cameraControlSettings()->CameraVFov()->rawValue().toFloat();
+            float hFov = _settingsManager->gimbalControllerSettings()->CameraHFov()->rawValue().toFloat();
+            float vFov = _settingsManager->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
 
             float panIncDesired =  panPct  * hFov;
             float tiltIncDesired = tiltPct * vFov;
@@ -4438,7 +4438,7 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
             // Should send rate commands, but it seems for some reason it is not working on AP side. 
             // Pitch works ok but yaw doesn't stop, it keeps like inertia, like if it was buffering the messages.
             // So we do a workaround with angle targets
-            float maxSpeed = _settingsManager->cameraControlSettings()->CameraSlideSpeed()->rawValue().toFloat();
+            float maxSpeed = _settingsManager->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
             
             float panIncDesired  = panPct * maxSpeed  * 0.1f;
             float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
@@ -4462,7 +4462,7 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
 
         //     This is how it should be
 
-        //     float maxSpeed = _settingsManager->cameraControlSettings()->CameraSlideSpeed()->rawValue().toFloat();
+        //     float maxSpeed = _settingsManager->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
             
         //     float panDesired  = panPct * maxSpeed;
         //     float tiltDesired = tiltPct * maxSpeed;

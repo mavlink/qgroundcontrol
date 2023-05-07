@@ -29,6 +29,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _adsbVehicleManagerSettings   (nullptr)
     , _batteryIndicatorSettings     (nullptr)
     , _cameraControlSettings        (nullptr)
+    , _gimbalControllerSettings     (nullptr)
 #if !defined(NO_ARDUPILOT_DIALECT)
     , _apmMavlinkStreamRateSettings (nullptr)
 #endif
@@ -58,6 +59,7 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _adsbVehicleManagerSettings =   new ADSBVehicleManagerSettings  (this);
     _batteryIndicatorSettings =     new BatteryIndicatorSettings    (this);
     _cameraControlSettings =        new CameraControlSettings       (this);
+    _gimbalControllerSettings =     new GimbalControllerSettings       (this);
 #if !defined(NO_ARDUPILOT_DIALECT)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 #endif

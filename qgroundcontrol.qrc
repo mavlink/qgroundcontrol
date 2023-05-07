@@ -368,7 +368,7 @@
         <file alias="Vehicle/EFIFact.json">src/Vehicle/EFIFact.json</file>
         <file alias="Video.SettingsGroup.json">src/Settings/Video.SettingsGroup.json</file>
         <file alias="VTOLLandingPattern.FactMetaData.json">src/MissionManager/VTOLLandingPattern.FactMetaData.json</file>
-        <file alias="CameraControl.SettingsGroup.json">src/Settings/CameraControl.SettingsGroup.json</file>
+        <file alias="GimbalController.SettingsGroup.json">src/Settings/GimbalController.SettingsGroup.json</file>
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="APMArduSubMockLink.params">src/comm/APMArduSubMockLink.params</file>
