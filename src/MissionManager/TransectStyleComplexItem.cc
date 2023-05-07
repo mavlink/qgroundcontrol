@@ -422,12 +422,14 @@ void TransectStyleComplexItem::_rebuildTransects(void)
         return;
     case QGroundControlQmlGlobal::AltitudeModeRelative:
     case QGroundControlQmlGlobal::AltitudeModeAbsolute:
-        // Not following terrain so we can build the flight path now
+    case QGroundControlQmlGlobal::AltitudeModeTerrainFrame:
+        // Terrain height not needed to calculate path, as TerrainFrame specifies a fixed altitude over terrain, doesn't need to know the actual terrain height
+        // so vehicle is responsible for having or not this altitude calculation, so we can build the flight path right away.
         _buildFlightPathCoordInfoFromTransects();
         break;
     case QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain:
-    case QGroundControlQmlGlobal::AltitudeModeTerrainFrame:
-        // Query the terrain data. Once available flight path will be calculated
+        // Query the terrain data. Once available flight path will be calculated, as on this mode QGC actually calculates the individual altitude for each waypoint
+        // having into account terrain data.
         _queryTransectsPathHeightInfo();
         break;
     }
