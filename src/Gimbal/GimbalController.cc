@@ -162,6 +162,8 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     gimbal_it->curRoll  = roll * (180.0f / M_PI);
     gimbal_it->curYaw   = yaw * (180.0f / M_PI);
 
+    gimbal_it->receivedAttitude = true;
+
     _checkComplete(*gimbal_it);
 }
 
