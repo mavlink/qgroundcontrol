@@ -183,7 +183,7 @@ void GimbalController::_requestMessageHandler(void* resultHandlerData,
 {
     // GimbalController* self = (GimbalController*)resultHandlerData;
 
-    qCDebug(GimbalLog) << "_requestMessageHandler, commandResult: " << commandResult << ", failureCode: " << failureCode << "message id: " << message.msgid;
+    qCDebug(GimbalLog) << "_requestMessageHandler, commandResult: " << commandResult << ", failureCode: " << failureCode;
 
     // Not sure what to do here, we already subscribed to GimbalInformation in general in case it
     // arrives without us asking for it.
