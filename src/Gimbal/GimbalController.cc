@@ -145,6 +145,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     if (gimbal_it == _potentialGimbals.end()) {
         qCDebug(GimbalLog) << "_handleGimbalDeviceAttitudeStatus for unknown device with component " << message.compid;
+        return;
     }
 
     mavlink_gimbal_device_attitude_status_t attitude_status;
