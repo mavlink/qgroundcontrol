@@ -148,7 +148,9 @@ protected:
     qint64              _lastSourceFrameTime;
     qint64              _lastVideoFrameTime;
     bool                _resetVideoSink;
-    gulong              _videoSinkProbeId;
+    gulong              _videoSinkProbeId = 0;
+
+    gulong              _teeProbeId = 0;
 
     QTimer              _watchdogTimer;
 

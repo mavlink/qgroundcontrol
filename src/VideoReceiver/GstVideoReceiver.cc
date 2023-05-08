@@ -63,6 +63,7 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
 
 GstVideoReceiver::~GstVideoReceiver(void)
 {
+    stop();
     _slotHandler.shutdown();
 }
 
@@ -122,7 +123,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 
         _lastSourceFrameTime = 0;
 
-        gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this, nullptr);
+        _teeProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this, nullptr);
         gst_object_unref(pad);
         pad = nullptr;
 
@@ -286,6 +287,15 @@ GstVideoReceiver::stop(void)
     }
 
     qCDebug(VideoReceiverLog) << "Stopping" << _uri;
+
+    if (_teeProbeId != 0) {
+        GstPad* sinkpad;
+        if ((sinkpad = gst_element_get_static_pad(_tee, "sink")) != nullptr) {
+            gst_pad_remove_probe(sinkpad, _teeProbeId);
+            sinkpad = nullptr;
+        }
+        _teeProbeId = 0;
+    }
 
     if (_pipeline != nullptr) {
         GstBus* bus;
