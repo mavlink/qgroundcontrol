@@ -97,7 +97,7 @@ doInstall:
   ; QGC stores its own driver version key to prevent installation if already up to date
   ; This prevents running the driver install a second time which will start up in repair mode which is confusing
   !define QGCDRIVERVERSIONKEY "SOFTWARE\QGroundControlUAVDrivers"
-  !define QGCCURRENTDRIVERVERSION 2
+  !define QGCCURRENTDRIVERVERSION 3
 
   ; If the drivers are already installed the key "HKCU/SOFTWARE\MichaelOborne\driver\installed" will be present and set to 1
   SetRegView 64
