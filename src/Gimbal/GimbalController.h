@@ -61,8 +61,6 @@ private:
     void    _handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message);
     void    _checkComplete                   (Gimbal& gimbal);
 
-    static void _requestMessageHandler(void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
-
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
 
