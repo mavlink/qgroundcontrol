@@ -206,4 +206,5 @@ void GimbalController::_checkComplete(Gimbal& gimbal)
     gimbal.isComplete = true;
 
     _gimbals.push_back(&gimbal);
+    _vehicle->gimbalDataChanged();
 }
