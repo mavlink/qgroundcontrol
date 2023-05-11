@@ -55,6 +55,9 @@
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="XDeleteBlack.svg">resources/XDeleteBlack.svg</file>
         <file alias="waypoint.svg">resources/waypoint.svg</file>
+        <file alias="Gripper.svg">resources/Gripper.svg</file>
+        <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
+        <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">
