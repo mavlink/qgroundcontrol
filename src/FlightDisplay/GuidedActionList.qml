@@ -69,6 +69,12 @@ Rectangle {
             text:       guidedController.changeSpeedMessage,
             action:     guidedController.actionChangeSpeed,
             visible:    guidedController.showChangeSpeed
+        },
+        {
+            title:      guidedController.dropTitle,
+            text:       guidedController.dropMessage,
+            action:     guidedController.actionDrop,
+            visible:    guidedController.showGripper
         }
     ]
 
