@@ -77,6 +77,7 @@ public:
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             getHobbsMeter                   (Vehicle* vehicle) override; 
+    bool                hasGripper                      (const Vehicle* vehicle) const override;
 
 protected:
     /// All access to singleton is through stack specific implementation

@@ -630,6 +630,15 @@ QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle)
     return timeStr;
 } 
 
+bool APMFirmwarePlugin::hasGripper(const Vehicle* vehicle) const
+{
+    if(vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "GRIP_ENABLE")) {
+        bool _hasGripper = (vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("GRIP_ENABLE"))->rawValue().toInt()) == 1 ? true : false;
+        return _hasGripper;
+    }
+    return false;
+}
+
 bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
     return vehicle->flightMode() == "Guided";
