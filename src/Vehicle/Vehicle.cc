@@ -2709,6 +2709,11 @@ double Vehicle::minimumEquivalentAirspeed()
     return _firmwarePlugin->minimumEquivalentAirspeed(this);
 }
 
+bool Vehicle::hasGripper()  const 
+{ 
+    return _firmwarePlugin->hasGripper(this);
+}
+
 void Vehicle::startMission()
 {
     _firmwarePlugin->startMission(this);
@@ -4269,4 +4274,21 @@ void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
             0,                                   // Param1: Gripper ID (Always set to 0)
             gripperAction,                       // Param2: Gripper Action
             0, 0, 0, 0, 0);                      // Param 3 ~ 7 : unused
+}
+
+void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
+{
+    switch(gripperOption) {
+        case Gripper_release: 
+            setGripperAction(GRIPPER_ACTION_RELEASE);
+            break;
+        case Gripper_grab: 
+            setGripperAction(GRIPPER_ACTION_GRAB);
+            break;
+        case Invalid_option:
+            qDebug("unknown function");
+            break;
+        default: 
+        break;
+    }
 }
