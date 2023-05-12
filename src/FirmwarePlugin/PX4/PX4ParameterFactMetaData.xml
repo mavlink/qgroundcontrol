@@ -10589,7 +10589,7 @@
     </parameter>
     <parameter name="VT_QC_T_ALT_LOSS" default="20.0" type="FLOAT">
       <short_desc>Quad-chute transition altitude loss threshold</short_desc>
-      <long_desc>Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight. If the current altitude is more than this value below the altitude at the beginning of the transition, it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
+      <long_desc>Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight. Active until 5s after completing transition to fixed-wing. Only active if altitude estimate is valid and in altitude-controlled mode. If the current altitude is more than this value below the altitude at the beginning of the transition, it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
       <min>0</min>
       <max>50</max>
       <unit>m</unit>
