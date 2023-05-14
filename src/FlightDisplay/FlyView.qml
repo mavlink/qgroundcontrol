@@ -56,9 +56,10 @@ Item {
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapControl
+    property real   _fullItemZorder:        0
+    property real   _pipItemZorder:         QGroundControl.zOrderWidgets
+    property alias  _widgetLayer:           widgetLayer
 
-    property real   _fullItemZorder:    0
-    property real   _pipItemZorder:     QGroundControl.zOrderWidgets
 
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
