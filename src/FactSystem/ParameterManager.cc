@@ -18,6 +18,8 @@
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
 #include "FTPManager.h"
+#include "SettingsManager.h"
+
 
 #include <QEasingCurve>
 #include <QFile>
@@ -86,6 +88,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _indexBatchQueueActive            (false)
     , _totalParamCount                  (0)
     , _tryftp                           (vehicle->apmFirmware())
+    , _settingsManager                  (qgcApp()->toolbox()->settingsManager())
 {
     if (_vehicle->isOfflineEditingVehicle()) {
         _loadOfflineEditingParams();
@@ -256,8 +259,18 @@ void ParameterManager::_handleParamValue(int componentId, QString parameterName,
 
     if (_vehicle->px4Firmware() && parameterName == "_HASH_CHECK") {
         if (!_initialLoadComplete && !_logReplay) {
-            /* we received a cache hash, potentially load from cache */
-            _tryCacheHashLoad(_vehicle->id(), componentId, parameterValue);
+            //Check de Autoload parammeter
+            if (_settingsManager->appSettings()->autoLoadMissions()->rawValue().toBool()){
+
+                //Load the file named Autoload.plan in the missionSavePath
+                _vehicle->sendPlan(_settingsManager -> appSettings() -> missionSavePath() + "/AutoLoad.plan");
+
+            }
+            else{
+                //Load the plan saved in the chache
+                _tryCacheHashLoad(_vehicle->id(), componentId, parameterValue);
+
+            }
         }
         return;
     }

@@ -22,6 +22,7 @@
 #include "AutoPilotPlugin.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
+#include "SettingsManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
@@ -188,4 +189,6 @@ private:
 
     /* MavFTP */
     bool               _tryftp;
+    //Settings Manager
+    SettingsManager* _settingsManager;
 };
