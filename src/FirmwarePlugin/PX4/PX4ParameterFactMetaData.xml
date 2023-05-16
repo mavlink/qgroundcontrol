@@ -3431,7 +3431,7 @@
       <decimal>1</decimal>
       <increment>1.0</increment>
     </parameter>
-    <parameter name="FW_T_SPD_DEV_STD" default="0.05" type="FLOAT">
+    <parameter name="FW_T_SPD_DEV_STD" default="0.2" type="FLOAT">
       <short_desc>Airspeed rate measurement standard deviation for airspeed filter</short_desc>
       <long_desc>This is the measurement standard deviation for the airspeed rate used in the airspeed filter in TECS.</long_desc>
       <min>0.01</min>
