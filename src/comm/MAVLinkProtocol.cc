@@ -272,6 +272,18 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
             }
 
+            // MAVLink forwarding support
+            bool forwardingSupportEnabled = _linkMgr->mavlinkSupportForwardingEnabled();
+            if (forwardingSupportEnabled) {
+                SharedLinkInterfacePtr forwardingSupportLink = _linkMgr->mavlinkForwardingSupportLink();
+
+                if (forwardingSupportLink) {
+                    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+                    int len = mavlink_msg_to_send_buffer(buf, &_message);
+                    forwardingSupportLink->writeBytesThreadSafe((const char*)buf, len);
+                }
+            }
+
             //-----------------------------------------------------------------
             // Log data
             if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
