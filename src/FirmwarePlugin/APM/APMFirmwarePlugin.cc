@@ -639,6 +639,17 @@ bool APMFirmwarePlugin::hasGripper(const Vehicle* vehicle) const
     return false;
 }
 
+const QVariantList& APMFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
+{
+    if (_toolIndicatorList.size() == 0) {
+        // First call the base class to get the standard QGC list
+        _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
+        // Then add the forwarding support indicator
+        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/APMSupportForwardingIndicator.qml")));
+    }
+    return _toolIndicatorList;
+}
+
 bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
     return vehicle->flightMode() == "Guided";
