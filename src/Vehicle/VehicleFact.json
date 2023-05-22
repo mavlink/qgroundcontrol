@@ -136,6 +136,12 @@
     "shortDesc": "Throttle %",
     "type":             "uint16",
     "units":            "%"
+},
+{
+    "name":             "imuTemp",
+    "shortDesc": "Imu temperature",
+    "type":             "int16",
+    "units":            "°C"
 }
 ]
 }
