@@ -91,6 +91,7 @@ const char* Vehicle::_altitudeTuningSetpointFactName = "altitudeTuningSetpoint";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
 const char* Vehicle::_flightTimeFactName =          "flightTime";
 const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
+const char* Vehicle::_timeToHomeFactName =          "timeToHome";
 const char* Vehicle::_missionItemIndexFactName =    "missionItemIndex";
 const char* Vehicle::_headingToNextWPFactName =     "headingToNextWP";
 const char* Vehicle::_headingToHomeFactName =       "headingToHome";
@@ -154,6 +155,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _flightDistanceFact           (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact               (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact           (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
+    , _timeToHomeFact               (0, _timeToHomeFactName,        FactMetaData::valueTypeDouble)
     , _missionItemIndexFact         (0, _missionItemIndexFactName,  FactMetaData::valueTypeUint16)
     , _headingToNextWPFact          (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
     , _headingToHomeFact            (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
@@ -439,6 +441,7 @@ void Vehicle::_commonInit()
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
+    _addFact(&_timeToHomeFact,          _timeToHomeFactName);
     _addFact(&_missionItemIndexFact,    _missionItemIndexFactName);
     _addFact(&_headingToNextWPFact,     _headingToNextWPFactName);
     _addFact(&_headingToHomeFact,       _headingToHomeFactName);
@@ -1023,6 +1026,9 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
         _altitudeTuningOffset = vfrHud.alt;
     }
     _altitudeTuningFact.setRawValue(vfrHud.alt - _altitudeTuningOffset);
+    if (!qIsNaN(vfrHud.groundspeed) && !qIsNaN(_distanceToHomeFact.cookedValue().toDouble())) {
+      _timeToHomeFact.setRawValue(_distanceToHomeFact.cookedValue().toDouble() / vfrHud.groundspeed);
+    }
 }
 
 void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
