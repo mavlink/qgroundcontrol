@@ -95,6 +95,13 @@
     "units":            "m"
 },
 {
+    "name":             "timeToHome",
+    "shortDesc": "Time to Home",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "s"
+},
+{
     "name":             "headingToHome",
     "shortDesc": "Heading to Home",
     "type":             "double",
