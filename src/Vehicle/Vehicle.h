@@ -541,7 +541,7 @@ public:
     Q_ENUM(GRIPPER_OPTIONS)
 
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
-    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption); //I'm not able to comunicate gripper_actions with gripper_options unless i use a parser function like this one
+    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption); 
 
     bool fixedWing() const;
     bool multiRotor() const;
