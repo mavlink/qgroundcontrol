@@ -28,11 +28,18 @@ Item {
 
     QGCMapPalette { id: mapPal }
 
-    onWidthChanged:                     calculateXAxis()
     onStickPositionXChanged:            calculateXAxis()
-    onHeightChanged:                    calculateYAxis()
     onStickPositionYChanged:            calculateYAxis()
     onYAxisPositiveRangeOnlyChanged:    calculateYAxis()
+    onHeightChanged:                    { 
+                                            calculateYAxis()
+                                            reCenter() 
+                                        }
+    onWidthChanged:                     { 
+                                            calculateXAxis()
+                                            reCenter() 
+                                        }
+    //We prevent Joystick to move while the screen is resizing 
 
     function calculateXAxis() {
         if(!_joyRoot.visible) {
