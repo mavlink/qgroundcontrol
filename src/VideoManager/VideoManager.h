@@ -105,6 +105,9 @@ public:
     // Override from QGCTool
     virtual void        setToolbox          (QGCToolbox *toolbox);
 
+
+    Q_INVOKABLE void sendTarget     (double x, double y, double width, double height, double maxX, double maxY);
+
     Q_INVOKABLE void startVideo     ();
     Q_INVOKABLE void stopVideo      ();
 
