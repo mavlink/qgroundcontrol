@@ -51,7 +51,7 @@ Item {
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property var    _guidedController:      guidedActionsController
     property var    _guidedActionList:      guidedActionList
-    property var    _guidedValueSlider:       guidedValueSlider
+    property var    _guidedValueSlider:     guidedValueSlider
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
