@@ -220,8 +220,6 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
 {
     calibrate_return result = calibrate_return_ok;
 
-    unsigned orientation_failures = 0;
-
     // Rotate through all requested orientations
     while (true) {
         if (_cancel) {
@@ -259,21 +257,18 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
         enum detect_orientation_return orient = detect_orientation();
 
         if (orient == DETECT_ORIENTATION_ERROR) {
-            orientation_failures++;
             _emitVehicleTextMessage(QStringLiteral("[cal] detected motion, hold still..."));
             continue;
         }
 
         /* inform user about already handled side */
         if (side_data_collected[orient]) {
-            orientation_failures++;
             _emitVehicleTextMessage(QStringLiteral("%1 side already completed").arg(detect_orientation_str(orient)));
             _emitVehicleTextMessage(QStringLiteral("rotate to a pending side"));
             continue;
         }
 
         _emitVehicleTextMessage(QStringLiteral("[cal] %1 orientation detected").arg(detect_orientation_str(orient)));
-        orientation_failures = 0;
 
         // Call worker routine
         result = mag_calibration_worker(orient, worker_data);
