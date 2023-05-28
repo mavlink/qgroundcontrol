@@ -66,6 +66,8 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f
 #define DEFAULT_LON -120.083923f
+#define SET_HOME_TERRAIN_ALT_MAX 10000
+#define SET_HOME_TERRAIN_ALT_MIN -500
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
@@ -1514,6 +1516,7 @@ void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
 {
     if (homeCoord != _homePosition) {
         _homePosition = homeCoord;
+        qCDebug(VehicleLog) << "new home location set at coordinate: " << homeCoord;
         emit homePositionChanged(_homePosition);
     }
 }
@@ -4073,6 +4076,60 @@ void Vehicle::flashBootloader()
 
 }
 #endif
+
+void Vehicle::doSetHome(const QGeoCoordinate& coord)
+{
+    if (coord.isValid()) {
+        // If for some reason we already did a query and it hasn't arrived yet, disconnect signals and unset current query. TerrainQuery system will
+        // automatically delete that forgotten query. This could happen if we send 2 do_set_home commands one after another, so usually the latest one
+        // is the one we would want to arrive to the vehicle, so it is fine to forget about the previous ones in case it could happen.
+        if (_currentDoSetHomeTerrainAtCoordinateQuery) {
+            disconnect(_currentDoSetHomeTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_doSetHomeTerrainReceived);
+            _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
+        }
+        // Save the coord for using when our terrain data arrives. If there was a pending terrain query paired with an older coordinate it is safe to 
+        // Override now, as we just disconnected the signal that would trigger the command sending 
+        _doSetHomeCoordinate = coord;
+        // Now setup and trigger the new terrain query
+        _currentDoSetHomeTerrainAtCoordinateQuery = new TerrainAtCoordinateQuery(true /* autoDelet */);
+        connect(_currentDoSetHomeTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_doSetHomeTerrainReceived);
+        QList<QGeoCoordinate> rgCoord;
+        rgCoord.append(coord);
+        _currentDoSetHomeTerrainAtCoordinateQuery->requestData(rgCoord);
+    }
+}
+
+// This will be called after our query started in doSetHome arrives
+void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
+{
+    if (success) {
+        double terrainAltitude = heights[0];
+        // Coord and terrain alt sanity check
+        if (_doSetHomeCoordinate.isValid() && terrainAltitude <= SET_HOME_TERRAIN_ALT_MAX && terrainAltitude >= SET_HOME_TERRAIN_ALT_MIN) {
+            sendMavCommand(
+                        defaultComponentId(),
+                        MAV_CMD_DO_SET_HOME,
+                        true, // show error if fails
+                        0,
+                        0,
+                        0,
+                        0,
+                        _doSetHomeCoordinate.latitude(),
+                        _doSetHomeCoordinate.longitude(),
+                        terrainAltitude);
+
+        } else if (_doSetHomeCoordinate.isValid()) {
+            qCDebug(VehicleLog) << "_doSetHomeTerrainReceived: internal error, elevation data out of limits ";
+        } else {
+            qCDebug(VehicleLog) << "_doSetHomeTerrainReceived: internal error, cached home coordinate is not valid";
+        }
+    } else {
+        qgcApp()->showAppMessage(tr("Set Home failed, terrain data not available for selected coordinate"));
+    }
+    // Clean up
+    _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
+    _doSetHomeCoordinate = QGeoCoordinate(); // So isValid() will no longer return true, for extra safety
+}
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {

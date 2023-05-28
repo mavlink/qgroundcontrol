@@ -47,6 +47,7 @@
 #include "FTPManager.h"
 #include "ImageProtocolManager.h"
 #include "HealthAndArmingCheckReport.h"
+#include "TerrainQuery.h"
 
 class Actuators;
 class EventHandler;
@@ -462,6 +463,8 @@ public:
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
+    /// Set home from flight map coordinate
+    Q_INVOKABLE void doSetHome(const QGeoCoordinate& coord);
 
     bool    isInitialConnectComplete() const;
     bool    guidedModeSupported     () const;
@@ -1083,6 +1086,9 @@ private:
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode);
 
+    // This is called after we get terrain data triggered from a doSetHome()
+    void _doSetHomeTerrainReceived      (bool success, QList<double> heights);
+
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
@@ -1445,6 +1451,11 @@ private:
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickEnabledSettingsKey;
+
+    // Terrain query members, used to get terrain altitude for doSetHome()
+    QTimer                      _updateDoSetHomeTerrainTimer;
+    TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
+    QGeoCoordinate              _doSetHomeCoordinate;
 };
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)
