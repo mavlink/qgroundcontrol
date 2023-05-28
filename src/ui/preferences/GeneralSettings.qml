@@ -182,7 +182,7 @@ Rectangle {
                             }
 
                             FactCheckBox {
-                                text:       qsTr("Update Home Position")
+                                text:       qsTr("Update home position based on device location. This will affect return to home")
                                 fact:       _updateHomePosition
                                 visible:    _updateHomePosition.visible
                                 property Fact _updateHomePosition: QGroundControl.settingsManager.flyViewSettings.updateHomePosition
