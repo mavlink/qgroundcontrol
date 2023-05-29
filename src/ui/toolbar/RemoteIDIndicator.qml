@@ -142,6 +142,7 @@ Item {
                         source:             armFlag ? "/qmlimages/RidFlagBackgroundGreen.svg" : "/qmlimages/RidFlagBackgroundRed.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
+                        visible:            commsFlag
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -169,7 +170,7 @@ Item {
 
                         QGCLabel {
                             anchors.fill:           parent
-                            text:                   qsTr("RID COMMS")
+                            text:                   commsFlag ? qsTr("RID COMMS") : qsTr("NOT CONNECTED")
                             wrapMode:               Text.WordWrap
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
@@ -190,6 +191,7 @@ Item {
                         source:             gpsFlag ? "/qmlimages/RidFlagBackgroundGreen.svg" : "/qmlimages/RidFlagBackgroundRed.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
+                        visible:            commsFlag
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -214,6 +216,7 @@ Item {
                         source:             basicIDFlag ? "/qmlimages/RidFlagBackgroundGreen.svg" : "/qmlimages/RidFlagBackgroundRed.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
+                        visible:            commsFlag
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -238,7 +241,7 @@ Item {
                         source:             operatorIDFlag ? "/qmlimages/RidFlagBackgroundGreen.svg" : "/qmlimages/RidFlagBackgroundRed.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
-                        visible:            _activeVehicle ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDIndicator.RegionOperation.EU) : false
+                        visible:            commsFlag && _activeVehicle ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDIndicator.RegionOperation.EU) : false
 
                         QGCLabel {
                             anchors.fill:           parent
