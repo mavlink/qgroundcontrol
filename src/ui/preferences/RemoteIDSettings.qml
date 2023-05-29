@@ -42,6 +42,9 @@ Rectangle {
     // Flag to get active vehicle and active RID
     property var  _activeRID:           _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager : null
 
+    // Healthy connection with RID device
+    property bool commsGood:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.commsGood : false
+
     // General properties
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property int  _regionOperation:     QGroundControl.settingsManager.remoteIDSettings.region.value
@@ -151,6 +154,7 @@ Rectangle {
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_activeVehicle.remoteIDManager.armStatusGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
+                        visible:                commsGood
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -178,7 +182,7 @@ Rectangle {
 
                         QGCLabel {
                             anchors.fill:           parent
-                            text:                   qsTr("RID COMMS")
+                            text:                   _activeRID && _activeVehicle.remoteIDManager.commsGood ? qsTr("RID COMMS") : qsTr("NOT CONNECTED")
                             wrapMode:               Text.WordWrap
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
@@ -192,6 +196,7 @@ Rectangle {
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_activeVehicle.remoteIDManager.gcsGPSGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
+                        visible:                commsGood
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -215,6 +220,7 @@ Rectangle {
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_activeVehicle.remoteIDManager.basicIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
+                        visible:                commsGood
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -238,7 +244,7 @@ Rectangle {
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
-                        visible:                _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
+                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
 
                         QGCLabel {
                             anchors.fill:           parent
