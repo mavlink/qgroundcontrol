@@ -1,5 +1,6 @@
 import QtQml.Models                 2.12
 import QtQuick                      2.12
+import QtQuick.Controls             2.15
 import QtQuick.Layouts              1.11
 import QtQuick.Dialogs              1.2
 import QtPositioning                5.3
@@ -19,6 +20,7 @@ Item {
     property real  _margins:                ScreenTools.defaultFontPixelWidth * 0.75
     property bool  _modesPanelVisible:      modesToolStripAction.checked
     property bool  _actionsPanelVisible:    actionsToolStripAction.checked
+    property bool  _selectPanelVisible:     selectToolStripAction.checked
     property bool  _actionsMapPanelVisible: mapToolsToolStripAction.checked
     property var   _activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
     property bool  _haveGimbalControl:      _activeVehicle ? _activeVehicle.gimbalHaveControl : false
@@ -56,7 +58,7 @@ Item {
                     
                     onVisibleChanged: {
                         checked = false
-                    }   
+                    }
                 },
                 ToolStripAction {
                     id:                actionsToolStripAction
@@ -68,7 +70,18 @@ Item {
 
                     onVisibleChanged: {
                         checked = false
-                    } 
+                    }
+                },
+                ToolStripAction {
+                    id:                 selectToolStripAction
+                    text:               qsTr("")
+                    iconSource:         "/HA_Icons/SELECT.png"
+                    checkable:          true
+                    visible:            !toolStripPanelVideo.panelHidden
+                    
+                    onVisibleChanged: {
+                        checked = false
+                    }
                 }
             ]
         }
@@ -83,7 +96,8 @@ Item {
         fontSize:  ScreenTools.isMobile ? ScreenTools.smallFontPointSize * 0.7 : ScreenTools.smallFontPointSize
 
         anchors.top:                toolStripPanelVideo.bottom
-        anchors.horizontalCenter:   toolStripPanelVideo.horizontalCenter
+        anchors.left:               toolStripPanelVideo.left
+        anchors.leftMargin:         toolStripPanelVideo.height
         anchors.topMargin:          _margins
 
         ToolStripActionList {
@@ -342,6 +356,35 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    ToolStrip {
+        id:        selectToolStrip
+        width:     toolStripPanelVideo.height
+        maxHeight: width * 2
+        visible:   rootItem._selectPanelVisible
+        model:     selectToolStripActionList.model
+        fontSize:  ScreenTools.isMobile ? ScreenTools.smallFontPointSize * 0.7 : ScreenTools.smallFontPointSize
+
+        anchors.top:                toolStripPanelVideo.bottom
+        anchors.right:              toolStripPanelVideo.right
+        anchors.topMargin:          _margins
+
+        ToolStripActionList {
+            id: selectToolStripActionList
+            model: [
+                ToolStripAction {
+                    text:               qsTr("Gimbal 1")
+                    iconSource:         "/HA_Icons/PAYLOAD.png"
+                    onTriggered:        undefined
+                },
+                ToolStripAction {
+                    text:               qsTr("Gimbal 2")
+                    iconSource:         "/HA_Icons/PAYLOAD.png"
+                    onTriggered:        undefined
+                }
+            ]
         }
     }
 }

@@ -121,5 +121,6 @@
         <file alias="YAW_UNLOCK.png">resources/HA_Icons/payload/YAW_UNLOCK.png</file>
         <file alias="HOME.png">resources/HA_Icons/payload/HOME.png</file>
         <file alias="MODES.png">resources/HA_Icons/payload/MODES.png</file>
+        <file alias="SELECT.png">resources/HA_Icons/payload/SELECT.png</file>
     </qresource>
 </RCC>
