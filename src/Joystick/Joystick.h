@@ -239,11 +239,6 @@ protected:
     void    _handleButtons          ();
     void    _buildActionList        (Vehicle* activeVehicle);
 
-    void    _pitchStep              (int direction);
-    void    _yawStep                (int direction);
-    double  _localYaw       = 0.0;
-    double  _localPitch     = 0.0;
-
 private:
     virtual bool _open      ()          = 0;
     virtual void _close     ()          = 0;
