@@ -980,6 +980,15 @@
       <short_desc>Require valid mission to arm</short_desc>
       <long_desc>The default allows to arm the vehicle without a valid mission.</long_desc>
     </parameter>
+    <parameter name="COM_ARM_ODID" default="0" type="INT32">
+      <short_desc>Enable Drone ID system detection and health check</short_desc>
+      <long_desc>This check detects if the Open Drone ID system is missing. Depending on the value of the parameter, the check can be disabled, warn only or deny arming.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Warning only</value>
+        <value code="2">Enforce Open Drone ID system presence</value>
+      </values>
+    </parameter>
     <parameter name="COM_ARM_SDCARD" default="1" type="INT32">
       <short_desc>Enable FMU SD card detection check</short_desc>
       <long_desc>This check detects if the FMU SD card is missing. Depending on the value of the parameter, the check can be disabled, warn only or deny arming.</long_desc>
