@@ -69,6 +69,9 @@ SetupPage {
                     text:       qsTr("General")
                 }
                 QGCTabButton {
+                    text:       qsTr("Peripherals")
+                }
+                QGCTabButton {
                     text:       qsTr("Button Assigment")
                 }
                 QGCTabButton {

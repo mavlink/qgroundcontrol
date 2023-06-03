@@ -25,19 +25,56 @@ Item {
     height:                 mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
 
     Column {
-        columns:        2
-        rowSpacing:     _rowSpacing
-        columnSpacing:  _colSpacing
-
 
         QGCLabel {
-            text:       qsTr("Item 1")
+            id:         joystickPeripheralsPage
+            text:       qsTr("Select wanted peripheral to be active")
         }
 
-        QGCComboBox {
-            id:                     itemActive
-            Layout.preferredWidth:  _secondColumnWidth
-            checked:                subEditConfig.itemActive
+        Row {
+            Rectangle {
+                Rectangle {
+                    QGCLabel {
+                        id:                 tbHeader
+                        text:               qsTr("Peripheral")
+                    }
+                }
+                Rectangle {
+                    QGCLabel {
+                        id:                 item1
+                        text:               qsTr("Item 1")
+                    }
+                    QGCLabel {
+                        id:                 item2
+                        text:               qsTr("Item 2")
+                    }
+                    QGCLabel {
+                        id:                 item3
+                        text:               qsTr("Item 3")
+                    }
+                }
+            Rectangle {
+                Rectangle {
+                    QGCLabel {
+                        id:                 tbHeader
+                        text:               qsTr("Active")
+                    }
+                }
+                Rectangle {
+                    CheckBox {
+                        id:                 item1
+                        checkState: childGroup.checkState
+                    }
+                    CheckBox {
+                        id:                 item2
+                        checkState: childGroup.checkState
+                    }
+                    CheckBox {
+                        id:                 item3
+                        checkState: childGroup.checkState
+                    }
+                }
+            }
         }
     }
 }
