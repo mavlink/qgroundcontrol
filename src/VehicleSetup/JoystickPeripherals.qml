@@ -53,6 +53,7 @@ Item {
                         text:               qsTr("Item 3")
                     }
                 }
+            }
             Rectangle {
                 Rectangle {
                     QGCLabel {
