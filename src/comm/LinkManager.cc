@@ -175,10 +175,9 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
 
 SharedLinkInterfacePtr LinkManager::mavlinkForwardingLink()
 {
-    for (int i = 0; i < _rgLinks.count(); i++) {
-        SharedLinkConfigurationPtr linkConfig = _rgLinks[i]->linkConfiguration();
+    for (auto& link : _rgLinks) {
+        SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
         if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _mavlinkForwardingLinkName) {
-            SharedLinkInterfacePtr& link = _rgLinks[i];
             return link;
         }
     }
@@ -188,10 +187,9 @@ SharedLinkInterfacePtr LinkManager::mavlinkForwardingLink()
 
 SharedLinkInterfacePtr LinkManager::mavlinkForwardingSupportLink()
 {
-    for (int i = 0; i < _rgLinks.count(); i++) {
-        SharedLinkConfigurationPtr linkConfig = _rgLinks[i]->linkConfiguration();
+    for (auto& link : _rgLinks) {
+        SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
         if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _mavlinkForwardingSupportLinkName) {
-            SharedLinkInterfacePtr& link = _rgLinks[i];
             return link;
         }
     }
