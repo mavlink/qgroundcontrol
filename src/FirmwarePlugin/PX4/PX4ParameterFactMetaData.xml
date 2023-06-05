@@ -2498,14 +2498,6 @@
     </parameter>
   </group>
   <group name="FW Attitude Control">
-    <parameter name="FW_ARSP_MODE" default="0" type="INT32">
-      <short_desc>Airspeed mode</short_desc>
-      <long_desc>On vehicles without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
-      <values>
-        <value code="0">Use airspeed in controller</value>
-        <value code="1">Do not use airspeed in controller</value>
-      </values>
-    </parameter>
     <parameter name="FW_MAN_P_MAX" default="30.0" type="FLOAT">
       <short_desc>Maximum manual pitch angle</short_desc>
       <long_desc>Maximum manual pitch angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
@@ -2514,14 +2506,6 @@
       <unit>deg</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_MAN_P_SC" default="1.0" type="FLOAT">
-      <short_desc>Manual pitch scale</short_desc>
-      <long_desc>Scale factor applied to the desired pitch actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
-      <min>0.0</min>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_MAN_R_MAX" default="45.0" type="FLOAT">
       <short_desc>Maximum manual roll angle</short_desc>
@@ -2532,15 +2516,6 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_MAN_R_SC" default="1.0" type="FLOAT">
-      <short_desc>Manual roll scale</short_desc>
-      <long_desc>Scale factor applied to the desired roll actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="FW_MAN_YR_MAX" default="30." type="FLOAT">
       <short_desc>Maximum manually added yaw rate</short_desc>
       <long_desc>This is the maximally added yaw rate setpoint from the yaw stick in any attitude controlled flight mode. The controller already generates a yaw rate setpoint to coordinate a turn, and this value is added to it. This is an absolute value, which is applied symmetrically to the negative and positive side.</long_desc>
@@ -2548,14 +2523,6 @@
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_MAN_Y_SC" default="1.0" type="FLOAT">
-      <short_desc>Manual yaw scale</short_desc>
-      <long_desc>Scale factor applied to the desired yaw actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
-      <min>0.0</min>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_PSP_OFF" default="0.0" type="FLOAT">
       <short_desc>Pitch setpoint offset (pitch at level flight)</short_desc>
@@ -2569,7 +2536,7 @@
     <parameter name="FW_P_RMAX_NEG" default="60.0" type="FLOAT">
       <short_desc>Maximum negative / down pitch rate setpoint</short_desc>
       <min>0.0</min>
-      <max>90.0</max>
+      <max>180</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -2577,7 +2544,7 @@
     <parameter name="FW_P_RMAX_POS" default="60.0" type="FLOAT">
       <short_desc>Maximum positive / up pitch rate setpoint</short_desc>
       <min>0.0</min>
-      <max>90.0</max>
+      <max>180</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -2591,17 +2558,10 @@
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="FW_RLL_TO_YAW_FF" default="0.0" type="FLOAT">
-      <short_desc>Roll control to yaw control feedforward gain</short_desc>
-      <long_desc>This gain can be used to counteract the "adverse yaw" effect for fixed wings. When the plane enters a roll it will tend to yaw the nose out of the turn. This gain enables the use of a yaw actuator to counteract this effect.</long_desc>
-      <min>0.0</min>
-      <decimal>1</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="FW_R_RMAX" default="70.0" type="FLOAT">
       <short_desc>Maximum roll rate setpoint</short_desc>
       <min>0.0</min>
-      <max>90.0</max>
+      <max>180</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -2631,20 +2591,11 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_SPOILERS_MAN" default="0" type="INT32">
-      <short_desc>Spoiler input in manual flight</short_desc>
-      <long_desc>Chose source for manual setting of spoilers in manual flight modes.</long_desc>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="1">Flaps channel</value>
-        <value code="2">Aux1</value>
-      </values>
-    </parameter>
     <parameter name="FW_WR_FF" default="0.2" type="FLOAT">
       <short_desc>Wheel steering rate feed forward</short_desc>
       <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
@@ -2653,7 +2604,7 @@
       <short_desc>Wheel steering rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>0.5</max>
+      <max>10</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -2670,7 +2621,7 @@
       <short_desc>Wheel steering rate proportional gain</short_desc>
       <long_desc>This defines how much the wheel steering input will be commanded depending on the current body angular rate error.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -2691,7 +2642,7 @@
     <parameter name="FW_Y_RMAX" default="50.0" type="FLOAT">
       <short_desc>Maximum yaw rate setpoint</short_desc>
       <min>0.0</min>
-      <max>90.0</max>
+      <max>180</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -2983,7 +2934,7 @@
     <parameter name="FW_ACRO_X_MAX" default="90" type="FLOAT">
       <short_desc>Acro body x max rate</short_desc>
       <long_desc>This is the rate the controller is trying to achieve if the user applies full roll stick input in acro mode.</long_desc>
-      <min>45</min>
+      <min>10</min>
       <max>720</max>
       <unit>deg</unit>
     </parameter>
@@ -2993,15 +2944,23 @@
     </parameter>
     <parameter name="FW_ACRO_Y_MAX" default="90" type="FLOAT">
       <short_desc>Acro body pitch max rate setpoint</short_desc>
-      <min>45</min>
+      <min>10</min>
       <max>720</max>
       <unit>deg</unit>
     </parameter>
     <parameter name="FW_ACRO_Z_MAX" default="45" type="FLOAT">
       <short_desc>Acro body yaw max rate setpoint</short_desc>
       <min>10</min>
-      <max>180</max>
+      <max>720</max>
       <unit>deg</unit>
+    </parameter>
+    <parameter name="FW_ARSP_MODE" default="0" type="INT32">
+      <short_desc>Airspeed mode</short_desc>
+      <long_desc>On vehicles without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
+      <values>
+        <value code="0">Use airspeed in controller</value>
+        <value code="1">Do not use airspeed in controller</value>
+      </values>
     </parameter>
     <parameter name="FW_ARSP_SCALE_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable airspeed scaling</short_desc>
@@ -3014,48 +2973,48 @@
     <parameter name="FW_DTRIM_P_VMAX" default="0.0" type="FLOAT">
       <short_desc>Pitch trim increment at maximum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MAX.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_DTRIM_P_VMIN" default="0.0" type="FLOAT">
       <short_desc>Pitch trim increment at minimum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_PITCH when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_DTRIM_R_VMAX" default="0.0" type="FLOAT">
       <short_desc>Roll trim increment at maximum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_ROLL when airspeed is FW_AIRSPD_MAX.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_DTRIM_R_VMIN" default="0.0" type="FLOAT">
       <short_desc>Roll trim increment at minimum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_ROLL when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_DTRIM_Y_VMAX" default="0.0" type="FLOAT">
       <short_desc>Yaw trim increment at maximum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MAX.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_DTRIM_Y_VMIN" default="0.0" type="FLOAT">
       <short_desc>Yaw trim increment at minimum airspeed</short_desc>
       <long_desc>This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MIN.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -3077,11 +3036,36 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter name="FW_MAN_P_SC" default="1.0" type="FLOAT">
+      <short_desc>Manual pitch scale</short_desc>
+      <long_desc>Scale factor applied to the desired pitch actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
+      <min>0.0</min>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_MAN_R_SC" default="1.0" type="FLOAT">
+      <short_desc>Manual roll scale</short_desc>
+      <long_desc>Scale factor applied to the desired roll actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_MAN_Y_SC" default="1.0" type="FLOAT">
+      <short_desc>Manual yaw scale</short_desc>
+      <long_desc>Scale factor applied to the desired yaw actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
+      <min>0.0</min>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="FW_PR_D" default="0." type="FLOAT">
       <short_desc>Pitch rate derivative gain</short_desc>
       <long_desc>Pitch rate differential gain.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -3099,7 +3083,7 @@
       <short_desc>Pitch rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>0.5</max>
+      <max>10</max>
       <unit>%/rad</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -3115,16 +3099,23 @@
     <parameter name="FW_PR_P" default="0.08" type="FLOAT">
       <short_desc>Pitch rate proportional gain</short_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_RLL_TO_YAW_FF" default="0.0" type="FLOAT">
+      <short_desc>Roll control to yaw control feedforward gain</short_desc>
+      <long_desc>This gain can be used to counteract the "adverse yaw" effect for fixed wings. When the plane enters a roll it will tend to yaw the nose out of the turn. This gain enables the use of a yaw actuator to counteract this effect.</long_desc>
+      <min>0.0</min>
+      <decimal>1</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_RR_D" default="0.00" type="FLOAT">
       <short_desc>Roll rate derivative Gain</short_desc>
       <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -3142,10 +3133,10 @@
       <short_desc>Roll rate integrator Gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>0.2</max>
+      <max>10</max>
       <unit>%/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_RR_IMAX" default="0.2" type="FLOAT">
       <short_desc>Roll integrator anti-windup</short_desc>
@@ -3158,16 +3149,25 @@
     <parameter name="FW_RR_P" default="0.05" type="FLOAT">
       <short_desc>Roll rate proportional Gain</short_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
+    </parameter>
+    <parameter name="FW_SPOILERS_MAN" default="0" type="INT32">
+      <short_desc>Spoiler input in manual flight</short_desc>
+      <long_desc>Chose source for manual setting of spoilers in manual flight modes.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Flaps channel</value>
+        <value code="2">Aux1</value>
+      </values>
     </parameter>
     <parameter name="FW_YR_D" default="0.0" type="FLOAT">
       <short_desc>Yaw rate derivative gain</short_desc>
       <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -3185,7 +3185,7 @@
       <short_desc>Yaw rate integrator gain</short_desc>
       <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
-      <max>50.0</max>
+      <max>10</max>
       <unit>%/rad</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -3201,7 +3201,7 @@
     <parameter name="FW_YR_P" default="0.05" type="FLOAT">
       <short_desc>Yaw rate proportional gain</short_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>10</max>
       <unit>%/rad/s</unit>
       <decimal>3</decimal>
       <increment>0.005</increment>
@@ -3212,7 +3212,6 @@
       <short_desc>Maximum Airspeed (CAS)</short_desc>
       <long_desc>The maximal airspeed (calibrated airspeed) the user is able to command.</long_desc>
       <min>0.5</min>
-      <max>40</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -3221,7 +3220,6 @@
       <short_desc>Minimum Airspeed (CAS)</short_desc>
       <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively. Has to be set according to the vehicle's stall speed (which should be set in FW_AIRSPD_STALL), with some margin between the stall speed and minimum airspeed. This value corresponds to the desired minimum speed with the default load factor (level flight, default weight), and is automatically adpated to the current load factor (calculated from roll setpoint and WEIGHT_GROSS/WEIGHT_BASE).</long_desc>
       <min>0.5</min>
-      <max>40</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -3230,7 +3228,6 @@
       <short_desc>Stall Airspeed (CAS)</short_desc>
       <long_desc>The stall airspeed (calibrated airspeed) of the vehicle. It is used for airspeed sensor failure detection and for the control surface scaling airspeed limits.</long_desc>
       <min>0.5</min>
-      <max>40</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -3239,7 +3236,6 @@
       <short_desc>Trim (Cruise) Airspeed</short_desc>
       <long_desc>The trim CAS (calibrated airspeed) of the vehicle. If an airspeed controller is active, this is the default airspeed setpoint that the controller will try to achieve.</long_desc>
       <min>0.5</min>
-      <max>40</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -3378,7 +3374,7 @@
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="FW_T_I_GAIN_THR" default="0.1" type="FLOAT">
+    <parameter name="FW_T_I_GAIN_THR" default="0.05" type="FLOAT">
       <short_desc>Integrator gain throttle</short_desc>
       <long_desc>This is the integrator gain on the throttle part of the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
       <min>0.0</min>
@@ -6971,24 +6967,24 @@
     <parameter name="TRIM_PITCH" default="0.0" type="FLOAT">
       <short_desc>Pitch trim</short_desc>
       <long_desc>The trim value is the actuator control value the system needs for straight and level flight. It can be calibrated by flying manually straight and level using the RC trims and copying them using the GCS.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="TRIM_ROLL" default="0.0" type="FLOAT">
       <short_desc>Roll trim</short_desc>
       <long_desc>The trim value is the actuator control value the system needs for straight and level flight. It can be calibrated by flying manually straight and level using the RC trims and copying them using the GCS.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="TRIM_YAW" default="0.0" type="FLOAT">
       <short_desc>Yaw trim</short_desc>
       <long_desc>The trim value is the actuator control value the system needs for straight and level flight. It can be calibrated by flying manually straight and level using the RC trims and copying them using the GCS.</long_desc>
-      <min>-0.25</min>
-      <max>0.25</max>
+      <min>-0.5</min>
+      <max>0.5</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
@@ -10450,6 +10446,8 @@
       <min>0.0</min>
       <max>20.0</max>
       <unit>s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32" boolean="true">
       <short_desc>Lock control surfaces in hover</short_desc>
@@ -10473,6 +10471,8 @@
       <long_desc>Scale applied to the demanded down-pitch to get the fixed-wing forward actuation in hover mode. Enabled via VT_FWD_THRUST_EN.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="VT_FW_DIFTHR_EN" default="0" type="INT32">
       <short_desc>Differential thrust in forwards flight</short_desc>
@@ -10618,14 +10618,14 @@
       <increment>0.1</increment>
     </parameter>
     <parameter name="VT_TILT_FW" default="1.0" type="FLOAT">
-      <short_desc>Position of tilt servo in fw mode</short_desc>
+      <short_desc>Normalized tilt in FW</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="VT_TILT_MC" default="0.0" type="FLOAT">
-      <short_desc>Position of tilt servo in mc mode</short_desc>
+      <short_desc>Normalized tilt in Hover</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>3</decimal>
@@ -10639,8 +10639,8 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="VT_TILT_TRANS" default="0.3" type="FLOAT">
-      <short_desc>Position of tilt servo in transition mode</short_desc>
+    <parameter name="VT_TILT_TRANS" default="0.4" type="FLOAT">
+      <short_desc>Normalized tilt in transition to FW</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>3</decimal>
