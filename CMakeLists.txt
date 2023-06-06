@@ -189,7 +189,7 @@ if (WIN32)
 	# append application icon resource for Windows
 	set(QGC_RESOURCES
 		${QGC_RESOURCES}
-		${CMAKE_CURRENT_SOURCE_DIR}/windows/QGroundControl.rc)
+		${CMAKE_CURRENT_SOURCE_DIR}/deploy/windows/QGroundControl.rc)
 endif()
 
 if(BUILD_TESTING)
