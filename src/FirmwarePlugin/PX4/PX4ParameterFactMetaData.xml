@@ -10077,6 +10077,202 @@
       <short_desc>Thermal compensation for rate gyro sensors</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="TC_M0_ID" default="0" type="INT32" category="System">
+      <short_desc>ID of Magnetometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter name="TC_M0_TMAX" default="100.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration maximum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M0_TMIN" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration minimum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M0_TREF" default="25.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration reference temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X0_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X0_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X0_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X1_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X1_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X1_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X2_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X2_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X2_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X3_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X3_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M0_X3_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_ID" default="0" type="INT32" category="System">
+      <short_desc>ID of Magnetometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter name="TC_M1_TMAX" default="100.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration maximum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M1_TMIN" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration minimum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M1_TREF" default="25.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration reference temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X0_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X0_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X0_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X1_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X1_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X1_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X2_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X2_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X2_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X3_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X3_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M1_X3_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_ID" default="0" type="INT32" category="System">
+      <short_desc>ID of Magnetometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter name="TC_M2_TMAX" default="100.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration maximum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M2_TMIN" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration minimum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M2_TREF" default="25.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration reference temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X0_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X0_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X0_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X1_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X1_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X1_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X2_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X2_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X2_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X3_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X3_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M2_X3_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_ID" default="0" type="INT32" category="System">
+      <short_desc>ID of Magnetometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter name="TC_M3_TMAX" default="100.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration maximum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M3_TMIN" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration minimum temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M3_TREF" default="25.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer calibration reference temperature</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X0_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X0_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X0_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X1_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X1_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X1_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X2_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X2_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X2_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X3_0" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X3_1" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
+    </parameter>
+    <parameter name="TC_M3_X3_2" default="0.0" type="FLOAT" category="System">
+      <short_desc>Magnetometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
+    </parameter>
+    <parameter name="TC_M_ENABLE" default="0" type="INT32" boolean="true">
+      <short_desc>Thermal compensation for magnetometer sensors</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="Transponder">
     <parameter name="MXS_EXT_CFG" default="0" type="INT32" boolean="true">
