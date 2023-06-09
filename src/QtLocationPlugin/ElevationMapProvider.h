@@ -16,7 +16,8 @@ class ElevationProvider : public MapProvider {
     Q_OBJECT
   public:
     ElevationProvider(const QString& imageFormat, quint32 averageSize,
-                      QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
+                      QGeoMapType::MapStyle mapType, const QString &referrer, 
+                      QObject* parent = nullptr);
 
     virtual bool _isElevationProvider() const override { return true; }
 };
@@ -29,7 +30,7 @@ class AirmapElevationProvider : public ElevationProvider {
   public:
     AirmapElevationProvider(QObject* parent = nullptr)
         : ElevationProvider(QStringLiteral("bin"), AVERAGE_AIRMAP_ELEV_SIZE,
-                            QGeoMapType::StreetMap, parent) {}
+                            QGeoMapType::StreetMap, QStringLiteral("https://api.airmap.com/"), parent) {}
 
     int long2tileX(const double lon, const int z) const override;
 

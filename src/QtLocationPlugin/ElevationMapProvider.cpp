@@ -6,8 +6,8 @@
 #include "QGCMapEngine.h"
 #include "TerrainTile.h"
 
-ElevationProvider::ElevationProvider(const QString& imageFormat, quint32 averageSize, QGeoMapType::MapStyle mapType, QObject* parent)
-    : MapProvider(QStringLiteral("https://api.airmap.com/"), imageFormat, averageSize, mapType, parent) {}
+ElevationProvider::ElevationProvider(const QString& imageFormat, quint32 averageSize, QGeoMapType::MapStyle mapType, const QString &referrer, QObject* parent)
+    : MapProvider(referrer, imageFormat, averageSize, mapType, parent) {}
 
 //-----------------------------------------------------------------------------
 int AirmapElevationProvider::long2tileX(const double lon, const int z) const {
