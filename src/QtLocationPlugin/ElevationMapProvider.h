@@ -11,6 +11,7 @@
 #include <QString>
 
 static const quint32 AVERAGE_AIRMAP_ELEV_SIZE = 2786;
+static const quint32 AVERAGE_APSTR3_ELEV_SIZE = 100000; // Around 1 MB?
 
 class ElevationProvider : public MapProvider {
     Q_OBJECT
@@ -49,3 +50,25 @@ class AirmapElevationProvider : public ElevationProvider {
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
+// -----------------------------------------------------------
+// Ardupilot Terrain Server Elevation SRTM1
+// https://terrain.ardupilot.org/SRTM1/
+
+class ApStr1ElevationProvider : public ElevationProvider {
+    Q_OBJECT
+  public:
+    ApStr1ElevationProvider(QObject* parent = nullptr)
+        : ElevationProvider(QStringLiteral("bin"), AVERAGE_APSTR3_ELEV_SIZE,
+                            QGeoMapType::StreetMap, QStringLiteral("https://terrain.ardupilot.org/SRTM1/"), parent) {}
+
+    int long2tileX(const double lon, const int z) const override;
+
+    int lat2tileY(const double lat, const int z) const override;
+
+    QGCTileSet getTileCount(const int zoom, const double topleftLon,
+                            const double topleftLat, const double bottomRightLon,
+                            const double bottomRightLat) const override;
+
+  protected:
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
