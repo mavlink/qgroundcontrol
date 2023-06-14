@@ -49,3 +49,7 @@ QGCTileSet AirmapElevationProvider::getTileCount(const int zoom, const double to
 
     return set;
 }
+
+QByteArray AirmapElevationProvider::serializeTile(QByteArray image) {
+    return TerrainTile::serializeFromAirMapJson(image);
+}

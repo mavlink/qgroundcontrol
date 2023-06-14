@@ -207,3 +207,15 @@ UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double 
 bool UrlFactory::isElevation(int mapId){
     return _providersTable[getTypeFromId(mapId)]->_isElevationProvider();
 }
+
+bool UrlFactory::isElevation(QString mapType){
+    return _providersTable[mapType]->_isElevationProvider();
+}
+
+bool UrlFactory::needsSerializingTiles(QString mapType){
+    return _providersTable[mapType]->serializeTilesNeeded();
+}
+
+QByteArray UrlFactory::serializeTileForId(QByteArray image, QString mapType){
+    return _providersTable[mapType]->serializeTile(image);
+}

@@ -40,6 +40,11 @@ class AirmapElevationProvider : public ElevationProvider {
                             const double topleftLat, const double bottomRightLon,
                             const double bottomRightLat) const override;
 
+    // Airmap needs to serialize the tiles, because they are received in json format. This way we can work with
+    // them in the map tiles database
+    bool serializeTilesNeeded() override { return true; }
+    QByteArray serializeTile(QByteArray image) override;
+
   protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };

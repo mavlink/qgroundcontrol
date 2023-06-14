@@ -287,8 +287,9 @@ QGCCachedTileSet::_networkReplyFinished()
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
             QString type = getQGCMapEngine()->hashToType(hash);
-            if (type == "Airmap Elevation" ) {
-                image = TerrainTile::serializeFromAirMapJson(image);
+            // Some providers need the images to be serialized because the response is not directly a image based tile
+            if (getQGCMapEngine()->urlFactory()->needsSerializingTiles(type)) {
+                image = getQGCMapEngine()->urlFactory()->serializeTileForId(image, type);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
             if(!format.isEmpty()) {
