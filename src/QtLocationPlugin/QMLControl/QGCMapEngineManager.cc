@@ -19,6 +19,7 @@
 #include "QGCApplication.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
+#include "SettingsManager.h"
 
 #include <QSettings>
 #include <QStorageInfo>
@@ -84,7 +85,8 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
         _imageSet += set;
     }
     if (_fetchElevation) {
-        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, "Airmap Elevation");
+        QString elevationProviderName = _toolbox->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, elevationProviderName);
         _elevationSet += set;
     }
 
@@ -159,9 +161,14 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
     } else {
         qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
     }
-    if (mapType != "Airmap Elevation" && _fetchElevation) {
+    // Fetch elevation:
+    // If _fetchElevation is true the user ticked "fetch elevation data". But if the user
+    // Selected in map provider an elevation provider we avoid here to download twice.
+    int mapid = getQGCMapEngine()->urlFactory()->getIdFromType(mapType);
+    if (_fetchElevation && !getQGCMapEngine()->urlFactory()->isElevation(mapid)) {
         QGCCachedTileSet* set = new QGCCachedTileSet(name + " Elevation");
-        set->setMapTypeStr("Airmap Elevation");
+        QString elevationProviderName = qgcApp()->toolbox()->settingsManager()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+        set->setMapTypeStr(elevationProviderName);
         set->setTopleftLat(_topleftLat);
         set->setTopleftLon(_topleftLon);
         set->setBottomRightLat(_bottomRightLat);
@@ -170,7 +177,7 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setMaxZoom(1);
         set->setTotalTileSize(_elevationSet.tileSize);
         set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
-        set->setType("Airmap Elevation");
+        set->setType(elevationProviderName);
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
