@@ -42,6 +42,7 @@ Rectangle {
     property real   _valueFieldWidth:           ScreenTools.defaultFontPixelWidth * 10
     property string _mapProvider:               QGroundControl.settingsManager.flightMapSettings.mapProvider.value
     property string _mapType:                   QGroundControl.settingsManager.flightMapSettings.mapType.value
+    property string _elevationMapProvider:      QGroundControl.settingsManager.flightMapSettings.elevationMapProvider.value
     property Fact   _followTarget:              QGroundControl.settingsManager.appSettings.followTarget
     property real   _panelWidth:                _root.width * _internalWidthRatio
     property real   _margins:                   ScreenTools.defaultFontPixelWidth
@@ -593,6 +594,25 @@ Rectangle {
                                         var index = mapTypeCombo.find(_mapType)
                                         if(index < 0) index = 0
                                         mapTypeCombo.currentIndex = index
+                                    }
+                                }
+
+                                QGCLabel {
+                                    text:       qsTr("Elevation Map Provider")
+                                    width:      _labelWidth
+                                }
+                                QGCComboBox {
+                                    id:             elevationMapProviderCombo
+                                    model:          QGroundControl.mapEngineManager.elevationProviderList
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    onActivated: {
+                                        _elevationMapProvider = textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.elevationMapProvider.value=textAt(index)
+                                    }
+                                    Component.onCompleted: {
+                                        var index = elevationMapProviderCombo.find(_elevationMapProvider)
+                                        if(index < 0) index = 0
+                                        elevationMapProviderCombo.currentIndex = index
                                     }
                                 }
 

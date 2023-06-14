@@ -226,6 +226,21 @@ QGCMapEngineManager::mapProviderList()
     mapList.removeDuplicates();
     return mapList;
 }
+//-----------------------------------------------------------------------------
+QStringList
+QGCMapEngineManager::elevationProviderList()
+{
+    QStringList mapList = getQGCMapEngine()->getMapNameList();
+    QStringList elevationMapList;
+
+    for (const QString& providerString : mapList) {
+        int mapid = getQGCMapEngine()->urlFactory()->getIdFromType(providerString);
+        if (getQGCMapEngine()->urlFactory()->isElevation(mapid)) {
+            elevationMapList.append(providerString);
+        }
+    }
+    return elevationMapList;
+}
 
 //-----------------------------------------------------------------------------
 QStringList
