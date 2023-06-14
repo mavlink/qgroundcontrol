@@ -19,7 +19,8 @@
     "name":             "elevationMapProvider",
     "shortDesc": "Currently selected elevation map provider",
     "type":             "string",
-    "default":     "Airmap Elevation"
+    "default":     "Airmap Elevation",
+    "qgcRebootRequired": true
 }
 ]
 }
