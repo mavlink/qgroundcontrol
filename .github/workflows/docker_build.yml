@@ -32,3 +32,4 @@ jobs:
         run: |
               mkdir build 
               docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-linux-docker
+        run-as: non-root
