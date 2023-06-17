@@ -84,7 +84,7 @@ GimbalController::_handleGimbalManagerInformation(const mavlink_message_t& messa
     gimbal.receivedInformation = true;
     if (information.gimbal_device_id != 0) {
         gimbal.responsibleCompid = information.gimbal_device_id;
-        qCDebug(GimbalLog) << "gimbal manager " << message.compid
+        qCDebug(GimbalLog) << "gimbal manager with compId " << message.compid
             << " is responsible for gimbal device " << information.gimbal_device_id;
     }
 
@@ -105,7 +105,7 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
 
     if (status.gimbal_device_id != 0) {
         gimbal.responsibleCompid = status.gimbal_device_id;
-        qCDebug(GimbalLog) << "gimbal manager " << message.compid
+        qCDebug(GimbalLog) << "gimbal manager with compId " << message.compid
             << " is responsible for gimbal device " << status.gimbal_device_id;
     }
 
