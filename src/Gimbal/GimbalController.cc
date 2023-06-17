@@ -54,6 +54,7 @@ GimbalController::_handleHeartbeat(const mavlink_message_t& message)
                                  MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS,
                                  (gimbal.requestStatusRetries > 1) ? 0 : 5000000 /* request default rate, if we don't succeed, last attempt is fixed 0.2 Hz instead */);
         --gimbal.requestStatusRetries;
+        qCDebug(GimbalLog) << "attempt to set GIMBAL_MANAGER_STATUS message interval for compID " << message.compid << ", retries remaining: " << gimbal.requestStatusRetries;
     }
 
     if (!gimbal.receivedAttitude && gimbal.requestAttitudeRetries > 0 &&
