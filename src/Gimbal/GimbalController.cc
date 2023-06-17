@@ -52,7 +52,7 @@ GimbalController::_handleHeartbeat(const mavlink_message_t& message)
                                  MAV_CMD_SET_MESSAGE_INTERVAL,
                                  false /* no error */,
                                  MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS,
-                                 0 /* request default rate */);
+                                 (gimbal.requestStatusRetries > 1) ? 0 : 5000000 /* request default rate, if we don't succeed, last attempt is fixed 0.2 Hz instead */);
         --gimbal.requestStatusRetries;
     }
 

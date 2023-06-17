@@ -1,0 +1,1 @@
+- we should test the latest stuff done over QGCMapTileset, moving serializefromairmapjson to map provider. play around with offline maps etc to verify
