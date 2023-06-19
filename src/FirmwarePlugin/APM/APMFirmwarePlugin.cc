@@ -1133,3 +1133,45 @@ QMutex& APMFirmwarePlugin::_reencodeMavlinkChannelMutex()
     static QMutex _mutex{};
     return _mutex;
 }
+
+double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle)
+{
+    QString airspeedMax("ARSPD_FBW_MAX");
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMax)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    }
+
+    return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
+}
+
+double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle)
+{
+    QString airspeedMin("ARSPD_FBW_MIN");
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, airspeedMin)) {
+        return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    }
+
+    return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);
+}
+
+bool APMFirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
+{
+    return vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "ARSPD_FBW_MIN") &&
+           vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "ARSPD_FBW_MAX");
+}
+
+void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv)
+{
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_DO_CHANGE_SPEED,
+        true,                                 // show error is fails
+        0,                                    // 0: airspeed, 1: groundspeed
+        static_cast<float>(airspeed_equiv),   // speed setpoint
+        -1,                                   // throttle, no change
+        0                                     // 0: absolute speed, 1: relative to current
+        );                                    // param 5-7 unused
+}
