@@ -58,7 +58,7 @@ class ApStr1ElevationProvider : public ElevationProvider {
     Q_OBJECT
   public:
     ApStr1ElevationProvider(QObject* parent = nullptr)
-        : ElevationProvider(QStringLiteral("bin"), AVERAGE_APSTR3_ELEV_SIZE,
+        : ElevationProvider(QStringLiteral("hgt"), AVERAGE_APSTR3_ELEV_SIZE,
                             QGeoMapType::StreetMap, QStringLiteral("https://terrain.ardupilot.org/SRTM1/"), parent) {}
 
     int long2tileX(const double lon, const int z) const override;

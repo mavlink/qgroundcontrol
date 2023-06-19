@@ -132,8 +132,17 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
     UrlFactory* urlFactory = getQGCMapEngine()->urlFactory();
     QString format = urlFactory->getImageFormat(tileSpec().mapId(), a);
     //-- Test for a specialized, elevation data (not map tile)
+    qDebug() << "control point 0";
     if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
-        a = TerrainTile::serializeFromAirMapJson(a);
+        QString type = getQGCMapEngine()->urlFactory()->getTypeFromId(tileSpec().mapId());
+        // Some providers need the images to be serialized because the response is not directly a image based tile
+        if (getQGCMapEngine()->urlFactory()->needsSerializingTiles(type)) {
+            a = getQGCMapEngine()->urlFactory()->serializeTileForId(a, type);
+        }
+        // Some providers return the tiles zipped, like Ardupilot terrain servers
+        if (getQGCMapEngine()->urlFactory()->needsUnzippingTiles(type)) {
+            a = getQGCMapEngine()->urlFactory()->unzipTileForType(a, type);
+        }
         //-- Cache it if valid
         if(!a.isEmpty()) {
             getQGCMapEngine()->cacheTile(
@@ -141,6 +150,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
                     tileSpec().mapId()),
                 tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
         }
+        qDebug() << "control point 5";
         emit terrainDone(a, QNetworkReply::NoError);
     } else {
         MapProvider* mapProvider = urlFactory->getMapProviderFromId(tileSpec().mapId());
@@ -173,6 +183,7 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
     }
     //-- Test for a specialized, elevation data (not map tile)
     if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
+        qDebug() << "control point 1";
         emit terrainDone(QByteArray(), error);
     } else {
         //-- Regular map tile
@@ -191,6 +202,7 @@ QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorStrin
 {
     if(!getQGCMapEngine()->isInternetActive()) {
         if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
+            qDebug() << "control point 2";
             emit terrainDone(QByteArray(), QNetworkReply::NetworkSessionFailedError);
         } else {
             setError(QGeoTiledMapReply::CommunicationError, "Network not available");
@@ -228,6 +240,7 @@ QGeoTiledMapReplyQGC::cacheReply(QGCCacheTile* tile)
 {
     //-- Test for a specialized, elevation data (not map tile)
     if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
+        qDebug() << "control point 3";
         emit terrainDone(tile->img(), QNetworkReply::NoError);
     } else {
         //-- Regular map tile

@@ -500,6 +500,43 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
         reply->deleteLater();
         return;
     }
+
+    // This is Mattew's code
+
+    // QString providerName = getQGCMapEngine()->urlFactory()->getTypeFromId(spec.mapId());
+    // // Some providers like Ardupilot SRTM servers send files zipped. check if it is needed
+    // if (getQGCMapEngine()->urlFactory()->needsUnzippingTiles(providerName)) {
+    //     // responseBytes = getQGCMapEngine()->urlFactory()->unzipTileForType(responseBytes, providerName);
+        
+    //     // Split out filename from path
+    //     QString remoteFileName = QFileInfo(reply->url().toString()).fileName();
+    //     if (remoteFileName.isEmpty()) {
+    //         qWarning() << "Unabled to parse filename from remote url" << reply->url().toString();
+    //         remoteFileName = "DownloadedFile";
+    //     }
+
+    //     // Strip out http parameters from remote filename
+    //     int parameterIndex = remoteFileName.indexOf("?");
+    //     if (parameterIndex != -1) {
+    //         remoteFileName  = remoteFileName.left(parameterIndex);
+    //     }
+    //     QFileInfo fi(remoteFileName);
+    //     QString ext = fi.completeSuffix();
+    //     //need to save ardupilot terrain data zip for extraction
+    //     if (ext == "hgt.zip"){
+    //         // Determine location to download file to
+    //         QString downloadFilename = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    //         downloadFilename += "/"  + remoteFileName;
+    //         if (!downloadFilename.isEmpty()) {
+    //             // Store downloaded file in download location
+    //             QFile file(downloadFilename);
+    //             if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    //                 file.write(image);
+    //                 file.close();
+    //             }
+    //         }
+    //     }
+    // }
     if (responseBytes.isEmpty()) {
         qCWarning(TerrainQueryLog) << "Error in fetching elevation tile. Empty response.";
         _tileFailed();
@@ -508,7 +545,8 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
     }
 
     qCDebug(TerrainQueryLog) << "Received some bytes of terrain data: " << responseBytes.size();
-
+    qDebug() << "Received some bytes of terrain data: " << responseBytes.size();
+    return;
     TerrainTile* terrainTile = new TerrainTile(responseBytes);
     if (terrainTile->isValid()) {
         _tilesMutex.lock();

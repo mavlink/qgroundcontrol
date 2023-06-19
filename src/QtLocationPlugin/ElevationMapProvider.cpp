@@ -115,6 +115,18 @@ QGCTileSet ApStr1ElevationProvider::getTileCount(const int zoom, const double to
 }
 
 QByteArray ApStr1ElevationProvider::unzipTile(QByteArray response) {
+
+    // This is not working, we need to use a proper zip library like zlib
+    
+    int decompressedSize = 25000000; // Uncompressed AP terrain files STR1 are aprox 25 Mb. 
+    response.prepend((unsigned char)((decompressedSize >> 24) & 0xFF));
+    response.prepend((unsigned char)((decompressedSize >> 16) & 0xFF));
+    response.prepend((unsigned char)((decompressedSize >> 8) & 0xFF));
+    response.prepend((unsigned char)((decompressedSize >> 0) & 0xFF));
+
+    qDebug() << "response before: " << response.size();
+    response = qUncompress(response);
+    qDebug() << "response aftery: " << response.size();
     
     return response;
 }

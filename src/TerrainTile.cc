@@ -92,6 +92,7 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     }
 
     _data = new int16_t*[_gridSizeLat];
+    // Here we have trouble crashing, obviously, we need to manage this whole terrain tile thing for other providers
     for (int k = 0; k < _gridSizeLat; k++) {
         _data[k] = new int16_t[_gridSizeLon];
     }
