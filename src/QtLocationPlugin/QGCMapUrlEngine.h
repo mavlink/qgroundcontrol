@@ -58,6 +58,8 @@ public:
     bool isElevation(int mapId);
     bool needsSerializingTiles(QString mapType);
     QByteArray serializeTileForId(QByteArray image, QString mapType);
+    bool needsUnzippingTiles(QString mapType);
+    QByteArray unzipTileForType(QByteArray response, QString mapType);
 
   private:
     int             _timeout;

@@ -69,6 +69,9 @@ class ApStr1ElevationProvider : public ElevationProvider {
                             const double topleftLat, const double bottomRightLon,
                             const double bottomRightLat) const override;
 
+    bool unzippingTilesNeeded() override { return true; }
+    QByteArray unzipTile(QByteArray response) override;
+
   protected:
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };

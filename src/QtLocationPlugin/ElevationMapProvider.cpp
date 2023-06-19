@@ -88,6 +88,8 @@ QString ApStr1ElevationProvider::_getURL(const int x, const int y, const int zoo
          .arg(QString(formattedStringYLat))
          .arg(QString(formattedStringXLong))
          ;
+
+    qDebug() << "Ardupilot string: " << urlString;
     
     return urlString;
 }
@@ -110,4 +112,9 @@ QGCTileSet ApStr1ElevationProvider::getTileCount(const int zoom, const double to
     set.tileSize = getAverageSize() * set.tileCount;
 
     return set;
+}
+
+QByteArray ApStr1ElevationProvider::unzipTile(QByteArray response) {
+    
+    return response;
 }

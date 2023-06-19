@@ -54,6 +54,8 @@ public:
 
     virtual bool serializeTilesNeeded() { return false; }
     virtual QByteArray serializeTile(QByteArray image) { return image; }
+    virtual bool unzippingTilesNeeded() { return false; }
+    virtual QByteArray unzipTile(QByteArray response) { return response; }
 
 protected:
     QString _tileXYToQuadKey(const int tileX, const int tileY, const int levelOfDetail) const;

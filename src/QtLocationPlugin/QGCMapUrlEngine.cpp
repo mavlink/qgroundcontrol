@@ -220,3 +220,11 @@ bool UrlFactory::needsSerializingTiles(QString mapType){
 QByteArray UrlFactory::serializeTileForId(QByteArray image, QString mapType){
     return _providersTable[mapType]->serializeTile(image);
 }
+
+bool UrlFactory::needsUnzippingTiles(QString mapType){
+    return _providersTable[mapType]->unzippingTilesNeeded();
+}
+
+QByteArray UrlFactory::unzipTileForType(QByteArray response, QString mapType) {
+    return _providersTable[mapType]->unzipTile(response);
+}
