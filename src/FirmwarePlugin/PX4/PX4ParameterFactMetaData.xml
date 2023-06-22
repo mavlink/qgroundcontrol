@@ -877,6 +877,14 @@
         <value code="4">Terminate</value>
       </values>
     </parameter>
+    <parameter name="COM_ARMABLE" default="1" type="INT32" boolean="true">
+      <short_desc>Flag to allow arming</short_desc>
+      <long_desc>Set 0 to prevent accidental use of the vehicle e.g. for safety or maintenance reasons.</long_desc>
+      <values>
+        <value code="0">Disallow arming</value>
+        <value code="1">Allow arming</value>
+      </values>
+    </parameter>
     <parameter name="COM_ARM_ARSP_EN" default="1" type="INT32">
       <short_desc>Enable preflight check for maximal allowed airspeed when arming</short_desc>
       <long_desc>Deny arming if the current airspeed measurement is greater than half the cruise airspeed (FW_AIRSPD_TRIM). Excessive airspeed measurements on ground are either caused by wind or bad airspeed calibration.</long_desc>
