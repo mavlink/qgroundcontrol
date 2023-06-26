@@ -4706,8 +4706,7 @@
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_YAW_MODE" default="0" type="INT32">
-      <short_desc>Yaw mode</short_desc>
-      <long_desc>Specifies the heading in Auto.</long_desc>
+      <short_desc>Heading behavior in autonomous modes</short_desc>
       <min>0</min>
       <max>4</max>
       <values>
@@ -5057,13 +5056,13 @@
       <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="MPC_YAWRAUTO_MAX" default="45.0" type="FLOAT">
-      <short_desc>Max yaw rate in auto mode</short_desc>
-      <long_desc>Limit the rate of change of the yaw setpoint in autonomous mode to avoid large control output and mixer saturation.</long_desc>
-      <min>0.0</min>
-      <max>360.0</max>
+    <parameter name="MPC_YAWRAUTO_MAX" default="45." type="FLOAT">
+      <short_desc>Max yaw rate in autonomous modes</short_desc>
+      <long_desc>Limits the rate of change of the yaw setpoint to avoid large control output and mixer saturation.</long_desc>
+      <min>0</min>
+      <max>360</max>
       <unit>deg/s</unit>
-      <decimal>1</decimal>
+      <decimal>0</decimal>
       <increment>5</increment>
     </parameter>
   </group>
@@ -5102,41 +5101,41 @@
       <decimal>2</decimal>
     </parameter>
     <parameter name="MPC_ACC_DOWN_MAX" default="3.0" type="FLOAT">
-      <short_desc>Maximum vertical acceleration in velocity controlled modes down</short_desc>
+      <short_desc>Maximum downwards acceleration in climb rate controlled modes</short_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s^2</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_ACC_HOR" default="3.0" type="FLOAT">
-      <short_desc>Acceleration for auto and for manual</short_desc>
-      <long_desc>Note: In manual, this parameter is only used in MPC_POS_MODE 4.</long_desc>
-      <min>2.0</min>
-      <max>15.0</max>
+    <parameter name="MPC_ACC_HOR" default="3." type="FLOAT">
+      <short_desc>Acceleration for autonomous and for manual modes</short_desc>
+      <long_desc>When piloting manually, this parameter is only used in MPC_POS_MODE 4.</long_desc>
+      <min>2</min>
+      <max>15</max>
       <unit>m/s^2</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_ACC_HOR_MAX" default="5.0" type="FLOAT">
-      <short_desc>Maximum horizontal acceleration for auto mode and for manual mode</short_desc>
-      <long_desc>MPC_POS_MODE 1 just deceleration 3 acceleration and deceleration 4 just acceleration</long_desc>
-      <min>2.0</min>
-      <max>15.0</max>
+    <parameter name="MPC_ACC_HOR_MAX" default="5." type="FLOAT">
+      <short_desc>Maximum horizontal acceleration</short_desc>
+      <long_desc>MPC_POS_MODE 1 just deceleration 3 acceleration and deceleration 4 not used, use MPC_ACC_HOR instead</long_desc>
+      <min>2</min>
+      <max>15</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_ACC_UP_MAX" default="4.0" type="FLOAT">
-      <short_desc>Maximum vertical acceleration in velocity controlled modes upward</short_desc>
+      <short_desc>Maximum upwards acceleration in climb rate controlled modes</short_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s^2</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_ALT_MODE" default="0" type="INT32">
-      <short_desc>Altitude control mode</short_desc>
+      <short_desc>Altitude reference mode</short_desc>
       <long_desc>Set to 0 to control height relative to the earth frame origin. This origin may move up and down in flight due to sensor drift. Set to 1 to control height relative to estimated distance to ground. The vehicle will move up and down with terrain height variation. Requires a distance to ground sensor. The height controller will revert to using height above origin if the distance to ground estimate becomes invalid as indicated by the local_position.distance_bottom_valid message being false. Set to 2 to control height relative to ground (requires a distance sensor) when stationary and relative to earth frame origin when moving horizontally. The speed threshold is controlled by the MPC_HOLD_MAX_XY parameter.</long_desc>
       <min>0</min>
       <max>2</max>
@@ -5147,44 +5146,48 @@
       </values>
     </parameter>
     <parameter name="MPC_HOLD_DZ" default="0.1" type="FLOAT">
-      <short_desc>Deadzone of sticks where position hold is enabled</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
+      <short_desc>Deadzone for sticks in manual piloted modes</short_desc>
+      <long_desc>Does not apply to manual throttle and direct attitude piloting by stick.</long_desc>
+      <min>0</min>
+      <max>1</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="MPC_HOLD_MAX_XY" default="0.8" type="FLOAT">
       <short_desc>Maximum horizontal velocity for which position hold is enabled (use 0 to disable check)</short_desc>
-      <min>0.0</min>
-      <max>3.0</max>
+      <long_desc>Only used with MPC_POS_MODE 0 or MPC_ALT_MODE 2</long_desc>
+      <min>0</min>
+      <max>3</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter name="MPC_HOLD_MAX_Z" default="0.6" type="FLOAT">
       <short_desc>Maximum vertical velocity for which position hold is enabled (use 0 to disable check)</short_desc>
-      <min>0.0</min>
-      <max>3.0</max>
+      <long_desc>Only used with MPC_ALT_MODE 1</long_desc>
+      <min>0</min>
+      <max>3</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="MPC_JERK_AUTO" default="4.0" type="FLOAT">
-      <short_desc>Jerk limit in auto mode</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility.</long_desc>
-      <min>1.0</min>
-      <max>80.0</max>
+    <parameter name="MPC_JERK_AUTO" default="4." type="FLOAT">
+      <short_desc>Jerk limit in autonomous modes</short_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions but also limited agility.</long_desc>
+      <min>1</min>
+      <max>80</max>
       <unit>m/s^3</unit>
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_JERK_MAX" default="8.0" type="FLOAT">
-      <short_desc>Maximum jerk limit</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: This is only used when MPC_POS_MODE is set to a smoothing mode 3 or 4.</long_desc>
+    <parameter name="MPC_JERK_MAX" default="8." type="FLOAT">
+      <short_desc>Maximum horizontal and vertical jerk in Position/Altitude mode</short_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother motions but limits agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Only used with smooth MPC_POS_MODE 3 and 4.</long_desc>
       <min>0.5</min>
-      <max>500.0</max>
+      <max>500</max>
       <unit>m/s^3</unit>
-      <decimal>2</decimal>
+      <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_LAND_ALT1" default="10.0" type="FLOAT">
+    <parameter name="MPC_LAND_ALT1" default="10." type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
       <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX_DN" (or "MPC_Z_V_AUTO_DN") and "MPC_LAND_SPEED" Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
@@ -5192,7 +5195,7 @@
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MPC_LAND_ALT2" default="5.0" type="FLOAT">
+    <parameter name="MPC_LAND_ALT2" default="5." type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
       <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED" Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
@@ -5200,7 +5203,7 @@
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MPC_LAND_ALT3" default="1.0" type="FLOAT">
+    <parameter name="MPC_LAND_ALT3" default="1." type="FLOAT">
       <short_desc>Altitude for 3. step of slow landing</short_desc>
       <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_CRWL", if LIDAR available. No effect if LIDAR not available</long_desc>
       <min>0</min>
@@ -5217,19 +5220,20 @@
     </parameter>
     <parameter name="MPC_LAND_RADIUS" default="1000." type="FLOAT">
       <short_desc>User assisted landing radius</short_desc>
-      <long_desc>When user assisted descent is enabled (see MPC_LAND_RC_HELP), this parameter controls the maximum position adjustment allowed from the original landing point.</long_desc>
+      <long_desc>When nudging is enabled (see MPC_LAND_RC_HELP), this controls the maximum allowed horizontal displacement from the original landing point.</long_desc>
       <min>0</min>
       <unit>m</unit>
-      <decimal>1</decimal>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="MPC_LAND_RC_HELP" default="0" type="INT32">
-      <short_desc>Enable user assisted descent for autonomous land routine</short_desc>
-      <long_desc>When enabled, descent speed will be: stick full up - 0 stick centered - MPC_LAND_SPEED stick full down - 2 * MPC_LAND_SPEED Additionally, the vehicle can be yawed and moved laterally using the other sticks. Manual override during auto modes has to be disabled to use this feature (see COM_RC_OVERRIDE).</long_desc>
+      <short_desc>Enable nudging based on user input during autonomous land routine</short_desc>
+      <long_desc>Using stick input the vehicle can be moved horizontally and yawed. The descend speed is amended: stick full up - 0 stick centered - MPC_LAND_SPEED stick full down - 2 * MPC_LAND_SPEED Manual override during auto modes has to be disabled to use this feature (see COM_RC_OVERRIDE).</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
-        <value code="0">Fixed descent speed of MPC_LAND_SPEED</value>
-        <value code="1">User assisted descent speed</value>
+        <value code="0">Nudging disabled</value>
+        <value code="1">Nudging enabled</value>
       </values>
     </parameter>
     <parameter name="MPC_LAND_SPEED" default="0.7" type="FLOAT">
@@ -5239,110 +5243,116 @@
       <decimal>1</decimal>
     </parameter>
     <parameter name="MPC_MANTHR_MIN" default="0.08" type="FLOAT">
-      <short_desc>Minimum manual thrust</short_desc>
-      <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust. With MC_AIRMODE set to 1, this can safely be set to 0.</long_desc>
+      <short_desc>Minimum collective thrust in Stabilized mode</short_desc>
+      <long_desc>The value is mapped to the lowest throttle stick position in Stabilized mode. Too low collective thrust leads to loss of roll/pitch/yaw torque control authority. Airmode is used to keep torque authority with zero thrust (see MC_AIRMODE).</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="MPC_MAN_TILT_MAX" default="35.0" type="FLOAT">
-      <short_desc>Maximal tilt angle in manual or altitude mode</short_desc>
-      <min>0.0</min>
-      <max>90.0</max>
+    <parameter name="MPC_MAN_TILT_MAX" default="35." type="FLOAT">
+      <short_desc>Maximal tilt angle in Stabilized or Altitude mode</short_desc>
+      <min>0</min>
+      <max>90</max>
       <unit>deg</unit>
-      <decimal>1</decimal>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
-    <parameter name="MPC_MAN_Y_MAX" default="150.0" type="FLOAT">
-      <short_desc>Max manual yaw rate</short_desc>
-      <min>0.0</min>
+    <parameter name="MPC_MAN_Y_MAX" default="150." type="FLOAT">
+      <short_desc>Max manual yaw rate for Stabilized, Altitude, Position mode</short_desc>
+      <min>0</min>
       <max>400</max>
       <unit>deg/s</unit>
-      <decimal>1</decimal>
+      <decimal>0</decimal>
+      <increment>10</increment>
     </parameter>
     <parameter name="MPC_MAN_Y_TAU" default="0.08" type="FLOAT">
       <short_desc>Manual yaw rate input filter time constant</short_desc>
-      <long_desc>Setting this parameter to 0 disables the filter</long_desc>
+      <long_desc>Not used in Stabilized mode Setting this parameter to 0 disables the filter</long_desc>
       <min>0.0</min>
       <max>5.0</max>
       <unit>s</unit>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="MPC_POS_MODE" default="4" type="INT32">
-      <short_desc>Manual-Position control sub-mode</short_desc>
-      <long_desc>The supported sub-modes are: 0 Simple position control where sticks map directly to velocity setpoints without smoothing. Useful for velocity control tuning. 3 Smooth position control with maximum acceleration and jerk limits based on jerk optimized trajectory generator (different algorithm than 1). 4 Smooth position control where sticks map to acceleration and there's a virtual brake drag</long_desc>
+      <short_desc>Position/Altitude mode variant</short_desc>
+      <long_desc>The supported sub-modes are: 0 Sticks directly map to velocity setpoints without smoothing. Also applies to vertical direction and Altitude mode. Useful for velocity control tuning. 3 Sticks map to velocity but with maximum acceleration and jerk limits based on jerk optimized trajectory generator (different algorithm than 1). 4 Sticks map to acceleration and there's a virtual brake drag</long_desc>
       <values>
-        <value code="0">Simple position control</value>
-        <value code="3">Smooth position control (Jerk optimized)</value>
-        <value code="4">Acceleration based input</value>
+        <value code="0">Direct velocity</value>
+        <value code="3">Smoothed velocity</value>
+        <value code="4">Acceleration based</value>
       </values>
     </parameter>
     <parameter name="MPC_THR_CURVE" default="0" type="INT32">
-      <short_desc>Thrust curve in Manual Mode</short_desc>
-      <long_desc>This parameter defines how the throttle stick input is mapped to commanded thrust in Manual/Stabilized flight mode. In case the default is used ('Rescale to hover thrust'), the stick input is linearly rescaled, such that a centered stick corresponds to the hover throttle (see MPC_THR_HOVER). Select 'No Rescale' to directly map the stick 1:1 to the output. This can be useful in case the hover thrust is very low and the default would lead to too much distortion (e.g. if hover thrust is set to 20%, 80% of the upper thrust range is squeezed into the upper half of the stick range). Note: In case MPC_THR_HOVER is set to 50%, the modes 0 and 1 are the same.</long_desc>
+      <short_desc>Thrust curve mapping in Stabilized Mode</short_desc>
+      <long_desc>This parameter defines how the throttle stick input is mapped to collective thrust in Stabilized mode. In case the default is used ('Rescale to hover thrust'), the stick input is linearly rescaled, such that a centered stick corresponds to the hover throttle (see MPC_THR_HOVER). Select 'No Rescale' to directly map the stick 1:1 to the output. This can be useful in case the hover thrust is very low and the default would lead to too much distortion (e.g. if hover thrust is set to 20%, then 80% of the upper thrust range is squeezed into the upper half of the stick range). Note: In case MPC_THR_HOVER is set to 50%, the modes 0 and 1 are the same.</long_desc>
       <values>
         <value code="0">Rescale to hover thrust</value>
         <value code="1">No Rescale</value>
       </values>
     </parameter>
     <parameter name="MPC_THR_HOVER" default="0.5" type="FLOAT">
-      <short_desc>Hover thrust</short_desc>
-      <long_desc>Vertical thrust required to hover. This value is mapped to center stick for manual throttle control. With this value set to the thrust required to hover, transition from manual to Altitude or Position mode while hovering will occur with the throttle stick near center, which is then interpreted as (near) zero demand for vertical speed. This parameter is also important for the landing detection to work correctly.</long_desc>
+      <short_desc>Vertical thrust required to hover</short_desc>
+      <long_desc>Mapped to center throttle stick in Stabilized mode (see MPC_THR_CURVE). Used for initialization of the hover thrust estimator (see MPC_USE_HTE). The estimated hover thrust is used as base for zero vertical acceleration in altitude control. The hover thrust is important for land detection to work correctly.</long_desc>
       <min>0.1</min>
       <max>0.8</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="MPC_THR_MAX" default="1.0" type="FLOAT">
-      <short_desc>Maximum thrust in auto thrust control</short_desc>
-      <long_desc>Limit max allowed thrust</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
+    <parameter name="MPC_THR_MAX" default="1." type="FLOAT">
+      <short_desc>Maximum collective thrust in climb rate controlled modes</short_desc>
+      <long_desc>Limit allowed thrust e.g. for indoor test of overpowered vehicle.</long_desc>
+      <min>0</min>
+      <max>1</max>
       <unit>norm</unit>
       <decimal>2</decimal>
-      <increment>0.01</increment>
+      <increment>0.05</increment>
     </parameter>
     <parameter name="MPC_THR_MIN" default="0.12" type="FLOAT">
-      <short_desc>Minimum collective thrust in auto thrust control</short_desc>
-      <long_desc>It's recommended to set it &gt; 0 to avoid free fall with zero thrust. Note: Without airmode zero thrust leads to zero roll/pitch control authority. (see MC_AIRMODE)</long_desc>
+      <short_desc>Minimum collective thrust in climb rate controlled modes</short_desc>
+      <long_desc>Too low thrust leads to loss of roll/pitch/yaw torque control authority. With airmode enabled this parameters can be set to 0 while still keeping torque authority (see MC_AIRMODE).</long_desc>
       <min>0.05</min>
-      <max>1.0</max>
+      <max>0.5</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
     <parameter name="MPC_THR_XY_MARG" default="0.3" type="FLOAT">
       <short_desc>Horizontal thrust margin</short_desc>
-      <long_desc>Margin that is kept for horizontal control when prioritizing vertical thrust. To avoid completely starving horizontal control with high vertical error.</long_desc>
+      <long_desc>Margin that is kept for horizontal control when higher priority vertical thrust is saturated. To avoid completely starving horizontal control with high vertical error.</long_desc>
       <min>0.0</min>
       <max>0.5</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="MPC_TILTMAX_AIR" default="45.0" type="FLOAT">
+    <parameter name="MPC_TILTMAX_AIR" default="45." type="FLOAT">
       <short_desc>Maximum tilt angle in air</short_desc>
-      <long_desc>Limits maximum tilt in AUTO and POSCTRL modes during flight.</long_desc>
-      <min>20.0</min>
-      <max>89.0</max>
+      <long_desc>Absolute maximum for all velocity or acceleration controlled modes. Any higher value is truncated.</long_desc>
+      <min>20</min>
+      <max>89</max>
       <unit>deg</unit>
-      <decimal>1</decimal>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
-    <parameter name="MPC_TILTMAX_LND" default="12.0" type="FLOAT">
-      <short_desc>Maximum tilt during landing</short_desc>
-      <long_desc>Limits maximum tilt angle on landing.</long_desc>
-      <min>10.0</min>
-      <max>89.0</max>
+    <parameter name="MPC_TILTMAX_LND" default="12." type="FLOAT">
+      <short_desc>Maximum tilt during inital takeoff ramp</short_desc>
+      <long_desc>Tighter tilt limit during takeoff to avoid tip over.</long_desc>
+      <min>5</min>
+      <max>89</max>
       <unit>deg</unit>
-      <decimal>1</decimal>
+      <decimal>0</decimal>
+      <increment>1</increment>
     </parameter>
-    <parameter name="MPC_TKO_RAMP_T" default="3.0" type="FLOAT">
-      <short_desc>Position control smooth takeoff ramp time constant</short_desc>
-      <long_desc>Increasing this value will make automatic and manual takeoff slower. If it's too slow the drone might scratch the ground and tip over. A time constant of 0 disables the ramp</long_desc>
+    <parameter name="MPC_TKO_RAMP_T" default="3." type="FLOAT">
+      <short_desc>Smooth takeoff ramp time constant</short_desc>
+      <long_desc>Increasing this value will make climb rate controlled takeoff slower. If it's too slow the drone might scratch the ground and tip over. A time constant of 0 disables the ramp</long_desc>
       <min>0</min>
       <max>5</max>
+      <unit>s</unit>
     </parameter>
     <parameter name="MPC_TKO_SPEED" default="1.5" type="FLOAT">
       <short_desc>Takeoff climb rate</short_desc>
@@ -5352,79 +5362,85 @@
       <decimal>2</decimal>
     </parameter>
     <parameter name="MPC_USE_HTE" default="1" type="INT32" boolean="true">
-      <short_desc>Hover thrust source selector</short_desc>
-      <long_desc>Set false to use the fixed parameter MPC_THR_HOVER Set true to use the value computed by the hover thrust estimator</long_desc>
+      <short_desc>Hover thrust estimator</short_desc>
+      <long_desc>Disable to use the fixed parameter MPC_THR_HOVER Enable to use the hover thrust estimator</long_desc>
     </parameter>
     <parameter name="MPC_VELD_LP" default="5.0" type="FLOAT">
-      <short_desc>Low pass filter cut freq. for numerical velocity derivative</short_desc>
+      <short_desc>Numerical velocity derivative low pass cutoff frequency</short_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>Hz</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
     </parameter>
-    <parameter name="MPC_VEL_MANUAL" default="10.0" type="FLOAT">
+    <parameter name="MPC_VEL_MANUAL" default="10." type="FLOAT">
       <short_desc>Maximum horizontal velocity setpoint in Position mode</short_desc>
-      <long_desc>If velocity setpoint larger than MPC_XY_VEL_MAX is set, then the setpoint will be capped to MPC_XY_VEL_MAX The maximum sideways and backward speed can be set differently using MPC_VEL_MAN_SIDE and MPC_VEL_MAN_BACK, respectively.</long_desc>
-      <min>3.0</min>
-      <max>20.0</max>
+      <long_desc>Must be smaller than MPC_XY_VEL_MAX. The maximum sideways and backward speed can be set differently using MPC_VEL_MAN_SIDE and MPC_VEL_MAN_BACK, respectively.</long_desc>
+      <min>3</min>
+      <max>20</max>
       <unit>m/s</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_VEL_MAN_BACK" default="-1.0" type="FLOAT">
+    <parameter name="MPC_VEL_MAN_BACK" default="-1." type="FLOAT">
       <short_desc>Maximum backward velocity in Position mode</short_desc>
       <long_desc>If set to a negative value or larger than MPC_VEL_MANUAL then MPC_VEL_MANUAL is used.</long_desc>
-      <min>-1.0</min>
-      <max>20.0</max>
+      <min>-1</min>
+      <max>20</max>
       <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.1</increment>
-    </parameter>
-    <parameter name="MPC_VEL_MAN_SIDE" default="-1.0" type="FLOAT">
-      <short_desc>Maximum sideways velocity in Position mode</short_desc>
-      <long_desc>If set to a negative value or larger than MPC_VEL_MANUAL then MPC_VEL_MANUAL is used.</long_desc>
-      <min>-1.0</min>
-      <max>20.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>0.1</increment>
-    </parameter>
-    <parameter name="MPC_XY_CRUISE" default="5.0" type="FLOAT">
-      <short_desc>Default horizontal velocity in mission</short_desc>
-      <long_desc>Horizontal velocity used when flying autonomously in e.g. Missions, RTL, Goto.</long_desc>
-      <min>3.0</min>
-      <max>20.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
+      <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_XY_ERR_MAX" default="2.0" type="FLOAT">
+    <parameter name="MPC_VEL_MAN_SIDE" default="-1." type="FLOAT">
+      <short_desc>Maximum sideways velocity in Position mode</short_desc>
+      <long_desc>If set to a negative value or larger than MPC_VEL_MANUAL then MPC_VEL_MANUAL is used.</long_desc>
+      <min>-1</min>
+      <max>20</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="MPC_XY_CRUISE" default="5." type="FLOAT">
+      <short_desc>Default horizontal velocity in autonomous modes</short_desc>
+      <long_desc>e.g. in Missions, RTL, Goto if the waypoint does not specify differently</long_desc>
+      <min>3</min>
+      <max>20</max>
+      <unit>m/s</unit>
+      <decimal>0</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="MPC_XY_ERR_MAX" default="2." type="FLOAT">
       <short_desc>Maximum horizontal error allowed by the trajectory generator</short_desc>
       <long_desc>The integration speed of the trajectory setpoint is linearly reduced with the horizontal position tracking error. When the error is above this parameter, the integration of the trajectory is stopped to wait for the drone. This value can be adjusted depending on the tracking capabilities of the vehicle.</long_desc>
       <min>0.1</min>
-      <max>10.0</max>
+      <max>10</max>
       <decimal>1</decimal>
+      <increment>1</increment>
     </parameter>
     <parameter name="MPC_XY_MAN_EXPO" default="0.6" type="FLOAT">
       <short_desc>Manual position control stick exponential curve sensitivity</short_desc>
-      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve (default) 1 Purely cubic input curve</long_desc>
+      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve 1 Purely cubic input curve</long_desc>
       <min>0</min>
       <max>1</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="MPC_XY_P" default="0.95" type="FLOAT">
       <short_desc>Proportional gain for horizontal position error</short_desc>
-      <min>0.0</min>
-      <max>2.0</max>
+      <long_desc>Defined as corrective velocity in m/s per m position error</long_desc>
+      <min>0</min>
+      <max>2</max>
       <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_XY_TRAJ_P" default="0.5" type="FLOAT">
       <short_desc>Proportional gain for horizontal trajectory position error</short_desc>
       <min>0.1</min>
-      <max>1.0</max>
+      <max>1</max>
       <decimal>1</decimal>
+      <increment>0.1</increment>
     </parameter>
-    <parameter name="MPC_XY_VEL_ALL" default="-10.0" type="FLOAT">
+    <parameter name="MPC_XY_VEL_ALL" default="-10." type="FLOAT">
       <short_desc>Overall Horizontal Velocity Limit</short_desc>
       <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_XY_VEL_MAX or MPC_VEL_MANUAL). If set to a negative value, the existing individual parameters are used.</long_desc>
       <min>-20</min>
@@ -5433,56 +5449,63 @@
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_XY_VEL_D_ACC" default="0.2" type="FLOAT">
-      <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
-      <long_desc>defined as correction acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
+      <short_desc>Differential gain for horizontal velocity error</short_desc>
+      <long_desc>Defined as corrective acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
       <min>0.1</min>
-      <max>2.0</max>
-      <decimal>3</decimal>
+      <max>2</max>
+      <decimal>2</decimal>
+      <increment>0.02</increment>
     </parameter>
     <parameter name="MPC_XY_VEL_I_ACC" default="0.4" type="FLOAT">
       <short_desc>Integral gain for horizontal velocity error</short_desc>
-      <long_desc>defined as correction acceleration in m/s^2 per m velocity integral Non-zero value allows to eliminate steady state errors in the presence of disturbances like wind.</long_desc>
-      <min>0.0</min>
-      <max>60.0</max>
-      <decimal>3</decimal>
-    </parameter>
-    <parameter name="MPC_XY_VEL_MAX" default="12.0" type="FLOAT">
-      <short_desc>Maximum horizontal velocity</short_desc>
-      <long_desc>Maximum horizontal velocity in AUTO mode. If higher speeds are commanded in a mission they will be capped to this velocity.</long_desc>
-      <min>0.0</min>
-      <max>20.0</max>
-      <unit>m/s</unit>
+      <long_desc>Defined as correction acceleration in m/s^2 per m velocity integral Allows to eliminate steady state errors in disturbances like wind.</long_desc>
+      <min>0</min>
+      <max>60</max>
       <decimal>2</decimal>
+      <increment>0.02</increment>
+    </parameter>
+    <parameter name="MPC_XY_VEL_MAX" default="12." type="FLOAT">
+      <short_desc>Maximum horizontal velocity</short_desc>
+      <long_desc>Absolute maximum for all velocity controlled modes. Any higher value is truncated.</long_desc>
+      <min>0</min>
+      <max>20</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
     <parameter name="MPC_XY_VEL_P_ACC" default="1.8" type="FLOAT">
       <short_desc>Proportional gain for horizontal velocity error</short_desc>
-      <long_desc>defined as correction acceleration in m/s^2 per m/s velocity error</long_desc>
+      <long_desc>Defined as corrective acceleration in m/s^2 per m/s velocity error</long_desc>
       <min>1.2</min>
-      <max>5.0</max>
+      <max>5</max>
       <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_YAW_EXPO" default="0.6" type="FLOAT">
       <short_desc>Manual control stick yaw rotation exponential curve</short_desc>
-      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve (default) 1 Purely cubic input curve</long_desc>
+      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve 1 Purely cubic input curve</long_desc>
       <min>0</min>
       <max>1</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
     <parameter name="MPC_Z_MAN_EXPO" default="0.6" type="FLOAT">
       <short_desc>Manual control stick vertical exponential curve</short_desc>
-      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve (default) 1 Purely cubic input curve</long_desc>
+      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve 1 Purely cubic input curve</long_desc>
       <min>0</min>
       <max>1</max>
       <decimal>2</decimal>
+      <increment>0.01</increment>
     </parameter>
-    <parameter name="MPC_Z_P" default="1.0" type="FLOAT">
+    <parameter name="MPC_Z_P" default="1." type="FLOAT">
       <short_desc>Proportional gain for vertical position error</short_desc>
-      <min>0.0</min>
+      <long_desc>Defined as corrective velocity in m/s per m position error</long_desc>
+      <min>0.1</min>
       <max>1.5</max>
       <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
-    <parameter name="MPC_Z_VEL_ALL" default="-3.0" type="FLOAT">
+    <parameter name="MPC_Z_VEL_ALL" default="-3." type="FLOAT">
       <short_desc>Overall Vertical Velocity Limit</short_desc>
       <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_Z_VEL_MAX_UP or MPC_LAND_SPEED). If set to a negative value, the existing individual parameters are used.</long_desc>
       <min>-3</min>
@@ -5490,62 +5513,65 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="MPC_Z_VEL_D_ACC" default="0.0" type="FLOAT">
+    <parameter name="MPC_Z_VEL_D_ACC" default="0." type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
-      <long_desc>defined as correction acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <decimal>3</decimal>
+      <long_desc>Defined as corrective acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <decimal>2</decimal>
+      <increment>0.02</increment>
     </parameter>
-    <parameter name="MPC_Z_VEL_I_ACC" default="2.0" type="FLOAT">
+    <parameter name="MPC_Z_VEL_I_ACC" default="2." type="FLOAT">
       <short_desc>Integral gain for vertical velocity error</short_desc>
-      <long_desc>defined as correction acceleration in m/s^2 per m velocity integral Non zero value allows hovering thrust estimation on stabilized or autonomous takeoff.</long_desc>
+      <long_desc>Defined as corrective acceleration in m/s^2 per m velocity integral</long_desc>
       <min>0.2</min>
-      <max>3.0</max>
-      <decimal>3</decimal>
+      <max>3</max>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_Z_VEL_MAX_DN" default="1.5" type="FLOAT">
       <short_desc>Maximum descent velocity</short_desc>
-      <long_desc>Descent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_DN</long_desc>
+      <long_desc>Absolute maximum for all climb rate controlled modes. In manually piloted modes full stick deflection commands this velocity. For default autonomous velocity see MPC_Z_V_AUTO_UP</long_desc>
       <min>0.5</min>
-      <max>4.0</max>
+      <max>4</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_Z_VEL_MAX_UP" default="3." type="FLOAT">
       <short_desc>Maximum ascent velocity</short_desc>
-      <long_desc>Ascent velocity in manual modes and offboard. For auto modes, see MPC_Z_V_AUTO_UP</long_desc>
+      <long_desc>Absolute maximum for all climb rate controlled modes. In manually piloted modes full stick deflection commands this velocity. For default autonomous velocity see MPC_Z_V_AUTO_UP</long_desc>
       <min>0.5</min>
-      <max>8.0</max>
+      <max>8</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="MPC_Z_VEL_P_ACC" default="4.0" type="FLOAT">
+    <parameter name="MPC_Z_VEL_P_ACC" default="4." type="FLOAT">
       <short_desc>Proportional gain for vertical velocity error</short_desc>
-      <long_desc>defined as correction acceleration in m/s^2 per m/s velocity error</long_desc>
-      <min>2.0</min>
-      <max>15.0</max>
+      <long_desc>Defined as corrective acceleration in m/s^2 per m/s velocity error</long_desc>
+      <min>2</min>
+      <max>15</max>
       <decimal>2</decimal>
+      <increment>0.1</increment>
     </parameter>
     <parameter name="MPC_Z_V_AUTO_DN" default="1.5" type="FLOAT">
-      <short_desc>Automatic descent velocity</short_desc>
-      <long_desc>Descent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_DN</long_desc>
+      <short_desc>Descent velocity in autonomous modes</short_desc>
+      <long_desc>For manual modes and offboard, see MPC_Z_VEL_MAX_DN</long_desc>
       <min>0.5</min>
-      <max>4.0</max>
+      <max>4</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
-      <increment>0.1</increment>
+      <increment>0.5</increment>
     </parameter>
     <parameter name="MPC_Z_V_AUTO_UP" default="3." type="FLOAT">
-      <short_desc>Automatic ascent velocity</short_desc>
-      <long_desc>Ascent velocity in auto modes. For manual modes and offboard, see MPC_Z_VEL_MAX_UP</long_desc>
+      <short_desc>Ascent velocity in autonomous modes</short_desc>
+      <long_desc>For manually controlled modes and offboard see MPC_Z_VEL_MAX_UP</long_desc>
       <min>0.5</min>
-      <max>8.0</max>
+      <max>8</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
-      <increment>0.1</increment>
+      <increment>0.5</increment>
     </parameter>
     <parameter name="SYS_VEHICLE_RESP" default="-0.4" type="FLOAT">
       <short_desc>Responsiveness</short_desc>
