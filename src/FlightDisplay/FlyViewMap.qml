@@ -53,7 +53,6 @@ FlightMap {
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
-    property bool   _showProximityRadar:        _flyViewSettings.showProximityRadar.rawValue
     property bool   _showPositionSetpointLine:  _flyViewSettings.showPositionSetpointLine.rawValue
     property var    _aviantSettings:            QGroundControl.settingsManager.aviantSettings
     property bool   _showTrafficIndicators:     _aviantSettings.showTrafficIndicators.rawValue
@@ -276,7 +275,6 @@ FlightMap {
             coordinate:     object.coordinate
             map:            _root
             z:              QGroundControl.zOrderVehicles
-            enabled:        _showProximityRadar
         }
     }
     // Add ADSB vehicles to the map

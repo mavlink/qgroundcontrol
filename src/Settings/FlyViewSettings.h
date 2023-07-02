@@ -28,7 +28,6 @@ public:
     DEFINE_SETTINGFACT(maxGoToLocationDistance)
     DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
     DEFINE_SETTINGFACT(hideAllCameraControl)
-    DEFINE_SETTINGFACT(showProximityRadar)
     DEFINE_SETTINGFACT(showPositionSetpointLine)
     DEFINE_SETTINGFACT(showSimpleCameraControl)
     DEFINE_SETTINGFACT(showObstacleDistanceOverlay)

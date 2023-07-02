@@ -127,14 +127,6 @@ Rectangle {
                             }
 
                             FactCheckBox {
-                                text:       qsTr("Show proximity sensor radar")
-                                fact:       _showProximityRadar
-                                visible:    _showProximityRadar.visible
-
-                                property Fact _showProximityRadar: QGroundControl.settingsManager.flyViewSettings.showProximityRadar
-                            }
-
-                            FactCheckBox {
                                 text:       qsTr("Show line from vehicle to position setpoint")
                                 fact:       _showPositionSetpointLine
                                 visible:    _showPositionSetpointLine.visible
