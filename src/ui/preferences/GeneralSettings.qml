@@ -127,14 +127,6 @@ Rectangle {
                             }
 
                             FactCheckBox {
-                                text:       qsTr("Show line from vehicle to position setpoint")
-                                fact:       _showPositionSetpointLine
-                                visible:    _showPositionSetpointLine.visible
-
-                                property Fact _showPositionSetpointLine: QGroundControl.settingsManager.flyViewSettings.showPositionSetpointLine
-                            }
-
-                            FactCheckBox {
                                 text:       qsTr("Show Telemetry Log Replay Status Bar")
                                 fact:       _showLogReplayStatusBar
                                 visible:    _showLogReplayStatusBar.visible
