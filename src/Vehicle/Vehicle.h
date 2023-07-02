@@ -160,6 +160,7 @@ public:
     Q_PROPERTY(int                  id                          READ id                                                             CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilot                   MEMBER _autopilotPlugin                                             CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate                  READ coordinate                                                     NOTIFY coordinateChanged)
+    Q_PROPERTY(QGeoCoordinate       positionSetpoint            READ positionSetpoint                                               NOTIFY positionSetpointChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition                READ homePosition                                                   NOTIFY homePositionChanged)
     Q_PROPERTY(QGeoCoordinate       armedPosition               READ armedPosition                                                  NOTIFY armedPositionChanged)
     Q_PROPERTY(bool                 armed                       READ armed                      WRITE setArmedShowError             NOTIFY armedChanged)
@@ -450,6 +451,7 @@ public:
     // Property accessors
 
     QGeoCoordinate coordinate() { return _coordinate; }
+    QGeoCoordinate positionSetpoint() { return _positionSetpoint; }
     QGeoCoordinate armedPosition    () { return _armedPosition; }
 
     void updateFlightDistance(double distance);
@@ -841,6 +843,7 @@ public slots:
 
 signals:
     void coordinateChanged              (QGeoCoordinate coordinate);
+    void positionSetpointChanged        (QGeoCoordinate positionSetpoint);
     void joystickEnabledChanged         (bool enabled);
     void mavlinkMessageReceived         (const mavlink_message_t& message);
     void homePositionChanged            (const QGeoCoordinate& homePosition);
@@ -992,6 +995,7 @@ private:
     void _handleCommandAck              (mavlink_message_t& message);
     void _handleGpsRawInt               (mavlink_message_t& message);
     void _handleGlobalPositionInt       (mavlink_message_t& message);
+    void _handleUtmGlobalPosition       (mavlink_message_t& message);
     void _handleAltitude                (mavlink_message_t& message);
     void _handleVfrHud                  (mavlink_message_t& message);
     void _handleNavControllerOutput     (mavlink_message_t& message);
@@ -1057,6 +1061,7 @@ private:
     UAS* _uas = nullptr;
 
     QGeoCoordinate  _coordinate;
+    QGeoCoordinate  _positionSetpoint;
     QGeoCoordinate  _homePosition;
     QGeoCoordinate  _armedPosition;
 
@@ -1081,6 +1086,7 @@ private:
     bool            _gpsRawIntMessageAvailable              = false;
     bool            _gps2RawMessageAvailable                = false;
     bool            _globalPositionIntMessageAvailable      = false;
+    bool            _utmGlobalPositionMessageAvailable      = false;
     bool            _altitudeMessageAvailable               = false;
     double          _defaultCruiseSpeed = qQNaN();
     double          _defaultHoverSpeed = qQNaN();

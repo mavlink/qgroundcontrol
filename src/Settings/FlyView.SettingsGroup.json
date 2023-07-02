@@ -54,6 +54,12 @@
     "default":      true
 },
 {
+    "name":         "showPositionSetpointLine",
+    "shortDesc":    "Show line from vehicle to position setpoint",
+    "type":         "bool",
+    "default":      false
+},
+{
     "name":         "showSimpleCameraControl",
     "shortDesc":    "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
     "type":         "bool",
