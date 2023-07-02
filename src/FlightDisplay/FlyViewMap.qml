@@ -53,6 +53,8 @@ FlightMap {
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
+    property bool   _showProximityRadar:        _flyViewSettings.showProximityRadar.rawValue
+    property bool   _showPositionSetpointLine:  _flyViewSettings.showPositionSetpointLine.rawValue
     property var    _aviantSettings:            QGroundControl.settingsManager.aviantSettings
     property bool   _showTrafficIndicators:     _aviantSettings.showTrafficIndicators.rawValue
     property var   _horizontalConflictDistance: _aviantSettings.horizontalConflictDistance.value
@@ -274,6 +276,7 @@ FlightMap {
             coordinate:     object.coordinate
             map:            _root
             z:              QGroundControl.zOrderVehicles
+            enabled:        _showProximityRadar
         }
     }
     // Add ADSB vehicles to the map
@@ -368,6 +371,15 @@ FlightMap {
         interactive:            false
         planView:               false
         homePosition:           _activeVehicle && _activeVehicle.homePosition.isValid ? _activeVehicle.homePosition :  QtPositioning.coordinate()
+    }
+
+    MapPolyline {
+        id:             positionSetpointLine
+        visible:        _showPositionSetpointLine && _activeVehicle && _activeVehicle.positionSetpoint.isValid
+        path:           _activeVehicle && _activeVehicle.positionSetpoint.isValid ? [_activeVehicle.coordinate, _activeVehicle.positionSetpoint ] : []
+        z:              QGroundControl.zOrderMapItems + 1
+        line.color:     "white"
+        line.width:     1
     }
 
     // Rally points on map

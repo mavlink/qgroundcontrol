@@ -716,6 +716,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
         _handleGlobalPositionInt(message);
         break;
+    case MAVLINK_MSG_ID_UTM_GLOBAL_POSITION:
+        _handleUtmGlobalPosition(message);
+        break;
     case MAVLINK_MSG_ID_ALTITUDE:
         _handleAltitude(message);
         break;
@@ -1138,6 +1141,33 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     if (newPosition != _coordinate) {
         _coordinate = newPosition;
         emit coordinateChanged(_coordinate);
+    }
+}
+
+void Vehicle::_handleUtmGlobalPosition(mavlink_message_t& message)
+{
+    mavlink_utm_global_position_t utmGlobalPosition;
+    mavlink_msg_utm_global_position_decode(&message, &utmGlobalPosition);
+
+    // Both values being zero typically corresponds to the current waypoint not
+    // being initialized. We make sure it gets invalid values so it is cleared
+    // from the UI.
+    if (utmGlobalPosition.next_lat == 0 && utmGlobalPosition.next_lon == 0) {
+        if (_positionSetpoint.isValid()) {
+            _positionSetpoint = QGeoCoordinate(qQNaN(), qQNaN(), qQNaN());
+            emit positionSetpointChanged(_positionSetpoint);
+        }
+        return;
+    }
+    _utmGlobalPositionMessageAvailable = true;
+
+    // We have GLOBAL_POSITION_INT for other position information, so we use
+    // UTM_GLOBAL_POSITION only for information about the next position
+    // setpoint.
+    QGeoCoordinate newPositionSetpoint(utmGlobalPosition.next_lat  / (double)1E7, utmGlobalPosition.next_lon / (double)1E7, utmGlobalPosition.next_alt  / 1000.0);
+    if (newPositionSetpoint != _positionSetpoint) {
+        _positionSetpoint = newPositionSetpoint;
+        emit positionSetpointChanged(_positionSetpoint);
     }
 }
 
