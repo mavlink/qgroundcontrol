@@ -54,6 +54,12 @@
     "default":      true
 },
 {
+    "name":             "showProximityRadar",
+    "shortDesc": "Show proximity sensor radar",
+    "type":             "bool",
+    "default":     false
+},
+{
     "name":         "showPositionSetpointLine",
     "shortDesc":    "Show line from vehicle to position setpoint",
     "type":         "bool",
