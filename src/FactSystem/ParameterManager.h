@@ -189,6 +189,4 @@ private:
 
     /* MavFTP */
     bool               _tryftp;
-    //Settings Manager
-    SettingsManager* _settingsManager;
 };
