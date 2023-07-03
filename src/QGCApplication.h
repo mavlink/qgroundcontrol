@@ -135,6 +135,9 @@ public slots:
     /// Show modal application message to the user
     void showAppMessage(const QString& message, const QString& title = QString());
 
+    ///Ask to the user to load a plan in an specific folder when a vehicle is connected
+    void autoLoadCheck();
+    
     /// Show modal application message to the user about the need for a reboot. Multiple messages will be supressed if they occur
     /// one after the other.
     void showRebootAppMessage(const QString& message, const QString& title = QString());

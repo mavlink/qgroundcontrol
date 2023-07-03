@@ -258,6 +258,14 @@ ApplicationWindow {
         id:             rootBackground
         anchors.fill:   parent
     }
+    
+    function askforAutoloadMission(MissionPath) {
+        mainWindow.showMessageDialog("Autoload",
+                "Are you sure that you want to load the Autoload.plan file? This will override the actual plan saved in the vehicle ",
+                StandardButton.Yes | StandardButton.No,
+                function() { QGroundControl.multiVehicleManager.activeVehicle.sendPlan(MissionPath) })
+                return
+    }
 
     //-------------------------------------------------------------------------
     /// Toolbar
