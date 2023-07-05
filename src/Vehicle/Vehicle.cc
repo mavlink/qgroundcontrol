@@ -4110,6 +4110,7 @@ void Vehicle::gimbalPitchStep(int direction)
     }
 }
 
+
 void Vehicle::gimbalYawStep(int direction)
 {
     if(_haveGimbalData) {
