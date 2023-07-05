@@ -18,6 +18,7 @@
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
 #include "FTPManager.h"
+
 #include <QEasingCurve>
 #include <QFile>
 #include <QDebug>
