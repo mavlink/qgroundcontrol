@@ -19,8 +19,6 @@ import QtQml.Models             2.1
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
-import QGroundControl.Airspace      1.0
-import QGroundControl.Airmap        1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FactSystem    1.0
@@ -261,14 +259,6 @@ Item {
 
     GripperMenu {
         id: gripperOptions
-    }
-
-    FlyViewAirspaceIndicator {
-        anchors.top:                parent.top
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * 0.25
-        anchors.horizontalCenter:   parent.horizontalCenter
-        z:                          QGroundControl.zOrderWidgets
-        show:                       mapControl.pipState.state !== mapControl.pipState.pipState
     }
 
     VehicleWarnings {
