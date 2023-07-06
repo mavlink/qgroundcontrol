@@ -24,8 +24,6 @@ import QGroundControl.FactControls      1.0
 import QGroundControl.Palette           1.0
 import QGroundControl.Controllers       1.0
 import QGroundControl.ShapeFileHelper   1.0
-import QGroundControl.Airspace          1.0
-import QGroundControl.Airmap            1.0
 
 Item {
     id: _root
@@ -40,7 +38,6 @@ Item {
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    property bool   _airspaceEnabled:                   QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _planMasterController:              planMasterController
     property var    _missionController:                 _planMasterController.missionController
     property var    _geoFenceController:                _planMasterController.geoFenceController
@@ -70,16 +67,6 @@ Item {
         return coordinate
     }
 
-    function updateAirspace(reset) {
-        if(_airspaceEnabled) {
-            var coordinateNW = editorMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
-            var coordinateSE = editorMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
-            if(coordinateNW.isValid && coordinateSE.isValid) {
-                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, true /*planView*/, reset)
-            }
-        }
-    }
-
     property bool _firstMissionLoadComplete:    false
     property bool _firstFenceLoadComplete:      false
     property bool _firstRallyLoadComplete:      false
@@ -90,19 +77,6 @@ Item {
         map:                        editorMap
         usePlannedHomePosition:     true
         planMasterController:       _planMasterController
-    }
-
-    on_AirspaceEnabledChanged: {
-        if(QGroundControl.airmapSupported) {
-            if(_airspaceEnabled) {
-                planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
-                updateAirspace(true)
-            } else {
-                planControlColapsed = false
-            }
-        } else {
-            planControlColapsed = false
-        }
     }
 
     onVisibleChanged: {
@@ -170,13 +144,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    Connections {
-        target: QGroundControl.airspaceManager
-        function onAirspaceVisibleChanged() {
-            planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
         }
     }
 
@@ -381,11 +348,9 @@ Item {
 
             onZoomLevelChanged: {
                 QGroundControl.flightMapZoom = zoomLevel
-                updateAirspace(false)
             }
             onCenterChanged: {
                 QGroundControl.flightMapPosition = center
-                updateAirspace(false)
             }
 
             MouseArea {
@@ -524,28 +489,6 @@ Item {
                 interactive:            _editingLayer == _layerRallyPoints
                 planView:               true
                 opacity:                _editingLayer != _layerRallyPoints ? editorMap._nonInteractiveOpacity : 1
-            }
-
-            // Airspace overlap support
-            MapItemView {
-                model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
-                delegate: MapCircle {
-                    center:         object.center
-                    radius:         object.radius
-                    color:          object.color
-                    border.color:   object.lineColor
-                    border.width:   object.lineWidth
-                }
-            }
-
-            MapItemView {
-                model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
-                delegate: MapPolygon {
-                    path:           object.polygon
-                    color:          object.color
-                    border.color:   object.lineColor
-                    border.width:   object.lineWidth
-                }
             }
         }
 
@@ -693,67 +636,11 @@ Item {
                 anchors.right:      parent.right
                 anchors.top:        parent.top
                 //-------------------------------------------------------
-                // Airmap Airspace Control
-                AirspaceControl {
-                    id:             airspaceControl
-                    width:          parent.width
-                    visible:        _airspaceEnabled
-                    planView:       true
-                    showColapse:    true
-                }
-                //-------------------------------------------------------
-                // Mission Controls (Colapsed)
-                Rectangle {
-                    width:      parent.width
-                    height:     planControlColapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
-                    color:      qgcPal.missionItemEditor
-                    radius:     _radius
-                    visible:    planControlColapsed && _airspaceEnabled
-                    Row {
-                        id:                     colapsedRow
-                        spacing:                ScreenTools.defaultFontPixelWidth
-                        anchors.left:           parent.left
-                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        QGCColoredImage {
-                            width:              height
-                            height:             ScreenTools.defaultFontPixelWidth * 2.5
-                            sourceSize.height:  height
-                            source:             "qrc:/res/waypoint.svg"
-                            color:              qgcPal.text
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        QGCLabel {
-                            text:               qsTr("Plan")
-                            color:              qgcPal.text
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-                    QGCColoredImage {
-                        width:                  height
-                        height:                 ScreenTools.defaultFontPixelWidth * 2.5
-                        sourceSize.height:      height
-                        source:                 QGroundControl.airmapSupported ? "qrc:/airmap/expand.svg" : ""
-                        color:                  "white"
-                        visible:                QGroundControl.airmapSupported
-                        anchors.right:          parent.right
-                        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    MouseArea {
-                        anchors.fill:   parent
-                        enabled:        QGroundControl.airmapSupported
-                        onClicked: {
-                            QGroundControl.airspaceManager.airspaceVisible = false
-                        }
-                    }
-                }
-                //-------------------------------------------------------
                 // Mission Controls (Expanded)
                 QGCTabBar {
                     id:         layerTabBar
                     width:      parent.width
-                    visible:    (!planControlColapsed || !_airspaceEnabled) && QGroundControl.corePlugin.options.enablePlanViewSelector
+                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector
                     Component.onCompleted: currentIndex = 0
                     QGCTabButton {
                         text:       qsTr("Mission")

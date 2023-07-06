@@ -77,7 +77,6 @@ private:
     QElapsedTimer   _lastUpdateTimer;
 
     static constexpr qint64 expirationTimeoutMs = 120000;   ///< timeout with no update in ms after which the vehicle is removed.
-                                                            ///< AirMap sends updates for each vehicle every second.
 };
 
 Q_DECLARE_METATYPE(ADSBVehicle::ADSBVehicleInfo_t)
