@@ -34,11 +34,6 @@
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirMapManager.h"
-#else
-#include "AirspaceManager.h"
-#endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
 #include "TaisyncManager.h"
 #endif
@@ -78,14 +73,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = new PairingManager            (app, this);
 #endif
-    //-- Airmap Manager
-    //-- This should be "pluggable" so an arbitrary AirSpace manager can be used
-    //-- For now, we instantiate the one and only AirMap provider
-#if defined(QGC_AIRMAP_ENABLED)
-    _airspaceManager        = new AirMapManager             (app, this);
-#else
-    _airspaceManager        = new AirspaceManager           (app, this);
-#endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager         = new TaisyncManager            (app, this);
 #endif
@@ -118,7 +105,6 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
-    _airspaceManager->setToolbox(this);
     _adsbVehicleManager->setToolbox(this);
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager->setToolbox(this);

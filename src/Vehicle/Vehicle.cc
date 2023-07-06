@@ -57,10 +57,6 @@
 #include "Autotune.h"
 #include "RemoteIDManager.h"
 
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceVehicleManager.h"
-#endif
-
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
 #define UPDATE_TIMER 50
@@ -210,17 +206,6 @@ Vehicle::Vehicle(LinkInterface*             link,
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
-
-    //-- Airspace Management
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
-    if (airspaceManager) {
-        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
-        if (_airspaceVehicleManager) {
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-        }
-    }
-#endif
 
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
     _autopilotPlugin->setParent(this);
@@ -488,17 +473,6 @@ void Vehicle::_commonInit()
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
-
-    //-- Airspace Management
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
-    if (airspaceManager) {
-        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
-        if (_airspaceVehicleManager) {
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-        }
-    }
-#endif
 }
 
 Vehicle::~Vehicle()
@@ -517,12 +491,6 @@ Vehicle::~Vehicle()
     if (_joystickManager) {
         _startJoystick(false);
     }
-
-#if defined(QGC_AIRMAP_ENABLED)
-    if (_airspaceVehicleManager) {
-        delete _airspaceVehicleManager;
-    }
-#endif
 }
 
 void Vehicle::prepareDelete()
@@ -3927,21 +3895,6 @@ void Vehicle::_vehicleParamLoaded(bool ready)
     if(ready) {
         emit hobbsMeterChanged();
     }
-}
-
-void Vehicle::_trafficUpdate(bool /*alert*/, QString /*traffic_id*/, QString /*vehicle_id*/, QGeoCoordinate /*location*/, float /*heading*/)
-{
-#if 0
-    // This is ifdef'ed out for now since this code doesn't mesh with the recent ADSB manager changes. Also airmap isn't in any
-    // released build. So not going to waste time trying to fix up unused code.
-    if (_trafficVehicleMap.contains(traffic_id)) {
-        _trafficVehicleMap[traffic_id]->update(alert, location, heading);
-    } else {
-        ADSBVehicle* vehicle = new ADSBVehicle(location, heading, alert, this);
-        _trafficVehicleMap[traffic_id] = vehicle;
-        _adsbVehicles.append(vehicle);
-    }
-#endif
 }
 
 void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)

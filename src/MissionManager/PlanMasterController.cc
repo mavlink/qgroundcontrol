@@ -20,9 +20,6 @@
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "BlankPlanCreator.h"
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceFlightPlanProvider.h"
-#endif
 
 #include <QDomDocument>
 #include <QJsonDocument>
@@ -96,14 +93,6 @@ void PlanMasterController::start(void)
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);
 
     _updatePlanCreatorsList();
-
-#if defined(QGC_AIRMAP_ENABLED)
-    //-- This assumes there is one single instance of PlanMasterController in edit mode.
-    if(!_flyView) {
-        // Wait for signal confirming AirMap client connection before starting flight planning
-        connect(qgcApp()->toolbox()->airspaceManager(), &AirspaceManager::connectStatusChanged, this, &PlanMasterController::_startFlightPlanning);
-    }
-#endif
 }
 
 void PlanMasterController::startStaticActiveVehicle(Vehicle* vehicle, bool deleteWhenSendCompleted)
@@ -315,15 +304,6 @@ void PlanMasterController::_sendRallyPointsComplete(void)
         this->deleteLater();
     }
 }
-
-#if defined(QGC_AIRMAP_ENABLED)
-void PlanMasterController::_startFlightPlanning(void) {
-    if (qgcApp()->toolbox()->airspaceManager()->connected()) {
-        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_startFlightPlanning client connected, start flight planning";
-        qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
-    }
-}
-#endif
 
 void PlanMasterController::sendToVehicle(void)
 {
