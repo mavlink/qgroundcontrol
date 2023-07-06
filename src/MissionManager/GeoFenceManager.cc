@@ -19,9 +19,6 @@ QGC_LOGGING_CATEGORY(GeoFenceManagerLog, "GeoFenceManagerLog")
 
 GeoFenceManager::GeoFenceManager(Vehicle* vehicle)
     : PlanManager       (vehicle, MAV_MISSION_TYPE_FENCE)
-#if defined(QGC_AIRMAP_ENABLED)
-    , _airspaceManager  (qgcApp()->toolbox()->airspaceManager())
-#endif
 {
     connect(this, &PlanManager::inProgressChanged,          this, &GeoFenceManager::inProgressChanged);
     connect(this, &PlanManager::error,                      this, &GeoFenceManager::error);

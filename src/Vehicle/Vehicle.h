@@ -75,10 +75,6 @@ class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
 
-#if defined(QGC_AIRMAP_ENABLED)
-class AirspaceVehicleManager;
-#endif
-
 namespace events {
 namespace parser {
 class ParsedEvent;
@@ -1027,7 +1023,6 @@ private slots:
     void _vehicleParamLoaded                (bool ready);
     void _sendQGCTimeToVehicle              ();
     void _mavlinkMessageStatus              (int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
-    void _trafficUpdate                     (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _orbitTelemetryTimeout             ();
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
@@ -1178,9 +1173,6 @@ private:
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceVehicleManager*         _airspaceVehicleManager         = nullptr;
-#endif
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT
