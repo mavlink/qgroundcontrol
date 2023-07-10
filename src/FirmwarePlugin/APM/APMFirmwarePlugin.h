@@ -56,6 +56,7 @@ public:
     QStringList         flightModes                     (Vehicle* vehicle) override;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
+    bool MAV_CMD_DO_SET_MODE_is_supported() const override { return true; }
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
     QString             gotoFlightMode                  (void) const override { return QStringLiteral("Guided"); }
     QString             rtlFlightMode                   (void) const override { return QString("RTL"); }
