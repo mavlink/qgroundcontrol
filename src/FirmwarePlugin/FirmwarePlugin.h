@@ -102,6 +102,9 @@ public:
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
+    /// returns true if this flight stack supports MAV_CMD_DO_SET_MODE
+    virtual bool MAV_CMD_DO_SET_MODE_is_supported() const { return false; }
+
     /// Returns The flight mode which indicates the vehicle is paused
     virtual QString pauseFlightMode(void) const { return QString(); }
 
