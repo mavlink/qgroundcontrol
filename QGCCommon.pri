@@ -20,7 +20,9 @@ CONFIG -= debug_and_release
 CONFIG += warn_on
 CONFIG += resources_big
 CONFIG += c++17
-    
+
+DEFINES += DISABLE_AIRMAP # AIRMAP SDK does not exist anymore
+
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
