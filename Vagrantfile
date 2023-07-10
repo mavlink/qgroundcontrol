@@ -122,6 +122,10 @@ MAKE
 "
     su - vagrant -c "chmod +x do-qmake.sh do-make.sh"
 
+    # increase the allowed number of open files (the link step takes a
+    # lot of open filehandles!):
+echo '*               soft    nofile          2048' >/etc/security/limits.d/fileno.conf
+
     # now run the scripts:
     su - vagrant -c ./do-qmake.sh
     su - vagrant -c ./do-make.sh
