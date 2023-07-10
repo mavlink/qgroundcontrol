@@ -2202,15 +2202,23 @@ void Vehicle::setFlightMode(const QString& flightMode)
         // states.
         newBaseMode |= base_mode;
 
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack_chan(_mavlink->getSystemId(),
-                                       _mavlink->getComponentId(),
-                                       sharedLink->mavlinkChannel(),
-                                       &msg,
-                                       id(),
-                                       newBaseMode,
-                                       custom_mode);
-        sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        if (_firmwarePlugin->MAV_CMD_DO_SET_MODE_is_supported()) {
+            sendMavCommand(defaultComponentId(),
+                           MAV_CMD_DO_SET_MODE,
+                           true,    // show error if fails
+                           MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                           custom_mode);
+        } else {
+            mavlink_message_t msg;
+            mavlink_msg_set_mode_pack_chan(_mavlink->getSystemId(),
+                                           _mavlink->getComponentId(),
+                                           sharedLink->mavlinkChannel(),
+                                           &msg,
+                                           id(),
+                                           newBaseMode,
+                                           custom_mode);
+            sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        }
     } else {
         qCWarning(VehicleLog) << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
     }
