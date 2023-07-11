@@ -8550,6 +8550,7 @@
         <value code="4">SF11/c</value>
         <value code="5">SF/LW20/b</value>
         <value code="6">SF/LW20/c</value>
+        <value code="7">SF/LW30/d</value>
       </values>
     </parameter>
     <parameter name="SENS_EN_SHT3X" default="0" type="INT32" boolean="true">
