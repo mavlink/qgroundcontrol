@@ -44,6 +44,11 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
                 axisCount = SDL_JoystickNumAxes(sdlJoystick);
                 buttonCount = SDL_JoystickNumButtons(sdlJoystick);
                 hatCount = SDL_JoystickNumHats(sdlJoystick);
+#ifdef Q_OS_WIN
+                if (name == QStringLiteral("Xbox Series X Controller") || name == QStringLiteral("Controller (Xbox One For Windows)")) {
+                    hatCount = 0;
+                }
+#endif
                 if (axisCount < 0 || buttonCount < 0 || hatCount < 0) {
                     qCWarning(JoystickLog) << "\t libsdl error parsing joystick features:" << SDL_GetError();
                 }
