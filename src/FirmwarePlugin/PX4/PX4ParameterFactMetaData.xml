@@ -2204,7 +2204,12 @@
       <decimal>3</decimal>
     </parameter>
     <parameter name="EKF2_OF_QMIN" default="1" type="INT32">
-      <short_desc>Optical Flow data will only be used if the sensor reports a quality metric &gt;= EKF2_OF_QMIN</short_desc>
+      <short_desc>Optical Flow data will only be used in air if the sensor reports a quality metric &gt;= EKF2_OF_QMIN</short_desc>
+      <min>0</min>
+      <max>255</max>
+    </parameter>
+    <parameter name="EKF2_OF_QMIN_GND" default="0" type="INT32">
+      <short_desc>Optical Flow data will only be used on the ground if the sensor reports a quality metric &gt;= EKF2_OF_QMIN_GND</short_desc>
       <min>0</min>
       <max>255</max>
     </parameter>
