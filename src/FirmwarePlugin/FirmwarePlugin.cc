@@ -554,6 +554,22 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
         _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
+                    "Sentera 65R Sensor",
+                    tr("Sentera"),
+                    tr("65R Sensor"),
+                    29.9,                // sensorWidth
+                    22.4,                // sendsorHeight
+                    9344,                // imageWidth
+                    7000,                // imageHeight
+                    27.4,                // focalLength
+                    true,                // landscape
+                    false,               // fixedOrientation
+                    0.3,                 // minTriggerInterval
+                    tr(""),              // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
+                    this);               // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
                     //-- http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-6000-body-kit#product_details_default
                     // Sony a6000 Sony 16mm f/2.8"
                     "Sony a6000 16mm",
