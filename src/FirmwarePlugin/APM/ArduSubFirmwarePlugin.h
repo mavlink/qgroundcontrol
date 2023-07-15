@@ -98,6 +98,7 @@ public:
         RESERVED_18       = 18,
         MANUAL            = 19,
         MOTORDETECTION    = 20,
+        RNG_HOLD          = 21,
     };
 
     APMSubMode(uint32_t mode, bool settable);

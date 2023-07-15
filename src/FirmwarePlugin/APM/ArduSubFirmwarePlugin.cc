@@ -43,6 +43,7 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
         {SURFACE, "Surface"},
         {POSHOLD, "Position Hold"},
         {MOTORDETECTION, "Motor Detection"},
+        {RNG_HOLD, "Range Hold"},
     });
 }
 
@@ -60,6 +61,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
         APMSubMode(APMSubMode::SURFACE ,false),
         APMSubMode(APMSubMode::POSHOLD ,true),
         APMSubMode(APMSubMode::MOTORDETECTION, false),
+        APMSubMode(APMSubMode::RNG_HOLD, true),
     });
 
     if (!_remapParamNameIntialized) {
