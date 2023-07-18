@@ -572,7 +572,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 }
 
-void PX4FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed)
+void PX4FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed)
 {
 
     vehicle->sendMavCommand(
@@ -586,7 +586,7 @@ void PX4FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle* vehicle, double gro
         NAN, NAN,NAN);                        // param 5-7 unused
 }
 
-void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv)
+void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
 {
 
     vehicle->sendMavCommand(

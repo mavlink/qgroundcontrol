@@ -180,11 +180,11 @@ public:
 
         /// Command vehicle to change groundspeed
     ///     @param groundspeed Groundspeed in m/s
-    virtual void guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed);
+    virtual void guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed);
 
     /// Command vehicle to change equivalent airspeed
     ///     @param airspeed_equiv Equivalent airspeed in m/s
-    virtual void guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv);
+    virtual void guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv);
 
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html

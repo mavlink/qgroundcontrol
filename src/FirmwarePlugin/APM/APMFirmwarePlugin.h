@@ -83,7 +83,7 @@ public:
     double              maximumEquivalentAirspeed       (Vehicle* vehicle) override;
     double              minimumEquivalentAirspeed       (Vehicle* vehicle) override;
     bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
-    void                guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv) override;
+    void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
 
 protected:
     /// All access to singleton is through stack specific implementation
