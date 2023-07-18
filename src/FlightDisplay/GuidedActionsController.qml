@@ -604,9 +604,9 @@ Item {
                 // We need to convert back to m/s as that is what mavlink standard uses for MAV_CMD_DO_CHANGE_SPEED
                 var metersSecondSpeed = QGroundControl.unitsConversion.appSettingsSpeedUnitsToMetersSecond(sliderOutputValue).toFixed(1)
                 if (_activeVehicle.vtolInFwdFlight || _activeVehicle.fixedWing) {
-                   _activeVehicle.guidedModeChangeEquivalentAirspeed(metersSecondSpeed)
+                   _activeVehicle.guidedModeChangeEquivalentAirspeedMetersSecond(metersSecondSpeed)
                 } else {
-                    _activeVehicle.guidedModeChangeGroundSpeed(metersSecondSpeed)
+                    _activeVehicle.guidedModeChangeGroundSpeedMetersSecond(metersSecondSpeed)
                 }
             }
             break
