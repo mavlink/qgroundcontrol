@@ -2775,23 +2775,23 @@ void Vehicle::guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle)
 }
 
 void
-Vehicle::guidedModeChangeGroundSpeed(double groundspeed)
+Vehicle::guidedModeChangeGroundSpeedMetersSecond(double groundspeed)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    _firmwarePlugin->guidedModeChangeGroundSpeed(this, groundspeed);
+    _firmwarePlugin->guidedModeChangeGroundSpeedMetersSecond(this, groundspeed);
 }
 
 void
-Vehicle::guidedModeChangeEquivalentAirspeed(double airspeed)
+Vehicle::guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    _firmwarePlugin->guidedModeChangeEquivalentAirspeed(this, airspeed);
+    _firmwarePlugin->guidedModeChangeEquivalentAirspeedMetersSecond(this, airspeed);
 }
 
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)

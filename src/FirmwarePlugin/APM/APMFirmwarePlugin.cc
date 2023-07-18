@@ -1162,7 +1162,7 @@ bool APMFirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle)
            vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "ARSPD_FBW_MAX");
 }
 
-void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv)
+void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
 {
 
     vehicle->sendMavCommand(
