@@ -25,6 +25,9 @@
 
 #include <QQmlEngine>
 
+#include <QtTest/QtTest>
+#include <QSignalSpy>
+
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
 const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
