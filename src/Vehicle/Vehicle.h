@@ -378,10 +378,10 @@ public:
 
     /// Command vehicle to change groundspeed
     ///     @param groundspeed Target horizontal groundspeed
-    Q_INVOKABLE void guidedModeChangeGroundSpeed   (double groundspeed);
+    Q_INVOKABLE void guidedModeChangeGroundSpeedMetersSecond(double groundspeed);
     /// Command vehicle to change equivalent airspeed
     ///     @param airspeed Target equivalent airspeed
-    Q_INVOKABLE void guidedModeChangeEquivalentAirspeed   (double airspeed);
+    Q_INVOKABLE void guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed);
 
     /// Command vehicle to orbit given center point
     ///     @param centerCoord Orit around this point

@@ -276,14 +276,14 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicl
 }
 
 void
-FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle*, double)
+FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void
-FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle*, double)
+FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
