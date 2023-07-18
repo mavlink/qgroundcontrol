@@ -1200,6 +1200,26 @@ QVariant FactMetaData::appSettingsWeightUnitsToGrams(const QVariant& weight) {
     }
 }
 
+QVariant FactMetaData::metersSecondToAppSettingsSpeedUnits(const QVariant& metersSecond)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m/s", UnitSpeed);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->rawTranslator(metersSecond);
+    } else {
+        return metersSecond;
+    }
+}
+
+QVariant FactMetaData::appSettingsSpeedUnitsToMetersSecond(const QVariant& speed)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m/s", UnitSpeed);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedTranslator(speed);
+    } else {
+        return speed;
+    }
+}
+
 QString FactMetaData::appSettingsSpeedUnitsString()
 {
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m/s", UnitSpeed);

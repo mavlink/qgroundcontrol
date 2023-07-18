@@ -99,6 +99,12 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsAreaUnitsString(void);
 
+    /// Converts from meters/second to the user specified speed unit
+    static QVariant metersSecondToAppSettingsSpeedUnits(const QVariant& metersSecond);
+
+    /// Converts from user specified speed unit to meters/second
+    static QVariant appSettingsSpeedUnitsToMetersSecond(const QVariant& speed);
+
     /// Returns the string for speed units which has configued by user
     static QString appSettingsSpeedUnitsString();
 

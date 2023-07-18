@@ -59,6 +59,12 @@ public:
 
     QString appSettingsAreaUnitsString(void) const { return FactMetaData::appSettingsAreaUnitsString(); }
 
+    /// Converts from meters/second to the user specified speed unit
+    Q_INVOKABLE QVariant metersSecondToAppSettingsSpeedUnits(const QVariant& metersSecond) const { return FactMetaData::metersSecondToAppSettingsSpeedUnits(metersSecond); }
+
+    /// Converts from user specified speed unit to meters/second
+    Q_INVOKABLE QVariant appSettingsSpeedUnitsToMetersSecond(const QVariant& speed) const { return FactMetaData::appSettingsSpeedUnitsToMetersSecond(speed); }
+
     /// Returns the string for speed units which has configued by user
     QString appSettingsSpeedUnitsString() { return FactMetaData::appSettingsSpeedUnitsString(); }
 
