@@ -10,8 +10,6 @@
 import QtQuick 2.12
 
 import QGroundControl               1.0
-import QGroundControl.Airspace      1.0
-import QGroundControl.Airmap        1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
@@ -22,13 +20,6 @@ Column {
     z:          QGroundControl.zOrderWidgets
 
     property real availableHeight
-
-    AirspaceControl {
-        id:                 airspaceControl
-        width:              parent.width
-        planView:           false
-        visible:            QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
-    }
 
     FlightDisplayViewWidgets {
         id:                 flightDisplayViewWidgets

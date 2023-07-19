@@ -47,6 +47,7 @@
 #include "FTPManager.h"
 #include "ImageProtocolManager.h"
 #include "HealthAndArmingCheckReport.h"
+#include "TerrainQuery.h"
 
 class Actuators;
 class EventHandler;
@@ -74,10 +75,6 @@ class LinkManager;
 class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
-
-#if defined(QGC_AIRMAP_ENABLED)
-class AirspaceVehicleManager;
-#endif
 
 namespace events {
 namespace parser {
@@ -249,6 +246,7 @@ public:
     Q_PROPERTY(qreal                gimbalPitch                 READ gimbalPitch                                                    NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal                gimbalYaw                   READ gimbalYaw                                                      NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData                  READ gimbalData                                                     NOTIFY gimbalDataChanged)
+    Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
     Q_PROPERTY(bool                 isROIEnabled                READ isROIEnabled                                                   NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState              READ checkListState             WRITE setCheckListState             NOTIFY checkListStateChanged)
     Q_PROPERTY(bool                 readyToFlyAvailable         READ readyToFlyAvailable                                            NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
@@ -462,6 +460,8 @@ public:
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
+    /// Set home from flight map coordinate
+    Q_INVOKABLE void doSetHome(const QGeoCoordinate& coord);
 
     bool    isInitialConnectComplete() const;
     bool    guidedModeSupported     () const;
@@ -470,7 +470,7 @@ public:
     bool    roiModeSupported        () const;
     bool    takeoffVehicleSupported () const;
     QString gotoFlightMode          () const;
-
+    bool    hasGripper              () const;
     bool haveMRSpeedLimits() const { return _multirotor_speed_limits_available; }
     bool haveFWSpeedLimits() const { return _fixed_wing_airspeed_limits_available; }
 
@@ -529,8 +529,18 @@ public:
      * @brief Send MAV_CMD_DO_GRIPPER command to trigger specified action in the vehicle
      * 
      * @param gripperAction Gripper action to trigger
-     */
+    */
+
+    enum    GRIPPER_OPTIONS
+    {
+    Gripper_release = GRIPPER_ACTION_RELEASE, 
+    Gripper_grab    = GRIPPER_ACTION_GRAB,
+    Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
+    }; 
+    Q_ENUM(GRIPPER_OPTIONS)
+
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
+    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption); 
 
     bool fixedWing() const;
     bool multiRotor() const;
@@ -1016,7 +1026,6 @@ private slots:
     void _vehicleParamLoaded                (bool ready);
     void _sendQGCTimeToVehicle              ();
     void _mavlinkMessageStatus              (int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
-    void _trafficUpdate                     (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _orbitTelemetryTimeout             ();
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
@@ -1082,6 +1091,9 @@ private:
     EventHandler& _eventHandler         (uint8_t compid);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode);
+
+    // This is called after we get terrain data triggered from a doSetHome()
+    void _doSetHomeTerrainReceived      (bool success, QList<double> heights);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1167,9 +1179,6 @@ private:
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceVehicleManager*         _airspaceVehicleManager         = nullptr;
-#endif
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT
@@ -1445,6 +1454,11 @@ private:
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickEnabledSettingsKey;
+
+    // Terrain query members, used to get terrain altitude for doSetHome()
+    QTimer                      _updateDoSetHomeTerrainTimer;
+    TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
+    QGeoCoordinate              _doSetHomeCoordinate;
 };
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

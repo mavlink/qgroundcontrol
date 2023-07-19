@@ -11,7 +11,6 @@ env_global = [
   'JOBS=4',
   'SHADOW_BUILD_DIR=/tmp/shadow_build_dir',
   'CODESIGN=nocodesign',
-  'secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE='
 ]
 
 packages = [
@@ -33,7 +32,7 @@ Vagrant.configure(2) do |config|
   config.vm.provider "virtualbox"
   config.vm.provider "vmware_fusion"
 
-  config.vm.box = "ubuntu/bionic64"
+  config.vm.box = "ubuntu/jammy64"
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
@@ -93,6 +92,8 @@ Vagrant.configure(2) do |config|
      su - vagrant -c "mkdir -p ${dir}"
      su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
 
+     mkdir -p /vagrant/shadow-build
+
      # write out a pair of scripts to make rebuilding on the VM easy:
      su - vagrant -c "cat <<QMAKE >do-qmake.sh
 #!/bin/bash
@@ -120,6 +121,10 @@ make -j${JOBS}
 MAKE
 "
     su - vagrant -c "chmod +x do-qmake.sh do-make.sh"
+
+    # increase the allowed number of open files (the link step takes a
+    # lot of open filehandles!):
+echo '*               soft    nofile          2048' >/etc/security/limits.d/fileno.conf
 
     # now run the scripts:
     su - vagrant -c ./do-qmake.sh

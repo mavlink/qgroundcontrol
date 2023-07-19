@@ -178,8 +178,6 @@ set(QGC_RESOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/qgcresources.qrc
 	${CMAKE_CURRENT_SOURCE_DIR}/qgroundcontrol.qrc
 	${CMAKE_CURRENT_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Airmap/airmap.qrc
-	${CMAKE_CURRENT_SOURCE_DIR}/src/Airmap/dummy/airmap_dummy.qrc
 	${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
 	${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
 	${CMAKE_CURRENT_SOURCE_DIR}/VideoReceiverApp/qml.qrc

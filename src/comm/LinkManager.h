@@ -52,20 +52,22 @@ public:
     LinkManager(QGCApplication* app, QGCToolbox* toolbox);
     ~LinkManager();
 
-    Q_PROPERTY(bool                 isBluetoothAvailable    READ isBluetoothAvailable   CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  linkConfigurations      READ _qmlLinkConfigurations CONSTANT)
-    Q_PROPERTY(QStringList          linkTypeStrings         READ linkTypeStrings        CONSTANT)
-    Q_PROPERTY(QStringList          serialBaudRates         READ serialBaudRates        CONSTANT)
-    Q_PROPERTY(QStringList          serialPortStrings       READ serialPortStrings      NOTIFY commPortStringsChanged)
-    Q_PROPERTY(QStringList          serialPorts             READ serialPorts            NOTIFY commPortsChanged)
+    Q_PROPERTY(bool                 isBluetoothAvailable            READ isBluetoothAvailable            CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  linkConfigurations              READ _qmlLinkConfigurations          CONSTANT)
+    Q_PROPERTY(QStringList          linkTypeStrings                 READ linkTypeStrings                 CONSTANT)
+    Q_PROPERTY(QStringList          serialBaudRates                 READ serialBaudRates                 CONSTANT)
+    Q_PROPERTY(QStringList          serialPortStrings               READ serialPortStrings               NOTIFY commPortStringsChanged)
+    Q_PROPERTY(QStringList          serialPorts                     READ serialPorts                     NOTIFY commPortsChanged)
+    Q_PROPERTY(bool                 mavlinkSupportForwardingEnabled READ mavlinkSupportForwardingEnabled NOTIFY mavlinkSupportForwardingEnabledChanged)
 
     /// Create/Edit Link Configuration
-    Q_INVOKABLE LinkConfiguration*  createConfiguration         (int type, const QString& name);
-    Q_INVOKABLE LinkConfiguration*  startConfigurationEditing   (LinkConfiguration* config);
-    Q_INVOKABLE void                cancelConfigurationEditing  (LinkConfiguration* config) { delete config; }
-    Q_INVOKABLE bool                endConfigurationEditing     (LinkConfiguration* config, LinkConfiguration* editedConfig);
-    Q_INVOKABLE bool                endCreateConfiguration      (LinkConfiguration* config);
-    Q_INVOKABLE void                removeConfiguration         (LinkConfiguration* config);
+    Q_INVOKABLE LinkConfiguration*  createConfiguration                (int type, const QString& name);
+    Q_INVOKABLE LinkConfiguration*  startConfigurationEditing          (LinkConfiguration* config);
+    Q_INVOKABLE void                cancelConfigurationEditing         (LinkConfiguration* config) { delete config; }
+    Q_INVOKABLE bool                endConfigurationEditing            (LinkConfiguration* config, LinkConfiguration* editedConfig);
+    Q_INVOKABLE bool                endCreateConfiguration             (LinkConfiguration* config);
+    Q_INVOKABLE void                removeConfiguration                (LinkConfiguration* config);
+    Q_INVOKABLE void                createMavlinkForwardingSupportLink (void);
 
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     Q_INVOKABLE void shutdown(void);
@@ -76,11 +78,12 @@ public:
 
     bool isBluetoothAvailable       (void);
 
-    QList<SharedLinkInterfacePtr>   links               (void) { return _rgLinks; }
-    QStringList                     linkTypeStrings     (void) const;
-    QStringList                     serialBaudRates     (void);
-    QStringList                     serialPortStrings   (void);
-    QStringList                     serialPorts         (void);
+    QList<SharedLinkInterfacePtr>   links                           (void) { return _rgLinks; }
+    QStringList                     linkTypeStrings                 (void) const;
+    QStringList                     serialBaudRates                 (void);
+    QStringList                     serialPortStrings               (void);
+    QStringList                     serialPorts                     (void);
+    bool                            mavlinkSupportForwardingEnabled (void) { return _mavlinkSupportForwardingEnabled; }
 
     void loadLinkConfigurationList();
     void saveLinkConfigurationList();
@@ -103,6 +106,9 @@ public:
 
     /// Returns pointer to the mavlink forwarding link, or nullptr if it does not exist
     SharedLinkInterfacePtr mavlinkForwardingLink();
+
+    /// Returns pointer to the mavlink support forwarding link, or nullptr if it does not exist
+    SharedLinkInterfacePtr mavlinkForwardingSupportLink();
 
     void disconnectAll(void);
 
@@ -136,6 +142,7 @@ public:
 signals:
     void commPortStringsChanged();
     void commPortsChanged();
+    void mavlinkSupportForwardingEnabledChanged();
 
 private slots:
     void _linkDisconnected  (void);
@@ -150,6 +157,7 @@ private:
     void                _addZeroConfAutoConnectLink (void);
     void                _addMAVLinkForwardingLink   (void);
     bool                _isSerialPortConnected      (void);
+    void                _createDynamicForwardLink   (const char* linkName, QString hostName);
 
 #ifndef NO_SERIAL_LINK
     bool                _portAlreadyConnected       (const QString& portName);
@@ -190,8 +198,10 @@ private:
 
     static const char*  _defaultUDPLinkName;
     static const char*  _mavlinkForwardingLinkName;
+    static const char*  _mavlinkForwardingSupportLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
+    bool                _mavlinkSupportForwardingEnabled = false;
 
 };
 

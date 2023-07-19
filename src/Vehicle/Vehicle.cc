@@ -57,15 +57,13 @@
 #include "Autotune.h"
 #include "RemoteIDManager.h"
 
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceVehicleManager.h"
-#endif
-
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f
 #define DEFAULT_LON -120.083923f
+#define SET_HOME_TERRAIN_ALT_MAX 10000
+#define SET_HOME_TERRAIN_ALT_MIN -500
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
@@ -210,17 +208,6 @@ Vehicle::Vehicle(LinkInterface*             link,
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
-
-    //-- Airspace Management
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
-    if (airspaceManager) {
-        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
-        if (_airspaceVehicleManager) {
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-        }
-    }
-#endif
 
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
     _autopilotPlugin->setParent(this);
@@ -488,17 +475,6 @@ void Vehicle::_commonInit()
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
-
-    //-- Airspace Management
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
-    if (airspaceManager) {
-        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
-        if (_airspaceVehicleManager) {
-            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
-        }
-    }
-#endif
 }
 
 Vehicle::~Vehicle()
@@ -517,12 +493,6 @@ Vehicle::~Vehicle()
     if (_joystickManager) {
         _startJoystick(false);
     }
-
-#if defined(QGC_AIRMAP_ENABLED)
-    if (_airspaceVehicleManager) {
-        delete _airspaceVehicleManager;
-    }
-#endif
 }
 
 void Vehicle::prepareDelete()
@@ -1514,6 +1484,7 @@ void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
 {
     if (homeCoord != _homePosition) {
         _homePosition = homeCoord;
+        qCDebug(VehicleLog) << "new home location set at coordinate: " << homeCoord;
         emit homePositionChanged(_homePosition);
     }
 }
@@ -2234,15 +2205,23 @@ void Vehicle::setFlightMode(const QString& flightMode)
         // states.
         newBaseMode |= base_mode;
 
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack_chan(_mavlink->getSystemId(),
-                                       _mavlink->getComponentId(),
-                                       sharedLink->mavlinkChannel(),
-                                       &msg,
-                                       id(),
-                                       newBaseMode,
-                                       custom_mode);
-        sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        if (_firmwarePlugin->MAV_CMD_DO_SET_MODE_is_supported()) {
+            sendMavCommand(defaultComponentId(),
+                           MAV_CMD_DO_SET_MODE,
+                           true,    // show error if fails
+                           MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                           custom_mode);
+        } else {
+            mavlink_message_t msg;
+            mavlink_msg_set_mode_pack_chan(_mavlink->getSystemId(),
+                                           _mavlink->getComponentId(),
+                                           sharedLink->mavlinkChannel(),
+                                           &msg,
+                                           id(),
+                                           newBaseMode,
+                                           custom_mode);
+            sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        }
     } else {
         qCWarning(VehicleLog) << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
     }
@@ -2707,6 +2686,11 @@ double Vehicle::maximumEquivalentAirspeed()
 double Vehicle::minimumEquivalentAirspeed()
 {
     return _firmwarePlugin->minimumEquivalentAirspeed(this);
+}
+
+bool Vehicle::hasGripper()  const 
+{ 
+    return _firmwarePlugin->hasGripper(this);
 }
 
 void Vehicle::startMission()
@@ -3924,21 +3908,6 @@ void Vehicle::_vehicleParamLoaded(bool ready)
     }
 }
 
-void Vehicle::_trafficUpdate(bool /*alert*/, QString /*traffic_id*/, QString /*vehicle_id*/, QGeoCoordinate /*location*/, float /*heading*/)
-{
-#if 0
-    // This is ifdef'ed out for now since this code doesn't mesh with the recent ADSB manager changes. Also airmap isn't in any
-    // released build. So not going to waste time trying to fix up unused code.
-    if (_trafficVehicleMap.contains(traffic_id)) {
-        _trafficVehicleMap[traffic_id]->update(alert, location, heading);
-    } else {
-        ADSBVehicle* vehicle = new ADSBVehicle(location, heading, alert, this);
-        _trafficVehicleMap[traffic_id] = vehicle;
-        _adsbVehicles.append(vehicle);
-    }
-#endif
-}
-
 void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)
 {
     if(uasId == _id) {
@@ -4073,6 +4042,60 @@ void Vehicle::flashBootloader()
 
 }
 #endif
+
+void Vehicle::doSetHome(const QGeoCoordinate& coord)
+{
+    if (coord.isValid()) {
+        // If for some reason we already did a query and it hasn't arrived yet, disconnect signals and unset current query. TerrainQuery system will
+        // automatically delete that forgotten query. This could happen if we send 2 do_set_home commands one after another, so usually the latest one
+        // is the one we would want to arrive to the vehicle, so it is fine to forget about the previous ones in case it could happen.
+        if (_currentDoSetHomeTerrainAtCoordinateQuery) {
+            disconnect(_currentDoSetHomeTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_doSetHomeTerrainReceived);
+            _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
+        }
+        // Save the coord for using when our terrain data arrives. If there was a pending terrain query paired with an older coordinate it is safe to 
+        // Override now, as we just disconnected the signal that would trigger the command sending 
+        _doSetHomeCoordinate = coord;
+        // Now setup and trigger the new terrain query
+        _currentDoSetHomeTerrainAtCoordinateQuery = new TerrainAtCoordinateQuery(true /* autoDelet */);
+        connect(_currentDoSetHomeTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_doSetHomeTerrainReceived);
+        QList<QGeoCoordinate> rgCoord;
+        rgCoord.append(coord);
+        _currentDoSetHomeTerrainAtCoordinateQuery->requestData(rgCoord);
+    }
+}
+
+// This will be called after our query started in doSetHome arrives
+void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
+{
+    if (success) {
+        double terrainAltitude = heights[0];
+        // Coord and terrain alt sanity check
+        if (_doSetHomeCoordinate.isValid() && terrainAltitude <= SET_HOME_TERRAIN_ALT_MAX && terrainAltitude >= SET_HOME_TERRAIN_ALT_MIN) {
+            sendMavCommand(
+                        defaultComponentId(),
+                        MAV_CMD_DO_SET_HOME,
+                        true, // show error if fails
+                        0,
+                        0,
+                        0,
+                        static_cast<float>(qQNaN()),
+                        _doSetHomeCoordinate.latitude(),
+                        _doSetHomeCoordinate.longitude(),
+                        terrainAltitude);
+
+        } else if (_doSetHomeCoordinate.isValid()) {
+            qCDebug(VehicleLog) << "_doSetHomeTerrainReceived: internal error, elevation data out of limits ";
+        } else {
+            qCDebug(VehicleLog) << "_doSetHomeTerrainReceived: internal error, cached home coordinate is not valid";
+        }
+    } else {
+        qgcApp()->showAppMessage(tr("Set Home failed, terrain data not available for selected coordinate"));
+    }
+    // Clean up
+    _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
+    _doSetHomeCoordinate = QGeoCoordinate(); // So isValid() will no longer return true, for extra safety
+}
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
@@ -4269,4 +4292,21 @@ void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
             0,                                   // Param1: Gripper ID (Always set to 0)
             gripperAction,                       // Param2: Gripper Action
             0, 0, 0, 0, 0);                      // Param 3 ~ 7 : unused
+}
+
+void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
+{
+    switch(gripperOption) {
+        case Gripper_release: 
+            setGripperAction(GRIPPER_ACTION_RELEASE);
+            break;
+        case Gripper_grab: 
+            setGripperAction(GRIPPER_ACTION_GRAB);
+            break;
+        case Invalid_option:
+            qDebug("unknown function");
+            break;
+        default: 
+        break;
+    }
 }

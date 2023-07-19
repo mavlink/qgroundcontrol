@@ -19,8 +19,6 @@ import QtQml.Models             2.1
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
-import QGroundControl.Airspace      1.0
-import QGroundControl.Airmap        1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FactSystem    1.0
@@ -48,6 +46,7 @@ Item {
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
+    property alias  _gripperMenu:           gripperOptions
 
     QGCToolInsets {
         id:                     _totalToolInsets
@@ -258,12 +257,8 @@ Item {
         property real leftInset: x + width
     }
 
-    FlyViewAirspaceIndicator {
-        anchors.top:                parent.top
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * 0.25
-        anchors.horizontalCenter:   parent.horizontalCenter
-        z:                          QGroundControl.zOrderWidgets
-        show:                       mapControl.pipState.state !== mapControl.pipState.pipState
+    GripperMenu {
+        id: gripperOptions
     }
 
     VehicleWarnings {

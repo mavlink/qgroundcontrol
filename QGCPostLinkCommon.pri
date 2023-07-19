@@ -27,20 +27,10 @@ MacBuild {
         # SDL2 Framework
         QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.framework $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
-        # AirMap
-        contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks/
-            QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
-        }
     } else {
         # SDL2 Framework
         QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.framework $${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
-        # AirMap
-        contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmap-platform-sdk/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
-            QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $${TARGET}.app/Contents/MacOS/$${TARGET}
-        }
     }
 }
 
@@ -159,11 +149,6 @@ LinuxBuild {
 
     # QT_INSTALL_QML
     QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
-
-    # Airmap
-    contains (DEFINES, QGC_AIRMAP_ENABLED) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$OUT_PWD/libs/airmap-platform-sdk/linux/$$AIRMAP_QT_PATH/libairmap-cpp.so.2.0.1 $$DESTDIR/Qt/libs/
-    }
 
     # QGroundControl start script
     contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) | !exists($$PWD/custom/custom.pri) {

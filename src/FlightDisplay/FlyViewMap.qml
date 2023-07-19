@@ -15,7 +15,6 @@ import QtQuick.Dialogs              1.2
 import QtQuick.Layouts              1.11
 
 import QGroundControl               1.0
-import QGroundControl.Airspace      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
@@ -51,23 +50,12 @@ FlightMap {
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property real   _toolsMargin:               ScreenTools.defaultFontPixelWidth * 0.75
-    property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       pipMode ? true : false
     property bool   _saveZoomLevelSetting:      true
-
-    function updateAirspace(reset) {
-        if(_airspaceEnabled) {
-            var coordinateNW = _root.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
-            var coordinateSE = _root.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
-            if(coordinateNW.isValid && coordinateSE.isValid) {
-                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, false /*planView*/, reset)
-            }
-        }
-    }
 
     function _adjustMapZoomForPipMode() {
         _saveZoomLevelSetting = false
@@ -93,16 +81,10 @@ FlightMap {
     onZoomLevelChanged: {
         if (_saveZoomLevelSetting) {
             QGroundControl.flightMapZoom = zoomLevel
-            updateAirspace(false)
         }
     }
     onCenterChanged: {
         QGroundControl.flightMapPosition = center
-        updateAirspace(false)
-    }
-
-    on_AirspaceEnabledChanged: {
-        updateAirspace(true)
     }
 
     // We track whether the user has panned or not to correctly handle automatic map positioning
@@ -588,11 +570,23 @@ FlightMap {
                         globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
                     }
                 }
+
+                QGCButton {
+                    Layout.fillWidth: true
+                    text: "Set home here"
+                    visible: globals.guidedControllerFlyView.showSetHome
+                    onClicked: {
+                        if (clickMenu.opened) {
+                            clickMenu.close()
+                        }
+                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, clickMenu.coord)
+                    }
+                }
             }
         }
 
         onClicked: {
-            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI)) {
+            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
                 orbitMapCircle.hide()
                 gotoLocationItem.hide()
                 var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
@@ -600,28 +594,6 @@ FlightMap {
                 clickMenu.setCoordinates(mouse.x, mouse.y)
                 clickMenu.open()
             }
-        }
-    }
-
-    // Airspace overlap support
-    MapItemView {
-        model:              _airspaceEnabled && QGroundControl.settingsManager.airMapSettings.enableAirspace && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
-        delegate: MapCircle {
-            center:         object.center
-            radius:         object.radius
-            color:          object.color
-            border.color:   object.lineColor
-            border.width:   object.lineWidth
-        }
-    }
-
-    MapItemView {
-        model:              _airspaceEnabled && QGroundControl.settingsManager.airMapSettings.enableAirspace && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
-        delegate: MapPolygon {
-            path:           object.polygon
-            color:          object.color
-            border.color:   object.lineColor
-            border.width:   object.lineWidth
         }
     }
 
