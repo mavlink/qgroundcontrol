@@ -20,7 +20,7 @@ public:
     class Gimbal {
     public:
         unsigned requestInformationRetries = 3;
-        unsigned requestStatusRetries = 4;
+        unsigned requestStatusRetries = 6;
         unsigned requestAttitudeRetries = 3;
         uint8_t responsibleCompid = 0;
         bool receivedInformation = false;
