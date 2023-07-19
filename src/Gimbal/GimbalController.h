@@ -22,7 +22,7 @@ public:
         unsigned requestInformationRetries = 3;
         unsigned requestStatusRetries = 6;
         unsigned requestAttitudeRetries = 3;
-        uint8_t responsibleCompid = 0;
+        uint8_t deviceId = 0;                       // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
         bool receivedInformation = false;
         bool receivedStatus = false;
         bool receivedAttitude = false;
@@ -37,6 +37,12 @@ public:
 
         bool haveControl = false;
         bool othersHaveControl = false;
+    };
+
+    class GimbalManager {
+    public:
+        unsigned requestGimbalManagerInformationRetries = 3;
+        bool receivedInformation = false;
     };
  
     // TODO: Some sort of selection of gimbal to access the API.
@@ -59,11 +65,13 @@ private:
     void    _handleGimbalManagerInformation  (const mavlink_message_t& message);
     void    _handleGimbalManagerStatus       (const mavlink_message_t& message);
     void    _handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message);
-    void    _checkComplete                   (Gimbal& gimbal);
+    void    _checkComplete                   (Gimbal& gimbal, uint8_t compid);
 
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
 
+
+    QMap<uint8_t, GimbalManager> _potentialGimbalManagers;
     QMap<uint8_t, Gimbal> _potentialGimbals;
     QVector<Gimbal*> _gimbals;
 };
