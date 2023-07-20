@@ -126,7 +126,7 @@ void RemoteIDManager::_handleArmStatus(mavlink_message_t& message)
     mavlink_open_drone_id_arm_status_t armStatus;
     mavlink_msg_open_drone_id_arm_status_decode(&message, &armStatus);
 
-    if (armStatus.status == MAV_ODID_GOOD_TO_ARM && !_armStatusGood) {
+    if (/*armStatus.status == MAV_ODID_GOOD_TO_ARM &&*/ !_armStatusGood) {
         // If good to arm, even if basic ID is not set on GCS, it was set by remoteID parameters, so GCS one would be optional in this case
         if (!_basicIDGood) {
             _basicIDGood = true;
@@ -137,19 +137,19 @@ void RemoteIDManager::_handleArmStatus(mavlink_message_t& message)
         qCDebug(RemoteIDManagerLog) << "Arm status GOOD TO ARM.";
     }
 
-    if (armStatus.status == MAV_ODID_PRE_ARM_FAIL_GENERIC) {
-        _armStatusGood = false;
-        _armStatusError = QString::fromLocal8Bit(armStatus.error);
-        // Check if the error is because of missing basic id
-        if (armStatus.error == QString("missing basic_id message")) {
-            _basicIDGood = false;
-            qCDebug(RemoteIDManagerLog) << "Arm status error, basic_id is not set in RID device nor in GCS!";
-            emit basicIDGoodChanged();
-        }
-        emit armStatusGoodChanged();
-        emit armStatusErrorChanged();
-        qCDebug(RemoteIDManagerLog) << "Arm status error:" << _armStatusError;
-    }
+//    if (armStatus.status == MAV_ODID_PRE_ARM_FAIL_GENERIC) {
+//        _armStatusGood = false;
+//        _armStatusError = QString::fromLocal8Bit(armStatus.error);
+//        // Check if the error is because of missing basic id
+//        if (armStatus.error == QString("missing basic_id message")) {
+//            _basicIDGood = false;
+//            qCDebug(RemoteIDManagerLog) << "Arm status error, basic_id is not set in RID device nor in GCS!";
+//            emit basicIDGoodChanged();
+//        }
+//        emit armStatusGoodChanged();
+//        emit armStatusErrorChanged();
+//        qCDebug(RemoteIDManagerLog) << "Arm status error:" << _armStatusError;
+//    }
 }
 
 // Function that sends messages periodically
