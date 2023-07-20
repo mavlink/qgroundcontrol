@@ -26,9 +26,11 @@ public:
     virtual ~LinkConfiguration() {}
 
     Q_PROPERTY(QString          name                READ name           WRITE setName           NOTIFY nameChanged)
+    Q_PROPERTY(QString          password            READ password                               CONSTANT)
     Q_PROPERTY(LinkInterface*   link                READ link                                   NOTIFY linkChanged)
     Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
     Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
+    Q_PROPERTY(bool             online              READ online         WRITE setOnline         NOTIFY onlineChanged)
     Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
     Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
     Q_PROPERTY(QString          settingsTitle       READ settingsTitle                          CONSTANT)
@@ -37,6 +39,8 @@ public:
     // Property accessors
 
     QString         name(void) const { return _name; }
+    QString         password(void) const { return _password; }
+    bool            online(void) const { return _isOnline; }
     LinkInterface*  link(void)  { return _link.lock().get(); }
 
     void            setName(const QString name);
@@ -63,6 +67,8 @@ public:
 
     bool isDynamic      () const{ return _dynamic; }     ///< Not persisted
     bool isAutoConnect  () const{ return _autoConnect; }
+    void setPassword    (const QString &password) { _password = password; };
+    void setOnline      (const bool &isOnline) { _isOnline = isOnline; emit onlineChanged(); };
 
     /*!
      *
@@ -164,7 +170,8 @@ public:
 
 signals:
     void nameChanged        (const QString& name);
-    void dynamicChanged     ();
+    void dynamicChanged     ();    
+    void onlineChanged      ();
     void autoConnectChanged ();
     void highLatencyChanged ();
     void linkChanged        ();
@@ -174,7 +181,9 @@ protected:
 
 private:
     QString _name;
+    QString _password;
     bool    _dynamic;       ///< A connection added automatically and not persistent (unless it's edited).
+    bool    _isOnline;
     bool    _autoConnect;   ///< This connection is started automatically at boot
     bool    _highLatency;
 };

@@ -7,15 +7,19 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick                  2.3
+import QtQuick.Controls         2.12
+import QtQuick.Controls.Styles  1.4
+import QtQuick.Dialogs          1.2
+import QtQuick.Layouts          1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.FactControls  1.0
+import QGroundControl.FactSystem    1.0
+
 
 Rectangle {
     id:                 _linkRoot
@@ -28,11 +32,51 @@ Rectangle {
     property int _secondColumnWidth:    ScreenTools.defaultFontPixelWidth * 30
     property int _rowSpacing:           ScreenTools.defaultFontPixelHeight / 2
     property int _colSpacing:           ScreenTools.defaultFontPixelWidth / 2
+    property int _isConnectionServer: {
+        if (!QGroundControl.linkManager.isConnectServer) {
+            connectingDialog.visible = true
+            return false
+        }
+        return true
+    }
+    property int _isAuthServer: {
+        if (QGroundControl.linkManager.isAuthServer) {
+            closeAirLinkRegistration()
+            return true
+        } else {
+            loginDialog.visible = true
+            return false
+        }
+    }
+
+    MessageDialog {
+        id:         loginDialog
+        visible:    false
+        icon:       StandardIcon.Warning
+        standardButtons: StandardButton.Yes
+        title:      qsTr("AirLink Authentification")
+        text:       qsTr("Wrong login or password. Please check it and try again!")
+
+        onYes: loginDialog.visible = false
+    }
+
+    MessageDialog {
+        id:         connectingDialog
+        visible:    false
+        icon:       StandardIcon.Warning
+        standardButtons: StandardButton.Yes
+        title:      qsTr("AirLink Authentification")
+        text:       qsTr("No network connection. Please check it and try again!")
+
+        onYes: loginDialog.visible = false
+    }
 
     QGCPalette {
         id:                 qgcPal
         colorGroupEnabled:  enabled
     }
+
+    property bool highlight: pressed | checked | hovered
 
     function openCommSettings(originalLinkConfig) {
         settingsLoader.originalLinkConfig = originalLinkConfig
@@ -44,6 +88,15 @@ Rectangle {
             settingsLoader.editingConfig = QGroundControl.linkManager.createConfiguration(ScreenTools.isSerialAvailable ? LinkConfiguration.TypeSerial : LinkConfiguration.TypeUdp, "")
         }
         settingsLoader.sourceComponent = commSettings
+    }
+
+    function openAirLinkRegistration() {
+        settingsLoader.sourceComponent = airLinkRegistration
+    }
+
+    function closeAirLinkRegistration() {
+        settingsLoader.sourceComponent = null
+        QGroundControl.linkManager.createConfigurationAirLink()
     }
 
     Component.onDestruction: {
@@ -72,13 +125,18 @@ Rectangle {
                 delegate: QGCButton {
                     anchors.horizontalCenter:   settingsColumn.horizontalCenter
                     width:                      _linkRoot.width * 0.5
-                    text:                       object.name
                     autoExclusive:              true
                     visible:                    !object.dynamic
                     onClicked: {
                         checked = true
                         _currentSelection = object
                         console.log("clicked", object, object.link)
+                        buttonRow.update()
+                    }
+                    Text {
+                        anchors.centerIn:   parent
+                        text:               object.online ? object.name + " (online)" : object.name                       
+                        color:              object.online ? qgcPal.colorGreen : qgcPal.buttonText
                     }
                 }
             }
@@ -91,6 +149,11 @@ Rectangle {
         anchors.bottom:     parent.bottom
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         anchors.horizontalCenter: parent.horizontalCenter
+        QGCButton {
+            text:       qsTr("Login AirLink")
+            enabled:    true
+            onClicked:  _linkRoot.openAirLinkRegistration()
+        }
         QGCButton {
             width:      ScreenTools.defaultFontPixelWidth * 10
             text:       qsTr("Delete")
@@ -125,7 +188,10 @@ Rectangle {
         QGCButton {
             text:       qsTr("Connect")
             enabled:    _currentSelection && !_currentSelection.link
-            onClicked:  QGroundControl.linkManager.createConnectedLink(_currentSelection)
+            onClicked:  {
+                QGroundControl.linkManager.createConnectedLink(_currentSelection)
+                QGroundControl.linkManager.sendLoginMsgToAirLink(_currentSelection.link, _currentSelection.name)
+            }
         }
         QGCButton {
             text:       qsTr("Disconnect")
@@ -264,6 +330,106 @@ Rectangle {
                             }
                         }
 
+                        QGCButton {
+                            width:      ScreenTools.defaultFontPixelWidth * 10
+                            text:       qsTr("Cancel")
+                            onClicked: {
+                                settingsLoader.sourceComponent = null
+                                QGroundControl.linkManager.cancelConfigurationEditing(settingsLoader.editingConfig)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //---------------------------------------------
+    // AirLink Registration
+    Component {
+        id: airLinkRegistration
+        Rectangle {
+            id:             settingsRect
+            color:          qgcPal.window
+            anchors.fill:   parent
+            property real   _panelWidth:    width * 0.8
+
+            QGCFlickable {
+                id:                 settingsFlick
+                clip:               true
+                anchors.fill:       parent
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                contentHeight:      mainLayout.height
+                contentWidth:       mainLayout.width
+
+                ColumnLayout {
+                    id:         mainLayout
+                    spacing:    _rowSpacing
+
+                    QGCGroupBox {
+                        title: qsTr("Login / Registration")
+
+                        ColumnLayout {
+                            spacing: _rowSpacing
+
+                            GridLayout {
+                                columns:        2
+                                columnSpacing:  _colSpacing
+                                rowSpacing:     _rowSpacing
+
+                                QGCLabel {text: qsTr("User Name:")}
+                                FactTextField {
+                                    id:             _userText
+                                    fact:           _usernameFact
+                                    width:          _secondColumnWidth
+                                    visible:        _usernameFact.visible
+                                    placeholderText:qsTr("Enter Login")
+                                    Layout.fillWidth:    true
+                                    Layout.preferredWidth:  _secondColumnWidth
+                                    property Fact _usernameFact: QGroundControl.settingsManager.appSettings.loginAirLink
+                                }
+                                QGCLabel { text: qsTr("Password:") }
+                                FactTextField {
+                                    id:             _passText
+                                    fact:           _passwordFact
+                                    width:          _secondColumnWidth
+                                    visible:        _passwordFact.visible
+                                    placeholderText:qsTr("Enter Password")
+                                    echoMode:       TextInput.Password
+                                    Layout.fillWidth:    true
+                                    property Fact _passwordFact: QGroundControl.settingsManager.appSettings.passAirLink
+                                }
+                                QGCLabel {
+                                    text: "Forgot Your AirLink Password?"
+                                    font.underline: true
+                                    Layout.columnSpan:  2
+                                    MouseArea {
+                                        anchors.fill:   parent
+                                        hoverEnabled:   true
+                                        cursorShape:    Qt.PointingHandCursor
+                                        onClicked:      Qt.openUrlExternally("https://air-link.space/forgot-pass")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+                    RowLayout {
+                        Layout.alignment:   Qt.AlignHCenter
+                        spacing:            _colSpacing
+
+                        QGCButton {
+                            width:      ScreenTools.defaultFontPixelWidth * 10
+                            text:       qsTr("Register")
+                            onClicked:  Qt.openUrlExternally("https://air-link.space/registration")
+                        }
+                        QGCButton {
+                            width:      ScreenTools.defaultFontPixelWidth * 10
+                            text:       qsTr("OK")
+                            enabled:    _userText.text !== "" && _passText.text !== ""
+                            onClicked:  QGroundControl.linkManager.connectToAirLinkServer(_userText.text, _passText.text)
+                        }
                         QGCButton {
                             width:      ScreenTools.defaultFontPixelWidth * 10
                             text:       qsTr("Cancel")
