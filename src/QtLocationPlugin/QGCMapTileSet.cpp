@@ -289,7 +289,7 @@ QGCCachedTileSet::_networkReplyFinished()
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
             QString type = getQGCMapEngine()->hashToType(hash);
-            if (type == "Airmap Elevation" ) {
+            if (type == UrlFactory::kCopernicusElevationProviderKey) {
                 image = TerrainTile::serializeFromAirMapJson(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
