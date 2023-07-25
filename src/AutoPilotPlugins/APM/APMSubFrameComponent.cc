@@ -29,9 +29,10 @@ QString APMSubFrameComponent::name(void) const
 
 QString APMSubFrameComponent::description(void) const
 {
-    return tr("Frame setup allows you to choose your vehicle's motor configuration. Install clockwise" \
-              "\npropellers on the green thrusters and counter-clockwise propellers on the blue thrusters" \
-              "\n(or vice-versa). The flight controller will need to be rebooted to apply changes.");
+    return tr("Frame setup allows you to choose your vehicle's motor configuration. Install <b>clockwise</b>" \
+              "<br>propellers on the <b>green thrusters</b> and <b>counter-clockwise</b> propellers on the <b>blue thrusters</b>" \
+              "<br>(or vice-versa). The flight controller will need to be rebooted to apply changes." \
+              "<br>When selecting a frame, you can choose to load the default parameter set for that frame configuration if available.");
 }
 
 QString APMSubFrameComponent::iconResource(void) const

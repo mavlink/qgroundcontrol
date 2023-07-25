@@ -26,8 +26,8 @@ public:
     LogCompressor(QString logFileName, QString outFileName="", QString delimiter="\t");
     /** @brief Start the compression of a raw, line-based logfile into a CSV file */
     void startCompression(bool holeFilling=false);
-    bool isFinished();
-    int getCurrentLine();
+    bool isFinished() const;
+    int getCurrentLine() const;
 
 protected:
     void run();                     ///< This function actually performs the compression. It's an overloaded function from QThread

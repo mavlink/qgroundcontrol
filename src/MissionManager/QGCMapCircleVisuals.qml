@@ -9,6 +9,7 @@
 
 import QtQuick          2.3
 import QtQuick.Controls 1.2
+import QtQuick.Shapes   1.12
 import QtLocation       5.3
 import QtPositioning    5.3
 
@@ -22,19 +23,20 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var    mapControl                                                  ///< Map control to place item in
-    property var    mapCircle                                                   ///< QGCMapCircle object
-    property bool   interactive:        mapCircle ? mapCircle.interactive : 0   /// true: user can manipulate polygon
-    property color  interiorColor:      "transparent"
-    property real   interiorOpacity:    1
-    property int    borderWidth:        2
-    property color  borderColor:        "orange"
+    property var    mapControl                                                        ///< Map control to place item in
+    property var    mapCircle                                                         ///< QGCMapCircle object
+    property bool   interactive:              mapCircle ? mapCircle.interactive : 0   /// true: user can manipulate polygon
+    property color  interiorColor:            "transparent"
+    property real   interiorOpacity:          0.95
+    property int    borderWidth:              3
+    property color  borderColor:              QGroundControl.globalPalette.mapMissionTrajectory
+    property bool   centerDragHandleVisible:  true
+    property real   _radius:                  mapCircle ? mapCircle.radius.rawValue : 0
 
     property var    _circleComponent
     property var    _topRotationIndicatorComponent
     property var    _bottomRotationIndicatorComponent
     property var    _dragHandlesComponent
-    property real   _radius:            mapCircle ? mapCircle.radius.rawValue : 0
 
     function addVisuals() {
         if (!_circleComponent) {
@@ -106,7 +108,6 @@ Item {
 
         MapQuickItem {
             visible: mapCircle.showRotation
-
             property bool topIndicator: true
 
             property real _rotationRadius: _radius
@@ -121,26 +122,35 @@ Item {
 
             Connections {
                 target:             mapCircle
-                onCenterChanged:    updateCoordinate()
+                function onCenterChanged()    { updateCoordinate() }
             }
 
-            sourceItem: QGCColoredImage {
-                anchors.centerIn:   parent
-                width:              ScreenTools.defaultFontPixelHeight * 0.66
-                height:             ScreenTools.defaultFontPixelHeight
-                source:             "/qmlimages/arrow-down.png"
-                color:              borderColor
+            sourceItem: Shape {
+                width:            ScreenTools.defaultFontPixelHeight
+                height:           ScreenTools.defaultFontPixelHeight
+                anchors.centerIn: parent
 
                 transform: Rotation {
-                    origin.x:   width / 2
-                    origin.y:   height / 2
-                    angle:      (mapCircle.clockwiseRotation ? 1 : -1) * (topIndicator ? -90 : 90)
+                    origin.x: width / 2
+                    origin.y: height / 2
+                    angle:   (mapCircle.clockwiseRotation ? 0 : 180) + (topIndicator ? 180 : 0)
+                }
+
+                ShapePath {
+                    strokeWidth: 2
+                    strokeColor: borderColor
+                    fillColor:   borderColor
+                    startX:      0
+                    startY:      width / 2
+                    PathLine { x: width;  y: width     }
+                    PathLine { x: width;  y: 0         }
+                    PathLine { x: 0;      y: width / 2 }
                 }
 
                 QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  mapCircle.clockwiseRotation = !mapCircle.clockwiseRotation
-                    visible:    mapCircle.interactive
+                    fillItem:  parent
+                    onClicked: mapCircle.clockwiseRotation = !mapCircle.clockwiseRotation
+                    visible:   mapCircle.interactive
                 }
             }
         }
@@ -223,11 +233,11 @@ Item {
                 radiusDragHandle = dragHandleComponent.createObject(mapControl)
                 radiusDragHandle.coordinate = Qt.binding(function() { return radiusDragCoord })
                 mapControl.addMapItem(radiusDragHandle)
-                radiusDragArea = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": radiusDragCoord })
-                centerDragHandle = dragHandleComponent.createObject(mapControl)
+                radiusDragArea = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": radiusDragCoord } )
+                centerDragHandle = dragHandleComponent.createObject(mapControl, { "visible": _root.centerDragHandleVisible })
                 centerDragHandle.coordinate = Qt.binding(function() { return circleCenterCoord })
                 mapControl.addMapItem(centerDragHandle)
-                centerDragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": centerDragHandle, "itemCoordinate": circleCenterCoord })
+                centerDragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": centerDragHandle, "itemCoordinate": circleCenterCoord, "visible": _root.centerDragHandleVisible })
             }
 
             Component.onDestruction: {

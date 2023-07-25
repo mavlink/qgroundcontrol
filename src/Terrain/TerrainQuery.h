@@ -305,8 +305,9 @@ private:
 class UnitTestTerrainQuery : public TerrainQueryInterface {
 public:
 
-    static constexpr double regionSizeDeg   = 0.1;      // all regions are 0.1deg (~11km) square
-    static constexpr double one_second_deg  = 1.0/3600;
+    static constexpr double regionSizeDeg     = 0.1;      // all regions are 0.1deg (~11km) square
+    static constexpr double one_second_deg    = 1.0/3600;
+    static constexpr double earths_radius_mts = 6371000.;
 
     /// Point Nemo is a point on Earth furthest from land
     static const QGeoCoordinate pointNemo;
@@ -338,6 +339,18 @@ public:
         static const double totalElevationChange;
     };
     static const LinearSlopeRegion linearSlopeRegion;
+
+    /// Region with a hill (top half of a sphere) in the center.
+    struct HillRegion : public QGeoRectangle
+    {
+        HillRegion(const QGeoRectangle& region)
+            : QGeoRectangle(region)
+        {
+        }
+
+        static const double radius;
+    };
+    static const HillRegion hillRegion;
 
     UnitTestTerrainQuery(TerrainQueryInterface* parent = nullptr);
 

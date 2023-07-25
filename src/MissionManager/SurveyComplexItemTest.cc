@@ -13,6 +13,13 @@
 
 SurveyComplexItemTest::SurveyComplexItemTest(void)
 {
+    _rgSurveySignals[surveyVisualTransectPointsChangedIndex] =    SIGNAL(visualTransectPointsChanged());
+    _rgSurveySignals[surveyCameraShotsChangedIndex] =             SIGNAL(cameraShotsChanged());
+    _rgSurveySignals[surveyCoveredAreaChangedIndex] =             SIGNAL(coveredAreaChanged());
+    _rgSurveySignals[surveyTimeBetweenShotsChangedIndex] =        SIGNAL(timeBetweenShotsChanged());
+    _rgSurveySignals[surveyRefly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
+    _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
+
     // We use a 100m by 100m square test polygon
     const double edgeDistance = 100;
     _polyVertices.append(QGeoCoordinate(47.633550640000003, -122.08982199));
@@ -25,14 +32,7 @@ void SurveyComplexItemTest::init(void)
 {
     TransectStyleComplexItemTestBase::init();
 
-    _rgSurveySignals[surveyVisualTransectPointsChangedIndex] =    SIGNAL(visualTransectPointsChanged());
-    _rgSurveySignals[surveyCameraShotsChangedIndex] =             SIGNAL(cameraShotsChanged());
-    _rgSurveySignals[surveyCoveredAreaChangedIndex] =             SIGNAL(coveredAreaChanged());
-    _rgSurveySignals[surveyTimeBetweenShotsChangedIndex] =        SIGNAL(timeBetweenShotsChanged());
-    _rgSurveySignals[surveyRefly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
-    _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
-
-    _surveyItem = new SurveyComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */, this /* parent */);
+    _surveyItem = new SurveyComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
     _mapPolygon = _surveyItem->surveyAreaPolygon();
     _mapPolygon->appendVertices(_polyVertices);
 
@@ -61,10 +61,13 @@ void SurveyComplexItemTest::init(void)
 
 void SurveyComplexItemTest::cleanup(void)
 {
-    delete _surveyItem;
     delete _multiSpy;
+    _multiSpy = nullptr;
 
     TransectStyleComplexItemTestBase::cleanup();
+
+    // These items are deleted when _masterController is deleted
+    _surveyItem = nullptr;
 }
 
 void SurveyComplexItemTest::_testDirty(void)

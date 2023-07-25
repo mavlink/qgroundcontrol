@@ -3,6 +3,7 @@ add_custom_target(PlanViewQml
 		CameraCalcCamera.qml
 		CameraCalcGrid.qml
 		CameraSection.qml
+		Campos.qml
 		CorridorScanEditor.qml
 		CorridorScanMapVisual.qml
 		FWLandingPatternEditor.qml

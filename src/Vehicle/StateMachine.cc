@@ -51,7 +51,7 @@ void StateMachine::statesCompleted(void) const
 
 }
 
-StateMachine::StateFn StateMachine::currentState(void)
+StateMachine::StateFn StateMachine::currentState(void) const
 {
     if (_active) {
         return rgStates()[_stateIndex];

@@ -221,6 +221,20 @@
     "default":     ""
 },
 {
+    "name":             "customURL",
+    "shortDesc": "Custom Map URL",
+    "longDesc":  "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "vworldToken",
+    "shortDesc": "VWorld Token",
+    "longDesc":  "Your personal access token for VWorld maps",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "defaultFirmwareType",
     "shortDesc": "Default firmware type for flashing",
     "type":             "uint32",
@@ -263,12 +277,13 @@
     "default":     false
 },
 {
-    "name":             "language",
-    "shortDesc": "Language",
-    "type":             "uint32",
-    "enumStrings":      "System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish),Azerbaijani (Azerbaijani)",
-    "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
-    "default":     0
+    "name":         "qLocaleLanguage",
+    "shortDesc":    "Language",
+    "type":         "uint32",
+    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
+    "enumValues":   "0,12,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125",
+    "comment":      "enumValues uses Qt QLocale::Language values",
+    "default":      0
 },
 {
     "name":             "disableAllPersistence",
@@ -310,12 +325,6 @@
     "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
     "type":             "string",
     "default":     "localhost:14445"
-},
-{
-    "name":         "useComponentInformationQuery",
-    "shortDesc":    "Use COMPONENT_INFORMATION query (beta)",
-    "type":         "bool",
-    "default":      false
 }
 ]
 }

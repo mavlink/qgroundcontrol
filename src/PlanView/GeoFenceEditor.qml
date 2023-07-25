@@ -342,9 +342,8 @@ QGCFlickable {
                             text: qsTr("Altitude")
                         }
 
-                        AltitudeFactTextField {
-                            fact:           myGeoFenceController.breachReturnAltitude
-                            altitudeMode:   QGroundControl.AltitudeModeRelative
+                        FactTextField {
+                            fact: myGeoFenceController.breachReturnAltitude
                         }
                     }
 

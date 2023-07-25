@@ -10,19 +10,15 @@ import QGroundControl.Palette           1.0
 
 // Camera calculator "Grid" section for mission item editors
 Column {
-    anchors.left:   parent.left
-    anchors.right:  parent.right
-    spacing:        _margin
+    spacing: _margin
 
     property var    cameraCalc
     property bool   vehicleFlightIsFrontal:         true
     property string distanceToSurfaceLabel
-    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
-    property string _cameraName:        cameraCalc.cameraName.value
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
     property var    _cameraList:        [ ]
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
@@ -95,7 +91,7 @@ Column {
 
             AltitudeFactTextField {
                 fact:                       cameraCalc.distanceToSurface
-                altitudeMode:               distanceToSurfaceAltitudeMode
+                altitudeMode:               cameraCalc.distanceMode
                 enabled:                    fixedDistanceRadio.checked
                 Layout.fillWidth:           true
             }
@@ -128,7 +124,7 @@ Column {
         QGCLabel { text: distanceToSurfaceLabel }
         AltitudeFactTextField {
             fact:                       cameraCalc.distanceToSurface
-            altitudeMode:               distanceToSurfaceAltitudeMode
+            altitudeMode:               cameraCalc.distanceMode
             Layout.fillWidth:           true
         }
 

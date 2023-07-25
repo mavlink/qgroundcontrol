@@ -238,7 +238,7 @@ private:
 
     static bool _parseEnum          (const QJsonObject& jsonObject, DefineMap_t defineMap, QStringList& rgDescriptions, QStringList& rgValues, QString& errorString);
     static bool _parseValuesArray   (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString);
-    static bool _parseBitmaskArray  (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString);
+    static bool _parseBitmaskArray  (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<int>& rgValues, QString& errorString);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -371,6 +371,7 @@ private:
     static const char* _incrementJsonKey;
     static const char* _hasControlJsonKey;
     static const char* _qgcRebootRequiredJsonKey;
+    static const char* _rebootRequiredJsonKey;
     static const char* _categoryJsonKey;
     static const char* _groupJsonKey;
     static const char* _volatileJsonKey;

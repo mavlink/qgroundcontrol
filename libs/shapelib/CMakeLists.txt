@@ -33,11 +33,13 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 cmake_policy(SET CMP0026 OLD) # Disallow use of the LOCATION property for build targets
 
-add_compile_options(
-	-Wno-missing-braces
-	-Wno-sign-compare
-	-Wno-return-type
-)
+if(NOT MSVC)
+  add_compile_options(
+  	-Wno-missing-braces
+  	-Wno-sign-compare
+  	-Wno-return-type
+  )
+endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -189,7 +191,6 @@ foreach(executable ${executables})
     get_target_property(${executable}_LOC ${executable} LOCATION)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/script.sed "s?\\./${executable}?${${executable}_LOC}?\n")
   endif(BUILD_TEST)
-  install(TARGETS ${executable} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endforeach(executable ${executables})
 
 # Install header

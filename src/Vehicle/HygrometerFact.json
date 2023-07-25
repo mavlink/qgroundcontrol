@@ -1,0 +1,27 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "temperature",
+    "shortDesc": "Temperature",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "deg"
+},
+{
+    "name":             "humidity",
+    "shortDesc": "Humidity %",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "%"
+},
+{
+    "name":             "hygrometerid",
+    "shortDesc": "ID",
+    "type":             "uint16",
+    "decimalPlaces":    0
+}
+]
+}

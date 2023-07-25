@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=QGroundControl
+GenericName=Ground Control Station
+Comment=UAS ground control station
+Icon=org.mavlink.qgroundcontrol
+Exec=QGroundControl
+Terminal=false
+Categories=Utility;

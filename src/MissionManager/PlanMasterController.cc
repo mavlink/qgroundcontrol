@@ -99,7 +99,7 @@ void PlanMasterController::start(void)
 
 #if defined(QGC_AIRMAP_ENABLED)
     //-- This assumes there is one single instance of PlanMasterController in edit mode.
-    if(!flyView) {
+    if(!_flyView) {
         // Wait for signal confirming AirMap client connection before starting flight planning
         connect(qgcApp()->toolbox()->airspaceManager(), &AirspaceManager::connectStatusChanged, this, &PlanMasterController::_startFlightPlanning);
     }
@@ -127,9 +127,9 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
     if (_managerVehicle) {
         // Disconnect old vehicle. Be careful of wildcarding disconnect too much since _managerVehicle may equal _controllerVehicle
-        disconnect(_managerVehicle->missionManager(),       nullptr, nullptr, nullptr);
-        disconnect(_managerVehicle->geoFenceManager(),      nullptr, nullptr, nullptr);
-        disconnect(_managerVehicle->rallyPointManager(),    nullptr, nullptr, nullptr);
+        disconnect(_managerVehicle->missionManager(),       nullptr, this, nullptr);
+        disconnect(_managerVehicle->geoFenceManager(),      nullptr, this, nullptr);
+        disconnect(_managerVehicle->rallyPointManager(),    nullptr, this, nullptr);
     }
 
     bool newOffline = false;

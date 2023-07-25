@@ -247,6 +247,7 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     _ruleSets.clearAndDeleteContents();
     _state = State::RetrieveItems;
     RuleSets::Search::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
     //-- Geometry: Polygon
     Geometry::Polygon polygon;
     //-- Get ROI bounding box, clipping to max area of interest

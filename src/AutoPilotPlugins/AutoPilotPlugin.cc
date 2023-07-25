@@ -51,7 +51,7 @@ void AutoPilotPlugin::_recalcSetupComplete(void)
     }
 }
 
-bool AutoPilotPlugin::setupComplete(void)
+bool AutoPilotPlugin::setupComplete(void) const
 {
     return _setupComplete;
 }

@@ -19,8 +19,10 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 
 message(Qt version $$[QT_VERSION])
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 10) {
-    error("Unsupported Qt version, 5.11+ is required")
+!contains(CONFIG, DISABLE_QT_VERSION_CHECK) {
+    !equals(QT_MAJOR_VERSION, 5) | !equals(QT_MINOR_VERSION, 15) {
+        error("Unsupported Qt version, 5.15 is required")
+    }
 }
 
 include(QGCCommon.pri)
@@ -62,8 +64,10 @@ QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl
 QGC_APP_COPYRIGHT   = "Copyright (C) 2019 QGroundControl Development Team. All rights reserved."
 
 WindowsBuild {
-    QGC_INSTALLER_ICON          = "$$SOURCE_DIR\\windows\\WindowsQGC.ico"
-    QGC_INSTALLER_HEADER_BITMAP = "$$SOURCE_DIR\\windows\\installheader.bmp"
+    QGC_INSTALLER_SCRIPT        = "$$SOURCE_DIR\\deploy\\windows\\nullsoft_installer.nsi"
+    QGC_INSTALLER_ICON          = "$$SOURCE_DIR\\deploy\\windows\\WindowsQGC.ico"
+    QGC_INSTALLER_HEADER_BITMAP = "$$SOURCE_DIR\\deploy\\windows\\installheader.bmp"
+    QGC_INSTALLER_DRIVER_MSI    = "$$SOURCE_DIR\\deploy\\windows\\driver.msi"
 }
 
 # Load additional config flags from user_config.pri
@@ -218,8 +222,7 @@ LinuxBuild {
 # Qt configuration
 
 CONFIG += qt \
-    thread \
-    c++11
+    thread
 
 DebugBuild {
     CONFIG -= qtquickcompiler
@@ -383,6 +386,7 @@ INCLUDEPATH += \
     src/api \
     src/AnalyzeView \
     src/Camera \
+    src/Compression \
     src/AutoPilotPlugins \
     src/FlightDisplay \
     src/FlightMap \
@@ -488,12 +492,14 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTest.h \
         src/MissionManager/TransectStyleComplexItemTestBase.h \
         src/MissionManager/VisualMissionItemTest.h \
+        src/qgcunittest/ComponentInformationCacheTest.h \
         src/qgcunittest/GeoTest.h \
         src/qgcunittest/MavlinkLogTest.h \
         src/qgcunittest/MultiSignalSpy.h \
         src/qgcunittest/MultiSignalSpyV2.h \
         src/qgcunittest/UnitTest.h \
         src/Vehicle/FTPManagerTest.h \
+        src/Vehicle/InitialConnectTest.h \
         src/Vehicle/RequestMessageTest.h \
         src/Vehicle/SendMavCommandWithHandlerTest.h \
         src/Vehicle/SendMavCommandWithSignallingTest.h \
@@ -534,6 +540,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/MissionManager/TransectStyleComplexItemTest.cc \
         src/MissionManager/TransectStyleComplexItemTestBase.cc \
         src/MissionManager/VisualMissionItemTest.cc \
+        src/qgcunittest/ComponentInformationCacheTest.cc \
         src/qgcunittest/GeoTest.cc \
         src/qgcunittest/MavlinkLogTest.cc \
         src/qgcunittest/MultiSignalSpy.cc \
@@ -541,6 +548,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/qgcunittest/UnitTest.cc \
         src/qgcunittest/UnitTestList.cc \
         src/Vehicle/FTPManagerTest.cc \
+        src/Vehicle/InitialConnectTest.cc \
         src/Vehicle/RequestMessageTest.cc \
         src/Vehicle/SendMavCommandWithHandlerTest.cc \
         src/Vehicle/SendMavCommandWithSignallingTest.cc \
@@ -564,14 +572,18 @@ HEADERS += \
     src/AnalyzeView/ULogParser.h \
     src/AnalyzeView/MavlinkConsoleController.h \
     src/Audio/AudioOutput.h \
+    src/Vehicle/Autotune.h \
     src/Camera/QGCCameraControl.h \
     src/Camera/QGCCameraIO.h \
     src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
+    src/Compression/QGCLZMA.h \
+    src/Compression/QGCZlib.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/Joystick/JoystickMavCommand.h \
     src/JsonHelper.h \
     src/KMLDomDocument.h \
     src/KMLHelper.h \
@@ -639,7 +651,6 @@ HEADERS += \
     src/QGCQGeoCoordinate.h \
     src/QGCTemporaryFile.h \
     src/QGCToolbox.h \
-    src/QGCZlib.h \
     src/QmlControls/AppMessages.h \
     src/QmlControls/EditPositionDialogController.h \
     src/QmlControls/FlightPathSegment.h \
@@ -677,14 +688,29 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
+    src/Vehicle/Actuators/ActuatorActions.h \
+    src/Vehicle/Actuators/Actuators.h \
+    src/Vehicle/Actuators/ActuatorOutputs.h \
+    src/Vehicle/Actuators/ActuatorTesting.h \
+    src/Vehicle/Actuators/Common.h \
+    src/Vehicle/Actuators/GeometryImage.h \
+    src/Vehicle/Actuators/Mixer.h \
+    src/Vehicle/Actuators/MotorAssignment.h \
     src/Vehicle/CompInfo.h \
+    src/Vehicle/CompInfoActuators.h \
+    src/Vehicle/CompInfoEvents.h \
     src/Vehicle/CompInfoParam.h \
-    src/Vehicle/CompInfoVersion.h \
+    src/Vehicle/CompInfoGeneral.h \
+    src/Vehicle/ComponentInformationCache.h \
     src/Vehicle/ComponentInformationManager.h \
+    src/Vehicle/EventHandler.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
+    src/Vehicle/HealthAndArmingChecks.h \
+    src/Vehicle/ImageProtocolManager.h \
     src/Vehicle/InitialConnectStateMachine.h \
     src/Vehicle/MAVLinkLogManager.h \
+    src/Vehicle/MAVLinkStreamConfig.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/StateMachine.h \
     src/Vehicle/SysStatusSensorInfo.h \
@@ -697,12 +723,16 @@ HEADERS += \
     src/Vehicle/VehicleClockFactGroup.h \
     src/Vehicle/VehicleDistanceSensorFactGroup.h \
     src/Vehicle/VehicleEstimatorStatusFactGroup.h \
+    src/Vehicle/VehicleLocalPositionFactGroup.h \
+    src/Vehicle/VehicleLocalPositionSetpointFactGroup.h \
     src/Vehicle/VehicleGPSFactGroup.h \
+    src/Vehicle/VehicleGPS2FactGroup.h \
     src/Vehicle/VehicleLinkManager.h \
     src/Vehicle/VehicleSetpointFactGroup.h \
     src/Vehicle/VehicleTemperatureFactGroup.h \
     src/Vehicle/VehicleVibrationFactGroup.h \
     src/Vehicle/VehicleWindFactGroup.h \
+    src/Vehicle/VehicleHygrometerFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -797,13 +827,17 @@ SOURCES += \
     src/AnalyzeView/ULogParser.cc \
     src/AnalyzeView/MavlinkConsoleController.cc \
     src/Audio/AudioOutput.cc \
+    src/Vehicle/Autotune.cpp \
     src/Camera/QGCCameraControl.cc \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
+    src/Compression/QGCLZMA.cc \
+    src/Compression/QGCZlib.cc \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/Joystick/JoystickMavCommand.cc \
     src/JsonHelper.cc \
     src/KMLDomDocument.cc \
     src/KMLHelper.cc \
@@ -868,7 +902,6 @@ SOURCES += \
     src/QGCQGeoCoordinate.cc \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
-    src/QGCZlib.cc \
     src/QmlControls/AppMessages.cc \
     src/QmlControls/EditPositionDialogController.cc \
     src/QmlControls/FlightPathSegment.cc \
@@ -906,14 +939,29 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
+    src/Vehicle/Actuators/ActuatorActions.cc \
+    src/Vehicle/Actuators/Actuators.cc \
+    src/Vehicle/Actuators/ActuatorOutputs.cc \
+    src/Vehicle/Actuators/ActuatorTesting.cc \
+    src/Vehicle/Actuators/Common.cc \
+    src/Vehicle/Actuators/GeometryImage.cc \
+    src/Vehicle/Actuators/Mixer.cc \
+    src/Vehicle/Actuators/MotorAssignment.cc \
     src/Vehicle/CompInfo.cc \
+    src/Vehicle/CompInfoActuators.cc \
+    src/Vehicle/CompInfoEvents.cc \
     src/Vehicle/CompInfoParam.cc \
-    src/Vehicle/CompInfoVersion.cc \
+    src/Vehicle/CompInfoGeneral.cc \
+    src/Vehicle/ComponentInformationCache.cc \
     src/Vehicle/ComponentInformationManager.cc \
+    src/Vehicle/EventHandler.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
+    src/Vehicle/HealthAndArmingChecks.cc \
+    src/Vehicle/ImageProtocolManager.cc \
     src/Vehicle/InitialConnectStateMachine.cc \
     src/Vehicle/MAVLinkLogManager.cc \
+    src/Vehicle/MAVLinkStreamConfig.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/StateMachine.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
@@ -926,11 +974,15 @@ SOURCES += \
     src/Vehicle/VehicleClockFactGroup.cc \
     src/Vehicle/VehicleDistanceSensorFactGroup.cc \
     src/Vehicle/VehicleEstimatorStatusFactGroup.cc \
+    src/Vehicle/VehicleLocalPositionFactGroup.cc \
+    src/Vehicle/VehicleLocalPositionSetpointFactGroup.cc \
     src/Vehicle/VehicleGPSFactGroup.cc \
+    src/Vehicle/VehicleGPS2FactGroup.cc \
     src/Vehicle/VehicleLinkManager.cc \
     src/Vehicle/VehicleSetpointFactGroup.cc \
     src/Vehicle/VehicleTemperatureFactGroup.cc \
     src/Vehicle/VehicleVibrationFactGroup.cc \
+    src/Vehicle/VehicleHygrometerFactGroup.cc \
     src/Vehicle/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
@@ -1136,6 +1188,7 @@ PX4FirmwarePlugin {
         src/FirmwarePlugin/PX4 \
 
     HEADERS+= \
+        src/AutoPilotPlugins/PX4/ActuatorComponent.h \
         src/AutoPilotPlugins/PX4/AirframeComponent.h \
         src/AutoPilotPlugins/PX4/AirframeComponentAirframes.h \
         src/AutoPilotPlugins/PX4/AirframeComponentController.h \
@@ -1144,6 +1197,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.h \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
+        src/AutoPilotPlugins/PX4/PX4FlightBehavior.h \
         src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
         src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.h \
         src/AutoPilotPlugins/PX4/PX4TuningComponent.h \
@@ -1156,6 +1210,7 @@ PX4FirmwarePlugin {
         src/FirmwarePlugin/PX4/PX4ParameterMetaData.h \
 
     SOURCES += \
+        src/AutoPilotPlugins/PX4/ActuatorComponent.cc \
         src/AutoPilotPlugins/PX4/AirframeComponent.cc \
         src/AutoPilotPlugins/PX4/AirframeComponentAirframes.cc \
         src/AutoPilotPlugins/PX4/AirframeComponentController.cc \
@@ -1164,6 +1219,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
+        src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc \
         src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
         src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.cc \
         src/AutoPilotPlugins/PX4/PX4TuningComponent.cc \
@@ -1209,7 +1265,10 @@ SOURCES += \
 
 #-------------------------------------------------------------------------------------
 # MAVLink Inspector
-contains (DEFINES, QGC_ENABLE_MAVLINK_INSPECTOR) {
+
+contains (DEFINES, QGC_DISABLE_MAVLINK_INSPECTOR) {
+    message("Disable mavlink inspector")
+} else {
     HEADERS += \
         src/AnalyzeView/MAVLinkInspectorController.h
     SOURCES += \
@@ -1306,7 +1365,8 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/airmap.qrc
 
     INCLUDEPATH += \
-        src/Airmap
+        src/Airmap \
+        src/Airmap/services
 
     HEADERS += \
         src/Airmap/AirMapAdvisoryManager.h \
@@ -1322,6 +1382,21 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapVehicleManager.h \
         src/Airmap/AirMapWeatherInfoManager.h \
         src/Airmap/LifetimeChecker.h \
+        src/Airmap/services/advisory.h \
+        src/Airmap/services/aircrafts.h \
+        src/Airmap/services/airspaces.h \
+        src/Airmap/services/authenticator.h \
+        src/Airmap/services/client.h \
+        src/Airmap/services/dispatcher.h \
+        src/Airmap/services/flight_plans.h \
+        src/Airmap/services/flights.h \
+        src/Airmap/services/logger.h \
+        src/Airmap/services/pilots.h \
+        src/Airmap/services/rulesets.h \
+        src/Airmap/services/status.h \
+        src/Airmap/services/telemetry.h \
+        src/Airmap/services/traffic.h \
+        src/Airmap/services/types.h \
 
     SOURCES += \
         src/Airmap/AirMapAdvisoryManager.cc \
@@ -1336,6 +1411,21 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapTrafficMonitor.cc \
         src/Airmap/AirMapVehicleManager.cc \
         src/Airmap/AirMapWeatherInfoManager.cc \
+        src/Airmap/services/advisory.cpp \
+        src/Airmap/services/aircrafts.cpp \
+        src/Airmap/services/airspaces.cpp \
+        src/Airmap/services/authenticator.cpp \
+        src/Airmap/services/client.cpp \
+        src/Airmap/services/dispatcher.cpp \
+        src/Airmap/services/flight_plans.cpp \
+        src/Airmap/services/flights.cpp \
+        src/Airmap/services/logger.cpp \
+        src/Airmap/services/pilots.cpp \
+        src/Airmap/services/rulesets.cpp \
+        src/Airmap/services/status.cpp \
+        src/Airmap/services/telemetry.cpp \
+        src/Airmap/services/traffic.cpp \
+        src/Airmap/services/types.cpp \
 
     #-- Do we have an API key?
     exists(src/Airmap/Airmap_api_key.h) {
@@ -1436,3 +1526,22 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 
 DISTFILES += \
     src/QmlControls/QGroundControl/Specific/qmldir
+
+#
+# Steps for "install" target on Linux
+#
+LinuxBuild {
+    target.path = $${PREFIX}/bin/
+
+    share_qgroundcontrol.path = $${PREFIX}/share/qgroundcontrol/
+    share_qgroundcontrol.files = $${IN_PWD}/resources/
+
+    share_icons.path = $${PREFIX}/share/icons/hicolor/128x128/apps/
+    share_icons.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
+    share_metainfo.path = $${PREFIX}/share/metainfo/
+    share_metainfo.files = $${IN_PWD}/deploy/org.mavlink.qgroundcontrol.metainfo.xml
+    share_applications.path = $${PREFIX}/share/applications/
+    share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
+
+    INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
+}

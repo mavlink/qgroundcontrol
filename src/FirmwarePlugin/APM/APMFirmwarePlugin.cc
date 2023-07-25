@@ -26,6 +26,7 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
 #include "ArduSubFirmwarePlugin.h"
+#include "LinkManager.h"
 
 #include <QTcpSocket>
 
@@ -185,11 +186,16 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
     paramValue.param_value = paramUnion.param_float;
 
     // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
+    uint8_t channel = _reencodeMavlinkChannel();
+    QMutexLocker reencode_lock{&_reencodeMavlinkChannelMutex()};
+
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
+
+    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_param_value_encode_chan(message->sysid,
                                         message->compid,
-                                        0,                  // Re-encoding uses reserved channel 0
+                                        channel,
                                         message,
                                         &paramValue);
 }
@@ -240,7 +246,11 @@ void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, 
     }
 
     _adjustOutgoingMavlinkMutex.lock();
-    mavlink_msg_param_set_encode_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message, &paramSet);
+    mavlink_msg_param_set_encode_chan(message->sysid,
+                                      message->compid,
+                                      outgoingLink->mavlinkChannel(),
+                                      message,
+                                      &paramSet);
     _adjustOutgoingMavlinkMutex.unlock();
 }
 
@@ -299,27 +309,39 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_messa
 
 bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
+    // We use loss of BATTERY_STATUS/HOME_POSITION as a trigger to reinitialize stream rates
+    auto instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+
     if (message->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
         // We need to look at all heartbeats that go by from any component
         _handleIncomingHeartbeat(vehicle, message);
-        return true;
+    } else if (message->msgid == MAVLINK_MSG_ID_BATTERY_STATUS && instanceData)  {
+        instanceData->lastBatteryStatusTime = QTime::currentTime();
+    } else if (message->msgid == MAVLINK_MSG_ID_HOME_POSITION && instanceData)  {
+        instanceData->lastHomePositionTime = QTime::currentTime();
+    } else {
+        // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
+        if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
+            switch (message->msgid) {
+            case MAVLINK_MSG_ID_PARAM_VALUE:
+                _handleIncomingParamValue(vehicle, message);
+                break;
+            case MAVLINK_MSG_ID_STATUSTEXT:
+                return _handleIncomingStatusText(vehicle, message);
+            case MAVLINK_MSG_ID_RC_CHANNELS:
+                _handleRCChannels(vehicle, message);
+                break;
+            case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+                _handleRCChannelsRaw(vehicle, message);
+                break;
+            }
+        }
     }
 
-    // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
-    if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
-        switch (message->msgid) {
-        case MAVLINK_MSG_ID_PARAM_VALUE:
-            _handleIncomingParamValue(vehicle, message);
-            break;
-        case MAVLINK_MSG_ID_STATUSTEXT:
-            return _handleIncomingStatusText(vehicle, message);
-        case MAVLINK_MSG_ID_RC_CHANNELS:
-            _handleRCChannels(vehicle, message);
-            break;
-        case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-            _handleRCChannelsRaw(vehicle, message);
-            break;
-        }
+    // If we lose BATTERY_STATUS/HOME_POSITION for reinitStreamsTimeoutSecs seconds we re-initialize stream rates
+    const int reinitStreamsTimeoutSecs = 10;
+    if (instanceData && (instanceData->lastBatteryStatusTime.secsTo(QTime::currentTime()) > reinitStreamsTimeoutSecs || instanceData->lastHomePositionTime.secsTo(QTime::currentTime()) > reinitStreamsTimeoutSecs)) {
+        initializeStreamRates(vehicle);
     }
 
     return true;
@@ -349,16 +371,20 @@ QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
 {
     // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
+    uint8_t channel = _reencodeMavlinkChannel();
+    QMutexLocker reencode_lock{&_reencodeMavlinkChannelMutex()};
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
 
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
 
     statusText.severity = MAV_SEVERITY_INFO;
+
+    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     mavlink_msg_statustext_encode_chan(message->sysid,
                                        message->compid,
-                                       0,                  // Re-encoding uses reserved channel 0
+                                       channel,
                                        message,
                                        &statusText);
 }
@@ -367,37 +393,58 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
 {
     mavlink_statustext_t statusText;
     mavlink_msg_statustext_decode(message, &statusText);
+
     // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
+    uint8_t channel = _reencodeMavlinkChannel();
+    QMutexLocker reencode_lock{&_reencodeMavlinkChannelMutex()};
+
+    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
     statusText.severity = MAV_SEVERITY_INFO;
-    mavlink_msg_statustext_encode_chan(message->sysid, message->compid, 0, message, &statusText);
+
+    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
+    mavlink_msg_statustext_encode_chan(message->sysid,
+                                       message->compid,
+                                       channel,
+                                       message,
+                                       &statusText);
 }
 
 void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
 {
-    APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
+    // We use loss of BATTERY_STATUS/HOME_POSITION as a trigger to reinitialize stream rates
+    auto instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+    if (!instanceData) {
+        instanceData = new APMFirmwarePluginInstanceData(vehicle);
+        instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
+        vehicle->setFirmwarePluginInstanceData(instanceData);
+    }
 
-    struct StreamInfo_s {
-        MAV_DATA_STREAM mavStream;
-        int             streamRate;
-    };
+    if (qgcApp()->toolbox()->settingsManager()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
 
-    StreamInfo_s rgStreamInfo[] = {
-        { MAV_DATA_STREAM_RAW_SENSORS,      streamRates->streamRateRawSensors()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTENDED_STATUS,  streamRates->streamRateExtendedStatus()->rawValue().toInt() },
-        { MAV_DATA_STREAM_RC_CHANNELS,      streamRates->streamRateRCChannels()->rawValue().toInt() },
-        { MAV_DATA_STREAM_POSITION,         streamRates->streamRatePosition()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTRA1,           streamRates->streamRateExtra1()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTRA2,           streamRates->streamRateExtra2()->rawValue().toInt() },
-        { MAV_DATA_STREAM_EXTRA3,           streamRates->streamRateExtra3()->rawValue().toInt() },
-    };
+        APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
 
-    for (size_t i=0; i<sizeof(rgStreamInfo)/sizeof(rgStreamInfo[0]); i++) {
-        const StreamInfo_s& streamInfo = rgStreamInfo[i];
+        struct StreamInfo_s {
+            MAV_DATA_STREAM mavStream;
+            int             streamRate;
+        };
 
-        if (streamInfo.streamRate >= 0) {
-            vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
+        StreamInfo_s rgStreamInfo[] = {
+            { MAV_DATA_STREAM_RAW_SENSORS,      streamRates->streamRateRawSensors()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTENDED_STATUS,  streamRates->streamRateExtendedStatus()->rawValue().toInt() },
+            { MAV_DATA_STREAM_RC_CHANNELS,      streamRates->streamRateRCChannels()->rawValue().toInt() },
+            { MAV_DATA_STREAM_POSITION,         streamRates->streamRatePosition()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTRA1,           streamRates->streamRateExtra1()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTRA2,           streamRates->streamRateExtra2()->rawValue().toInt() },
+            { MAV_DATA_STREAM_EXTRA3,           streamRates->streamRateExtra3()->rawValue().toInt() },
+        };
+
+        for (size_t i=0; i<sizeof(rgStreamInfo)/sizeof(rgStreamInfo[0]); i++) {
+            const StreamInfo_s& streamInfo = rgStreamInfo[i];
+
+            if (streamInfo.streamRate >= 0) {
+                vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
+            }
         }
     }
 
@@ -407,6 +454,8 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
     // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. So we set showError=false.
     // Which also means than on older firmwares you may be left with some missing features.
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
+
+    instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
 }
 
 
@@ -444,10 +493,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
             break;
         }
     } else {
-        if (qgcApp()->toolbox()->settingsManager()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
-            // Streams are not started automatically on APM stack (sort of)
-            initializeStreamRates(vehicle);
-        }
+        initializeStreamRates(vehicle);
     }
 
     if (qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoSource3DRSolo) {
@@ -481,13 +527,6 @@ FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData,
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass)
 {
-    return {
-#if 0
-    // Waiting for module update
-        MAV_CMD_DO_SET_REVERSE,
-#endif
-    };
-
     QList<MAV_CMD> supportedCommands = {
         MAV_CMD_NAV_WAYPOINT,
         MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TURNS, MAV_CMD_NAV_LOITER_TIME,
@@ -573,6 +612,24 @@ QObject* APMFirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
     return metaData;
 }
 
+QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle) 
+{
+    uint64_t hobbsTimeSeconds = 0;
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "STAT_FLTTIME")) {
+        Fact* factFltTime = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "STAT_FLTTIME");
+        hobbsTimeSeconds = (uint64_t)factFltTime->rawValue().toUInt();
+        qCDebug(VehicleLog) << "Hobbs Meter raw Ardupilot(s):" << "(" <<  hobbsTimeSeconds << ")";
+    }
+
+    int hours   = hobbsTimeSeconds / 3600;
+    int minutes = (hobbsTimeSeconds % 3600) / 60;
+    int seconds = hobbsTimeSeconds % 60;
+    QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
+    qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
+    return timeStr;
+} 
+
 bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
     return vehicle->flightMode() == "Guided";
@@ -582,11 +639,7 @@ void APMFirmwarePlugin::_soloVideoHandshake(void)
 {
     QTcpSocket* socket = new QTcpSocket(this);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &APMFirmwarePlugin::_artooSocketError);
-#else
     QObject::connect(socket, &QAbstractSocket::errorOccurred, this, &APMFirmwarePlugin::_artooSocketError);
-#endif
     socket->connectToHost(_artooIP, _artooVideoHandshakePort);
 }
 
@@ -604,6 +657,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
+        if (vehicle->versionCompare(4, 1, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.1.xml");
+        }
         if (vehicle->versionCompare(4, 0, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.0.xml");
         }
@@ -623,6 +679,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
+        if (vehicle->versionCompare(4, 1, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.1.xml");
+        }
         if (vehicle->versionCompare(4, 0, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.0.xml");
         }
@@ -636,6 +695,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
 
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
+        if (vehicle->versionCompare(4, 1, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.1.xml");
+        }
         if (vehicle->versionCompare(4, 0, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.0.xml");
         }
@@ -648,6 +710,9 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
 
     case MAV_TYPE_SUBMARINE:
+        if (vehicle->versionCompare(4, 1, 0) >= 0) { // 4.1.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.1.xml");
+        }
         if (vehicle->versionCompare(4, 0, 0) >= 0) { // 4.0.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.0.xml");
         }
@@ -699,10 +764,15 @@ void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
     _setFlightModeAndValidate(vehicle, smartRTL ? smartRTLFlightMode() : rtlFlightMode());
 }
 
-void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
+void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(tr("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    if (pauseVehicle && !_setFlightModeAndValidate(vehicle, pauseFlightMode())) {
+        qgcApp()->showAppMessage(tr("Unable to pause vehicle."));
         return;
     }
 
@@ -713,12 +783,10 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     setGuidedMode(vehicle, true);
 
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_message_t                       msg;
         mavlink_set_position_target_local_ned_t cmd;
-        SharedLinkInterfacePtr                  sharedLink = weakLink.lock();
-
 
         memset(&cmd, 0, sizeof(cmd));
 
@@ -858,10 +926,9 @@ QString APMFirmwarePlugin::_versionRegex() {
 
 void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* message)
 {
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_rc_channels_t   channels;
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
         mavlink_msg_rc_channels_decode(message, &channels);
         //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
@@ -880,10 +947,9 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* m
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
 {
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         mavlink_rc_channels_raw_t   channels;
-        SharedLinkInterfacePtr      sharedLink = weakLink.lock();
 
         mavlink_msg_rc_channels_raw_decode(message, &channels);
         //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
@@ -921,11 +987,10 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
         return;
     }
 
-    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
         MAVLinkProtocol*                mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_global_position_int_t   globalPositionInt;
-        SharedLinkInterfacePtr          sharedLink = weakLink.lock();
 
         memset(&globalPositionInt, 0, sizeof(globalPositionInt));
 
@@ -948,4 +1013,28 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
                                                     &globalPositionInt);
         vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
+}
+
+uint8_t APMFirmwarePlugin::_reencodeMavlinkChannel()
+{
+    // This mutex is only to guard against a race on allocating the channel id
+    // if two firmware plugins are created simultaneously from different threads
+    //
+    // Use of the allocated channel should be guarded by the mutex returned from
+    // _reencodeMavlinkChannelMutex()
+    //
+    static QMutex _channelMutex{};
+    _channelMutex.lock();
+    static uint8_t channel{LinkManager::invalidMavlinkChannel()};
+    if (LinkManager::invalidMavlinkChannel() == channel) {
+        channel = qgcApp()->toolbox()->linkManager()->allocateMavlinkChannel();
+    }
+    _channelMutex.unlock();
+    return channel;
+}
+
+QMutex& APMFirmwarePlugin::_reencodeMavlinkChannelMutex()
+{
+    static QMutex _mutex{};
+    return _mutex;
 }

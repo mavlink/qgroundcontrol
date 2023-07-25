@@ -19,6 +19,7 @@
 #include "LinkInterface.h"
 #include "Fact.h"
 #include "MissionItem.h"
+#include "MockLink.h"
 
 #define UT_REGISTER_TEST(className)             static UnitTestWrapper<className> className(#className, false);
 #define UT_REGISTER_TEST_STANDALONE(className)  static UnitTestWrapper<className> className(#className, true);  // Test will only be run with specifically called to from command line
@@ -76,7 +77,7 @@ public:
     //          @param Expected failure response flags
     void checkExpectedFileDialog(int expectFailFlags = expectFailNoFailure);
 
-    bool standalone(void) { return _standalone; }
+    bool standalone(void) const{ return _standalone; }
     void setStandalone(bool standalone) { _standalone = standalone; }
 
     /// @brief Adds a unit test to the list. Should only be called by UnitTestWrapper.
@@ -114,7 +115,7 @@ protected slots:
     virtual void cleanup(void);
 
 protected:
-    void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
+    void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     void _connectMockLinkNoInitialConnectSequence(void) { _connectMockLink(MAV_AUTOPILOT_INVALID); }
     void _disconnectMockLink(void);
     void _missionItemsEqual(MissionItem& actual, MissionItem& expected);

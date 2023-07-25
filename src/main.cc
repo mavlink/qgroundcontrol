@@ -21,7 +21,10 @@
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "AppMessages.h"
-#include "SerialLink.h"
+
+#ifndef NO_SERIAL_LINK
+    #include "SerialLink.h"
+#endif
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
@@ -211,6 +214,18 @@ bool checkAndroidWritePermission() {
 }
 #endif
 
+// To shut down QGC on Ctrl+C on Linux
+#ifdef Q_OS_LINUX
+#include <csignal>
+
+void sigHandler(int s)
+{
+    std::signal(s, SIG_DFL);
+    QApplication::instance()->quit();
+}
+
+#endif /* Q_OS_LINUX */
+
 //-----------------------------------------------------------------------------
 /**
  * @brief Starts the application
@@ -223,7 +238,14 @@ bool checkAndroidWritePermission() {
 int main(int argc, char *argv[])
 {
 #ifndef __mobile__
-    RunGuard guard("QGroundControlRunGuardKey");
+    // We make the runguard key different for custom and non custom
+    // builds, so they can be executed together in the same device.
+    // Stable and Daily have same QGC_APPLICATION_NAME so they would
+    // not be able to run at the same time
+    QString runguardString(QGC_APPLICATION_NAME);
+    runguardString.append("RunGuardKey");
+
+    RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);
@@ -270,6 +292,11 @@ int main(int argc, char *argv[])
         }
     }
 #endif
+
+#ifdef Q_OS_LINUX
+    std::signal(SIGINT, sigHandler);
+    std::signal(SIGTERM, sigHandler);
+#endif /* Q_OS_LINUX */
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue

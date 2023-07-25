@@ -14,16 +14,10 @@ jobs:
     include:
         - stage: "Build"
           name: "Linux Installer"
+          if: branch = master
           os: linux
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
-          sudo: required
-        - stage: "Build"
-          name: "Linux Debug"
-          os: linux
-          dist: bionic
-          env: SPEC=linux-g++-64 CONFIG=debug
-          services: xvfb
           sudo: required
         - stage: "Build"
           name: "Android 32 bit"
@@ -39,6 +33,7 @@ jobs:
           sudo: false
         - stage: "Build"
           name: "OSX Installer"
+          if: branch = master
           os: osx
           osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
@@ -112,9 +107,9 @@ install:
 
   # android dependencies: qt, gstreamer, android-ndk
   - if [ "${SPEC}" = "android-clang" ]; then
-        wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-1.0-android-universal-1.18.1.tar.xz &&
-        mkdir gstreamer-1.0-android-universal-1.18.1 &&
-        tar xf gstreamer-1.0-android-universal-1.18.1.tar.xz -C gstreamer-1.0-android-universal-1.18.1 &&
+        wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz &&
+        mkdir gstreamer-1.0-android-universal-1.18.5 &&
+        tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5 &&
         wget --quiet https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip &&
         unzip android-ndk-r20-linux-x86_64.zip > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r20 &&
@@ -179,8 +174,9 @@ before_script:
         export CONFIG=release;
     fi
 
-  # insert QGC version in AndroidManifest.xml
-  - if [ "${SPEC}" = "android-clang" ]; then
+  # Update QGC version in AndroidManifest.xml based on git tag. We do not do this on pull requests
+  # since it is likely the tags out out of date on the pull and may cause an error.
+  - if [ "${SPEC}" = "android-clang"  && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         git remote set-branches origin 'master' &&
         git fetch --tags origin master &&
         ./tools/update_android_version.sh ${BITNESS} ${TRAVIS_BRANCH};

@@ -34,8 +34,9 @@ public:
     bool verify             (const FirmwareImage* image);
     bool reboot             (void);
 
-    static const int boardIDPX4Flow     = 6;        ///< PX4 Flow board, as from USB PID
-    static const int boardID3DRRadio    = 78;       ///< 3DR Radio. This is an arbitrary value unrelated to the PID
+    static const int boardIDPX4Flow         = 6;        ///< PX4 Flow board, as from USB PID
+    static const int boardIDSiKRadio1000    = 78;       ///< Original radio based on SI1000 chip
+    static const int boardIDSiKRadio1060    = 80;       ///< Newer radio based on SI1060 chip
 
     /// Simulated board id for V3 which is a V2 board which supports larger flash space
     /// IMPORTANT: Make sure this id does not conflict with any newly added real board ids

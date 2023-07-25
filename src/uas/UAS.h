@@ -135,19 +135,6 @@ protected:
     bool attitudeStamped;           ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
     quint64 lastAttitude;           ///< Timestamp of last attitude measurement
 
-    // dongfang: This looks like a candidate for being moved off to a separate class.
-    /// IMAGING
-    int imageSize;              ///< Image size being transmitted (bytes)
-    int imagePackets;           ///< Number of data packets being sent for this image
-    int imagePacketsArrived;    ///< Number of data packets received
-    int imagePayload;           ///< Payload size per transmitted packet (bytes). Standard is 254, and decreases when image resolution increases.
-    int imageQuality;           ///< Quality of the transmitted image (percentage)
-    int imageType;              ///< Type of the transmitted image (BMP, PNG, JPEG, RAW 8 bit, RAW 32 bit)
-    int imageWidth;             ///< Width of the image stream
-    int imageHeight;            ///< Width of the image stream
-    QByteArray imageRecBuffer;  ///< Buffer for the incoming bytestream
-    QImage image;               ///< Image data of last completely transmitted image
-    quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
 
     /// SIMULATION NOISE
@@ -169,9 +156,6 @@ public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
-    QImage getImage();
-    void requestImage();
-
 public slots:
     /** @brief Order the robot to pair its receiver **/
     void pairRX(int rxType, int rxSubType);
@@ -180,10 +164,6 @@ public slots:
     virtual void receiveMessage(mavlink_message_t message);
 
 signals:
-    void imageStarted(quint64 timestamp);
-    /** @brief A new camera image has arrived */
-    void imageReady(UASInterface* uas);
-
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);

@@ -174,7 +174,7 @@ Item {
     Connections {
         target: _root.parent
 
-        onWidthChanged: {
+        function onWidthChanged() {
             if (!_componentComplete) {
                 // Wait until first time setup is done
                 return

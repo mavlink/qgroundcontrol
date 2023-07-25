@@ -212,11 +212,5 @@ Item {
         touchPoints:            [ TouchPoint { id: touchPoint } ]
         onPressed:              _joyRoot.thumbDown(touchPoints)
         onReleased:             _joyRoot.reCenter()
-
-        Rectangle {
-            border.color: "red"
-            color: "transparent"
-            anchors.fill: parent
-        }
     }
 }

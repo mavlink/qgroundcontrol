@@ -80,7 +80,8 @@ public:
     Q_PROPERTY(double compass3CalFitness                    READ compass3CalFitness                         NOTIFY compass3CalFitnessChanged)
 
     Q_INVOKABLE void calibrateCompass           (void);
-    Q_INVOKABLE void calibrateAccel             (void);
+    Q_INVOKABLE void calibrateAccel             (bool doSimpleAccelCal);
+    Q_INVOKABLE void calibrateCompassNorth      (float lat, float lon, int mask);
     Q_INVOKABLE void calibrateGyro              (void);
     Q_INVOKABLE void calibrateMotorInterference (void);
     Q_INVOKABLE void levelHorizon               (void);
@@ -100,6 +101,7 @@ public:
         CalTypeLevelHorizon,
         CalTypeCompassMot,
         CalTypePressure,
+        CalTypeAccelFast,
         CalTypeNone
     } CalType_t;
     Q_ENUM(CalType_t)

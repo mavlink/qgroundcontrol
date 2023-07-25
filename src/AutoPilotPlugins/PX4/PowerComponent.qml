@@ -57,11 +57,8 @@ SetupPage {
                 id: controller
                 onOldFirmware:          mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName))
                 onNewerFirmware:        mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName))
-                onBatteryConnected:     mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("Performing calibration. This will take a few seconds.."))
-                onCalibrationFailed:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"),    errorMessage)
-                onCalibrationSuccess:   mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("Calibration complete. You can disconnect your battery now if you like."))
-                onConnectBattery:       mainWindow.showMessageDialog(qsTr("ESC Calibration"),           _highlightPrefix + qsTr("WARNING: Props must be removed from vehicle prior to performing ESC calibration.") + _highlightSuffix + qsTr(" Connect the battery now and calibration will begin."))
                 onDisconnectBattery:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"),    qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."))
+                onConnectBattery:       { var dialog = mainWindow.showPopupDialogFromComponent(escCalibrationDlgComponent); dialog.disableAcceptButton() }
             }
 
             ColumnLayout {
@@ -520,6 +517,34 @@ SetupPage {
                                     batParams.battAmpsPerVolt.value = newAmpsPerVolt
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            Component {
+                id: escCalibrationDlgComponent
+
+                QGCPopupDialog {
+                    id:         popupDialog
+                    title:      qsTr("ESC Calibration")
+                    buttons:    StandardButton.Ok
+
+                    Connections {
+                        target: controller
+
+                        onBatteryConnected:     textLabel.text = qsTr("Performing calibration. This will take a few seconds..")
+                        onCalibrationFailed:    { popupDialog.enableAcceptButton(); textLabel.text = _highlightPrefix + qsTr("ESC Calibration failed. ") + _highlightSuffix + errorMessage }
+                        onCalibrationSuccess:   { popupDialog.enableAcceptButton(); textLabel.text = qsTr("Calibration complete. You can disconnect your battery now if you like.") }
+                    }
+
+                    ColumnLayout {
+                        QGCLabel {
+                            id:                     textLabel
+                            wrapMode:               Text.WordWrap
+                            text:                   _highlightPrefix + qsTr("WARNING: Props must be removed from vehicle prior to performing ESC calibration.") + _highlightSuffix + qsTr(" Connect the battery now and calibration will begin.")
+                            Layout.fillWidth:       true
+                            Layout.maximumWidth:    mainWindow.width / 2
                         }
                     }
                 }

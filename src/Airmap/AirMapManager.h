@@ -13,8 +13,8 @@
 #include "AirspaceManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <airmap/qt/logger.h>
-#include <airmap/qt/types.h>
+#include <Airmap/services/logger.h>
+#include <Airmap/services/types.h>
 
 #include <memory>
 
@@ -60,12 +60,14 @@ private slots:
     void _authStatusChanged (AirspaceManager::AuthStatus status);
 
 private:
-    QString                                         _connectStatus;
-    QTimer                                          _settingsTimer;
-    AirMapSharedState                               _shared;
-    std::shared_ptr<airmap::qt::Logger>             _logger;
-    std::shared_ptr<airmap::qt::DispatchingLogger>  _dispatchingLogger;
-    AirspaceManager::AuthStatus                     _authStatus;
+    QString                                                 _connectStatus;
+    QTimer                                                  _settingsTimer;
+    AirMapSharedState                                       _shared;
+    std::shared_ptr<airmap::services::Logger>               _logger;
+    std::shared_ptr<airmap::services::DispatchingLogger>    _dispatchingLogger; 
+    AirspaceManager::AuthStatus                             _authStatus;
+    const std::string                                       _telemetryHost = "telemetry.airmap.com";
+    const uint16_t                                          _telemetryPort = 16060;
 };
 
 

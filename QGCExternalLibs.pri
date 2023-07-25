@@ -102,6 +102,20 @@ INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
+# [REQUIRED] Events submodule
+HEADERS+= \
+	libs/libevents/libevents/libs/cpp/protocol/receive.h \
+	libs/libevents/libevents/libs/cpp/parse/parser.h \
+	libs/libevents/libevents/libs/cpp/generated/events_generated.h \
+	libs/libevents/libevents_definitions.h
+SOURCES += \
+	libs/libevents/libevents/libs/cpp/protocol/receive.cpp \
+	libs/libevents/libevents/libs/cpp/parse/parser.cpp \
+	libs/libevents/definitions.cpp
+INCLUDEPATH += \
+        libs/libevents \
+        libs/libevents/libs/cpp/parse
+#
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib
 SOURCES += \
@@ -117,6 +131,75 @@ WindowsBuild {
 } else {
     LIBS += -lz
 }
+
+#
+# [REQUIRED] LZMA decompression library
+HEADERS+= \
+    libs/xz-embedded/linux/include/linux/xz.h \
+    libs/xz-embedded/linux/lib/xz/xz_lzma2.h \
+    libs/xz-embedded/linux/lib/xz/xz_private.h \
+    libs/xz-embedded/linux/lib/xz/xz_stream.h \
+    libs/xz-embedded/userspace/xz_config.h
+SOURCES += \
+    libs/xz-embedded/linux/lib/xz/xz_crc32.c \
+    libs/xz-embedded/linux/lib/xz/xz_crc64.c \
+    libs/xz-embedded/linux/lib/xz/xz_dec_lzma2.c \
+    libs/xz-embedded/linux/lib/xz/xz_dec_stream.c
+INCLUDEPATH += \
+    libs/xz-embedded/userspace \
+    libs/xz-embedded/linux/include/linux
+DEFINES += XZ_DEC_ANY_CHECK XZ_USE_CRC64
+
+# [REQUIRED] QMDNS Engine
+HEADERS+= \
+    libs/qmdnsengine_export.h \
+    libs/qmdnsengine/src/src/bitmap_p.h \
+    libs/qmdnsengine/src/src/browser_p.h \
+    libs/qmdnsengine/src/src/cache_p.h \
+    libs/qmdnsengine/src/src/hostname_p.h \
+    libs/qmdnsengine/src/src/message_p.h \
+    libs/qmdnsengine/src/src/prober_p.h \
+    libs/qmdnsengine/src/src/provider_p.h \
+    libs/qmdnsengine/src/src/query_p.h \
+    libs/qmdnsengine/src/src/record_p.h \
+    libs/qmdnsengine/src/src/resolver_p.h \
+    libs/qmdnsengine/src/src/server_p.h \
+    libs/qmdnsengine/src/src/service_p.h \
+    libs/qmdnsengine/src/include/qmdnsengine/abstractserver.h \
+    libs/qmdnsengine/src/include/qmdnsengine/bitmap.h \
+    libs/qmdnsengine/src/include/qmdnsengine/browser.h \
+    libs/qmdnsengine/src/include/qmdnsengine/cache.h \
+    libs/qmdnsengine/src/include/qmdnsengine/dns.h \
+    libs/qmdnsengine/src/include/qmdnsengine/hostname.h \
+    libs/qmdnsengine/src/include/qmdnsengine/mdns.h \
+    libs/qmdnsengine/src/include/qmdnsengine/message.h \
+    libs/qmdnsengine/src/include/qmdnsengine/prober.h \
+    libs/qmdnsengine/src/include/qmdnsengine/provider.h \
+    libs/qmdnsengine/src/include/qmdnsengine/query.h \
+    libs/qmdnsengine/src/include/qmdnsengine/record.h \
+    libs/qmdnsengine/src/include/qmdnsengine/resolver.h \
+    libs/qmdnsengine/src/include/qmdnsengine/server.h \
+    libs/qmdnsengine/src/include/qmdnsengine/service.h
+SOURCES += \
+    libs/qmdnsengine/src/src/abstractserver.cpp \
+    libs/qmdnsengine/src/src/bitmap.cpp \
+    libs/qmdnsengine/src/src/browser.cpp \
+    libs/qmdnsengine/src/src/cache.cpp \
+    libs/qmdnsengine/src/src/dns.cpp \
+    libs/qmdnsengine/src/src/hostname.cpp \
+    libs/qmdnsengine/src/src/mdns.cpp \
+    libs/qmdnsengine/src/src/message.cpp \
+    libs/qmdnsengine/src/src/prober.cpp \
+    libs/qmdnsengine/src/src/provider.cpp \
+    libs/qmdnsengine/src/src/query.cpp \
+    libs/qmdnsengine/src/src/record.cpp \
+    libs/qmdnsengine/src/src/resolver.cpp \
+    libs/qmdnsengine/src/src/server.cpp \
+    libs/qmdnsengine/src/src/service.cpp
+INCLUDEPATH += \
+    libs/ \
+    libs/qmdnsengine/src/include/ \
+    libs/qmdnsengine/src/src/
 
 #
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
@@ -202,26 +285,44 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
-    AIRMAPD_PATH    = $$PWD/libs/airmapd
-    AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
-    message('Looking for Airmap in folder "$${AIRMAPD_PATH}", variant: "$$AIRMAP_QT_PATH"')
+    AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmap-platform-sdk
+    AIRMAP_QT_PATH              = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
+    message("Including support for AirMap")
     MacBuild {
-        exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
+        exists("$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH") {
             message("Including support for AirMap for macOS")
             LIBS += -L$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
     } else:LinuxBuild {
-        exists($${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH) {
-            message("Including support for AirMap for Linux")
-            LIBS += -L$${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
-            DEFINES += QGC_AIRMAP_ENABLED
-        }
+        #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
+        AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.0/airmap-platform-sdk-2.0.0-Linux.deb"
+        AIRMAP_PLATFORM_SDK_FILEPATH = "$${OUT_PWD}/airmap-platform-sdk.deb"
+        AIRMAP_PLATFORM_SDK_INSTALL_DIR = "tmp"
+
+        airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
+        airmap_platform_sdk_install.commands = \
+            rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
+            curl --location --output "$${AIRMAP_PLATFORM_SDK_FILEPATH}" "$${AIRMAP_PLATFORM_SDK_URL}" && \
+            ar p "$${AIRMAP_PLATFORM_SDK_FILEPATH}" data.tar.gz | tar xvz -C "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/" --strip-components=1 && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
+            rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
+            rm "$${AIRMAP_PLATFORM_SDK_FILEPATH}"
+        airmap_platform_sdk_install.depends =
+        QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
+        PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
+
+        LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH} -lairmap-cpp
+        DEFINES += QGC_AIRMAP_ENABLED
     } else {
         message("Skipping support for Airmap (unsupported platform)")
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \
-            $${AIRMAPD_PATH}/include
+            $${AIRMAP_PLATFORM_SDK_PATH}/include
     }
 }

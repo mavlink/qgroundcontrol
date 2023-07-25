@@ -154,7 +154,11 @@ Item {
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                 _missionItem.launchCoordinate = coordinate
-                if (_missionItem.launchTakeoffAtSameLocation) {
+
+                // We drop out of wizard mode after launch position is set if:
+                //  - Takeoff location is same as launch position so nothing left to do
+                //  - Not a fixed wing. Fixed wing require warning about tweaking climb out position
+                if (_missionItem.launchTakeoffAtSameLocation || !vehicle.fixedWing) {
                     _missionItem.wizardMode = false
                 }
                 _objMgrMouseClick.destroyObjects()

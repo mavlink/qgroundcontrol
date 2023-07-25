@@ -125,6 +125,7 @@
 		<file alias="QGroundControl/Controls/PreFlightCheckGroup.qml">../src/QmlControls/PreFlightCheckGroup.qml</file>
 		<file alias="QGroundControl/Controls/PreFlightCheckModel.qml">../src/QmlControls/PreFlightCheckModel.qml</file>
 		<file alias="QGroundControl/Controls/QGCButton.qml">../src/QmlControls/QGCButton.qml</file>
+		<file alias="QGroundControl/Controls/AutotuneUI.qml">../src/QmlControls/AutotuneUI.qml</file>
 		<file alias="QGroundControl/Controls/QGCCheckBox.qml">../src/QmlControls/QGCCheckBox.qml</file>
 		<file alias="QGroundControl/Controls/QGCColoredImage.qml">../src/QmlControls/QGCColoredImage.qml</file>
 		<file alias="QGroundControl/Controls/QGCControlDebug.qml">../src/QmlControls/QGCControlDebug.qml</file>
@@ -200,7 +201,6 @@
 		<file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">../src/FlightDisplay/FlightDisplayViewWidgets.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewAirspaceIndicator.qml">../src/FlightDisplay/FlyViewAirspaceIndicator.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyView.qml">../src/FlightDisplay/FlyView.qml</file>
-		<file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">../src/FlightDisplay/FlyViewCustomLayer.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewInstrumentPanel.qml">../src/FlightDisplay/FlyViewInstrumentPanel.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewMap.qml">../src/FlightDisplay/FlyViewMap.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlyViewMissionCompleteDialog.qml">../src/FlightDisplay/FlyViewMissionCompleteDialog.qml</file>
@@ -329,14 +329,16 @@
 		<file alias="Vehicle/VehicleFact.json">../src/Vehicle/VehicleFact.json</file>
 		<file alias="Vehicle/VibrationFact.json">../src/Vehicle/VibrationFact.json</file>
 		<file alias="Vehicle/WindFact.json">../src/Vehicle/WindFact.json</file>
+                <file alias="Vehicle/HygrometerFact.json">../src/Vehicle/HygrometerFact.json</file>
 		<file alias="Video.SettingsGroup.json">../src/Settings/Video.SettingsGroup.json</file>
 		<file alias="VTOLLandingPattern.FactMetaData.json">../src/MissionManager/VTOLLandingPattern.FactMetaData.json</file>
 	</qresource>
 	<qresource prefix="/MockLink">
 		<file alias="APMArduSubMockLink.params">../src/comm/APMArduSubMockLink.params</file>
 		<file alias="PX4MockLink.params">../src/comm/PX4MockLink.params</file>
-		<file alias="Version.MetaData.json">../src/comm/MockLink.Version.MetaData.json</file>
-		<file alias="Version.MetaData.json.gz">../src/comm/MockLink.Version.MetaData.json.gz</file>
+		<file alias="General.MetaData.json">../src/comm/MockLink.General.MetaData.json</file>
+		<file alias="General.MetaData.json.xz">src/comm/MockLink.General.MetaData.json.xz</file>
 		<file alias="Parameter.MetaData.json">../src/comm/MockLink.Parameter.MetaData.json</file>
+		<file alias="Parameter.MetaData.json.xz">src/comm/MockLink.Parameter.MetaData.json.xz</file>
 	</qresource>
 </RCC>

@@ -11,6 +11,7 @@
 
 #include <QThread>
 #include <QDateTime>
+#include <QLoggingCategory>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QMetaType>
@@ -26,6 +27,8 @@
 
 class LinkManager;
 
+Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
+
 /**
 * @brief The link interface defines the interface for all links used to communicate
 * with the ground station application.
@@ -36,7 +39,8 @@ class LinkInterface : public QThread
 
     friend class LinkManager;
 
-public:    
+public:
+
     virtual ~LinkInterface();
 
     Q_PROPERTY(bool isPX4Flow   READ isPX4Flow  CONSTANT)
@@ -58,6 +62,8 @@ public:
     virtual bool isLogReplay    (void) { return false; }
 
     uint8_t mavlinkChannel              (void) const;
+    bool    mavlinkChannelIsSet         (void) const;
+
     bool    decodedFirstMavlinkPacket   (void) const { return _decodedFirstMavlinkPacket; }
     bool    setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { return _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void    writeBytesThreadSafe        (const char *bytes, int length);
@@ -70,6 +76,7 @@ signals:
     void connected          (void);
     void disconnected       (void);
     void communicationError (const QString& title, const QString& error);
+    void _invokeWriteBytes  (QByteArray);
 
 protected:
     // Links are only created by LinkManager so constructor is not public
@@ -79,21 +86,28 @@ protected:
 
     SharedLinkConfigurationPtr _config;
 
+    ///
+    /// \brief _allocateMavlinkChannel
+    ///     Called by the LinkManager during LinkInterface construction
+    /// instructing the link to setup channels.
+    ///
+    /// Default implementation allocates a single channel. But some link types
+    /// (such as MockLink) need more than one.
+    ///
+    virtual bool _allocateMavlinkChannel();
+    virtual void _freeMavlinkChannel    ();
+
+private slots:
+    virtual void _writeBytes(const QByteArray) = 0; // Not thread safe if called directly, only writeBytesThreadSafe is thread safe
+
 private:
     // connect is private since all links should be created through LinkManager::createConnectedLink calls
     virtual bool _connect(void) = 0;
 
-    virtual void _writeBytes(const QByteArray) = 0; // Not thread safe, only writeBytesThreadSafe is thread safe
-
-    void _setMavlinkChannel(uint8_t channel);
-
-    bool    _mavlinkChannelSet          = false;
-    uint8_t _mavlinkChannel;
+    uint8_t _mavlinkChannel             = std::numeric_limits<uint8_t>::max();
     bool    _decodedFirstMavlinkPacket  = false;
     bool    _isPX4Flow                  = false;
     int     _vehicleReferenceCount      = 0;
-
-    mutable QMutex _writeBytesMutex;
 
     QMap<int /* vehicle id */, MavlinkMessagesTimer*> _mavlinkMessagesTimers;
 };

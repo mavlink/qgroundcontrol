@@ -73,7 +73,7 @@ private:
     void                    _removeLink             (LinkInterface* link);
     void                    _linkDisconnected       (void);
     bool                    _updatePrimaryLink      (void);
-    WeakLinkInterfacePtr    _bestActivePrimaryLink  (void);
+    SharedLinkInterfacePtr  _bestActivePrimaryLink  (void);
     void                    _commRegainedOnLink     (LinkInterface*  link);
 
     typedef struct LinkInfo {

@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick 2.3
 
 import QGroundControl               1.0
@@ -18,30 +17,23 @@ import QGroundControl.FlightMap     1.0
 import QGroundControl.Palette       1.0
 
 Rectangle {
-    id:             root
-    height:         _outerRadius * 4 + _valuesWidget.height
-    radius:         _outerRadius
-    color:          qgcPal.window
+    height: _outerRadius * 4
+    radius: _outerRadius
+    color:  QGroundControl.globalPalette.window
 
-    // These properties are expected to be in the Loader
-    //  property real maxHeight
-    //  property bool showValues - true: show value pages
-
-    property real   _innerRadius:   (width - (_topBottomMargin * 2)) / 2
-    property real   _outerRadius:   _innerRadius + _topBottomMargin * 2
-    property real   _margins:       (width * 0.05) / 2
+    property real _outerMargin: (width * 0.05) / 2
+    property real _outerRadius: width / 2
+    property real _innerRadius: _outerRadius - _outerMargin
 
     // Prevent all clicks from going through to lower layers
     DeadMouseArea {
         anchors.fill: parent
     }
 
-    QGCPalette { id: qgcPal }
-
     QGCAttitudeWidget {
         id:                         attitude
         anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.margins :           _margins
+        anchors.topMargin:          _outerMargin
         anchors.top:                parent.top
         size:                       _innerRadius * 2
         vehicle:                    globals.activeVehicle
@@ -50,7 +42,7 @@ Rectangle {
     QGCCompassWidget {
         id:                         compass
         anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.margins:            _margins
+        anchors.topMargin:          _outerMargin * 2
         anchors.top:                attitude.bottom
         size:                       _innerRadius * 2
         vehicle:                    globals.activeVehicle

@@ -128,7 +128,6 @@ Rectangle {
                     cameraCalc:                     missionItem.cameraCalc
                     vehicleFlightIsFrontal:         false
                     distanceToSurfaceLabel:         qsTr("Scan Distance")
-                    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
                     frontalDistanceLabel:           qsTr("Layer Height")
                     sideDistanceLabel:              qsTr("Trigger Distance")
                 }

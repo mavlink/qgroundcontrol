@@ -1,4 +1,6 @@
 
+add_subdirectory(Actuators)
+
 set(EXTRA_SRC)
 if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
@@ -16,22 +18,38 @@ if(BUILD_TESTING)
 endif()
 
 add_library(Vehicle
+	Autotune.cpp
+	Autotune.h
 	CompInfo.cc
 	CompInfo.h
+	CompInfoActuators.cc
+	CompInfoActuators.h
+	CompInfoEvents.cc
+	CompInfoEvents.h
 	CompInfoParam.cc
 	CompInfoParam.h
-	CompInfoVersion.cc
-	CompInfoVersion.h
+	CompInfoGeneral.cc
+	CompInfoGeneral.h
+	ComponentInformationCache.cc
+	ComponentInformationCache.h
 	ComponentInformationManager.cc
 	ComponentInformationManager.h
+	EventHandler.cc
+	EventHandler.h
 	FTPManager.cc
 	FTPManager.h
 	GPSRTKFactGroup.cc
 	GPSRTKFactGroup.h
+	HealthAndArmingChecks.cc
+	HealthAndArmingChecks.h
+	ImageProtocolManager.cc
+	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
 	InitialConnectStateMachine.h
 	MAVLinkLogManager.cc
 	MAVLinkLogManager.h
+	MAVLinkStreamConfig.cc
+	MAVLinkStreamConfig.h
 	MultiVehicleManager.cc
 	MultiVehicleManager.h
 	StateMachine.cc
@@ -55,8 +73,14 @@ add_library(Vehicle
 	VehicleEscStatusFactGroup.h
 	VehicleEstimatorStatusFactGroup.cc
 	VehicleEstimatorStatusFactGroup.h
+	VehicleLocalPositionFactGroup.cc
+	VehicleLocalPositionFactGroup.h
+	VehicleLocalPositionSetpointFactGroup.cc
+	VehicleLocalPositionSetpointFactGroup.h
 	VehicleGPSFactGroup.cc
 	VehicleGPSFactGroup.h
+	VehicleGPS2FactGroup.cc
+	VehicleGPS2FactGroup.h
 	Vehicle.h
 	VehicleLinkManager.cc
 	VehicleLinkManager.h
@@ -70,13 +94,19 @@ add_library(Vehicle
 	VehicleVibrationFactGroup.h
 	VehicleWindFactGroup.cc
 	VehicleWindFactGroup.h
+        VehicleHygrometerFactGroup.cc
+        VehicleHygrometerFactGroup.h
 
 	${EXTRA_SRC}
 )
 
 target_link_libraries(Vehicle
 	PRIVATE
+		Actuators
 		ui
+		compression
+		libevents_generated
+		libevents_parser
 	PUBLIC
 		qgc
 )

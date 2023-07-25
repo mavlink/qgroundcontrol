@@ -31,7 +31,7 @@ Item {
         }
         VehicleSummaryRow {
             labelText: qsTr("WiFi Mode")
-            valueText: wifiMode ? (wifiMode.value === 0 ? "AP Mode" : "Station Mode") : "AP Mode"
+            valueText: wifiMode ? (wifiMode.value === 0 ? qsTr("AP Mode") : qsTr("Station Mode")) : qsTr("AP Mode")
         }
         VehicleSummaryRow {
             labelText:  qsTr("WiFi Channel")

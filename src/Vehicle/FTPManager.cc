@@ -81,6 +81,67 @@ bool FTPManager::download(const QString& fromURI, const QString& toDir)
     return true;
 }
 
+void FTPManager::cancel()
+{
+    if (!_downloadState.inProgress()) {
+        return;
+    }
+
+    _ackOrNakTimeoutTimer.stop();
+    _rgStateMachine.clear();
+    static const StateFunctions_t rgTerminateStateMachine[] = {
+        { &FTPManager::_terminateSessionBegin,       &FTPManager::_terminateSessionAckOrNak,     &FTPManager::_terminateSessionTimeout },
+        { &FTPManager::_terminateComplete,               nullptr,                                    nullptr },
+    };
+    for (size_t i=0; i<sizeof(rgTerminateStateMachine)/sizeof(rgTerminateStateMachine[0]); i++) {
+        _rgStateMachine.append(rgTerminateStateMachine[i]);
+    }
+    _downloadState.retryCount = 0;
+    _startStateMachine();
+}
+
+void FTPManager::_terminateSessionBegin(void)
+{
+    MavlinkFTP::Request request{};
+    request.hdr.session = _downloadState.sessionId;
+    request.hdr.opcode  = MavlinkFTP::kCmdTerminateSession;
+    _sendRequestExpectAck(&request);
+}
+
+void FTPManager::_terminateSessionAckOrNak(const MavlinkFTP::Request *ackOrNak)
+{
+    MavlinkFTP::OpCode_t requestOpCode = static_cast<MavlinkFTP::OpCode_t>(ackOrNak->hdr.req_opcode);
+    if (requestOpCode != MavlinkFTP::kCmdTerminateSession) {
+        qCDebug(FTPManagerLog) << "_terminateSessionAckOrNak: Ack disregarding ack for incorrect requestOpCode" << MavlinkFTP::opCodeToString(requestOpCode);
+        return;
+    }
+    if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
+        qCDebug(FTPManagerLog) << "_terminateSessionAckOrNak: Ack disregarding ack for incorrect sequence actual:expected" << ackOrNak->hdr.seqNumber << _expectedIncomingSeqNumber;
+        return;
+    }
+
+    _ackOrNakTimeoutTimer.stop();
+    _advanceStateMachine();
+}
+
+void FTPManager::_terminateSessionTimeout(void)
+{
+    if (++_downloadState.retryCount > _maxRetry) {
+        qCDebug(FTPManagerLog) << QString("_terminateSessionTimeout retries exceeded");
+        _downloadComplete(tr("Download failed"));
+    } else {
+        // Try again
+        qCDebug(FTPManagerLog) << QString("_terminateSessionTimeout: retrying - retryCount(%1)").arg(_downloadState.retryCount);
+        _terminateSessionBegin();
+    }
+
+}
+
+void FTPManager::_terminateComplete(void)
+{
+    _downloadComplete("Aborted");
+}
+
 /// Closes out a download session by writing the file and doing cleanup.
 ///     @param errorMsg Error message, empty if no error
 void FTPManager::_downloadComplete(const QString& errorMsg)
@@ -310,10 +371,6 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
         _downloadState.bytesWritten += ackOrNak->hdr.size;
         _downloadState.expectedOffset = ackOrNak->hdr.offset + ackOrNak->hdr.size;
 
-        if (_downloadState.fileSize != 0) {
-            emit commandProgress(100 * ((float)(_downloadState.bytesWritten) / (float)_downloadState.fileSize));
-        }
-
         if (ackOrNak->hdr.burstComplete) {
             // The current burst is done, request next one in offset sequence
             _expectedIncomingSeqNumber = ackOrNak->hdr.seqNumber;
@@ -322,6 +379,11 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
             // Still within a burst, next ack should come automatically
             _expectedIncomingSeqNumber = ackOrNak->hdr.seqNumber + 1;
             _ackOrNakTimeoutTimer.start();
+        }
+
+        // Emit progress last, as cancel could be called in there
+        if (_downloadState.fileSize != 0) {
+            emit commandProgress((float)(_downloadState.bytesWritten) / (float)_downloadState.fileSize);
         }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         if (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber) {
@@ -445,12 +507,13 @@ void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
             _downloadState.rgMissingData.takeFirst();
         }
 
-        if (_downloadState.fileSize != 0) {
-            emit commandProgress(100 * ((float)(_downloadState.bytesWritten) / (float)_downloadState.fileSize));
-        }
-
         // Move on to fill in possible next hole
         _fillMissingBlocksWorker(true /* firstReqeust */);
+
+        // Emit progress last, as cancel could be called in there
+        if (_downloadState.fileSize != 0) {
+            emit commandProgress((float)(_downloadState.bytesWritten) / (float)_downloadState.fileSize);
+        }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         MavlinkFTP::ErrorCode_t errorCode = static_cast<MavlinkFTP::ErrorCode_t>(ackOrNak->data[0]);
 

@@ -82,6 +82,7 @@ SetupPage {
                                 id:         monitor1Combo
                                 fact:       _batt1Monitor
                                 indexModel: false
+                                sizeToContents: true
                             }
                         }
 
@@ -168,6 +169,7 @@ SetupPage {
                                 id:         monitor2Combo
                                 fact:       _batt2Monitor
                                 indexModel: false
+                                sizeToContents: true
                             }
                         }
 
@@ -339,9 +341,18 @@ SetupPage {
                 }
 
                 ListElement {
-                    text:       qsTr("Blue Robotics Power Sense Module R2")
+                    text:       qsTr("Blue Robotics Power Sense Module")
                     voltPin:    2
                     currPin:    3
+                    voltMult:   11.000
+                    ampPerVolt: 37.8788
+                    ampOffset:  0.330
+                }
+
+                ListElement {
+                    text:       qsTr("Navigator w/ Blue Robotics Power Sense Module")
+                    voltPin:    5
+                    currPin:    4
                     voltMult:   11.000
                     ampPerVolt: 37.8788
                     ampOffset:  0.330
@@ -364,6 +375,7 @@ SetupPage {
                     id:         monitorCombo
                     fact:       battMonitor
                     indexModel: false
+                    sizeToContents: true
                 }
 
                 QGCLabel {
@@ -427,6 +439,7 @@ SetupPage {
                     fact:                   battCurrPin
                     indexModel:             false
                     visible:                _showAdvanced
+                    sizeToContents:         true
                 }
 
                 QGCLabel {
@@ -441,6 +454,7 @@ SetupPage {
                     fact:                   battVoltPin
                     indexModel:             false
                     visible:                _showAdvanced
+                    sizeToContents:         true
                 }
 
                 QGCLabel {

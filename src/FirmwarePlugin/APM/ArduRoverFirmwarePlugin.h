@@ -50,7 +50,7 @@ public:
     // Overrides from FirmwarePlugin
     QString pauseFlightMode                         (void) const override { return QStringLiteral("Hold"); }
     QString followFlightMode                        (void) const override { return QStringLiteral("Follow"); }
-    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
+    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange, bool pauseVehicle) final;
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
     const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     bool    supportsNegativeThrust                  (Vehicle *) final;

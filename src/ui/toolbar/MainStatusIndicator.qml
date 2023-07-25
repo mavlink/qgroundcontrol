@@ -93,23 +93,23 @@ RowLayout {
     }
 
     Item {
-        width:  ScreenTools.defaultFontPixelWidth
-        height: 1
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        height:                 1
     }
 
     QGCColoredImage {
         id:         flightModeIcon
-        width:      height
+        width:      ScreenTools.defaultFontPixelWidth * 2
         height:     ScreenTools.defaultFontPixelHeight * 0.75
         fillMode:   Image.PreserveAspectFit
         mipmap:     true
         color:      qgcPal.text
         source:     "/qmlimages/FlightModesComponentIcon.png"
-        visible:    _activeVehicle
+        visible:    flightModeMenu.visible
     }
 
     Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * (_vehicleInAir ?  ScreenTools.largeFontPointRatio : 1) / 3
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth / 2
         height:                 1
         visible:                flightModeMenu.visible
     }
@@ -124,7 +124,7 @@ RowLayout {
     }
 
     Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
         height:                 1
         visible:                vtolModeLabel.visible
     }
@@ -147,67 +147,76 @@ RowLayout {
         id: sensorStatusInfoComponent
 
         Rectangle {
-            width:          mainLayout.width   + (_margins * 2)
-            height:         mainLayout.height  + (_margins * 2)
+            width:          flickable.width + (_margins * 2)
+            height:         flickable.height + (_margins * 2)
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
             color:          qgcPal.window
             border.color:   qgcPal.text
 
-            ColumnLayout {
-                id:                 mainLayout
+            QGCFlickable {
+                id:                 flickable
                 anchors.margins:    _margins
                 anchors.top:        parent.top
                 anchors.left:       parent.left
-                spacing:            _spacing
+                width:              mainLayout.width
+                height:             mainWindow.contentItem.height - (indicatorPopup.padding * 2) - (_margins * 2)
+                flickableDirection: Flickable.VerticalFlick
+                contentHeight:      mainLayout.height
+                contentWidth:       mainLayout.width
 
-                QGCLabel {
-                    Layout.alignment:   Qt.AlignHCenter
-                    text:               qsTr("Sensor Status")
-                }
+                ColumnLayout {
+                    id:         mainLayout
+                    spacing:    _spacing
 
-                GridLayout {
-                    rowSpacing:     _spacing
-                    columnSpacing:  _spacing
-                    rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
-                    flow:           GridLayout.TopToBottom
+                    QGCButton {
+                        Layout.alignment:   Qt.AlignHCenter
+                        text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
 
-                    Repeater {
-                        model: _activeVehicle.sysStatusSensorInfo.sensorNames
+                        property bool forceArm: false
 
-                        QGCLabel {
-                            text: modelData
-                        }
-                    }
+                        onPressAndHold: forceArm = true
 
-                    Repeater {
-                        model: _activeVehicle.sysStatusSensorInfo.sensorStatus
-
-                        QGCLabel {
-                            text: modelData
-                        }
-                    }
-                }
-
-                QGCButton {
-                    Layout.alignment:   Qt.AlignHCenter
-                    text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
-
-                    property bool forceArm: false
-
-                    onPressAndHold: forceArm = true
-
-                    onClicked: {
-                        if (_armed) {
-                            mainWindow.disarmVehicleRequest()
-                        } else {
-                            if (forceArm) {
-                                mainWindow.forceArmVehicleRequest()
+                        onClicked: {
+                            if (_armed) {
+                                mainWindow.disarmVehicleRequest()
                             } else {
-                                mainWindow.armVehicleRequest()
+                                if (forceArm) {
+                                    mainWindow.forceArmVehicleRequest()
+                                } else {
+                                    mainWindow.armVehicleRequest()
+                                }
+                            }
+                            forceArm = false
+                            mainWindow.hideIndicatorPopup()
+                        }
+                    }
+
+                    QGCLabel {
+                        Layout.alignment:   Qt.AlignHCenter
+                        text:               qsTr("Sensor Status")
+                    }
+
+                    GridLayout {
+                        rowSpacing:     _spacing
+                        columnSpacing:  _spacing
+                        rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
+                        flow:           GridLayout.TopToBottom
+
+                        Repeater {
+                            model: _activeVehicle.sysStatusSensorInfo.sensorNames
+
+                            QGCLabel {
+                                text: modelData
                             }
                         }
-                        forceArm = false
-                        mainWindow.hideIndicatorPopup()
+
+                        Repeater {
+                            model: _activeVehicle.sysStatusSensorInfo.sensorStatus
+
+                            QGCLabel {
+                                text: modelData
+                            }
+                        }
                     }
                 }
             }

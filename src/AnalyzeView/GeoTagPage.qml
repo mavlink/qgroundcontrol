@@ -23,8 +23,7 @@ import QGroundControl.Controllers   1.0
 AnalyzePage {
     id:                 geoTagPage
     pageComponent:      pageComponent
-    pageName:           qsTr("GeoTag Images")
-    pageDescription:    qsTr("GeoTag Images is used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
+    pageDescription:    qsTr("Used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
 
     readonly property real _margin:     ScreenTools.defaultFontPixelWidth * 2
     readonly property real _minWidth:   ScreenTools.defaultFontPixelWidth * 20
@@ -139,7 +138,7 @@ AnalyzePage {
                 }
             }
             QGCLabel {
-                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? "/TAGGED folder in your image folder" : geoController.imageDirectory + "/TAGGED") : geoController.saveDirectory
+                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? qsTr("/TAGGED folder in your image folder") : geoController.imageDirectory + qsTr("/TAGGED")) : geoController.saveDirectory
                 elide:              Text.ElideLeft
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter

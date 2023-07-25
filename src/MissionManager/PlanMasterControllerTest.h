@@ -23,7 +23,7 @@
 class PlanMasterControllerTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     PlanMasterControllerTest(void);
 
@@ -33,6 +33,7 @@ private slots:
 
     void _testMissionFileLoad(void);
     void _testMissionPlannerFileLoad(void);
+    void _testActiveVehicleChanged(void);
 
 private:
     PlanMasterController*   _masterController;

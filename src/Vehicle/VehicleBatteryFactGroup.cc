@@ -142,6 +142,13 @@ void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_mes
             totalVoltage += cellVoltage;
         }
     }
+    for (int i=0; i<4; i++) {
+        double cellVoltage = batteryStatus.voltages_ext[i] == UINT16_MAX ? qQNaN() : static_cast<double>(batteryStatus.voltages_ext[i]) / 1000.0;
+        if (qIsNaN(cellVoltage)) {
+            break;
+        }
+        totalVoltage += cellVoltage;
+    }
 
     group->function()->setRawValue          (batteryStatus.battery_function);
     group->type()->setRawValue              (batteryStatus.type);

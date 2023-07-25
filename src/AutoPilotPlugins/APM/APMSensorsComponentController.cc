@@ -280,6 +280,14 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
         }
     } else if (command == MAV_CMD_DO_START_MAG_CAL && result != MAV_RESULT_ACCEPTED) {
         _restorePreviousCompassCalFitness();
+    } else if (command == MAV_CMD_FIXED_MAG_CAL_YAW) {
+        if (result == MAV_RESULT_ACCEPTED) {
+            _appendStatusLog(tr("Successfully completed"));
+            _stopCalibration(StopCalibrationSuccessShowLog);
+        } else {
+            _appendStatusLog(tr("Failed"));
+            _stopCalibration(StopCalibrationFailed);
+        }
     }
 }
 
@@ -293,9 +301,23 @@ void APMSensorsComponentController::calibrateCompass(void)
     // Now we wait for the result to come back
 }
 
-void APMSensorsComponentController::calibrateAccel(void)
+void APMSensorsComponentController::calibrateCompassNorth(float lat, float lon, int mask)
 {
+    _startLogCalibration();
+    connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_FIXED_MAG_CAL_YAW, true /* showError */, 0 /* north*/, mask, lat, lon);
+}
+
+void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
+{
+
     _calTypeInProgress = CalTypeAccel;
+    if (doSimpleAccelCal) {
+        _startLogCalibration();
+        _calTypeInProgress = CalTypeAccelFast;
+        _vehicle->startCalibration(Vehicle::CalibrationAPMAccelSimple);
+        return;
+    }
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startVisualCalibration();
     _cancelButton->setEnabled(false);
@@ -442,7 +464,7 @@ void APMSensorsComponentController::cancelCalibration(void)
         emit waitingForCancelChanged();
         // The firmware doesn't always allow us to cancel calibration. The best we can do is wait
         // for it to timeout.
-        _vehicle->stopCalibration();
+        _vehicle->stopCalibration(true /* showError */);
     }
 
 }
@@ -496,7 +518,7 @@ bool APMSensorsComponentController::usingUDPLink(void)
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
 {
-    if (_calTypeInProgress == CalTypeLevelHorizon || _calTypeInProgress == CalTypeGyro || _calTypeInProgress == CalTypePressure) {
+    if (_calTypeInProgress == CalTypeLevelHorizon || _calTypeInProgress == CalTypeGyro || _calTypeInProgress == CalTypePressure || _calTypeInProgress == CalTypeAccelFast) {
         mavlink_command_ack_t commandAck;
         mavlink_msg_command_ack_decode(&message, &commandAck);
 

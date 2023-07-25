@@ -351,7 +351,7 @@ AirMapFlightPlanManager::_endFlight()
 
 //-----------------------------------------------------------------------------
 bool
-AirMapFlightPlanManager::_collectFlightDtata()
+AirMapFlightPlanManager::_collectFlightData()
 {
     if(!_planController || !_planController->missionController()) {
         return false;
@@ -363,10 +363,11 @@ AirMapFlightPlanManager::_collectFlightDtata()
         qCDebug(AirMapManagerLog) << "Not enough points for a flight plan.";
         return false;
     }
-    _flight.maxAltitude   = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
-    _flight.takeoffCoord  = _planController->missionController()->takeoffCoordinate();
-    _flight.coords        = bc.polygon2D();
-    _flight.bc            = bc;
+    // altitude reference for AirMap is takeoff altitude & all altitudes provided in the bounding cube are relative to takeoff already
+    _flight.takeoffCoord            = _planController->missionController()->takeoffCoordinate();
+    _flight.maxAltitudeAboveTakeoff = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
+    _flight.coords                  = bc.polygon2D();
+    _flight.bc                      = bc;
     emit missionAreaChanged();
     return true;
 }
@@ -378,7 +379,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     _flight.reset();
 
     //-- Get flight data
-    if(!_collectFlightDtata()) {
+    if(!_collectFlightData()) {
         return;
     }
 
@@ -511,7 +512,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         if (!isAlive.lock()) return;
         if (_state != State::FlightUpload) return;
         FlightPlans::Create::Parameters params;
-        params.max_altitude = _flight.maxAltitude;
+        params.max_altitude = _flight.maxAltitudeAboveTakeoff;
         params.min_altitude = 0.0;
         params.buffer       = 10.f;
         params.latitude     = static_cast<float>(_flight.takeoffCoord.latitude());
@@ -566,12 +567,12 @@ AirMapFlightPlanManager::_updateFlightPlan(bool interactive)
         return;
     }
     //-- Get flight data
-    if(!_collectFlightDtata()) {
+    if(!_collectFlightData()) {
         return;
     }
 
     //-- Update local instance of the flight plan
-    _flightPlan.altitude_agl.max  = _flight.maxAltitude;
+    _flightPlan.altitude_agl.max  = _flight.maxAltitudeAboveTakeoff;
     _flightPlan.altitude_agl.min  = 0.0f;
     _flightPlan.buffer            = 2.f;
     _flightPlan.takeoff.latitude  = static_cast<float>(_flight.takeoffCoord.latitude());

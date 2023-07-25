@@ -59,27 +59,42 @@ static QMap<int, QString> px4_board_name_map {
     {51, "px4_fmu-v5x_default"},
     {52, "px4_fmu-v6_default"},
     {53, "px4_fmu-v6x_default"},
+    {54, "px4_fmu-v6u_default"},
+    {56, "px4_fmu-v6c_default"},
+    {57, "ark_fmu-v6x_default"},
+    {55, "sky-drones_smartap-airlink_default"},
     {88, "airmind_mindpx-v2_default"},
     {12, "bitcraze_crazyflie_default"},
+    {14, "bitcraze_crazyflie21_default"},
     {42, "omnibus_f4sd_default"},
     {33, "mro_x21_default"},
     {65, "intel_aerofc-v1_default"},
     {123, "holybro_kakutef7_default"},
     {41775, "modalai_fc-v1_default"},
+    {41776, "modalai_fc-v2_default"},
     {78, "holybro_pix32v5_default"},
+    {79, "holybro_can-gps-v1_default"},
     {28, "nxp_fmuk66-v3_default"},
-    {29, "av_x-v1_default"},
     {30, "nxp_fmuk66-e_default"},
     {31, "nxp_fmurt1062-v1_default"},
-
+    {85, "freefly_can-rtk-gps_default"},
     {120, "cubepilot_cubeyellow_default"},
     {136, "mro_x21-777_default"},
     {139, "holybro_durandal-v1_default"},
     {140, "cubepilot_cubeorange_default"},
+    {1063, "cubepilot_cubeorangeplus_default"},
     {141, "mro_ctrl-zero-f7_default"},
+    {142, "mro_ctrl-zero-f7-oem_default"},
+    {212, "thepeach_k1_default"},
+    {213, "thepeach_r1_default"},
     {1009, "cuav_nora_default"},
     {1010, "cuav_x7pro_default"},
     {1017, "mro_pixracerpro_default"},
+    {1023, "mro_ctrl-zero-h7_default"},
+    {1024, "mro_ctrl-zero-h7-oem_default"},
+    {1048, "holybro_kakuteh7_default"},
+    {1053, "holybro_kakuteh7v2_default"},
+    {1054, "holybro_kakuteh7mini_default"},
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
@@ -127,7 +142,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     connect(_threadController, &PX4FirmwareUpgradeThreadController::eraseComplete,          this, &FirmwareUpgradeController::_eraseComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
-    
+
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -240,12 +255,12 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
             // Radio always flashes latest firmware, so we can start right away without
             // any further user input.
             _startFlashWhenBootloaderFound = true;
-            _startFlashWhenBootloaderFoundFirmwareIdentity = FirmwareIdentifier(ThreeDRRadio,
+            _startFlashWhenBootloaderFoundFirmwareIdentity = FirmwareIdentifier(SiKRadio,
                                                                                 StableFirmware,
                                                                                 DefaultVehicleFirmware);
         }
     }
-    
+
     qCDebug(FirmwareUpgradeLog) << _boardType << _boardTypeName;
     emit boardFound();
 }
@@ -269,12 +284,12 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
     _bootloaderVersion          = static_cast<uint32_t>(bootloaderVersion);
     _bootloaderBoardID          = static_cast<uint32_t>(boardID);
     _bootloaderBoardFlashSize   = static_cast<uint32_t>(flashSize);
-    
+
     _appendStatusLog(tr("Connected to bootloader:"));
     _appendStatusLog(tr("  Version: %1").arg(_bootloaderVersion));
     _appendStatusLog(tr("  Board ID: %1").arg(_bootloaderBoardID));
     _appendStatusLog(tr("  Flash size: %1").arg(_bootloaderBoardFlashSize));
-    
+
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
     } else {
@@ -304,18 +319,9 @@ void FirmwareUpgradeController::_initFirmwareHash()
     #endif
     };
 
-    /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
-    FirmwareToUrlElement_t rg3DRRadioFirmwareArray[] = {
-        { ThreeDRRadio, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx"}
-    };
-
     // We build the maps for PX4 firmwares dynamically using the data below
     for (auto& element : rgPX4FLowFirmwareArray) {
         _rgPX4FLowFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    for (auto& element : rg3DRRadioFirmwareArray) {
-        _rg3DRRadioFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 }
 
@@ -334,8 +340,17 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     case Bootloader::boardIDPX4Flow:
         _rgFirmwareDynamic = _rgPX4FLowFirmware;
         break;
-    case Bootloader::boardID3DRRadio:
-        _rgFirmwareDynamic = _rg3DRRadioFirmware;
+    case Bootloader::boardIDSiKRadio1000:
+    {
+        FirmwareToUrlElement_t element = { SiKRadio, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx" };
+        _rgFirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+        break;
+    case Bootloader::boardIDSiKRadio1060:
+    {
+        FirmwareToUrlElement_t element = { SiKRadio, StableFirmware, DefaultVehicleFirmware, "https://px4-travis.s3.amazonaws.com/SiK/stable/radio~hb1060.ihx" };
+        _rgFirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
         break;
     default:
         if (px4_board_name_map.contains(boardId)) {
@@ -365,7 +380,7 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
             return;
         }
     }
-    
+
     if (_firmwareFilename.isEmpty()) {
         _errorCancel(tr("No firmware file selected"));
     } else {
@@ -377,10 +392,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
-    
+
     _appendStatusLog(tr("Downloading firmware..."));
     _appendStatusLog(tr(" From: %1").arg(_firmwareFilename));
-    
+
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_firmwareDownloadComplete);
     connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
@@ -401,23 +416,23 @@ void FirmwareUpgradeController::_firmwareDownloadComplete(QString /*remoteFile*/
 {
     if (errorMsg.isEmpty()) {
     _appendStatusLog(tr("Download complete"));
-    
+
     FirmwareImage* image = new FirmwareImage(this);
-    
+
     connect(image, &FirmwareImage::statusMessage, this, &FirmwareUpgradeController::_status);
     connect(image, &FirmwareImage::errorMessage, this, &FirmwareUpgradeController::_error);
-    
+
     if (!image->load(localFile, _bootloaderBoardID)) {
         _errorCancel(tr("Image load failed"));
         return;
     }
-    
+
     // We can't proceed unless we have the bootloader
     if (!_bootloaderFound) {
         _errorCancel(tr("Bootloader not found"));
         return;
     }
-    
+
     if (_bootloaderBoardFlashSize != 0 && image->imageSize() > _bootloaderBoardFlashSize) {
         _errorCancel(tr("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
         return;
@@ -450,7 +465,7 @@ void FirmwareUpgradeController::_flashComplete(void)
 {
     delete _image;
     _image = nullptr;
-    
+
     _appendStatusLog(tr("Upgrade complete"), true);
     _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
@@ -461,7 +476,7 @@ void FirmwareUpgradeController::_error(const QString& errorString)
 {
     delete _image;
     _image = nullptr;
-    
+
     _errorCancel(QString("Error: %1").arg(errorString));
 }
 
@@ -490,16 +505,16 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool critical)
 {
     Q_ASSERT(_statusLog);
-    
+
     QVariant returnedValue;
     QVariant varText;
-    
+
     if (critical) {
         varText = QString("<font color=\"yellow\">%1</font>").arg(text);
     } else {
         varText = text;
     }
-    
+
     QMetaObject::invokeMethod(_statusLog,
                               "append",
                               Q_RETURN_ARG(QVariant, returnedValue),

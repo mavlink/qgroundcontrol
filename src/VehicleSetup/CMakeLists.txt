@@ -29,6 +29,8 @@ add_custom_target(VehicleSetupQml
 )
 
 target_link_libraries(VehicleSetup
+	PRIVATE
+		compression
 	PUBLIC
 		qgc
 )

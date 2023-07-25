@@ -25,7 +25,7 @@ const char* LandingComplexItem::_jsonLoiterRadiusKey            = "loiterRadius"
 const char* LandingComplexItem::_jsonLoiterClockwiseKey         = "loiterClockwise";
 const char* LandingComplexItem::_jsonLandingCoordinateKey       = "landCoordinate";
 const char* LandingComplexItem::_jsonAltitudesAreRelativeKey    = "altitudesAreRelative";
-const char* LandingComplexItem::_jsonUseLoiterToAltKey          = "stopTakingPhotos";
+const char* LandingComplexItem::_jsonUseLoiterToAltKey          = "useLoiterToAlt";
 const char* LandingComplexItem::_jsonStopTakingPhotosKey        = "stopTakingPhotos";
 const char* LandingComplexItem::_jsonStopTakingVideoKey         = "stopVideoPhotos";
 
@@ -50,8 +50,8 @@ const char* LandingComplexItem::_jsonDeprecatedLoiterAltitudeRelativeKey    = "l
 // the new support for using either a loiter or just a waypoint as the approach entry point.
 const char* LandingComplexItem::_jsonDeprecatedLoiterCoordinateKey          = "loiterCoordinate";
 
-LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : ComplexMissionItem        (masterController, flyView, parent)
+LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
+    : ComplexMissionItem        (masterController, flyView)
 {
     _isIncomplete = false;
 
@@ -72,11 +72,11 @@ void LandingComplexItem::_init(void)
     connect(landingHeading(),           &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromHeadingAndDistanceChange);
 
     connect(loiterRadius(),             &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromRadiusChange);
-    connect(this,                       &LandingComplexItem::loiterClockwiseChanged,        this, &LandingComplexItem::_recalcFromRadiusChange);
+    connect(loiterClockwise(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromRadiusChange);
 
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_recalcFromCoordinateChange);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_recalcFromCoordinateChange);
-    connect(this,                       &LandingComplexItem::useLoiterToAltChanged,         this, &LandingComplexItem::_recalcFromCoordinateChange);
+    connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromCoordinateChange);
 
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
@@ -89,17 +89,13 @@ void LandingComplexItem::_init(void)
     connect(stopTakingVideo(),          &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_setDirty);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_setDirty);
-    connect(this,                       &LandingComplexItem::loiterClockwiseChanged,        this, &LandingComplexItem::_setDirty);
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_setDirty);
-    connect(this,                       &LandingComplexItem::useLoiterToAltChanged,         this, &LandingComplexItem::_setDirty);
 
     connect(stopTakingPhotos(),         &Fact::valueChanged,                                this, &LandingComplexItem::_signalLastSequenceNumberChanged);
     connect(stopTakingVideo(),          &Fact::valueChanged,                                this, &LandingComplexItem::_signalLastSequenceNumberChanged);
 
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_amslEntryAltChanged);
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_amslExitAltChanged);
-    connect(_missionController,         &MissionController::plannedHomePositionChanged,     this, &LandingComplexItem::_amslEntryAltChanged);
-    connect(_missionController,         &MissionController::plannedHomePositionChanged,     this, &LandingComplexItem::_amslExitAltChanged);
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_amslEntryAltChanged);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_amslExitAltChanged);
     connect(this,                       &LandingComplexItem::amslEntryAltChanged,           this, &LandingComplexItem::maxAMSLAltitudeChanged);
@@ -199,7 +195,7 @@ void LandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
         _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
 
         // Loiter coord is 90 degrees counter clockwise from tangent coord
-        _finalApproachCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 - 90);
+        _finalApproachCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 + (_loiterClockwise()->rawValue().toBool() ? -90 : 90));
         _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
 
         _ignoreRecalcSignals = true;
@@ -479,7 +475,7 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
 
     // Now stuff all the scanned information into the item
 
-    LandingComplexItem* complexItem = createItemFunc(masterController, flyView, visualItems /* parent */);
+    LandingComplexItem* complexItem = createItemFunc(masterController, flyView);
 
     complexItem->_ignoreRecalcSignals = true;
 

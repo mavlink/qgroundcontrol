@@ -623,6 +623,21 @@ Item {
                     }
                 }
             }
+
+            QGCButton {
+                text:  qsTr("Factory reset")
+                width: _buttonWidth
+
+                anchors {
+                    right:       orientationCalArea.left
+                    rightMargin: ScreenTools.defaultFontPixelWidth/2
+                    bottom:      orientationCalArea.bottom
+                }
+
+                onClicked: {
+                    controller.resetFactoryParameters()
+                }
+            }
         }
     }
 }

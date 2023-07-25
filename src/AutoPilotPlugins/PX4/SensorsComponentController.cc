@@ -61,6 +61,8 @@ SensorsComponentController::SensorsComponentController(void)
     , _unknownFirmwareVersion                   (false)
     , _waitingForCancel                         (false)
 {
+    connect(_vehicle, &Vehicle::sensorsParametersResetAck, this, &SensorsComponentController::_handleParametersReset);
+
 }
 
 bool SensorsComponentController::usingUDPLink(void)
@@ -491,5 +493,30 @@ void SensorsComponentController::cancelCalibration(void)
     _waitingForCancel = true;
     emit waitingForCancelChanged();
     _cancelButton->setEnabled(false);
-    _vehicle->stopCalibration();
+    _vehicle->stopCalibration(true /* showError */);
+}
+
+void SensorsComponentController::_handleParametersReset(bool success)
+{
+    if (success) {
+        qgcApp()->showAppMessage(tr("Reset successful"));
+
+        QTimer::singleShot(1000, this, [this]() {
+            _refreshParams();
+        });
+    }
+    else {
+        qgcApp()->showAppMessage(tr("Reset failed"));
+    }
+}
+
+void SensorsComponentController::resetFactoryParameters()
+{
+    auto compId = _vehicle->defaultComponentId();
+
+    _vehicle->sendMavCommand(compId,
+                             MAV_CMD_PREFLIGHT_STORAGE,
+                             true,  // showError
+                             3,     // Reset factory parameters
+                             -1);   // Don't do anything with mission storage
 }

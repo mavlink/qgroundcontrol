@@ -47,10 +47,10 @@ public:
     /** @brief Get the human-friendly name of this protocol */
     QString getName();
     /** @brief Get the system id of this application */
-    int getSystemId();
+    int getSystemId() const;
     /** @brief Get the component id of this application */
     int getComponentId();
-    
+
     /** @brief Get protocol version check state */
     bool versionCheckEnabled() const {
         return m_enable_version_check;
@@ -60,14 +60,14 @@ public:
         return MAVLINK_VERSION;
     }
     /** @brief Get the currently configured protocol version */
-    unsigned getCurrentVersion() {
+    unsigned getCurrentVersion() const{
         return _current_version;
     }
     /**
      * Reset the counters for all metadata for this link.
      */
     virtual void resetMetadataForLink(LinkInterface *link);
-    
+
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend);
 
@@ -83,7 +83,7 @@ public slots:
 
     /** @brief Log bytes sent from a communication interface */
     void logSentBytes(LinkInterface* link, QByteArray b);
-    
+
     /** @brief Set the system id of this application */
     void setSystemId(int id);
 
@@ -94,10 +94,10 @@ public slots:
     void loadSettings();
     /** @brief Store protocol settings */
     void storeSettings();
-    
+
     /// @brief Deletes any log files which are in the temp directory
     static void deleteTempLogFiles(void);
-    
+
     /// Checks for lost log files
     void checkForLostLogFiles(void);
 
@@ -145,7 +145,7 @@ signals:
      */
     void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, int rssi, int remrssi,
     unsigned txbuf, unsigned noise, unsigned remnoise);
-    
+
     /// Emitted when a temporary telemetry log file is ready for saving
     void saveTelemetryLog(QString tempLogfile);
 
@@ -154,7 +154,7 @@ signals:
 
 private slots:
     void _vehicleCountChanged(void);
-    
+
 private:
     bool _closeLogFile(void);
     void _startLogging(void);

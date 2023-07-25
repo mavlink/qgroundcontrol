@@ -141,6 +141,7 @@ const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_incrementJsonKey =           "increment";
 const char* FactMetaData::_hasControlJsonKey =          "control";
 const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
+const char* FactMetaData::_rebootRequiredJsonKey =      "rebootRequired";
 const char* FactMetaData::_categoryJsonKey =            "category";
 const char* FactMetaData::_groupJsonKey =               "group";
 const char* FactMetaData::_volatileJsonKey =            "volatile";
@@ -1269,6 +1270,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         { _maxJsonKey,                  QJsonValue::Double, false },
         { _hasControlJsonKey,           QJsonValue::Bool,   false },
         { _qgcRebootRequiredJsonKey,    QJsonValue::Bool,   false },
+        { _rebootRequiredJsonKey,       QJsonValue::Bool,   false },
         { _categoryJsonKey,             QJsonValue::String, false },
         { _groupJsonKey,                QJsonValue::String, false },
         { _volatileJsonKey,             QJsonValue::Bool,   false },
@@ -1295,6 +1297,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     QStringList     rgDescriptions;
     QList<double>   rgDoubleValues;
+    QList<int>      rgIntValues;
     QStringList     rgStringValues;
 
     bool foundBitmask = false;
@@ -1302,7 +1305,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseValueDescriptionArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
     }
     if (rgDescriptions.isEmpty()) {
-        if (!_parseBitmaskArray(json, rgDescriptions, rgDoubleValues, errorString)) {
+        if (!_parseBitmaskArray(json, rgDescriptions, rgIntValues, errorString)) {
             qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseBitmaskArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
         }
         foundBitmask = rgDescriptions.count() != 0;
@@ -1315,13 +1318,13 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     if (errorString.isEmpty() && rgDescriptions.count()) {
         for (int i=0; i<rgDescriptions.count(); i++) {
-            QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
-            QVariant    convertedValueVariant;
-            QString     errorString;
 
             if (foundBitmask) {
-                metaData->addBitmaskInfo(rgDescriptions[i], rawValueVariant);
+                metaData->addBitmaskInfo(rgDescriptions[i], 1 << rgIntValues[i]);
             } else {
+                QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
+                QVariant    convertedValueVariant;
+                QString     errorString;
                 if (metaData->convertAndValidateRaw(rawValueVariant, false /* validate */, convertedValueVariant, errorString)) {
                     metaData->addEnumInfo(rgDescriptions[i], convertedValueVariant);
                 } else {
@@ -1423,6 +1426,12 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         qgcRebootRequired = json[_qgcRebootRequiredJsonKey].toBool();
     }
     metaData->setQGCRebootRequired(qgcRebootRequired);
+
+    bool rebootRequired = false;
+    if (json.contains(_rebootRequiredJsonKey)) {
+        rebootRequired = json[_rebootRequiredJsonKey].toBool();
+    }
+    metaData->setVehicleRebootRequired(rebootRequired);
 
     bool volatileValue = false;
     if (json.contains(_volatileJsonKey)) {
@@ -1531,18 +1540,10 @@ bool FactMetaData::_parseEnum(const QJsonObject& jsonObject, DefineMap_t defineM
     }
 
     QString strings = jsonObject.value(_enumStringsJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    rgDescriptions = defineMap.value(strings, strings).split(",", QString::SkipEmptyParts);
-#else
     rgDescriptions = defineMap.value(strings, strings).split(",", Qt::SkipEmptyParts);
-#endif
 
     QString values = jsonObject.value(_enumValuesJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    rgValues = defineMap.value(values, values).split(",", QString::SkipEmptyParts);
-#else
     rgValues = defineMap.value(values, values).split(",", Qt::SkipEmptyParts);
-#endif
 
     if (rgDescriptions.count() != rgValues.count()) {
         errorString = QStringLiteral("Enum strings/values count mismatch - strings:values %1:%2").arg(rgDescriptions.count()).arg(rgValues.count());
@@ -1587,7 +1588,7 @@ bool FactMetaData::_parseValuesArray(const QJsonObject& jsonObject, QStringList&
     return true;
 }
 
-bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString)
+bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<int>& rgValues, QString& errorString)
 {
     rgDescriptions.clear();
     rgValues.clear();
@@ -1616,7 +1617,7 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList
         }
 
         rgDescriptions.append(valueDescriptionObject[_enumBitmaskArrayDescriptionJsonKey].toString());
-        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toDouble());
+        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toInt());
     }
 
     return true;

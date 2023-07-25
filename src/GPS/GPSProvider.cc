@@ -95,7 +95,8 @@ void GPSProvider::run()
             gpsDriver->setBasePosition(_fixedBaseLatitude, _fixedBaseLongitude, _fixedBaseAltitudeMeters, _fixedBaseAccuracyMeters * 1000.0f);
         }
 
-        if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
+        _gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;
+        if (gpsDriver->configure(baudrate, _gpsConfig) == 0) {
 
             /* reset report */
             memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));

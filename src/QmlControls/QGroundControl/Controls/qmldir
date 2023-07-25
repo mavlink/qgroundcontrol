@@ -2,9 +2,11 @@ Module QGroundControl.Controls
 
 AnalyzePage                             1.0 AnalyzePage.qml
 AppMessages                             1.0 AppMessages.qml
+AltModeDialog                           1.0 AltModeDialog.qml
 AxisMonitor                             1.0 AxisMonitor.qml
 CameraCalcCamera                        1.0 CameraCalcCamera.qml
 CameraCalcGrid                          1.0 CameraCalcGrid.qml
+Campos                                  1.0 Campos.qml
 ContentAreaCalc                         1.0 ContentAreaCalc.qml
 APMSubMotorDisplay                      1.0 APMSubMotorDisplay.qml
 CameraSection                           1.0 CameraSection.qml
@@ -52,6 +54,7 @@ PreFlightCheckButton                    1.0 PreFlightCheckButton.qml
 PreFlightCheckGroup                     1.0 PreFlightCheckGroup.qml
 PreFlightCheckModel                     1.0 PreFlightCheckModel.qml
 QGCButton                               1.0 QGCButton.qml
+AutotuneUI                              1.0 AutotuneUI.qml
 QGCCheckBox                             1.0 QGCCheckBox.qml
 QGCColoredImage                         1.0 QGCColoredImage.qml
 QGCComboBox                             1.0 QGCComboBox.qml
@@ -101,6 +104,7 @@ SliderSwitch                            1.0 SliderSwitch.qml
 SubMenuButton                           1.0 SubMenuButton.qml
 SurveyMapVisuals                        1.0 SurveyMapVisuals.qml
 TerrainStatus                           1.0 TerrainStatus.qml
+TransectStyleComplexItemEditor          1.0 TransectStyleComplexItemEditor.qml
 TransectStyleComplexItemStats           1.0 TransectStyleComplexItemStats.qml
 TransectStyleComplexItemTabBar          1.0 TransectStyleComplexItemTabBar.qml
 TransectStyleComplexItemTerrainFollow   1.0 TransectStyleComplexItemTerrainFollow.qml

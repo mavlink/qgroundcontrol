@@ -23,8 +23,8 @@ import QGroundControl.Controllers   1.0
 AnalyzePage {
     id:                 geoTagPage
     pageComponent:      pageComponent
-    pageName:           qsTr("Vibration")
     pageDescription:    qsTr("Analyze vibration associated with your vehicle.")
+    allowPopout:        true
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property bool   _available:     !isNaN(_activeVehicle.vibration.xAxis.rawValue)

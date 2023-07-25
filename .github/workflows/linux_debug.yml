@@ -1,0 +1,98 @@
+name: Linux Debug and Test
+
+on:
+  push:
+    branches:
+    - 'master'
+  pull_request:
+    branches:
+    - '*'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   5.15.2
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
+
+jobs:
+  build:
+    runs-on:  ubuntu-20.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         linux
+          target:       desktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts
+          setup-python: true
+
+      - name: Install QGC source dependencies
+        run:  sudo apt-get install -y libsdl2-dev
+
+      - name: Install Gstreamer dev packages
+        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
+
+      - name: Install ccache
+        run:  sudo apt-get install ccache
+
+      - name: Install post-link dependencies
+        run:  sudo apt-get install -y binutils patchelf
+
+      - name: Prepare ccache timestamp
+        id: ccache_cache_timestamp
+        shell: cmake -P {0}
+        run: |
+          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+          message("::set-output name=timestamp::${current_date}")
+
+      - name: ccache cache files
+        uses: actions/cache@v2
+        with:
+          path:         ~/.ccache
+          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: ${{ runner.os }}-ccache-
+
+      - name: Setup ccache
+        run: |
+            mkdir -p ~/.ccache
+            echo "base_dir = ${GITHUB_WORKSPACE}" > ~/.ccache/ccache.conf
+            echo "compression = true" >> ~/.ccache/ccache.conf
+            echo "compression_level = 5" >> ~/.ccache/ccache.conf
+            ccache -s
+            ccache -z
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run:  |
+              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=debug CONFIG+=${BUILD_TYPE}
+              make -j2
+
+      - name: ccache post-run
+        run:  ccache -s
+
+      - name: Setup for unit tests
+        working-directory: ${{ runner.temp }}/shadow_build_dir  
+        run:  |
+              mkdir -p ~/.config/QtProject/
+              cp ${SOURCE_DIR}/test/qtlogging.ini ~/.config/QtProject/
+              export QT_FATAL_WARNINGS=1
+
+      - name: Run unit tests
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          working-directory:  ${{ runner.temp }}/shadow_build_dir  
+          run:                ./staging/qgroundcontrol-start.sh --unittest

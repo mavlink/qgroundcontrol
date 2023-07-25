@@ -22,6 +22,7 @@ Slider {
     // Value indicator starts display from zero instead of min value
     property bool zeroCentered: false
     property bool displayValue: false
+    property bool indicatorBarVisible: true
 
     style: SliderStyle {
         groove: Item {
@@ -40,6 +41,7 @@ Slider {
             Item {
                 id:     indicatorBar
                 clip:   true
+                visible: indicatorBarVisible
                 x:      _root.zeroCentered ? zeroCenteredIndicatorStart : 0
                 width:  _root.zeroCentered ? centerIndicatorWidth : styleData.handlePosition
                 height: parent.height

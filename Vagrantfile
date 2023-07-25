@@ -59,14 +59,19 @@ Vagrant.configure(2) do |config|
      echo 'Initialising submodules'
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
 
-     echo 'Saving %{qt_deps_tarball} from %{deps_url} to %{project_root_dir}'
-     su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
-     su - vagrant -c 'rm -rf %{qt_deps_unpack_dir}'
-     su - vagrant -c 'mkdir -p %{qt_deps_unpack_parent_dir}'
-     su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
-     su - vagrant -c 'rm -rf %{shadow_build_dir}'
+     # with reference to https://github.com/jurplel/install-qt-action/blob/master/src/main.ts and .github/workflows/linux_release.yml:
+     echo 'Installing QT'
+     apt-get install -y python3-pip
+     su - vagrant -c "pip3 install --user aqtinstall"
 
-     su - vagrant -c 'mkdir -p %{shadow_build_dir}'
+     dir="%{qt_deps_unpack_dir}"
+     version="5.15.2"
+     host="linux"
+     target="desktop"
+     modules="qtcharts"
+     su - vagrant -c "rm -rf ${dir}"
+     su - vagrant -c "mkdir -p ${dir}"
+     su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
 
      # write out a pair of scripts to make rebuilding on the VM easy:
      su - vagrant -c "cat <<QMAKE >do-qmake.sh
@@ -107,7 +112,6 @@ MAKE
     :qt_deps_tarball => yaml_config['qt_deps_tarball'],
     :pro => yaml_config['pro'],
     :spec => yaml_config['spec'],
-    :deps_url => yaml_config['deps_url'],
     :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse', 'libsdl2-dev']).join(' '),
     :build_env => travisfile['env']['global'].select { |item| item.is_a?(String) }.join(' '),
 

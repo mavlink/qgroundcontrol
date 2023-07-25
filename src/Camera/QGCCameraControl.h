@@ -40,11 +40,11 @@ public:
 
     QString uri             () { return QString(_streamInfo.uri);  }
     QString name            () { return QString(_streamInfo.name); }
-    qreal   aspectRatio     ();
-    qreal   hfov            () { return _streamInfo.hfov; }
-    int     type            () { return _streamInfo.type; }
-    int     streamID        () { return _streamInfo.stream_id; }
-    bool    isThermal       () { return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
+    qreal   aspectRatio     () const;
+    qreal   hfov            () const{ return _streamInfo.hfov; }
+    int     type            () const{ return _streamInfo.type; }
+    int     streamID        () const{ return _streamInfo.stream_id; }
+    bool    isThermal       () const{ return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
 
     bool    update          (const mavlink_video_stream_status_t* vs);
 

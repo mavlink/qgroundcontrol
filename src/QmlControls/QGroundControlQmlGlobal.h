@@ -48,14 +48,15 @@ public:
     QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox);
     ~QGroundControlQmlGlobal();
 
-    enum AltitudeMode {
-        AltitudeModeNone,           // Being used as distance value unrelated to ground (for example distance to structure)
-        AltitudeModeRelative,       // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        AltitudeModeAbsolute,       // MAV_FRAME_GLOBAL
-        AltitudeModeAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
-        AltitudeModeTerrainFrame    // MAV_FRAME_GLOBAL_TERRAIN_ALT
+    enum AltMode {
+        AltitudeModeMixed,              // Used by global altitude mode for mission planning
+        AltitudeModeRelative,           // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        AltitudeModeAbsolute,           // MAV_FRAME_GLOBAL
+        AltitudeModeCalcAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
+        AltitudeModeTerrainFrame,       // MAV_FRAME_GLOBAL_TERRAIN_ALT
+        AltitudeModeNone,               // Being used as distance value unrelated to ground (for example distance to structure)
     };
-    Q_ENUM(AltitudeMode)
+    Q_ENUM(AltMode)
 
     Q_PROPERTY(QString              appName                 READ    appName                 CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
@@ -142,8 +143,8 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
-    Q_INVOKABLE QString altitudeModeExtraUnits(AltitudeMode altMode);       ///< String shown in the FactTextField.extraUnits ui
-    Q_INVOKABLE QString altitudeModeShortDescription(AltitudeMode altMode); ///< String shown when a user needs to select an altitude mode
+    Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
+    Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
 
     // Property accesors
 
@@ -200,17 +201,17 @@ public:
     bool    hasAPMSupport           () { return true; }
 #endif
 
-#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
-    bool    hasMAVLinkInspector     () { return true; }
-#else
+#if defined(QGC_DISABLE_MAVLINK_INSPECTOR)
     bool    hasMAVLinkInspector     () { return false; }
+#else
+    bool    hasMAVLinkInspector     () { return true; }
 #endif
 
     bool    singleFirmwareSupport   ();
     bool    singleVehicleSupport    ();
     bool    px4ProFirmwareSupported ();
     bool    apmFirmwareSupported    ();
-    bool    skipSetupPage           () { return _skipSetupPage; }
+    bool    skipSetupPage           () const{ return _skipSetupPage; }
     void    setSkipSetupPage        (bool skip);
 
     void    setIsVersionCheckEnabled    (bool enable);

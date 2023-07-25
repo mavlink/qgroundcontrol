@@ -23,6 +23,7 @@ import QGroundControl.ScreenTools   1.0
 AnalyzePage {
     headerComponent:    headerComponent
     pageComponent:      pageComponent
+    allowPopout:        true
 
     property var    curSystem:          controller ? controller.activeSystem : null
     property var    curMessage:         curSystem && curSystem.messages.count ? curSystem.messages.get(curSystem.selected) : null

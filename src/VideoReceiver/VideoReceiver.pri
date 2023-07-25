@@ -25,6 +25,9 @@ LinuxBuild {
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
         LIBS        += -F/Library/Frameworks -framework GStreamer
+        QMAKE_LFLAGS += -Wl,-rpath,@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib
+        QMAKE_LFLAGS += -Wl,-rpath,@executable_path/../Frameworks/GStreamer.framework/Versions/1.0
+        QMAKE_LFLAGS += -Wl,-rpath,/Library/Frameworks/GStreamer.framework/Versions/1.0
     }
 } else:iOSBuild {
     #- gstreamer framework installed by the gstreamer iOS SDK installer (default to home directory)
@@ -62,13 +65,16 @@ LinuxBuild {
         QMAKE_POST_LINK += $$escape_expand(\\n) xcopy \"$$GST_ROOT_WIN\\lib\\gstreamer-1.0\\*.dll\" \"$$DESTDIR_WIN\\gstreamer-plugins\\\" /Y $$escape_expand(\\n)
     }
 } else:AndroidBuild {
-    #- gstreamer assumed to be installed in $$PWD/../../gstreamer-1.0-android-universal-1.18.1/***
-    contains(QT_ARCH, arm) {
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.1/armv7
-    } else:contains(QT_ARCH, arm64) {
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.1/arm64
+    #- gstreamer assumed to be installed in $$PWD/../../gstreamer-1.0-android-universal-1.18.5/***
+    contains(ANDROID_TARGET_ARCH, armeabi-v7a) {
+        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/armv7
+    } else:contains(ANDROID_TARGET_ARCH, arm64-v8a) {
+        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/arm64
+    } else:contains(ANDROID_TARGET_ARCH, x86_64) {
+        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/x86_64
     } else {
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.1/x86
+        message(Unknown ANDROID_TARGET_ARCH $$ANDROID_TARGET_ARCH)
+        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/x86
     }
     exists($$GST_ROOT) {
         QMAKE_CXXFLAGS  += -pthread

@@ -37,7 +37,7 @@ void SectionTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
+    _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem);
 }
 
 void SectionTest::cleanup(void)
@@ -62,13 +62,13 @@ void SectionTest::_commonScanTest(Section* section)
 
     QmlObjectListModel waypointVisualItems;
     MissionItem waypointItem(0, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleItem(_masterController, false /* flyView */, waypointItem, this);
+    SimpleMissionItem simpleItem(_masterController, false /* flyView */, waypointItem);
     waypointVisualItems.append(&simpleItem);
     waypointVisualItems.append(&simpleItem);
     waypointVisualItems.append(&simpleItem);
 
     QmlObjectListModel complexVisualItems;
-    SurveyComplexItem surveyItem(_masterController, false /* fly View */, QString() /* kmlFile */, this /* parent */);
+    SurveyComplexItem surveyItem(_masterController, false /* fly View */, QString() /* kmlFile */);
     complexVisualItems.append(&surveyItem);
 
     // This tests the common cases which should not lead to scan succeess

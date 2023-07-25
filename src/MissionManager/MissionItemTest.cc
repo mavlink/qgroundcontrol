@@ -40,7 +40,8 @@ void MissionItemTest::init(void)
 
 void MissionItemTest::cleanup(void)
 {
-    _masterController->deleteLater();
+    delete _masterController;
+    _masterController = nullptr;
     UnitTest::cleanup();
 }
 
@@ -160,11 +161,11 @@ void MissionItemTest::_testFactSignals(void)
     QSignalSpy commandSpy(&missionItem._commandFact, SIGNAL(valueChanged(QVariant)));
     missionItem.setCommand(MAV_CMD_NAV_WAYPOINT);
     QCOMPARE(commandSpy.count(), 0);
-    missionItem.setCommand(MAV_CMD_NAV_ALTITUDE_WAIT);
+    missionItem.setCommand(MAV_CMD_NAV_LAND);
     QCOMPARE(commandSpy.count(), 1);
     QList<QVariant> arguments = commandSpy.takeFirst();
     QCOMPARE(arguments.count(), 1);
-    QCOMPARE((MAV_CMD)arguments.at(0).toInt(), MAV_CMD_NAV_ALTITUDE_WAIT);
+    QCOMPARE((MAV_CMD)arguments.at(0).toInt(), MAV_CMD_NAV_LAND);
 
     // frame
     QSignalSpy frameSpy(&missionItem._frameFact, SIGNAL(valueChanged(QVariant)));
@@ -237,7 +238,7 @@ void MissionItemTest::_testFactSignals(void)
     QCOMPARE(arguments.at(0).toDouble(), 8.0);
 }
 
-void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs)
+void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs) const
 {
     QCOMPARE(missionItem.sequenceNumber(), _seq);
     QCOMPARE(missionItem.isCurrentItem(), false);
@@ -278,7 +279,7 @@ void MissionItemTest::_testSimpleLoadFromStream(void)
 {
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
-    SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, nullptr);
+    SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, false /* forLoad */);
 
     QString testString("10\t0\t3\t80\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n");
     QTextStream testStream(&testString, QIODevice::ReadOnly);
@@ -448,7 +449,7 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
 
-    SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, nullptr);
+    SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, false /* forLoad */);
     QString     errorString;
     QJsonArray  coordinateArray;
     QJsonObject jsonObject;

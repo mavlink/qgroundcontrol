@@ -308,6 +308,8 @@ APMFrameClass::APMFrameClass(const QString& name, bool copter, int frameClass, F
                 _frameTypeEnumStrings.append(frameTypeFact->enumStrings()[index]);
             }
         }
+    } else {
+        _imageResourceDefault = imageResource();
     }
 
     // If the frameClass is not in the list then frame type is not supported

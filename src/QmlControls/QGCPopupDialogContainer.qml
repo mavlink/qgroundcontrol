@@ -156,9 +156,17 @@ Popup {
         }
     }
 
+    function disableAcceptButton() {
+        acceptButton.enabled = false
+    }
+
     Connections {
-        target:         dialogComponentLoader.item
-        onHideDialog:   close()
+        target:                 dialogComponentLoader.item
+        onHideDialog:           close()
+        onEnableAcceptButton:   acceptButton.enabled = true
+        onEnableRejectButton:   rejectButton.enabled = true
+        onDisableAcceptButton:  acceptButton.enabled = false
+        onDisableRejectButton:  rejectButton.enabled = false
     }
 
     Rectangle {

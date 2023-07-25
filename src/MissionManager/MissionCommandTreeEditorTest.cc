@@ -26,7 +26,7 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(firmwareClass);
     appSettings->offlineEditingVehicleClass()->setRawValue(vehicleClass);
-    PlanMasterController* masterController = new PlanMasterController();
+    PlanMasterController masterController;
 
     FirmwarePlugin* firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
     if (firmwarePlugin->supportedMissionCommands(vehicleClass).count() == 0) {
@@ -36,13 +36,13 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
 
     QVariantList varSimpleItems;
     for (MAV_CMD command: firmwarePlugin->supportedMissionCommands(vehicleClass)) {
-        SimpleMissionItem* simpleItem = new SimpleMissionItem(masterController, false /* flyView */, false /* forLoad */, this);
+        SimpleMissionItem* simpleItem = new SimpleMissionItem(&masterController, false /* flyView */, false /* forLoad */);
         simpleItem->setCommand(command);
         varSimpleItems.append(QVariant::fromValue(simpleItem));
     }
 
     QQmlApplicationEngine* qmlAppEngine = qgcApp()->toolbox()->corePlugin()->createQmlApplicationEngine(this);
-    qmlAppEngine->rootContext()->setContextProperty("planMasterController", masterController);
+    qmlAppEngine->rootContext()->setContextProperty("planMasterController", &masterController);
     qmlAppEngine->rootContext()->setContextProperty("missionItems", varSimpleItems);
     qmlAppEngine->rootContext()->setContextProperty("cColumns", cColumns);
     qmlAppEngine->rootContext()->setContextProperty("imagePath", QStringLiteral("/home/parallels/Downloads/%1-%2.png").arg(firmwareClassString).arg(vehicleClassString));

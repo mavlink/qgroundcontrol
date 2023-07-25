@@ -13,7 +13,7 @@
 #include "MockLink.h"
 
 RequestMessageTest::TestCase_t RequestMessageTest::_rgTestCases[] = {
-//    {  MockLink::FailRequestMessageNone,                                MAV_RESULT_ACCEPTED,    Vehicle::RequestMessageNoFailure,                   1,                                  false },
+    {  MockLink::FailRequestMessageNone,                                MAV_RESULT_ACCEPTED,    Vehicle::RequestMessageNoFailure,                   1,                                  false },
     {  MockLink::FailRequestMessageCommandAcceptedMsgNotSent,           MAV_RESULT_FAILED,      Vehicle::RequestMessageFailureMessageNotReceived,   1,                                  false },
     {  MockLink::FailRequestMessageCommandUnsupported,                  MAV_RESULT_UNSUPPORTED, Vehicle::RequestMessageFailureCommandError,         1,                                  false },
     {  MockLink::FailRequestMessageCommandNoResponse,                   MAV_RESULT_FAILED,      Vehicle::RequestMessageFailureCommandNotAcked,      Vehicle::_mavCommandMaxRetryCount,  false },
@@ -46,6 +46,14 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
     QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE),   -1);
     QCOMPARE(_mockLink->sendMavCommandCount(MAV_CMD_REQUEST_MESSAGE),                                   testCase.expectedSendCount);
 
+    // We should be able to do it twice in a row without any duplicate command problems
+    testCase.resultHandlerCalled = false;
+    _mockLink->clearSendMavCommandCounts();
+    vehicle->requestMessage(_requestMessageResultHandler, &testCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG);
+    QVERIFY(QTest::qWaitFor([&]() { return testCase.resultHandlerCalled; }, 10000));
+    QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE),   -1);
+    QCOMPARE(_mockLink->sendMavCommandCount(MAV_CMD_REQUEST_MESSAGE),                                   testCase.expectedSendCount);
+
     _disconnectMockLink();
 }
 
@@ -72,6 +80,8 @@ void RequestMessageTest::_duplicateCommand(void)
     _mockLink->clearSendMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(testCase.failureMode);
 
+    QVERIFY(false == vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE));
+
     vehicle->requestMessage(_requestMessageResultHandler, &testCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG);
     QVERIFY(QTest::qWaitFor([&]() { return _mockLink->sendMavCommandCount(MAV_CMD_REQUEST_MESSAGE) == 1; }, 10));
     QCOMPARE(testCase.resultHandlerCalled, false);
@@ -81,6 +91,16 @@ void RequestMessageTest::_duplicateCommand(void)
     QCOMPARE(testCase.resultHandlerCalled,                                                              true);
     QCOMPARE(_mockLink->sendMavCommandCount(MAV_CMD_REQUEST_MESSAGE),                                   testCase.expectedSendCount);
     QVERIFY(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE) != -1);
+    QVERIFY(true == vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE));
+
+    // MockLink does not ack messages?
+    // So wait for Vehicle to exhaust retries and then report that failure.
+    // We should then observe that the command is no longer pending and may send again.
+    testCase.resultHandlerCalled = false;
+    testCase.expectedFailureCode = Vehicle::RequestMessageFailureCommandNotAcked;
+    auto timeout = Vehicle::_mavCommandMaxRetryCount * (Vehicle::_mavCommandResponseCheckTimeoutMSecs + Vehicle::_mavCommandAckTimeoutMSecs);
+    QVERIFY(QTest::qWaitFor([&]() { return testCase.resultHandlerCalled; }, timeout));
+    QVERIFY(false == vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE));
 }
 
 void RequestMessageTest::_compIdAllRequestMessageResultHandler(void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& /*message*/)

@@ -38,7 +38,7 @@ public:
     Fact* lock              () { return &_lockFact; }
 
     // Overrides from FactGroup
-    void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
+    virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
     static const char* _latFactName;
     static const char* _lonFactName;
@@ -49,7 +49,7 @@ public:
     static const char* _countFactName;
     static const char* _lockFactName;
 
-private:
+protected:
     void _handleGpsRawInt   (mavlink_message_t& message);
     void _handleHighLatency (mavlink_message_t& message);
     void _handleHighLatency2(mavlink_message_t& message);

@@ -39,12 +39,12 @@ public:
     Q_PROPERTY(bool         uploaded    READ    uploaded                            NOTIFY uploadedChanged)
 
     QString     name                () { return _name; }
-    quint32     size                () { return _size; }
-    bool        selected            () { return _selected; }
-    bool        uploading           () { return _uploading; }
-    qreal       progress            () { return _progress; }
-    bool        writing             () { return _writing; }
-    bool        uploaded            () { return _uploaded; }
+    quint32     size                () const{ return _size; }
+    bool        selected            () const{ return _selected; }
+    bool        uploading           () const{ return _uploading; }
+    qreal       progress            () const{ return _progress; }
+    bool        writing             () const{ return _writing; }
+    bool        uploaded            () const{ return _uploaded; }
 
     void        setSelected         (bool selected);
     void        setUploading        (bool uploading);
@@ -136,14 +136,14 @@ public:
     QString     uploadURL           () { return _uploadURL; }
     QString     feedback            () { return _feedback; }
     QString     videoURL            () { return _videoURL; }
-    bool        enableAutoUpload    () { return _enableAutoUpload; }
-    bool        enableAutoStart     () { return _enableAutoStart; }
+    bool        enableAutoUpload    () const{ return _enableAutoUpload; }
+    bool        enableAutoStart     () const{ return _enableAutoStart; }
     bool        uploading                ();
-    bool        logRunning          () { return _logRunning; }
+    bool        logRunning          () const{ return _logRunning; }
     bool        canStartLog         () { return _vehicle != nullptr && !_logginDenied; }
-    bool        deleteAfterUpload   () { return _deleteAfterUpload; }
-    bool        publicLog           () { return _publicLog; }
-    int         windSpeed           () { return _windSpeed; }
+    bool        deleteAfterUpload   () const{ return _deleteAfterUpload; }
+    bool        publicLog           () const{ return _publicLog; }
+    int         windSpeed           () const{ return _windSpeed; }
     QString     rating              () { return _rating; }
     QString     logExtension        () { return _ulogExtension; }
 

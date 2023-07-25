@@ -128,11 +128,7 @@ void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQue
     connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
     connect(networkReply, &QNetworkReply::sslErrors, this, &TerrainAirMapQuery::_sslErrors);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    connect(networkReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &TerrainAirMapQuery::_requestError);
-#else
     connect(networkReply, &QNetworkReply::errorOccurred, this, &TerrainAirMapQuery::_requestError);
-#endif
 }
 
 void TerrainAirMapQuery::_requestError(QNetworkReply::NetworkError code)
@@ -828,6 +824,15 @@ const double UnitTestTerrainQuery::LinearSlopeRegion::minAMSLElevation  = -100;
 const double UnitTestTerrainQuery::LinearSlopeRegion::maxAMSLElevation  = 1000;
 const double UnitTestTerrainQuery::LinearSlopeRegion::totalElevationChange     = maxAMSLElevation - minAMSLElevation;
 
+const UnitTestTerrainQuery::HillRegion UnitTestTerrainQuery::hillRegion{{
+    linearSlopeRegion.topRight(),
+    QGeoCoordinate{
+        linearSlopeRegion.topRight().latitude() - UnitTestTerrainQuery::regionSizeDeg,
+        linearSlopeRegion.topRight().longitude() + UnitTestTerrainQuery::regionSizeDeg
+    }
+}};
+const double UnitTestTerrainQuery::HillRegion::radius = UnitTestTerrainQuery::regionSizeDeg / UnitTestTerrainQuery::one_second_deg;
+
 UnitTestTerrainQuery::UnitTestTerrainQuery(TerrainQueryInterface* parent)
     :TerrainQueryInterface(parent)
 {
@@ -901,6 +906,19 @@ QList<double> UnitTestTerrainQuery::_requestCoordinateHeights(const QList<QGeoCo
             long dx = regionSizeDeg/one_second_deg;
             double fraction = 1.0 * x / dx;
             result.append(std::round(UnitTestTerrainQuery::LinearSlopeRegion::minAMSLElevation + (fraction * UnitTestTerrainQuery::LinearSlopeRegion::totalElevationChange)));
+        } else if (hillRegion.contains(coordinate)) {
+            double arc_second_meters = (earths_radius_mts * one_second_deg) * (M_PI / 180);
+            double x = (coordinate.latitude() - hillRegion.center().latitude()) * arc_second_meters / one_second_deg;
+            double y = (coordinate.longitude() - hillRegion.center().longitude()) * arc_second_meters / one_second_deg;
+            double x2y2 = pow(x, 2) + pow(y, 2);
+            double r2 = pow(UnitTestTerrainQuery::HillRegion::radius, 2);
+            double z;
+            if (x2y2 <= r2) {
+                z = sqrt(r2 - x2y2);
+            } else {
+                z = UnitTestTerrainQuery::Flat10Region::amslElevation;
+            }
+            result.append(z);
         } else {
             result.clear();
             break;

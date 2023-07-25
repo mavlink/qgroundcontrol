@@ -195,12 +195,12 @@ SetupPage {
 
             QGCCheckBox {
                 id:     _allVisible
-                text:   "Show all settings (advanced)"
+                text:   qsTr("Show all settings (advanced)")
             }
 
             QGCLabel {
                 visible:     !_oldFW
-                text:        "Camera mount tilt speed:"
+                text:        qsTr("Camera mount tilt speed:")
                 font.family: ScreenTools.demiboldFontFamily
             }
 

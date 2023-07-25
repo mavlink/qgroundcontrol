@@ -29,6 +29,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     setParent(nullptr);
+
     // Load last coordinates and zoom from config file
     QSettings settings;
     settings.beginGroup(_flightMapPositionSettingsGroup);
@@ -208,11 +209,7 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
 {
     QPointF intersectPoint;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    auto intersect = QLineF(line1A, line1B).intersect(QLineF(line2A, line2B), &intersectPoint);
-#else
     auto intersect = QLineF(line1A, line1B).intersects(QLineF(line2A, line2B), &intersectPoint);
-#endif
 
     return  intersect == QLineF::BoundedIntersection &&
             intersectPoint != line1A && intersectPoint != line1B;
@@ -261,7 +258,7 @@ QString QGroundControlQmlGlobal::qgcVersion(void) const
     return versionStr;
 }
 
-QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltitudeMode altMode)
+QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltMode altMode)
 {
     switch (altMode) {
     case AltitudeModeNone:
@@ -271,17 +268,20 @@ QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltitudeMode altMode)
         return QString();
     case AltitudeModeAbsolute:
         return tr("(AMSL)");
-    case AltitudeModeAboveTerrain:
-        return tr("(Abv Terr)");
+    case AltitudeModeCalcAboveTerrain:
+        return tr("(CalcT)");
     case AltitudeModeTerrainFrame:
         return tr("(TerrF)");
+    case AltitudeModeMixed:
+        qWarning() << "Internal Error: QGroundControlQmlGlobal::altitudeModeExtraUnits called with altMode == AltitudeModeMixed";
+        return QString();
     }
 
     // Should never get here but makes some compilers happy
     return QString();
 }
 
-QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltitudeMode altMode)
+QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
 {
     switch (altMode) {
     case AltitudeModeNone:
@@ -289,11 +289,13 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltitudeMode altMo
     case AltitudeModeRelative:
         return tr("Relative To Launch");
     case AltitudeModeAbsolute:
-        return tr("Above Mean Sea Level");
-    case AltitudeModeAboveTerrain:
-        return tr("Above Terrain");
+        return tr("AMSL");
+    case AltitudeModeCalcAboveTerrain:
+        return tr("Calc Above Terrain");
     case AltitudeModeTerrainFrame:
         return tr("Terrain Frame");
+    case AltitudeModeMixed:
+        return tr("Mixed Modes");
     }
 
     // Should never get here but makes some compilers happy

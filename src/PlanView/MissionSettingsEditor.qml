@@ -45,6 +45,16 @@ Rectangle {
 
     QGCPalette { id: qgcPal }
     QGCFileDialogController { id: fileController }
+    Component { id: altModeDialogComponent; AltModeDialog { } }
+
+    Connections {
+        target: _controllerVehicle
+        function onSupportsTerrainFrameChanged() {
+            if (!_controllerVehicle.supportsTerrainFrame && _missionController.globalAltitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
+                _missionController.globalAltitudeMode = QGroundControl.AltitudeModeCalcAboveTerrain
+            }
+        }
+    }
 
     ColumnLayout {
         id:                 valuesColumn
@@ -58,75 +68,43 @@ Rectangle {
             text:           qsTr("All Altitudes")
             font.pointSize: ScreenTools.smallFontPointSize
         }
-        QGCComboBox {
-            id:                     altModeCombo
-            model:                  enumStrings
-            Layout.fillWidth:       true
+        MouseArea {
+            Layout.preferredWidth:  childrenRect.width
+            Layout.preferredHeight: childrenRect.height
             enabled:                _noMissionItemsAdded
-            onActivated:            _missionController.globalAltitudeMode = enumValues[index]
-            Component.onCompleted:  buildEnumStrings()
 
-            readonly property var enumStringsBase:   [ QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative),
-                QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute),
-                QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAboveTerrain),
-                QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame),
-                qsTr("Mixed Modes") ]
-            readonly property var enumValuesBase:    [QGroundControl.AltitudeModeRelative, QGroundControl.AltitudeModeAbsolute, QGroundControl.AltitudeModeAboveTerrain, QGroundControl.AltitudeModeTerrainFrame, QGroundControl.AltitudeModeNone  ]
-
-            property var enumStrings:   [ ]
-            property var enumValues:    [ ]
-
-            function buildEnumStrings() {
-                var newEnumStrings = enumStringsBase.slice(0)
-                var newEnumValues = enumValuesBase.slice(0)
+            onClicked: {
+                var removeModes = []
+                var updateFunction = function(altMode){ _missionController.globalAltitudeMode = altMode }
                 if (!_controllerVehicle.supportsTerrainFrame) {
-                    // We need to find and pull out the QGroundControl.AltitudeModeTerrainFrame values
-                    var deleteIndex = newEnumValues.lastIndexOf(QGroundControl.AltitudeModeTerrainFrame)
-                    newEnumStrings.splice(deleteIndex, 1)
-                    newEnumValues.splice(deleteIndex, 1)
-                    if (_missionController.globalAltitudeMode == QGroundControl.AltitudeModeTerrainFrame) {
-                        _missionController.globalAltitudeMode = QGroundControl.AltitudeModeAboveTerrain
-                    }
+                    removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
                 }
-                enumStrings = newEnumStrings
-                enumValues = newEnumValues
-                currentIndex = enumValues.lastIndexOf(_missionController.globalAltitudeMode)
+                mainWindow.showPopupDialogFromComponent(altModeDialogComponent, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction })
             }
 
-            Connections {
-                target:                         _controllerVehicle
-                onSupportsTerrainFrameChanged:  altModeCombo.buildEnumStrings()
+            RowLayout {
+                spacing: ScreenTools.defaultFontPixelWidth
+                enabled: _noMissionItemsAdded
+
+                QGCLabel {
+                    id:     altModeLabel
+                    text:   QGroundControl.altitudeModeShortDescription(_missionController.globalAltitudeMode)
+                }
+                QGCColoredImage {
+                    height:     ScreenTools.defaultFontPixelHeight / 2
+                    width:      height
+                    source:     "/res/DropArrow.svg"
+                    color:      altModeLabel.color
+                }
             }
-        }
-        QGCLabel {
-            Layout.fillWidth:       true
-            wrapMode:               Text.WordWrap
-            horizontalAlignment:    Text.AlignHCenter
-            font.pointSize:         ScreenTools.smallFontPointSize
-            text:                   switch(_missionController.globalAltitudeMode) {
-                                    case QGroundControl.AltitudeModeAboveTerrain:
-                                        qsTr("Specified altitudes are distance above terrain. Actual altitudes sent to vehicle are calculated from terrain data and sent in AMSL")
-                                        break
-                                    case QGroundControl.AltitudeModeTerrainFrame:
-                                        qsTr("Specified altitudes are distance above terrain. The actual altitude flown is controlled by the vehicle either from terrain height maps being sent to vehicle or a distance sensor.")
-                                        break
-                                    case QGroundControl.AltitudeModeNone:
-                                        qsTr("The altitude mode can differ for each individual item.")
-                                        break
-                                    default:
-                                        ""
-                                        break
-                                    }
-            visible:                _missionController.globalAltitudeMode == QGroundControl.AltitudeModeAboveTerrain || _missionController.globalAltitudeMode == QGroundControl.AltitudeModeTerrainFrame || _missionController.globalAltitudeMode == QGroundControl.AltitudeModeNone
         }
 
         QGCLabel {
             text:           qsTr("Initial Waypoint Alt")
             font.pointSize: ScreenTools.smallFontPointSize
         }
-        AltitudeFactTextField {
+        FactTextField {
             fact:               QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
-            altitudeMode:       _missionController.globalAltitudeModeDefault
             Layout.fillWidth:   true
         }
 

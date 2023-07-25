@@ -112,7 +112,7 @@ Item {
     */
     Connections {
         target: QGroundControl.settingsManager.appSettings.appFontPointSize
-        onValueChanged: {
+        function onValueChanged() {
             _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
         }
     }

@@ -82,36 +82,36 @@ public:
 
     QString     name                    () { return _name; }
     QString     mapTypeStr              () { return _mapTypeStr; }
-    double      topleftLat              () { return _topleftLat; }
-    double      topleftLon              () { return _topleftLon; }
-    double      bottomRightLat          () { return _bottomRightLat; }
-    double      bottomRightLon          () { return _bottomRightLon; }
-    quint32     totalTileCount          () { return (quint32)_totalTileCount; }
-    QString     totalTileCountStr       ();
-    quint64     totalTilesSize          () { return (quint64)_totalTileSize; }
-    QString     totalTilesSizeStr       ();
-    quint32     uniqueTileCount         () { return _uniqueTileCount; }
-    QString     uniqueTileCountStr      ();
-    quint64     uniqueTileSize          () { return _uniqueTileSize; }
-    QString     uniqueTileSizeStr       ();
-    quint32     savedTileCount          () { return (quint32)_savedTileCount; }
-    QString     savedTileCountStr       ();
-    quint64     savedTileSize           () { return (quint64)_savedTileSize; }
-    QString     savedTileSizeStr        ();
+    double      topleftLat              () const{ return _topleftLat; }
+    double      topleftLon              () const{ return _topleftLon; }
+    double      bottomRightLat          () const{ return _bottomRightLat; }
+    double      bottomRightLon          () const{ return _bottomRightLon; }
+    quint32     totalTileCount          () const{ return (quint32)_totalTileCount; }
+    QString     totalTileCountStr       () const;
+    quint64     totalTilesSize          () const{ return (quint64)_totalTileSize; }
+    QString     totalTilesSizeStr       () const;
+    quint32     uniqueTileCount         () const{ return _uniqueTileCount; }
+    QString     uniqueTileCountStr      () const;
+    quint64     uniqueTileSize          () const{ return _uniqueTileSize; }
+    QString     uniqueTileSizeStr       () const;
+    quint32     savedTileCount          () const{ return (quint32)_savedTileCount; }
+    QString     savedTileCountStr       () const;
+    quint64     savedTileSize           () const{ return (quint64)_savedTileSize; }
+    QString     savedTileSizeStr        () const;
     QString     downloadStatus          ();
-    int         minZoom                 () { return _minZoom; }
-    int         maxZoom                 () { return _maxZoom; }
+    int         minZoom                 () const{ return _minZoom; }
+    int         maxZoom                 () const{ return _maxZoom; }
     QDateTime   creationDate            () { return _creationDate; }
-    quint64     id                      () { return _id; }
+    quint64     id                      () const{ return _id; }
     QString type            () { return _type; }
-    bool        complete                () { return _defaultSet || (_totalTileCount <= _savedTileCount); }
-    bool        defaultSet              () { return _defaultSet; }
-    quint64     setID                   () { return _id; }
-    bool        deleting                () { return _deleting; }
-    bool        downloading             () { return _downloading; }
-    quint32     errorCount              () { return _errorCount; }
-    QString     errorCountStr           ();
-    bool        selected                () { return _selected; }
+    bool        complete                () const{ return _defaultSet || (_totalTileCount <= _savedTileCount); }
+    bool        defaultSet              () const{ return _defaultSet; }
+    quint64     setID                   () const{ return _id; }
+    bool        deleting                () const{ return _deleting; }
+    bool        downloading             () const{ return _downloading; }
+    quint32     errorCount              () const{ return _errorCount; }
+    QString     errorCountStr           () const;
+    bool        selected                () const{ return _selected; }
 
     void        setSelected             (bool sel);
     void        setName                 (QString name)              { _name = name; }

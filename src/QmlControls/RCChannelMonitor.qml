@@ -79,7 +79,7 @@ Item {
                 anchors.fill:           parent
                 horizontalAlignment:    Text.AlignHCenter
                 verticalAlignment:      Text.AlignVCenter
-                text:                   "Not Mapped"
+                text:                   qsTr("Not Mapped")
                 visible:                !mapped
             }
 
@@ -101,7 +101,7 @@ Item {
 
         QGCLabel {
             Layout.columnSpan:  parent.columns
-            text:               "Channel Monitor"
+            text:               qsTr("Channel Monitor")
         }
 
         Connections {

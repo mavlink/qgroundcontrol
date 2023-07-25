@@ -5,9 +5,7 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 
 QGCTabBar {
-    id:             tabBar
-    anchors.left:   parent.left
-    anchors.right:  parent.right
+    id: tabBar
 
     Component.onCompleted: currentIndex = QGroundControl.settingsManager.planViewSettings.displayPresetsTabFirst.rawValue ? 2 : 0
 

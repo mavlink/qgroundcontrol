@@ -1183,8 +1183,7 @@ QGCCameraControl::_requestAllParameters()
                     sharedLink->mavlinkChannel(),
                     &msg,
                     static_cast<uint8_t>(_vehicle->id()),
-                    static_cast<uint8_t>(compID()),
-                    0);                                                 // trimmed messages = false
+                    static_cast<uint8_t>(compID()));
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
     qCDebug(CameraControlVerboseLog) << "Request all parameters";
@@ -1279,11 +1278,7 @@ QGCCameraControl::_processConditionTest(const QString conditionTest)
     QStringList test;
 
     auto split = [&conditionTest](const QString& sep ) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        return conditionTest.split(sep, QString::SkipEmptyParts);
-#else
         return conditionTest.split(sep, Qt::SkipEmptyParts);
-#endif
     };
 
     if(conditionTest.contains("!=")) {
@@ -1331,11 +1326,7 @@ QGCCameraControl::_processCondition(const QString condition)
     bool result = true;
     bool andOp  = true;
     if(!condition.isEmpty()) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        QStringList scond = condition.split(" ", QString::SkipEmptyParts);
-#else
         QStringList scond = condition.split(" ", Qt::SkipEmptyParts);
-#endif
         while(scond.size()) {
             QString test = scond.first();
             scond.removeFirst();
@@ -1995,7 +1986,7 @@ QGCCameraControl::_httpRequest(const QString &url)
     tempProxy.setType(QNetworkProxy::DefaultProxy);
     _netManager->setProxy(tempProxy);
     QNetworkRequest request(url);
-    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QSslConfiguration conf = request.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
@@ -2019,7 +2010,11 @@ QGCCameraControl::_downloadFinished()
         data.append("\n");
     } else {
         data.clear();
-        qWarning() << QString("Camera Definition download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
+        qWarning() << QString("Camera Definition (%1) download error: %2 status: %3").arg(
+            reply->url().toDisplayString(),
+            reply->errorString(),
+            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString()
+        );
     }
     emit dataReady(data);
     //reply->deleteLater();
@@ -2156,7 +2151,7 @@ QGCVideoStreamInfo::QGCVideoStreamInfo(QObject* parent, const mavlink_video_stre
 
 //-----------------------------------------------------------------------------
 qreal
-QGCVideoStreamInfo::aspectRatio()
+QGCVideoStreamInfo::aspectRatio() const
 {
     qreal ar = 1.0;
     if(_streamInfo.resolution_h && _streamInfo.resolution_v) {

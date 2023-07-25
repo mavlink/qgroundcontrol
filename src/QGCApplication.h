@@ -67,20 +67,14 @@ public:
     void clearDeleteAllSettingsNextBoot(void);
 
     /// @brief Returns true if unit tests are being run
-    bool runningUnitTests(void) { return _runningUnitTests; }
+    bool runningUnitTests(void) const{ return _runningUnitTests; }
 
     /// @brief Returns true if Qt debug output should be logged to a file
-    bool logOutput(void) { return _logOutput; }
+    bool logOutput(void) const{ return _logOutput; }
 
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
     void reportMissingParameter(int componentId, const QString& name);
-
-    /// Show non-modal vehicle message to the user
-    Q_SLOT void showCriticalVehicleMessage(const QString& message);
-
-    /// Show modal application message to the user
-    Q_SLOT void showAppMessage(const QString& message, const QString& title = QString());
 
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) const { return _fakeMobile; }
@@ -89,7 +83,7 @@ public:
     QGCToolbox* toolbox(void) { return _toolbox; }
 
     /// Do we have Bluetooth Support?
-    bool isBluetoothAvailable() { return _bluetoothAvailable; }
+    bool isBluetoothAvailable() const{ return _bluetoothAvailable; }
 
     /// Is Internet available?
     bool isInternetAvailable();
@@ -99,13 +93,15 @@ public:
     QTranslator& qgcJSONTranslator(void) { return _qgcTranslatorJSON; }
 
     void            setLanguage();
-    QQuickItem*     mainRootWindow();
+    QQuickWindow*   mainRootWindow();
     uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
 
     /// Registers the signal such that only the last duplicate signal added is left in the queue.
     void addCompressedSignal(const QMetaMethod & method);
 
     void removeCompressedSignal(const QMetaMethod & method);
+
+    bool event(QEvent *e) override;
 
     static QString cachedParameterMetaDataFile(void);
     static QString cachedAirframeMetaDataFile(void);
@@ -133,6 +129,16 @@ public slots:
     /// Get current language
     const QLocale getCurrentLanguage() { return _locale; }
 
+    /// Show non-modal vehicle message to the user
+    void showCriticalVehicleMessage(const QString& message);
+
+    /// Show modal application message to the user
+    void showAppMessage(const QString& message, const QString& title = QString());
+
+    /// Show modal application message to the user about the need for a reboot. Multiple messages will be supressed if they occur
+    /// one after the other.
+    void showRebootAppMessage(const QString& message, const QString& title = QString());
+
 signals:
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
     /// on the MAVLinkProtocol thread;
@@ -157,7 +163,9 @@ public:
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
-    bool    isErrorState()  { return _error; }
+    bool    isErrorState() const { return _error; }
+
+    QQmlApplicationEngine* qmlAppEngine() { return _qmlAppEngine; }
 
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
@@ -199,7 +207,7 @@ private:
     int                 _buildVersion           = 0;
     GPSRTKFactGroup*    _gpsRtkFactGroup        = nullptr;
     QGCToolbox*         _toolbox                = nullptr;
-    QQuickItem*         _mainRootWindow         = nullptr;
+    QQuickWindow*       _mainRootWindow         = nullptr;
     bool                _bluetoothAvailable     = false;
     QTranslator         _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
     QTranslator         _qgcTranslatorJSON;                 ///< translations for json files

@@ -19,22 +19,23 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSourceNoVideo           = "No Video Available";
-const char* VideoSettings::videoDisabled                = "Video Stream Disabled";
-const char* VideoSettings::videoSourceRTSP              = "RTSP Video Stream";
-const char* VideoSettings::videoSourceUDPH264           = "UDP h.264 Video Stream";
-const char* VideoSettings::videoSourceUDPH265           = "UDP h.265 Video Stream";
-const char* VideoSettings::videoSourceTCP               = "TCP-MPEG2 Video Stream";
-const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video Stream";
-const char* VideoSettings::videoSource3DRSolo           = "3DR Solo (requires restart)";
-const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
+const char* VideoSettings::videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
+const char* VideoSettings::videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
+const char* VideoSettings::videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
+const char* VideoSettings::videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
+const char* VideoSettings::videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
+const char* VideoSettings::videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");
+const char* VideoSettings::videoSourceMPEGTS            = QT_TRANSLATE_NOOP("VideoSettings", "MPEG-TS (h.264) Video Stream");
+const char* VideoSettings::videoSource3DRSolo           = QT_TRANSLATE_NOOP("VideoSettings", "3DR Solo (requires restart)");
+const char* VideoSettings::videoSourceParrotDiscovery   = QT_TRANSLATE_NOOP("VideoSettings", "Parrot Discovery");
+const char* VideoSettings::videoSourceYuneecMantisG     = QT_TRANSLATE_NOOP("VideoSettings", "Yuneec Mantis G");
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data
-    QStringList videoSourceList;
+    QVariantList videoSourceList;
 #ifdef QGC_GST_STREAMING
     videoSourceList.append(videoSourceRTSP);
 #ifndef NO_UDP_VIDEO
@@ -45,6 +46,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceMPEGTS);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
+    videoSourceList.append(videoSourceYuneecMantisG);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -58,11 +60,14 @@ DECLARE_SETTINGGROUP(Video, "Video")
     } else {
         videoSourceList.insert(0, videoDisabled);
     }
-    QVariantList videoSourceVarList;
-    for (const QString& videoSource: videoSourceList) {
-        videoSourceVarList.append(QVariant::fromValue(videoSource));
+
+    // make translated strings
+    QStringList videoSourceCookedList;
+    for (const QVariant& videoSource: videoSourceList) {
+        videoSourceCookedList.append( VideoSettings::tr(videoSource.toString().toStdString().c_str()) );
     }
-    _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
+
+    _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
 
     const QVariantList removeForceVideoDecodeList{
 #ifdef Q_OS_LINUX
@@ -113,7 +118,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
         //-- Check for sources no longer available
-        if(!_videoSourceFact->enumStrings().contains(_videoSourceFact->rawValue().toString())) {
+        if(!_videoSourceFact->enumValues().contains(_videoSourceFact->rawValue().toString())) {
             if (_noVideo) {
                 _videoSourceFact->setRawValue(videoSourceNoVideo);
             } else {

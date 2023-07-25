@@ -28,6 +28,7 @@
 class Vehicle;
 class QGCCameraControl;
 class QGCCameraManager;
+class Autotune;
 
 /// This is the base class for Firmware specific plugins
 ///
@@ -41,6 +42,8 @@ class FirmwarePlugin : public QObject
     Q_OBJECT
 
 public:
+    FirmwarePlugin ();
+
     /// Set of optional capabilites which firmware may support
     typedef enum {
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
@@ -155,7 +158,8 @@ public:
 
     /// Command vehicle to change altitude
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
-    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
+    ///     @param pauseVehicle true: pause vehicle prior to altitude change
+    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
 
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
@@ -326,6 +330,12 @@ public:
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
+
+    // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
+    virtual QString getHobbsMeter(Vehicle* vehicle) { Q_UNUSED(vehicle); return "Not Supported"; }
+
+    /// Creates Autotune object.
+    virtual Autotune* createAutotune(Vehicle *vehicle);
 
 signals:
     void toolIndicatorsChanged(void);

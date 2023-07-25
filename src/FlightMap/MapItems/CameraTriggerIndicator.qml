@@ -29,13 +29,39 @@ MapQuickItem {
 
         readonly property real _radius: ScreenTools.defaultFontPixelHeight * 0.6
 
-        QGCColoredImage {
-            anchors.margins:    3
-            anchors.fill:       parent
-            color:              "white"
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            source:             "/qmlimages/camera.svg"
+        // Bigger rectangle of camera icon
+        Rectangle {
+            id:                       cameraIconFrameRectangle
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter:   parent.verticalCenter
+            height:                   width * 0.6
+            width:                    parent.width * 0.6
+            color:                    qgcPal.window
+            radius:                   4
+
+            // Little rectangle on top indicating viewfinder
+            Rectangle {
+                id:                       cameraIconViewFinderRectangle
+                anchors.horizontalCenter: cameraIconFrameRectangle.horizontalCenter
+                anchors.bottom:           cameraIconFrameRectangle.top
+                width:                    cameraIconFrameRectangle.width * 0.5
+                height:                   cameraIconFrameRectangle.height * 0.3
+                color:                    qgcPal.window
+                radius:                   2
+            }
+        }
+
+        // Circunference indicating the lens
+        Rectangle {
+            id:                      cameraIconLens
+            anchors.centerIn:        cameraIconFrameRectangle
+            height:                  width
+            width:                   cameraIconFrameRectangle.height * 0.9
+            color:                   "transparent"
+            border.color:            "black"
+            opacity:                 0.9
+            border.width:            2
+            radius:                  width * 0.5
         }
     }
 }

@@ -54,9 +54,9 @@ public:
 
     // Property accessors
 
-    bool activeVehicleAvailable(void) { return _activeVehicleAvailable; }
+    bool activeVehicleAvailable(void) const{ return _activeVehicleAvailable; }
 
-    bool parameterReadyVehicleAvailable(void) { return _parameterReadyVehicleAvailable; }
+    bool parameterReadyVehicleAvailable(void) const{ return _parameterReadyVehicleAvailable; }
 
     Vehicle* activeVehicle(void) { return _activeVehicle; }
     void setActiveVehicle(Vehicle* vehicle);

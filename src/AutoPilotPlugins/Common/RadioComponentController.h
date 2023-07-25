@@ -98,9 +98,9 @@ public:
     bool yawChannelReversed(void);
     bool throttleChannelReversed(void);
 
-    int channelCount(void);
+    int channelCount(void) const;
 
-    int transmitterMode(void) { return _transmitterMode; }
+    int transmitterMode(void) const{ return _transmitterMode; }
     void setTransmitterMode(int mode);
 
 signals:
@@ -301,7 +301,6 @@ private:
     int _rcRawValue[_chanMax];         ///< Current set of raw channel values
 
     int     _stickDetectChannel;
-    int     _stickDetectInitialValue;
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
     QElapsedTimer   _stickDetectSettleElapsed;

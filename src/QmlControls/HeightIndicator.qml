@@ -10,7 +10,7 @@ ColumnLayout {
     spacing:    0
 
     property var map
-    property string heightText: "30 ft"
+    property string heightText: qsTr("30 ft")
 
     property color _textColor:  _mapPalette.text
 

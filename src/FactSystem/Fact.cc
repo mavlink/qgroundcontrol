@@ -303,6 +303,39 @@ QVariantList Fact::bitmaskValues(void) const
     }
 }
 
+/**
+ * @brief Provide a list of selected strings based on the fact value with the bitmaskString/bitmaskValues map
+ *
+ * @return QStringList
+ */
+QStringList Fact::selectedBitmaskStrings(void) const
+{
+    if (_metaData) {
+        const auto values = _metaData->bitmaskValues();
+        const auto strings = _metaData->bitmaskStrings();
+        if(values.size() != strings.size()) {
+            qWarning() << "Size of bitmask value and string is different."  << name();
+            return {};
+        }
+
+        QStringList selected;
+        for(int i = 0; i < values.size(); i++) {
+            if(rawValue().toInt() & values[i].toInt()) {
+                selected += strings[i];
+            }
+        }
+
+        if(selected.isEmpty()) {
+            selected += "Not value selected";
+        }
+
+        return selected;
+    } else {
+        qWarning() << kMissingMetadata << name();
+        return {};
+    }
+}
+
 QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
 {
     QString valueString;
@@ -742,9 +775,9 @@ void Fact::_checkForRebootMessaging(void)
     if(qgcApp()) {
         if (!qgcApp()->runningUnitTests()) {
             if (vehicleRebootRequired()) {
-                qgcApp()->showAppMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
+                qgcApp()->showRebootAppMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
             } else if (qgcRebootRequired()) {
-                qgcApp()->showAppMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
+                qgcApp()->showRebootAppMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
             }
         }
     }

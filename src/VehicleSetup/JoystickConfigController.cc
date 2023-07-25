@@ -714,7 +714,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
     }
 }
 
-bool JoystickConfigController::_validAxis(int axis)
+bool JoystickConfigController::_validAxis(int axis) const
 {
     return axis >= 0 && axis < _axisCount;
 }

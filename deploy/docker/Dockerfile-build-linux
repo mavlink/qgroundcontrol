@@ -1,0 +1,74 @@
+#
+# QGroundControl linux build environment
+#
+
+FROM ubuntu:20.04
+LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
+
+ARG QT_VERSION=5.15.2
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QMAKESPEC linux-g++-64
+
+ENV QT_PATH /opt/Qt
+ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
+
+ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+
+RUN apt update && apt -y --quiet --no-install-recommends install \
+		apt-utils \
+		binutils \
+		build-essential \
+		ca-certificates \
+		ccache \
+		checkinstall \
+		cmake \
+		curl \
+		espeak \
+		fuse \
+		g++ \
+		gcc \
+		git \
+		gosu \
+		kmod \
+		libespeak-dev \
+		libfontconfig1 \
+		libfuse2 \
+		libgstreamer-plugins-base1.0-dev \
+		libgstreamer1.0-0 \
+		libgstreamer1.0-dev \
+		libsdl2-dev \
+		libssl-dev \
+		libudev-dev \
+		locales \
+		make \
+		ninja-build \
+		openssh-client \
+		openssl \
+		patchelf \
+		pkg-config \
+		rsync \
+		speech-dispatcher \
+		wget \
+		xvfb \
+		zlib1g-dev \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+# Install Qt
+COPY deploy/docker/install-qt-linux.sh /tmp/qt/
+RUN /tmp/qt/install-qt-linux.sh
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1000 to not run commands/generate files as root
+RUN useradd user --create-home --home-dir /home/user --shell /bin/bash --uid 1000
+USER user
+
+WORKDIR /project/build
+CMD qmake /project/source && make -j$(nproc)

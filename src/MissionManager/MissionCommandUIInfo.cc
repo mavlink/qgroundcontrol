@@ -39,6 +39,7 @@ const char* MissionCommandUIInfo::_specifiesCoordinateJsonKey   = "specifiesCoor
 const char* MissionCommandUIInfo::_specifiesAltitudeOnlyJsonKey = "specifiesAltitudeOnly";
 const char* MissionCommandUIInfo::_isLandCommandJsonKey         = "isLandCommand";
 const char* MissionCommandUIInfo::_isTakeoffCommandJsonKey      = "isTakeoffCommand";
+const char* MissionCommandUIInfo::_isLoiterCommandJsonKey       = "isLoiterCommand";
 const char* MissionCommandUIInfo::_unitsJsonKey                 = "units";
 const char* MissionCommandUIInfo::_commentJsonKey               = "comment";
 const char* MissionCommandUIInfo::_advancedCategory             = "Advanced";
@@ -184,6 +185,15 @@ bool MissionCommandUIInfo::isTakeoffCommand(void) const
     }
 }
 
+bool MissionCommandUIInfo::isLoiterCommand() const
+{
+    if (_infoMap.contains(_isLoiterCommandJsonKey)) {
+        return _infoMap[_isLoiterCommandJsonKey].toBool();
+    } else {
+        return false;
+    }
+}
+
 void MissionCommandUIInfo::_overrideInfo(MissionCommandUIInfo* uiInfo)
 {
     // Override info values
@@ -219,7 +229,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     QStringList allKeys;
     allKeys << _idJsonKey << _rawNameJsonKey << _friendlyNameJsonKey << _descriptionJsonKey << _standaloneCoordinateJsonKey << _specifiesCoordinateJsonKey
             <<_friendlyEditJsonKey << _param1JsonKey << _param2JsonKey << _param3JsonKey << _param4JsonKey << _param5JsonKey << _param6JsonKey << _param7JsonKey
-            << _paramRemoveJsonKey << _categoryJsonKey << _specifiesAltitudeOnlyJsonKey << _isLandCommandJsonKey << _isTakeoffCommandJsonKey;
+            << _paramRemoveJsonKey << _categoryJsonKey << _specifiesAltitudeOnlyJsonKey << _isLandCommandJsonKey << _isTakeoffCommandJsonKey << _isLoiterCommandJsonKey;
 
     // Look for unknown keys in top level object
     for (const QString& key: jsonObject.keys()) {
@@ -288,6 +298,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     if (jsonObject.contains(_isTakeoffCommandJsonKey)) {
         _infoMap[_isTakeoffCommandJsonKey] = jsonObject.value(_isTakeoffCommandJsonKey).toBool();
     }
+    if (jsonObject.contains(_isLoiterCommandJsonKey)) {
+        _infoMap[_isLoiterCommandJsonKey] = jsonObject.value(_isLoiterCommandJsonKey).toBool();
+    }
     if (jsonObject.contains(_friendlyEditJsonKey)) {
         _infoMap[_friendlyEditJsonKey] = jsonObject.value(_friendlyEditJsonKey).toVariant();
     }
@@ -320,6 +333,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
         }
         if (!_infoAvailable(_isTakeoffCommandJsonKey)) {
             _setInfoValue(_isTakeoffCommandJsonKey, false);
+        }
+        if (!_infoAvailable(_isLoiterCommandJsonKey)) {
+            _setInfoValue(_isLoiterCommandJsonKey, false);
         }
         if (!_infoAvailable(_friendlyEditJsonKey)) {
             _setInfoValue(_friendlyEditJsonKey, false);
@@ -387,11 +403,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_param =         i;
             paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-            paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
-#else
             paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", Qt::SkipEmptyParts);
-#endif
 
             if (paramObject.contains(_defaultJsonKey)) {
                 if (paramInfo->_nanUnchanged) {
@@ -406,11 +418,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             } else {
                 paramInfo->_defaultValue = paramInfo->_nanUnchanged ? std::numeric_limits<double>::quiet_NaN() : 0;
             }
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-            QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
-#else
             QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", Qt::SkipEmptyParts);
-#endif
             for (const QString &enumValue: enumValues) {
                 bool    convertOk;
                 double  value = enumValue.toDouble(&convertOk);

@@ -39,8 +39,6 @@ private:
         loiterTangentCoordinateChangedIndex,
         landingCoordinateChangedIndex,
         landingCoordSetChangedIndex,
-        loiterClockwiseChangedIndex,
-        useLoiterToAltChangedIndex,
         altitudesAreRelativeChangedIndex,
         _updateFlightPathSegmentsSignalIndex,
         maxSignalIndex,
@@ -51,8 +49,6 @@ private:
         loiterTangentCoordinateChangedMask      = 1 << loiterTangentCoordinateChangedIndex,
         landingCoordinateChangedMask            = 1 << landingCoordinateChangedIndex,
         landingCoordSetChangedMask              = 1 << landingCoordSetChangedIndex,
-        loiterClockwiseChangedMask              = 1 << loiterClockwiseChangedIndex,
-        useLoiterToAltChangedMask               = 1 << useLoiterToAltChangedIndex,
         altitudesAreRelativeChangedMask         = 1 << altitudesAreRelativeChangedIndex,
         _updateFlightPathSegmentsSignalMask     = 1 << _updateFlightPathSegmentsSignalIndex,
     };
@@ -74,7 +70,7 @@ class SimpleLandingComplexItem : public LandingComplexItem
     Q_OBJECT
 
 public:
-    SimpleLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent);
+    SimpleLandingComplexItem(PlanMasterController* masterController, bool flyView);
 
     // Overrides from ComplexMissionItem
     QString patternName (void) const final { return QString(); }
@@ -94,7 +90,7 @@ private slots:
     void _updateFlightPathSegmentsDontCallDirectly(void) override;
 
 private:
-    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView, QObject* parent) { return new SimpleLandingComplexItem(masterController, flyView, parent); }
+    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView) { return new SimpleLandingComplexItem(masterController, flyView); }
     static bool                 _isValidLandItem(const MissionItem& missionItem);
 
     // Overrides from LandingComplexItem

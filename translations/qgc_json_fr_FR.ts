@@ -2,60 +2,342 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="fr" sourcelanguage="en">
   <context>
+    <name>App.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
+      <translation>ArduPilot,PX4 Pro,Mavlink Générique</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
+      <translation type="unfinished">Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
+      <translation type="unfinished">Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Indoor,Outdoor</source>
+      <translation>Intérieur, Extérieur</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>Never,Always,When in Follow Me Flight Mode</source>
+      <translation type="unfinished">Never,Always,When in Follow Me Flight Mode</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].enumStrings, </extracomment>
+      <location filename="../src/Settings/App.SettingsGroup.json"/>
+      <source>System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</source>
+      <translation type="unfinished">System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)</translation>
+    </message>
+  </context>
+  <context>
+    <name>FirmwareUpgrade.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>ChibiOS,NuttX</source>
+      <translation type="unfinished">ChibiOS,NuttX</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
+      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
+      <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
+      <translation type="unfinished">Multi-Rotor,Helicopter,Plane,Rover,Sub</translation>
+    </message>
+  </context>
+  <context>
+    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
+      <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
+      <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
+      <translation>Contrôlé par le véhicule,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
+    </message>
+  </context>
+  <context>
+    <name>Video.SettingsGroup.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Hide,Show</source>
+      <translation>Masquer/Afficher</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Fit Width,Fit Height,Stretch</source>
+      <translation type="unfinished">Fit Width,Fit Height,Stretch</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>mkv,mov,mp4</source>
+      <translation>mkv,mov,mp4</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
+      <location filename="../src/Settings/Video.SettingsGroup.json"/>
+      <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
+      <translation type="unfinished">Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</translation>
+    </message>
+  </context>
+  <context>
+    <name>BatteryFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/BatteryFact.json"/>
+      <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
+      <translation type="unfinished">n/a,All Flight Systems,Propulsion,Avionics,Payload</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/BatteryFact.json"/>
+      <source>n/a,LIPO,LIFE,LION,NIMH</source>
+      <translation type="unfinished">n/a,LIPO,LIFE,LION,NIMH</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/BatteryFact.json"/>
+      <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
+      <translation type="unfinished">n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</translation>
+    </message>
+  </context>
+  <context>
+    <name>GPSFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/GPSFact.json"/>
+      <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
+      <translation>Aucun,Aucun,Verrouillage 2D,Verrouillage 3D,Verrouillage 3D DGPS,Verrouillage GPS RTK 3D (flottant),Verrouillage GPS RTK 3D (fixe),Statique (fixe)</translation>
+    </message>
+  </context>
+  <context>
+    <name>SubmarineFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/SubmarineFact.json"/>
+      <source>Disabled,Enabled</source>
+      <translation>Activer,Désactiver</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
+      <location filename="../src/Vehicle/SubmarineFact.json"/>
+      <source>Disabled,Enabled,Unavailable</source>
+      <translation>Désactivé,Activé,Indisponible</translation>
+    </message>
+  </context>
+  <context>
+    <name>EditPositionDialog.FactMetaData.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
+      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
+      <source>North,South</source>
+      <translation type="unfinished">North,South</translation>
+    </message>
+  </context>
+  <context>
+    <name>UT-MavCmdInfoFixedWing.json</name>
+    <message>
+      <extracomment>.mavCmdInfo[Override testing].description, .mavCmdInfo[Override testing].category, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
+      <source>override fw 4</source>
+      <translation>surcharge fw 4</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[Override testing].param1.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
+      <source>override fw 4 1</source>
+      <translation>surcharge fw 4 1</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[Override testing].param1.enumStrings, .mavCmdInfo[Override testing].param3.enumStrings, .mavCmdInfo[Override testing].param5.enumStrings, .mavCmdInfo[Override testing].param7.enumStrings, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
+      <source>1,2</source>
+      <translation>1,2</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[Override testing].param3.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
+      <source>override fw 4 3</source>
+      <translation>surcharge fw 4 3</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[Override testing].param5.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
+      <source>override fw 4 5</source>
+      <translation>surcharge fw 4 5</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[Override testing].param7.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
+      <source>override fw 4 7</source>
+      <translation>surcharge fw 4 7</translation>
+    </message>
+  </context>
+  <context>
+    <name>UT-MavCmdInfoCommon.json</name>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_2].param1.label, .mavCmdInfo[UNITTEST_3].param1.label, .mavCmdInfo[UNITTEST_4].param1.label, .mavCmdInfo[UNITTEST_5].param1.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param1</source>
+      <translation>param1</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>Unit Test 3</source>
+      <translation>Test de l'unité 3</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].description, .mavCmdInfo[UNITTEST_4].description, .mavCmdInfo[UNITTEST_5].description, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>description</source>
+      <translation>Description</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].category, .mavCmdInfo[UNITTEST_4].category, .mavCmdInfo[UNITTEST_5].category, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>category</source>
+      <translation>catégorie</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param1.enumStrings, .mavCmdInfo[UNITTEST_3].param2.enumStrings, .mavCmdInfo[UNITTEST_3].param3.enumStrings, .mavCmdInfo[UNITTEST_3].param4.enumStrings, .mavCmdInfo[UNITTEST_3].param5.enumStrings, .mavCmdInfo[UNITTEST_3].param6.enumStrings, .mavCmdInfo[UNITTEST_3].param7.enumStrings, .mavCmdInfo[UNITTEST_4].param1.enumStrings, .mavCmdInfo[UNITTEST_4].param2.enumStrings, .mavCmdInfo[UNITTEST_4].param3.enumStrings, .mavCmdInfo[UNITTEST_4].param4.enumStrings, .mavCmdInfo[UNITTEST_4].param5.enumStrings, .mavCmdInfo[UNITTEST_4].param6.enumStrings, .mavCmdInfo[UNITTEST_4].param7.enumStrings, .mavCmdInfo[UNITTEST_5].param1.enumStrings, .mavCmdInfo[UNITTEST_5].param2.enumStrings, .mavCmdInfo[UNITTEST_5].param3.enumStrings, .mavCmdInfo[UNITTEST_5].param4.enumStrings, .mavCmdInfo[UNITTEST_5].param5.enumStrings, .mavCmdInfo[UNITTEST_5].param6.enumStrings, .mavCmdInfo[UNITTEST_5].param7.enumStrings, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>1,2</source>
+      <translation>1,2</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param2.label, .mavCmdInfo[UNITTEST_4].param2.label, .mavCmdInfo[UNITTEST_5].param2.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param2</source>
+      <translation>param2</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param3.label, .mavCmdInfo[UNITTEST_4].param3.label, .mavCmdInfo[UNITTEST_5].param3.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param3</source>
+      <translation>param3</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param4.label, .mavCmdInfo[UNITTEST_4].param4.label, .mavCmdInfo[UNITTEST_5].param4.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param4</source>
+      <translation type="unfinished">param4</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param5.label, .mavCmdInfo[UNITTEST_4].param5.label, .mavCmdInfo[UNITTEST_5].param5.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param5</source>
+      <translation>param5</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param6.label, .mavCmdInfo[UNITTEST_4].param6.label, .mavCmdInfo[UNITTEST_5].param6.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param6</source>
+      <translation>param6</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_3].param7.label, .mavCmdInfo[UNITTEST_4].param7.label, .mavCmdInfo[UNITTEST_5].param7.label, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>param7</source>
+      <translation>param7</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_4].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>Unit Test 4</source>
+      <translation>Test de l'unité 4</translation>
+    </message>
+    <message>
+      <extracomment>.mavCmdInfo[UNITTEST_5].friendlyName, </extracomment>
+      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
+      <source>Unit Test 5</source>
+      <translation>Test de l'unité 5</translation>
+    </message>
+  </context>
+  <context>
+    <name>MavCmdInfoMultiRotor.json</name>
+    <message>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoMultiRotor.json"/>
+      <source>Yaw</source>
+      <translation type="unfinished">Yaw</translation>
+    </message>
+  </context>
+  <context>
+    <name>MavCmdInfoFixedWing.json</name>
+    <message>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
+      <location filename="../src/MissionManager/MavCmdInfoFixedWing.json"/>
+      <source>Pitch</source>
+      <translation type="unfinished">Pitch</translation>
+    </message>
+  </context>
+  <context>
     <name>MavCmdInfoCommon.json</name>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Home Position</source>
-      <translation type="unfinished">Home Position</translation>
+      <translation>Position de départ</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Planned home position for mission.</source>
-      <translation type="unfinished">Planned home position for mission.</translation>
+      <translation>Position d'origine prévue pour la mission</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Basic</source>
-      <translation type="unfinished">Basic</translation>
+      <translation>Élémentaire</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param5.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Latitude</source>
-      <translation type="unfinished">Latitude</translation>
+      <translation>Latitude</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param6.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Longitude</source>
-      <translation type="unfinished">Longitude</translation>
+      <translation>Longitude</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Waypoint</source>
-      <translation type="unfinished">Waypoint</translation>
+      <translation>Repère</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space.</source>
-      <translation type="unfinished">Travel to a position in 3D space.</translation>
+      <translation>Se diriger vers une position dans l'espace 3D.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>Maintenir</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Acceptance</source>
-      <translation type="unfinished">Acceptance</translation>
+      <translation>Acceptation</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label, </extracomment>
@@ -64,16 +346,16 @@
       <translation type="unfinished">Pass Radius</translation>
     </message>
     <message>
-      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, </extracomment>
+      <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>Axe de lacet</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>Attendre</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
@@ -85,7 +367,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Radius</source>
-      <translation type="unfinished">Radius</translation>
+      <translation>Rayon</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName, </extracomment>
@@ -103,7 +385,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Turns</source>
-      <translation type="unfinished">Turns</translation>
+      <translation>Tours</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label, </extracomment>
@@ -121,19 +403,19 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exit loiter from</source>
-      <translation type="unfinished">Exit loiter from</translation>
+      <translation>Quitter l'attente de</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Center,Tangent</source>
-      <translation type="unfinished">Center,Tangent</translation>
+      <translation>Centre,Tangente</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (time)</source>
-      <translation type="unfinished">Loiter (time)</translation>
+      <translation>Vol d'attente (durée)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
@@ -157,31 +439,31 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Return To Launch</source>
-      <translation type="unfinished">Return To Launch</translation>
+      <translation>Retour au Point de Décollage (RTL)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Send the vehicle back to the launch position.</source>
-      <translation type="unfinished">Send the vehicle back to the launch position.</translation>
+      <translation>Renvoyez le véhicule à la position de décollage.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Atterir</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land vehicle at the specified location.</source>
-      <translation type="unfinished">Land vehicle at the specified location.</translation>
+      <translation>Faire atterrir le véhicule à la position indiquée.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Abort Alt</source>
-      <translation type="unfinished">Abort Alt</translation>
+      <translation>Abandonner Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label, </extracomment>
@@ -199,19 +481,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Décollage</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Launch from the ground and travel towards the specified takeoff position.</source>
-      <translation type="unfinished">Launch from the ground and travel towards the specified takeoff position.</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].param1.label, </extracomment>
-      <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
-      <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>Départ depuis le sol et déplacement vers la position de décollage spécifiée.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName, </extracomment>
@@ -553,13 +829,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode</source>
-      <translation type="unfinished">Set flight mode</translation>
+      <translation>Sélection du Mode de vol</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode.</source>
-      <translation type="unfinished">Set flight mode.</translation>
+      <translation>Sélection du Mode de vol</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
@@ -1484,126 +1760,6 @@
     </message>
   </context>
   <context>
-    <name>UT-MavCmdInfoFixedWing.json</name>
-    <message>
-      <extracomment>.mavCmdInfo[Override testing].description, .mavCmdInfo[Override testing].category, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
-      <source>override fw 4</source>
-      <translation type="unfinished">override fw 4</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[Override testing].param1.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
-      <source>override fw 4 1</source>
-      <translation type="unfinished">override fw 4 1</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[Override testing].param1.enumStrings, .mavCmdInfo[Override testing].param3.enumStrings, .mavCmdInfo[Override testing].param5.enumStrings, .mavCmdInfo[Override testing].param7.enumStrings, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
-      <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[Override testing].param3.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
-      <source>override fw 4 3</source>
-      <translation type="unfinished">override fw 4 3</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[Override testing].param5.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
-      <source>override fw 4 5</source>
-      <translation type="unfinished">override fw 4 5</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[Override testing].param7.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
-      <source>override fw 4 7</source>
-      <translation type="unfinished">override fw 4 7</translation>
-    </message>
-  </context>
-  <context>
-    <name>UT-MavCmdInfoCommon.json</name>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_2].param1.label, .mavCmdInfo[UNITTEST_3].param1.label, .mavCmdInfo[UNITTEST_4].param1.label, .mavCmdInfo[UNITTEST_5].param1.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param1</source>
-      <translation type="unfinished">param1</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].friendlyName, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>Unit Test 3</source>
-      <translation type="unfinished">Unit Test 3</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].description, .mavCmdInfo[UNITTEST_4].description, .mavCmdInfo[UNITTEST_5].description, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>description</source>
-      <translation type="unfinished">description</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].category, .mavCmdInfo[UNITTEST_4].category, .mavCmdInfo[UNITTEST_5].category, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>category</source>
-      <translation type="unfinished">category</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param1.enumStrings, .mavCmdInfo[UNITTEST_3].param2.enumStrings, .mavCmdInfo[UNITTEST_3].param3.enumStrings, .mavCmdInfo[UNITTEST_3].param4.enumStrings, .mavCmdInfo[UNITTEST_3].param5.enumStrings, .mavCmdInfo[UNITTEST_3].param6.enumStrings, .mavCmdInfo[UNITTEST_3].param7.enumStrings, .mavCmdInfo[UNITTEST_4].param1.enumStrings, .mavCmdInfo[UNITTEST_4].param2.enumStrings, .mavCmdInfo[UNITTEST_4].param3.enumStrings, .mavCmdInfo[UNITTEST_4].param4.enumStrings, .mavCmdInfo[UNITTEST_4].param5.enumStrings, .mavCmdInfo[UNITTEST_4].param6.enumStrings, .mavCmdInfo[UNITTEST_4].param7.enumStrings, .mavCmdInfo[UNITTEST_5].param1.enumStrings, .mavCmdInfo[UNITTEST_5].param2.enumStrings, .mavCmdInfo[UNITTEST_5].param3.enumStrings, .mavCmdInfo[UNITTEST_5].param4.enumStrings, .mavCmdInfo[UNITTEST_5].param5.enumStrings, .mavCmdInfo[UNITTEST_5].param6.enumStrings, .mavCmdInfo[UNITTEST_5].param7.enumStrings, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param2.label, .mavCmdInfo[UNITTEST_4].param2.label, .mavCmdInfo[UNITTEST_5].param2.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param2</source>
-      <translation type="unfinished">param2</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param3.label, .mavCmdInfo[UNITTEST_4].param3.label, .mavCmdInfo[UNITTEST_5].param3.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param3</source>
-      <translation type="unfinished">param3</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param4.label, .mavCmdInfo[UNITTEST_4].param4.label, .mavCmdInfo[UNITTEST_5].param4.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param4</source>
-      <translation type="unfinished">param4</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param5.label, .mavCmdInfo[UNITTEST_4].param5.label, .mavCmdInfo[UNITTEST_5].param5.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param5</source>
-      <translation type="unfinished">param5</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param6.label, .mavCmdInfo[UNITTEST_4].param6.label, .mavCmdInfo[UNITTEST_5].param6.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param6</source>
-      <translation type="unfinished">param6</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_3].param7.label, .mavCmdInfo[UNITTEST_4].param7.label, .mavCmdInfo[UNITTEST_5].param7.label, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>param7</source>
-      <translation type="unfinished">param7</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_4].friendlyName, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>Unit Test 4</source>
-      <translation type="unfinished">Unit Test 4</translation>
-    </message>
-    <message>
-      <extracomment>.mavCmdInfo[UNITTEST_5].friendlyName, </extracomment>
-      <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
-      <source>Unit Test 5</source>
-      <translation type="unfinished">Unit Test 5</translation>
-    </message>
-  </context>
-  <context>
     <name>APM-MavCmdInfoCommon.json</name>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
@@ -1670,150 +1826,6 @@
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
       <translation type="unfinished">Enable,Disable</translation>
-    </message>
-  </context>
-  <context>
-    <name>Video.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[gridLines].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Hide,Show</source>
-      <translation type="unfinished">Hide,Show</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Fit Width,Fit Height,Stretch</source>
-      <translation type="unfinished">Fit Width,Fit Height,Stretch</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>mkv,mov,mp4</source>
-      <translation type="unfinished">mkv,mov,mp4</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
-      <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</source>
-      <translation type="unfinished">Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder</translation>
-    </message>
-  </context>
-  <context>
-    <name>FirmwareUpgrade.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
-      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-      <source>ChibiOS,NuttX</source>
-      <translation type="unfinished">ChibiOS,NuttX</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
-      <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
-      <source>Multi-Rotor,Helicopter,Plane,Rover,Sub</source>
-      <translation type="unfinished">Multi-Rotor,Helicopter,Plane,Rover,Sub</translation>
-    </message>
-  </context>
-  <context>
-    <name>APMMavlinkStreamRate.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings, </extracomment>
-      <location filename="../src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
-      <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation type="unfinished">Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
-    </message>
-  </context>
-  <context>
-    <name>App.SettingsGroup.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation type="unfinished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</source>
-      <translation type="unfinished">Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
-      <translation type="unfinished">Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Indoor,Outdoor</source>
-      <translation type="unfinished">Indoor,Outdoor</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation type="unfinished">Never,Always,When in Follow Me Flight Mode</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[language].enumStrings, </extracomment>
-      <location filename="../src/Settings/App.SettingsGroup.json"/>
-      <source>System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish),Azerbaijani (Azerbaijani)</source>
-      <translation type="unfinished">System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish),Azerbaijani (Azerbaijani)</translation>
-    </message>
-  </context>
-  <context>
-    <name>GPSFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/GPSFact.json"/>
-      <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation type="unfinished">None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
-    </message>
-  </context>
-  <context>
-    <name>BatteryFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/BatteryFact.json"/>
-      <source>n/a,All Flight Systems,Propulsion,Avionics,Payload</source>
-      <translation type="unfinished">n/a,All Flight Systems,Propulsion,Avionics,Payload</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/BatteryFact.json"/>
-      <source>n/a,LIPO,LIFE,LION,NIMH</source>
-      <translation type="unfinished">n/a,LIPO,LIFE,LION,NIMH</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/BatteryFact.json"/>
-      <source>n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</source>
-      <translation type="unfinished">n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging</translation>
-    </message>
-  </context>
-  <context>
-    <name>SubmarineFact.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/SubmarineFact.json"/>
-      <source>Disabled,Enabled</source>
-      <translation type="unfinished">Disabled,Enabled</translation>
-    </message>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
-      <location filename="../src/Vehicle/SubmarineFact.json"/>
-      <source>Disabled,Enabled,Unavailable</source>
-      <translation type="unfinished">Disabled,Enabled,Unavailable</translation>
-    </message>
-  </context>
-  <context>
-    <name>EditPositionDialog.FactMetaData.json</name>
-    <message>
-      <extracomment>.QGC.MetaData.Facts[Hemisphere].enumStrings, </extracomment>
-      <location filename="../src/QmlControls/EditPositionDialog.FactMetaData.json"/>
-      <source>North,South</source>
-      <translation type="unfinished">North,South</translation>
     </message>
   </context>
 </TS>

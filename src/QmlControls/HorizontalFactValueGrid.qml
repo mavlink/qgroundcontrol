@@ -44,31 +44,6 @@ T.HorizontalFactValueGrid {
         spacing:    0
 
         RowLayout {
-
-            Item {
-                id:                     lockItem
-                Layout.fillHeight:      true
-                Layout.preferredWidth:  ScreenTools.minTouchPixels
-                visible:                settingsUnlocked
-                enabled:                settingsUnlocked
-
-                QGCColoredImage {
-                    anchors.centerIn:   parent
-                    source:             "/res/LockOpen.svg"
-                    mipmap:             true
-                    width:              parent.width * 0.75
-                    height:             width
-                    sourceSize.width:   width
-                    color:              qgcPal.text
-                    fillMode:           Image.PreserveAspectFit
-                }
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  settingsUnlocked = false
-                }
-            }
-
             RowLayout {
                 id:         labelValueColumnLayout
                 spacing:    ScreenTools.defaultFontPixelWidth * 1.25
@@ -136,102 +111,6 @@ T.HorizontalFactValueGrid {
                         }
                     }
                 }
-
-                /*
-        ColumnLayout {
-            Layout.fillHeight:  true
-
-            GridLayout {
-                id:         valueGrid
-                rows:       _root.columns.count
-                rowSpacing: 0
-
-                Repeater {
-                    model: _root.columns
-
-                    Repeater {
-                        id:     labelRepeater
-                        model:  object
-
-                        property real _index: index
-
-                        InstrumentValueLabel {
-                            Layout.row:             index
-                            Layout.column:          labelRepeater._index * 3
-                            Layout.fillHeight:      true
-                            Layout.alignment:       Qt.AlignRight
-                            instrumentValueData:    object
-                        }
-                    }
-                }
-
-                Repeater {
-                    model: _root.columns
-
-                    Repeater {
-                        id:     valueRepeater
-                        model:  object
-
-                        property real   _index:     index
-                        property real   maxWidth:   0
-                        property var    lastCheck:  new Date().getTime()
-
-                        function recalcWidth() {
-                            var newMaxWidth = 0
-                            for (var i=0; i<valueRepeater.count; i++) {
-                                newMaxWidth = Math.max(newMaxWidth, valueRepeater.itemAt(0).contentWidth)
-                            }
-                            maxWidth = Math.min(maxWidth, newMaxWidth)
-                        }
-
-                        InstrumentValueValue {
-                            Layout.row:             index
-                            Layout.column:          (valueRepeater._index * 3) + 1
-                            Layout.fillHeight:      true
-                            Layout.alignment:       Qt.AlignLeft
-                            Layout.preferredWidth:  maxWidth
-                            instrumentValueData:    object
-
-                            property real lastContentWidth
-
-                            Component.onCompleted:  {
-                                maxWidth = Math.max(maxWidth, contentWidth)
-                                lastContentWidth = contentWidth
-                            }
-
-                            onContentWidthChanged: {
-                                maxWidth = Math.max(maxWidth, contentWidth)
-                                lastContentWidth = contentWidth
-                                var currentTime = new Date().getTime()
-                                if (currentTime - lastCheck > 30 * 1000) {
-                                    lastCheck = currentTime
-                                    valueRepeater.recalcWidth()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Repeater {
-                    model: _root.columns
-
-                    Repeater {
-                        id:     spacerRepeater
-                        model:  object.count > 1 ? object : 0
-
-                        property real _index: index
-
-                        Item {
-                            Layout.row:             index
-                            Layout.column:          (spacerRepeater._index * 3) + 2
-                            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth
-                            Layout.preferredHeight: 1
-                        }
-                    }
-                }
-            }
-            */
-
             }
 
             ColumnLayout {
@@ -291,6 +170,7 @@ T.HorizontalFactValueGrid {
         width:      labelValueColumnLayout.width
         height:     labelValueColumnLayout.height
         visible:    settingsUnlocked
+        cursorShape:Qt.PointingHandCursor
 
         property var mappedLabelValueColumnLayoutPosition: _root.mapFromItem(labelValueColumnLayout, labelValueColumnLayout.x, labelValueColumnLayout.y)
 

@@ -22,7 +22,7 @@
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
 
-const QString SurveyComplexItem::name(tr("Survey"));
+const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
 
 const char* SurveyComplexItem::jsonComplexItemTypeValue =   "survey";
 const char* SurveyComplexItem::jsonV3ComplexItemTypeValue = "survey";
@@ -64,8 +64,8 @@ const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90
 const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
 const char* SurveyComplexItem::_jsonSplitConcavePolygonsKey =           "splitConcavePolygons";
 
-SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile, QObject* parent)
-    : TransectStyleComplexItem  (masterController, flyView, settingsGroup, parent)
+SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
+    : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
     , _flyAlternateTransectsFact(settingsGroup, _metaDataMap[flyAlternateTransectsName])
@@ -115,7 +115,7 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
 {
     QJsonObject saveObject;
 
-    _saveWorker(saveObject);
+    _saveCommon(saveObject);
     planItems.append(saveObject);
 }
 
@@ -123,11 +123,11 @@ void SurveyComplexItem::savePreset(const QString& name)
 {
     QJsonObject saveObject;
 
-    _saveWorker(saveObject);
+    _saveCommon(saveObject);
     _savePresetJson(name, saveObject);
 }
 
-void SurveyComplexItem::_saveWorker(QJsonObject& saveObject)
+void SurveyComplexItem::_saveCommon(QJsonObject& saveObject)
 {
     TransectStyleComplexItem::_save(saveObject);
 
@@ -292,7 +292,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraTriggerInTurnAroundFact.setRawValue  (complexObject[_jsonV3CameraTriggerInTurnaroundKey].toBool(true));
 
     _cameraCalc.valueSetIsDistance()->setRawValue   (complexObject[_jsonV3FixedValueIsAltitudeKey].toBool(true));
-    _cameraCalc.setDistanceToSurfaceRelative        (complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true));
+    _cameraCalc.setDistanceMode(complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true) ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute);
 
     bool manualGrid = complexObject[_jsonV3ManualGridKey].toBool(true);
 
@@ -301,7 +301,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
         { _jsonV3GridAltitudeRelativeKey,   QJsonValue::Bool,   true },
         { _jsonV3GridAngleKey,              QJsonValue::Double, true },
         { _jsonV3GridSpacingKey,            QJsonValue::Double, true },
-        { _jsonEntryPointKey,      QJsonValue::Double, false },
+        { _jsonEntryPointKey,               QJsonValue::Double, false },
         { _jsonV3TurnaroundDistKey,         QJsonValue::Double, true },
     };
     QJsonObject gridObject = complexObject[_jsonV3GridObjectKey].toObject();
@@ -521,11 +521,7 @@ void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
         const QLineF& line = lineList[i];
 
         auto isLineBoundedIntersect = [&line, &intersectPoint](const QLineF& linePosition) {
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-            return line.intersect(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
-#else
             return line.intersects(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
-#endif
         };
 
         int foundCount = 0;
@@ -586,11 +582,7 @@ void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
             QPointF intersectPoint;
             QLineF polygonLine = QLineF(polygon[j], polygon[j+1]);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-            auto intersect = line.intersect(polygonLine, &intersectPoint);
-#else
             auto intersect = line.intersects(polygonLine, &intersectPoint);
-#endif
             if (intersect == QLineF::BoundedIntersection) {
                 if (!intersections.contains(intersectPoint)) {
                     intersections.append(intersectPoint);
@@ -1105,11 +1097,7 @@ bool SurveyComplexItem::_VertexCanSeeOther(const QPolygonF& polygon, const QPoin
         QLineF lineCD(*vertexC, *vertexD);
         QPointF intersection{};
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        auto intersects = lineAB.intersect(lineCD, &intersection);
-#else
         auto intersects = lineAB.intersects(lineCD, &intersection);
-#endif
         if (intersects == QLineF::IntersectType::BoundedIntersection) {
 //            auto diffIntersection = *vertexA - intersection;
 //            auto distanceIntersection = sqrtf(diffIntersection.x() * diffIntersection.x() + diffIntersection.y()*diffIntersection.y());

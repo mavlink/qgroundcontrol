@@ -17,8 +17,8 @@ Item {
     property string folder              // Due to Qt bug with file url parsing this must be an absolute path
     property var    nameFilters:    []  // Important: Only name filters with simple wildcarding like *.foo are supported.
     property string title
-    property bool   selectExisting
-    property bool   selectFolder
+    property bool   selectExisting: true
+    property bool   selectFolder:   false
 
     signal acceptedForLoad(string file)
     signal acceptedForSave(string file)

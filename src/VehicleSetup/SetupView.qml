@@ -258,6 +258,7 @@ Rectangle {
 
             SubMenuButton {
                 id:                 joystickButton
+                imageResource:      "/qmlimages/Joystick.png"
                 setupIndicator:     true
                 setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
                 exclusiveGroup:     setupButtonGroup

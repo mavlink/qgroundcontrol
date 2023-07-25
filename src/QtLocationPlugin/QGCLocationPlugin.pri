@@ -9,14 +9,7 @@
 
 QT  += location-private positioning-private network
 
-contains(QT_VERSION, 5.5.1) {
-    message(Using Local QtLocation headers for Qt 5.5.1)
-    INCLUDEPATH += \
-        $$PWD/qtlocation/include \
-} else {
-    message(Using Default QtLocation headers)
-    INCLUDEPATH += $$QT.location.includes
-}
+INCLUDEPATH += $$QT.location.includes
 
 HEADERS += \
     $$PWD/QGCMapEngine.h \

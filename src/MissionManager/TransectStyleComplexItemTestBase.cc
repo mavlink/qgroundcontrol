@@ -26,9 +26,11 @@ void TransectStyleComplexItemTestBase::init(void)
 void TransectStyleComplexItemTestBase::cleanup(void)
 {
     delete _masterController;
-    _planViewSettings = nullptr;
-    _masterController = nullptr;
-    _controllerVehicle = nullptr;
+
+    _planViewSettings   = nullptr;
+    _masterController   = nullptr;
+    _controllerVehicle  = nullptr;
+
     UnitTest::cleanup();
 }
 

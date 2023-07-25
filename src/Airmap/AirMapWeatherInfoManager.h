@@ -16,7 +16,7 @@
 #include "QGCGeoBoundingCube.h"
 
 #include <QGeoCoordinate>
-#include <QTime>
+#include <QElapsedTimer>
 
 #include "airmap/advisory.h"
 
@@ -57,5 +57,5 @@ private:
     //-- Don't check the weather every time the user moves the map
     AirMapSharedState&      _shared;
     QGeoCoordinate          _lastRoiCenter;
-    QTime                   _weatherTime;
+    QElapsedTimer           _weatherTimeElapsed;
 };

@@ -22,6 +22,9 @@ Button {
     property real   heightFactor:   0.5
     property string iconSource
 
+    property alias wrapMode:            text.wrapMode
+    property alias horizontalAlignment: text.horizontalAlignment
+
     property bool   _showHighlight:     pressed | hovered | checked
 
     property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth

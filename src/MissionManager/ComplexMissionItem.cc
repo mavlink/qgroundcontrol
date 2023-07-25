@@ -22,12 +22,15 @@ const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 
 const char* ComplexMissionItem::_presetSettingsKey =        "_presets";
 
-ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : VisualMissionItem (masterController, flyView, parent)
+ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView)
+    : VisualMissionItem (masterController, flyView)
     , _toolbox          (qgcApp()->toolbox())
     , _settingsManager  (_toolbox->settingsManager())
 {
-
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::_amslEntryAltChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::_amslExitAltChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::minAMSLAltitudeChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::maxAMSLAltitudeChanged);
 }
 
 const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem& other)
@@ -79,7 +82,7 @@ void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& prese
     QSettings settings;
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    settings.setValue(name, QCborMap::fromJsonObject(presetObject).toCborValue().toByteArray());
+    settings.setValue(name, QCborMap::fromJsonObject(presetObject).toCborValue().toVariant());
 
     // Use this to save a survey preset as a JSON file to be included in the build
     // as a built-in survey preset that cannot be deleted.
@@ -108,7 +111,7 @@ QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
     QSettings settings;
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    return QCborValue(settings.value(name).toByteArray()).toMap().toJsonObject();
+    return QCborValue::fromVariant(settings.value(name)).toMap().toJsonObject();
 }
 
 void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)
@@ -116,9 +119,9 @@ void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)
     // Default implementation has no visuals
 }
 
-void ComplexMissionItem::_appendFlightPathSegment(const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt)
+void ComplexMissionItem::_appendFlightPathSegment(FlightPathSegment::SegmentType segmentType, const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt)
 {
-    FlightPathSegment* segment = new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, true /* queryTerrainData */, this /* parent */);
+    FlightPathSegment* segment = new FlightPathSegment(segmentType, coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, true /* queryTerrainData */, this /* parent */);
 
     connect(segment, &FlightPathSegment::terrainCollisionChanged,       this,               &ComplexMissionItem::_segmentTerrainCollisionChanged);
     connect(segment, &FlightPathSegment::terrainCollisionChanged,       _missionController, &MissionController::recalcTerrainProfile, Qt::QueuedConnection);

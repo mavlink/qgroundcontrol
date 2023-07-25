@@ -91,6 +91,15 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         }
     }
 
+#if !defined(NO_ARDUPILOT_DIALECT)
+    // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
+    // works this way. Because of this the vehicle type is not known at first connection. In order to make QGC work reasonably
+    // we assume ArduCopter for this case.
+    if (vehicleType == 0 && vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        vehicleType = MAV_TYPE_QUADROTOR;
+    }
+#endif
+
     if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
         return;
     }

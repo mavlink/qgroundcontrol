@@ -143,6 +143,9 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
     // Send maximum sized chunks until the complete buffer is transmitted
     while(data.size()) {
         QByteArray chunk{data.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN)};
+        int dataSize = chunk.size();
+        // Ensure the buffer is large enough, as the MAVLink parser expects MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN bytes
+        chunk.append(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN - chunk.size(), '\0');
         uint8_t flags = SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
         if (close) flags = 0;
         auto protocol = qgcApp()->toolbox()->mavlinkProtocol();
@@ -157,8 +160,9 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
                     flags,
                     0,
                     0,
-                    chunk.size(),
-                    reinterpret_cast<uint8_t*>(chunk.data()));
+                    dataSize,
+                    reinterpret_cast<uint8_t*>(chunk.data()),
+                    _vehicle->id(), _vehicle->defaultComponentId());
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
         data.remove(0, chunk.size());
     }

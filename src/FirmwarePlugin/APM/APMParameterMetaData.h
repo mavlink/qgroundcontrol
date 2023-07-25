@@ -42,6 +42,7 @@ public:
     QString incrementSize;
     QString units;
     bool    rebootRequired;
+    bool    readOnly;
     QList<QPair<QString, QString> > values;
     QList<QPair<QString, QString> > bitmask;
 };

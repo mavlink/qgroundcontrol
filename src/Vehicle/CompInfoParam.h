@@ -50,7 +50,6 @@ private:
     QObject*                            _opaqueParameterMetaData    = nullptr;
 
     static const char* _cachedMetaDataFilePrefix;
-    static const char* _jsonScopeKey;
     static const char* _jsonParametersKey;
     static const char* _indexedNameTag;
 };

@@ -55,11 +55,7 @@ void LogCompressor::run()
 
     QString outFileName;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
-#else
     QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", Qt::SkipEmptyParts);
-#endif
 
     parts.replace(0, parts.first() + "_compressed");
     parts.replace(parts.size()-1, "txt");
@@ -201,12 +197,12 @@ void LogCompressor::startCompression(bool holeFilling)
 	start();
 }
 
-bool LogCompressor::isFinished()
+bool LogCompressor::isFinished() const
 {
 	return !running;
 }
 
-int LogCompressor::getCurrentLine()
+int LogCompressor::getCurrentLine() const
 {
 	return currentDataLine;
 }

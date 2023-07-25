@@ -29,8 +29,12 @@ Rectangle {
     property var _dropPanel: dropPanel
 
     function simulateClick(buttonIndex) {
-        buttonIndex = buttonIndex + 1 // skip over title
-        toolStripColumn.children[buttonIndex].clicked()
+        buttonIndex = buttonIndex + 1 // skip over title label
+        var button = toolStripColumn.children[buttonIndex]
+        if (button.checkable) {
+            button.checked = !button.checked
+        }
+        button.clicked()
     }
 
     // Ensure we don't get narrower than content

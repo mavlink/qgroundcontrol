@@ -14,7 +14,7 @@
 #include "FTPManager.h"
 
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
-    {  "/version.json" },
+    {  "/general.json" },
 };
 
 void FTPManagerTest::cleanup(void)

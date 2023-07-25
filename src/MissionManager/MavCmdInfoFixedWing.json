@@ -22,7 +22,12 @@
         {
             "id":           22,
             "comment":      "MAV_CMD_NAV_TAKEOFF",
-            "paramRemove":  "4"
+            "param1": {
+                "label":            "Pitch",
+                "units":            "deg",
+                "default":          15,
+                "decimalPlaces":    2
+            }
         }
     ]
 }

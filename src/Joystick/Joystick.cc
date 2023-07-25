@@ -27,6 +27,7 @@ const char* Joystick::_calibratedSettingsKey =          "Calibrated4"; // Increm
 const char* Joystick::_buttonActionNameKey =            "ButtonActionName%1";
 const char* Joystick::_buttonActionRepeatKey =          "ButtonActionRepeat%1";
 const char* Joystick::_throttleModeSettingsKey =        "ThrottleMode";
+const char* Joystick::_negativeThrustSettingsKey =      "NegativeThrust";
 const char* Joystick::_exponentialSettingsKey =         "Exponential";
 const char* Joystick::_accumulatorSettingsKey =         "Accumulator";
 const char* Joystick::_deadbandSettingsKey =            "Deadband";
@@ -119,12 +120,21 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
     _loadSettings();
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
+
+    _customMavCommands = JoystickMavCommand::load("JoystickMavCommands.json");
+}
+
+void Joystick::stop()
+{
+    _exitThread = true;
+    wait();
 }
 
 Joystick::~Joystick()
 {
-    _exitThread = true;
-    wait();
+    if (!_exitThread) {
+        qWarning() << "Joystick thread still running!";
+    }
     delete[] _rgAxisValues;
     delete[] _rgCalibration;
     delete[] _rgButtonValues;
@@ -231,6 +241,8 @@ void Joystick::_loadSettings()
     _axisFrequencyHz    = settings.value(_axisFrequencySettingsKey,     _defaultAxisFrequencyHz).toFloat();
     _buttonFrequencyHz  = settings.value(_buttonFrequencySettingsKey,   _defaultButtonFrequencyHz).toFloat();
     _circleCorrection   = settings.value(_circleCorrectionSettingsKey,  false).toBool();
+    _negativeThrust     = settings.value(_negativeThrustSettingsKey,    false).toBool();
+
 
     _throttleMode   = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
     badSettings |= !convertOk;
@@ -334,6 +346,7 @@ void Joystick::_saveSettings()
     settings.setValue(_axisFrequencySettingsKey,    _axisFrequencyHz);
     settings.setValue(_buttonFrequencySettingsKey,  _buttonFrequencyHz);
     settings.setValue(_throttleModeSettingsKey,     _throttleMode);
+    settings.setValue(_negativeThrustSettingsKey,   _negativeThrust);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
 
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _circleCorrection << _transmitterMode;
@@ -503,6 +516,8 @@ void Joystick::_handleButtons()
             int rgButtonValueIndex = hatIndex*numHatButtons + hatButtonIndex + _buttonCount;
             // Get hat value from joystick
             bool newButtonValue = _getHat(hatIndex, hatButtonIndex);
+            if(rgButtonValueIndex < 256)
+                lastBbuttonValues[rgButtonValueIndex] = _rgButtonValues[rgButtonValueIndex];
             if (newButtonValue && _rgButtonValues[rgButtonValueIndex] == BUTTON_UP) {
                 _rgButtonValues[rgButtonValueIndex] = BUTTON_DOWN;
                 emit rawButtonPressedChanged(rgButtonValueIndex, newButtonValue);
@@ -663,6 +678,8 @@ void Joystick::_handleAxis()
                     buttonPressedBits |= buttonBit;
                 }
             }
+            emit axisValues(roll, pitch, yaw, throttle);
+
             uint16_t shortButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
             _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, shortButtons);
         }
@@ -864,7 +881,7 @@ void Joystick::setThrottleMode(int mode)
     emit throttleModeChanged(_throttleMode);
 }
 
-bool Joystick::negativeThrust()
+bool Joystick::negativeThrust() const
 {
     return _negativeThrust;
 }
@@ -879,7 +896,7 @@ void Joystick::setNegativeThrust(bool allowNegative)
     emit negativeThrustChanged(_negativeThrust);
 }
 
-float Joystick::exponential()
+float Joystick::exponential() const
 {
     return _exponential;
 }
@@ -891,7 +908,7 @@ void Joystick::setExponential(float expo)
     emit exponentialChanged(_exponential);
 }
 
-bool Joystick::accumulator()
+bool Joystick::accumulator() const
 {
     return _accumulator;
 }
@@ -903,7 +920,7 @@ void Joystick::setAccumulator(bool accu)
     emit accumulatorChanged(_accumulator);
 }
 
-bool Joystick::deadband()
+bool Joystick::deadband() const
 {
     return _deadband;
 }
@@ -914,7 +931,7 @@ void Joystick::setDeadband(bool deadband)
     _saveSettings();
 }
 
-bool Joystick::circleCorrection()
+bool Joystick::circleCorrection() const
 {
     return _circleCorrection;
 }
@@ -1013,6 +1030,14 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionEmergencyStop) {
       if(buttonDown) emit emergencyStop();
     } else {
+        if (buttonDown && _activeVehicle) {
+            for (auto& item : _customMavCommands) {
+                if (action == item.name()) {
+                    item.send(_activeVehicle);
+                    return;
+                }
+            }
+        }
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
 }
@@ -1034,7 +1059,7 @@ void Joystick::_yawStep(int direction)
     emit gimbalControlValue(_localPitch, _localYaw);
 }
 
-bool Joystick::_validAxis(int axis)
+bool Joystick::_validAxis(int axis) const
 {
     if(axis >= 0 && axis < _axisCount) {
         return true;
@@ -1043,7 +1068,7 @@ bool Joystick::_validAxis(int axis)
     return false;
 }
 
-bool Joystick::_validButton(int button)
+bool Joystick::_validButton(int button) const
 {
     if(button >= 0 && button < _totalButtonCount)
         return true;
@@ -1101,6 +1126,9 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
+    for (auto& item : _customMavCommands)
+        _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
+
     for(int i = 0; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();

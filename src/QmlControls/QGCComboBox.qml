@@ -53,7 +53,7 @@ T.ComboBox {
     }
 
     function _adjustSizeToContents() {
-        if (_onCompleted && sizeToContents) {
+        if (_onCompleted && sizeToContents && model) {
             _largestTextWidth = 0
             for (var i = 0; i < model.length; i++){
                 textMetrics.text = model[i]

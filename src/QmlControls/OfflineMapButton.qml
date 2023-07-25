@@ -47,6 +47,8 @@ Button {
             text:   mapButton.text
             width:  mapButton.width * 0.4
             color:  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCLabel {

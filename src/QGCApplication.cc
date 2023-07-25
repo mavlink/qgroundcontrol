@@ -17,13 +17,6 @@
  */
 
 #include <QFile>
-#include <QFlags>
-#include <QPixmap>
-#include <QDesktopWidget>
-#include <QPainter>
-#include <QStyleFactory>
-#include <QAction>
-#include <QStringListModel>
 #include <QRegularExpression>
 #include <QFontDatabase>
 #include <QQuickWindow>
@@ -73,7 +66,7 @@
 #include "VideoManager.h"
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
-#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
+#if !defined(QGC_DISABLE_MAVLINK_INSPECTOR)
 #include "MAVLinkInspectorController.h"
 #endif
 #include "HorizontalFactValueGrid.h"
@@ -108,6 +101,7 @@
 #include "ToolStripActionList.h"
 #include "QGCMAVLink.h"
 #include "VehicleLinkManager.h"
+#include "Autotune.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -279,7 +273,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
-    this->setApplicationVersion(QString(GIT_VERSION));
+    this->setApplicationVersion(QString(APP_VERSION_STR));
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -389,71 +383,9 @@ void QGCApplication::setLanguage()
     _locale = QLocale::system();
     qDebug() << "System reported locale:" << _locale << "; Name" << _locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
 
-    int langID = AppSettings::_languageID();
-    //-- See App.SettinsGroup.json for index
-    if(langID) {
-        switch(langID) {
-        case 1:
-            _locale = QLocale(QLocale::Bulgarian);
-            break;
-        case 2:
-            _locale = QLocale(QLocale::Chinese);
-            break;
-        case 3:
-            _locale = QLocale(QLocale::Dutch);
-            break;
-        case 4:
-            _locale = QLocale(QLocale::English);
-            break;
-        case 5:
-            _locale = QLocale(QLocale::Finnish);
-            break;
-        case 6:
-            _locale = QLocale(QLocale::French);
-            break;
-        case 7:
-            _locale = QLocale(QLocale::German);
-            break;
-        case 8:
-            _locale = QLocale(QLocale::Greek);
-            break;
-        case 9:
-            _locale = QLocale(QLocale::Hebrew);
-            break;
-        case 10:
-            _locale = QLocale(QLocale::Italian);
-            break;
-        case 11:
-            _locale = QLocale(QLocale::Japanese);
-            break;
-        case 12:
-            _locale = QLocale(QLocale::Korean);
-            break;
-        case 13:
-            _locale = QLocale(QLocale::Norwegian);
-            break;
-        case 14:
-            _locale = QLocale(QLocale::Polish);
-            break;
-        case 15:
-            _locale = QLocale(QLocale::Portuguese);
-            break;
-        case 16:
-            _locale = QLocale(QLocale::Russian);
-            break;
-        case 17:
-            _locale = QLocale(QLocale::Spanish);
-            break;
-        case 18:
-            _locale = QLocale(QLocale::Swedish);
-            break;
-        case 19:
-            _locale = QLocale(QLocale::Turkish);
-            break;
-        case 20:
-            _locale = QLocale(QLocale::Azerbaijani);
-            break;
-        }
+    QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageID();
+    if (possibleLocale != QLocale::AnyLanguage) {
+        _locale = QLocale(possibleLocale);
     }
     //-- We have specific fonts for Korean
     if(_locale == QLocale::Korean) {
@@ -530,6 +462,7 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<QGCVideoStreamInfo>      (kQGCVehicle,                       1, 0, "QGCVideoStreamInfo",         kRefOnly);
     qmlRegisterUncreatableType<LinkInterface>           (kQGCVehicle,                       1, 0, "LinkInterface",              kRefOnly);
     qmlRegisterUncreatableType<VehicleLinkManager>      (kQGCVehicle,                       1, 0, "VehicleLinkManager",         kRefOnly);
+    qmlRegisterUncreatableType<Autotune>                (kQGCVehicle,                       1, 0, "Autotune",                   kRefOnly);
 
     qmlRegisterUncreatableType<MissionController>       (kQGCControllers,                   1, 0, "MissionController",          kRefOnly);
     qmlRegisterUncreatableType<GeoFenceController>      (kQGCControllers,                   1, 0, "GeoFenceController",         kRefOnly);
@@ -537,14 +470,14 @@ void QGCApplication::_initCommon()
 
     qmlRegisterUncreatableType<MissionItem>         (kQGroundControl,                       1, 0, "MissionItem",                kRefOnly);
     qmlRegisterUncreatableType<VisualMissionItem>   (kQGroundControl,                       1, 0, "VisualMissionItem",          kRefOnly);
-    qmlRegisterUncreatableType<FlightPathSegment>    (kQGroundControl,                       1, 0, "FlightPathSegment",           kRefOnly);
+    qmlRegisterUncreatableType<FlightPathSegment>   (kQGroundControl,                       1, 0, "FlightPathSegment",          kRefOnly);
     qmlRegisterUncreatableType<QmlObjectListModel>  (kQGroundControl,                       1, 0, "QmlObjectListModel",         kRefOnly);
     qmlRegisterUncreatableType<MissionCommandTree>  (kQGroundControl,                       1, 0, "MissionCommandTree",         kRefOnly);
     qmlRegisterUncreatableType<CameraCalc>          (kQGroundControl,                       1, 0, "CameraCalc",                 kRefOnly);
     qmlRegisterUncreatableType<LogReplayLink>       (kQGroundControl,                       1, 0, "LogReplayLink",              kRefOnly);
     qmlRegisterUncreatableType<InstrumentValueData> (kQGroundControl,                       1, 0, "InstrumentValueData",        kRefOnly);
     qmlRegisterType<LogReplayLinkController>        (kQGroundControl,                       1, 0, "LogReplayLinkController");
-#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
+#if !defined(QGC_DISABLE_MAVLINK_INSPECTOR)
     qmlRegisterUncreatableType<MAVLinkChartController> (kQGroundControl,                    1, 0, "MAVLinkChart",               kRefOnly);
 #endif
 #if defined(QGC_ENABLE_PAIRING)
@@ -590,7 +523,7 @@ void QGCApplication::_initCommon()
 #endif
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
-#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
+#if !defined(QGC_DISABLE_MAVLINK_INSPECTOR)
     qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
 #endif
 
@@ -620,7 +553,7 @@ bool QGCApplication::_initForNormalAppBoot()
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
     _qmlAppEngine->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
 
-    QQuickWindow* rootWindow = (QQuickWindow*)qgcApp()->mainRootWindow();
+    QQuickWindow* rootWindow = qgcApp()->mainRootWindow();
 
     if (rootWindow) {
         rootWindow->scheduleRenderJob (new FinishVideoInitialization (toolbox()->videoManager()),
@@ -827,6 +760,22 @@ void QGCApplication::showAppMessage(const QString& message, const QString& title
     }
 }
 
+void QGCApplication::showRebootAppMessage(const QString& message, const QString& title)
+{
+    static QTime lastRebootMessage;
+
+    QTime currentTime = QTime::currentTime();
+    QTime previousTime = lastRebootMessage;
+    lastRebootMessage = currentTime;
+
+    if (previousTime.isValid() && previousTime.msecsTo(currentTime) < 60 * 1000 * 2) {
+        // Debounce reboot messages
+        return;
+    }
+
+    showAppMessage(message, title);
+}
+
 void QGCApplication::_showDelayedAppMessages(void)
 {
     if (_rootQmlObject()) {
@@ -839,10 +788,10 @@ void QGCApplication::_showDelayedAppMessages(void)
     }
 }
 
-QQuickItem* QGCApplication::mainRootWindow()
+QQuickWindow* QGCApplication::mainRootWindow()
 {
     if(!_mainRootWindow) {
-        _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
+        _mainRootWindow = qobject_cast<QQuickWindow*>(_rootQmlObject());
     }
     return _mainRootWindow;
 }
@@ -1064,4 +1013,25 @@ bool QGCApplication::compressEvent(QEvent*event, QObject* receiver, QPostEventLi
     }
 
     return false;
+}
+
+bool QGCApplication::event(QEvent *e)
+{
+    if (e->type() == QEvent::Quit) {
+        // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit even here only.
+        // This in turn causes the standard QGC shutdown sequence to not run. So in this case we close the window ourselves such that the
+        // signal is sent and the normal shutdown sequence runs.
+        bool forceClose = _mainRootWindow->property("_forceClose").toBool();
+        qDebug() << "Quit event" << forceClose;
+        // forceClose
+        //  true:   Standard QGC shutdown sequence is complete. Let the app quit normally by falling through to the base class processing.
+        //  false:  QGC shutdown sequence has not been run yet. Don't let this event close the app yet. Close the main window to kick off the normal shutdown.
+        if (!forceClose) {
+            //
+            _mainRootWindow->close();
+            e->ignore();
+            return true;
+        }
+    }
+    return QApplication::event(e);
 }

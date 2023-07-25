@@ -62,10 +62,19 @@ QString LogReplayLinkConfiguration::logFilenameShort(void)
 }
 
 LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr& config)
-    : LinkInterface     (config)
-    , _logReplayConfig  (qobject_cast<LogReplayLinkConfiguration*>(config.get()))
-    , _connected        (false)
-    , _playbackSpeed    (1)
+    : LinkInterface              (config)
+    , _logReplayConfig           (qobject_cast<LogReplayLinkConfiguration*>(config.get()))
+    , _connected                 (false)
+    , _mavlinkChannel            (0)
+    , _logCurrentTimeUSecs       (0)
+    , _logStartTimeUSecs         (0)
+    , _logEndTimeUSecs           (0)
+    , _logDurationUSecs          (0)
+    , _playbackSpeed             (1)
+    , _playbackStartTimeMSecs    (0)
+    , _playbackStartLogTimeUSecs (0)
+    , _mavlink                   (nullptr)
+    , _logFileSize               (0)
 {
     if (!_logReplayConfig) {
         qWarning() << "Internal error";

@@ -69,14 +69,7 @@ const ItemExpected_t _rgItemExpected[] = {
 
 SimpleMissionItemTest::SimpleMissionItemTest(void)
     : _simpleItem(nullptr)
-{
-    
-}
-
-void SimpleMissionItemTest::init(void)
-{
-    VisualMissionItemTest::init();
-
+{    
     rgSimpleItemSignals[commandChangedIndex] =                          SIGNAL(commandChanged(int));
     rgSimpleItemSignals[altitudeModeChangedIndex] =                     SIGNAL(altitudeModeChanged());
     rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =              SIGNAL(friendlyEditAllowedChanged(bool));
@@ -84,6 +77,11 @@ void SimpleMissionItemTest::init(void)
     rgSimpleItemSignals[rawEditChangedIndex] =                          SIGNAL(rawEditChanged(bool));
     rgSimpleItemSignals[cameraSectionChangedIndex] =                    SIGNAL(cameraSectionChanged(QObject*));
     rgSimpleItemSignals[speedSectionChangedIndex] =                     SIGNAL(speedSectionChanged(QObject*));
+}
+
+void SimpleMissionItemTest::init(void)
+{
+    VisualMissionItemTest::init();
 
     MissionItem missionItem(1,              // sequence number
                             MAV_CMD_NAV_WAYPOINT,
@@ -97,7 +95,7 @@ void SimpleMissionItemTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
+    _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem);
 
     // It's important top check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -110,8 +108,10 @@ void SimpleMissionItemTest::init(void)
 
 void SimpleMissionItemTest::cleanup(void)
 {
-    delete _simpleItem;
     VisualMissionItemTest::cleanup();
+
+    // These items go away from _masterController is deleted
+    _simpleItem = nullptr;
 }
 
 bool SimpleMissionItemTest::_classMatch(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass)
@@ -162,7 +162,7 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
                                 70.1234567,
                                 true,           // autoContinue
                                 false);         // isCurrentItem
-        SimpleMissionItem simpleMissionItem(&planController, false /* flyView */, missionItem, nullptr);
+        SimpleMissionItem simpleMissionItem(&planController, false /* flyView */, missionItem);
 
         MissionController::MissionFlightStatus_t missionFlightStatus;
         missionFlightStatus.vtolMode        = vtolMode;
@@ -240,7 +240,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
 
 void SimpleMissionItemTest::_testDefaultValues(void)
 {
-    SimpleMissionItem item(_masterController, false /* flyView */, false /* forLoad */, nullptr);
+    SimpleMissionItem item(_masterController, false /* flyView */, false /* forLoad */);
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);

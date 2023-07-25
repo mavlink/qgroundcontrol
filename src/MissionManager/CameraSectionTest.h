@@ -24,12 +24,12 @@ public:
     void init(void) override;
     void cleanup(void) override;
 
-    static SimpleMissionItem* createValidStopVideoItem      (PlanMasterController* masterController, QObject* parent);
-    static SimpleMissionItem* createValidStopDistanceItem   (PlanMasterController* masterController, QObject* parent);
-    static SimpleMissionItem* createValidStopTimeItem       (PlanMasterController* masterController, QObject* parent);
-    static SimpleMissionItem* createInvalidStopVideoItem    (PlanMasterController* masterController, QObject* parent);
-    static SimpleMissionItem* createInvalidStopDistanceItem (PlanMasterController* masterController, QObject* parent);
-    static SimpleMissionItem* createInvalidStopTimeItem     (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createValidStopVideoItem      (PlanMasterController* masterController);
+    static SimpleMissionItem* createValidStopDistanceItem   (PlanMasterController* masterController);
+    static SimpleMissionItem* createValidStopTimeItem       (PlanMasterController* masterController);
+    static SimpleMissionItem* createInvalidStopVideoItem    (PlanMasterController* masterController);
+    static SimpleMissionItem* createInvalidStopDistanceItem (PlanMasterController* masterController);
+    static SimpleMissionItem* createInvalidStopTimeItem     (PlanMasterController* masterController);
 
 private slots:
     void _testDirty                                 (void);

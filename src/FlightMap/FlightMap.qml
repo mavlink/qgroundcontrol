@@ -109,12 +109,12 @@ Map {
 
     Connections {
         target:             QGroundControl.settingsManager.flightMapSettings.mapType
-        onRawValueChanged:  updateActiveMapType()
+        function onRawValueChanged() { updateActiveMapType() }
     }
 
     Connections {
         target:             QGroundControl.settingsManager.flightMapSettings.mapProvider
-        onRawValueChanged:  updateActiveMapType()
+        function onRawValueChanged() { updateActiveMapType() }
     }
 
     /// Ground Station location

@@ -37,7 +37,7 @@ SetupPage {
             property real _margins:             ScreenTools.defaultFontPixelWidth
             property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS")
             property Fact _frameType:           controller.getParameterFact(-1, "FRAME_TYPE", false)    // FRAME_TYPE is not available on all Rover versions
-            property bool _frameTypeAvailable:  controller.parameterExists(-1, "FRAME_TYPE")
+            property bool _frameTypeAvailable:  controller.vehicle.multiRotor
 
             readonly property real spacerHeight: ScreenTools.defaultFontPixelHeight
 
@@ -72,7 +72,7 @@ SetupPage {
                                          qsTr("Currently set to frame class '%1'").arg(_frameClass.enumStringValue) +
                                          (_frameTypeAvailable ?  qsTr(" and frame type '%2'").arg(_frameType.enumStringValue) : "") +
                                          qsTr(".", "period for end of sentence")) +
-                                    qsTr(" To change this configuration, select the desired frame class below and frame type.")
+                                    qsTr(" To change this configuration, select the desired frame class below and then reboot the vehicle.")
                 font.family:        ScreenTools.demiboldFontFamily
                 wrapMode:           Text.WordWrap
             }

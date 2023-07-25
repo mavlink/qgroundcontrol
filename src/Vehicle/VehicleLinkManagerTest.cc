@@ -152,8 +152,6 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
 
     _startMockLink(1, false /*highLatency*/, false /*incrementVehicleId*/, mockConfig1, mockLink1);
     _startMockLink(2, false /*highLatency*/, false /*incrementVehicleId*/, mockConfig2, mockLink2);
-    MockLink* pMockLink1 = qobject_cast<MockLink*>(mockLink1.get());
-    MockLink* pMockLink2 = qobject_cast<MockLink*>(mockLink2.get());
 
     QCOMPARE(spyVehicleCreate.wait(1000),           true);
     QCOMPARE(_multiVehicleMgr->vehicles()->count(), 1);
@@ -164,7 +162,15 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
     QSignalSpy spyVehicleInitialConnectComplete(vehicle, &Vehicle::initialConnectComplete);
     QCOMPARE(spyVehicleInitialConnectComplete.wait(3000), true);
 
-    QCOMPARE(mockLink1.get(), vehicleLinkManager->primaryLink().lock().get());
+    // The first link to start sending a heartbeat will be the primary link.
+    // Depending on how the thread scheduling works, that could be the mockLink2.
+    SharedLinkInterfacePtr primaryLink = vehicleLinkManager->primaryLink().lock();
+    QVERIFY(primaryLink == mockLink1 || primaryLink == mockLink2);
+    MockLink* pMockLink1 = qobject_cast<MockLink*>(mockLink1.get());
+    MockLink* pMockLink2 = qobject_cast<MockLink*>(mockLink2.get());
+    if (primaryLink == mockLink2) {
+        std::swap(pMockLink1, pMockLink2);
+    }
 
     QStringList rgNames = vehicleLinkManager->linkNames();
     QStringList rgStatus = vehicleLinkManager->linkStatuses();

@@ -37,6 +37,12 @@
 #include "MockLink.h"
 #endif
 
+#include <qmdnsengine/browser.h>
+#include <qmdnsengine/cache.h>
+#include <qmdnsengine/mdns.h>
+#include <qmdnsengine/server.h>
+#include <qmdnsengine/service.h>
+
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
@@ -137,12 +143,8 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
     }
 
     if (link) {
-
-        int mavlinkChannel = _reserveMavlinkChannel();
-        if (mavlinkChannel != 0) {
-            link->_setMavlinkChannel(mavlinkChannel);
-        } else {
-            qWarning() << "Ran out of mavlink channels";
+        if (false == link->_allocateMavlinkChannel() ) {
+            qCWarning(LinkManagerLog) << "Link failed to setup mavlink channels";
             return false;
         }
 
@@ -202,7 +204,7 @@ void LinkManager::_linkDisconnected(void)
     disconnect(link, &LinkInterface::bytesSent,           _mavlinkProtocol,    &MAVLinkProtocol::logSentBytes);
     disconnect(link, &LinkInterface::disconnected,        this,                &LinkManager::_linkDisconnected);
 
-    _freeMavlinkChannel(link->mavlinkChannel());
+    link->_freeMavlinkChannel();
     for (int i=0; i<_rgLinks.count(); i++) {
         if (_rgLinks[i].get() == link) {
             qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" << _rgLinks[i]->linkConfiguration()->name() << _rgLinks[i].use_count();
@@ -419,6 +421,76 @@ void LinkManager::_addMAVLinkForwardingLink(void)
     }
 }
 
+void LinkManager::_addZeroConfAutoConnectLink(void)
+{
+    if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
+        return;
+    }
+
+    static QSharedPointer<QMdnsEngine::Server> server;
+    static QSharedPointer<QMdnsEngine::Browser> browser;
+    server.reset(new QMdnsEngine::Server());
+    browser.reset(new QMdnsEngine::Browser(server.get(), QMdnsEngine::MdnsBrowseType));
+
+    auto checkIfConnectionLinkExist = [this](LinkConfiguration::LinkType linkType, const QString& linkName){
+        for (const auto& link : qAsConst(_rgLinks)) {
+            SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
+            if (linkConfig->type() == linkType && linkConfig->name() == linkName) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    connect(browser.get(), &QMdnsEngine::Browser::serviceAdded, this, [checkIfConnectionLinkExist, this](const QMdnsEngine::Service &service) {
+        qCDebug(LinkManagerVerboseLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
+
+        if(!service.type().startsWith("_mavlink")) {
+            return;
+        }
+
+        // Windows dont accept trailling dots in mdns
+        // http://www.dns-sd.org/trailingdotsindomainnames.html
+        QString hostname = service.hostname();
+        if(hostname.endsWith('.')) {
+            hostname.chop(1);
+        }
+
+        if(service.type().startsWith("_mavlink._udp")) {
+            static QString udpName("ZeroConf UDP");
+            if (checkIfConnectionLinkExist(LinkConfiguration::TypeUdp, udpName)) {
+                return;
+            }
+
+            auto link = new UDPConfiguration(udpName);
+            link->addHost(hostname, service.port());
+            link->setAutoConnect(true);
+            link->setDynamic(true);
+            SharedLinkConfigurationPtr config = addConfiguration(link);
+            createConnectedLink(config);
+            return;
+        }
+
+        if(service.type().startsWith("_mavlink._tcp")) {
+            static QString tcpName("ZeroConf TCP");
+            if (checkIfConnectionLinkExist(LinkConfiguration::TypeTcp, tcpName)) {
+                return;
+            }
+
+            auto link = new TCPConfiguration(tcpName);
+            QHostAddress address(hostname);
+            link->setAddress(address);
+            link->setPort(service.port());
+            link->setAutoConnect(true);
+            link->setDynamic(true);
+            SharedLinkConfigurationPtr config = addConfiguration(link);
+            createConnectedLink(config);
+            return;
+        }
+    });
+}
+
 void LinkManager::_updateAutoConnectLinks(void)
 {
     if (_connectionsSuspended || qgcApp()->runningUnitTests()) {
@@ -427,6 +499,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
     _addUDPAutoConnectLink();
     _addMAVLinkForwardingLink();
+    _addZeroConfAutoConnectLink();
 
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
@@ -673,7 +746,6 @@ QStringList LinkManager::serialBaudRates(void)
 bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfiguration* editedConfig)
 {
     if (config && editedConfig) {
-        _fixUnnamed(editedConfig);
         config->copyFrom(editedConfig);
         saveLinkConfigurationList();
         emit config->nameChanged(config->name());
@@ -688,7 +760,6 @@ bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfigu
 bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 {
     if (config) {
-        _fixUnnamed(config);
         addConfiguration(config);
         saveLinkConfigurationList();
     } else {
@@ -700,8 +771,9 @@ bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 LinkConfiguration* LinkManager::createConfiguration(int type, const QString& name)
 {
 #ifndef NO_SERIAL_LINK
-    if(static_cast<LinkConfiguration::LinkType>(type) == LinkConfiguration::TypeSerial)
+    if (static_cast<LinkConfiguration::LinkType>(type) == LinkConfiguration::TypeSerial) {
         _updateSerialPorts();
+    }
 #endif
     return LinkConfiguration::createSettings(type, name);
 }
@@ -710,74 +782,14 @@ LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* con
 {
     if (config) {
 #ifndef NO_SERIAL_LINK
-        if(config->type() == LinkConfiguration::TypeSerial)
+        if (config->type() == LinkConfiguration::TypeSerial) {
             _updateSerialPorts();
+        }
 #endif
         return LinkConfiguration::duplicateSettings(config);
     } else {
         qWarning() << "Internal error";
         return nullptr;
-    }
-}
-
-void LinkManager::_fixUnnamed(LinkConfiguration* config)
-{
-    if (config) {
-        //-- Check for "Unnamed"
-        if (config->name() == "Unnamed") {
-            switch(config->type()) {
-#ifndef NO_SERIAL_LINK
-            case LinkConfiguration::TypeSerial: {
-                QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
-#ifdef Q_OS_WIN
-                tname.replace("\\\\.\\", "");
-#else
-                tname.replace("/dev/cu.", "");
-                tname.replace("/dev/", "");
-#endif
-                config->setName(QString("Serial Device on %1").arg(tname));
-                break;
-            }
-#endif
-            case LinkConfiguration::TypeUdp:
-                config->setName(
-                            QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
-                break;
-            case LinkConfiguration::TypeTcp: {
-                TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(
-                                QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg(static_cast<int>(tconfig->port())));
-                }
-            }
-                break;
-#ifdef QGC_ENABLE_BLUETOOTH
-            case LinkConfiguration::TypeBluetooth: {
-                BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
-                }
-            }
-                break;
-#endif
-            case LinkConfiguration::TypeLogReplay: {
-                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
-                }
-            }
-                break;
-#ifdef QT_DEBUG
-            case LinkConfiguration::TypeMock:
-                config->setName(QString("Mock Link"));
-                break;
-#endif
-            case LinkConfiguration::TypeLast:
-                break;
-            }
-        }
-    } else {
-        qWarning() << "Internal error";
     }
 }
 
@@ -840,24 +852,30 @@ void LinkManager::startAutoConnectedLinks(void)
     }
 }
 
-int LinkManager::_reserveMavlinkChannel(void)
+uint8_t LinkManager::allocateMavlinkChannel(void)
 {
-    // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
-    for (uint8_t mavlinkChannel = 1; mavlinkChannel < MAVLINK_COMM_NUM_BUFFERS; mavlinkChannel++) {
+    // Find a mavlink channel to use for this link
+    for (uint8_t mavlinkChannel = 0; mavlinkChannel < MAVLINK_COMM_NUM_BUFFERS; mavlinkChannel++) {
         if (!(_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
             mavlink_reset_channel_status(mavlinkChannel);
             // Start the channel on Mav 1 protocol
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
             mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             _mavlinkChannelsUsedBitMask |= 1 << mavlinkChannel;
+            qCDebug(LinkManagerLog) << "allocateMavlinkChannel" << mavlinkChannel;
             return mavlinkChannel;
         }
     }
-    return 0;   // All channels reserved
+    qWarning(LinkManagerLog) << "allocateMavlinkChannel: all channels reserved!";
+    return invalidMavlinkChannel();   // All channels reserved
 }
 
-void LinkManager::_freeMavlinkChannel(int channel)
+void LinkManager::freeMavlinkChannel(uint8_t channel)
 {
+    qCDebug(LinkManagerLog) << "freeMavlinkChannel" << channel;
+    if (invalidMavlinkChannel() == channel) {
+        return;
+    }
     _mavlinkChannelsUsedBitMask &= ~(1 << channel);
 }
 
@@ -877,11 +895,12 @@ LogReplayLink* LinkManager::startLogReplay(const QString& logFile)
 
 bool LinkManager::_isSerialPortConnected(void)
 {
+#ifndef NO_SERIAL_LINK
     for (SharedLinkInterfacePtr link: _rgLinks) {
         if (qobject_cast<SerialLink*>(link.get())) {
             return true;
         }
     }
-
+#endif
     return false;
 }

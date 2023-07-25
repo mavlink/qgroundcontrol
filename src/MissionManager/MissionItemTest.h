@@ -40,7 +40,7 @@ private slots:
     void _testSaveToJson(void);
 
 private:
-    void _checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs = false);
+    void _checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs = false) const;
     QJsonObject _createV1Json(void);
     QJsonObject _createV2Json(void);
     QJsonObject _createV3Json(bool allNaNs = false);

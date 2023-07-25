@@ -64,6 +64,7 @@
             "friendlyName":         "Loiter",
             "description":          "Travel to a position and Loiter around the specified position indefinitely.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param3": {
@@ -86,6 +87,7 @@
             "friendlyName":         "Loiter (turns)",
             "description":          "Travel to a position and Loiter around the specified position for a number of turns.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
@@ -120,6 +122,7 @@
             "friendlyName":         "Loiter (time)",
             "description":          "Travel to a position and Loiter around the specified position for an amount of time.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
@@ -196,20 +199,7 @@
             "specifiesCoordinate":  true,
             "isTakeoffCommand":     true,
             "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Pitch",
-                "units":            "deg",
-                "default":          15,
-                "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Yaw",
-                "units":            "deg",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
-            }
+            "category":             "Basic"
         },
         { "id": 23, "rawName": "MAV_CMD_NAV_LAND_LOCAL", "friendlyName": "Land local" },
         { "id": 24, "rawName": "MAV_CMD_NAV_TAKEOFF_LOCAL", "friendlyName": "Takeoff local" },
@@ -237,6 +227,7 @@
             "friendlyName":         "Loiter (altitude)",
             "description":          "Loiter at specified position until altitude reached.",
             "specifiesCoordinate":  true,
+            "isLoiterCommand":      true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
@@ -518,8 +509,8 @@
             "category":     "Flight control",
             "param1": {
                 "label":            "Type",
-                "enumStrings":      "Airspeed,Ground Speed",
-                "enumValues":       "0,1",
+                "enumStrings":      "Airspeed,Ground Speed,Ascend Speed,Descend Speed",
+                "enumValues":       "0,1,2,3",
                 "default":          0
             },
             "param2": {
