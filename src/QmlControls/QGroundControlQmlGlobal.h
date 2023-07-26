@@ -109,6 +109,8 @@ public:
     //-------------------------------------------------------------------------
     // Elevation Provider
     Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              CONSTANT)
+    Q_PROPERTY(QString  elevationProviderNotice         READ elevationProviderNotice            CONSTANT)
+
 
 #if defined(QGC_ENABLE_PAIRING)
     Q_PROPERTY(PairingManager*      pairingManager          READ pairingManager         CONSTANT)
@@ -208,6 +210,7 @@ public:
 #endif
 
     QString elevationProviderName   () { return UrlFactory::kCopernicusElevationProviderKey; }
+    QString elevationProviderNotice () { return UrlFactory::kCopernicusElevationProviderNotice; }
 
     bool    singleFirmwareSupport   ();
     bool    singleVehicleSupport    ();

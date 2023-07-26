@@ -30,6 +30,7 @@ class UrlFactory : public QObject {
     Q_OBJECT
 public:
     static const char* kCopernicusElevationProviderKey;
+    static const char* kCopernicusElevationProviderNotice;
 
     UrlFactory      ();
     ~UrlFactory     ();
