@@ -33,6 +33,7 @@ QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 #include <QTimer>
 
 const char* UrlFactory::kCopernicusElevationProviderKey = "Copernicus Elevation";
+const char* UrlFactory::kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";
 
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory() : _timeout(5 * 1000) {
@@ -73,7 +74,7 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
 
     //_providersTable["MapQuest Map"] = new MapQuestMapMapProvider(this);
     //_providersTable["MapQuest Sat"] = new MapQuestSatMapProvider(this);
-    
+
     _providersTable["VWorld Street Map"] = new VWorldStreetMapProvider(this);
     _providersTable["VWorld Satellite Map"] = new VWorldSatMapProvider(this);
 
@@ -84,9 +85,9 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Japan-GSI Anaglyph"] = new JapanAnaglyphMapProvider(this);
     _providersTable["Japan-GSI Slope"] = new JapanSlopeMapProvider(this);
     _providersTable["Japan-GSI Relief"] = new JapanReliefMapProvider(this);
-    
+
     _providersTable["LINZ Basemap"] = new LINZBasemapMapProvider(this);
-    
+
     _providersTable["CustomURL Custom"] = new CustomURLMapProvider(this);
 }
 
@@ -142,7 +143,7 @@ QNetworkRequest UrlFactory::getTileURL(const QString& type, int x, int y, int zo
 quint32 UrlFactory::averageSizeForType(const QString& type) {
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getAverageSize();
-    } 
+    }
     qCDebug(QGCMapUrlEngineLog) << "UrlFactory::averageSizeForType " << type
         << " Not registered";
 
