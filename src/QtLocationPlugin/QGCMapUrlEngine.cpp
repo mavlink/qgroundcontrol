@@ -106,7 +106,7 @@ QString UrlFactory::getImageFormat(int id, const QByteArray& image) {
 }
 
 //-----------------------------------------------------------------------------
-QString UrlFactory::getImageFormat(QString type, const QByteArray& image) {
+QString UrlFactory::getImageFormat(const QString& type, const QByteArray& image) {
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getImageFormat(image);
     } else {
@@ -127,7 +127,7 @@ QNetworkRequest UrlFactory::getTileURL(int id, int x, int y, int zoom,
 }
 
 //-----------------------------------------------------------------------------
-QNetworkRequest UrlFactory::getTileURL(QString type, int x, int y, int zoom,
+QNetworkRequest UrlFactory::getTileURL(const QString& type, int x, int y, int zoom,
                                        QNetworkAccessManager* networkManager) {
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getTileURL(x, y, zoom, networkManager);
@@ -137,7 +137,7 @@ QNetworkRequest UrlFactory::getTileURL(QString type, int x, int y, int zoom,
 }
 
 //-----------------------------------------------------------------------------
-quint32 UrlFactory::averageSizeForType(QString type) {
+quint32 UrlFactory::averageSizeForType(const QString& type) {
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getAverageSize();
     } 
@@ -177,21 +177,26 @@ MapProvider* UrlFactory::getMapProviderFromId(int id)
     return nullptr;
 }
 
+//-----------------------------------------------------------------------------
 // Todo : qHash produce a uint bigger than max(int)
 // There is still a low probability for this to
 // generate similar hash for different types
-int UrlFactory::getIdFromType(QString type) { return (int)(qHash(type)>>1); }
+int
+UrlFactory::getIdFromType(const QString& type)
+{
+    return (int)(qHash(type)>>1);
+}
 
 //-----------------------------------------------------------------------------
 int
-UrlFactory::long2tileX(QString mapType, double lon, int z)
+UrlFactory::long2tileX(const QString& mapType, double lon, int z)
 {
     return _providersTable[mapType]->long2tileX(lon, z);
 }
 
 //-----------------------------------------------------------------------------
 int
-UrlFactory::lat2tileY(QString mapType, double lat, int z)
+UrlFactory::lat2tileY(const QString& mapType, double lat, int z)
 {
     return _providersTable[mapType]->lat2tileY(lat, z);
 }
@@ -199,7 +204,7 @@ UrlFactory::lat2tileY(QString mapType, double lat, int z)
 
 //-----------------------------------------------------------------------------
 QGCTileSet
-UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType)
+UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, const QString& mapType)
 {
 	return _providersTable[mapType]->getTileCount(zoom, topleftLon, topleftLat, bottomRightLon, bottomRightLat);
 }
