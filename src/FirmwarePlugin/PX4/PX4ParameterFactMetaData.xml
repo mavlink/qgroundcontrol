@@ -1252,8 +1252,8 @@
       </values>
     </parameter>
     <parameter name="COM_MOT_TEST_EN" default="1" type="INT32" boolean="true">
-      <short_desc>Enable Motor Testing</short_desc>
-      <long_desc>If set, enables the motor test interface via MAVLink (DO_MOTOR_TEST), that allows spinning the motors for testing purposes.</long_desc>
+      <short_desc>Enable Actuator Testing</short_desc>
+      <long_desc>If set, enables the actuator test interface via MAVLink (ACTUATOR_TEST), that allows spinning the motors and moving the servos for testing purposes.</long_desc>
     </parameter>
     <parameter name="COM_OBC_LOSS_T" default="5.0" type="FLOAT">
       <short_desc>Time-out to wait when onboard computer connection is lost before warning about loss connection</short_desc>
