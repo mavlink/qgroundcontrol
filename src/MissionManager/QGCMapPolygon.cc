@@ -279,7 +279,9 @@ void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
         objects.append(new QGCQGeoCoordinate(coordinate, this));
         _polygonPath.append(QVariant::fromValue(coordinate));
     }
-    if(!objects.empty())  _polygonModel.append(objects);
+    if (!objects.empty()) {
+        _polygonModel.append(objects);
+    }
     _endResetIfNotActive();
 
     emit pathChanged();
