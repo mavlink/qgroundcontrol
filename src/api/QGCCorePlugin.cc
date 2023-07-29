@@ -248,6 +248,13 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMeta
             return true;
         }
 #endif
+
+#ifndef __android__
+        if (metaData.name() == AppSettings::androidSaveToSDCardName) {
+            // This only shows on android builds
+            return false;
+        }
+#endif
     }
 
     return true; // Show setting in ui
