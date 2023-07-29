@@ -132,6 +132,13 @@
     "qgcRebootRequired":    true
 },
 {
+    "name":             "autoLoadMissions",
+    "shortDesc": "AutoLoad mission on vehicle connect",
+    "longDesc":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
+    "type":             "bool",
+    "default":     false
+},
+{
     "name":             "useChecklist",
     "shortDesc": "Use preflight checklist",
     "longDesc":  "If this option is enabled the preflight checklist will be used.",

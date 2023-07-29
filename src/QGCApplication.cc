@@ -746,6 +746,17 @@ void QGCApplication::showCriticalVehicleMessage(const QString& message)
         qWarning() << "Internal error";
     }
 }
+void QGCApplication::autoLoadCheck(){
+
+
+    QObject* rootQmslObject = _rootQmlObject();
+    if (rootQmslObject) {
+        //_settingsManager -> appSettings() -> missionSavePath() + "/AutoLoad.plan"
+        QVariant path = qgcApp()->toolbox()->settingsManager()->appSettings() -> missionSavePath() + "/Autoload.plan";
+        QMetaObject::invokeMethod(_rootQmlObject(), "askforAutoloadMission" ,Q_ARG(QVariant,path));
+    }
+    
+}
 
 void QGCApplication::showAppMessage(const QString& message, const QString& title)
 {

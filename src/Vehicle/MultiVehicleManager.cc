@@ -25,6 +25,9 @@
 
 #include <QQmlEngine>
 
+#include <QtTest/QtTest>
+#include <QSignalSpy>
+
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 
 const char* MultiVehicleManager::_gcsHeartbeatEnabledKey = "gcsHeartbeatEnabled";
@@ -149,7 +152,18 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     } else {
         setActiveVehicle(vehicle);
     }
+    if (qgcApp()->toolbox()->settingsManager()->appSettings()->autoLoadMissions()->rawValue().toBool()){
 
+        QSignalSpy initialConnectCompleteSpy(vehicle, &Vehicle::initialConnectComplete);
+        QSignalSpy flyingChangedSpy(vehicle, &Vehicle::flyingChanged);
+        
+        QCOMPARE(initialConnectCompleteSpy.wait(30000), true);
+        bool signalrecived = flyingChangedSpy.wait(1000);
+        
+        if (vehicle->property("flying").toBool() == false || !signalrecived) {
+            qgcApp()->autoLoadCheck();
+        }
+    }
 #if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 1) {
         //-- Once a vehicle is connected, keep screen from going off
