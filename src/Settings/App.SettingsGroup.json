@@ -174,9 +174,17 @@
 {
     "name":             "savePath",
     "shortDesc": "Application save directory",
-    "longDesc":  "Directory to which all data files  are saved/loaded from",
+    "longDesc":  "Directory to which all data files are saved/loaded from",
     "type":             "string",
     "default":     ""
+},
+{
+    "name":                 "androidSaveToSDCard",
+    "shortDesc":            "Save to SD card",
+    "longDesc":             "Application data is saved to the sd card",
+    "type":                 "bool",
+    "default":              false,
+    "qgcRebootRequired":    true
 },
 {
     "name":             "userBrandImageIndoor",
