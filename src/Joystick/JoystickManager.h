@@ -70,10 +70,12 @@ private slots:
 
 private:
     void _setActiveJoystickFromSettings(void);
+    void _setActiveJoysticksFromSettings(void);
 
 private:
     Joystick*                   _activeJoystick;
     QMap<QString, Joystick*>    _name2JoystickMap;
+    QMap<Joystick*, bool>       _activeJoysticks;
     MultiVehicleManager*        _multiVehicleManager;
 
     static const char * _settingsGroup;

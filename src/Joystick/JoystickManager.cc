@@ -30,7 +30,9 @@ const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
 JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _activeJoystick(nullptr)
+    , _activeJoysticks()
     , _multiVehicleManager(nullptr)
+
 {
 }
 
@@ -121,6 +123,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 
 Joystick* JoystickManager::activeJoystick(void)
 {
+    qDebug()<< _activeJoystick;
     return _activeJoystick;
 }
 

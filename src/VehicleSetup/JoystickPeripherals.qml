@@ -57,21 +57,21 @@ Item {
             Rectangle {
                 Rectangle {
                     QGCLabel {
-                        id:                 tbHeader
+                        id:                 tbHeader2
                         text:               qsTr("Active")
                     }
                 }
                 Rectangle {
                     CheckBox {
-                        id:                 item1
-                        checkState: childGroup.checkState
-                    }
-                    CheckBox {
-                        id:                 item2
-                        checkState: childGroup.checkState
-                    }
-                    CheckBox {
                         id:                 item3
+                        checkState: childGroup.checkState
+                    }
+                    CheckBox {
+                        id:                 item4
+                        checkState: childGroup.checkState
+                    }
+                    CheckBox {
+                        id:                 item5
                         checkState: childGroup.checkState
                     }
                 }
