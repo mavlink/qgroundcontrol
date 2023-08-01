@@ -43,6 +43,8 @@ public:
 
     /// Get active joystick
     Joystick* activeJoystick(void);
+    /// Get list of actives joystick
+    QList<Joystick*> getActivesJoysticks(QList<Joystick*>);
     /// Set active joystick
     void setActiveJoystick(Joystick* joystick);
 
