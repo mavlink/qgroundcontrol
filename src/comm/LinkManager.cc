@@ -713,8 +713,8 @@ void LinkManager::_updateSerialPorts()
     _commPortList.clear();
     _commPortDisplayList.clear();
 #ifndef NO_SERIAL_LINK
-    QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &info: portList)
+    QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
+    for (const QGCSerialPortInfo &info: portList)
     {
         QString port = info.systemLocation().trimmed();
         _commPortList += port;
