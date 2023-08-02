@@ -153,6 +153,17 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
     if (_currentSource != nullptr) {
         _currentSource->stopUpdates();
         disconnect(_currentSource);
+
+        // Reset all values so we dont get stuck on old values
+        _geoPositionInfo = QGeoPositionInfo();
+        _gcsPosition = QGeoCoordinate();
+        _gcsHeading =       qQNaN();
+        _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
+
+        emit gcsPositionChanged(_gcsPosition);
+        emit gcsHeadingChanged(_gcsHeading);
+        emit positionInfoUpdated(_geoPositionInfo);
+        emit gcsPositionHorizontalAccuracyChanged();
     }
 
     if (qgcApp()->runningUnitTests()) {
