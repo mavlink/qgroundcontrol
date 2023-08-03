@@ -52,7 +52,7 @@ Rectangle {
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        height:             parent.height
+        height:             parent.height - anchors.margins * 2
         contentHeight:      toolStripColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true

@@ -53,3 +53,12 @@ DISTFILES += \
     $$PWD/android/build.gradle \
     $$PWD/android/gradle/wrapper/gradle-wrapper.properties \
     $$PWD/android/gradlew.bat
+
+SOURCES += \
+    $$PWD/android/src/AndroidInterface.cc
+
+HEADERS += \
+    $$PWD/android/src/AndroidInterface.h
+
+INCLUDEPATH += \
+    $$PWD/android/src
