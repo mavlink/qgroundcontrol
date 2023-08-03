@@ -700,7 +700,6 @@ public:
     Fact* hobbs                             () { return &_hobbsFact; }
     Fact* throttlePct                       () { return &_throttlePctFact; }
     Fact* imuTemp                           () { return &_imuTempFact; }
-   // Fact* rpm                               () { return &_rpmFact; }
 
     FactGroup* gpsFactGroup                 () { return &_gpsFactGroup; }
     FactGroup* gps2FactGroup                () { return &_gps2FactGroup; }
@@ -1381,7 +1380,6 @@ private:
     Fact _hobbsFact;
     Fact _throttlePctFact;
     Fact _imuTempFact;
-    //Fact _rpmFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
     VehicleGPS2FactGroup            _gps2FactGroup;
@@ -1439,8 +1437,6 @@ private:
     static const char* _hobbsFactName;
     static const char* _throttlePctFactName;
     static const char* _imuTempFactName;
- //   static const char* _rpmFactName;
-
     static const char* _gpsFactGroupName;
     static const char* _gps2FactGroupName;
     static const char* _windFactGroupName;
