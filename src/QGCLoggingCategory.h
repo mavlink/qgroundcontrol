@@ -24,6 +24,7 @@ Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(LocalizationLog)
 Q_DECLARE_LOGGING_CATEGORY(VideoAllLog) // turns on all individual QGC video logs
+Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a

@@ -42,7 +42,10 @@ Item {
             QGCCheckBox {
                 id:             enabledSwitch
                 enabled:        _activeJoystick ? _activeJoystick.calibrated : false
-                onClicked:      globals.activeVehicle.joystickEnabled = checked
+                onClicked:      {
+                    globals.activeVehicle.joystickEnabled = checked
+                    globals.activeVehicle.saveJoystickSettings()
+                }
                 Component.onCompleted: {
                     checked = globals.activeVehicle.joystickEnabled
                 }
