@@ -373,23 +373,40 @@ ApplicationWindow {
                                 onClicked: {
                                     if (mouse.modifiers & Qt.ControlModifier) {
                                         QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                                    } else if (mouse.modifiers & Qt.ShiftModifier) {
+                                    } else if (ScreenTools.isMobile || mouse.modifiers & Qt.ShiftModifier) {
                                         if(!QGroundControl.corePlugin.showAdvancedUI) {
-                                            advancedModeConfirmation.open()
+                                            advancedModeOnConfirmation.open()
                                         } else {
-                                            QGroundControl.corePlugin.showAdvancedUI = false
+                                            advancedModeOffConfirmation.open()
                                         }
                                     }
                                 }
 
+                                // This allows you to change this on mobile
+                                onPressAndHold: {
+                                    QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                                    console.log("Press and hold", QGroundControl.corePlugin.showTouchAreas)
+                                }
+
                                 MessageDialog {
-                                    id:                 advancedModeConfirmation
+                                    id:                 advancedModeOnConfirmation
                                     title:              qsTr("Advanced Mode")
                                     text:               QGroundControl.corePlugin.showAdvancedUIMessage
                                     standardButtons:    StandardButton.Yes | StandardButton.No
                                     onYes: {
                                         QGroundControl.corePlugin.showAdvancedUI = true
-                                        advancedModeConfirmation.close()
+                                        advancedModeOnConfirmation.close()
+                                    }
+                                }
+
+                                MessageDialog {
+                                    id:                 advancedModeOffConfirmation
+                                    title:              qsTr("Advanced Mode")
+                                    text:               qsTr("Turn off Advanced Mode?")
+                                    standardButtons:    StandardButton.Yes | StandardButton.No
+                                    onYes: {
+                                        QGroundControl.corePlugin.showAdvancedUI = false
+                                        advancedModeOffConfirmation.close()
                                     }
                                 }
                             }
