@@ -18,6 +18,7 @@ add_library(AutoPilotPlugins
 	APM/APMMotorComponent.cc
 	APM/APMPowerComponent.cc
 	APM/APMRadioComponent.cc
+	APM/APMRemoteSupportComponent.cc
 	APM/APMSafetyComponent.cc
 	APM/APMSensorsComponent.cc
 	APM/APMSensorsComponentController.cc
