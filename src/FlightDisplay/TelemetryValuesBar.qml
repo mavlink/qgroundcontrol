@@ -92,8 +92,17 @@ Rectangle {
             y:                          telemetryLayout.y
             width:                      telemetryLayout.width
             height:                     telemetryLayout.height
-            hoverEnabled:               true
+            hoverEnabled:               !ScreenTools.isMobile
             propagateComposedEvents:    true
+
+            onClicked: {
+                if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
+                    valueArea.settingsUnlocked = true
+                    mouse.accepted = true
+                } else {
+                    mouse.accepted = false
+                }
+            }
         }
 
         HorizontalFactValueGrid {
