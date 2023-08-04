@@ -21,7 +21,7 @@
 #include "MultiVehicleManager.h"
 #include "JoystickMavCommand.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
+// JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 
@@ -370,4 +370,6 @@ private:
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
+    void _vehicleCountChanged(int count);
+
 };
