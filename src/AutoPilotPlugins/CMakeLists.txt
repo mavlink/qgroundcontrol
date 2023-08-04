@@ -65,6 +65,7 @@ if (NOT QGC_DISABLE_APM_PLUGIN)
 		APM/APMSubFrameComponent.cc
 		APM/APMSubMotorComponentController.cc
 		APM/APMTuningComponent.cc
+		APM/APMRemoteSupportComponent.cc
 		)
 endif()
 
