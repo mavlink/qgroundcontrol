@@ -141,6 +141,10 @@ linux|macx|ios {
     }
 }
 
+NoSerialBuild {
+    message("Serial port support disabled")
+}
+
 !MacBuild:!AndroidBuild {
     # See QGCPostLinkCommon.pri for details on why MacBuild doesn't use DESTDIR
     DESTDIR = staging
