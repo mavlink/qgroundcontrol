@@ -4,6 +4,9 @@ QT += androidextras
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 
+android_source_dir_target.commands = echo Updating Android Manifest
+android_source_dir_target.depends = FORCE
+
 exists($$PWD/custom/android) {
     message("Merging $$PWD/custom/android/ -> $$PWD/android/")
 
@@ -12,11 +15,25 @@ exists($$PWD/custom/android) {
     PRE_TARGETDEPS += $$android_source_dir_target.target
     QMAKE_EXTRA_TARGETS += android_source_dir_target
 
-    android_source_dir_target.commands = $$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR && \
+    android_source_dir_target.commands = $$android_source_dir_target.commands && \
+            $$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_COPY_DIR $$PWD/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_COPY_DIR $$PWD/custom/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_STREAM_EDITOR -i \"s/package=\\\"org.mavlink.qgroundcontrol\\\"/package=\\\"$$QGC_ANDROID_PACKAGE\\\"/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
-    android_source_dir_target.depends = FORCE
+}
+
+NoSerialBuild {
+    # No need to add anything to manifest
+    android_source_dir_target.commands = $$android_source_dir_target.commands && \
+        $$QMAKE_STREAM_EDITOR -i \"s/<!-- %%QGC_INSERT_ACTIVITY_INTENT_FILTER -->//\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
+    android_source_dir_target.commands = $$android_source_dir_target.commands && \
+        $$QMAKE_STREAM_EDITOR -i \"s/<!-- %%QGC_INSERT_ACTIVITY_META_DATA -->//\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
+} else {
+    # Updates the manifest for usb device support
+    android_source_dir_target.commands = $$android_source_dir_target.commands && \
+        $$QMAKE_STREAM_EDITOR -i \"s/<!-- %%QGC_INSERT_ACTIVITY_INTENT_FILTER -->/<action android:name=\\\"android.hardware.usb.action.USB_DEVICE_ATTACHED\\\"\\\/>\r\n<action android:name=\\\"android.hardware.usb.action.USB_DEVICE_DETACHED\\\"\\\/>\r\n<action android:name=\\\"android.hardware.usb.action.USB_ACCESSORY_ATTACHED\\\"\\\/>/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
+    android_source_dir_target.commands = $$android_source_dir_target.commands && \
+        $$QMAKE_STREAM_EDITOR -i \"s/<!-- %%QGC_INSERT_ACTIVITY_META_DATA -->/<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_DEVICE_ATTACHED\\\"\\\/>\r\n<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_DEVICE_DETACHED\\\"\\\/>\r\n<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_ACCESSORY_ATTACHED\\\"\\\/>/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
 }
 
 exists($$PWD/custom/android/AndroidManifest.xml) {
