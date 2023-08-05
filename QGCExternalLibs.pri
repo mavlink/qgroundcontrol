@@ -226,9 +226,9 @@ MacBuild {
 # Include Android OpenSSL libs
 AndroidBuild {
     include($$SOURCE_DIR/libs/OpenSSL/android_openssl/openssl.pri)
-    message("ANDROID_EXTRA_LIBS")
-    message($$ANDROID_TARGET_ARCH)
-    message($$ANDROID_EXTRA_LIBS)
+    #message("ANDROID_EXTRA_LIBS")
+    #message($$ANDROID_TARGET_ARCH)
+    #message($$ANDROID_EXTRA_LIBS)
 }
 
 # Pairing
