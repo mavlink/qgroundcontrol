@@ -12,6 +12,10 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
+#ifdef __android__
+#include "AndroidInterface.h"
+#endif
+
 #include <QQmlEngine>
 #include <QtQml>
 #include <QStandardPaths>
@@ -95,10 +99,26 @@ DECLARE_SETTINGGROUP(App, "")
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.absolutePath());
     #else
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
-        savePathFact->setRawValue(rootDir.filePath(appName));
+        QString rootDirPath;
+        #ifdef __android__
+        if (androidSaveToSDCard()->rawValue().toBool()) {
+                rootDirPath = AndroidInterface::getSDCardPath();
+            qDebug() << "AndroidInterface::getSDCardPath();" << rootDirPath;
+                if (rootDirPath.isEmpty() || !QDir(rootDirPath).exists()) {
+                    rootDirPath.clear();
+                    qgcApp()->showAppMessage(tr("Save to SD card specified for application data. But no SD card present. Using internal storage."));
+                } else if (!QFileInfo(rootDirPath).isWritable()) {
+                    rootDirPath.clear();
+                    qgcApp()->showAppMessage(tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
+                }
+            }
+        #endif
+        if (rootDirPath.isEmpty()) {
+            rootDirPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        }
+        savePathFact->setRawValue(QDir(rootDirPath).filePath(appName));
     #endif
-        savePathFact->setVisible(false);
+    savePathFact->setVisible(false);
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.filePath(appName));
@@ -128,6 +148,7 @@ DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
+DECLARE_SETTINGSFACT(AppSettings, androidSaveToSDCard)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)
 DECLARE_SETTINGSFACT(AppSettings, mapboxToken)

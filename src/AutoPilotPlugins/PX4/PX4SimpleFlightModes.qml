@@ -34,8 +34,8 @@ Item {
             _switchTHList.push("RC_TRANS_TH")
         }
         if (controller.vehicle.fixedWing) {
-            _switchFactList.push("RC_MAP_FLAPS")
-            _switchTHFactList.push("")
+            _switchNameList.push("RC_MAP_FLAPS")
+            _switchTHList.push("")
         }
         switchRepeater.model = _switchNameList
     }
