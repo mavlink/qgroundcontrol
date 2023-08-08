@@ -373,6 +373,7 @@ ApplicationWindow {
                                 onClicked: {
                                     if (mouse.modifiers & Qt.ControlModifier) {
                                         QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                                        showTouchAreasNotification.open()
                                     } else if (ScreenTools.isMobile || mouse.modifiers & Qt.ShiftModifier) {
                                         if(!QGroundControl.corePlugin.showAdvancedUI) {
                                             advancedModeOnConfirmation.open()
@@ -385,7 +386,14 @@ ApplicationWindow {
                                 // This allows you to change this on mobile
                                 onPressAndHold: {
                                     QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                                    console.log("Press and hold", QGroundControl.corePlugin.showTouchAreas)
+                                    showTouchAreasNotification.open()
+                                }
+
+                                MessageDialog {
+                                    id:                 showTouchAreasNotification
+                                    title:              qsTr("Debug Touch Areas")
+                                    text:               qsTr("Touch Area display toggled")
+                                    standardButtons:    StandardButton.Ok
                                 }
 
                                 MessageDialog {
