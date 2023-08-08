@@ -505,7 +505,7 @@
     </parameter>
   </group>
   <group name="Attitude Q estimator">
-    <parameter name="ATT_ACC_COMP" default="1" type="INT32" boolean="true">
+    <parameter name="ATT_ACC_COMP" default="0" type="INT32" boolean="true">
       <short_desc>Acceleration compensation based on GPS velocity</short_desc>
     </parameter>
     <parameter name="ATT_BIAS_MAX" default="0.05" type="FLOAT">
