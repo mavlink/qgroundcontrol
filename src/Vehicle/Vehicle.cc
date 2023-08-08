@@ -742,6 +742,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
         break;
+    case MAVLINK_MSG_ID_FENCE_STATUS:
+        _handleFenceStatus(message);
+        break;
 
     case MAVLINK_MSG_ID_EVENT:
     case MAVLINK_MSG_ID_CURRENT_EVENT_SEQUENCE:
@@ -4173,6 +4176,42 @@ void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
     _objectAvoidance->update(&o);
 }
 
+void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
+{
+    mavlink_fence_status_t fenceStatus;
+
+    mavlink_msg_fence_status_decode(&message, &fenceStatus);
+
+    qCDebug(VehicleLog) << "_handleFenceStatus breach_status" << fenceStatus.breach_status;
+
+    static qint64 lastUpdate = 0;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (fenceStatus.breach_status == 1) {
+        if (now - lastUpdate > 3000) {
+            lastUpdate = now;
+            QString breachTypeStr;
+            switch (fenceStatus.breach_type) {
+                case FENCE_BREACH_NONE:
+                    return;
+                case FENCE_BREACH_MINALT:
+                    breachTypeStr = tr("minimum altitude");
+                    break;
+                case FENCE_BREACH_MAXALT:
+                    breachTypeStr = tr("maximum altitude");
+                    break;
+                case FENCE_BREACH_BOUNDARY:
+                    breachTypeStr = tr("boundary");
+                    break;
+                default:
+                    break;
+            }
+
+            qgcApp()->toolbox()->audioOutput()->say(breachTypeStr + " " + tr("fence breached"));
+        }
+    } else {
+        lastUpdate = now;
+    }
+}
 void Vehicle::updateFlightDistance(double distance)
 {
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
