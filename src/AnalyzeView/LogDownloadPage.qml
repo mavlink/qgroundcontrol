@@ -84,7 +84,7 @@ AnalyzePage {
                                     if(d.getUTCFullYear() < 2010)
                                         return qsTr("Date Unknown")
                                     else
-                                        return d.toLocaleString()
+                                        return d.toLocaleString(undefined, "short")
                                 }
                             }
                             return ""
