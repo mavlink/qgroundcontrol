@@ -414,7 +414,22 @@ void RemoteIDManager::setEmergency(bool declare)
 {
     _emergencyDeclared = declare;
     emit emergencyDeclaredChanged();
-    // Wether we are starting an emergency or cancelling it, we need to enforce sending
+
+    // We send a MAV Command to the vehicle to start or stop the emergency
+    _vehicle->sendMavCommand(
+        _vehicle->compId(),        // Target component
+        MAV_CMD_DO_SET_EMERGENCY,  // MAV_CMD
+        true,                     // ShowError
+        _emergencyDeclared ? 1 : 0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0);
+
+
+    // Whether we are starting an emergency or cancelling it, we need to enforce sending
     // this message. Otherwise, if non optimal connection quality, vehicle RID device
     // could remain in the wrong state. It is clarified to the user in remoteidsettings.qml
     _enforceSendingSelfID = true;
