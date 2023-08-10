@@ -23,59 +23,57 @@ import QGroundControl.FactControls  1.0
 Item {
     width:                  mainCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
     height:                 mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-
+    property var peripheralList: [
+         { name: "Peripheral 1", active: true },
+         { name: "Peripheral 2", active: false },
+         { name: "Peripheral 3", active: false },
+         { name: "Peripheral 4", active: false },
+         { name: "Peripheral 5", active: false },
+        ]
     Column {
+        id:                 mainCol
+        anchors.centerIn:   parent
+        spacing:            ScreenTools.defaultFontPixelHeight
 
-        QGCLabel {
-            id:         joystickPeripheralsPage
-            text:       qsTr("Select wanted peripheral to be active")
+        Row{
+            QGCLabel {
+                id:         joystickPeripheralsPageLabel
+                text:       qsTr("Select wanted peripheral to be active")
+            }
         }
+        GridLayout{
+            columns: 2
+            columnSpacing:      ScreenTools.defaultFontPixelWidth
+            rowSpacing:         ScreenTools.defaultFontPixelHeight
+            ListView{
+            width: ListView.width
+            model: ListModel{
+                id: peripheralModel
+            }
+            Component.onCompleted: {
+                for (var i = 0; i < peripheralList.length; i++) {
+                peripheralModel.append(peripheralList[i]);
+                }
 
-        Row {
-            Rectangle {
-                Rectangle {
-                    QGCLabel {
-                        id:                 tbHeader
-                        text:               qsTr("Peripheral")
-                    }
-                }
-                Rectangle {
-                    QGCLabel {
-                        id:                 item1
-                        text:               qsTr("Item 1")
-                    }
-                    QGCLabel {
-                        id:                 item2
-                        text:               qsTr("Item 2")
-                    }
-                    QGCLabel {
-                        id:                 item3
-                        text:               qsTr("Item 3")
-                    }
-                }
             }
-            Rectangle {
-                Rectangle {
-                    QGCLabel {
-                        id:                 tbHeader2
-                        text:               qsTr("Active")
+            delegate: Row{
+                spacing: 2
+                    Column{
+                        QGCLabel {
+                            text: model.name
+                        }
                     }
-                }
-                Rectangle {
-                    CheckBox {
-                        id:                 item3
-                        checkState: childGroup.checkState
+                    Column{
+                        QGCCheckBox {
+                            checked: model.active
+                            onCheckedChanged:{
+                                model.active
+                            }
+                        }
+
                     }
-                    CheckBox {
-                        id:                 item4
-                        checkState: childGroup.checkState
-                    }
-                    CheckBox {
-                        id:                 item5
-                        checkState: childGroup.checkState
-                    }
-                }
             }
+        }
         }
     }
 }
