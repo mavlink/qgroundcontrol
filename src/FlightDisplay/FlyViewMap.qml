@@ -265,6 +265,7 @@ FlightMap {
             heading:        object.heading
             alert:          object.alert
             map:            _root
+            size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 2.5
             z:              QGroundControl.zOrderVehicles
         }
     }
