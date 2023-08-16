@@ -41,14 +41,14 @@ void ActuatorTest::updateFunctions(const QList<Actuator*> &actuators)
 
     Actuator* motorActuator{nullptr};
     for (const auto& actuator : actuators) {
-        if (actuator->isMotor()) {
+        if (actuator->isMotor() && !actuator->isBidirectional()) {
             motorActuator = actuator;
         }
         _actuators->append(actuator);
     }
     if (motorActuator) {
-        _allMotorsActuator = new Actuator(this, tr("All Motors"), motorActuator->min(), motorActuator->max(), motorActuator->defaultValue(),
-                motorActuator->function(), true);
+        _allMotorsActuator = new Actuator(this, tr("All Standard Motors"), motorActuator->min(), motorActuator->max(), motorActuator->defaultValue(),
+                motorActuator->function(), true, false);
     }
     resetStates();
 

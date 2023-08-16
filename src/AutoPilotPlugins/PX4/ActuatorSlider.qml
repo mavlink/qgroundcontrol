@@ -11,10 +11,10 @@ Column {
 
     // If the default value is NaN, we add a small range
     // below, which snaps into place
-    property var snap:                isNaN(channel.defaultValue)
+    property var snap:                channel.isMotor & !channel.isBidirectional
     property var span:                channel.max - channel.min
     property var snapRange:           span * 0.15
-    property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
+    property var defaultVal:          snap ? channel.min - snapRange : 0
     property var blockUpdates:        true // avoid slider changes on startup
 
     id:                               root
