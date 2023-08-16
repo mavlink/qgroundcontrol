@@ -498,35 +498,11 @@ void Mixers::update()
                 currentMixerGroup->setCountParam(new ConfigParameter(currentMixerGroup, getFact(actuatorGroup.count),
                         "", false));
             }
-            quint8 num_motor = 0;
             for (int actuatorIdx = 0; actuatorIdx < count; ++actuatorIdx) {
                 QString label = "";
                 int actuatorFunction = 0;
                 if (actuatorType != _actuatorTypes.end()) {
                     actuatorFunction = actuatorType->functionMin + actuatorTypeIndex;
-
-                    bool isMotor = ActuatorGeometry::typeFromStr(actuatorType.key()) == ActuatorGeometry::Type::Motor;
-                    // bool isBidirectional = false;
-
-                    if(isMotor){
-                        QString bidirectional_param("CA_R_REV");
-                        quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
-                        quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
-                        // qDebug() << "num of motor: " << num_motor << " CA_R_REV : " << bitset_bidirectional << " is bidi: " << is_bidi;
-                        if(is_bidi == 1){
-                            actuatorType->values.min = -1.0f;
-                            actuatorType->values.defaultVal = 0.0f;
-                            // _actuatorTypes[actuatorType.key()].values.min = -1.0f;
-                            // isBidirectional = true;
-                            qDebug() << "actuatorTypeName: " << actuatorType.key() << " is bidrectional";
-
-                        }
-                        num_motor++;
-                    }
-
-
-
-
                     label = _functions.value(actuatorFunction).label;
                     if (label == "") {
                         qCWarning(ActuatorsConfigLog) << "No label for output function" << actuatorFunction;

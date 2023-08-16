@@ -228,26 +228,31 @@ void Actuators::parametersChanged()
                 if (function >= actuatorType.functionMin && function <= actuatorType.functionMax) {
                     bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor;
                     bool isBidirectional = false;
+                    float min_value = actuatorType.values.min;
+                    float default_value = actuatorType.values.defaultVal;
 
                     if(isMotor){
-                        // QString bidirectional_param("CA_R_REV");
-                        // quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
-                        // quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
+                        QString bidirectional_param("CA_R_REV");
+                        quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
+                        quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
                         qDebug() << "num of motor: " << num_motor << " min value is: " << actuatorType.values.min;
-                        // if(is_bidi == 1){
 
-                            // isBidirectional = true;
-                            // qDebug() << "actuatorTypeName: " << actuatorTypeName << " is bidrectional";
+                        if(is_bidi == 1){
 
-                        // }
+                            min_value = -1.0f;
+                            default_value = 0.0f;
+                            isBidirectional = true;
+                            qDebug() << actuatorTypeName << " " << num_motor << " is bidrectional";
+
+                        }
                         num_motor++;
 
                     }
 
                     // qDebug() << "testinng: " << actuatorType.values.min << actuatorType.values.max << actuatorType.values.defaultVal;
                     actuators.append(
-                            new ActuatorTesting::Actuator(&_actuatorTest, label, actuatorType.values.min, actuatorType.values.max,
-                                    actuatorType.values.defaultVal, function, isMotor, isBidirectional));
+                            new ActuatorTesting::Actuator(&_actuatorTest, label, min_value, actuatorType.values.max,
+                                    default_value, function, isMotor, isBidirectional));
                     found = true;
                     break;
                 }
