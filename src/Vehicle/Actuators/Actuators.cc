@@ -230,16 +230,16 @@ void Actuators::parametersChanged()
                     bool isBidirectional = false;
 
                     if(isMotor){
-                        QString bidirectional_param("CA_R_REV");
-                        quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
-                        quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
-                        qDebug() << "num of motor: " << num_motor << " CA_R_REV : " << bitset_bidirectional << " is bidi: " << is_bidi;
-                        if(is_bidi == 1){
+                        // QString bidirectional_param("CA_R_REV");
+                        // quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
+                        // quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
+                        qDebug() << "num of motor: " << num_motor << " min value is: " << actuatorType.values.min;
+                        // if(is_bidi == 1){
 
-                            isBidirectional = true;
-                            qDebug() << "actuatorTypeName: " << actuatorTypeName << " is bidrectional";
+                            // isBidirectional = true;
+                            // qDebug() << "actuatorTypeName: " << actuatorTypeName << " is bidrectional";
 
-                        }
+                        // }
                         num_motor++;
 
                     }
@@ -600,7 +600,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
                 
             //     bool max = ((getFact(param.name)->rawValue().toInt()) >> loop) & 0b1;
             //     qDebug() << "CA_R_REV: " << getFact(param.name)->rawValue().toInt() << "set to -1.0: " << max;
-            actuatorType.values.min = -1.0;
+            // actuatorType.values.min = -1.0;
                 
             // }
             // loop++;
