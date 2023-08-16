@@ -498,6 +498,7 @@ void Mixers::update()
                 currentMixerGroup->setCountParam(new ConfigParameter(currentMixerGroup, getFact(actuatorGroup.count),
                         "", false));
             }
+
             for (int actuatorIdx = 0; actuatorIdx < count; ++actuatorIdx) {
                 QString label = "";
                 int actuatorFunction = 0;

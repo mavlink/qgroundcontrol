@@ -15,8 +15,6 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
-#include <QtDebug>
-
 #include <algorithm>
 
 using namespace ActuatorOutputs;
@@ -118,8 +116,6 @@ bool Actuators::isMultirotor() const
 void Actuators::load(const QString &json_file)
 {
     QFile file;
-
-    qDebug() << "jsonfile : " << json_file;
     file.setFileName(json_file);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json_data = file.readAll();
@@ -148,7 +144,7 @@ void Actuators::init()
     for (int groupIdx = 0; groupIdx < _actuatorOutputs->count(); groupIdx++) {
         ActuatorOutput* group = qobject_cast<ActuatorOutput*>(_actuatorOutputs->get(groupIdx));
         if (!group->enableParam() && !group->hasExistingOutputFunctionParams()) {
-            qDebug(ActuatorsConfigLog) << "Removing actuator group w/o function parameters at" << groupIdx;
+            qCDebug(ActuatorsConfigLog) << "Removing actuator group w/o function parameters at" << groupIdx;
             _actuatorOutputs->removeAt(groupIdx);
             delete group;
             --groupIdx;
@@ -223,7 +219,6 @@ void Actuators::parametersChanged()
         if (!excludeFromActuatorTesting) {
             bool found = false;
             for (const auto& actuatorTypeName : actuatorTypes.keys()) {
-                // qDebug() << "actuatorTypeName: " << actuatorTypeName;
                 const Mixer::ActuatorType& actuatorType = actuatorTypes[actuatorTypeName];
                 if (function >= actuatorType.functionMin && function <= actuatorType.functionMax) {
                     bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor;
@@ -235,14 +230,12 @@ void Actuators::parametersChanged()
                         QString bidirectional_param("CA_R_REV");
                         quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
                         quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
-                        qDebug() << "num of motor: " << num_motor << " min value is: " << actuatorType.values.min;
 
                         if(is_bidi == 1){
 
                             min_value = -1.0f;
                             default_value = 0.0f;
                             isBidirectional = true;
-                            qDebug() << actuatorTypeName << " " << num_motor << " is bidrectional";
 
                         }
                         num_motor++;
@@ -432,7 +425,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
         QJsonValue output = outputJson.toObject();
         QString label = output["label"].toString();
 
-        qDebug() << "Actuator group:" << label;
+        qCDebug(ActuatorsConfigLog) << "Actuator group:" << label;
 
         Condition groupVisibilityCondition(output["show-subgroups-if"].toString(""), _vehicle->parameterManager());
         subscribeFact(groupVisibilityCondition.fact());
@@ -444,7 +437,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
             Parameter param{};
             param.parse(parameter);
             QString functionStr = parameter["function"].toString("");
-            qDebug() << "param:" << param.name << "label:" << param.label << "function:" << functionStr;
+            qCDebug(ActuatorsConfigLog) << "param:" << param.name << "label:" << param.label << "function:" << functionStr;
             ConfigParameter::Function function = ConfigParameter::Function::Unspecified;
             if (functionStr == "enable") {
                 function = ConfigParameter::Function::Enable;
@@ -466,7 +459,6 @@ bool Actuators::parseJson(const QJsonDocument &json)
             QJsonValue subgroup = subgroupJson.toObject();
             QString subgroupLabel = subgroup["label"].toString();
             ActuatorOutputSubgroup* actuatorSubgroup = new ActuatorOutputSubgroup(this, subgroupLabel);
-            qDebug() << "subgroup label: " << subgroupLabel;
             currentActuatorOutput->addSubgroup(actuatorSubgroup);
 
             QJsonValue supportedActions = subgroup["supported-actions"];
@@ -541,7 +533,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
                 QJsonValue channel = channelJson.toObject();
                 QString channelLabel = channel["label"].toString();
                 int paramIndex = channel["param-index"].toInt();
-                qDebug() << "channel label:" << channelLabel << "param-index" << paramIndex;
+                qCDebug(ActuatorsConfigLog) << "channel label:" << channelLabel << "param-index" << paramIndex;
                 actuatorSubgroup->addChannel(
                         new ActuatorOutputChannel(this, channelLabel, paramIndex, *actuatorSubgroup->channelConfigs(),
                                 _vehicle->parameterManager(), [this](Fact* fact) { subscribeFact(fact); }));
@@ -572,12 +564,11 @@ bool Actuators::parseJson(const QJsonDocument &json)
             }
         }
     }
-    qDebug(ActuatorsConfigLog) << "functions:" << outputFunctions;
+    qCDebug(ActuatorsConfigLog) << "functions:" << outputFunctions;
 
     Mixer::ActuatorTypes actuatorTypes;
     // parse mixer
     QJsonObject actuatorTypesJson = mixerJson.toObject().value("actuator-types").toObject();
-    // int loop = 0;
     for (const auto& actuatorTypeName : actuatorTypesJson.keys()) {
         QJsonValue actuatorTypeVal = actuatorTypesJson.value(actuatorTypeName).toObject();
         Mixer::ActuatorType actuatorType{};
@@ -599,16 +590,6 @@ bool Actuators::parseJson(const QJsonDocument &json)
             Parameter param{};
             param.parse(perItemParameter);
             actuatorType.perItemParams.append(param);
-
-            // // qDebug() << "param.name: " << param.name <<" param.label: " << param.label;
-            // if(param.label == "Bidirectional" && param.name == "CA_R_REV"){
-                
-            //     bool max = ((getFact(param.name)->rawValue().toInt()) >> loop) & 0b1;
-            //     qDebug() << "CA_R_REV: " << getFact(param.name)->rawValue().toInt() << "set to -1.0: " << max;
-            // actuatorType.values.min = -1.0;
-                
-            // }
-            // loop++;
         }
         actuatorTypes[actuatorTypeName] = actuatorType;
     }
