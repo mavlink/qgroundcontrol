@@ -2142,9 +2142,7 @@ void Vehicle::setJoystickEnabled(bool enabled)
 
     // if we are the active vehicle, call start polling on the active joystick
     // This routes the joystick signals to this vehicle
-    // We do this even if we are disabling the joystick
-    // because it will trigger disconnection of the signals
-    if (_toolbox->multiVehicleManager()->activeVehicle() == this){
+    if (enabled && _toolbox->multiVehicleManager()->activeVehicle() == this){
         _captureJoystick();
     }
 
