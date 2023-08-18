@@ -28,6 +28,7 @@ ColumnLayout {
     property var    _rgFontSizeTightHeights:    [ _tightDefaultFontHeight * _rgFontSizeRatios[0] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[1] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[2] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[3] + 2 ]
     property real   _tightHeight:               _rgFontSizeTightHeights[instrumentValueData.factValueGrid.fontSize]
     property bool   _iconVisible:               instrumentValueData.rangeType === InstrumentValueData.IconSelectRange || instrumentValueData.icon
+    property var    _color:                     instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -40,7 +41,7 @@ ColumnLayout {
         fillMode:                   Image.PreserveAspectFit
         mipmap:                     true
         smooth:                     true
-        color:                      instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
+        color:                      _color
         opacity:                    instrumentValueData.currentOpacity
         visible:                    _iconVisible
 
@@ -77,6 +78,8 @@ ColumnLayout {
         height:             _tightHeight
         font.pointSize:     ScreenTools.smallFontPointSize
         text:               instrumentValueData.text
+        color:              _color
+        opacity:            instrumentValueData.currentOpacity
         visible:            !_iconVisible
     }
 }
