@@ -45,35 +45,35 @@ Item {
             columns: 2
             columnSpacing:      ScreenTools.defaultFontPixelWidth
             rowSpacing:         ScreenTools.defaultFontPixelHeight
-            ListView{
-            width: ListView.width
-            model: ListModel{
-                id: peripheralModel
-            }
-            Component.onCompleted: {
-                for (var i = 0; i < peripheralList.length; i++) {
-                peripheralModel.append(peripheralList[i]);
-                }
 
-            }
-            delegate: Row{
-                spacing: 2
-                    Column{
-                        QGCLabel {
-                            text: model.name
-                        }
+                Repeater{
+                    model: ListModel{
+                        id: peripheralModel
                     }
-                    Column{
-                        QGCCheckBox {
-                            checked: model.active
-                            onCheckedChanged:{
-                                model.active
+                    Component.onCompleted: {
+                        for (var i = 0; i < peripheralList.length; i++) {
+                        peripheralModel.append(peripheralList[i]);
+                        }
+
+                    }
+                    Row{
+                        Column{
+                            QGCLabel {
+                                text: model.name
                             }
                         }
-
+                        Column{
+                            QGCCheckBox {
+                                checked: model.active
+                                onCheckedChanged:{
+                                    model.active
+                                }
+                            }
+                        }
                     }
-            }
-        }
+                }
+
         }
     }
 }
+
