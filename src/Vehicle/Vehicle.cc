@@ -2088,21 +2088,11 @@ void Vehicle::_loadJoystickSettings()
 {
     QSettings settings;
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-    const bool _useButtonsOnly = qgcApp()->toolbox()->corePlugin()->options()->joystickUseButtonsOnly();
 
-    if (!_useButtonsOnly && _toolbox->joystickManager()->activeJoystick()) {
+    if (_toolbox->joystickManager()->activeJoystick()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
-    }
-    else if(_useButtonsOnly)
-    {
-        // in a build with _useButtonsOnly set, joystickenable should always be left false
-        // this prevents the sticks from doing anything
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Skipping Load of Joystick Settings because QCC Options useButtonsOnly is set";
-        setJoystickEnabled(false);
-    }
-    else
-    {
+    } else {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified that there is no active joystick";
         setJoystickEnabled(false);
     }
