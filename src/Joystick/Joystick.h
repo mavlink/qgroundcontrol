@@ -94,10 +94,6 @@ public:
     Q_PROPERTY(int      axisCount               READ axisCount              CONSTANT)
     Q_PROPERTY(bool     requiresCalibration     READ requiresCalibration    CONSTANT)
 
-    // This property is used to indicate a joystick setup where the stick axes are ignored and only the
-    // buttons are supported. This type of setup is used by a Herelink controller for example.
-    Q_PROPERTY(bool     useButtonsOnly          MEMBER _useButtonsOnly      CONSTANT)
-
     //-- Actions assigned to buttons
     Q_PROPERTY(QStringList buttonActions        READ buttonActions          NOTIFY buttonActionsChanged)
 
@@ -279,7 +275,6 @@ protected:
 
     std::atomic<bool> _exitThread{false};    ///< true: signal thread to exit
     bool    _calibrationMode        = false;
-    bool    _useButtonsOnly         = false;
     int*    _rgAxisValues           = nullptr;
     Calibration_t* _rgCalibration   = nullptr;
     ThrottleMode_t _throttleMode    = ThrottleModeDownZero;
