@@ -146,10 +146,6 @@ public:
 
     virtual QGCFlyViewOptions* flyViewOptions       ();
 
-    // This is used to indicate a joystick setup where the stick axes are ignored and only the
-    // buttons are supported. This type of setup is used by a Herelink controller for example.
-    virtual bool joystickUseButtonsOnly() const { return false; }
-
 signals:
     void showSensorCalibrationCompassChanged    (bool show);
     void showSensorCalibrationGyroChanged       (bool show);

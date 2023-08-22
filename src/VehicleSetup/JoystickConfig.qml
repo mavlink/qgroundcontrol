@@ -62,30 +62,20 @@ SetupPage {
                 id:             bar
                 width:          parent.width
                 Component.onCompleted: {
-                    currentIndex = 0
-                    if (_activeJoystick) {
-                        if (_activeJoystick.useButtonsOnly) {
-                            currentIndex = 1
-                        } else if (_activeJoystick.calibrated) {
-                            currentIndex = 2
-                        }
-                    }
+                    currentIndex = _activeJoystick && _activeJoystick.calibrated ? 0 : 2
                 }
                 anchors.top:    parent.top
                 QGCTabButton {
                     text:       qsTr("General")
-                    visible:    !_activeJoystick.useButtonsOnly
                 }
                 QGCTabButton {
                     text:       qsTr("Button Assigment")
                 }
                 QGCTabButton {
                     text:       qsTr("Calibration")
-                    visible:    !_activeJoystick.useButtonsOnly
                 }
                 QGCTabButton {
                     text:       qsTr("Advanced")
-                    visible:    !_activeJoystick.useButtonsOnly
                 }
             }
 
