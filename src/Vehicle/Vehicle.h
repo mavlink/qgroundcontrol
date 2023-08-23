@@ -1483,7 +1483,6 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
     // Terrain query members, used to get terrain altitude for doSetHome()
-    QTimer                      _updateDoSetHomeTerrainTimer;
     TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
     QGeoCoordinate              _doSetHomeCoordinate;
 };
