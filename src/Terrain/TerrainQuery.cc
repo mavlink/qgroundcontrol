@@ -10,6 +10,7 @@
 #include "TerrainQuery.h"
 #include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
+#include "QGCFileDownload.h"
 #include "QGCApplication.h"
 
 #include <QUrl>
@@ -123,7 +124,7 @@ void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQue
         _requestFailed();
         return;
     }
-    networkReply->ignoreSslErrors();
+    QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*networkReply);
 
     connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
     connect(networkReply, &QNetworkReply::sslErrors, this, &TerrainAirMapQuery::_sslErrors);
