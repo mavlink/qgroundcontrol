@@ -1056,6 +1056,7 @@ private slots:
     void _orbitTelemetryTimeout             ();
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
+    void _doSetHomeTerrainReceived          (bool success, QList<double> heights);
 
 private:
     void _loadJoystickSettings          ();
@@ -1119,9 +1120,6 @@ private:
     bool setFlightModeCustom            (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
-
-    // This is called after we get terrain data triggered from a doSetHome()
-    void _doSetHomeTerrainReceived      (bool success, QList<double> heights);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
