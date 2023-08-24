@@ -19,6 +19,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapEngineManager.h"
+#include "QGCFileDownload.h"
 #include "TerrainTile.h"
 
 #include <QSettings>
@@ -249,6 +250,7 @@ void QGCCachedTileSet::_prepareDownload()
 #endif
             QNetworkReply* reply = _networkManager->get(request);
             reply->setParent(0);
+            QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*reply);
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
             connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
             _replies.insert(tile->hash(), reply);
