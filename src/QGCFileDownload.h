@@ -25,6 +25,8 @@ public:
     /// @return true: Asynchronous download has started, false: Download initialization failed
     bool download(const QString& remoteFile, const QVector<QPair<QNetworkRequest::Attribute, QVariant>>& requestAttributes={}, bool redirect = false);
 
+    static void setIgnoreSSLErrorsIfNeeded(QNetworkReply& networkReply);
+
 signals:
     void downloadProgress(qint64 curr, qint64 total);
     void downloadComplete(QString remoteFile, QString localFile, QString errorMsg);
