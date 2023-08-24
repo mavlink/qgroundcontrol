@@ -109,8 +109,6 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     : _singleFirmwareURL                (qgcApp()->toolbox()->corePlugin()->options()->firmwareUpgradeSingleURL())
     , _singleFirmwareMode               (!_singleFirmwareURL.isEmpty())
     , _downloadingFirmwareList          (false)
-    , _downloadManager                  (nullptr)
-    , _downloadNetworkReply             (nullptr)
     , _statusLog                        (nullptr)
     , _selectedFirmwareBuildType        (StableFirmware)
     , _image                            (nullptr)
@@ -688,7 +686,7 @@ void FirmwareUpgradeController::_downloadArduPilotManifest(void)
 
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_ardupilotManifestDownloadComplete);
-    downloader->download(QStringLiteral("http://firmware.ardupilot.org/manifest.json.gz"));
+    downloader->download(QStringLiteral("https://firmware.ardupilot.org/manifest.json.gz"));
 }
 
 void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
