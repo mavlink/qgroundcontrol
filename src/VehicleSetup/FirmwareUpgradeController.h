@@ -226,9 +226,6 @@ private:
     
     QString _firmwareFilename;      ///< Image which we are going to flash to the board
     
-    QNetworkAccessManager*  _downloadManager;       ///< Used for firmware file downloading across the internet
-    QNetworkReply*          _downloadNetworkReply;  ///< Used for firmware file downloading across the internet
-    
     /// @brief Thread controller which is used to run bootloader commands on separate thread
     PX4FirmwareUpgradeThreadController* _threadController;
     
