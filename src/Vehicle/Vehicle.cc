@@ -2156,7 +2156,7 @@ void Vehicle::_captureJoystick()
     Joystick* joystick = _joystickManager->activeJoystick();
 
     if(joystick){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick";
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();
         joystick->startPolling(this);
     }
 }

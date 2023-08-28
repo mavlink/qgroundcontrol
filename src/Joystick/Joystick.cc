@@ -501,7 +501,9 @@ void Joystick::run()
     while (!_exitThread) {
         _update();
         _handleButtons();
-        _handleAxis();
+        if (axisCount() != 0) {
+            _handleAxis();
+        }
         QGC::SLEEP::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
     }
     _close();
@@ -719,7 +721,7 @@ void Joystick::startPolling(Vehicle* vehicle)
         // Always set up the new vehicle
         _activeVehicle = vehicle;
         // If joystick is not calibrated, disable it
-        if ( !_calibrated ) {
+        if ( axisCount() != 0 && !_calibrated ) {
             vehicle->setJoystickEnabled(false);
         }
         // Update qml in case of joystick transition

@@ -48,7 +48,9 @@ SetupPage {
             height: bar.height + joyLoader.height
 
             readonly property real  labelToMonitorMargin:   ScreenTools.defaultFontPixelWidth * 3
-            property var            _activeJoystick:        joystickManager.activeJoystick
+
+            property var  _activeJoystick:          joystickManager.activeJoystick
+            property bool _allowJoystickSelection:  QGroundControl.corePlugin.options.allowJoystickSelection
 
             function setupPageCompleted() {
                 controller.start()
@@ -62,20 +64,31 @@ SetupPage {
                 id:             bar
                 width:          parent.width
                 Component.onCompleted: {
-                    currentIndex = _activeJoystick && _activeJoystick.calibrated ? 0 : 2
+                    if (_activeJoystick) {
+                        if (_activeJoystick.axisCount == 0) {
+                            currentIndex = _allowJoystickSelection ? 0 : 1
+                        } else {
+                            currentIndex = _activeJoystick.calibrated ? 0 : 2
+                        }
+                    } else {
+                        currentIndex = 0
+                    }
                 }
                 anchors.top:    parent.top
                 QGCTabButton {
                     text:       qsTr("General")
+                    visible:    _allowJoystickSelection
                 }
                 QGCTabButton {
                     text:       qsTr("Button Assigment")
                 }
                 QGCTabButton {
                     text:       qsTr("Calibration")
+                    visible:    _activeJoystick.axisCount != 0
                 }
                 QGCTabButton {
                     text:       qsTr("Advanced")
+                    visible:    _activeJoystick.axisCount != 0
                 }
             }
 
