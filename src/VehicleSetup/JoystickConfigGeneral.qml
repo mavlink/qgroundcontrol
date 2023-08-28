@@ -21,9 +21,14 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 
 Item {
-    width:                  mainCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-    height:                 mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+    width:  mainCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+    height: mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+
     readonly property real axisMonitorWidth: ScreenTools.defaultFontPixelWidth * 32
+
+    property bool _buttonsOnly:         _activeJoystick.axisCount == 0
+    property bool _requiresCalibration: !_activeJoystick.calibrated && !_buttonsOnly
+
     Column {
         id:                 mainCol
         anchors.centerIn:   parent
@@ -35,13 +40,13 @@ Item {
             //---------------------------------------------------------------------
             //-- Enable Joystick
             QGCLabel {
-                text:               _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
+                text:               _requiresCalibration ? qsTr("Enable not allowed (Calibrate First)") : qsTr("Enable joystick input")
                 Layout.alignment:   Qt.AlignVCenter
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 36
             }
             QGCCheckBox {
                 id:             enabledSwitch
-                enabled:        _activeJoystick ? _activeJoystick.calibrated : false
+                enabled:        !_requiresCalibration
                 onClicked:      {
                     globals.activeVehicle.joystickEnabled = checked
                     globals.activeVehicle.saveJoystickSettings()
@@ -99,9 +104,11 @@ Item {
             QGCLabel {
                 text:               qsTr("RC Mode:")
                 Layout.alignment:   Qt.AlignVCenter
+                visible:            !_buttonsOnly
             }
             Row {
                 spacing:            ScreenTools.defaultFontPixelWidth
+                visible:            !_buttonsOnly
                 QGCRadioButton {
                     text:       "1"
                     checked:    controller.transmitterMode === 1
@@ -144,6 +151,7 @@ Item {
                 radius:             ScreenTools.defaultFontPixelWidth * 0.5
                 width:              axisGrid.width  + (ScreenTools.defaultFontPixelWidth  * 2)
                 height:             axisGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+                visible:            !_buttonsOnly
                 GridLayout {
                     id:                 axisGrid
                     columns:            2
