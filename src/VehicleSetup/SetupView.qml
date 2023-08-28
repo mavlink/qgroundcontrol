@@ -260,7 +260,7 @@ Rectangle {
                 id:                 joystickButton
                 imageResource:      "/qmlimages/Joystick.png"
                 setupIndicator:     true
-                setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
+                setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated || joystickManager.activeJoystick.axisCount == 0 : false
                 exclusiveGroup:     setupButtonGroup
                 visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
                 text:               qsTr("Joystick")
