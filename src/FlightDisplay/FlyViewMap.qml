@@ -126,17 +126,59 @@ FlightMap {
         animateLong.start()
     }
 
-    function _insetRect() {
+    // returns the rectangle formed by the four center insets
+    // used for checking if vehicle is under ui, and as a target for recentering the view
+    function _insetCenterRect() {
         return Qt.rect(toolInsets.leftEdgeCenterInset,
                        toolInsets.topEdgeCenterInset,
                        _root.width - toolInsets.leftEdgeCenterInset - toolInsets.rightEdgeCenterInset,
                        _root.height - toolInsets.topEdgeCenterInset - toolInsets.bottomEdgeCenterInset)
     }
 
+    // returns the four rectangles formed by the 8 corner insets
+    // used for detecting if the vehicle has flown under the instrument panel, virtual joystick etc
+    function _insetCornerRects() {
+        var rects = {
+        "topleft":      Qt.rect(0,0,
+                               toolInsets.leftEdgeTopInset,
+                               toolInsets.topEdgeLeftInset),
+        "topright":     Qt.rect(_root.width-toolInsets.rightEdgeTopInset,0,
+                               toolInsets.rightEdgeTopInset,
+                               toolInsets.topEdgeRightInset),
+        "bottomleft":   Qt.rect(0,_root.height-toolInsets.bottomEdgeLeftInset,
+                               toolInsets.leftEdgeBottomInset,
+                               toolInsets.bottomEdgeLeftInset),
+        "bottomright":  Qt.rect(_root.width-toolInsets.rightEdgeBottomInset,_root.height-toolInsets.bottomEdgeRightInset,
+                               toolInsets.rightEdgeBottomInset,
+                               toolInsets.bottomEdgeRightInset)}
+        return rects
+    }
+
     function recenterNeeded() {
         var vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-        var insetRect = _insetRect()
-        return !pointInRect(vehiclePoint, insetRect)
+        var centerRect = _insetCenterRect()
+        //return !pointInRect(vehiclePoint,insetRect)
+
+        // If we are outside the center inset rectangle, recenter
+        if(!pointInRect(vehiclePoint, centerRect)){
+            return true
+        }
+
+        // if we are inside the center inset rectangle
+        // then additionally check if we are underneath one of the corner inset rectangles
+        var cornerRects = _insetCornerRects()
+        if(pointInRect(vehiclePoint, cornerRects["topleft"])){
+            return true
+        } else if(pointInRect(vehiclePoint, cornerRects["topright"])){
+            return true
+        } else if(pointInRect(vehiclePoint, cornerRects["bottomleft"])){
+            return true
+        } else if(pointInRect(vehiclePoint, cornerRects["bottomright"])){
+            return true
+        }
+
+        // if we are inside the center inset rectangle, and not under any corner elements
+        return false
     }
 
     function updateMapToVehiclePosition() {
@@ -151,8 +193,8 @@ FlightMap {
                 if (firstVehiclePositionReceived && recenterNeeded()) {
                     // Move the map such that the vehicle is centered within the inset area
                     var vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-                    var insetRect = _insetRect()
-                    var centerInsetPoint = Qt.point(insetRect.x + insetRect.width / 2, insetRect.y + insetRect.height / 2)
+                    var centerInsetRect = _insetCenterRect()
+                    var centerInsetPoint = Qt.point(centerInsetRect.x + centerInsetRect.width / 2, centerInsetRect.y + centerInsetRect.height / 2)
                     var centerOffset = Qt.point((_root.width / 2) - centerInsetPoint.x, (_root.height / 2) - centerInsetPoint.y)
                     var vehicleOffsetPoint = Qt.point(vehiclePoint.x + centerOffset.x, vehiclePoint.y + centerOffset.y)
                     var vehicleOffsetCoord = _root.toCoordinate(vehicleOffsetPoint, false /* clipToViewport */)
