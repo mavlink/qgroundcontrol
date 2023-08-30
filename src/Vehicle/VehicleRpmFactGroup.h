@@ -25,7 +25,6 @@ public:
     Q_PROPERTY(Fact* rpm3       READ rpm3       CONSTANT)
     Q_PROPERTY(Fact* rpm4       READ rpm4       CONSTANT)
 
-  //  Fact* rpm () { return &_rpmFact; }
     Fact* rpm1 () { return &_rpm1Fact; }
     Fact* rpm2 () { return &_rpm2Fact; }
     Fact* rpm3 () { return &_rpm3Fact; }
@@ -34,7 +33,6 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-//    static const char* _rpmFactName;
     static const char* _rpm1FactName;
     static const char* _rpm2FactName;
     static const char* _rpm3FactName;
