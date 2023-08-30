@@ -116,7 +116,7 @@ FactGroup* FactGroup::getFactGroup(const QString& name)
         factGroup = _nameToFactGroupMap[camelCaseName];
         QQmlEngine::setObjectOwnership(factGroup, QQmlEngine::CppOwnership);
     } else {
-        qWarning() << "Unknown FactGroup (" << camelCaseName << ")";
+        qWarning() << "Unknown FactGroup (camelCaseName)" << camelCaseName;
         qWarning() << "Available FactGroups:" << _nameToFactGroupMap.keys();
     }
 
