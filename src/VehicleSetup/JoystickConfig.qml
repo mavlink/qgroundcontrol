@@ -48,12 +48,29 @@ SetupPage {
             height: bar.height + joyLoader.height
 
             readonly property real  labelToMonitorMargin:   ScreenTools.defaultFontPixelWidth * 3
-
+            readonly property var _tabBarButtons: [
+                {"name": qsTr("General"), "visible": _allowJoystickSelection},
+                {"name": qsTr("Button Assigment"), "visible": true},
+                {"name": qsTr("Calibration"), "visible": _activeJoystick.axisCount !== 0},
+                {"name": qsTr("Advanced"), "visible": _activeJoystick.axisCount !== 0}
+            ]
+            property var  _tabBarButtonsModel:      fillTabBarButtonsModel()
             property var  _activeJoystick:          joystickManager.activeJoystick
             property bool _allowJoystickSelection:  QGroundControl.corePlugin.options.allowJoystickSelection
 
             function setupPageCompleted() {
                 controller.start()
+            }
+
+            // Fill the model for the tab bar buttons based on the tab bar button visible property
+            function fillTabBarButtonsModel() {
+                var model = []
+                for(var i = 0; i < _tabBarButtons.length; i++) {
+                    if(_tabBarButtons[i].visible) {
+                        model.push(_tabBarButtons[i].name)
+                    }
+                }
+                return model
             }
 
             JoystickConfigController {
@@ -75,20 +92,13 @@ SetupPage {
                     }
                 }
                 anchors.top:    parent.top
-                QGCTabButton {
-                    text:       qsTr("General")
-                    visible:    _allowJoystickSelection
-                }
-                QGCTabButton {
-                    text:       qsTr("Button Assigment")
-                }
-                QGCTabButton {
-                    text:       qsTr("Calibration")
-                    visible:    _activeJoystick.axisCount != 0
-                }
-                QGCTabButton {
-                    text:       qsTr("Advanced")
-                    visible:    _activeJoystick.axisCount != 0
+
+                Repeater {
+                    model: _tabBarButtonsModel
+
+                    QGCTabButton {
+                        text: modelData
+                    }
                 }
             }
 
