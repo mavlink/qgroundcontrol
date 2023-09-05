@@ -8407,6 +8407,10 @@
         <value code="1">Enabled</value>
       </values>
     </parameter>
+    <parameter name="SENS_EN_ASP5033" default="0" type="INT32" boolean="true">
+      <short_desc>ASP5033 differential pressure sensor (external I2C)</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_BAROSIM" default="0" type="INT32">
       <short_desc>Enable simulated barometer sensor instance</short_desc>
       <min>0</min>
@@ -10369,12 +10373,6 @@
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
       <max>1000000</max>
-    </parameter>
-    <parameter name="CANNODE_NODE_ID" default="120" type="INT32">
-      <short_desc>UAVCAN Node ID</short_desc>
-      <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
-      <min>1</min>
-      <max>125</max>
     </parameter>
     <parameter name="CANNODE_PUB_MBD" default="0" type="INT32" boolean="true">
       <short_desc>Enable MovingBaselineData publication</short_desc>
