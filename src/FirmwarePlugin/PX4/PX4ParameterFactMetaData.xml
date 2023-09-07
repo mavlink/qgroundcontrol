@@ -9514,11 +9514,10 @@
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SYS_HAS_NUM_DIST" default="0" type="INT32">
-      <short_desc>Control the number of distance sensors on the vehicle</short_desc>
-      <long_desc>If set to the number of distance sensors, the preflight check will check for their presence and valid data publication. Disable with 0 if no distance sensor present or to disable the preflight check.</long_desc>
+      <short_desc>Number of distance sensors to check being available</short_desc>
+      <long_desc>The preflight check will fail if fewer than this number of distance sensors with valid data is present. Disable the check with 0.</long_desc>
       <min>0</min>
       <max>4</max>
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SYS_HITL" default="0" type="INT32">
       <short_desc>Enable HITL/SIH mode on next boot</short_desc>
