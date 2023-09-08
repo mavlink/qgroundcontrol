@@ -26,11 +26,15 @@
 		<file alias="JoystickBezel.png">../resources/JoystickBezel.png</file>
 		<file alias="JoystickBezelLight.png">../resources/JoystickBezelLight.png</file>
 		<file alias="land.svg">../resources/land.svg</file>
+		<file alias="layout-bottom.svg">../resources/layout-bottom.svg</file>
+		<file alias="layout-right.svg">../resources/layout-right.svg</file>
 		<file alias="LockClosed.svg">../resources/LockClosed.svg</file>
 		<file alias="LockOpen.svg">../resources/LockOpen.svg</file>
 		<file alias="notile.png">../resources/notile.png</file>
+		<file alias="NoVideoBackground.jpg">../resources/NoVideoBackground.jpg</file>
 		<file alias="Pause.svg">../resources/Pause.svg</file>
 		<file alias="pause-mission.svg">../resources/pause-mission.svg</file>
+		<file alias="pencil.svg">../resources/pencil.svg</file>
 		<file alias="Play">../resources/Play.svg</file>
 		<file alias="PowerButton">../resources/PowerButton.svg</file>
 		<file alias="QGCLogoBlack">../resources/QGCLogoBlack.svg</file>
@@ -51,6 +55,9 @@
 		<file alias="XDelete.svg">../resources/XDelete.svg</file>
 		<file alias="XDeleteBlack.svg">../resources/XDeleteBlack.svg</file>
 		<file alias="waypoint.svg">../resources/waypoint.svg</file>
+		<file alias="Gripper.svg">../resources/Gripper.svg</file>
+		<file alias="GripperRelease.svg">../resources/GripperRelease.svg</file>
+		<file alias="GripperGrab.svg">../resources/GripperGrab.svg</file>
 		<file>../resources/icons/qgroundcontrol.ico</file>
 	</qresource>
 	<qresource prefix="/res/firmware">
