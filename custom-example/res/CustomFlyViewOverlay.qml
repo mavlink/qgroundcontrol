@@ -55,8 +55,18 @@ Item {
 
     QGCToolInsets {
         id:                     _totalToolInsets
-        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
+        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
+        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
+        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
+        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
+        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
         rightEdgeBottomInset:   parent.width - compassBackground.x
+        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
+        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
+        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
+        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
+        bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
+        bottomEdgeRightInset:   parent.height - attitudeIndicator.y
     }
 
     //-------------------------------------------------------------------------
@@ -209,7 +219,7 @@ Item {
 
     Rectangle {
         id:                     attitudeIndicator
-        anchors.bottomMargin:   _toolsMargin
+        anchors.bottomMargin:   _toolsMargin + parentToolInsets.bottomEdgeRightInset
         anchors.rightMargin:    _toolsMargin
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
