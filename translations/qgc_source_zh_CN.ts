@@ -8245,7 +8245,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Joystick/Joystick.cc" line="47"/>
       <source>Toggle Arm</source>
-      <translation>拨杆解锁</translation>
+      <translation>切换锁定</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.cc" line="48"/>

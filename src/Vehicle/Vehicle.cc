@@ -179,8 +179,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 {
     _linkManager = _toolbox->linkManager();
 
-    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadSettings);
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_activeVehicleAvailableChanged);
+    connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
     _mavlink = _toolbox->mavlinkProtocol();
@@ -475,6 +474,9 @@ void Vehicle::_commonInit()
         _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
+
+    // enable Joystick if appropriate
+    _loadJoystickSettings();
 }
 
 Vehicle::~Vehicle()
@@ -489,10 +491,6 @@ Vehicle::~Vehicle()
 
     delete _mav;
     _mav = nullptr;
-
-    if (_joystickManager) {
-        _startJoystick(false);
-    }
 }
 
 void Vehicle::prepareDelete()
@@ -741,6 +739,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
+        break;
+    case MAVLINK_MSG_ID_FENCE_STATUS:
+        _handleFenceStatus(message);
         break;
 
     case MAVLINK_MSG_ID_EVENT:
@@ -2079,34 +2080,27 @@ void Vehicle::resetErrorLevelMessages()
     }
 }
 
-void Vehicle::_loadSettings()
+// this function called in three cases:
+// 1. On constructor of vehicle, to see if we should enable a joystick
+// 2. When there is a new active joystick
+// 3. When the active joystick is disconnected (even if there isnt a new one)
+void Vehicle::_loadJoystickSettings()
 {
     QSettings settings;
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-    // Joystick enabled is a global setting so first make sure there are any joysticks connected
-    if (_toolbox->joystickManager()->joysticks().count()) {
-        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
-        _startJoystick(true);
-    }
-}
 
-void Vehicle::_activeVehicleAvailableChanged(bool isActiveVehicleAvailable)
-{
-    // if there is no longer an active vehicle, disconnect the joystick
-    if(!isActiveVehicleAvailable) {
+    if (_toolbox->joystickManager()->activeJoystick()) {
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
+        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
+    } else {
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified that there is no active joystick";
         setJoystickEnabled(false);
     }
 }
 
-void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
-{
-    if(newActiveVehicle == this) {
-        // this vehicle is the newly active vehicle
-        setJoystickEnabled(true);
-    }
-}
-
-void Vehicle::_saveSettings()
+// This is called from the UI when a deliberate action is taken to enable or disable the joystick
+// This save allows the joystick enable state to persist restarts, disconnections of the joystick etc
+void Vehicle::saveJoystickSettings()
 {
     QSettings settings;
     settings.beginGroup(QString(_settingsGroup).arg(_id));
@@ -2114,6 +2108,7 @@ void Vehicle::_saveSettings()
     // The joystick enabled setting should only be changed if a joystick is present
     // since the checkbox can only be clicked if one is present
     if (_toolbox->joystickManager()->joysticks().count()) {
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Saving setting joystickenabled: " << _joystickEnabled;
         settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
     }
 }
@@ -2125,24 +2120,47 @@ bool Vehicle::joystickEnabled() const
 
 void Vehicle::setJoystickEnabled(bool enabled)
 {
+    if (enabled){
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Enabled";
+    }
+    else {
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Disabled";
+    }
+
+    // _joystickEnabled is the runtime state - it determines whether a vehicle is using joystick data when it is active
     _joystickEnabled = enabled;
-    _startJoystick(_joystickEnabled);
-    _saveSettings();
+
+    // if we are the active vehicle, call start polling on the active joystick
+    // This routes the joystick signals to this vehicle
+    if (enabled && _toolbox->multiVehicleManager()->activeVehicle() == this){
+        _captureJoystick();
+    }
+
     emit joystickEnabledChanged(_joystickEnabled);
 }
 
-void Vehicle::_startJoystick(bool start)
+void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
 {
-    Joystick* joystick = _joystickManager->activeJoystick();
-    if (joystick) {
-        if (start) {
-            joystick->startPolling(this);
-        } else {
-            joystick->stopPolling();
-            joystick->wait(500);
-        }
+    // the new active vehicle should always capture the joystick
+    // even if the new active vehicle has joystick disabled
+    // capturing the joystick will stop the joystick data going to the inactive vehicle
+    if (newActiveVehicle == this){
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " is the new active vehicle";
+        _captureJoystick();
     }
 }
+
+// tells the active joystick where to send data
+void Vehicle::_captureJoystick()
+{
+    Joystick* joystick = _joystickManager->activeJoystick();
+
+    if(joystick){
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();
+        joystick->startPolling(this);
+    }
+}
+
 
 QGeoCoordinate Vehicle::homePosition()
 {
@@ -2552,14 +2570,14 @@ QString Vehicle::vehicleTypeName() const {
         { MAV_TYPE_OCTOROTOR,       tr("Octorotor")},
         { MAV_TYPE_TRICOPTER,       tr("Octorotor")},
         { MAV_TYPE_FLAPPING_WING,   tr("Flapping wing")},
-        { MAV_TYPE_KITE,            tr("Flapping wing")},
+        { MAV_TYPE_KITE,            tr("Kite")},
         { MAV_TYPE_ONBOARD_CONTROLLER, tr("Onboard companion controller")},
         { MAV_TYPE_VTOL_TAILSITTER_DUOROTOR,   tr("Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter")},
         { MAV_TYPE_VTOL_TAILSITTER_QUADROTOR,  tr("Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter")},
         { MAV_TYPE_VTOL_TILTROTOR,  tr("Tiltrotor VTOL")},
         { MAV_TYPE_VTOL_FIXEDROTOR,  tr("VTOL Fixedrotor")},
         { MAV_TYPE_VTOL_TAILSITTER,  tr("VTOL Tailsitter")},
-        { MAV_TYPE_VTOL_RESERVED4,  tr("VTOL reserved 4")},
+        { MAV_TYPE_VTOL_TILTWING,   tr("VTOL Tiltwing")},
         { MAV_TYPE_VTOL_RESERVED5,  tr("VTOL reserved 5")},
         { MAV_TYPE_GIMBAL,          tr("Onboard gimbal")},
         { MAV_TYPE_ADSB,            tr("Onboard ADSB peripheral")},
@@ -4173,6 +4191,42 @@ void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
     _objectAvoidance->update(&o);
 }
 
+void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
+{
+    mavlink_fence_status_t fenceStatus;
+
+    mavlink_msg_fence_status_decode(&message, &fenceStatus);
+
+    qCDebug(VehicleLog) << "_handleFenceStatus breach_status" << fenceStatus.breach_status;
+
+    static qint64 lastUpdate = 0;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (fenceStatus.breach_status == 1) {
+        if (now - lastUpdate > 3000) {
+            lastUpdate = now;
+            QString breachTypeStr;
+            switch (fenceStatus.breach_type) {
+                case FENCE_BREACH_NONE:
+                    return;
+                case FENCE_BREACH_MINALT:
+                    breachTypeStr = tr("minimum altitude");
+                    break;
+                case FENCE_BREACH_MAXALT:
+                    breachTypeStr = tr("maximum altitude");
+                    break;
+                case FENCE_BREACH_BOUNDARY:
+                    breachTypeStr = tr("boundary");
+                    break;
+                default:
+                    break;
+            }
+
+            qgcApp()->toolbox()->audioOutput()->say(breachTypeStr + " " + tr("fence breached"));
+        }
+    } else {
+        lastUpdate = now;
+    }
+}
 void Vehicle::updateFlightDistance(double distance)
 {
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);

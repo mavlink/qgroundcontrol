@@ -476,7 +476,7 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
         case MAV_TYPE_VTOL_TILTROTOR:
         case MAV_TYPE_VTOL_FIXEDROTOR:
         case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_RESERVED4:
+        case MAV_TYPE_VTOL_TILTWING:
         case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
             vehicle->setFirmwareVersion(3, 9, 0);
@@ -699,7 +699,7 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_TILTROTOR:
     case MAV_TYPE_VTOL_FIXEDROTOR:
     case MAV_TYPE_VTOL_TAILSITTER:
-    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_TILTWING:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
         if (vehicle->versionCompare(4, 2, 0) >= 0) {

@@ -182,13 +182,12 @@ contains (CONFIG, QGC_DISABLE_PX4_PLUGIN_FACTORY) {
 
 # Bluetooth
 contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
-    message("Skipping support for Bluetooth (manual override from command line)")
+    message("Bluetooth support disabled (manual override from command line)")
     DEFINES -= QGC_ENABLE_BLUETOOTH
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_BLUETOOTH) {
-    message("Skipping support for Bluetooth (manual override from user_config.pri)")
+    message("Bluetooth support disabled (manual override from user_config.pri)")
     DEFINES -= QGC_ENABLE_BLUETOOTH
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_BLUETOOTH) {
-    message("Including support for Bluetooth (manual override from user_config.pri)")
     DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
@@ -797,11 +796,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
-contains(DEFINES, NO_SERIAL_LINK) {
-    CONFIG += NoSerialBuild
-}
-
-!NoSerialBuild {
+!contains(DEFINES, NO_SERIAL_LINK) {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
     src/comm/SerialLink.h \
@@ -1032,7 +1027,7 @@ SOURCES += \
     src/comm/MockLinkMissionItemHandler.cc \
 }
 
-!NoSerialBuild {
+!contains(DEFINES, NO_SERIAL_LINK) {
 SOURCES += \
     src/comm/QGCSerialPortInfo.cc \
     src/comm/SerialLink.cc \
@@ -1087,7 +1082,7 @@ HEADERS+= \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/VehicleSetup/VehicleComponent.h \
 
-!MobileBuild { !NoSerialBuild {
+!MobileBuild { !contains(DEFINES, NO_SERIAL_LINK) {
     HEADERS += \
         src/VehicleSetup/Bootloader.h \
         src/VehicleSetup/FirmwareImage.h \
@@ -1109,7 +1104,7 @@ SOURCES += \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
-!MobileBuild { !NoSerialBuild {
+!MobileBuild { !contains(DEFINES, NO_SERIAL_LINK) {
     SOURCES += \
         src/VehicleSetup/Bootloader.cc \
         src/VehicleSetup/FirmwareImage.cc \

@@ -54,7 +54,7 @@ isEmpty(MAVLINK_CONF) {
         MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
         message($$sprintf("Using user-supplied mavlink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
     } else {
-        MAVLINK_CONF = ardupilotmega
+        MAVLINK_CONF = all
     }
 }
 
@@ -226,9 +226,9 @@ MacBuild {
 # Include Android OpenSSL libs
 AndroidBuild {
     include($$SOURCE_DIR/libs/OpenSSL/android_openssl/openssl.pri)
-    message("ANDROID_EXTRA_LIBS")
-    message($$ANDROID_TARGET_ARCH)
-    message($$ANDROID_EXTRA_LIBS)
+    #message("ANDROID_EXTRA_LIBS")
+    #message($$ANDROID_TARGET_ARCH)
+    #message($$ANDROID_EXTRA_LIBS)
 }
 
 # Pairing

@@ -11,20 +11,17 @@ import QGroundControl.ScreenTools   1.0
 QGCTextField {
     id: _textField
 
-    text:       fact ? fact.valueString : ""
-    unitsLabel: fact ? fact.units : ""
-    showUnits:  true
-    showHelp:   true
+    text:               fact ? fact.valueString : ""
+    unitsLabel:         fact ? fact.units : ""
+    showUnits:          true
+    showHelp:           true
+    numericValuesOnly:  fact && !fact.typeIsString
 
     signal updated()
 
     property Fact   fact: null
 
     property string _validateString
-
-    inputMethodHints: ((fact && fact.typeIsString) || ScreenTools.isiOS) ?
-                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
-                          Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
 
     onEditingFinished: {
         var errorString = fact.validate(text, false /* convertOnly */)

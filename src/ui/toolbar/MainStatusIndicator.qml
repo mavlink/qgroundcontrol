@@ -107,7 +107,7 @@ RowLayout {
             }
         }
 
-        MouseArea {
+        QGCMouseArea {
             anchors.left:           parent.left
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
@@ -120,23 +120,6 @@ RowLayout {
     Item {
         Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
         height:                 1
-    }
-
-    QGCColoredImage {
-        id:         flightModeIcon
-        width:      ScreenTools.defaultFontPixelWidth * 2
-        height:     ScreenTools.defaultFontPixelHeight * 0.75
-        fillMode:   Image.PreserveAspectFit
-        mipmap:     true
-        color:      qgcPal.text
-        source:     "/qmlimages/FlightModesComponentIcon.png"
-        visible:    flightModeMenu.visible
-    }
-
-    Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth / 2
-        height:                 1
-        visible:                flightModeMenu.visible
     }
 
     FlightModeMenuIndicator {

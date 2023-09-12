@@ -113,13 +113,14 @@ linux {
     }
 } else : ios {
     message("iOS build")
-    CONFIG  += iOSBuild MobileBuild app_bundle NoSerialBuild
+    CONFIG  += iOSBuild MobileBuild app_bundle
     CONFIG  -= bitcode
     DEFINES += __ios__
     DEFINES += QGC_NO_GOOGLE_MAPS
     DEFINES += NO_SERIAL_LINK
     DEFINES += QGC_DISABLE_UVC
     DEFINES += QGC_GST_TAISYNC_ENABLED
+    DEFINES += NO_SERIAL_LINK
     QMAKE_IOS_DEPLOYMENT_TARGET = 11.0
     QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
@@ -139,6 +140,10 @@ linux|macx|ios {
             QMAKE_CC  = $$PWD/tools/iosccachecxx.sh
         }
     }
+}
+
+contains(DEFINES, NO_SERIAL_LINK) {
+    message("Serial port support disabled")
 }
 
 !MacBuild:!AndroidBuild {
@@ -193,6 +198,8 @@ exists ($$PWD/.git) {
 DEFINES += APP_VERSION_STR=\"\\\"$$APP_VERSION_STR\\\"\"
 
 AndroidBuild {
+    QGC_ANDROID_PACKAGE = org.mavlink.qgroundcontrol
+    
     message(VERSION $${VERSION})
     MAJOR_VERSION   = $$section(VERSION, ".", 0, 0)
     MINOR_VERSION   = $$section(VERSION, ".", 1, 1)

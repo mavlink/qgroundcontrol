@@ -16,9 +16,9 @@ import QGroundControl.MultiVehicleManager 1.0
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Palette 1.0
 
-RowLayout {
-    id: _root
-    spacing: 0
+Item {
+    id:                     _root
+    Layout.preferredWidth:  rowLayout.width
 
     property real fontPointSize: ScreenTools.largeFontPointSize
     property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
@@ -68,19 +68,35 @@ RowLayout {
     }
 
     RowLayout {
-        Layout.fillWidth: true
+        id:         rowLayout
+        spacing:    0
+        height:     parent.height
+
+        QGCColoredImage {
+            id:         flightModeIcon
+            width:      ScreenTools.defaultFontPixelWidth * 2
+            height:     ScreenTools.defaultFontPixelHeight * 0.75
+            fillMode:   Image.PreserveAspectFit
+            mipmap:     true
+            color:      qgcPal.text
+            source:     "/qmlimages/FlightModesComponentIcon.png"
+            Layout.alignment:   Qt.AlignVCenter
+        }
+
+        Item {
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth / 2
+            height:                 1
+        }
 
         QGCLabel {
-            text: activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
-            font.pointSize: fontPointSize
-            Layout.alignment: Qt.AlignCenter
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    mainWindow.showIndicatorPopup(_root, flightModeMenu)
-                }
-            }
+            text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
+            font.pointSize:     fontPointSize
+            Layout.alignment:   Qt.AlignVCenter
         }
+    }
+
+    QGCMouseArea {
+        anchors.fill:   parent
+        onClicked:      mainWindow.showIndicatorPopup(_root, flightModeMenu)
     }
 }

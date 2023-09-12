@@ -200,7 +200,7 @@ QGCMapEngine::addTask(QGCMapTask* task)
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngine::cacheTile(QString type, int x, int y, int z, const QByteArray& image, const QString &format, qulonglong set)
+QGCMapEngine::cacheTile(const QString& type, int x, int y, int z, const QByteArray& image, const QString &format, qulonglong set)
 {
     QString hash = getTileHash(type, x, y, z);
     cacheTile(type, hash, image, format, set);
@@ -208,7 +208,7 @@ QGCMapEngine::cacheTile(QString type, int x, int y, int z, const QByteArray& ima
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
+QGCMapEngine::cacheTile(const QString& type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
 {
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
     //-- If we are allowed to persist data, save tile to cache
@@ -220,7 +220,7 @@ QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& ima
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::getTileHash(QString type, int x, int y, int z)
+QGCMapEngine::getTileHash(const QString& type, int x, int y, int z)
 {
     return QString::asprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
 }
@@ -235,7 +235,7 @@ QGCMapEngine::hashToType(const QString& hash)
 
 //-----------------------------------------------------------------------------
 	QGCFetchTileTask*
-QGCMapEngine::createFetchTileTask(QString type, int x, int y, int z)
+QGCMapEngine::createFetchTileTask(const QString& type, int x, int y, int z)
 {
 	QString hash = getTileHash(type, x, y, z);
 	QGCFetchTileTask* task = new QGCFetchTileTask(hash);
@@ -244,7 +244,7 @@ QGCMapEngine::createFetchTileTask(QString type, int x, int y, int z)
 
 //-----------------------------------------------------------------------------
 	QGCTileSet
-QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType)
+QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, const QString& mapType)
 {
 	if(zoom <  1) zoom = 1;
 	if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
@@ -368,7 +368,7 @@ QGCMapEngine::_pruned()
 
 //-----------------------------------------------------------------------------
 int
-QGCMapEngine::concurrentDownloads(QString type)
+QGCMapEngine::concurrentDownloads(const QString& type)
 {
     Q_UNUSED(type);
     // TODO : We may want different values depending on

@@ -730,6 +730,19 @@ Item {
             }
         }
 
+        QGCLabel {
+            // Elevation provider notice on top of terrain plot
+            readonly property string _licenseString: QGroundControl.elevationProviderNotice
+
+            id:                         licenseLabel
+            visible:                    terrainStatus.visible && _licenseString !== ""
+            anchors.bottom:             terrainStatus.top
+            anchors.horizontalCenter:   terrainStatus.horizontalCenter
+            anchors.bottomMargin:       ScreenTools.defaultFontPixelWidth * 0.5
+            font.pointSize:             ScreenTools.smallFontPointSize
+            text:                       qsTr("Powered by %1").arg(_licenseString)
+        }
+
         TerrainStatus {
             id:                 terrainStatus
             anchors.margins:    _toolsMargin
