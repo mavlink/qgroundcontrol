@@ -11,6 +11,7 @@ FlyViewToolStrip                1.0 FlyViewToolStrip.qml
 FlyViewToolStripActionList      1.0 FlyViewToolStripActionList.qml
 FlyViewVideo                    1.0 FlyViewVideo.qml
 FlyViewWidgetLayer              1.0 FlyViewWidgetLayer.qml
+FlyViewInsetViewer              1.0 FlyViewInsetViewer.qml
 GuidedActionActionList          1.0 GuidedActionActionList.qml
 GuidedActionConfirm             1.0 GuidedActionConfirm.qml
 GuidedActionsController         1.0 GuidedActionsController.qml
