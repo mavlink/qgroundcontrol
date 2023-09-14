@@ -40,30 +40,21 @@ Item {
             columnSpacing:      ScreenTools.defaultFontPixelWidth
             rowSpacing:         ScreenTools.defaultFontPixelHeight
             Repeater{
-                model: joystickManager.joystickNames
-                Component.onCompleted: {
-                    for (var i=0; i < model.length; i++){
-                        console.log(model[i])
-                    }
-                }
-
+                model: joystickManager.joystickNames.length
                 Row{
-                Column{
-                    QGCLabel {
-                        text: {
-                            for (var i=0; i < model.length; i++){
-                                return model[i]
+                    Column{
+                        QGCLabel {
+                            text: joystickManager.joystickNames[index]
                             }
                         }
+                    Column{
+                         QGCCheckBox {
+                            onCheckedChanged:{
+                                if (checked) {
+                                    joystickManager.activeJoystickName = joystickManager.joystickNames[index];
+                                }
+                            }
                         }
-                    }
-                Column{
-                     QGCCheckBox {
-                        checked: model.active
-                        onCheckedChanged:{
-                        }
-
-                       }
                     }
                 }
             }
