@@ -23,13 +23,7 @@ import QGroundControl.FactControls  1.0
 Item {
     width:                  mainCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
     height:                 mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-    property var peripheralList: [
-         { name: "Peripheral 1", active: true },
-         { name: "Peripheral 2", active: false },
-         { name: "Peripheral 3", active: false },
-         { name: "Peripheral 4", active: false },
-         { name: "Peripheral 5", active: false },
-        ]
+    property var peripheralList: []
     Column {
         id:                 mainCol
         anchors.centerIn:   parent
@@ -45,34 +39,34 @@ Item {
             columns: 2
             columnSpacing:      ScreenTools.defaultFontPixelWidth
             rowSpacing:         ScreenTools.defaultFontPixelHeight
-
-                Repeater{
-                    model: ListModel{
-                        id: peripheralModel
-                    }
-                    Component.onCompleted: {
-                        for (var i = 0; i < peripheralList.length; i++) {
-                        peripheralModel.append(peripheralList[i]);
-                        }
-
-                    }
-                    Row{
-                        Column{
-                            QGCLabel {
-                                text: model.name
-                            }
-                        }
-                        Column{
-                            QGCCheckBox {
-                                checked: model.active
-                                onCheckedChanged:{
-                                    model.active
-                                }
-                            }
-                        }
+            Repeater{
+                model: joystickManager.joystickNames
+                Component.onCompleted: {
+                    for (var i=0; i < model.length; i++){
+                        console.log(model[i])
                     }
                 }
 
+                Row{
+                Column{
+                    QGCLabel {
+                        text: {
+                            for (var i=0; i < model.length; i++){
+                                return model[i]
+                            }
+                        }
+                        }
+                    }
+                Column{
+                     QGCCheckBox {
+                        checked: model.active
+                        onCheckedChanged:{
+                        }
+
+                       }
+                    }
+                }
+            }
         }
     }
 }
