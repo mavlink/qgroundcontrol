@@ -30,7 +30,6 @@ const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
 JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _activeJoystick(nullptr)
-    , _activeJoysticks()
     , _multiVehicleManager(nullptr)
 
 {
@@ -155,6 +154,35 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
 
     emit activeJoystickChanged(_activeJoystick);
     emit activeJoystickNameChanged(_activeJoystick?_activeJoystick->name():"");
+}
+
+void JoystickManager::setActiveJoysticks(Joystick* joystick)
+{
+    QSettings settings;
+
+    if (joystick != nullptr && !_name2JoystickMap.contains(joystick->name())) {
+        qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
+        return;
+    }
+
+    if(_activeJoysticksList.contains(joystick)){
+        return;
+    }
+
+    if (!_activeJoysticksList.empty()){
+        for (int i = 0; i < _activeJoysticksList.length(); i++){
+            _activeJoysticksList[i]->stopPolling();
+        }
+    }
+
+    for (int i = 0; i < _activeJoysticksList.length(); i++){
+        if(_activeJoysticksList[i] == joystick){
+            qCDebug(JoystickManagerLog) << "Set active:" << _activeJoysticksList[i]->name();
+            settings.beginGroup(_settingsGroup);
+            settings.setValue(_settingsKeyActiveJoystick, _activeJoysticksList[i]->name());
+        }
+    }
+    emit activeJoysticksChanged(_activeJoysticksList);
 }
 
 QVariantList JoystickManager::joysticks(void)

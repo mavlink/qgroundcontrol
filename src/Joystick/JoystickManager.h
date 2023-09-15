@@ -47,6 +47,7 @@ public:
     QList<Joystick*> getActivesJoysticks(QList<Joystick*>);
     /// Set active joystick
     void setActiveJoystick(Joystick* joystick);
+    void setActiveJoysticks(Joystick* joystick);
 
     QString activeJoystickName(void);
     bool setActiveJoystickName(const QString& name);
@@ -61,7 +62,9 @@ public slots:
 
 signals:
     void activeJoystickChanged(Joystick* joystick);
+    void activeJoysticksChanged(QList<Joystick*> joysticksList);
     void activeJoystickNameChanged(const QString& name);
+    void activeJoysticksNamesChanged(const QList<QString&> name);
     void availableJoysticksChanged(void);
     void updateAvailableJoysticksSignal();
 
@@ -74,8 +77,8 @@ private:
 
 private:
     Joystick*                   _activeJoystick;
+    QList<Joystick*>            _activeJoysticksList;
     QMap<QString, Joystick*>    _name2JoystickMap;
-    QMap<Joystick*, bool>       _activeJoysticks;
     MultiVehicleManager*        _multiVehicleManager;
 
     static const char * _settingsGroup;
