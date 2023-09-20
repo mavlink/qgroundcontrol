@@ -215,6 +215,10 @@ void Joystick::_activeVehicleChanged(Vehicle* activeVehicle)
         settings.beginGroup(_settingsGroup);
         int mode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
         setTXMode(mode);
+
+        const auto defaultThrottleMode = activeVehicle->supportsNegativeThrust() ? ThrottleModeCenterZero : ThrottleModeDownZero;
+        const int throttleMode = settings.value(_throttleModeSettingsKey, defaultThrottleMode).toInt();
+        setThrottleMode(throttleMode);
     }
 }
 
