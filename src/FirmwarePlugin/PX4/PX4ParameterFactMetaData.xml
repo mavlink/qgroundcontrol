@@ -4051,43 +4051,6 @@
     </parameter>
   </group>
   <group name="Landing Target Estimator">
-    <parameter name="LTEST_SENS_POS_X" default="0.0" type="FLOAT">
-      <short_desc>X Position of IRLOCK in body frame (forward)</short_desc>
-      <unit>m</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="LTEST_SENS_POS_Y" default="0.0" type="FLOAT">
-      <short_desc>Y Position of IRLOCK in body frame (right)</short_desc>
-      <unit>m</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="LTEST_SENS_POS_Z" default="0.0" type="FLOAT">
-      <short_desc>Z Position of IRLOCK in body frame (downward)</short_desc>
-      <unit>m</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="LTEST_SENS_ROT" default="2" type="INT32">
-      <short_desc>Rotation of IRLOCK sensor relative to airframe</short_desc>
-      <long_desc>Default orientation of Yaw 90°</long_desc>
-      <min>-1</min>
-      <max>40</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">No rotation</value>
-        <value code="1">Yaw 45°</value>
-        <value code="2">Yaw 90°</value>
-        <value code="3">Yaw 135°</value>
-        <value code="4">Yaw 180°</value>
-        <value code="5">Yaw 225°</value>
-        <value code="6">Yaw 270°</value>
-        <value code="7">Yaw 315°</value>
-      </values>
-    </parameter>
-  </group>
-  <group name="Landing target Estimator">
     <parameter name="LTEST_ACC_UNC" default="10.0" type="FLOAT">
       <short_desc>Acceleration uncertainty</short_desc>
       <long_desc>Variance of acceleration measurement used for landing target position prediction. Higher values results in tighter following of the measurements and more lenient outlier rejection</long_desc>
@@ -4129,6 +4092,41 @@
       <long_desc>Landing target y measurements are scaled by this factor before being used</long_desc>
       <min>0.01</min>
       <decimal>3</decimal>
+    </parameter>
+    <parameter name="LTEST_SENS_POS_X" default="0.0" type="FLOAT">
+      <short_desc>X Position of IRLOCK in body frame (forward)</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="LTEST_SENS_POS_Y" default="0.0" type="FLOAT">
+      <short_desc>Y Position of IRLOCK in body frame (right)</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="LTEST_SENS_POS_Z" default="0.0" type="FLOAT">
+      <short_desc>Z Position of IRLOCK in body frame (downward)</short_desc>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="LTEST_SENS_ROT" default="2" type="INT32">
+      <short_desc>Rotation of IRLOCK sensor relative to airframe</short_desc>
+      <long_desc>Default orientation of Yaw 90°</long_desc>
+      <min>-1</min>
+      <max>40</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
     </parameter>
     <parameter name="LTEST_VEL_UNC_IN" default="0.1" type="FLOAT">
       <short_desc>Initial landing target velocity uncertainty</short_desc>
@@ -4687,10 +4685,9 @@
       <increment>1</increment>
     </parameter>
     <parameter name="MIS_TAKEOFF_ALT" default="2.5" type="FLOAT">
-      <short_desc>Take-off altitude</short_desc>
-      <long_desc>This is the minimum altitude the system will take off to.</long_desc>
+      <short_desc>Default take-off altitude</short_desc>
+      <long_desc>This is the relative altitude the system will take off to if not otherwise specified.</long_desc>
       <min>0</min>
-      <max>80</max>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -8304,6 +8301,45 @@
       <short_desc>PCF8583 rotorfreq (i2c) pulse reset value</short_desc>
       <long_desc>Internal device counter is reset to 0 when overrun this value, counter is able to store up to 6 digits reset of counter takes some time - measurement with reset has worse accuracy. 0 means reset counter after every measurement.</long_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SENS_AFBR_HYSTER" default="1" type="INT32">
+      <short_desc>AFBR Rangefinder Short/Long Range Threshold Hysteresis</short_desc>
+      <long_desc>This parameter defines the hysteresis for switching between short and long range mode.</long_desc>
+      <min>1</min>
+      <max>10</max>
+      <unit>m</unit>
+    </parameter>
+    <parameter name="SENS_AFBR_L_RATE" default="25" type="INT32">
+      <short_desc>AFBR Rangefinder Long Range Rate</short_desc>
+      <long_desc>This parameter defines measurement rate of the AFBR Rangefinder in long range mode.</long_desc>
+      <min>1</min>
+      <max>100</max>
+    </parameter>
+    <parameter name="SENS_AFBR_MODE" default="1" type="INT32">
+      <short_desc>AFBR Rangefinder Mode</short_desc>
+      <long_desc>This parameter defines the mode of the AFBR Rangefinder.</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Short Range Mode</value>
+        <value code="1">Long Range Mode</value>
+        <value code="2">High Speed Short Range Mode</value>
+        <value code="3">High Speed Long Range Mode</value>
+      </values>
+    </parameter>
+    <parameter name="SENS_AFBR_S_RATE" default="50" type="INT32">
+      <short_desc>AFBR Rangefinder Short Range Rate</short_desc>
+      <long_desc>This parameter defines measurement rate of the AFBR Rangefinder in short range mode.</long_desc>
+      <min>1</min>
+      <max>100</max>
+    </parameter>
+    <parameter name="SENS_AFBR_THRESH" default="5" type="INT32">
+      <short_desc>AFBR Rangefinder Short/Long Range Threshold</short_desc>
+      <long_desc>This parameter defines the threshold for switching between short and long range mode. The mode will switch from short to long range when the distance is greater than the threshold plus the hysteresis. The mode will switch from long to short range when the distance is less than the threshold minus the hysteresis.</long_desc>
+      <min>1</min>
+      <max>50</max>
+      <unit>m</unit>
     </parameter>
     <parameter name="SENS_BARO_QNH" default="1013.25" type="FLOAT">
       <short_desc>QNH for barometer</short_desc>
