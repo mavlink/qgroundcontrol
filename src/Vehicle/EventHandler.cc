@@ -45,6 +45,9 @@ EventHandler::EventHandler(QObject* parent, const QString& profile, handle_event
     _parser.formatters().param = [](const std::string& content) {
         return "<a href=\"param://"+content+"\">"+content+"</a>"; };
 
+    _parser.formatters().escape = [](const std::string& str) {
+        return QString::fromStdString(str).toHtmlEscaped().toStdString(); };
+
     events::ReceiveProtocol::Callbacks callbacks{error_cb, _sendRequestCB,
         std::bind(&EventHandler::gotEvent, this, std::placeholders::_1), timeout_cb};
     _protocol = new events::ReceiveProtocol(callbacks, ourSystemId, ourComponentId, systemId, componentId);
