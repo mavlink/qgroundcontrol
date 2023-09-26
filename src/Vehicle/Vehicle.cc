@@ -925,7 +925,7 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
             qgcApp()->toolbox()->audioOutput()->say(messageText);
         }
     }
-    emit textMessageReceived(id(), compId, severity, messageText);
+    emit textMessageReceived(id(), compId, severity, messageText.toHtmlEscaped(), "");
 }
 
 void Vehicle::_handleStatusText(mavlink_message_t& message)
@@ -1605,24 +1605,19 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
                 }
             }
             if (!message.empty() && !messageChecks.empty()) {
-                message += "<br/>";
+                message += "\n";
             }
             if (messageChecks.size() == 1) {
                 message += messageChecks[0];
             } else {
                 for (const auto& messageCheck : messageChecks) {
-                    message += "- " + messageCheck + "<br/>";
+                    message += "- " + messageCheck + "\n";
                 }
             }
         }
 
-        if (message.size() > 0) {
-            // TODO: handle this properly in the UI (e.g. with an expand button to display the description, clickable URL's + params)...
-            QString msg = QString::fromStdString(message);
-            if (description.size() > 0) {
-                msg += "<br/><small><small>" + QString::fromStdString(description).replace("\n", "<br/>") + "</small></small>";
-            }
-            emit textMessageReceived(id(), comp_id, severity, msg);
+        if (!message.empty()) {
+            emit textMessageReceived(id(), comp_id, severity, QString::fromStdString(message), QString::fromStdString(description));
         }
     }
 }
@@ -2029,11 +2024,6 @@ void Vehicle::_handleTextMessage(int newCount)
     if(newCount != _messageCount) {
         _messageCount = newCount;
         emit messageCountChanged();
-    }
-    QString errMsg = pMh->getLatestError();
-    if(errMsg != _latestError) {
-        _latestError = errMsg;
-        emit latestErrorChanged();
     }
 }
 
