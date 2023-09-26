@@ -177,7 +177,6 @@ public:
     Q_PROPERTY(int                  newMessageCount             READ newMessageCount                                                NOTIFY newMessageCountChanged)
     Q_PROPERTY(int                  messageCount                READ messageCount                                                   NOTIFY messageCountChanged)
     Q_PROPERTY(QString              formattedMessages           READ formattedMessages                                              NOTIFY formattedMessagesChanged)
-    Q_PROPERTY(QString              latestError                 READ latestError                                                    NOTIFY latestErrorChanged)
     Q_PROPERTY(bool                 joystickEnabled             READ joystickEnabled            WRITE setJoystickEnabled            NOTIFY joystickEnabledChanged)
     Q_PROPERTY(int                  flowImageIndex              READ flowImageIndex                                                 NOTIFY flowImageIndexChanged)
     Q_PROPERTY(int                  rcRSSI                      READ rcRSSI                                                         NOTIFY rcRSSIChanged)
@@ -595,7 +594,6 @@ public:
     int             newMessageCount             () const{ return _currentMessageCount; }
     int             messageCount                () const{ return _messageCount; }
     QString         formattedMessages           ();
-    QString         latestError                 () { return _latestError; }
     float           latitude                    () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude                   () { return static_cast<float>(_coordinate.longitude()); }
     bool            mavPresent                  () { return _mav != nullptr; }
@@ -919,7 +917,7 @@ signals:
     void capabilityBitsChanged          (uint64_t capabilityBits);
     void toolIndicatorsChanged          ();
     void modeIndicatorsChanged          ();
-    void textMessageReceived            (int uasid, int componentid, int severity, QString text);
+    void textMessageReceived            (int uasid, int componentid, int severity, QString text, QString description);
     void calibrationEventReceived       (int uasid, int componentid, int severity, QSharedPointer<events::parser::ParsedEvent> event);
     void checkListStateChanged          ();
     void messagesReceivedChanged        ();
@@ -930,7 +928,6 @@ signals:
     void messageCountChanged            ();
     void formattedMessagesChanged       ();
     void newFormattedMessage            (QString formattedMessage);
-    void latestErrorChanged             ();
     void longitudeChanged               ();
     void currentConfigChanged           ();
     void flowImageIndexChanged          ();
@@ -1129,7 +1126,6 @@ private:
     int             _currentWarningCount = 0;
     int             _currentNormalCount = 0;
     MessageType_t   _currentMessageType = MessageNone;
-    QString         _latestError;
     int             _updateCount = 0;
     int             _rcRSSI = 255;
     double          _rcRSSIstore = 255;
