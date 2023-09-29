@@ -20,7 +20,10 @@ android_source_dir_target.depends = FORCE
 exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR) {
     message("Merging$$ $$ANDROID_PACKAGE_QGC_SOURCE_DIR and $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR to $$ANDROID_PACKAGE_SOURCE_DIR")
 
-    android_source_dir_target.target = $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml
+    exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml) {
+        android_source_dir_target.target = $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml
+    }
+    
     android_source_dir_target.commands = $$android_source_dir_target.commands && \
             $$QMAKE_COPY_DIR $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/* $$ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_STREAM_EDITOR -i \"s/package=\\\"org.mavlink.qgroundcontrol\\\"/package=\\\"$$QGC_ANDROID_PACKAGE\\\"/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
