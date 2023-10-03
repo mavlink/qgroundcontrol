@@ -49,10 +49,21 @@ Item {
                         }
                     Column{
                          QGCCheckBox {
+                            id: peripheralStatus
+                            Component.onCompleted: {
+                                var list = joystickManager.activeJoystickName
+                                for(var i = 0; i < list.length; i++){
+                                    if (list[i] === joystickManager.joystickNames[index]){
+                                        peripheralStatus.checked = globals.activeVehicle.joystickEnabled
+                                    }
+                                }
+                            }
                             onCheckedChanged:{
                                 if (checked) {
-                                    joystickManager.activeJoystickName = joystickManager.joystickNames[index];
+                                    joystickManager.setActiveJoysticks = joystickManager.joystickNames[index]
                                 }
+                                console.log(joystickManager.joystickNames[index])
+                                console.log(joystickManager.activesJoysticks)
                             }
                         }
                     }

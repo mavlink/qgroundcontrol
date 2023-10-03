@@ -41,8 +41,12 @@ public:
     /// List of available joystick names
     QStringList joystickNames(void);
 
+
     /// Get active joystick
     Joystick* activeJoystick(void);
+
+    QList<Joystick*> activesJoysticks(void);
+
     /// Get list of actives joystick
     QList<Joystick*> getActivesJoysticks(QList<Joystick*>);
     /// Set active joystick
@@ -51,6 +55,8 @@ public:
 
     QString activeJoystickName(void);
     bool setActiveJoystickName(const QString& name);
+
+    QList<QString> activeJoysticksNames(void);
 
     void restartJoystickCheckTimer(void);
 
@@ -64,7 +70,7 @@ signals:
     void activeJoystickChanged(Joystick* joystick);
     void activeJoysticksChanged(QList<Joystick*> joysticksList);
     void activeJoystickNameChanged(const QString& name);
-    void activeJoysticksNamesChanged(const QList<QString&> name);
+    void activeJoysticksNamesChanged(const QList<QString>& name);
     void availableJoysticksChanged(void);
     void updateAvailableJoysticksSignal();
 
