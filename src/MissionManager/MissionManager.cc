@@ -278,6 +278,13 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
     mavlink_mission_current_t missionCurrent;
     mavlink_msg_mission_current_decode(&message, &missionCurrent);
     _updateMissionIndex(missionCurrent.seq);
+
+    emit currentProgressChanged(
+        missionCurrent.seq,
+        missionCurrent.item_progress_units,
+        missionCurrent.item_progress_percentage,
+        missionCurrent.item_progress_remaining
+    );
 }
 
 void MissionManager::_handleHeartbeat(const mavlink_message_t& message)
