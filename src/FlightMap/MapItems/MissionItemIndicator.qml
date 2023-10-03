@@ -32,6 +32,7 @@ MapQuickItem {
             id:                 _label
             checked:            _isCurrentItem
             label:              missionItem.abbreviation
+            progress:           missionItem.flyView ? missionItem.progress : ""
             index:              missionItem.abbreviation.charAt(0) > 'A' && missionItem.abbreviation.charAt(0) < 'z' ? -1 : missionItem.sequenceNumber
             gimbalYaw:          missionItem.missionGimbalYaw
             vehicleYaw:         missionItem.missionVehicleYaw

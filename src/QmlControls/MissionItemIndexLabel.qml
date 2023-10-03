@@ -13,6 +13,7 @@ Canvas {
     signal clicked
 
     property string label                           ///< Label to show to the side of the index indicator
+    property string progress                        ///< Label to show the progress of the mission item
     property int    index:                  0       ///< Index to show in the indicator, 0 will show single char label instead, -1 first char of label in indicator full label to the side
     property bool   checked:                false
     property bool   small:                  !checked
@@ -77,27 +78,53 @@ Canvas {
 
     Rectangle {
         id:                     labelControl
-        anchors.leftMargin:     -((_labelMargin * 2) + indicator.width)
-        anchors.rightMargin:    -(_labelMargin * 2)
-        anchors.fill:           labelControlLabel
+
+        anchors.left:           indicator.left
+        anchors.top:            indicator.top
+        anchors.leftMargin:     _labelMargin * -1
+        anchors.topMargin:      _labelMargin * -1
+
         color:                  "white"
         opacity:                0.5
         radius:                 _labelRadius
-        visible:                _label.length !== 0 && !small
-    }
 
-    QGCLabel {
-        id:                     labelControlLabel
-        anchors.topMargin:      -_labelMargin
-        anchors.bottomMargin:   -_labelMargin
-        anchors.leftMargin:     _labelMargin
-        anchors.left:           indicator.right
-        anchors.top:            indicator.top
-        anchors.bottom:         indicator.bottom
-        color:                  "black"
-        text:                   _label
-        verticalAlignment:      Text.AlignVCenter
-        visible:                labelControl.visible
+        width:                  childrenRect.width
+        height:                 childrenRect.height
+
+        QGCLabel {
+            id:                     mainLabel
+
+            anchors.left:           labelControl.left
+            anchors.top:            labelControl.top
+            leftPadding:            (_labelMargin * 3) + (_indicatorRadius * 2)
+            rightPadding:           _indicatorRadius
+
+            property real _height:  (_indicatorRadius * 2) + (_labelMargin * 2)
+            height:                 visible ? _height  : 0
+
+            color:                  "black"
+            text:                   _label
+            verticalAlignment:      Text.AlignVCenter
+            visible:                _label.length !== 0 && !small
+        }
+
+        QGCLabel {
+            id:                     progressLabel
+
+            anchors.left:           mainLabel.left
+            anchors.top:            mainLabel.bottom
+            leftPadding:            mainLabel.leftPadding
+            rightPadding:           mainLabel.rightPadding
+            topPadding:             _labelMargin * -4
+
+            property real _height:  _indicatorRadius * 1.5
+            height:                 visible ? _height : 0
+
+            color:                  mainLabel.color
+            text:                   progress
+            verticalAlignment:      Text.AlignVCenter
+            visible:                mainLabel.visible && progress.length > 0 && !small
+        }
     }
 
     Rectangle {
