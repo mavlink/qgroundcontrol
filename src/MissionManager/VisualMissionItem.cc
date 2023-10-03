@@ -85,6 +85,12 @@ VisualMissionItem::~VisualMissionItem()
 void VisualMissionItem::setIsCurrentItem(bool isCurrentItem)
 {
     if (_isCurrentItem != isCurrentItem) {
+        // If we're no longer the current item, clear the progress so it isn't
+        // stale if we re-select this item.
+        if (!isCurrentItem) {
+            setProgress(MISSION_ITEM_PROGRESS_UNITS_NOT_USED, 0, 0);
+        }
+
         _isCurrentItem = isCurrentItem;
         emit isCurrentItemChanged(isCurrentItem);
     }
@@ -247,4 +253,47 @@ void VisualMissionItem::_amslEntryAltChanged(void)
 void VisualMissionItem::_amslExitAltChanged(void)
 {
     emit amslExitAltChanged(amslExitAlt());
+}
+
+QString VisualMissionItem::progress(void) const {
+    QString progress = "";
+
+    switch (_progress.unit) {
+    case MISSION_ITEM_PROGRESS_UNITS_NOT_USED:
+    case MISSION_ITEM_PROGRESS_UNITS_ENUM_END:
+        break;
+    case MISSION_ITEM_PROGRESS_UNITS_DISTANCE: {
+        uint32_t distance = FactMetaData::metersToAppSettingsHorizontalDistanceUnits(_progress.remaining).toUInt();
+        QString units = FactMetaData::appSettingsHorizontalDistanceUnitsString();
+        progress = QStringLiteral("%1%2").arg(distance).arg(units);
+        break;
+    }
+    case MISSION_ITEM_PROGRESS_UNITS_TIME: {
+        const QChar fillChar = '0';
+        const int width = 2;
+        const int base = 10;
+        const uint16_t hours   = _progress.remaining / 3600;
+        const uint16_t minutes = (_progress.remaining - (hours * 3600)) / 60;
+        const uint16_t seconds = _progress.remaining - (hours * 3600) - (minutes * 60);
+        progress = QStringLiteral("%1:%2:%3").arg(hours,   width, base, fillChar)
+                       .arg(minutes, width, base, fillChar)
+                       .arg(seconds, width, base, fillChar);
+        break;
+    }
+    case MISSION_ITEM_PROGRESS_UNITS_COUNT:
+        progress = QStringLiteral("%1 remaining").arg(_progress.remaining);
+        break;
+    }
+
+    return progress;
+}
+
+void VisualMissionItem::setProgress(MISSION_ITEM_PROGRESS_UNITS unit, uint8_t percentage, uint16_t remaining) {
+    if (_progress.unit != unit || _progress.percentage != percentage || _progress.remaining != remaining) {
+        _progress.unit = unit;
+        _progress.percentage = percentage;
+        _progress.remaining = remaining;
+
+        emit progressChanged();
+    }
 }

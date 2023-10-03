@@ -84,6 +84,8 @@ public:
     Q_PROPERTY(bool             wizardMode                          READ wizardMode                         WRITE setWizardMode             NOTIFY wizardModeChanged)
     Q_PROPERTY(int              previousVTOLMode                    MEMBER _previousVTOLMode                                                NOTIFY previousVTOLModeChanged)                     ///< Current VTOL mode (VehicleClass_t) prior to executing this item
 
+    Q_PROPERTY(QString          progress                            READ progress                                                           NOTIFY progressChanged)
+
     Q_PROPERTY(PlanMasterController*    masterController    READ masterController                                                   CONSTANT)
     Q_PROPERTY(ReadyForSaveState        readyForSaveState   READ readyForSaveState                                                  NOTIFY readyForSaveStateChanged)
     Q_PROPERTY(VisualMissionItem*       parentItem          READ parentItem                        WRITE setParentItem              NOTIFY parentItemChanged)
@@ -99,6 +101,9 @@ public:
     Q_PROPERTY(double azimuth           READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
     Q_PROPERTY(double distance          READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
     Q_PROPERTY(double distanceFromStart READ distanceFromStart      WRITE setDistanceFromStart  NOTIFY distanceFromStartChanged)    ///< Flight path cumalative horizontal distance from home point to this item
+
+    QString progress            (void) const;
+    void    setProgress         (MISSION_ITEM_PROGRESS_UNITS units, uint8_t percentage, uint16_t remaining);
 
     // Property accesors
     bool    homePosition        (void) const { return _homePositionSpecialCase; }
@@ -247,6 +252,8 @@ signals:
 
     void exitCoordinateSameAsEntryChanged           (bool exitCoordinateSameAsEntry);
 
+    void progressChanged(void);
+
 protected slots:
     void _amslEntryAltChanged(void);    // signals new amslEntryAlt value
     void _amslExitAltChanged(void);     // signals new amslExitAlt value
@@ -291,6 +298,12 @@ private slots:
 
 private:
     void _commonInit(void);
+
+    struct {
+        MISSION_ITEM_PROGRESS_UNITS unit;
+        uint8_t percentage;
+        uint16_t remaining;
+    } _progress;
 
     QTimer                      _updateTerrainTimer;
     TerrainAtCoordinateQuery*   _currentTerrainAtCoordinateQuery = nullptr;
