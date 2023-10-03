@@ -418,10 +418,26 @@ QString SimpleMissionItem::abbreviation() const
     case MAV_CMD_DO_SET_ROI_LOCATION:
         return tr("ROI");
     case MAV_CMD_NAV_LOITER_TIME:
+        return tr("Loiter (time)");
     case MAV_CMD_NAV_LOITER_TURNS:
+        return tr("Loiter (turns)");
     case MAV_CMD_NAV_LOITER_UNLIM:
-    case MAV_CMD_NAV_LOITER_TO_ALT:
         return tr("Loiter");
+    case MAV_CMD_NAV_LOITER_TO_ALT:
+        return tr("Loiter (altitide)");
+    case MAV_CMD_NAV_WAYPOINT:{
+        // This is a little bit magical: MissionItemIndexLabel.qml uses these
+        // strings for both:
+        //     1) the character to use inside the Mission Item icon; and
+        //     2) the label to display next to the Icon.
+        //
+        // If the first character of the label is a letter, then that is used
+        // in the Icon, otherwise the sequence number is used. On Waypoints,
+        // we specifically want the sequence number, so we add a non-printable
+        // character to the start of the string.
+        const auto zero_width_space = QChar(0x200B);
+        return QStringLiteral("%1Waypoint").arg(zero_width_space);
+    }
     default:
         return QString();
     }
