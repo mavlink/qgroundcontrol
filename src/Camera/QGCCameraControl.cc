@@ -13,6 +13,7 @@
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
 #include "QGCLZMA.h"
+#include "QGCCorePlugin.h"
 
 #include <QDir>
 #include <QStandardPaths>
@@ -2092,7 +2093,19 @@ QGCCameraControl::_dataReady(QByteArray data)
         qCDebug(CameraControlLog) << "Parsing camera definition";
         _loadCameraDefinitionFile(data);
     } else {
-        qCDebug(CameraControlLog) << "No camera definition";
+        qCDebug(CameraControlLog) << "No camera definition received, trying to search on our own...";
+        QFile definitionFile;
+        if(qgcApp()->toolbox()->corePlugin()->getOfflineCameraDefinitionFile(_modelName, definitionFile)) {
+            qCDebug(CameraControlLog) << "Found offline definition file for: " << _modelName << ", loading: " << definitionFile.fileName();
+            if (definitionFile.open(QIODevice::ReadOnly)) {
+                QByteArray newData = definitionFile.readAll();
+                _loadCameraDefinitionFile(newData);
+            } else {
+                qCDebug(CameraControlLog) << "error opening offline definition file for: " << _modelName;
+            }
+        } else {
+            qCDebug(CameraControlLog) << "No offline camera definition file found";
+        }
     }
     _initWhenReady();
 }
