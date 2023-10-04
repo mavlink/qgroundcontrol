@@ -2989,6 +2989,11 @@ void Vehicle::sendMavCommand(int compId, MAV_CMD command, bool showError, float 
                           param1, param2, param3, param4, param5, param6, param7);
 }
 
+void Vehicle::sendMavCommandDelayed(int compId, MAV_CMD command, bool showError, int milliseconds, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+    QTimer::singleShot(milliseconds, this, [=] { sendMavCommand(compId, command, showError, param1, param2, param3, param4, param5, param6, param7); });
+}
+
 void Vehicle::sendCommand(int compId, int command, bool showError, double param1, double param2, double param3, double param4, double param5, double param6, double param7)
 {
     sendMavCommand(
