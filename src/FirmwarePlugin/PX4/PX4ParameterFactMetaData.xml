@@ -357,14 +357,14 @@
   </group>
   <group name="Airspeed Validator">
     <parameter name="ASPD_BETA_GATE" default="1" type="INT32">
-      <short_desc>Airspeed Selector: Gate size for sideslip angle fusion</short_desc>
+      <short_desc>Gate size for sideslip angle fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1</min>
       <max>5</max>
       <unit>SD</unit>
     </parameter>
     <parameter name="ASPD_BETA_NOISE" default="0.3" type="FLOAT">
-      <short_desc>Airspeed Selector: Wind estimator sideslip measurement noise</short_desc>
+      <short_desc>Wind estimator sideslip measurement noise</short_desc>
       <long_desc>Sideslip measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
       <min>0</min>
       <max>1</max>
@@ -373,7 +373,7 @@
     </parameter>
     <parameter name="ASPD_DO_CHECKS" default="7" type="INT32">
       <short_desc>Enable checks on airspeed sensors</short_desc>
-      <long_desc>Controls which checks are run to check airspeed data for validity. Only applied if ASPD_PRIMARY &gt; 0. Note that the data missing check is enabled if any of the options is set.</long_desc>
+      <long_desc>Controls which checks are run to check airspeed data for validity. Only applied if ASPD_PRIMARY &gt; 0.</long_desc>
       <min>0</min>
       <max>15</max>
       <bitmask>
@@ -465,7 +465,7 @@
       </values>
     </parameter>
     <parameter name="ASPD_SCALE_NSD" default="1.e-4" type="FLOAT">
-      <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise spectral density</short_desc>
+      <short_desc>Wind estimator true airspeed scale process noise spectral density</short_desc>
       <long_desc>Airspeed scale process noise of the internal wind estimator(s) of the airspeed selector. When unaided, the scale uncertainty (1-sigma, unitless) increases by this amount every second.</long_desc>
       <min>0</min>
       <max>0.1</max>
@@ -473,14 +473,14 @@
       <decimal>5</decimal>
     </parameter>
     <parameter name="ASPD_TAS_GATE" default="3" type="INT32">
-      <short_desc>Airspeed Selector: Gate size for true airspeed fusion</short_desc>
+      <short_desc>Gate size for true airspeed fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1</min>
       <max>5</max>
       <unit>SD</unit>
     </parameter>
     <parameter name="ASPD_TAS_NOISE" default="1.4" type="FLOAT">
-      <short_desc>Airspeed Selector: Wind estimator true airspeed measurement noise</short_desc>
+      <short_desc>Wind estimator true airspeed measurement noise</short_desc>
       <long_desc>True airspeed measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
       <min>0</min>
       <max>4</max>
@@ -489,14 +489,14 @@
     </parameter>
     <parameter name="ASPD_WERR_THR" default="0.55" type="FLOAT">
       <short_desc>Horizontal wind uncertainty threshold for synthetic airspeed</short_desc>
-      <long_desc>The synthetic airspeed estimate (from groundspeed and heading) will be declared valid as soon and as long the horizontal wind uncertainty drops below this value.</long_desc>
+      <long_desc>The synthetic airspeed estimate (from groundspeed and heading) will be declared valid as soon and as long the horizontal wind uncertainty is below this value.</long_desc>
       <min>0.001</min>
       <max>5</max>
       <unit>m/s</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter name="ASPD_WIND_NSD" default="1.e-2" type="FLOAT">
-      <short_desc>Airspeed Selector: Wind estimator wind process noise noise spectral density</short_desc>
+      <short_desc>Wind estimator wind process noise spectral density</short_desc>
       <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector. When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
       <min>0</min>
       <max>1</max>
@@ -1640,7 +1640,7 @@
     </parameter>
     <parameter name="EKF2_ARSP_THR" default="0.0" type="FLOAT">
       <short_desc>Airspeed fusion threshold</short_desc>
-      <long_desc>A value of zero will deactivate airspeed fusion. Any other positive value will determine the minimum airspeed which will still be fused. Set to about 90% of the vehicles stall speed. Both airspeed fusion and sideslip fusion must be active for the EKF to continue navigating after loss of GPS. Use EKF2_FUSE_BETA to activate sideslip fusion. Note: side slip fusion is currently not supported for tailsitters.</long_desc>
+      <long_desc>Airspeed data is fused for wind estimation if above this threshold. Set to 0 to disable airspeed fusion. For reliable wind estimation both sideslip (see EKF2_FUSE_BETA) and airspeed fusion should be enabled. Only applies to fixed-wing vehicles (or VTOLs in fixed-wing mode).</long_desc>
       <min>0.0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -1838,8 +1838,8 @@
       <decimal>1</decimal>
     </parameter>
     <parameter name="EKF2_FUSE_BETA" default="0" type="INT32" boolean="true">
-      <short_desc>Boolean determining if synthetic sideslip measurements should fused</short_desc>
-      <long_desc>A value of 1 indicates that fusion is active Both  sideslip fusion and airspeed fusion must be active for the EKF to continue navigating after loss of GPS. Use EKF2_ARSP_THR to activate airspeed fusion.</long_desc>
+      <short_desc>Enable synthetic sideslip fusion</short_desc>
+      <long_desc>For reliable wind estimation both sideslip and airspeed fusion (see EKF2_ARSP_THR) should be enabled. Only applies to fixed-wing vehicles (or VTOLs in fixed-wing mode). Note: side slip fusion is currently not supported for tailsitters.</long_desc>
     </parameter>
     <parameter name="EKF2_GBIAS_INIT" default="0.1" type="FLOAT">
       <short_desc>1-sigma IMU gyro switch-on bias</short_desc>
@@ -2526,7 +2526,7 @@
   <group name="FW Attitude Control">
     <parameter name="FW_MAN_P_MAX" default="30.0" type="FLOAT">
       <short_desc>Maximum manual pitch angle</short_desc>
-      <long_desc>Maximum manual pitch angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
+      <long_desc>Applies to both directions in all manual modes with attitude stabilization but without altitude control</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
@@ -2535,7 +2535,7 @@
     </parameter>
     <parameter name="FW_MAN_R_MAX" default="45.0" type="FLOAT">
       <short_desc>Maximum manual roll angle</short_desc>
-      <long_desc>Maximum manual roll angle setpoint (positive &amp; negative) in manual attitude-only stabilized mode</long_desc>
+      <long_desc>Applies to both directions in all manual modes with attitude stabilization</long_desc>
       <min>0.0</min>
       <max>90.0</max>
       <unit>deg</unit>
@@ -2544,7 +2544,7 @@
     </parameter>
     <parameter name="FW_MAN_YR_MAX" default="30." type="FLOAT">
       <short_desc>Maximum manually added yaw rate</short_desc>
-      <long_desc>This is the maximally added yaw rate setpoint from the yaw stick in any attitude controlled flight mode. The controller already generates a yaw rate setpoint to coordinate a turn, and this value is added to it. This is an absolute value, which is applied symmetrically to the negative and positive side.</long_desc>
+      <long_desc>This is the maximally added yaw rate setpoint from the yaw stick in any attitude controlled flight mode. It is added to the yaw rate setpoint generated by the controller for turn coordination.</long_desc>
       <min>0</min>
       <unit>deg/s</unit>
       <decimal>1</decimal>
@@ -2577,7 +2577,7 @@
     </parameter>
     <parameter name="FW_P_TC" default="0.4" type="FLOAT">
       <short_desc>Attitude pitch time constant</short_desc>
-      <long_desc>This defines the latency between a pitch step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
+      <long_desc>This defines the latency between a pitch step input and the achieved setpoint (inverse to a P gain). Smaller systems may require smaller values.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
       <unit>s</unit>
@@ -2594,7 +2594,7 @@
     </parameter>
     <parameter name="FW_R_TC" default="0.4" type="FLOAT">
       <short_desc>Attitude Roll Time Constant</short_desc>
-      <long_desc>This defines the latency between a roll step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
+      <long_desc>This defines the latency between a roll step input and the achieved setpoint (inverse to a P gain). Smaller systems may require smaller values.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
       <unit>s</unit>
@@ -2619,7 +2619,6 @@
     </parameter>
     <parameter name="FW_WR_FF" default="0.2" type="FLOAT">
       <short_desc>Wheel steering rate feed forward</short_desc>
-      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad/s</unit>
@@ -2637,7 +2636,6 @@
     </parameter>
     <parameter name="FW_WR_IMAX" default="0.4" type="FLOAT">
       <short_desc>Wheel steering rate integrator limit</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
@@ -2704,7 +2702,7 @@
     </parameter>
     <parameter name="FW_LND_EARLYCFG" default="0" type="INT32" boolean="true">
       <short_desc>Early landing configuration deployment</short_desc>
-      <long_desc>When disabled, the landing configuration (flaps, landing airspeed, etc.) is only activated on the final approach to landing. When enabled, it is already activated when entering the final loiter-down (loiter-to-alt) waypoint before the landing approach. This shifts the (often large) altitude and airspeed errors caused by the configuration change away from the ground such that these are not so critical. It also gives the controller enough time to adapt to the new configuration such that the landing approach starts with a cleaner initial state.</long_desc>
+      <long_desc>When disabled, the landing configuration (flaps, landing airspeed, etc.) is only activated on the final approach to landing. When enabled, it is already activated when entering the final loiter-down (loiter-to-alt) waypoint before the landing approach.</long_desc>
     </parameter>
     <parameter name="FW_LND_FLALT" default="0.5" type="FLOAT">
       <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
@@ -2835,8 +2833,8 @@
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_LAUN_DETCN_ON" default="0" type="INT32" boolean="true">
-      <short_desc>FW Launch detection</short_desc>
-      <long_desc>Enables automatic launch detection based on measured acceleration. Use for hand- or catapult-launched vehicles. Only available for fixed-wing vehicles. Not compatible with runway takeoff.</long_desc>
+      <short_desc>Fixed-wing launch detection</short_desc>
+      <long_desc>Enables automatic launch detection based on measured acceleration. Use for hand- or catapult-launched vehicles. Not compatible with runway takeoff.</long_desc>
     </parameter>
     <parameter name="FW_LAUN_MOT_DEL" default="0.0" type="FLOAT">
       <short_desc>Motor delay</short_desc>
@@ -2958,8 +2956,7 @@
   </group>
   <group name="FW Rate Control">
     <parameter name="FW_ACRO_X_MAX" default="90" type="FLOAT">
-      <short_desc>Acro body x max rate</short_desc>
-      <long_desc>This is the rate the controller is trying to achieve if the user applies full roll stick input in acro mode.</long_desc>
+      <short_desc>Acro body roll max rate setpoint</short_desc>
       <min>10</min>
       <max>720</max>
       <unit>deg</unit>
@@ -3107,7 +3104,6 @@
     </parameter>
     <parameter name="FW_PR_I" default="0.1" type="FLOAT">
       <short_desc>Pitch rate integrator gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad</unit>
@@ -3116,7 +3112,6 @@
     </parameter>
     <parameter name="FW_PR_IMAX" default="0.4" type="FLOAT">
       <short_desc>Pitch rate integrator limit</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
@@ -3137,9 +3132,8 @@
       <decimal>1</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_RR_D" default="0.00" type="FLOAT">
-      <short_desc>Roll rate derivative Gain</short_desc>
-      <long_desc>Roll rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+    <parameter name="FW_RR_D" default="0.0" type="FLOAT">
+      <short_desc>Roll rate derivative gain</short_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad/s</unit>
@@ -3148,7 +3142,7 @@
     </parameter>
     <parameter name="FW_RR_FF" default="0.5" type="FLOAT">
       <short_desc>Roll rate feed forward</short_desc>
-      <long_desc>Direct feed forward from rate setpoint to control surface output. Use this to obtain a tigher response of the controller without introducing noise amplification.</long_desc>
+      <long_desc>Direct feed forward from rate setpoint to control surface output.</long_desc>
       <min>0.0</min>
       <max>10.0</max>
       <unit>%/rad/s</unit>
@@ -3156,8 +3150,7 @@
       <increment>0.05</increment>
     </parameter>
     <parameter name="FW_RR_I" default="0.1" type="FLOAT">
-      <short_desc>Roll rate integrator Gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
+      <short_desc>Roll rate integrator gain</short_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad</unit>
@@ -3165,15 +3158,14 @@
       <increment>0.01</increment>
     </parameter>
     <parameter name="FW_RR_IMAX" default="0.2" type="FLOAT">
-      <short_desc>Roll integrator anti-windup</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value.</long_desc>
+      <short_desc>Roll integrator limit</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
     <parameter name="FW_RR_P" default="0.05" type="FLOAT">
-      <short_desc>Roll rate proportional Gain</short_desc>
+      <short_desc>Roll rate proportional gain</short_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad/s</unit>
@@ -3191,7 +3183,6 @@
     </parameter>
     <parameter name="FW_YR_D" default="0.0" type="FLOAT">
       <short_desc>Yaw rate derivative gain</short_desc>
-      <long_desc>Yaw rate differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad/s</unit>
@@ -3209,7 +3200,6 @@
     </parameter>
     <parameter name="FW_YR_I" default="0.1" type="FLOAT">
       <short_desc>Yaw rate integrator gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
       <min>0.0</min>
       <max>10</max>
       <unit>%/rad</unit>
@@ -3218,7 +3208,6 @@
     </parameter>
     <parameter name="FW_YR_IMAX" default="0.2" type="FLOAT">
       <short_desc>Yaw rate integrator limit</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
@@ -3244,7 +3233,7 @@
     </parameter>
     <parameter name="FW_AIRSPD_MIN" default="10.0" type="FLOAT">
       <short_desc>Minimum Airspeed (CAS)</short_desc>
-      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively. Has to be set according to the vehicle's stall speed (which should be set in FW_AIRSPD_STALL), with some margin between the stall speed and minimum airspeed. This value corresponds to the desired minimum speed with the default load factor (level flight, default weight), and is automatically adpated to the current load factor (calculated from roll setpoint and WEIGHT_GROSS/WEIGHT_BASE).</long_desc>
+      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively. Should be set (with some margin) above the vehicle stall speed. This value corresponds to the desired minimum speed with the default load factor (level flight, default weight), and is automatically adapated to the current load factor (calculated from roll setpoint and WEIGHT_GROSS/WEIGHT_BASE).</long_desc>
       <min>0.5</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -3320,7 +3309,7 @@
     </parameter>
     <parameter name="FW_THR_MAX" default="1.0" type="FLOAT">
       <short_desc>Throttle limit max</short_desc>
-      <long_desc>This is the maximum throttle % that can be used by the controller. For overpowered aircraft, this should be reduced to a value that provides sufficient thrust to climb at the maximum pitch angle PTCH_MAX.</long_desc>
+      <long_desc>Maximum throttle limit in altitude controlled modes. Should be set accordingly to achieve FW_T_CLMB_MAX.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -3329,7 +3318,7 @@
     </parameter>
     <parameter name="FW_THR_MIN" default="0.0" type="FLOAT">
       <short_desc>Throttle limit min</short_desc>
-      <long_desc>This is the minimum throttle % that can be used by the controller. For electric aircraft this will normally be set to zero, but can be set to a small non-zero value if a folding prop is fitted to prevent the prop from folding and unfolding repeatedly in-flight or to provide some aerodynamic drag from a turning prop to improve the descent rate. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
+      <long_desc>Minimum throttle limit in altitude controlled modes. Usually set to 0 but can be increased to prevent the motor from stopping when descending, which can increase achievable descent rates. For aircraft with internal combustion engine this parameter should be set for desired idle rpm.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -3526,7 +3515,7 @@
     </parameter>
     <parameter name="FW_WIND_ARSP_SC" default="0." type="FLOAT">
       <short_desc>Wind-based airspeed scaling factor</short_desc>
-      <long_desc>Multiplying this factor with the current absolute wind estimate gives the airspeed offset added to the minimum airspeed setpoint limit. This helps to make the system more robust against disturbances (turbulence) in high wind. Only applies to AUTO flight mode. airspeed_min_adjusted = FW_AIRSPD_MIN + FW_WIND_ARSP_SC * wind.length()</long_desc>
+      <long_desc>Multiplying this factor with the current absolute wind estimate gives the airspeed offset added to the minimum airspeed setpoint limit. This helps to make the system more robust against disturbances (turbulence) in high wind. Only applies to AUTO flight mode.</long_desc>
       <min>0</min>
       <decimal>2</decimal>
       <increment>0.01</increment>
@@ -10856,7 +10845,7 @@
     </parameter>
     <parameter name="VT_LND_PITCH_MIN" default="-5.0" type="FLOAT">
       <short_desc>Minimum pitch angle during hover landing</short_desc>
-      <long_desc>Overrides VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to allow lower minimum pitch angles as it can avoid the wings generating too much lift and preventing the vehicle from sinking at the desired rate.</long_desc>
+      <long_desc>Overrides VT_PITCH_MIN when the vehicle is in LAND mode (hovering). During landing it can be beneficial to reduce the pitch angle to reduce the generated lift in head wind.</long_desc>
       <min>-10.0</min>
       <max>45.0</max>
       <unit>deg</unit>
@@ -10891,7 +10880,7 @@
     </parameter>
     <parameter name="VT_QC_T_ALT_LOSS" default="20.0" type="FLOAT">
       <short_desc>Quad-chute transition altitude loss threshold</short_desc>
-      <long_desc>Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight. Active until 5s after completing transition to fixed-wing. Only active if altitude estimate is valid and in altitude-controlled mode. If the current altitude is more than this value below the altitude at the beginning of the transition, it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
+      <long_desc>Altitude loss threshold for quad-chute triggering during VTOL transition to fixed-wing flight in altitude-controlled flight modes. Active until 5s after completing transition to fixed-wing. If the current altitude is more than this value below the altitude at the beginning of the transition, it will instantly switch back to MC mode and execute behavior defined in COM_QC_ACT. Set to 0 do disable this threshold.</long_desc>
       <min>0</min>
       <max>50</max>
       <unit>m</unit>
