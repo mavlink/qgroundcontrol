@@ -908,6 +908,15 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
+    <parameter name="COM_ARM_BAT_MIN" default="0." type="FLOAT">
+      <short_desc>Minimum battery level for arming</short_desc>
+      <long_desc>Additional battery level check that only allows arming if the state of charge of the emptiest connected battery is above this value. A value of 0 disables the check.</long_desc>
+      <min>0</min>
+      <max>0.9</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="COM_ARM_CHK_ESCS" default="0" type="INT32" boolean="true">
       <short_desc>Enable checks on ESCs that report telemetry</short_desc>
       <long_desc>If this parameter is set, the system will check ESC's online status and failures. This param is specific for ESCs reporting status. It shall be used only if ESCs support telemetry.</long_desc>
@@ -1042,7 +1051,7 @@
     </parameter>
     <parameter name="COM_FAIL_ACT_T" default="5." type="FLOAT">
       <short_desc>Delay between failsafe condition triggered and failsafe reaction</short_desc>
-      <long_desc>Before entering failsafe (RTL, Land, Hold), wait COM_FAIL_ACT_T seconds in Hold mode for the user to realize. During that time the user cannot take over control via the stick override feature see COM_RC_OVERRIDE. Afterwards the configured failsafe action is triggered and the user may use stick override. A zero value disables the delay and the user cannot take over via stick movements (switching modes is still allowed).</long_desc>
+      <long_desc>Before entering failsafe (RTL, Land, Hold), wait COM_FAIL_ACT_T seconds in Hold mode for the user to realize. During that time the user cannot take over control via the stick override feature (see COM_RC_OVERRIDE). Afterwards the configured failsafe action is triggered and the user may use stick override. A zero value disables the delay and the user cannot take over via stick movements (switching modes is still allowed).</long_desc>
       <min>0.0</min>
       <max>25.0</max>
       <unit>s</unit>
@@ -1376,8 +1385,8 @@
       </values>
     </parameter>
     <parameter name="COM_RC_LOSS_T" default="0.5" type="FLOAT">
-      <short_desc>RC loss time threshold</short_desc>
-      <long_desc>After this amount of seconds without RC connection it's considered lost and not used anymore</long_desc>
+      <short_desc>Manual control loss timeout</short_desc>
+      <long_desc>The time in seconds without a new setpoint from RC or Joystick, after which the connection is considered lost. This must be kept short as the vehicle will use the last supplied setpoint until the timeout triggers.</long_desc>
       <min>0</min>
       <max>35</max>
       <unit>s</unit>
