@@ -156,13 +156,9 @@ quint32 UrlFactory::averageSizeForType(const QString& type) {
 }
 
 QString UrlFactory::getTypeFromId(int id) {
-
-    QHashIterator<QString, MapProvider*> i(_providersTable);
-
-    while (i.hasNext()) {
-        i.next();
-        if ((int)(qHash(i.key())>>1) == id) {
-            return i.key();
+    for (auto it = _providersTable.constBegin(); it != _providersTable.constEnd(); ++it) {
+        if ((int)(qHash(it.key()) >> 1) == id) {
+            return it.key();
         }
     }
     qCDebug(QGCMapUrlEngineLog) << "getTypeFromId : id not found" << id;
