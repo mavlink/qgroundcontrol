@@ -911,6 +911,51 @@
             }
         },
         {
+            "id":                   1000,
+            "rawName":              "MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW",
+            "friendlyName":         "Gimbal Manager PitchYaw" ,
+            "description":          "Control the gimbal during the mission",
+            "category":             "Advanced",
+            "param1": {
+                "label":            "Pitch",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    2
+            },
+            "param2": {
+                "label":            "Yaw",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    2
+            },
+            "param3": {
+                "label":            "Pitch rate",
+                "default":          0,
+                "units":            "deg/s",
+                "decimalPlaces":    2
+            },
+            "param4": {
+                "label":            "Yaw rate",
+                "default":          0,
+                "units":            "deg/s",
+                "decimalPlaces":    2
+            },
+            "param5": {
+                "label":            "Follow yaw",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "Follow yaw, Lock yaw",
+                "enumValues":       "0,16"
+            },
+            "param7": {
+                "label":            "Gimbal",
+                "default":          0,
+                "decimalPlaces":    0,
+                "enumStrings":      "Primary,first gimbal,second gimbal",
+                "enumValues":       "0,1,2"
+            }
+        },
+        {
             "id":                   206,
             "rawName":              "MAV_CMD_DO_SET_CAM_TRIGG_DIST",
             "friendlyName":         "Camera trigger distance",
