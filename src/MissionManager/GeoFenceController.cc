@@ -490,6 +490,16 @@ void GeoFenceController::clearAllInteractive(void)
     }
 }
 
+void GeoFenceController::setPolygonFenceAction(int index, int fenceAction)
+{
+    _polygons.value<QGCFencePolygon*>(index)->setFenceAction(fenceAction);
+}
+
+void GeoFenceController::setCircleFenceAction(int index, int fenceAction)
+{
+    _circles.value<QGCFenceCircle*>(index)->setFenceAction(fenceAction);
+}
+
 bool GeoFenceController::supported(void) const
 {
     return (_managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE) && (_managerVehicle->maxProtoVersion() >= 200);

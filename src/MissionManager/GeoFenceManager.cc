@@ -62,7 +62,9 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
                                                 polygon.inclusion() ? MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION : MAV_CMD_NAV_FENCE_POLYGON_VERTEX_EXCLUSION,
                                                 MAV_FRAME_GLOBAL,
                                                 polygon.count(),    // vertex count
-                                                0, 0, 0,            // param 2-4 unused
+                                                0,                  // param 2 reserved (inclusion_group)
+                                                static_cast<double>(polygon.fenceAction()),  // param 3
+                                                0,                  // param 4 unused
                                                 vertex.latitude(),
                                                 vertex.longitude(),
                                                 0,                  // param 7 unused
@@ -80,7 +82,9 @@ void GeoFenceManager::sendToVehicle(const QGeoCoordinate&   breachReturn,
                                             circle.inclusion() ? MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION : MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION,
                                             MAV_FRAME_GLOBAL,
                                             circle.radius()->rawValue().toDouble(),
-                                            0, 0, 0,                    // param 2-4 unused
+                                            0,                          // param 2 reserved (inclusion_group)
+                                            static_cast<double>(circle.fenceAction()),  // param 3
+                                            0,                          // param 4 unused
                                             circle.center().latitude(),
                                             circle.center().longitude(),
                                             0,                          // param 7 unused
@@ -169,6 +173,7 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
             if (nextPolygon.count() == expectedVertexCount) {
                 // Polygon is complete
                 nextPolygon.setInclusion(command == MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION);
+                nextPolygon.setFenceAction(static_cast<int>(item->param3()));
                 _polygons.append(nextPolygon);
                 nextPolygon.clear();
             }
@@ -179,6 +184,7 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
                 break;
             }
             QGCFenceCircle circle(QGeoCoordinate(item->param5(), item->param6()), item->param1(), command == MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION /* inclusion */);
+            circle.setFenceAction(static_cast<int>(item->param3()));
             _circles.append(circle);
         } else if (command == MAV_CMD_NAV_FENCE_RETURN_POINT) {
             _breachReturnPoint = QGeoCoordinate(item->param5(), item->param6(), item->param7());

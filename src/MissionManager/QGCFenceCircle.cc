@@ -11,6 +11,7 @@
 #include "JsonHelper.h"
 
 const char* QGCFenceCircle::_jsonInclusionKey = "inclusion";
+const char* QGCFenceCircle::_jsonFenceActionKey = "fenceAction";
 
 QGCFenceCircle::QGCFenceCircle(QObject* parent)
     : QGCMapCircle  (parent)
@@ -29,6 +30,7 @@ QGCFenceCircle::QGCFenceCircle(const QGeoCoordinate& center, double radius, bool
 QGCFenceCircle::QGCFenceCircle(const QGCFenceCircle& other, QObject* parent)
     : QGCMapCircle  (other, parent)
     , _inclusion    (other._inclusion)
+    , _fenceAction  (other._fenceAction)
 {
     _init();
 }
@@ -43,6 +45,7 @@ const QGCFenceCircle& QGCFenceCircle::operator=(const QGCFenceCircle& other)
     QGCMapCircle::operator=(other);
 
     setInclusion(other._inclusion);
+    setFenceAction(other._fenceAction);
 
     return *this;
 }
@@ -56,6 +59,7 @@ void QGCFenceCircle::saveToJson(QJsonObject& json)
 {
     json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
+    json[_jsonFenceActionKey] = _fenceAction;
     QGCMapCircle::saveToJson(json);
 }
 
@@ -66,6 +70,7 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
         { _jsonInclusionKey,            QJsonValue::Bool,   true },
+        { _jsonFenceActionKey,          QJsonValue::Double, true },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;
@@ -80,6 +85,7 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
         return false;
     }
 
+    setFenceAction(json[_jsonFenceActionKey].toInt());
     setInclusion(json[_jsonInclusionKey].toBool());
 
     return true;
@@ -87,8 +93,11 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
 
 void QGCFenceCircle::setInclusion(bool inclusion)
 {
-    if (inclusion != _inclusion) {
         _inclusion = inclusion;
         emit inclusionChanged(inclusion);
-    }
+}
+
+void QGCFenceCircle::setFenceAction (int fenceAction)
+{
+    _fenceAction = fenceAction;
 }

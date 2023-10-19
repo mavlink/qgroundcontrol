@@ -38,7 +38,9 @@ public:
     // Property methods
 
     bool inclusion      (void) const { return _inclusion; }
+    int  fenceAction    (void) const { return _fenceAction; }
     void setInclusion   (bool inclusion);
+    void setFenceAction (int fenceAction);
 
 signals:
     void inclusionChanged   (bool inclusion);
@@ -47,11 +49,15 @@ private slots:
     void _setDirty(void);
 
 private:
+
+    constexpr static int DEFAULT_FENCE_ACTION = 2; // HOLD
     void _init(void);
 
     bool _inclusion;
+    int _fenceAction{DEFAULT_FENCE_ACTION};
 
     static const int _jsonCurrentVersion = 1;
 
     static const char* _jsonInclusionKey;
+    static const char* _jsonFenceActionKey;
 };

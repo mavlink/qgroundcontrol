@@ -18,6 +18,10 @@
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
+#define SHARED_CONSTANT(type, name, value) \
+static inline const type name = value; \
+    Q_PROPERTY(type name MEMBER name CONSTANT)
+
 Q_DECLARE_LOGGING_CATEGORY(GeoFenceControllerLog)
 
 class GeoFenceManager;
@@ -29,6 +33,13 @@ class GeoFenceController : public PlanElementController
 public:
     GeoFenceController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~GeoFenceController();
+
+    SHARED_CONSTANT(QString, NONE, QStringLiteral("None"));
+    SHARED_CONSTANT(QString, WARN, QStringLiteral("Warn"));
+    SHARED_CONSTANT(QString, HOLD, QStringLiteral("Hold"));
+    SHARED_CONSTANT(QString, RTL, QStringLiteral("RTL"));
+    SHARED_CONSTANT(QString, LAND, QStringLiteral("Land"));
+    SHARED_CONSTANT(QString, TERMINATE, QStringLiteral("Terminate"));
 
     Q_PROPERTY(QmlObjectListModel*  polygons                READ polygons                                           CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  circles                 READ circles                                            CONSTANT)
@@ -58,6 +69,26 @@ public:
 
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
+
+    /// Get polygon fence action
+    ///     @param index: index of poygon
+    ///     @return fenceAction
+    Q_INVOKABLE int getPolygonFenceAction(int index) { return _polygons.value<QGCFencePolygon*>(index)->fenceAction(); }
+
+    /// Get circle fence action
+    ///     @param index: index of circle
+    ///     @return fenceAction
+    Q_INVOKABLE int getCircleFenceAction(int index) { return _circles.value<QGCFenceCircle*>(index)->fenceAction(); }
+
+    /// Set polygon fence action
+    ///     @param index: index of poygon
+    ///     @param fenceAction: action to apply for this fence
+    Q_INVOKABLE void setPolygonFenceAction(int index, int fenceAction);
+
+    /// Set circle fence action
+    ///     @param index: index of circle
+    ///     @param fenceAction: action to apply for this fence
+    Q_INVOKABLE void setCircleFenceAction(int index, int fenceAction);
 
     double  paramCircularFence  (void);
     Fact*   breachReturnAltitude(void) { return &_breachReturnAltitudeFact; }
