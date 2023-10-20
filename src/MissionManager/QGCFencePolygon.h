@@ -39,8 +39,10 @@ public:
 
     bool inclusion      (void) const { return _inclusion; }
     int  fenceAction    (void) const { return _fenceAction; }
+    int  maxAltitude    (void) const { return _maxAltitude; }
     void setInclusion   (bool inclusion);
     void setFenceAction (int fenceAction);
+    void setMaxAltitude(int maxAltitude);
 
 signals:
     void inclusionChanged   (bool inclusion);
@@ -51,13 +53,17 @@ private slots:
 private:
 
     constexpr static int DEFAULT_FENCE_ACTION = 2; // HOLD
+    constexpr static int DEFAULT_MAX_ALTITUDE = 10000; // meters
+
     void _init(void);
 
     bool _inclusion;
     int _fenceAction{DEFAULT_FENCE_ACTION};
+    int _maxAltitude{DEFAULT_MAX_ALTITUDE};
 
     static const int _jsonCurrentVersion = 1;
 
     static const char* _jsonInclusionKey;
     static const char* _jsonFenceActionKey;
+    static const char* _jsonMaxAltitudeKey;
 };

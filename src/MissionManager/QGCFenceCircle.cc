@@ -12,6 +12,7 @@
 
 const char* QGCFenceCircle::_jsonInclusionKey = "inclusion";
 const char* QGCFenceCircle::_jsonFenceActionKey = "fenceAction";
+const char* QGCFenceCircle::_jsonMaxAltitudeKey = "maxAltitude";
 
 QGCFenceCircle::QGCFenceCircle(QObject* parent)
     : QGCMapCircle  (parent)
@@ -31,6 +32,7 @@ QGCFenceCircle::QGCFenceCircle(const QGCFenceCircle& other, QObject* parent)
     : QGCMapCircle  (other, parent)
     , _inclusion    (other._inclusion)
     , _fenceAction  (other._fenceAction)
+    , _maxAltitude  (other._maxAltitude)
 {
     _init();
 }
@@ -46,6 +48,7 @@ const QGCFenceCircle& QGCFenceCircle::operator=(const QGCFenceCircle& other)
 
     setInclusion(other._inclusion);
     setFenceAction(other._fenceAction);
+    setMaxAltitude(other._maxAltitude);
 
     return *this;
 }
@@ -60,6 +63,7 @@ void QGCFenceCircle::saveToJson(QJsonObject& json)
     json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
     json[_jsonFenceActionKey] = _fenceAction;
+    json[_jsonMaxAltitudeKey] = _maxAltitude;
     QGCMapCircle::saveToJson(json);
 }
 
@@ -71,6 +75,7 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
         { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
         { _jsonInclusionKey,            QJsonValue::Bool,   true },
         { _jsonFenceActionKey,          QJsonValue::Double, true },
+        { _jsonMaxAltitudeKey,          QJsonValue::Double, true },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;
@@ -85,19 +90,25 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
         return false;
     }
 
+    setMaxAltitude(json[_jsonMaxAltitudeKey].toInt());
     setFenceAction(json[_jsonFenceActionKey].toInt());
-    setInclusion(json[_jsonInclusionKey].toBool());
+    setInclusion(json[_jsonInclusionKey].toBool()); // This will trigger even to change maxAltitude, fenceAction and inclustion
 
     return true;
 }
 
 void QGCFenceCircle::setInclusion(bool inclusion)
 {
-        _inclusion = inclusion;
-        emit inclusionChanged(inclusion);
+    _inclusion = inclusion;
+    emit inclusionChanged(inclusion);
 }
 
 void QGCFenceCircle::setFenceAction (int fenceAction)
 {
     _fenceAction = fenceAction;
+}
+
+void QGCFenceCircle::setMaxAltitude (int maxAltitude)
+{
+    _maxAltitude = maxAltitude;
 }

@@ -495,9 +495,19 @@ void GeoFenceController::setPolygonFenceAction(int index, int fenceAction)
     _polygons.value<QGCFencePolygon*>(index)->setFenceAction(fenceAction);
 }
 
+void GeoFenceController::setPolygonMaxAltitude(int index, int maxAltitude)
+{
+    _polygons.value<QGCFencePolygon*>(index)->setMaxAltitude(maxAltitude);
+}
+
 void GeoFenceController::setCircleFenceAction(int index, int fenceAction)
 {
     _circles.value<QGCFenceCircle*>(index)->setFenceAction(fenceAction);
+}
+
+void GeoFenceController::setCircleMaxAltitude(int index, int maxAltitude)
+{
+    _circles.value<QGCFenceCircle*>(index)->setMaxAltitude(maxAltitude);
 }
 
 bool GeoFenceController::supported(void) const
