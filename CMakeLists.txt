@@ -164,7 +164,7 @@ include_directories(
 	libs/libevents
 
 	libs/mavlink/include/mavlink/v2.0
-	libs/mavlink/include/mavlink/v2.0/ardupilotmega
+	libs/mavlink/include/mavlink/v2.0/all
 	libs/mavlink/include/mavlink/v2.0/common
 
 	libs/shapelib
