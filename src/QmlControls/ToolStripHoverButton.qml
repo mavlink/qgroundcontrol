@@ -17,7 +17,7 @@ Button {
     id:             control
     width:          contentLayoutItem.contentWidth + (contentMargins * 2)
     height:         width
-    hoverEnabled:   true
+    hoverEnabled:   !ScreenTools.isMobile
     enabled:        toolStripAction.enabled
     visible:        toolStripAction.visible
     imageSource:    toolStripAction.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
