@@ -7,7 +7,7 @@ import QGroundControl.ScreenTools 1.0
 
 Button {
     id:             control
-    hoverEnabled:   true
+    hoverEnabled:   !ScreenTools.isMobile
     topPadding:     _verticalPadding
     bottomPadding:  _verticalPadding
     leftPadding:    _horizontalPadding
