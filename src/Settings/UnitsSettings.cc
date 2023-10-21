@@ -155,7 +155,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         // Units settings can't be loaded from json since it creates an infinite loop of meta data loading.
         QStringList     enumStrings;
         QVariantList    enumValues;
-        enumStrings << "Celsius" << "Farenheit";
+        enumStrings << "Celsius" << "Fahrenheit";
         enumValues << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsCelsius)) << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsFarenheit));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(temperatureUnitsName);
