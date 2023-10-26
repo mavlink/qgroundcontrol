@@ -773,6 +773,31 @@ void APMFirmwarePlugin::pauseVehicle(Vehicle* vehicle)
     _setFlightModeAndValidate(vehicle, pauseFlightMode());
 }
 
+typedef struct {
+    Vehicle*            vehicle;
+} MAV_CMD_DO_REPOSITION_HandlerData_t;
+
+static void _MAV_CMD_DO_REPOSITION_ResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode)
+{
+    Q_UNUSED(progress);
+
+    auto* data = (MAV_CMD_DO_REPOSITION_HandlerData_t*)resultHandlerData;
+    auto* vehicle = data->vehicle;
+    auto* instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+
+    if (instanceData->MAV_CMD_DO_REPOSITION_supported ||
+        instanceData->MAV_CMD_DO_REPOSITION_unsupported) {
+        // we never change out minds once set
+        goto out;
+    }
+
+    instanceData->MAV_CMD_DO_REPOSITION_supported = (commandResult == MAV_RESULT_ACCEPTED);
+    instanceData->MAV_CMD_DO_REPOSITION_unsupported = (commandResult == MAV_RESULT_UNSUPPORTED);
+
+out:
+    delete data;
+}
+
 void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
@@ -780,6 +805,39 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
         return;
     }
 
+    // attempt to use MAV_CMD_DO_REPOSITION to move vehicle.  If that
+    // comes back as unsupported, try using the old system of sending
+    // through mission items with custom "current" field values.
+    auto* instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+
+    // if we know it is supported or we don't know for sure it is
+    // unsupported then send the command:
+    if (instanceData) {
+        if (instanceData->MAV_CMD_DO_REPOSITION_supported ||
+            !instanceData->MAV_CMD_DO_REPOSITION_unsupported) {
+            auto* result_handler_data = new MAV_CMD_DO_REPOSITION_HandlerData_t{
+                vehicle
+            };
+            vehicle->sendMavCommandIntWithHandler(
+                _MAV_CMD_DO_REPOSITION_ResultHandler,
+                result_handler_data,
+                vehicle->defaultComponentId(),
+                MAV_CMD_DO_REPOSITION,
+                MAV_FRAME_GLOBAL,
+                -1.0f,
+                MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
+                0.0f,
+                NAN,
+                gotoCoord.latitude(),
+                gotoCoord.longitude(),
+                vehicle->altitudeAMSL()->rawValue().toFloat()
+                );
+        }
+        if (instanceData->MAV_CMD_DO_REPOSITION_supported) {
+            // no need to fall back
+            return;
+        }
+    }
 
     setGuidedMode(vehicle, true);
 
