@@ -137,4 +137,7 @@ public:
 
     QTime lastBatteryStatusTime;
     QTime lastHomePositionTime;
+
+    bool  MAV_CMD_DO_REPOSITION_supported = false;
+    bool  MAV_CMD_DO_REPOSITION_unsupported = false;
 };
