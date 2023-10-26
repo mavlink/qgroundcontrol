@@ -3005,6 +3005,18 @@ void Vehicle::sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bo
                           param1, param2, param3, param4, param5, param6, param7);
 }
 
+void Vehicle::sendMavCommandIntWithHandler(MavCmdResultHandler resultHandler, void *resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+{
+    _sendMavCommandWorker(true,                   // commandInt
+                          false,                  // showError
+                          resultHandler,
+                          resultHandlerData,
+                          compId,
+                          command,
+                          frame,
+                          param1, param2, param3, param4, param5, param6, param7);
+}
+
 bool Vehicle::isMavCommandPending(int targetCompId, MAV_CMD command)
 {
     return ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
