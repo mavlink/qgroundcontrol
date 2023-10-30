@@ -563,6 +563,80 @@ Item {
                 onClicked:          kmlOrSHPLoadDialog.openForLoad()
                 visible:            !mapPolygon.traceMode
             }
+
+            QGCButton {
+                _horizontalPadding: 0
+                text:               qsTr("AR Mode")
+                visible:            !mapPolygon.traceMode
+                onClicked:
+                {
+                    toolDrawerArView.toolSource   = qsTr("ArView.qml")
+                    toolDrawerArView.visible      = true
+                }
+            }
+        }
+    }
+
+    Drawer {
+        id:             toolDrawerArView
+        width:          mainWindow.width
+        height:         mainWindow.height
+        dragMargin:     0
+        closePolicy:    Drawer.NoAutoClose
+        interactive:    false
+        visible:        false
+
+        property alias toolSource:  toolDrawerLoader.source
+
+        Rectangle {
+            z: QGroundControl.zOrderTopMost
+
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+
+            Button {
+
+                id: btnCloseArView
+
+                height: 100
+                width: 100
+
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+
+                contentItem: Text
+                {
+                    text: qsTr("Close")
+                    font.pixelSize: 13
+                    opacity: 1.0
+                    color: "#3AC0FF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+
+                background: Rectangle {
+                    border.width: 0
+                }
+
+                onClicked:
+                {
+                    toolDrawerArView.visible = false
+                    toolDrawerArView.toolSource = ""
+                }
+            }
+        }
+
+        Loader {
+            id:             toolDrawerLoader
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
         }
     }
 
