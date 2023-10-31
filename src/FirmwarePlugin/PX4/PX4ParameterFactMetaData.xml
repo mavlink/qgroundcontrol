@@ -7593,6 +7593,10 @@
     </parameter>
   </group>
   <group name="Return To Land">
+    <parameter name="RTL_APPR_FORCE" default="0" type="INT32" boolean="true">
+      <short_desc>RTL force approach landing</short_desc>
+      <long_desc>Only consider RTL point, if it has an approach defined.</long_desc>
+    </parameter>
     <parameter name="RTL_TIME_FACTOR" default="1.1" type="FLOAT">
       <short_desc>RTL time estimate safety margin factor</short_desc>
       <long_desc>Safety factor that is used to scale the actual RTL time estimate. Time with margin = RTL_TIME_FACTOR * time + RTL_TIME_MARGIN</long_desc>
