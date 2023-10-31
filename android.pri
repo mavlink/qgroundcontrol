@@ -8,20 +8,23 @@ ANDROID_PACKAGE_CUSTOM_SOURCE_DIR   = $$PWD/custom/android                  # Or
 
 # We always move the package files to the ANDROID_PACKAGE_SOURCE_DIR build dir so we can modify the manifest as needed
 
-android_source_dir_target.target = $$ANDROID_PACKAGE_QGC_SOURCE_DIR/AndroidManifest.xml
+android_source_dir_target.target = $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
 android_source_dir_target.commands = \
     $$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR && \
     $$QMAKE_COPY_DIR $$ANDROID_PACKAGE_QGC_SOURCE_DIR/* $$ANDROID_PACKAGE_SOURCE_DIR
 PRE_TARGETDEPS += $$android_source_dir_target.target
 QMAKE_EXTRA_TARGETS += android_source_dir_target
-android_source_dir_target.depends = FORCE
+exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml) {
+    android_source_dir_target.depends = $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml
+} else {
+    android_source_dir_target.depends = $$ANDROID_PACKAGE_QGC_SOURCE_DIR/AndroidManifest.xml
+}
 
 # Custom builds can override android package file
 
 exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR) {
     message("Merging$$ $$ANDROID_PACKAGE_QGC_SOURCE_DIR and $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR to $$ANDROID_PACKAGE_SOURCE_DIR")
 
-    android_source_dir_target.target = $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml
     android_source_dir_target.commands = $$android_source_dir_target.commands && \
             $$QMAKE_COPY_DIR $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/* $$ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_STREAM_EDITOR -i \"s/package=\\\"org.mavlink.qgroundcontrol\\\"/package=\\\"$$QGC_ANDROID_PACKAGE\\\"/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
