@@ -524,6 +524,9 @@ void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message
 
         if (commandAck.command == MAV_CMD_PREFLIGHT_CALIBRATION) {
             switch (commandAck.result) {
+            case MAV_RESULT_IN_PROGRESS:
+                _appendStatusLog(tr("In progress"));
+                break;
             case MAV_RESULT_ACCEPTED:
                 _appendStatusLog(tr("Successfully completed"));
                 _stopCalibration(StopCalibrationSuccessShowLog);
