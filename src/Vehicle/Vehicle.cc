@@ -3254,7 +3254,10 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     int entryIndex = _findMavCommandListEntryIndex(message.compid, static_cast<MAV_CMD>(ack.command));
     bool commandInList = false;
     if (entryIndex != -1) {
-        MavCommandListEntry_t commandEntry = _mavCommandList.takeAt(entryIndex);
+        // We remove the command from the list unless it's still in progress.
+        MavCommandListEntry_t commandEntry =
+            (ack.result == MAV_RESULT_IN_PROGRESS) ? _mavCommandList.at(entryIndex) : _mavCommandList.takeAt(entryIndex);
+
         if (commandEntry.command == ack.command) {
             if (commandEntry.resultHandler) {
                 (*commandEntry.resultHandler)(commandEntry.resultHandlerData, message.compid, static_cast<MAV_RESULT>(ack.result), ack.progress, MavCmdResultCommandResultOnly);
