@@ -777,10 +777,8 @@ typedef struct {
     Vehicle*            vehicle;
 } MAV_CMD_DO_REPOSITION_HandlerData_t;
 
-static void _MAV_CMD_DO_REPOSITION_ResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode)
+static void _MAV_CMD_DO_REPOSITION_ResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t /*failureCode*/)
 {
-    Q_UNUSED(progress);
-
     auto* data = (MAV_CMD_DO_REPOSITION_HandlerData_t*)resultHandlerData;
     auto* vehicle = data->vehicle;
     auto* instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
@@ -791,8 +789,8 @@ static void _MAV_CMD_DO_REPOSITION_ResultHandler(void* resultHandlerData, int /*
         goto out;
     }
 
-    instanceData->MAV_CMD_DO_REPOSITION_supported = (commandResult == MAV_RESULT_ACCEPTED);
-    instanceData->MAV_CMD_DO_REPOSITION_unsupported = (commandResult == MAV_RESULT_UNSUPPORTED);
+    instanceData->MAV_CMD_DO_REPOSITION_supported = (ack.result == MAV_RESULT_ACCEPTED);
+    instanceData->MAV_CMD_DO_REPOSITION_unsupported = (ack.result == MAV_RESULT_UNSUPPORTED);
 
 out:
     delete data;
@@ -818,9 +816,13 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
             auto* result_handler_data = new MAV_CMD_DO_REPOSITION_HandlerData_t{
                 vehicle
             };
+
+            Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+            handlerInfo.resultHandler       = _MAV_CMD_DO_REPOSITION_ResultHandler;
+            handlerInfo.resultHandlerData   = result_handler_data;
+
             vehicle->sendMavCommandIntWithHandler(
-                _MAV_CMD_DO_REPOSITION_ResultHandler,
-                result_handler_data,
+                &handlerInfo,
                 vehicle->defaultComponentId(),
                 MAV_CMD_DO_REPOSITION,
                 MAV_FRAME_GLOBAL,
