@@ -494,14 +494,12 @@ typedef struct {
     double              newAMSLAlt;
 } PauseVehicleThenChangeAltData_t;
 
-static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode)
+static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
-    Q_UNUSED(progress);
-
-    if (commandResult != MAV_RESULT_ACCEPTED) {
+    if (ack.result != MAV_RESULT_ACCEPTED) {
         switch (failureCode) {
         case Vehicle::MavCmdResultCommandResultOnly:
-            qDebug() << QStringLiteral("MAV_CMD_DO_REPOSITION error(%1)").arg(commandResult);
+            qDebug() << QStringLiteral("MAV_CMD_DO_REPOSITION error(%1)").arg(ack.result);
             break;
         case Vehicle::MavCmdResultFailureNoResponseToCommand:
             qDebug() << "MAV_CMD_DO_REPOSITION no response from vehicle";
@@ -513,7 +511,7 @@ static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int
     }
 
     PauseVehicleThenChangeAltData_t* pData = static_cast<PauseVehicleThenChangeAltData_t*>(resultHandlerData);
-    pData->plugin->_changeAltAfterPause(resultHandlerData, commandResult == MAV_RESULT_ACCEPTED /* pauseSucceeded */);
+    pData->plugin->_changeAltAfterPause(resultHandlerData, ack.result == MAV_RESULT_ACCEPTED /* pauseSucceeded */);
 }
 
 void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pauseSucceeded)
@@ -557,9 +555,12 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     resultData->newAMSLAlt  = vehicle->homePosition().altitude() + newAltRel;
 
     if (pauseVehicle) {
+        Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+        handlerInfo.resultHandler       = _pauseVehicleThenChangeAltResultHandler;
+        handlerInfo.resultHandlerData   = resultData;
+
         vehicle->sendMavCommandWithHandler(
-                    _pauseVehicleThenChangeAltResultHandler,
-                    resultData,
+                    &handlerInfo,
                     vehicle->defaultComponentId(),
                     MAV_CMD_DO_REPOSITION,
                     -1.0f,                                  // Don't change groundspeed
