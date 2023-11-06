@@ -763,21 +763,38 @@ public:
         MavCmdResultFailureDuplicateCommand,    ///< Unable to send command since duplicate is already being waited on for response
     } MavCmdResultFailureCode_t;
 
-    /// Callback for sendMavCommandWithHandler
-    ///     @param resultHandleData     Opaque data passed in to sendMavCommand call
-    ///     @param commandResult        Ack result for command send
-    ///     @param failureCode          Failure reason
-    typedef void (*MavCmdResultHandler)(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode);
+    /// Callback for sendMavCommandWithHandler which handles MAV_RESULT_IN_PROGRESS acks
+    ///     @param progressHandlerData  Opaque data passed in to sendMavCommand call
+    ///     @param ack                  Received COMMAND_ACK
+    typedef void (*MavCmdProgressHandler)(void* progressHandlerData, int compId, const mavlink_command_ack_t& ack);
+
+    /// Callback for sendMavCommandWithHandler which handles all acks which are not MAV_RESULT_IN_PROGRESS
+    ///     @param resultHandlerData    Opaque data passed in to sendMavCommand call
+    ///     @param ack                  Received COMMAND_ACK
+    ///     @param failureCode          Failure reason. If not MavCmdResultCommandResultOnly only ack.result == MAV_RESULT_FAILED is valid.
+    typedef void (*MavCmdResultHandler)(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+
+    // Callback info for sendMavCommandWithHandler
+    typedef struct MavCmdAckHandlerInfo_s {
+        MavCmdResultHandler     resultHandler;          ///> nullptr for no handler
+        void*                   resultHandlerData; 
+        MavCmdProgressHandler   progressHandler;
+        void*                   progressHandlerData;    ///> nullptr for no handler
+    } MavCmdAckHandlerInfo_t;
+
+    /// Sends the command and calls the callback with the result
+    void sendMavCommandWithHandler(
+        const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
+        int compId, MAV_CMD command, 
+        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
     /// Sends the command and calls the callback with the result
     ///     @param resultHandler    Callback for result, nullptr for no callback
     ///     @param resultHandleData Opaque data passed through callback
-    void sendMavCommandWithHandler(MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
-
-    /// Sends the command and calls the callback with the result
-    ///     @param resultHandler    Callback for result, nullptr for no callback
-    ///     @param resultHandleData Opaque data passed through callback
-    void sendMavCommandIntWithHandler(MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
+    void sendMavCommandIntWithHandler(
+        const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
+        int compId, MAV_CMD command, MAV_FRAME frame, 
+        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
 
     typedef enum {
         RequestMessageNoFailure,
@@ -1095,7 +1112,7 @@ private:
     EventHandler& _eventHandler         (uint8_t compid);
     bool setFlightModeCustom            (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
-    static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode);
+    static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
     // This is called after we get terrain data triggered from a doSetHome()
     void _doSetHomeTerrainReceived      (bool success, QList<double> heights);
@@ -1309,28 +1326,27 @@ private:
         mavlink_message_t           message;
     } RequestMessageInfo_t;
 
-    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, uint8_t progress, MavCmdResultFailureCode_t failureCode);
+    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
     static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
     typedef struct MavCommandListEntry {
-        int                 targetCompId        = MAV_COMP_ID_AUTOPILOT1;
-        bool                useCommandInt       = false;
-        MAV_CMD             command;
-        MAV_FRAME           frame;
-        float               rgParam1            = 0;
-        float               rgParam2            = 0;
-        float               rgParam3            = 0;
-        float               rgParam4            = 0;
-        double              rgParam5            = 0;
-        double              rgParam6            = 0;
-        float               rgParam7            = 0;
-        bool                showError           = true;
-        MavCmdResultHandler resultHandler;
-        void*               resultHandlerData   = nullptr;
-        int                 maxTries            = _mavCommandMaxRetryCount;
-        int                 tryCount            = 0;
-        QElapsedTimer       elapsedTimer;
-        int                 ackTimeoutMSecs     = _mavCommandAckTimeoutMSecs;
+        int                     targetCompId        = MAV_COMP_ID_AUTOPILOT1;
+        bool                    useCommandInt       = false;
+        MAV_CMD                 command;
+        MAV_FRAME               frame;
+        float                   rgParam1            = 0;
+        float                   rgParam2            = 0;
+        float                   rgParam3            = 0;
+        float                   rgParam4            = 0;
+        double                  rgParam5            = 0;
+        double                  rgParam6            = 0;
+        float                   rgParam7            = 0;
+        bool                    showError           = true;
+        MavCmdAckHandlerInfo_t  ackHandlerInfo;
+        int                     maxTries            = _mavCommandMaxRetryCount;
+        int                     tryCount            = 0;
+        QElapsedTimer           elapsedTimer;
+        int                     ackTimeoutMSecs     = _mavCommandAckTimeoutMSecs;
     } MavCommandListEntry_t;
 
     QList<MavCommandListEntry_t>    _mavCommandList;
@@ -1340,7 +1356,11 @@ private:
     static const int                _mavCommandAckTimeoutMSecs              = 3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
-    void _sendMavCommandWorker  (bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
+    void _sendMavCommandWorker  (
+            bool commandInt, bool showError, 
+            const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
+            int compId, MAV_CMD command, MAV_FRAME frame, 
+            float param1, float param2, float param3, float param4, double param5, double param6, float param7);
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
     bool _sendMavCommandShouldRetry(MAV_CMD command);

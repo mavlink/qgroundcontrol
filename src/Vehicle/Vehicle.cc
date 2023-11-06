@@ -2960,8 +2960,7 @@ void Vehicle::sendMavCommand(int compId, MAV_CMD command, bool showError, float 
 {
     _sendMavCommandWorker(false,            // commandInt
                           showError,
-                          nullptr,          // resultHandler
-                          nullptr,          // resultHandlerData
+                          nullptr,          // no handlers
                           compId,
                           command,
                           MAV_FRAME_GLOBAL,
@@ -2982,12 +2981,11 @@ void Vehicle::sendCommand(int compId, int command, bool showError, double param1
                 static_cast<float>(param7));
 }
 
-void Vehicle::sendMavCommandWithHandler(MavCmdResultHandler resultHandler, void *resultHandlerData, int compId, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Vehicle::sendMavCommandWithHandler(const MavCmdAckHandlerInfo_t* ackHandlerInfo, int compId, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
     _sendMavCommandWorker(false,                // commandInt
                           false,                // showError
-                          resultHandler,
-                          resultHandlerData,
+                          ackHandlerInfo,
                           compId,
                           command,
                           MAV_FRAME_GLOBAL,
@@ -2998,20 +2996,18 @@ void Vehicle::sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bo
 {
     _sendMavCommandWorker(true,         // commandInt
                           showError,
-                          nullptr,      // resultHandler
-                          nullptr,      // resultHandlerData
+                          nullptr,      // no handlers
                           compId,
                           command,
                           frame,
                           param1, param2, param3, param4, param5, param6, param7);
 }
 
-void Vehicle::sendMavCommandIntWithHandler(MavCmdResultHandler resultHandler, void *resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+void Vehicle::sendMavCommandIntWithHandler(const MavCmdAckHandlerInfo_t* ackHandlerInfo, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
 {
     _sendMavCommandWorker(true,                   // commandInt
                           false,                  // showError
-                          resultHandler,
-                          resultHandlerData,
+                          ackHandlerInfo,
                           compId,
                           command,
                           frame,
@@ -3080,19 +3076,30 @@ bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
     }
 }
 
-void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int targetCompId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+void Vehicle::_sendMavCommandWorker(
+    bool        commandInt, 
+    bool        showError, 
+    const MavCmdAckHandlerInfo_t* ackHandlerInfo,
+    int         targetCompId, 
+    MAV_CMD     command, 
+    MAV_FRAME   frame, 
+    float param1, float param2, float param3, float param4, double param5, double param6, float param7)
 {
+    // We can't send commands to compIdAll using this method. The reason being that we would get responses back possibly from multiple components
+    // which this code can't handle.
+    // We also can't send the majority of commands again if we are already waiting for a response from that same command. If we did that we would not be able to discern
+    // which ack was associated with which command.
     if ((targetCompId == MAV_COMP_ID_ALL) || (isMavCommandPending(targetCompId, command) && !_commandCanBeDuplicated(command))) {
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
         QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
 
         qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supportded" : "duplicate command") << rawCommandName;
 
-        // If we send multiple versions of the same command to a component there is no way to discern which COMMAND_ACK we get back goes with which.
-        // Because of this we fail in that case.
         MavCmdResultFailureCode_t failureCode = compIdAll ? MavCmdResultCommandResultOnly : MavCmdResultFailureDuplicateCommand;
-        if (resultHandler) {
-            (*resultHandler)(resultHandlerData, targetCompId, MAV_RESULT_FAILED, 0, failureCode);
+        if (ackHandlerInfo && ackHandlerInfo->resultHandler) {
+            mavlink_command_ack_t ack = {};
+            ack.result = MAV_RESULT_FAILED;
+            (*ackHandlerInfo->resultHandler)(ackHandlerInfo->resultHandlerData, targetCompId, ack, failureCode);
         } else {
             emit mavCommandResult(_id, targetCompId, command, MAV_RESULT_FAILED, failureCode);
         }
@@ -3116,8 +3123,10 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool showError, MavCmdResul
     entry.command           = command;
     entry.frame             = frame;
     entry.showError         = showError;
-    entry.resultHandler     = resultHandler;
-    entry.resultHandlerData = resultHandlerData;
+    entry.ackHandlerInfo    = {};
+    if (ackHandlerInfo) {
+        entry.ackHandlerInfo = *ackHandlerInfo;
+    }
     entry.rgParam1          = param1;
     entry.rgParam2          = param2;
     entry.rgParam3          = param3;
@@ -3142,8 +3151,10 @@ void Vehicle::_sendMavCommandFromList(int index)
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
         qCDebug(VehicleLog) << "_sendMavCommandFromList giving up after max retries" << rawCommandName;
         _mavCommandList.removeAt(index);
-        if (commandEntry.resultHandler) {
-            (*commandEntry.resultHandler)(commandEntry.resultHandlerData, commandEntry.targetCompId, MAV_RESULT_FAILED, 0, MavCmdResultFailureNoResponseToCommand);
+        if (commandEntry.ackHandlerInfo.resultHandler) {
+            mavlink_command_ack_t ack = {};
+            ack.result = MAV_RESULT_FAILED;
+            (*commandEntry.ackHandlerInfo.resultHandler)(commandEntry.ackHandlerInfo.resultHandlerData, commandEntry.targetCompId, ack, MavCmdResultFailureNoResponseToCommand);
         } else {
             emit mavCommandResult(_id, commandEntry.targetCompId, commandEntry.command, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         }
@@ -3264,12 +3275,21 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 #endif
 
     int entryIndex = _findMavCommandListEntryIndex(message.compid, static_cast<MAV_CMD>(ack.command));
-    bool commandInList = false;
     if (entryIndex != -1) {
-        MavCommandListEntry_t commandEntry = _mavCommandList.takeAt(entryIndex);
-        if (commandEntry.command == ack.command) {
-            if (commandEntry.resultHandler) {
-                (*commandEntry.resultHandler)(commandEntry.resultHandlerData, message.compid, static_cast<MAV_RESULT>(ack.result), ack.progress, MavCmdResultCommandResultOnly);
+        if (ack.result == MAV_RESULT_IN_PROGRESS) {
+            MavCommandListEntry_t commandEntry = _mavCommandList.at(entryIndex);  // Command has not completed yet, don't remove
+
+            commandEntry.maxTries = 1;              // Vehicle responsed to command so don't retry
+            commandEntry.elapsedTimer.restart();    // We've heard from vehicle, restart elapsed timer for no ack received timeout
+
+            if (commandEntry.ackHandlerInfo.progressHandler) {
+                (*commandEntry.ackHandlerInfo.progressHandler)(commandEntry.ackHandlerInfo.progressHandlerData, message.compid, ack);
+            }
+        } else {
+            MavCommandListEntry_t commandEntry = _mavCommandList.takeAt(entryIndex);
+
+            if (commandEntry.ackHandlerInfo.resultHandler) {
+                (*commandEntry.ackHandlerInfo.resultHandler)(commandEntry.ackHandlerInfo.resultHandlerData, message.compid, ack, MavCmdResultCommandResultOnly);
             } else {
                 if (commandEntry.showError) {
                     switch (ack.result) {
@@ -3292,11 +3312,8 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
                 }
                 emit mavCommandResult(_id, message.compid, ack.command, ack.result, MavCmdResultCommandResultOnly);
             }
-            commandInList = true;
         }
-    }
-
-    if (!commandInList) {
+    } else {
         qCDebug(VehicleLog) << "_handleCommandAck Ack not in list" << rawCommandName;
     }
 
@@ -3360,10 +3377,13 @@ void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* re
 
     _waitForMavlinkMessage(_requestMessageWaitForMessageResultHandler, pInfo, pInfo->msgId, 1000);
 
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+    handlerInfo.resultHandler       = _requestMessageCmdResultHandler;
+    handlerInfo.resultHandlerData   = pInfo;
+
     _sendMavCommandWorker(false,                                    // commandInt
                           false,                                    // showError
-                          _requestMessageCmdResultHandler,
-                          pInfo,                                    // resultHandlerData
+                          &handlerInfo,
                           compId,
                           MAV_CMD_REQUEST_MESSAGE,
                           MAV_FRAME_GLOBAL,
@@ -3371,13 +3391,13 @@ void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* re
                           param1, param2, param3, param4, param5, 0);
 }
 
-void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, uint8_t progress, MavCmdResultFailureCode_t failureCode)
+void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
 {
     RequestMessageInfo_t*   pInfo   = static_cast<RequestMessageInfo_t*>(resultHandlerData);
     Vehicle*                vehicle = pInfo->vehicle;
 
     pInfo->commandAckReceived = true;
-    if (result != MAV_RESULT_ACCEPTED) {
+    if (ack.result != MAV_RESULT_ACCEPTED) {
         mavlink_message_t                           message;
         RequestMessageResultHandlerFailureCode_t    requestMessageFailureCode;
 
@@ -3394,12 +3414,12 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*com
         }
 
         vehicle->_waitForMavlinkMessageClear();
-        (*pInfo->resultHandler)(pInfo->resultHandlerData, result,  requestMessageFailureCode, message);
+        (*pInfo->resultHandler)(pInfo->resultHandlerData, static_cast<MAV_RESULT>(ack.result),  requestMessageFailureCode, message);
         return;
     }
 
     if (pInfo->messageReceived) {
-        (*pInfo->resultHandler)(pInfo->resultHandlerData, result,  RequestMessageNoFailure, pInfo->message);
+        (*pInfo->resultHandler)(pInfo->resultHandlerData, static_cast<MAV_RESULT>(ack.result),  RequestMessageNoFailure, pInfo->message);
         delete pInfo;
     } else {
         vehicle->_waitForMavlinkMessageTimeoutActive = true;
@@ -3468,16 +3488,14 @@ QString Vehicle::firmwareVersionTypeString() const
     }
 }
 
-void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode)
+void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
 {
-    Q_UNUSED(progress)
-
     Vehicle* vehicle = static_cast<Vehicle*>(resultHandlerData);
 
-    if (commandResult != MAV_RESULT_ACCEPTED) {
+    if (ack.result != MAV_RESULT_ACCEPTED) {
         switch (failureCode) {
         case MavCmdResultCommandResultOnly:
-            qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN error(%1)").arg(commandResult);
+            qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN error(%1)").arg(ack.result);
             break;
         case MavCmdResultFailureNoResponseToCommand:
             qCDebug(VehicleLog) << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN failed: no response from vehicle";
@@ -3494,7 +3512,11 @@ void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*
 
 void Vehicle::rebootVehicle()
 {
-    sendMavCommandWithHandler(_rebootCommandResultHandler, this, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+    handlerInfo.resultHandler       = _rebootCommandResultHandler;
+    handlerInfo.resultHandlerData   = this;
+
+    sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
 }
 
 void Vehicle::startCalibration(Vehicle::CalibrationType calType)
