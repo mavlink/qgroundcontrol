@@ -5217,7 +5217,7 @@
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_ALT_MODE" default="0" type="INT32">
+    <parameter name="MPC_ALT_MODE" default="2" type="INT32">
       <short_desc>Altitude reference mode</short_desc>
       <long_desc>Set to 0 to control height relative to the earth frame origin. This origin may move up and down in flight due to sensor drift. Set to 1 to control height relative to estimated distance to ground. The vehicle will move up and down with terrain height variation. Requires a distance to ground sensor. The height controller will revert to using height above origin if the distance to ground estimate becomes invalid as indicated by the local_position.distance_bottom_valid message being false. Set to 2 to control height relative to ground (requires a distance sensor) when stationary and relative to earth frame origin when moving horizontally. The speed threshold is controlled by the MPC_HOLD_MAX_XY parameter.</long_desc>
       <min>0</min>
