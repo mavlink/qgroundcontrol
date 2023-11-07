@@ -1020,7 +1020,7 @@
     </parameter>
     <parameter name="COM_CPU_MAX" default="95.0" type="FLOAT">
       <short_desc>Maximum allowed CPU load to still arm</short_desc>
-      <long_desc>A negative value disables the check.</long_desc>
+      <long_desc>The check fails if the CPU load is above this threshold for 2s. A negative value disables the check.</long_desc>
       <min>-1</min>
       <max>100</max>
       <unit>%</unit>
@@ -1437,12 +1437,25 @@
       <decimal>1</decimal>
     </parameter>
     <parameter name="COM_WIND_MAX" default="-1." type="FLOAT">
-      <short_desc>Wind speed RTL threshold</short_desc>
-      <long_desc>Wind speed threshold above which an automatic return to launch is triggered. It is not possible to resume the mission or switch to any auto mode other than RTL or Land if this threshold is exceeded. Taking over in any manual mode is still possible. Set to -1 to disable.</long_desc>
+      <short_desc>High wind speed failsafe threshold</short_desc>
+      <long_desc>Wind speed threshold above which an automatic failsafe action is triggered. Failsafe action can be specified with COM_WIND_MAX_ACT.</long_desc>
       <min>-1</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
+    </parameter>
+    <parameter name="COM_WIND_MAX_ACT" default="0" type="INT32">
+      <short_desc>High wind failsafe mode</short_desc>
+      <long_desc>Action the system takes when a wind speed above the specified threshold is detected. See COM_WIND_MAX to set the failsafe threshold. If enabled, it is not possible to resume the mission or switch to any auto mode other than RTL or Land if this threshold is exceeded. Taking over in any manual mode is still possible.</long_desc>
+      <increment>1</increment>
+      <values>
+        <value code="0">None</value>
+        <value code="1">Warning</value>
+        <value code="2">Hold</value>
+        <value code="3">Return</value>
+        <value code="4">Terminate</value>
+        <value code="5">Land</value>
+      </values>
     </parameter>
     <parameter name="COM_WIND_WARN" default="-1." type="FLOAT">
       <short_desc>Wind speed warning threshold</short_desc>
