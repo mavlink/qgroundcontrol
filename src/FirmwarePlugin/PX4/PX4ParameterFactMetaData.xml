@@ -363,7 +363,7 @@
       <max>5</max>
       <unit>SD</unit>
     </parameter>
-    <parameter name="ASPD_BETA_NOISE" default="0.3" type="FLOAT">
+    <parameter name="ASPD_BETA_NOISE" default="0.15" type="FLOAT">
       <short_desc>Wind estimator sideslip measurement noise</short_desc>
       <long_desc>Sideslip measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
       <min>0</min>
@@ -472,7 +472,7 @@
       <unit>1/s/sqrt(Hz)</unit>
       <decimal>5</decimal>
     </parameter>
-    <parameter name="ASPD_TAS_GATE" default="3" type="INT32">
+    <parameter name="ASPD_TAS_GATE" default="4" type="INT32">
       <short_desc>Gate size for true airspeed fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1</min>
@@ -495,7 +495,7 @@
       <unit>m/s</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="ASPD_WIND_NSD" default="1.e-2" type="FLOAT">
+    <parameter name="ASPD_WIND_NSD" default="1.e-1" type="FLOAT">
       <short_desc>Wind estimator wind process noise spectral density</short_desc>
       <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector. When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
       <min>0</min>
@@ -2465,7 +2465,7 @@
       <short_desc>Enable synthetic magnetometer Z component measurement</short_desc>
       <long_desc>Use for vehicles where the measured body Z magnetic field is subject to strong magnetic interference. For magnetic heading fusion the magnetometer Z measurement will be replaced by a synthetic value calculated using the knowledge of the 3D magnetic field vector at the location of the drone. Therefore, this parameter will only have an effect if the global position of the drone is known. For 3D mag fusion the magnetometer Z measurement will simply be ignored instead of fusing the synthetic value.</long_desc>
     </parameter>
-    <parameter name="EKF2_TAS_GATE" default="3.0" type="FLOAT">
+    <parameter name="EKF2_TAS_GATE" default="5.0" type="FLOAT">
       <short_desc>Gate size for TAS fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
@@ -2507,7 +2507,7 @@
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="EKF2_WIND_NSD" default="1.0e-2" type="FLOAT">
+    <parameter name="EKF2_WIND_NSD" default="5.0e-2" type="FLOAT">
       <short_desc>Process noise spectral density for wind velocity prediction</short_desc>
       <long_desc>When unaided, the wind estimate uncertainty (1-sigma, in m/s) increases by this amount every second.</long_desc>
       <min>0.0</min>
