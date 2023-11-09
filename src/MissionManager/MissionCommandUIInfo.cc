@@ -24,6 +24,8 @@ const char* MissionCommandUIInfo::_friendlyNameJsonKey          = "friendlyName"
 const char* MissionCommandUIInfo::_idJsonKey                    = "id";
 const char* MissionCommandUIInfo::_labelJsonKey                 = "label";
 const char* MissionCommandUIInfo::_mavCmdInfoJsonKey            = "mavCmdInfo";
+const char* MissionCommandUIInfo::_maxJsonKey                   = "max";
+const char* MissionCommandUIInfo::_minJsonKey                   = "min";
 const char* MissionCommandUIInfo::_param1JsonKey                = "param1";
 const char* MissionCommandUIInfo::_param2JsonKey                = "param2";
 const char* MissionCommandUIInfo::_param3JsonKey                = "param3";
@@ -46,6 +48,8 @@ const char* MissionCommandUIInfo::_advancedCategory             = "Advanced";
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)
+    , _min   (FactMetaData::minForType(FactMetaData::valueTypeDouble).toDouble())
+    , _max   (FactMetaData::maxForType(FactMetaData::valueTypeDouble).toDouble())
 {
 
 }
@@ -66,6 +70,8 @@ const MissionCmdParamInfo& MissionCmdParamInfo::operator=(const MissionCmdParamI
     _param =            other._param;
     _units =            other._units;
     _nanUnchanged =     other._nanUnchanged;
+    _min =              other._min;
+    _max =              other._max;
 
     return *this;
 }
@@ -370,7 +376,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             QJsonObject paramObject = jsonObject.value(paramKey).toObject();
 
             QStringList allParamKeys;
-            allParamKeys << _defaultJsonKey << _decimalPlacesJsonKey << _enumStringsJsonKey << _enumValuesJsonKey << _labelJsonKey << _unitsJsonKey << _nanUnchangedJsonKey;
+            allParamKeys << _defaultJsonKey << _decimalPlacesJsonKey << _enumStringsJsonKey << _enumValuesJsonKey
+                         << _labelJsonKey << _unitsJsonKey << _nanUnchangedJsonKey
+                         << _minJsonKey << _maxJsonKey;
 
             // Look for unknown keys in param object
             for (const QString& key: paramObject.keys()) {
@@ -405,6 +413,14 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
             paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", Qt::SkipEmptyParts);
 
+            // The min and max values are defaulted correctly already, so only set them if a value is present in the JSON.
+            if (paramObject.value(_minJsonKey).isDouble()) {
+                paramInfo->_min = paramObject.value(_minJsonKey).toDouble();
+            }
+            if (paramObject.value(_maxJsonKey).isDouble()) {
+                paramInfo->_max = paramObject.value(_maxJsonKey).toDouble();
+            }
+
             if (paramObject.contains(_defaultJsonKey)) {
                 if (paramInfo->_nanUnchanged) {
                     paramInfo->_defaultValue = JsonHelper::possibleNaNJsonValue(paramObject[_defaultJsonKey]);
@@ -418,6 +434,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             } else {
                 paramInfo->_defaultValue = paramInfo->_nanUnchanged ? std::numeric_limits<double>::quiet_NaN() : 0;
             }
+
             QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", Qt::SkipEmptyParts);
             for (const QString &enumValue: enumValues) {
                 bool    convertOk;
@@ -445,7 +462,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                                         << paramInfo->_units
                                         << paramInfo->_enumStrings
                                         << paramInfo->_enumValues
-                                        << paramInfo->_nanUnchanged;
+                                        << paramInfo->_nanUnchanged
+                                        << paramInfo->_min
+                                        << paramInfo->_max;
 
             _paramInfoMap[i] = paramInfo;
         }
