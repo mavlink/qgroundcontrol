@@ -9601,15 +9601,6 @@
     <parameter name="SYS_STCK_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable stack checking</short_desc>
     </parameter>
-    <parameter name="SYS_USE_IO" default="0" type="INT32">
-      <short_desc>Set usage of IO board</short_desc>
-      <long_desc>Can be used to use a configure the use of the IO board.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">IO PWM disabled (RC only)</value>
-        <value code="1">IO enabled (RC &amp; PWM)</value>
-      </values>
-    </parameter>
   </group>
   <group name="Telemetry">
     <parameter name="TEL_BST_EN" default="0" type="INT32" boolean="true">
