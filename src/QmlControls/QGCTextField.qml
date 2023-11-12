@@ -12,11 +12,15 @@ TextField {
     implicitHeight:     ScreenTools.implicitTextFieldHeight
     activeFocusOnPress: true
     antialiasing:       true
+    inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
+                          Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
+                          Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
 
     property bool   showUnits:          false
     property bool   showHelp:           false
     property string unitsLabel:         ""
     property string extraUnitsLabel:    ""
+    property bool   numericValuesOnly:  false   // true: Used as hint for mobile devices to show numeric only keyboard
 
     signal helpClicked
 

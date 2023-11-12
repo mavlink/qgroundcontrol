@@ -185,7 +185,7 @@
         <file alias="QGroundControl/Controls/TerrainStatus.qml">src/PlanView/TerrainStatus.qml</file>
         <file alias="QGroundControl/Controls/TakeoffItemMapVisual.qml">src/PlanView/TakeoffItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ToolStrip.qml">src/QmlControls/ToolStrip.qml</file>
-       	<file alias="QGroundControl/Controls/ToolStripHoverButton.qml">src/QmlControls/ToolStripHoverButton.qml</file>
+        <file alias="QGroundControl/Controls/ToolStripHoverButton.qml">src/QmlControls/ToolStripHoverButton.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemEditor.qml">src/PlanView/TransectStyleComplexItemEditor.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemStats.qml">src/PlanView/TransectStyleComplexItemStats.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemTabBar.qml">src/PlanView/TransectStyleComplexItemTabBar.qml</file>
@@ -287,6 +287,8 @@
         <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
+        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewInsetViewer.qml">src/FlightDisplay/FlyViewInsetViewer.qml</file>
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>
@@ -356,8 +358,5 @@
         <file alias="Parameter.MetaData.json.xz">src/comm/MockLink.Parameter.MetaData.json.xz</file>
         <file alias="Parameter.MetaData.json">src/comm/MockLink.Parameter.MetaData.json</file>
         <file alias="Arduplane.params.ftp.bin">src/comm/Mocklink.Arduplane.params.ftp.bin</file>
-    </qresource>
-    <qresource prefix="/qml">
-        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
     </qresource>
 </RCC>

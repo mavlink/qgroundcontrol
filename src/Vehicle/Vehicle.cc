@@ -372,11 +372,15 @@ void Vehicle::_commonInit()
     connect(_missionManager, &MissionManager::sendComplete,             _trajectoryPoints, &TrajectoryPoints::clear);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, _trajectoryPoints, &TrajectoryPoints::clear);
 
+    _standardModes                  = new StandardModes                 (this, this);
     _componentInformationManager    = new ComponentInformationManager   (this);
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
     _ftpManager                     = new FTPManager                    (this);
     _imageProtocolManager           = new ImageProtocolManager          ();
     _vehicleLinkManager             = new VehicleLinkManager            (this);
+
+    connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
+    connect(_standardModes, &StandardModes::modesUpdated, this, [this](){ Vehicle::flightModeChanged(flightMode()); });
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
@@ -762,6 +766,21 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
         break;
+#ifdef DAILY_BUILD // Disable use of development/WIP MAVLink messages for release builds
+        case MAVLINK_MSG_ID_AVAILABLE_MODES_MONITOR:
+    {
+        // Avoid duplicate requests during initial connection setup
+        if (!_initialConnectStateMachine || !_initialConnectStateMachine->active()) {
+            mavlink_available_modes_monitor_t availableModesMonitor;
+            mavlink_msg_available_modes_monitor_decode(&message, &availableModesMonitor);
+            _standardModes->availableModesMonitorReceived(availableModesMonitor.seq);
+        }
+        break;
+    }
+    case MAVLINK_MSG_ID_CURRENT_MODE:
+        _handleCurrentMode(message);
+        break;
+#endif // DAILY_BUILD
 
         // Following are ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -925,7 +944,7 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
             qgcApp()->toolbox()->audioOutput()->say(messageText);
         }
     }
-    emit textMessageReceived(id(), compId, severity, messageText);
+    emit textMessageReceived(id(), compId, severity, messageText.toHtmlEscaped(), "");
 }
 
 void Vehicle::_handleStatusText(mavlink_message_t& message)
@@ -1605,24 +1624,19 @@ void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::Pars
                 }
             }
             if (!message.empty() && !messageChecks.empty()) {
-                message += "<br/>";
+                message += "\n";
             }
             if (messageChecks.size() == 1) {
                 message += messageChecks[0];
             } else {
                 for (const auto& messageCheck : messageChecks) {
-                    message += "- " + messageCheck + "<br/>";
+                    message += "- " + messageCheck + "\n";
                 }
             }
         }
 
-        if (message.size() > 0) {
-            // TODO: handle this properly in the UI (e.g. with an expand button to display the description, clickable URL's + params)...
-            QString msg = QString::fromStdString(message);
-            if (description.size() > 0) {
-                msg += "<br/><small><small>" + QString::fromStdString(description).replace("\n", "<br/>") + "</small></small>";
-            }
-            emit textMessageReceived(id(), comp_id, severity, msg);
+        if (!message.empty()) {
+            emit textMessageReceived(id(), comp_id, severity, QString::fromStdString(message), QString::fromStdString(description));
         }
     }
 }
@@ -1656,16 +1670,15 @@ EventHandler& Vehicle::_eventHandler(uint8_t compid)
 
         // connect health and arming check updates
         connect(eventHandler.data(), &EventHandler::healthAndArmingChecksUpdated, this, [compid, this]() {
-            // TODO: use user-intended mode instead of currently set mode
             const QSharedPointer<EventHandler>& eventHandler = _events[compid];
             _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
-                    eventHandler->getModeGroup(_custom_mode));
+                    eventHandler->getModeGroup(_has_custom_mode_user_intention ? _custom_mode_user_intention : _custom_mode));
         });
         connect(this, &Vehicle::flightModeChanged, this, [compid, this]() {
             const QSharedPointer<EventHandler>& eventHandler = _events[compid];
             if (eventHandler->healthAndArmingCheckResultsValid()) {
                 _healthAndArmingCheckReport.update(compid, eventHandler->healthAndArmingCheckResults(),
-                                                   eventHandler->getModeGroup(_custom_mode));
+                                                   eventHandler->getModeGroup(_has_custom_mode_user_intention ? _custom_mode_user_intention : _custom_mode));
             }
         });
     }
@@ -1682,7 +1695,7 @@ void Vehicle::setEventsMetadata(uint8_t compid, const QString& metadataJsonFileN
     for (size_t i = 0; i < sizeof(modeGroups)/sizeof(modeGroups[0]); ++i) {
         uint8_t     base_mode;
         uint32_t    custom_mode;
-        if (_firmwarePlugin->setFlightMode(modes[i], &base_mode, &custom_mode)) {
+        if (setFlightModeCustom(modes[i], &base_mode, &custom_mode)) {
             modeGroups[i] = _eventHandler(compid).getModeGroup(custom_mode);
             if (modeGroups[i] == -1) {
                 qCDebug(VehicleLog) << "Failed to get mode group for mode" << modes[i] << "(Might not be in metadata)";
@@ -1740,6 +1753,20 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         _base_mode   = heartbeat.base_mode;
         _custom_mode = heartbeat.custom_mode;
         if (previousFlightMode != flightMode()) {
+            emit flightModeChanged(flightMode());
+        }
+    }
+}
+
+void Vehicle::_handleCurrentMode(mavlink_message_t& message)
+{
+    mavlink_current_mode_t currentMode;
+    mavlink_msg_current_mode_decode(&message, &currentMode);
+    if (currentMode.intended_custom_mode != 0) { // 0 == unknown/not supplied
+        _has_custom_mode_user_intention = true;
+        bool changed = _custom_mode_user_intention != currentMode.intended_custom_mode;
+        _custom_mode_user_intention = currentMode.intended_custom_mode;
+        if (changed) {
             emit flightModeChanged(flightMode());
         }
     }
@@ -2030,11 +2057,6 @@ void Vehicle::_handleTextMessage(int newCount)
         _messageCount = newCount;
         emit messageCountChanged();
     }
-    QString errMsg = pMh->getLatestError();
-    if(errMsg != _latestError) {
-        _latestError = errMsg;
-        emit latestErrorChanged();
-    }
 }
 
 void Vehicle::resetAllMessages()
@@ -2088,21 +2110,11 @@ void Vehicle::_loadJoystickSettings()
 {
     QSettings settings;
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-    const bool _useButtonsOnly = qgcApp()->toolbox()->corePlugin()->options()->joystickUseButtonsOnly();
 
-    if (!_useButtonsOnly && _toolbox->joystickManager()->activeJoystick()) {
+    if (_toolbox->joystickManager()->activeJoystick()) {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
-    }
-    else if(_useButtonsOnly)
-    {
-        // in a build with _useButtonsOnly set, joystickenable should always be left false
-        // this prevents the sticks from doing anything
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Skipping Load of Joystick Settings because QCC Options useButtonsOnly is set";
-        setJoystickEnabled(false);
-    }
-    else
-    {
+    } else {
         qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified that there is no active joystick";
         setJoystickEnabled(false);
     }
@@ -2142,9 +2154,7 @@ void Vehicle::setJoystickEnabled(bool enabled)
 
     // if we are the active vehicle, call start polling on the active joystick
     // This routes the joystick signals to this vehicle
-    // We do this even if we are disabling the joystick
-    // because it will trigger disconnection of the signals
-    if (_toolbox->multiVehicleManager()->activeVehicle() == this){
+    if (enabled && _toolbox->multiVehicleManager()->activeVehicle() == this){
         _captureJoystick();
     }
 
@@ -2168,7 +2178,7 @@ void Vehicle::_captureJoystick()
     Joystick* joystick = _joystickManager->activeJoystick();
 
     if(joystick){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick";
+        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();
         joystick->startPolling(this);
     }
 }
@@ -2204,17 +2214,27 @@ bool Vehicle::flightModeSetAvailable()
 
 QStringList Vehicle::flightModes()
 {
+	if (_standardModes->supported()) {
+		return _standardModes->flightModes();
+	}
     return _firmwarePlugin->flightModes(this);
-}
-
-QStringList Vehicle::extraJoystickFlightModes()
-{
-    return _firmwarePlugin->extraJoystickFlightModes(this);
 }
 
 QString Vehicle::flightMode() const
 {
+    if (_standardModes->supported()) {
+        return _standardModes->flightMode(_custom_mode);
+    }
     return _firmwarePlugin->flightMode(_base_mode, _custom_mode);
+}
+
+bool Vehicle::setFlightModeCustom(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode)
+{
+    if (_standardModes->supported()) {
+        *base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+        return _standardModes->setFlightMode(flightMode, custom_mode);
+    }
+    return _firmwarePlugin->setFlightMode(flightMode, base_mode, custom_mode);
 }
 
 void Vehicle::setFlightMode(const QString& flightMode)
@@ -2222,7 +2242,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
     uint8_t     base_mode;
     uint32_t    custom_mode;
 
-    if (_firmwarePlugin->setFlightMode(flightMode, &base_mode, &custom_mode)) {
+    if (setFlightModeCustom(flightMode, &base_mode, &custom_mode)) {
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (!sharedLink) {
             qCDebug(VehicleLog) << "setFlightMode: primary link gone!";
@@ -2582,14 +2602,14 @@ QString Vehicle::vehicleTypeName() const {
         { MAV_TYPE_OCTOROTOR,       tr("Octorotor")},
         { MAV_TYPE_TRICOPTER,       tr("Octorotor")},
         { MAV_TYPE_FLAPPING_WING,   tr("Flapping wing")},
-        { MAV_TYPE_KITE,            tr("Flapping wing")},
+        { MAV_TYPE_KITE,            tr("Kite")},
         { MAV_TYPE_ONBOARD_CONTROLLER, tr("Onboard companion controller")},
         { MAV_TYPE_VTOL_TAILSITTER_DUOROTOR,   tr("Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter")},
         { MAV_TYPE_VTOL_TAILSITTER_QUADROTOR,  tr("Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter")},
         { MAV_TYPE_VTOL_TILTROTOR,  tr("Tiltrotor VTOL")},
         { MAV_TYPE_VTOL_FIXEDROTOR,  tr("VTOL Fixedrotor")},
         { MAV_TYPE_VTOL_TAILSITTER,  tr("VTOL Tailsitter")},
-        { MAV_TYPE_VTOL_RESERVED4,  tr("VTOL reserved 4")},
+        { MAV_TYPE_VTOL_TILTWING,   tr("VTOL Tiltwing")},
         { MAV_TYPE_VTOL_RESERVED5,  tr("VTOL reserved 5")},
         { MAV_TYPE_GIMBAL,          tr("Onboard gimbal")},
         { MAV_TYPE_ADSB,            tr("Onboard ADSB peripheral")},
@@ -2980,6 +3000,18 @@ void Vehicle::sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bo
                           showError,
                           nullptr,      // resultHandler
                           nullptr,      // resultHandlerData
+                          compId,
+                          command,
+                          frame,
+                          param1, param2, param3, param4, param5, param6, param7);
+}
+
+void Vehicle::sendMavCommandIntWithHandler(MavCmdResultHandler resultHandler, void *resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+{
+    _sendMavCommandWorker(true,                   // commandInt
+                          false,                  // showError
+                          resultHandler,
+                          resultHandlerData,
                           compId,
                           command,
                           frame,

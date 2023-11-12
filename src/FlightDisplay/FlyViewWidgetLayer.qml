@@ -50,18 +50,18 @@ Item {
 
     QGCToolInsets {
         id:                     _totalToolInsets
-        leftEdgeTopInset:       toolStrip.leftInset
-        leftEdgeCenterInset:    toolStrip.leftInset
-        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
-        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
-        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
-        rightEdgeBottomInset:   parentToolInsets.rightEdgeBottomInset
-        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
-        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
-        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
-        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  mapScale.centerInset
-        bottomEdgeRightInset:   0
+        leftEdgeTopInset:       toolStrip.leftEdgeTopInset
+        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
+        leftEdgeBottomInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.leftEdgeBottomInset : parentToolInsets.leftEdgeBottomInset
+        rightEdgeTopInset:      instrumentPanel.rightEdgeTopInset
+        rightEdgeCenterInset:   (telemetryPanel.rightEdgeCenterInset > photoVideoControl.rightEdgeCenterInset) ? telemetryPanel.rightEdgeCenterInset : photoVideoControl.rightEdgeCenterInset
+        rightEdgeBottomInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.rightEdgeBottomInset : parentToolInsets.rightEdgeBottomInset
+        topEdgeLeftInset:       toolStrip.topEdgeLeftInset
+        topEdgeCenterInset:     mapScale.topEdgeCenterInset
+        topEdgeRightInset:      instrumentPanel.topEdgeRightInset
+        bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
+        bottomEdgeCenterInset:  telemetryPanel.bottomEdgeCenterInset
+        bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : parentToolInsets.bottomEdgeRightInset
     }
 
     FlyViewMissionCompleteDialog {
@@ -125,7 +125,8 @@ Item {
         visible:                    QGroundControl.corePlugin.options.flyView.showInstrumentPanel && multiVehiclePanelSelector.showSingleVehiclePanel
         availableHeight:            parent.height - y - _toolsMargin
 
-        property real rightInset: visible ? parent.width - x : 0
+        property real rightEdgeTopInset: visible ? parent.width - x : 0
+        property real topEdgeRightInset: visible ? y + height : 0
     }
 
     PhotoVideoControl {
@@ -133,6 +134,9 @@ Item {
         anchors.margins:        _toolsMargin
         anchors.right:          parent.right
         width:                  _rightPanelWidth
+
+        property real rightEdgeCenterInset: visible ? parent.width - x : 0
+
         state:                  _verticalCenter ? "verticalCenter" : "topAnchor"
         states: [
             State {
@@ -161,6 +165,9 @@ Item {
         x:                  recalcXPosition()
         anchors.margins:    _toolsMargin
 
+        property real bottomEdgeCenterInset: 0
+        property real rightEdgeCenterInset: 0
+
         // States for custom layout support
         states: [
             State {
@@ -178,6 +185,8 @@ Item {
                 PropertyChanges {
                     target: telemetryPanel
                     x: recalcXPosition()
+                    bottomEdgeCenterInset: visible ? parent.height-y : 0
+                    rightEdgeCenterInset: 0
                 }
             },
 
@@ -192,6 +201,11 @@ Item {
                     anchors.right: parent.right
                     anchors.verticalCenter: undefined
                 }
+                PropertyChanges {
+                    target: telemetryPanel
+                    bottomEdgeCenterInset: 0
+                    rightEdgeCenterInset: visible ? parent.width - x : 0
+                }
             },
 
             State {
@@ -204,6 +218,11 @@ Item {
                     anchors.bottom: undefined
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
+                }
+                PropertyChanges {
+                    target: telemetryPanel
+                    bottomEdgeCenterInset: 0
+                    rightEdgeCenterInset: visible ? parent.width - x : 0
                 }
             }
         ]
@@ -240,6 +259,13 @@ Item {
         property bool autoCenterThrottle: QGroundControl.settingsManager.appSettings.virtualJoystickAutoCenterThrottle.rawValue
 
         property bool _virtualJoystickEnabled: QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue
+
+        property real bottomEdgeLeftInset: parent.height-y
+        property real bottomEdgeRightInset: parent.height-y
+
+        // Width is difficult to access directly hence this hack which may not work in all circumstances
+        property real leftEdgeBottomInset: visible ? bottomEdgeLeftInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
+        property real rightEdgeBottomInset: visible ? bottomEdgeRightInset + width/18 - ScreenTools.defaultFontPixelHeight*2 : 0
     }
 
     FlyViewToolStrip {
@@ -254,7 +280,9 @@ Item {
 
         onDisplayPreFlightChecklist: preFlightChecklistPopup.createObject(mainWindow).open()
 
-        property real leftInset: x + width
+
+        property real topEdgeLeftInset: visible ? y + height : 0
+        property real leftEdgeTopInset: visible ? x + width : 0
     }
 
     GripperMenu {
@@ -275,7 +303,7 @@ Item {
         buttonsOnLeft:      false
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state === mapControl.pipState.fullState
 
-        property real centerInset: visible ? parent.height - y : 0
+        property real topEdgeCenterInset: visible ? y + height : 0
     }
 
     Component {

@@ -88,10 +88,6 @@ public:
     /// list available from the firmware. Call will be made again if advanced mode changes.
     virtual QStringList flightModes(Vehicle* /*vehicle*/) { return QStringList(); }
 
-    /// Returns the list of additional flight modes to add to the list for joystick button actions.
-    /// Call will be made again if advanced mode changes.
-    virtual QStringList extraJoystickFlightModes(Vehicle* /*vehicle*/) { return QStringList(); }
-
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
     ///     @param custom_mode Custom mode from mavlink HEARTBEAT message

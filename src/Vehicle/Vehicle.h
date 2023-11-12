@@ -48,6 +48,7 @@
 #include "ImageProtocolManager.h"
 #include "HealthAndArmingCheckReport.h"
 #include "TerrainQuery.h"
+#include "StandardModes.h"
 
 class Actuators;
 class EventHandler;
@@ -164,7 +165,6 @@ public:
     Q_PROPERTY(bool                 autoDisarm                  READ autoDisarm                                                     NOTIFY autoDisarmChanged)
     Q_PROPERTY(bool                 flightModeSetAvailable      READ flightModeSetAvailable                                         CONSTANT)
     Q_PROPERTY(QStringList          flightModes                 READ flightModes                                                    NOTIFY flightModesChanged)
-    Q_PROPERTY(QStringList          extraJoystickFlightModes    READ extraJoystickFlightModes                                       NOTIFY flightModesChanged)
     Q_PROPERTY(QString              flightMode                  READ flightMode                 WRITE setFlightMode                 NOTIFY flightModeChanged)
     Q_PROPERTY(TrajectoryPoints*    trajectoryPoints            MEMBER _trajectoryPoints                                            CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints         READ cameraTriggerPoints                                            CONSTANT)
@@ -177,7 +177,6 @@ public:
     Q_PROPERTY(int                  newMessageCount             READ newMessageCount                                                NOTIFY newMessageCountChanged)
     Q_PROPERTY(int                  messageCount                READ messageCount                                                   NOTIFY messageCountChanged)
     Q_PROPERTY(QString              formattedMessages           READ formattedMessages                                              NOTIFY formattedMessagesChanged)
-    Q_PROPERTY(QString              latestError                 READ latestError                                                    NOTIFY latestErrorChanged)
     Q_PROPERTY(bool                 joystickEnabled             READ joystickEnabled            WRITE setJoystickEnabled            NOTIFY joystickEnabledChanged)
     Q_PROPERTY(int                  flowImageIndex              READ flowImageIndex                                                 NOTIFY flowImageIndexChanged)
     Q_PROPERTY(int                  rcRSSI                      READ rcRSSI                                                         NOTIFY rcRSSIChanged)
@@ -522,7 +521,6 @@ public:
 
     bool flightModeSetAvailable             ();
     QStringList flightModes                 ();
-    QStringList extraJoystickFlightModes    ();
     QString flightMode                      () const;
     void setFlightMode                      (const QString& flightMode);
 
@@ -595,7 +593,6 @@ public:
     int             newMessageCount             () const{ return _currentMessageCount; }
     int             messageCount                () const{ return _messageCount; }
     QString         formattedMessages           ();
-    QString         latestError                 () { return _latestError; }
     float           latitude                    () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude                   () { return static_cast<float>(_coordinate.longitude()); }
     bool            mavPresent                  () { return _mav != nullptr; }
@@ -777,6 +774,11 @@ public:
     ///     @param resultHandleData Opaque data passed through callback
     void sendMavCommandWithHandler(MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
+    /// Sends the command and calls the callback with the result
+    ///     @param resultHandler    Callback for result, nullptr for no callback
+    ///     @param resultHandleData Opaque data passed through callback
+    void sendMavCommandIntWithHandler(MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
+
     typedef enum {
         RequestMessageNoFailure,
         RequestMessageFailureCommandError,
@@ -919,7 +921,7 @@ signals:
     void capabilityBitsChanged          (uint64_t capabilityBits);
     void toolIndicatorsChanged          ();
     void modeIndicatorsChanged          ();
-    void textMessageReceived            (int uasid, int componentid, int severity, QString text);
+    void textMessageReceived            (int uasid, int componentid, int severity, QString text, QString description);
     void calibrationEventReceived       (int uasid, int componentid, int severity, QSharedPointer<events::parser::ParsedEvent> event);
     void checkListStateChanged          ();
     void messagesReceivedChanged        ();
@@ -930,7 +932,6 @@ signals:
     void messageCountChanged            ();
     void formattedMessagesChanged       ();
     void newFormattedMessage            (QString formattedMessage);
-    void latestErrorChanged             ();
     void longitudeChanged               ();
     void currentConfigChanged           ();
     void flowImageIndexChanged          ();
@@ -1040,6 +1041,7 @@ private:
     void _handlePing                    (LinkInterface* link, mavlink_message_t& message);
     void _handleHomePosition            (mavlink_message_t& message);
     void _handleHeartbeat               (mavlink_message_t& message);
+    void _handleCurrentMode             (mavlink_message_t& message);
     void _handleRadioStatus             (mavlink_message_t& message);
     void _handleRCChannels              (mavlink_message_t& message);
     void _handleBatteryStatus           (mavlink_message_t& message);
@@ -1091,6 +1093,7 @@ private:
     void _chunkedStatusTextCompleted    (uint8_t compId);
     void _setMessageInterval            (int messageId, int rate);
     EventHandler& _eventHandler         (uint8_t compid);
+    bool setFlightModeCustom            (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, MavCmdResultFailureCode_t failureCode);
 
@@ -1129,7 +1132,6 @@ private:
     int             _currentWarningCount = 0;
     int             _currentNormalCount = 0;
     MessageType_t   _currentMessageType = MessageNone;
-    QString         _latestError;
     int             _updateCount = 0;
     int             _rcRSSI = 255;
     double          _rcRSSIstore = 255;
@@ -1185,6 +1187,8 @@ private:
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT
     uint32_t _custom_mode = 0;  ///< custom_mode from HEARTBEAT
+    uint32_t _custom_mode_user_intention = 0;  ///< custom_mode_user_intention from CURRENT_MODE
+    bool _has_custom_mode_user_intention = false;
 
     /// Used to store a message being sent by sendMessageMultiple
     typedef struct {
@@ -1407,6 +1411,7 @@ private:
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
     RemoteIDManager*                _remoteIDManager            = nullptr;
+    StandardModes*                  _standardModes              = nullptr;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
