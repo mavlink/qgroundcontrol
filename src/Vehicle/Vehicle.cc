@@ -3277,7 +3277,13 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     int entryIndex = _findMavCommandListEntryIndex(message.compid, static_cast<MAV_CMD>(ack.command));
     if (entryIndex != -1) {
         if (ack.result == MAV_RESULT_IN_PROGRESS) {
-            MavCommandListEntry_t commandEntry = _mavCommandList.at(entryIndex);  // Command has not completed yet, don't remove
+            MavCommandListEntry_t commandEntry;
+            if (px4Firmware() && ack.command == MAV_CMD_DO_AUTOTUNE_ENABLE) {
+                // HacK to support PX4 autotune which does not send final result ack and just sends in progress
+                commandEntry = _mavCommandList.takeAt(entryIndex);
+            } else {
+                commandEntry = _mavCommandList.at(entryIndex);  // Command has not completed yet, don't remove
+            }
 
             commandEntry.maxTries = 1;              // Vehicle responsed to command so don't retry
             commandEntry.elapsedTimer.restart();    // We've heard from vehicle, restart elapsed timer for no ack received timeout
