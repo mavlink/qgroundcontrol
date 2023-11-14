@@ -1429,6 +1429,18 @@
         <value code="1">Mission (if valid)</value>
       </values>
     </parameter>
+    <parameter name="COM_THROW_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Enable throw-start</short_desc>
+      <long_desc>Allows to start the vehicle by throwing it into the air.</long_desc>
+    </parameter>
+    <parameter name="COM_THROW_SPEED" default="5" type="FLOAT">
+      <short_desc>Minimum speed for the throw start</short_desc>
+      <long_desc>When the throw launch is enabled, the drone will only arm after this speed is exceeded before detecting the freefall. This is a safety feature to ensure the drone does not turn on after accidental drop or a rapid movement before the throw. Set to 0 to disable.</long_desc>
+      <min>0</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
     <parameter name="COM_VEL_FS_EVH" default="1." type="FLOAT">
       <short_desc>Horizontal velocity error threshold</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing. If the previous velocity error was below this threshold, there is an additional factor of 2.5 applied (threshold for invalidation 2.5 times the one for validation).</long_desc>
