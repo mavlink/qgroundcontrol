@@ -55,6 +55,7 @@ isEmpty(MAVLINK_CONF) {
         message($$sprintf("Using user-supplied mavlink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
     } else {
         MAVLINK_CONF = all
+        message($$sprintf("Using MAVLink dialect '%1'.", $$MAVLINK_CONF))
     }
 }
 
@@ -67,32 +68,18 @@ contains (CONFIG, QGC_DISABLE_APM_MAVLINK) {
     CONFIG  += ArdupilotEnabled
 }
 
-# First we select the dialect, checking for valid user selection
-# Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake
-!isEmpty(MAVLINK_CONF) {
-    message($$sprintf("Using MAVLink dialect '%1'.", $$MAVLINK_CONF))
-}
-
 # Then we add the proper include paths dependent on the dialect.
 INCLUDEPATH += $$MAVLINKPATH
 
-exists($$MAVLINKPATH/common) {
-    !isEmpty(MAVLINK_CONF) {
-        count(MAVLINK_CONF, 1) {
-            exists($$MAVLINKPATH/$$MAVLINK_CONF) {
-                INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-                DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
-            } else {
-                error($$sprintf("MAVLink dialect '%1' does not exist at '%2'!", $$MAVLINK_CONF, $$MAVLINKPATH_REL))
-            }
-        } else {
-            error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
-        }
+count(MAVLINK_CONF, 1) {
+    exists($$MAVLINKPATH/$$MAVLINK_CONF) {
+        INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
+        DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
     } else {
-        INCLUDEPATH += $$MAVLINKPATH/common
+        error($$sprintf("MAVLink dialect '%1' does not exist at '%2'!", $$MAVLINK_CONF, $$MAVLINKPATH_REL))
     }
 } else {
-    error($$sprintf("MAVLink folder does not exist at '%1'! Run 'git submodule init && git submodule update' on the command line.",$$MAVLINKPATH_REL))
+    error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
 }
 
 #
