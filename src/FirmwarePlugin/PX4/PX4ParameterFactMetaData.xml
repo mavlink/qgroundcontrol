@@ -1526,24 +1526,6 @@
       <unit>m/s^2</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_AID_MASK" default="0" type="INT32">
-      <short_desc>Will be removed after v1.14 release</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Deprecated, use EKF2_GPS_CTRL instead 1 : Deprecated. use EKF2_OF_CTRL instead 2 : Deprecated, use EKF2_IMU_CTRL instead 3 : Deprecated, use EKF2_EV_CTRL instead 4 : Deprecated, use EKF2_EV_CTRL instead 5 : Deprecated. use EKF2_DRAG_CTRL instead 6 : Deprecated, use EKF2_EV_CTRL instead 7 : Deprecated, use EKF2_GPS_CTRL instead 8 : Deprecated, use EKF2_EV_CTRL instead</long_desc>
-      <min>0</min>
-      <max>511</max>
-      <reboot_required>true</reboot_required>
-      <bitmask>
-        <bit index="0">unused</bit>
-        <bit index="1">unused</bit>
-        <bit index="2">unused</bit>
-        <bit index="3">unused</bit>
-        <bit index="4">unused</bit>
-        <bit index="5">unused</bit>
-        <bit index="6">unused</bit>
-        <bit index="7">unused</bit>
-        <bit index="8">unused</bit>
-      </bitmask>
-    </parameter>
     <parameter name="EKF2_ANGERR_INIT" default="0.1" type="FLOAT">
       <short_desc>1-sigma tilt angle uncertainty after gravity vector alignment</short_desc>
       <min>0.0</min>
