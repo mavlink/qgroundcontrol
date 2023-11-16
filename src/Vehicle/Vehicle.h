@@ -49,6 +49,8 @@
 #include "HealthAndArmingCheckReport.h"
 #include "TerrainQuery.h"
 #include "StandardModes.h"
+#include "VehicleGeneratorFactGroup.h"
+#include "VehicleEFIFactGroup.h"
 
 class Actuators;
 class EventHandler;
@@ -322,6 +324,8 @@ public:
     Q_PROPERTY(FactGroup*           localPosition   READ localPositionFactGroup     CONSTANT)
     Q_PROPERTY(FactGroup*           localPositionSetpoint READ localPositionSetpointFactGroup CONSTANT)
     Q_PROPERTY(FactGroup*           hygrometer      READ hygrometerFactGroup        CONSTANT)
+    Q_PROPERTY(FactGroup*           generator       READ generatorFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup*           efi             READ efiFactGroup               CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
     Q_PROPERTY(Actuators*           actuators       READ actuators                  CONSTANT)
     Q_PROPERTY(HealthAndArmingCheckReport* healthAndArmingCheckReport READ healthAndArmingCheckReport CONSTANT)
@@ -713,6 +717,8 @@ public:
     FactGroup* estimatorStatusFactGroup     () { return &_estimatorStatusFactGroup; }
     FactGroup* terrainFactGroup             () { return &_terrainFactGroup; }
     FactGroup* hygrometerFactGroup          () { return &_hygrometerFactGroup; }
+    FactGroup* generatorFactGroup           () { return &_generatorFactGroup; }
+    FactGroup* efiFactGroup                 () { return &_efiFactGroup; }
     QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; }
 
     MissionManager*                 missionManager      () { return _missionManager; }
@@ -1417,6 +1423,8 @@ private:
     VehicleEscStatusFactGroup       _escStatusFactGroup;
     VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
     VehicleHygrometerFactGroup      _hygrometerFactGroup;
+    VehicleGeneratorFactGroup       _generatorFactGroup;
+    VehicleEFIFactGroup             _efiFactGroup;
     TerrainFactGroup                _terrainFactGroup;
     QmlObjectListModel              _batteryFactGroupListModel;
 
@@ -1474,6 +1482,8 @@ private:
     static const char* _escStatusFactGroupName;
     static const char* _estimatorStatusFactGroupName;
     static const char* _hygrometerFactGroupName;
+    static const char* _generatorFactGroupName;
+    static const char* _efiFactGroupName;
     static const char* _terrainFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs      = 100;
