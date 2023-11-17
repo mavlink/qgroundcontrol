@@ -1033,6 +1033,10 @@
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
+    <parameter name="COM_DISARM_MAN" default="1" type="INT32" boolean="true">
+      <short_desc>Allow disarming via switch/stick/button on multicopters in manual thrust modes</short_desc>
+      <long_desc>0: Disallow disarming when not landed 1: Allow disarming in multicopter flight in modes where the thrust is directly controlled by thr throttle stick e.g. Stabilized, Acro</long_desc>
+    </parameter>
     <parameter name="COM_DISARM_PRFLT" default="10.0" type="FLOAT">
       <short_desc>Time-out for auto disarm if not taking off</short_desc>
       <long_desc>A non-zero, positive value specifies the time in seconds, within which the vehicle is expected to take off after arming. In case the vehicle didn't takeoff within the timeout it disarms again. A negative value disables autmoatic disarming triggered by a pre-takeoff timeout.</long_desc>
@@ -4518,6 +4522,14 @@
     <parameter name="MAN_ARM_GESTURE" default="1" type="INT32" boolean="true">
       <short_desc>Enable arm/disarm stick gesture</short_desc>
       <long_desc>This determines if moving the left stick to the lower right arms and to the lower left disarms the vehicle.</long_desc>
+    </parameter>
+    <parameter name="MAN_KILL_GEST_T" default="-1." type="FLOAT">
+      <short_desc>Trigger time for kill stick gesture</short_desc>
+      <long_desc>The timeout for holding the left stick to the lower left and the right stick to the lower right at the same time until the gesture kills the actuators one-way. A negative value disables the feature.</long_desc>
+      <min>-1</min>
+      <max>15</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
     </parameter>
   </group>
   <group name="Mission">
