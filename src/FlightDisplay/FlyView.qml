@@ -34,6 +34,9 @@ Item {
     property var planController:    _planController
     property var guidedController:  _guidedController
 
+    // Properties of UTM adapter
+    property bool utmspSendActTrigger
+
     PlanMasterController {
         id:                     _planController
         flyView:                true
