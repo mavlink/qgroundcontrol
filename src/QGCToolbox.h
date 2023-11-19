@@ -36,6 +36,9 @@ class ADSBVehicleManager;
 #if defined(QGC_ENABLE_PAIRING)
 class PairingManager;
 #endif
+#ifdef CONFIG_UTM_ADAPTER
+class UTMSPManager;
+#endif
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -66,6 +69,9 @@ public:
 #endif
 #ifndef __mobile__
     GPSManager*                 gpsManager              () { return _gpsManager; }
+#endif
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager*                utmspManager             () { return _utmspManager; }
 #endif
 
 private:
@@ -98,6 +104,9 @@ private:
     PairingManager*             _pairingManager         = nullptr;
 #endif
 
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager*                _utmspManager            = nullptr;
+#endif
     friend class QGCApplication;
 };
 

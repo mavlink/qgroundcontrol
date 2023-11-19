@@ -1422,7 +1422,9 @@ contains (DEFINES, CONFIG_UTM_ADAPTER) {
         src/UTMSP/UTMSPFlightDetails.h \
         src/UTMSP/UTMSPOperator.h \
         src/UTMSP/UTMSPFlightPlanManager.h \
-        src/UTMSP/UTMSPServiceController.h
+        src/UTMSP/UTMSPServiceController.h \
+        src/UTMSP/UTMSPVehicle.h \
+        src/UTMSP/UTMSPManager.h
 
     SOURCES += \
         src/UTMSP/UTMSPRestInterface.cpp \
@@ -1433,5 +1435,7 @@ contains (DEFINES, CONFIG_UTM_ADAPTER) {
         src/UTMSP/UTMSPFlightDetails.cpp \
         src/UTMSP/UTMSPOperator.cpp \
         src/UTMSP/UTMSPFlightPlanManager.cpp \
-        src/UTMSP/UTMSPServiceController.cpp
+        src/UTMSP/UTMSPServiceController.cpp \
+        src/UTMSP/UTMSPVehicle.cpp \
+        src/UTMSP/UTMSPManager.cpp
 }

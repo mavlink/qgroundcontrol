@@ -82,6 +82,9 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = toolbox->pairingManager();
 #endif
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager            = toolbox->utmspManager();
+#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)

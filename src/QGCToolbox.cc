@@ -39,6 +39,10 @@
 #include CUSTOMHEADER
 #endif
 
+#ifdef CONFIG_UTM_ADAPTER
+#include "UTMSPManager.h"
+#endif
+
  /**
   * @brief Helper function to register a type with QML that is not creatable from QML
   * @param uri The URI to register the type under
@@ -85,6 +89,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = new PairingManager            (app, this);
 #endif
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager            = new UTMSPManager               (app, this);
+#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -114,6 +121,9 @@ void QGCToolbox::setChildToolboxes(void)
     _adsbVehicleManager->setToolbox(this);
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
+#endif
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager->setToolbox(this);
 #endif
 }
 
