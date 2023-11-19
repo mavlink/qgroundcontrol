@@ -1456,6 +1456,9 @@ contains (DEFINES, CONFIG_UTM_ADAPTER) {
     INCLUDEPATH += \
         src/UTMSP \
 
+    RESOURCES += \
+        src/UTMSP/utmsp.qrc
+
     HEADERS += \
         src/UTMSP/UTMSPLogger.h \
         src/UTMSP/UTMSPRestInterface.h \
@@ -1482,4 +1485,11 @@ contains (DEFINES, CONFIG_UTM_ADAPTER) {
         src/UTMSP/UTMSPServiceController.cpp \
         src/UTMSP/UTMSPVehicle.cpp \
         src/UTMSP/UTMSPManager.cpp
+}
+else {
+   #-- Dummy UTM Adapter resource file created to override UTM adapter qml files
+   INCLUDEPATH += \
+       src/UTMSP/dummy
+   RESOURCES += \
+       src/UTMSP/dummy/utmsp_dummy.qrc
 }

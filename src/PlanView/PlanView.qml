@@ -24,6 +24,10 @@ import QGroundControl.FactControls      1.0
 import QGroundControl.Palette           1.0
 import QGroundControl.Controllers       1.0
 import QGroundControl.ShapeFileHelper   1.0
+import QGroundControl.FlightDisplay     1.0
+import QGroundControl.UTMSP             1.0
+
+
 
 Item {
     id: _root
@@ -46,18 +50,26 @@ Item {
     property bool   _lightWidgetBorders:                editorMap.isSatelliteMap
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
-    property int    _editingLayer:                      layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission
+     property int    _editingLayer:                      {if(!_utmspEnabled){layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission}else{layerTabBarUTMSP.currentIndex ? _layersUTMSP[layerTabBarUTMSP.currentIndex] : _layerMission}}
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
     property bool   _promptForPlanUsageShowing:         false
+    property bool   _utmspEnabled:                      QGroundControl.utmspSupported
+    property bool   _resetTrigered:                     false   //Reset the Geofence Polygon
+    property var    _vehicleID
+    property bool   _triggerSubmit
 
-    readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
+    readonly property var       _layers:                    [_layerMission, _layerGeoFence, _layerRallyPoints]
+    readonly property var       _layersUTMSP:               [_layerMission, _layerRallyPoints, _layerUTMSP] //Adds additional UTMSP layer
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
     readonly property int       _layerRallyPoints:          3
+    readonly property int       _layerUTMSP:                4 // Additional Tab button when UTMSP is enabled
     readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
+
+    signal activationParamsSent(string startTime, bool activate, string flightID)
 
     function mapCenter() {
         var coordinate = editorMap.center
@@ -362,6 +374,9 @@ Item {
                     coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                     coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                     coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+                    if(_utmspEnabled){
+                        QGroundControl.utmspManager.utmspVehicle.updateLastCoordinates(coordinate.latitude, coordinate.longitude)
+                    }
 
                     switch (_editingLayer) {
                     case _layerMission:
@@ -371,8 +386,17 @@ Item {
                             insertROIAfterCurrent(coordinate)
                             _addROIOnClick = false
                         }
-
                         break
+
+                    case _layerUTMSP:
+                        if (addWaypointRallyPointAction.checked) {
+                            insertSimpleItemAfterCurrent(coordinate)
+                        } else if (_addROIOnClick) {
+                            insertROIAfterCurrent(coordinate)
+                            _addROIOnClick = false
+                        }
+                        break
+
                     case _layerRallyPoints:
                         if (_rallyPointController.supported && addWaypointRallyPointAction.checked) {
                             _rallyPointController.addPoint(coordinate)
@@ -388,8 +412,8 @@ Item {
                 delegate: MissionItemMapVisual {
                     map:         editorMap
                     onClicked:   _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
-                    opacity:     _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
-                    interactive: _editingLayer == _layerMission
+                    opacity:     _editingLayer == _layerMission || _editingLayer == _layerUTMSP ? 1 : editorMap._nonInteractiveOpacity
+                    interactive: _editingLayer == _layerMission || _editingLayer == _layerUTMSP
                     vehicle:     _planMasterController.controllerVehicle
                 }
             }
@@ -398,12 +422,12 @@ Item {
             MissionLineView {
                 showSpecialVisual:  _missionController.isROIBeginCurrentItem
                 model:              _missionController.simpleFlightPathSegments
-                opacity:            _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
+                opacity:            _editingLayer == _layerMission ||  _editingLayer == _layerUTMSP  ? 1 : editorMap._nonInteractiveOpacity
             }
 
             // Direction arrows in waypoint lines
             MapItemView {
-                model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
+                model: _editingLayer == _layerMission ||_editingLayer == _layerUTMSP ? _missionController.directionArrows : undefined
 
                 delegate: MapLineArrow {
                     fromCoord:      object ? object.coordinate1 : undefined
@@ -432,7 +456,7 @@ Item {
                 anchorPoint.x:  sourceItem.width / 2
                 anchorPoint.y:  sourceItem.height / 2
                 z:              QGroundControl.zOrderWaypointLines + 1
-                visible:        _editingLayer == _layerMission
+                visible:        _editingLayer == _layerMission ||  _editingLayer == _layerUTMSP
 
                 sourceItem: SplitIndicator {
                     onClicked:  _missionController.insertSimpleMissionItem(splitSegmentItem.coordinate,
@@ -490,6 +514,35 @@ Item {
                 planView:               true
                 opacity:                _editingLayer != _layerRallyPoints ? editorMap._nonInteractiveOpacity : 1
             }
+
+            UTMSPMapVisuals {
+                id: utmspvisual
+                enabled:                _utmspEnabled
+                map:                    editorMap
+                currentMissionItems:    _visualItems
+                myGeoFenceController:   _geoFenceController
+                interactive:            _editingLayer == _layerUTMSP
+                homePosition:           _missionController.plannedHomePosition
+                planView:               true
+                opacity:                _editingLayer != _layerUTMSP ? editorMap._nonInteractiveOpacity : 1
+                resetCheck:             _resetTrigered
+            }
+
+            Connections {
+                target: utmspEditor
+                function onResetTriggered() {
+                    resetTimer.start()
+                }
+            }
+            Timer {
+                id: resetTimer
+                interval: 2500
+                running: false
+                repeat: false
+                onTriggered: {
+                    _resetTrigered = true
+                }
+            }
         }
 
         //-----------------------------------------------------------
@@ -514,6 +567,7 @@ Item {
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
+            property bool _isUtmspLayer:     _editingLayer == _layerUTMSP
 
             ToolStripActionList {
                 id: toolStripActionList
@@ -536,10 +590,11 @@ Item {
                         text:       qsTr("Takeoff")
                         iconSource: "/res/takeoff.svg"
                         enabled:    _missionController.isInsertTakeoffValid
-                        visible:    toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
+                        visible:    toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover || toolStrip._isUtmspLayer && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertTakeItemAfterCurrent()
+                            _triggerSubmit = true
                         }
                     },
                     ToolStripAction {
@@ -547,7 +602,7 @@ Item {
                         text:               _editingLayer == _layerRallyPoints ? qsTr("Rally Point") : qsTr("Waypoint")
                         iconSource:         "/qmlimages/MapAddMission.svg"
                         enabled:            toolStrip._isRallyLayer ? true : _missionController.flyThroughCommandsAllowed
-                        visible:            toolStrip._isRallyLayer || toolStrip._isMissionLayer
+                        visible:            toolStrip._isRallyLayer || toolStrip._isMissionLayer || toolStrip._isUtmspLayer
                         checkable:          true
                     },
                     ToolStripAction {
@@ -583,7 +638,7 @@ Item {
                         text:       _planMasterController.controllerVehicle.multiRotor ? qsTr("Return") : qsTr("Land")
                         iconSource: "/res/rtl.svg"
                         enabled:    _missionController.isInsertLandValid
-                        visible:    toolStrip._isMissionLayer
+                        visible:    toolStrip._isMissionLayer || toolStrip._isUtmspLayer
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertLandItemAfterCurrent()
@@ -614,7 +669,14 @@ Item {
         Rectangle {
             id:                 rightPanel
             height:             parent.height
-            width:              _rightPanelWidth
+            width:{
+                 if(_utmspEnabled){
+                     _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667
+                 }
+                 else{
+                     _rightPanelWidth
+                 }
+             }
             color:              qgcPal.window
             opacity:            layerTabBar.visible ? 0.2 : 0
             anchors.bottom:     parent.bottom
@@ -640,7 +702,7 @@ Item {
                 QGCTabBar {
                     id:         layerTabBar
                     width:      parent.width
-                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector
+                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector  && !_utmspEnabled
                     Component.onCompleted: currentIndex = 0
                     QGCTabButton {
                         text:       qsTr("Mission")
@@ -652,6 +714,24 @@ Item {
                     QGCTabButton {
                         text:       qsTr("Rally")
                         enabled:    _rallyPointController.supported
+                    }
+                }
+
+                QGCTabBar {
+                    id:         layerTabBarUTMSP
+                    width:      parent.width
+                    visible:    (!planControlColapsed || !_airspaceEnabled) && QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
+                    QGCTabButton {
+                        text:       qsTr("Mission")
+                    }
+                    QGCTabButton {
+                        text:       qsTr("Rally")
+                        enabled:    _rallyPointController.supported
+                    }
+                    QGCTabButton {
+                        id: utmspbutton
+                        text:       qsTr("UTM-Adapter")
+                        visible: _utmspEnabled
                     }
                 }
             }
@@ -727,6 +807,40 @@ Item {
                 visible:                _editingLayer == _layerRallyPoints && _rallyPointController.points.count
                 rallyPoint:             _rallyPointController.currentRallyPoint
                 controller:             _rallyPointController
+            }
+            UTMSPAdapterEditor{
+                id: utmspEditor
+                enabled:                _utmspEnabled
+                anchors.top:            rightControls.bottom
+                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
+                anchors.bottom:         parent.bottom
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                currentMissionItems:    _visualItems
+                myGeoFenceController:   _geoFenceController
+                flightMap:              editorMap
+                visible:                _editingLayer == _layerUTMSP
+                triggerSubmitButton:    _triggerSubmit
+            }
+        }
+
+        Connections {
+            target: utmspEditor
+            function onResponseSent(response, responseFlag) {
+                if(responseFlag===true){
+                    successPopup.opacity = 1
+                    successPopup.visible = true
+                    success_notify.text = "Flight Plan for Vehicle:" + _vehicleID +" is successfully Registered..."
+                    var disappearTimer1 = Qt.createQmlObject("import QtQuick 2.0; Timer { interval: 3000; onTriggered: {successPopup.visible = false; successPopup.opacity = 0;} }", parent, "disappearTimer");
+                    disappearTimer1.start()
+                }
+                else{
+                    failPopup.opacity = 1
+                    failPopup.visible = true
+                    fail_notify.text = "Error in Flightblender Response..." //TODO->Will pass the response message
+                    var disappearTimer4 = Qt.createQmlObject("import QtQuick 2.0; Timer { interval: 3000; onTriggered: {failPopup.visible = false; failPopup.opacity = 0;} }", parent, "disappearTimer");
+                    disappearTimer4.start()
+                }
             }
         }
 
@@ -1055,4 +1169,136 @@ Item {
             }
         }
     }
+
+    Rectangle {
+        id:             successPopup
+        x:              Math.round((mainWindow.width - width) * 0.5)
+        y:              ScreenTools.defaultFontPixelHeight
+        width:          mainWindow.width  * 0.55
+        height:         ScreenTools.defaultFontPixelHeight * 2.944
+        color:          _utmspEnabled? qgcPal.successNotifyUTMSP: qgcPal.buttonText
+        radius:         ScreenTools.defaultFontPixelHeight * 0.5
+        border.color:   qgcPal.alertBorder
+        border.width:   1
+        opacity:        0
+        visible:        false
+        Text{
+            id:             success_notify
+            width:          successPopup.width - (ScreenTools.defaultFontPixelHeight * 2)
+            x:              ScreenTools.defaultFontPixelWidth * 2
+            y:              ScreenTools.defaultFontPixelHeight * 0.667
+            textFormat:     TextEdit.RichText
+            font.pointSize: ScreenTools.defaultFontPointSize
+            font.family:    ScreenTools.demiboldFontFamily
+            wrapMode:       TextEdit.WordWrap
+            color:          qgcPal.alertText
+        }
+        Rectangle {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.top:                parent.top
+            anchors.topMargin:          -(height / 2)
+            color:                      _utmspEnabled? qgcPal.successNotifyUTMSP: qgcPal.buttonText
+            radius:                     ScreenTools.defaultFontPixelHeight * 0.25
+            border.color:               qgcPal.alertBorder
+            border.width:               1
+            width:                      statusLabel.contentWidth + _margins
+            height:                     statusLabel.contentHeight + _margins
+
+            property real _margins: ScreenTools.defaultFontPixelHeight * 0.25
+
+            QGCLabel {
+                id:                 statusLabel
+                anchors.centerIn:   parent
+                text:               qsTr("Status")
+                font.pointSize:     ScreenTools.smallFontPointSize
+                color:              qgcPal.alertText
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation { duration: 1000 }
+        }
+        function hidesuccessPopup() {
+            successPopup.visible = false;
+            successPopup.opacity = 0;
+        }
+        Behavior on visible {
+            SequentialAnimation {
+                NumberAnimation { from: 2.5; to: 3.5; duration: 500 }
+                PauseAnimation { duration: 2000 }
+                NumberAnimation { from: 3.5; to: 2.5; duration: 500 }
+            }
+        }
+    }
+    // Failure Notification Popup
+    Rectangle {
+        id:      failPopup
+        x:       Math.round((mainWindow.width - width) * 0.5)
+        y:       ScreenTools.defaultFontPixelHeight
+        width:   mainWindow.width  * 0.55
+        height:  ScreenTools.defaultFontPixelHeight  * 2.944
+        color:   qgcPal.alertBackground
+        radius:  ScreenTools.defaultFontPixelHeight * 0.5
+        opacity: 0
+        visible: false
+        Text{
+            id:fail_notify
+            width:          successPopup.width - (ScreenTools.defaultFontPixelHeight * 2)
+            x:              ScreenTools.defaultFontPixelWidth * 2
+            y:              ScreenTools.defaultFontPixelHeight * 0.667
+            textFormat:     TextEdit.RichText
+            font.pointSize: ScreenTools.defaultFontPointSize
+            font.family:    ScreenTools.demiboldFontFamily
+            wrapMode:       TextEdit.WordWrap
+            color:          qgcPal.alertText
+        }
+        Rectangle {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.top:                parent.top
+            anchors.topMargin:          -(height / 2)
+            color:                      qgcPal.alertBackground
+            radius:                     ScreenTools.defaultFontPixelHeight * 0.25
+            border.color:               qgcPal.alertBorder
+            border.width:               1
+            width:                      warningLabel.contentWidth + _margins
+            height:                     warningLabel.contentHeight + _margins
+
+            property real _margins: ScreenTools.defaultFontPixelHeight * 0.25
+
+            QGCLabel {
+                id:                 warningLabel
+                anchors.centerIn:   parent
+                text:               qsTr("Status Error")
+                font.pointSize:     ScreenTools.smallFontPointSize
+                color:              qgcPal.alertText
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation { duration: 1000 }
+        }
+        function hidefailPopup() {
+            failPopup.visible = false;
+            failPopup.opacity = 0;
+        }
+        Behavior on visible {
+            SequentialAnimation {
+                NumberAnimation { from: 2.5; to: 3.5; duration: 500 }
+                PauseAnimation { duration: 2000 }
+                NumberAnimation { from: 3.5; to: 2.5; duration: 500 }
+            }
+        }
+    }
+    Connections{
+        target: utmspEditor
+        function onTimeStampSent(timestamp, activateflag, id){
+            activationParamsSent(timestamp,activateflag, id)
+        }
+    }
+
+    Connections {
+        target: utmspEditor
+        function onVehicleIDSent(id) {
+            _vehicleID = id
+        }
+    }
+
 }
