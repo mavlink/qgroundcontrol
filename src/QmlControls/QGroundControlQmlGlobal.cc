@@ -88,6 +88,9 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 #if defined(QGC_GST_MICROHARD_ENABLED)
     _microhardManager       = toolbox->microhardManager();
 #endif
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager            = toolbox->utmspManager();
+#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)

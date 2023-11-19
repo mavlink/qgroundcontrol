@@ -43,6 +43,10 @@ class TaisyncManager;
 class MicrohardManager;
 #endif
 
+#ifdef CONFIG_UTM_ADAPTER
+class UTMSPManager;
+#endif
+
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
     Q_OBJECT
@@ -79,6 +83,9 @@ public:
 #if defined(QGC_GST_MICROHARD_ENABLED)
     MicrohardManager*           microhardManager        () { return _microhardManager; }
 #endif
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager*                utmspManager             () { return _utmspManager; }
+#endif
 
 private:
     void setChildToolboxes(void);
@@ -114,6 +121,9 @@ private:
 #endif
 #if defined(QGC_GST_MICROHARD_ENABLED)
     MicrohardManager*           _microhardManager       = nullptr;
+#endif
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager*                _utmspManager            = nullptr;
 #endif
     friend class QGCApplication;
 };
