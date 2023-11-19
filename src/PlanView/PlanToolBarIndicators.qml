@@ -68,6 +68,22 @@ Item {
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
+    // Properties of UTM adapter
+    property var    _utmspController:                    _planMasterController.geoFenceController
+    property bool   _utmspEnabled:                       QGroundControl.utmspSupported
+    property bool  responseFlag
+    // Dummy object when utm adapter flag is not enabled
+    QtObject {
+        id: dummyTarget
+        signal uploadFlagSent(bool flag)
+    }
+    Connections {
+        target: _utmspEnabled ? _utmspController: dummyTarget
+        onUploadFlagSent: function(flag) {
+            responseFlag = flag
+        }
+    }
+
     function getMissionTime() {
         if (!_missionTime) {
             return "00:00:00"
@@ -244,10 +260,18 @@ Item {
         QGCButton {
             id:          uploadButton
             text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-            enabled:     !_controllerSyncInProgress
+            enabled:     _utmspEnabled ? !_controllerSyncInProgress && responseFlag : !_controllerSyncInProgress
             visible:     !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
             primary:     _controllerDirty
-            onClicked:   _planMasterController.upload()
+            onClicked:   {
+                if(_utmspEnabled){
+                    _planMasterController.upload()
+                    QGroundControl.utmspManager.utmspVehicle.triggerUploadButton(true)
+                }
+                else{
+                    _planMasterController.upload()
+                }
+            }
 
             PropertyAnimation on opacity {
                 easing.type:    Easing.OutQuart

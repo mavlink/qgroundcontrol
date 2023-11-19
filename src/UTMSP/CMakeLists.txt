@@ -24,8 +24,24 @@ add_library(UTMSP
         UTMSPVehicle.cpp
         UTMSPManager.h
         UTMSPManager.cpp
+        utmsp.qrc
+        QGroundControl/UTMSP/UTMSPAdapterEditor.qml
+        QGroundControl/UTMSP/UTMSPMapVisuals.qml
+        QGroundControl/UTMSP/UTMSPActivationStatusBar.qml
         )
 
+        add_custom_target(UTMSPQml
+                SOURCES
+                UTMSPAdapterEditor.qml
+                UTMSPMapVisuals.qml
+        )
+
+else()
+        add_library(UTMSP
+                utmsp_dummy.qrc
+        )
+        target_include_directories(UTMSP PUBLIC dummy)
+endif()
 target_include_directories(UTMSP PUBLIC services )
 
 target_link_libraries(UTMSP
