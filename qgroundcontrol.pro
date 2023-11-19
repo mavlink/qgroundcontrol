@@ -1349,3 +1349,23 @@ LinuxBuild {
 
     INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
 }
+
+# UTM Adapter Enabled
+contains (DEFINES, CONFIG_UTM_ADAPTER) {
+
+    #-- To test with UTM Adapter Enabled Flag
+    LIBS += -lboost_system -lboost_thread -lssl -lcrypto
+    INCLUDEPATH += \
+        src/UTMSP \
+
+    HEADERS += \
+        src/UTMSP/UTMSPLogger.h \
+        src/UTMSP/UTMSPRestInterface.h \
+        src/UTMSP/UTMSPBlenderRestInterface.h \
+        src/UTMSP/UTMSPAuthorization.h
+
+    SOURCES += \
+        src/UTMSP/UTMSPRestInterface.cpp \
+        src/UTMSP/UTMSPBlenderRestInterface.cpp \
+        src/UTMSP/UTMSPAuthorization.cpp
+}
