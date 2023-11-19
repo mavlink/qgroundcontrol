@@ -1363,11 +1363,21 @@ contains (DEFINES, CONFIG_UTM_ADAPTER) {
         src/UTMSP/UTMSPRestInterface.h \
         src/UTMSP/UTMSPBlenderRestInterface.h \
         src/UTMSP/UTMSPAuthorization.h \
-        src/UTMSP/UTMSPNetworkRemoteIDManager.h
+        src/UTMSP/UTMSPNetworkRemoteIDManager.h \
+        src/UTMSP/UTMSPAircraft.h \
+        src/UTMSP/UTMSPFlightDetails.h \
+        src/UTMSP/UTMSPOperator.h \
+        src/UTMSP/UTMSPFlightPlanManager.h \
+        src/UTMSP/UTMSPServiceController.h
 
     SOURCES += \
         src/UTMSP/UTMSPRestInterface.cpp \
         src/UTMSP/UTMSPBlenderRestInterface.cpp \
         src/UTMSP/UTMSPAuthorization.cpp \
-        src/UTMSP/UTMSPNetworkRemoteIDManager.cpp
+        src/UTMSP/UTMSPNetworkRemoteIDManager.cpp \
+        src/UTMSP/UTMSPAircraft.cpp \
+        src/UTMSP/UTMSPFlightDetails.cpp \
+        src/UTMSP/UTMSPOperator.cpp \
+        src/UTMSP/UTMSPFlightPlanManager.cpp \
+        src/UTMSP/UTMSPServiceController.cpp
 }

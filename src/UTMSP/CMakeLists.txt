@@ -10,6 +10,16 @@ add_library(UTMSP
         UTMSPAuthorization.cpp
         UTMSPNetworkRemoteIDManager.h
         UTMSPNetworkRemoteIDManager.cpp
+        UTMSPAircraft.h
+        UTMSPAircraft.cpp
+        UTMSPFlightDetails.h
+        UTMSPFlightDetails.cpp
+        UTMSPOperator.h
+        UTMSPOperator.cpp
+        UTMSPFlightPlanManager.h
+        UTMSPFlightPlanManager.cpp
+        UTMSPServiceController.h
+        UTMSPServiceController.cpp
         )
 
 target_include_directories(UTMSP PUBLIC services )
