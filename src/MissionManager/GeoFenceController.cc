@@ -602,3 +602,48 @@ bool GeoFenceController::isEmpty(void) const
     return _polygons.count() == 0 && _circles.count() == 0 && !_breachReturnPoint.isValid();
 
 }
+
+#ifdef CONFIG_UTM_ADAPTER
+void GeoFenceController::loadFlightPlanData()
+{
+    QJsonArray jsonPolygonArray;
+    QJsonDocument doc;
+    QList<QGeoCoordinate> geoCoordinates ;
+
+    for (int i = 0; i < _polygons.count(); i++) {
+        QJsonObject jsonPolygon;
+        QGCFencePolygon* fencePolygon = _polygons.value<QGCFencePolygon*>(i);
+        fencePolygon->saveToJson(jsonPolygon);
+        jsonPolygonArray.append(jsonPolygon);
+    }
+    doc.setArray(jsonPolygonArray);
+    QString dataToString(doc.toJson());
+
+    // Parse the JSON string into a QJsonArray
+    QJsonDocument polygonDoc = QJsonDocument::fromJson(dataToString.toUtf8());
+    QJsonArray jsonArray = polygonDoc.array();
+    QJsonObject jsonObject = jsonArray.at(0).toObject();
+    QJsonArray polygonArray = jsonObject.value("polygon").toArray();
+
+    for (int i = 0; i < polygonArray.size(); ++i) {
+        QJsonArray pointArray = polygonArray.at(i).toArray();
+        double latitude = pointArray.at(0).toDouble();
+        double longitude = pointArray.at(1).toDouble();
+        QGeoCoordinate geoCoordinate(latitude, longitude);
+        geoCoordinates.append(geoCoordinate);
+    }
+
+    // Append the first coordinate again to the end of the list
+    if (!geoCoordinates.isEmpty()) {
+        geoCoordinates.append(geoCoordinates.first());
+    }
+
+    emit polygonBoundarySent(geoCoordinates);
+}
+bool GeoFenceController::loadUploadFlag()
+{
+    emit uploadFlagSent(true);
+
+    return true;
+}
+#endif

@@ -1,79 +1,75 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-import QtQuick
-import QtQuick.Controls
-import QtLocation
-import QtPositioning
-import QtQuick.Dialogs
-import QtQuick.Layouts
+import QtQuick                          2.11
+import QtQuick.Controls                 2.4
+import QtLocation                       5.3
+import QtPositioning                    5.3
+import QtQuick.Dialogs                  1.2
+import QtQuick.Layouts                  1.11
 
-import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.Controls
-import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
+import QGroundControl                   1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.Palette           1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.FlightMap         1.0
+import QGroundControl.ShapeFileHelper   1.0
 
-/// QGCMapPolygon map visuals
 Item {
     id: _root
+    property var             mapControl
+    property var             mapPolygon
+    property var             missionItems
+    property bool            interactive         : mapPolygon.interactive
+    property color           interiorColor       : "transparent"
+    property color           altColor            : "transparent"
+    property real            interiorOpacity     : 1
+    property int             borderWidth         : 0
+    property color           borderColor         : "black"
+    property string          _instructionText    : _polygonToolsText
+    property var             _StoreCoordinates  : []
+    property real            _zorderDragHandle   : QGroundControl.zOrderMapItems + 3
+    property real            _zorderSplitHandle  : QGroundControl.zOrderMapItems + 2
+    property real            _zorderCenterHandle : QGroundControl.zOrderMapItems + 1
+    readonly property string _polygonToolsText   : qsTr("Option")
+    readonly property string _fenceText          : qsTr("Click on the map to add vertices. Click 'Done Fencing' when finished.")
+    property string          someParameter       : "defaultParameter"
+    property real            radius              : ScreenTools.defaultFontPixelHeight * 4.44     //Automatic Geofence Radius
+    property real            centerX             //Initial Drone X-Position
+    property real            centerY             //Initial Drone Y-Position
+    property bool            resetChecked
 
-    property var    mapControl                                  ///< Map control to place item in
-    property var    mapPolygon                                  ///< QGCMapPolygon object
-    property bool   interactive:        mapPolygon.interactive
-    property color  interiorColor:      "transparent"
-    property color  altColor:           "transparent"
-    property real   interiorOpacity:    1
-    property int    borderWidth:        0
-    property color  borderColor:        "black"
-
-    property bool   _circleMode:                false
-    property real   _circleRadius
-    property bool   _circleRadiusDrag:          false
-    property var    _circleRadiusDragCoord:     QtPositioning.coordinate()
-    property bool   _editCircleRadius:          false
-    property string _instructionText:           _polygonToolsText
-    property var    _savedVertices:             [ ]
-    property bool   _savedCircleMode
-    property bool   _isVertexBeingDragged:      false
-
-    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
-    property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
-    property real _zorderCenterHandle:  QGroundControl.zOrderMapItems + 1   // Lowest such that drag or split takes precedence
-
-    readonly property string _polygonToolsText: qsTr("Polygon Tools")
-    readonly property string _traceText:        qsTr("Click in the map to add vertices. Click 'Done Tracing' when finished.")
-
+    //Create Geofence Polygon Visuals
     function addCommonVisuals() {
         if (_objMgrCommonVisuals.empty) {
             _objMgrCommonVisuals.createObject(polygonComponent, mapControl, true)
         }
     }
 
+    //Delete Geofence Polygon Visuals
     function removeCommonVisuals() {
         _objMgrCommonVisuals.destroyObjects()
     }
 
+    //Create Editing tools for Polygon Visuals
     function addEditingVisuals() {
         if (_objMgrEditingVisuals.empty) {
-            _objMgrEditingVisuals.createObjects(
-                [ dragHandlesComponent, splitHandlesComponent, centerDragHandleComponent, edgeLengthHandlesComponent ], 
-                mapControl, 
-                false /* addToMap */)
+            _objMgrEditingVisuals.createObjects([ dragHandlesComponent, splitHandlesComponent, centerDragHandleComponent ], mapControl, false /* addToMap */)
         }
     }
 
+    //Delete Editing tools for Polygon Visuals
     function removeEditingVisuals() {
         _objMgrEditingVisuals.destroyObjects()
     }
 
+    // Create a Toolbar for Polygon Visuals
     function addToolbarVisuals() {
         if (_objMgrToolVisuals.empty) {
             var toolbar = _objMgrToolVisuals.createObject(toolbarComponent, mapControl)
@@ -81,14 +77,9 @@ Item {
         }
     }
 
+    // Delete a Toolbar for Polygon Visuals
     function removeToolVisuals() {
         _objMgrToolVisuals.destroyObjects()
-    }
-
-    function addCircleVisuals() {
-        if (_objMgrCircleVisuals.empty) {
-            _objMgrCircleVisuals.createObject(radiusVisualsComponent, mapControl)
-        }
     }
 
     /// Calculate the default/initial 4 sided polygon
@@ -100,57 +91,209 @@ Item {
         rect.width *= 0.75
         rect.height *= 0.75
 
-        var centerCoord =       mapControl.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
-        var topLeftCoord =      mapControl.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
-        var topRightCoord =     mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
-        var bottomLeftCoord =   mapControl.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
+        var centerCoord      =  mapControl.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
+        var topLeftCoord     =  mapControl.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
+        var topRightCoord    =  mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
+        var bottomLeftCoord  =  mapControl.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
         var bottomRightCoord =  mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
 
         // Initial polygon has max width and height of 3000 meters
-        var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
+        var halfWidthMeters  =  Math.min(topLeftCoord.distanceTo(topRightCoord), 3000) / 2
         var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), 3000) / 2
-        topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
-        topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
-        bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
-        bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
+        topLeftCoord         =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
+        topRightCoord        =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
+        bottomLeftCoord      =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
+        bottomRightCoord     =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
+        console.log([topLeftCoord, topRightCoord, bottomRightCoord, bottomLeftCoord])
+        return [topLeftCoord, topRightCoord, bottomRightCoord, bottomLeftCoord]
+    }
 
-        return [ topLeftCoord, topRightCoord, bottomRightCoord, bottomLeftCoord  ]
+    // Generate Automatic Geofence
+    function optimalPolygonVertices() {
+
+        var firstPoints = []
+        var lastPoints = []
+        var topCoordList = []
+        var bottomCoordList = []
+        var arrayPolygon = []
+        var newPolyCoords = []
+        var Mt = []
+        var Ct = []
+        var Mb = []
+        var Cb = []
+        var thetaList = []
+        var Xt = []
+        var Yt = []
+        var Xb = []
+        var Yb = []
+        var appendedListx =[]
+        var appendedListy =[]
+        var X_Top = []
+        var Y_Top = []
+        var X_Bottom = []
+        var Y_Bottom = []
+        var coordinateListx = []
+        var coordinateListy = []
+
+        centerX = Math.round(mapControl.fromCoordinate(missionItems.get(1).coordinate,false).x)
+        centerY = Math.round(mapControl.fromCoordinate(missionItems.get(1).coordinate,false).y)
+        for (var r = 0; r <  missionItems.count - 2; r++) {
+            var item = missionItems.get(r + 2)
+            var point = mapControl.fromCoordinate(item.coordinate,false)
+            coordinateListx.push(Math.round(point.x))
+            coordinateListy.push(Math.round(point.y))
+        }
+
+        var lastcenterX = coordinateListx[coordinateListx.length - 1]
+        var lastcenterY = coordinateListy[coordinateListy.length - 1]
+        coordinateListx.splice(0, 0, centerX)
+        coordinateListy.splice(0, 0, centerY)
+
+        for (var m = 1; m < coordinateListx.length - 1; m++){
+            appendedListx.push(coordinateListx[m])
+            appendedListx.push(coordinateListx[m])
+            appendedListy.push(coordinateListy[m])
+            appendedListy.push(coordinateListy[m])
+        }
+
+        appendedListx.splice(0, 0, centerX)
+        appendedListx.splice(appendedListx.length, 0, coordinateListx[coordinateListx.length - 1])
+        appendedListy.splice(0, 0, centerY)
+        appendedListy.splice(appendedListy.length, 0, coordinateListy[coordinateListy.length - 1])
+
+        for (var n = 0; n < coordinateListx.length - 1; n++){
+
+            var theta = Math.atan((coordinateListy[n + 1] - coordinateListy[n]) / (coordinateListx[n + 1] - coordinateListx[n]))
+
+            if(coordinateListx[n + 1] > coordinateListx[n] && coordinateListy[n + 1] < coordinateListy[n] ){
+                thetaList.push(theta)
+            }
+
+            else if(coordinateListx[n + 1] > coordinateListx[n] && coordinateListy[n + 1] > coordinateListy[n] && theta > 0){
+                thetaList.push(theta)
+            }
+
+            else if(coordinateListx[n + 1] < coordinateListx[n] && coordinateListy[n + 1] > coordinateListy[n] && theta > 0){
+                var newtheta1 = ((theta * (180 / Math.PI)) - 180) * (Math.PI / 180)
+                thetaList.push(newtheta1)
+            }
+
+            else {
+                var newtheta2 = ((theta * (180 / Math.PI)) + 180) * (Math.PI / 180)
+                thetaList.push(newtheta2)
+            }
+        }
+
+        for (var o = 0; o < appendedListx.length-1; o += 2){
+
+                var xt1 = appendedListx[o] - 80 * Math.sin(thetaList[o / 2])
+                var yt1 = appendedListy[o] + 80 * Math.cos(thetaList[o / 2])
+
+                var xt2 = appendedListx[o + 1] - 80 * Math.sin(thetaList[o / 2])
+                var yt2 = appendedListy[o + 1] + 80 * Math.cos(thetaList[o / 2])
+
+                var xb1 = appendedListx[o] + 80 * Math.sin(thetaList[o / 2])
+                var yb1 = appendedListy[o] - 80 * Math.cos(thetaList[o / 2])
+
+                var xb2 = appendedListx[o+1] + 80 * Math.sin(thetaList[o / 2])
+                var yb2 = appendedListy[o+1] - 80 * Math.cos(thetaList[o / 2])
+
+                Xt.push(xt1)
+                Xt.push(xt2)
+                Xb.push(xb1)
+                Xb.push(xb2)
+
+                Yt.push(yt1)
+                Yt.push(yt2)
+                Yb.push(yb1)
+                Yb.push(yb2)
+        }
+
+        for (var q = 0; q < Xt.length - 1; q += 2){
+
+            var mt = (Yt[q] - Yt[q + 1]) / (Xt[q] - Xt[q + 1])
+            var ct = (-mt * Xt[q + 1]) + Yt[q + 1]
+            Mt.push(mt)
+            Ct.push(ct)
+
+            var mb = (Yb[q] - Yb[q + 1]) / (Xb[q] - Xb[q + 1])
+            var cb = (-mb * Xb[q + 1]) + Yb[q + 1]
+            Mb.push(mb)
+            Cb.push(cb)
+        }
+
+        for (var p = 0; p < Mt.length - 1; p++){
+
+            var xTop = (Ct[p + 1] - Ct[p]) / (Mt[p] - Mt[p + 1])
+            var yTop = Mt[p] * xTop + Ct[p]
+
+            var xBottom = (Cb[p + 1] - Cb[p]) / (Mb[p] - Mb[p + 1])
+            var yBottom = Mb[p] * xBottom + Cb[p]
+
+            X_Top.push(xTop)
+            Y_Top.push(yTop)
+            X_Bottom.push(xBottom)
+            Y_Bottom.push(yBottom)
+        }
+
+        X_Top.splice(0, 0, Xt[0])
+        Y_Top.splice(0, 0, Yt[0])
+
+        X_Bottom.splice(0, 0, Xb[0])
+        Y_Bottom.splice(0, 0, Yb[0])
+
+        X_Top.splice(Xt.length - 1, 0, Xt[Xt.length - 1])
+        Y_Top.splice(Yt.length - 1, 0, Yt[Yt.length - 1])
+
+        X_Bottom.splice(Yb.length - 1, 0,  Xb[Xb.length - 1])
+        Y_Bottom.splice(Yb.length - 1, 0, Yb[Yb.length - 1])
+
+
+        for (var i = 90 + (thetaList[0] * (180 / Math.PI)); i <= 270+(thetaList[0] * (180 / Math.PI)); i += 9) {
+            var anglef = i * Math.PI / 180.0
+            var xf = centerX + radius * Math.cos(anglef)
+            var yf = centerY + radius * Math.sin(anglef)
+            firstPoints.push(mapControl.toCoordinate(Qt.point(xf, yf)))
+        }
+
+        for (var j = 270 + (thetaList[thetaList.length-1] * (180 / Math.PI)); j <= 450 + (thetaList[thetaList.length - 1]*(180/Math.PI)); j += 9) {
+            var anglel = j * Math.PI / 180.0
+            var xl = lastcenterX + radius * Math.cos(anglel)
+            var yl = lastcenterY + radius * Math.sin(anglel)
+            lastPoints.push(mapControl.toCoordinate(Qt.point(xl, yl)))
+        }
+
+        for (var k = 0; k <= X_Top.length - 1; k++) {
+            var x_top = X_Top[k]
+            var y_top = Y_Top[k]
+
+            var x_bottom = X_Bottom[k]
+            var y_bottom = Y_Bottom[k]
+
+            var topCoord = mapControl.toCoordinate(Qt.point(x_top, y_top), false /* clipToViewPort */)
+            var bottomCoord = mapControl.toCoordinate(Qt.point(x_bottom, y_bottom), false /* clipToViewPort */)
+            topCoordList.push(topCoord)
+            bottomCoordList.push(bottomCoord)
+        }
+
+        arrayPolygon.push(topCoordList)
+        arrayPolygon.push(lastPoints.reverse())
+        arrayPolygon.push(bottomCoordList.reverse())
+        arrayPolygon.push(firstPoints.reverse())
+
+        for (var l = 0; l < arrayPolygon.length; l++) {
+            newPolyCoords = newPolyCoords.concat(arrayPolygon[l])
+        }
+
+        return newPolyCoords;
     }
 
     /// Reset polygon back to initial default
     function _resetPolygon() {
         mapPolygon.beginReset()
         mapPolygon.clear()
-        mapPolygon.appendVertices(defaultPolygonVertices())
+        mapPolygon.appendVertices(optimalPolygonVertices())
         mapPolygon.endReset()
-        _circleMode = false
-    }
-
-    function _createCircularPolygon(center, radius) {
-        var unboundCenter = center.atDistanceAndAzimuth(0, 0)
-        var segments = 16
-        var angleIncrement = 360 / segments
-        var angle = 0
-        mapPolygon.beginReset()
-        mapPolygon.clear()
-        _circleRadius = radius
-        for (var i=0; i<segments; i++) {
-            var vertex = unboundCenter.atDistanceAndAzimuth(radius, angle)
-            mapPolygon.appendVertex(vertex)
-            angle += angleIncrement
-        }
-        mapPolygon.endReset()
-        _circleMode = true
-    }
-
-    /// Reset polygon to a circle which fits within initial polygon
-    function _resetCircle() {
-        var initialVertices = defaultPolygonVertices()
-        var width = initialVertices[0].distanceTo(initialVertices[1])
-        var height = initialVertices[1].distanceTo(initialVertices[2])
-        var radius = Math.min(width, height) / 2
-        var center = initialVertices[0].atDistanceAndAzimuth(width / 2, 90).atDistanceAndAzimuth(height / 2, 180)
-        _createCircularPolygon(center, radius)
     }
 
     function _handleInteractiveChanged() {
@@ -165,38 +308,29 @@ Item {
     }
 
     function _saveCurrentVertices() {
-        _savedVertices = [ ]
-        _savedCircleMode = _circleMode
+        _StoreCoordinates = [ ]
         for (var i=0; i<mapPolygon.count; i++) {
-            _savedVertices.push(mapPolygon.vertexCoordinate(i))
+            _StoreCoordinates.push(mapPolygon.vertexCoordinate(i))
         }
     }
 
     function _restorePreviousVertices() {
         mapPolygon.beginReset()
         mapPolygon.clear()
-        for (var i=0; i<_savedVertices.length; i++) {
-            mapPolygon.appendVertex(_savedVertices[i])
+        for (var i=0; i<_StoreCoordinates.length; i++) {
+            mapPolygon.appendVertex(_StoreCoordinates[i])
         }
         mapPolygon.endReset()
-        _circleMode = _savedCircleMode
     }
 
     onInteractiveChanged: _handleInteractiveChanged()
 
-    on_CircleModeChanged: {
-        if (_circleMode) {
-            addCircleVisuals()
-        } else {
-            _objMgrCircleVisuals.destroyObjects()
-        }
-    }
 
     Connections {
         target: mapPolygon
         onTraceModeChanged: {
             if (mapPolygon.traceMode) {
-                _instructionText = _traceText
+                _instructionText = _fenceText
                 _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
             } else {
                 _instructionText = _polygonToolsText
@@ -219,17 +353,6 @@ Item {
 
     QGCPalette { id: qgcPal }
 
-    KMLOrSHPFileDialog {
-        id:             kmlOrSHPLoadDialog
-        title:          qsTr("Select Polygon File")
-
-        onAcceptedForLoad: (file) => {
-            mapPolygon.loadKMLOrSHPFile(file)
-            mapFitFunctions.fitMapViewportToMissionItems()
-            close()
-        }
-    }
-
     QGCMenu {
         id: menu
 
@@ -247,7 +370,6 @@ Item {
 
         QGCMenuItem {
             id:             removeVertexItem
-            visible:        !_circleMode
             text:           qsTr("Remove vertex")
             onTriggered: {
                 if (menu._editingVertexIndex >= 0) {
@@ -261,20 +383,13 @@ Item {
         }
 
         QGCMenuItem {
-            text:           qsTr("Set radius..." )
-            visible:        _circleMode
-            onTriggered:    _editCircleRadius = true
-        }
-
-        QGCMenuItem {
             text:           qsTr("Edit position..." )
-            visible:        _circleMode
             onTriggered:    editCenterPositionDialog.createObject(mainWindow).open()
         }
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
-            visible:        !_circleMode && menu._editingVertexIndex >= 0
+            visible:        menu._editingVertexIndex >= 0
             onTriggered:    editVertexPositionDialog.createObject(mainWindow).open()
         }
     }
@@ -292,73 +407,12 @@ Item {
     }
 
     Component {
-        id: edgeLengthHandleComponent
-
-        MapQuickItem {
-            id:             mapQuickItem
-            anchorPoint.x:  sourceItem.width / 2
-            anchorPoint.y:  sourceItem.height / 2
-            visible:        !_circleMode
-
-            property int vertexIndex
-            property real distance
-
-            property var _unitsConversion: QGroundControl.unitsConversion
-
-            sourceItem: Text {
-              text:     _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(distance).toFixed(1) + " " +
-                        _unitsConversion.appSettingsHorizontalDistanceUnitsString
-              color:    "white"
-            }
-        }
-    }
-
-    Component {
-        id: edgeLengthHandlesComponent
-
-        Repeater {
-            model: _isVertexBeingDragged ? mapPolygon.path : undefined
-
-            delegate: Item {
-                property var _edgeLengthHandle
-                property var _vertices:     mapPolygon.path
-
-                function _setHandlePosition() {
-                    var nextIndex = index + 1
-                    if (nextIndex > _vertices.length - 1) {
-                        nextIndex = 0
-                    }
-                    var distance = _vertices[index].distanceTo(_vertices[nextIndex])
-                    var azimuth = _vertices[index].azimuthTo(_vertices[nextIndex])
-                    _edgeLengthHandle.coordinate =_vertices[index].atDistanceAndAzimuth(distance / 3, azimuth)
-                    _edgeLengthHandle.distance = distance
-                }
-
-                Component.onCompleted: {
-                    _edgeLengthHandle = edgeLengthHandleComponent.createObject(mapControl)
-                    _edgeLengthHandle.vertexIndex = index
-                    _setHandlePosition()
-                    mapControl.addMapItem(_edgeLengthHandle)
-                }
-
-                Component.onDestruction: {
-                    if (_edgeLengthHandle) {
-                        _edgeLengthHandle.destroy()
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
         id: splitHandleComponent
 
         MapQuickItem {
             id:             mapQuickItem
             anchorPoint.x:  sourceItem.width / 2
             anchorPoint.y:  sourceItem.height / 2
-            visible:        !_circleMode
-
             property int vertexIndex
 
             sourceItem: SplitIndicator {
@@ -409,12 +463,10 @@ Item {
         id: dragAreaComponent
 
         MissionItemIndicatorDrag {
-            id:             dragArea
-            mapControl:     _root.mapControl
-            z:              _zorderDragHandle
-            visible:        !_circleMode
-            onDragStart:    _isVertexBeingDragged = true
-            onDragStop:     { _isVertexBeingDragged = false; mapPolygon.verifyClockwiseWinding() }
+            id:         dragArea
+            mapControl: _root.mapControl
+            z:          _zorderDragHandle
+            onDragStop: mapPolygon.verifyClockwiseWinding()
 
             property int polygonVertex
 
@@ -470,7 +522,7 @@ Item {
             anchorPoint.x:  dragHandle.width  / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              _zorderDragHandle
-            visible:        !_circleMode
+
 
             property int polygonVertex
 
@@ -590,21 +642,15 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Basic")
+                text:               qsTr("Automatic")
                 visible:            !mapPolygon.traceMode
                 onClicked:          _resetPolygon()
             }
 
-            QGCButton {
-                _horizontalPadding: 0
-                text:               qsTr("Circular")
-                visible:            !mapPolygon.traceMode
-                onClicked:          _resetCircle()
-            }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               mapPolygon.traceMode ? qsTr("Done Tracing") : qsTr("Trace")
+                text:               mapPolygon.traceMode ? qsTr("Done fencing") : qsTr("Mannual")
                 onClicked: {
                     if (mapPolygon.traceMode) {
                         if (mapPolygon.count < 3) {
@@ -613,21 +659,15 @@ Item {
                         mapPolygon.traceMode = false
                     } else {
                         _saveCurrentVertices()
-                        _circleMode = false
                         mapPolygon.traceMode = true
-                        mapPolygon.clear();
+                        mapPolygon.clear()
                     }
                 }
             }
 
-            QGCButton {
-                _horizontalPadding: 0
-                text:               qsTr("Load KML/SHP...")
-                onClicked:          kmlOrSHPLoadDialog.openForLoad()
-                visible:            !mapPolygon.traceMode
-            }
         }
     }
+
 
     // Mouse area to capture clicks for tracing a polygon
     Component {
@@ -635,19 +675,12 @@ Item {
 
         MouseArea {
             anchors.fill:       mapControl
-            preventStealing:    true
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
-            onClicked: (mouse) => {
-                if(_utmspEnabled){
-                    if (mouse.button === Qt.LeftButton) {
-                        mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
-                    }
-                }
-                else{
-                    if (mouse.button === Qt.LeftButton && _root.interactive) {
-                        mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
-                    }
+            onClicked: {
+                if (mouse.button === Qt.LeftButton) {
+                    mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
+
                 }
             }
         }
@@ -672,57 +705,4 @@ Item {
             }
         }
     }
-
-    Component {
-        id: radiusDragAreaComponent
-
-        MissionItemIndicatorDrag {
-            mapControl: _root.mapControl
-
-            property real _lastRadius
-
-            onItemCoordinateChanged: {
-                var radius = mapPolygon.center.distanceTo(itemCoordinate)
-                // Prevent signalling re-entrancy
-                if (!_circleRadiusDrag && Math.abs(radius - _lastRadius) > 0.1) {
-                    _circleRadiusDrag = true
-                    _createCircularPolygon(mapPolygon.center, radius)
-                    _circleRadiusDragCoord = itemCoordinate
-                    _circleRadiusDrag = false
-                    _lastRadius = radius
-                }
-            }
-        }
-    }
-
-    Component {
-        id: radiusVisualsComponent
-
-        Item {
-            property var    circleCenterCoord:  mapPolygon.center
-
-            function _calcRadiusDragCoord() {
-                _circleRadiusDragCoord = circleCenterCoord.atDistanceAndAzimuth(_circleRadius, 90)
-            }
-
-            onCircleCenterCoordChanged: {
-                if (!_circleRadiusDrag) {
-                    _calcRadiusDragCoord()
-                }
-            }
-
-            QGCDynamicObjectManager {
-                id: _objMgr
-            }
-
-            Component.onCompleted: {
-                _calcRadiusDragCoord()
-                var radiusDragHandle = _objMgr.createObject(radiusDragHandleComponent, mapControl, true)
-                radiusDragHandle.coordinate = Qt.binding(function() { return _circleRadiusDragCoord })
-                var radiusDragIndicator = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": _circleRadiusDragCoord })
-                _objMgr.addObject(radiusDragIndicator)
-            }
-        }
-    }
 }
-
