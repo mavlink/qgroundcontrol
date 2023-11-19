@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="QGroundControl/UTMSP/UTMSPAdapterEditor.qml">UTMSPAdapterEditor.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPMapVisuals.qml">UTMSPMapVisuals.qml</file>
+        <file alias="QGroundControl/UTMSP/qmldir">qmldir</file>
+        <file alias="QGroundControl/UTMSP/UTMSPMapPolygonVisuals.qml">UTMSPMapPolygonVisuals.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPActivationStatusBar.qml">UTMSPActivationStatusBar.qml</file>
+    </qresource>
+    <qresource prefix="/utmsp">
+        <file alias="red.png">images/red.png</file>
+        <file alias="green.png">images/green.png</file>
+        <file alias="time.svg">images/time.svg</file>
+        <file alias="date.svg">images/date.svg</file>
+        <file alias="load.gif">images/load.gif</file>
+        <file alias="timer.gif">images/timer.gif</file>
+    </qresource>
+</RCC>
