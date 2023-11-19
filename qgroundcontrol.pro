@@ -1362,10 +1362,12 @@ contains (DEFINES, CONFIG_UTM_ADAPTER) {
         src/UTMSP/UTMSPLogger.h \
         src/UTMSP/UTMSPRestInterface.h \
         src/UTMSP/UTMSPBlenderRestInterface.h \
-        src/UTMSP/UTMSPAuthorization.h
+        src/UTMSP/UTMSPAuthorization.h \
+        src/UTMSP/UTMSPNetworkRemoteIDManager.h
 
     SOURCES += \
         src/UTMSP/UTMSPRestInterface.cpp \
         src/UTMSP/UTMSPBlenderRestInterface.cpp \
-        src/UTMSP/UTMSPAuthorization.cpp
+        src/UTMSP/UTMSPAuthorization.cpp \
+        src/UTMSP/UTMSPNetworkRemoteIDManager.cpp
 }
