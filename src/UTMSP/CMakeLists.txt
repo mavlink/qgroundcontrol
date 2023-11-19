@@ -8,7 +8,11 @@ add_library(UTMSP
         UTMSPBlenderRestInterface.cpp
         UTMSPAuthorization.h
         UTMSPAuthorization.cpp
+        UTMSPNetworkRemoteIDManager.h
+        UTMSPNetworkRemoteIDManager.cpp
         )
+
+target_include_directories(UTMSP PUBLIC services )
 
 target_link_libraries(UTMSP
 
