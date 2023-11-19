@@ -20,6 +20,10 @@ add_library(UTMSP
         UTMSPFlightPlanManager.cpp
         UTMSPServiceController.h
         UTMSPServiceController.cpp
+        UTMSPVehicle.h
+        UTMSPVehicle.cpp
+        UTMSPManager.h
+        UTMSPManager.cpp
         )
 
 target_include_directories(UTMSP PUBLIC services )
