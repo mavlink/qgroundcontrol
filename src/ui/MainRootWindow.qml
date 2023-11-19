@@ -20,6 +20,8 @@ import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
+import QGroundControl.UTMSP              1.0
+
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
@@ -27,6 +29,12 @@ ApplicationWindow {
     minimumWidth:   ScreenTools.isMobile ? Screen.width  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
     minimumHeight:  ScreenTools.isMobile ? Screen.height : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
+
+    property string _startTimeStamp
+    property bool   _showVisible
+    property string _flightID
+    property bool   _utmspSendActTrigger
+    property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
         //-- Full screen on mobile or tiny screens
@@ -810,5 +818,28 @@ ApplicationWindow {
                 source = ""
             }
         }
+    }
+
+    Connections{
+         target: planView
+         function onActivationParamsSent(timestamp,activate,flightID){
+             _startTimeStamp = timestamp
+             _showVisible = activate
+             _flightID = flightID
+         }
+     }
+    Connections{
+         target: activationbar
+         function onActivationTriggered(value){
+              _utmspSendActTrigger= value
+         }
+    }
+
+    UTMSPActivationStatusBar{
+         id:                         activationbar
+         activationStartTimestamp:  _startTimeStamp
+         activationApproval:        _showVisible && planView.visible == false && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
+         flightID:                  _flightID
+         anchors.fill:              parent
     }
 }
