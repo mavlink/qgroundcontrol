@@ -45,6 +45,10 @@
 #include CUSTOMHEADER
 #endif
 
+#ifdef CONFIG_UTM_ADAPTER
+#include "UTMSPManager.h"
+#endif
+
 QGCToolbox::QGCToolbox(QGCApplication* app)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
@@ -78,6 +82,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #endif
 #if defined(QGC_GST_MICROHARD_ENABLED)
     _microhardManager       = new MicrohardManager          (app, this);
+#endif
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager            = new UTMSPManager               (app, this);
 #endif
 }
 
@@ -114,6 +121,9 @@ void QGCToolbox::setChildToolboxes(void)
 #endif
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
+#endif
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager->setToolbox(this);
 #endif
 }
 

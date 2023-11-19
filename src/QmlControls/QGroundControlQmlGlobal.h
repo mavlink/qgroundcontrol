@@ -31,6 +31,9 @@ class TaisyncManager;
 #else
 class MicrohardManager;
 #endif
+#ifdef CONFIG_UTM_ADAPTER
+#include "UTMSPManager.h"
+#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -116,6 +119,12 @@ public:
     Q_PROPERTY(PairingManager*      pairingManager          READ pairingManager         CONSTANT)
 #endif
 
+    Q_PROPERTY(bool              utmspSupported           READ    utmspSupported              CONSTANT)
+
+#ifdef CONFIG_UTM_ADAPTER
+    Q_PROPERTY(UTMSPManager*     utmspManager             READ    utmspManager                CONSTANT)
+#endif
+
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -187,6 +196,10 @@ public:
     bool                    microhardSupported  () { return false; }
 #endif
 
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager*            utmspManager         ()  {return _utmspManager;}
+#endif
+
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -230,6 +243,12 @@ public:
 
     QString qgcVersion              (void) const;
 
+#ifdef CONFIG_UTM_ADAPTER
+    bool    utmspSupported() { return true; }
+#else
+    bool    utmspSupported() { return false; }
+#endif
+
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -261,6 +280,9 @@ private:
     QmlUnitsConversion      _unitsConversion;
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager*         _pairingManager         = nullptr;
+#endif
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager*            _utmspManager;
 #endif
 
     bool                    _skipSetupPage          = false;
