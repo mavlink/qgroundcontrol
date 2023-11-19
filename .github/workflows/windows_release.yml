@@ -72,7 +72,8 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
-            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
+            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-msvc-x86_64-1.18.1.msi /passive /L*V ${{ runner.temp }}\gstreamer.log ADDLOCAL=ALL
+            cat ${{ runner.temp }}\gstreamer.log
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
 
       - name: Create build directory
