@@ -1073,22 +1073,22 @@ void LinkManager::_updateAirLinkState(const QString &login, const QString &pass)
 
 void LinkManager::sendLoginMsgToAirLink(LinkInterface* link, const QString &login)
 {
-    __mavlink_airlink_auth_t auth;
-    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-    mavlink_message_t mavmsg;
+//    __mavlink_airlink_auth_t auth;
+//    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+//    mavlink_message_t mavmsg;
 
-    const QString pass = qgcApp()->toolbox()->settingsManager()->appSettings()->passAirLink()->rawValueString();
+//    const QString pass = qgcApp()->toolbox()->settingsManager()->appSettings()->passAirLink()->rawValueString();
 
-    memset(&auth.login, 0, sizeof(auth.login));
-    memset(&auth.password, 0, sizeof(auth.password));
-    strcpy(auth.login, login.toUtf8().constData());
-    strcpy(auth.password, pass.toUtf8().constData());
+//    memset(&auth.login, 0, sizeof(auth.login));
+//    memset(&auth.password, 0, sizeof(auth.password));
+//    strcpy(auth.login, login.toUtf8().constData());
+//    strcpy(auth.password, pass.toUtf8().constData());
 
-    mavlink_msg_airlink_auth_pack(0, 0, &mavmsg, auth.login, auth.password);
-    uint16_t len = mavlink_msg_to_send_buffer(buffer, &mavmsg);
-    link->writeBytesThreadSafe((const char *)buffer, len);
+//    mavlink_msg_airlink_auth_pack(0, 0, &mavmsg, auth.login, auth.password);
+//    uint16_t len = mavlink_msg_to_send_buffer(buffer, &mavmsg);
+//    link->writeBytesThreadSafe((const char *)buffer, len);
 
-    qDebug() << (link->isConnected() ? "Connected" : "Not connected");
-    qDebug() << login.toUtf8().constData();
-    qDebug() << pass.toUtf8().constData();
+//    qDebug() << (link->isConnected() ? "Connected" : "Not connected");
+//    qDebug() << login.toUtf8().constData();
+//    qDebug() << pass.toUtf8().constData();
 }
