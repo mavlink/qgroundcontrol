@@ -260,12 +260,16 @@ Rectangle {
                 id:                 joystickButton
                 imageResource:      "/qmlimages/Joystick.png"
                 setupIndicator:     true
-                setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
+                setupComplete:      _activeJoystick ? _activeJoystick.calibrated || _buttonsOnly : false
                 exclusiveGroup:     setupButtonGroup
                 visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
-                text:               qsTr("Joystick")
+                text:               _forcedToButtonsOnly ? qsTr("Buttons") : qsTr("Joystick")
                 Layout.fillWidth:   true
                 onClicked:          showPanel(this, "JoystickConfig.qml")
+
+                property var    _activeJoystick:        joystickManager.activeJoystick
+                property bool   _buttonsOnly:           _activeJoystick ? _activeJoystick.axisCount == 0 : false
+                property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }
 
             Repeater {

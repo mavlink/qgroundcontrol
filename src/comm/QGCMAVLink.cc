@@ -130,7 +130,7 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
     case MAV_TYPE_VTOL_TILTROTOR:
     case MAV_TYPE_VTOL_FIXEDROTOR:
     case MAV_TYPE_VTOL_TAILSITTER:
-    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_TILTWING:
     case MAV_TYPE_VTOL_RESERVED5:
         return VehicleClassVTOL;
     case MAV_TYPE_FIXED_WING:

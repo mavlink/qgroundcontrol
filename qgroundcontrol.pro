@@ -182,13 +182,12 @@ contains (CONFIG, QGC_DISABLE_PX4_PLUGIN_FACTORY) {
 
 # Bluetooth
 contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
-    message("Skipping support for Bluetooth (manual override from command line)")
+    message("Bluetooth support disabled (manual override from command line)")
     DEFINES -= QGC_ENABLE_BLUETOOTH
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_BLUETOOTH) {
-    message("Skipping support for Bluetooth (manual override from user_config.pri)")
+    message("Bluetooth support disabled (manual override from user_config.pri)")
     DEFINES -= QGC_ENABLE_BLUETOOTH
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_BLUETOOTH) {
-    message("Including support for Bluetooth (manual override from user_config.pri)")
     DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
@@ -725,6 +724,7 @@ HEADERS += \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/RemoteIDManager.h \
     src/Vehicle/StateMachine.h \
+    src/Vehicle/StandardModes.h \
     src/Vehicle/SysStatusSensorInfo.h \
     src/Vehicle/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
@@ -745,6 +745,8 @@ HEADERS += \
     src/Vehicle/VehicleVibrationFactGroup.h \
     src/Vehicle/VehicleWindFactGroup.h \
     src/Vehicle/VehicleHygrometerFactGroup.h \
+    src/Vehicle/VehicleGeneratorFactGroup.h \
+    src/Vehicle/VehicleEFIFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -797,11 +799,7 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
-contains(DEFINES, NO_SERIAL_LINK) {
-    CONFIG += NoSerialBuild
-}
-
-!NoSerialBuild {
+!contains(DEFINES, NO_SERIAL_LINK) {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
     src/comm/SerialLink.h \
@@ -984,6 +982,7 @@ SOURCES += \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/RemoteIDManager.cc \
     src/Vehicle/StateMachine.cc \
+    src/Vehicle/StandardModes.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
     src/Vehicle/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \
@@ -1003,6 +1002,8 @@ SOURCES += \
     src/Vehicle/VehicleTemperatureFactGroup.cc \
     src/Vehicle/VehicleVibrationFactGroup.cc \
     src/Vehicle/VehicleHygrometerFactGroup.cc \
+    src/Vehicle/VehicleGeneratorFactGroup.cc \
+    src/Vehicle/VehicleEFIFactGroup.cc \
     src/Vehicle/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
@@ -1032,7 +1033,7 @@ SOURCES += \
     src/comm/MockLinkMissionItemHandler.cc \
 }
 
-!NoSerialBuild {
+!contains(DEFINES, NO_SERIAL_LINK) {
 SOURCES += \
     src/comm/QGCSerialPortInfo.cc \
     src/comm/SerialLink.cc \
@@ -1087,7 +1088,7 @@ HEADERS+= \
     src/FirmwarePlugin/FirmwarePluginManager.h \
     src/VehicleSetup/VehicleComponent.h \
 
-!MobileBuild { !NoSerialBuild {
+!MobileBuild { !contains(DEFINES, NO_SERIAL_LINK) {
     HEADERS += \
         src/VehicleSetup/Bootloader.h \
         src/VehicleSetup/FirmwareImage.h \
@@ -1109,7 +1110,7 @@ SOURCES += \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
-!MobileBuild { !NoSerialBuild {
+!MobileBuild { !contains(DEFINES, NO_SERIAL_LINK) {
     SOURCES += \
         src/VehicleSetup/Bootloader.cc \
         src/VehicleSetup/FirmwareImage.cc \
@@ -1141,7 +1142,6 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
         src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
         src/AutoPilotPlugins/APM/APMCameraComponent.h \
-        src/AutoPilotPlugins/APM/APMCompassCal.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
         src/AutoPilotPlugins/APM/APMFollowComponent.h \
@@ -1170,7 +1170,6 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
         src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
         src/AutoPilotPlugins/APM/APMCameraComponent.cc \
-        src/AutoPilotPlugins/APM/APMCompassCal.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
         src/AutoPilotPlugins/APM/APMFollowComponent.cc \

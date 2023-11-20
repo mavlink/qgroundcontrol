@@ -38,6 +38,7 @@ ColumnLayout {
         id:                 label
         Layout.alignment:   Qt.AlignVCenter
         font.pointSize:     _fontSize
+        color:              instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
         text:               valueText()
 
         function valueText() {

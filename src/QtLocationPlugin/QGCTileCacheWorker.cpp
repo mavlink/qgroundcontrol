@@ -329,11 +329,11 @@ QGCCacheWorker::_getTile(QGCMapTask* mtask)
     QString s = QString("SELECT tile, format, type FROM Tiles WHERE hash = \"%1\"").arg(task->hash());
     if(query.exec(s)) {
         if(query.next()) {
-            QByteArray ar   = query.value(0).toByteArray();
-            QString format  = query.value(1).toString();
+            const QByteArray& arrray   = query.value(0).toByteArray();
+            const QString& format  = query.value(1).toString();
             QString type = getQGCMapEngine()->urlFactory()->getTypeFromId(query.value(2).toInt());
             qCDebug(QGCTileCacheLog) << "_getTile() (Found in DB) HASH:" << task->hash();
-            QGCCacheTile* tile = new QGCCacheTile(task->hash(), ar, format, type);
+            QGCCacheTile* tile = new QGCCacheTile(task->hash(), arrray, format, type);
             task->setTileFetched(tile);
             found = true;
         }

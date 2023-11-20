@@ -38,6 +38,7 @@ QGCPopupDialog {
     property bool   _editingParameter:          fact.componentId != 0
     property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI || !_editingParameter
     property bool   _allowDefaultReset:         fact.defaultValueAvailable && (QGroundControl.corePlugin.showAdvancedUI || !_editingParameter)
+    property bool   _showCombo:                 fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
 
     ParameterEditorController { id: controller; }
 
@@ -114,11 +115,11 @@ QGCPopupDialog {
                 text:               validate ? validateValue : fact.valueString
                 unitsLabel:         fact.units
                 showUnits:          fact.units != ""
-                focus:              setFocus
-                inputMethodHints:   (fact.typeIsString || ScreenTools.isiOS) ?
-                                        Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
+                focus:              setFocus && visible
+                inputMethodHints:   (fact.typeIsString || ScreenTools.isiOS) ? // iOS numeric keyboard has no done button, we can't use it
+                                        Qt.ImhNone :
                                         Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
-                visible:            fact.enumStrings.length === 0 || validate || manualEntry.checked
+                visible:            !_showCombo || validate || manualEntry.checked
             }
 
             QGCComboBox {
@@ -126,8 +127,7 @@ QGCPopupDialog {
                 width:      _editFieldWidth
                 model:      fact.enumStrings
                 visible:    _showCombo
-
-                property bool _showCombo: fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
+                focus:      setFocus && visible
 
                 Component.onCompleted: {
                     // We can't bind directly to fact.enumIndex since that would add an unknown value
