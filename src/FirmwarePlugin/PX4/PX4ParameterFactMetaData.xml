@@ -3893,14 +3893,6 @@
       <unit>m</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="LNDMC_ALT_MAX" default="-1.0" type="FLOAT">
-      <short_desc>Maximum altitude for multicopters</short_desc>
-      <long_desc>The system will obey this limit as a hard altitude limit. This setting will be consolidated with the GF_MAX_VER_DIST parameter. A negative value indicates no altitude limitation.</long_desc>
-      <min>-1</min>
-      <max>10000</max>
-      <unit>m</unit>
-      <decimal>2</decimal>
-    </parameter>
     <parameter name="LNDMC_ROT_MAX" default="20.0" type="FLOAT">
       <short_desc>Multicopter max rotation</short_desc>
       <long_desc>Maximum allowed angular velocity around each axis allowed in the landed state.</long_desc>
