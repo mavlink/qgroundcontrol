@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -33,6 +33,7 @@ Item {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
+        anchors.verticalCenter: parent.verticalCenter
 
         Repeater {
             model: _activeVehicle ? _activeVehicle.batteries : 0
@@ -91,22 +92,48 @@ Item {
                 return ""
             }
 
+            function getBatteryVoltageText() {
+                if (!isNaN(battery.voltage.rawValue)) {
+                    return battery.voltage.valueString + battery.voltage.units
+                } else if (battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
+                    return battery.chargeState.enumStringValue
+                }
+                return "?"
+            }
+
             QGCColoredImage {
+                id:                 battIcon
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 width:              height
-                sourceSize.width:   width
+                sourceSize.height:   height
                 source:             "/qmlimages/Battery.svg"
                 fillMode:           Image.PreserveAspectFit
                 color:              getBatteryColor()
             }
+            Column {
+                id:                     batteryInfoColumn
+                anchors.top:            parent.top
+                anchors.bottom:         parent.bottom
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
 
-            QGCLabel {
-                text:                   getBatteryPercentageText()
-                font.pointSize:         ScreenTools.mediumFontPointSize
-                color:                  getBatteryColor()
-                anchors.verticalCenter: parent.verticalCenter
+                QGCLabel {
+                    verticalAlignment:      Text.AlignVCenter
+                    color:                  getBatteryColor()
+                    text:                   getBatteryPercentageText()
+                    font.pointSize:         ScreenTools.defaultFontPointSize
+                }
+
+                QGCLabel {
+                    id:                     voltValue
+                    verticalAlignment:      Text.AlignVCenter
+                    font.pointSize:         ScreenTools.defaultFontPointSize
+                    color:                  getBatteryColor()
+                    text:                   getBatteryVoltageText()
+                }
             }
+
+
         }
     }
 
