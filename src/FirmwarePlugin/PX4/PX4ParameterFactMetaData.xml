@@ -1486,7 +1486,7 @@
     </parameter>
     <parameter name="EKF2_ABL_ACCLIM" default="25.0" type="FLOAT">
       <short_desc>Maximum IMU accel magnitude that allows IMU bias learning</short_desc>
-      <long_desc>If the magnitude of the IMU accelerometer vector exceeds this value, the EKF delta velocity state estimation will be inhibited. This reduces the adverse effect of high manoeuvre accelerations and IMU nonlinerity and scale factor errors on the delta velocity bias estimates.</long_desc>
+      <long_desc>If the magnitude of the IMU accelerometer vector exceeds this value, the EKF accel bias state estimation will be inhibited. This reduces the adverse effect of high manoeuvre accelerations and IMU nonlinerity and scale factor errors on the accel bias estimates.</long_desc>
       <min>20.0</min>
       <max>200.0</max>
       <unit>m/s^2</unit>
@@ -1494,7 +1494,7 @@
     </parameter>
     <parameter name="EKF2_ABL_GYRLIM" default="3.0" type="FLOAT">
       <short_desc>Maximum IMU gyro angular rate magnitude that allows IMU bias learning</short_desc>
-      <long_desc>If the magnitude of the IMU angular rate vector exceeds this value, the EKF delta velocity state estimation will be inhibited. This reduces the adverse effect of rapid rotation rates and associated errors on the delta velocity bias estimates.</long_desc>
+      <long_desc>If the magnitude of the IMU angular rate vector exceeds this value, the EKF accel bias state estimation will be inhibited. This reduces the adverse effect of rapid rotation rates and associated errors on the accel bias estimates.</long_desc>
       <min>2.0</min>
       <max>20.0</max>
       <unit>rad/s</unit>
@@ -1502,14 +1502,14 @@
     </parameter>
     <parameter name="EKF2_ABL_LIM" default="0.4" type="FLOAT">
       <short_desc>Accelerometer bias learning limit</short_desc>
-      <long_desc>The ekf delta velocity bias states will be limited to within a range equivalent to +- of this value.</long_desc>
+      <long_desc>The ekf accel bias states will be limited to within a range equivalent to +- of this value.</long_desc>
       <min>0.0</min>
       <max>0.8</max>
       <unit>m/s^2</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter name="EKF2_ABL_TAU" default="0.5" type="FLOAT">
-      <short_desc>Time constant used by acceleration and angular rate magnitude checks used to inhibit delta velocity bias learning</short_desc>
+      <short_desc>Time constant used by acceleration and angular rate magnitude checks used to inhibit accel bias learning</short_desc>
       <long_desc>The vector magnitude of angular rate and acceleration used to check if learning should be inhibited has a peak hold filter applied to it with an exponential decay. This parameter controls the time constant of the decay.</long_desc>
       <min>0.1</min>
       <max>1.0</max>
@@ -1818,28 +1818,28 @@
       <decimal>3</decimal>
     </parameter>
     <parameter name="EKF2_GPS_P_GATE" default="5.0" type="FLOAT">
-      <short_desc>Gate size for GPS horizontal position fusion</short_desc>
+      <short_desc>Gate size for GNSS position fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="EKF2_GPS_P_NOISE" default="0.5" type="FLOAT">
-      <short_desc>Measurement noise for gps position</short_desc>
+      <short_desc>Measurement noise for GNSS position</short_desc>
       <min>0.01</min>
       <max>10.0</max>
       <unit>m</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter name="EKF2_GPS_V_GATE" default="5.0" type="FLOAT">
-      <short_desc>Gate size for GPS velocity fusion</short_desc>
+      <short_desc>Gate size for GNSS velocity fusion</short_desc>
       <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
       <min>1.0</min>
       <unit>SD</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="EKF2_GPS_V_NOISE" default="0.3" type="FLOAT">
-      <short_desc>Measurement noise for gps horizontal velocity</short_desc>
+      <short_desc>Measurement noise for GNSS velocity</short_desc>
       <min>0.01</min>
       <max>5.0</max>
       <unit>m/s</unit>
@@ -1862,7 +1862,7 @@
     </parameter>
     <parameter name="EKF2_GYR_B_LIM" default="0.15" type="FLOAT">
       <short_desc>Gyro bias learning limit</short_desc>
-      <long_desc>The ekf delta angle bias states will be limited to within a range equivalent to +- of this value.</long_desc>
+      <long_desc>The ekf gyro bias states will be limited to within a range equivalent to +- of this value.</long_desc>
       <min>0.0</min>
       <max>0.4</max>
       <unit>rad/s</unit>
@@ -2854,6 +2854,105 @@
       <increment>0.5</increment>
     </parameter>
   </group>
+  <group name="FW Performance">
+    <parameter name="FW_AIRSPD_MAX" default="20.0" type="FLOAT">
+      <short_desc>Maximum Airspeed (CAS)</short_desc>
+      <long_desc>The maximal airspeed (calibrated airspeed) the user is able to command.</long_desc>
+      <min>0.5</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_AIRSPD_MIN" default="10.0" type="FLOAT">
+      <short_desc>Minimum Airspeed (CAS)</short_desc>
+      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively. Has to be set according to the vehicle's stall speed (which should be set in FW_AIRSPD_STALL), with some margin between the stall speed and minimum airspeed. This value corresponds to the desired minimum speed with the default load factor (level flight, default weight), and is automatically adpated to the current load factor (calculated from roll setpoint and WEIGHT_GROSS/WEIGHT_BASE).</long_desc>
+      <min>0.5</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_AIRSPD_STALL" default="7.0" type="FLOAT">
+      <short_desc>Stall Airspeed (CAS)</short_desc>
+      <long_desc>The stall airspeed (calibrated airspeed) of the vehicle. It is used for airspeed sensor failure detection and for the control surface scaling airspeed limits.</long_desc>
+      <min>0.5</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_AIRSPD_TRIM" default="15.0" type="FLOAT">
+      <short_desc>Trim (Cruise) Airspeed</short_desc>
+      <long_desc>The trim CAS (calibrated airspeed) of the vehicle. If an airspeed controller is active, this is the default airspeed setpoint that the controller will try to achieve. This value corresponds to the trim airspeed with the default load factor (level flight, default weight).</long_desc>
+      <min>0.5</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_SERVICE_CEIL" default="-1.0" type="FLOAT">
+      <short_desc>Service ceiling</short_desc>
+      <long_desc>Altitude in standard atmosphere at which the vehicle in normal configuration (WEIGHT_BASE) is still able to achieve a maximum climb rate of 0.5m/s at maximum throttle (FW_THR_MAX). Used to compensate for air density in FW_T_CLMB_MAX. Set negative to disable.</long_desc>
+      <min>-1.0</min>
+      <unit>m</unit>
+      <decimal>0</decimal>
+      <increment>1.0</increment>
+    </parameter>
+    <parameter name="FW_THR_ASPD_MAX" default="0." type="FLOAT">
+      <short_desc>Throttle at max airspeed</short_desc>
+      <long_desc>Required throttle (at sea level, standard atmosphere) for level flight at maximum airspeed FW_AIRSPD_MAX Set to 0 to disable mapping of airspeed to trim throttle.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_THR_ASPD_MIN" default="0." type="FLOAT">
+      <short_desc>Throttle at min airspeed</short_desc>
+      <long_desc>Required throttle (at sea level, standard atmosphere) for level flight at minimum airspeed FW_AIRSPD_MIN Set to 0 to disable mapping of airspeed to trim throttle below FW_AIRSPD_TRIM.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_THR_TRIM" default="0.6" type="FLOAT">
+      <short_desc>Trim throttle</short_desc>
+      <long_desc>Required throttle (at sea level, standard atmosphere) for level flight at FW_AIRSPD_TRIM</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_T_CLMB_MAX" default="5.0" type="FLOAT">
+      <short_desc>Maximum climb rate</short_desc>
+      <long_desc>This is the maximum calibrated climb rate that the aircraft can achieve with the throttle set to FW_THR_MAX and the airspeed set to the trim value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced.</long_desc>
+      <min>1.0</min>
+      <max>15.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="FW_T_SINK_MIN" default="2.0" type="FLOAT">
+      <short_desc>Minimum descent rate</short_desc>
+      <long_desc>This is the minimum calibrated sink rate of the aircraft with the throttle set to THR_MIN and flown at the same airspeed as used to measure FW_T_CLMB_MAX.</long_desc>
+      <min>1.0</min>
+      <max>5.0</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="WEIGHT_BASE" default="-1.0" type="FLOAT">
+      <short_desc>Vehicle base weight</short_desc>
+      <long_desc>This is the weight of the vehicle at which it's performance limits were derived. A zero or negative value disables trim throttle and minimum airspeed compensation based on weight.</long_desc>
+      <unit>kg</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter name="WEIGHT_GROSS" default="-1.0" type="FLOAT">
+      <short_desc>Vehicle gross weight</short_desc>
+      <long_desc>This is the actual weight of the vehicle at any time. This value will differ from WEIGHT_BASE in case weight was added or removed from the base weight. Examples are the addition of payloads or larger batteries. A zero or negative value disables trim throttle and minimum airspeed compensation based on weight.</long_desc>
+      <unit>kg</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+  </group>
   <group name="FW Rate Control">
     <parameter name="FW_ACRO_X_MAX" default="90" type="FLOAT">
       <short_desc>Acro body roll max rate setpoint</short_desc>
@@ -3123,38 +3222,6 @@
     </parameter>
   </group>
   <group name="FW TECS">
-    <parameter name="FW_AIRSPD_MAX" default="20.0" type="FLOAT">
-      <short_desc>Maximum Airspeed (CAS)</short_desc>
-      <long_desc>The maximal airspeed (calibrated airspeed) the user is able to command.</long_desc>
-      <min>0.5</min>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_AIRSPD_MIN" default="10.0" type="FLOAT">
-      <short_desc>Minimum Airspeed (CAS)</short_desc>
-      <long_desc>The minimal airspeed (calibrated airspeed) the user is able to command. Further, if the airspeed falls below this value, the TECS controller will try to increase airspeed more aggressively. Should be set (with some margin) above the vehicle stall speed. This value corresponds to the desired minimum speed with the default load factor (level flight, default weight), and is automatically adapated to the current load factor (calculated from roll setpoint and WEIGHT_GROSS/WEIGHT_BASE).</long_desc>
-      <min>0.5</min>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_AIRSPD_STALL" default="7.0" type="FLOAT">
-      <short_desc>Stall Airspeed (CAS)</short_desc>
-      <long_desc>The stall airspeed (calibrated airspeed) of the vehicle. It is used for airspeed sensor failure detection and for the control surface scaling airspeed limits.</long_desc>
-      <min>0.5</min>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_AIRSPD_TRIM" default="15.0" type="FLOAT">
-      <short_desc>Trim (Cruise) Airspeed</short_desc>
-      <long_desc>The trim CAS (calibrated airspeed) of the vehicle. If an airspeed controller is active, this is the default airspeed setpoint that the controller will try to achieve.</long_desc>
-      <min>0.5</min>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter name="FW_GND_SPD_MIN" default="5.0" type="FLOAT">
       <short_desc>Minimum groundspeed</short_desc>
       <long_desc>The controller will increase the commanded airspeed to maintain this minimum groundspeed to the next waypoint.</long_desc>
@@ -3181,22 +3248,6 @@
       <unit>deg</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_THR_ASPD_MAX" default="0." type="FLOAT">
-      <short_desc>Throttle at max airspeed</short_desc>
-      <long_desc>Required throttle for level flight at maximum airspeed FW_AIRSPD_MAX (sea level, standard atmosphere) Set to 0 to disable mapping of airspeed to trim throttle.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter name="FW_THR_ASPD_MIN" default="0." type="FLOAT">
-      <short_desc>Throttle at min airspeed</short_desc>
-      <long_desc>Required throttle for level flight at minimum airspeed FW_AIRSPD_MIN (sea level, standard atmosphere) Set to 0 to disable mapping of airspeed to trim throttle below FW_AIRSPD_TRIM.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
     <parameter name="FW_THR_IDLE" default="0.0" type="FLOAT">
       <short_desc>Idle throttle</short_desc>
@@ -3233,15 +3284,6 @@
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_THR_TRIM" default="0.6" type="FLOAT">
-      <short_desc>Trim throttle</short_desc>
-      <long_desc>This is the throttle setting required to achieve FW_AIRSPD_TRIM during level flight.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter name="FW_TKO_AIRSPD" default="-1.0" type="FLOAT">
       <short_desc>Takeoff Airspeed</short_desc>
       <long_desc>The calibrated airspeed setpoint TECS will stabilize to during the takeoff climbout. If set &lt;= 0.0, FW_AIRSPD_MIN will be set by default.</long_desc>
@@ -3254,15 +3296,6 @@
       <short_desc>Altitude error time constant</short_desc>
       <min>2.0</min>
       <decimal>2</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_T_CLMB_MAX" default="5.0" type="FLOAT">
-      <short_desc>Maximum climb rate</short_desc>
-      <long_desc>This is the maximum climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the trim value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced.</long_desc>
-      <min>1.0</min>
-      <max>15.0</max>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_T_CLMB_R_SP" default="3.0" type="FLOAT">
@@ -3325,15 +3358,6 @@
       <long_desc>This sets the maximum descent rate that the controller will use. If this value is too large, the aircraft can over-speed on descent. This should be set to a value that can be achieved without exceeding the lower pitch angle limit and without over-speeding the aircraft.</long_desc>
       <min>1.0</min>
       <max>15.0</max>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="FW_T_SINK_MIN" default="2.0" type="FLOAT">
-      <short_desc>Minimum descent rate</short_desc>
-      <long_desc>This is the sink rate of the aircraft with the throttle set to THR_MIN and flown at the same airspeed as used to measure FW_T_CLMB_MAX.</long_desc>
-      <min>1.0</min>
-      <max>5.0</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -4705,20 +4729,6 @@
       <min>1</min>
       <max>900000000</max>
       <unit>s</unit>
-    </parameter>
-    <parameter name="WEIGHT_BASE" default="-1.0" type="FLOAT">
-      <short_desc>Vehicle base weight</short_desc>
-      <long_desc>This is the weight of the vehicle at which it's performance limits were derived. A zero or negative value disables trim throttle and minimum airspeed compensation based on weight.</long_desc>
-      <unit>kg</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter name="WEIGHT_GROSS" default="-1.0" type="FLOAT">
-      <short_desc>Vehicle gross weight</short_desc>
-      <long_desc>This is the actual weight of the vehicle at any time. This value will differ from WEIGHT_BASE in case weight was added or removed from the base weight. Examples are the addition of payloads or larger batteries. A zero or negative value disables trim throttle and minimum airspeed compensation based on weight.</long_desc>
-      <unit>kg</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
     </parameter>
   </group>
   <group name="Mixer Output">
