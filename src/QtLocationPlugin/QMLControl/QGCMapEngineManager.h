@@ -37,26 +37,27 @@ public:
     };
     Q_ENUM(ImportAction)
 
-    Q_PROPERTY(quint64              tileCount       READ    tileCount       NOTIFY tileCountChanged)
-    Q_PROPERTY(QString              tileCountStr    READ    tileCountStr    NOTIFY tileCountChanged)
-    Q_PROPERTY(quint64              tileSize        READ    tileSize        NOTIFY tileSizeChanged)
-    Q_PROPERTY(QString              tileSizeStr     READ    tileSizeStr     NOTIFY tileSizeChanged)
-    Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
-    Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
-    Q_PROPERTY(QStringList          mapProviderList READ    mapProviderList CONSTANT)
-    Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
-    Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
-    Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
-    Q_PROPERTY(bool                 fetchElevation  READ    fetchElevation  WRITE   setFetchElevation   NOTIFY  fetchElevationChanged)
+    Q_PROPERTY(quint64              tileCount            READ    tileCount            NOTIFY tileCountChanged)
+    Q_PROPERTY(QString              tileCountStr         READ    tileCountStr         NOTIFY tileCountChanged)
+    Q_PROPERTY(quint64              tileSize             READ    tileSize             NOTIFY tileSizeChanged)
+    Q_PROPERTY(QString              tileSizeStr          READ    tileSizeStr          NOTIFY tileSizeChanged)
+    Q_PROPERTY(QmlObjectListModel*  tileSets             READ    tileSets             NOTIFY tileSetsChanged)
+    Q_PROPERTY(QString              tilesetFileExtension READ    tilesetFileExtension CONSTANT)
+    Q_PROPERTY(QStringList          mapList              READ    mapList              CONSTANT)
+    Q_PROPERTY(QStringList          mapProviderList      READ    mapProviderList      CONSTANT)
+    Q_PROPERTY(quint32              maxMemCache          READ    maxMemCache          WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
+    Q_PROPERTY(quint32              maxDiskCache         READ    maxDiskCache         WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
+    Q_PROPERTY(QString              errorMessage         READ    errorMessage         NOTIFY  errorMessageChanged)
+    Q_PROPERTY(bool                 fetchElevation       READ    fetchElevation       WRITE   setFetchElevation   NOTIFY  fetchElevationChanged)
     //-- Disk Space in MB
-    Q_PROPERTY(quint32              freeDiskSpace   READ    freeDiskSpace   NOTIFY  freeDiskSpaceChanged)
-    Q_PROPERTY(quint32              diskSpace       READ    diskSpace       CONSTANT)
+    Q_PROPERTY(quint32              freeDiskSpace        READ    freeDiskSpace        NOTIFY  freeDiskSpaceChanged)
+    Q_PROPERTY(quint32              diskSpace            READ    diskSpace            CONSTANT)
     //-- Tile set export
-    Q_PROPERTY(int                  selectedCount   READ    selectedCount   NOTIFY selectedCountChanged)
-    Q_PROPERTY(int                  actionProgress  READ    actionProgress  NOTIFY actionProgressChanged)
-    Q_PROPERTY(ImportAction         importAction    READ    importAction    WRITE  setImportAction   NOTIFY importActionChanged)
+    Q_PROPERTY(int                  selectedCount        READ    selectedCount        NOTIFY selectedCountChanged)
+    Q_PROPERTY(int                  actionProgress       READ    actionProgress       NOTIFY actionProgressChanged)
+    Q_PROPERTY(ImportAction         importAction         READ    importAction         WRITE  setImportAction   NOTIFY importActionChanged)
 
-    Q_PROPERTY(bool                 importReplace   READ    importReplace   WRITE   setImportReplace   NOTIFY importReplaceChanged)
+    Q_PROPERTY(bool                 importReplace        READ    importReplace        WRITE   setImportReplace   NOTIFY importReplaceChanged)
 
     Q_INVOKABLE void                loadTileSets            ();
     Q_INVOKABLE void                updateForCurrentView    (double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString& mapName);
@@ -77,6 +78,7 @@ public:
     QString                         tileCountStr            () const;
     quint64                         tileSize                () const{ return _imageSet.tileSize + _elevationSet.tileSize; }
     QString                         tileSizeStr             () const;
+    QString                         tilesetFileExtension    () const;
     QStringList                     mapList                 ();
     QStringList                     mapProviderList         ();
     Q_INVOKABLE QStringList         mapTypeList             (QString provider);

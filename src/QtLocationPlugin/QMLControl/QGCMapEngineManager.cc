@@ -15,6 +15,7 @@
 //-- TODO: #include "QGCQFileDialog.h"
 #endif
 
+#include "AppSettings.h"
 #include "QGCMapEngineManager.h"
 #include "QGCApplication.h"
 #include "QGCMapTileSet.h"
@@ -496,6 +497,12 @@ QGCMapEngineManager::exportSets(QString path) {
 #endif
     }
     if(!dir.isEmpty()) {
+
+        // Add tileset file extension if unspecified
+        if (!QFileInfo(path).fileName().contains(".")) {
+            dir += QString(".%1").arg(tilesetFileExtension());
+        }
+
         QVector<QGCCachedTileSet*> sets;
         for(int i = 0; i < _tileSets.count(); i++ ) {
             QGCCachedTileSet* set = qobject_cast<QGCCachedTileSet*>(_tileSets.get(i));
@@ -559,6 +566,11 @@ QGCMapEngineManager::getUniqueName()
         if(!findName(name))
             return name;
     }
+}
+
+QString QGCMapEngineManager::tilesetFileExtension(void) const
+{
+    return AppSettings::tilesetFileExtension;
 }
 
 //-----------------------------------------------------------------------------
