@@ -3750,34 +3750,17 @@
         <value code="5">Land mode</value>
       </values>
     </parameter>
-    <parameter name="GF_ALTMODE" default="0" type="INT32">
-      <short_desc>Geofence altitude mode</short_desc>
-      <long_desc>Select which altitude (AMSL) source should be used for geofence calculations.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Autopilot estimator global position altitude (GPS)</value>
-        <value code="1">Raw barometer altitude (assuming standard atmospheric pressure)</value>
-      </values>
-    </parameter>
-    <parameter name="GF_COUNT" default="-1" type="INT32">
-      <short_desc>Geofence counter limit</short_desc>
-      <long_desc>Set how many subsequent position measurements outside of the fence are needed before geofence violation is triggered</long_desc>
-      <min>-1</min>
-      <max>10</max>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="GF_MAX_HOR_DIST" default="0" type="FLOAT">
-      <short_desc>Max horizontal distance in meters</short_desc>
-      <long_desc>Maximum horizontal distance in meters the vehicle can be from home before triggering a geofence action. Disabled if 0.</long_desc>
+    <parameter name="GF_MAX_HOR_DIST" default="0.0" type="FLOAT">
+      <short_desc>Max horizontal distance from Home</short_desc>
+      <long_desc>Maximum horizontal distance in meters the vehicle can be from Home before triggering a geofence action. Disabled if 0.</long_desc>
       <min>0</min>
       <max>10000</max>
       <unit>m</unit>
       <increment>1</increment>
     </parameter>
-    <parameter name="GF_MAX_VER_DIST" default="0" type="FLOAT">
-      <short_desc>Max vertical distance in meters</short_desc>
-      <long_desc>Maximum vertical distance in meters the vehicle can be from home before triggering a geofence action. Disabled if 0.</long_desc>
+    <parameter name="GF_MAX_VER_DIST" default="0.0" type="FLOAT">
+      <short_desc>Max vertical distance from Home</short_desc>
+      <long_desc>Maximum vertical distance in meters the vehicle can be from Home before triggering a geofence action. Disabled if 0.</long_desc>
       <min>0</min>
       <max>10000</max>
       <unit>m</unit>
