@@ -40,7 +40,7 @@ Item {
             columnSpacing:      ScreenTools.defaultFontPixelWidth
             rowSpacing:         ScreenTools.defaultFontPixelHeight
             Repeater{
-                model: joystickManager.joystickNames.length
+                model: joystickManager.joystickNames
                 Row{
                     Column{
                         QGCLabel {
@@ -50,20 +50,24 @@ Item {
                     Column{
                          QGCCheckBox {
                             id: peripheralStatus
-                            Component.onCompleted: {
-                                var list = joystickManager.activeJoystickName
-                                for(var i = 0; i < list.length; i++){
-                                    if (list[i] === joystickManager.joystickNames[index]){
-                                        peripheralStatus.checked = globals.activeVehicle.joystickEnabled
+//                            Component.onCompleted: {
+//                                var list = joystickManager.activeJoystickName
+//                                for(var i = 0; i < list.length; i++){
+//                                    if (list[i] === joystickManager.joystickNames[index]){
+//                                        peripheralStatus.checked = globals.activeVehicle.joystickEnabled
+//                                    }
+//                                }
+//                            }
+                            onClicked:{
+                                if (checked) {
+                                    console.log("trying to set: " +joystickManager.joystickNames[index])
+                                    joystickManager.activePeripheralName = joystickManager.joystickNames[index]
+                                    console.log(joystickManager.activesJoysticks)
+                                    var lst = joystickManager.activesJoysticks
+                                    for(var i = 0; i < lst.length; i++){
+                                        console.log(lst[i]+" :is set active")
                                     }
                                 }
-                            }
-                            onCheckedChanged:{
-                                if (checked) {
-                                    joystickManager.setActiveJoysticks = joystickManager.joystickNames[index]
-                                }
-                                console.log(joystickManager.joystickNames[index])
-                                console.log(joystickManager.activesJoysticks)
                             }
                         }
                     }
