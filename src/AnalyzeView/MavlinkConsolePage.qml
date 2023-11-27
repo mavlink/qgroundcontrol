@@ -128,7 +128,7 @@ AnalyzePage {
                 Layout.preferredWidth:   parent.width
                 Layout.fillHeight:       true
                 readOnly:                _separateCommandInput
-                frameVisible:            false
+                //frameVisible:            false    // FIXME-QT6 - possibly no replacement
                 textFormat:              TextEdit.RichText
                 inputMethodHints:        Qt.ImhNoAutoUppercase | Qt.ImhMultiLine
                 text:                    "> "
@@ -139,6 +139,8 @@ AnalyzePage {
                 font.pointSize:         ScreenTools.defaultFontPointSize
                 font.family:            ScreenTools.fixedFontFamily
 
+                // FIXME-QT6 - menu: not supported directly
+                /*
                 menu: Menu {
                     id: contextMenu
                     MenuItem {
@@ -154,6 +156,7 @@ AnalyzePage {
                         }
                     }
                 }
+                */
 
                 background: Rectangle { color: qgcPal.windowShade }
 

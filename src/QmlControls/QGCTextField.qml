@@ -17,6 +17,10 @@ TextField {
     inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
                           Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
                           Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
+    leftPadding:        _marginPadding
+    rightPadding:       _marginPadding + unitsHelpLayout.width
+    topPadding:         _marginPadding
+    bottomPadding:      _marginPadding
 
     property bool   showUnits:          false
     property bool   showHelp:           false
@@ -25,6 +29,7 @@ TextField {
     property bool   numericValuesOnly:  false   // true: Used as hint for mobile devices to show numeric only keyboard
 
     property real _helpLayoutWidth: 0
+    property real _marginPadding:   ScreenTools.defaultFontPixelHeight / 3
 
     signal helpClicked
 
@@ -54,45 +59,44 @@ TextField {
         antialiasing:   true
     }
 
-    background: Item {
-        id: backgroundItem
-
-        property bool showHelp: control.showHelp && control.activeFocus
-
-        Rectangle {
-            anchors.fill:           parent
-            anchors.bottomMargin:   -1
-            color:                  "#44ffffff"
-        }
-
-        Rectangle {
-            anchors.fill:           parent
-            border.width:           enabled ? 1 : 0
-            border.color:           control.activeFocus ? "#47b" : "#999"
-            color:                  qgcPal.textField
-        }
+    background: Rectangle {
+        border.width:   1
+        border.color:   control.activeFocus ? "#47b" : "#999"
+        color:          qgcPal.textField
+        implicitHeight: ScreenTools.implicitTextFieldHeight
 
         RowLayout {
             id:                     unitsHelpLayout
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
-            anchors.rightMargin:    backgroundItem.showHelp ? 0 : control.__contentHeight * 0.333
             anchors.right:          parent.right
+            anchors.rightMargin:    control.activeFocus ? 2 : control._marginPadding
             spacing:                ScreenTools.defaultFontPixelWidth / 4
+            layoutDirection:        Qt.RightToLeft
 
             Component.onCompleted:  control._helpLayoutWidth = unitsHelpLayout.width
             onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
 
-            Text {
-                Layout.alignment:   Qt.AlignVCenter
-                text:               control.unitsLabel
-                font.pointSize:     backgroundItem.showHelp ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
-                font.family:        ScreenTools.normalFontFamily
-                antialiasing:       true
-                color:              control.color
-                visible:            control.showUnits && text !== ""
+            // Help buttons
+            Rectangle {
+                Layout.margins:         2
+                Layout.leftMargin:      0
+                Layout.rightMargin:     1
+                Layout.fillHeight:      true
+                Layout.preferredWidth:  helpLabel.contentWidth * 3
+                Layout.alignment:       Qt.AlignVCenter
+                color:                  control.color
+                visible:                control.showHelp && control.activeFocus
+
+                QGCLabel {
+                    id:                 helpLabel
+                    anchors.centerIn:   parent
+                    color:              qgcPal.textField
+                    text:               qsTr("?")
+                }
             }
 
+            // Extra units
             Text {
                 Layout.alignment:   Qt.AlignVCenter
                 text:               control.extraUnitsLabel
@@ -103,21 +107,15 @@ TextField {
                 visible:            control.showUnits && text !== ""
             }
 
-            Rectangle {
-                Layout.margins:     2
-                Layout.leftMargin:  0
-                Layout.rightMargin: 1
-                Layout.fillHeight:  true
-                width:              helpLabel.contentWidth * 3
+            // Units
+            Text {
+                Layout.alignment:   Qt.AlignVCenter
+                text:               control.unitsLabel
+                font.pointSize:     control.activeFocus ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                font.family:        ScreenTools.normalFontFamily
+                antialiasing:       true
                 color:              control.color
-                visible:            backgroundItem.showHelp
-
-                QGCLabel {
-                    id:                 helpLabel
-                    anchors.centerIn:   parent
-                    color:              qgcPal.textField
-                    text:               qsTr("?")
-                }
+                visible:            control.showUnits && text !== ""
             }
         }
 

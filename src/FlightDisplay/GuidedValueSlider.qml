@@ -164,8 +164,8 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         orientation:        Qt.Vertical
-        from:       -1
-        to:       1
+        from:               -1
+        to:                 1
         zeroCentered:       false
         rotation:           180
 

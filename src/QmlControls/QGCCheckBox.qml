@@ -28,7 +28,7 @@ CheckBox {
         //implicitWidth:  _noText ? 0 : text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
         //implicitHeight: _noText ? 0 : Math.max(text.implicitHeight, ScreenTools.checkBoxIndicatorSize)
         leftPadding:        control.indicator.width + control.spacing
-        verticalAlignment: Text.AlignVCenter
+        verticalAlignment:  Text.AlignVCenter
         text:               control.text
         font.pointSize:     textFontPointSize
         font.bold:          control.textBold
@@ -36,6 +36,8 @@ CheckBox {
         color:              control.textColor
     }
 
+    /*
+    // FIXME-QT6: Temporarily disabled, using standard Qt for now
     indicator:  Rectangle {
         implicitWidth:  ScreenTools.checkBoxIndicatorSize
         implicitHeight: implicitWidth
@@ -58,4 +60,5 @@ CheckBox {
             anchors.centerIn:  parent
         }
     }
+    */
 }

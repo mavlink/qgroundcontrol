@@ -370,7 +370,7 @@ ApplicationWindow {
                                 anchors.topMargin:  -versionLabel.height
                                 anchors.fill:       parent
 
-                                onClicked: {
+                                onClicked: (mouse) => {
                                     if (mouse.modifiers & Qt.ControlModifier) {
                                         QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
                                         showTouchAreasNotification.open()

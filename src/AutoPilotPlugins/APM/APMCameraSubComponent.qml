@@ -219,6 +219,8 @@ SetupPage {
                 property var  _fact:            controller.getParameterFact(-1, "MNT_JSTICK_SPD")
                 property bool _loadComplete:    false
 
+                /*
+                // FIXME-QT6 - Controls 2 doesn't style controls this way
                 // Override style to make handles smaller than default
                 style: SliderStyle {
                     handle: Rectangle {
@@ -233,6 +235,7 @@ SetupPage {
                         property real _radius: Math.round(ScreenTools.defaultFontPixelHeight * 0.35)
                     }
                 }
+                */
 
                 onValueChanged: {
                     if (_loadComplete) {

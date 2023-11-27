@@ -24,19 +24,28 @@ Slider {
     property bool displayValue: false
     property bool indicatorBarVisible: true
 
-    background: Item {
-        anchors.verticalCenter: parent.verticalCenter
-        implicitWidth:          Math.round(ScreenTools.defaultFontPixelHeight * 4.5)
-        implicitHeight:         Math.round(ScreenTools.defaultFontPixelHeight * 0.3)
+    property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
+    property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
 
-        Rectangle {
-            radius:         height / 2
-            anchors.fill:   parent
-            color:          qgcPal.button
-            border.width:   1
-            border.color:   qgcPal.buttonText
-        }
+    background: Rectangle {
+        x:              control.horizontal ? 
+                            control.leftPadding : 
+                            control.leftPadding + control.availableWidth / 3 - width / 2
+        y:              control.horizontal ? 
+                            control.topPadding + control.availableHeight / 2 - height / 2 :
+                            control.topPadding
+        implicitWidth:  control.horizontal ? control._implicitBarLength : control._barHeight
+        implicitHeight: control.horizontal ? control._barHeight : control._implicitBarLength
+        width:          control.horizontal ? control.availableWidth : implicitWidth
+        height:         control.horizontal ? implicitHeight : control.availableHeight
+        radius:         control._barHeight / 2
+        color:          qgcPal.button
+        border.width:   1
+        border.color:   qgcPal.buttonText
+    }
 
+    // FIXME-QT6: Indicator portion of slider not yet supported
+/*
         Item {
             id:     indicatorBar
             clip:   true
@@ -57,18 +66,19 @@ Slider {
                 radius:         height/2
             }
         }
-    }
+    }*/
 
     handle: Rectangle {
-        anchors.centerIn: parent
+        x:              control.leftPadding + control.visualPosition * (control.availableWidth - width)
+        y:              control.topPadding + control.availableHeight / 2 - height / 2
+        implicitWidth:  _radius * 2
+        implicitHeight: _radius * 2
         color:          qgcPal.button
         border.color:   qgcPal.buttonText
         border.width:   1
-        implicitWidth:  _radius * 2
-        implicitHeight: _radius * 2
         radius:         _radius
 
-        property real _radius: Math.round(control.implicitHeight / 2)
+        property real _radius: ScreenTools.defaultFontPixelHeight / 2
 
         Label {
             text:               control.value.toFixed( control.maximumValue <= 1 ? 1 : 0)
