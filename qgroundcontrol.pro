@@ -21,7 +21,7 @@ message(Qt version $$[QT_VERSION])
 
 !contains(CONFIG, DISABLE_QT_VERSION_CHECK) {
     !equals(QT_MAJOR_VERSION, 6) | !equals(QT_MINOR_VERSION, 6) {
-        error("Unsupported Qt version, 6.6 is required")
+        error("Unsupported Qt version, 6.6 is required. Found $$QT_MAJOR_VERSION.$$QT_MINOR_VERSION")
     }
 }
 
@@ -1365,9 +1365,6 @@ HEADERS += \
 SOURCES += \
     src/VideoManager/SubtitleWriter.cc \
     src/VideoManager/VideoManager.cc
-
-# Temporarily disabled until all video code is moved to Qt 6
-CONFIG += DISABLE_VIDEOSTREAMING
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")

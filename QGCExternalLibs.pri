@@ -139,9 +139,10 @@ INCLUDEPATH += \
     libs/xz-embedded/linux/include/linux
 DEFINES += XZ_DEC_ANY_CHECK XZ_USE_CRC64
 
-TempDisableUntilUpdatedForQt6 {
-    # This library has tons of compile errors associated with Qt 6. For now we are disabling usage until it gets fixed up.
-    
+# This library has tons of compile errors associated with Qt 6. For now we are disabling usage until it gets fixed up.
+QT6_DISABLE_DNSENGINE {
+    DEFINES += QT6_DISABLE_DNSENGINE
+} else {
 # [REQUIRED] QMDNS Engine
 HEADERS+= \
     libs/qmdnsengine_export.h \

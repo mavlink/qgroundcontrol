@@ -37,9 +37,7 @@
 #include "MockLink.h"
 #endif
 
-#define DISABLE_DNSENGINE # The source for this has all sorts of Qt 6 compile problems. So temporarily disabled until that is fixed up
-
-#ifndef DISABLE_DNSENGINE
+#ifndef QT6_DISABLE_DNSENGINE
 #include <qmdnsengine/browser.h>
 #include <qmdnsengine/cache.h>
 #include <qmdnsengine/mdns.h>
@@ -434,7 +432,7 @@ void LinkManager::_addMAVLinkForwardingLink(void)
 
 void LinkManager::_addZeroConfAutoConnectLink(void)
 {
-#ifndef DISABLE_DNSENGINE
+#ifndef QT6_DISABLE_DNSENGINE
     if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
         return;
     }
