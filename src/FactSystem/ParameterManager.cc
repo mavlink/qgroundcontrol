@@ -174,8 +174,9 @@ void ParameterManager::mavlinkMessageReceived(mavlink_message_t message)
         mavlink_msg_param_value_decode(&message, &param_value);
 
         // This will null terminate the name string
-        QByteArray bytes(param_value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
-        QString parameterName(bytes);
+        char parameterNameWithNull[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN] = {};
+        strncpy(parameterNameWithNull, param_value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+        QString parameterName(parameterNameWithNull);
 
         mavlink_param_union_t paramUnion;
         paramUnion.param_float  = param_value.param_value;

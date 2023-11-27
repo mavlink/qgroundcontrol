@@ -10,7 +10,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
-import Qt.labs.settings
+import QtCore
 
 import QGroundControl
 import QGroundControl.ScreenTools

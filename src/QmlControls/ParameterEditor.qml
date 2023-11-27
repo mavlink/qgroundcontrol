@@ -197,6 +197,8 @@ Item {
                     Repeater {
                         model: categoryHeader.checked ? object.groups : 0
 
+                        onCountChanged: console.log("Category count", count)
+
                         QGCButton {
                             width:          ScreenTools.defaultFontPixelWidth * 25
                             text:           object.name

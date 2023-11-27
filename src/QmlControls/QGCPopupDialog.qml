@@ -275,7 +275,7 @@ Popup {
                     height: childrenRect.height
                     focus:  true
 
-                    Keys.onReleased: {
+                    Keys.onReleased: (event) => {
                         if (event.key === Qt.Key_Escape) {
                             _reject()
                             event.accepted = true

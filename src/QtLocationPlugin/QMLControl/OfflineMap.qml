@@ -1236,9 +1236,9 @@ Item {
                     if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone) {
                         return qsTr("Map Tile Set Import");
                     } else if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting) {
-                        return qsTr("Map Tile Set import Progress
+                        return qsTr("Map Tile Set import Progress");
                     } else {
-                        return qsTr("Map Tile Set import Completed
+                        return qsTr("Map Tile Set import Completed");
                     }
                 }
                 font.family:        ScreenTools.demiboldFontFamily
@@ -1297,7 +1297,7 @@ Item {
                     width:          _bigButtonSize * 1.25
                     onClicked: {
                         importDialog.close()
-                        fileDialog.title = qsTr("import Tile
+                        fileDialog.title = qsTr("import Tile")
                         fileDialog.selectExisting = true
                         fileDialog.openForLoad()
                     }
