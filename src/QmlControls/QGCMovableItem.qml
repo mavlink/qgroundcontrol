@@ -1,6 +1,6 @@
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QGroundControl.ScreenTools 1.0
+import QtQuick
+import QtQuick.Controls
+import QGroundControl.ScreenTools
 
 // This item can be dragged around within its parent.
 // Double click issues a signal the parent can use to

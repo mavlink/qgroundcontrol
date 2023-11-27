@@ -69,36 +69,33 @@ LinuxBuild {
 
     # QT_INSTALL_LIBS
     QT_LIB_LIST += \
-        libQt5Charts.so.5 \
-        libQt5Core.so.5 \
-        libQt5DBus.so.5 \
-        libQt5Gui.so.5 \
-        libQt5Location.so.5 \
-        libQt5Multimedia.so.5 \
-        libQt5MultimediaQuick.so.5 \
-        libQt5Network.so.5 \
-        libQt5OpenGL.so.5 \
-        libQt5Positioning.so.5 \
-        libQt5PositioningQuick.so.5 \
-        libQt5PrintSupport.so.5 \
-        libQt5Qml.so.5 \
-        libQt5QmlModels.so.5 \
-        libQt5QmlWorkerScript.so.5 \
-        libQt5Quick.so.5 \
-        libQt5QuickControls2.so.5 \
-        libQt5QuickShapes.so.5 \
-        libQt5QuickTemplates2.so.5 \
-        libQt5QuickWidgets.so.5 \
-        libQt5SerialPort.so.5 \
-        libQt5Sql.so.5 \
-        libQt5Svg.so.5 \
-        libQt5Test.so.5 \
-        libQt5Widgets.so.5 \
-        libQt5X11Extras.so.5 \
-        libQt5XcbQpa.so.5 \
-        libQt5Xml.so.5 \
-        libicui18n.so* \
-        libQt5TextToSpeech.so.5
+	    libQt6Location.so.6
+	    libQt6QuickControls2.so.6
+	    libQt6Quick.so.6
+	    libQt6Charts.so.6
+	    libQt6Widgets.so.6
+	    libQt6TextToSpeech.so.6
+	    libQt6Multimedia.so.6
+	    libQt6Gui.so.6
+	    libQt6Positioning.so.6
+	    libQt6Qml.so.6
+	    libQt6Network.so.6
+	    libQt6Sql.so.6
+	    libQt6Xml.so.6
+	    libQt6Core5Compat.so.6
+	    libQt6SerialPort.so.6
+	    libQt6Test.so.6
+	    libQt6Core.so.6
+        libQt6QuickShapes.so.6
+        libQt6PositioningQuick.so.6
+        libQt6QmlModels.so.6
+        libQt6OpenGL.so.6
+        libQt6QuickTemplates2.so.6
+        libQt6OpenGLWidgets.so.6
+        libQt6DBus.so.6
+        libicui18n.so.56
+        libicuuc.so.56
+        libicudata.so.56
 
     # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
     QT_LIB_OPTIONALS = \
@@ -129,7 +126,6 @@ LinuxBuild {
 
     # QT_INSTALL_PLUGINS
     QT_PLUGIN_LIST = \
-        bearer \
         geoservices \
         iconengines \
         imageformats \
@@ -143,9 +139,10 @@ LinuxBuild {
         QT_PLUGIN_LIST += xcbglintegrations
     }
 
-    for(QT_PLUGIN, QT_PLUGIN_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
-    }
+#    for(QT_PLUGIN, QT_PLUGIN_LIST) {
+#        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
+#    }
+    QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS] $$DESTDIR/Qt/
 
     # QT_INSTALL_QML
     QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
@@ -162,5 +159,5 @@ LinuxBuild {
     QMAKE_POST_LINK += && SEARCHDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" "$$PWD/deploy/linux-fixup-rpaths.bash"
 
     # https://doc.qt.io/qt-5/qt-conf.html
-    QMAKE_POST_LINK += && $$QMAKE_COPY "$$SOURCE_DIR/deploy/qt.conf" "$$DESTDIR"
+    #QMAKE_POST_LINK += && $$QMAKE_COPY "$$SOURCE_DIR/deploy/qt.conf" "$$DESTDIR"
 }

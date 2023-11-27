@@ -7,12 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.3
-import QtGraphicalEffects   1.0
+import QtQuick
 
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 Item {
     property real size:     _defaultSize

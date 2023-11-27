@@ -8,21 +8,21 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.Controllers           1.0
-import QGroundControl.SettingsManager       1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.SettingsManager
 
 Rectangle {
     id:                 _root
@@ -709,17 +709,21 @@ Rectangle {
                                     MessageDialog {
                                         id:                 clearDialog
                                         visible:            false
-                                        icon:               StandardIcon.Warning
-                                        standardButtons:    StandardButton.Yes | StandardButton.No
+                                        //icon:               StandardIcon.Warning
+                                        buttons:            MessageDialog.Yes | MessageDialog.No
                                         title:              qsTr("Clear Settings")
                                         text:               qsTr("All saved settings will be reset the next time you start %1. Is this really what you want?").arg(QGroundControl.appName)
-                                        onYes: {
-                                            QGroundControl.deleteAllSettingsNextBoot()
-                                            clearDialog.visible = false
-                                        }
-                                        onNo: {
-                                            clearCheck.checked  = false
-                                            clearDialog.visible = false
+                                        onButtonClicked: function (button, role) {
+                                            switch (button) {
+                                            case MessageDialog.Yes:
+                                                QGroundControl.deleteAllSettingsNextBoot()
+                                                clearDialog.visible = false
+                                                break;
+                                            case MessageDialog.No:
+                                                clearCheck.checked  = false
+                                                clearDialog.visible = false
+                                                break;
+                                            }
                                         }
                                     }
                                 }

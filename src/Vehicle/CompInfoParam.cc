@@ -17,6 +17,7 @@
 #include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QRegExp>
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 

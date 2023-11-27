@@ -127,6 +127,6 @@ private:
     static const char* _deprecatedGroupKey;
 };
 
-QML_DECLARE_TYPE(FactValueGrid)
+//QML_DECLARE_TYPE(FactValueGrid)
 
 Q_DECLARE_METATYPE(FactValueGrid::FontSize)

@@ -14,9 +14,9 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-import QtQuick 2.4
+import QtQuick
 
-import QGroundControl.Palette 1.0
+import QGroundControl.Palette
 
 Rectangle {
     QGCPalette { id: palette; colorGroupEnabled: true }

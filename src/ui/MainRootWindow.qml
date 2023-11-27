@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
-import QtQuick.Controls 2.4
-import QtQuick.Dialogs  1.3
-import QtQuick.Layouts  1.11
-import QtQuick.Window   2.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import QtQuick.Window
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FlightDisplay
+import QGroundControl.FlightMap
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -170,7 +170,7 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
-    function showMessageDialog(dialogTitle, dialogText, buttons = StandardButton.Ok, acceptFunction = null) {
+    function showMessageDialog(dialogTitle, dialogText, buttons = Dialog.Ok, acceptFunction = null) {
         simpleMessageDialogComponent.createObject(mainWindow, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction }).open()
     }
 
@@ -214,7 +214,7 @@ ApplicationWindow {
         if (globals.planMasterControllerPlanView && globals.planMasterControllerPlanView.dirty) {
             showMessageDialog(closeDialogTitle,
                               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
-                              StandardButton.Yes | StandardButton.No,
+                              Dialog.Yes | Dialog.No,
                               function() { checkForPendingParameterWrites() })
         } else {
             checkForPendingParameterWrites()
@@ -226,7 +226,7 @@ ApplicationWindow {
             if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
                 mainWindow.showMessageDialog(closeDialogTitle,
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
-                    StandardButton.Yes | StandardButton.No,
+                    Dialog.Yes | Dialog.No,
                     function() { checkForActiveConnections() })
                 return
             }
@@ -238,14 +238,14 @@ ApplicationWindow {
         if (QGroundControl.multiVehicleManager.activeVehicle) {
             mainWindow.showMessageDialog(closeDialogTitle,
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
-                StandardButton.Yes | StandardButton.No,
+                Dialog.Yes | Dialog.No,
                 function() { finishCloseProcess() })
         } else {
             finishCloseProcess()
         }
     }
 
-    onClosing: {
+    onClosing: (close) => {
         if (!_forceClose) {
             close.accepted = false
             checkForUnsavedMission()
@@ -283,7 +283,7 @@ ApplicationWindow {
         QGCPopupDialog {
             id:         toolSelectDialog
             title:      qsTr("Select Tool")
-            buttons:    StandardButton.Close
+            buttons:    Dialog.Close
 
             property real _toolButtonHeight:    ScreenTools.defaultFontPixelHeight * 3
             property real _margins:             ScreenTools.defaultFontPixelWidth
@@ -393,17 +393,21 @@ ApplicationWindow {
                                     id:                 showTouchAreasNotification
                                     title:              qsTr("Debug Touch Areas")
                                     text:               qsTr("Touch Area display toggled")
-                                    standardButtons:    StandardButton.Ok
+                                    buttons:            MessageDialog.Ok
                                 }
 
                                 MessageDialog {
                                     id:                 advancedModeOnConfirmation
                                     title:              qsTr("Advanced Mode")
                                     text:               QGroundControl.corePlugin.showAdvancedUIMessage
-                                    standardButtons:    StandardButton.Yes | StandardButton.No
-                                    onYes: {
-                                        QGroundControl.corePlugin.showAdvancedUI = true
-                                        advancedModeOnConfirmation.close()
+                                    buttons:            MessageDialog.Yes | MessageDialog.No
+                                    onButtonClicked: function (button, role) {
+                                        switch (button) {
+                                        case MessageDialog.Yes:
+                                            QGroundControl.corePlugin.showAdvancedUI = true
+                                            advancedModeOnConfirmation.close()
+                                            break;
+                                        }
                                     }
                                 }
 
@@ -411,10 +415,17 @@ ApplicationWindow {
                                     id:                 advancedModeOffConfirmation
                                     title:              qsTr("Advanced Mode")
                                     text:               qsTr("Turn off Advanced Mode?")
-                                    standardButtons:    StandardButton.Yes | StandardButton.No
-                                    onYes: {
-                                        QGroundControl.corePlugin.showAdvancedUI = false
-                                        advancedModeOffConfirmation.close()
+                                    buttons:            MessageDialog.Yes | MessageDialog.No
+                                    onButtonClicked: function (button, role) {
+                                        switch (button) {
+                                        case MessageDialog.Yes:
+                                            QGroundControl.corePlugin.showAdvancedUI = false
+                                            advancedModeOffConfirmation.close()
+                                            break;
+                                        case MessageDialog.No:
+                                            resetPrompt.close()
+                                            break;
+                                        }
                                     }
                                 }
                             }

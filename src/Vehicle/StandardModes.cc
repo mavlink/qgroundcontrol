@@ -103,7 +103,7 @@ void StandardModes::ensureUniqueModeNames()
     // restarting dynamic modes, it might not be.
     for (auto iter = _modes.begin(); iter != _modes.end(); ++iter) {
         int duplicateIdx = 0;
-        for (auto iter2 = iter + 1; iter2 != _modes.end(); ++iter2) {
+        for (auto iter2 = std::next(iter); iter2 != _modes.end(); ++iter2) {
             if (iter.value().name == iter2.value().name) {
                 iter2.value().name += QStringLiteral(" (%1)").arg(duplicateIdx + 1);
                 ++duplicateIdx;

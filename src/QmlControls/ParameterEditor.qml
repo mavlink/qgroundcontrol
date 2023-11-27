@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
-import QtQuick.Dialogs              1.2
-import QtQuick.Layouts              1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Item {
     id:         _root
@@ -37,7 +37,7 @@ Item {
         id: controller
     }
 
-    ExclusiveGroup { id: sectionGroup }
+    ButtonGroup { id: sectionGroup }
 
     //---------------------------------------------
     //-- Header
@@ -109,7 +109,7 @@ Item {
             text:           qsTr("Reset all to firmware's defaults")
             onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations."),
-                                                         StandardButton.Cancel | StandardButton.Reset,
+                                                         Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToDefaults() })
         }
         QGCMenuItem {
@@ -117,7 +117,7 @@ Item {
             visible:        !_activeVehicle.apmFirmware
             onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults."),
-                                                         StandardButton.Cancel | StandardButton.Reset,
+                                                         Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToVehicleConfiguration() })
         }
         QGCMenuSeparator { }
@@ -148,7 +148,7 @@ Item {
             text:           qsTr("Reboot Vehicle")
             onTriggered:    mainWindow.showMessageDialog(qsTr("Reboot Vehicle"),
                                                          qsTr("Select Ok to reboot vehicle."),
-                                                         StandardButton.Cancel | StandardButton.Ok,
+                                                         Dialog.Cancel | Dialog.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
         }
     }
@@ -185,7 +185,7 @@ Item {
                         anchors.right:  parent.right
                         text:           object.name
                         checked:        object == controller.currentCategory
-                        exclusiveGroup: sectionGroup
+                        buttonGroup: sectionGroup
 
                         onCheckedChanged: {
                             if (checked) {

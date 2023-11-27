@@ -7,19 +7,19 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
-import QtQuick.Controls 2.4
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl           1.0
-import QGroundControl.Vehicle   1.0
-import QGroundControl.Controls  1.0
+import QGroundControl
+import QGroundControl.Vehicle
+import QGroundControl.Controls
 
 /// Popup container for preflight checklists
 QGCPopupDialog {
     id:         _root
     title:      qsTr("Pre-Flight Checklist")
-    buttons:    StandardButton.Close
+    buttons:    Dialog.Close
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:      QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length

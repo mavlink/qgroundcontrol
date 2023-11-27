@@ -7,31 +7,26 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
-import QtQuick.Dialogs  1.2
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
+import QtQuick.Dialogs
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FlightMap             1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Vehicle               1.0
-import QGroundControl.QGCPositionManager    1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.Controls
+import QGroundControl.FlightMap
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Vehicle
+import QGroundControl.QGCPositionManager
 
 Map {
     id: _map
 
-    //-- Qt 5.9 has rotation gesture enabled by default. Here we limit the possible gestures.
-    gesture.acceptedGestures:   MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
-    gesture.flickDeceleration:  3000
-    plugin:                     Plugin { name: "QGroundControl" }
-
-    // https://bugreports.qt.io/browse/QTBUG-82185
-    opacity:                    0.99
+    plugin:     Plugin { name: "QGroundControl" }
+    opacity:    0.99 // https://bugreports.qt.io/browse/QTBUG-82185
 
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1

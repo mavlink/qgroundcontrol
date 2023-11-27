@@ -1265,7 +1265,7 @@ QString ParameterManager::_remapParamNameToVersion(const QString& paramName)
 
     qCDebug(ParameterManagerLog) << "_remapParamNameToVersion" << paramName << majorVersion << minorVersion;
 
-    mappedParamName = paramName.right(paramName.count() - 2);
+    mappedParamName = paramName.right(paramName.length() - 2);
 
     if (majorVersion == Vehicle::versionNotSetValue) {
         // Vehicle version unknown

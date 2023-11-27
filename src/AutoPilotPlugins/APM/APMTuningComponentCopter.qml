@@ -8,16 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Layouts      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 SetupPage {
     id:             tuningPage
@@ -160,8 +160,8 @@ SetupPage {
                                 id:                 rollPitch
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0.08
-                                maximumValue:       0.4
+                                from:       0.08
+                                to:       0.4
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
 
@@ -193,8 +193,8 @@ SetupPage {
                                 id:                 climb
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0.3
-                                maximumValue:       1.0
+                                from:       0.3
+                                to:       1.0
                                 stepSize:           0.02
                                 tickmarksEnabled:   true
                                 value:              _rateClimbP.value
@@ -226,8 +226,8 @@ SetupPage {
                                 id:                 atcInputTC
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       _atcInputTC.min
-                                maximumValue:       _atcInputTC.max
+                                from:       _atcInputTC.min
+                                to:       _atcInputTC.max
                                 stepSize:           _atcInputTC.increment
                                 tickmarksEnabled:   true
 
@@ -255,8 +255,8 @@ SetupPage {
                             Slider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0
-                                maximumValue:       Math.max(0.3, _motSpinArm.rawValue)
+                                from:       0
+                                to:       Math.max(0.3, _motSpinArm.rawValue)
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
                                 value:              _motSpinArm.rawValue
@@ -291,8 +291,8 @@ SetupPage {
                             Slider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0
-                                maximumValue:       Math.max(0.3, _motSpinMin.rawValue)
+                                from:       0
+                                to:       Math.max(0.3, _motSpinMin.rawValue)
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
                                 value:              _motSpinMin.rawValue

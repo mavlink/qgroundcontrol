@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQuick      2.3
-import QtLocation   5.3
+import QtQuick
+import QtLocation
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 
 /// Polygon drawing item. Add to your control and call methods to get support for polygon drawing and adjustment.
@@ -76,9 +76,9 @@ Item {
         adjustingPolygon = true
         for (var i=0; i<vertexCoordinates.length; i++) {
             var dragItem = Qt.createQmlObject(
-                        "import QtQuick                     2.3; " +
-                        "import QtLocation                  5.3; " +
-                        "import QGroundControl.ScreenTools  1.0; " +
+                        "import QtQuick; " +
+                        "import QtLocation; " +
+                        "import QGroundControl.ScreenTools; " +
                         "" +
                         "Rectangle {" +
                         "   id:     vertexDrag; " +

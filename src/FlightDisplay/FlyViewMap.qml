@@ -7,21 +7,21 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtLocation                   5.3
-import QtPositioning                5.3
-import QtQuick.Dialogs              1.2
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl
+import QGroundControl.Controllers
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
+import QGroundControl.FlightMap
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 FlightMap {
     id:                         _root
@@ -80,21 +80,39 @@ FlightMap {
 
     onZoomLevelChanged: {
         if (_saveZoomLevelSetting) {
-            QGroundControl.flightMapZoom = zoomLevel
+            QGroundControl.flightMapZoom = _root.zoomLevel
         }
     }
     onCenterChanged: {
-        QGroundControl.flightMapPosition = center
+        QGroundControl.flightMapPosition = _root.center
     }
 
     // We track whether the user has panned or not to correctly handle automatic map positioning
-    Connections {
-        target: gesture
+    DragHandler {
+        target:                 null
+        onTranslationChanged:   (delta) => _root.pan(-delta.x, -delta.y)
 
-        function onPanStarted() {       _disableVehicleTracking = true }
-        function onFlickStarted() {     _disableVehicleTracking = true }
-        function onPanFinished() {      panRecenterTimer.restart() }
-        function onFlickFinished() {    panRecenterTimer.restart() }
+        onGrabChanged: function(transition) {
+            switch (transition) {
+            case PointerDevice.GrabExclusive:
+                _disableVehicleTracking = true
+                break
+            case PointerDevice.CancelGrabExclusive:
+                panRecenterTimer.restart()
+                break
+            }
+        }
+    }
+
+    WheelHandler {
+        // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
+        // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
+        // and we don't yet distinguish mice and trackpads on Wayland either
+        acceptedDevices: Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland"
+                         ? PointerDevice.Mouse | PointerDevice.TouchPad
+                         : PointerDevice.Mouse
+        rotationScale: 1/120
+        property: "zoomLevel"
     }
 
     function pointInRect(point, rect) {
@@ -269,10 +287,10 @@ FlightMap {
         }
 
         Connections {
-            target:                 _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            onPointAdded:           trajectoryPolyline.addCoordinate(coordinate)
-            onUpdateLastPoint:      trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
-            onPointsCleared:        trajectoryPolyline.path = []
+            target:                             _activeVehicle ? _activeVehicle.trajectoryPoints : null
+            onPointAdded: (coordinate) =>       trajectoryPolyline.addCoordinate(coordinate)
+            onUpdateLastPoint: (coordinate) =>  trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
+            onPointsCleared:                    trajectoryPolyline.path = []
         }
     }
 

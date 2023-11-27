@@ -1,11 +1,11 @@
-import QtQuick          2.3
-import QtQuick.Controls 2.4
-import QtQuick.Layouts  1.11
-import QtQuick.Dialogs  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Rectangle {
     height:             visible ? (rowLayout.height + (_margins * 2)) : 0

@@ -63,7 +63,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
     , _request(request)
     , _networkManager(networkManager)
 {
-    if (_bingNoTileImage.count() == 0) {
+    if (_bingNoTileImage.length() == 0) {
         QFile file(":/res/BingNoTileBytes.dat");
         file.open(QFile::ReadOnly);
         _bingNoTileImage = file.readAll();

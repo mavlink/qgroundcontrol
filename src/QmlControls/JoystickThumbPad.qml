@@ -1,9 +1,9 @@
-import QtQuick                  2.12
-import QtQuick.Controls         1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Item {
     id:             _joyRoot

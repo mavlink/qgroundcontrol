@@ -1,8 +1,8 @@
-import QtQuick                  2.15
-import QtQuick.Controls         2.15
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 /// The SliderSwitch control implements a sliding switch control similar to the power off
 /// control on an iPhone. It supports holding the space bar to slide the switch.

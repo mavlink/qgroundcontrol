@@ -1,7 +1,7 @@
-import QtQuick 2.12
-import QtQuick.Window 2.12
-import QtQuick.Layouts 1.3
-import org.freedesktop.gstreamer.GLVideoItem 1.0
+import QtQuick
+import QtQuick.Window
+import QtQuick.Layouts
+import org.freedesktop.gstreamer.GLVideoItem
 
 Window {
     visible: true

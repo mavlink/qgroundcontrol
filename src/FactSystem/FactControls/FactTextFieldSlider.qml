@@ -1,12 +1,12 @@
-import QtQuick              2.7
-import QtQuick.Controls     1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl.FactSystem
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactControls
 
 
 Row {

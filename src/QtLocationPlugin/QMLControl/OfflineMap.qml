@@ -7,22 +7,22 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.11
-import QtQuick.Controls         2.4
-import QtQuick.Layouts          1.11
-import QtQuick.Dialogs          1.3
-import QtQuick.Controls.Styles  1.4
-import QtLocation               5.3
-import QtPositioning            5.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.FlightMap             1.0
-import QGroundControl.QGCMapEngineManager   1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.FlightMap
+import QGroundControl.QGCMapEngineManager
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Item {
     id:             offlineMapView
@@ -236,11 +236,15 @@ Item {
         id:         errorDialog
         visible:    false
         text:       QGroundControl.mapEngineManager.errorMessage
-        icon:       StandardIcon.Critical
-        standardButtons: StandardButton.Ok
+        //icon:       StandardIcon.Critical
+        buttons:    MessageDialog.Ok
         title:      qsTr("Error Message")
-        onYes: {
-            errorDialog.visible = false
+        onButtonClicked: function (button, role) {
+            switch (button) {
+            case MessageDialog.Yes:
+                errorDialog.visible = false
+                break;
+            }
         }
     }
 
@@ -249,7 +253,7 @@ Item {
 
         QGCPopupDialog {
             title:      qsTr("Offline Maps Options")
-            buttons:    StandardButton.Save | StandardButton.Cancel
+            buttons:    Dialog.Save | Dialog.Cancel
 
             onAccepted: {
                 QGroundControl.mapEngineManager.maxDiskCache = parseInt(maxCacheSize.text)
@@ -406,7 +410,7 @@ Item {
             text:       offlineMapView._currentSelection.defaultSet ?
                             qsTr("This will delete all tiles INCLUDING the tile sets you have created yourself.\n\nIs this really what you want?") :
                             qsTr("Delete %1 and all its tiles.\n\nIs this really what you want?").arg(offlineMapView._currentSelection.name)
-            buttons:    StandardButton.Yes | StandardButton.No
+            buttons:    Dialog.Yes | Dialog.No
 
             onAccepted: {
                 QGroundControl.mapEngineManager.deleteTileSet(offlineMapView._currentSelection)
@@ -1232,9 +1236,9 @@ Item {
                     if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionNone) {
                         return qsTr("Map Tile Set Import");
                     } else if(QGroundControl.mapEngineManager.importAction === QGCMapEngineManager.ActionImporting) {
-                        return qsTr("Map Tile Set Import Progress");
+                        return qsTr("Map Tile Set import Progress
                     } else {
-                        return qsTr("Map Tile Set Import Completed");
+                        return qsTr("Map Tile Set import Completed
                     }
                 }
                 font.family:        ScreenTools.demiboldFontFamily
@@ -1293,7 +1297,7 @@ Item {
                     width:          _bigButtonSize * 1.25
                     onClicked: {
                         importDialog.close()
-                        fileDialog.title = qsTr("Import Tile Set")
+                        fileDialog.title = qsTr("import Tile
                         fileDialog.selectExisting = true
                         fileDialog.openForLoad()
                     }

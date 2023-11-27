@@ -7,23 +7,23 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 2.15
-import QtQuick.Layouts  1.15
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.ScreenTools
 
 QGCPopupDialog {
     id:         root
     title:      qsTr("Parameter Editor")
-    buttons:    StandardButton.Cancel | StandardButton.Save
+    buttons:    Dialog.Cancel | Dialog.Save
 
     property Fact   fact
     property bool   showRCToParam:  false

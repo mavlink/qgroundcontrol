@@ -1,12 +1,12 @@
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.2
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.Controllers
 
 /// This control is meant to be a direct replacement for the standard Qml FileDialog control.
 /// It differs for mobile builds which uses a completely custom file picker.
@@ -89,12 +89,12 @@ Item {
 
     FileDialog {
         id:             fullFileDialog
-        folder:         "file:///" + _root.folder
+        currentFolder:  "file:///" + _root.folder
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
-        selectExisting: _root.selectExisting
-        selectMultiple: false
-        selectFolder:   _root.selectFolder
+//        selectExisting: _root.selectExisting
+//        selectMultiple: false
+//        selectFolder:   _root.selectFolder
 
         onAccepted: {
             if (_openForLoad) {
@@ -112,7 +112,7 @@ Item {
         QGCPopupDialog {
             id:         mobileFileOpenDialog
             title:      _root.title
-            buttons:    StandardButton.Cancel
+            buttons:    Dialog.Cancel
 
             Column {
                 id:         fileOpenColumn
@@ -174,7 +174,7 @@ Item {
         QGCPopupDialog {
             id:         mobileFileSaveDialog
             title:      _root.title
-            buttons:    StandardButton.Cancel | StandardButton.Ok
+            buttons:    Dialog.Cancel | Dialog.Ok
 
             onAccepted: {
                 if (filenameTextField.text == "") {

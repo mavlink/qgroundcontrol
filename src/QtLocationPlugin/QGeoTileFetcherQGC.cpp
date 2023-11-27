@@ -51,6 +51,7 @@
 #include <QtCore/QLocale>
 #include <QtNetwork/QNetworkRequest>
 #include <QtLocation/private/qgeotilespec_p.h>
+#include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
 //-----------------------------------------------------------------------------
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)

@@ -232,7 +232,7 @@ QGCCacheWorker::_deleteBingNoTileTiles()
     QSqlQuery query(*_db);
     QString s;
     //-- Select tiles in default set only, sorted by oldest.
-    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.count());
+    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.length());
     QList<quint64> idsToDelete;
     if (query.exec(s)) {
         while(query.next()) {
