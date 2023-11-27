@@ -79,6 +79,7 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
 LinkManager::~LinkManager()
 {
+    disconnectAll();
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     delete _nmeaPort;
@@ -925,9 +926,9 @@ void LinkManager::_createDynamicForwardLink(const char* linkName, QString hostNa
 {
     UDPConfiguration* udpConfig = new UDPConfiguration(linkName);
     udpConfig->setDynamic(true);
-    
+
     udpConfig->addHost(hostName);
-    
+
     SharedLinkConfigurationPtr config = addConfiguration(udpConfig);
     createConnectedLink(config);
 
