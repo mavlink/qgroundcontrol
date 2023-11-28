@@ -3,6 +3,8 @@
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 
+#include <Eigen/Eigen>
+
 QGC_LOGGING_CATEGORY(GimbalLog,         "GimbalLog")
 
 GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
@@ -32,7 +34,7 @@ GimbalController::_mavlinkMessageReceived(const mavlink_message_t& message)
     }
 }
 
-void    
+void
 GimbalController::_handleHeartbeat(const mavlink_message_t& message)
 {
     if (!_potentialGimbalManagers.contains(message.compid)) {
@@ -90,7 +92,7 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
     }
 
     gimbal.deviceId = status.gimbal_device_id;
-    
+
     // Only log this message once
     if (!gimbal.receivedStatus) {
         qCDebug(GimbalLog) << "_handleGimbalManagerStatus: gimbal manager with compId " << message.compid
@@ -104,7 +106,7 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
         (status.primary_control_compid == _mavlink->getComponentId());
 
     const bool othersHaveControl = !haveControl &&
-        (status.primary_control_sysid != 0 && status.primary_control_compid != 0); 
+        (status.primary_control_sysid != 0 && status.primary_control_compid != 0);
 
     bool hasChanged = false;
 
@@ -133,7 +135,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     uint8_t gimbal_device_id_or_compid;
 
-    // If gimbal_device_id is 0, we must take the compid of the message    
+    // If gimbal_device_id is 0, we must take the compid of the message
     if (attitude_status.gimbal_device_id == 0) {
         gimbal_device_id_or_compid = message.compid;
 
@@ -151,17 +153,36 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
         return;
     }
 
-    gimbal_it->retracted = (attitude_status.flags & GIMBAL_MANAGER_FLAGS_RETRACT) > 0;
-    gimbal_it->neutral = (attitude_status.flags & GIMBAL_MANAGER_FLAGS_NEUTRAL) > 0;
-    gimbal_it->yawLock = (attitude_status.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) > 0;
+    const bool yaw_in_vehicle_frame = [&](){
+        if ((attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_IN_VEHICLE_FRAME) > 0) {
+            return true;
+        } else if ((attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_IN_EARTH_FRAME) > 0) {
+            return false;
+        } else {
+            // For backwards compatibility: if both new flags are 0, yaw lock defines the frame.
+            return (attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) == 0;
+        }
+    }();
 
-    // TODO: use more appropriate conversion
-    float roll, pitch, yaw;
-    mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
+    gimbal_it->retracted = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_RETRACT) > 0;
+    gimbal_it->neutral = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_NEUTRAL) > 0;
+    gimbal_it->yawLock = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) > 0;
 
-    gimbal_it->curPitch = pitch * (180.0f / M_PI);
-    gimbal_it->curRoll  = roll * (180.0f / M_PI);
-    gimbal_it->curYaw   = yaw * (180.0f / M_PI);
+    auto quat = Eigen::Quaternionf{attitude_status.q[0], attitude_status.q[1], attitude_status.q[2], attitude_status.q[3]};
+    auto euler = quat.toRotationMatrix().eulerAngles(2,0,1);
+
+    gimbal_it->curYaw   = euler[0] * (180.0f / M_PI);
+    gimbal_it->curRoll  = euler[1] * (180.0f / M_PI);
+    gimbal_it->curPitch = euler[2] * (180.0f / M_PI);
+
+    if (yaw_in_vehicle_frame) {
+        gimbal_it->curYaw += _vehicle->heading()->rawValue().toFloat();
+        if (gimbal_it->curYaw > 180.0f) {
+            gimbal_it->curYaw -= 360.0f;
+        }
+    }
+
+    // qCDebug(GimbalLog) << "roll: " << gimbal_it->curRoll << ", pitch: " << gimbal_it->curPitch << ", yaw: " << gimbal_it->curYaw;
 
     gimbal_it->receivedAttitude = true;
 
@@ -201,7 +222,7 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
                                  MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS,
                                  (gimbal.requestStatusRetries > 1) ? 0 : 5000000); // request default rate, if we don't succeed, last attempt is fixed 0.2 Hz instead
         --gimbal.requestStatusRetries;
-        qCDebug(GimbalLog) << "attempt to set GIMBAL_MANAGER_STATUS message at" << (gimbal.requestStatusRetries > 1 ? "default rate" : "0.2 Hz") << "interval for device: " 
+        qCDebug(GimbalLog) << "attempt to set GIMBAL_MANAGER_STATUS message at" << (gimbal.requestStatusRetries > 1 ? "default rate" : "0.2 Hz") << "interval for device: "
                            << gimbal.deviceId << "compID: " << compid << ", retries remaining: " << gimbal.requestStatusRetries;
     }
 
