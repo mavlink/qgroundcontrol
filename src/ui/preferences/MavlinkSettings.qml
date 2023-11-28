@@ -622,11 +622,10 @@ Rectangle {
                             id:                 feedbackTextArea
                             width:              _valueWidth
                             height:             ScreenTools.defaultFontPixelHeight * 4
-                            frameVisible:       false
                             font.pointSize:     ScreenTools.defaultFontPointSize
                             text:               QGroundControl.mavlinkLogManager.feedback
                             enabled:            !_disableDataPersistence
-                            color:              gcPal.textFieldText
+                            color:              qgcPal.textFieldText
                             background:         Rectangle { color: qgcPal.textField }
                         }
                     }
@@ -788,7 +787,7 @@ Rectangle {
                                 id:         deleteDialog
                                 visible:    false
                                 //icon:       StandardIcon.Warning
-                                button:     MessageDialog.Yes | MessageDialog.No
+                                buttons:    MessageDialog.Yes | MessageDialog.No
                                 title:      qsTr("Delete Selected Log Files")
                                 text:       qsTr("Confirm deleting selected log files?")
                                 onButtonClicked: function (button, role) {

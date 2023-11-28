@@ -158,7 +158,7 @@ Item {
         }
     }
 
-    RoundButton {
+    QGCRoundButton {
         id:             roundButton
         radius:         parent.width / 2
         onClicked:  {

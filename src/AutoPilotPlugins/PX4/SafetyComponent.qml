@@ -171,7 +171,7 @@ SetupPage {
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.fillWidth:   true
                                 currentIndex:       _collisionPrevention ? (_collisionPrevention.rawValue > 0 ? 1 : 0) : 0
-                                onActivated: {
+                                onActivated: (index) => {
                                     if(_collisionPrevention) {
                                         _collisionPrevention.value = index > 0 ? 5 : -1
                                         console.log('Collision prevention enabled: ' + _collisionPrevention.value)

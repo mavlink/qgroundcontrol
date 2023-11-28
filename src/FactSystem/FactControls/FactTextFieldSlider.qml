@@ -132,15 +132,15 @@ Row {
 
                 MouseArea {
                     anchors.fill: parent
-                    onWheel: {
+                    onWheel: (wheel) => {
                         // do nothing
                         wheel.accepted = true;
                     }
-                    onPressed: {
+                    onPressed: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }
-                    onReleased: {
+                    onReleased: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }

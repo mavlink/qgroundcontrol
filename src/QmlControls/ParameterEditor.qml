@@ -37,8 +37,6 @@ Item {
         id: controller
     }
 
-    ButtonGroup { id: sectionGroup }
-
     //---------------------------------------------
     //-- Header
     Row {
@@ -125,7 +123,6 @@ Item {
             text:           qsTr("Load from file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
-                fileDialog.selectExisting = true
                 fileDialog.openForLoad()
             }
         }
@@ -133,7 +130,6 @@ Item {
             text:           qsTr("Save to file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Save Parameters")
-                fileDialog.selectExisting = false
                 fileDialog.openForSave()
             }
         }
@@ -185,7 +181,6 @@ Item {
                         anchors.right:  parent.right
                         text:           object.name
                         checked:        object == controller.currentCategory
-                        buttonGroup: sectionGroup
 
                         onCheckedChanged: {
                             if (checked) {
@@ -196,8 +191,6 @@ Item {
 
                     Repeater {
                         model: categoryHeader.checked ? object.groups : 0
-
-                        onCountChanged: console.log("Category count", count)
 
                         QGCButton {
                             width:          ScreenTools.defaultFontPixelWidth * 25
@@ -304,12 +297,12 @@ Item {
         folder:         _appSettings.parameterSavePath
         nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
 
-        onAcceptedForSave: {
+        onAcceptedForSave: (file) => {
             controller.saveToFile(file)
             close()
         }
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             close()
             if (controller.buildDiffFromFile(file)) {
                 parameterDiffDialog.createObject(mainWindow).open()

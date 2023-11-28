@@ -155,7 +155,6 @@ AnalyzePage {
                             logController.download()
                         } else {
                             fileDialog.title =          qsTr("Select save directory")
-                            fileDialog.selectExisting = true
                             fileDialog.folder =         QGroundControl.settingsManager.appSettings.logSavePath
                             fileDialog.selectFolder =   true
                             fileDialog.openForLoad()
@@ -163,7 +162,7 @@ AnalyzePage {
                     }
                     QGCFileDialog {
                         id: fileDialog
-                        onAcceptedForLoad: {
+                        onAcceptedForLoad: (file) => {
                             logController.download(file)
                             close()
                         }

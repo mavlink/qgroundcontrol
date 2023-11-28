@@ -254,7 +254,7 @@ AnalyzePage {
                     onClicked: {
                         // disable middle-click pasting (we could add support for that if needed)
                     }
-                    onWheel: {
+                    onWheel: (wheel) => {
                         // increase scrolling speed (the default is a single line)
                         var numLines = 4
                         var flickable = textConsole.flickableItem

@@ -17,6 +17,5 @@ QGCFileDialog {
     id:             kmlOrSHPLoadDialog
     folder:         QGroundControl.settingsManager.appSettings.missionSavePath
     title:          qsTr("Select Polygon File")
-    selectExisting: true
     nameFilters:    ShapeFileHelper.fileDialogKMLOrSHPFilters
 }

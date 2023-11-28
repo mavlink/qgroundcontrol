@@ -85,9 +85,8 @@ Item {
                 id:             writeDialog
                 folder:         QGroundControl.settingsManager.appSettings.logSavePath
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
-                selectExisting: false
                 title:          qsTr("Select log save file")
-                onAcceptedForSave: {
+                onAcceptedForSave: (file) => {
                     debugMessageModel.writeMessages(file);
                     visible = false;
                 }

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Qt.labs.platform as Labs
 
 import QGroundControl
 import QGroundControl.ScreenTools
@@ -17,8 +18,8 @@ Item {
     property string folder              // Due to Qt bug with file url parsing this must be an absolute path
     property var    nameFilters:    []  // Important: Only name filters with simple wildcarding like *.foo are supported.
     property string title
-    property bool   selectExisting: true
     property bool   selectFolder:   false
+    property string defaultSuffix:  ""
 
     signal acceptedForLoad(string file)
     signal acceptedForSave(string file)
@@ -28,7 +29,10 @@ Item {
         _openForLoad = true
         if (_mobileDlg && folder.length !== 0) {
             mobileFileOpenDialogComponent.createObject(mainWindow).open()
+        } else if (selectFolder) {
+            fullFolderDialog.open()
         } else {
+            fullFileDialog.fileMode = FileDialog.OpenFile
             fullFileDialog.open()
         }
     }
@@ -38,6 +42,7 @@ Item {
         if (_mobileDlg && folder.length !== 0) {
             mobileFileSaveDialogComponent.createObject(mainWindow).open()
         } else {
+            fullFileDialog.fileMode = FileDialog.SaveFile
             fullFileDialog.open()
         }
     }
@@ -92,17 +97,24 @@ Item {
         currentFolder:  "file:///" + _root.folder
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
-//        selectExisting: _root.selectExisting
-//        selectMultiple: false
-//        selectFolder:   _root.selectFolder
+        defaultSuffix:  _root.defaultSuffix
 
         onAccepted: {
-            if (_openForLoad) {
-                _root.acceptedForLoad(controller.urlToLocalFile(fileUrl))
+            if (fileMode == FileDialog.OpenFile) {
+                _root.acceptedForLoad(controller.urlToLocalFile(selectedFile))
             } else {
-                _root.acceptedForSave(controller.urlToLocalFile(fileUrl))
+                _root.acceptedForSave(controller.urlToLocalFile(selectedFile))
             }
         }
+        onRejected: _root.rejected()
+    }
+
+    Labs.FolderDialog {
+        id:             fullFolderDialog
+        currentFolder:  "file:///" + _root.folder
+        title:          _root.title
+
+        onAccepted: _root.acceptedForLoad(controller.urlToLocalFile(folder))
         onRejected: _root.rejected()
     }
 

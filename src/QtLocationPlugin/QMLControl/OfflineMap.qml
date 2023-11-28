@@ -215,7 +215,7 @@ Item {
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         nameFilters:    ["Tile Sets (*.qgctiledb)"]
 
-        onAcceptedForSave: {
+        onAcceptedForSave: (file) => {
             if (QGroundControl.mapEngineManager.exportSets(file)) {
                 exportToDiskProgress.open()
             } else {
@@ -224,7 +224,7 @@ Item {
             close()
         }
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             if(!QGroundControl.mapEngineManager.importSets(file)) {
                 showList();
             }
@@ -429,7 +429,6 @@ Item {
             visible:                    false
             allowGCSLocationCenter:     true
             allowVehicleLocationCenter: false
-            gesture.flickDeceleration:  3000
             mapName:                    "OfflineMap"
 
             property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
@@ -652,7 +651,6 @@ Item {
                         center:             _map.center
                         activeMapType:      _map.activeMapType
                         zoomLevel:          sliderMinZoom.value
-                        gesture.enabled:    false
                         visible:            _showPreview
 
                         property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
@@ -692,7 +690,6 @@ Item {
                         center:             _map.center
                         activeMapType:      _map.activeMapType
                         zoomLevel:          sliderMaxZoom.value
-                        gesture.enabled:    false
                         visible:            _showPreview
 
                         property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
@@ -1144,7 +1141,6 @@ Item {
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
                     fileDialog.title = qsTr("Export Tile Set")
-                    fileDialog.selectExisting = false
                     fileDialog.openForSave()
                 }
             }
@@ -1298,7 +1294,6 @@ Item {
                     onClicked: {
                         importDialog.close()
                         fileDialog.title = qsTr("import Tile")
-                        fileDialog.selectExisting = true
                         fileDialog.openForLoad()
                     }
                 }

@@ -123,7 +123,7 @@ add_custom_target(QmlControlsQml
 		QmlTest.qml
 		RCChannelMonitor.qml
 		RCToParamDialog.qml
-		RoundButton.qml
+		QGCRoundButton.qml
 		ScreenTools.qml
 		SectionHeader.qml
 		SliderSwitch.qml

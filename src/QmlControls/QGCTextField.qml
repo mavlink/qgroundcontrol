@@ -51,14 +51,6 @@ TextField {
         }
     }
 
-    QGCLabel {
-        id:             unitsLabelWidthGenerator
-        text:           unitsLabel
-        width:          contentWidth + parent.__contentHeight * 0.666
-        visible:        false
-        antialiasing:   true
-    }
-
     background: Rectangle {
         border.width:   1
         border.color:   control.activeFocus ? "#47b" : "#999"
@@ -77,8 +69,9 @@ TextField {
             Component.onCompleted:  control._helpLayoutWidth = unitsHelpLayout.width
             onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
 
-            // Help buttons
+            // Help button
             Rectangle {
+                id:                     helpButton
                 Layout.margins:         2
                 Layout.leftMargin:      0
                 Layout.rightMargin:     1
@@ -94,6 +87,7 @@ TextField {
                     color:              qgcPal.textField
                     text:               qsTr("?")
                 }
+
             }
 
             // Extra units
@@ -118,12 +112,14 @@ TextField {
                 visible:            control.showUnits && text !== ""
             }
         }
+    }
 
-        MouseArea {
-            anchors.margins:    ScreenTools.isMobile ? -(ScreenTools.defaultFontPixelWidth * 0.66) : 0 // Larger touch area for mobile
-            anchors.fill:       unitsHelpLayout
-            enabled:            control.activeFocus
-            onClicked:          control.helpClicked()
-        }
+    MouseArea {
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        anchors.right:  parent.right
+        width:          control._helpLayoutWidth
+        enabled:        helpButton.visible
+        onClicked:      control.helpClicked()
     }
 }

@@ -40,9 +40,8 @@ RowLayout {
         id:                 filePicker
         title:              qsTr("Select Telemetery Log")
         nameFilters:        [ qsTr("Telemetry Logs (*.%1)").arg(_logFileExtension), qsTr("All Files (*)") ]
-        selectExisting:     true
         folder:             QGroundControl.settingsManager.appSettings.telemetrySavePath
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             logField.text = file
             close()
         }

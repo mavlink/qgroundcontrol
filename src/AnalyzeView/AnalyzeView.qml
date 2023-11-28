@@ -24,8 +24,6 @@ Rectangle {
 
     signal popout()
 
-    ButtonGroup { id: setupButtonGroup }
-
     readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
     readonly property real  _defaultTextWidth:      ScreenTools.defaultFontPixelWidth
     readonly property real  _horizontalMargin:      _defaultTextWidth / 2
@@ -87,7 +85,7 @@ Rectangle {
                     id:                 subMenu
                     imageResource:      modelData.icon
                     setupIndicator:     false
-                    buttonGroup:     setupButtonGroup
+                    autoExclusive:      true
                     text:               modelData.title
 
                     onClicked: {

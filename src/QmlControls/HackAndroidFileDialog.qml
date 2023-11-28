@@ -9,7 +9,6 @@ Item {
     property var folder
     property var nameFilters
     property var title
-    property var selectExisting
     property var selectMultiple
     property var selectFolder
 

@@ -306,13 +306,13 @@ RowLayout {
                 property var _startPoint: undefined
                 property double _scaling: 0
                 anchors.fill: parent
-                onPressed: {
+                onPressed: (mouse) => {
                     _startPoint = Qt.point(mouse.x, mouse.y)
                     var start = chart.mapToValue(_startPoint)
                     var next = chart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
                     _scaling = next.x - start.x
                 }
-                onWheel: {
+                onWheel: (wheel) => {
                     if (wheel.angleDelta.y > 0)
                         chartDisplaySec /= 1.2
                     else

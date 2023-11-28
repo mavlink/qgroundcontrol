@@ -211,7 +211,6 @@ Item {
         function loadFromSelectedFile() {
             fileDialog.title =          qsTr("Select Plan File")
             fileDialog.planFiles =      true
-            fileDialog.selectExisting = true
             fileDialog.nameFilters =    _planMasterController.loadNameFilters
             fileDialog.openForLoad()
         }
@@ -222,7 +221,6 @@ Item {
             }
             fileDialog.title =          qsTr("Save Plan")
             fileDialog.planFiles =      true
-            fileDialog.selectExisting = false
             fileDialog.nameFilters =    _planMasterController.saveNameFilters
             fileDialog.openForSave()
         }
@@ -237,7 +235,6 @@ Item {
             }
             fileDialog.title =          qsTr("Save KML")
             fileDialog.planFiles =      false
-            fileDialog.selectExisting = false
             fileDialog.nameFilters =    ShapeFileHelper.fileDialogKMLFilters
             fileDialog.openForSave()
         }
@@ -302,7 +299,7 @@ Item {
 
         property bool planFiles: true    ///< true: working with plan files, false: working with kml file
 
-        onAcceptedForSave: {
+        onAcceptedForSave: (file) => {
             if (planFiles) {
                 _planMasterController.saveToFile(file)
             } else {
@@ -311,7 +308,7 @@ Item {
             close()
         }
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             _planMasterController.loadFromFile(file)
             _planMasterController.fitViewportToItems()
             _missionController.setCurrentPlanViewSeqNum(0, true)

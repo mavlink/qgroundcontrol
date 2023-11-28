@@ -28,14 +28,14 @@ Item {
         drag.maximumX:      root.parent.width  - (root.width  * tform.xScale)
         drag.maximumY:      root.parent.height - (root.height * tform.yScale)
         drag.filterChildren: true
-        onPressed: {
+        onPressed: (mouse) => {
             root.anchors.left  = undefined
             root.anchors.right = undefined
         }
         onDoubleClicked: {
             root.resetRequested();
         }
-        onWheel:
+        onWheel: (wheel) =>
         {
             var zoomFactor = 1;
             if(wheel.angleDelta.y > 0)

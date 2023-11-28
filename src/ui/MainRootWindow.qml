@@ -371,6 +371,7 @@ ApplicationWindow {
                                 anchors.fill:       parent
 
                                 onClicked: (mouse) => {
+                                    console.log("clicked")
                                     if (mouse.modifiers & Qt.ControlModifier) {
                                         QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
                                         showTouchAreasNotification.open()

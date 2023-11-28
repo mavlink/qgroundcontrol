@@ -5,9 +5,8 @@ import QtQuick.Layouts
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
-Button {
+CheckBox {
     id:         control
-    checkable:  true
     focusPolicy: Qt.ClickFocus
 
     property var            color:          qgcPal.text
@@ -22,15 +21,13 @@ Button {
         }
     }
 
-    onClicked: checked = !checked
-
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     contentItem: ColumnLayout {
         Item {
-            Layout.preferredHeight: _sectionSpacer
+            Layout.preferredHeight: control._sectionSpacer
             width:                  1
-            visible:                showSpacer
+            visible:                control.showSpacer
         }
 
         QGCLabel {
@@ -56,5 +53,5 @@ Button {
         }
     }
 
-    background: Item {}
+    indicator: Item {}
 }

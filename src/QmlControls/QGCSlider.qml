@@ -18,11 +18,15 @@ import QGroundControl.ScreenTools
 Slider {
     id:             control
     implicitHeight: ScreenTools.implicitSliderHeight
+    leftPadding:    0
+    rightPadding:   0
+    topPadding:     0
+    bottomPadding:  0
 
-    // Value indicator starts display from zero instead of min value
-    property bool zeroCentered: false
-    property bool displayValue: false
-    property bool indicatorBarVisible: true
+    
+    property bool zeroCentered:         false   // Value indicator starts display from zero instead of min value
+    property bool displayValue:         false
+    property bool indicatorBarVisible:  true
 
     property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
     property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
@@ -30,7 +34,7 @@ Slider {
     background: Rectangle {
         x:              control.horizontal ? 
                             control.leftPadding : 
-                            control.leftPadding + control.availableWidth / 3 - width / 2
+                            control.leftPadding + control.availableWidth / 2 - width / 2
         y:              control.horizontal ? 
                             control.topPadding + control.availableHeight / 2 - height / 2 :
                             control.topPadding
@@ -69,8 +73,12 @@ Slider {
     }*/
 
     handle: Rectangle {
-        x:              control.leftPadding + control.visualPosition * (control.availableWidth - width)
-        y:              control.topPadding + control.availableHeight / 2 - height / 2
+        x:              control.horizontal ? 
+                            control.leftPadding + control.visualPosition * (control.availableWidth - width) :
+                            control.leftPadding + control.availableWidth / 2 - width / 2
+        y:              control.horizontal ? 
+                            control.topPadding + control.availableHeight / 2 - height / 2 :
+                            control.topPadding + control.visualPosition * (control.availableHeight - height)
         implicitWidth:  _radius * 2
         implicitHeight: _radius * 2
         color:          qgcPal.button

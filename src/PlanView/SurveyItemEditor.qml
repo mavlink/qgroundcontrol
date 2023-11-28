@@ -105,9 +105,8 @@ TransectStyleComplexItemEditor {
     KMLOrSHPFileDialog {
         id:             kmlOrSHPLoadDialog
         title:          qsTr("Select Polygon File")
-        selectExisting: true
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             missionItem.surveyAreaPolygon.loadKMLOrSHPFile(file)
             missionItem.resetState = false
             //editorMap.mapFitFunctions.fitMapViewportTomissionItems()

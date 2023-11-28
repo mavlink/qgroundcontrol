@@ -75,9 +75,8 @@ SetupPage {
                 id:                 customFirmwareDialog
                 title:              qsTr("Select Firmware File")
                 nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
-                selectExisting:     true
                 folder:             QGroundControl.settingsManager.appSettings.logSavePath
-                onAcceptedForLoad: {
+                onAcceptedForLoad: (file) => {
                     controller.flashFirmwareUrl(file)
                     close()
                 }

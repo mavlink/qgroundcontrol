@@ -138,7 +138,7 @@ Item {
                                 preventStealing:    true
                                 property real startX
                                 property real direction
-                                onPressed: {
+                                onPressed: (mouse) => {
                                     startX = mouseX
                                     direction = startX > width/2 ? 1 : -1
                                     parent.item.deadbandColor = "#3C6315"

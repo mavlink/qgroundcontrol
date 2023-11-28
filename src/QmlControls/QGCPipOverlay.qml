@@ -133,7 +133,7 @@ Item {
         property real initialWidth: 0
 
         // When we push the mouse button down, we un-anchor the mouse area to prevent a resizing loop
-        onPressed: {
+        onPressed: (mouse) => {
             pipResize.anchors.top = undefined // Top doesn't seem to 'detach'
             pipResize.anchors.right = undefined // This one works right, which is what we really need
             pipResize.initialX = mouse.x

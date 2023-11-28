@@ -234,7 +234,6 @@ Rectangle {
                                         id:             customActionPathBrowseDialog
                                         title:          qsTr("Choose the Custom Action Definitions file")
                                         folder:         customActions.jsonFile.rawValue
-                                        selectExisting: true
                                         selectFolder:   false
                                         onAcceptedForLoad: customActions.jsonFile.rawValue = file
                                         nameFilters: ["JSON files (*.json)"]
@@ -759,7 +758,6 @@ Rectangle {
                                     id:             savePathBrowseDialog
                                     title:          qsTr("Choose the location to save/load files")
                                     folder:         _savePath.rawValue
-                                    selectExisting: true
                                     selectFolder:   true
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
@@ -1163,7 +1161,6 @@ Rectangle {
                                     id:                 userBrandImageIndoorBrowseDialog
                                     title:              qsTr("Choose custom brand image file")
                                     folder:             _userBrandImageIndoor.rawValue.replace("file:///","")
-                                    selectExisting:     true
                                     selectFolder:       false
                                     onAcceptedForLoad:  _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
@@ -1185,7 +1182,6 @@ Rectangle {
                                     id:                 userBrandImageOutdoorBrowseDialog
                                     title:              qsTr("Choose custom brand image file")
                                     folder:             _userBrandImageOutdoor.rawValue.replace("file:///","")
-                                    selectExisting:     true
                                     selectFolder:       false
                                     onAcceptedForLoad:  _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }

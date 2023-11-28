@@ -126,10 +126,9 @@ Item {
         id:             kmlLoadDialog
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select KML File")
-        selectExisting: true
         nameFilters:    ShapeFileHelper.fileDialogKMLFilters
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             mapPolyline.loadKMLFile(file)
             close()
         }

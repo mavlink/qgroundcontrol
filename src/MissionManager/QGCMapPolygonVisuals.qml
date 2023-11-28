@@ -218,9 +218,8 @@ Item {
     KMLOrSHPFileDialog {
         id:             kmlOrSHPLoadDialog
         title:          qsTr("Select Polygon File")
-        selectExisting: true
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             mapPolygon.loadKMLOrSHPFile(file)
             mapFitFunctions.fitMapViewportToMissionItems()
             close()
