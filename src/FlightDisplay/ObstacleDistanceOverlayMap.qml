@@ -54,10 +54,10 @@ Item {
             const rad =  deg * Math.PI / 180.0
             const m = obstacleDistance._ranges[obstacleDistance._degToRangeIdx(deg, true)] / 100.0
             const pixels = minGradPixels + m * metersToPixels
-            const outerX = centerX + pixels * Math.cos(rad)
-            const outerY = centerY + pixels * Math.sin(rad)
-            const innerX = centerX + (pixels - height) * Math.cos(rad)
-            const innerY = centerY + (pixels - height) * Math.sin(rad)
+            const outerX = centerX + pixels * Math.sin(rad)
+            const outerY = centerY - pixels * Math.cos(rad)
+            const innerX = centerX + (pixels - height) * Math.sin(rad)
+            const innerY = centerY - (pixels - height) * Math.cos(rad)
 
             points.push({'outer_x': outerX, 'outer_y': outerY, 'inner_x': innerX, 'inner_y': innerY, 'range': m})
         }

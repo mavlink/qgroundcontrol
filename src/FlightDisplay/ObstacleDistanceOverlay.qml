@@ -36,7 +36,10 @@ Canvas {
 
     // Converts degrees to index from ranges
     function rangeIdx(deg, increment, offset, len, heading) {
-        const i = (360 - heading + deg - offset) / increment
+        var degrees = deg + offset - heading
+        if (degrees > 360) degrees = degrees - 360
+        if (degrees < 0) degrees = degrees + 360;
+        const i = degrees / increment
         return (len + Math.ceil(i)) % len
     }
 
