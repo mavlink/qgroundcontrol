@@ -115,6 +115,23 @@ Map {
         function onRawValueChanged() { updateActiveMapType() }
     }
 
+    // We track whether the user has panned or not to correctly handle automatic map positioning
+    DragHandler {
+        target:                 null
+        onTranslationChanged:   (delta) => _map.pan(-delta.x, -delta.y)
+    }
+
+    WheelHandler {
+        // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
+        // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
+        // and we don't yet distinguish mice and trackpads on Wayland either
+        acceptedDevices: Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland"
+                         ? PointerDevice.Mouse | PointerDevice.TouchPad
+                         : PointerDevice.Mouse
+        rotationScale: 1/120
+        property: "zoomLevel"
+    }
+
     /// Ground Station location
     MapQuickItem {
         anchorPoint.x:  sourceItem.width / 2
