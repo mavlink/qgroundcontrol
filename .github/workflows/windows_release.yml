@@ -45,7 +45,7 @@ jobs:
           target:       desktop
           arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
-          modules:      qtcharts location positioning texttospeech core5compat multimedia serialport location-private positioning-private
+          modules:      qtcharts qtlocation qtpositioning qttexttospeech qt5compat qtmultimedia qtserialport
           setup-python: false
 
       - name: Download JOM
