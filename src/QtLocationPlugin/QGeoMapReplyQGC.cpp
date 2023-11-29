@@ -80,7 +80,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
         setFinished(true);
         setCached(false);
     } else {
-        QGCFetchTileTask* task = getQGCMapEngine()->createFetchTileTask(getQGCMapEngine()->urlFactory()->getTypeFromId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
+        QGCFetchTileTask* task = getQGCMapEngine()->createFetchTileTask(getQGCMapEngine()->urlFactory()->getProviderTypeFromQtMapId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
         connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::cacheReply);
         connect(task, &QGCMapTask::error, this, &QGeoTiledMapReplyQGC::cacheError);
         getQGCMapEngine()->addTask(task);
@@ -137,13 +137,13 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         //-- Cache it if valid
         if(!a.isEmpty()) {
             getQGCMapEngine()->cacheTile(
-                getQGCMapEngine()->urlFactory()->getTypeFromId(
+                getQGCMapEngine()->urlFactory()->getProviderTypeFromQtMapId(
                     tileSpec().mapId()),
                 tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
         }
         emit terrainDone(a, QNetworkReply::NoError);
     } else {
-        MapProvider* mapProvider = urlFactory->getMapProviderFromId(tileSpec().mapId());
+        MapProvider* mapProvider = urlFactory->getMapProviderFromQtMapId(tileSpec().mapId());
         if (mapProvider && mapProvider->_isBingProvider() && a.size() && _bingNoTileImage.size() && a == _bingNoTileImage) {
             // Bing doesn't return an error if you request a tile above supported zoom level
             // It instead returns an image of a missing tile graphic. We need to detect that
@@ -155,7 +155,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
             setMapImageData(a);
             if(!format.isEmpty()) {
                 setMapImageFormat(format);
-                getQGCMapEngine()->cacheTile(getQGCMapEngine()->urlFactory()->getTypeFromId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
+                getQGCMapEngine()->cacheTile(getQGCMapEngine()->urlFactory()->getProviderTypeFromQtMapId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
             }
         }
         setFinished(true);

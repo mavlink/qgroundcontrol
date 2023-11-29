@@ -222,15 +222,16 @@ QGCMapEngine::cacheTile(const QString& type, const QString& hash, const QByteArr
 QString
 QGCMapEngine::getTileHash(const QString& type, int x, int y, int z)
 {
-    return QString::asprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
+    int hash = urlFactory()->hashFromProviderType(type);
+    return QString::asprintf("%010d%08d%08d%03d", hash, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::hashToType(const QString& hash)
+QGCMapEngine::tileHashToType(const QString& tileHash)
 {
-    QString type = hash.mid(0,10);
-    return urlFactory()->getTypeFromId(type.toInt());
+    int providerHash = tileHash.mid(0,10).toInt();
+    return urlFactory()->providerTypeFromHash(providerHash);
 }
 
 //-----------------------------------------------------------------------------
@@ -257,7 +258,7 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
 QStringList
 QGCMapEngine::getMapNameList()
 {
-    return QStringList(getQGCMapEngine()->urlFactory()->getProviderTable().keys());
+    return getQGCMapEngine()->urlFactory()->getProviderTypes();
 }
 
 //-----------------------------------------------------------------------------
