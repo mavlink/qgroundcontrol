@@ -103,11 +103,17 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
     }
 }
 
-void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString text)
+void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString text, QString description)
 {
     // Hack to prevent calibration messages from cluttering things up
     if (_activeVehicle->px4Firmware() && text.startsWith(QStringLiteral("[cal] "))) {
         return;
+    }
+
+    text = text.replace("\n", "<br/>");
+    // TODO: handle text + description separately in the UI
+    if (!description.isEmpty()) {
+        text += "<br/><small><small>" + description.replace("\n", "<br/>") + "</small></small>";
     }
 
     // Color the output depending on the message severity. We have 3 distinct cases:
@@ -187,11 +193,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }
-    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font><br/>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text.toHtmlEscaped()));
-
-    if (message->severityIsError()) {
-        _latestError = severityText + " " + text;
-    }
+    message->_setFormatedText(QString("<font style=\"%1\">[%2%3]%4 %5</font><br/>").arg(style).arg(dateString).arg(compString).arg(severityText).arg(text));
 
     _mutex.unlock();
 
@@ -202,7 +204,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
 
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showCriticalVehicleMessage(message->getText().toHtmlEscaped());
+        _app->showCriticalVehicleMessage(message->getText());
     }
 }
 

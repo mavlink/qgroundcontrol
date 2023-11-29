@@ -37,7 +37,7 @@ public:
      */
     int getSeverity() const          { return _severity; }
     /**
-     * @brief Get message text (e.g. "[pm] sending list")
+     * @brief Get (html escaped) message text (e.g. "[pm] sending list")
      */
     QString getText()           { return _text; }
     /**
@@ -98,10 +98,6 @@ public:
      * @brief Get normal message count (Resets count once read)
      */
     int getNormalCount();
-    /**
-     * @brief Get latest error message
-     */
-    QString getLatestError()   { return _latestError; }
 
     /// Begin to show message which are errors in the toolbar
     void showErrorsInToolbar(void) { _showErrorsInToolbar = true; }
@@ -115,9 +111,10 @@ public slots:
      * @param uasid UAS Id
      * @param componentid Component Id
      * @param severity Message severity
-     * @param text Message Text
+     * @param text Message Text (html escaped)
+     * @param description Optional detailed description (html escaped)
      */
-    void handleTextMessage(int uasid, int componentid, int severity, QString text);
+    void handleTextMessage(int uasid, int componentid, int severity, QString text, QString description);
 
 signals:
     /**
@@ -144,7 +141,6 @@ private:
     int                     _errorCountTotal;
     int                     _warningCount;
     int                     _normalCount;
-    QString                 _latestError;
     bool                    _showErrorsInToolbar;
     MultiVehicleManager*    _multiVehicleManager;
 };

@@ -36,19 +36,20 @@ Item {
     property var totalToolInsets:   _toolInsets // These are the insets for your custom overlay additions
     property var mapControl
 
+    // since this file is a placeholder for the custom layer in a standard build, we will just pass through the parent insets
     QGCToolInsets {
-        id:                         _toolInsets
-        leftEdgeCenterInset:    0
-        leftEdgeTopInset:           0
-        leftEdgeBottomInset:        0
-        rightEdgeCenterInset:   0
-        rightEdgeTopInset:          0
-        rightEdgeBottomInset:       0
-        topEdgeCenterInset:       0
-        topEdgeLeftInset:           0
-        topEdgeRightInset:          0
-        bottomEdgeCenterInset:    0
-        bottomEdgeLeftInset:        0
-        bottomEdgeRightInset:       0
+        id:                     _toolInsets
+        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
+        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
+        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
+        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
+        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
+        rightEdgeBottomInset:   parentToolInsets.rightEdgeBottomInset
+        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
+        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
+        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
+        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
+        bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
+        bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 }

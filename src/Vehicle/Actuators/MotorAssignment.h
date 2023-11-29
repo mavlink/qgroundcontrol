@@ -62,8 +62,7 @@ private:
     static constexpr int _spinTimeoutDefaultSec = 1000;
     static constexpr int _spinTimeoutHighSec = 3000; ///< wait a bit longer after assigning motors, so ESCs can initialize
 
-    static void ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
-            Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
     void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
     void sendMavlinkRequest(int function, float value);
 

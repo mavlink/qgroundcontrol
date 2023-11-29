@@ -26,6 +26,7 @@ Rectangle {
     property real _sliderCenterValue:   _vehicleAltitude
     property string _displayText:       ""
     property bool _altSlider:         true
+    property bool _speedSlider:       false
 
     property var sliderValue : valueSlider.value
 
@@ -75,6 +76,10 @@ Rectangle {
         _displayText = text
     }
 
+    function setIsSpeedSlider(isSpeed) {
+        _speedSlider = isSpeed
+    }
+
     function getOutputValue() {
         if (_altSlider) {
             return valueField.newValue - _sliderCenterValue
@@ -101,7 +106,8 @@ Rectangle {
         QGCLabel {
             id:                         valueField
             anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       newValueAppUnits + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+            text:                       newValueAppUnits + " " + (_speedSlider ? QGroundControl.unitsConversion.appSettingsSpeedUnitsString
+                                                                               : QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
 
             property real   newValue
             property string newValueAppUnits
@@ -120,7 +126,12 @@ Rectangle {
             function updateLinear(value) {
                 // value is between -1 and 1
                 newValue = _sliderMinVal + (value + 1) * 0.5 * (_sliderMaxVal - _sliderMinVal)
-                newValueAppUnits = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newValue).toFixed(1)
+                if (_speedSlider) {
+                    // Already working in converted units
+                    newValueAppUnits = newValue.toFixed(1)
+                } else {
+                    newValueAppUnits = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newValue).toFixed(1)
+                }
             }
 
             function getSliderValueFromOutputLinear(val) {
