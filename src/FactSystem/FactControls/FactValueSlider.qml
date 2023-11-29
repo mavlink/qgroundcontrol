@@ -38,7 +38,7 @@ Rectangle {
     property var    _fact:                  fact
 
     QGCPalette { id: qgcPal; colorGroupEnabled: parent.enabled }
-    QGCPalette { id: qgcPal.Disabled; colorGroupEnabled: false }
+    QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
 
     function firstVisibleIndex() {
         return valueListView.contentX / _itemWidth
