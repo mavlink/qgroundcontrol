@@ -1576,6 +1576,7 @@ void MissionController::_recalcMissionFlightStatus()
             case MAV_CMD_NAV_ROI:
             case MAV_CMD_DO_SET_ROI_LOCATION:
             case MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET:
+            case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW:
                 _missionFlightStatus.gimbalYaw      = qQNaN();
                 _missionFlightStatus.gimbalPitch    = qQNaN();
                 break;

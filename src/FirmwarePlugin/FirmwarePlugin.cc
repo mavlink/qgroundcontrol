@@ -276,14 +276,14 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicl
 }
 
 void
-FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle*, double)
+FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void
-FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle*, double)
+FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
@@ -949,8 +949,8 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
     // Only try arming the vehicle a single time. Doing retries on arming with a delay can lead to safety issues.
     vehicle->setArmed(true, false /* showError */);
 
-    // Wait 1000 msecs for vehicle to arm
-    for (int i=0; i<10; i++) {
+    // Wait 1500 msecs for vehicle to arm (waiting for the next heartbeat)
+    for (int i = 0; i < 15; i++) {
         if (vehicle->armed()) {
             vehicleArmed = true;
             break;
