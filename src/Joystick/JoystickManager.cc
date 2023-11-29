@@ -127,7 +127,7 @@ Joystick* JoystickManager::activeJoystick(void)
     return _activeJoystick;
 }
 
-QList<Joystick*> JoystickManager::activesJoysticks(void)
+QList<Joystick*> JoystickManager::activePeripherals(void)
 {
     qDebug()<< _activeJoysticksList;
     return _activeJoysticksList;
@@ -163,10 +163,53 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
     emit activeJoystickNameChanged(_activeJoystick?_activeJoystick->name():"");
 }
 
+void JoystickManager::setActivePeripherals(QList<Joystick*> peripherals)
+{
+
+    QSettings settings;
+    QList<QString> periphNamesList;
+    for (int i = 0; i < peripherals.length(); i++){
+        qDebug() << "current joystick in pipe: " << peripherals[i] ;
+        if (peripherals[i] != nullptr && !_name2JoystickMap.contains(peripherals[i]->name())) {
+            qCWarning(JoystickManagerLog) << "Set active not in map" << peripherals[i]->name();
+            return;
+        }
+
+        if(_activeJoysticksList.contains(peripherals[i])){
+            return;
+        }
+
+        if (!_activeJoysticksList.empty()){
+            for (int i = 0; i < _activeJoysticksList.length(); i++){
+                _activeJoysticksList[i]->stopPolling();
+            }
+        }
+        if(!peripherals.empty()){
+
+        }
+        _activeJoysticksList.append(peripherals[i]);
+
+        for (int i = 0; i < _activeJoysticksList.length(); i++){
+            if(_activeJoysticksList[i] == peripherals[i]){
+                qCDebug(JoystickManagerLog) << "Set active:" << _activeJoysticksList[i]->name();
+                settings.beginGroup(_settingsGroup);
+                settings.setValue(_settingsKeyActiveJoystick, _activeJoysticksList[i]->name());
+            }
+        }
+
+        periphNamesList.append(peripherals[i]->name());
+
+        emit activePeripheralsChanged(_activeJoysticksList);
+        emit activePeripheralsNamesChanged(periphNamesList);
+    }
+}
+
 void JoystickManager::setActivePeripherals(Joystick* joystick)
 {
 
     QSettings settings;
+    QList<QString> periphNamesList;
+
     qDebug() << "current joystick in pipe: " << joystick ;
     if (joystick != nullptr && !_name2JoystickMap.contains(joystick->name())) {
         qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
@@ -195,8 +238,6 @@ void JoystickManager::setActivePeripherals(Joystick* joystick)
             settings.setValue(_settingsKeyActiveJoystick, _activeJoysticksList[i]->name());
         }
     }
-    emit activePeripheralsChanged(_activeJoysticksList);
-    QList<QString> periphNamesList;
 
     for(int i = 0; i < _activeJoysticksList.length(); i++){
         periphNamesList.append(_activeJoysticksList[i]->name());
@@ -222,6 +263,11 @@ QStringList JoystickManager::joystickNames(void)
 }
 
 QString JoystickManager::activeJoystickName(void)
+{
+    return _activeJoystick ? _activeJoystick->name() : QString();
+}
+
+QString JoystickManager::activePeripheralName(void)
 {
     return _activeJoystick ? _activeJoystick->name() : QString();
 }

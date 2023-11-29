@@ -36,26 +36,27 @@ public:
     Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
     Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
 
-    Q_PROPERTY(Joystick* activePeripheral READ activePeripheral WRITE setActivePeripherals NOTIFY activePeripheralsNamesChanged)
+    Q_PROPERTY(QList<Joystick*> activePeripherals READ activePeripherals WRITE setActivePeripherals NOTIFY activePeripheralsNamesChanged)
     Q_PROPERTY(QString activePeripheralName READ activePeripheralName WRITE setActivePeripheralName NOTIFY activePeripheralsNamesChanged)
     /// List of available joysticks
     QVariantList joysticks();
     /// List of available joystick names
     QStringList joystickNames(void);
 
-
     /// Get active joystick
     Joystick* activeJoystick(void);
-
-    QList<Joystick*> activesJoysticks(void);
+    QList<Joystick*> activePeripherals(void);
 
     /// Get list of actives joystick
     QList<Joystick*> getActivesJoysticks(QList<Joystick*>);
     /// Set active joystick
     void setActiveJoystick(Joystick* joystick);
     void setActivePeripherals(Joystick* joystick);
+    void setActivePeripherals(QList<Joystick*> peripherals);
+
 
     QString activeJoystickName(void);
+    QString activePeripheralName(void);
 
     bool setActiveJoystickName(const QString& name);
     bool setActivePeripheralName(const QString& name);

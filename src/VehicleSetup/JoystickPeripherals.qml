@@ -62,10 +62,12 @@ Item {
                                 if (checked) {
                                     console.log("trying to set: " +joystickManager.joystickNames[index])
                                     joystickManager.activePeripheralName = joystickManager.joystickNames[index]
-                                    console.log(joystickManager.activesJoysticks)
-                                    var lst = joystickManager.activesJoysticks
-                                    for(var i = 0; i < lst.length; i++){
-                                        console.log(lst[i]+" :is set active")
+                                    console.log(joystickManager.activePeripherals)
+                                    var lst = joystickManager.activePeripherals
+                                    if(lst){
+                                        for(var i = 0; i < lst.length; i++){
+                                            console.log(lst[i]+" :is set active")
+                                        }
                                     }
                                 }
                             }
