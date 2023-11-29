@@ -136,12 +136,10 @@ GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
         case VideoSettings::ForceVideoDecoderDefault:
             break;
         case VideoSettings::ForceVideoDecoderSoftware:
-            for(auto name : {"avdec_h264", "avdec_h265"}) {
-                changeRank(name, GST_RANK_PRIMARY + 1);
-            }
+            changeRank("avdec_h264", GST_RANK_PRIMARY + 1);
             break;
         case VideoSettings::ForceVideoDecoderVAAPI:
-            for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapih265dec", "vaapivc1dec"}) {
+            for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapivc1dec"}) {
                 changeRank(name, GST_RANK_PRIMARY + 1);
             }
             break;

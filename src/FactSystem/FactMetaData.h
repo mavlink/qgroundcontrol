@@ -99,12 +99,6 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsAreaUnitsString(void);
 
-    /// Converts from meters/second to the user specified speed unit
-    static QVariant metersSecondToAppSettingsSpeedUnits(const QVariant& metersSecond);
-
-    /// Converts from user specified speed unit to meters/second
-    static QVariant appSettingsSpeedUnitsToMetersSecond(const QVariant& speed);
-
     /// Returns the string for speed units which has configued by user
     static QString appSettingsSpeedUnitsString();
 
@@ -124,10 +118,10 @@ public:
     QString         longDescription         (void) const { return _longDescription;}
     QVariant        rawMax                  (void) const { return _rawMax; }
     QVariant        cookedMax               (void) const;
-    bool            maxIsDefaultForType     (void) const { return _rawMax == _maxForType(); }
+    bool            maxIsDefaultForType     (void) const { return _maxIsDefaultForType; }
     QVariant        rawMin                  (void) const { return _rawMin; }
     QVariant        cookedMin               (void) const;
-    bool            minIsDefaultForType     (void) const { return _rawMin == _minForType(); }
+    bool            minIsDefaultForType     (void) const { return _minIsDefaultForType; }
     QString         name                    (void) const { return _name; }
     QString         shortDescription        (void) const { return _shortDescription; }
     ValueType_t     type                    (void) const { return _type; }
@@ -212,14 +206,11 @@ public:
     static QString typeToString(ValueType_t type);
     static size_t typeToSize(ValueType_t type);
 
-    static QVariant minForType(ValueType_t type);
-    static QVariant maxForType(ValueType_t type);
-
     static const char* qgcFileType;
 
 private:
-    QVariant _minForType                (void) const { return minForType(_type); };
-    QVariant _maxForType                (void) const { return maxForType(_type); };
+    QVariant _minForType                (void) const;
+    QVariant _maxForType                (void) const;
     void    _setAppSettingsTranslators  (void);
 
     /// Clamp a value to be within cookedMin and cookedMax
@@ -323,7 +314,9 @@ private:
     QString         _group;
     QString         _longDescription;
     QVariant        _rawMax;
+    bool            _maxIsDefaultForType;
     QVariant        _rawMin;
+    bool            _minIsDefaultForType;
     QString         _name;
     QString         _shortDescription;
     QString         _rawUnits;

@@ -494,12 +494,14 @@ typedef struct {
     double              newAMSLAlt;
 } PauseVehicleThenChangeAltData_t;
 
-static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
-    if (ack.result != MAV_RESULT_ACCEPTED) {
+    Q_UNUSED(progress);
+
+    if (commandResult != MAV_RESULT_ACCEPTED) {
         switch (failureCode) {
         case Vehicle::MavCmdResultCommandResultOnly:
-            qDebug() << QStringLiteral("MAV_CMD_DO_REPOSITION error(%1)").arg(ack.result);
+            qDebug() << QStringLiteral("MAV_CMD_DO_REPOSITION error(%1)").arg(commandResult);
             break;
         case Vehicle::MavCmdResultFailureNoResponseToCommand:
             qDebug() << "MAV_CMD_DO_REPOSITION no response from vehicle";
@@ -511,7 +513,7 @@ static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int
     }
 
     PauseVehicleThenChangeAltData_t* pData = static_cast<PauseVehicleThenChangeAltData_t*>(resultHandlerData);
-    pData->plugin->_changeAltAfterPause(resultHandlerData, ack.result == MAV_RESULT_ACCEPTED /* pauseSucceeded */);
+    pData->plugin->_changeAltAfterPause(resultHandlerData, commandResult == MAV_RESULT_ACCEPTED /* pauseSucceeded */);
 }
 
 void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pauseSucceeded)
@@ -555,12 +557,9 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     resultData->newAMSLAlt  = vehicle->homePosition().altitude() + newAltRel;
 
     if (pauseVehicle) {
-        Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
-        handlerInfo.resultHandler       = _pauseVehicleThenChangeAltResultHandler;
-        handlerInfo.resultHandlerData   = resultData;
-
         vehicle->sendMavCommandWithHandler(
-                    &handlerInfo,
+                    _pauseVehicleThenChangeAltResultHandler,
+                    resultData,
                     vehicle->defaultComponentId(),
                     MAV_CMD_DO_REPOSITION,
                     -1.0f,                                  // Don't change groundspeed
@@ -572,7 +571,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 }
 
-void PX4FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed)
+void PX4FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed)
 {
 
     vehicle->sendMavCommand(
@@ -586,7 +585,7 @@ void PX4FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle
         NAN, NAN,NAN);                        // param 5-7 unused
 }
 
-void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
+void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv)
 {
 
     vehicle->sendMavCommand(

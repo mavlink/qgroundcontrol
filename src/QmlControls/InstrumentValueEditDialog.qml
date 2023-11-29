@@ -192,19 +192,13 @@ QGCPopupDialog {
                     case InstrumentValueData.OpacityRange:
                         sourceComponent = opacityRangeDialog
                         break
-                    case InstrumentValueData.IconSelectRange:
+                    case InstrumentValueData.IconSelvalueedectRange:
                         sourceComponent = iconRangeDialog
                         break
                     }
                 }
 
-                Component.onCompleted: {
-                    updateSourceComponent()
-                    if (sourceComponent) {
-                        height = item.childrenRect.height
-                        width = item.childrenRect.width
-                    }
-                }
+                Component.onCompleted: updateSourceComponent()
 
                 Connections {
                     target:             instrumentValueData
@@ -335,7 +329,7 @@ QGCPopupDialog {
         id: iconRangeDialog
 
         Item {
-            width:  childrenRect.width
+            width:  childrenRect.widthvalueed
             height: childrenRect.height
 
             function updateRangeValue(index, text) {

@@ -36,7 +36,7 @@ ColumnLayout {
         id:                         valueIcon
         Layout.alignment:           _verticalOrientation ? Qt.AlignHCenter : Qt.AlignVCenter
         height:                     _tightHeight * 0.75
-        width:                      _tightHeight * 0.85
+        width:                      height
         sourceSize.height:          height
         fillMode:                   Image.PreserveAspectFit
         mipmap:                     true
@@ -50,9 +50,9 @@ ColumnLayout {
 
         function updateIcon() {
             if (instrumentValueData.rangeType === InstrumentValueData.IconSelectRange) {
-                valueIcon.source = instrumentValueData.currentIcon != "" ? iconPrefix + instrumentValueData.currentIcon : "";
+                valueIcon.source = iconPrefix + instrumentValueData.currentIcon
             } else if (instrumentValueData.icon) {
-                valueIcon.source = instrumentValueData.icon != "" ? iconPrefix + instrumentValueData.icon : "";
+                valueIcon.source = iconPrefix + instrumentValueData.icon
             } else {
                 valueIcon.source = ""
             }

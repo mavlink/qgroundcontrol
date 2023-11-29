@@ -825,6 +825,7 @@ bool QGCApplication::isInternetAvailable()
 
 void QGCApplication::_checkForNewVersion()
 {
+#ifndef __mobile__
     if (!_runningUnitTests) {
         if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
             QString versionCheckFile = toolbox()->corePlugin()->stableVersionCheckFileUrl();
@@ -835,10 +836,15 @@ void QGCApplication::_checkForNewVersion()
             }
         }
     }
+#endif
 }
 
 void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
+#ifdef __mobile__
+    Q_UNUSED(localFile)
+    Q_UNUSED(errorMsg)
+#else
     if (errorMsg.isEmpty()) {
         QFile versionFile(localFile);
         if (versionFile.open(QIODevice::ReadOnly)) {
@@ -861,6 +867,7 @@ void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFi
     }
 
     sender()->deleteLater();
+#endif
 }
 
 bool QGCApplication::_parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion)

@@ -14,7 +14,6 @@ import QtQuick.Layouts  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
-import QGroundControl.FactSystem            1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
@@ -143,10 +142,6 @@ Item {
                 }
             }
 
-            FactPanelController {
-                id: controller
-            }
-
             QGCFlickable {
                 id:                 messageFlick
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
@@ -163,27 +158,6 @@ Item {
                     color:              qgcPal.text
                     selectionColor:     qgcPal.text
                     selectedTextColor:  qgcPal.window
-                    property var fact:  null
-                    onLinkActivated: {
-                        if (link.startsWith('param://')) {
-                            var paramName = link.substr(8);
-                            fact = controller.getParameterFact(-1, paramName, true)
-                            if (fact != null) {
-                                paramEditorDialogComponent.createObject(mainWindow).open()
-                            }
-                        } else {
-                            Qt.openUrlExternally(link);
-                        }
-                    }
-                }
-                Component {
-                    id: paramEditorDialogComponent
-
-                    ParameterEditorDialog {
-                        title:          qsTr("Edit Parameter")
-                        fact:           messageText.fact
-                        destroyOnClose: true
-                    }
                 }
             }
         }

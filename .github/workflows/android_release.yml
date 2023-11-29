@@ -44,7 +44,7 @@ jobs:
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |
-          git fetch --all --tags -f --depth 1
+          git fetch --all --tags -f
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -63,12 +63,10 @@ jobs:
           ndk-version: r21e
           add-to-path: false
 
-      - name: Remove Android SDKs to force usage of android-33 only
+      - name: Remove Android SDK android-33-ext
         run: |
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-33-ext5"
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-33-ext4"
-            ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34"
-            ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34-ext8"
 
       - name: Install ccache
         run:  sudo apt-get install ccache

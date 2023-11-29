@@ -48,7 +48,8 @@ public:
     Q_INVOKABLE void trigger();
 
 private:
-    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
+            Vehicle::MavCmdResultFailureCode_t failureCode);
     void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
     void sendMavlinkRequest();
 
