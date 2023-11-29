@@ -225,6 +225,16 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
     }
+    //-- If Herelink Air unit, good to go
+    if(vSource == videoSourceHerelinkAirUnit) {
+        qCDebug(VideoManagerLog) << "Stream configured for Herelink Air Unit";
+        return true;
+    }
+    //-- If Herelink Hotspot, good to go
+    if(vSource == videoSourceHerelinkHotspot) {
+        qCDebug(VideoManagerLog) << "Stream configured for Herelink Hotspot";
+        return true;
+    }
     return false;
 }
 

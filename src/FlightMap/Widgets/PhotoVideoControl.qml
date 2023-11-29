@@ -101,7 +101,19 @@ Rectangle {
 
     function toggleShooting() {
         console.log("toggleShooting", _anyVideoStreamAvailable)
-        if (_mavlinkCamera && _mavlinkCamera.capturesVideo || _mavlinkCamera.capturesPhotos ) {
+
+        // This whole mavlinkCameraCaptureVideoOrPhotos stuff is to work around some strange qml boolean testing 
+        // behavior which wasn't working correctly. This should work:
+        //    if (_mavlinkCamera && (_mavlinkCamera.capturesVideo || _mavlinkCamera.capturesPhotos) ) {
+        // but it doesn't for some strange reason. Hence all the stuff below...
+        var mavlinkCameraCaptureVideoOrPhotos = false
+        if (_mavlinkCamera) {
+            if (_mavlinkCamera.capturesVideo || _mavlinkCamera.capturesPhotos) {
+                mavlinkCameraCaptureVideoOrPhotos = true
+            }
+        }
+        
+        if (mavlinkCameraCaptureVideoOrPhotos) {
             if(_mavlinkCameraInVideoMode) {
                 _mavlinkCamera.toggleVideo()
             } else {
