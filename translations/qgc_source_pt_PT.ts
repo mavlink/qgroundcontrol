@@ -6903,24 +6903,6 @@ Clique em Ok para inciar o processo de auto-ajuste.</translation>
     </message>
   </context>
   <context>
-    <name>FlyViewAirspaceIndicator</name>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="46"/>
-      <source>Approval Pending</source>
-      <translation>Aprovação pendente</translation>
-    </message>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="48"/>
-      <source>Flight Approved</source>
-      <translation>Voo aprovado</translation>
-    </message>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="50"/>
-      <source>Flight Rejected</source>
-      <translation>Voo rejeitado</translation>
-    </message>
-  </context>
-  <context>
     <name>FlyViewMap</name>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="346"/>

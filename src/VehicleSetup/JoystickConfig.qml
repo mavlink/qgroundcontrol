@@ -80,6 +80,9 @@ SetupPage {
                     visible:    _allowJoystickSelection
                 }
                 QGCTabButton {
+                    text:       qsTr("Peripherals")
+                }
+                QGCTabButton {
                     text:       qsTr("Button Assigment")
                 }
                 QGCTabButton {
@@ -92,7 +95,7 @@ SetupPage {
                 }
             }
 
-            property var pages:  ["JoystickConfigGeneral.qml", "JoystickConfigButtons.qml", "JoystickConfigCalibration.qml", "JoystickConfigAdvanced.qml"]
+            property var pages:  ["JoystickConfigGeneral.qml","JoystickPeripherals.qml", "JoystickConfigButtons.qml", "JoystickConfigCalibration.qml", "JoystickConfigAdvanced.qml"]
 
             Loader {
                 id:             joyLoader

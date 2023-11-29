@@ -6897,24 +6897,6 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
-    <name>FlyViewAirspaceIndicator</name>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="46"/>
-      <source>Approval Pending</source>
-      <translation>承認待ち</translation>
-    </message>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="48"/>
-      <source>Flight Approved</source>
-      <translation>飛行承認されました</translation>
-    </message>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="50"/>
-      <source>Flight Rejected</source>
-      <translation>飛行が拒否されました</translation>
-    </message>
-  </context>
-  <context>
     <name>FlyViewMap</name>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="346"/>
