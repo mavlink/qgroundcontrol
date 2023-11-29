@@ -190,22 +190,24 @@ Item {
     function setupSlider(actionCode) {
         // generic defaults
         guidedValueSlider.configureAsLinearSlider()
+        guidedValueSlider.setIsSpeedSlider(false)
 
         if (actionCode === actionTakeoff) {
                 guidedValueSlider.setMinVal(_activeVehicle.minimumTakeoffAltitude())
                 guidedValueSlider.setValue(_activeVehicle ? _activeVehicle.minimumTakeoffAltitude() : 0)
                 guidedValueSlider.setDisplayText("Height")
         } else if (actionCode === actionChangeSpeed) {
-            if (_activeVehicle.vtolInFwdFlight) {
+            guidedValueSlider.setIsSpeedSlider(true)
+            if (_fixedWing) {
                 guidedValueSlider.setDisplayText("Set Airspeed")
-                guidedValueSlider.setMinVal(_activeVehicle.minimumEquivalentAirspeed())
-                guidedValueSlider.setMaxVal(_activeVehicle.maximumEquivalentAirspeed())
-                guidedValueSlider.setValue(_activeVehicle.airSpeedSetpoint.rawValue)
-            } else {
+                guidedValueSlider.setMinVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()).toFixed(1))
+                guidedValueSlider.setMaxVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumEquivalentAirspeed()).toFixed(1))
+                guidedValueSlider.setValue(_activeVehicle.airSpeed.value)
+            } else if (!_fixedWing && _activeVehicle.haveMRSpeedLimits) {
                 guidedValueSlider.setDisplayText("Set Speed")
-                guidedValueSlider.setMinVal(0.1)
-                guidedValueSlider.setMaxVal(_activeVehicle.maximumHorizontalSpeedMultirotor())
-                guidedValueSlider.setValue(_activeVehicle.maximumHorizontalSpeedMultirotor()/2)
+                guidedValueSlider.setMinVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(0.1).toFixed(1))
+                guidedValueSlider.setMaxVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()).toFixed(1))
+                guidedValueSlider.setValue(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()/2).toFixed(1))
             }
         } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setDisplayText("New Alt(rel)")
@@ -599,10 +601,12 @@ Item {
             break
         case actionChangeSpeed:
             if (_activeVehicle) {
+                // We need to convert back to m/s as that is what mavlink standard uses for MAV_CMD_DO_CHANGE_SPEED
+                var metersSecondSpeed = QGroundControl.unitsConversion.appSettingsSpeedUnitsToMetersSecond(sliderOutputValue).toFixed(1)
                 if (_activeVehicle.vtolInFwdFlight || _activeVehicle.fixedWing) {
-                   _activeVehicle.guidedModeChangeEquivalentAirspeed(sliderOutputValue)
+                   _activeVehicle.guidedModeChangeEquivalentAirspeedMetersSecond(metersSecondSpeed)
                 } else {
-                    _activeVehicle.guidedModeChangeGroundSpeed(sliderOutputValue)
+                    _activeVehicle.guidedModeChangeGroundSpeedMetersSecond(metersSecondSpeed)
                 }
             }
             break

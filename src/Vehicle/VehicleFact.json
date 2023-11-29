@@ -81,6 +81,13 @@
     "units":            "m"
 },
 {
+    "name":             "altitudeAboveTerr",
+    "shortDesc": "Alt (Above Terrain)",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
     "name":             "flightDistance",
     "shortDesc": "Flight Distance",
     "type":             "double",

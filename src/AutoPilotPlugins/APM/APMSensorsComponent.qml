@@ -168,9 +168,6 @@ SetupPage {
                 onCalibrationComplete: {
                     switch (calType) {
                     case APMSensorsComponentController.CalTypeAccel:
-                    case APMSensorsComponentController.CalTypeOffboardCompass:
-                        postCalibrationComponent.createObject(mainWindow).open()
-                        break
                     case APMSensorsComponentController.CalTypeOnboardCompass:
                         _singleCompassSettingsComponentShowPriority = true
                         postOnboardCompassCalibrationComponent.createObject(mainWindow).open()

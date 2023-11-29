@@ -58,9 +58,6 @@ APMSensorsComponentController::APMSensorsComponentController(void)
     , _waitingForCancel(false)
     , _restoreCompassCalFitness(false)
 {
-    _compassCal.setVehicle(_vehicle);
-    connect(&_compassCal, &APMCompassCal::vehicleTextMessage, this, &APMSensorsComponentController::_handleUASTextMessage);
-
     APMAutoPilotPlugin * apmPlugin = qobject_cast<APMAutoPilotPlugin*>(_vehicle->autopilotPlugin());
 
     // Find the sensors component
@@ -274,9 +271,6 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
                                      0,             // no delayed start
                                      0);            // no auto-reboot
 
-        } else {
-            // Onboard mag cal is not supported
-            _compassCal.startCalibration();
         }
     } else if (command == MAV_CMD_DO_START_MAG_CAL && result != MAV_RESULT_ACCEPTED) {
         _restorePreviousCompassCalFitness();
@@ -452,11 +446,7 @@ void APMSensorsComponentController::cancelCalibration(void)
 {
     _cancelButton->setEnabled(false);
 
-    if (_calTypeInProgress == CalTypeOffboardCompass) {
-        _waitingForCancel = true;
-        emit waitingForCancelChanged();
-        _compassCal.cancelCalibration();
-    } else if (_calTypeInProgress == CalTypeOnboardCompass) {
+    if (_calTypeInProgress == CalTypeOnboardCompass) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
         _stopCalibration(StopCalibrationCancelled);
     } else {
@@ -524,6 +514,9 @@ void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message
 
         if (commandAck.command == MAV_CMD_PREFLIGHT_CALIBRATION) {
             switch (commandAck.result) {
+            case MAV_RESULT_IN_PROGRESS:
+                _appendStatusLog(tr("In progress"));
+                break;
             case MAV_RESULT_ACCEPTED:
                 _appendStatusLog(tr("Successfully completed"));
                 _stopCalibration(StopCalibrationSuccessShowLog);

@@ -55,8 +55,38 @@ Item {
 
     QGCToolInsets {
         id:                     _totalToolInsets
-        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
+        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
+        leftEdgeCenterInset:    exampleRectangle.leftEdgeCenterInset
+        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
+        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
+        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
         rightEdgeBottomInset:   parent.width - compassBackground.x
+        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
+        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
+        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
+        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
+        bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
+        bottomEdgeRightInset:   parent.height - attitudeIndicator.y
+    }
+
+    // This is an example of how you can use parent tool insets to position an element on the custom fly view layer
+    // - we use parent topEdgeLeftInset to position the widget below the toolstrip
+    // - we use parent bottomEdgeLeftInset to dodge the virtual joystick if enabled
+    // - we use the parent leftEdgeTopInset to size our element to the same width as the ToolStripAction
+    // - we export the width of this element as the leftEdgeCenterInset so that the map will recenter if the vehicle flys behind this element
+    Rectangle {
+        id: exampleRectangle
+        visible: false // to see this example, set this to true. To view insets, enable the insets viewer FlyView.qml
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: parentToolInsets.topEdgeLeftInset + _toolsMargin
+        anchors.bottomMargin: parentToolInsets.bottomEdgeLeftInset + _toolsMargin
+        anchors.leftMargin: _toolsMargin
+        width: parentToolInsets.leftEdgeTopInset - _toolsMargin
+        color: 'red'
+
+        property real leftEdgeCenterInset: visible ? x + width : 0
     }
 
     //-------------------------------------------------------------------------
@@ -209,7 +239,7 @@ Item {
 
     Rectangle {
         id:                     attitudeIndicator
-        anchors.bottomMargin:   _toolsMargin
+        anchors.bottomMargin:   _toolsMargin + parentToolInsets.bottomEdgeRightInset
         anchors.rightMargin:    _toolsMargin
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right

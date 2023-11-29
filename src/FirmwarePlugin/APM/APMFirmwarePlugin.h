@@ -80,6 +80,10 @@ public:
     QString             getHobbsMeter                   (Vehicle* vehicle) override; 
     bool                hasGripper                      (const Vehicle* vehicle) const override;
     const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
+    double              maximumEquivalentAirspeed       (Vehicle* vehicle) override;
+    double              minimumEquivalentAirspeed       (Vehicle* vehicle) override;
+    bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
+    void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
 
 protected:
     /// All access to singleton is through stack specific implementation
@@ -137,4 +141,7 @@ public:
 
     QTime lastBatteryStatusTime;
     QTime lastHomePositionTime;
+
+    bool  MAV_CMD_DO_REPOSITION_supported = false;
+    bool  MAV_CMD_DO_REPOSITION_unsupported = false;
 };
