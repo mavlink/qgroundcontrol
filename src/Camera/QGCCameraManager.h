@@ -85,6 +85,7 @@ protected:
     virtual void    _handleVideoStreamInfo  (const mavlink_message_t& message);
     virtual void    _handleVideoStreamStatus(const mavlink_message_t& message);
     virtual void    _handleBatteryStatus    (const mavlink_message_t& message);
+    virtual void    _handleTrackingImageStatus(const mavlink_message_t& message);
 
 protected:
 
