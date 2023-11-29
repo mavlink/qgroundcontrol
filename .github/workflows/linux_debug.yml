@@ -28,7 +28,7 @@ jobs:
           submodules: recursive
 
       - name: Install Qt
-        uses: jurplel/install-qt-action
+        uses: jurplel/install-qt-action@Unreleased
         with:
           version:      ${{ env.QT_VERSION }}
           host:         linux

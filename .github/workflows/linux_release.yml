@@ -37,7 +37,7 @@ jobs:
           git fetch --all --tags -f --depth 1
 
       - name: Install Qt
-        uses: jurplel/install-qt-action
+        uses: jurplel/install-qt-action@Unreleased
         with:
           version:      ${{ env.QT_VERSION }}
           host:         linux
