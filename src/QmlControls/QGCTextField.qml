@@ -13,8 +13,8 @@ TextField {
     activeFocusOnPress: true
     antialiasing:       true
     inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
-                          Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
-                          Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
+                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it.
+                          Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard instead of full keyboard
 
     property bool   showUnits:          false
     property bool   showHelp:           false

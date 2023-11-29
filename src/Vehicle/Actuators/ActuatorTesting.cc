@@ -120,10 +120,11 @@ void ActuatorTest::setActive(bool active)
     _active = active;
 }
 
-void ActuatorTest::ackHandlerEntry(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+void ActuatorTest::ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
+        Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     ActuatorTest* actuatorTest = (ActuatorTest*)resultHandlerData;
-    actuatorTest->ackHandler(static_cast<MAV_RESULT>(ack.result), failureCode);
+    actuatorTest->ackHandler(commandResult, failureCode);
 }
 
 void ActuatorTest::ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode)
@@ -189,12 +190,9 @@ void ActuatorTest::sendMavlinkRequest(int function, float value, float timeout)
 
     // TODO: consider using a lower command timeout
 
-    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
-    handlerInfo.resultHandler       = ackHandlerEntry;
-    handlerInfo.resultHandlerData   = this;
-
     _vehicle->sendMavCommandWithHandler(
-            &handlerInfo,
+            ackHandlerEntry,                  // Ack callback
+            this,                             // Ack callback data
             MAV_COMP_ID_AUTOPILOT1,           // the ID of the autopilot
             MAV_CMD_ACTUATOR_TEST,            // the mavlink command
             value,                            // value

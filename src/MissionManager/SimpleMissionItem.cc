@@ -480,9 +480,6 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
                     paramFact->_setName(paramInfo->label());
                     paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                     paramMetaData->setRawUnits(paramInfo->units());
-                    paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
-                    paramMetaData->setRawMin(paramInfo->min());
-                    paramMetaData->setRawMax(paramInfo->max());
                     paramFact->setMetaData(paramMetaData);
                     _textFieldFacts.append(paramFact);
                 }
@@ -531,9 +528,6 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                     paramFact->_setName(paramInfo->label());
                     paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                     paramMetaData->setRawUnits(paramInfo->units());
-                    paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
-                    paramMetaData->setRawMin(paramInfo->min());
-                    paramMetaData->setRawMax(paramInfo->max());
                     paramFact->setMetaData(paramMetaData);
                     _nanFacts.append(paramFact);
                 }
@@ -603,9 +597,6 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                 paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
                 paramMetaData->setEnumInfo(paramInfo->enumStrings(), paramInfo->enumValues());
                 paramMetaData->setRawUnits(paramInfo->units());
-                paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
-                paramMetaData->setRawMin(paramInfo->min());
-                paramMetaData->setRawMax(paramInfo->max());
                 paramFact->setMetaData(paramMetaData);
                 _comboboxFacts.append(paramFact);
             }

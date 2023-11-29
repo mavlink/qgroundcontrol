@@ -4851,7 +4851,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="108"/>
       <source>Yaw</source>
-      <translation>偏航</translation>
+      <translation>水平</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CameraSection.qml" line="106"/>
@@ -10152,7 +10152,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="251"/>
       <source>Item #%1</source>
-      <translation>项目 1</translation>
+      <translation>项目 #%1</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="155"/>
@@ -10541,7 +10541,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Vehicle/MultiVehicleManager.cc" line="139"/>
       <source>Connected to Vehicle %1</source>
-      <translation>已连接到载具 %1</translation>
+      <translation>已连接到飞机 %1</translation>
     </message>
   </context>
   <context>

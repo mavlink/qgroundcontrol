@@ -39,10 +39,11 @@ void Action::trigger()
     sendMavlinkRequest();
 }
 
-void Action::ackHandlerEntry(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+void Action::ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
+        Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     Action* action = (Action*)resultHandlerData;
-    action->ackHandler(static_cast<MAV_RESULT>(ack.result), failureCode);
+    action->ackHandler(commandResult, failureCode);
 }
 
 void Action::ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode)
@@ -57,12 +58,9 @@ void Action::sendMavlinkRequest()
 {
     qCDebug(ActuatorsConfigLog) << "Sending actuator action, function:" << _outputFunction << "type:" << (int)_type;
 
-    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
-    handlerInfo.resultHandler       = ackHandlerEntry;
-    handlerInfo.resultHandlerData   = this;
-
     _vehicle->sendMavCommandWithHandler(
-            &handlerInfo,
+            ackHandlerEntry,                  // Ack callback
+            this,                             // Ack callback data
             MAV_COMP_ID_AUTOPILOT1,           // the ID of the autopilot
             MAV_CMD_CONFIGURE_ACTUATOR,       // the mavlink command
             (int)_type,                       // action type

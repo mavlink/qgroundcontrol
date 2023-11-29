@@ -25,19 +25,17 @@ private:
     typedef struct {
         MAV_CMD                             command;
         MAV_RESULT                          expectedCommandResult;
-        bool                                expectInProgressResult;
+        uint8_t                             progress;
         Vehicle::MavCmdResultFailureCode_t  expectedFailureCode;
         int                                 expectedSendCount;
     } TestCase_t;
 
     void _testCaseWorker(TestCase_t& testCase);
 
-    static void _mavCmdResultHandler                (void* resultHandlerData,   int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
-    static void _mavCmdProgressHandler              (void* progressHandlerData, int compId, const mavlink_command_ack_t& ack);
-    static void _compIdAllFailureMavCmdResultHandler(void* resultHandlerData,   int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _mavCmdResultHandler            (void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _compIdAllMavCmdResultHandler   (void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode);
 
-    static bool _resultHandlerCalled;
-    static bool _progressHandlerCalled;
+    static bool _handlerCalled;
 
     static TestCase_t _rgTestCases[];
 };

@@ -724,7 +724,6 @@ HEADERS += \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/RemoteIDManager.h \
     src/Vehicle/StateMachine.h \
-    src/Vehicle/StandardModes.h \
     src/Vehicle/SysStatusSensorInfo.h \
     src/Vehicle/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
@@ -745,8 +744,6 @@ HEADERS += \
     src/Vehicle/VehicleVibrationFactGroup.h \
     src/Vehicle/VehicleWindFactGroup.h \
     src/Vehicle/VehicleHygrometerFactGroup.h \
-    src/Vehicle/VehicleGeneratorFactGroup.h \
-    src/Vehicle/VehicleEFIFactGroup.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -982,7 +979,6 @@ SOURCES += \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/RemoteIDManager.cc \
     src/Vehicle/StateMachine.cc \
-    src/Vehicle/StandardModes.cc \
     src/Vehicle/SysStatusSensorInfo.cc \
     src/Vehicle/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \
@@ -1002,8 +998,6 @@ SOURCES += \
     src/Vehicle/VehicleTemperatureFactGroup.cc \
     src/Vehicle/VehicleVibrationFactGroup.cc \
     src/Vehicle/VehicleHygrometerFactGroup.cc \
-    src/Vehicle/VehicleGeneratorFactGroup.cc \
-    src/Vehicle/VehicleEFIFactGroup.cc \
     src/Vehicle/VehicleWindFactGroup.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
@@ -1142,6 +1136,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMAirframeComponentController.h \
         src/AutoPilotPlugins/APM/APMAutoPilotPlugin.h \
         src/AutoPilotPlugins/APM/APMCameraComponent.h \
+        src/AutoPilotPlugins/APM/APMCompassCal.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
         src/AutoPilotPlugins/APM/APMFollowComponent.h \
@@ -1170,6 +1165,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMAirframeComponentController.cc \
         src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc \
         src/AutoPilotPlugins/APM/APMCameraComponent.cc \
+        src/AutoPilotPlugins/APM/APMCompassCal.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
         src/AutoPilotPlugins/APM/APMFollowComponent.cc \

@@ -36,15 +36,13 @@
                 "label":            "Hold",
                 "units":            "secs",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Acceptance",
                 "units":            "m",
                 "default":          0,
-                "decimalPlaces":    2,
-                "min":              0
+                "decimalPlaces":    2
             },
             "param3": {
                 "label":            "Pass Radius",
@@ -95,8 +93,7 @@
             "param1": {
                 "label":            "Turns",
                 "default":          1,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Leave Loiter",
@@ -132,8 +129,7 @@
                 "label":            "Loiter Time",
                 "units":            "secs",
                 "default":          30,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Leave Loiter",
@@ -298,8 +294,7 @@
                 "label":            "Hold",
                 "units":            "secs",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }        
         },
         { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
@@ -369,34 +364,27 @@
             "id":           93,
             "rawName":      "MAV_CMD_NAV_DELAY",
             "friendlyName": "Delay until",
-            "description":  "Delay until the specified time is reached.",
+            "description":  "Delay unti the specified time is reached.",
             "param1": {
                 "label":            "Hold",
                 "units":            "secs",
                 "default":          30,
-                "decimalPlaces":    0,
-                "min":              -1
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Hour (utc)",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              -1,
-                "max":              23
+                "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Min (utc)",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              -1,
-                "max":              59
+                "decimalPlaces":    0
             },
             "param4": {
                 "label":            "Sec (utc)",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              -1,
-                "max":              59
+                "decimalPlaces":    0
             }
         },
         {
@@ -410,8 +398,7 @@
                 "label":            "Delay",
                 "units":            "secs",
                 "default":          30,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -439,8 +426,7 @@
                 "label":            "Distance",
                 "units":            "m",
                 "default":          10,
-                "decimalPlaces":    2,
-                "min":              0
+                "decimalPlaces":    2
             }
         },
         {
@@ -507,14 +493,12 @@
             "param1": {
                 "label":            "Item #",
                 "default":          1,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Repeat",
                 "default":          10,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -532,14 +516,12 @@
             "param2": {
                 "label":            "Speed",
                 "units":            "m/s",
-                "default":          0,
-                "min":              -2
+                "default":          0
             },
             "param3": {
                 "label":            "Throttle",
                 "units":            "%",
-                "default":          0,
-                "min":              -2
+                "default":          0
             },
             "param4": {
                 "label":            "Offset",
@@ -573,8 +555,7 @@
             "param1": {
                 "label":            "Relay #",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Value",
@@ -589,22 +570,19 @@
             "param1": {
                 "label":            "Relay #",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Cycles",
                 "default":          1,
                 "units":            "count",
-                "decimalPlaces":    0,
-                "min":              1
+                "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Time",
                 "default":          10,
                 "units":            "secs",
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -616,14 +594,12 @@
             "param1": {
                 "label":            "Servo",
                 "default":          1,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "PWM",
                 "default":          1500,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -634,28 +610,24 @@
             "param1": {
                 "label":            "Servo",
                 "default":          1,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "PWM",
                 "default":          1000,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Cycles",
                 "default":          1,
                 "units":            "count",
-                "decimalPlaces":    0,
-                "min":              1
+                "decimalPlaces":    0
             },
             "param4": {
                 "label":            "Time",
                 "default":          10,
                 "units":            "secs",
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -783,14 +755,12 @@
             "param2": {
                 "label":            "Mission Index",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param3": {
                 "label":            "ROI Index",
                 "default":          0,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -941,51 +911,6 @@
             }
         },
         {
-            "id":                   1000,
-            "rawName":              "MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW",
-            "friendlyName":         "Gimbal Manager PitchYaw" ,
-            "description":          "Control the gimbal during the mission",
-            "category":             "Advanced",
-            "param1": {
-                "label":            "Pitch",
-                "default":          0,
-                "units":            "deg",
-                "decimalPlaces":    2
-            },
-            "param2": {
-                "label":            "Yaw",
-                "default":          0,
-                "units":            "deg",
-                "decimalPlaces":    2
-            },
-            "param3": {
-                "label":            "Pitch rate",
-                "default":          0,
-                "units":            "deg/s",
-                "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Yaw rate",
-                "default":          0,
-                "units":            "deg/s",
-                "decimalPlaces":    2
-            },
-            "param5": {
-                "label":            "Follow yaw",
-                "default":          0,
-                "decimalPlaces":    0,
-                "enumStrings":      "Follow yaw, Lock yaw",
-                "enumValues":       "0,16"
-            },
-            "param7": {
-                "label":            "Gimbal",
-                "default":          0,
-                "decimalPlaces":    0,
-                "enumStrings":      "Primary,first gimbal,second gimbal",
-                "enumValues":       "0,1,2"
-            }
-        },
-        {
             "id":                   206,
             "rawName":              "MAV_CMD_DO_SET_CAM_TRIGG_DIST",
             "friendlyName":         "Camera trigger distance",
@@ -995,15 +920,13 @@
                 "label":            "Distance",
                 "default":          25,
                 "units":            "m",
-                "decimalPlaces":    2,
-                "min":              0
+                "decimalPlaces":    2
             },
             "param2": {
                 "label":            "Shutter",
                 "default":          0,
                 "units":            "msecs",
-                "decimalPlaces":    0,
-                "min":              -1
+                "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Trigger",
@@ -1108,8 +1031,7 @@
                 "label":            "Timeout",
                 "default":          0,
                 "units":            "secs",
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Min Alt",
@@ -1127,8 +1049,7 @@
                 "label":            "H Limit",
                 "default":          25,
                 "units":            "m",
-                "decimalPlaces":    2,
-                "min":              0
+                "decimalPlaces":    2
             }
         },
         { "id": 241, "rawName": "MAV_CMD_PREFLIGHT_CALIBRATION", "friendlyName": "Calibration" },
@@ -1169,14 +1090,12 @@
                 "label":            "Interval",
                 "default":          0,
                 "units":            "secs",
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Photo count",
                 "default":          1,
-                "decimalPlaces":    0,
-                "min":              0
+                "decimalPlaces":    0
             }
         },
         {
@@ -1198,8 +1117,7 @@
                 "label":            "Status Frequency",
                 "default":          0.2,
                 "units":            "Hz",
-                "decimalPlaces":    2,
-                "min":              0
+                "decimalPlaces":    2
             }
         },
         {

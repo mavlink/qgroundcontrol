@@ -55,8 +55,6 @@ public:
     Q_PROPERTY(int          param           READ param          CONSTANT)
     Q_PROPERTY(QString      units           READ units          CONSTANT)
     Q_PROPERTY(bool         nanUnchanged    READ nanUnchanged   CONSTANT)
-    Q_PROPERTY(double       min             READ min            CONSTANT)
-    Q_PROPERTY(double       max             READ max            CONSTANT)
 
     int             decimalPlaces   (void) const { return _decimalPlaces; }
     double          defaultValue    (void) const { return _defaultValue; }
@@ -66,8 +64,6 @@ public:
     int             param           (void) const { return _param; }
     QString         units           (void) const { return _units; }
     bool            nanUnchanged    (void) const { return _nanUnchanged; }
-    double          min             (void) const { return _min; }
-    double          max             (void) const { return _max; }
 
 private:
     int             _decimalPlaces;
@@ -78,8 +74,6 @@ private:
     int             _param;
     QString         _units;
     bool            _nanUnchanged;
-    double          _min;
-    double          _max;
 
     friend class MissionCommandTree;
     friend class MissionCommandUIInfo;
@@ -191,8 +185,6 @@ private:
     static const char* _idJsonKey;
     static const char* _labelJsonKey;
     static const char* _mavCmdInfoJsonKey;
-    static const char* _maxJsonKey;
-    static const char* _minJsonKey;
     static const char* _param1JsonKey;
     static const char* _param2JsonKey;
     static const char* _param3JsonKey;

@@ -88,6 +88,10 @@ public:
     /// list available from the firmware. Call will be made again if advanced mode changes.
     virtual QStringList flightModes(Vehicle* /*vehicle*/) { return QStringList(); }
 
+    /// Returns the list of additional flight modes to add to the list for joystick button actions.
+    /// Call will be made again if advanced mode changes.
+    virtual QStringList extraJoystickFlightModes(Vehicle* /*vehicle*/) { return QStringList(); }
+
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
     ///     @param custom_mode Custom mode from mavlink HEARTBEAT message
@@ -180,11 +184,11 @@ public:
 
         /// Command vehicle to change groundspeed
     ///     @param groundspeed Groundspeed in m/s
-    virtual void guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed);
+    virtual void guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed);
 
     /// Command vehicle to change equivalent airspeed
     ///     @param airspeed_equiv Equivalent airspeed in m/s
-    virtual void guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv);
+    virtual void guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv);
 
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
