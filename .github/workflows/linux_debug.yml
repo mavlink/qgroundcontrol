@@ -34,7 +34,7 @@ jobs:
           host:         linux
           target:       desktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts
+          modules:      qtcharts location positioning texttospeech core5compat multimedia serialport location-private positioning-private
           setup-python: true
 
       - name: Install QGC source dependencies

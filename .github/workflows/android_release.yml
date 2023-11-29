@@ -53,7 +53,7 @@ jobs:
           host:         linux
           target:       android
           dir:          ${{ runner.temp }}
-          modules:      qtcharts
+          modules:      qtcharts location positioning texttospeech core5compat multimedia serialport location-private positioning-private
           setup-python: true
 
       - name: Install Android NDK
