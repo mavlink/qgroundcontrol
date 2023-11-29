@@ -54,7 +54,7 @@ jobs:
           host:         linux
           target:       android
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtimageformats qtshadertools
           setup-python: true
 
       - name: Install Android NDK
