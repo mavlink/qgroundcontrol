@@ -308,7 +308,7 @@ SetupPage {
                 sensorCombo.currentIndex = sensorModel.count - 1
             }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             ListModel {
                 id: sensorModel

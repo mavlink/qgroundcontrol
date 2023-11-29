@@ -352,7 +352,7 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
+                onClicked: (mouse) => {
                     // Take focus to close any previous editing
                     editorMap.focus = true
                     var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)

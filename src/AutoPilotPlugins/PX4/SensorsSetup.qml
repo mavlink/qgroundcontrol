@@ -191,6 +191,8 @@ Item {
         }
     }
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
     SensorsComponentController {
         id:                         controller
         statusLog:                  statusTextArea
@@ -523,7 +525,6 @@ Item {
                 width:          parent.calDisplayAreaWidth
                 height:         parent.height
                 readOnly:       true
-                frameVisible:   false
                 text:           statusTextAreaDefaultText
                 color:          qgcPal.Text
                 background: Rectangle { color: qgcPal.windowShade }

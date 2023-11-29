@@ -154,7 +154,7 @@ T.ComboBox {
         }
 
         background: Rectangle {
-            color: control.palette.window
+            color: control.qgcPal.window
         }
     }
 }

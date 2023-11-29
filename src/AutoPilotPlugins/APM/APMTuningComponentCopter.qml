@@ -156,7 +156,7 @@ SetupPage {
                                 text: qsTr("Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 rollPitch
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
@@ -189,7 +189,7 @@ SetupPage {
                                 text: qsTr("Slide to the right to climb more aggressively or slide to the left to climb more gently")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 climb
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
@@ -222,7 +222,7 @@ SetupPage {
                                 text: qsTr("Slide to the left for soft control, slide to the right for crisp control")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 atcInputTC
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
@@ -252,7 +252,7 @@ SetupPage {
                                 text: qsTr("Adjust the amount the motors spin to indicate armed")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 from:       0
@@ -288,7 +288,7 @@ SetupPage {
                                 visible:    _motSpinMin.rawValue < _motSpinArm.rawValue
                             }
 
-                            Slider {
+                            QGCSlider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 from:       0

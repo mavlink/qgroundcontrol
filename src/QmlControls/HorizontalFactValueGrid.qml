@@ -172,7 +172,7 @@ T.HorizontalFactValueGrid {
 
         property var mappedLabelValueColumnLayoutPosition: _root.mapFromItem(labelValueColumnLayout, labelValueColumnLayout.x, labelValueColumnLayout.y)
 
-        onClicked: {
+        onClicked: (mouse) => {
             var columnGridLayoutItem = labelValueColumnLayout.childAt(mouse.x, mouse.y)
             //console.log(mouse.x, mouse.y, columnGridLayoutItem)
             var mappedMouse = labelValueColumnLayout.mapToItem(columnGridLayoutItem, mouse.x, mouse.y)

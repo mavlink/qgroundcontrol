@@ -33,7 +33,7 @@ SetupPage {
 
             FactPanelController { id: controller; }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property bool _oldFW:               !(globals.activeVehicle.firmwareMajorVersion > 3 || globals.activeVehicle.firmwareMinorVersion > 5 || globals.activeVehicle.firmwarePatchVersion >= 2)
 
@@ -297,7 +297,7 @@ SetupPage {
                             id:     rectangle
                             height: innerColumn.height + _margins*2
                             width:  innerColumn.width + _margins*2
-                            color:  palette.windowShade
+                            color:  qgcPal.windowShade
 
                             // Section Content - 3 Rows
                             Column {
@@ -461,7 +461,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
                         height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                        color:              palette.windowShade
+                        color:              qgcPal.windowShade
 
                         QGCLabel {
                             id:                 gimbalTypeLabel

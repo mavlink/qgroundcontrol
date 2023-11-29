@@ -116,9 +116,23 @@ Map {
     }
 
     // We track whether the user has panned or not to correctly handle automatic map positioning
+    signal mapPanStart
+    signal mapPanStop
     DragHandler {
         target:                 null
+
         onTranslationChanged:   (delta) => _map.pan(-delta.x, -delta.y)
+
+        onGrabChanged:  function(transition) {
+            switch (transition) {
+            case PointerDevice.GrabExclusive:
+                mapPanStart()
+                break
+            case PointerDevice.UngrabExclusive:
+                mapPanStop()
+                break
+            }
+        }
     }
 
     WheelHandler {

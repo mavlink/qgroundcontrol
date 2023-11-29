@@ -23,6 +23,9 @@ Slider {
     topPadding:     0
     bottomPadding:  0
 
+    // FIXME-QT6 - This property used to be available in Control 1. Now we will need to implement the visuals ourselves
+    property bool tickmarksEnabled: false
+
     
     property bool zeroCentered:         false   // Value indicator starts display from zero instead of min value
     property bool displayValue:         false

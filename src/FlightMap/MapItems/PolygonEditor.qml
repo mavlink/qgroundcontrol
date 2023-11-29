@@ -214,7 +214,7 @@ Item {
 
             property bool   justClicked: false
 
-            onClicked: {
+            onClicked: (mouse) => {
                 if (mouse.button == Qt.LeftButton) {
                     justClicked = true
                     if (_newPolygon.path.length > 2) {
@@ -269,7 +269,7 @@ Item {
                 }
             }
 
-            onPositionChanged: {
+            onPositionChanged: (mouse) => {
                 if (ScreenTools.isMobile) {
                     // We don't track mouse drag on mobile
                     return

@@ -432,7 +432,7 @@ SetupPage {
                     MouseArea {
                         anchors.fill: parent
 
-                        onClicked: {
+                        onClicked: (mouse) => {
                             // Translate x,y to centered
                             var x = mouse.x - (width / 2)
                             var y = (height - mouse.y) - (height / 2)

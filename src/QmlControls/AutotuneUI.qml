@@ -34,7 +34,7 @@ Item {
     Rectangle {
         width:   _root.width
         height:  statusColumn.height + (2 * _margins)
-        color:   palette.windowShade
+        color:   qgcPal.windowShade
         enabled: _autotune.autotuneEnabled
 
         QGCButton {

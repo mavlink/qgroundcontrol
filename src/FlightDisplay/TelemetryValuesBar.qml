@@ -95,7 +95,7 @@ Rectangle {
             hoverEnabled:               !ScreenTools.isMobile
             propagateComposedEvents:    true
 
-            onClicked: {
+            onClicked: (mouse) => {
                 if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
                     valueArea.settingsUnlocked = true
                     mouse.accepted = true

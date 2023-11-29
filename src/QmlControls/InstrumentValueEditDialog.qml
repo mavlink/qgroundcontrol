@@ -27,8 +27,8 @@ QGCPopupDialog {
 
     property var instrumentValueData
 
-    QGCPalette { id: qgcPal;            colorGroupEnabled: parent.enabled }
-    QGCPalette { id: qgcPalDisabled;    colorGroupEnabled: false }
+    QGCPalette { id: qgcPal;        colorGroupEnabled: parent.enabled }
+    QGCPalette { id: qgcPalDisable; colorGroupEnabled: false }
 
     Loader {
         sourceComponent: instrumentValueData.fact ? editorComponent : noFactComponent
@@ -106,7 +106,7 @@ QGCPopupDialog {
                 fillMode:           Image.PreserveAspectFit
                 mipmap:             true
                 smooth:             true
-                color:              enabled ? qgcPal.text : qgcPalDisabled.text
+                color:              enabled ? qgcPal.text : qgcPalDisable.text
                 enabled:            iconRadio.checked
 
                 MouseArea {

@@ -128,7 +128,6 @@ AnalyzePage {
                 Layout.preferredWidth:   parent.width
                 Layout.fillHeight:       true
                 readOnly:                _separateCommandInput
-                //frameVisible:            false    // FIXME-QT6 - possibly no replacement
                 textFormat:              TextEdit.RichText
                 inputMethodHints:        Qt.ImhNoAutoUppercase | Qt.ImhMultiLine
                 text:                    "> "

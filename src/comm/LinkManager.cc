@@ -443,7 +443,7 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
     browser.reset(new QMdnsEngine::Browser(server.get(), QMdnsEngine::MdnsBrowseType));
 
     auto checkIfConnectionLinkExist = [this](LinkConfiguration::LinkType linkType, const QString& linkName){
-        for (const auto& link : qAsConst(_rgLinks)) {
+        for (const auto& link : std::as_const(_rgLinks)) {
             SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
             if (linkConfig->type() == linkType && linkConfig->name() == linkName) {
                 return true;

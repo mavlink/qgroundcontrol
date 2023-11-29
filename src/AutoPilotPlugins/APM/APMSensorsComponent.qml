@@ -792,7 +792,6 @@ SetupPage {
                         id:             statusTextArea
                         anchors.fill:   parent
                         readOnly:       true
-                        frameVisible:   false
                         text:           statusTextAreaDefaultText
                         color:          qgcPal.text
                         background:     Rectangle { color: qgcPal.windowShade }

@@ -88,19 +88,8 @@ FlightMap {
     }
 
     // We track whether the user has panned or not to correctly handle automatic map positioning
-    DragHandler {
-        target:         null
-        onGrabChanged:  function(transition) {
-            switch (transition) {
-            case PointerDevice.GrabExclusive:
-                _disableVehicleTracking = true
-                break
-            case PointerDevice.CancelGrabExclusive:
-                panRecenterTimer.restart()
-                break
-            }
-        }
-    }
+    onMapPanStart:  _disableVehicleTracking = true
+    onMapPanStop:   panRecenterTimer.restart()
 
     function pointInRect(point, rect) {
         return point.x > rect.x &&
@@ -633,7 +622,7 @@ FlightMap {
             }
         }
 
-        onClicked: {
+        onClicked: (mouse) => {
             if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
                 orbitMapCircle.hide()
                 gotoLocationItem.hide()

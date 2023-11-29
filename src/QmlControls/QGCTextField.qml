@@ -27,6 +27,7 @@ TextField {
     property string unitsLabel:         ""
     property string extraUnitsLabel:    ""
     property bool   numericValuesOnly:  false   // true: Used as hint for mobile devices to show numeric only keyboard
+    property alias textColor:           control.color
 
     property real _helpLayoutWidth: 0
     property real _marginPadding:   ScreenTools.defaultFontPixelHeight / 3

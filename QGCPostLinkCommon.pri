@@ -120,9 +120,10 @@ LinuxBuild {
             libicuuc.so
     }
     # Copy only if non-existing to avoid file timestamp updates
-    for(QT_LIB, QT_LIB_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
-    }
+    # FIXME_QT6 - temp disable
+#    for(QT_LIB, QT_LIB_LIST) {
+#        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
+#    }
 
     # QT_INSTALL_PLUGINS
     QT_PLUGIN_LIST = \
@@ -139,10 +140,10 @@ LinuxBuild {
         QT_PLUGIN_LIST += xcbglintegrations
     }
 
+# FIXME_QT6 - temp disable
 #    for(QT_PLUGIN, QT_PLUGIN_LIST) {
 #        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
 #    }
-    QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS] $$DESTDIR/Qt/
 
     # QT_INSTALL_QML
     QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
@@ -159,5 +160,6 @@ LinuxBuild {
     QMAKE_POST_LINK += && SEARCHDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" "$$PWD/deploy/linux-fixup-rpaths.bash"
 
     # https://doc.qt.io/qt-5/qt-conf.html
+    # FIXME_QT6 - temp disable
     #QMAKE_POST_LINK += && $$QMAKE_COPY "$$SOURCE_DIR/deploy/qt.conf" "$$DESTDIR"
 }

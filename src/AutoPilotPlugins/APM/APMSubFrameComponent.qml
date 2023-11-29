@@ -63,7 +63,7 @@ SetupPage {
             id:     mainColumn
             width:  availableWidth
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property real _minW:        ScreenTools.defaultFontPixelWidth * 30
             property real _boxWidth:    _minW

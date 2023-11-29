@@ -27,7 +27,7 @@ AnalyzePage {
     property real _margin:          ScreenTools.defaultFontPixelWidth
     property real _butttonWidth:    ScreenTools.defaultFontPixelWidth * 10
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Component {
         id: pageComponent
@@ -95,7 +95,7 @@ AnalyzePage {
                         DelegateChoice { 
                             column: 0
                             delegate : Text  {
-                                color: palette.text
+                                color: qgcPal.text
                                 //horizontalAlignment: Text.AlignHCenter
                                 Component.onCompleted: console.log("index", index, text)
                                 text: {
@@ -108,7 +108,7 @@ AnalyzePage {
                         DelegateChoice { 
                             column: 1
                             delegate: Text  {
-                                color: palette.text
+                                color: qgcPal.text
                                 text: {
                                     var o = logController.model.get(index)
                                     if (o) {
@@ -129,7 +129,7 @@ AnalyzePage {
                         DelegateChoice { 
                             column: 2
                             delegate : Text  {
-                                color: palette.text
+                                color: qgcPal.text
                                 //horizontalAlignment: Text.AlignRight
                                 Component.onCompleted: console.log("size", index, logController.model.get(index).sizeStr)
                                 text: {
@@ -142,7 +142,7 @@ AnalyzePage {
                         DelegateChoice { 
                             column: 3
                             delegate : Text  {
-                                color: palette.text
+                                color: qgcPal.text
                                 //horizontalAlignment: Text.AlignHCenter
                                 text: {
                                     var o = logController.model.get(index)

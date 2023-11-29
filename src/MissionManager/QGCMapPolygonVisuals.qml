@@ -574,7 +574,7 @@ Item {
             preventStealing:    true
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
-            onClicked: {
+            onClicked: (mouse) => {
                 if (mouse.button === Qt.LeftButton && _root.interactive) {
                     mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
                 }

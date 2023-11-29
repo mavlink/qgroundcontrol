@@ -319,7 +319,7 @@ RowLayout {
                         chartDisplaySec *= 1.2
                     _xAxis.min = _xAxis.max - chartDisplaySec
                 }
-                onPositionChanged: {
+                onPositionChanged: (mouse) => {
                     if(_startPoint != undefined) {
                         dataTimer.running = false
                         var cp = Qt.point(mouse.x, mouse.y)

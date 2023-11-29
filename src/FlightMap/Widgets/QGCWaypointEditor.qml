@@ -19,8 +19,8 @@ import QtQuick
 import QGroundControl.Palette
 
 Rectangle {
-    QGCPalette { id: palette; colorGroupEnabled: true }
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
     id: root
-    color: palette.window
+    color: qgcPal.window
 
 }

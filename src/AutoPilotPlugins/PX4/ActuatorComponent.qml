@@ -163,7 +163,7 @@ SetupPage {
                     cache:             false
                     MouseArea {
                         anchors.fill:  parent
-                        onClicked: {
+                        onClicked: (mouse) => {
                             if (mouse.button == Qt.LeftButton) {
                                 actuators.imageClicked(mouse.x, mouse.y);
                             }
