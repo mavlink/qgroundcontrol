@@ -17,7 +17,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QStack>
-#include <QRegExp>
+#include <QtCore5Compat/QRegExp>
 
 static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
 

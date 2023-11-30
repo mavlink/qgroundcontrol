@@ -13,7 +13,7 @@
 #include <QStandardPaths>
 #endif
 #include <QtGlobal>
-#include <QRegExp>
+#include <QtCore5Compat/QRegExp>
 
 #include "QGCMapEngine.h"
 
