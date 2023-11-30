@@ -29,7 +29,7 @@
 #include "LinkManager.h"
 
 #include <QTcpSocket>
-#include <QRegExp>
+#include <QtCore5Compat/QRegExp>
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
