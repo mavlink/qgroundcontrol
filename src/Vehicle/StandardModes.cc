@@ -12,9 +12,9 @@
 
 QGC_LOGGING_CATEGORY(StandardModesLog, "StandardModesLog")
 
-
-static void requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result,
-                                        Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message)
+static void requestMessageResultHandler(void *resultHandlerData, MAV_RESULT result,
+                                        [[maybe_unused]] Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+                                        const mavlink_message_t &message)
 {
     StandardModes* standardModes = static_cast<StandardModes*>(resultHandlerData);
     standardModes->gotMessage(result, message);
