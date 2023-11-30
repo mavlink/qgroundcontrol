@@ -3,10 +3,29 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "QGroundControl Guide",
+  title: "QGC Guide (4.3)",
   description:
     "How to use and develop QGroundControl for PX4 or ArduPilot powered vehicles.",
   ignoreDeadLinks: true, // Do this for stable, where we don't yet have all translations
+
+  head: [
+    [
+      "script",
+      {
+        async: "",
+        src: "https://www.googletagmanager.com/gtag/js?id=UA-33658859-3",
+      },
+    ],
+    [
+      "script",
+      {},
+      `window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-33658859-3');`,
+    ],
+  ],
+
   locales: {
     en: {
       label: "English",
