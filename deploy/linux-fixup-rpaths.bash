@@ -37,19 +37,21 @@ set -euo pipefail
 # find:
 #    type f (files)
 #    that end with '.so'
-#    or that end with '.so.5'
+#    or that end with '.so.*'
 #    and are executable
 #    silence stderr (find will complain if it doesn't have permission to traverse)
-find "${SEARCHDIR}" \
+find "${RPATHDIR}" \
     -type f \
     -iname '*.so' \
-    -o -iname '*.so.5' \
+    -o -iname '*.so.*' \
     -executable \
     2>/dev/null |
 while IFS='' read -r library; do
 
     # readelf is expensive, so keep track of updates with a timestamp file
     if [ ! -e "$library.stamp" ] || [ "$library" -nt "$library.stamp" ]; then
+
+        echo "Patching rpath for ${library}"
 
         # Get the library's current RPATH (RUNPATH)
         # Example output of `readelf -d ./build/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-Debug/staging/QGroundControl`:
@@ -90,4 +92,13 @@ while IFS='' read -r library; do
 
         touch "$library.stamp"
     fi
+done
+
+find "${RPATHDIR}" \
+    -type f \
+    -iname '*.so.stamp' \
+    -o -iname '*.so.*.stamp' \
+    2>/dev/null |
+while IFS='' read -r stamp; do
+    rm "$stamp"
 done
