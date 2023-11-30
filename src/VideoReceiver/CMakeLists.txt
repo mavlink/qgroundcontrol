@@ -21,9 +21,9 @@ add_library(VideoReceiver
 
 target_link_libraries(VideoReceiver
     PUBLIC
-        Qt5::Multimedia
-        Qt5::OpenGL
-        Qt5::Quick
+        Qt6::Multimedia
+        Qt6::OpenGL
+        Qt6::Quick
         ${EXTRA_LIBRARIES}
         Settings
 )

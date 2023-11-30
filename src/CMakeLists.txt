@@ -2,7 +2,7 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
-	${Qt5Location_PRIVATE_INCLUDE_DIRS}
+	${Qt6Location_PRIVATE_INCLUDE_DIRS}
 	VideoManager
 )
 
@@ -157,11 +157,11 @@ add_subdirectory(VideoReceiver)
 target_link_libraries(qgc
 	PRIVATE
 		shp
-		Qt5::QuickControls2
+		Qt6::QuickControls2
 
 	PUBLIC
-		Qt5::QuickWidgets
-		Qt5::Widgets
+		Qt6::QuickWidgets
+		Qt6::Widgets
 
 		ADSB
 		AnalyzeView
@@ -190,6 +190,7 @@ target_link_libraries(qgc
 		VehicleSetup
 		VideoManager
 		z # zlib
+		Qt6::Core5Compat
 )
 
 if(GST_FOUND)
