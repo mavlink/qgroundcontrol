@@ -139,11 +139,11 @@ target_link_libraries(QmlControls
 
 		FactSystem
 	PUBLIC
-		Qt5::Concurrent
-		Qt5::Location
-		Qt5::SerialPort
-		Qt5::TextToSpeech
-		Qt5::Widgets
+		Qt6::Concurrent
+		Qt6::Location
+		Qt6::SerialPort
+		Qt6::TextToSpeech
+		Qt6::Widgets
 )
 
 target_include_directories(QmlControls INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

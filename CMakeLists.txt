@@ -28,8 +28,8 @@ endif()
 # Add folder where are supportive functions
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-# Configure Qt5 to get necessary variables
-include(Qt5QGCConfiguration)
+# Configure Qt6 to get necessary variables
+include(Qt6QGCConfiguration)
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt version: ${QT_VERSION}")
 message(STATUS "Qt spec: ${QT_MKSPEC}")
@@ -62,9 +62,9 @@ endif()
 option(COMPILE_QML "Pre-compile QML files using the Qt Quick compiler." FALSE)
 add_feature_info(COMPILE_QML COMPILE_QML "Pre-compile QML files using the Qt Quick compiler.")
 if(COMPILE_QML)
-    find_package(Qt5QuickCompiler)
+    find_package(Qt6QuickCompiler)
 
-    set_package_properties(Qt5QuickCompiler PROPERTIES
+    set_package_properties(Qt6QuickCompiler PROPERTIES
         DESCRIPTION "Pre-compile QML files using the Qt Quick compiler."
         TYPE OPTIONAL
     )
@@ -85,42 +85,46 @@ endif()
 #=============================================================================
 # GStreamer
 #
-find_package(PkgConfig)
+# TODO(Sergii Lisovenko): Remove this option when video streaming will be enabled for Qt6 builds.
+option(ENABLE_VIDEOSTREAMING "Enable video streaming" OFF)
+if (ENABLE_VIDEOSTREAMING)
+	find_package(PkgConfig)
 
-set(GST_DEPENDENCIES
-	gstreamer-1.0>=1.14
-	gstreamer-video-1.0>=1.14
-	gstreamer-gl-1.0>=1.14
+	set(GST_DEPENDENCIES
+			gstreamer-1.0>=1.14
+			gstreamer-video-1.0>=1.14
+			gstreamer-gl-1.0>=1.14
 	)
 
-if (MSVC)
-	pkg_check_modules(GST
-		${GST_DEPENDENCIES}
+	if (MSVC)
+		pkg_check_modules(GST
+				${GST_DEPENDENCIES}
 		)
-else()
-	pkg_check_modules(GST
-		${GST_DEPENDENCIES}
-		egl
+	else ()
+		pkg_check_modules(GST
+				${GST_DEPENDENCIES}
+				egl
 		)
-endif()
+	endif ()
 
-if (GST_FOUND)
-    add_definitions(
-        -DQGC_GST_STREAMING
-    )
+	if (GST_FOUND)
+		add_definitions(
+				-DQGC_GST_STREAMING
+		)
 
-    option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
-    option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
-else()
-	if (QGC_GST_MICROHARD_ENABLED OR QGC_GST_TAISYNC_ENABLED)
-		message(FATAL_ERROR "You tried to enable Microhard or Taisync but gstreamer is not found. Make sure to set PKG_CONFIG_EXECUTABLE and/or PKG_CONFIG_PATH properly.")
-	endif()
-endif()
+		option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
+		option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
+	else ()
+		if (QGC_GST_MICROHARD_ENABLED OR QGC_GST_TAISYNC_ENABLED)
+			message(FATAL_ERROR "You tried to enable Microhard or Taisync but gstreamer is not found. Make sure to set PKG_CONFIG_EXECUTABLE and/or PKG_CONFIG_PATH properly.")
+		endif ()
+	endif ()
+endif ()
 
 #=============================================================================
-# Qt5
+# Qt6
 #
-find_package(Qt5 ${QT_VERSION}
+find_package(Qt6 ${QT_VERSION}
 	COMPONENTS
 		Bluetooth
 		Charts
@@ -141,12 +145,13 @@ find_package(Qt5 ${QT_VERSION}
 		Widgets
 		Xml
 	REQUIRED
+		Core5Compat
 	HINTS
 		${QT_LIBRARY_HINTS}
 )
 
 if(NOT QT_MKSPEC MATCHES "winrt")
-	find_package(Qt5 ${QT_VERSION}
+	find_package(Qt6 ${QT_VERSION}
 		COMPONENTS
 			SerialPort
 		REQUIRED
@@ -233,13 +238,13 @@ install(
 )
 
 if(BUILD_TESTING)
-        target_link_libraries(QGroundControl PRIVATE Qt5::Test)
+        target_link_libraries(QGroundControl PRIVATE Qt6::Test)
 endif()
 
 if(NOT QT_MKSPEC MATCHES "winrt")
 	target_link_libraries(QGroundControl
 		PUBLIC
-			Qt5::SerialPort
+			Qt6::SerialPort
 		)
 endif()
 
