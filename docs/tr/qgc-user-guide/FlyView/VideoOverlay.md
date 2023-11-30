@@ -16,22 +16,22 @@ Altyazılar [HandBrake](https://handbrake.fr/)'i kullanarak kalıcı olarak vide
 
 **HandBrake**'i açın, ana arayüzünü göreceksiniz. **Open**'a tıklayın ve video dosyasını seçin.
 
-![video dosyasını nasıl açılacağını gösteren Handbrake Kullanıcı Arayüzü](../../../assets/fly/videoOverlay/1-open.png)
+![video dosyasını nasıl açılacağını gösteren Handbrake Kullanıcı Arayüzü](../../../assets/fly/video_overlay/1-open.png)
 
 Video dosyası yüklenirken, subtitles sekmesine geçin. Altyazı dosyasını yüklemek için **Add**'e tıklayın.
 
-![altyazıların nasıl ekleneceğini gösteren Handbrake Kullanıcı Arayüzü ekran görüntüsü](../../../assets/fly/videoOverlay/2-subtitles.png)
+![altyazıların nasıl ekleneceğini gösteren Handbrake Kullanıcı Arayüzü ekran görüntüsü](../../../assets/fly/video_overlay/2-subtitles.png)
 
 **import SSA**'ı seçin ( [ASS](https://en.wikipedia.org/wiki/SubStation_Alpha#Advanced_SubStation_Alpha) SSA'nın bir uzantısıdır).
 
-![SSA dosyasını içe aktar](../../../assets/fly/videoOverlay/3-ssa.png)
+![SSA dosyasını içe aktar](../../../assets/fly/video_overlay/3-ssa.png)
 
 Videonuza karşılık gelen **.ass** dosyasını videonuza yükleyin ve **Burn into video**'u işaretleyin.
 
-![yazma](../../../assets/fly/videoOverlay/4-openandburn.png)
+![yazma](../../../assets/fly/video_overlay/4-openandburn.png)
 
 Yeni dosyanın nereye kaydedilmesini istediğinizi seçin ve **Start**'a tıklayın.
 
-![Yeni bir dosya yazmaya başla](../../../assets/fly/videoOverlay/5-start.png)
+![Yeni bir dosya yazmaya başla](../../../assets/fly/video_overlay/5-start.png)
 
 Bu, altyazıyı ve videoyu yeni bir dosyaya yazmaya başlayacaktır.

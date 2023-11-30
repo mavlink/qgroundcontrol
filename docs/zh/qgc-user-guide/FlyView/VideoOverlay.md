@@ -16,22 +16,22 @@ Subtitles can be permanently added to a video file using [HandBrake](https://han
 
 Open **HandBrake**, you should see its main interface. Click **Open** and select the video file.
 
-![Handbrake UI showing how to open video file](../../../assets/fly/videoOverlay/1-open.png)
+![Handbrake UI showing how to open video file](../../../assets/fly/video_overlay/1-open.png)
 
 With the video file loaded, switch to the subtitles tab. Click **Add** to load the subtitle file.
 
-![Handbrake UI screenshot showing how to add subtitles](../../../assets/fly/videoOverlay/2-subtitles.png)
+![Handbrake UI screenshot showing how to add subtitles](../../../assets/fly/video_overlay/2-subtitles.png)
 
 Choose **import SSA** ([ASS](https://en.wikipedia.org/wiki/SubStation_Alpha#Advanced_SubStation_Alpha) is an extension of SSA).
 
-![Import SSA file](../../../assets/fly/videoOverlay/3-ssa.png)
+![Import SSA file](../../../assets/fly/video_overlay/3-ssa.png)
 
 Load the **.ass** file corresponding to your video and tick the **Burn into video** checkbox.
 
-![burn](../../../assets/fly/videoOverlay/4-openandburn.png)
+![burn](../../../assets/fly/video_overlay/4-openandburn.png)
 
 Choose where you want to save the new file and click **Start**.
 
-![Start burning new file](../../../assets/fly/videoOverlay/5-start.png)
+![Start burning new file](../../../assets/fly/video_overlay/5-start.png)
 
 This will start burning the subtitle and video to a new file.

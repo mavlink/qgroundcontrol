@@ -14,7 +14,7 @@ _QGroundControl_ 向PX4 或 ArduPilot 驱动的载具平台提供了全方位的
 - 支持一站多机。
 - QGC 可运行于Windows, OS X, Linux平台, iOS 和 Android 设备。
 
-![](../../assets/quickstart/ConnectedVehicle.jpg)
+![](../../assets/quickstart/connected_vehicle.jpg)
 
 ::: info
 本指南将持续更新！ 本指南多提供的信息应该是正确的，但不排除信息缺失或页面不完整。

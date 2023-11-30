@@ -8,7 +8,7 @@
 
 ## 사전설정 관리
 
-![사전 설정 콤보](../../../assets/plan/pattern/PatternPresetCombo.jpg)
+![사전 설정 콤보](../../../assets/plan/pattern/pattern_preset_combo.jpg)
 
 패턴 항목의 상단에는 사전 설정을 관리할 수 있는 새로운 선택 항목이 있습니다.
 
@@ -19,7 +19,7 @@
 
 ## 사전 설정 생성/업데이트
 
-![사전 설정 저장](../../../assets/plan/pattern/PatternPresetSave.jpg)
+![사전 설정 저장](../../../assets/plan/pattern/pattern_preset_save.jpg)
 
 **설정을 사전 설정으로 저장**을 선택하면 사전 설정 이름을 입력하라는 메시지가 표시됩니다. 기존 사전 설정에 대한 새 설정을 저장하려면 사전 설정이 현재 선택된 상태에서 **설정을 사전 설정으로 저장**을 선택합니다.
 

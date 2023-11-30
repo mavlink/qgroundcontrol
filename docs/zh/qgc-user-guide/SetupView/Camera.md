@@ -4,11 +4,11 @@ The details of the page differ if you are using PX4 firmware or ArduPilot firmwa
 
 ## ArduPilot Camera Setup
 
-![](../../../assets/setup/APMCamera.jpg)
+![](../../../assets/setup/ardupilot_camera.jpg)
 
 ## PX4 Camera Setup
 
-![PX4 Camera setup](../../../assets/setup/PX4Camera.jpg)
+![PX4 Camera setup](../../../assets/setup/px4_camera.jpg)
 
 For more information see [Camera](http://docs.px4.io/master/en/peripherals/camera.html) (PX4 User Guide).
 

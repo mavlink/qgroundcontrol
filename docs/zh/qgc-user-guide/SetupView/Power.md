@@ -2,7 +2,7 @@
 
 The _Power Setup_ screen is used to configure battery parameters and also provide advanced settings for propellers.
 
-![Battery Calibration](../../../assets/setup/PX4Power.jpg)
+![Battery Calibration](../../../assets/setup/px4_power.jpg)
 
 ## Battery Voltage/Current Calibration
 

@@ -16,7 +16,7 @@ Bu özellik henüz ArduPilot yazılımı tarafından desteklenmemektedir. PX4'de
 
 Aşağıdaki resim, yapı taramasının bir ekran görüntüsünü göstermektedir. Yeşil çokgen, yapının zemin ayak izini işaretlemek için kullanılırken, etrafındaki beyaz çizgi aracın uçuş yolunu gösterir. Uçuş yolundaki yeşil numaralı daire, taramaya giriş/çıkış noktasıdır (taramanın başladığı yer).
 
-![Yapı Taraması](../../../assets/plan/structure_scan_v2/StructureScan.jpg)
+![Yapı Taraması](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
 
 Tarama, yapıyı eşit olarak katmanlara ayırır; araç, yapının çevresinde belirli bir irtifada ve yapıya _ scan distance_'den uçar, ardından tüm yüzey taranana kadar işlemi her katmanda tekrarlar.
 

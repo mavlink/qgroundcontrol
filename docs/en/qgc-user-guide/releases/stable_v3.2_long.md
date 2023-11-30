@@ -51,7 +51,7 @@ Information about the format can be found in [Plan File Format](https://dev.qgro
 
 ### Plan Toolbar
 
-![Plan Toolbar](../../../assets/plan/PlanToolbar.jpg)
+![Plan Toolbar](../../../assets/plan/plan_toolbar.jpg)
 
 The new _Plan Toolbar_ is displayed at the top of the [PlanView](../PlanView/PlanView.md).
 It shows you information related to the currently selected waypoint as well as statistics for the entire mission.
@@ -113,14 +113,14 @@ The planned home position allows you to simulate the vehicle's home position whi
 
 ### New Waypoint features
 
-<img src="../../../assets/plan/Waypoint.jpg" style="width: 150px;"/>
+<img src="../../../assets/plan/waypoint.jpg" style="width: 150px;"/>
 
 - You can now adjust heading and flight speed for each waypoint.
 - There is a camera section available for camera changes on each waypoint. Explanation of Camera Section can be read under Mission Settings above.
 
 ### Visual Gimbal direction
 
-<img src="../../../assets/plan/GimbalDirection.jpg" style="width: 300px;"/>
+<img src="../../../assets/plan/gimbal_direction.jpg" style="width: 300px;"/>
 
 If you specify gimbal yaw changes on waypoints, both the plan and fly views will show you a visual representation of the gimbal direction.
 
@@ -150,7 +150,7 @@ For more information see [Fixed Wing Landing Pattern](../PlanView/pattern_fixed_
 - There is a new _Hover and Capture_ option which can be used to capture the highest quality image at each image location. The vehicle will stop at each image location prior to taking the image such that the vehicle is stable while the image is taken.
 - There is a new option to re-fly the survey grid at a 90 degree angle to the previous pass. This allows you to generate much denser coverage for the images.
 
-![](../../../assets/plan/PolygonEdit.jpg)
+![](../../../assets/plan/polygon_edit.jpg)
 
 Manipulating the survey area polygon is now easier to use on tablets with touch screens:
 
@@ -243,11 +243,11 @@ For existing users who have already modified their instrument panel values you w
 
 There is a new view available when you have multiple vehicles connected to QGC. It will only show up when more than one vehicle is connected. When that happens you will see an additional set of radio button at the top right of the Plan view.
 
-<img src="../../../assets/daily_build_changes/MultiVehicleRadios.jpg" style="width: 150px;"/>
+<img src="../../../assets/daily_build_changes/multi_vehicle_radios.jpg" style="width: 150px;"/>
 
 Click the **Multi-Vehicle** radio button to replace the instrument panel with the multi-vehicle list:
 
-<img src="../../../assets/daily_build_changes/MultiVehicleList.jpg" style="width: 150px;"/>
+<img src="../../../assets/daily_build_changes/multi_vehicle_list.jpg" style="width: 150px;"/>
 
 The example above shows three vehicles. The numbers are the vehicle id. In the large font is the current flight mode. You can click the flight mode name to change to a different flight mode. To the right are small version of the instruments for each vehicle. You can command the vehicle to do the following actions from the control panel:
 

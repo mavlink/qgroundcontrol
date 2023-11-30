@@ -2,7 +2,7 @@
 
 설정 보기는 첫 비행 전에 새 기체를 구성하거나 구성된 기체를 조정하는 데 사용됩니다.
 
-![](../../../assets/setup/SetupView.jpg)
+![](../../../assets/setup/setup_view.jpg)
 
 ## 설정 옵션
 

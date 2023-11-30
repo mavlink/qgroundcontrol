@@ -4,11 +4,11 @@ PX4 veya ArduPilot kullanmanıza göre sayfanın ayrıntıları farklılık gös
 
 ## ArduPilot Kamera Kurulumu
 
-![](../../../assets/setup/APMCamera.jpg)
+![](../../../assets/setup/ardupilot_camera.jpg)
 
 ## PX4 Kamera Kurulumu
 
-![PX4 Kamera Kurulumu](../../../assets/setup/PX4Camera.jpg)
+![PX4 Kamera Kurulumu](../../../assets/setup/px4_camera.jpg)
 
 Daha fazla bilgi için [ Camera ](http://docs.px4.io/master/en/peripherals/camera.html) (PX4 Kullanıcı Kılavuzu) 'ya bakın.
 

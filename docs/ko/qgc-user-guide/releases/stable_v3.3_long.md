@@ -16,7 +16,7 @@
 
 #### 비디오 녹화
 
-![비디오 녹화](../../../assets/settings/VideoRecording.jpg)
+![비디오 녹화](../../../assets/settings/video_recording.jpg)
 
 비디오는 QGroundControl 파일 저장 경로의 비디오 디렉토리에 저장됩니다. 비디오 파일들의 최대 저장 용량을 지정할 수 있습니다. 해당 크기를 초과하면 가장 오래된 비디오 파일을 삭제합니다. 비디오 녹화는 플라이 뷰의 비디오 위젯에서 켜고 끌 수 있습니다.
 
@@ -32,7 +32,7 @@
 
 #### 새로운 MAVLink GeoFence, Rally Point 지원
 
-![](../../../assets/plan/GeoFenceRally.jpg)
+![](../../../assets/plan/geofence_rally.jpg)
 
 QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토콜을 지원합니다. 이 새로운 시스템은 제외 또는 포함 울타리로 지정할 수 있는 다중 다각형과 원형 울타리를 지원합니다.
 
@@ -42,15 +42,15 @@ QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토
 
 #### 위치 편집 대화 상자
 
-![](../../../assets/plan/EditPositionDialog.jpg)
+![](../../../assets/plan/edit_position_dialog.jpg)
 
 위치 편집 대화 상자는 지리적 또는 UTM 좌표계에서 항목에 대한 자세한 위치를 지정할 수 있습니다. 다각형 도구 메뉴와 좌표를 지정하는 모든 미션 항목의 햄버거 메뉴에서 사용할 수 있습니다.
 
-![](../../../assets/plan/MissionItemEditorHamburger.jpg)
+![](../../../assets/plan/mission_item_editor_hamburger.jpg)
 
 #### 폴리곤 도구
 
-![](../../../assets/plan/PolygonTools.jpg)
+![](../../../assets/plan/polygon_tools.jpg)
 
 이제 폴리곤 중심 드래그 핸들을 클릭하여 폴리곤 조작 도구 세트를 불러올 수도 있습니다. 이 도구는 측량, 구조 스캔, GeoFence 등 다각형 편집이 지원되는 모든 곳에서 사용할 수 있습니다.
 
@@ -62,7 +62,7 @@ QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토
 
 원형 다각형 예:
 
-<img src="../../../assets/plan/CircularPolygon.jpg" height="200" />
+<img src="../../../assets/plan/circular_polygon.jpg" height="200" />
 
 ### 비행 화면
 
@@ -74,13 +74,13 @@ QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토
 
 여러 기체에 연결되어 있는 경우, 기체 아이콘 아래에 기체 ID가 표시됩니다. 활성 기체는 불투명하고 비활성 기체는 반투명합니다.
 
-![](../../../assets/fly/MultiVehicleIndicators.jpg)
+![](../../../assets/fly/multi_vehicle_indicators.jpg)
 
 #### 다중 기체 화면은 일괄 명령을 지원합니다.
 
 다중 기체 목록은 이제 모든 기체에 적용되는 명령을 지원합니다.
 
-![](../../../assets/fly/MultiVehicleList.jpg)
+![](../../../assets/fly/multi_vehicle_list.jpg)
 
 현재 사용 가능한 명령 목록은 일시 중지 및 임무 시작이지만, 추가 개발에서 확장될 것입니다.
 
@@ -88,4 +88,4 @@ QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토
 
 차량의 ADS-B 센서에 의해 보고된 기체는 지도에 고도와 아이콘 아래 호출부호가 있는 작은 파란색 아이콘으로 표시됩니다.
 
-![](../../../assets/fly/ADSBVehicle.jpg)
+![](../../../assets/fly/adsb_vehicle.jpg)

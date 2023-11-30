@@ -48,7 +48,7 @@
 
 ### 계획 툴바
 
-![계획 툴바](../../../assets/plan/PlanToolbar.jpg)
+![계획 툴바](../../../assets/plan/plan_toolbar.jpg)
 
 [계획 화면](../PlanView/PlanView.md) 상단에 새로운 *계획 도구 모음*이 표시됩니다. 현재 선택된 웨이포인트와 관련된 정보와 전체 미션에 대한 통계를 나타냅니다.
 
@@ -107,14 +107,14 @@
 
 ### 새로운 경로점 기능
 
-<img src="../../../assets/plan/Waypoint.jpg" style="width: 150px;" />
+<img src="../../../assets/plan/waypoint.jpg" style="width: 150px;" />
 
 - 이제 각 경로점의 방향과 비행 속도를 조정할 수 있습니다.
 - 각 경로점에서 카메라 변경에 사용할 수 있는 카메라 섹션이 있습니다. 카메라 섹션에 대한 설명은 위의 미션 설정에서 읽을 수 있습니다.
 
 ### 비주얼 짐벌 방향
 
-<img src="../../../assets/plan/GimbalDirection.jpg" style="width: 300px;" />
+<img src="../../../assets/plan/gimbal_direction.jpg" style="width: 300px;" />
 
 경로점에서 짐벌 편요각 변경을 지정하면, 평면도와 조감도는 짐벌 방향을 시각적으로 나타냅니다.
 
@@ -141,7 +141,7 @@
 - 각 이미지 위치에서 최고 품질의 이미지를 캡처하는 데 사용할 수 있는 새로운 _마우스 오버 및 캡처_ 옵션이 있습니다. 영상 촬영전에 기체가 안정성을 위하여 영상 촬영 위치에서 정지합니다.
 - 이전 패스에 대해 90도 각도로 측량 그리드를 다시 비행하는 새로운 옵션이 있습니다. 이를 통해 훨씬 더 조밀한 영상 적용 범위를 생성할 수 있습니다.
 
-![](../../../assets/plan/PolygonEdit.jpg)
+![](../../../assets/plan/polygon_edit.jpg)
 
 이제 터치 스크린이 있는 태블릿에서 조사 영역 다각형을 더 쉽게 조작할 수 있습니다:
 
@@ -220,11 +220,11 @@
 
 여러 기체들이 QGroundControl에 연결된 경우 사용할 수 있는 새로운 화면을 제공합니다. 두 대 이상의 기체가 연결된 경우에만 표시됩니다. 이 경우 계획 화면의 오른쪽 상단에 추가 라디오 버튼 세트가 표시됩니다.
 
-<img src="../../../assets/daily_build_changes/MultiVehicleRadios.jpg" style="width: 150px;" />
+<img src="../../../assets/daily_build_changes/multi_vehicle_radios.jpg" style="width: 150px;" />
 
 계기판을 다중 기체 목록으로 바꾸려면 **다중 기체** 라디오 버튼을 클릭합니다.
 
-<img src="../../../assets/daily_build_changes/MultiVehicleList.jpg" style="width: 150px;" />
+<img src="../../../assets/daily_build_changes/multi_vehicle_list.jpg" style="width: 150px;" />
 
 위의 예는 세 대의 기체를 나타냅니다. 숫자는 차량 ID입니다. 큰 글꼴은 현재 비행 모드입니다. 비행 모드 이름을 클릭하여 다른 비행 모드로 변경할 수 있습니다. 오른쪽에는 각 차량용 계기의 작은 버전이 있습니다. 제어판에서 기체의 다음 작업을 수행하도록 명령할 수 있습니다.
 

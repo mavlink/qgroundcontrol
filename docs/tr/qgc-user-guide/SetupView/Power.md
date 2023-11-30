@@ -2,7 +2,7 @@
 
 _Power Setup_ ekranı batarya parametrelerini düzenlemek için kullanılır ve ayrıca pervaneler hakkında gelişmiş ayarlar sunar.
 
-![Batarya Kalibrasyonu](../../../assets/setup/PX4Power.jpg)
+![Batarya Kalibrasyonu](../../../assets/setup/px4_power.jpg)
 
 ## Batarya Voltaj/Akım Kalibrasyonu
 

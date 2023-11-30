@@ -2,7 +2,7 @@
 
 *콘솔*은 _QGroundControl_ 문제를 진단하는 데 유용한 도구입니다. **설정 화면 > 콘솔**에서 설정할 수 있습니다.
 
-![콘솔 로그](../../../assets/support/Console.jpg)
+![콘솔 로그](../../../assets/support/console.jpg)
 
 **로깅 설정** 버튼을 클릭하여 *QGroundControl*에 의해 표시되는 로깅 정보를 활성화 또는 비활성화합니다.
 

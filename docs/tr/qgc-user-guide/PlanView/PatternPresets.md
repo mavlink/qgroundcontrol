@@ -8,7 +8,7 @@ Yaygın olarak kullanılan ayarları adlandırılmış bir ön ayar olarak kayde
 
 ## Ön Ayarları Yönetme
 
-![Ön Ayar Kombosu](../../../assets/plan/pattern/PatternPresetCombo.jpg)
+![Ön Ayar Kombosu](../../../assets/plan/pattern/pattern_preset_combo.jpg)
 
 Mod öğelerinin üst kısmında ön ayarları yönetmenize izin veren bir seçenek vardır:
 
@@ -19,7 +19,7 @@ Mod öğelerinin üst kısmında ön ayarları yönetmenize izin veren bir seçe
 
 ## Ön Ayar Oluşturma/Güncelleme
 
-![Ön Ayarı Kaydet](../../../assets/plan/pattern/PatternPresetSave.jpg)
+![Ön Ayarı Kaydet](../../../assets/plan/pattern/pattern_preset_save.jpg)
 
 **Save Settings As Preset**'i seçtiğinizde sizden ön ayar için isim istenecektir. Varolan bir ön ayara yeni ayarlar kaydetmek için ön ayar seçiliyken **Save Settings As Preset**'i seçin.
 

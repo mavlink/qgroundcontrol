@@ -14,7 +14,7 @@
 - 다양한 기체 관리 방법들을 제공
 - QGroundControl은 Windows, OS X, Linux 플랫폼, iOS 및 Android 장치에서 실행됩니다.
 
-![](../../assets/quickstart/ConnectedVehicle.jpg)
+![](../../assets/quickstart/connected_vehicle.jpg)
 
 ::: info
 이 설명서는 작업 중인 버전입니다. 정확한 정보를 제공하기 위하여 노력하였습니다. 그럼에도 불구하고, 누락되거나 잘못된 부분이 있을 수 있습니다.

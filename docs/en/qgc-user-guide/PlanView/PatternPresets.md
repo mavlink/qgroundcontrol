@@ -8,7 +8,7 @@ Currently only supported by Survey. Support for other Patterns is in development
 
 ## Managing Presets
 
-![Preset Combo](../../../assets/plan/pattern/PatternPresetCombo.jpg)
+![Preset Combo](../../../assets/plan/pattern/pattern_preset_combo.jpg)
 
 Pattern items have a new selection at the top which allows you to manage presets:
 
@@ -19,7 +19,7 @@ Pattern items have a new selection at the top which allows you to manage presets
 
 ## Creating/Updating A Preset
 
-![Preset Save](../../../assets/plan/pattern/PatternPresetSave.jpg)
+![Preset Save](../../../assets/plan/pattern/pattern_preset_save.jpg)
 
 When you select **Save Settings As Preset** you will be prompted for the preset name. To save new settings for an existing preset select **Save Settings As Preset** while a preset is currently selected.
 

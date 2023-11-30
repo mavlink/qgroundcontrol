@@ -20,7 +20,7 @@ The image below shows a screenshot of structure scan.
 The green polygon is used to mark out the ground footprint of the structure, while the white line around it indicates the vehicle flight path.
 The green numbered circle on the flight path is the scan entry/exit point (where the scan starts).
 
-![Structure Scan](../../../assets/plan/structure_scan_v2/StructureScan.jpg)
+![Structure Scan](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
 
 The scan divides the structure evenly into layers; the vehicle flies all the way around the structure at a particular altitude and _scan distance_ from the structure, then repeats the process at each layer until the whole surface has been scanned.
 
