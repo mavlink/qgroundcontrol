@@ -120,10 +120,9 @@ LinuxBuild {
             libicuuc.so
     }
     # Copy only if non-existing to avoid file timestamp updates
-    # FIXME_QT6 - temp disable
-#    for(QT_LIB, QT_LIB_LIST) {
-#        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
-#    }
+    for(QT_LIB, QT_LIB_LIST) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
+    }
 
     # QT_INSTALL_PLUGINS
     QT_PLUGIN_LIST = \
@@ -134,16 +133,16 @@ LinuxBuild {
         platforms \
         position \
         sqldrivers \
-        texttospeech
+        texttospeech \
+        multimedia
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_PLUGIN_LIST += xcbglintegrations
     }
 
-# FIXME_QT6 - temp disable
-#    for(QT_PLUGIN, QT_PLUGIN_LIST) {
-#        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
-#    }
+    for(QT_PLUGIN, QT_PLUGIN_LIST) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
+    }
 
     # QT_INSTALL_QML
     QMAKE_POST_LINK += && $$QMAKE_COPY -n --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
@@ -160,6 +159,5 @@ LinuxBuild {
     QMAKE_POST_LINK += && SEARCHDIR="$$DESTDIR/Qt" RPATHDIR="$$DESTDIR/Qt/libs" "$$PWD/deploy/linux-fixup-rpaths.bash"
 
     # https://doc.qt.io/qt-5/qt-conf.html
-    # FIXME_QT6 - temp disable
-    #QMAKE_POST_LINK += && $$QMAKE_COPY "$$SOURCE_DIR/deploy/qt.conf" "$$DESTDIR"
+    QMAKE_POST_LINK += && $$QMAKE_COPY "$$SOURCE_DIR/deploy/qt.conf" "$$DESTDIR"
 }
