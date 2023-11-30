@@ -41,6 +41,13 @@ ApplicationWindow {
         firstRunPromptManager.nextPrompt()
     }
 
+    Rectangle {
+        width: 500
+        height: 500
+        anchors.left: parent.left
+        color: "red"
+    }
+
     QtObject {
         id: firstRunPromptManager
 
