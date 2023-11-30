@@ -8,8 +8,9 @@ The Setup View is used to configure a new vehicle prior to first flight and/or t
 
 To the left of the screen are the set of available setup options. A setup button is marked with a red icon if there are still settings needed to be adjusted/specified. You should not fly if any of these are red. In the above image the Radio setup is not yet complete.
 
-> **Note** The set of options shown and the contents of each option may differ based on whether the vehicle is running PX4 Pro or ArduPilot firmware. The image above is from a vehicle which is running PX4 Pro firmware.
-
+::: info
+The set of options shown and the contents of each option may differ based on whether the vehicle is running PX4 Pro or ArduPilot firmware. The image above is from a vehicle which is running PX4 Pro firmware.
+:::
 
 **Summary**
 <br>An overview of all the important setup options for your vehicle. Similar to the individual setup buttons, the summary blocks show a red indicator when those settings are not fully configured.

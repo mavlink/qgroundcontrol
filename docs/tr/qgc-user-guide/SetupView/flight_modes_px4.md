@@ -2,7 +2,10 @@
 
 The *Flight Modes* section allows you to configure which [flight modes](http://docs.px4.io/master/en/getting_started/flight_modes.html) and other actions are triggered by particular switches/switch positions on your RC transmitter.
 
-> **Note** In order to set up flight modes you must already have - [Configured your radio](../SetupView/Radio.md) in order to set flight modes. - [Setup the RC transmitter](../SetupView/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
+::: info
+In order to set up flight modes you must already have - [Configured your radio](../SetupView/Radio.md) in order to set flight modes. - [Setup the RC transmitter](../SetupView/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
+:::
+
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
@@ -24,7 +27,13 @@ The steps are:
 
 1. Specify *Flight Mode Settings*:
    * Select the transmitter **Mode channel** (shown as Channel 5 above).
-   * Select up to six **Flight Modes** for switch positions encoded in the channel. > **Note** Position mode, return mode and mission mode [are recommended](https://docs.px4.io/master/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
+   * Select up to six **Flight Modes** for switch positions encoded in the channel. 
+   
+     ::: info
+     Position mode, return mode and mission mode [are recommended](https://docs.px4.io/master/en/config/flight_mode.html#what-flight-modes-and-switches-should-i-set).
+     :::
+
+
 1. Specify *Switch Settings*:
    * Select the channels that you want to map to specific actions - *Kill switch*, landing gear, etc. (if you have spare switches and channels on your transmitter).
 1. Test that the modes are mapped to the right transmitter switches:

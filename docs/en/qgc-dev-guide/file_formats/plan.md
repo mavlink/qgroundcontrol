@@ -3,8 +3,10 @@
 Plan files are stored in JSON file format and contain mission items and (optional) geo-fence and rally-points.
 Below you can see the top level format of a Plan file
 
-> **Tip** This is "near-minimal" - a plan must contain at least one mission item.
-  The plan fence and rally points are also used in modes when no mission is running.
+::: tip
+This is "near-minimal" - a plan must contain at least one mission item.
+The plan fence and rally points are also used in modes when no mission is running.
+:::
 
 ```json
 {

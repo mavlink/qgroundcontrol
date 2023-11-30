@@ -4,7 +4,9 @@
 
 *QGroundControl* (QGC) is dual-licensed as Apache 2.0 and GPLv3. All contributions have to be made under both licenses. Users of the codebase are free to use it under either license. 
 
-> **Warning** *QGroundControl* licensing rules out the re-use of any copyleft (e.g. GPL) licensed code. All contributions must be original or from a compatible license (BSD 2/3 clause, MIT, Apache 2.0).
+::: warning
+*QGroundControl* licensing rules out the re-use of any copyleft (e.g. GPL) licensed code. All contributions must be original or from a compatible license (BSD 2/3 clause, MIT, Apache 2.0).
+:::
 
 The dual approach is necessary to be able to offer *QGroundControl* through the iOS and Android app stores and offers the open source community choice.
 

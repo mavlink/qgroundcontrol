@@ -2,9 +2,12 @@
 
 The *Flight Modes* section allows you to configure which flight modes and other actions are triggered by particular switches/switch positions on your RC transmitter.
 
-> **Note** In order to set up flight modes you must already have
+::: info
+In order to set up flight modes you must already have
 > - [Configured your radio](../SetupView/Radio.md) in order to set flight modes.
 > - [Setup the RC transmitter](../SetupView/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
+:::
+
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
@@ -24,8 +27,11 @@ To set the flight modes:
    
    ![Flight modes setup - ArduCopter](../../../assets/setup/flight_modes/ardupilot_copter.jpg)
    
-   > **Note** The above image is a screenshot of the flight mode setup for ArduCopter.
-   
+   ::: info
+   The above image is a screenshot of the flight mode setup for ArduCopter.
+   :::
+
+
 1. Select up to 6 flight modes in the drop downs.
 1. **ArduCopter only:** Select additional *Channel Options* for channels 7-12.
 1. **ArduPlane only:** Select the mode channel from the dropdown.
@@ -35,8 +41,10 @@ To set the flight modes:
 
 All values are automatically saved as they are changed.
 
-> **Note** The ArduCopter screenshot above shows a typical setup for a three position flight mode switch with an additional option of RTL being on a channel 7 switch.
-> You can also setup 6 flight modes using two switches plus mixing on your transmitter. Scroll down to the center section of this [page](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration) for tutorials on how to do that.
+::: info
+The ArduCopter screenshot above shows a typical setup for a three position flight mode switch with an additional option of RTL being on a channel 7 switch.
+You can also setup 6 flight modes using two switches plus mixing on your transmitter. Scroll down to the center section of this [page](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration) for tutorials on how to do that.
+:::
 
 
 ## See Also 

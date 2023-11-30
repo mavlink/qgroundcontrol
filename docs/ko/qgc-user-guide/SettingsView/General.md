@@ -2,7 +2,10 @@
 
 일반 설정(**설정 화면> 일반 설정**)은 애플리케이션의 주요 항목들을 설정합니다. 디스플레이 장치, 자동 연결 장치, 비디오 디스플레이 및 저장 장치, RTK GPS, 브랜드 이미지 및 기타 항목들을 설정합니다.
 
-> **Note** 기체가 연결되지 않은 상태에서도 설정할 수 있습니다. 차량 재시동이 필요한 설정은 UI에 표시됩니다.
+::: info
+기체가 연결되지 않은 상태에서도 설정할 수 있습니다. 차량 재시동이 필요한 설정은 UI에 표시됩니다.
+:::
+
 
 ![설정 보기 - 전체 일반 탭](../../../assets/settings/general/overview.jpg)
 
@@ -128,7 +131,9 @@
   - **NMEA GPS 장치:** *직렬*
   - **NMEA GPS Baudrate**: 직렬 포트 전송 속도
   
-  > **Tip** 직렬 GPS 문제를 해결하려면 RTK GPS [자동 연결](#auto_connect)을 비활성화하고 *QGroundControl*을 닫고 GPS를 다시 연결한 다음 QGroundControl을 실행합니다.
+  ::: tip
+  직렬 GPS 문제를 해결하려면 RTK GPS [자동 연결](#auto_connect)을 비활성화하고 *QGroundControl*을 닫고 GPS를 다시 연결한 다음 QGroundControl을 실행합니다.
+  :::
 
 - 네트워크 연결:
   
@@ -143,11 +148,14 @@
 
 ![RTK GPS 설정](../../../assets/settings/general/rtk_gps.jpg)
 
-> **Note** *설문조사* 프로세스는 기지국 위치의 정확한 추정치를 얻기 위해 RTK GPS 시스템에 필요한 시작 절차입니다. 이 프로세스는 시간이 지남에 따라 측정을 수행하여 위치 정확도를 높입니다. 설문조사가 완료되려면 두 가지 설정 조건이 모두 충족되어야 합니다. 자세한 내용은 [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html)(PX4 문서) 및 [GPS- 작동 방식](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections)(ArduPilot 문서)을 참고하십시오.
+::: info
+*설문조사* 프로세스는 기지국 위치의 정확한 추정치를 얻기 위해 RTK GPS 시스템에 필요한 시작 절차입니다. 이 프로세스는 시간이 지남에 따라 측정을 수행하여 위치 정확도를 높입니다. 설문조사가 완료되려면 두 가지 설정 조건이 모두 충족되어야 합니다. 자세한 내용은 [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html)(PX4 문서) 및 [GPS- 작동 방식](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections)(ArduPilot 문서)을 참고하십시오.
+:::
 
-<span></span>
 
-> **Tip** 기본 위치를 저장하고 재사용하려면(서베이 인은 시간이 많이 소요됩니다!) 설문 조사를 한 번 수행하려면 *지정된 기본 위치 사용*을 선택하고 **을 누르십시오. 현재 기준 위치를 저장**하여 마지막 설문조사의 값을 복사합니다. 그러면, 값이 변경시까지 QGC 재부팅시에도 유지됩니다.
+::: tip
+기본 위치를 저장하고 재사용하려면(서베이 인은 시간이 많이 소요됩니다!) 설문 조사를 한 번 수행하려면 *지정된 기본 위치 사용*을 선택하고 **을 누르십시오. 현재 기준 위치를 저장**하여 마지막 설문조사의 값을 복사합니다. 그러면, 값이 변경시까지 QGC 재부팅시에도 유지됩니다.
+:::
 
 설정 항목들은 다음과 같습니다:
 
@@ -173,7 +181,9 @@
 
 QGroundControl는 원격 또는 로컬 서버(지정된 IP 주소/포트)에서 SBS 형식의 ADSB 메시지를 사용하고 탐지된 기체를 비행화면의 지도에 표시할 수 있습니다.
 
-> **Tip** 주변 기체에서 ADSB 정보를 얻는 한 가지 방법은 [dump1090](https://github.com/antirez/dump1090)을 사용하여 연결된 RTL-SDR 동글에서 QGC로 데이터를 제공하는 것입니다. 과정은 다음과 같습니다: 1. RTL-SDR 동글(및 안테나)을 가져와 지상국 컴퓨터에 연결합니다(사용 중인 OS에 대해 호환되는 드라이버를 찾아야 할 수도 있음). 1. OS에 *dump1090*을 설치합니다(사전 빌드 또는 소스에서 빌드). 1. `dump1090 --net`을 실행하여 TCP localhost 포트 30003(127.0.0.1:30003)에서 감지된 차량에 대한 메시지 브로드캐스트를 시작합니다. 1. 위의 QGroundControl 설정에 서버(`127.0.0.1`)와 포트(`30003`) 주소를 입력합니다. 1. 지도에서 지역 차량을 보려면 QGroundControl을 다시 시작하세요.
+::: tip
+주변 기체에서 ADSB 정보를 얻는 한 가지 방법은 [dump1090](https://github.com/antirez/dump1090)을 사용하여 연결된 RTL-SDR 동글에서 QGC로 데이터를 제공하는 것입니다. 과정은 다음과 같습니다: 1. RTL-SDR 동글(및 안테나)을 가져와 지상국 컴퓨터에 연결합니다(사용 중인 OS에 대해 호환되는 드라이버를 찾아야 할 수도 있음). 1. OS에 *dump1090*을 설치합니다(사전 빌드 또는 소스에서 빌드). 1. `dump1090 --net`을 실행하여 TCP localhost 포트 30003(127.0.0.1:30003)에서 감지된 차량에 대한 메시지 브로드캐스트를 시작합니다. 1. 위의 QGroundControl 설정에 서버(`127.0.0.1`)와 포트(`30003`) 주소를 입력합니다. 1. 지도에서 지역 차량을 보려면 QGroundControl을 다시 시작하세요.
+:::
 
 ## 비디오 {#video}
 

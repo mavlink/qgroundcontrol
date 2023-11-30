@@ -12,7 +12,12 @@ AutoTune is used to automatically tune the rate parameters in order to provide t
 
 Performing an AutoTune:
 
-* Select which axes you would like to tune. > **Tip** Tuning all axes at once can take a significant amount of time, which may cause you to run out of battery. To prevent this choose to tune only one axis at a time. 
+* Select which axes you would like to tune. 
+
+  ::: tip
+  Tuning all axes at once can take a significant amount of time, which may cause you to run out of battery. To prevent this choose to tune only one axis at a time.
+  :::
+  
 * Assign AutoTune to one of your transmitter switches. Ensure that switch is in low position before taking off.
 * Take off and put the copter into AltHold.
 * Turn on AutoTune with your transmitter switch.

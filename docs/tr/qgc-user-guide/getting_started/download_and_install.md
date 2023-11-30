@@ -2,7 +2,9 @@
 
 The sections below can be used to download the [current stable release](../releases/release_notes.md) of *QGroundControl* for each platform.
 
-> **Tip** See [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md) if *QGroundControl* doesn't start and run properly after installation!
+::: tip
+See [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md) if *QGroundControl* doesn't start and run properly after installation!
+:::
 
 ## Sistem Gereksinimleri
 
@@ -17,11 +19,15 @@ En iyi deneyim ve uyumluluk için size işletim sisteminizin en yeni sürümün�
 1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
 2. Yükleyiciyi başlatmak için QGroundControl-installer. exe'ye çift tıklayın.
 
-> **Note** Windows kurulum programı 3 kısayol oluşturur: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**. Eğer başlatma veya video işleme sorunları yaşamıyorsanız ilk kısayolu kullanın. For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
+::: info
+Windows kurulum programı 3 kısayol oluşturur: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**. Eğer başlatma veya video işleme sorunları yaşamıyorsanız ilk kısayolu kullanın. For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
+:::
 
-<span></span>
 
-> **Note** 4.0'dan itibaren önceki *QGroundControl* sürümleri sadece 64 bittir. Manuel olarak 32 bit sürümler oluşturmak mümkündür (bu, geliştirici ekip tarafından desteklenmez).
+::: info
+4.0'dan itibaren önceki *QGroundControl* sürümleri sadece 64 bittir. Manuel olarak 32 bit sürümler oluşturmak mümkündür (bu, geliştirici ekip tarafından desteklenmez).
+:::
+
 
 ## Mac OS X {#macOS}
 
@@ -32,10 +38,14 @@ En iyi deneyim ve uyumluluk için size işletim sisteminizin en yeni sürümün�
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
 2. .dmg dosyasına çift tıklayın, ardından çıkan ekranda *QGroundControl*'ü *Application* dosyasına sürükleyin.
     
-    > **Note** QGroundControl imzasız olduğu için Catalina'da problem olmaya devam etmektedir. QGC uygulamasını ilk defa açmak için:
-    > 
-    > * QGC uygulama ikonuna sağ tıklayın, menüden Aç'ı seçin. Karşınıza yalnızca İptal Et seçeneği çıkacaktır. İptal Et'i seçin.
-    > * QGC uygulama ikonuna tekrar sağ tıklayın, menüden Aç'ı seçin. Bu sefer Aç seçeneği de size sunulacaktır.
+   ::: info
+   QGroundControl imzasız olduğu için Catalina'da problem olmaya devam etmektedir. QGC uygulamasını ilk defa açmak için:
+
+   * QGC uygulama ikonuna sağ tıklayın, menüden Aç'ı seçin. Karşınıza yalnızca İptal Et seçeneği çıkacaktır. İptal Et'i seçin.
+   * QGC uygulama ikonuna tekrar sağ tıklayın, menüden Aç'ı seçin. Bu sefer Aç seçeneği de size sunulacaktır.
+
+   :::
+
 
 ## Ubuntu Linux {#ubuntu}
 
@@ -67,11 +77,14 @@ Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili k
         chmod +x ./QGroundControl.AppImage
         ./QGroundControl.AppImage  (or double click)
 
-> **Note** There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
+::: info
+There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
+:::
 
-<span></span>
+::: info
+4.0'dan itibaren önceki *QGroundControl* sürümleri Ubuntu 16.04'te çalıştırılamaz. Bu versiyonları Ubuntu 16.04'te çalıştırabilmek için [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
+:::
 
-> **Note** 4.0'dan itibaren önceki *QGroundControl* sürümleri Ubuntu 16.04'te çalıştırılamaz. Bu versiyonları Ubuntu 16.04'te çalıştırabilmek için [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
 
 ## Android {#android}
 

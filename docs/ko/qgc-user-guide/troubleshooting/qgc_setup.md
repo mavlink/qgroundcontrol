@@ -2,7 +2,9 @@
 
 호스트 컴퓨터에서 *QGroundControl*의 설정 및 설치와 관련된 문제 해결 방법을 설명합니다.
 
-> **Tip** *QGroundControl*을 **사용**하여 기체 연동시 발생하는 문제는 [QGroundControl 기체 연동 문제](../troubleshooting/qgc_usage.md)에서 설명합니다.
+::: tip
+*QGroundControl*을 **사용**하여 기체 연동시 발생하는 문제는 [QGroundControl 기체 연동 문제](../troubleshooting/qgc_usage.md)에서 설명합니다.
+:::
 
 ## 64비트 윈도우: 예기치 않은 언어의 오디오
 
@@ -15,7 +17,10 @@ Windows 64비트 시스템에서 *QGroundControl*은 때때로 **제어판 > 음
 1. 제어판 응용 프로그램을 실행합니다: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
 2. 원하는 *음성 선택*을 한 다음 대화상자 하단의 **확인**을 클릭합니다. ![Windows 32비트 TTS(텍스트 음성 변환) 제어판](../../../assets/support/windows_text_to_speech.png)
 
-> **Note** Windows 음성 API에 대한 추가 정보는 [여기](https://www.webbie.org.uk/blog/microsoft-speech/)를 참고하십시오.
+::: info
+Windows 음성 API에 대한 추가 정보는 [여기](https://www.webbie.org.uk/blog/microsoft-speech/)를 참고하십시오.
+:::
+
 
 ## Windows: UI 렌더링/비디오 드라이버 문제 {#opengl_troubleshooting}
 
@@ -33,7 +38,10 @@ Wi-Fi를 통해 기체 연결시 *QGroundControl*이 영구적으로 유지되�
 
 해결책은 방화벽을 통해 *QGroundControl* 앱을 허용하는 것입니다.
 
-> **Note** 연결을 허용하기 위해 네트워크 프로필을 공개에서 비공개로 간단히 전환할 수 있지만, PC가 네트워크에 노출되므로 주의하십시오.
+::: info
+연결을 허용하기 위해 네트워크 프로필을 공개에서 비공개로 간단히 전환할 수 있지만, PC가 네트워크에 노출되므로 주의하십시오.
+:::
+
 
 *Windows Defender*를 사용하는 경우:
 
@@ -57,7 +65,10 @@ VideoReceiver::start()가 실패했습니다. gst_element_factory_make('avdec_h2
 
 Ubuntu 18.04의 GSteamer 버전에는 Intel 및 NVidia 비디오 디스플레이 어댑터가 모두 있는 시스템에서 VA API 기반 디코더(예: vaapih264dec 등)를 사용시 비디오가 표시되지 않는 버그가 있습니다.
 
-> **Note** 더 일반적인 문제는 Intel 및 NVidia VGA가 있는 Ubuntu 18.04에서 발생하는 것으로 알려져 있지만, 모든 Linux 시스템 및 기타 유형의 (이중) VGA에서 발생할 수 있습니다.
+::: info
+더 일반적인 문제는 Intel 및 NVidia VGA가 있는 Ubuntu 18.04에서 발생하는 것으로 알려져 있지만, 모든 Linux 시스템 및 기타 유형의 (이중) VGA에서 발생할 수 있습니다.
+:::
+
 
 이 경우 *QGroundControl* 실행하는 가장 쉬운 방법은 다음 명령어를 사용하여 시작하는 것입니다.
 

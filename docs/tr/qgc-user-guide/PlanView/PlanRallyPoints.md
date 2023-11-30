@@ -2,7 +2,10 @@
 
 Toparlanma noktaları, iniş ya da oyalanma noktalarına alternatif noktalardır. Genellikle Geri Dönüş / RTL modunda ana konumdan daha güvenli veya daha uygun (örneğin daha yakın) bir varış noktası sağlamak için kullanılırlar.
 
-> **Note** Toparlanma Noktaları sadece Rover 3.6 ve Copter3.7 (ve üzeri sürümlerde) desteklenir. PX4 desteği, PX4 v1.10 zaman dilimlerinde planlanmıştır. Ek olarak günlük sürümlerin ya da stabil 3.6 sürümünün (erişilebilir olduğunda) kullanılmasını gerektirir. Eğer bağlanan cihaz tarafından Toparlanma Noktası seçeneği desteklenmiyorsa *QGroundControl* seçeneği göstermeyecektir.
+::: info
+Toparlanma Noktaları sadece Rover 3.6 ve Copter3.7 (ve üzeri sürümlerde) desteklenir. PX4 desteği, PX4 v1.10 zaman dilimlerinde planlanmıştır. Ek olarak günlük sürümlerin ya da stabil 3.6 sürümünün (erişilebilir olduğunda) kullanılmasını gerektirir. Eğer bağlanan cihaz tarafından Toparlanma Noktası seçeneği desteklenmiyorsa *QGroundControl* seçeneği göstermeyecektir.
+:::
+
 
 ![Toparlanma Noktaları](../../../assets/plan/rally/rally_points_overview.jpg)
 

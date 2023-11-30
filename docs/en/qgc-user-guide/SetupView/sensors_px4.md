@@ -11,8 +11,10 @@ Click on the button for each sensor to start its calibration sequence.
 
 ![Sensors Setup screen for VTOL vehicle](../../../assets/setup/sensors_px4_vtol.jpg)
 
-> **Note** The image shown is from a VTOL vehicle running PX4 firmware. 
-  Other autopilot firmware and vehicles will offer slightly different options.
+::: info
+The image shown is from a VTOL vehicle running PX4 firmware. 
+Other autopilot firmware and vehicles will offer slightly different options.
+:::
 
 
 ## Compass {#compass}
@@ -23,8 +25,12 @@ The calibration steps are:
 
 1. Click the **Compass** sensor button
    ![Select Compass calibration PX4](../../../assets/setup/sensor_compass_select_px4.jpg)
-   > **Note** The default flight controller orientation is `ROTATION_NONE` (flight controller and compass mounted upright on the vehicle and facing the front). 
-     You can set a different value here or in [Set Orientations](#flight_controller_orientation). 
+   
+   ::: info
+   The default flight controller orientation is `ROTATION_NONE` (flight controller and compass mounted upright on the vehicle and facing the front). 
+   You can set a different value here or in [Set Orientations](#flight_controller_orientation).
+  :::
+
 1. Click **OK** to start the calibration. 
 1. Place the vehicle in any of the orientations shown in red (incomplete) and hold it still. 
    Once prompted (the orientation-image turns yellow) rotate the vehicle around the specified axis in either/both directions. 
@@ -53,7 +59,10 @@ The calibration steps are:
 1. When finished, *QGroundControl* will display *Calibration complete* and the progress bar will fill completely.
    ![Gyro calibration complete on PX4](../../../assets/setup/sensor/gyroscope_calibrate_complete_px4.jpg)
 
-> **Note** If you move the vehicle during calibration, *QGroundControl* will automatically restart the calibration.
+::: info
+If you move the vehicle during calibration, *QGroundControl* will automatically restart the calibration.
+:::
+
 
 You can then proceed to the next sensor.
 
@@ -66,8 +75,12 @@ The calibration steps are:
 
 1. Click the **Accelerometer** sensor button.
    ![Accelerometer calibration](../../../assets/setup/sensor/accelerometer_px4.jpg)
-   > **Note** You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
-     If not, you can also set it here.     
+   
+   ::: info
+   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
+   If not, you can also set it here.
+   :::
+
 1. Click **OK** to start the calibration. 
 1. Position the vehicle as guided by the *images* on the screen. This is very similar to compass calibration.
   ![Accelerometer calibration](../../../assets/setup/sensor/accelerometer_positions_px4.jpg)
@@ -84,8 +97,12 @@ You will be asked to place the vehicle in a level orientation while it captures 
 
 1. Click the **Level Horizon** sensor button.
    ![Level Horizon calibration](../../../assets/setup/sensor_level_horizon.jpg)
-   > **Note** You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
-     If not, you can also set it here.   
+   
+   ::: info
+   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
+   If not, you can also set it here.
+   :::
+
 1. Place the vehicle in its level flight orientation on a level surface:
   * For planes this is the position during level flight (planes tend to have their wings slightly pitched up!)
   * For copters this is the hover position.
@@ -106,8 +123,10 @@ To calibrate the airspeed sensor:
    
 1. Cover the sensor (i.e. with your hand)
 
-   > **Warning** Do not touch the sensor (obstruct any holes) during calibration.
-
+   ::: warning
+   Do not touch the sensor (obstruct any holes) during calibration.
+   :::
+   
 1. Click **OK** to start the calibration.
 1. Blow into the sensor.
 1. Wait for 2-3 seconds before removing the covering (calibration completes silently after several seconds)
@@ -115,7 +134,9 @@ To calibrate the airspeed sensor:
 
 ## Set Orientations {#flight_controller_orientation}
 
-> **Tip** You can skip this section if the flight controller and compass are mounted upright on the vehicle and facing the front (this is the default orientation - `ROTATION_NONE`).
+::: tip
+You can skip this section if the flight controller and compass are mounted upright on the vehicle and facing the front (this is the default orientation - `ROTATION_NONE`).
+:::
 
 If the autopilot/compass are mounted in any other way you will need to specify their orientations as YAW, PITCH and/or ROLL offsets relative to the forward-facing-upright orientation (clock-wise rotation around the Z, Y and X axis, respectively).
 

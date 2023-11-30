@@ -78,7 +78,9 @@ sudo yum install SDL2 SDL2-devel -y
 
 ### Update Kernel (optional)
 
-> **Tip** If your Joystick gets recognized and shows up as `/dev/input/js0` when you run the command `/dev/input/*` you can skip this step.
+:::tip
+If your Joystick gets recognized and shows up as `/dev/input/js0` when you run the command `/dev/input/*` you can skip this step.
+:::
 
 We recommend updating the kernel for:
 - Better touch screen responsiveness.

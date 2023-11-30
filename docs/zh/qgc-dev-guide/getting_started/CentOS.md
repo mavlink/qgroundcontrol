@@ -73,7 +73,9 @@ SDL2 is used for joystick support.
 
 ### 更新内核(可选)
 
-> **Tip**当运行命令`/dev/input/*` 时， 如果游戏杆被成功识别并显示为`/dev/input/js0` ，则可以跳过这一步。
+::: tip
+当运行命令`/dev/input/*` 时， 如果游戏杆被成功识别并显示为`/dev/input/js0` ，则可以跳过这一步。
+:::
 
 We recommend updating the kernel for:
 
@@ -96,7 +98,10 @@ Here's a short summary of the commands that you need to execute to update the ke
 
 Reboot your device afterwards and make sure the new kernel version shows up as the default start option in the GRUB menu on boot.
 
-> **Note** 您可能需要在 BIOS 中禁用安全启动才能启动新内核。
+::: info
+您可能需要在 BIOS 中禁用安全启动才能启动新内核。
+:::
+
 
 ## 在 CentOS 上运行 QGC
 

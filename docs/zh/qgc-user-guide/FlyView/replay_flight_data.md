@@ -1,10 +1,14 @@
 # Replay Flight Data
 
-> **Warning** This feature is intended primarily for **autopilot developers**/**vehicle creators**. It is only supported on desktop builds (Windows, Linux, Mac OS).
+::: warning
+This feature is intended primarily for **autopilot developers**/**vehicle creators**. It is only supported on desktop builds (Windows, Linux, Mac OS).
+:::
 
 The *Replay Flight Data* feature allows users to replay a telemetry log, enabling review of past or problematic flights. The flight can be started, paused, stopped, restarted etc.
 
-> **Note** *QGroundControl* treats flight replay like an active connection. When you pause/stop playing, the ground station will report "Communication Lost" and wait for disconnection or for more messages.
+::: info
+*QGroundControl* treats flight replay like an active connection. When you pause/stop playing, the ground station will report "Communication Lost" and wait for disconnection or for more messages.
+:::
 
 To replay a flight:
 1. Disconnect any active connections.
@@ -21,4 +25,6 @@ To replay a flight:
    - *Rate* selector to choose the playback speed.
 1. To stop replay (i.e. to load a new file to replay), first pause the flight, and then select **Disconnect** (when it appears). After disconnecting, the **Load Telemetry Log** button will be displayed.
 
-> **Tip** You can inspect the running replay in more detail using the [MAVLink Inspector](../analyze_view/mavlink_inspector.md).
+::: tip
+You can inspect the running replay in more detail using the [MAVLink Inspector](../analyze_view/mavlink_inspector.md).
+:::

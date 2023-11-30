@@ -44,13 +44,18 @@ Planlanan ev konumunu yaklaşık olarak kalkış yapmayı planladığınız konu
 
 <img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;" />
 
-> **Tip** The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
+::: tip
+The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
+:::
+
 
 ## Plan Araçları {#plan_tools}
 
 Plan araçları, ara noktalar eklemek, karmaşık yerler için görev oluşturmayı kolaylaştırmak, görevleri yüklemek/indirmek/kaydetmek/geri yüklemek ve haritada gezinmek için kullanılır. Ana araçlar aşağıda açıklanmıştır.
 
-> **Note** **Center map**, **Zoom In**, **Zoom Out** araçlar kullanıcıların daha iyi görüntü almasına ve *Plan Ekranı*'ndaki haritada gezinmelerine yardımcı olur (araca gönderilen görev komutlarını etkilemezler).
+::: info
+**Center map**, **Zoom In**, **Zoom Out** araçlar kullanıcıların daha iyi görüntü almasına ve *Plan Ekranı*'ndaki haritada gezinmelerine yardımcı olur (araca gönderilen görev komutlarını etkilemezler).
+:::
 
 ### Hedef Noktası Ekle
 
@@ -60,7 +65,10 @@ Plan araçları, ara noktalar eklemek, karmaşık yerler için görev oluşturma
 
 * Dosya araçları *, görevleri yer istasyonu ile araç arasında taşımak ve bunları dosyalara kaydetmek/dosyalardan geri yüklemek için kullanılır. Araçlar, araca göndermediğiniz görev değişiklikleri olduğunu belirtmek için bir `! ` işareti kullanır.
 
-> **Note** Bir görevi gerçekleştirmeden önce görevi araca yüklemeniz gerekmektedir.
+::: info
+Bir görevi gerçekleştirmeden önce görevi araca yüklemeniz gerekmektedir.
+:::
+
 
 *Dosya araçları* aşağıdaki fonksiyonları sağlar:
 
@@ -90,7 +98,10 @@ Komut adına tıklayarak komutun ** tipini ** değiştirebilirsiniz (örneğin: 
 
 Her komut adının sağında, * Ekle * ve * Sil * gibi ek seçeneklere erişmek için tıklayabileceğiniz bir menü bulunur.
 
-> **Note** Kullanılabilir komutların listesi aracın yazılımına ve türüne bağlıdır. Örnek olarak şunlar verilebilir: Hedef nokta, Görüntü yakalamayı başlat, Öğeye atla (görevi tekrarlamak için) ve diğer komutlar.
+::: info
+Kullanılabilir komutların listesi aracın yazılımına ve türüne bağlıdır. Örnek olarak şunlar verilebilir: Hedef nokta, Görüntü yakalamayı başlat, Öğeye atla (görevi tekrarlamak için) ve diğer komutlar.
+:::
+
 
 ### Görev Ayarları {#mission_settings}
 
@@ -122,7 +133,10 @@ Aracınızın son görev öğesinden sonra Geri Dönmesini/RTL istiyorsanız bun
 
 ![Görev Ayarları Planlanmış Ev Konumu Bölümü](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
 
-> **Note** Bu yalnızca * planlanan * ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır. Görevin gerçekleşmesinde gerçek bir etkisi yoktur. Asıl ev konumu, araç tarafından devreye alınırken ayarlanır.
+::: info
+Bu yalnızca * planlanan * ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır. Görevin gerçekleşmesinde gerçek bir etkisi yoktur. Asıl ev konumu, araç tarafından devreye alınırken ayarlanır.
+:::
+
 
 This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
 

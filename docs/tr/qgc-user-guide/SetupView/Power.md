@@ -29,7 +29,9 @@ Gelişmiş güç ayarlarını özelleştirmek için **Show Advanced Settings** o
 
 Bataryalar yüksek motor yüklemelerinde daha az voltaj gösterir. Motorlar boştayken ve tam kapasitede çalışırkenki volt farkını batarya hücrelerinin sayısına bölerek girin. Emin değilseniz varsayılan değer kullanılmalıdır!
 
-> **Warning** Eğer değer çok yüksekse batarya deep-discharged olabilir ve hasar görebilir.
+::: warning
+Eğer değer çok yüksekse batarya deep-discharged olabilir ve hasar görebilir.
+:::
 
 ## ESC PWM Minimum ve Maksimum Kalibrasyonu
 
@@ -39,9 +41,11 @@ ESC'nin max/min PWM değerlerini kalibre etmek için:
 2. Aracı QGC'ye USB (sadece) aracılığı ile bağlayın. 
 3. **Calibrate** butonuna basın.
 
-> **Warning** Pervaneler takılıyken hiçbir zaman ESC kalibrasyonunu denemeyin.
-> 
-> ESC kalibrasyonu sırasında motorlar dönmemelidir. Bununla birlikte, bir ESC kalibrasyon sırasını doğru şekilde desteklemez/tespit etmezse, motoru maksimum hızda çalıştırarak PWM girişine yanıt verecektir.
+::: warning
+Pervaneler takılıyken hiçbir zaman ESC kalibrasyonunu denemeyin.
+
+ESC kalibrasyonu sırasında motorlar dönmemelidir. Bununla birlikte, bir ESC kalibrasyon sırasını doğru şekilde desteklemez/tespit etmezse, motoru maksimum hızda çalıştırarak PWM girişine yanıt verecektir.
+:::
 
 ## Diğer Ayarlar
 

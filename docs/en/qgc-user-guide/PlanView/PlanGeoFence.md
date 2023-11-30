@@ -20,8 +20,10 @@ To create a GeoFence:
 1. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
    A new region will be added to the map and to the associated list of fences below the buttons.
    
-  > **Tip** You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
-  
+:::tip
+You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
+:::
+
    - Circular region:
    
      ![Circular Geofence](../../../assets/plan/geofence/geofence_circular.jpg)

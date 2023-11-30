@@ -25,4 +25,6 @@
    - *속도* 선택기를 사용하여 재생 속도를 선택합니다.
 1. 재생을 중지하려면(즉, 재생할 새 파일을 로드하려면) 먼저 비행을 일시 중지한 다음 **연결 해제**를 선택하십시오(표시될 때). 연결을 끊으면 **원격 측정 로그 로드** 버튼이 표시됩니다.
 
-> **Tip** [MAVLink Inspector](../analyze_view/mavlink_inspector.md)를 사용하여 실행 중인 리플레이를 더 자세히 검사할 수 있습니다.
+::: tip
+[MAVLink Inspector](../analyze_view/mavlink_inspector.md)를 사용하여 실행 중인 리플레이를 더 자세히 검사할 수 있습니다.
+:::

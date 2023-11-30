@@ -29,7 +29,9 @@ Click the **Show Advanced Settings** checkbox to specify advanced power settings
 
 Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full throttle, divided by the number of battery cells. The default value should be used if unsure!
 
-> **Warning** If the value is too high the battery may be deep-discharged and damaged.
+::: warning
+If the value is too high the battery may be deep-discharged and damaged.
+:::
 
 ## ESC PWM Minimum and Maximum Calibration
 
@@ -39,9 +41,11 @@ To calibrate the ESC max/min PWM values:
 2. Connect the vehicle to QGC via USB (only). 
 3. Click the **Calibrate** button.
 
-> **Warning** Never attempt ESC calibration with props on.
-> 
-> Motors should not spin during ESC calibration. However if an ESC doesn't properly support/detect the calibration sequence then it will respond to the PWM input by running the motor at maximum speed.
+::: warning
+Never attempt ESC calibration with props on.
+
+Motors should not spin during ESC calibration. However if an ESC doesn't properly support/detect the calibration sequence then it will respond to the PWM input by running the motor at maximum speed.
+:::
 
 ## Other Settings
 

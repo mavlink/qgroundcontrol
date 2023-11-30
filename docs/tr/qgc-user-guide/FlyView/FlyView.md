@@ -68,7 +68,10 @@ Gelişmiş ayarlara sayfanın sol üstündeki dişliye tıklayarak ulaşabilirsi
 
 ![Bilgi Paneli - Kameranın MAVLink ayarları](../../../assets/fly/instrument_page_camera_mavlink_settings.jpg)
 
-> **Note** Gösterilen ayarların çoğu kameraya bağlıdır (ayarlar [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)'da tanımlanmıştır). Sondaki bir kaç ortak ayar sabit olarak kodlanmıştır: Fotoğraf Modu (Tekli/Photolapse), Fotoğraf Aralığı (Timelapse için), Kamera Ayarlarını Varsayılana Sıfırla (kameraya bir sıfırlama komutu gönderir), Format (depolama)
+::: info
+Gösterilen ayarların çoğu kameraya bağlıdır (ayarlar [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)'da tanımlanmıştır). Sondaki bir kaç ortak ayar sabit olarak kodlanmıştır: Fotoğraf Modu (Tekli/Photolapse), Fotoğraf Aralığı (Timelapse için), Kamera Ayarlarını Varsayılana Sıfırla (kameraya bir sıfırlama komutu gönderir), Format (depolama)
+:::
+
 
 ### Video Akışı {#video_instrument_page}
 
@@ -92,7 +95,10 @@ Titreşim sayfası mevcut titreşim seviyelerini ve klips sayılarını gösteri
 
 Aşağıdaki bölümler, Uçuş Ekranı'nda genel işlemlerin / görevlerin nasıl gerçekleştirileceğini açıklamaktadır.
 
-> **Note** Mevcut seçeneklerin çoğu, hem aracın türüne hem de mevcut durumuna bağlıdır.
+::: info
+Mevcut seçeneklerin çoğu, hem aracın türüne hem de mevcut durumuna bağlıdır.
+:::
+
 
 ### Uçuş Öncesi Kontrol Listesi {#preflight_checklist}
 
@@ -106,7 +112,9 @@ Once you have performed each test, select it on the UI to mark it as complete.
 
 ### Aracı Devreye Alma {#arm}
 
-> **Tip** Genel olarak * QGroundControl * aracı manuel olarak devreye almanızı gerektirmez; Bir göreve veya kalkışa başlarsanız bu sizin için yapılır.
+::: tip
+Genel olarak * QGroundControl * aracı manuel olarak devreye almanızı gerektirmez; Bir göreve veya kalkışa başlarsanız bu sizin için yapılır.
+:::
 
 Bir aracı devreye almak, kalkışa hazırlık için motorları çalıştırır.
 
@@ -114,7 +122,10 @@ Aracı devreye almak için, *Fly Toolbar*'dan **Disarmed**'ı seçin ve kaydırm
 
 ![Aracı Devreye Alma](../../../assets/fly/arm.jpg)
 
-> **Note** Eğer bir kaç saniye içinde kalkmazlarsa araçlar genellikle otomatik olarak kendilerini devre dışı bırakırlar.
+::: info
+Eğer bir kaç saniye içinde kalkmazlarsa araçlar genellikle otomatik olarak kendilerini devre dışı bırakırlar.
+:::
+
 
 ### Aracı Devre Dışı Bırakma {#disarm}
 
@@ -122,7 +133,10 @@ Aracı devre dışı bırakmak motorları durdurur (aracı güvenli hale getirir
 
 ![Aracı Devre Dışı Bırakma](../../../assets/fly/disarm.jpg)
 
-> **Note** Aracı uçarken devre dışı bırakmak [Emergency Stop](#emergency_stop) olarak adlandırılır
+::: info
+Aracı uçarken devre dışı bırakmak [Emergency Stop](#emergency_stop) olarak adlandırılır
+:::
+
 
 ### Acil Durdurma {#emergency_stop}
 
@@ -134,7 +148,9 @@ Aracı devre dışı bırakmak için uçuş sırasında *Fly Toolbar*'dan **Arme
 
 ### Kalkış {#takeoff}
 
-> **Tip** If you are starting a mission for a multicopter, *QGroundControl* will automatically perform the takeoff step.
+::: tip
+If you are starting a mission for a multicopter, *QGroundControl* will automatically perform the takeoff step.
+:::
 
 Kalkmak için (iniş yapıldığında):
 
@@ -162,7 +178,10 @@ Return to a "safe point" at any time while flying:
 
 ![rtl](../../../assets/fly/rtl.jpg)
 
-> **Note** Vehicles commonly return to the "home" (takeoff) location and land. This behaviour depends on the vehicle type and configuration. For example, rally points or mission landings may be used as alternative return targets.
+::: info
+Vehicles commonly return to the "home" (takeoff) location and land. This behaviour depends on the vehicle type and configuration. For example, rally points or mission landings may be used as alternative return targets.
+:::
+
 
 ### Yükleklik Değiştirme {#change_altitude}
 
@@ -191,7 +210,10 @@ Kalkıştan sonra belirli bir konuma uçmayı ayarlayabilirsiniz.
 
 3. Hazır olduğunuzda kaydırarak onay verin (ya da **X**'e basarak iptal edin).
 
-> **Note** Hedef konum aracın 1 km çevresinde seçilmelidir (QGC'de sabit olarak ayarlanmıştır).
+::: info
+Hedef konum aracın 1 km çevresinde seçilmelidir (QGC'de sabit olarak ayarlanmıştır).
+:::
+
 
 ### Yörünge Konumu {#orbit}
 
@@ -213,7 +235,10 @@ Kalkıştan sonra belirli bir konumun çevresinde yörüngede dolaşmasını aya
 
 You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location. Duraklatıldığında aracın davranışı aracın tipine bağlıdır, genellikle multikopterler havada asılı kalırken sabit kanatlar çember çizer.
 
-> **Note** Bir *Goto location* operasyonunu durduramazsınız.
+::: info
+Bir *Goto location* operasyonunu durduramazsınız.
+:::
+
 
 Durdurmak için:
 
@@ -247,7 +272,10 @@ Yerdeki bir aracın görevini başlatmak için:
 
 Göreve *sıradaki* hedef noktanızdan *devam* edebilirsiniz (*Continue Mission* kaydırmalı onay butonu kalkıştan sonra çoğu kez varsayılan olarak gösterilir).
 
-> **Note** Continue ve [Resume mission](#resume_mission) farklıdır! Continue komutu durdurulmuş bir görevi tekrar başlatmak veya zaten kalkmış bir araç için yani kalkış görevi komutunu kaçırmış durumdaysanız kullanılır. Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
+::: info
+Continue ve [Resume mission](#resume_mission) farklıdır! Continue komutu durdurulmuş bir görevi tekrar başlatmak veya zaten kalkmış bir araç için yani kalkış görevi komutunu kaçırmış durumdaysanız kullanılır. Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
+:::
+
 
 Görevinize aşağıdakileri yaparak devam edebilirsiniz (hali hazırda bir görevde değilseniz!):
 
@@ -264,7 +292,10 @@ Görevinize aşağıdakileri yaparak devam edebilirsiniz (hali hazırda bir gör
 
 *Resume Mission*, bir görevin içinde [RTL/Return](#rtl) ya da [Land](#land) gerçekleştirdikten sonra (ör. batarya değiştirmek için) kullanılır.
 
-> **Note** Eğer bataryayı değiştiricekseniz, bataryanın bağlantısını kestikten sonra QGC ile aracın bağlantısını **kesmeyin**. Yeni bataryayı yerleştirdikten sonra *QGroundControl* cihazı tekrar tespit edip, bağlantıyı otomatik olarak yeniden kuracaktır.
+::: info
+Eğer bataryayı değiştiricekseniz, bataryanın bağlantısını kestikten sonra QGC ile aracın bağlantısını **kesmeyin**. Yeni bataryayı yerleştirdikten sonra *QGroundControl* cihazı tekrar tespit edip, bağlantıyı otomatik olarak yeniden kuracaktır.
+:::
+
 
 İnişten sonra size görev planını cihazdan kaldırma, cihazda bırakma ya da göreve kaldığı yerden devam etme seçeneklerini sunan bir *Flight Plan complete* iletişim kutusu karşınıza çıkacaktır.
 
@@ -276,7 +307,10 @@ Aşağıdaki görüntü inişten sonra yeniden yapılandırılan bir görevi gö
 
 ![Yapılandırılmış Göreve Devam Etme](../../../assets/fly/resume_mission_rebuilt.jpg)
 
-> **Note** Bir görev, basit bir şekilde aracın son gerçekleştirdiği görev aşamasından devam edemez, çünkü son yapılan aşamada görevin sonraki aşamalarına etki edebilecek birden fazla etken olabilir (ör. hız komutları ya da kameranın kontrol komutları). Basit bir şekilde devam etmek yerine, *QGroundControl* son gerçekleştirilen görev aşamasından başlayarak, ilgili komutları da dikkate alarak görevi tekrar yapılandırır.
+::: info
+Bir görev, basit bir şekilde aracın son gerçekleştirdiği görev aşamasından devam edemez, çünkü son yapılan aşamada görevin sonraki aşamalarına etki edebilecek birden fazla etken olabilir (ör. hız komutları ya da kameranın kontrol komutları). Basit bir şekilde devam etmek yerine, *QGroundControl* son gerçekleştirilen görev aşamasından başlayarak, ilgili komutları da dikkate alarak görevi tekrar yapılandırır.
+:::
+
 
 #### İnişten Sonra Görevi Kaldırma {#resume_mission_prompt}
 
@@ -288,7 +322,10 @@ Video akışı etkinleştirildiğinde, *QGroundControl* haritanın sol altında 
 
 ![Video Akışı Kaydı](../../../assets/fly/video_record.jpg)
 
-> **Note** video akışı [Application Settings > General tab > Video](../SettingsView/General.md#video)'dan etkinleştirilebilir/düzenlenebilir.
+::: info
+video akışı [Application Settings > General tab > Video](../SettingsView/General.md#video)'dan etkinleştirilebilir/düzenlenebilir.
+:::
+
 
 Video görüntüsünü geçiş penceresindeki kontrolleri kullanararak daha da düzenleyebilirsiniz:
 
@@ -303,7 +340,9 @@ Video görüntüsünü geçiş penceresindeki kontrolleri kullanararak daha da d
 
 Eğer araç ve kamera tarafından destekleniyorsa, *QGroundControl* kendiliğinden video kaydını başlatıp durdurabilirsiniz. Ayrıca *QGroundControl* videoyu yayınlayıp, yerel dosyalara kaydedebilir.
 
-> **Tip** Kameranın kendisinde kaydedilen video daha kaliteli olacak olsa da, yüksek ihtimalle yer istasyonunun daha büyük kayıt kapasitesi olacaktır.
+::: tip
+Kameranın kendisinde kaydedilen video daha kaliteli olacak olsa da, yüksek ihtimalle yer istasyonunun daha büyük kayıt kapasitesi olacaktır.
+:::
 
 #### Video Akışını Kaydetme (GCS'de)
 
@@ -313,10 +352,17 @@ Video akışı kaydı [video stream instrument page](#video_instrument_page)'dan
 
 Video akışı kaydı [Application Settings > General tab](../SettingsView/General.md)'dan düzenlenir:
 
-- [Video Recording](../SettingsView/General.md#video-recording) - kayıt dosyası formatını ve depolama sınırlarını belirtir. > **Note** Videolar varsayılan olarak Matroska format (.mkv) olarak kaydedilir. Bu format, hata durumunda bozulmaya karşı nispeten dayanıklıdır.
+- [Video Recording](../SettingsView/General.md#video-recording) - kayıt dosyası formatını ve depolama sınırlarını belirtir. 
+  
+  ::: info
+  Videolar varsayılan olarak Matroska format (.mkv) olarak kaydedilir. Bu format, hata durumunda bozulmaya karşı nispeten dayanıklıdır.
+  :::
+
 - [Miscellaneous](../SettingsView/General.md#miscellaneous) - Video **Application Load/Save Path**'e kaydedilir. 
 
-> **Tip** Kaydedilen video, sadece video akışının kendisini içerir. QGroundControl uygulamasının öğeleriyle videoyu kaydetmek için başka bir ekran kaydı uygulaması kullanmanız gerekir.
+::: tip
+Kaydedilen video, sadece video akışının kendisini içerir. QGroundControl uygulamasının öğeleriyle videoyu kaydetmek için başka bir ekran kaydı uygulaması kullanmanız gerekir.
+:::
 
 #### Videoyu Kamerada Kaydetme
 

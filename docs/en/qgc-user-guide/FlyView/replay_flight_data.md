@@ -29,4 +29,6 @@ To replay a flight:
 1. To stop replay (i.e. to load a new file to replay), first pause the flight, and then select **Disconnect** (when it appears).
    After disconnecting, the **Load Telemetry Log** button will be displayed.
 
-> **Tip** You can inspect the running replay in more detail using the [MAVLink Inspector](../analyze_view/mavlink_inspector.md).
+:::tip
+You can inspect the running replay in more detail using the [MAVLink Inspector](../analyze_view/mavlink_inspector.md).
+:::

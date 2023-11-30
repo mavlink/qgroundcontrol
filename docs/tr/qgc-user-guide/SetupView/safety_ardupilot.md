@@ -2,11 +2,13 @@
 
 The *Safety Setup* page allows you to configure (vehicle specific) failsafe settings.
 
-> **Tip** The setup page covers the most important safety options; other failsafe settings can be set via the [parameters](../SetupView/Parameters.md) described in the failsafe documentation for each vehicle type.
+::: tip
+The setup page covers the most important safety options; other failsafe settings can be set via the [parameters](../SetupView/Parameters.md) described in the failsafe documentation for each vehicle type.
+:::
 
-<span></span>
-
-> **Note** *QGroundControl* does not support polygon fences or rally points on ArduPilot.
+::: info
+*QGroundControl* does not support polygon fences or rally points on ArduPilot.
+:::
 
 ## Copter
 
@@ -14,13 +16,18 @@ The Copter safety page is shown below.
 
 ![Safety Setup - Copter (Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
 
-> **Note** For additional safety settings and information see: [Failsafe](http://ardupilot.org/copter/docs/failsafe-landing-page.html).
+::: info
+For additional safety settings and information see: [Failsafe](http://ardupilot.org/copter/docs/failsafe-landing-page.html).
+:::
+
 
 ### Battery Failsafe {#battery_failsafe_copter}
 
 This panel sets the [Battery Failsafe](http://ardupilot.org/copter/docs/failsafe-battery.html) parameters. You can set low and critical thresholds for voltage and/or remaining capacity and define the action if the failsafe value is breached. The thresholds can be disabled by setting them to zero.
 
-> **Tip** If there is a second battery (enabled in the [Power Setup](../SetupView/Power.md)) a second panel will be displayed with the same settings.
+::: tip
+If there is a second battery (enabled in the [Power Setup](../SetupView/Power.md)) a second panel will be displayed with the same settings.
+:::
 
 ![Safety Setup - Battery1 Failsafe Triggers (Copter)](../../../assets/setup/safety/safety_arducopter_battery1_failsafe_triggers.jpg)
 
@@ -93,7 +100,10 @@ The Plane safety page is shown below.
 
 ![Safety Setup - Plane (Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
-> **Note** For additional safety settings and information see: [Plane Failsafe Function](http://ardupilot.org/plane/docs/apms-failsafe-function.html) and [Advanced Failsafe Configuration](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html).
+::: info
+For additional safety settings and information see: [Plane Failsafe Function](http://ardupilot.org/plane/docs/apms-failsafe-function.html) and [Advanced Failsafe Configuration](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html).
+:::
+
 
 ### Battery Failsafe {#battery_failsafe_plane}
 
@@ -134,7 +144,10 @@ The Rover safety page is shown below.
 
 ![Safety Setup - Rover (Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
 
-> **Note** For additional safety settings and information see: [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
+::: info
+For additional safety settings and information see: [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
+:::
+
 
 ### Battery Failsafe {#battery_failsafe_rover}
 
@@ -163,7 +176,10 @@ The Sub safety page is shown below.
 
 ![Safety Setup - Sub (Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
 
-> **Note** For additional safety settings and information see: [Failsafes](https://www.ardusub.com/operators-manual/failsafes.html).
+::: info
+For additional safety settings and information see: [Failsafes](https://www.ardusub.com/operators-manual/failsafes.html).
+:::
+
 
 ### Failsafe Actions {#failsafe_actions_sub}
 

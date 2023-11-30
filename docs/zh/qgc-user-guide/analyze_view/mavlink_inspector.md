@@ -2,7 +2,9 @@
 
 The *MAVLink Inspector* provides real-time information and charting of MAVLink traffic received by *QGroundControl*.
 
-> **Warning** This feature is intended primarily for **autopilot developers**/**vehicle creators**. It is only supported on desktop builds (Windows, Linux, Mac OS).
+::: warning
+This feature is intended primarily for **autopilot developers**/**vehicle creators**. It is only supported on desktop builds (Windows, Linux, Mac OS).
+:::
 
 ![MAVLink inspector](../../../assets/analyze/mavlink_inspector/mavlink_inspector.jpg)
 

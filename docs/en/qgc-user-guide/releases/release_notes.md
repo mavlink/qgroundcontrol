@@ -134,7 +134,9 @@ This section contains a high level and *non-exhaustive* list of new features add
 
 ## Stable Version 3.3
 
-> **Tip** More detailed release notes for version 3.3 can be found [here](../releases/stable_v3.3_long.md).
+:::tip
+More detailed release notes for version 3.3 can be found [here](../releases/stable_v3.3_long.md).
+:::
 
 This section contains a high level and *non-exhaustive* list of new features added to *QGroundControl* in version 3.3. Not to mention the large number of bug fixes of this release.
 
@@ -160,7 +162,9 @@ This section contains a high level and *non-exhaustive* list of new features add
 
 ## Stable Version 3.2
 
-> **Tip** More detailed release notes for version 3.2 can be found [here](../releases/stable_v3.2_long.md).
+:::tip
+More detailed release notes for version 3.2 can be found [here](../releases/stable_v3.2_long.md).
+:::
 
 This section contains a high level and *non-exhaustive* list of new features added to *QGroundControl* in version 3.2. 
 

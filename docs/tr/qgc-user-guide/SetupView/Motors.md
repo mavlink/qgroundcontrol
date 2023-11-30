@@ -2,7 +2,9 @@
 
 Motor Kurulumu, ayrı motorları / servoları test etmek için kullanılır (örneğin, motorların doğru yönde döndüğünü doğrulamak için).
 
-> **Tip** Bu talimatlar PX4 ve ArduPilot'taki çoğu araç türü için geçerlidir. Araca özel talimatlar, alt konular olarak sağlanır (örn. [ Motor Kurulumu (ArduSub) ](../SetupView/Motors_ardusub.md)).
+::: tip
+Bu talimatlar PX4 ve ArduPilot'taki çoğu araç türü için geçerlidir. Araca özel talimatlar, alt konular olarak sağlanır (örn. [ Motor Kurulumu (ArduSub) ](../SetupView/Motors_ardusub.md)).
+:::
 
 ![Motorların Testi](../../../assets/setup/Motors.png)
 

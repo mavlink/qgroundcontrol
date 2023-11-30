@@ -137,7 +137,9 @@ Once you have performed each test, select it on the UI to mark it as complete.
 Arming a vehicle starts the motors in preparation for takeoff.
 You will only be able to arm the vehicle if it is safe and ready to fly.
 
-> **Tip** Generally, if the vehicle is ready to arm, _QGroundControl_ will arm the vehicle for you if you start a mission or takeoff.
+:::tip
+Generally, if the vehicle is ready to arm, _QGroundControl_ will arm the vehicle for you if you start a mission or takeoff.
+:::
 
 The vehicle is ready to fly in all modes if the status text says "Ready to Fly" and the background is green.
 
@@ -204,7 +206,9 @@ You will then need to use the emergency disarming slider.
 
 ### Takeoff {#takeoff}
 
-> **Tip** If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
+:::tip
+If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
+:::
 
 To takeoff (when landed):
 
@@ -405,7 +409,9 @@ You can further configure video display using controls on the switcher:
 
 If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.
 
-> **Tip** Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
+:::tip
+Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
+:::
 
 #### Record Video Stream (on GCS)
 

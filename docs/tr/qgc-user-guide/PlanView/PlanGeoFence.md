@@ -4,7 +4,10 @@ Coğrafi Sınırlar, aracınızın içinde uçmasına izin verilen ya da *izin v
 
 ![Coğrafi Sınır'a geneş bakış](../../../assets/plan/geofence/geofence_overview.jpg)
 
-> **Note** **ArduPilot users:** Coğrafi Sınır sadece Rover 3.6 ve Copter3.7 ve üzeri sürümlerde desteklenir. Ek olarak günlük sürümlerin ya da stabil 3.6 sürümünün (erişilebilir olduğunda) kullanılmasını gerektirir. Eğer bağlanan cihaz tarafından Coğrafi Sınır seçeneği desteklenmiyorsa *QGroundControl* seçeneği göstermeyecektir.
+::: info
+**ArduPilot users:** Coğrafi Sınır sadece Rover 3.6 ve Copter3.7 ve üzeri sürümlerde desteklenir. Ek olarak günlük sürümlerin ya da stabil 3.6 sürümünün (erişilebilir olduğunda) kullanılmasını gerektirir. Eğer bağlanan cihaz tarafından Coğrafi Sınır seçeneği desteklenmiyorsa *QGroundControl* seçeneği göstermeyecektir.
+:::
+
 
 ## Coğrafi Sınır Oluşturma
 
@@ -17,8 +20,10 @@ Coğrafi Sınır Oluşturmak için:
 
 3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively. Haritaya yeni bir bölge ve butonların altına sınırlarla ilgili yeni bir liste eklenecektir.
     
-    > **Tip** Butonlara birden çok kez basarak birden çok bölge oluşturabilirsiniz, böylece karmaşık coğrafi sınırlar oluşturulabilir.
-
+   ::: tip
+   Butonlara birden çok kez basarak birden çok bölge oluşturabilirsiniz, böylece karmaşık coğrafi sınırlar oluşturulabilir.
+   :::
+   
 - Dairesel Bölge:
     
     ![Dairesel Coğrafi Sınır](../../../assets/plan/geofence/geofence_circular.jpg)

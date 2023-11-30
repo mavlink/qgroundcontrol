@@ -4,7 +4,10 @@ Radyo Kurulumu, ana vericinizin konum kontrol çubuklarını(dönüş, eğim, sa
 
 Ana kalibrasyon süreci PX4 ve ArduPilot için aynıdır (bazı ek uçuş kontrol cihazına özgü ayarlar / araçlar [ aşağıda ayrıntılı](#additional-radio-setup) olarak açıklanmıştır).
 
-> **Note** Radyo sistemini kalibre etmeden önce, alıcı ve vericinin bağlanması gerekir. Bir alıcı ve verici çiftini bağlama işlemi donanıma özeldir ( talimatlar için kılavuzunuza bakın).
+::: info
+Radyo sistemini kalibre etmeden önce, alıcı ve vericinin bağlanması gerekir. Bir alıcı ve verici çiftini bağlama işlemi donanıma özeldir ( talimatlar için kılavuzunuza bakın).
+:::
+
 
 ## Kalibrasyonun Yapılması
 
@@ -18,7 +21,10 @@ Radyoyu kalibre etmek için:
     
     ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
     
-    > **Note** Yukardaki görüntü PX4 Pro içindir. Her iki aygıt yazılımı için kalibrasyon/üst bölüm aynıdır, ancak * Ek Radyo Ayarları * bölümü farklı olacaktır.
+    ::: info
+Yukardaki görüntü PX4 Pro içindir. Her iki aygıt yazılımı için kalibrasyon/üst bölüm aynıdır, ancak * Ek Radyo Ayarları * bölümü farklı olacaktır.
+:::
+
 
 4. Verici yapılandırmanıza uyan radyo * verici modunu * seçin (bu, * QGroundControl * 'ın kalibrasyon sırasında izlemeniz için doğru çubuk pozisyonlarını görüntülemesini sağlar).
     
@@ -85,7 +91,9 @@ The flight controller will pass through the unmodified values from the specified
 
 Tuning channels allow you to map a transmitter tuning knob to a parameter (so that you can dynamically modify a parameter from your transmitter).
 
-> **Tip** This feature is provided to enable manual in-flight tuning.
+::: tip
+This feature is provided to enable manual in-flight tuning.
+:::
 
 The channels used for parameter tuning are assigned in the *Radio* setup (here!), while the mapping from each tuning channel to its associated parameter is defined in the *Parameter editor*.
 
@@ -110,4 +118,6 @@ To map a PARAM tuning channel to a parameter:
 6. Press **OK** to close the dialog.
 7. Press **Save** to save all changes and close the *Parameter Editor*.
 
-> **Tip** You can clear all parameter/tuning channel mappings by selecting menu **Tools > Clear RC to Param** at the top right of the *Parameters* screen.
+::: tip
+You can clear all parameter/tuning channel mappings by selecting menu **Tools > Clear RC to Param** at the top right of the *Parameters* screen.
+:::

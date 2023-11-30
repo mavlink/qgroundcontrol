@@ -2,8 +2,10 @@
 
 Motor Setup is used to test individual motors/servos (for example, to verify that motors spin in the correct direction).
 
-> **Tip** These instructions apply to PX4 and to most vehicle types on ArduPilot.
-  Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../SetupView/Motors_ardusub.md)).
+::: tip
+These instructions apply to PX4 and to most vehicle types on ArduPilot.
+Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../SetupView/Motors_ardusub.md)).
+:::
 
 ![Motors Test](../../../assets/setup/Motors.png)
 

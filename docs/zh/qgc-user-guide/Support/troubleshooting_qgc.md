@@ -2,7 +2,9 @@
 
 This topic lists troubleshooting information related to **running** *QGroundControl* on the host computer (e.g. QGC setup and configuration issues).
 
-> **Tip** Problems when **using** *QGroundControl* to interact with a vehicle are covered in: [QGC/Vehicle Interaction Problems](../Support/CommonProblems.md).
+::: tip
+Problems when **using** *QGroundControl* to interact with a vehicle are covered in: [QGC/Vehicle Interaction Problems](../Support/CommonProblems.md).
+:::
 
 ## 64-bit Windows: Audio in Unexpected Language
 
@@ -15,7 +17,10 @@ The solution is to set the desired *32-bit voice* for your system:
 1. Run the control panel application: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
 2. Make your desired *Voice selection* and then click **OK** at the bottom of the dialog. ![Windows 32-bit Text-To-Speech Control Panel](../../../assets/support/windows_text_to_speech.png)
 
-> **Note** Additional information about the Windows speech APIs can be found [here](https://www.webbie.org.uk/blog/microsoft-speech/).
+::: info
+Additional information about the Windows speech APIs can be found [here](https://www.webbie.org.uk/blog/microsoft-speech/).
+:::
+
 
 ## Windows: UI Rendering/Video Driver Issues {#opengl_troubleshooting}
 
@@ -37,8 +42,12 @@ If using *Windows Defender*:
 
 - In the **Start** bar, enter/select: *Firewall & Network Protection* (System Settings).
 - Scroll to and select the option: *Allow an app through firewall*.
-- Select *QGroundControl* and change the *Access* selector to **Allow**. > **Tip** Programs are listed in alphabetical order by description (not filename). You'll find QGC under **O**: *Open source ground control app provided by QGroundControl dev team*
+- Select *QGroundControl* and change the *Access* selector to **Allow**.
 
+  ::: tip
+  Programs are listed in alphabetical order by description (not filename). You'll find QGC under **O**: *Open source ground control app provided by QGroundControl dev team*
+  :::
+  
 ## Ubuntu: Video Streaming Fails (Missing Gstreamer) {#missing_gstreamer}
 
 On Ubuntu you must install *Gstreamer* components in order to see video streams. If these are not installed *QGroundControl* is unable to create the gstreamer nodes and fails with:
@@ -55,7 +64,10 @@ The [download/install instructions for Ubuntu](../getting_started/download_and_i
 
 The version of GSteamer in Ubuntu 18.04 has a bug that prevents video displaying when using a VA API based decoder (i.e. vaapih264dec etc.) on systems that have both Intel and NVidia video display adapters.
 
-> **Note** More generally, while the problem is known to occur on Ubuntu 18.04 with Intel and NVidia VGAs, it might occur on any linux system and other types of (dual) VGAs.
+::: info
+More generally, while the problem is known to occur on Ubuntu 18.04 with Intel and NVidia VGAs, it might occur on any linux system and other types of (dual) VGAs.
+:::
+
 
 The easiest way to get *QGroundControl* to work in this case is to start it using the following command line:
 

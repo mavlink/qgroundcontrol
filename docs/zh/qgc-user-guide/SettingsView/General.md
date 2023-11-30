@@ -2,7 +2,10 @@
 
 The general settings (**SettingsView > General Settings**) are the main place for application-level configuration. Settable values include: display units, autoconnection devices, video display and storage, RTK GPS, brand image, and other miscellaneous settings.
 
-> **Note** Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
+::: info
+Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
+:::
+
 
 ![SettingsView - Full General Tab](../../../assets/settings/general/overview.jpg)
 
@@ -117,7 +120,9 @@ Settings include:
 
 You can also configure QGC to connect to an external GPS device via a serial or UDP port. The GPS device must support the ASCII NMEA format - this is normally the case.
 
-> **Tip** A higher quality external GPS system may be useful even if the ground station has internal GPS support.
+::: tip
+A higher quality external GPS system may be useful even if the ground station has internal GPS support.
+:::
 
 Use the *NMEA GPS Device* drop-down selector to manually select the GPS device and other options:
 
@@ -128,8 +133,10 @@ Use the *NMEA GPS Device* drop-down selector to manually select the GPS device a
   - **NMEA GPS Device:** *Serial*
   - **NMEA GPS Baudrate**: The baudrate for the serial port
   
-  > **Tip** To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close *QGroundControl*, reconnect your GPS, and open QGC.
-
+  ::: tip
+  To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close *QGroundControl*, reconnect your GPS, and open QGC.
+  :::
+  
 - Network connection:
   
   ![NMEA GPS Device - UDP](../../../assets/settings/general/nmea_gps_udp.jpg)
@@ -143,11 +150,14 @@ This section allows you to specify the RTK GPS "Survey-in" settings, to save and
 
 ![RTK GPS Settings](../../../assets/settings/general/rtk_gps.jpg)
 
-> **Note** The *Survey-In* process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position. The process takes measurements over time, leading to increasing position accuracy. Both of the setting conditions must met for the Survey-in process to complete. For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 docs) and [GPS- How it works](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot docs).
+::: info
+The *Survey-In* process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position. The process takes measurements over time, leading to increasing position accuracy. Both of the setting conditions must met for the Survey-in process to complete. For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 docs) and [GPS- How it works](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot docs).
+:::
 
-<span></span>
 
-> **Tip** In order to save and reuse a base position (because Survey-In is time consuming!) perform Survey-In once, select *Use Specified Base Position* and press **Save Current Base Position** to copy in the values for the last survey. The values will then persist across QGC reboots until they are changed.
+::: tip
+In order to save and reuse a base position (because Survey-In is time consuming!) perform Survey-In once, select *Use Specified Base Position* and press **Save Current Base Position** to copy in the values for the last survey. The values will then persist across QGC reboots until they are changed.
+:::
 
 The settings are:
 
@@ -173,7 +183,9 @@ The settings are:
 
 QGC can consume ADSB messages in SBS format from a remote or local server (at the specified IP address/port) and display detected vehicles on the Fly View map.
 
-> **Tip** One way to get ADSB information from nearby vehicles is to use [dump1090](https://github.com/antirez/dump1090) to serve the data from a connected RTL-SDR dongle to QGC. The steps are: 1. Get an RTL-SDR dongle (and antenna) and attach it to your ground station computer (you may need to find compatible drivers for your OS). 1. Install *dump1090* on your OS (either pre-built or build from source). 1. Run `dump1090 --net` to start broadcasting messages for detected vehicles on TCP localhost port 30003 (127.0.0.1:30003). 1. Enter the server (`127.0.0.1`) and port (`30003`) address in the QGC settings above. 1. Restart QGC to start seeing local vehicles on the map.
+::: tip
+One way to get ADSB information from nearby vehicles is to use [dump1090](https://github.com/antirez/dump1090) to serve the data from a connected RTL-SDR dongle to QGC. The steps are: 1. Get an RTL-SDR dongle (and antenna) and attach it to your ground station computer (you may need to find compatible drivers for your OS). 1. Install *dump1090* on your OS (either pre-built or build from source). 1. Run `dump1090 --net` to start broadcasting messages for detected vehicles on TCP localhost port 30003 (127.0.0.1:30003). 1. Enter the server (`127.0.0.1`) and port (`30003`) address in the QGC settings above. 1. Restart QGC to start seeing local vehicles on the map.
+:::
 
 ## Video {#video}
 
@@ -183,7 +195,12 @@ The *Video* section is used to define the source and connection settings for vid
 
 The settings are:
 
-- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS (h.264) Video Stream | Integrated Camera > **Note** If no video source is specified then no other video or *video recording* settings will be displayed (above we see the settings when UDP source is selected).
+- **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS (h.264) Video Stream | Integrated Camera 
+
+  ::: info
+  If no video source is specified then no other video or *video recording* settings will be displayed (above we see the settings when UDP source is selected).
+  :::
+
 - **URL/Port**: Connection type-specific stream address (may be port or URL).
 - **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
 - **Disabled When Disarmed**: Disable video feed when vehicle is disarmed.

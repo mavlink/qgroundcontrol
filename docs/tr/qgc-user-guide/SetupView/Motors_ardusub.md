@@ -16,7 +16,9 @@ Sağdaki resim, her bir iticinin konumu ve yönü ile birlikte şu anda kullanı
 
 Motorları manuel olarak kurmak ve test etmek için sayfadaki talimatları okuyun ve uygulayın.
 
-> **Warning** Aracı devreye almak ve testi etkinleştirmek için anahtarı kaydırmadan önce motorların ve pervanelerin engellerden uzak olduğundan emin olun!
+::: warning
+Aracı devreye almak ve testi etkinleştirmek için anahtarı kaydırmadan önce motorların ve pervanelerin engellerden uzak olduğundan emin olun!
+:::
 
 ![Ardusub Motorların Testi](../../../assets/setup/motors-sub.jpg)
 
@@ -26,6 +28,8 @@ Ardusub 4.0 ve daha yeni sürümler, motor yönlerinin otomatik olarak algılanm
 
 Otomatik motor yönü algılamasını gerçekleştirmek için **Vehicle Setup->Motors ** sekmesine gidin, ** Auto-Detect Directions ** düğmesine tıklayın ve bekleyin. İşlemle ilgili ek çıktı, işlem gerçekleşirken düğmenin yanında gösterilecektir.
 
-> **Warning** Bu prosedür hala motorların gövde görünümünde gösterildiği gibi * doğru çıkışlara * bağlanmasını gerektirir!
+::: warning
+Bu prosedür hala motorların gövde görünümünde gösterildiği gibi * doğru çıkışlara * bağlanmasını gerektirir!
+:::
 
 ![Ardusub Motorların Otomatik Kurulumu](../../../assets/setup/motors-sub-auto.jpg)

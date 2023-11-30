@@ -4,7 +4,9 @@ GeoFences allow you to create virtual regions within which the vehicle can fly, 
 
 ![Geofence overview](../../../assets/plan/geofence/geofence_overview.jpg)
 
-> **Note** **ArduPilot users:** GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available). *QGroundControl* will not display the GeoFence options if they are not supported by the connected vehicle.
+::: info ArduPilot users
+ GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available). *QGroundControl* will not display the GeoFence options if they are not supported by the connected vehicle.
+:::
 
 ## Create a Geofence
 
@@ -17,8 +19,10 @@ To create a GeoFence:
 
 3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively. A new region will be added to the map and to the associated list of fences below the buttons.
     
-    > **Tip** You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
-
+   ::: tip
+You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
+   :::
+   
 - Circular region:
     
     ![Circular Geofence](../../../assets/plan/geofence/geofence_circular.jpg)

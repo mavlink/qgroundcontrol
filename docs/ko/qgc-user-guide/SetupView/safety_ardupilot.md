@@ -2,11 +2,13 @@
 
 *안전 설정*에서는 (기체별) 비상 안전 설정을 설정합니다.
 
-> **Tip** 설정 페이지에서는 가장 중요한 안전 옵션을 설정합니다. 다른 안전 장치 설정은 각 차량 유형에 대한 안전 장치 설명서에 설명된 [매개변수](../SetupView/Parameters.md)를 통하여 설정할 수 있습니다.
+::: tip
+설정 페이지에서는 가장 중요한 안전 옵션을 설정합니다. 다른 안전 장치 설정은 각 차량 유형에 대한 안전 장치 설명서에 설명된 [매개변수](../SetupView/Parameters.md)를 통하여 설정할 수 있습니다.
+:::
 
-<span></span>
-
-> **Note** *QGroundControl*은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 지원하지 않습니다.
+::: info
+*QGroundControl*은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 지원하지 않습니다.
+:::
 
 ## 콥터
 
@@ -14,13 +16,18 @@
 
 ![안전 설정 - 콥터(Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
 
-> **Note** 추가 안전 설정 및 정보는 [안전장치](http://ardupilot.org/copter/docs/failsafe-landing-page.html)를 참고하십시오.
+::: info
+추가 안전 설정 및 정보는 [안전장치](http://ardupilot.org/copter/docs/failsafe-landing-page.html)를 참고하십시오.
+:::
+
 
 ### 배터리 안전장치 {#battery_failsafe_copter}
 
 이 패널은 [배터리 안전장치](http://ardupilot.org/copter/docs/failsafe-battery.html) 매개변수를 설정합니다. 전압 및 남은 용량에 대해 낮거나 중요한 임계값을 설정하고 안전 장치 값이 위반되는 경우 조치를 정의할 수 있습니다. 임계값을 0으로 설정하여 비활성화할 수 있습니다.
 
-> **Tip** 두 번째 배터리가 있는 경우([전원 설정](../SetupView/Power.md)에서 활성화됨) 두 번째 패널이 동일한 설정으로 표시됩니다.
+::: tip
+두 번째 배터리가 있는 경우([전원 설정](../SetupView/Power.md)에서 활성화됨) 두 번째 패널이 동일한 설정으로 표시됩니다.
+:::
 
 ![안전 설정 - Battery1 페일세이프 트리거(콥터)](../../../assets/setup/safety/safety_arducopter_battery1_failsafe_triggers.jpg)
 
@@ -93,7 +100,10 @@
 
 ![안전 설정 - 비행기(Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
-> **Note** 추가 안전 설정 및 정보는 [비행기 안전 장치 기능](http://ardupilot.org/plane/docs/apms-failsafe-function.html) 및 [고급 안전 장치 설정](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html)을 참고하십시오.
+::: info
+추가 안전 설정 및 정보는 [비행기 안전 장치 기능](http://ardupilot.org/plane/docs/apms-failsafe-function.html) 및 [고급 안전 장치 설정](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html)을 참고하십시오.
+:::
+
 
 ### 배터리 안전장치 {#battery_failsafe_plane}
 
@@ -134,7 +144,10 @@
 
 ![안전 설정 - 로버(Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
 
-> **Note** 추가 안전 설정 및 정보는 [비상안전장치](http://ardupilot.org/rover/docs/rover-failsafes.html)를 참고하십시오.
+::: info
+추가 안전 설정 및 정보는 [비상안전장치](http://ardupilot.org/rover/docs/rover-failsafes.html)를 참고하십시오.
+:::
+
 
 ### 배터리 비상안전장치 {#battery_failsafe_rover}
 
@@ -163,7 +176,10 @@
 
 ![안전 설정 - 잠수정(Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
 
-> **Note** 추가 안전 설정 및 정보는 [비상안전장치](https://www.ardusub.com/operators-manual/failsafes.html)를 참고하십시오.
+::: info
+추가 안전 설정 및 정보는 [비상안전장치](https://www.ardusub.com/operators-manual/failsafes.html)를 참고하십시오.
+:::
+
 
 ### 비상안전장치 동작 {#failsafe_actions_sub}
 

@@ -2,7 +2,10 @@
 
 기체 설정에서는 적합한 기체 프레임을 선택합니다.
 
-> **Note** 기체 설정은 *ArduCopter* 및 *ArduSub* 차량에만 사용할 수 있습니다(*ArduPilot* Rover 또는 Plane 차량에는 표시되지 않습니다).
+::: info
+기체 설정은 *ArduCopter* 및 *ArduSub* 차량에만 사용할 수 있습니다(*ArduPilot* Rover 또는 Plane 차량에는 표시되지 않습니다).
+:::
+
 
 ## ArduCopter 기체 설정
 
@@ -16,7 +19,9 @@
     
     ![기체 타입](../../../assets/setup/airframe/arducopter_class.jpg)
     
-    > **Note** 클래스 변경 사항을 적용하려면 차량을 재부팅하여야 합니다.
+    ::: info
+	클래스 변경 사항을 적용하려면 차량을 재부팅하여야 합니다.
+	:::
 
 3. 기체애 대한 특정 *프레임 유형*을 선택하십시오.
     

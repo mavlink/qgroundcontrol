@@ -7,4 +7,6 @@
 * [계획 업로드 및 다운로드 실패](../troubleshooting/plan_upload_download.md)
 * [미션 재실행 실패](../troubleshooting/resume_mission.md)
 
-> **Tip** 호스트 컴퓨터에서 **설치/실행**과 관련된 문제 *QGroundControl*은 [QGC 설정 문제 해결](../troubleshooting/qgc_setup.md)을 참고하십시오.
+::: tip
+호스트 컴퓨터에서 **설치/실행**과 관련된 문제 *QGroundControl*은 [QGC 설정 문제 해결](../troubleshooting/qgc_setup.md)을 참고하십시오.
+:::

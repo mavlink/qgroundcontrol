@@ -9,7 +9,10 @@ The QGroundControl developer team syncs up on technical details and in-depth ana
 * Dronecode members
 
 
-> **Note** The calls are open for anyone interested to attend, it's a great opportunity to meet the team and contribute to the ongoing development of the project.
+::: info
+The calls are open for anyone interested to attend, it's a great opportunity to meet the team and contribute to the ongoing development of the project.
+:::
+
 
 ## What gets discussed?
 The main agenda for the call is very simple, and usually remains the same with a few exceptions which are made aware to the community in advance. The calls typically last up to 60 minutes.
@@ -22,7 +25,10 @@ While the agenda below is the norm, we might
 * Update on the project [High Priority Issues](https://github.com/mavlink/qgroundcontrol/projects/2) tracker
 * Developer team coordination
 
-> **Note** If you want to guarantee your Pull Request get's discussed on the next developer call, make sure you add the "dev-call" label on GitHub. We expect the author and the assigned reviewer to be on the call.
+::: info
+If you want to guarantee your Pull Request get's discussed on the next developer call, make sure you add the "dev-call" label on GitHub. We expect the author and the assigned reviewer to be on the call.
+:::
+
 
 ## Schedule
 * Time: Bi-Weekly on Tuesdays at 17h00 CET, 12h00 EST, 08h00 PST ([subscribe to the calendar](https://www.dronecode.org/calendar/))

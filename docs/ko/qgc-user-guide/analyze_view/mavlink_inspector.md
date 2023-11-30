@@ -2,7 +2,9 @@
 
 *MAVLink 탐색기*는 *QGroundControl*에서 수신한 MAVLink 트래픽에 대한 실시간 정보와 차트를 제공합니다.
 
-> **Warning** 이 기능은 **자동 조종 장치 개발자**와 **자동차 제작자**에게 매우 유용합니다. 데스크톱(Windows, Linux, Mac OS) 버전에서 지원됩니다.
+::: warning
+이 기능은 **자동 조종 장치 개발자**와 **자동차 제작자**에게 매우 유용합니다. 데스크톱(Windows, Linux, Mac OS) 버전에서 지원됩니다.
+:::
 
 ![MAVLink 탐색기](../../../assets/analyze/mavlink_inspector/mavlink_inspector.jpg)
 

@@ -2,11 +2,17 @@
 
 *QGroundControl*의 지금까지의 배포판들의 정보들을 설명합니다.
 
-> **Note** 안정적인 빌드 메이저 및 마이너 번호는 다음과 같습니다. *패치* 배포 번호는 표시되어 있지 않으나, [Github 배포 페이지](https://github.com/mavlink/qgroundcontrol/releases)에서 나와 있습니다.
+::: info
+안정적인 빌드 메이저 및 마이너 번호는 다음과 같습니다. *패치* 배포 번호는 표시되어 있지 않으나, [Github 배포 페이지](https://github.com/mavlink/qgroundcontrol/releases)에서 나와 있습니다.
+:::
+
 
 ## 안정 버전 4.0(현재)
 
-> **Note** QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다. 즉, 모든 QGroundControl의 설정이 기본값으로 재설정됩니다.
+::: info
+QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다. 즉, 모든 QGroundControl의 설정이 기본값으로 재설정됩니다.
+:::
+
 
 * 설정 
   * 언어: 언어 선택 허용
@@ -114,7 +120,9 @@
 
 ## 안정 버전 3.3
 
-> **Tip** 버전 3.3에 대한 자세한 출시 정보는 [여기](../releases/stable_v3.3_long.md)에서 확인할 수 있습니다.
+::: tip
+버전 3.3에 대한 자세한 출시 정보는 [여기](../releases/stable_v3.3_long.md)에서 확인할 수 있습니다.
+:::
 
 이 섹션에는 버전 3.3에서 *QGroundControl*에 추가된 새 기능의 상위 수준 및 *전체* 목록이 포함되어 있습니다. 각 안정적인 릴리스에서 다수의 버그들이 수정되었습니다.
 
@@ -140,7 +148,9 @@
 
 ## 안정 버전 3.2
 
-> **Tip** 버전 3.2에 대한 자세한 출시 정보는 [여기](../releases/stable_v3.2_long.md)에서 확인할 수 있습니다.
+::: tip
+버전 3.2에 대한 자세한 출시 정보는 [여기](../releases/stable_v3.2_long.md)에서 확인할 수 있습니다.
+:::
 
 이 섹션에는 버전 3.2에서 *QGroundControl*에 추가된 새 기능의 상위 수준 및 *전체* 목록이 포함되어 있습니다.
 

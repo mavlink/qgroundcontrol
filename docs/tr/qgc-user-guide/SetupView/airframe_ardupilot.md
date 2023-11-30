@@ -2,7 +2,10 @@
 
 Gövde kurulumu, sınıfı ve modeli aracınızla eşleşen gövde seçiminde kullanılır
 
-> **Note** Gövde Kurulumu sadece *ArduCopter* ve *ArduSub* araçları için mevcuttur (*ArduPilot* arazi araçları ya da uçaklar için gösterilmez).
+::: info
+Gövde Kurulumu sadece *ArduCopter* ve *ArduSub* araçları için mevcuttur (*ArduPilot* arazi araçları ya da uçaklar için gösterilmez).
+:::
+
 
 ## Arducopter Gövde Kurulumu
 
@@ -14,13 +17,15 @@ Copter'den gövde seçmek için:
 
 2. Aracınız için uygun olan *Frame Class* 'ı seçin:
     
-    ![Gövde Modeli](../../../assets/setup/airframe/arducopter_class.jpg)
+   ![Gövde Modeli](../../../assets/setup/airframe/arducopter_class.jpg)
     
-    > **Note** Sınıf değişikliklerinin geçerli olması için aracı yeniden başlatmanız gerekecektir.
+   ::: info
+   Sınıf değişikliklerinin geçerli olması için aracı yeniden başlatmanız gerekecektir.
+   :::
 
 3. Aracınız için spesifik *Frame Type* 'ını seçin:
     
-    ![Gövde Modeli](../../../assets/setup/airframe/arducopter_type.jpg)
+   ![Gövde Modeli](../../../assets/setup/airframe/arducopter_type.jpg)
 
 ## ArduSub Gövde Kurulumu {#ardusub}
 

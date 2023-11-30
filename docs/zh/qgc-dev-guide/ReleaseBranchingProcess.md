@@ -30,7 +30,9 @@ Commits/changes to the stable branch must also be brought over to the master bra
 
 At the point where the decision is made to do a patch release, the release binaries are created and a new *tag* is added to the stable branch (with the same patch release number) indicating the associated source code.
 
-> **Note** New branches are not created for patch releases - only for major and minor releases.
+::: info
+New branches are not created for patch releases - only for major and minor releases.
+:::
 
 
 ## Daily Builds
@@ -45,7 +47,10 @@ There are no git tags associated with a released daily builds. The released dail
 
 When the decision is made to release a new major/minor version the master branch tends to go through an intial lockdown mode. This is where only important fixes for the release are accepted as pull requests.
 
-> **Note** During the lockdown phase, new features are not allowed in master.
+::: info
+During the lockdown phase, new features are not allowed in master.
+:::
+
 
 Once the level of fixes associated with the release slows down to a low level, a new stable branch is created (at this point the `master` branch can move forward again as the latest and greatest).
 

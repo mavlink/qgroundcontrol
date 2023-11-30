@@ -7,15 +7,21 @@ The tuning UI also supports manual tuning of all controllers.
 
 ![Tuning Setup > Autotune](../../../assets/setup/tuning/px4_autotune_hero.png)
 
-> **Note** During [Airframe Setup](../config/airframe.md) you should have selected the frame that most closely matches your vehicle.
+::: info
+During [Airframe Setup](../config/airframe.md) you should have selected the frame that most closely matches your vehicle.
 This will usually be tuned well enough to fly, and it _may_ also be sufficiently well tuned to run autotuning.
+:::
+
 
 ## Autotune
 
 Auto-tuning automates the process of tuning the PX4 rate and attitude controllers, which are the most important controllers for stable and responsive flight (other tuning is more "optional").
 
-> **Note** This guide shows the default usage of this feature.
-> Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/master/en/config/autotune.html) (PX4 User Guide).
+::: info
+This guide shows the default usage of this feature.
+Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/master/en/config/autotune.html) (PX4 User Guide).
+:::
+
 
 ### Pre-Autotuning Test
 
@@ -47,7 +53,10 @@ The auto-tuning sequence must be performed in a **safe flight zone, with enough 
 It takes about 40 seconds (between 19 and 68 seconds).
 For best results, we recommend running the test in calm weather conditions.
 
-> **Note** Be ready to abort the autotuning process by moving the RC controller sticks.
+::: info
+Be ready to abort the autotuning process by moving the RC controller sticks.
+:::
+
 
 The test steps are:
 

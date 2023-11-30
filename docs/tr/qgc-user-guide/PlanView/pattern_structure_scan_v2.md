@@ -4,11 +4,13 @@
 
 *Yapı Taramaları*, Plan ekranında **Pattern > Structure Scan** aracı kullanılarak bir görevin içine yerleştirilebilir.
 
-> **Note** *Structure Scan*'ın yeni versiyonu, eski *Structure Scan* planlarını okuyamaz. Eskilerin tekar oluşturulmaları gerekir.
+::: info
+*Structure Scan*'ın yeni versiyonu, eski *Structure Scan* planlarını okuyamaz. Eskilerin tekar oluşturulmaları gerekir.
+:::
 
-<span></span>
-
-> **Warning** Bu özellik henüz ArduPilot yazılımı tarafından desteklenmemektedir. PX4'de desteklenir.
+::: warning
+Bu özellik henüz ArduPilot yazılımı tarafından desteklenmemektedir. PX4'de desteklenir.
+:::
 
 ## Genel Bakış
 
@@ -48,11 +50,14 @@ Tarama oluşturmak için:
 
 4. Geri kalan düzenlemeler, ekranın sağındaki *Structure Scan* editörü kullanılarak halledilir. İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
   
-  > **Note** Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
+   ::: info
+   Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
+   :::
+
+
+   Farklı modlar için seçenekler aşağıda gösterilmiştir.
   
-  Farklı modlar için seçenekler aşağıda gösterilmiştir.
-  
-  ![Yapı Taraması Editörü](../../../assets/plan/structure_scan_v2/editor_options.jpg)
+   ![Yapı Taraması Editörü](../../../assets/plan/structure_scan_v2/editor_options.jpg)
 
 Kullanıcı her zaman aşağıdaki ayarları yapılandırabilir:
 

@@ -17,7 +17,9 @@
 
 1. Connect your device (Pixhawk, SiK Radio, PX4 Flow) directly to your computer via USB. 
 
-   > **Note** Connect directly to a powered USB port on your machine (do not connect through a USB hub).
+   ::: info
+   Connect directly to a powered USB port on your machine (do not connect through a USB hub).
+   :::
 
 
 ## Select Firmware to Load

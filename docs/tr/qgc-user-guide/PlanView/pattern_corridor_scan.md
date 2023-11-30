@@ -79,7 +79,10 @@ Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip 
 
 ![Koridor Taraması - Arazi Takibi Ayarları](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
-> **Note** Arazi takibi, *AirMap* serverlarından sağlanan arazi yüksekliklerini kullanır.
+::: info
+Arazi takibi, *AirMap* serverlarından sağlanan arazi yüksekliklerini kullanır.
+:::
+
 
 Ayarlanabilir seçenekler şunlardır:
 

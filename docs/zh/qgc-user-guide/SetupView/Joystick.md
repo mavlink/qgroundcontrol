@@ -2,15 +2,20 @@
 
 *QGroundControl* allows you to control a vehicle using a joystick or gamepad instead of an RC Transmitter.
 
-> **Note** Flying with a Joystick (or [virtual thumb-sticks](../SettingsView/VirtualJoystick.md)) requires a reliable high bandwidth telemetry channel to ensure that the vehicle is responsive to joystick movements (because joystick information is sent over MAVLink).
+::: info
+Flying with a Joystick (or [virtual thumb-sticks](../SettingsView/VirtualJoystick.md)) requires a reliable high bandwidth telemetry channel to ensure that the vehicle is responsive to joystick movements (because joystick information is sent over MAVLink).
+:::
 
-<span></span>
 
-> **Note** Joystick and Gamepad support is enabled using the cross-platform [SDL2](http://www.libsdl.org/index.php) library. Compatibility with a particular controller depends on SDL (all buttons that are exposed by that API are displayed through the *QGroundControl* UI). A [number of common joysticks and gamepads](#supported-joysticks) are known to work.
+::: info
+Joystick and Gamepad support is enabled using the cross-platform [SDL2](http://www.libsdl.org/index.php) library. Compatibility with a particular controller depends on SDL (all buttons that are exposed by that API are displayed through the *QGroundControl* UI). A [number of common joysticks and gamepads](#supported-joysticks) are known to work.
+:::
 
-<span></span>
 
-> **Note** The joystick is *enabled* as the last step of the calibration process.
+::: info
+The joystick is *enabled* as the last step of the calibration process.
+:::
+
 
 ## Enabling PX4 Joystick Support
 
@@ -133,7 +138,10 @@ The *FrSky Taranis XD9 plus* remote control can also be connected as a joystick.
 
 The Taranis does not allow you to use button options (to be precise, you can set the options, but toggling the buttons on your transmitter does not cause them to be pressed).
 
-> **Note** The Taranis is an open system that is openly being worked on. It is possible that at time of writing there is a firmware or configuration that allows it to work effectively as a joystick.
+::: info
+The Taranis is an open system that is openly being worked on. It is possible that at time of writing there is a firmware or configuration that allows it to work effectively as a joystick.
+:::
+
 
 ### Logitech Gamepad F310
 

@@ -79,7 +79,10 @@ By default a flying vehicle will follow the corridor path at a fixed altitude. E
 
 ![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
-> **Note** Terrain following uses terrain heights queried from *AirMap* servers.
+::: info
+Terrain following uses terrain heights queried from *AirMap* servers.
+:::
+
 
 The configurable options are:
 

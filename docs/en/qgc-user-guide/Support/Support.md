@@ -18,7 +18,9 @@ These forums are also the best place to start discussions on bugs/problems you a
 
 Issues are used to track bugs against *QGroundControl* as well as feature requests for later versions. The current list of issues can be found on [GitHub here](https://github.com/mavlink/qgroundcontrol/issues).
 
-> **Note** Please contact our developers using the support forums **before** creating GitHub issues for either bugs or feature requests.
+::: info
+Please contact our developers using the support forums **before** creating GitHub issues for either bugs or feature requests.
+:::
 
 ### Reporting Bugs
 

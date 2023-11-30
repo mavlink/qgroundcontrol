@@ -4,7 +4,10 @@
 
 ![Parametreler Ekranı](../../../assets/setup/parameters_px4.jpg)
 
-> **Note** PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu bölümde açıklandığı gibi yönetilir.
+::: info
+PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu bölümde açıklandığı gibi yönetilir.
+:::
+
 
 ## Bir Parametreyi Bulma
 
@@ -20,7 +23,9 @@ Bir parametrenin değerini değiştirmek için bir grup ya da arama listesindeki
 
 ![Bir parametre değerini değiştirme](../../../assets/setup/parameters_changing.png)
 
-> **Note** **Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir.
+::: info
+**Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir.
+:::
 
 ## Araçlar
 

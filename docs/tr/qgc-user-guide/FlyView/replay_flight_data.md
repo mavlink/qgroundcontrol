@@ -1,10 +1,14 @@
 # Uçuş Verilerini Yeniden Oynat
 
-> **Warning** Bu özellik, öncelikle ** otopilot geliştiricileri ** / ** araç tasarlayıcıları ** için tasarlanmıştır. Bu özellik, sadece bilgisayar sürümlerinde desteklenmektedir (Windows, Linux, Mac OS).
+::: warning
+Bu özellik, öncelikle ** otopilot geliştiricileri ** / ** araç tasarlayıcıları ** için tasarlanmıştır. Bu özellik, sadece bilgisayar sürümlerinde desteklenmektedir (Windows, Linux, Mac OS).
+:::
 
 The *Replay Flight Data* feature allows users to replay a telemetry log, enabling review of past or problematic flights. Uçuş başlatılabilir, duraklatılabilir, durdurulabilir, yeniden başlatılabilir vb.
 
-> **Note** *QGroundControl* uçuş tekrarını aktif bir bağlantı gibi görür. Oynatmayı duraklattığınızda / durdurduğunuzda, yer istasyonu "İletişim Kaybı" olarak rapor edecek ve bağlantının kesilmesini veya daha fazla komut bekleyecektir.
+::: info
+*QGroundControl* uçuş tekrarını aktif bir bağlantı gibi görür. Oynatmayı duraklattığınızda / durdurduğunuzda, yer istasyonu "İletişim Kaybı" olarak rapor edecek ve bağlantının kesilmesini veya daha fazla komut bekleyecektir.
+:::
 
 Bir uçuşu tekrar etmek için:
 1. Tüm aktif bağlantıları kesin.
@@ -21,4 +25,6 @@ Bir uçuşu tekrar etmek için:
    - *Rate* selector to choose the playback speed.
 1. To stop replay (i.e. to load a new file to replay), first pause the flight, and then select **Disconnect** (when it appears). After disconnecting, the **Load Telemetry Log** button will be displayed.
 
-> **Tip** [ MAVLink Inspector ](../analyze_view/mavlink_inspector.md) 'ı kullanarak devam eden tekrarı daha ayrıntılı olarak inceleyebilirsiniz.
+::: tip
+[ MAVLink Inspector ](../analyze_view/mavlink_inspector.md) 'ı kullanarak devam eden tekrarı daha ayrıntılı olarak inceleyebilirsiniz.
+:::

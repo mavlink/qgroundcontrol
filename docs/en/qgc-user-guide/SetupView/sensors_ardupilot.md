@@ -20,8 +20,13 @@ The calibration steps are:
 
 1. Click the **Accelerometer** sensor button.
    ![Accelerometer calibration](../../../assets/setup/sensor/accelerometer_ardupilot.jpg)
-   > **Note** You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
-     If not, you can also set it here. 
+   
+   ::: info
+   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
+   If not, you can also set it here.
+   :::
+
+
 1. Click **OK** to start the calibration.   
 1. Position the vehicle based on text instructions in the center display. 
    Click the **Next** button to capture each position.
@@ -32,7 +37,10 @@ The calibration steps are:
 
 ArduPilot uses onboard calibration support that allows for more accurate calibration.
 
-> **Note** Older ArduPilot firmware can be calibrated using the [same process as PX4](../SetupView/sensors_px4.md#compass). 
+::: info
+Older ArduPilot firmware can be calibrated using the [same process as PX4](../SetupView/sensors_px4.md#compass). 
+:::
+
 
 You need to rotate the vehicle randomly around all axes until the progress bar fills all the way to the right and the calibration completes. When the calibration completes you will get the following results:
 
@@ -48,8 +56,12 @@ You will be asked to place the vehicle in a level orientation while it captures 
 
 1. Click the **Level Horizon** sensor button.
    ![Level Horizon calibration](../../../assets/setup/sensor_level_horizon.jpg)
-   > **Note** You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
-     If not, you can also set it here.   
+   
+   ::: info
+   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above. 
+   If not, you can also set it here.
+   :::
+
 1. Place the vehicle in its level flight orientation on a level surface:
   * For planes this is the position during level flight (planes tend to have their wings slightly pitched up!)
   * For copters this is the hover position.
@@ -89,7 +101,9 @@ To perform **CompassMot** calibration:
 
 The *Sensor Settings* section allows you to specify the compass orientation and which compasses are enabled. 
 
-> **Tip** You can skip this section if the flight controller and compass are mounted upright on the vehicle and facing the front (this is the default orientation - `ROTATION_NONE`).
+::: tip
+You can skip this section if the flight controller and compass are mounted upright on the vehicle and facing the front (this is the default orientation - `ROTATION_NONE`).
+:::
 
 If the autopilot/compass are mounted in any other way you will need to specify their orientations as YAW, PITCH and/or ROLL offsets relative to the forward-facing-upright orientation (clock-wise rotation around the Z, Y and X axis, respectively).
 

@@ -16,8 +16,11 @@
 
 ![](../../assets/quickstart/ConnectedVehicle.jpg)
 
-> **Note** 本指南将持续更新！ 本指南多提供的信息应该是正确的，但不排除信息缺失或页面不完整。
+::: info
+本指南将持续更新！ 本指南多提供的信息应该是正确的，但不排除信息缺失或页面不完整。
+:::
 
-<span></span>
 
-> **提示** 关于 *QGroundControl* 开发、架构、贡献和翻译的信息可在 [开发者指南](https://dev.qgroundcontrol.com/en/) 中找到。
+::: tip
+关于 *QGroundControl* 开发、架构、贡献和翻译的信息可在 [开发者指南](https://dev.qgroundcontrol.com/en/) 中找到。
+:::

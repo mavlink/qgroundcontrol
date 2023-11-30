@@ -26,9 +26,10 @@ To get the source files:
    git submodule update --recursive
    ```
 
-> **Tip** Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
-> You must use git!
-
+:::tip
+Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
+You must use git!
+:::
 
 ## Build QGroundControl
 
@@ -51,10 +52,12 @@ We support Linux builds using a container found on the source tree of the reposi
   - Java JDK 11 is required.
 - **Qt version:** {{ $frontmatter.qt_version }} **(only)** <!-- NOTE {{ $frontmatter.qt_version }}  is set in the frontmatter above -->
 
-  > **Warning** **Do not use any other version of Qt!**
-    QGC has been thoroughly tested with the specified version of Qt ({{ $frontmatter.qt_version }}).
-    There is a significant risk that other Qt versions will inject bugs that affect stability and safety (even if QGC compiles).
-
+  ::: warning
+  **Do not use any other version of Qt!**
+  QGC has been thoroughly tested with the specified version of Qt ({{ $frontmatter.qt_version }}).
+  There is a significant risk that other Qt versions will inject bugs that affect stability and safety (even if QGC compiles).
+  :::
+  
 For more information see: [Qt 5 supported platform list](http://doc.qt.io/qt-5/supported-platforms.html).
 
 ::: info

@@ -44,13 +44,17 @@ You should move/drag the planned home position to roughly the location where you
 
 <img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;" />
 
-> **Tip** The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
+::: tip
+The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
+:::
 
 ## Plan Tools {#plan_tools}
 
 The plan tools are used for adding individual waypoints, easing mission creation for complicated geometries, uploading/downloading/saving/restoring missions, and for navigating the map. The main tools are described below.
 
-> **Note** **Center map**, **Zoom In**, **Zoom Out** tools help users better view and navigate the *Plan view* map (they don't affect the mission commands sent to the vehicle).
+::: info
+**Center map**, **Zoom In**, **Zoom Out** tools help users better view and navigate the *Plan view* map (they don't affect the mission commands sent to the vehicle).
+:::
 
 ### Add Waypoints
 
@@ -60,7 +64,10 @@ Click on the **Add Waypoint** tool to activate it. While active, clicking on the
 
 The *File tools* are used to move missions between the ground station and vehicle, and to save/restore them from files. The tool displays an `!` to indicate that there are mission changes that you have not sent to the vehicle.
 
-> **Note** Before you fly a mission you must upload it to the vehicle.
+::: info
+Before you fly a mission you must upload it to the vehicle.
+:::
+
 
 The *File tools* provide the following functionality:
 
@@ -90,7 +97,10 @@ You can change the **type** of the command by clicking on the command name (for 
 
 To the right of each command name is a menu that you can click to access to additional options such as *Insert* and *Delete*.
 
-> **Note** The list of available commands will depend on firmware and vehicle type. Examples may include: Waypoint, Start image capture, Jump to item (to repeat mission) and other commands.
+::: info
+The list of available commands will depend on firmware and vehicle type. Examples may include: Waypoint, Start image capture, Jump to item (to repeat mission) and other commands.
+:::
+
 
 ### Mission Settings {#mission_settings}
 
@@ -122,7 +132,10 @@ The [Planned Home Position](#planned_home) section allows you to simulate the ve
 
 ![MissionSettings Planned Home Position Section](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
 
-> **Note** This is only the *planned* home position and you should place it where you plan to start the vehicle from. It has no actual impact on flying the mission. The actual home position of a vehicle is set by the vehicle itself when arming.
+::: info
+This is only the *planned* home position and you should place it where you plan to start the vehicle from. It has no actual impact on flying the mission. The actual home position of a vehicle is set by the vehicle itself when arming.
+:::
+
 
 This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
 

@@ -7,8 +7,9 @@ The two main areas that are most problematic are:
 * The *Resume Mission* dialog doesn't display when it should and you are just left with a Start Mission slider.
 * The new mission generated from *Resume Mission* is not quite correct with respect to recreation of waypoints and/or camera commands.
 
-> **Warning** In order for the *QGroundControl* development team to debug these issues the following information **must be supplied** in any github issue entered against *Resume Mission*.
-
+::: warning
+In order for the *QGroundControl* development team to debug these issues the following information **must be supplied** in any github issue entered against *Resume Mission*.
+:::
 
 ## Common Steps for Resume Mission Dialog/Generation {#common_steps}
 

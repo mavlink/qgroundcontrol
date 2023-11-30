@@ -34,11 +34,14 @@ A high **Loss rate** may lead to protocol errors for things like parameter downl
 
 The *MAVLink 2 Logging* settings (PX4 only) configure real-time log streaming from PX4 to *QGroundControl* and upload of logs to [Flight Review](https://logs.px4.io).
 
-> **Warning** MAVLink 2 Logging cannot be used on "basic" setups because it requires a constant high-rate MAVLink connection to the vehicle (it *may* work over WiFI but will *not* work over a Telemetry link).
+::: warning
+MAVLink 2 Logging cannot be used on "basic" setups because it requires a constant high-rate MAVLink connection to the vehicle (it *may* work over WiFI but will *not* work over a Telemetry link).
+:::
 
-<span></span>
-> **Tip** In theory log streaming allows real time analysis of data.
-  At time of writing real-time analysis has not yet been implemented.
+::: tip
+In theory log streaming allows real time analysis of data.
+At time of writing real-time analysis has not yet been implemented.
+:::
 
 The log format is the same as for SD Card logs (downloaded using [Analyze View > Log Download](../analyze_view/log_download.md)), but actual data logged may be slightly different because log start/stop time is controlled by *QGroundControl* and because some dropouts may occur when streaming over a lossy channel.
 
@@ -70,6 +73,8 @@ The fields are:
 The *Saved Log Files* section is used to manually manage log uploads.
 Use the checkboxes and buttons to select logs, and either delete or upload them.
 
-> **Tip** You can change the parameters in *MAVLink 2 Log Uploads* above to specify separate descriptions for uploaded logs.
+::: tip
+You can change the parameters in *MAVLink 2 Log Uploads* above to specify separate descriptions for uploaded logs.
+:::
 
 ![Saved log files](../../../assets/settings/mavlink/saved_log_files.jpg)

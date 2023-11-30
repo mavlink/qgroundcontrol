@@ -52,19 +52,22 @@ The altitude for the planned home position is set in the [Mission Settings](#mis
 
 <img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;"/>
 
-> **Tip** The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode). 
-
+:::tip
+The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode). 
+:::
 
 ## Plan Tools {#plan_tools}
 
 The plan tools are used for adding individual waypoints, easing mission creation for complicated geometries, uploading/downloading/saving/restoring missions, and for navigating the map. The main tools are described below.
 
-> **Note** **Center map**, **Zoom In**, **Zoom Out** tools help users better view and navigate the *Plan view* map (they don't affect the mission commands sent to the vehicle).
+::: info
+**Center map**, **Zoom In**, **Zoom Out** tools help users better view and navigate the *Plan view* map (they don't affect the mission commands sent to the vehicle).
+:::
 
 
 ### Add Waypoints
 
-Click on the **Add Waypoint** tool to activate it. While active, clicking on the map will add new mission waypoint at the clicked location. 
+Click on the **Add Waypoint** tool to activate it. While active, clicking on the map will add new mission waypoint at the clicked location.
 The tool will stay active until you select it again. 
 Once you have added a waypoint, you can select it and drag it around to change its position.
 

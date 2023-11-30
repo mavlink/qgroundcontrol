@@ -79,7 +79,9 @@
 
 ![복도 스캔 - 지형 추적 설정](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
-> **Note** 지형 추적은 *AirMap* 서버에서 쿼리한 지형 높이를 사용합니다.
+::: info
+지형 추적은 *AirMap* 서버에서 쿼리한 지형 높이를 사용합니다.
+:::
 
 설정 옵션은 다음과 같습니다:
 

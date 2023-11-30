@@ -7,4 +7,6 @@ This section covers a number of common problems related to **using** *QGroundCon
 * [Plan Upload/Download failures](../troubleshooting/plan_upload_download.md)
 * [Resume Mission failures](../troubleshooting/resume_mission.md)
 
-> **Tip** Problems with **installing/running** *QGroundControl* on the host computer are covered in [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md).
+::: tip
+Problems with **installing/running** *QGroundControl* on the host computer are covered in [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md).
+:::

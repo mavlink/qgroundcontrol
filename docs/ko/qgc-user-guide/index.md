@@ -16,8 +16,10 @@
 
 ![](../../assets/quickstart/ConnectedVehicle.jpg)
 
-> **Note** 이 설명서는 작업 중인 버전입니다. 정확한 정보를 제공하기 위하여 노력하였습니다. 그럼에도 불구하고, 누락되거나 잘못된 부분이 있을 수 있습니다.
+::: info
+이 설명서는 작업 중인 버전입니다. 정확한 정보를 제공하기 위하여 노력하였습니다. 그럼에도 불구하고, 누락되거나 잘못된 부분이 있을 수 있습니다.
+:::
 
-<span></span>
-
-> **Tip** *QGroundControl*에 관련된 개발, 아키텍처, 기여 및 번역에 관련한 정보는 [개발자 가이드](https://dev.qgroundcontrol.com/en/)를 참고하십시오.
+::: tip
+*QGroundControl*에 관련된 개발, 아키텍처, 기여 및 번역에 관련한 정보는 [개발자 가이드](https://dev.qgroundcontrol.com/en/)를 참고하십시오.
+:::

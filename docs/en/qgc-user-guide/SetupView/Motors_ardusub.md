@@ -21,7 +21,9 @@ If the frame selection does not match your vehicle, first select the correct fra
 
 To manually set up and test the motors, read and follow the instructions on the page.
 
-> **Warning** Make sure the motors and propellers are clear from obstructions before sliding the switch to arm the vehicle and enable the test!
+::: warning
+Make sure the motors and propellers are clear from obstructions before sliding the switch to arm the vehicle and enable the test!
+:::
 
 ![Ardusub Motors Test](../../../assets/setup/motors-sub.jpg)
 
@@ -34,6 +36,8 @@ The process takes around one minute.
 To perform the automatic motor direction detection, navigate to **Vehicle Setup->Motors** tab, click the **Auto-Detect Directions** button and wait.
 Additional output about the process will be shown next to the button as it runs.
 
-> **Warning** This procedure still requires that the motors are connected to the *correct outputs* as shown in the frame view!
+::: warning
+This procedure still requires that the motors are connected to the *correct outputs* as shown in the frame view!
+:::
 
 ![Ardusub Motors Auto-Setup](../../../assets/setup/motors-sub-auto.jpg)

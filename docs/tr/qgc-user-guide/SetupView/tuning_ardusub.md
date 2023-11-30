@@ -12,4 +12,7 @@ This page allows changing the PID controller gains to better suit your vehicle a
 
 - **Waypoint Navigation Parameters** are the parameters for the controller responsible for following waypoints in **Auto** and **Guided** mode.
     
-    > **warning** **Guided** and **Auto** modes are currently unsupported and some features are disabled in QGC.
+  ::: warning
+  **Guided** and **Auto** modes are currently unsupported and some features are disabled in QGC.
+  :::
+  

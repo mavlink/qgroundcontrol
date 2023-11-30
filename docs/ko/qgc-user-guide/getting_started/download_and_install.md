@@ -2,7 +2,9 @@
 
 다양한 운영체제에서 실행 가능한 QGroundControl [최신 안정판](../releases/release_notes.md)를 다운로드할 수 있습니다.
 
-> **Tip** 설치 후 QGroundControl이 정상적으로 실행되지 않으면, [QGC 설정 문제 해결](../troubleshooting/qgc_setup.md)편을 참고하여 문제를 해결할 수 있습니다.
+::: tip
+설치 후 QGroundControl이 정상적으로 실행되지 않으면, [QGC 설정 문제 해결](../troubleshooting/qgc_setup.md)편을 참고하여 문제를 해결할 수 있습니다.
+:::
 
 ## 시스템 요구 사항
 
@@ -17,11 +19,14 @@ QGroundControl는 최신 컴퓨터나 모바일 장치에서 실행 가능합니
 1. [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe)을 다운로드합니다.
 2. 다운로드한 설치 파일을 더블 클릭하여 프로그램을 실행합니다.
 
-> **Note** 윈도우용 설치 프로그램은 **QGroundControl**, **GPU 호환 모드** 및 **GPU 안전 모드**의 3가지 바로 가기를 생성합니다. 시작 문제나 비디오 렌더링 문제가 발생하지 않으면, 첫 번째 바로 가기를 사용하십시오. 자세한 내용은 [QGroundControl 설정 문제 해결 > 윈도우: UI 렌더링/비디오 드라이버 문제](../troubleshooting/qgc_setup.md#opengl_troubleshooting)를 참고하십시오.
+::: info
+윈도우용 설치 프로그램은 **QGroundControl**, **GPU 호환 모드** 및 **GPU 안전 모드**의 3가지 바로 가기를 생성합니다. 시작 문제나 비디오 렌더링 문제가 발생하지 않으면, 첫 번째 바로 가기를 사용하십시오. 자세한 내용은 [QGroundControl 설정 문제 해결 > 윈도우: UI 렌더링/비디오 드라이버 문제](../troubleshooting/qgc_setup.md#opengl_troubleshooting)를 참고하십시오.
+:::
 
-<span></span>
 
-> **Note** *QGroundControl* 4.0 버전 이상의 사전 빌드 버전은 64비트 전용입니다. 32비트 버전은 수동으로 빌드할 수 있습니다(개발팀에서는 지원하지 않음).
+::: info
+_QGroundControl_ 4.0 버전 이상의 사전 빌드 버전은 64비트 전용입니다. 32비트 버전은 수동으로 빌드할 수 있습니다(개발팀에서는 지원하지 않음).
+:::
 
 ## Mac OS X  {#macOS}
 
@@ -32,10 +37,14 @@ QGroundControl는 최신 컴퓨터나 모바일 장치에서 실행 가능합니
 1. [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg)를 다운로드합니다.
 2. 다운로드한 dmg 파일을 더블 클릭하여 마운트하여, *QGroundControl* 애플리케이션을 *Application* 폴더로 드래그합니다.
     
-    > **Note** QGroundControl 미서명으로 인하여 Catalina에서 문제가 발생합니다. 처음으로 QGroundControl을 실행하려면:
-    > 
-    > * QGroundControl 앱 아이콘을 마우스 오른쪽 버튼으로 클릭한 다음에 메뉴에서 열기를 선택합니다. 취소 옵션만 제공됩니다. 취소를 선택합니다.
-    > * QGroundControl 앱 아이콘을 마우스 오른쪽 버튼으로 클릭한 다음에 메뉴에서 열기를 선택합니다. 이번에는 열기 옵션이 표시됩니다.
+    ::: info
+    QGroundControl 미서명으로 인하여 Catalina에서 문제가 발생합니다. 처음으로 QGroundControl을 실행하려면:
+    
+    * QGroundControl 앱 아이콘을 마우스 오른쪽 버튼으로 클릭한 다음에 메뉴에서 열기를 선택합니다. 취소 옵션만 제공됩니다. 취소를 선택합니다.
+    * QGroundControl 앱 아이콘을 마우스 오른쪽 버튼으로 클릭한 다음에 메뉴에서 열기를 선택합니다. 이번에는 열기 옵션이 표시됩니다.
+
+    :::
+
 
 ## 우분투 리눅스 {#ubuntu}
 
@@ -67,11 +76,14 @@ QGroundControl는 최신 컴퓨터나 모바일 장치에서 실행 가능합니
         chmod +x ./QGroundControl.AppImage
         ./QGroundControl.AppImage  (or double click)
 
-> **Note** 듀얼 어댑터가 있는 Ubuntu 18.04 시스템에는 [동영상 스트리밍 문제](../troubleshooting/qgc_setup.md#dual_vga)가 있습니다.
+::: info
+듀얼 어댑터가 있는 Ubuntu 18.04 시스템에는 [동영상 스트리밍 문제](../troubleshooting/qgc_setup.md#dual_vga)가 있습니다.
+:::
 
-<span></span>
 
-> **Note** *QGroundControl* 4.0의 사전 빌드된 버전은 Ubuntu 16.04에서 실행 불가능합니다. Ubuntu 16.04에서 이 버전을 실행하려면, [소스에서 비디오 라이브러리를 제거한 다음에 QGroundControl을 빌드](https://dev.qgroundcontrol.com/en/getting_started/)하여야 합니다.
+::: info
+*QGroundControl* 4.0의 사전 빌드된 버전은 Ubuntu 16.04에서 실행 불가능합니다. Ubuntu 16.04에서 이 버전을 실행하려면, [소스에서 비디오 라이브러리를 제거한 다음에 QGroundControl을 빌드](https://dev.qgroundcontrol.com/en/getting_started/)하여야 합니다.
+:::
 
 ## 안드로이드 {#android}
 

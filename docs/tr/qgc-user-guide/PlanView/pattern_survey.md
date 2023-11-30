@@ -99,7 +99,10 @@ Varsayılan olarak, uçan bir araç sabit bir yükseklikte gözlem rotasını ta
 
 ![Gözlem - Arazi Takibi Ayarları](../../../assets/plan/survey/survey_terrain.jpg)
 
-> **Note** Arazi takibi, *AirMap* serverlarından sağlanan arazi yüksekliklerini kullanır.
+::: info
+Arazi takibi, *AirMap* serverlarından sağlanan arazi yüksekliklerini kullanır.
+:::
+
 
 Ayarlanabilir seçenekler şunlardır:
 
