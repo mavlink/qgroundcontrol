@@ -86,29 +86,29 @@ Rectangle {
             }
         }
 
-        QGCMouseArea {
-            id:                         mouseArea
-            x:                          telemetryLayout.x
-            y:                          telemetryLayout.y
-            width:                      telemetryLayout.width
-            height:                     telemetryLayout.height
-            hoverEnabled:               !ScreenTools.isMobile
-            propagateComposedEvents:    true
-
-            onClicked: (mouse) => {
-                if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
-                    valueArea.settingsUnlocked = true
-                    mouse.accepted = true
-                } else {
-                    mouse.accepted = false
-                }
-            }
-        }
-
         HorizontalFactValueGrid {
             id:                     valueArea
             userSettingsGroup:      telemetryBarUserSettingsGroup
             defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
+        }
+    }
+
+    QGCMouseArea {
+        id:                         mouseArea
+        x:                          telemetryLayout.x
+        y:                          telemetryLayout.y
+        width:                      telemetryLayout.width
+        height:                     telemetryLayout.height
+        hoverEnabled:               !ScreenTools.isMobile
+        propagateComposedEvents:    true
+
+        onClicked: (mouse) => {
+            if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
+                valueArea.settingsUnlocked = true
+                mouse.accepted = true
+            } else {
+                mouse.accepted = false
+            }
         }
     }
 }
