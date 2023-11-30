@@ -236,12 +236,12 @@ endif()
 #######################################################
 
 if(ANDROID)
-    add_library(QGroundControl SHARED ${QGC_RESOURCES})
+    add_library(${PROJECT_NAME} SHARED ${QGC_RESOURCES})
 else()
-    add_executable(QGroundControl ${QGC_RESOURCES})
+    add_executable(${PROJECT_NAME} ${QGC_RESOURCES})
 endif()
 
-target_link_libraries(QGroundControl PRIVATE qgc)
+target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
 
 #######################################################
 #		Install Configuration
@@ -251,7 +251,7 @@ include(GNUInstallDirs)
 
 # Files/directories to install
 install(
-        TARGETS QGroundControl
+        TARGETS ${PROJECT_NAME}
         DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 install(
@@ -282,14 +282,14 @@ install(
 #######################################################
 
 if(BUILD_TESTING)
-    target_link_libraries(QGroundControl PRIVATE Qt6::Test)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Test)
 endif()
 
 #######################################################
 #               Serial Port Configuration
 #######################################################
 if(NOT QT_MKSPEC MATCHES "winrt")
-    target_link_libraries(QGroundControl
+    target_link_libraries(${PROJECT_NAME}
         PUBLIC
             Qt6::SerialPort
         )
