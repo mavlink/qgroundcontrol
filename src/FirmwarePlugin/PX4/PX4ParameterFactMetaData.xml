@@ -5010,10 +5010,19 @@
       <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
+    <parameter name="MPC_YAWRAUTO_ACC" default="60." type="FLOAT">
+      <short_desc>Maximum yaw acceleration in autonomous modes</short_desc>
+      <long_desc>Limits the acceleration of the yaw setpoint to avoid large control output and mixer saturation.</long_desc>
+      <min>5</min>
+      <max>360</max>
+      <unit>deg/s^2</unit>
+      <decimal>0</decimal>
+      <increment>5</increment>
+    </parameter>
     <parameter name="MPC_YAWRAUTO_MAX" default="45." type="FLOAT">
-      <short_desc>Max yaw rate in autonomous modes</short_desc>
+      <short_desc>Maximum yaw rate in autonomous modes</short_desc>
       <long_desc>Limits the rate of change of the yaw setpoint to avoid large control output and mixer saturation.</long_desc>
-      <min>0</min>
+      <min>5</min>
       <max>360</max>
       <unit>deg/s</unit>
       <decimal>0</decimal>
