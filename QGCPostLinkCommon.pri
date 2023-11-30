@@ -93,6 +93,7 @@ LinuxBuild {
         libQt6QuickTemplates2.so.6 \
         libQt6OpenGLWidgets.so.6 \
         libQt6DBus.so.6 \
+        libQt6XcbQpa.so.6 \
         libicui18n.so.56 \
         libicuuc.so.56 \
         libicudata.so.56
