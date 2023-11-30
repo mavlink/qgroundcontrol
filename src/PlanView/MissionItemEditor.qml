@@ -204,8 +204,7 @@ Rectangle {
 
                 QGCMenuItem {
                     text:           qsTr("Move to vehicle position")
-                    visible:        missionItem.specifiesCoordinate
-                    enabled:        _activeVehicle
+                    enabled:        _activeVehicle && missionItem.specifiesCoordinate
                     onTriggered:    missionItem.coordinate = _activeVehicle.coordinate
 
                     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
@@ -213,25 +212,25 @@ Rectangle {
 
                 QGCMenuItem {
                     text:           qsTr("Move to previous item position")
-                    visible:        _missionController.previousCoordinate.isValid
+                    enabled:        _missionController.previousCoordinate.isValid
                     onTriggered:    missionItem.coordinate = _missionController.previousCoordinate
                 }
 
                 QGCMenuItem {
                     text:           qsTr("Edit position...")
-                    visible:        missionItem.specifiesCoordinate
+                    enabled:        missionItem.specifiesCoordinate
                     onTriggered:    editPositionDialog.createObject(mainWindow).open()
                 }
 
                 QGCMenuSeparator {
-                    visible: missionItem.isSimpleItem && !_waypointsOnlyMode
+                    //visible: missionItem.isSimpleItem && !_waypointsOnlyMode
                 }
 
                 QGCMenuItem {
                     text:       qsTr("Show all values")
                     checkable:  true
                     checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
-                    visible:    missionItem.isSimpleItem && !_waypointsOnlyMode
+                    enabled:    missionItem.isSimpleItem && !_waypointsOnlyMode
 
                     onTriggered:    {
                         if (missionItem.rawEdit) {

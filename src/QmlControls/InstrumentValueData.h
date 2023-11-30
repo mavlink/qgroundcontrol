@@ -12,15 +12,9 @@
 #include "FactSystem.h"
 #include "QmlObjectListModel.h"
 #include "QGCApplication.h"
+#include "FactValueGrid.h"
 
 #include <QObject>
-
-class FactValueGrid;
-
-#ifndef OPAQUE_PTR_InstrumentValueData
-    #define OPAQUE_PTR_InstrumentValueData
-    Q_DECLARE_OPAQUE_POINTER(FactValueGrid*)
-#endif
 
 class InstrumentValueData : public QObject
 {
