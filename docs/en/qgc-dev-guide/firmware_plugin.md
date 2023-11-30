@@ -6,7 +6,7 @@ Another major issue is that the MAVLink spec does not cover vehicle configuratio
 
 Given all of these differences between firmware implementations it can be quite tricky to create a single ground station application that can support each without having the codebase degrade into a massive pile of if/then/else statements peppered everywhere based on the firmware the vehicle is using.
 
-QGC uses a plugin architecture to isolate the firmware specific code from the code which is generic to all firmwares. There are two main plugins which accomplish this ```FirmwarePlugin``` and ```AutoPilotPlugin```.
+QGC uses a plugin architecture to isolate the firmware specific code from the code which is generic to all firmwares. There are two main plugins which accomplish this `FirmwarePlugin` and `AutoPilotPlugin`.
 
 This plugin architecture is also used by custom builds to allow ever further customization beyond when standard QGC can provide.
 

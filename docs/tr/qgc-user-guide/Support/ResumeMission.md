@@ -4,13 +4,13 @@ The process of resuming a mission after a battery swap is a fairly complex proce
 
 The two main areas that are most problematic are:
 
-* The *Resume Mission* dialog doesn't display when it should and you are just left with a Start Mission slider.
-* The new mission generated from *Resume Mission* is not quite correct with respect to recreation of waypoints and/or camera commands.
+- The _Resume Mission_ dialog doesn't display when it should and you are just left with a Start Mission slider.
+- The new mission generated from _Resume Mission_ is not quite correct with respect to recreation of waypoints and/or camera commands.
 
   ::: warning
-  In order for the *QGroundControl* development team to debug these issues the following information **must be supplied** in any github issue entered against *Resume Mission*.
+  In order for the _QGroundControl_ development team to debug these issues the following information **must be supplied** in any github issue entered against _Resume Mission_.
   :::
-  
+
 ## Common Steps for Resume Mission Dialog/Generation {#common_steps}
 
 The following steps are required for debugging both types of problems:
@@ -24,31 +24,30 @@ The following steps are required for debugging both types of problems:
    ::: tip
    Alternatively you can attempt to reproduce the problem by manually RTL from the middle of the middle of the mission (though this may not always reproduce the problem).
    :::
-   
-6. Once the vehicle lands and disarms you should get the *Resume Mission* dialog.
+
+6. Once the vehicle lands and disarms you should get the _Resume Mission_ dialog.
 
    ::: info
    If not there is a possible bug in QGC.
    :::
 
-
 ### Resume Mission Dialog Problems
 
-For *Resume Mission Dialog* problems follow the [common steps above](#common_steps), and then:
+For _Resume Mission Dialog_ problems follow the [common steps above](#common_steps), and then:
 
-7. Save the *Console Log* to a file.
-8. Place the *Console Log*, *Telemetry Log* and *Plan File* someplace which you can link to in the issue.
+7. Save the _Console Log_ to a file.
+8. Place the _Console Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
 9. Create the issue with details and links to all three files.
 
 ## Resume Mission Generation Problems
 
-For *Resume Mission Generation* problems follow the [common steps above](#common_steps), and then:
+For _Resume Mission Generation_ problems follow the [common steps above](#common_steps), and then:
 
 7. Click **Resume Mission**.
 8. The new mission should be generated.
 9. Go to [Plan View](../PlanView/PlanView.md).
-10. Select **Download** from the *File/Sync* menu.
-11. Save the *Modified Plan* to a file.
-12. Save the *Console Log* to a file.
-13. Place the *Console Log*, *Telemetry Log*, *Original Plan* file and *Modified Plan* file someplace which you can link to in the issue.
+10. Select **Download** from the _File/Sync_ menu.
+11. Save the _Modified Plan_ to a file.
+12. Save the _Console Log_ to a file.
+13. Place the _Console Log_, _Telemetry Log_, _Original Plan_ file and _Modified Plan_ file someplace which you can link to in the issue.
 14. Create the issue with details and links to all four files.

@@ -11,7 +11,8 @@
 탐색기는 현재 기체에서 수신된 모든 메시지를 소스 구성 요소 ID 및 업데이트 빈도를 출력합니다. 개별 메시지로 드릴다운하여 메시지 Id, 소스 구성 요소 Id 및 모든 개별 필드의 값을 제공합니다. 또한 실시간으로 필드 값을 차트로 작성하여, 메시지들의 필드 정보들을 선택하여 두 차트 중 하나에 표시할 수 있습니다.
 
 *MAVLink 탐색기*를 사용하려면:
-1. *QGroundControl* 애플리케이션 메뉴(왼쪽 상단의 "Q" 아이콘)를 선택한 다음 **분석 도구** 버튼을 선택하여 *분석 보기*를 엽니다(*도구 선택* 팝업). ![분석 ](../../../assets/analyze/menu_analyze_tool.png)
+
+1. _QGroundControl_ 애플리케이션 메뉴(왼쪽 상단의 "Q" 아이콘)를 선택한 다음 **분석 도구** 버튼을 선택하여 *분석 보기*를 엽니다(_도구 선택_ 팝업). ![분석 ](../../../assets/analyze/menu_analyze_tool.png)
 1. 사이드바에서 **MAVLink 탐색기**를 선택합니다.
 
    ![MAVLink 탐색기 메뉴](../../../assets/analyze/mavlink_inspector/mavlink_inspector_menu.jpg)
@@ -30,5 +31,5 @@
    - 차트에는 여러 필드와 여러 메시지의 필드가 있을 수 있습니다(각 차트 위에 나열됨). 차트로 표시되는 필드가 포함된 메시지는 별표로 강조됩니다.
 
      ![MAVLink 탐색기: 차트 필드 세부 정보](../../../assets/analyze/mavlink_inspector/mavlink_inspector_charted_messages.jpg)
-   - *Scale* 및 *Range*는 적절한 값으로 설정되지만 필요한 경우 수정할 수 있습니다.
 
+   - _Scale_ 및 *Range*는 적절한 값으로 설정되지만 필요한 경우 수정할 수 있습니다.

@@ -2,8 +2,8 @@
 
 [![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/mavlink/QGroundControl/releases) [![Discuss](https://img.shields.io/badge/discuss-dev-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-developers)
 
-This developer guide is the best source for information if you want to build, modify or extend [QGroundControl](http://qgroundcontrol.com) (QGC). 
-It shows how to obtain and build the source code, explains how QGC works, and provides guidelines for contributing code to the project. 
+This developer guide is the best source for information if you want to build, modify or extend [QGroundControl](http://qgroundcontrol.com) (QGC).
+It shows how to obtain and build the source code, explains how QGC works, and provides guidelines for contributing code to the project.
 
 :::tip
 This part of the guide is for **developers**!
@@ -31,7 +31,7 @@ Development questions can be raised in the [QGroundControl Developer](http://dis
 Information about contributing, including coding styles, testing and licenses can be found in [Code Submissions](contribute/index.md).
 
 :::tip
-We expect all contributors to adhere to the [QGroundControl code of conduct](https://github.com/mavlink/qgroundcontrol/blob/master/CODE_OF_CONDUCT.md). 
+We expect all contributors to adhere to the [QGroundControl code of conduct](https://github.com/mavlink/qgroundcontrol/blob/master/CODE_OF_CONDUCT.md).
 This code aims to foster an open and welcoming environment.
 :::
 
@@ -41,21 +41,22 @@ The developer team meets bi-weekly to discuss the highest priority issues, proje
 
 ### Translations
 
-We use [Crowdin](https://crowdin.com) to make it easier to manage translation for both *QGroundControl* and the documentation.
+We use [Crowdin](https://crowdin.com) to make it easier to manage translation for both _QGroundControl_ and the documentation.
 
 The translation projects (and join links) are listed below:
-* [QGroundControl](https://crowdin.com/project/qgroundcontrol) ([join](https://crwd.in/qgroundcontrol))
-* [QGroundControl User Guide](https://crowdin.com/project/qgroundcontrol-user-guide) ([join](https://crwd.in/qgroundcontrol-user-guide))
-* [QGroundControl Developer Guide](https://crowdin.com/project/qgroundcontrol-developer-guide) ([join](https://crwd.in/qgroundcontrol-developer-guide))
+
+- [QGroundControl](https://crowdin.com/project/qgroundcontrol) ([join](https://crwd.in/qgroundcontrol))
+- [QGroundControl User Guide](https://crowdin.com/project/qgroundcontrol-user-guide) ([join](https://crwd.in/qgroundcontrol-user-guide))
+- [QGroundControl Developer Guide](https://crowdin.com/project/qgroundcontrol-developer-guide) ([join](https://crwd.in/qgroundcontrol-developer-guide))
 
 The PX4 Developer Guide contains additional information about the (common) docs/translation toolchain:
+
 - [Documentation](https://dev.px4.io/en/contribute/docs.html)
 - [Translation](https://dev.px4.io/en/contribute/docs.html)
 
-
 ## License
 
-*QGroundControl* source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
+_QGroundControl_ source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
 For more information see: [Licenses](contribute/licences.md).
 
 ## Governance
@@ -64,4 +65,5 @@ The QGroundControl mission planner is hosted under the governance of the [Dronec
 
 <a href="https://www.dronecode.org/" style="padding:20px" ><img src="https://mavlink.io/assets/site/logo_dronecode.png" alt="Dronecode Logo" width="110px"/></a>
 <a href="https://www.linuxfoundation.org/projects" style="padding:20px;"><img src="https://mavlink.io/assets/site/logo_linux_foundation.png" alt="Linux Foundation Logo" width="80px" /></a>
+
 <div style="padding:10px">&nbsp</div>

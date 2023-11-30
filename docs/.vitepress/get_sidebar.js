@@ -256,7 +256,7 @@ module.exports = {
       data = fs.readFileSync(summaryfile_path, "UTF-8");
     } catch (err) {
       console.log(
-        `DEBUG: ${lang} (${summaryfile_path}) - SIDEBAR  DEFINITION NOT FOUND`
+        `DEBUG: ${lang} (${summaryfile_path}) - SIDEBAR  DEFINITION NOT FOUND`,
       );
     }
 

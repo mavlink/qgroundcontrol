@@ -3,9 +3,8 @@
 *GeoTag 图像*界面（**分析Analyze > GeoTag Images**）允许您使用飞行日志中的资料信息，从执行任务中查调地理标签图像。
 
 ::: info
-此功能仅适用于 *PX4* 飞行日志。 ArduPilot 不支持。
+此功能仅适用于 _PX4_ 飞行日志。 ArduPilot 不支持。
 :::
-
 
 ![分析试图 - GeoTag 图像](../../../assets/analyze/geotag_images.jpg)
 

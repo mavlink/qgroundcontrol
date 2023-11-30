@@ -6,7 +6,7 @@ Be aware that using resource overrides does not isolate you from upstream QGC ch
 
 ## Exclusion Files
 
-The first step to overriding a resource is to "exclude" it from the standard portion of the upstream build. This means that you are going to provide that resource in your own custom build resource file(s). There are two files which achieve this: [qgroundcontrol.exclusion]() and [qgcresources.exclusion](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion). They correspond directly with the *.qrc counterparts. In order to exclude a resource, copy the resource line from the .qrc file into the appropriate .exclusion file.
+The first step to overriding a resource is to "exclude" it from the standard portion of the upstream build. This means that you are going to provide that resource in your own custom build resource file(s). There are two files which achieve this: [qgroundcontrol.exclusion]() and [qgcresources.exclusion](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion). They correspond directly with the \*.qrc counterparts. In order to exclude a resource, copy the resource line from the .qrc file into the appropriate .exclusion file.
 
 ## Custom version of excluded resources
 
@@ -20,5 +20,5 @@ This is done using the `updateqrc.py` python script. It will read the upstream `
 
 You can see an examples of custom build qgcresource overrides in the repo custom build example:
 
-* [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion)
-* [custom.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/custom.qrc)
+- [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/qgcresources.exclusion)
+- [custom.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/custom.qrc)

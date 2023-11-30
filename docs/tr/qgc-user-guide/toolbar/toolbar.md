@@ -4,9 +4,9 @@ Ana araç çubuğu, farklı uygulama görünümlerine erişmenize ve bağlı ara
 
 ## Seç-Görüntüle Simgeler
 
-Aşağıdaki simgeler ana *Views * arasında geçiş yapmak için kullanılır. Hiçbir araç bağlı olmasa bile bu simgeler ekranda bulunur.
+Aşağıdaki simgeler ana _Views _ arasında geçiş yapmak için kullanılır. Hiçbir araç bağlı olmasa bile bu simgeler ekranda bulunur.
 
-![Ayarlar ekranı simgesi](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../SettingsView/SettingsView.md)** <br />*QGroundControl* uygulamasını düzenleyin.
+![Ayarlar ekranı simgesi](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../SettingsView/SettingsView.md)** <br />_QGroundControl_ uygulamasını düzenleyin.
 
 ![Kurulum ekranı simgesi](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[Setup](../SetupView/SetupView.md)** <br /> Aracınızı ayarlayın ve yapılandırın.
 
@@ -18,7 +18,7 @@ Aşağıdaki simgeler ana *Views * arasında geçiş yapmak için kullanılır. 
 
 ## Durum Simgeleri
 
-Durum simgeleri *QGroundControl* bir araca bağlıyken gözükür. Bunlar araçla ilgili önemli bilgileri gösterir ve üstlerine tıklayarak daha ayrıntılı bilgilere erişilebilir.
+Durum simgeleri _QGroundControl_ bir araca bağlıyken gözükür. Bunlar araçla ilgili önemli bilgileri gösterir ve üstlerine tıklayarak daha ayrıntılı bilgilere erişilebilir.
 
 ![](../../../assets/toolbar/toolbar_status_message.jpg) ![yield](../../../assets/toolbar/toolbar_status_critical.jpg) **Vehicle Messages** <br />Click to show a list of messages from the vehicle. Note that version on the right is displayed when there are critical messages.
 

@@ -63,6 +63,7 @@
   - [Daily Build New Features](qgc-user-guide/releases/daily_build_new_features.md)
   - [Privacy Policy](qgc-user-guide/releases/privacy_policy.md)
 - [Troubleshooting](qgc-user-guide/troubleshooting/index.md)
+
   - [Setup Problems](qgc-user-guide/troubleshooting/qgc_setup.md)
   - [Usage Problems](qgc-user-guide/troubleshooting/qgc_usage.md)
     - [Connection problems](qgc-user-guide/troubleshooting/vehicle_connection.md)
@@ -112,4 +113,3 @@
     - [Unit Tests](qgc-dev-guide/contribute/unit_tests.md)
     - [Pull Requests](qgc-dev-guide/contribute/pull_requests.md)
     - [Licenses](qgc-dev-guide/contribute/licences.md)
-

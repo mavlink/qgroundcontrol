@@ -100,9 +100,9 @@ For example, if your camera supports video mode you will be able to switch betwe
 
 ::: info
 Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
-> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
-:::
 
+> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
+> :::
 
 ### Video Stream {#video_instrument_page}
 
@@ -118,7 +118,6 @@ The following sections describe how to perform common operations/tasks in the Fl
 ::: info
 Many of the available options depend on both the vehicle type and its current state.
 :::
-
 
 ### Pre Flight Checklist {#preflight_checklist}
 
@@ -165,12 +164,11 @@ When all issues blocking arming have been removed you can use the arm button to 
 
 ::: info
 The status text also displays when flying.
->
+
 > ![Vehicle state - armed](../../../assets/fly/vehicle_states/armed.png) > ![Vehicle state - flying](../../../assets/fly/vehicle_states/flying.png)
 >
 > The arming checks UI will open even when flying, allowing you to emergency disarm.
-:::
-
+> :::
 
 ### Disarm {#disarm}
 
@@ -189,7 +187,6 @@ You will then need to use the disarming slider.
 ::: info
 Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
 :::
-
 
 ### Emergency Stop {#emergency_stop}
 
@@ -242,7 +239,6 @@ This behaviour depends on the vehicle type and configuration.
 For example, rally points or mission landings may be used as alternative return targets.
 :::
 
-
 ### Change Altitude {#change_altitude}
 
 You can change altitude while flying, except when in a mission:
@@ -274,7 +270,6 @@ After taking off you can specify that you want to fly to a particular location.
 Goto points must be set within 1 km of the vehicle (hard-coded in QGC).
 :::
 
-
 ### Orbit Location {#orbit}
 
 After taking off you can specify that you want to orbit a particular location.
@@ -300,7 +295,6 @@ The vehicle behaviour when paused depends on the vehicle type; typically a multi
 ::: info
 You cannot pause a _Goto location_ operation.
 :::
-
 
 To pause:
 
@@ -339,7 +333,6 @@ Continue is used to restart a mission that has been paused, or where you have ta
 Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
 :::
 
-
 You can continue the current mission while (unless already in a mission!):
 
 1. Press the **Action** button on the _Fly Tools_
@@ -360,7 +353,6 @@ If you are performing a battery change, **do not** disconnect QGC from the vehic
 After you insert the new battery _QGroundControl_ will detect the vehicle again and automatically restore the connection.
 :::
 
-
 After landing you will be prompted with a _Flight Plan complete_ dialog, which gives you the option to remove the plan from the vehicle, leave it on the vehicle, or to resume the mission from the last waypoint that was traveled through.
 
 ![Resume Mission](../../../assets/fly/resume_mission.jpg)
@@ -377,7 +369,6 @@ A mission cannot simply resume from the last mission item that the vehicle execu
 Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
 :::
 
-
 #### Remove Mission Prompt After Landing {#resume_mission_prompt}
 
 You will be prompted to remove the mission from the vehicle after the mission completes and the vehicle lands and disarms.
@@ -393,7 +384,6 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (i
 ::: info
 Video streaming is configured/enabled in [Application Settings > General tab > Video](../SettingsView/General.md#video).
 :::
-
 
 You can further configure video display using controls on the switcher:
 
@@ -428,9 +418,8 @@ Video stream recording is configured in the [Application Settings > General tab]
   Videos are saved in Matroska format (.mkv) by default.
   This format is relatively robust against corruption in case of errors.
   :::
-  
-- [Miscellaneous](../SettingsView/General.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
 
+- [Miscellaneous](../SettingsView/General.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
 
 ::: tip
 The stored video includes just the video stream itself.

@@ -12,7 +12,6 @@ To the left of the screen are the set of available setup options. A setup button
 The set of options shown and the contents of each option may differ based on whether the vehicle is running PX4 Pro or ArduPilot firmware. The image above is from a vehicle which is running PX4 Pro firmware.
 :::
 
-
 **Summary** <br />An overview of all the important setup options for your vehicle. Similar to the individual setup buttons, the summary blocks show a red indicator when those settings are not fully configured.
 
 **[Firmware](Firmware.md)** <br />Flash new firmware onto your vehicle.

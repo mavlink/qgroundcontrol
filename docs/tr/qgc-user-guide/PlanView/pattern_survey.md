@@ -3,9 +3,9 @@
 Gözlem modu, poligonal bir alan üzerinde bir ızgara uçuş modeli oluşturmanıza olanak sağlar. İstediğiniz şekli, ızgaranın açısını ve diğer özelliklerini ve coğrafi etiketli görüntüler oluşturmak için uygun kamera ayarlarını belirtebilirsiniz.
 
 > **Important** Eğer gözlemlenecek alanda önemli yükseklik farkları varsa [Terrain Following](#terrain)'i devreye almayı gözönüne alın.
-> 
-> Kamera özelliklerini kullanan bir Gözlem planlanırken, gözlem alanınızın zeminin düz olduğu varsayılır - ör. kalkış/rv konumuyla aynı yükseklik. Eğer araştırma alanınızın zemin yüksekliği ev konumunuzdan daha yüksek veya daha alçaksa, görüntülerinizdeki etkili örtüşme hesaplanandan daha az veya daha fazla (sırasıyla) olacaktır. Araştırma alanınızın zemin yüksekliği ev konumunuzdan *önemli* ölçüde daha yüksekse, yanlışıla aracın zemin seviyesindeki engellere çarpmasına neden olacak bir görev planlayabilirsiniz.
-> 
+>
+> Kamera özelliklerini kullanan bir Gözlem planlanırken, gözlem alanınızın zeminin düz olduğu varsayılır - ör. kalkış/rv konumuyla aynı yükseklik. Eğer araştırma alanınızın zemin yüksekliği ev konumunuzdan daha yüksek veya daha alçaksa, görüntülerinizdeki etkili örtüşme hesaplanandan daha az veya daha fazla (sırasıyla) olacaktır. Araştırma alanınızın zemin yüksekliği ev konumunuzdan _önemli_ ölçüde daha yüksekse, yanlışıla aracın zemin seviyesindeki engellere çarpmasına neden olacak bir görev planlayabilirsiniz.
+>
 > Terrain Following'in kullanılması, araştırmanın arazi üzerinde istenen irtifaya daha yakın olmasını sağlar ve yer seviyesine çok yakın bir görev planlanması olasılığını azaltır.
 
 ![Gözlem](../../../assets/plan/survey/survey.jpg)
@@ -14,12 +14,12 @@ Gözlem modu, poligonal bir alan üzerinde bir ızgara uçuş modeli oluşturman
 
 Bir gözlem görevi oluşturmak için:
 
-1. [PlanView](../PlanView/PlanView.md)'den *Plan Tools*'u açın.
-2. *Plan Tools* 'dan *Pattern Tool*'u seçin ve *Survey*'e tıklayın.
-  
-  ![Gözlem Menüsü](../../../assets/plan/survey/survey_menu.jpg)
-  
-  Bu haritaya bir gözlem alanı ve görev listesine (sağda) bir *Survey* öğesi ekleyecektir.
+1. [PlanView](../PlanView/PlanView.md)'den _Plan Tools_'u açın.
+2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Survey_'e tıklayın.
+
+![Gözlem Menüsü](../../../assets/plan/survey/survey_menu.jpg)
+
+Bu haritaya bir gözlem alanı ve görev listesine (sağda) bir _Survey_ öğesi ekleyecektir.
 
 3. On the map drag the vertices to change the shape of the polygon.
 
@@ -29,7 +29,7 @@ Gözlem modu ayarları bir sonraki bölümde ele alınmıştır.
 
 ## Ayarlar
 
-Gözlem görevi, ilişkili görev öğesinde (*Plan View*'in sağ tarafındaki görev öğesi listesinde) daha da yapılandırılabilir.
+Gözlem görevi, ilişkili görev öğesinde (_Plan View_'in sağ tarafındaki görev öğesi listesinde) daha da yapılandırılabilir.
 
 ### Kamera
 
@@ -47,7 +47,7 @@ Varsayılan ayarlar, yapılandırma seçenekleri kullanılarak gözleminiz için
 
 - **Landscape/Portrait** - Aracın "normal" yönüne göre kamera yönü.
 - **Overlap** - Yakalanan her görüntü arasında örtüşme. Bu, ızgara hatları boyunca uçarken veya bu hatların üzerinden geçerken olmak üzere ayrı ayrı yapılandırılabilir.
-- Birini Seçin: 
+- Birini Seçin:
   - **Altitude** - Tarama yüksekliği (bu yükseklik için zemin çözünürlüğü hesaplanacak/görüntülenecektir).
   - **Ground resolution** - Her görüntü için zemin çözünürlüğü (bu çözünürlüğü sağlamak için gerekli yükseklik hesaplanacak/görüntülenecektir).
 
@@ -79,7 +79,7 @@ Ayarlanabilir seçenekler şunlardır:
 
 ### Kesitler
 
-*Transects* sekmesi kameradan bağımsız olan ızgara ayarları için kullanılır.
+_Transects_ sekmesi kameradan bağımsız olan ızgara ayarları için kullanılır.
 
 ![Gözlem - Kesitler](../../../assets/plan/survey/survey_transects.jpg)
 
@@ -95,24 +95,23 @@ Ayarlanabilir seçenekler şunlardır:
 
 ### Arazi
 
-Varsayılan olarak, uçan bir araç sabit bir yükseklikte gözlem rotasını takip edecektir. *Terrain Following*'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
+Varsayılan olarak, uçan bir araç sabit bir yükseklikte gözlem rotasını takip edecektir. _Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
 
 ![Gözlem - Arazi Takibi Ayarları](../../../assets/plan/survey/survey_terrain.jpg)
 
 ::: info
-Arazi takibi, *AirMap* serverlarından sağlanan arazi yüksekliklerini kullanır.
+Arazi takibi, _AirMap_ serverlarından sağlanan arazi yüksekliklerini kullanır.
 :::
-
 
 Ayarlanabilir seçenekler şunlardır:
 
-- **Araç araziyi takip eder** - Arazi takibini etkinleştirmek için işaretleyin (ve aşağıdaki seçenekleri görüntüleyin). 
+- **Araç araziyi takip eder** - Arazi takibini etkinleştirmek için işaretleyin (ve aşağıdaki seçenekleri görüntüleyin).
   - **Tolerance** - Hedeflenen yükseklikten kabul edilen sapma miktarı.
   - **Max Climb Rate** - Araziyi takip ederken maksimum yükselme oranı.
   - **Max Descent Rate** - Araziyi takip ederken maksimum yükselme oranı.
 
 ### İstatistikler
 
-*Statistics* bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
+_Statistics_ bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
 
 ![Gözlem - İstatistikler](../../../assets/plan/survey/survey_statistics.jpg)

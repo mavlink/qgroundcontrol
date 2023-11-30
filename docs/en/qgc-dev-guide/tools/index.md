@@ -1,7 +1,7 @@
 # Developer Tools
 
-*QGroundControl* makes a number of tools available primarily for autopilot developers.
-These ease common developer tasks including setting up simulated connections for testing, 
+_QGroundControl_ makes a number of tools available primarily for autopilot developers.
+These ease common developer tasks including setting up simulated connections for testing,
 and accessing the System Shell over MAVLink.
 
 ::: info

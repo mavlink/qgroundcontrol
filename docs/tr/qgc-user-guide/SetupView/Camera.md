@@ -15,4 +15,3 @@ Daha fazla bilgi için [ Camera ](http://docs.px4.io/master/en/peripherals/camer
 ::: info
 Kamera ayarları bölümü, FMUv2 tabanlı uçuş kontrolcüleri (örneğin, 3DR Pixhawk) için varsayılan olarak mevcut değildir çünkü kamera modülü otomatik olarak aygıt yazılımına dahil edilmemiştir. Daha fazla bilgi için [ bu konuya ](http://docs.px4.io/master/en/advanced_config/parameters.html#parameter-not-in-firmware) bakın.
 :::
-

@@ -8,7 +8,7 @@ The `LinkManager` object keeps track of all open links in the system. `LinkManag
 
 ## MAVLinkProtocol
 
-There is a single `MAVLinkProtocol` object in the system. It's job is to take incoming bytes from a link and translate them into MAVLink messages. MAVLink HEARTBEAT messages are routed to ``MultiVehicleManager``. All MAVLink messages are routed to Vehicle's which are associated with the link.
+There is a single `MAVLinkProtocol` object in the system. It's job is to take incoming bytes from a link and translate them into MAVLink messages. MAVLink HEARTBEAT messages are routed to `MultiVehicleManager`. All MAVLink messages are routed to Vehicle's which are associated with the link.
 
 ## MultiVehicleManager
 

@@ -1,6 +1,6 @@
 # Plan Ekranı
 
-*Plan View*, aracınız için * otonom görevler * planlamak ve onları araca yüklemek için kullanılır. Görev [planlanıp](#plan_mission) araca gönderildiğinde, görevi gerçekleştirmek için [Uçuş Ekranı](../FlyView/FlyView.md)'na geçillir.
+_Plan View_, aracınız için _ otonom görevler _ planlamak ve onları araca yüklemek için kullanılır. Görev [planlanıp](#plan_mission) araca gönderildiğinde, görevi gerçekleştirmek için [Uçuş Ekranı](../FlyView/FlyView.md)'na geçillir.
 
 Ayrıca eğer yazılım tarafından destekleniyorsa [GeoFence](PlanGeoFence.md) ve [Rally Points](PlanRallyPoints.md)'leri ayalarmak için kullanılır.
 
@@ -13,9 +13,9 @@ Yukarıdaki [ ekran görüntüsü ](#plan_screenshot), [ Planlanan Ev ](#planned
 
 Arayüzün temel elemanları şunlardır:
 
-- **Map:** [ Planlanan Ev ](#planned_home) konumu dahil olmak üzere mevcut görev için numaralandırılmış konumları görüntüler. Noktaları seçmek için tıklayın (düzenlemek için) ya da konumlarını değiştirmek için sürükleyin. 
-- **Plan Araçları:** Önceki hedef noktaya göre halihazırda seçili olan hedef nokta için durum bilgisi ve tüm görevin istatistikleri (örn. Yatay mesafe ve görev süresi). 
-  - `Max telem dist`, [Planlanan Ev](#planned_home) konumu ile en uzak hedef nokta arasındaki mesafedir. 
+- **Map:** [ Planlanan Ev ](#planned_home) konumu dahil olmak üzere mevcut görev için numaralandırılmış konumları görüntüler. Noktaları seçmek için tıklayın (düzenlemek için) ya da konumlarını değiştirmek için sürükleyin.
+- **Plan Araçları:** Önceki hedef noktaya göre halihazırda seçili olan hedef nokta için durum bilgisi ve tüm görevin istatistikleri (örn. Yatay mesafe ve görev süresi).
+  - `Max telem dist`, [Planlanan Ev](#planned_home) konumu ile en uzak hedef nokta arasındaki mesafedir.
   - Bir cihaza bağlanıldığında bir **Upload** butonu da belirir ve planı araca yüklemek için kullanılabilir.
 - **[Plan Araçları](#plan_tools):** Görevleri oluşturmak ve yönetmek çin kullanılır.
 - **[Mission Command List/Overlay](#mission_command_list):** Mevcut görevin öğelerinin listesini görüntüler (öğeleri [düzenlemek](#mission_command_editors) için seçin).
@@ -27,16 +27,16 @@ Size o anda seçili olan hedef noktasıyla ilgili bilgilerin yanı sıra tüm g�
 
 Genel bir bakış açısıyla, görev oluşturmanın aşamaları şunlardır:
 
-1. *Plan Ekranı*'nı açın.
+1. _Plan Ekranı_'nı açın.
 2. Göreve hedef noktalar veya komutlar ekleyin, gerektiği şekilde düzenleyin.
 3. Görevi araca yükleyin.
-4. *Uçuş Ekranı*'nı açın ve görevi gerçekleştirin.
+4. _Uçuş Ekranı_'nı açın ve görevi gerçekleştirin.
 
 Aşağıdaki bölümler, ekrandaki bazı ayrıntıları açıklamaktadır.
 
 ## Planlanmış Ev Konumu {#planned_home}
 
-The *Planned Home* shown in *Plan View* is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC). QGC tarafından görev sürelerini tahmin etmek ve hedef noktalar arası çizgileri çizmek için kullanılır.
+The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC). QGC tarafından görev sürelerini tahmin etmek ve hedef noktalar arası çizgileri çizmek için kullanılır.
 
 ![Planlanmış Ev Konumu](../../../assets/plan/mission/mission_settings_planned_home.jpg)
 
@@ -45,16 +45,15 @@ Planlanan ev konumunu yaklaşık olarak kalkış yapmayı planladığınız konu
 <img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;" />
 
 ::: tip
-The Fly View displays the *actual* home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
+The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
 :::
-
 
 ## Plan Araçları {#plan_tools}
 
 Plan araçları, ara noktalar eklemek, karmaşık yerler için görev oluşturmayı kolaylaştırmak, görevleri yüklemek/indirmek/kaydetmek/geri yüklemek ve haritada gezinmek için kullanılır. Ana araçlar aşağıda açıklanmıştır.
 
 ::: info
-**Center map**, **Zoom In**, **Zoom Out** araçlar kullanıcıların daha iyi görüntü almasına ve *Plan Ekranı*'ndaki haritada gezinmelerine yardımcı olur (araca gönderilen görev komutlarını etkilemezler).
+**Center map**, **Zoom In**, **Zoom Out** araçlar kullanıcıların daha iyi görüntü almasına ve _Plan Ekranı_'ndaki haritada gezinmelerine yardımcı olur (araca gönderilen görev komutlarını etkilemezler).
 :::
 
 ### Hedef Noktası Ekle
@@ -63,20 +62,19 @@ Plan araçları, ara noktalar eklemek, karmaşık yerler için görev oluşturma
 
 ### Dosya (Senkronizasyon) {#file}
 
-* Dosya araçları *, görevleri yer istasyonu ile araç arasında taşımak ve bunları dosyalara kaydetmek/dosyalardan geri yüklemek için kullanılır. Araçlar, araca göndermediğiniz görev değişiklikleri olduğunu belirtmek için bir `! ` işareti kullanır.
+- Dosya araçları \*, görevleri yer istasyonu ile araç arasında taşımak ve bunları dosyalara kaydetmek/dosyalardan geri yüklemek için kullanılır. Araçlar, araca göndermediğiniz görev değişiklikleri olduğunu belirtmek için bir `! ` işareti kullanır.
 
 ::: info
 Bir görevi gerçekleştirmeden önce görevi araca yüklemeniz gerekmektedir.
 :::
 
-
-*Dosya araçları* aşağıdaki fonksiyonları sağlar:
+_Dosya araçları_ aşağıdaki fonksiyonları sağlar:
 
 - Yükle (Araca göndermek)
 - İndir (Araçtan yüklemek)
 - KML dosyası dahil olmak üzere Dosyaya Kaydet/Farklı Kaydet.
 - Dosyadan Yükle
-- Tümünü Kaldır (tüm görev hedef noktalarını * Plan ekranından* ve araçtan kaldırır)
+- Tümünü Kaldır (tüm görev hedef noktalarını _ Plan ekranından_ ve araçtan kaldırır)
 
 ### Şablon
 
@@ -92,20 +90,19 @@ Mevcut görev için görev komutları ekranın sağında listelenir. En üstte g
 
 Düzenleyicisini görüntülemek için listedeki bir görev komutuna tıklayın (buradan komut özellikerini ayarlayabilir/değiştirebilirsiniz).
 
-Komut adına tıklayarak komutun ** tipini ** değiştirebilirsiniz (örneğin: *Waypoint*). Bu, aşağıda gösterilen * Select Mission Command* diyaloğunu görüntüler. Varsayılan olarak bu sadece "Temel Komutlar" görüntülenir, daha fazlasını görüntülemek için ** Category** açılır menüsünü kullanabilirsiniz (örneğin tüm seçenekleri görmek için ** All commands ** 'ı seçin).
+Komut adına tıklayarak komutun ** tipini ** değiştirebilirsiniz (örneğin: _Waypoint_). Bu, aşağıda gösterilen _ Select Mission Command_ diyaloğunu görüntüler. Varsayılan olarak bu sadece "Temel Komutlar" görüntülenir, daha fazlasını görüntülemek için ** Category** açılır menüsünü kullanabilirsiniz (örneğin tüm seçenekleri görmek için ** All commands ** 'ı seçin).
 
 <img src="../../../assets/plan/mission/mission_commands.jpg" style="width: 200px;" />
 
-Her komut adının sağında, * Ekle * ve * Sil * gibi ek seçeneklere erişmek için tıklayabileceğiniz bir menü bulunur.
+Her komut adının sağında, _ Ekle _ ve _ Sil _ gibi ek seçeneklere erişmek için tıklayabileceğiniz bir menü bulunur.
 
 ::: info
 Kullanılabilir komutların listesi aracın yazılımına ve türüne bağlıdır. Örnek olarak şunlar verilebilir: Hedef nokta, Görüntü yakalamayı başlat, Öğeye atla (görevi tekrarlamak için) ve diğer komutlar.
 :::
 
-
 ### Görev Ayarları {#mission_settings}
 
-*Mission Start* paneli [ görev komut listesinde ](#mission_command_list) görünen ilk öğedir. Görevin başlangıcını veya sonunu etkileyebilecek bir takım varsayılan ayarı düzenlemek için kullanılabilir.
+_Mission Start_ paneli [ görev komut listesinde ](#mission_command_list) görünen ilk öğedir. Görevin başlangıcını veya sonunu etkileyebilecek bir takım varsayılan ayarı düzenlemek için kullanılabilir.
 
 ![Görev Komutları Listesi - Görev Ayarlarını Gösterme](../../../assets/plan/mission_start.png)
 
@@ -134,9 +131,8 @@ Aracınızın son görev öğesinden sonra Geri Dönmesini/RTL istiyorsanız bun
 ![Görev Ayarları Planlanmış Ev Konumu Bölümü](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
 
 ::: info
-Bu yalnızca * planlanan * ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır. Görevin gerçekleşmesinde gerçek bir etkisi yoktur. Asıl ev konumu, araç tarafından devreye alınırken ayarlanır.
+Bu yalnızca _ planlanan _ ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır. Görevin gerçekleşmesinde gerçek bir etkisi yoktur. Asıl ev konumu, araç tarafından devreye alınırken ayarlanır.
 :::
-
 
 This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
 
@@ -159,7 +155,7 @@ Mevcut kamera eylemleri şunlardır:
 
 Araç için uygun görev komutları, aracın yazılımına ve türüne bağlıdır.
 
-* Bir araca bağlıyken * bir görev planlıyorsanız aracın yazılımı ve türü araçtan belirlenir. Bu bölüm, bir araca bağlı değilken aracın donanımını yazılımını/türünü belirlemenize olanak tanır.
+- Bir araca bağlıyken \* bir görev planlıyorsanız aracın yazılımı ve türü araçtan belirlenir. Bu bölüm, bir araca bağlı değilken aracın donanımını yazılımını/türünü belirlemenize olanak tanır.
 
 ![Görev Ayarları Araç Bilgisi Bölümü](../../../assets/plan/mission/mission_settings_vehicle_info_section.jpg)
 

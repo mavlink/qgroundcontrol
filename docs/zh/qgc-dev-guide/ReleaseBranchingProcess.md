@@ -4,9 +4,9 @@
 
 QGC uses semantic versioning for the version numbers associated with its releases. Semantic versioning is a 3-component number in the format of `vX.Y.Z`, where:
 
-* `X` is the major version.
-* `Y` is the minor version.
-* `Z` is the patch version.
+- `X` is the major version.
+- `Y` is the minor version.
+- `Z` is the patch version.
 
 ## Stable Builds
 
@@ -16,7 +16,7 @@ Stable builds are built from a separate branch that is named with the format: `S
 
 ### Patch Releases {#patch_releases}
 
-A patch release contains fixes to the stable release that are important enough to *require* an update, and are safe enough that the stable release continues to maintain high quality.
+A patch release contains fixes to the stable release that are important enough to _require_ an update, and are safe enough that the stable release continues to maintain high quality.
 
 Patch releases increment the patch version number only.
 
@@ -28,12 +28,11 @@ Commits/changes to the stable branch must also be brought over to the master bra
 
 ### Patch - Release Stage
 
-At the point where the decision is made to do a patch release, the release binaries are created and a new *tag* is added to the stable branch (with the same patch release number) indicating the associated source code.
+At the point where the decision is made to do a patch release, the release binaries are created and a new _tag_ is added to the stable branch (with the same patch release number) indicating the associated source code.
 
 ::: info
 New branches are not created for patch releases - only for major and minor releases.
 :::
-
 
 ## Daily Builds
 
@@ -50,7 +49,6 @@ When the decision is made to release a new major/minor version the master branch
 ::: info
 During the lockdown phase, new features are not allowed in master.
 :::
-
 
 Once the level of fixes associated with the release slows down to a low level, a new stable branch is created (at this point the `master` branch can move forward again as the latest and greatest).
 

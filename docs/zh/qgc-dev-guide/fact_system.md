@@ -16,7 +16,7 @@ Fact System(事实系统)提供一组标准化和简化QGC用户界面创建的�
 
 ## FactGroup（事实小组）
 
-A *Fact Group* is a group of [Facts](#fact). It is used to organise facts and manage user defined facts.
+A _Fact Group_ is a group of [Facts](#fact). It is used to organise facts and manage user defined facts.
 
 ## Custom Build Support
 

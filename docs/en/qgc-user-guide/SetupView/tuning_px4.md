@@ -12,7 +12,6 @@ During [Airframe Setup](../config/airframe.md) you should have selected the fram
 This will usually be tuned well enough to fly, and it _may_ also be sufficiently well tuned to run autotuning.
 :::
 
-
 ## Autotune
 
 Auto-tuning automates the process of tuning the PX4 rate and attitude controllers, which are the most important controllers for stable and responsive flight (other tuning is more "optional").
@@ -21,7 +20,6 @@ Auto-tuning automates the process of tuning the PX4 rate and attitude controller
 This guide shows the default usage of this feature.
 Additional information and configuration can be found in the [PX4 Autotuning Guide](http://docs.px4.io/master/en/config/autotune.html) (PX4 User Guide).
 :::
-
 
 ### Pre-Autotuning Test
 
@@ -46,7 +44,6 @@ If the drone can stabilize itself within 2 oscillations it is ready for the auto
 
 If not, see the [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/master/en/config/autotune.html#troubleshooting).
 
-
 ### Auto-tuning procedure
 
 The auto-tuning sequence must be performed in a **safe flight zone, with enough space**.
@@ -57,7 +54,6 @@ For best results, we recommend running the test in calm weather conditions.
 Be ready to abort the autotuning process by moving the RC controller sticks.
 :::
 
-
 The test steps are:
 
 1. Perform the [pre-tuning test](#pre-tuning-test) above.
@@ -65,11 +61,12 @@ The test steps are:
    - **Multicopters:** Takeoff using the remote controller in **Altitude mode**.
      Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
    - **VTOL in Fixed-wing mode:** Once flying at cruise speed, activate **Hold Mode**.
-      This will guide the plane to fly in circle at constant altitude and speed.
+     This will guide the plane to fly in circle at constant altitude and speed.
 1. In QGroundControl, open the menu: **Vehicle setup > PID Tuning**
 
    ![Tuning Setup > Autotune Enabled](../../../assets/setup/tuning/px4_autotune.png)
-1. Select either the *Rate Controller* or *Attitude Controller* tabs.
+
+1. Select either the _Rate Controller_ or _Attitude Controller_ tabs.
    Ensure that the **Autotune enabled** button is enabled (this will display the **Autotune** button and remove the manual tuning selectors).
 1. Stop moving the joysticks and click on the **Autotune** button.
    Read the warning popup and click on **OK** to start tuning.
@@ -84,7 +81,7 @@ The test steps are:
 
 <br/>
 
-<!-- 
+<!--
 A video of the process is shown below:
 
 {% youtube %}https://youtu.be/5xswOhhqrIQ{% endyoutube %} -->
@@ -92,7 +89,6 @@ A video of the process is shown below:
 A video of the process is shown below:
 
 <iframe width="750" height="425" src="https://www.youtube.com/embed/5xswOhhqrIQ?si=UZQ-M8A8Dt0JfL81" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
 
 ## Manual Tuning
 
@@ -102,27 +98,27 @@ The instructions below explain how you can use the manual tuning UI.
 It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Guides](http://docs.px4.io/master/en/config/autotune.html#see-also), which provide more detailed hints on the kinds of step sizes to use when changing PID values.
 
 In overview:
+
 1. Takeoff using RC control and prepare for test:
    - **Multicopters:** Takeoff using the remote controller in **Altitude mode**.
      Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
    - **Fixed-wing:** Once flying at cruise speed, activate **Hold Mode**.
-      This will guide the plane to fly in circle at constant altitude and speed.
+     This will guide the plane to fly in circle at constant altitude and speed.
 1. In QGroundControl, open the menu: **Vehicle setup > PID Tuning**
-1. Select the *Rate Controller* tab.
+1. Select the _Rate Controller_ tab.
    Ensure that the **Autotune enabled** button is is turned off.
-   
+
    ![PX4 Tuning - Manual - Rate controller](../../../assets/setup/tuning/px4_copter_manual_rate.png)
 
-1. Select the *Tuning axis* to tune: **Roll**, **Pitch** or **Yaw** (each axis is tuned separately).
+1. Select the _Tuning axis_ to tune: **Roll**, **Pitch** or **Yaw** (each axis is tuned separately).
 1. Fly the vehicle, observing the tracking on the chart.
-   - Adjust the *Tuning Values* (parameters) to improve the tracking shown on the graph using the slider.
+   - Adjust the _Tuning Values_ (parameters) to improve the tracking shown on the graph using the slider.
    - The values are automatically saved, but you may wish to use the **Save to Clipboard** and **Restore from Clipboard** buttons to store the last known good configuration.
    - You can also **Clear**/**Stop** the chart using the buttons provided.
 1. Tune the other axes.
 1. Switch to the other controllers and repeat the process.
    Screenshots of the tuning pages are shown below.
-   
+
    ![PX4 Tuning - Manual - Attitude controller](../../../assets/setup/tuning/px4_copter_manual_attitude.png)
    ![PX4 Tuning - Manual - Velocity controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)
    ![PX4 Tuning - Manual - Position controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)
-   

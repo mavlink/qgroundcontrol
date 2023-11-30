@@ -6,7 +6,7 @@
 
 鉴于固件实现之间的所有这些差异，创建单个地面站应用程序可能非常棘手，可以支持每个应用程序而不会使代码库降级为基于车辆使用的固件在任何地方遍布的大量if / then / else语句。
 
-QGC uses a plugin architecture to isolate the firmware specific code from the code which is generic to all firmwares. There are two main plugins which accomplish this ```FirmwarePlugin``` and ```AutoPilotPlugin```.
+QGC uses a plugin architecture to isolate the firmware specific code from the code which is generic to all firmwares. There are two main plugins which accomplish this `FirmwarePlugin` and `AutoPilotPlugin`.
 
 This plugin architecture is also used by custom builds to allow ever further customization beyond when standard QGC can provide.
 

@@ -3,9 +3,8 @@
 Airframe Setup is used to select the frame class and type that matches your vehicle
 
 ::: info
-Airframe Setup is only available on *ArduCopter* and *ArduSub* vehicles (it is not shown for *ArduPilot* Rover or Plane vehicles).
+Airframe Setup is only available on _ArduCopter_ and _ArduSub_ vehicles (it is not shown for _ArduPilot_ Rover or Plane vehicles).
 :::
-
 
 ## ArduCopter Airframe Setup
 
@@ -14,18 +13,18 @@ To select the airframe in Copter:
 1. First select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Airframe** in the sidebar.
 
    ![Airframe config](../../../assets/setup/airframe/arducopter.jpg)
-1. Select the broad *Frame Class* for your vehicle:
+
+1. Select the broad _Frame Class_ for your vehicle:
 
    ![Airframe type](../../../assets/setup/airframe/arducopter_class.jpg)
-   
+
    ::: info
    You will need to reboot the vehicle for class changes to take effect.
    :::
 
-1. Select the specific *Frame Type* for your vehicle:
+1. Select the specific _Frame Type_ for your vehicle:
 
    ![Airframe type](../../../assets/setup/airframe/arducopter_type.jpg)
-
 
 ## ArduSub Frame Setup {#ardusub}
 
@@ -37,6 +36,6 @@ To select the frame type for Sub:
 
    ![Select airframe type](../../../assets/setup/airframe_ardusub.jpg)
 
-   * You can also click **Load Vehicle Default Parameters** to load default parameter set for ArduSub.
+   - You can also click **Load Vehicle Default Parameters** to load default parameter set for ArduSub.
 
      ![Load vehicle params](../../../assets/setup/airframe_ardusub_parameters.jpg)

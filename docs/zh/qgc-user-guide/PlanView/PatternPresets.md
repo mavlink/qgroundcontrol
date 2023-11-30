@@ -6,17 +6,16 @@ Allows you to save commonly used settings as a named preset.
 Currently only supported by Survey. Support for other Patterns is in development.
 :::
 
-
 ## Managing Presets
 
 ![Preset Combo](../../../assets/plan/pattern/PatternPresetCombo.jpg)
 
 Pattern items have a new selection at the top which allows you to manage presets:
 
-* **Custom (specify all settings)** This allows you to *not* use a preset and specify all settings manually.
-* **Save Settings As Preset** Saves the current settings as a named preset.
-* **Delete Current Preset** Deletes the currently selected preset.
-* **Presets:** Below this item will be listed the available presets for this pattern.
+- **Custom (specify all settings)** This allows you to _not_ use a preset and specify all settings manually.
+- **Save Settings As Preset** Saves the current settings as a named preset.
+- **Delete Current Preset** Deletes the currently selected preset.
+- **Presets:** Below this item will be listed the available presets for this pattern.
 
 ## Creating/Updating A Preset
 

@@ -12,12 +12,12 @@ You can specify the path, the width of the corridor, and camera settings appropr
 
 To create a corridor scan:
 
-1. Open [PlanView](../PlanView/PlanView.md) *Plan Tools*.
-2. Choose the *Pattern Tool* from the *Plan Tools* and then select *Corridor Scan*.
-  
-  ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
-  
-  This will add a corridor to the map, and a *Corridor Scan* item to the mission list (on the right).
+1. Open [PlanView](../PlanView/PlanView.md) _Plan Tools_.
+2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Corridor Scan_.
+
+![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
+
+This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
 
 3. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 
@@ -45,7 +45,7 @@ The configurable options are:
 
 - **Landscape/Portrait** - Camera orientation relative to the "normal" orientation of the vehicle.
 - **Image Overlap** - Overlap between each image.
-- Select one of: 
+- Select one of:
   - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
   - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
 
@@ -75,24 +75,23 @@ The configurable options are:
 
 ### Terrain Following {#terrain_following}
 
-By default a flying vehicle will follow the corridor path at a fixed altitude. Enabling *Terrain Following* makes the vehicle maintain a constant height relative to ground.
+By default a flying vehicle will follow the corridor path at a fixed altitude. Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
 ![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
 ::: info
-Terrain following uses terrain heights queried from *AirMap* servers.
+Terrain following uses terrain heights queried from _AirMap_ servers.
 :::
-
 
 The configurable options are:
 
-- **Vehicle follows terrain** - Check to enable terrain following (and display the following options). 
+- **Vehicle follows terrain** - Check to enable terrain following (and display the following options).
   - **Tolerance** - The accepted deviation in altitude from the target altitude.
   - **Max Climb Rate** - Maximum climb rate when following terrain.
   - **Max Descent Rate** - Maximum descent rate when following terrain.
 
 ### Statistics
 
-The *Statistics* section shows the calculated survey area, photo interval, photo spacing and planned photo count.
+The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
 
 ![Corridor Scan - Statistics](../../../assets/plan/corridor_scan_settings_statistics.jpg)

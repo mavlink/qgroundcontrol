@@ -12,12 +12,12 @@ Coğrafi etiketli görüntüler oluşturmak için uygun yolu, koridor genişliğ
 
 Bir koridor taraması oluşturmak için:
 
-1. [PlanView](../PlanView/PlanView.md)'den *Plan Tools*'u açın.
-2. *Plan Tools* 'dan *Pattern Tool*'u seçin ve *Corridor Scan*'a tıklayın.
-  
-  ![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
-  
-  Bu haritaya bir koridor ve görev listesine (sağda) bir *Corridor Scan* öğesi ekleyecektir.
+1. [PlanView](../PlanView/PlanView.md)'den _Plan Tools_'u açın.
+2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Corridor Scan_'a tıklayın.
+
+![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
+
+Bu haritaya bir koridor ve görev listesine (sağda) bir _Corridor Scan_ öğesi ekleyecektir.
 
 3. Koridorun uçlarını, sırasıyla taramanın başlangıç ve bitiş noktalarına sürükleyin.
 
@@ -45,7 +45,7 @@ Ayarlanabilir seçenekler şunlardır:
 
 - **Landscape/Portrait** - Aracın "normal" yönüne göre kamera yönü.
 - **Image Overlap** - Her görüntü arasında örtüşme.
-- Birini Seç: 
+- Birini Seç:
   - **Altitude** - Tarama yüksekliği (bu yükseklik için zemin çözünürlüğü hesaplanacak/görüntülenecektir).
   - **Ground resolution** - Her görüntü için zemin çözünürlüğü (bu çözünürlüğü sağlamak için gerekli yükseklik hesaplanacak/görüntülenecektir).
 
@@ -75,24 +75,23 @@ Ayarlanabilir seçenekler şunlardır:
 
 ### Arazi Takibi {#terrain_following}
 
-Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip edecektir. *Terrain Following*'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
+Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip edecektir. _Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
 
 ![Koridor Taraması - Arazi Takibi Ayarları](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
 ::: info
-Arazi takibi, *AirMap* serverlarından sağlanan arazi yüksekliklerini kullanır.
+Arazi takibi, _AirMap_ serverlarından sağlanan arazi yüksekliklerini kullanır.
 :::
-
 
 Ayarlanabilir seçenekler şunlardır:
 
-- **Araç araziyi takip eder** - Arazi takibini etkinleştirmek için işaretleyin (ve aşağıdaki seçenekleri görüntüleyin). 
+- **Araç araziyi takip eder** - Arazi takibini etkinleştirmek için işaretleyin (ve aşağıdaki seçenekleri görüntüleyin).
   - **Tolerance** - Hedeflenen yükseklikten kabul edilen sapma miktarı.
   - **Max Climb Rate** - Araziyi takip ederken maksimum yükselme oranı.
   - **Max Descent Rate** - Araziyi takip ederken maksimum alçalma oranı.
 
 ### İstatistikler
 
-*Statistics* bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
+_Statistics_ bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
 
 ![Koridor Taraması - İstatistikler](../../../assets/plan/corridor_scan_settings_statistics.jpg)

@@ -1,6 +1,6 @@
 # Sabit Kanat İniş Yolu (Plan Şablonu)
 
-*Fixed Wing Landing Pattern* aracı, göreve sabit kanat iniş yolu eklemenize olanak tanır. Hem ArduPilot hem de PX4'de desteklenir.
+_Fixed Wing Landing Pattern_ aracı, göreve sabit kanat iniş yolu eklemenize olanak tanır. Hem ArduPilot hem de PX4'de desteklenir.
 
 ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern.jpg)
 
@@ -12,14 +12,14 @@ Hem oyalanma hem de iniş noktaları, istenilen yeni noktalara sürüklenebilir 
 
 İniş yolu oluşturmak için:
 
-1. Open [PlanView](../PlanView/PlanView.md) *Plan Tools*.
-2. *Plan Tools* 'dan *Plan Tools*'u açın ve *Fixed Wing Landing Pattern*'i seçin.
-  
-  ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
-  
-  Bu, görev listesine (sağda) *Landing Pattern* öğesi ekleyecektir.
-  
-  ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+1. Open [PlanView](../PlanView/PlanView.md) _Plan Tools_.
+2. _Plan Tools_ 'dan _Plan Tools_'u açın ve _Fixed Wing Landing Pattern_'i seçin.
+
+![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
+
+Bu, görev listesine (sağda) _Landing Pattern_ öğesi ekleyecektir.
+
+![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
 
 3. Click on the map to create both the loiter point and the landing point. Bu noktalar harita üzerinde hareket ettirilebilir.
 
@@ -31,7 +31,7 @@ Ek ayarlar bir sonraki bölümde ele alınmıştır.
 
 ### Oyalanma Noktası
 
-*Loiter Point* ayarları, oyalanmanın yüksekliğini, yarı çapını ve yönünü ayarlamak için kullanılır.
+_Loiter Point_ ayarları, oyalanmanın yüksekliğini, yarı çapını ve yönünü ayarlamak için kullanılır.
 
 ![İniş Yolu - Oyalanma Noktası](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_loiter.jpg)
 
@@ -39,11 +39,11 @@ Ayarlanabilir seçenekler şunlardır:
 
 - **Altitude** - Oyalanma yüksekliği.
 - **Radius** - Oyalanma yarıçapı.
-- **Loiter clockwise** - Oyalanmanın yönünün saat yönü olması için işaretleyin (varsayılan olarak yön, saat yönünün tersidir). 
+- **Loiter clockwise** - Oyalanmanın yönünün saat yönü olması için işaretleyin (varsayılan olarak yön, saat yönünün tersidir).
 
 ### İniş noktası
 
-*Landing Point* ayarları, iniş pozisyonunu ve yolunu ayarlamak için kullanılır.
+_Landing Point_ ayarları, iniş pozisyonunu ve yolunu ayarlamak için kullanılır.
 
 ![İniş Yolu - İniş Noktası](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_landing.jpg)
 
@@ -51,7 +51,7 @@ Ayarlanabilir seçenekler şunlardır:
 
 - **Heading** - Oyalanma noktasından iniş noktasına yönelme.
 - **Altitude** - İniş noktası için yükseklik (nominal olarak sıfır).
-- *Radyo Butonları* 
+- _Radyo Butonları_
   - **Landing Dist** - Distance between loiter point and landing point.
   - **Glide Slope** - Glide slope between loiter point and landing point.
 - **Altitudes relative to home** - Tüm yüksekliklerin ev konumuna bağlı olması için işaretleyin (varsayılan olarak deniz seviyesidir).
@@ -71,4 +71,3 @@ Eğer bu 2 konum aracın iniş kısıtlamalarını ihlal ederse (ör. alçalma a
 ::: info
 PX4'te, yükleme esnasında iniş kısıtlamalarının ihlali yer istasyonuna bir hata mesajı gönderir, ve otopilot görevi başlatmayı reddeder (bütünlük kontrolünde başarısız olacağı için).
 :::
-

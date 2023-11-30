@@ -3,9 +3,9 @@
 In order for ArduSub to function properly, the motors must be correctly set up.
 
 If you just assembled your ROV, first make sure that the thrusters are connected to the correct outputs in the **Manual Test** section.
-Drag each slider and make sure that the *correct motor* spins accordingly to the frame displayed.
+Drag each slider and make sure that the _correct motor_ spins accordingly to the frame displayed.
 
-Once you know that the thrusters are connected to the proper outputs you can check for *correct direction* (forward/reverse) using either [automatic direction detection](#automatic) (recommended from ArduSub 4.0) or the [manual test](#manual).
+Once you know that the thrusters are connected to the proper outputs you can check for _correct direction_ (forward/reverse) using either [automatic direction detection](#automatic) (recommended from ArduSub 4.0) or the [manual test](#manual).
 
 :::info
 [Manual Test](#manual) is supported by ArduSub up to 3.5, while ArduSub 4.0 supports both [Manual Test](#manual) and [automatic direction detection](#automatic).
@@ -16,7 +16,7 @@ Once you know that the thrusters are connected to the proper outputs you can che
 The ArduSub motor setup allows you to test individual motors.
 The sliders allow spinning each motor in forward or reverse mode, and the checkboxes under the sliders allow reversing the operation of individual thrusters.
 
-The image at the right shows the frame currently in use, along with the location and orientation of each thruster. 
+The image at the right shows the frame currently in use, along with the location and orientation of each thruster.
 If the frame selection does not match your vehicle, first select the correct frame in the [Frame](../SetupView/airframe_ardupilot.md#ardusub) tab.
 
 To manually set up and test the motors, read and follow the instructions on the page.
@@ -37,7 +37,7 @@ To perform the automatic motor direction detection, navigate to **Vehicle Setup-
 Additional output about the process will be shown next to the button as it runs.
 
 ::: warning
-This procedure still requires that the motors are connected to the *correct outputs* as shown in the frame view!
+This procedure still requires that the motors are connected to the _correct outputs_ as shown in the frame view!
 :::
 
 ![Ardusub Motors Auto-Setup](../../../assets/setup/motors-sub-auto.jpg)

@@ -6,7 +6,7 @@
 
 아래의 아이콘들을 사용하여 주요 *화면*들을 전환합니다. 기체가 연결되지 않아도 사용 가능합니다.
 
-![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[설정](../SettingsView/SettingsView.md)** <br />*QGroundControl* 애플리케이션을 설정합니다.
+![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[설정](../SettingsView/SettingsView.md)** <br />_QGroundControl_ 애플리케이션을 설정합니다.
 
 ![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[설정](../SetupView/SetupView.md)** <br />기체를 설정하고 튜닝합니다.
 

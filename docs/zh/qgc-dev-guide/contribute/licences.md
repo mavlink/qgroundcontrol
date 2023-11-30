@@ -20,9 +20,9 @@ GPL v3许可证是强大的著作权许可证。 在此许可下构建QGC时，�
 
 QGroundControl文档，图稿和图像根据CC BY 4.0获得许可。
 
-## 也可以看看 
+## 也可以看看
 
-* [qgroundcontrol/COPYING.md](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md)
-* [qgroundcontrol/CONTRIBUTING.md](https://github.com/mavlink/qgroundcontrol/blob/master/CONTRIBUTING.md)
-* [qgc-user-guide/LICENSE](https://github.com/mavlink/qgc-user-guide/blob/master/LICENSE)
-* [qgc-dev-guide/LICENSE](https://github.com/mavlink/qgc-dev-guide/blob/master/LICENSE)
+- [qgroundcontrol/COPYING.md](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md)
+- [qgroundcontrol/CONTRIBUTING.md](https://github.com/mavlink/qgroundcontrol/blob/master/CONTRIBUTING.md)
+- [qgc-user-guide/LICENSE](https://github.com/mavlink/qgc-user-guide/blob/master/LICENSE)
+- [qgc-dev-guide/LICENSE](https://github.com/mavlink/qgc-dev-guide/blob/master/LICENSE)

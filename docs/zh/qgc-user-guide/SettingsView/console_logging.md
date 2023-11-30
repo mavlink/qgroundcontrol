@@ -1,10 +1,10 @@
 # Console Logging
 
-The *Console* can be helpful tool for diagnosing *QGroundControl* problems. It can be found in **SettingsView > Console**.
+The _Console_ can be helpful tool for diagnosing _QGroundControl_ problems. It can be found in **SettingsView > Console**.
 
 ![Console logging](../../../assets/support/Console.jpg)
 
-Click the **Set Logging** button to enable/disable logging information displayed by *QGroundControl*.
+Click the **Set Logging** button to enable/disable logging information displayed by _QGroundControl_.
 
 ## Common Logging Options
 
@@ -22,26 +22,28 @@ The most commmonly used logging options are listed below.
 
 ## Logging from the Command Line
 
-An alternate mechanism for logging is using the `--logging` command line option. This is handy if you are trying to get logs from a situation where *QGroundControl* crashes.
+An alternate mechanism for logging is using the `--logging` command line option. This is handy if you are trying to get logs from a situation where _QGroundControl_ crashes.
 
 How you do this and where the traces are output vary by OS:
 
-* Windows 
-  * You must open a command prompt, change directory to the **qgroundcontrol.exe** location, and run it from there: 
-        bash
-        cd "\Program Files (x86)\qgroundcontrol"
-        qgroundcontrol --logging:full
-  
-  * When *QGroundControl* starts you should see a separate console window open which will have the log output
-* OSX 
-  * You must run *QGroundControl* from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it: 
-        bash
-        cd /Applications/qgroundcontrol.app/Contents/MacOS/
-        ./qgroundcontrol --logging:full
-  
-  * Log traces will output to the Terminal window.
-* Linux 
-  *     bash
+- Windows
+
+  - You must open a command prompt, change directory to the **qgroundcontrol.exe** location, and run it from there:
+    bash
+    cd "\Program Files (x86)\qgroundcontrol"
+    qgroundcontrol --logging:full
+  - When _QGroundControl_ starts you should see a separate console window open which will have the log output
+
+- OSX
+
+  - You must run _QGroundControl_ from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it:
+    bash
+    cd /Applications/qgroundcontrol.app/Contents/MacOS/
+    ./qgroundcontrol --logging:full
+  - Log traces will output to the Terminal window.
+
+- Linux
+
+  -     bash
         ./qgroundcontrol-start.sh --logging:full
-  
-  * Log traces will output to the shell you are running from.
+  - Log traces will output to the shell you are running from.

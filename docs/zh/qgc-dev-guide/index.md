@@ -39,7 +39,7 @@ The developer team meets bi-weekly to discuss the highest priority issues, proje
 
 ### Translations
 
-We use [Crowdin](https://crowdin.com) to make it easier to manage translation for both *QGroundControl* and the documentation.
+We use [Crowdin](https://crowdin.com) to make it easier to manage translation for both _QGroundControl_ and the documentation.
 
 The translation projects (and join links) are listed below:
 
@@ -54,7 +54,7 @@ The PX4 Developer Guide contains additional information about the (common) docs/
 
 ## 许可证
 
-*QGroundControl* source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md). For more information see: [Licenses](contribute/licences.md).
+_QGroundControl_ source code is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md). For more information see: [Licenses](contribute/licences.md).
 
 ## 管理
 

@@ -60,7 +60,7 @@ QGC 创建用户界面，用于从 json 元数据的层次结构中动态编辑�
 - 根－通用Mavlink
   - 特定的车辆类型－特定于车辆的通用规范
   - 特定的硬件类型－每个固件类型有一个可选的叶节点（PX4/ArduPilot）
-     - 特定的车辆类型－每个车辆类型有一个可选的叶节点（FW/MR/VTOL/Rover/Sub）
+    - 特定的车辆类型－每个车辆类型有一个可选的叶节点（FW/MR/VTOL/Rover/Sub）
 
 注意：实际上，此替代功能应该是mavlink规格的一部分，并且应该可以从车辆中查询。
 
@@ -69,10 +69,11 @@ QGC 创建用户界面，用于从 json 元数据的层次结构中动态编辑�
 由于 json 元数据提供了所有固件／车辆类型组合的信息，因此必须根据用于创建计划的固件和车辆类型来构建要使用的实际树。 这是通过一个进程调用“collapsing”的完整树到一个固件／车辆的特定树来完成的 ([code](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc#L119))。
 
 步骤如下：
-* 在实例树种添加根
-* 将特定的车辆类型重写实例树
-* Apply the firmware type specific overrides to the instance tree
-* 将特定的硬件／车辆类型重写实例树
+
+- 在实例树种添加根
+- 将特定的车辆类型重写实例树
+- Apply the firmware type specific overrides to the instance tree
+- 将特定的硬件／车辆类型重写实例树
 
 然后，生成的任务命令树将为平面项目编辑器构建UI。 实际上，它不仅用于此，还有许多其他地方可以帮助您了解有关特定命令 id 的更多信息。
 
@@ -81,7 +82,8 @@ QGC 创建用户界面，用于从 json 元数据的层次结构中动态编辑�
 让我们来看看`MAV_CMD_NAV_WAYPOINT`的示例层次结构。 根信息如上图所示。
 
 ### 根－车辆类型的特定叶节点
-层次结构的下一个层级是通用的 mavlink，但只针对特定的车辆。 这里的Json文件：[MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json)。 这个是重写（固定翼）　
+
+层次结构的下一个层级是通用的 mavlink，但只针对特定的车辆。 这里的Json文件：[MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json)。 这个是重写（固定翼）
 
 ```
         {
@@ -94,7 +96,8 @@ QGC 创建用户界面，用于从 json 元数据的层次结构中动态编辑�
 这样做是删除参数4的编辑 UI，固定翼没有使用航向（Yaw）参数。 由于这是根的叶节点，因此无论固件类型如何，这都适用于所有固定翼车辆。
 
 ### 根－硬件类型的特定叶节点
-层次结构的下一层级是特定于固件类型但适用于所有车辆类型的替代。  再次让我们看看航点（Waypoint）覆盖：
+
+层次结构的下一层级是特定于固件类型但适用于所有车辆类型的替代。 再次让我们看看航点（Waypoint）覆盖：
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6)：
 
@@ -121,6 +124,7 @@ QGC 创建用户界面，用于从 json 元数据的层次结构中动态编辑�
 您还可以看到，对于 PX4 param3/PassThru，由于 PX 不支持它，因此已被删除。
 
 ### 根－特定于固件的类型－特定于车辆类型的叶子节点
+
 层次结构的最后一个级别既针对固件又针对车辆类型。
 
 [ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoMultiRotor.json#L7):
@@ -136,10 +140,11 @@ QGC 创建用户界面，用于从 json 元数据的层次结构中动态编辑�
 在这里你可以看到，ArduPilot的多电机车辆参数2/3/4 Acceptance/PassThru/Yaw 已被移除。 例如，航向（Yaw）是因为不支持所以被移除。 由于此代码的工作原理的怪癖，您需要从较低级别重复重写。
 
 ## 任务命令 UI 信息
+
 两个类定义与命令相关联的元数据：
 
-* MissionCommandUIInfo－整个命令的元数据
-* MissionCmdParamInfo－命令中参数的元数据
+- MissionCommandUIInfo－整个命令的元数据
+- MissionCmdParamInfo－命令中参数的元数据
 
 源中注释了支持 json 键的完整详细信息。
 

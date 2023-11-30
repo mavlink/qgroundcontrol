@@ -1,11 +1,10 @@
 # Flight Modes Setup
 
-The *Flight Modes* section allows you to map flight modes to radio channel(s), and hence to the switches on your radio control transmitter. Both flight mode setup and the available flight modes are different in PX4 and ArduPilot (and there are some differences between ArduCopter and ArduPlane).
+The _Flight Modes_ section allows you to map flight modes to radio channel(s), and hence to the switches on your radio control transmitter. Both flight mode setup and the available flight modes are different in PX4 and ArduPilot (and there are some differences between ArduCopter and ArduPlane).
 
 ::: info
 In order to set up flight modes you must already have already [configured your radio](../SetupView/Radio.md), and [setup the transmitter](#transmitter-setup) (as shown below).
 :::
-
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
@@ -16,7 +15,7 @@ For more flight stack specific setup see:
 
 ## Transmitter Setup
 
-In order setup flight modes you will first need to configure your *transmitter* to encode the physical positions of your mode switch(es) into a single channel.
+In order setup flight modes you will first need to configure your _transmitter_ to encode the physical positions of your mode switch(es) into a single channel.
 
 On both PX4 and ArduPilot you can assign up to 6 different flight modes to a single channel of your transmitter It is common to use the positions of a 2- and a 3-position switch on the transmitter to represent the 6 flight modes. Each combination of switches is then encoded as a particular PWM value that will be sent on a single channel.
 
@@ -24,12 +23,11 @@ On both PX4 and ArduPilot you can assign up to 6 different flight modes to a sin
 The single channel is selectable on PX4 and ArduPlane, but is fixed to channel 5 on Copter.
 :::
 
-
 The process for this varies depending on the transmitter. A number of setup examples are provided below.
 
 ### Taranis
 
-These examples show several configurations for the *FrSky Taranis* transmitter.
+These examples show several configurations for the _FrSky Taranis_ transmitter.
 
 #### Map 3-way Switch to a Single Channel
 
@@ -39,7 +37,7 @@ Open the Taranis UI **MIXER** page and scroll down to **CH5**, as shown below:
 
 ![Taranis - Map channel to switch](../../../assets/setup/flight_modes/taranis_single_channel_mode_selection_1.png)
 
-Press **ENT(ER)** to edit the **CH5** configuration then change the **Source** to be the *SD* button.
+Press **ENT(ER)** to edit the **CH5** configuration then change the **Source** to be the _SD_ button.
 
 ![Taranis - Configure channel](../../../assets/setup/flight_modes/taranis_single_channel_mode_selection_2.png)
 
@@ -51,6 +49,6 @@ Most transmitters do not have 6-way switches, so if you need to be able to suppo
 
 On the FrSky Taranis this process involves assigning a "logical switch" to each combination of positions of the two real switches. Each logical switch is then assigned to a different PWM value on the same channel.
 
-This video shows how this is done with the *FrSky Taranis* transmitter: https://youtu.be/TFEjEQZqdVA
+This video shows how this is done with the _FrSky Taranis_ transmitter: https://youtu.be/TFEjEQZqdVA
 
 <!-- @[youtube](https://youtu.be/BNzeVGD8IZI?t=427) - video showing how to set the QGC side - at about 7mins and 3 secs -->

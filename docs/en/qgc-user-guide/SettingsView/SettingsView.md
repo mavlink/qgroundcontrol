@@ -1,6 +1,6 @@
 # Settings View
 
-The *Settings View* is used to configure the settings for the *QGroundControl* application (rather than a specific vehicle). You do not have to have a vehicle connected to change these values.
+The _Settings View_ is used to configure the settings for the _QGroundControl_ application (rather than a specific vehicle). You do not have to have a vehicle connected to change these values.
 
 You can switch between the various settings options by clicking the buttons in the left-sidebar.
 
@@ -12,7 +12,7 @@ You can switch between the various settings options by clicking the buttons in t
 <br>The main application configuration settings. These are used to specify: display units, autoconnection devices, video display and storage, RTK GPS, etc.
 
 **Comm Links**
-<br>Allows you to manually create communication links and connect to them. *Keep in mind that normally this is not needed since QGroundControl will automatically connect to the most common devices.*
+<br>Allows you to manually create communication links and connect to them. _Keep in mind that normally this is not needed since QGroundControl will automatically connect to the most common devices._
 
 **[Offline Maps](OfflineMaps.md)**
 <br>Allows you to cache maps for use while you have no Internet connection.

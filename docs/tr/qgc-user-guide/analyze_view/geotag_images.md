@@ -1,11 +1,10 @@
 # GeoTag Görüntüleri (Analiz Görünümü)
 
-*GeoTag Images* ekranı (**Analyze > GeoTag Images**) uçuş kayıtlarındaki bilgileri kullanarak bir gözlem görevindeki görüntüleri çoğrafi etiketlemenize olanak tanır.
+_GeoTag Images_ ekranı (**Analyze > GeoTag Images**) uçuş kayıtlarındaki bilgileri kullanarak bir gözlem görevindeki görüntüleri çoğrafi etiketlemenize olanak tanır.
 
 ::: info
-Bu özellik sadece *PX4* uçuş kayıtlarıyla çalışır. Ardupilot desteklenmemektedir.
+Bu özellik sadece _PX4_ uçuş kayıtlarıyla çalışır. Ardupilot desteklenmemektedir.
 :::
-
 
 ![GeoTag Görüntüleri Analiz Ekranı](../../../assets/analyze/geotag_images.jpg)
 

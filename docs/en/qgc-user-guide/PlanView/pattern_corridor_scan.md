@@ -11,12 +11,14 @@ You can specify the path, the width of the corridor, and camera settings appropr
 ## Creating a Scan
 
 To create a corridor scan:
-1. Open [PlanView](../PlanView/PlanView.md) *Plan Tools*.
-1. Choose the *Pattern Tool* from the *Plan Tools* and then select *Corridor Scan*.
+
+1. Open [PlanView](../PlanView/PlanView.md) _Plan Tools_.
+1. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Corridor Scan_.
 
    ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
-   
-   This will add a corridor to the map, and a *Corridor Scan* item to the mission list (on the right).
+
+   This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
+
 1. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 1. Click the `(+)` symbol at the centre of a line to create a new vertix.
    The new vertix can then be dragged into position to follow the path of the desired corridor.
@@ -25,7 +27,7 @@ The corridor scan settings are covered in the next section.
 
 ## Settings
 
-The corridor scan can be further configured in the associated mission item (in the mission item list on the right hand side of the Plan View). 
+The corridor scan can be further configured in the associated mission item (in the mission item list on the right hand side of the Plan View).
 
 ### Camera
 
@@ -35,7 +37,8 @@ The list of available cameras (QGC 3.4) is given below.
 
 ![Corridor Scan - Select Camera](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
 
-#### Known Camera 
+#### Known Camera
+
 Selecting a known camera from the option dropdown allows you to generate a grid pattern based on the camera's specifications.
 
 ![Corridor Scan - Camera Settings Canon SX260](../../../assets/plan/corridor_scan_settings_camera_canon_sx260.jpg)
@@ -48,7 +51,7 @@ The configurable options are:
   - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
   - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
 
-#### Manual Camera 
+#### Manual Camera
 
 The manual camera option allows you to specify desired survey height, trigger interval and appropriate grid spacing for your camera.
 
@@ -59,7 +62,6 @@ The configurable options are:
 - **Altitude** - Survey altitude.
 - **Trigger Distance** - The distance over ground between each camera shot.
 - **Spacing** - Distance between adjacent grid (flight path) lines across the corridor.
-
 
 ### Corridor
 
@@ -73,18 +75,16 @@ The configurable options are:
 - **Relative altitude** - Check to specify a relative altitude. This is only supported for manual grids that are not using [terrain following](#terrain_following).
 - **Rotate entry point** - Press button to swap the start and end point of the corridor scan.
 
-
 ### Terrain Following {#terrain_following}
 
-By default a flying vehicle will follow the corridor path at a fixed altitude. 
-Enabling *Terrain Following* makes the vehicle maintain a constant height relative to ground.
+By default a flying vehicle will follow the corridor path at a fixed altitude.
+Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
 ![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
 ::: info
-Terrain following uses terrain heights queried from *AirMap* servers.
+Terrain following uses terrain heights queried from _AirMap_ servers.
 :::
-
 
 The configurable options are:
 
@@ -95,7 +95,6 @@ The configurable options are:
 
 ### Statistics
 
-The *Statistics* section shows the calculated survey area, photo interval, photo spacing and planned photo count.
+The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
 
 ![Corridor Scan - Statistics](../../../assets/plan/corridor_scan_settings_statistics.jpg)
-

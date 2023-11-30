@@ -22,7 +22,6 @@ This guide is an active work in progress.
 The information provided should be correct, but you may find missing information or incomplete pages.
 :::
 
-
 ::: tip
 Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developers Guide](https://dev.qgroundcontrol.com/en/).
 :::

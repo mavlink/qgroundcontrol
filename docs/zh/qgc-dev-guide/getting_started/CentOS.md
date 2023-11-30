@@ -10,19 +10,19 @@
 
 下面的示例将说明如何从USB启动盘启动目标设备。
 
-**Example：** *Panasonic Toughpad FZ-M1* （为方便遵循本指南操作，建议在设备上附上一个键盘和鼠标）。
+**Example：** _Panasonic Toughpad FZ-M1_ （为方便遵循本指南操作，建议在设备上附上一个键盘和鼠标）。
 
 1. 在附加的 USB 键盘上按住 **Delete** 键，或者在启动时按下电源按钮周围的所有按钮，便可进入BIOS 菜单。
-2. 在 BIOS 菜单界面使用箭头键或触摸屏切换到 *Exit* 选项卡。
+2. 在 BIOS 菜单界面使用箭头键或触摸屏切换到 _Exit_ 选项卡。
 3. 从启动设备列表中，选择已插入的USB启动盘。
 
 **Example** [UAV 组件微导航](https://www.uavcomp.com/command-control/micronav/) 设备：
 
-1. CentOS 不会以默认配置安装。 为解决这个问题，可进行如下操作： 
-    1. 如上述的示例中所述，转到BIOS菜单。
-    2. 在“Advanced”选项卡下禁用“Extension Port”设备。
-    3. 在BIOS菜单的退出页面上选择“Exit and save”，然后从USB启动盘启动目标设备。
-    4. 在 CentOS 安装成功后，可再次恢复更改，以便微硬网络正常工作。
+1. CentOS 不会以默认配置安装。 为解决这个问题，可进行如下操作：
+   1. 如上述的示例中所述，转到BIOS菜单。
+   2. 在“Advanced”选项卡下禁用“Extension Port”设备。
+   3. 在BIOS菜单的退出页面上选择“Exit and save”，然后从USB启动盘启动目标设备。
+   4. 在 CentOS 安装成功后，可再次恢复更改，以便微硬网络正常工作。
 2. 如果想要重新进入Linux操作系统，请先关闭设备，而不是热重启。 否则微硬网络适配器将无法正常工作并怠速整个系统。
 
 ### CentOS 软件选择安装选项
@@ -43,33 +43,28 @@ CentOS 安装并启动后，我们需要为QGC 搭建环境。 首先，我们�
     sudo yum clean all
     sudo yum update
     sudo yum install gstreamer1* --skip-broken -y
-    
 
 **Note:**确保如下组件已安装 (Intel GPUs的 vaapi)
 
     sudo yum install gstreamer1-vaapi
     sudo yum install gstreamer1-libav
-    
 
 **Note:** Install these to enable hardware accelerated video decoding
 
     sudo yum install libva
     sudo yum install libva-utils
     sudo yum install libva-intel-driver
-    
 
 If libva-intel-driver is not found you can download it and install it manually
 
     wget http://download1.rpmfusion.org/free/el/updates/7/x86_64/l/libva-intel-driver-1.8.3-4.el7.x86_64.rpm
     sudo yum localinstall libva-intel-driver-1.8.3-4.el7.x86_64.rpm -y
-    
 
 ### 安装SDL2
 
 SDL2 is used for joystick support.
 
     sudo yum install SDL2 SDL2-devel -y
-    
 
 ### 更新内核(可选)
 
@@ -94,7 +89,6 @@ Here's a short summary of the commands that you need to execute to update the ke
     sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
     sudo rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
     sudo yum --enablerepo=elrepo-kernel install kernel-ml -y
-    
 
 Reboot your device afterwards and make sure the new kernel version shows up as the default start option in the GRUB menu on boot.
 
@@ -102,13 +96,11 @@ Reboot your device afterwards and make sure the new kernel version shows up as t
 您可能需要在 BIOS 中禁用安全启动才能启动新内核。
 :::
 
-
 ## 在 CentOS 上运行 QGC
 
 Before launching QGC, you need to make sure the current user has access to the dialout group (serial port access permission):
 
     sudo usermod -a -G dialout $USER
-    
 
 ### 防火墙
 
@@ -117,17 +109,14 @@ The default firewall security level of Red Hat distributions like CentOS block M
 Temporary:
 
     systemctl stop firewalld
-    
 
 Permanent (at your own risk):
 
     systemctl disable firewalld
-    
 
 Undo permanent change:
 
     systemctl enable firewalld
-    
 
 ### 与多网络的连接问题
 
@@ -149,45 +138,38 @@ If you face any of these problems avoid them by only connecting one network at a
 
       ./qgroundcontrol-run.sh
       ```
-    
-    ## Building QGC on CentOS
-    
-    ### Installing Qt
-    
+
+  ## Building QGC on CentOS
+
+  ### Installing Qt
 
 mkdir ~/devel cd ~/devel
 
     <br />Install Qt 5.12.4 from the Qt installation script that can be downloaded [here](https://www.qt.io/download-thank-you?os=linux&hsLang=en).
     Once downloaded, make it executable and run it:
-    
 
 chmod +x qt-unified-linux-x64-3.1.1-online.run ./qt-unified-linux-x64-3.1.1-online.run
 
     <br />Select the following options and install it under `~/devel/Qt`:
-    
+
     ![Qt Software Selection](../../../assets/dev_getting_started/centos/qt_setup.png)
-    
+
     ### Clone and Build QGC
-    
-    
 
 git clone --recursive https://github.com/mavlink/qgroundcontrol.git mkdir build cd build
 
     For a debug/test build:
-    
 
 ../Qt/5.12.4/gcc_64/bin/qmake ../qgroundcontrol/qgroundcontrol.pro -spec linux-g++ CONFIG+=debug
 
     For a release build:
-    
 
 ../Qt/5.12.4/gcc_64/bin/qmake ../qgroundcontrol/qgroundcontrol.pro -spec linux-g++ CONFIG+=qtquickcompiler
 
     Build it:
-    
 
 make -j4 ```
 
-You can alternatively launch *QtCreator* (found under `~/devel/Qt/Tools/QtCreator/bin/qtcreator`), load the `qgroundcontro.pro` project and build/debug from within its IDE.
+You can alternatively launch _QtCreator_ (found under `~/devel/Qt/Tools/QtCreator/bin/qtcreator`), load the `qgroundcontro.pro` project and build/debug from within its IDE.
 
 By default, this will build the regular QGC. To build the sample, customized UI version, follow [these instructions](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md).

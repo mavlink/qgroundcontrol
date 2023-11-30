@@ -1,6 +1,6 @@
 # QGroundControl v3.3 Release Notes (Detailed)
 
-This topic contains a high level and *non-exhaustive* list of new features added to *QGroundControl* in version 3.3.
+This topic contains a high level and _non-exhaustive_ list of new features added to _QGroundControl_ in version 3.3.
 
 ## Detailed Notes
 
@@ -54,11 +54,11 @@ The Edit Position Dialog allows you to specify a detailed position for an item i
 
 You can now also click on the polygon center drag handle to bring up a set of polygon manipulation tools. The tools are available anywhere polygon editing is supported: Survey, Structure Scan, GeoFence, ...
 
-* Circle - Converts the polygon to a circular polygon.
-* Polygon - Changes a circular polygon back to a rectangular polygon.
-* Set radius - Set radius for circular polygons.
-* Edit position - Displays the edit position dialog to specify a detailed position for the circular center.
-* Load KML - Set polygon to polygon loaded from KML file.
+- Circle - Converts the polygon to a circular polygon.
+- Polygon - Changes a circular polygon back to a rectangular polygon.
+- Set radius - Set radius for circular polygons.
+- Edit position - Displays the edit position dialog to specify a detailed position for the circular center.
+- Load KML - Set polygon to polygon loaded from KML file.
 
 Circular polygon example:
 

@@ -4,10 +4,10 @@ Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模
 
 模拟不支持飞行，但允许轻松测试：
 
-* 任务上传/下载
-* 查看和更改参数
-* 测试大多数设置页面
-* 多个载具用户界面
+- 任务上传/下载
+- 查看和更改参数
+- 测试大多数设置页面
+- 多个载具用户界面
 
 对于任务上载/下载的单元测试错误情况尤其有用。
 
@@ -17,15 +17,14 @@ Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模
 
 1. 1.通过构建源来创建调试版本。
 2. 通过选择顶部工具栏中的“应用程序设置”图标，然后选择侧栏中的“模拟链接”来访问“模拟链接”：
-    
-    ![](../../../assets/dev_tools/mocklink_waiting_for_connection.jpg)
+
+   ![](../../../assets/dev_tools/mocklink_waiting_for_connection.jpg)
 
 3. 3. 可以单击面板中的按钮以创建相关类型的车辆链接。
 
-* 每次单击按钮时，都会创建一个新连接。
-* 当存在多个连接时，将显示多车辆UI。
-    
-    ![](../../../assets/dev_tools/mocklink_connected.jpg)
+- 每次单击按钮时，都会创建一个新连接。
+- 当存在多个连接时，将显示多车辆UI。
+  ![](../../../assets/dev_tools/mocklink_connected.jpg)
 
 1. 1. 单击停止一个模拟链接以停止当前活动的车辆。
 

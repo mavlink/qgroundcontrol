@@ -1,6 +1,6 @@
 # Güç Kurulumu
 
-*Power Setup* ekranı batarya parametrelerini düzenlemek için kullanılır ve ayrıca pervaneler hakkında gelişmiş ayarlar sunar.
+_Power Setup_ ekranı batarya parametrelerini düzenlemek için kullanılır ve ayrıca pervaneler hakkında gelişmiş ayarlar sunar.
 
 ![Batarya Kalibrasyonu](../../../assets/setup/PX4Power.jpg)
 
@@ -8,18 +8,18 @@
 
 Batarya/güç modülünüz için veri sayfasından verileri girin: hücre sayısı, hücre başına tam voltaj, hücre başına boş voltaj. Eğer varsa, voltaj bölücü ve volt başına amper bilgilerini de girin.
 
-*QGroundControl*, ölçümlerden uygun voltaj bölücü ve volt başına amper değerlerini hesaplamak için kullanılabilir:
+_QGroundControl_, ölçümlerden uygun voltaj bölücü ve volt başına amper değerlerini hesaplamak için kullanılabilir:
 
 1. Bir multimetre kullanarak pilden gelen voltajı ölçün.
-2. *Voltage divider*'ın yanındaki **Calculate** butonuna tıklayın. Gelen pencerede: 
-    1. Ölçülen voltajı girin.
-    2. **Calculate**'e tıklayarak yeni bir voltaj bölücü değeri oluşturun.
-    3. Değeri ana forma kaydetmek için **Close**'a tıklayın. 
+2. _Voltage divider_'ın yanındaki **Calculate** butonuna tıklayın. Gelen pencerede:
+   1. Ölçülen voltajı girin.
+   2. **Calculate**'e tıklayarak yeni bir voltaj bölücü değeri oluşturun.
+   3. Değeri ana forma kaydetmek için **Close**'a tıklayın.
 3. Bataryadaki akımı ölçün.
-4. *Amps per volt*'un yanındaki **Calculate** butonuna tıklayın. Gelen pencerede: 
-    1. Ölçülen akımı girin.
-    2. **Calculate**'e tıklayarak yeni bir *volt başına akım* değeri oluşturun.
-    3. Değeri ana forma kaydetmek için **Close**'a tıklayın. 
+4. _Amps per volt_'un yanındaki **Calculate** butonuna tıklayın. Gelen pencerede:
+   1. Ölçülen akımı girin.
+   2. **Calculate**'e tıklayarak yeni bir _volt başına akım_ değeri oluşturun.
+   3. Değeri ana forma kaydetmek için **Close**'a tıklayın.
 
 ## Gelişmiş Güç Ayarları
 
@@ -37,8 +37,8 @@ Eğer değer çok yüksekse batarya deep-discharged olabilir ve hasar görebilir
 
 ESC'nin max/min PWM değerlerini kalibre etmek için:
 
-1. Pervaneleri çıkarın. 
-2. Aracı QGC'ye USB (sadece) aracılığı ile bağlayın. 
+1. Pervaneleri çıkarın.
+2. Aracı QGC'ye USB (sadece) aracılığı ile bağlayın.
 3. **Calibrate** butonuna basın.
 
 ::: warning

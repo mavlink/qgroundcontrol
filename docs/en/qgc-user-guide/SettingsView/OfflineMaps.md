@@ -5,6 +5,7 @@
 Offline Maps allows you to cache map tiles for use when not connected to the Internet. You can create multiple offline sets, each for a different location.
 
 ## Add new set
+
 To create a new offline map set, click "Add new set". Which will take you to this page:
 ![](../../../assets/settings/OfflineMapsAdd.jpg)
 

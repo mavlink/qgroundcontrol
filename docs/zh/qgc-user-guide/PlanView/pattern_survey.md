@@ -5,7 +5,7 @@ A survey allows you to create a grid flight pattern over a polygonal area. You c
 ::: warning
 If the survey area has significant elevation variation then consider enabling [Terrain Following](#terrain).
 
-When planning a Survey using camera specifications, the ground under the survey area are assumed to be flat - i.e. at the same altitude as the launch/home location. If the ground elevation under the survey is either higher or lower than the home location the effective overlap in images will be less or more (respectively) than calculated. If ground elevation under the survey area is *significantly* higher than the home location you could inadvertently plan a mission path that causes the vehicle to fly into ground-level obstacles.
+When planning a Survey using camera specifications, the ground under the survey area are assumed to be flat - i.e. at the same altitude as the launch/home location. If the ground elevation under the survey is either higher or lower than the home location the effective overlap in images will be less or more (respectively) than calculated. If ground elevation under the survey area is _significantly_ higher than the home location you could inadvertently plan a mission path that causes the vehicle to fly into ground-level obstacles.
 
 Using terrain following ensures that the survey more closely matches the desired altitude above terrain, and reduces the likelihood of planning a mission that is too close to ground level.
 :::
@@ -16,12 +16,12 @@ Using terrain following ensures that the survey more closely matches the desired
 
 To create a survey:
 
-1. Open [PlanView](../PlanView/PlanView.md) *Plan Tools*.
-2. Choose the *Pattern Tool* from the *Plan Tools* and then select *Survey*.
-  
-  ![Survey Menu](../../../assets/plan/survey/survey_menu.jpg)
-  
-  This will add a survey grid to the map, and a *Survey* item to the mission list (on the right).
+1. Open [PlanView](../PlanView/PlanView.md) _Plan Tools_.
+2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Survey_.
+
+![Survey Menu](../../../assets/plan/survey/survey_menu.jpg)
+
+This will add a survey grid to the map, and a _Survey_ item to the mission list (on the right).
 
 3. On the map drag the vertices to change the shape of the polygon.
 
@@ -31,7 +31,7 @@ The survey settings are covered in the next section.
 
 ## Settings
 
-The survey can be further configured in the associated mission item (in the mission item list on the right hand side of the *Plan View*).
+The survey can be further configured in the associated mission item (in the mission item list on the right hand side of the _Plan View_).
 
 ### Camera
 
@@ -49,7 +49,7 @@ The default settings can be tuned for your survey using the configuration option
 
 - **Landscape/Portrait** - Camera orientation relative to the "normal" orientation of the vehicle.
 - **Overlap** - Overlap between each image capture. This can be configured separately for when flying along grid lines or across them.
-- Select one of: 
+- Select one of:
   - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
   - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
 
@@ -81,7 +81,7 @@ The configurable options are:
 
 ### Transects
 
-The *Transects* section is used for grid settings that are independent of the camera used.
+The _Transects_ section is used for grid settings that are independent of the camera used.
 
 ![Survey - Transects](../../../assets/plan/survey/survey_transects.jpg)
 
@@ -97,23 +97,23 @@ The configurable options are:
 
 ### Terrain
 
-By default, a flying vehicle will follow the survey path at a fixed altitude. Enabling *Terrain Following* makes the vehicle maintain a constant height relative to ground.
+By default, a flying vehicle will follow the survey path at a fixed altitude. Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
 ![Survey - Terrain Following Settings](../../../assets/plan/survey/survey_terrain.jpg)
 
 ::: info
-Terrain following uses terrain heights queried from *AirMap* servers.
+Terrain following uses terrain heights queried from _AirMap_ servers.
 :::
 
 The configurable options are:
 
-- **Vehicle follows terrain** - Check to enable terrain following (and display the following options). 
+- **Vehicle follows terrain** - Check to enable terrain following (and display the following options).
   - **Tolerance** - The accepted deviation in altitude from the target altitude.
   - **Max Climb Rate** - Maximum climb rate when following terrain.
   - **Max Descent Rate** - Maximum descent rate when following terrain.
 
 ### Statistics
 
-The *Statistics* section shows the calculated survey area, photo interval, photo spacing and planned photo count.
+The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
 
 ![Survey - Statistics](../../../assets/plan/survey/survey_statistics.jpg)

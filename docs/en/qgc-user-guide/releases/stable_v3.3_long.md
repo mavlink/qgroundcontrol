@@ -1,7 +1,7 @@
 # QGroundControl v3.3 Release Notes (Detailed)
 
-This topic contains a high level and *non-exhaustive* list of new features added to *QGroundControl* in version 3.3.
-  
+This topic contains a high level and _non-exhaustive_ list of new features added to _QGroundControl_ in version 3.3.
+
 ## Detailed Notes
 
 ### Settings View
@@ -19,9 +19,9 @@ For more information see [Settings > General (AutoConnect to the following devic
 
 ![Video Recording](../../../assets/settings/VideoRecording.jpg)
 
-Videos will be saved to the Video directory of your QGC file save path. 
-You can also specify the maximum amount of space you want video files to consume. 
-After that size if exceeded the oldest video files will be removed. 
+Videos will be saved to the Video directory of your QGC file save path.
+You can also specify the maximum amount of space you want video files to consume.
+After that size if exceeded the oldest video files will be removed.
 Video Recording is turned on/off from the Video widget in the Fly View.
 
 For more information see [Settings > General (Video / Video Recording)](../SettingsView/General.md#video).
@@ -37,8 +37,8 @@ Details [here](../PlanView/pattern_structure_scan_v2.md).
 
 #### New MAVLink GeoFence, Rally Point support
 
-   ![](../../../assets/plan/GeoFenceRally.jpg)
-   
+![](../../../assets/plan/GeoFenceRally.jpg)
+
 QGC supports the new MAVLink GeoFence and Rally Point specification/protocol. This new system supports multiple polygonal and/or circular fences which can be specified as an exclusion or an inclusion fence.
 
 The fence which is currently selected by the "Edit" radio button will show the on screen editing controls such as the drag points for polygon editing.
@@ -47,23 +47,23 @@ The fence which is currently selected by the "Edit" radio button will show the o
 
 #### Edit Position Dialog
 
-   ![](../../../assets/plan/EditPositionDialog.jpg)
+![](../../../assets/plan/EditPositionDialog.jpg)
 
 The Edit Position Dialog allows you to specify a detailed position for an item in either Geographic or UTM coordinate systems. It is available from the Polygon Tools menu as well as the hamburger menu of any mission item which specifies a coordinate:
 
-   ![](../../../assets/plan/MissionItemEditorHamburger.jpg)
+![](../../../assets/plan/MissionItemEditorHamburger.jpg)
 
 #### Polygon Tools
 
-   ![](../../../assets/plan/PolygonTools.jpg)
-   
+![](../../../assets/plan/PolygonTools.jpg)
+
 You can now also click on the polygon center drag handle to bring up a set of polygon manipulation tools. The tools are available anywhere polygon editing is supported: Survey, Structure Scan, GeoFence, ...
 
-* Circle - Converts the polygon to a circular polygon.
-* Polygon - Changes a circular polygon back to a rectangular polygon.
-* Set radius - Set radius for circular polygons.
-* Edit position - Displays the edit position dialog to specify a detailed position for the circular center.
-* Load KML - Set polygon to polygon loaded from KML file.
+- Circle - Converts the polygon to a circular polygon.
+- Polygon - Changes a circular polygon back to a rectangular polygon.
+- Set radius - Set radius for circular polygons.
+- Edit position - Displays the edit position dialog to specify a detailed position for the circular center.
+- Load KML - Set polygon to polygon loaded from KML file.
 
 Circular polygon example:
 
@@ -79,20 +79,18 @@ This is now a video record button in the video window. Settings for saved videos
 
 When you are connected to multiple vehicles the vehicle id will be shown below the vehicle icon. The active vehicle will be opaque and the inactive vehicles will be semi-transparent.
 
-   ![](../../../assets/fly/MultiVehicleIndicators.jpg)
+![](../../../assets/fly/MultiVehicleIndicators.jpg)
 
 #### Multi-Vehicle View supports batch commands
 
 The multi-vehicle list now supports commands which apply to all vehicles.
 
-   ![](../../../assets/fly/MultiVehicleList.jpg)
-   
-The current list of available commands are Pause and Start Mission but that will be exapanded upon with further development.
+![](../../../assets/fly/MultiVehicleList.jpg)
 
+The current list of available commands are Pause and Start Mission but that will be exapanded upon with further development.
 
 #### ADS-B sensor vehicle display
 
 Vehicle reported by ADS-B sensor on vehicle are shown on map as smaller blue icons with altitude and callsign below the icon.
 
-   ![](../../../assets/fly/ADSBVehicle.jpg)
-
+![](../../../assets/fly/ADSBVehicle.jpg)

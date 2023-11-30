@@ -16,8 +16,8 @@ A Fact Control is a QML user interface control which connects to a Fact and it's
 
 ## FactGroup
 
-A *Fact Group* is a group of [Facts](#fact).
-It is used to organise facts and manage user defined facts. 
+A _Fact Group_ is a group of [Facts](#fact).
+It is used to organise facts and manage user defined facts.
 
 ## Custom Build Support
 

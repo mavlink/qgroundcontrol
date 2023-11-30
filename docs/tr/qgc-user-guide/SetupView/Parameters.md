@@ -1,6 +1,6 @@
 # Parametreler
 
-*Parametreler* ekranı, araçla ilişkili parametrelerden herhangi birini bulmanıza ve düzenlemenizi sağlar.
+_Parametreler_ ekranı, araçla ilişkili parametrelerden herhangi birini bulmanıza ve düzenlemenizi sağlar.
 
 ![Parametreler Ekranı](../../../assets/setup/parameters_px4.jpg)
 
@@ -8,12 +8,11 @@
 PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu bölümde açıklandığı gibi yönetilir.
 :::
 
-
 ## Bir Parametreyi Bulma
 
-Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde * Pil Kalibrasyonu * grubu seçilir).
+Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde _ Pil Kalibrasyonu _ grubu seçilir).
 
-Ayrıca * Search* alanına bir terim girerek bir parametre için * arama * yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için ** Clear ** tuşuna basın).
+Ayrıca _ Search_ alanına bir terim girerek bir parametre için _ arama _ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için ** Clear ** tuşuna basın).
 
 ![Parametreler Araması](../../../assets/setup/parameters_search.jpg)
 

@@ -24,8 +24,6 @@ The `-t` flag is essential.
 Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
 :::
 
-
-
 ::: info
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
@@ -38,6 +36,7 @@ Otherwise you will get a build error like:
 ```
 qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
 ```
+
 :::
 
 ## Building QGC using the Container
@@ -57,23 +56,26 @@ On Windows the docker command is:
 ```
 docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-linux-docker
 ```
+
 :::
 
 Depending on your system resources, or the resources assigned to your Docker Daemon, the build step can take some time.
-
 
 ## Troubleshooting
 
 ### Windows: 'bash\r': No such file or directory
 
 This error indicates that a Linux script is being run with Windows line endings, which might occur if `git` was configured to use Windows line endings:
+
 ```
  > [4/7] RUN /tmp/qt/install-qt-linux.sh:
 #9 0.445 /usr/bin/env: 'bash\r': No such file or directory
 ```
 
 One fix is to force Linux line endings using the command:
+
 ```
 git config --global core.autocrlf false
 ```
+
 Then update/recreate your local repository.

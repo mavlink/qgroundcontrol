@@ -16,7 +16,6 @@ Your custom daily builds are built from master and this is where all new major f
 
 You must keep custom master up to date with QGC master! It is important to not lag behind, because new upstream features may require some effort to integrate with your build, or may even require changes to "core" QGC in order to work with your code. If you don't let QGC development team know soon enough, it may end up being too late to get things changed.
 
-
 ## Stable Builds
 
 ### Release Stage

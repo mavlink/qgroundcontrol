@@ -6,17 +6,16 @@ Yaygın olarak kullanılan ayarları adlandırılmış bir ön ayar olarak kayde
 Şuan için sadece Gözlem modu tarafından desteklenmektedir. Diğer modların desteği için geliştirme devam etmektedir.
 :::
 
-
 ## Ön Ayarları Yönetme
 
 ![Ön Ayar Kombosu](../../../assets/plan/pattern/PatternPresetCombo.jpg)
 
 Mod öğelerinin üst kısmında ön ayarları yönetmenize izin veren bir seçenek vardır:
 
-* **Custom (specify all settings)** Bu bir ön ayar *kullanmamanıza* ve tüm ayarları manuel ayarlamanıza olanak verir.
-* **Save Settings As Preset** Mevcut ayarları adlandırılmış bir ön ayar olarak kaydeder.
-* **Delete Current Preset** Seçili olan ön ayarı siler.
-* **Presets:** Bu öğenin altında bu mod için mevcut ön ayarlar listelenecektir.
+- **Custom (specify all settings)** Bu bir ön ayar _kullanmamanıza_ ve tüm ayarları manuel ayarlamanıza olanak verir.
+- **Save Settings As Preset** Mevcut ayarları adlandırılmış bir ön ayar olarak kaydeder.
+- **Delete Current Preset** Seçili olan ön ayarı siler.
+- **Presets:** Bu öğenin altında bu mod için mevcut ön ayarlar listelenecektir.
 
 ## Ön Ayar Oluşturma/Güncelleme
 

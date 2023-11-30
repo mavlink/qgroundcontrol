@@ -1,6 +1,6 @@
 # Mission Command Tree
 
-QGC creates the user interface for editing a specific mission item command dynamically from a hierarchy of json metadata. This hierarchy is called the Mission Command Tree. This way only json metadata must be created when new commands are added. 
+QGC creates the user interface for editing a specific mission item command dynamically from a hierarchy of json metadata. This hierarchy is called the Mission Command Tree. This way only json metadata must be created when new commands are added.
 
 ## Why a tree?
 
@@ -12,7 +12,7 @@ The tree is the MissionCommandTree class: [MissionCommandTree.cc](https://github
 
 The root of the tree is json metadata which matches the mavlink spec exactly.
 
-Here you can see an example of the root [json](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L27) for ```MAV_CMD_NAV_WAYPOINT```:
+Here you can see an example of the root [json](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L27) for `MAV_CMD_NAV_WAYPOINT`:
 
 ```
         {
@@ -58,9 +58,9 @@ Note: In reality this based information should be provided by mavlink itself and
 The leaf nodes then provides metadata which can override values for the command and/or remove parameters from display to the user. The full tree hierarchy is this:
 
 - Root - Generic Mavlink
-  - Vehicle Type Specific -  Vehicle specific overrides to the generic spec
+  - Vehicle Type Specific - Vehicle specific overrides to the generic spec
   - Firmware Type Specific - One optional leaf node for each firmware type (PX4/ArduPilot)
-     - Vehicle Type Specific - One optional leaf node for each vehicel type (FW/MR/VTOL/Rover/Sub)
+    - Vehicle Type Specific - One optional leaf node for each vehicel type (FW/MR/VTOL/Rover/Sub)
 
 Note: In reality this override capability should be part of mavlink spec and should be able to be queried from the vehicle.
 
@@ -69,18 +69,20 @@ Note: In reality this override capability should be part of mavlink spec and sho
 Since the json metadata provides information for all firmware/vehicle type combinations the actual tree to use must be built based on the firmware and vehicle type which is being used to create a Plan. This is done through a process call "collapsing" the full tree to a firmware/vehicle specific tree ([code](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc#L119)).
 
 The steps are as follows:
-* Add the root to the instance tree
-* Apply the vehicle type specific overrides to the instance tree
-* Apply the firmware type specific overrides to the instance tree
-* Apply the firmware/vehicle type specific overrides to the instance tree
+
+- Add the root to the instance tree
+- Apply the vehicle type specific overrides to the instance tree
+- Apply the firmware type specific overrides to the instance tree
+- Apply the firmware/vehicle type specific overrides to the instance tree
 
 The resulting Mission Command Tree is then used to build UI for the Plan View item editors. In reality it is used for more than just that, there are many other places where knowing more information about a specific command id is useful.
 
-## Example hierarchy for ```MAV_CMD_NAV_WAYPOINT```
+## Example hierarchy for `MAV_CMD_NAV_WAYPOINT`
 
-Let's walk through an example hierarchy for ```MAV_CMD_NAV_WAYPOINT```. Root information is shown above.
+Let's walk through an example hierarchy for `MAV_CMD_NAV_WAYPOINT`. Root information is shown above.
 
 ### Root - Vehicle Type Specific leaf node
+
 The next level of the hiearchy is generic mavlink but vehicle specific. Json files are here: [MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json). And here are the overrides for (Fixed Wings)(https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7):
 
 ```
@@ -94,7 +96,8 @@ The next level of the hiearchy is generic mavlink but vehicle specific. Json fil
 What this does is remove the editing UI for param4 which is Yaw and not used by fixed wings. Since this is a leaf node of the root, this applies to all fixed wing vehicle no matter the firmware type.
 
 ### Root - Firmware Type Specific leaf node
-The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types.  Once again lets loook at the waypoint overrides:
+
+The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets loook at the waypoint overrides:
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6):
 
@@ -121,6 +124,7 @@ You can see that for both firmwares param2 which is acceptance radius is removed
 You can also see that for PX4 param3/PassThru is removed since it is not supported by PX.
 
 ### Root - Firmware Type Specific - Vehicle Type Specific leaf node
+
 The last level of the hiearchy is both firmware and vehicle type specific.
 
 [ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoMultiRotor.json#L7):
@@ -136,10 +140,11 @@ The last level of the hiearchy is both firmware and vehicle type specific.
 Here you can see that for an ArduPilot Multi-Rotor vehicle param2/3/4 Acceptance/PassThru/Yaw are removed. Yaw for example is removed because it is not supported. Due to quirk of how this code works, you need to repeat the overrides from the lower level.
 
 ## Mission Command UI Info
+
 Two classes define the metadata associated with a command:
 
-* MissionCommandUIInfo - Metadata for the entire command
-* MissionCmdParamInfo - Metadata for a param in a command
+- MissionCommandUIInfo - Metadata for the entire command
+- MissionCmdParamInfo - Metadata for a param in a command
 
 The source is commented with full details of the json keys which are supported.
 

@@ -4,9 +4,9 @@ The main toolbar provides access to select the different application views, and 
 
 ## View-select icons
 
-The following icons are used to switch between the main *Views*. These are displayed even if no vehicle is connected.
+The following icons are used to switch between the main _Views_. These are displayed even if no vehicle is connected.
 
-![Settings view icon](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../SettingsView/SettingsView.md)** <br />Configure the *QGroundControl* application.
+![Settings view icon](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../SettingsView/SettingsView.md)** <br />Configure the _QGroundControl_ application.
 
 ![Setup view icon](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[Setup](../SetupView/SetupView.md)** <br />Configure and tune your vehicle.
 
@@ -18,7 +18,7 @@ The following icons are used to switch between the main *Views*. These are displ
 
 ## Status icons
 
-Status icons are displayed when *QGroundControl* is connected to a vehicle. These show the high level status of the vehicle, and can be clicked to see more detailed information.
+Status icons are displayed when _QGroundControl_ is connected to a vehicle. These show the high level status of the vehicle, and can be clicked to see more detailed information.
 
 ![](../../../assets/toolbar/toolbar_status_message.jpg) ![yield](../../../assets/toolbar/toolbar_status_critical.jpg) **Vehicle Messages** <br />Click to show a list of messages from the vehicle. Note that version on the right is displayed when there are critical messages.
 
