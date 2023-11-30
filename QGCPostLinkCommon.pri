@@ -69,32 +69,32 @@ LinuxBuild {
 
     # QT_INSTALL_LIBS
     QT_LIB_LIST += \
-	    libQt6Location.so.6
-	    libQt6QuickControls2.so.6
-	    libQt6Quick.so.6
-	    libQt6Charts.so.6
-	    libQt6Widgets.so.6
-	    libQt6TextToSpeech.so.6
-	    libQt6Multimedia.so.6
-	    libQt6Gui.so.6
-	    libQt6Positioning.so.6
-	    libQt6Qml.so.6
-	    libQt6Network.so.6
-	    libQt6Sql.so.6
-	    libQt6Xml.so.6
-	    libQt6Core5Compat.so.6
-	    libQt6SerialPort.so.6
-	    libQt6Test.so.6
-	    libQt6Core.so.6
-        libQt6QuickShapes.so.6
-        libQt6PositioningQuick.so.6
-        libQt6QmlModels.so.6
-        libQt6OpenGL.so.6
-        libQt6QuickTemplates2.so.6
-        libQt6OpenGLWidgets.so.6
-        libQt6DBus.so.6
-        libicui18n.so.56
-        libicuuc.so.56
+	    libQt6Location.so.6 \
+	    libQt6QuickControls2.so.6 \
+	    libQt6Quick.so.6 \
+	    libQt6Charts.so.6 \
+	    libQt6Widgets.so.6 \
+	    libQt6TextToSpeech.so.6 \
+	    libQt6Multimedia.so.6 \
+	    libQt6Gui.so.6 \
+	    libQt6Positioning.so.6 \
+	    libQt6Qml.so.6 \
+	    libQt6Network.so.6 \
+	    libQt6Sql.so.6 \
+	    libQt6Xml.so.6 \
+	    libQt6Core5Compat.so.6 \
+	    libQt6SerialPort.so.6 \
+	    libQt6Test.so.6 \
+	    libQt6Core.so.6 \
+        libQt6QuickShapes.so.6 \
+        libQt6PositioningQuick.so.6 \
+        libQt6QmlModels.so.6 \
+        libQt6OpenGL.so.6 \
+        libQt6QuickTemplates2.so.6 \
+        libQt6OpenGLWidgets.so.6 \
+        libQt6DBus.so.6 \
+        libicui18n.so.56 \
+        libicuuc.so.56 \
         libicudata.so.56
 
     # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
