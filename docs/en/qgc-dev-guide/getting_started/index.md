@@ -57,8 +57,10 @@ We support Linux builds using a container found on the source tree of the reposi
 
 For more information see: [Qt 5 supported platform list](http://doc.qt.io/qt-5/supported-platforms.html).
 
-<span></span>
-> **Note** Native [CentOS Builds](../getting_started/CentOS.md) are also supported, but are documented separately (as the tested environment is different).
+::: info
+Native [CentOS Builds](../getting_started/CentOS.md) are also supported, but are documented separately (as the tested environment is different).
+:::
+
 
 #### Install Visual Studio 2019 (Windows Only) {#vs}
 
@@ -68,7 +70,9 @@ When installing, select *Desktop development with C++* as shown:
 
 ![Visual Studio 2019 - Select Desktop Environment with C++](../../../assets/dev_getting_started/visual_studio_select_features.png)
 
-   > **Note** Visual Studio is ONLY used to get the compiler. Actually building *QGroundControl* should be done using [Qt Creator](#qt-creator) or [qmake](#qmake) as outlined below.
+::: info
+Visual Studio is ONLY used to get the compiler. Actually building *QGroundControl* should be done using [Qt Creator](#qt-creator) or [qmake](#qmake) as outlined below.
+:::
 
 
 #### Install Qt
@@ -83,7 +87,9 @@ To install Qt:
      - Install to default location for use with **./qgroundcontrol-start.sh.** If you install Qt to a non-default location you will need to modify **qgroundcontrol-start.sh** in order to run downloaded builds.
 1. In the installer *Select Components* dialog choose: {{ $frontmatter.qt_version }}.
 
-   > **Note** If the version needed is not displayed, check the archive (show archive and refresh).
+   ::: info
+   If the version needed is not displayed, check the archive (show archive and refresh).
+   :::
 
    Then install just the following components:
    - **Windows**: *MSVC 2019 64 bit*
@@ -99,18 +105,27 @@ To install Qt:
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **Android:** [Qt Android Setup](http://doc.qt.io/qt-5/androidgs.html)
-     > **Note** JDK11 is required (install if needed)!
+   
+     ::: info
+     JDK11 is required (install if needed)!
+     :::
+
 1. Install Optional/OS-Specific Functionality
 
-   > **Note** Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
-     These features can be forcibly enabled/disabled by specifying additional values to qmake.
+   ::: info
+   Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
+   These features can be forcibly enabled/disabled by specifying additional values to qmake.
+   :::
 
    - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoReceiver/README.md).
    - **Airmap SDK:** - TBD.
 1. Disable platform-specific optional features that are enabled (but not installed), by default.
 
-   > **Note** This currently applies to Airmap on Linux, which is optional but enabled by default.
-   
+   ::: info
+   This currently applies to Airmap on Linux, which is optional but enabled by default.
+   :::
+
+
    - **Ubuntu:** 
      - Airmap: Create a file named **user_config.pri** (in the repo root directory) containing the text `DEFINES += DISABLE_AIRMAP`.
        This can be done in a bash terminal using the command:
@@ -123,7 +138,11 @@ To install Qt:
 1. Launch *Qt Creator* and open the **qgroundcontrol.pro** project.
 1. In the **Projects** section, select the appropriate kit for your needs:
    - **OSX:** Desktop Qt {{ $frontmatter.qt_version }} clang 64 bit
-     > **Note** iOS builds must be built using [XCode](http://doc.qt.io/qt-5/ios-support.html).
+   
+     ::: info
+     iOS builds must be built using [XCode](http://doc.qt.io/qt-5/ios-support.html).
+     :::
+
    - **Ubuntu:** Desktop Qt {{ $frontmatter.qt_version }} GCC 64bit
    - **Windows:** Desktop Qt {{ $frontmatter.qt_version }} MSVC2019 **64bit**
    - **Android:** Android for armeabi-v7a (GCC 4.9, Qt {{ $frontmatter.qt_version }})
@@ -152,14 +171,19 @@ Example commands to build a default QGC and run it afterwards:
    ```
 1. Run make to compile and link.
    To accelerate the process things you can use the `-j{number of threads}` parameter.
+   
    ```
    make -j12
    ```
-   > **Note** You can also specify build time flags here.
-   > For example, you could disable airmap inclusion using the command:
-   > ```
-   > DEFINES+=DISABLE_AIRMAP make build
-   > ```
+   
+   ::: info
+   You can also specify build time flags here.
+   For example, you could disable airmap inclusion using the command:
+   
+   ```
+   DEFINES+=DISABLE_AIRMAP make build
+   ```
+   :::
    
 1. Run the QGroundcontrol binary that was just built:
    ```
@@ -186,7 +210,9 @@ Example commands to build a default QGC and run it afterwards:
 
 You can additionally create installation file(s) for *QGroundControl* as part of the normal build process.
 
-> **Note** On Windows you will need to first install [NSIS](https://sourceforge.net/projects/nsis/).
+::: tip
+On Windows you will need to first install [NSIS](https://sourceforge.net/projects/nsis/).
+:::
 
 To add support for installation file creation you need to add `CONFIG+=installer` to your project file, or when you call *qmake*.
 

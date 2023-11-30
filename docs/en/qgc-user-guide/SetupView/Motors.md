@@ -12,11 +12,19 @@ Motor Setup is used to test individual motors/servos (for example, to verify tha
 To test the motors:
 
 1. Remove all propellers.
-   > **Warning** You must remove props before activating the motors!
+
+   ::: warning
+   You must remove props before activating the motors!
+   :::
+   
 1. (*PX4-only*) Enable safety switch - if used.
 1. Slide the switch to enable motor sliders (labeled: *Propellers are removed - Enable motor sliders*).
 1. Adjust the individual sliders to spin the motors and confirm they spin in the correct direction.
-   > **Note** The motors only spin after you release the slider and will automatically stop spinning after 3 seconds.
+
+   ::: info
+   The motors only spin after you release the slider and will automatically stop spinning after 3 seconds.
+   :::
+
 
 ## Additional Information
 

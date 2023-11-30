@@ -9,4 +9,6 @@ The PX4 page is shown below.
 
 ![Safety Setup - PX4](../../../assets/setup/PX4Safety.jpg)
 
-> **Note** For additional PX4 safety settings and information see: [Safety Configuration](https://docs.px4.io/en/config/safety.html).
+::: info
+For additional PX4 safety settings and information see: [Safety Configuration](https://docs.px4.io/en/config/safety.html).
+:::

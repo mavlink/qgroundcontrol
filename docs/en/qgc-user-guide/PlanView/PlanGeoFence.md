@@ -5,8 +5,10 @@ You can also configure the action taken if you fly outside permitted areas.
 
 ![Geofence overview](../../../assets/plan/geofence/geofence_overview.jpg)
 
-> **Note** **ArduPilot users:** GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available). 
+::: info
+**ArduPilot users:** GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available). 
   *QGroundControl* will not display the GeoFence options if they are not supported by the connected vehicle.
+:::
 
 ## Create a Geofence
 

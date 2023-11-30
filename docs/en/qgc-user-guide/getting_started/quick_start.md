@@ -22,4 +22,7 @@ A good way to become familiar with *QGroundControl* is to start experimenting:
 
 While the UI is fairly intuitive, this documentation can also be referenced to find out more.
 
-> **Note** Make sure QGC has an internet connection when you connect a new vehicle. This will allow it to get the latest parameter and other metadata for the vehicle, along with [translations](../SettingsView/General.md#miscellaneous).
+::: info
+Make sure QGC has an internet connection when you connect a new vehicle. This will allow it to get the latest parameter and other metadata for the vehicle, along with [translations](../SettingsView/General.md#miscellaneous).
+:::
+

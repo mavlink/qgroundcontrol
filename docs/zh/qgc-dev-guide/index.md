@@ -4,11 +4,14 @@
 
 如果要构建，修改或扩展QGroundControl（QGC），此开发人员指南是获取信息的最佳来源。 它展示了如何获取和构建源代码，解释了QGC的工作原理，并提供了为项目贡献代码的指南。
 
-> **Tip** 本指南适用于开发人员！ 要了解如何使用QGroundControl，请参阅“用户指南”。
+:::tip
+This part of the guide is for **developers**!
+:::
 
-<span></span>
-
-> **Note** 本指南的编写是一项正在进行的活动 - 信息应该是正确的，但可能不完整！ 如果您发现它缺少有用的信息（或错误），请提出问题。
+:::warning
+This is an active work in progress - information should be correct, but may not be complete!
+If you find that it is missing helpful information (or errors) please raise an issue.
+:::
 
 ## 设计理念
 

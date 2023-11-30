@@ -17,9 +17,12 @@ It provides easy and straightforward usage for beginners, while still delivering
 
 ![](../../assets/quickstart/ConnectedVehicle.jpg)
 
-> **Note** This guide is an active work in progress.
-> The information provided should be correct, but you may find missing information or incomplete pages.
+::: info
+This guide is an active work in progress.
+The information provided should be correct, but you may find missing information or incomplete pages.
+:::
 
-<span></span>
 
-> **Tip** Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developers Guide](https://dev.qgroundcontrol.com/en/).
+::: tip
+Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developers Guide](https://dev.qgroundcontrol.com/en/).
+:::

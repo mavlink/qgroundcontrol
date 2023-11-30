@@ -98,8 +98,11 @@ For example, if your camera supports video mode you will be able to switch betwe
 
 ![Camera Panel - MAVLink settings](../../../assets/fly/camera_panel/camera_settings_mavlink.png)
 
-> **Note** Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
+::: info
+Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
 > A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
+:::
+
 
 ### Video Stream {#video_instrument_page}
 
@@ -112,7 +115,10 @@ When enabled, you can start/stop the video stream, enable a grid overlay, change
 
 The following sections describe how to perform common operations/tasks in the Fly View.
 
-> **Note** Many of the available options depend on both the vehicle type and its current state.
+::: info
+Many of the available options depend on both the vehicle type and its current state.
+:::
+
 
 ### Pre Flight Checklist {#preflight_checklist}
 
@@ -155,11 +161,14 @@ When all issues blocking arming have been removed you can use the arm button to 
 
 ![Arm confirmation slider](../../../assets/fly/vehicle_states/arming_slider.png)
 
-> **Note** The status text also displays when flying.
+::: info
+The status text also displays when flying.
 >
 > ![Vehicle state - armed](../../../assets/fly/vehicle_states/armed.png) > ![Vehicle state - flying](../../../assets/fly/vehicle_states/flying.png)
 >
 > The arming checks UI will open even when flying, allowing you to emergency disarm.
+:::
+
 
 ### Disarm {#disarm}
 
@@ -175,7 +184,10 @@ You will then need to use the disarming slider.
 
 ![disarm slider](../../../assets/fly/vehicle_states/disarm_slider.png)
 
-> **Note** Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
+::: info
+Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
+:::
+
 
 ### Emergency Stop {#emergency_stop}
 
@@ -220,9 +232,12 @@ Return to a "safe point" at any time while flying:
 
 ![rtl](../../../assets/fly/rtl.jpg)
 
-> **Note** Vehicles commonly return to the "home" (takeoff) location and land.
-> This behaviour depends on the vehicle type and configuration.
-> For example, rally points or mission landings may be used as alternative return targets.
+::: info
+Vehicles commonly return to the "home" (takeoff) location and land.
+This behaviour depends on the vehicle type and configuration.
+For example, rally points or mission landings may be used as alternative return targets.
+:::
+
 
 ### Change Altitude {#change_altitude}
 
@@ -251,7 +266,10 @@ After taking off you can specify that you want to fly to a particular location.
 
 1. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
 
-> **Note** Goto points must be set within 1 km of the vehicle (hard-coded in QGC).
+::: info
+Goto points must be set within 1 km of the vehicle (hard-coded in QGC).
+:::
+
 
 ### Orbit Location {#orbit}
 
@@ -275,7 +293,10 @@ After taking off you can specify that you want to orbit a particular location.
 You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location.
 The vehicle behaviour when paused depends on the vehicle type; typically a multicopter will hover, and a fixed wing vehicle will circle.
 
-> **Note** You cannot pause a _Goto location_ operation.
+::: info
+You cannot pause a _Goto location_ operation.
+:::
+
 
 To pause:
 
@@ -308,9 +329,12 @@ To start a mission from landed:
 
 You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation slider is often displayed by default after you takeoff).
 
-> **Note** Continue and [Resume mission](#resume_mission) are different!
-> Continue is used to restart a mission that has been paused, or where you have taken off, so you've already missed a takeoff mission command.
-> Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
+::: info
+Continue and [Resume mission](#resume_mission) are different!
+Continue is used to restart a mission that has been paused, or where you have taken off, so you've already missed a takeoff mission command.
+Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
+:::
+
 
 You can continue the current mission while (unless already in a mission!):
 
@@ -327,8 +351,11 @@ You can continue the current mission while (unless already in a mission!):
 
 _Resume Mission_ is used to resume a mission after performing an [RTL/Return](#rtl) or [Land](#land) from within a mission (in order, for example, to perform a battery change).
 
-> **Note** If you are performing a battery change, **do not** disconnect QGC from the vehicle after disconnecting the battery.
-> After you insert the new battery _QGroundControl_ will detect the vehicle again and automatically restore the connection.
+::: info
+If you are performing a battery change, **do not** disconnect QGC from the vehicle after disconnecting the battery.
+After you insert the new battery _QGroundControl_ will detect the vehicle again and automatically restore the connection.
+:::
+
 
 After landing you will be prompted with a _Flight Plan complete_ dialog, which gives you the option to remove the plan from the vehicle, leave it on the vehicle, or to resume the mission from the last waypoint that was traveled through.
 
@@ -341,8 +368,11 @@ The image below shows the mission that was rebuilt after the Return shown above.
 
 ![Resume Rebuilt Mission](../../../assets/fly/resume_mission_rebuilt.jpg)
 
-> **Note** A mission cannot simply resume from the last mission item that the vehicle executed, because there may be multiple items at the last waypoint that affect the next stage of the mission (e.g. speed commands or camera control commands).
-> Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
+::: info
+A mission cannot simply resume from the last mission item that the vehicle executed, because there may be multiple items at the last waypoint that affect the next stage of the mission (e.g. speed commands or camera control commands).
+Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
+:::
+
 
 #### Remove Mission Prompt After Landing {#resume_mission_prompt}
 
@@ -356,7 +386,10 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (i
 
 ![Video Stream Record](../../../assets/fly/video_record.jpg)
 
-> **Note** Video streaming is configured/enabled in [Application Settings > General tab > Video](../SettingsView/General.md#video).
+::: info
+Video streaming is configured/enabled in [Application Settings > General tab > Video](../SettingsView/General.md#video).
+:::
+
 
 You can further configure video display using controls on the switcher:
 
@@ -384,12 +417,19 @@ Press the red circle to start recording a new video (a new video file is created
 Video stream recording is configured in the [Application Settings > General tab](../SettingsView/General.md):
 
 - [Video Recording](../SettingsView/General.md#video-recording) - specifies the recording file format and storage limits.
-  > **Note** Videos are saved in Matroska format (.mkv) by default.
-  > This format is relatively robust against corruption in case of errors.
+
+  ::: info
+  Videos are saved in Matroska format (.mkv) by default.
+  This format is relatively robust against corruption in case of errors.
+  :::
+  
 - [Miscellaneous](../SettingsView/General.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
 
-> **Tip** The stored video includes just the video stream itself.
-> To record video with QGroundControl application elements displayed, you should use separate screen recording software.
+
+::: tip
+The stored video includes just the video stream itself.
+To record video with QGroundControl application elements displayed, you should use separate screen recording software.
+:::
 
 #### Record Video on Camera
 

@@ -81,7 +81,10 @@ Enabling *Terrain Following* makes the vehicle maintain a constant height relati
 
 ![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
-> **Note** Terrain following uses terrain heights queried from *AirMap* servers.
+::: info
+Terrain following uses terrain heights queried from *AirMap* servers.
+:::
+
 
 The configurable options are:
 

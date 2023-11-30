@@ -4,8 +4,9 @@ Radio Setup is used to configure the mapping of your main transmitter attitude c
 
 The main calibration process is identical for PX4 and ArduPilot (a number of additional flight-controller specific settings/tools are [detailed below](#additional-radio-setup)).
 
-> **Note** Before you can calibrate the radio system the receiver and transmitter must be connected/bound. The process for binding a transmitter and receiver pair is hardware specific (see your manual for instructions). 
-
+::: info
+Before you can calibrate the radio system the receiver and transmitter must be connected/bound. The process for binding a transmitter and receiver pair is hardware specific (see your manual for instructions). 
+:::
 
 
 ## Performing the Calibration 
@@ -20,8 +21,11 @@ To calibrate the radio:
    
    ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
    
-   > **Note** The image above is for PX4 Pro. Calibration/top section is the same for both firmware, but the *Additional Radio setup* section will differ.
-   
+   ::: info
+   The image above is for PX4 Pro. Calibration/top section is the same for both firmware, but the *Additional Radio setup* section will differ.
+   :::
+
+
 1. Set the *transmitter mode* radio button that matches your transmitter configuration (this ensures that *QGroundControl* displays the correct stick positions for you to follow during calibration).
 
    ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)

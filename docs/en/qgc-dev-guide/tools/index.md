@@ -4,7 +4,9 @@
 These ease common developer tasks including setting up simulated connections for testing, 
 and accessing the System Shell over MAVLink.
 
-> **Note** [Build the source in debug mode](https://github.com/mavlink/qgroundcontrol#supported-builds) to enable these tools.
+::: info
+[Build the source in debug mode](https://github.com/mavlink/qgroundcontrol#supported-builds) to enable these tools.
+:::
 
 Tools include:
 

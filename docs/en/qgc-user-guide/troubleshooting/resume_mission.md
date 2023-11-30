@@ -17,10 +17,18 @@ The following steps are required for debugging both types of problems:
 1. Turn on [console logging](../SettingsView/console_logging.md) with the log option: `GuidedActionsControllerLog`.
 1. Enable [telemetry logging](../SettingsView/General.md#miscellaneous) (**Settings > General**).
 1. Start the mission.
-1. Fly till you need a battery swap. 
-   > **Tip** Alternatively you can attempt to reproduce the problem by manually RTL from the middle of the middle of the mission (though this may not always reproduce the problem).
+1. Fly till you need a battery swap.
+
+   ::: tip
+   Alternatively you can attempt to reproduce the problem by manually RTL from the middle of the middle of the mission (though this may not always reproduce the problem).
+   :::
+   
 1. Once the vehicle lands and disarms you should get the *Resume Mission* dialog.
-   > **Note** If not there is a possible bug in QGC.
+
+   ::: info
+   If not there is a possible bug in QGC.
+   :::
+
 
 ### Resume Mission Dialog Problems
 

@@ -74,7 +74,10 @@ Once you have added a waypoint, you can select it and drag it around to change i
 The *File tools* are used to move missions between the ground station and vehicle, and to save/restore them from files. 
 The tool displays an `!` to indicate that there are mission changes that you have not sent to the vehicle.
 
-> **Note** Before you fly a mission you must upload it to the vehicle.
+::: info
+Before you fly a mission you must upload it to the vehicle.
+:::
+
 
 The *File tools* provide the following functionality:
 
@@ -111,8 +114,10 @@ By default this just displays the "Basic Commands", but you can use the **Catego
 
 To the right of each command name is a menu that you can click to access to additional options such as *Insert* and *Delete*.
 
-> **Note** The list of available commands will depend on firmware and vehicle type. 
+::: info
+The list of available commands will depend on firmware and vehicle type. 
 Examples may include: Waypoint, Start image capture, Jump to item (to repeat mission) and other commands.
+:::
 
 
 ### Mission Settings {#mission_settings}
@@ -148,9 +153,12 @@ This allows you to view the waypoint trajectory for your vehicle from takeoff to
 
 ![MissionSettings Planned Home Position Section](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
 
-> **Note** This is only the *planned* home position and you should place it where you plan to start the vehicle from. 
-  It has no actual impact on flying the mission. 
-  The actual home position of a vehicle is set by the vehicle itself when arming.
+::: info
+This is only the *planned* home position and you should place it where you plan to start the vehicle from. 
+It has no actual impact on flying the mission. 
+The actual home position of a vehicle is set by the vehicle itself when arming.
+:::
+
 
 This section allows you to set the **Altitude** and **Set Home to Map Centre** 
 (you can move it to another position by dragging it on the map).

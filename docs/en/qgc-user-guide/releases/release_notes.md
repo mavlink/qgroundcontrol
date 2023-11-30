@@ -2,12 +2,18 @@
 
 This topic contains the cumulative release notes for *QGroundControl*.
 
-> **Note** Stable build major/minor numbers are listed below.
-  *Patch* release numbers are not listed, but can be found on the [Github release page](https://github.com/mavlink/qgroundcontrol/releases).
-  
+::: info
+Stable build major/minor numbers are listed below.
+*Patch* release numbers are not listed, but can be found on the [Github release page](https://github.com/mavlink/qgroundcontrol/releases).
+:::
+
+
 ## Stable Version 4.0 (current)
 
-> **Note** The format for Settings in QGC had to change in this release. Which means all QGC settings will be reset to defaults.
+::: info
+The format for Settings in QGC had to change in this release. Which means all QGC settings will be reset to defaults.
+:::
+
 
 * Settings
   * Language: Allow selection of language
@@ -109,7 +115,11 @@ This section contains a high level and *non-exhaustive* list of new features add
   * **Terrain**
      * Height of mission items can be specified as height above terrain.
      * Survey and Corridor Scan can generate flight plans which follow terrain.
-       > **Note** This feature does not support [ArduPilot terrain following](http://ardupilot.org/copter/docs/common-terrain-following.html). 
+
+       ::: info
+       This feature does not support [ArduPilot terrain following](http://ardupilot.org/copter/docs/common-terrain-following.html).
+       :::
+
   * **Edit Position** Set item position from vehicle position. 
 * **Fly**
   * **Pre-Flight Checklist** You can turn this on from Settings. It provides a generic checklist to follow prior to flight. Expect more feature to appear for this in 3.5 daily builds.

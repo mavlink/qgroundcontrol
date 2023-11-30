@@ -2,7 +2,10 @@
 
 Allows you to save commonly used settings as a named preset.
 
-> **Note** Currently only supported by Survey. Support for other Patterns is in development.
+::: info
+Currently only supported by Survey. Support for other Patterns is in development.
+:::
+
 
 ## Managing Presets
 

@@ -6,14 +6,13 @@ This developer guide is the best source for information if you want to build, mo
 It shows how to obtain and build the source code, explains how QGC works, and provides guidelines for contributing code to the project. 
 
 :::tip
-This guide is for **developers**! To learn how to **use** *QGroundControl*, see the [User Guide](https://docs.qgroundcontrol.com/en/).
+This part of the guide is for **developers**!
 :::
 
-> **Tip** This guide is for **developers**! To learn how to **use** *QGroundControl*, see the [User Guide](https://docs.qgroundcontrol.com/en/).
-
-<span></span>
-> **Note** This guide is an active work in progress - information should be correct, but may not be complete!
-> If you find that it is missing helpful information (or errors) please raise an [issue](https://github.com/mavlink/qgc-dev-guide/issues).
+:::warning
+This is an active work in progress - information should be correct, but may not be complete!
+If you find that it is missing helpful information (or errors) please raise an issue.
+:::
 
 ## Design Philosophy
 

@@ -100,7 +100,9 @@ sudo yum --enablerepo=elrepo-kernel install kernel-ml -y
 
 Reboot your device afterwards and make sure the new kernel version shows up as the default start option in the GRUB menu on boot.
 
-> **Note** You might need to disable secure boot in the BIOS to allow the new kernel to be booted.
+::: info
+You might need to disable secure boot in the BIOS to allow the new kernel to be booted.
+:::
 
 ## Running QGC on CentOS
 

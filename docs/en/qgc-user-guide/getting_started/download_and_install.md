@@ -19,13 +19,18 @@ For the best experience and compatibility, we recommend you the newest version o
 1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
 1. Double click the executable to launch the installer.
 
-> **Note** The Windows installer creates 3 shortcuts: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**. 
-  Use the first shortcut unless you experience startup or video rendering issues. 
-  For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
-  
-<span></span>
-> **Note** Prebuilt *QGroundControl* versions from 4.0 onwards are 64-bit only.
-  It is possible to manually build 32 bit versions (this is not supported by the dev team).
+::: info
+The Windows installer creates 3 shortcuts: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**. 
+Use the first shortcut unless you experience startup or video rendering issues. 
+For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
+:::
+
+
+::: info
+Prebuilt *QGroundControl* versions from 4.0 onwards are 64-bit only.
+It is possible to manually build 32 bit versions (this is not supported by the dev team).
+:::
+
 
 ## Mac OS X {#macOS}
 
@@ -36,12 +41,13 @@ For the best experience and compatibility, we recommend you the newest version o
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
 1. Double-click the .dmg file to mount it, then drag the *QGroundControl* application to your *Application* folder.
 
-  > **Note** QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
+  ::: info
+  QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
+  * Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
+  * Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
+  :::
 
-  > *   Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
-  > *   Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
 
-  
 ## Ubuntu Linux {#ubuntu}
 
 *QGroundControl* can be installed/run on Ubuntu LTS 20.04 (and later).
@@ -71,11 +77,15 @@ To install *QGroundControl*:
    ./QGroundControl.AppImage  (or double click)
    ```
 
-> **Note** There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
+::: info
+There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
+:::
 
-<span></span>
-> **Note** Prebuilt *QGroundControl* versions from 4.0 cannot run on Ubuntu 16.04.
-  To run these versions on Ubuntu 16.04 you can [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
+
+::: info
+Prebuilt *QGroundControl* versions from 4.0 cannot run on Ubuntu 16.04.
+To run these versions on Ubuntu 16.04 you can [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
+:::
 
 
 ## Android {#android}

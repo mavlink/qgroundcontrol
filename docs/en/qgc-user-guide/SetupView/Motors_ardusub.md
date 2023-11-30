@@ -7,7 +7,9 @@ Drag each slider and make sure that the *correct motor* spins accordingly to the
 
 Once you know that the thrusters are connected to the proper outputs you can check for *correct direction* (forward/reverse) using either [automatic direction detection](#automatic) (recommended from ArduSub 4.0) or the [manual test](#manual).
 
-> **Note** [Manual Test](#manual) is supported by ArduSub up to 3.5, while ArduSub 4.0 supports both [Manual Test](#manual) and [automatic direction detection](#automatic).
+:::info
+[Manual Test](#manual) is supported by ArduSub up to 3.5, while ArduSub 4.0 supports both [Manual Test](#manual) and [automatic direction detection](#automatic).
+:::
 
 ## Manual Test {#manual}
 

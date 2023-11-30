@@ -19,19 +19,26 @@ You can accomplish this using docker, running the following script from the root
 docker build --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
 ```
 
-> **Note** The `-t` flag is essential.
-  Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
+::: info
+The `-t` flag is essential.
+Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
+:::
 
-<span></span>
-> **Note** If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
-> ```
-> docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
-> ```
-> Otherwise you will get a build error like:
-> ```
-> qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
-> ```
 
+
+::: info
+If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
+
+```
+docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+```
+
+Otherwise you will get a build error like:
+
+```
+qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
+```
+:::
 
 ## Building QGC using the Container
 
@@ -43,12 +50,14 @@ mkdir build
 docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-linux-docker
 ```
 
-> **Note** If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently.
-> On Windows the docker command is:
-> 
-> ```
-> docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-linux-docker
-> ```
+::: info
+If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently.
+On Windows the docker command is:
+
+```
+docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-linux-docker
+```
+:::
 
 Depending on your system resources, or the resources assigned to your Docker Daemon, the build step can take some time.
 

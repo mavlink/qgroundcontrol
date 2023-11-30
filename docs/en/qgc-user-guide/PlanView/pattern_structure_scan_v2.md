@@ -5,12 +5,15 @@ Structure Scans are typically used for the visual inspection or creating 3D mode
 
 *Structure Scans* may be inserted into a mission using the Plan view **Pattern > Structure Scan** tool.
 
-> **Note** The new version of *Structure Scan* can't read older *Structure Scan* plans. They will need to be recreated.
+::: info
+The new version of *Structure Scan* can't read older *Structure Scan* plans. They will need to be recreated.
+:::
 
-<span></span>
-> **Warning** This feature is not yet supported by ArduPilot firmware.
-  It is supported in PX4.
 
+::: warning
+This feature is not yet supported by ArduPilot firmware.
+It is supported in PX4.
+:::
 
 ## Overview
 
@@ -51,8 +54,10 @@ To create a scan:
 1. The rest of the configuration is handled using the *Structure Scan* editor on the right hand side of the view. 
    First select whether you want to perform a manual scan, a scan using a particular camera, or a scan using a custom camera definition.
    
-   > **Note** The main difference between the modes is that predefined cameras are already set up to correctly calculate an effective layer height and trigger distance.
-   
+   ::: info
+   The main difference between the modes is that predefined cameras are already set up to correctly calculate an effective layer height and trigger distance.
+   :::
+
    Options for the different modes are shown below.
 
    ![Structure Scan editor](../../../assets/plan/structure_scan_v2/editor_options.jpg)
