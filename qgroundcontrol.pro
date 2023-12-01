@@ -229,10 +229,7 @@ CONFIG += qt \
 DebugBuild {
     CONFIG -= qtquickcompiler
 } else {
-    # FIXME-QT6 - qmlcachegen is failing in CI for some strange reason
-    !WindowsBuild {
-        CONFIG += qtquickcompiler
-    }
+    CONFIG += qtquickcompiler
 }
 
 contains(DEFINES, ENABLE_VERBOSE_OUTPUT) {
