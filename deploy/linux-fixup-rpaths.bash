@@ -32,7 +32,7 @@ set -euo pipefail
 # To set these arguments, set them as an environment variable. For example:
 # SEARCHDIR=/opt/qgc-deploy/Qt RPATHDIR=/opt/qgc-deploy/Qt/libs ./linux-post-link.sh
 : "${SEARCHDIR:=./Qt}"
-: "${RPATHDIR:="${SEARCHDIR}/libs"}"
+: "${RPATHDIR:="${SEARCHDIR}/lib"}"
 
 # find:
 #    type f (files)
