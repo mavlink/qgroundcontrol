@@ -1530,6 +1530,37 @@
       <unit>m/s^2</unit>
       <decimal>2</decimal>
     </parameter>
+    <parameter name="EKF2_AGP_CTRL" default="1" type="INT32">
+      <short_desc>Aux global position (AGP) sensor aiding</short_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Horizontal position fusion 1 : Vertical position fusion</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <bitmask>
+        <bit index="0">Horizontal position</bit>
+        <bit index="1">Vertical position</bit>
+      </bitmask>
+    </parameter>
+    <parameter name="EKF2_AGP_DELAY" default="0" type="FLOAT">
+      <short_desc>Aux global position estimator delay relative to IMU measurements</short_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>ms</unit>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="EKF2_AGP_GATE" default="3.0" type="FLOAT">
+      <short_desc>Gate size for aux global position fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="EKF2_AGP_NOISE" default="0.9" type="FLOAT">
+      <short_desc>Measurement noise for aux global position observations used to lower bound or replace the uncertainty included in the message</short_desc>
+      <min>0.01</min>
+      <unit>m</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter name="EKF2_ANGERR_INIT" default="0.1" type="FLOAT">
       <short_desc>1-sigma tilt angle uncertainty after gravity vector alignment</short_desc>
       <min>0.0</min>
