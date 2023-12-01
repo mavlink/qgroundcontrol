@@ -38,6 +38,16 @@ endif()
 # Add folder where are supportive functions
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+# Stable or daily build option
+option(STABLE_BUILD "Stable build Rdsi-Nav" OFF)
+
+if (STABLE_BUILD)
+    message(STATUS "Stable Build")
+else ()
+    message(STATUS "Daily Build")
+    add_definitions(-DDAILY_BUILD)
+endif ()
+
 #######################################################
 #               Qt6 Configuration
 #######################################################
