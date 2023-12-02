@@ -37,7 +37,7 @@ add_library(Settings
 target_link_libraries(Settings
 	PUBLIC
 		qgc
-		Qt5::Multimedia
+		Qt6::Multimedia
 )
 
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
