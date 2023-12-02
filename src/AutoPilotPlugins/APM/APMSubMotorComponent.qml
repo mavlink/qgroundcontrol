@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 2.4
-import QtQuick.Dialogs  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 SetupPage {
     id:             motorPage
@@ -77,7 +77,7 @@ SetupPage {
                                     id:                         slider
                                     height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
                                     orientation:                Qt.Vertical
-                                    maximumValue:               100
+                                    to:               100
                                     value:                      neutralValue
 
                                     // Give slider 'center sprung' behavior
@@ -90,15 +90,15 @@ SetupPage {
                                     // Disable mouse scroll
                                     MouseArea {
                                         anchors.fill: parent
-                                        onWheel: {
+                                        onWheel: (wheel) => {
                                             // do nothing
                                             wheel.accepted = true;
                                         }
-                                        onPressed: {
+                                        onPressed: (mouse) => {
                                             // propogate/accept
                                             mouse.accepted = false;
                                         }
-                                        onReleased: {
+                                        onReleased: (mouse) => {
                                             // propogate/accept
                                             mouse.accepted = false;
                                         }

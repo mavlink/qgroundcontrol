@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Vehicle
 
 Item {
     // The following properties must be passed in from the Loader

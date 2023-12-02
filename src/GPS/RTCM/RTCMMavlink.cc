@@ -32,7 +32,7 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
         _bandwidthByteCounter = 0;
     }
 
-    const int maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
+    const qsizetype maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
     mavlink_gps_rtcm_data_t mavlinkRtcmData;
     memset(&mavlinkRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
 

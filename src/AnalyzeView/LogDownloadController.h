@@ -52,6 +52,7 @@ public:
 
     int         rowCount        (const QModelIndex & parent = QModelIndex()) const;
     QVariant    data            (const QModelIndex & index, int role = Qt::DisplayRole) const;
+    int         columnCount     (const QModelIndex &parent) const;
 
 signals:
     void        countChanged    ();

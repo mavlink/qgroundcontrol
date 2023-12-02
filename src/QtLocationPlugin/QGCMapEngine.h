@@ -42,7 +42,8 @@ public:
     QStringList                 getMapNameList      ();
     const QString               userAgent           () { return _userAgent; }
     void                        setUserAgent        (const QString& ua) { _userAgent = ua; }
-    QString                     hashToType          (const QString& hash);
+    QString                     tileHashToType      (const QString& tileHash);
+    QString                     getTileHash         (const QString& type, int x, int y, int z);
     quint32                     getMaxDiskCache     ();
     void                        setMaxDiskCache     (quint32 size);
     quint32                     getMaxMemCache      ();
@@ -57,7 +58,6 @@ public:
 
     //-- Tile Math
     static QGCTileSet           getTileCount        (int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, const QString& mapType);
-    static QString              getTileHash         (const QString& type, int x, int y, int z);
     static QString              getTypeFromName     (const QString& name);
     static QString              bigSizeToString     (quint64 size);
     static QString              storageFreeSizeToString(quint64 size_MB);

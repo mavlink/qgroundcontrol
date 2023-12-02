@@ -22,6 +22,11 @@ class MissionController;
 class QmlObjectListModel;
 class FlightPathSegment;
 
+#ifndef OPAQUE_PTR_TerrainProfile
+    #define OPAQUE_PTR_TerrainProfile
+    Q_DECLARE_OPAQUE_POINTER(MissionController*)
+#endif
+
 class TerrainProfile : public QQuickItem
 {
     Q_OBJECT

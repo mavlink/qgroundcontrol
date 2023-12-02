@@ -7,12 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.3
-import QtQuick.Controls     2.2
-import QtGraphicalEffects   1.0
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 Button {
     id:             control

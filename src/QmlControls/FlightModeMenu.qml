@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.12
-import QtQuick.Controls             2.12
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 // Label control whichs pop up a flight mode change menu when clicked
 QGCLabel {

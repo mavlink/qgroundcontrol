@@ -563,14 +563,14 @@ void MockLink::_writeBytes(const QByteArray bytes)
 void MockLink::_writeBytesQueued(const QByteArray bytes)
 {
     if (_inNSH) {
-        _handleIncomingNSHBytes(bytes.constData(), bytes.count());
+        _handleIncomingNSHBytes(bytes.constData(), bytes.length());
     } else {
         if (bytes.startsWith(QByteArray("\r\r\r"))) {
             _inNSH  = true;
-            _handleIncomingNSHBytes(&bytes.constData()[3], bytes.count() - 3);
+            _handleIncomingNSHBytes(&bytes.constData()[3], bytes.length() - 3);
         }
 
-        _handleIncomingMavlinkBytes((uint8_t *)bytes.constData(), bytes.count());
+        _handleIncomingMavlinkBytes((uint8_t *)bytes.constData(), bytes.length());
     }
 }
 

@@ -7,17 +7,17 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtCharts         2.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtCharts
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 RowLayout {
     layoutDirection: Qt.RightToLeft
@@ -306,20 +306,20 @@ RowLayout {
                 property var _startPoint: undefined
                 property double _scaling: 0
                 anchors.fill: parent
-                onPressed: {
+                onPressed: (mouse) => {
                     _startPoint = Qt.point(mouse.x, mouse.y)
                     var start = chart.mapToValue(_startPoint)
                     var next = chart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
                     _scaling = next.x - start.x
                 }
-                onWheel: {
+                onWheel: (wheel) => {
                     if (wheel.angleDelta.y > 0)
                         chartDisplaySec /= 1.2
                     else
                         chartDisplaySec *= 1.2
                     _xAxis.min = _xAxis.max - chartDisplaySec
                 }
-                onPositionChanged: {
+                onPositionChanged: (mouse) => {
                     if(_startPoint != undefined) {
                         dataTimer.running = false
                         var cp = Qt.point(mouse.x, mouse.y)

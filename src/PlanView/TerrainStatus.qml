@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick  2.12
-import QtCharts 2.3
+import QtQuick
+import QtCharts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
     id:         root

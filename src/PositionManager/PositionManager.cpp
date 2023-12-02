@@ -45,15 +45,15 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
 
    if (!_defaultSource) {
        //-- Otherwise, create a default one
-#if 0
+#if 1
        // Calling this can end up falling through a path which tries to instantiate a serialnmea source.
        // The Qt code for this will pop a qWarning if there are no serial ports available. This in turn
        // causes you to be unable to run with QT_FATAL_WARNINGS=1 to debug stuff.
        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
 #else
        // So instead we create our own version of QGeoPositionInfoSource::createDefaultSource which isn't as stupid.
-       QList<QJsonObject> plugins = QGeoPositionInfoSourcePrivate::pluginsSorted();
-       foreach (const QJsonObject &obj, plugins) {
+       QList<QCborMap> plugins = QGeoPositionInfoSourcePrivate::pluginsSorted();
+       foreach (const auto &obj, plugins) {
            if (obj.value("Position").isBool() && obj.value("Position").toBool()) {
                QString pluginName = obj.value("Keys").toArray()[0].toString();
                if (pluginName == "serialnmea") {
@@ -190,8 +190,8 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         _updateInterval = _currentSource->minimumUpdateInterval();
         _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
         _currentSource->setUpdateInterval(_updateInterval);
-        connect(_currentSource, &QGeoPositionInfoSource::positionUpdated,       this, &QGCPositionManager::_positionUpdated);
-        connect(_currentSource, SIGNAL(error(QGeoPositionInfoSource::Error)),   this, SLOT(_error(QGeoPositionInfoSource::Error)));
+        connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this, &QGCPositionManager::_positionUpdated);
+        connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this, &QGCPositionManager::_error);
         _currentSource->startUpdates();
     }
 }

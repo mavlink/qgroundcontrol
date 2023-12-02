@@ -17,6 +17,7 @@
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
+#include <QQuickStyle>
 
 #include "QGC.h"
 #include "QGCApplication.h"
@@ -365,9 +366,9 @@ int main(int argc, char *argv[])
 #endif
 #endif // QT_DEBUG
 
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
+    QQuickStyle::setStyle("Basic");
     if(app->isErrorState()) {
         app->exec();
         return -1;

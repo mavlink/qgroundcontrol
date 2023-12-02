@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.12
-import QtQuick.Window               2.12
+import QtQuick
+import QtQuick.Window
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Item {
     id:         _root
@@ -133,7 +133,7 @@ Item {
         property real initialWidth: 0
 
         // When we push the mouse button down, we un-anchor the mouse area to prevent a resizing loop
-        onPressed: {
+        onPressed: (mouse) => {
             pipResize.anchors.top = undefined // Top doesn't seem to 'detach'
             pipResize.anchors.right = undefined // This one works right, which is what we really need
             pipResize.initialX = mouse.x

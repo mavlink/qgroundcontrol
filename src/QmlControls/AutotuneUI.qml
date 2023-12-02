@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Dialogs      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controllers
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Item {
     id: _root
@@ -34,7 +34,7 @@ Item {
     Rectangle {
         width:   _root.width
         height:  statusColumn.height + (2 * _margins)
-        color:   palette.windowShade
+        color:   qgcPal.windowShade
         enabled: _autotune.autotuneEnabled
 
         QGCButton {
@@ -56,7 +56,7 @@ Item {
             \n2. The current control gains are good enough to stabilize the drone in presence of medium disturbances \
             \n3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens. \
             \n\nClick Ok to start the auto-tuning process.\n"),
-                                                    StandardButton.Ok | StandardButton.Cancel,
+                                                    Dialog.Ok | Dialog.Cancel,
                                                     function() { _autotune.autotuneRequest() })
         }
 

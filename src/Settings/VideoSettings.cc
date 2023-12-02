@@ -16,7 +16,8 @@
 #include <QVariantList>
 
 #ifndef QGC_DISABLE_UVC
-#include <QCameraInfo>
+#include <QMediaDevices>
+#include <QCameraDevice>
 #endif
 
 const char* VideoSettings::videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
@@ -58,9 +59,9 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #endif
 
 #ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    for (const QCameraInfo &cameraInfo: cameras) {
-        videoSourceList.append(cameraInfo.description());
+    QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
+    for (const auto& cameraDevice: videoInputs) {
+        videoSourceList.append(cameraDevice.description());
     }
 #endif
     if (videoSourceList.count() == 0) {

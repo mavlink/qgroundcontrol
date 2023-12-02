@@ -232,7 +232,7 @@ QGCCacheWorker::_deleteBingNoTileTiles()
     QSqlQuery query(*_db);
     QString s;
     //-- Select tiles in default set only, sorted by oldest.
-    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.count());
+    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.length());
     QList<quint64> idsToDelete;
     if (query.exec(s)) {
         while(query.next()) {
@@ -331,7 +331,7 @@ QGCCacheWorker::_getTile(QGCMapTask* mtask)
         if(query.next()) {
             const QByteArray& arrray   = query.value(0).toByteArray();
             const QString& format  = query.value(1).toString();
-            QString type = getQGCMapEngine()->urlFactory()->getTypeFromId(query.value(2).toInt());
+            const QString& type = query.value(2).toString();
             qCDebug(QGCTileCacheLog) << "_getTile() (Found in DB) HASH:" << task->hash();
             QGCCacheTile* tile = new QGCCacheTile(task->hash(), arrray, format, type);
             task->setTileFetched(tile);
@@ -367,7 +367,7 @@ QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
             set->setBottomRightLon(query.value("bottomRightLon").toDouble());
             set->setMinZoom(query.value("minZoom").toInt());
             set->setMaxZoom(query.value("maxZoom").toInt());
-            set->setType(getQGCMapEngine()->urlFactory()->getTypeFromId(query.value("type").toInt()));
+            set->setType(getQGCMapEngine()->urlFactory()->getProviderTypeFromQtMapId(query.value("type").toInt()));
             set->setTotalTileCount(query.value("numTiles").toUInt());
             set->setDefaultSet(query.value("defaultSet").toInt() != 0);
             set->setCreationDate(QDateTime::fromSecsSinceEpoch(query.value("date").toUInt()));
@@ -497,7 +497,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
         query.addBindValue(task->tileSet()->bottomRightLon());
         query.addBindValue(task->tileSet()->minZoom());
         query.addBindValue(task->tileSet()->maxZoom());
-        query.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(task->tileSet()->type()));
+        query.addBindValue(getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(task->tileSet()->type()));
         query.addBindValue(task->tileSet()->totalTileCount());
         query.addBindValue(QDateTime::currentDateTime().toSecsSinceEpoch());
         if(!query.exec()) {
@@ -516,14 +516,14 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
                 for(int x = set.tileX0; x <= set.tileX1; x++) {
                     for(int y = set.tileY0; y <= set.tileY1; y++) {
                         //-- See if tile is already downloaded
-                        QString hash = QGCMapEngine::getTileHash(type, x, y, z);
+                        QString hash = getQGCMapEngine()->getTileHash(type, x, y, z);
                         quint64 tileID = _findTile(hash);
                         if(!tileID) {
                             //-- Set to download
                             query.prepare("INSERT OR IGNORE INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(?, ?, ?, ?, ? ,? ,?)");
                             query.addBindValue(setID);
                             query.addBindValue(hash);
-                            query.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(type));
+                            query.addBindValue(getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(type));
                             query.addBindValue(x);
                             query.addBindValue(y);
                             query.addBindValue(z);
@@ -571,7 +571,7 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
         while(query.next()) {
             QGCTile* tile = new QGCTile;
             tile->setHash(query.value("hash").toString());
-            tile->setType(getQGCMapEngine()->urlFactory()->getTypeFromId(query.value("type").toInt()));
+            tile->setType(getQGCMapEngine()->urlFactory()->getProviderTypeFromQtMapId(query.value("type").toInt()));
             tile->setX(query.value("x").toInt());
             tile->setY(query.value("y").toInt());
             tile->setZ(query.value("z").toInt());
@@ -936,7 +936,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
                 exportQuery.addBindValue(set->bottomRightLon());
                 exportQuery.addBindValue(set->minZoom());
                 exportQuery.addBindValue(set->maxZoom());
-                exportQuery.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(set->type()));
+                exportQuery.addBindValue(getQGCMapEngine()->urlFactory()->getQtMapIdFromProviderType(set->type()));
                 exportQuery.addBindValue(set->totalTileCount());
                 exportQuery.addBindValue(set->defaultSet());
                 exportQuery.addBindValue(QDateTime::currentDateTime().toSecsSinceEpoch());

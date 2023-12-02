@@ -275,7 +275,7 @@ void QGeoCodeReplyQGC::networkReplyFinished()
         QGeoLocation location;
         location.setAddress(address);
         location.setCoordinate(coordinate);
-        location.setBoundingBox(boundingBox);
+        location.setBoundingShape(boundingBox);
 
         locations << location;
     }

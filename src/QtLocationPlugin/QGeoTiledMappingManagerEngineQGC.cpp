@@ -78,20 +78,19 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"), cameraCaps)
 
-    /*
-     * Google and Bing don't seem kosher at all. This was based on original code from OpenPilot and heavily modified to be used in QGC.
-     */
 
+    // Qt Map Ids must start at 1 and are sequential.
+    int qtMapId = 1;
+    auto urlFactory = getQGCMapEngine()->urlFactory();
+    MapProvider* provider = urlFactory->getMapProviderFromQtMapId(qtMapId);
     QList<QGeoMapType> mapList;
-    QHashIterator<QString, MapProvider*> i(getQGCMapEngine()->urlFactory()->getProviderTable());
 
-    while(i.hasNext()){
-        i.next();
-
-		if(!i.value()->_isElevationProvider()){
-			mapList.append(QGCGEOMAPTYPE(i.value()->getMapStyle(), i.key(), i.key(), false, false, getQGCMapEngine()->urlFactory()->getIdFromType(i.key()) )); 
-		}
+    while (provider) {
+        QString providerType = urlFactory->getProviderTypeFromQtMapId(qtMapId);
+        mapList.append(QGCGEOMAPTYPE(provider->getMapStyle(), providerType, providerType, false, false, qtMapId++));
+        provider = urlFactory->getMapProviderFromQtMapId(qtMapId);
     }
+
     setSupportedMapTypes(mapList);
 
     //-- Users (QML code) can define a different user agent
