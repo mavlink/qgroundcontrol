@@ -17,7 +17,7 @@ defaults:
 
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   5.15.2
+  QT_VERSION:   6.6.1
   ARTIFACT:     QGroundControl-installer.exe
   BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
@@ -40,11 +40,12 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           version:      ${{ env.QT_VERSION }}
+          aqtversion:   ==3.1.*
           host:         windows
           target:       desktop
           arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
-          modules:      qtcharts
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools
           setup-python: false
 
       - name: Download JOM
