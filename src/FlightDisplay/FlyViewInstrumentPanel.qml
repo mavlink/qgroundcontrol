@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.12
+import QtQuick
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 // This control contains the instruments as well and the instrument pages which include values, camera, ...
 Column {

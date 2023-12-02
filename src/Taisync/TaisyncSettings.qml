@@ -8,24 +8,23 @@
  ****************************************************************************/
 
 
-import QtGraphicalEffects       1.0
-import QtMultimedia             5.5
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
-import QtLocation               5.3
-import QtPositioning            5.3
+import QtMultimedia
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import QtLocation
+import QtPositioning
 
-import QGroundControl                       1.0
-import QGroundControl.Controllers           1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.SettingsManager       1.0
+import QGroundControl
+import QGroundControl.Controllers
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.FactSystem
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
+import QGroundControl.SettingsManager
 
 Rectangle {
     id:                 _root
@@ -410,16 +409,20 @@ Rectangle {
                         }
                         MessageDialog {
                             id:                 setRTSPDialog
-                            icon:               StandardIcon.Warning
-                            standardButtons:    StandardButton.Yes | StandardButton.No
+                            //icon:               StandardIcon.Warning
+                            buttons:            MessageDialog.Yes | MessageDialog.No
                             title:              qsTr("Set Streaming Settings")
                             text:               qsTr("Once changed, you will need to reboot the ground unit for the changes to take effect.\n\nConfirm change?")
-                            onYes: {
-                                QGroundControl.taisyncManager.setRTSPSettings(rtspURI.text, rtspAccount.text, rtspPassword.text)
-                                setRTSPDialog.close()
-                            }
-                            onNo: {
-                                setRTSPDialog.close()
+                            onButtonClicked: function (button, role) {
+                                switch (button) {
+                                case MessageDialog.Yes:
+                                    QGroundControl.taisyncManager.setRTSPSettings(rtspURI.text, rtspAccount.text, rtspPassword.text)
+                                    setRTSPDialog.close()
+                                    break;
+                                case MessageDialog.No:
+                                    setRTSPDialog.close()
+                                    break;
+                                }
                             }
                         }
                     }
@@ -517,15 +520,19 @@ Rectangle {
                         MessageDialog {
                             id:                 setIPDialog
                             icon:               StandardIcon.Warning
-                            standardButtons:    StandardButton.Yes | StandardButton.No
+                            buttons:            MessageDialog.Yes | MessageDialog.No
                             title:              qsTr("Set Network Settings")
                             text:               qsTr("Once changed, you will need to reboot the ground unit for the changes to take effect. The local IP address must match the one entered (%1).\n\nConfirm change?").arg(localIP.text)
-                            onYes: {
-                                QGroundControl.taisyncManager.setIPSettings(localIP.text, remoteIP.text, netMask.text)
-                                setIPDialog.close()
-                            }
-                            onNo: {
-                                setIPDialog.close()
+                            onButtonClicked: function (button, role) {
+                                switch (button) {
+                                case MessageDialog.Yes:
+                                    QGroundControl.taisyncManager.setIPSettings(localIP.text, remoteIP.text, netMask.text)
+                                    setIPDialog.close()
+                                    break;
+                                case MessageDialog.No:
+                                    setIPDialog.close()
+                                    break;
+                                }
                             }
                         }
                     }

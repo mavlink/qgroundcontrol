@@ -23,7 +23,8 @@
     "name":             "SplitConcavePolygons",
     "shortDesc": "Split mission concave polygons into separate regular, convex polygons.",
     "type":             "bool",
-    "default":     false
+    "default":     false,
+    "comment":      "Although this setting is here, the code for it is disabled since it was not working."
 }
 ]
 }

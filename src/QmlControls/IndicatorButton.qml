@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 /// Works just like a regular button but it can have a red indicator on the right side displayed
 QGCButton {

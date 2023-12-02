@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 
-import QtQuick          2.5
-import QtQuick.Controls 1.3
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 /// This is an example Qml file which is used to describe the QGroundControl coding style.
 /// In general almost everything in here has some coding style meaning including order of

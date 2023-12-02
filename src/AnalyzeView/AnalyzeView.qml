@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Window   2.2
-import QtQuick.Controls 1.2
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 Rectangle {
     id:     _root
@@ -23,8 +23,6 @@ Rectangle {
     z:      QGroundControl.zOrderTopMost
 
     signal popout()
-
-    ExclusiveGroup { id: setupButtonGroup }
 
     readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
     readonly property real  _defaultTextWidth:      ScreenTools.defaultFontPixelWidth
@@ -87,7 +85,7 @@ Rectangle {
                     id:                 subMenu
                     imageResource:      modelData.icon
                     setupIndicator:     false
-                    exclusiveGroup:     setupButtonGroup
+                    autoExclusive:      true
                     text:               modelData.title
 
                     onClicked: {

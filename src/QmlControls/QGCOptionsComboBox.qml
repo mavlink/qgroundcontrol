@@ -9,13 +9,13 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 ComboBox {
     id:         control

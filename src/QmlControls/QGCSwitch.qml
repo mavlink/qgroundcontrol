@@ -7,24 +7,22 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Switch {
     id: _root
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
-    style: SwitchStyle {
-        groove:     Rectangle {
-            implicitWidth:  ScreenTools.defaultFontPixelWidth * 6
-            implicitHeight: ScreenTools.defaultFontPixelHeight
-            color:          (control.checked && control.enabled) ? qgcPal.colorGreen : qgcPal.colorGrey
-            radius:         3
-            border.color:   qgcPal.button
-            border.width:   1
-        }
+    indicator: Rectangle {
+        implicitWidth:  ScreenTools.defaultFontPixelWidth * 6
+        implicitHeight: ScreenTools.defaultFontPixelHeight
+        color:          (control.checked && control.enabled) ? qgcPal.colorGreen : qgcPal.colorGrey
+        radius:         3
+        border.color:   qgcPal.button
+        border.width:   1
     }
 }

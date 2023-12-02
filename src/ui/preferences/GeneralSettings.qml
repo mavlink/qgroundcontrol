@@ -8,21 +8,21 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.Controllers           1.0
-import QGroundControl.SettingsManager       1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.SettingsManager
 
 Rectangle {
     id:                 _root
@@ -39,7 +39,7 @@ Rectangle {
 
     property real   _labelWidth:                ScreenTools.defaultFontPixelWidth * 20
     property real   _comboFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
-    property real   _valueFieldWidth:           ScreenTools.defaultFontPixelWidth * 10
+    property real   _valueFieldWidth:           ScreenTools.defaultFontPixelWidth * 15
     property string _mapProvider:               QGroundControl.settingsManager.flightMapSettings.mapProvider.value
     property string _mapType:                   QGroundControl.settingsManager.flightMapSettings.mapType.value
     property Fact   _followTarget:              QGroundControl.settingsManager.appSettings.followTarget
@@ -234,7 +234,6 @@ Rectangle {
                                         id:             customActionPathBrowseDialog
                                         title:          qsTr("Choose the Custom Action Definitions file")
                                         folder:         customActions.jsonFile.rawValue
-                                        selectExisting: true
                                         selectFolder:   false
                                         onAcceptedForLoad: customActions.jsonFile.rawValue = file
                                         nameFilters: ["JSON files (*.json)"]
@@ -709,17 +708,21 @@ Rectangle {
                                     MessageDialog {
                                         id:                 clearDialog
                                         visible:            false
-                                        icon:               StandardIcon.Warning
-                                        standardButtons:    StandardButton.Yes | StandardButton.No
+                                        //icon:               StandardIcon.Warning
+                                        buttons:            MessageDialog.Yes | MessageDialog.No
                                         title:              qsTr("Clear Settings")
                                         text:               qsTr("All saved settings will be reset the next time you start %1. Is this really what you want?").arg(QGroundControl.appName)
-                                        onYes: {
-                                            QGroundControl.deleteAllSettingsNextBoot()
-                                            clearDialog.visible = false
-                                        }
-                                        onNo: {
-                                            clearCheck.checked  = false
-                                            clearDialog.visible = false
+                                        onButtonClicked: function (button, role) {
+                                            switch (button) {
+                                            case MessageDialog.Yes:
+                                                QGroundControl.deleteAllSettingsNextBoot()
+                                                //clearDialog.visible = false
+                                                break;
+                                            case MessageDialog.No:
+                                                clearCheck.checked  = false
+                                                //clearDialog.visible = false
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -755,7 +758,6 @@ Rectangle {
                                     id:             savePathBrowseDialog
                                     title:          qsTr("Choose the location to save/load files")
                                     folder:         _savePath.rawValue
-                                    selectExisting: true
                                     selectFolder:   true
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
@@ -1159,7 +1161,6 @@ Rectangle {
                                     id:                 userBrandImageIndoorBrowseDialog
                                     title:              qsTr("Choose custom brand image file")
                                     folder:             _userBrandImageIndoor.rawValue.replace("file:///","")
-                                    selectExisting:     true
                                     selectFolder:       false
                                     onAcceptedForLoad:  _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
@@ -1181,7 +1182,6 @@ Rectangle {
                                     id:                 userBrandImageOutdoorBrowseDialog
                                     title:              qsTr("Choose custom brand image file")
                                     folder:             _userBrandImageOutdoor.rawValue.replace("file:///","")
-                                    selectExisting:     true
                                     selectFolder:       false
                                     onAcceptedForLoad:  _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }

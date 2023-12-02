@@ -7,14 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.12
-import QtQuick.Layouts              1.12
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
     id:                 telemetryPanel
@@ -86,29 +86,29 @@ Rectangle {
             }
         }
 
-        QGCMouseArea {
-            id:                         mouseArea
-            x:                          telemetryLayout.x
-            y:                          telemetryLayout.y
-            width:                      telemetryLayout.width
-            height:                     telemetryLayout.height
-            hoverEnabled:               !ScreenTools.isMobile
-            propagateComposedEvents:    true
-
-            onClicked: {
-                if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
-                    valueArea.settingsUnlocked = true
-                    mouse.accepted = true
-                } else {
-                    mouse.accepted = false
-                }
-            }
-        }
-
         HorizontalFactValueGrid {
             id:                     valueArea
             userSettingsGroup:      telemetryBarUserSettingsGroup
             defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
+        }
+    }
+
+    QGCMouseArea {
+        id:                         mouseArea
+        x:                          telemetryLayout.x
+        y:                          telemetryLayout.y
+        width:                      telemetryLayout.width
+        height:                     telemetryLayout.height
+        hoverEnabled:               !ScreenTools.isMobile
+        propagateComposedEvents:    true
+
+        onClicked: (mouse) => {
+            if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
+                valueArea.settingsUnlocked = true
+                mouse.accepted = true
+            } else {
+                mouse.accepted = false
+            }
         }
     }
 }

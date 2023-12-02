@@ -7,16 +7,17 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Dialogs      1.2
-import QtQuick.Layouts      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import Qt.labs.qmlmodels
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 AnalyzePage {
     id:                 logDownloadPage
@@ -26,7 +27,7 @@ AnalyzePage {
     property real _margin:          ScreenTools.defaultFontPixelWidth
     property real _butttonWidth:    ScreenTools.defaultFontPixelWidth * 10
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Component {
         id: pageComponent
@@ -48,74 +49,106 @@ AnalyzePage {
                 }
             }
 
-            TableView {
-                id: tableView
-                Layout.fillHeight:  true
-                model:              logController.model
-                selectionMode:      SelectionMode.MultiSelection
+            ColumnLayout {
                 Layout.fillWidth:   true
+                Layout.fillHeight:  true
+                spacing:            0
 
-                TableViewColumn {
-                    title: qsTr("Id")
-                    width: ScreenTools.defaultFontPixelWidth * 6
-                    horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
-                        color: styleData.textColor
-                        horizontalAlignment: Text.AlignHCenter
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            return o ? o.id : ""
-                        }
-                    }
+                HorizontalHeaderView {
+                    Layout.fillWidth:   true
+                    model:              [ qsTr("Id"), qsTr("Date"), qsTr("Size"), qsTr("Status") ]
+                    syncView:           tableView
+                    clip:               true
                 }
 
-                TableViewColumn {
-                    title: qsTr("Date")
-                    width: ScreenTools.defaultFontPixelWidth * 34
-                    horizontalAlignment: Text.AlignHCenter
-                    delegate: Text  {
-                        color: styleData.textColor
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            if (o) {
-                                //-- Have we received this entry already?
-                                if(logController.model.get(styleData.row).received) {
-                                    var d = logController.model.get(styleData.row).time
-                                    if(d.getUTCFullYear() < 2010)
-                                        return qsTr("Date Unknown")
-                                    else
-                                        return d.toLocaleString(undefined, "short")
+                TableView {
+                    id:                     tableView
+                    Layout.fillWidth:       true
+                    model:                  logController.model
+                    selectionBehavior:      TableView.SelectRows
+                    selectionMode:          TableView.ExtendedSelection
+                    columnWidthProvider:    columnWidth
+                    selectionModel:         ItemSelectionModel {}
+
+                    property int modelCount: model.count
+
+                    onModelCountChanged: console.log("modelCount", modelCount)
+
+                    onColumnsChanged: console.log("columns", columns)
+
+                    function columnWidth(column) {
+                        switch (column) {
+                        case 0:
+                            return ScreenTools.defaultFontPixelWidth * 6
+                        case 1:
+                            return ScreenTools.defaultFontPixelWidth * 34
+                        case 2:
+                            return ScreenTools.defaultFontPixelWidth * 18
+                        case 3:
+                            return  ScreenTools.defaultFontPixelWidth * 22
+                        default:
+                            return 0
+                        }
+                    }
+
+                    delegate: DelegateChooser {
+                        DelegateChoice { 
+                            column: 0
+                            delegate : Text  {
+                                color: qgcPal.text
+                                //horizontalAlignment: Text.AlignHCenter
+                                Component.onCompleted: console.log("index", index, text)
+                                text: {
+                                    var o = logController.model.get(index)
+                                    return o ? o.id : ""
                                 }
                             }
-                            return ""
                         }
-                    }
-                }
 
-                TableViewColumn {
-                    title: qsTr("Size")
-                    width: ScreenTools.defaultFontPixelWidth * 18
-                    horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
-                        color: styleData.textColor
-                        horizontalAlignment: Text.AlignRight
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            return o ? o.sizeStr : ""
+                        DelegateChoice { 
+                            column: 1
+                            delegate: Text  {
+                                color: qgcPal.text
+                                text: {
+                                    var o = logController.model.get(index)
+                                    if (o) {
+                                        //-- Have we received this entry already?
+                                        if(logController.model.get(index).received) {
+                                            var d = logController.model.get(index).time
+                                            if(d.getUTCFullYear() < 2010)
+                                                return qsTr("Date Unknown")
+                                            else
+                                                return d.toLocaleString(undefined, "short")
+                                        }
+                                    }
+                                    return ""
+                                }
+                            }
                         }
-                    }
-                }
 
-                TableViewColumn {
-                    title: qsTr("Status")
-                    width: ScreenTools.defaultFontPixelWidth * 22
-                    horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
-                        color: styleData.textColor
-                        horizontalAlignment: Text.AlignHCenter
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            return o ? o.status : ""
+                        DelegateChoice { 
+                            column: 2
+                            delegate : Text  {
+                                color: qgcPal.text
+                                //horizontalAlignment: Text.AlignRight
+                                Component.onCompleted: console.log("size", index, logController.model.get(index).sizeStr)
+                                text: {
+                                    var o = logController.model.get(index)
+                                    return o ? o.sizeStr : ""
+                                }
+                            }
+                        }
+
+                        DelegateChoice { 
+                            column: 3
+                            delegate : Text  {
+                                color: qgcPal.text
+                                //horizontalAlignment: Text.AlignHCenter
+                                text: {
+                                    var o = logController.model.get(index)
+                                    return o ? o.status : ""
+                                }
+                            }
                         }
                     }
                 }
@@ -136,7 +169,7 @@ AnalyzePage {
                     }
                 }
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs && tableView.selection.count > 0
+                    enabled:    !logController.requestingList && !logController.downloadingLogs && tableView.selectionModel.selectedIndexes.count > 0
                     text:       qsTr("Download")
                     width:      _butttonWidth
                     onClicked: {
@@ -146,7 +179,7 @@ AnalyzePage {
                             if (o) o.selected = false
                         }
                         //-- Flag selected log files
-                        tableView.selection.forEach(function(rowIndex){
+                        tableView.selectionModel.selectedIndexes.forEach(function(rowIndex){
                             var o = logController.model.get(rowIndex)
                             if (o) o.selected = true
                         })
@@ -155,7 +188,6 @@ AnalyzePage {
                             logController.download()
                         } else {
                             fileDialog.title =          qsTr("Select save directory")
-                            fileDialog.selectExisting = true
                             fileDialog.folder =         QGroundControl.settingsManager.appSettings.logSavePath
                             fileDialog.selectFolder =   true
                             fileDialog.openForLoad()
@@ -163,7 +195,7 @@ AnalyzePage {
                     }
                     QGCFileDialog {
                         id: fileDialog
-                        onAcceptedForLoad: {
+                        onAcceptedForLoad: (file) => {
                             logController.download(file)
                             close()
                         }
@@ -175,7 +207,7 @@ AnalyzePage {
                     width:      _butttonWidth
                     onClicked:  mainWindow.showMessageDialog(qsTr("Delete All Log Files"),
                                                              qsTr("All log files will be erased permanently. Is this really what you want?"),
-                                                             StandardButton.Yes | StandardButton.No,
+                                                             Dialog.Yes | Dialog.No,
                                                              function() { logController.eraseAll() })
                 }
                 QGCButton {

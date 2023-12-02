@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 Item {
     id:     _root
@@ -107,7 +107,7 @@ Item {
         Connections {
             target: controller
 
-            onChannelRCValueChanged: {
+            onChannelRCValueChanged: (channel, rcValue) => {
                 if (channelMonitorRepeater.itemAt(channel)) {
                     channelMonitorRepeater.itemAt(channel).loader.item.rcValue = rcValue
                 }
