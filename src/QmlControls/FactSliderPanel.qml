@@ -99,7 +99,7 @@ Column {
                         style: SliderStyle {
                             tickmarks: Repeater {
                                 id: repeater
-                                model: control.stepSize > 0 ? 1 + (control.maximumValue - control.minimumValue) / control.stepSize : 0
+                                model: control.stepSize > 0 ? 1 + (control.to - control.from) / control.stepSize : 0
                                 property int unused: get()
                                 function get() {
                                     slider.handleWidth = styleData.handleWidth
@@ -128,17 +128,17 @@ Column {
                         anchors.right:      parent.right
                         QGCLabel {
                             id: leftValueLabel
-                            text: slider.minimumValue
+                            text: slider.from
                             horizontalAlignment: Text.AlignLeft
                         }
                         Item {
                             QGCLabel {
-                                visible: slider.value != slider.minimumValue && slider.value != slider.maximumValue
+                                visible: slider.value != slider.from && slider.value != slider.to
                                 text: Math.round(slider._fact.value*100000)/100000
                                 x: getX()
                                 function getX() {
-                                    var span = slider.maximumValue - slider.minimumValue
-                                    var x = slider.handleWidth / 2 + (slider.value-slider.minimumValue)/span * (slider.width-slider.handleWidth) - width / 2
+                                    var span = slider.to - slider.from
+                                    var x = slider.handleWidth / 2 + (slider.value-slider.from)/span * (slider.width-slider.handleWidth) - width / 2
                                     // avoid overlapping text
                                     var minX = leftValueLabel.x + leftValueLabel.width + _margins/2
                                     if (x < minX) x = minX
@@ -150,7 +150,7 @@ Column {
                         }
                         QGCLabel {
                             id: rightValueLabel
-                            text: slider.maximumValue
+                            text: slider.to
                             Layout.alignment: Qt.AlignRight
                         }
                     }
