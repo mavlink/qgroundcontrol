@@ -80,6 +80,7 @@ linux {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += __STDC_CONSTANT_MACROS        
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         QMAKE_CFLAGS -= -Zc:strictStrings
