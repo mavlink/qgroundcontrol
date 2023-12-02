@@ -81,8 +81,10 @@ void ChannelConfig::instanceVisibleChanged()
     }
 }
 
-ChannelConfigInstance* ChannelConfigVirtualAxis::instantiate(int paramIndex, int actuatorTypeIndex,
-        ParameterManager* parameterManager, std::function<void(Function, Fact*)> factAddedCb)
+ChannelConfigInstance *ChannelConfigVirtualAxis::instantiate(
+    [[maybe_unused]] int paramIndex, [[maybe_unused]] int actuatorTypeIndex,
+    [[maybe_unused]] ParameterManager *parameterManager,
+    [[maybe_unused]] std::function<void(Function, Fact *)> factAddedCb)
 {
     ChannelConfigInstance* instance = new ChannelConfigInstanceVirtualAxis(this, *this);
     channelInstanceCreated(instance);
@@ -366,7 +368,7 @@ bool MixerChannel::getGeometry(const ActuatorTypes& actuatorTypes, const MixerOp
     return numPositionAxis == 3;
 }
 
-Fact* MixerChannel::getFact(Function function) const
+Fact* MixerChannel::getFact([[maybe_unused]] Function function) const
 {
     for (int i = 0; i < _configInstances->count(); ++i) {
         ChannelConfigInstance* configInstance = _configInstances->value<ChannelConfigInstance*>(i);

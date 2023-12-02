@@ -39,6 +39,11 @@ class QGCCameraControl;
 class QQuickItem;
 class InstrumentValueAreaController;
 
+#ifndef OPAQUE_PTR_QGCCorePlugin
+    #define OPAQUE_PTR_QGCCorePlugin
+    Q_DECLARE_OPAQUE_POINTER(QGCOptions*)
+#endif
+
 class QGCCorePlugin : public QGCTool
 {
     Q_OBJECT

@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtPositioning    5.3
+import QtQuick
+import QtPositioning
 
-import QGroundControl           1.0
-import QGroundControl.FlightMap 1.0
+import QGroundControl
+import QGroundControl.FlightMap
 
 /// Set of functions for fitting the map view to a specific constraint
 Item {

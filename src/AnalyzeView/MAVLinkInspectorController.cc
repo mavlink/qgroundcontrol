@@ -14,8 +14,6 @@
 
 QGC_LOGGING_CATEGORY(MAVLinkInspectorLog, "MAVLinkInspectorLog")
 
-QT_CHARTS_USE_NAMESPACE
-
 Q_DECLARE_METATYPE(QAbstractSeries*)
 
 #define UPDATE_FREQUENCY (1000 / 15)    // 15Hz

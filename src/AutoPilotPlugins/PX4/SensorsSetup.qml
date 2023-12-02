@@ -7,19 +7,19 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 /// Page for sensor calibration. This control is used within the SensorsComponent control and can also be used
 /// standalone for custom uis. When using standadalone you can use the various show* bools to show/hide what you want.
@@ -191,6 +191,8 @@ Item {
         }
     }
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
     SensorsComponentController {
         id:                         controller
         statusLog:                  statusTextArea
@@ -250,7 +252,7 @@ Item {
         id: preCalibrationDialogComponent
 
         QGCPopupDialog {
-            buttons: StandardButton.Cancel | StandardButton.Ok
+            buttons: Dialog.Cancel | Dialog.Ok
 
             onAccepted: {
                 if (preCalibrationDialogType == "gyro") {
@@ -318,7 +320,7 @@ Item {
         id: setOrientationsDialogComponent
 
         QGCPopupDialog {
-            buttons: StandardButton.Ok
+            buttons: Dialog.Ok
 
             property bool showRebootVehicleButton: true
 
@@ -523,13 +525,9 @@ Item {
                 width:          parent.calDisplayAreaWidth
                 height:         parent.height
                 readOnly:       true
-                frameVisible:   false
                 text:           statusTextAreaDefaultText
-
-                style: TextAreaStyle {
-                    textColor: qgcPal.text
-                    backgroundColor: qgcPal.windowShade
-                }
+                color:          qgcPal.Text
+                background: Rectangle { color: qgcPal.windowShade }
             }
 
             Rectangle {

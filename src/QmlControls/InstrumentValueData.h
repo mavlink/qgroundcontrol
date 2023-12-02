@@ -12,10 +12,9 @@
 #include "FactSystem.h"
 #include "QmlObjectListModel.h"
 #include "QGCApplication.h"
+#include "FactValueGrid.h"
 
 #include <QObject>
-
-class FactValueGrid;
 
 class InstrumentValueData : public QObject
 {

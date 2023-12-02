@@ -1,70 +1,57 @@
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
-FocusScope {
-    id:     _root
-    height: column.height
+CheckBox {
+    id:         control
+    focusPolicy: Qt.ClickFocus
 
-    property alias          color:          label.color
-    property alias          text:           label.text
-    property bool           checked:        true
+    property var            color:          qgcPal.text
     property bool           showSpacer:     true
-    property ExclusiveGroup exclusiveGroup: null
+    property ButtonGroup    buttonGroup:    null
 
-    property real   _sectionSpacer: ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
+    property real _sectionSpacer: ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
 
-    onExclusiveGroupChanged: {
-        if (exclusiveGroup)
-            exclusiveGroup.bindCheckable(_root)
+    onButtonGroupChanged: {
+        if (buttonGroup) {
+            buttonGroup.addButton(control)
+        }
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    QGCMouseArea {
-        anchors.fill: parent
-
-        onClicked: {
-            _root.focus = true
-            checked = !checked
+    contentItem: ColumnLayout {
+        Item {
+            Layout.preferredHeight: control._sectionSpacer
+            width:                  1
+            visible:                control.showSpacer
         }
 
-        ColumnLayout {
-            id:             column
-            anchors.left:   parent.left
-            anchors.right:  parent.right
+        QGCLabel {
+            text:               control.text
+            color:              control.color
+            Layout.fillWidth:   true
 
-            Item {
-                height:     _sectionSpacer
-                width:      1
-                visible:    showSpacer
+            QGCColoredImage {
+                anchors.right:          parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width:                  parent.height / 2
+                height:                 width
+                source:                 "/qmlimages/arrow-down.png"
+                color:                  qgcPal.text
+                visible:                !control.checked
             }
+        }
 
-            QGCLabel {
-                id:                 label
-                Layout.fillWidth:   true
-
-                QGCColoredImage {
-                    id:                     image
-                    anchors.right:          parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    width:                  label.height / 2
-                    height:                 width
-                    source:                 "/qmlimages/arrow-down.png"
-                    color:                  qgcPal.text
-                    visible:                !_root.checked
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth:   true
-                height:             1
-                color:              qgcPal.text
-            }
+        Rectangle {
+            Layout.fillWidth:   true
+            height:             1
+            color:              qgcPal.text
         }
     }
+
+    indicator: Item {}
 }

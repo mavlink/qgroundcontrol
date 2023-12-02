@@ -14,14 +14,14 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick              2.3
-import QtGraphicalEffects   1.0
+import QtQuick
+import Qt5Compat.GraphicalEffects
 
-import QGroundControl              1.0
-import QGroundControl.Controls     1.0
-import QGroundControl.ScreenTools  1.0
-import QGroundControl.Vehicle      1.0
-import QGroundControl.Palette      1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Palette
 
 Item {
     id:     root

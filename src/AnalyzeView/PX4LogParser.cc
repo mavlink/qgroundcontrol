@@ -42,7 +42,7 @@ bool PX4LogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFee
     // extract trigger data
     int index = 1;
     int sequence = -1;
-    while(index < log.count() - 1) {
+    while(index < log.length() - 1) {
 
         // first extract trigger
         index = log.indexOf(triggerHeader, index + 1);

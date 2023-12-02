@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick                          2.11
+import QtQuick
 
-import QGroundControl                   1.0
-import QGroundControl.SettingsManager   1.0
+import QGroundControl
+import QGroundControl.SettingsManager
 
 Item {
     id: root

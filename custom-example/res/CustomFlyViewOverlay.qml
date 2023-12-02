@@ -9,16 +9,16 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick          2.12
-import QtQuick.Controls 2.4
-import QtQuick.Layouts  1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
-import Custom.Widgets 1.0
+import Custom.Widgets
 
 Item {
     property var parentToolInsets                       // These insets tell you what screen real estate is available for positioning the controls in your overlay

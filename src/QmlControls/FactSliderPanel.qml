@@ -8,16 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Column {
     /// ListModel must contains elements which look like this:
@@ -40,7 +40,7 @@ Column {
         id: controller
     }
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Column {
         id:                 sliderOuterColumn
@@ -57,7 +57,7 @@ Column {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             sliderColumn.y + sliderColumn.height + _margins
-                color:              palette.windowShade
+                color:              qgcPal.windowShade
 
                 Column {
                     id:                 sliderColumn
@@ -78,10 +78,10 @@ Column {
                     Slider {
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        minimumValue:       min
-                        maximumValue:       max
+                        from:       min
+                        to:       max
                         stepSize:           step
-                        tickmarksEnabled:   true
+                        //tickmarksEnabled:   true  // FIXME_QT6
                         value:              _fact.value
                         id:                 slider
                         property int handleWidth: 0
@@ -94,6 +94,8 @@ Column {
                             }
                         }
 
+                        // FIXME-QT6 - Controls 2 doesn't do styling this way
+                        /*
                         style: SliderStyle {
                             tickmarks: Repeater {
                                 id: repeater
@@ -105,7 +107,7 @@ Column {
                                 }
 
                                 Rectangle {
-                                    color: Qt.hsla(palette.text.hslHue, palette.text.hslSaturation, palette.text.hslLightness, 0.5)
+                                    color: Qt.hsla(qgcPal.text.hslHue, qgcPal.text.hslSaturation, qgcPal.text.hslLightness, 0.5)
                                     width: 2
                                     height: 4
                                     y: repeater.height
@@ -113,6 +115,7 @@ Column {
                                 }
                             }
                         }
+                        */
                     }
 
                     Item { // spacing
