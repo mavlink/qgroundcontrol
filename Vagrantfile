@@ -76,7 +76,7 @@ Vagrant.configure(2) do |config|
      echo 'Initialising submodules'
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
 
-     # with reference to https://github.com/jurplel/install-qt-action/blob/master/src/main.ts and .github/workflows/linux_release.yml:
+     # with reference to https://github.com/jurplel/install-qt-action@v3/blob/master/src/main.ts and .github/workflows/linux_release.yml:
      echo 'Installing QT'
      apt-get install -y python3-pip
      su - vagrant -c "pip3 install --user aqtinstall"
