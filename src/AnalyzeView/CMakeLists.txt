@@ -42,11 +42,11 @@ target_link_libraries(AnalyzeView
 		qgc
 
 	PUBLIC
-		Qt5::Charts
-		Qt5::Location
-		Qt5::SerialPort
-		Qt5::TextToSpeech
-		Qt5::Widgets
+		Qt6::Charts
+		Qt6::Location
+		Qt6::SerialPort
+		Qt6::TextToSpeech
+		Qt6::Widgets
 )
 
 target_include_directories(AnalyzeView INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
