@@ -26,8 +26,8 @@ Row {
     }
 
     Component.onCompleted: {
-        slide.minimumValue = fact.min
-        slide.maximumValue = fact.max
+        slide.from = fact.min
+        slide.to = fact.max
         slide.value = fact.value
         _loadComplete = true
     }

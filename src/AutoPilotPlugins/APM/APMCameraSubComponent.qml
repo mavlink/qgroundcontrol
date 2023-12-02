@@ -97,8 +97,8 @@ SetupPage {
                     gimbalSettingsLoader.sourceComponent = gimbalSettings
                 }
                 calcGimbalOutValues()
-                slide.minimumValue = 10
-                slide.maximumValue = 127
+                slide.from = 10
+                slide.to = 127
                 slide.value = slide._fact.value
                 slide._loadComplete = true
             }
