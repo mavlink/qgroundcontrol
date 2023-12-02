@@ -244,7 +244,7 @@ void GeoTagWorker::run()
     }
 
     // Tag images
-    int maxIndex = std::min(_imageIndices.count(), _triggerIndices.count());
+    auto maxIndex = std::min(_imageIndices.count(), _triggerIndices.count());
     maxIndex = std::min(maxIndex, _imageList.count());
     for(int i = 0; i < maxIndex; i++) {
         int imageIndex = _imageIndices[i];

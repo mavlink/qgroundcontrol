@@ -7,16 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.12
-import QtLocation               5.3
-import QtPositioning            5.3
-import QtGraphicalEffects       1.0
+import QtQuick
+import QtLocation
+import QtPositioning
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
 
 Item {
     id:             _root

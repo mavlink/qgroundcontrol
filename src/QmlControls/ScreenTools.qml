@@ -1,11 +1,11 @@
 pragma Singleton
 
-import QtQuick          2.12
-import QtQuick.Controls 1.2
-import QtQuick.Window   2.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
 
-import QGroundControl                       1.0
-import QGroundControl.ScreenToolsController 1.0
+import QGroundControl
+import QGroundControl.ScreenToolsController
 
 /*!
  The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
@@ -17,7 +17,7 @@ import QGroundControl.ScreenToolsController 1.0
 
  Usage:
 
-        import QGroundControl.ScreenTools 1.0
+        import QGroundControl.ScreenTools
 
         Rectangle {
             anchors.fill:       parent

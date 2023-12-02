@@ -179,7 +179,7 @@ private:
     typedef struct {
         TerrainAtCoordinateQuery*   terrainAtCoordinateQuery;
         bool                        queryObjectDestroyed;
-        int                         cCoord;
+        qsizetype                   cCoord;
     } SentRequestInfo_t;
 
 

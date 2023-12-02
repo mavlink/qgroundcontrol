@@ -79,6 +79,18 @@ class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
 
+#ifndef OPAQUE_PTR_Vehicle
+    #define OPAQUE_PTR_Vehicle
+    Q_DECLARE_OPAQUE_POINTER(AutoPilotPlugin*)
+    Q_DECLARE_OPAQUE_POINTER(TrajectoryPoints*)
+    Q_DECLARE_OPAQUE_POINTER(ParameterManager*)
+    Q_DECLARE_OPAQUE_POINTER(VehicleObjectAvoidance*)
+    Q_DECLARE_OPAQUE_POINTER(Autotune*)
+    Q_DECLARE_OPAQUE_POINTER(RemoteIDManager*)
+    Q_DECLARE_OPAQUE_POINTER(Actuators*)
+    Q_DECLARE_OPAQUE_POINTER(QGCCameraManager*)
+#endif
+
 namespace events {
 namespace parser {
 class ParsedEvent;

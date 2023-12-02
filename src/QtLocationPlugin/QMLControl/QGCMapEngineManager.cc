@@ -224,7 +224,7 @@ QGCMapEngineManager::mapProviderList()
 {
     // Extract Provider name from MapName ( format : "Provider Type")
     QStringList mapList = getQGCMapEngine()->getMapNameList();
-    mapList.replaceInStrings(QRegExp("^([^\\ ]*) (.*)$"),"\\1");
+    mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\1");
     mapList.removeDuplicates();
     return mapList;
 }
@@ -236,7 +236,7 @@ QGCMapEngineManager::mapTypeList(QString provider)
     // Extract type name from MapName ( format : "Provider Type")
     QStringList mapList = getQGCMapEngine()->getMapNameList();
     mapList = mapList.filter(QRegularExpression(provider));
-    mapList.replaceInStrings(QRegExp("^([^\\ ]*) (.*)$"),"\\2");
+    mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\2");
     mapList.removeDuplicates();
     return mapList;
 }

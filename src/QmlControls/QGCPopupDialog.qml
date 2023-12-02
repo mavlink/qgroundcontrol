@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.12
-import QtQuick.Controls             2.4
-import QtQuick.Layouts              1.12
-import QtQuick.Dialogs              1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 // Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
 //
@@ -50,7 +50,7 @@ Popup {
     focus:              true
 
     property string title
-    property var    buttons:                StandardButton.Ok
+    property var    buttons:                Dialog.Ok
     property bool   acceptAllowed:          acceptButton.visible
     property bool   rejectAllowed:          rejectButton.visible
     property alias  acceptButtonEnabled:    acceptButton.enabled
@@ -155,58 +155,58 @@ Popup {
         acceptButton.visible = false
         rejectButton.visible = false
         // Accept role buttons
-        if (buttons & StandardButton.Ok) {
+        if (buttons & Dialog.Ok) {
             acceptButton.text = qsTr("Ok")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Open) {
+        } else if (buttons & Dialog.Open) {
             acceptButton.text = qsTr("Open")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Save) {
+        } else if (buttons & Dialog.Save) {
             acceptButton.text = qsTr("Save")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Apply) {
+        } else if (buttons & Dialog.Apply) {
             acceptButton.text = qsTr("Apply")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Open) {
+        } else if (buttons & Dialog.Open) {
             acceptButton.text = qsTr("Open")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.SaveAll) {
+        } else if (buttons & Dialog.SaveAll) {
             acceptButton.text = qsTr("Save All")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Yes) {
+        } else if (buttons & Dialog.Yes) {
             acceptButton.text = qsTr("Yes")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.YesToAll) {
+        } else if (buttons & Dialog.YesToAll) {
             acceptButton.text = qsTr("Yes to All")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Retry) {
+        } else if (buttons & Dialog.Retry) {
             acceptButton.text = qsTr("Retry")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Reset) {
+        } else if (buttons & Dialog.Reset) {
             acceptButton.text = qsTr("Reset")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.RestoreToDefaults) {
+        } else if (buttons & Dialog.RestoreToDefaults) {
             acceptButton.text = qsTr("Restore to Defaults")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Ignore) {
+        } else if (buttons & Dialog.Ignore) {
             acceptButton.text = qsTr("Ignore")
             acceptButton.visible = true
         }
 
         // Reject role buttons
-        if (buttons & StandardButton.Cancel) {
+        if (buttons & Dialog.Cancel) {
             rejectButton.text = qsTr("Cancel")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.Close) {
+        } else if (buttons & Dialog.Close) {
             rejectButton.text = qsTr("Close")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.No) {
+        } else if (buttons & Dialog.No) {
             rejectButton.text = qsTr("No")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.NoToAll) {
+        } else if (buttons & Dialog.NoToAll) {
             rejectButton.text = qsTr("No to All")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.Abort) {
+        } else if (buttons & Dialog.Abort) {
             rejectButton.text = qsTr("Abort")
             rejectButton.visible = true
         }
@@ -275,7 +275,7 @@ Popup {
                     height: childrenRect.height
                     focus:  true
 
-                    Keys.onReleased: {
+                    Keys.onReleased: (event) => {
                         if (event.key === Qt.Key_Escape) {
                             _reject()
                             event.accepted = true

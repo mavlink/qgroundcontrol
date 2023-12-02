@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQml.Models 2.12
+import QtQml.Models
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
 
 ToolStrip {
     id:     _root

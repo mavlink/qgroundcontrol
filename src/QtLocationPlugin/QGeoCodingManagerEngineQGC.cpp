@@ -174,5 +174,5 @@ void QGeoCodingManagerEngineQGC::replyError(QGeoCodeReply::Error errorCode, cons
 {
     QGeoCodeReply *reply = qobject_cast<QGeoCodeReply *>(sender());
     if (reply)
-        emit error(reply, errorCode, errorString);
+        emit errorOccurred(reply, errorCode, errorString);
 }

@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 Rectangle {
     id:                 _linkRoot
@@ -100,17 +100,23 @@ Rectangle {
             MessageDialog {
                 id:         deleteDialog
                 visible:    false
-                icon:       StandardIcon.Warning
-                standardButtons: StandardButton.Yes | StandardButton.No
+                //icon:       StandardIcon.Warning
+                buttons:    MessageDialog.Yes | MessageDialog.No
                 title:      qsTr("Remove Link Configuration")
                 text:       _currentSelection ? qsTr("Remove %1. Is this really what you want?").arg(_currentSelection.name) : ""
 
-                onYes: {
-                    QGroundControl.linkManager.removeConfiguration(_currentSelection)
-                    _currentSelection = null
-                    deleteDialog.visible = false
+                onButtonClicked: function (button, role) {
+                    switch (button) {
+                    case MessageDialog.Yes:
+                        QGroundControl.linkManager.removeConfiguration(_currentSelection)
+                        _currentSelection = null
+                        deleteDialog.visible = false
+                        break;
+                    case MessageDialog.No:
+                        deleteDialog.visible = false
+                        break;
+                    }
                 }
-                onNo: deleteDialog.visible = false
             }
         }
         QGCButton {

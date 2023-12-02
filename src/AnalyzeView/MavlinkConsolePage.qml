@@ -7,19 +7,19 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 AnalyzePage {
     id:                 mavlinkConsolePage
@@ -128,12 +128,18 @@ AnalyzePage {
                 Layout.preferredWidth:   parent.width
                 Layout.fillHeight:       true
                 readOnly:                _separateCommandInput
-                frameVisible:            false
                 textFormat:              TextEdit.RichText
                 inputMethodHints:        Qt.ImhNoAutoUppercase | Qt.ImhMultiLine
                 text:                    "> "
                 focus:                   true
+                color:                  qgcPal.text
+                selectedTextColor:      qgcPal.windowShade
+                selectionColor:         qgcPal.text
+                font.pointSize:         ScreenTools.defaultFontPointSize
+                font.family:            ScreenTools.fixedFontFamily
 
+                // FIXME-QT6 - menu: not supported directly
+                /*
                 menu: Menu {
                     id: contextMenu
                     MenuItem {
@@ -149,15 +155,9 @@ AnalyzePage {
                         }
                     }
                 }
+                */
 
-                style: TextAreaStyle {
-                    textColor:          qgcPal.text
-                    backgroundColor:    qgcPal.windowShade
-                    selectedTextColor:  qgcPal.windowShade
-                    selectionColor:     qgcPal.text
-                    font.pointSize:     ScreenTools.defaultFontPointSize
-                    font.family:        ScreenTools.fixedFontFamily
-                }
+                background: Rectangle { color: qgcPal.windowShade }
 
                 Keys.onPressed: {
                     if (event.key == Qt.Key_Tab) { // ignore tabs
@@ -253,7 +253,7 @@ AnalyzePage {
                     onClicked: {
                         // disable middle-click pasting (we could add support for that if needed)
                     }
-                    onWheel: {
+                    onWheel: (wheel) => {
                         // increase scrolling speed (the default is a single line)
                         var numLines = 4
                         var flickable = textConsole.flickableItem

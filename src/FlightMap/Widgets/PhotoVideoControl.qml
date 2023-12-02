@@ -7,21 +7,20 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.4
-import QtPositioning            5.2
-import QtQuick.Layouts          1.2
-import QtQuick.Controls         1.4
-import QtQuick.Dialogs          1.2
-import QtGraphicalEffects       1.0
+import QtQuick
+import QtPositioning
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl                   1.0
-import QGroundControl.ScreenTools       1.0
-import QGroundControl.Controls          1.0
-import QGroundControl.Palette           1.0
-import QGroundControl.Vehicle           1.0
-import QGroundControl.Controllers       1.0
-import QGroundControl.FactSystem        1.0
-import QGroundControl.FactControls      1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Vehicle
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Rectangle {
     height:     mainLayout.height + (_margins * 2)
@@ -362,7 +361,7 @@ Rectangle {
 
         QGCPopupDialog {
             title:      qsTr("Settings")
-            buttons:    StandardButton.Close
+            buttons:    Dialog.Close
 
             ColumnLayout {
                 spacing: _margins
@@ -474,10 +473,10 @@ Rectangle {
 
                     QGCSlider {
                         Layout.fillWidth:           true
-                        maximumValue:               100
-                        minimumValue:               0
+                        to:               100
+                        from:               0
                         value:                      _mavlinkCamera ? _mavlinkCamera.thermalOpacity : 0
-                        updateValueWhileDragging:   true
+                        live:   true
                         visible:                    _mavlinkCameraHasThermalVideoStream && _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
                         onValueChanged:             _mavlinkCamera.thermalOpacity = value
                     }
@@ -510,11 +509,11 @@ Rectangle {
                             }
                             QGCSlider {
                                 Layout.fillWidth:           true
-                                maximumValue:               parent._fact.max
-                                minimumValue:               parent._fact.min
+                                to:               parent._fact.max
+                                from:               parent._fact.min
                                 stepSize:                   parent._fact.increment
                                 visible:                    parent._isSlider
-                                updateValueWhileDragging:   false
+                                live:   false
                                 property bool initialized:  false
 
                                 onValueChanged: {
@@ -548,12 +547,12 @@ Rectangle {
 
                     QGCSlider {
                         Layout.fillWidth:           true
-                        maximumValue:               60
-                        minimumValue:               1
+                        to:               60
+                        from:               1
                         stepSize:                   1
                         value:                      _mavlinkCamera ? _mavlinkCamera.photoLapse : 5
                         displayValue:               true
-                        updateValueWhileDragging:   true
+                        live:   true
                         visible:                    _mavlinkCameraInPhotoMode && _mavlinkCamera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
                         onValueChanged: {
                             if (_mavlinkCamera) {
@@ -585,11 +584,18 @@ Rectangle {
                             id:                 resetPrompt
                             title:              qsTr("Reset Camera to Factory Settings")
                             text:               qsTr("Confirm resetting all settings?")
-                            standardButtons:    StandardButton.Yes | StandardButton.No
-                            onNo: resetPrompt.close()
-                            onYes: {
-                                _mavlinkCamera.resetSettings()
-                                resetPrompt.close()
+                            buttons:            MessageDialog.Yes | MessageDialog.No
+
+                            onButtonClicked: function (button, role) {
+                                switch (button) {
+                                case MessageDialog.Yes:
+                                    _mavlinkCamera.resetSettings()
+                                    resetPrompt.close()
+                                    break;
+                                case MessageDialog.No:
+                                    resetPrompt.close()
+                                    break;
+                                }
                             }
                         }
                     }
@@ -603,11 +609,18 @@ Rectangle {
                             id:                 formatPrompt
                             title:              qsTr("Format Camera Storage")
                             text:               qsTr("Confirm erasing all files?")
-                            standardButtons:    StandardButton.Yes | StandardButton.No
-                            onNo: formatPrompt.close()
-                            onYes: {
-                                _mavlinkCamera.formatCard()
-                                formatPrompt.close()
+                            buttons:            MessageDialog.Yes | MessageDialog.No
+
+                            onButtonClicked: function (button, role) {
+                                switch (button) {
+                                case MessageDialog.Yes:
+                                    _mavlinkCamera.formatCard()
+                                    formatPrompt.close()
+                                    break;
+                                case MessageDialog.No:
+                                    formatPrompt.close()
+                                    break;
+                                }
                             }
                         }
                     }

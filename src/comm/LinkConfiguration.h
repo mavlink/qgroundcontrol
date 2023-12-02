@@ -15,6 +15,11 @@
 
 class LinkInterface;
 
+#ifndef OPAQUE_PTR_LinkConfiguration
+    #define OPAQUE_PTR_LinkConfiguration
+    Q_DECLARE_OPAQUE_POINTER(LinkInterface*)
+#endif
+
 /// Interface holding link specific settings.
 class LinkConfiguration : public QObject
 {

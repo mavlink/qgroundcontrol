@@ -29,10 +29,11 @@
 #include "LinkManager.h"
 
 #include <QTcpSocket>
+#include <QtCore5Compat/QRegExp>
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
-static const QRegExp APM_FRAME_REXP("^Frame: ");
+static const QRegularExpression APM_FRAME_REXP("^Frame: ");
 
 const char* APMFirmwarePlugin::_artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
 const int   APMFirmwarePlugin::_artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller

@@ -291,7 +291,7 @@ void Actuators::updateFunctionMetadata()
     for (int groupIdx = 0; groupIdx < _actuatorOutputs->count(); groupIdx++) {
         ActuatorOutput* group = qobject_cast<ActuatorOutput*>(_actuatorOutputs->get(groupIdx));
 
-        group->forEachOutputFunction([&](ActuatorOutputSubgroup* subgroup, ChannelConfigInstance*, Fact* fact) {
+        group->forEachOutputFunction([&]([[maybe_unused]] ActuatorOutputSubgroup* subgroup, ChannelConfigInstance*, Fact* fact) {
             QStringList enumStrings = fact->enumStrings();
             if (!enumStrings.empty()) {
                 QVariantList enumValues = fact->enumValues();
