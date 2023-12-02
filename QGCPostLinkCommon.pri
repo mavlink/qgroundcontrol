@@ -55,6 +55,7 @@ WindowsBuild {
         # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\libs\\Microsoft\\windows\\msvcp140.dll\"  \"$$DESTDIR\"
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\libs\\Microsoft\\windows\\msvcp140_1.dll\"  \"$$DESTDIR\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\libs\\Microsoft\\windows\\msvcp140_2.dll\"  \"$$DESTDIR\"
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\libs\\Microsoft\\windows\\vcruntime140.dll\"  \"$$DESTDIR\"
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\libs\\Microsoft\\windows\\vcruntime140_1.dll\"  \"$$DESTDIR\"
     }
