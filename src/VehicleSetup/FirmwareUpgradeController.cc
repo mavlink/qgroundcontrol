@@ -292,7 +292,7 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
     } else {
-        if (_rgManifestFirmwareInfo.count()) {
+        if (_rgManifestFirmwareInfo.length()) {
             _buildAPMFirmwareNames();
         }
         emit showFirmwareSelectDlg();
@@ -598,7 +598,7 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 
     if (_apmFirmwareNamesBestIndex == -1) {
         _apmFirmwareNamesBestIndex++;
-        if (_apmFirmwareNames.count() > 1) {
+        if (_apmFirmwareNames.length() > 1) {
             _apmFirmwareNames.prepend(tr("Choose board type"));
             _apmFirmwareUrls.prepend(QString());
         }
@@ -610,8 +610,8 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 
 FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::vehicleTypeFromFirmwareSelectionIndex(int index)
 {
-    if (index < 0 || index >= _apmVehicleTypeFromCurrentVersionList.count()) {
-        qWarning() << "Invalid index, index:count" << index << _apmVehicleTypeFromCurrentVersionList.count();
+    if (index < 0 || index >= _apmVehicleTypeFromCurrentVersionList.length()) {
+        qWarning() << "Invalid index, index:count" << index << _apmVehicleTypeFromCurrentVersionList.length();
         return CopterFirmware;
     }
 
@@ -749,8 +749,8 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
                     QString pid = vidpid[1];
 
                     bool ok;
-                    firmwareInfo.rgVID.append(vid.right(vid.count() - 2).toInt(&ok, 16));
-                    firmwareInfo.rgPID.append(pid.right(pid.count() - 2).toInt(&ok, 16));
+                    firmwareInfo.rgVID.append(vid.right(vid.length() - 2).toInt(&ok, 16));
+                    firmwareInfo.rgPID.append(pid.right(pid.length() - 2).toInt(&ok, 16));
                 }
 
                 QString brandName = firmwareJson[_manifestBrandNameKey].toString();

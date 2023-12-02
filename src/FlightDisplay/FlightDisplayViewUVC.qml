@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtMultimedia             5.5
+import QtQuick
+import QtMultimedia
 
-import QGroundControl           1.0
+import QGroundControl
 
 Rectangle {
     id:                 _root

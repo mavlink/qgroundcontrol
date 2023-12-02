@@ -1,8 +1,8 @@
-import QtQuick          2.3
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem
+import QGroundControl.Controls
 
 RowLayout {
     property var fact: Fact { }

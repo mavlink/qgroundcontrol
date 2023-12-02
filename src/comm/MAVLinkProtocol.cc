@@ -171,7 +171,7 @@ void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
 
         b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
 
-        int len = b.count();
+        int len = b.length();
 
         if(_tempLogFile.write(b) != len)
         {

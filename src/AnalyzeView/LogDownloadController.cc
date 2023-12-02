@@ -724,7 +724,9 @@ QGCLogModel::QGCLogModel(QObject* parent)
 QGCLogEntry*
 QGCLogModel::get(int index)
 {
+    qDebug() << "QGCLogModel::get" << index;
     if (index < 0 || index >= _logEntries.count()) {
+        qDebug() << "QGCLogModel::get failed";
         return nullptr;
     }
     return _logEntries[index];
@@ -794,4 +796,10 @@ QGCLogModel::roleNames() const {
     QHash<int, QByteArray> roles;
     roles[ObjectRole] = "logEntry";
     return roles;
+}
+
+int QGCLogModel::columnCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+    return 4;
 }

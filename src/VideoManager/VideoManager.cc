@@ -16,7 +16,8 @@
 #include <QQuickWindow>
 
 #ifndef QGC_DISABLE_UVC
-#include <QCameraInfo>
+#include <QMediaDevices>
+#include <QCameraDevice>
 #endif
 
 #include "ScreenToolsController.h"
@@ -475,10 +476,10 @@ VideoManager::_updateUVC()
         _uvcVideoSourceID = "";
     } else {
         QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-        QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-        for (const QCameraInfo &cameraInfo : cameras) {
-            if (cameraInfo.description() == videoSource) {
-                _uvcVideoSourceID = cameraInfo.deviceName();
+        auto videoInputs = QMediaDevices::videoInputs();
+        for (const auto& cameraDevice: videoInputs) {
+            if (cameraDevice.description() == videoSource) {
+                _uvcVideoSourceID = cameraDevice.description();
                 qCDebug(VideoManagerLog)
                     << "Found USB source:" << _uvcVideoSourceID << " Name:" << videoSource;
                 break;
@@ -590,7 +591,7 @@ VideoManager::isUvc()
 bool
 VideoManager::uvcEnabled()
 {
-    return QCameraInfo::availableCameras().count() > 0;
+    return QMediaDevices::videoInputs().count() > 0;
 }
 #endif
 

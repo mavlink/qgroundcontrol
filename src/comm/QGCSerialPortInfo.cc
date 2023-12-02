@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QtCore5Compat/QRegExp>
 
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "QGCSerialPortInfoLog")
 
@@ -238,7 +239,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
         for (int i=0; i<_boardDescriptionFallbackList.count(); i++) {
             const BoardRegExpFallback_t& boardFallback = _boardDescriptionFallbackList[i];
 
-            if (description().contains(QRegExp(boardFallback.regExp, Qt::CaseInsensitive))) {
+            if (description().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
 #ifndef __android
                 if (boardFallback.androidOnly) {
                     continue;
@@ -253,7 +254,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
         for (int i=0; i<_boardManufacturerFallbackList.count(); i++) {
             const BoardRegExpFallback_t& boardFallback = _boardManufacturerFallbackList[i];
 
-            if (manufacturer().contains(QRegExp(boardFallback.regExp, Qt::CaseInsensitive))) {
+            if (manufacturer().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
 #ifndef __android
                 if (boardFallback.androidOnly) {
                     continue;

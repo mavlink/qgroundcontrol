@@ -6,14 +6,14 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-import QtQuick          2.3
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 FactTextField {
     unitsLabel:                 fact ? fact.units : ""

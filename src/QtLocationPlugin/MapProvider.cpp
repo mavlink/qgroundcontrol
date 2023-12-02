@@ -12,13 +12,17 @@
 
 #include "MapProvider.h"
 
-MapProvider::MapProvider(const QString &referrer, const QString &imageFormat,
-                         const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent)
-    : QObject(parent)
-    , _referrer(referrer)
-    , _imageFormat(imageFormat)
-    , _averageSize(averageSize)
-    , _mapType(mapType)
+MapProvider::MapProvider(
+    const QString &referrer, 
+    const QString &imageFormat,
+    const quint32 averageSize, 
+    const QGeoMapType::MapStyle mapStyle, 
+    QObject* parent)
+    : QObject       (parent)
+    , _referrer     (referrer)
+    , _imageFormat  (imageFormat)
+    , _averageSize  (averageSize)
+    , _mapStyle     (mapStyle)
 {
     const QStringList langs = QLocale::system().uiLanguages();
     if (langs.length() > 0) {

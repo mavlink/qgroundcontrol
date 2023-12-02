@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QGroundControl.Controls 1.0
+import QGroundControl.Controls
 
 ToolStripAction {
     property int    actionID

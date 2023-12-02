@@ -35,12 +35,12 @@ bool QGCCachedFileDownload::download(const QString& url, int maxCacheAgeSec)
         bool expired = creationTime.addSecs(maxCacheAgeSec) < QDateTime::currentDateTime();
         if (expired) {
             // Force network download, as Qt would still use the cache otherwise (w/o checking the remote)
-            auto attributes = QVector{qMakePair(QNetworkRequest::CacheLoadControlAttribute, QVariant{QNetworkRequest::AlwaysNetwork})};
+            auto attributes = QVector<QPair<QNetworkRequest::Attribute, QVariant>>{qMakePair(QNetworkRequest::CacheLoadControlAttribute, QVariant{QNetworkRequest::AlwaysNetwork})};
             _downloadFromNetwork = true;
             return _fileDownload->download(url, attributes);
         }
 
-        auto attributes = QVector{qMakePair(QNetworkRequest::CacheLoadControlAttribute, QVariant{QNetworkRequest::PreferCache})};
+        auto attributes = QVector<QPair<QNetworkRequest::Attribute, QVariant>>{qMakePair(QNetworkRequest::CacheLoadControlAttribute, QVariant{QNetworkRequest::PreferCache})};
         return _fileDownload->download(url, attributes);
 
     } else {

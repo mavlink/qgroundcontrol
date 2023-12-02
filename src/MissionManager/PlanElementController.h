@@ -17,6 +17,11 @@
 
 class PlanMasterController;
 
+#ifndef OPAQUE_PTR_PlanElementController
+    #define OPAQUE_PTR_PlanElementController
+    Q_DECLARE_OPAQUE_POINTER(PlanMasterController*)
+#endif
+
 /// This is the abstract base clas for Plan Element controllers.
 /// Examples of plan elements are: missions (MissionController), geofence (GeoFenceController)
 class PlanElementController : public QObject

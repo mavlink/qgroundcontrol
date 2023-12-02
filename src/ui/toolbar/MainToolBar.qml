@@ -7,17 +7,17 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Controls 2.4
-import QtQuick.Layouts  1.11
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Controllers           1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.MultiVehicleManager
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 Rectangle {
     id:     _root

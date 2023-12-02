@@ -25,8 +25,11 @@ QString Config::typeToLabel() const
     return "";
 }
 
-Action::Action(QObject *parent, const Config &action, const QString &label, int outputFunction,
-        Vehicle *vehicle)
+Action::Action([[maybe_unused]] QObject *parent,
+               const Config &action,
+               const QString &label,
+               int outputFunction,
+               Vehicle *vehicle)
     : _label(label), _outputFunction(outputFunction), _type(action.type), _vehicle(vehicle)
 {
 }
@@ -75,7 +78,7 @@ void Action::sendMavlinkRequest()
     _commandInProgress = true;
 }
 
-ActionGroup::ActionGroup(QObject *parent, const QString &label, Config::Type type)
+ActionGroup::ActionGroup([[maybe_unused]] QObject *parent, const QString &label, Config::Type type)
     : _label(label), _type(type)
 {
 }

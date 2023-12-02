@@ -15,6 +15,7 @@
 #include <QFontDatabase>
 #include <QScreen>
 #include <QFontMetrics>
+#include <QInputDevice>
 
 #include "SettingsManager.h"
 
@@ -30,7 +31,12 @@ ScreenToolsController::ScreenToolsController()
 bool
 ScreenToolsController::hasTouch() const
 {
-    return QTouchDevice::devices().count() > 0 || isMobile();
+    for (const auto& inputDevice: QInputDevice::devices()) {
+        if (inputDevice->type() == QInputDevice::DeviceType::TouchScreen) {
+            return true;
+        }
+    }
+    return false;
 }
 
 QString
