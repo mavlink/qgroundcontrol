@@ -61,7 +61,7 @@ Slider {
             width:  control.zeroCentered ? centerIndicatorWidth : control.visualPosition
             height: parent.height
 
-            property real zeroValuePosition:            (Math.abs(control.minimumValue) / (control.maximumValue - control.minimumValue)) * parent.width
+            property real zeroValuePosition:            (Math.abs(control.from) / (control.to - control.from)) * parent.width
             property real zeroCenteredIndicatorStart:   Math.min(control.visualPosition, zeroValuePosition)
             property real zeroCenteredIndicatorStop:    Math.max(control.visualPosition, zeroValuePosition)
             property real centerIndicatorWidth:         zeroCenteredIndicatorStop - zeroCenteredIndicatorStart
@@ -92,7 +92,7 @@ Slider {
         property real _radius: ScreenTools.defaultFontPixelHeight / 2
 
         Label {
-            text:               control.value.toFixed( control.maximumValue <= 1 ? 1 : 0)
+            text:               control.value.toFixed( control.to <= 1 ? 1 : 0)
             visible:            control.displayValue
             anchors.centerIn:   parent
             font.family:        ScreenTools.normalFontFamily
