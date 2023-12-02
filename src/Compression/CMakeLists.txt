@@ -21,7 +21,7 @@ add_library(compression
 target_compile_definitions(compression PRIVATE XZ_DEC_ANY_CHECK XZ_USE_CRC64)
 
 target_link_libraries(compression
-	Qt5::Core
+	Qt6::Core
 
 	qgc
 )
