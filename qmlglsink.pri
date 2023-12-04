@@ -1,5 +1,6 @@
 LinuxBuild {
     DEFINES += HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND
+    # DEFINES += HAVE_QT_EGLFS HAVE_QT_WAYLAND
 } else:MacBuild {
     DEFINES += HAVE_QT_MAC
 } else:iOSBuild {

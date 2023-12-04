@@ -39,3 +39,5 @@ set(QT_LIBRARY_HINTS
 		$ENV{QT_PATH}/${QT_VERSION}/${QT_MKSPEC}
 		C:/Qt
 )
+
+message(STATUS "lib hints ${QT_LIBRARY_HINTS}")
