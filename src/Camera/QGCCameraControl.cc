@@ -1627,7 +1627,7 @@ QGCCameraControl::handleTrackingImageStatus(const mavlink_camera_tracking_image_
     if (tis) {
         _trackingImageStatus = *tis;
 
-        if (_trackingImageStatus.tracking_status == 0) {
+        if (_trackingImageStatus.tracking_status == 0 || !trackingEnabled()) {
             _trackingImageRect = {};
             qCDebug(CameraControlLog) << "Tracking off";
         } else {
@@ -2385,6 +2385,9 @@ QGCCameraControl::stopTracking()
                              true,
                              MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
                              -1);
+
+    // reset tracking image rectangle
+    _trackingImageRect = {};
 }
 
 //-----------------------------------------------------------------------------
