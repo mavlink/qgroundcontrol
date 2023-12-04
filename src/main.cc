@@ -17,6 +17,8 @@
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
+#include <QQuickStyle>
+#include <QQuickWindow>
 
 #include "QGC.h"
 #include "QGCApplication.h"
@@ -221,7 +223,9 @@ bool checkAndroidWritePermission() {
 void sigHandler(int s)
 {
     std::signal(s, SIG_DFL);
-    QApplication::instance()->quit();
+    qgcApp()->mainRootWindow()->close();
+    QEvent event{QEvent::Quit};
+    qgcApp()->event(&event);
 }
 
 #endif /* Q_OS_LINUX */
