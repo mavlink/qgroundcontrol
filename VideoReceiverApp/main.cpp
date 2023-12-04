@@ -482,6 +482,8 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+
     GStreamer::initialize(argc, argv, 3);
 
     if (isQtApp(argv[0])) {

@@ -54,7 +54,7 @@ endif ()
 
 # Compilation error for deprecated functions
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
-
+add_compile_definitions(QT_DEBUG_FIND_PACKAGE=ON)
 # Configure Qt6 to get necessary variables
 include(Qt6QGCConfiguration)
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
@@ -153,7 +153,8 @@ message(STATUS "QGroundControl version: ${APP_VERSION_STR}")
 #######################################################
 # Configuring ccache if it's available and not disabled
 
-option(CCACHE "Use ccache if available" ON)
+# bzd tymczasowo
+option(CCACHE "Use ccache if available" OFF)
 find_program(CCACHE_PROGRAM ccache)
 if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
@@ -185,9 +186,7 @@ if (ENABLE_VIDEOSTREAMING)
         )
     endif ()
     if (GST_FOUND)
-        add_definitions(
-                -DQGC_GST_STREAMING
-        )
+        add_definitions(-DQGC_GST_STREAMING)
         option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
         option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
     else ()

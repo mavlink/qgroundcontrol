@@ -1,5 +1,6 @@
 
-find_package(Qt5Gui ${QT_VERSION} CONFIG REQUIRED Private)
+find_package(Qt6Gui ${QT_VERSION}  REQUIRED )
+find_package(Qt6 ${QT_VERSION}  REQUIRED )
 find_package(OpenGL REQUIRED)
 
 add_library(qmlglsink
@@ -23,18 +24,18 @@ add_library(qmlglsink
 if(LINUX)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND)
 
-	find_package(Qt5 ${QT_VERSION}
-		COMPONENTS
-			X11Extras
-		REQUIRED
-		HINTS
-			${QT_LIBRARY_HINTS}
-	)
+#	find_package(Qt6 ${QT_VERSION}
+##		COMPONENTS
+##			X11Extras
+#		REQUIRED
+#		HINTS
+#			${QT_LIBRARY_HINTS}
+#	)
 
-	target_link_libraries(qmlglsink
-		PUBLIC
-			Qt5::X11Extras
-	)
+#	target_link_libraries(qmlglsink
+#		PUBLIC
+#			Qt6::X11Extras
+#	)
 
 elseif(APPLE)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_MAC)
@@ -51,9 +52,9 @@ endif()
 
 target_link_libraries(qmlglsink
 	PUBLIC
-		Qt5::Core
-		Qt5::OpenGL
-		Qt5::GuiPrivate
+		Qt6::Core
+		Qt6::OpenGL
+		Qt6::GuiPrivate
 		${GST_LINK_LIBRARIES}
 )
 
