@@ -313,6 +313,12 @@ Rectangle {
                 }
             }
         }
+        QGCLabel {
+            Layout.alignment:   Qt.AlignHCenter
+            text:               qsTr("Camera Tracking")
+            font.pointSize:     ScreenTools.defaultFontPointSize
+            visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
+        }
 
         //-- Status Information
         ColumnLayout {
