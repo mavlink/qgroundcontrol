@@ -323,4 +323,33 @@ Item {
         FlyViewPreFlightChecklistPopup {
         }
     }
+
+        // Pitch/Roll indicators
+    Rectangle {
+        id: pitchRollRectangle
+        width: gimbalPitchLabel.width + gimbalPanLabel.width + ScreenTools.defaultFontPixelWidth * 5
+        height: gimbalPitchLabel.height + ScreenTools.defaultFontPixelWidth * 2
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        color: qgcPal.window
+        opacity: 0.8
+
+        QGCLabel {
+            id: gimbalPitchLabel
+            text: _activeVehicle && _activeVehicle.gimbalData ? "Tilt: " + _activeVehicle.gimbalPitch.toFixed(2) : ""
+            visible: _activeVehicle && _activeVehicle.gimbalData
+            anchors.top: parent.top
+            anchors.left: parent.horizontalCenter
+            anchors.margins: ScreenTools.defaultFontPixelWidth
+        }
+
+        QGCLabel {
+            id: gimbalPanLabel
+            text: _activeVehicle && _activeVehicle.gimbalData ? "Pan: " + _activeVehicle.gimbalYaw.toFixed(2) : ""
+            visible: _activeVehicle && _activeVehicle.gimbalData
+            anchors.top: parent.top
+            anchors.right: parent.horizontalCenter
+            anchors.margins: ScreenTools.defaultFontPixelWidth
+        }
+    }
 }
