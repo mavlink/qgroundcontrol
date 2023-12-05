@@ -185,6 +185,8 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     // qCDebug(GimbalLog) << "roll: " << gimbal_it->curRoll << ", pitch: " << gimbal_it->curPitch << ", yaw: " << gimbal_it->curYaw;
 
     gimbal_it->receivedAttitude = true;
+    _vehicle->gimbalPitchChanged();
+    _vehicle->gimbalYawChanged();
 
     _checkComplete(*gimbal_it, message.compid);
 }
