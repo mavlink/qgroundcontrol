@@ -43,8 +43,7 @@ The configuration options are:
 
 ### General Failsafe Triggers {#failsafe\_triggers\_copter}
 
-This panel enables the [GCS Failsafe](http://ardupilot.org/copter/docs/gcs-failsafe.html)
-and enables/configures the throttle failsafe.
+This panel enables the [GCS Failsafe](http://ardupilot.org/copter/docs/gcs-failsafe.html) and enables/configures the throttle failsafe.
 
 ![Safety Setup - General Failsafe Triggers (Copter)](../../../assets/setup/safety/safety_arducopter_general_failsafe_triggers.jpg)
 
