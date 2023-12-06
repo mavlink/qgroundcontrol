@@ -1,6 +1,6 @@
-# Airframe Setup (PX4)
+# Gövde Kurulumu (PX4)
 
-To select the airframe in PX4:
+PX4 de gövde seçmek için:
 
 1. Start _QGroundControl_ and connect the vehicle.
 
