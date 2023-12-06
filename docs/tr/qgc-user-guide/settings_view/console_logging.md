@@ -28,6 +28,9 @@ How you do this and where the traces are output vary by OS:
 
 - Windows
   - You must open a command prompt, change directory to the **qgroundcontrol.exe** location, and run it from there:
+    bash
+    cd "\Program Files (x86)\qgroundcontrol"
+    qgroundcontrol --logging:full
     ```bash
     cd "\Program Files (x86)\qgroundcontrol"
     qgroundcontrol --logging:full
@@ -36,12 +39,15 @@ How you do this and where the traces are output vary by OS:
 - OSX
   - You must run _QGroundControl_ from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it:
     ```bash
-    cd /Applications/qgroundcontrol.app/Contents/MacOS/
-    ./qgroundcontrol --logging:full
+    Once Terminal is open paste the following into it:
+        bash
+        cd /Applications/qgroundcontrol.app/Contents/MacOS/
+        ./qgroundcontrol --logging:full
     ```
   - Log traces will output to the Terminal window.
 - ## Linux
   ```bash
+  bash
   ./qgroundcontrol-start.sh --logging:full
   ```
   - Log traces will output to the shell you are running from.
