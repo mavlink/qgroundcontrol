@@ -4,21 +4,26 @@ When QGroundControl is recording a video stream to a file, it will also export a
 
 ![Değerler Widgetı](../../../assets/fly/overlay_widget.png)
 
-Seçilen değerler ekran kullanımını optimize etmek için 3 sütun halinde düzenlenmiştir. ![İşlemde Overlay](../../../assets/fly/overlay_capture.png)
+Seçilen değerler ekran kullanımını optimize etmek için 3 sütun halinde düzenlenmiştir.
+![İşlemde Overlay](../../../assets/fly/overlay_capture.png)
 
 ## Oynatma
 
-Overlay, [SubStation Alpha](https://en.wikipedia.org/wiki/SubStation_Alpha#Players_and_renderers) altyazı formatını destekleyen tüm oynatıcılarla birlikte kullanılabilir. Çoğu oynatıcı videoyu oynatmayı denediğinizde iki dosyayı birden açacaktır. QGC tarafından oluşturuldukları gibi, iki dosyanında aynı dosyada aynı isimle olması gerekmektedir.
+Overlay, [SubStation Alpha](https://en.wikipedia.org/wiki/SubStation_Alpha#Players_and_renderers) altyazı formatını destekleyen tüm oynatıcılarla birlikte kullanılabilir.
+Çoğu oynatıcı videoyu oynatmayı denediğinizde iki dosyayı birden açacaktır. QGC tarafından oluşturuldukları gibi, iki dosyanında aynı dosyada aynı isimle olması gerekmektedir.
 
 ## Handbrake'i Kullanarak Kalıcı Video Altyazıları
 
-Altyazılar [HandBrake](https://handbrake.fr/)'i kullanarak kalıcı olarak video dosyalarına eklenebilir. Bu, altyazıları tüm oynatıcılar için kalıcı olarak görünür yapacaktır.
+Altyazılar [HandBrake](https://handbrake.fr/)'i kullanarak kalıcı olarak video dosyalarına eklenebilir.
+Bu, altyazıları tüm oynatıcılar için kalıcı olarak görünür yapacaktır.
 
-**HandBrake**'i açın, ana arayüzünü göreceksiniz. **Open**'a tıklayın ve video dosyasını seçin.
+**HandBrake**'i açın, ana arayüzünü göreceksiniz.
+**Open**'a tıklayın ve video dosyasını seçin.
 
 ![video dosyasını nasıl açılacağını gösteren Handbrake Kullanıcı Arayüzü](../../../assets/fly/video_overlay/1-open.png)
 
-Video dosyası yüklenirken, subtitles sekmesine geçin. Altyazı dosyasını yüklemek için **Add**'e tıklayın.
+Video dosyası yüklenirken, subtitles sekmesine geçin.
+Altyazı dosyasını yüklemek için **Add**'e tıklayın.
 
 ![altyazıların nasıl ekleneceğini gösteren Handbrake Kullanıcı Arayüzü ekran görüntüsü](../../../assets/fly/video_overlay/2-subtitles.png)
 
