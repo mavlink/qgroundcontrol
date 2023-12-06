@@ -46,7 +46,7 @@ jobs:
         with:
           name: qgc_docs_build
           path: docs/.vitepress/dist/
-
+          retention-days: 1
 
   deploy:
     needs: build
@@ -63,14 +63,19 @@ jobs:
         run: |
           git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_PASS }}@github.com/mavlink/docs.qgroundcontrol.com.git
           rm -rf docs.qgroundcontrol.com/${BRANCH_NAME}
+          echo "mkdir"
           mkdir -p docs.qgroundcontrol.com/${BRANCH_NAME}
+          echo "cp"
           cp -r ~/_book/* docs.qgroundcontrol.com/${BRANCH_NAME}/
           cd docs.qgroundcontrol.com
           git config user.email "bot@px4.io"
           git config user.name "PX4BuildBot"
+          echo "add"
           git add ${BRANCH_NAME}
+          echo "commit"
           git commit -a -m "QGC docs build update `date`"
-          git push origin tester
+          echo "push"
+          git push origin master
           
         env:
           GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
