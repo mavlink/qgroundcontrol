@@ -17,7 +17,11 @@ _QGroundControl_'e alışmanın iyi bir yolu denemeye başlamaktır:
   - [Setup](../setup_view/setup_view.md): Aracınızı yapılandırın ve ayarlayın.
   - [Plan](../plan_view/plan_view.md): Otonom görevler oluşturun.
   - [Fly](../fly_view/fly_view.md): Video akışıyla birlikte araç(lar)ınızı uçarken izleyin.
-  - [Analyze] ** Description of Analyze view is missing **
+  - \[Analyze] \*\* Description of Analyze view is missing \*\*
 - Bağlı aracın durumunu öğrenmek için araç çubuğundaki _Status icons_'a tıklayın.
 
 Kullanıcı arayüzü gayet açık olsa da, daha fazlasını öğrenmek için bu dokümantasyona başvurulabilir.
+
+:::info
+Make sure QGC has an internet connection when you connect a new vehicle. This will allow it to get the latest parameter and other metadata for the vehicle, along with [translations](../settings_view/general.md#miscellaneous).
+:::
