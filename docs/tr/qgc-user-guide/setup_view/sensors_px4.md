@@ -1,7 +1,6 @@
 # Sensor Setup (PX4)
 
-The _Sensor Setup_ section allows you to configure and calibrate the vehicle's compass, gyroscope, accelerometer and any other sensors
-(the available sensors will depend on the vehicle type).
+The _Sensor Setup_ section allows you to configure and calibrate the vehicle's compass, gyroscope, accelerometer and any other sensors (the available sensors will depend on the vehicle type).
 
 Available sensors are displayed as a list of buttons beside the sidebar.
 Sensors marked with green are already calibrated, while sensors marked with red require calibration prior to flight.
@@ -22,8 +21,7 @@ The process guides you to position the vehicle in a number of set orientations a
 
 The calibration steps are:
 
-1. Click the **Compass** sensor button
-   ![Select Compass calibration PX4](../../../assets/setup/sensor_compass_select_px4.jpg)
+1. Click the **Compass** sensor button ![Select Compass calibration PX4](../../../assets/setup/sensor_compass_select_px4.jpg)
 
    ::: info
    The default flight controller orientation is `ROTATION_NONE` (flight controller and compass mounted upright on the vehicle and facing the front).
@@ -39,8 +37,7 @@ The calibration steps are:
 
 4. Repeat the calibration process for all vehicle orientations.
 
-Once you've rotated the vehicle in all the positions _QGroundControl_ will display _Calibration complete_ (all orientation images will be displayed in green and the progress bar will fill completely)
-You can then proceed to the next sensor.
+Once you've rotated the vehicle in all the positions _QGroundControl_ will display _Calibration complete_ (all orientation images will be displayed in green and the progress bar will fill completely) You can then proceed to the next sensor.
 
 ## Gyroscope {#gyroscope}
 
@@ -48,8 +45,7 @@ You will be guided to place the vehicle on a flat surface and keep it still.
 
 The calibration steps are:
 
-1. Click the **Gyroscope** sensor button
-   ![Select Gyroscope calibration PX4](../../../assets/setup/sensor/gyroscope_calibrate_px4.jpg)
+1. Click the **Gyroscope** sensor button ![Select Gyroscope calibration PX4](../../../assets/setup/sensor/gyroscope_calibrate_px4.jpg)
 
 2. Place the vehicle on a surface and leave it still.
 
