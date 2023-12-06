@@ -17,22 +17,8 @@ on:
 
   workflow_dispatch:
 
-env:
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}  
-
-#####
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-#permissions:
-#  contents: read
-#  pages: write
-#  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-#concurrency:
-#  group: pages
-#  cancel-in-progress: false
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   # Build job
@@ -48,8 +34,6 @@ jobs:
         with:
           node-version: 18
           cache: npm
-##      - name: Setup Pages
-##        uses: actions/configure-pages@v3
       - name: Install dependencies
         run: npm ci
       - name: Build with VitePress
@@ -60,17 +44,34 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
+          name: qgc_docs_build
           path: docs/.vitepress/dist/
 
-#  # Deployment job
-#  deploy:
-#    environment:
-#      name: github-pages
-#      url: ${{ steps.deployment.outputs.page_url }}
-#    needs: build
-#    runs-on: ubuntu-latest
-#    name: Deploy
-#    steps:
-#      - name: Deploy to GitHub Pages
-#        id: deployment
-#        uses: actions/deploy-pages@v2
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: qgc_docs_build
+          path: ~/_book
+        
+      - name: Deploy
+        run: |
+          git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_PASS }}@github.com/mavlink/docs.qgroundcontrol.com.git
+          rm -rf docs.qgroundcontrol.com/${BRANCH_NAME}
+          mkdir -p docs.qgroundcontrol.com/${BRANCH_NAME}
+          cp -r ~/_book/* docs.qgroundcontrol.com/${BRANCH_NAME}/
+          cd docs.qgroundcontrol.com
+          git config user.email "bot@px4.io"
+          git config user.name "PX4BuildBot"
+          git add ${BRANCH_NAME}
+          git commit -a -m "QGC docs build update `date`"
+          git push origin tester
+          
+        env:
+          GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
+          GIT_PASS: ${{ secrets.PX4BUILDBOT_PASS }}
