@@ -1,6 +1,6 @@
 # Bi-Weekly Dev Call
 
-The QGroundControl developer team syncs up on technical details and in-depth analysis. There is also a space in the agenda to discuss pull requests, major impacting issues and Q&A.
+The QGroundControl developer team syncs up on technical details and in-depth analysis. There is also a space in the agenda to discuss pull requests, major impacting issues and Q\&A.
 
 ## Who Should attend:
 
@@ -9,7 +9,7 @@ The QGroundControl developer team syncs up on technical details and in-depth ana
 - Component maintainers
 - Dronecode members
 
-::: info
+:::info
 The calls are open for anyone interested to attend, it's a great opportunity to meet the team and contribute to the ongoing development of the project.
 :::
 
@@ -23,11 +23,11 @@ The developer team goes through the issue tracker, including the current queue o
 
 While the agenda below is the norm, we might
 
-- Community Q&A (Open mic, you can bring your own topics, we can discuss your PRs/Issues/Questions)
+- Community Q\&A (Open mic, you can bring your own topics, we can discuss your PRs/Issues/Questions)
 - Update on the project [High Priority Issues](https://github.com/mavlink/qgroundcontrol/projects/2) tracker
 - Developer team coordination
 
-::: info
+:::info
 If you want to guarantee your Pull Request get's discussed on the next developer call, make sure you add the "dev-call" label on GitHub. We expect the author and the assigned reviewer to be on the call.
 :::
 
