@@ -12,7 +12,7 @@ These forums are also the best place to start discussions on bugs/problems you a
 
 ### Developer Chat {#developer\_chat}
 
-_QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl channel on the Dronecode Discord](https://discord.gg/dronecode).
+_QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl Slack channel](https://px4.slack.com/).
 
 ## GitHub Issues
 
