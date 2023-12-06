@@ -139,7 +139,7 @@ export default defineConfig({
       },
       {
         text: "Support",
-        link: "https://docs.qgroundcontrol.com/master/en/Support/Support.html",
+        link: "https://docs.qgroundcontrol.com/master/en/support/support.html",
       },
       {
         text: "Version",
