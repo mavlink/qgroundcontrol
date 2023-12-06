@@ -7,6 +7,7 @@ export default defineConfig({
   description:
     "How to use and develop QGroundControl for PX4 or ArduPilot powered vehicles.",
   ignoreDeadLinks: true, // Do this for stable, where we don't yet have all translations
+  base: process.env.BRANCH_NAME ? "/" + process.env.BRANCH_NAME + "/" : "",
 
   head: [
     [
