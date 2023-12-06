@@ -7,18 +7,22 @@ The two main areas that are most problematic are:
 - The _Resume Mission_ dialog doesn't display when it should and you are just left with a Start Mission slider.
 - The new mission generated from _Resume Mission_ is not quite correct with respect to recreation of waypoints and/or camera commands.
 
-::: warning
+:::warning
 In order for the _QGroundControl_ development team to debug these issues the following information **must be supplied** in any github issue entered against _Resume Mission_.
 :::
 
-## Common Steps for Resume Mission Dialog/Generation {#common_steps}
+## Common Steps for Resume Mission Dialog/Generation {#common\_steps}
 
 The following steps are required for debugging both types of problems:
 
 1. Restart QGC
+
 2. Turn on [console logging](../settings_view/console_logging.md) with the log option: `GuidedActionsControllerLog`.
+
 3. Enable [telemetry logging](../settings_view/general.md#miscellaneous) (**Settings > General**).
+
 4. Start the mission.
+
 5. Fly till you need a battery swap.
 
    ::: tip

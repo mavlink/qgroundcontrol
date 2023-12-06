@@ -8,20 +8,22 @@ Koridor taraması, çoklu çizgileri takip eden bir uçuş şablonu oluşturman�
 
 Coğrafi etiketli görüntüler oluşturmak için uygun yolu, koridor genişliğini ve kamera ayarlarını özelleştirebilirsinz.
 
-## Tarama Oluşturma
+## Creating a Scan
 
 Bir koridor taraması oluşturmak için:
 
 1. [PlanView](../plan_view/plan_view.md)'den _Plan Tools_'u açın.
+
 2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Corridor Scan_'a tıklayın.
 
-![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
+   ![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
 
-Bu haritaya bir koridor ve görev listesine (sağda) bir _Corridor Scan_ öğesi ekleyecektir.
+   Bu haritaya bir koridor ve görev listesine (sağda) bir _Corridor Scan_ öğesi ekleyecektir.
 
 3. Koridorun uçlarını, sırasıyla taramanın başlangıç ve bitiş noktalarına sürükleyin.
 
-4. Yeni bir köşe noktası oluşturmak için hattın ortasındaki `(+)` semboüne tıklayın. Yeni köşe noktası, istenen koridor yolunu takip edeceği bir noktaya sürüklenebilir.
+4. Yeni bir köşe noktası oluşturmak için hattın ortasındaki `(+)` semboüne tıklayın.
+   Yeni köşe noktası, istenen koridor yolunu takip edeceği bir noktaya sürüklenebilir.
 
 Koridor taraması ayarları bir sonraki bölümde ele alınmıştır.
 
@@ -31,7 +33,9 @@ Koridor taraması, ilişkili görev öğesinde (Plan Görünümü'nün sağ tara
 
 ### Kamera
 
-Kamera başlatma davranışı, kamera/kamera ayarlarına bağlıdır. Var olan bir kamerayı seçebilir ya da ayarları manuel olarak girebilirsiniz. Mevcut kameraların listesi (QGC 3.4) aşağıda verilmiştir.
+Kamera başlatma davranışı, kamera/kamera ayarlarına bağlıdır.
+Var olan bir kamerayı seçebilir ya da ayarları manuel olarak girebilirsiniz.
+Mevcut kameraların listesi (QGC 3.4) aşağıda verilmiştir.
 
 ![Koridor Taraması - Kamera Seç](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
 
@@ -73,13 +77,14 @@ Ayarlanabilir seçenekler şunlardır:
 - **Relative altitude** - Bağlı bir yüksekik belirtmek için işaretleyin. Bu özellik sadece [terrain following](#terrain_following) kullanmayan manuel ayarlanmış ızgaralarda desteklenir.
 - **Rotate entry point** - Koridor taramasının başlangıç ve bitiş noktasını birbirleriyle değiştirmek için butona basın.
 
-### Arazi Takibi {#terrain_following}
+### Arazi Takibi {#terrain\_following}
 
-Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip edecektir. _Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
+Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip edecektir.
+_Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
 
 ![Koridor Taraması - Arazi Takibi Ayarları](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
-::: info
+:::info
 Arazi takibi, _AirMap_ serverlarından sağlanan arazi yüksekliklerini kullanır.
 :::
 
