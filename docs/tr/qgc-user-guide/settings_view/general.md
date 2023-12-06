@@ -71,7 +71,6 @@ The settings are:
 The settings are:
 
 - **Disable all data persistence**: Check to prevent any data being saved or cached: logs, map tiles etc.
-  This setting disables the [telemetry logs section](#telemetry_logs).
 
 ## Telemetry Logs from Vehicle {#telemetry\_logs}
 
@@ -163,7 +162,7 @@ Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device a
   - **NMEA GPS Device:** _Serial_
   - **NMEA GPS Baudrate**: The baudrate for the serial port
 
-  :::tip
+  ::: tip
   To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
   :::
 
@@ -219,7 +218,7 @@ QGC can consume ADSB messages in SBS format from a remote or local server (at th
 ::: tip
 One way to get ADSB information from nearby vehicles is to use [dump1090](https://github.com/antirez/dump1090) to serve the data from a connected RTL-SDR dongle to QGC.
 
-The steps are:
+The steps are: 1.
 
 1. Get an RTL-SDR dongle (and antenna) and attach it to your ground station computer (you may need to find compatible drivers for your OS).
 2. Install _dump1090_ on your OS (either pre-built or build from source).
