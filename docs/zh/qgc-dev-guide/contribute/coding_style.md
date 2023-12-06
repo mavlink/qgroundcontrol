@@ -1,11 +1,11 @@
-# 编码风格
+# Coding Style
 
-高级样式信息：
+High level style information:
 
-- 标签扩展到4个空格
-- Pascal / CamelCase命名约定
+- Tabs expanded to 4 spaces
+- Pascal/CamelCase naming conventions
 
-样式本身是以下示例文件中的文档：
+The style itself is documents in the following example files:
 
 - [CodingStyle.cc](https://github.com/mavlink/qgroundcontrol/blob/master/CodingStyle.cc)
 - [CodingStyle.h](https://github.com/mavlink/qgroundcontrol/blob/master/CodingStyle.h)
