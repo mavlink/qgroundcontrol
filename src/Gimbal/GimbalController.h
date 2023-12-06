@@ -11,33 +11,55 @@ Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 
 class MavlinkProtocol;
 
+class Gimbal : public QObject
+{
+    Q_OBJECT
+public:
+    Gimbal();
+    Gimbal(const Gimbal& other);
+    const Gimbal& operator=(const Gimbal& other);
+
+    Q_PROPERTY(qreal curRoll         READ curRoll           NOTIFY curRollChanged)
+    Q_PROPERTY(qreal curPitch        READ curPitch          NOTIFY curPitchChanged)
+    Q_PROPERTY(qreal curYaw          READ curYaw            NOTIFY curYawChanged)
+
+    qreal curRoll()  { return _curRoll; } 
+    qreal curPitch() { return _curPitch; }  
+    qreal curYaw()   { return _curYaw; }
+
+signals:
+    void curRollChanged();
+    void curPitchChanged();
+    void curYawChanged();
+
+public:
+    unsigned requestInformationRetries = 3;
+    unsigned requestStatusRetries = 6;
+    unsigned requestAttitudeRetries = 3;
+    uint8_t deviceId = 0;                       // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
+    bool receivedInformation = false;
+    bool receivedStatus = false;
+    bool receivedAttitude = false;
+    bool isComplete = false;
+    bool retracted = false;
+    bool neutral = false;
+    bool yawLock = false;
+    bool haveControl = false;
+    bool othersHaveControl = false;
+
+private:
+    float _curRoll = 0.0f;
+    float _curPitch = 0.0f;
+    float _curYaw = 0.0f;
+
+    friend class GimbalController;
+};
+
 class GimbalController : public QObject
 {
     Q_OBJECT
 public:
     GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle);
-
-    class Gimbal {
-    public:
-        unsigned requestInformationRetries = 3;
-        unsigned requestStatusRetries = 6;
-        unsigned requestAttitudeRetries = 3;
-        uint8_t deviceId = 0;                       // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
-        bool receivedInformation = false;
-        bool receivedStatus = false;
-        bool receivedAttitude = false;
-        bool isComplete = false;
-
-        float curRoll = 0.0f;
-        float curPitch = 0.0f;
-        float curYaw = 0.0f;
-        bool retracted = false;
-        bool neutral = false;
-        bool yawLock = false;
-
-        bool haveControl = false;
-        bool othersHaveControl = false;
-    };
 
     class GimbalManager {
     public:

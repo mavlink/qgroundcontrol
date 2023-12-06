@@ -7,6 +7,40 @@
 
 QGC_LOGGING_CATEGORY(GimbalLog,         "GimbalLog")
 
+Gimbal::Gimbal()
+    : QObject(nullptr)
+{
+    
+}
+
+Gimbal::Gimbal(const Gimbal& other)
+    : QObject(nullptr)
+{
+    *this = other;
+}
+
+const Gimbal& Gimbal::operator=(const Gimbal& other)
+{
+    requestInformationRetries = other.requestInformationRetries;                    
+    requestStatusRetries      = other.requestStatusRetries;                
+    requestAttitudeRetries    = other.requestAttitudeRetries;                
+    deviceId                  = other.deviceId;    
+    receivedInformation       = other.receivedInformation;                
+    receivedStatus            = other.receivedStatus;        
+    receivedAttitude          = other.receivedAttitude;            
+    isComplete                = other.isComplete;    
+    retracted                 = other.retracted;    
+    neutral                   = other.neutral;    
+    yawLock                   = other.yawLock;    
+    haveControl               = other.haveControl;        
+    othersHaveControl         = other.othersHaveControl;            
+    _curRoll                  = other._curRoll;    
+    _curPitch                 = other._curPitch;    
+    _curYaw                   = other._curYaw;    
+
+    return *this;
+}
+
 GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
     : _mavlink(mavlink)
     , _vehicle(vehicle)
@@ -171,18 +205,18 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     auto quat = Eigen::Quaternionf{attitude_status.q[0], attitude_status.q[1], attitude_status.q[2], attitude_status.q[3]};
     auto euler = quat.toRotationMatrix().eulerAngles(2,0,1);
 
-    gimbal_it->curYaw   = euler[0] * (180.0f / M_PI);
-    gimbal_it->curRoll  = euler[1] * (180.0f / M_PI);
-    gimbal_it->curPitch = euler[2] * (180.0f / M_PI);
+    gimbal_it->_curYaw   = euler[0] * (180.0f / M_PI);
+    gimbal_it->_curRoll  = euler[1] * (180.0f / M_PI);
+    gimbal_it->_curPitch = euler[2] * (180.0f / M_PI);
 
     if (yaw_in_vehicle_frame) {
-        gimbal_it->curYaw += _vehicle->heading()->rawValue().toFloat();
-        if (gimbal_it->curYaw > 180.0f) {
-            gimbal_it->curYaw -= 360.0f;
+        gimbal_it->_curYaw += _vehicle->heading()->rawValue().toFloat();
+        if (gimbal_it->_curYaw > 180.0f) {
+            gimbal_it->_curYaw -= 360.0f;
         }
     }
 
-    // qCDebug(GimbalLog) << "roll: " << gimbal_it->curRoll << ", pitch: " << gimbal_it->curPitch << ", yaw: " << gimbal_it->curYaw;
+    // qCDebug(GimbalLog) << "roll: " << gimbal_it->_curRoll << ", pitch: " << gimbal_it->_curPitch << ", yaw: " << gimbal_it->_curYaw;
 
     gimbal_it->receivedAttitude = true;
     _vehicle->gimbalPitchChanged();
