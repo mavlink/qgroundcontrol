@@ -1,89 +1,99 @@
-# Yapı Taraması (Plan Şablonu)
+# Structure Scan (Plan Pattern)
 
-_Structure Scan_, çok köşeli (veya dairesel) zemin ayak izine sahip bir yapının _dikey yüzeyleri_ üzerinde (ör. duvarlar) görüntüler yakalayabilmek için ızgara şeklinde bir uçuş şablonu oluşturmanıza olanak sağlar. Structure Scans are typically used for the visual inspection or creating 3D models of structures.
+A _Structure Scan_ allows you to create a grid flight pattern that captures images over _vertical surfaces_ (e.g. walls) around a structure with an arbitrary polygonal (or circular) ground footprint.
+Structure Scans are typically used for the visual inspection or creating 3D models of structures.
 
-_Yapı Taramaları_, Plan ekranında **Pattern > Structure Scan** aracı kullanılarak bir görevin içine yerleştirilebilir.
+_Structure Scans_ may be inserted into a mission using the Plan view **Pattern > Structure Scan** tool.
 
-::: info
-_Structure Scan_'ın yeni versiyonu, eski _Structure Scan_ planlarını okuyamaz. Eskilerin tekar oluşturulmaları gerekir.
+:::info
+The new version of _Structure Scan_ can't read older _Structure Scan_ plans. They will need to be recreated.
 :::
 
-::: warning
-Bu özellik henüz ArduPilot yazılımı tarafından desteklenmemektedir. PX4'de desteklenir.
+:::warning
+This feature is not yet supported by ArduPilot firmware.
+It is supported in PX4.
 :::
 
-## Genel Bakış
+## Overview
 
-Aşağıdaki resim, yapı taramasının bir ekran görüntüsünü göstermektedir. Yeşil çokgen, yapının zemin ayak izini işaretlemek için kullanılırken, etrafındaki beyaz çizgi aracın uçuş yolunu gösterir. Uçuş yolundaki yeşil numaralı daire, taramaya giriş/çıkış noktasıdır (taramanın başladığı yer).
+The image below shows a screenshot of structure scan.
+The green polygon is used to mark out the ground footprint of the structure, while the white line around it indicates the vehicle flight path.
+The green numbered circle on the flight path is the scan entry/exit point (where the scan starts).
 
-![Yapı Taraması](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
+![Structure Scan](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
 
-Tarama, yapıyı eşit olarak katmanlara ayırır; araç, yapının çevresinde belirli bir irtifada ve yapıya _ scan distance_'den uçar, ardından tüm yüzey taranana kadar işlemi her katmanda tekrarlar.
+The scan divides the structure evenly into layers; the vehicle flies all the way around the structure at a particular altitude and _scan distance_ from the structure, then repeats the process at each layer until the whole surface has been scanned.
 
-![Katman JPG](../../../assets/plan/structure_scan_v2/layers.jpg)
+![Layer JPG](../../../assets/plan/structure_scan_v2/layers.jpg)
 
-Kullanıcılar, yapının altındaki engellerden kaçınmak için _scan bottom altitude_ ve araç taramaya / taramaya giderken engellerden kaçınmak için _entrance/exit altitude_ ayarlayabilir.
+Users can set the _scan bottom altitude_ to avoid obstacles at the bottom of the structure, and the _extrance/exit altitude_ to avoid obstacles as the vehicle travels to/from the scan.
 
-## Tarama Oluşturma
+## Creating a Scan
 
-Tarama oluşturmak için:
+To create a scan:
 
-1. **Plan View**'den **Pattern tool > Structure Scan**'ı seçin.
+1. In the **Plan View** select **Pattern tool > Structure Scan**.
 
-![Tarama JPG'si oluştur](../../../assets/plan/structure_scan_v2/create_scan.jpg)
+![Create Scan JPG](../../../assets/plan/structure_scan_v2/create_scan.jpg)
 
-2. Bu haritada basit kare bir yapı taraması oluşturacaktır.
+1. This will create a simple square structure scan on the map.
 
-![İlk Köşegen](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
+   ![Initial Polygon](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
 
-Yeşil bölge, yapıyı kaplayacak şekilde düzenlenmelidir.
+   The region shown in green must be modified so that it surrounds the structure.
 
-- Haritadaki opak köşeleri yapının kenarlarına sürükleyin (yukarıda leylak rengi daire içine alınmış köşeler).
-- Yapının kapladığı alan basit bir kareden fazlaysa, yeni bir köşe noktası oluşturmak için köşeler arasındaki yarı saydam dairelere tıklayabilirsiniz.
+   - Drag the opaque vertices on the map to the edge of the structure (example circled in mauve above).
+   - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertix.
 
-3. Ayrıca merkezdeki "daire"ye (kırmızı ile işaretlenmiş) tıklayarak ve açılır menüden _Circle_ 'ı seçerek dairesel bir alana geçebilirsiniz.
+2. You can also change to a circular footprint by clicking on the central "vertix" (marked in red) and selecting _Circle_ in the popup menu.
 
-![Dairesel Tarama](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
+   ![Circle Scan](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
 
-- Açılır menüden çokgen alana geri dönebilir ve taramanın yarıçapını ve/veya konumunu değiştirebilirsiniz.
-- Çemberin merkezini konumlandırmak için merkezdeki daireyi sürükleyin.
+   - From the popup menu you can switch back to a polygon footprint and change the radius and/or position of the scan.
+   - Drag the central vertix to position the centre of the circle.
 
-4. Geri kalan düzenlemeler, ekranın sağındaki _Structure Scan_ editörü kullanılarak halledilir. İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
+3. The rest of the configuration is handled using the _Structure Scan_ editor on the right hand side of the view.
+   First select whether you want to perform a manual scan, a scan using a particular camera, or a scan using a custom camera definition.
 
    ::: info
-   Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
+   The main difference between the modes is that predefined cameras are already set up to correctly calculate an effective layer height and trigger distance.
    :::
 
-   Farklı modlar için seçenekler aşağıda gösterilmiştir.
+   Options for the different modes are shown below.
 
-   ![Yapı Taraması Editörü](../../../assets/plan/structure_scan_v2/editor_options.jpg)
+   ![Structure Scan editor](../../../assets/plan/structure_scan_v2/editor_options.jpg)
 
-Kullanıcı her zaman aşağıdaki ayarları yapılandırabilir:
+The user can always configure the following settings:
 
-- **Start scan from top/bottom:** Katmanların taranma yönü.
-- **Structure height:**Taranan nesnenin yüksekliği.
+- **Start scan from top/bottom:** The direction in which layers are scanned.
+- **Structure height:** The height of the object being scanned.
 - **Scan distance:** Distance from the structure to the flight path.
-- **Entrance/Exit Alt:** Son/sonraki hedef noktası ile taranacak yapı arasındaki engellerden kaçınmak için bu ayarı kullanın.
-  - Araç, bu irtifada _Entrance/Exit_ noktasına yükselecek ve ardından taramayı başlatmak için ilk katmana alçalacaktır.
-  - Araç, taramayı tamamladıktan sonra bu irtifaya yükselecek ve ardından bir sonraki hedef noktaya geçecektir.
-- **Scan Bottom Alt:**Yapının tabanı etrafındaki engellerden kaçınmak için bu ayarı kullanın. Bu ayar, yapının altını yerden yukarıda olacak şekilde ayarlar ve bu nedenle ilk tarama uçuşu yolunun yüksekliği (en alt katmanın yüksekliği) tarama istatistiklerinde _Bottom Layer Alt_ olarak gösterilir.
-- **Rotate Entry Point:** Başlangıç/bitiş noktasını uçuş yolundaki bir sonraki köşeye/konuma taşıyın.
+- **Entrance/Exit Alt:** Use this setting to avoid obstacles between the last/next waypoint and the structure to be scanned.
+  - The vehicle will fly to the _Entrance/Exit_ point at this altitude and then descend to the initial layer to start the scan.
+  - The vehicle will ascend to this altitude after completing the scan and then move to the next waypoint.
+- **Scan Bottom Alt:** Use this setting to avoid obstacles around the base of the structure.
+  This adjust the bottom of the structure to be above the ground, and hence the altitude of the first scan
+  (the height of the lowest layer flight path is shown in the scan statistics as _Bottom Layer Alt_.
+- **Rotate Entry Point:** Move the start/finish point to the next vertix/position on the flight path.
 
-Kalan ayarlar _camera mode_'a bağlıdır:
+The remaining settings depend on the _camera mode_:
 
-- _Manuel Mod_ şunları ayarlamanıza olanak verir:
+- _Manual Mode_ allows you to specify:
+  - **Layer height:** The height of each layer.
+  - **Trigger Distance:** The distance between each camera trigger.
+    The camera is only triggered while flying the layer path.
+    It does not trigger images while transitioning from one layer to the next.
+  - **Gimbal Pitch** - Gimbal pitch you want to use for the scan.
 
-  - **Layer height:** Her katmanın yüksekliğini.
-  - **Trigger Distance:** Her kamera çekimi arasındaki mesafe. Kamera sadece katman yolunda uçarken çekim yapar. Bir katmandan diğerine geçerken görüntü çekmez.
-  - **Gimbal Pitch** -Tarama için kullanmak istediğiniz gimbal eğimi.
+- _Known/pre-defined cameras_ automatically calculates layer heights and image triggering from required image overlap, and allows you to trade off scan distance and require image resolution.
+  It also ensures that the camera is pointed directly at the surface when it is capturing images (i.e. at a right angle rather than some tangent).
+  The settings are:
 
-- _Bilinen/önceden tanımlanmış kameralar_ görüntü örtüşmesi için gerekli katman yüksekliklerini ve görüntü çekim aralıklarını otomatik olarak hesaplar ve tarama mesafesini değiştirmenize ve görüntü çözünürlüğü ayarlamanıza olanak tanır. It also ensures that the camera is pointed directly at the surface when it is capturing images (i.e. at a right angle rather than some tangent). Ayarlar şunlardır:
-
-  - **Camera Orientation:** Dikey veya Yatay
-  - _Örtüşme_:
-    - **Front Lap:** Görüntünün yukardan aşağıya örtüşmesi. (arttırılırsa katman boyu küçülür katman sayısı artar).
-    - **Side Lap:** Görüntü kenarlarda örtüşür. (arttırılırsa, her turda/katman taramasında daha fazla görüntü çeker).
+  - **Camera Orientation:** Portrait or Landscape
+  - _Overlap_:
+    - **Front Lap:** Image overlap from top to bottom (increasing shrinks layer height and increases layer count).
+    - **Side Lap:** Image overlap at sides (increasing takes more images in each lap/layer scan).
   - **Scan distance:** Distance from the structure to the flight path.
-  - **Ground Res:** Yüzey için gerekli görüntü çözünürlüğü/numune kalitesi.
+  - **Ground Res:** Required image resolution/sample quality of surface.
 
-- _Custom camera_ seçimi, kendi kamera özelliklerinizi girmenize olanak tanır, ancak aksi takdirde önceden tanımlanmış bir kamerayla aynı şekilde davranır.
+- _Custom camera_ selection allows you to enter your own camera characteristics, but otherwise behaves the same as a predefined camera.
