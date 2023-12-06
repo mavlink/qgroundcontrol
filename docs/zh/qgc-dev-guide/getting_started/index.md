@@ -4,35 +4,35 @@ qt_version: 5.15.2
 
 # Getting Started
 
-This topic explains how to get the _QGroundControl_ source code and build it either natively or within a _Vagrant_ environment.
+本主题说明如何获取QGroundControl源代码并在本机或在Vagrant(虚拟机)环境中构建它。 本主题还提供其他可选功能信息及特定于操作系统的功能信息。
 It also provides information about optional or OS specific functionality.
 
-## Daily Builds
+## 每日构建
 
-If you just want to test (and not debug) a recent build of _QGroundControl_ you can use the [Daily Build](https://docs.qgroundcontrol.com/en/releases/daily_builds.html). Versions are provided for all platforms.
+如果您只是想测试 (而不是调试) 最近生成的 _QGroundControl_ ，那么请使用[Daily build](https://docs.qgroundcontrol.com/en/releases/daily_builds.html)。 官方提供了适用于所有平台的版本。 Versions are provided for all platforms.
 
-## Source Code
+## 源代码
 
-Source code for _QGroundControl_ is kept on GitHub here: https\://github.com/mavlink/qgroundcontrol.
+_QGroundControl_ 的源代码保存在 github 上，下载地址为: https\://github.com/mavlink/qgroundcontrol。 QGroundControl源代码在Apache 2.0和GPLv3下是双许可的。 有关更多信息，请参阅：许可证。
 It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/COPYING.md).
 
-To get the source files:
+要获取源文件, 请执行以下操作:
 
 1. Clone the repo (or your fork) including submodules:
    ```
-   git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
+   克隆存储库 (或您的分叉), 包括子模块: `git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git`
    ```
 2. Update submodules (required each time you pull new source code):
    ```
-   git submodule update --recursive
+   2.更新子模块（每次拉新源代码时都这样做）： `git submodule update --recursive`
    ```
 
 :::tip
-Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
+提示：不能使用Github以zip形式下载源文件，因为zip压缩包中不包含相应的子模块源代码。 你必须使用git工具！
 You must use git!
 :::
 
-## Build QGroundControl
+## 构建QGroundControl开发环境
 
 ### Using Containers
 
@@ -45,18 +45,17 @@ We support Linux builds using a container found on the source tree of the reposi
 _QGroundControl_ builds are supported for macOS, Linux, Windows, iOS and Android.
 _QGroundControl_ uses [Qt](http://www.qt.io) as its cross-platform support library and uses [QtCreator](http://doc.qt.io/qtcreator/index.html) as its default build environment.
 
-- **macOS:** v10.11 or higher
-- **Ubuntu:** 64 bit, gcc compiler
+- macOS：v10.11或更高版本
+- Ubuntu：64位，gcc编译器
 - **Windows:** Vista or higher, [Visual Studio 2019 compiler](#vs) (64 bit)
-- **iOS:** 10.0 and higher
+- iOS：10.0及更高版本
 - **Android:** Android 5.0 and later.
   - Standard QGC is built against ndk version 19.
   - Java JDK 11 is required.
-- **Qt version:** {{ $frontmatter.qt\_version }} **(only)** <!-- NOTE {{ $frontmatter.qt_version }}  is set in the frontmatter above -->
+- **Qt version:** {{ $frontmatter.qt\_version }} **(only)** <!-- NOTE {{ $frontmatter.qt_version }} is set in the frontmatter above -->
 
-  ::: warning
-  **Do not use any other version of Qt!**
-  QGC has been thoroughly tested with the specified version of Qt ({{ $frontmatter.qt\_version }}).
+  :::warning
+  **Do not use any other version of Qt!** QGC has been thoroughly tested with the specified version of Qt ({{ $frontmatter.qt\_version }}).
   There is a significant risk that other Qt versions will inject bugs that affect stability and safety (even if QGC compiles).
   :::
 
@@ -78,16 +77,16 @@ When installing, select _Desktop development with C++_ as shown:
 Visual Studio is ONLY used to get the compiler. Actually building _QGroundControl_ should be done using [Qt Creator](#qt-creator) or [qmake](#qmake) as outlined below.
 :::
 
-#### Install Qt
+#### 安装Qt
 
 You **need to install Qt as described below** instead of using pre-built packages from say, a Linux distribution, because _QGroundControl_ needs access to private Qt headers.
 
 To install Qt:
 
-1. Download and run the [Qt Online Installer](http://www.qt.io/download-open-source)
+1. 下载并运行[Qt Online Installer](http://www.qt.io/download-open-source)
    - **Ubuntu:**
-     - Set the downloaded file to executable using: `chmod +x`.
-     - Install to default location for use with **./qgroundcontrol-start.sh.** If you install Qt to a non-default location you will need to modify **qgroundcontrol-start.sh** in order to run downloaded builds.
+     - 使用以下命令将下载的文件设置为可执行文件：`chmod + x`
+     - 请安装到默认位置, 以便与 **./qgroundcontrol-start.sh** 一起使用。如果将 Qt 安装到非默认位置, 则需要修改 **qgroundcontrol-start.sh** ，才能运行下载的组件。
 
 2. In the installer _Select Components_ dialog choose: {{ $frontmatter.qt\_version }}.
 
@@ -95,7 +94,7 @@ To install Qt:
    If the version needed is not displayed, check the archive (show archive and refresh).
    :::
 
-   Then install just the following components:
+   然后，按如下向导，安装组件:
 
    - **Windows**: _MSVC 2019 64 bit_
    - **MacOS**: _macOS_
@@ -119,12 +118,12 @@ To install Qt:
 
 4. Install Optional/OS-Specific Functionality
 
-   ::: info
    Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
    These features can be forcibly enabled/disabled by specifying additional values to qmake.
    :::
 
-   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoReceiver/README.md).
+   - - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoReceiver/README.md).
+     - **Airmap SDK:** - TBD.
    - **Airmap SDK:** - TBD.
 
 5. Disable platform-specific optional features that are enabled (but not installed), by default.
@@ -137,7 +136,7 @@ To install Qt:
      - Airmap: Create a file named **user\_config.pri** (in the repo root directory) containing the text `DEFINES += DISABLE_AIRMAP`.
        This can be done in a bash terminal using the command:
        ```
-       echo -e "DEFINES += DISABLE_AIRMAP\r\n" | tee user_config.pri
+       This can be done in a bash terminal using the command: `echo -e "DEFINES += DISABLE_AIRMAP\r\n" | tee user_config.pri`
        ```
 
 #### Building using Qt Creator {#qt-creator}
@@ -168,7 +167,7 @@ To install Qt:
 
 Example commands to build a default QGC and run it afterwards:
 
-1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder:
+1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder: `cd qgroundcontrol`
    ```
    cd qgroundcontrol
    ```
@@ -179,16 +178,16 @@ Example commands to build a default QGC and run it afterwards:
    cd build
    ```
 
-3. Configure the build using the qmake script in the root of the repository:
+3. Configure the build using the qmake script in the root of the repository: `qmake ../`
    ```
-   qmake ../
+   入门指南
    ```
 
 4. Run make to compile and link.
    To accelerate the process things you can use the `-j{number of threads}` parameter.
 
    ```
-   make -j12
+   `make -j12`
    ```
 
    ::: info
@@ -201,7 +200,7 @@ Example commands to build a default QGC and run it afterwards:
 
    :::
 
-5. Run the QGroundcontrol binary that was just built:
+5. Run the QGroundcontrol binary that was just built: `./staging/QGroundControl`
    ```
    ./staging/QGroundControl
    ```
@@ -234,5 +233,4 @@ To add support for installation file creation you need to add `CONFIG+=installer
 To do this in _Qt Creator_:
 
 - Open **Projects > Build > Build Steps > qmake > Additional arguments**.
-- Enter `CONFIG+=installer` as shown:
-  ![Installer](../../../assets/dev_getting_started/qt_project_installer.png)
+- Enter `CONFIG+=installer` as shown: ![Installer](../../../assets/dev_getting_started/qt_project_installer.png)
