@@ -1,5 +1,6 @@
-# 로그 다운로드(분석 화면)
+# Log Download (Analyze View)
 
-_로그 다운로드_ 화면(**분석 > 로그 다운로드**)은 _새로고침_, _다운로드_ 및 _ 전체 삭제 _ 기능을 제공합니다.
+The _Log Download_ screen (**Analyze > Log Download**) is used to list (_Refresh_),
+_Download_ and _Erase All_ log files from the connected vehicle.
 
-![보기 로그 다운로드 분석](../../../assets/analyze/log_download.jpg)
+![Analyze View Log Download](../../../assets/analyze/log_download.jpg)
