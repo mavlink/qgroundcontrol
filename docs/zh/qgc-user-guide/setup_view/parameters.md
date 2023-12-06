@@ -4,7 +4,7 @@ The _Parameters_ screen allows you to find and modify any of the parameters asso
 
 ![Parameters Screen](../../../assets/setup/parameters_px4.jpg)
 
-::: info
+:::info
 PX4 Pro and ArduPilot use different parameter sets, but they are both managed as described in this section.
 :::
 
@@ -22,7 +22,7 @@ To change the value of a parameter click on the parameter row in a group or sear
 
 ![Changing a parameter value](../../../assets/setup/parameters_changing.png)
 
-::: info
+:::info
 When you click **Save** the parameter is automatically and silently uploaded to the connected vehicle. Depending on the parameter, you may then need to reboot the flight controller for the change to take effect.
 :::
 
