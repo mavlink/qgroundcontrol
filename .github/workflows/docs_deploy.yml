@@ -45,10 +45,10 @@ jobs:
         with:
           node-version: 18
           cache: npm
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
+##      - name: Setup Pages
+##        uses: actions/configure-pages@v3
       - name: Install dependencies
-        run: npm ci # or pnpm install / yarn install / bun install
+        run: npm ci
       - name: Build with VitePress
         run: |
           npm run docs:build
