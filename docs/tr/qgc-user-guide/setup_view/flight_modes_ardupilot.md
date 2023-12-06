@@ -5,8 +5,8 @@ The _Flight Modes_ section allows you to configure which flight modes and other 
 ::: info
 In order to set up flight modes you must already have
 
-> - [Configured your radio](../setup_view/radio.md) in order to set flight modes.
-> - [Setup the RC transmitter](../setup_view/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)> :::
+> - In order to set up flight modes you must already have - [Configured your radio](../setup_view/radio.md) in order to set flight modes.
+> - - [Setup the RC transmitter](../setup_view/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
@@ -42,7 +42,6 @@ To set the flight modes:
 
 All values are automatically saved as they are changed.
 
-::: info
 The ArduCopter screenshot above shows a typical setup for a three position flight mode switch with an additional option of RTL being on a channel 7 switch.
 You can also setup 6 flight modes using two switches plus mixing on your transmitter. Scroll down to the center section of this [page](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration) for tutorials on how to do that.
 :::
