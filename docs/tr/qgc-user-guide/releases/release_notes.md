@@ -2,13 +2,14 @@
 
 This topic contains the cumulative release notes for _QGroundControl_.
 
-::: info
-Stable build major/minor numbers are listed below. _Patch_ release numbers are not listed, but can be found on the [Github release page](https://github.com/mavlink/qgroundcontrol/releases).
+:::info
+Stable build major/minor numbers are listed below.
+_Patch_ release numbers are not listed, but can be found on the [Github release page](https://github.com/mavlink/qgroundcontrol/releases).
 :::
 
 ## Stable Version 4.0 (current)
 
-::: info
+:::info
 The format for Settings in QGC had to change in this release. Which means all QGC settings will be reset to defaults.
 :::
 
@@ -57,10 +58,12 @@ This section contains a high level and _non-exhaustive_ list of new features add
 
 - **Overall**
   - Added Airmap integration to QGC. OSX build only.
-  - Bumped settings version (now 8). This will cause all settings to be reset to defaults.
+  - Bumped settings version (now 8).
+    This will cause all settings to be reset to defaults.
   - Added Chinese and Turkish localization and partial German localization.
   - Added support for the Taisync 2.4GHz ViUlinx digital HD wireless link.
-  - Fix loading of parameters from multiple components. This especially affected WiFi connections.
+  - Fix loading of parameters from multiple components.
+    This especially affected WiFi connections.
   - **ArduPilot** Support for ChibiOS firmware connect and flash.
 - **Settings**
   - **RTK** Add support for specifying fixed RTK based station location in Settings/General.
@@ -69,13 +72,16 @@ This section contains a high level and _non-exhaustive_ list of new features add
     - GCS heading shown if available
 - **Plan**
   - **Polygons** Support loading polygons from SHP files.
-  - **Fixed Wing Landing Pattern** Add stop photo/video support. Defaults to on such that doing an RTL will stop camera.
+  - **Fixed Wing Landing Pattern** Add stop photo/video support.
+    Defaults to on such that doing an RTL will stop camera.
   - **Edit Position dialog** Available on polygon vertices.
 - **Fly**
-  - **Camera Page** Updated support for new MAVLInk camera messages. Camera select, camera mode, start/stop photo/video, storage mangement...
+  - **Camera Page** Updated support for new MAVLInk camera messages.
+    Camera select, camera mode, start/stop photo/video, storage mangement...
   - **Orbit** Support for changing rotation direction.
   - **Instrument Panel**
-    - Added ESTIMATOR_STATUS values to new estimatorStatus Vehicle FactGroup. These are now available to display in instrument panel.
+    - Added ESTIMATOR\_STATUS values to new estimatorStatus Vehicle FactGroup.
+      These are now available to display in instrument panel.
     - Make Distance to GCS available for display from instrument panel.
     - Make Heading to Home available for display from instrument panel.
 
@@ -88,6 +94,7 @@ This section contains a high level and _non-exhaustive_ list of new features add
     - Center Tool allows you to specify a map location in lat/lon or UTM coordinates. Making it easier to get to the location you want to create an offline map for.
     - Ability to pre-download terrain heights for offline use.
   - **Help** Provides links to QGC user guide and forums.
+
 - **Setup**
   - **Firmware** Ability to flash either PX4 or ArduPilot Flow firmware.
   - PX4 Pro Firmware
@@ -96,15 +103,21 @@ This section contains a high level and _non-exhaustive_ list of new features add
   - ArduPilot Firmware
     - **Power/Safety** Support for new multi-battery setup.
     - **Trad Heli** New setup page.
+
 - **Plan**
 
   - **File Load/Save** New model for Plan file loading which matches a standard File Load/Save/Save As user model.
+
   - **Load KML** Ability to load a KML file directly from the Sync menu. You will be prompted for what type of Pattern you want to create from the KML if needed.
+
   - **Survey** Better support for irregular shaped polygons.
+
   - **[Corridor Scan](../plan_view/pattern_corridor_scan.md)** - Create a flight pattern which follows a poly-line. For example can be used to survey a road.
+
   - **[Fixed Wing Landing Pattern](../plan_view/pattern_fixed_wing_landing.md)**
     - Landing area visually represented in Plan.
     - Landing position/heading can be copied from Vehicle position/heading.
+
   - **Terrain**
 
     - Height of mission items can be specified as height above terrain.
@@ -122,11 +135,14 @@ This section contains a high level and _non-exhaustive_ list of new features add
     - Many new values available for display.
     - New Camera page which provides full camera control. Requires a camera which support new MavLink camera specification.
   - **ArduPlane** Much better support for guided commands including QuadPlane support.
-  - **High Latency Links** Support for high latency links such as satellite connections. Limits the traffic from QGC up to Vehicle on these links to reduce cost. Supports HIGH_LATENCY MavLink message. Supports failover back/forth from high latency to normal link with dual link setup.
+  - **High Latency Links** Support for high latency links such as satellite connections.
+    Limits the traffic from QGC up to Vehicle on these links to reduce cost.
+    Supports HIGH\_LATENCY MavLink message.
+    Supports failover back/forth from high latency to normal link with dual link setup.
 
 ## Stable Version 3.3
 
-::: tip
+:::tip
 More detailed release notes for version 3.3 can be found [here](../releases/stable_v3.3_long.md).
 :::
 
@@ -154,7 +170,7 @@ This section contains a high level and _non-exhaustive_ list of new features add
 
 ## Stable Version 3.2
 
-::: tip
+:::tip
 More detailed release notes for version 3.2 can be found [here](../releases/stable_v3.2_long.md).
 :::
 
@@ -215,7 +231,6 @@ This section contains a high level and _non-exhaustive_ list of new features add
   - **Mavlink Console** - NSH shell access
 
 - **Support for third-party customized QGroundControl**
-
   - Standard QGC supports multiple firmware types and multiple vehicle types. There is now support in QGC which allows a third-party to create their own custom version of QGC which is targeted specifically to their custom vehicle. They can then release their own version of QGC with their vehicle.
 
 ## Stable Version 3.1
