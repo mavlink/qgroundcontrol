@@ -4,7 +4,7 @@ _QGroundControl_ allows you to control a vehicle with on-screen virtual thumbsti
 
 ![QGroundControl Preferences > Enable Virtual Joystick](../../../assets/settings/joystick_virtual_joystick_displayed.jpg)
 
-::: info
+:::info
 Thumbstick control is not as responsive as using an RC Transmitter (because the information is sent over MAVLink). Another alternative is to use a [USB Joystick/Gamepad](../setup_view/joystick.md).
 :::
 
