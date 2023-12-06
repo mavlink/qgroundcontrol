@@ -1,53 +1,53 @@
-# Power Setup
+# Güç Kurulumu
 
-The _Power Setup_ screen is used to configure battery parameters and also provide advanced settings for propellers.
+_Power Setup_ ekranı batarya parametrelerini düzenlemek için kullanılır ve ayrıca pervaneler hakkında gelişmiş ayarlar sunar.
 
-![Battery Calibration](../../../assets/setup/px4_power.jpg)
+![Batarya Kalibrasyonu](../../../assets/setup/px4_power.jpg)
 
-## Battery Voltage/Current Calibration
+## Batarya Voltaj/Akım Kalibrasyonu
 
-Enter data for your battery/power module from its data sheet: number of cells, full voltage per cell, empty voltage per cell. If provided, also enter voltage divider and amps-per-volt information.
+Batarya/güç modülünüz için veri sayfasından verileri girin: hücre sayısı, hücre başına tam voltaj, hücre başına boş voltaj. Eğer varsa, voltaj bölücü ve volt başına amper bilgilerini de girin.
 
-_QGroundControl_ can be used to calculate appropriate voltage divider and amps-per-volt values from measurements:
+_QGroundControl_, ölçümlerden uygun voltaj bölücü ve volt başına amper değerlerini hesaplamak için kullanılabilir:
 
-1. Measure the voltage from the battery using a multimeter.
-2. Click **Calculate** next to the _Voltage divider_ field. On the prompt that appears:
-3. Enter the measured voltage.
-4. Click **Calculate** to generate a new voltage-divider value.
-5. Click **Close** to save the value into the main form.
-6. Measure the current from the battery.
-7. Click **Calculate** next to the _Amps per volt_ field. On the prompt that appears:
-8. Enter the measured current.
-9. Click **Calculate** to generate a new _amps per volt_ value.
-10. Click **Close** to save the value into the main form.
+1. Bir multimetre kullanarak pilden gelen voltajı ölçün.
+2. _Voltage divider_'ın yanındaki **Calculate** butonuna tıklayın. On the prompt that appears:
+3. Ölçülen voltajı girin.
+4. **Calculate**'e tıklayarak yeni bir voltaj bölücü değeri oluşturun.
+5. Değeri ana forma kaydetmek için **Close**'a tıklayın.
+6. Bataryadaki akımı ölçün.
+7. _Amps per volt_'un yanındaki **Calculate** butonuna tıklayın. On the prompt that appears:
+8. Ölçülen akımı girin.
+9. **Calculate**'e tıklayarak yeni bir _volt başına akım_ değeri oluşturun.
+10. Değeri ana forma kaydetmek için **Close**'a tıklayın.
 
-## Advanced Power Settings
+## Gelişmiş Güç Ayarları
 
-Click the **Show Advanced Settings** checkbox to specify advanced power settings.
+Gelişmiş güç ayarlarını özelleştirmek için **Show Advanced Settings** onay kutusuna tıklayın.
 
-### Voltage Drop on Full Load
+### Tam Yükte Voltaj Düşüşü
 
-Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full throttle, divided by the number of battery cells. The default value should be used if unsure!
+Bataryalar yüksek motor yüklemelerinde daha az voltaj gösterir. Motorlar boştayken ve tam kapasitede çalışırkenki volt farkını batarya hücrelerinin sayısına bölerek girin. Emin değilseniz varsayılan değer kullanılmalıdır!
 
 :::warning
-If the value is too high the battery may be deep-discharged and damaged.
+Eğer değer çok yüksekse batarya deep-discharged olabilir ve hasar görebilir.
 :::
 
-## ESC PWM Minimum and Maximum Calibration
+## ESC PWM Minimum ve Maksimum Kalibrasyonu
 
-To calibrate the ESC max/min PWM values:
+ESC'nin max/min PWM değerlerini kalibre etmek için:
 
-1. Remove the propellers.
-2. Connect the vehicle to QGC via USB (only).
-3. Click the **Calibrate** button.
+1. Pervaneleri çıkarın.
+2. Aracı QGC'ye USB (sadece) aracılığı ile bağlayın.
+3. **Calibrate** butonuna basın.
 
 ::: warning
 Never attempt ESC calibration with props on.
 
-Motors should not spin during ESC calibration.
-However if an ESC doesn't properly support/detect the calibration sequence then it will respond to the PWM input by running the motor at maximum speed.
+ESC kalibrasyonu sırasında motorlar dönmemelidir.
+Bununla birlikte, bir ESC kalibrasyon sırasını doğru şekilde desteklemez/tespit etmezse, motoru maksimum hızda çalıştırarak PWM girişine yanıt verecektir.
 :::
 
-## Other Settings
+## Diğer Ayarlar
 
-Select the **Show UAVCAN Settings** checkbox to access additional settings for UAVCAN Bus Configuration and motor index and direction assignment.
+UAVCAN Veriyolu Yapılandırması ve motor indeksi ve yön ataması için ek ayarlara erişmek için **Show UAVCAN Settings** onay kutusunu seçin.
