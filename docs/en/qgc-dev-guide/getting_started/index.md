@@ -2,7 +2,7 @@
 qt_version: 5.15.2
 ---
 
-# Getting Started
+# Getting Started with Source and Builds
 
 This topic explains how to get the _QGroundControl_ source code and build it either natively or within a _Vagrant_ environment.
 It also provides information about optional or OS specific functionality.
