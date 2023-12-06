@@ -1,33 +1,34 @@
-# Mock Link
+# 模拟链接
 
-_Mock Link_ allows you to create and stop links to multiple simulated (mock) vehicles in _QGroundControl_ debug builds.
+Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模拟（模拟）载具的链接。
 
-The simulation does not support flight, but does allow easy testing of:
+模拟不支持飞行，但允许轻松测试：
 
-- Mission upload/download
-- Viewing and changing parameters
-- Testing most setup pages
-- Multiple vehicle UIs
+- 任务上传/下载
+- 查看和更改参数
+- 测试大多数设置页面
+- 多个载具用户界面
 
-It is particularly useful for unit testing error cases for mission upload/download.
+对于任务上载/下载的单元测试错误情况尤其有用。
 
-## Using Mock Link
+## 使用Mock Link
 
-To use _Mock Link_:
+为了使用Mock Link：
 
 1. Create a debug build by [building the source](https://github.com/mavlink/qgroundcontrol#supported-builds).
 
-2. Access _Mock Link_ by selecting the _Application Settings_ icon in the top toolbar and then **Mock Link** in the sidebar:
+2. 通过选择顶部工具栏中的“应用程序设置”图标，然后选择侧栏中的“模拟链接”来访问“模拟链接”：
 
    ![](../../../assets/dev_tools/mocklink_waiting_for_connection.jpg)
 
-3. The buttons in the panel can be clicked to create a vehicle link of the associated type.
+3. 可以单击面板中的按钮以创建相关类型的车辆链接。
 
-   - Each time you click a button a new connection will be created.
-   - When there is more than one connection the multiple-vehicle UI will appear.
+   - 每次单击按钮时，都会创建一个新连接。
+   - 当存在多个连接时，将显示多车辆UI。
+     ![](../../../assets/dev_tools/mocklink_connected.jpg)
 
    ![](../../../assets/dev_tools/mocklink_connected.jpg)
 
-4. Click the **Stop one Mock Link** to stop the currently active vehicle.
+4. 单击停止一个模拟链接以停止当前活动的车辆。
 
-Using _Mock Link_ is then more or less the same as using any other vehicle, except that the simulation does not allow flight.
+然后使用模拟链接或多或少与使用任何其他载具相同，只是模拟不允许飞行。
