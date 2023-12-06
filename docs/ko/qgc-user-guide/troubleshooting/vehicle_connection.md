@@ -2,12 +2,12 @@
 
 ## UI에 기체가 표시되지 않음
 
-QGroundControl은 네트워크이 접속된 기체를 자동으로 연결됩니다(USB 또는 WiFi 등 사용). QGroundControl UI에 네트워크에 접속한 기체가 표시되지 않는 경우 [콘솔 로깅](../SettingsView/console_logging.md)을 사용하여 문제를 디버깅할 수 있습니다.
+QGroundControl은 네트워크이 접속된 기체를 자동으로 연결됩니다(USB 또는 WiFi 등 사용). QGroundControl UI에 네트워크에 접속한 기체가 표시되지 않는 경우 [콘솔 로깅](../settings_view/console_logging.md)을 사용하여 문제를 디버깅할 수 있습니다.
 
 문제를 디버그하려면 다음 절차를 따라 해결하십시오.
 
 - 연결되지 않은 기체의 네트워크에서 시작합니다. 예를 들어, USB 연결을 연결하거나 OS에서 WiFi 링크를 설정하지 마십시오.
-- QGroundControl에서 `LinkManagerLog` [콘솔 로깅](../SettingsView/console_logging.md)을 켭니다. 이것은 QGroundControl에서 연결하는 링크에 대한 출력을 기록합니다.
+- QGroundControl에서 `LinkManagerLog` [콘솔 로깅](../settings_view/console_logging.md)을 켭니다. 이것은 QGroundControl에서 연결하는 링크에 대한 출력을 기록합니다.
 - 기체의 네트워크를 설정합니다.
 - 콘솔 로그 출력은 다음과 같이 표시되어야 합니다.
 
@@ -25,7 +25,7 @@ QGroundControl은 네트워크이 접속된 기체를 자동으로 연결됩니�
 이 항목이 표시되지 않으면 QGroundControl에서 네트워크를 인식하지 못하는 것입니다. 하드웨어가 OS 수준에서 인식되는지 확인하려면 다음을 수행하십시오.
 
 - 연결되지 않은 기체의 네트워크에서 시작합니다. 예를 들어, USB 연결을 연결하거나 OS에서 WiFi 링크를 설정하지 마십시오.
-- QGroundControl에서 `LinkManagerVerboseLog` [콘솔 로깅](../SettingsView/console_logging.md)을 켭니다. 이것은 QGroundControl에서 인식하는 모든 직렬 하드웨어 연결에 대한 출력을 기록합니다.
+- QGroundControl에서 `LinkManagerVerboseLog` [콘솔 로깅](../settings_view/console_logging.md)을 켭니다. 이것은 QGroundControl에서 인식하는 모든 직렬 하드웨어 연결에 대한 출력을 기록합니다.
 - 장치에서 직렬 포트의 지속적인 출력을 볼 수 있습니다.
 - USB 통신 장치를 연결합니다.
 - 콘솔 출력에 새 장치가 표시되어야 합니다. 예:

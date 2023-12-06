@@ -63,7 +63,7 @@ _QGroundControl_ uses [Qt](http://www.qt.io) as its cross-platform support libra
 For more information see: [Qt 5 supported platform list](http://doc.qt.io/qt-5/supported-platforms.html).
 
 ::: info
-Native [CentOS Builds](../getting_started/CentOS.md) are also supported, but are documented separately (as the tested environment is different).
+Native [CentOS Builds](../getting_started/cent_os.md) are also supported, but are documented separately (as the tested environment is different).
 :::
 
 #### Install Visual Studio 2019 (Windows Only) {#vs}

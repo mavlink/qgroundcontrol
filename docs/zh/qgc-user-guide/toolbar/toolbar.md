@@ -6,13 +6,13 @@ The main toolbar provides access to select the different application views, and 
 
 The following icons are used to switch between the main _Views_. These are displayed even if no vehicle is connected.
 
-![Settings view icon](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../SettingsView/SettingsView.md)** <br />Configure the _QGroundControl_ application.
+![Settings view icon](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../settings_view/settings_view.md)** <br />Configure the _QGroundControl_ application.
 
-![Setup view icon](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[Setup](../SetupView/SetupView.md)** <br />Configure and tune your vehicle.
+![Setup view icon](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[Setup](../setup_view/setup_view.md)** <br />Configure and tune your vehicle.
 
-![Plan view icon](../../../assets/toolbar/toolbar_view_select_plan.jpg) **[Plan](../PlanView/PlanView.md)** <br />Create autonomous missions.
+![Plan view icon](../../../assets/toolbar/toolbar_view_select_plan.jpg) **[Plan](../plan_view/plan_view.md)** <br />Create autonomous missions.
 
-![Fly icon](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[Fly](../FlyView/FlyView.md)** <br />Monitor your vehicle(s) while flying, including streaming video.
+![Fly icon](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[Fly](../fly_view/fly_view.md)** <br />Monitor your vehicle(s) while flying, including streaming video.
 
 ![Analyze icon](../../../assets/toolbar/toolbar_view_select_analyse.jpg) **[Analyze](../analyze_view/index.md)** <br />Download logs, geotag images from a survey mission, access the MAVLink console.
 

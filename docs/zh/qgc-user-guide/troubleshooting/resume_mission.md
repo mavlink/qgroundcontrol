@@ -16,8 +16,8 @@ In order for the _QGroundControl_ development team to debug these issues the fol
 The following steps are required for debugging both types of problems:
 
 1. Restart QGC
-2. Turn on [console logging](../SettingsView/console_logging.md) with the log option: `GuidedActionsControllerLog`.
-3. Enable [telemetry logging](../SettingsView/General.md#miscellaneous) (**Settings > General**).
+2. Turn on [console logging](../settings_view/console_logging.md) with the log option: `GuidedActionsControllerLog`.
+3. Enable [telemetry logging](../settings_view/general.md#miscellaneous) (**Settings > General**).
 4. Start the mission.
 5. Fly till you need a battery swap.
 
@@ -45,7 +45,7 @@ For _Resume Mission Generation_ problems follow the [common steps above](#common
 
 7. Click **Resume Mission**.
 8. The new mission should be generated.
-9. Go to [Plan View](../PlanView/PlanView.md).
+9. Go to [Plan View](../plan_view/plan_view.md).
 10. Select **Download** from the _File/Sync_ menu.
 11. Save the _Modified Plan_ to a file.
 12. Save the _Console Log_ to a file.

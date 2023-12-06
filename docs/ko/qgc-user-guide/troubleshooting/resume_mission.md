@@ -16,8 +16,8 @@ _QGroundControl_ 개발 팀이 이러한 문제를 디버그하려면 *임무 �
 두 가지 유형의 문제를 디버깅하려면 다음 단계가 필요합니다.
 
 1. QGroundControl 다시 시작
-2. `GuidedActionsControllerLog` 로그 옵션으로 [콘솔 로깅](../SettingsView/console_logging.md)을 켭니다.
-3. [원격 분석 로깅](../SettingsView/General.md#miscellaneous)을 활성화합니다(**설정 > 일반**).
+2. `GuidedActionsControllerLog` 로그 옵션으로 [콘솔 로깅](../settings_view/console_logging.md)을 켭니다.
+3. [원격 분석 로깅](../settings_view/general.md#miscellaneous)을 활성화합니다(**설정 > 일반**).
 4. 미션을 시작합니다.
 5. 배터리 교체가 필요할 때까지 비행합니다. **Tip** 또는 미션 중간부터 수동으로 출발지를 복귀하여 문제를 재현할 수 있습니다(항상 문제가 재현되지는 않음).
 6. 기체가 착륙후 시동이 정지되면 _임무 재개_ 대화창이 나타납니다. **Note** 그렇지 않은 경우는 QGroundControl에 버그가 있을 수 있습니다.
@@ -36,7 +36,7 @@ _임무 재개 생성_ 문제의 경우 [위의 일반적인 단계](#common_ste
 
 7. **임무 재개**를 클릭합니다.
 8. 새로운 미션이 생성되어야 합니다.
-9. [계획 화면](../PlanView/PlanView.md)으로 이동합니다.
+9. [계획 화면](../plan_view/plan_view.md)으로 이동합니다.
 10. _파일/동기화_ 메뉴에서 **다운로드**를 선택합니다.
 11. *수정된 계획*을 파일에 저장합니다.
 12. *콘솔 로그*를 파일에 저장합니다.

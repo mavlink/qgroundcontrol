@@ -13,7 +13,7 @@ This topic contains a high level and _non-exhaustive_ list of new features added
 You can specify a connection to one of these devices on the General page.
 The GPS information will then be used for ground station location and in turn follow me support.
 
-For more information see [Settings > General (AutoConnect to the following devices)](../SettingsView/General.md#auto_connect).
+For more information see [Settings > General (AutoConnect to the following devices)](../settings_view/general.md#auto_connect).
 
 #### Video Recording
 
@@ -24,7 +24,7 @@ You can also specify the maximum amount of space you want video files to consume
 After that size if exceeded the oldest video files will be removed.
 Video Recording is turned on/off from the Video widget in the Fly View.
 
-For more information see [Settings > General (Video / Video Recording)](../SettingsView/General.md#video).
+For more information see [Settings > General (Video / Video Recording)](../settings_view/general.md#video).
 
 ### Plan View {#plan_view}
 
@@ -33,7 +33,7 @@ For more information see [Settings > General (Video / Video Recording)](../Setti
 A Structure Scan allows you to create a grid flight pattern that captures images over vertical surfaces (polygonal or circular).
 These are typically used for the visual inspection or creation of 3d models of structures.
 
-Details [here](../PlanView/pattern_structure_scan_v2.md).
+Details [here](../plan_view/pattern_structure_scan_v2.md).
 
 #### New MAVLink GeoFence, Rally Point support
 

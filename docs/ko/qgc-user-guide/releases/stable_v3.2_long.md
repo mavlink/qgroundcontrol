@@ -6,27 +6,27 @@
 
 ### 원격 측정 로그 자동 저장
 
-*비행 후 텔레메트리 로그 저장*을 켠 경우 더 이상 차량이 시동 정지 시마다 로그를 저장 위치를 묻는 메시지가 표시되지 않습니다. 로그는 [애플리케이션 로드/저장 경로](../SettingsView/General.md#load_save_path)에 자동으로 저장됩니다.
+*비행 후 텔레메트리 로그 저장*을 켠 경우 더 이상 차량이 시동 정지 시마다 로그를 저장 위치를 묻는 메시지가 표시되지 않습니다. 로그는 [애플리케이션 로드/저장 경로](../settings_view/general.md#load_save_path)에 자동으로 저장됩니다.
 
-자세한 내용은 [설정 > 일반(기타)](../SettingsView/General.md#autosave_log)을 참고하십시오.
+자세한 내용은 [설정 > 일반(기타)](../settings_view/general.md#autosave_log)을 참고하십시오.
 
 ### 계획 자동 로드
 
-이 설정이 켜져 있으면, *QGroundControl*에 차량 연결시 계획을 자동으로 업로드합니다. 계획 파일의 이름은 **AutoLoad#.plan**이어야 하며, 여기서 `#`은 차량 Id로 대체됩니다. 계획 파일은 [응용 프로그램 로드/저장 경로](../SettingsView/General.md#load_save_path)에 위치하여야 합니다.
+이 설정이 켜져 있으면, *QGroundControl*에 차량 연결시 계획을 자동으로 업로드합니다. 계획 파일의 이름은 **AutoLoad#.plan**이어야 하며, 여기서 `#`은 차량 Id로 대체됩니다. 계획 파일은 [응용 프로그램 로드/저장 경로](../settings_view/general.md#load_save_path)에 위치하여야 합니다.
 
-자세한 내용은 [설정 > 일반(기타)](../SettingsView/General.md#autoload_missions)을 참고하십시오.
+자세한 내용은 [설정 > 일반(기타)](../settings_view/general.md#autoload_missions)을 참고하십시오.
 
 ### 응용프로그램 불러오기/저장 경로
 
 이제 QGroundControl에 매개변수, 원격 측정 또는 임무 계획의 기본 저장 경로를 지정할 수 있습니다.
 
-자세한 내용은 [설정 > 일반(기타)](../SettingsView/General.md#load_save_path)을 참고하십시오.
+자세한 내용은 [설정 > 일반(기타)](../settings_view/general.md#load_save_path)을 참고하십시오.
 
 ### RTK GPS
 
 이제 연결된 RTK GPS와 함께 사용할 _정확도 조사_ 및 *최소 관찰 기간*을 지정할 수 있습니다.
 
-자세한 내용은 [설정 > 일반(RTK GPS)](../SettingsView/General.md#rtk_gps)을 참고하십시오.
+자세한 내용은 [설정 > 일반(RTK GPS)](../settings_view/general.md#rtk_gps)을 참고하십시오.
 
 ## 설정
 
@@ -50,13 +50,13 @@
 
 ![계획 툴바](../../../assets/plan/plan_toolbar.jpg)
 
-[계획 화면](../PlanView/PlanView.md) 상단에 새로운 *계획 도구 모음*이 표시됩니다. 현재 선택된 웨이포인트와 관련된 정보와 전체 미션에 대한 통계를 나타냅니다.
+[계획 화면](../plan_view/plan_view.md) 상단에 새로운 *계획 도구 모음*이 표시됩니다. 현재 선택된 웨이포인트와 관련된 정보와 전체 미션에 대한 통계를 나타냅니다.
 
 차량에 연결하면 **업로드** 버튼도 표시되며, 차량에 계획을 업로드할 수 있습니다.
 
 ### 임무 설정
 
-[미션 설정](../PlanView/PlanView.md#mission_settings) 패널을 사용하면 전체 미션에 적용되는 값을 지정하거나 미션 시작 시 바로 제어하려는 설정을 지정할 수 있습니다. 화면 오른쪽 미션 목록의 첫 번째 아이템입니다.
+[미션 설정](../plan_view/plan_view.md#mission_settings) 패널을 사용하면 전체 미션에 적용되는 값을 지정하거나 미션 시작 시 바로 제어하려는 설정을 지정할 수 있습니다. 화면 오른쪽 미션 목록의 첫 번째 아이템입니다.
 
 <img src="../../../assets/plan/mission/mission_settings.png" style="width: 150px;" />
 
@@ -133,7 +133,7 @@
 
 배회 지점과 착륙 지점 모두 드래그하여 수정할 수 있습니다. 또한, 패턴과 관련된 모든 다양한 값들을 수정할 수 있습니다.
 
-자세한 내용은 [고정 날개 착륙 패턴](../PlanView/pattern_fixed_wing_landing.md)을 참고하십시오.
+자세한 내용은 [고정 날개 착륙 패턴](../plan_view/pattern_fixed_wing_landing.md)을 참고하십시오.
 
 #### 탐사(신규 기능)
 

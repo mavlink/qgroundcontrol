@@ -12,7 +12,7 @@
 
 일반 페이지에서 이러한 장치 연결을 지정할 수 있습니다. GPS 정보는 지상국 위치 측정에 사용됩니다.
 
-자세한 내용은 [설정 > 일반(다음 장치에 자동 연결)](../SettingsView/General.md#auto_connect)을 참고하십시오.
+자세한 내용은 [설정 > 일반(다음 장치에 자동 연결)](../settings_view/general.md#auto_connect)을 참고하십시오.
 
 #### 비디오 녹화
 
@@ -20,7 +20,7 @@
 
 비디오는 QGroundControl 파일 저장 경로의 비디오 디렉토리에 저장됩니다. 비디오 파일들의 최대 저장 용량을 지정할 수 있습니다. 해당 크기를 초과하면 가장 오래된 비디오 파일을 삭제합니다. 비디오 녹화는 플라이 뷰의 비디오 위젯에서 켜고 끌 수 있습니다.
 
-자세한 내용은 [설정 > 일반(동영상/동영상 녹화)](../SettingsView/General.md#video)을 참고하십시오.
+자세한 내용은 [설정 > 일반(동영상/동영상 녹화)](../settings_view/general.md#video)을 참고하십시오.
 
 ### 계획 화면 {#plan_view}
 
@@ -28,7 +28,7 @@
 
 구조 스캔은 수직 표면(다각형 또는 원형) 위의 이미지를 캡처하는 격자 비행 패턴을 만들 수 있습니다. 일반적으로 육안 검사나 구조물의 3D 모델을 생성합니다.
 
-자세한 내용은 [여기](../PlanView/pattern_structure_scan_v2.md)를 참고하십시오.
+자세한 내용은 [여기](../plan_view/pattern_structure_scan_v2.md)를 참고하십시오.
 
 #### 새로운 MAVLink GeoFence, Rally Point 지원
 

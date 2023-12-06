@@ -3,7 +3,7 @@
 This topic lists troubleshooting information related to **running** _QGroundControl_ on the host computer (e.g. QGC setup and configuration issues).
 
 ::: tip
-Problems when **using** _QGroundControl_ to interact with a vehicle are covered in: [QGC/Vehicle Interaction Problems](../Support/CommonProblems.md).
+Problems when **using** _QGroundControl_ to interact with a vehicle are covered in: [QGC/Vehicle Interaction Problems](../support/common_problems.md).
 :::
 
 ## 64-bit Windows: Audio in Unexpected Language

@@ -6,13 +6,13 @@
 
 아래의 아이콘들을 사용하여 주요 *화면*들을 전환합니다. 기체가 연결되지 않아도 사용 가능합니다.
 
-![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[설정](../SettingsView/SettingsView.md)** <br />_QGroundControl_ 애플리케이션을 설정합니다.
+![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[설정](../settings_view/settings_view.md)** <br />_QGroundControl_ 애플리케이션을 설정합니다.
 
-![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[설정](../SetupView/SetupView.md)** <br />기체를 설정하고 튜닝합니다.
+![설정 화면 아이콘](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[설정](../setup_view/setup_view.md)** <br />기체를 설정하고 튜닝합니다.
 
-![계획 화면 아이콘](../../../assets/toolbar/toolbar_view_select_plan.jpg) **[계획](../PlanView/PlanView.md)** <br />자율 비행 미션을 생성합니다.
+![계획 화면 아이콘](../../../assets/toolbar/toolbar_view_select_plan.jpg) **[계획](../plan_view/plan_view.md)** <br />자율 비행 미션을 생성합니다.
 
-![비행 아이콘](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[비행](../FlyView/FlyView.md)** <br />스트리밍 비디오를 포함하여 비행 중 기체를 모니터링합니다.
+![비행 아이콘](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[비행](../fly_view/fly_view.md)** <br />스트리밍 비디오를 포함하여 비행 중 기체를 모니터링합니다.
 
 ![분석 아이콘](../../../assets/toolbar/toolbar_view_select_analyse.jpg) **[분석](../analyze_view/index.md)** <br />로그를 다운로드하고, 탐사 미션의 이미지에 위치정보 태그를 지정하며, MAVLink 콘솔에 접근합니다.
 

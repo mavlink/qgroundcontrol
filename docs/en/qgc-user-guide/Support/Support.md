@@ -50,7 +50,7 @@ Troubleshooting information is linked from [here](../troubleshooting/index.md).
 
 ### Console Logging
 
-_Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For more information see: [Console Logging](../SettingsView/console_logging.md).
+_Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For more information see: [Console Logging](../settings_view/console_logging.md).
 
 ## Help Improve these Docs!
 

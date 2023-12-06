@@ -7,16 +7,16 @@ The toolbar is the same in all views except for "PlanView" (which has a single i
 
 The following icons are used to switch between the main _Views_. These are displayed even if no vehicle is connected.
 
-![Settings view icon](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../SettingsView/SettingsView.md)**
+![Settings view icon](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../settings_view/settings_view.md)**
 <br>Configure the _QGroundControl_ application.
 
-![Setup view icon](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[Setup](../SetupView/SetupView.md)**
+![Setup view icon](../../../assets/toolbar/toolbar_view_select_setup.jpg) **[Setup](../setup_view/setup_view.md)**
 <br>Configure and tune your vehicle.
 
-![Plan view icon](../../../assets/toolbar/toolbar_view_select_plan.jpg) **[Plan](../PlanView/PlanView.md)**
+![Plan view icon](../../../assets/toolbar/toolbar_view_select_plan.jpg) **[Plan](../plan_view/plan_view.md)**
 <br>Create autonomous missions.
 
-![Fly icon](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[Fly](../FlyView/FlyView.md)**
+![Fly icon](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[Fly](../fly_view/fly_view.md)**
 <br>Monitor your vehicle(s) while flying, including streaming video.
 
 ![Analyze icon](../../../assets/toolbar/toolbar_view_select_analyse.jpg) **[Analyze](../analyze_view/index.md)**

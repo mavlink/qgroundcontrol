@@ -14,7 +14,7 @@ QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다.
 
 - 설정
   - 언어: 언어 선택 허용
-  - 접근성 향상을 위한 원격 측정 데이터의 선택적 [CSV 로깅](../SettingsView/csv.md).
+  - 접근성 향상을 위한 원격 측정 데이터의 선택적 [CSV 로깅](../settings_view/csv.md).
   - ArduPilot
     - Mavlink: 가능한 스트리밍 속도 설정
 - 설정
@@ -39,7 +39,7 @@ QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다.
   - 나침반에서 집으로 향하는 방향, COG 및 다음 웨이포인트 방향 표시기를 켤 수 있는 기능.
   - 비디오
     - h.265 비디오 스트림 지원 추가
-    - 비행 데이터가 포함된 [동영상 오버레이](../FlyView/VideoOverlay.md)를 현지에서 녹화된 동영상의 자막으로 자동 추가
+    - 비행 데이터가 포함된 [동영상 오버레이](../fly_view/video_overlay.md)를 현지에서 녹화된 동영상의 자막으로 자동 추가
   - 차량 유형별 비행 전 체크리스트. 설정에서 켜기
 - 분석
   - 차트 지원을 포함하는 새로운 Mavlink 탐색기. Android 및 iOS를 포함한 모든 빌드에서 지원됩니다.
@@ -100,8 +100,8 @@ QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다.
   - **파일 로드/저장** 표준 파일 로드/저장/다른 이름으로 저장 사용자 모델과 일치하는 계획 파일 로드를 위한 새 모델입니다.
   - **KML 로드** 동기화 메뉴에서 직접 KML 파일을 로드하는 기능. 필요한 경우 KML에서 생성하려는 패턴 유형을 묻는 메시지가 표시됩니다.
   - **탐사** 불규칙한 모양의 다각형에 대한 지원이 개선되었습니다.
-  - **[복도 스캔](../PlanView/pattern_corridor_scan.md)** - 폴리라인 형태의 비행 패턴을 생성합니다. 예를 들어, 도로 조사에 사용할 수 있습니다.
-  - **[고정익 착륙 패턴](../PlanView/pattern_fixed_wing_landing.md)**
+  - **[복도 스캔](../plan_view/pattern_corridor_scan.md)** - 폴리라인 형태의 비행 패턴을 생성합니다. 예를 들어, 도로 조사에 사용할 수 있습니다.
+  - **[고정익 착륙 패턴](../plan_view/pattern_fixed_wing_landing.md)**
     - 평면도에 시각적으로 표시되는 착륙 영역.
     - 착륙 위치/방향은 차량 위치/방향에서 복사할 수 있습니다.
   - **지형**
@@ -214,9 +214,9 @@ QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다.
 
 새로운 기능
 
-- [탐사](../PlanView/pattern_survey.md) 미션 지원
-- 계획 화면에서 [GeoFence](../PlanView/PlanGeoFence.md) 지원
-- 계획 화면에서 [Rally Point](../PlanView/PlanRallyPoints.md) 지원(ArduPilot만 해당)
+- [탐사](../plan_view/pattern_survey.md) 미션 지원
+- 계획 화면에서 [GeoFence](../plan_view/plan_geofence.md) 지원
+- 계획 화면에서 [Rally Point](../plan_view/plan_rally_points.md) 지원(ArduPilot만 해당)
 - ArduPilot 온보드 나침반 보정
 - 더 빠른 액세스를 위해 입력 시 매개변수 편집기를 검색합니다.
 - 이제 매개변수에서 단위 변환을 지원합니다.

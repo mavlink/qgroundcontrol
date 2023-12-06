@@ -3,13 +3,13 @@
 ## Vehicle does not show up in UI
 
 QGC will automatically connect to a vehicle as soon as a communication link is created (using USB, or WiFi, etc.)
-If you establish that link and you don't see your vehicle show up in the QGC UI you can use [console logging](../SettingsView/console_logging.md) to help debug the problem.
+If you establish that link and you don't see your vehicle show up in the QGC UI you can use [console logging](../settings_view/console_logging.md) to help debug the problem.
 
 Use the following steps to debug the issue:
 
 - Start with the hardware vehicle link not connected.
   Don't plug in the USB connection and/or establish the WiFi link in your OS for example.
-- Turn on `LinkManagerLog` [console logging](../SettingsView/console_logging.md) in QGC.
+- Turn on `LinkManagerLog` [console logging](../settings_view/console_logging.md) in QGC.
   This will log output about the link which QGC sees and connects to.
 - Establish the hardware vehicle communication link.
 - The console log output should display something like this:
@@ -30,7 +30,7 @@ To see if your hardware is being recognized at the OS level do this:
 
 - Start with the hardware vehicle link not connected.
   Don't plug in the USB connection and/or establish the WiFi link in your OS for example.
-- Turn on `LinkManagerVerboseLog` [console logging](../SettingsView/console_logging.md) in QGC.
+- Turn on `LinkManagerVerboseLog` [console logging](../settings_view/console_logging.md) in QGC.
   This will log output for all serial hardware connections that QGC recognizes.
 - You will see continuous output of the serial ports on your device.
 - Plug in your USB comm device.

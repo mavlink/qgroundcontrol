@@ -4,7 +4,7 @@ One of the trickier aspects of creating your own custom build is the process to 
 
 ## Upstream QGC release/branching strategy
 
-The best place to start is understanding the mechanism QGC uses to do it's own releases. We will layer a custom build release process on top of that. You can find standard QGC [release process here](../ReleaseBranchingProcess.md).
+The best place to start is understanding the mechanism QGC uses to do it's own releases. We will layer a custom build release process on top of that. You can find standard QGC [release process here](../release_branching_process.md).
 
 ## Custom build/release types
 

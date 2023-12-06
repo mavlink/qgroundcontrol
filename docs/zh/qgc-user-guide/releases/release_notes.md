@@ -14,7 +14,7 @@ The format for Settings in QGC had to change in this release. Which means all QG
 
 - Settings
   - Language: Allow selection of language
-  - Optional [CSV Logging](../SettingsView/csv.md) of telemetry data for improved accessibility.
+  - Optional [CSV Logging](../settings_view/csv.md) of telemetry data for improved accessibility.
   - ArduPilot
     - Mavlink: Configurable stream rate settings
 - Setup
@@ -39,7 +39,7 @@ The format for Settings in QGC had to change in this release. Which means all QG
   - Ability to turn on Heading to home, COG and Next Waypoint heading indicators in Compass.
   - Video
     - Add support for h.265 video streams
-    - Automatically add a [Video Overlay](../FlyView/VideoOverlay.md) with flight data as a subtitle for locally-recorded videos
+    - Automatically add a [Video Overlay](../fly_view/video_overlay.md) with flight data as a subtitle for locally-recorded videos
   - Vehicle type specific pre-flight checklists. Turn on from Settings.
 - Analyze
   - New Mavlink Inspector which includes charting support. Supported on all builds including Android and iOS.
@@ -101,8 +101,8 @@ This section contains a high level and _non-exhaustive_ list of new features add
   - **File Load/Save** New model for Plan file loading which matches a standard File Load/Save/Save As user model.
   - **Load KML** Ability to load a KML file directly from the Sync menu. You will be prompted for what type of Pattern you want to create from the KML if needed.
   - **Survey** Better support for irregular shaped polygons.
-  - **[Corridor Scan](../PlanView/pattern_corridor_scan.md)** - Create a flight pattern which follows a poly-line. For example can be used to survey a road.
-  - **[Fixed Wing Landing Pattern](../PlanView/pattern_fixed_wing_landing.md)**
+  - **[Corridor Scan](../plan_view/pattern_corridor_scan.md)** - Create a flight pattern which follows a poly-line. For example can be used to survey a road.
+  - **[Fixed Wing Landing Pattern](../plan_view/pattern_fixed_wing_landing.md)**
     - Landing area visually represented in Plan.
     - Landing position/heading can be copied from Vehicle position/heading.
   - **Terrain**
@@ -222,9 +222,9 @@ This section contains a high level and _non-exhaustive_ list of new features add
 
 New Features
 
-- [Survey](../PlanView/pattern_survey.md) mission support
-- [GeoFence](../PlanView/PlanGeoFence.md) support in Plan View
-- [Rally Point](../PlanView/PlanRallyPoints.md) support in Plan View (ArduPilot only)
+- [Survey](../plan_view/pattern_survey.md) mission support
+- [GeoFence](../plan_view/plan_geofence.md) support in Plan View
+- [Rally Point](../plan_view/plan_rally_points.md) support in Plan View (ArduPilot only)
 - ArduPilot onboard compass calibration
 - Parameter editor search will now search as you type for quicker access
 - Parameter display now supports unit conversion

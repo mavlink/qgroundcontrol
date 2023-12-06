@@ -6,27 +6,27 @@ This topic contains a high level and _non-exhaustive_ list of new features added
 
 ### Telemetry log auto-save
 
-If you have _Save telemetry log after each flight_ turned on you will no longer be prompted as to where to save the log each time the vehicle disarms. Logs will automatically be saved to the [Application Load/Save Path](../SettingsView/General.md#load_save_path)
+If you have _Save telemetry log after each flight_ turned on you will no longer be prompted as to where to save the log each time the vehicle disarms. Logs will automatically be saved to the [Application Load/Save Path](../settings_view/general.md#load_save_path)
 
-For more information see [Settings > General (Miscellaneous)](../SettingsView/General.md#autosave_log).
+For more information see [Settings > General (Miscellaneous)](../settings_view/general.md#autosave_log).
 
 ### AutoLoad plans
 
-If this setting is turned on, _QGroundControl_ will automatically upload a plan to the vehicle when it connects. The plan file must be named **AutoLoad#.plan** where the `#` is replaced with the vehicle id. The plan file must be located in the [Application Load/Save Path](../SettingsView/General.md#load_save_path).
+If this setting is turned on, _QGroundControl_ will automatically upload a plan to the vehicle when it connects. The plan file must be named **AutoLoad#.plan** where the `#` is replaced with the vehicle id. The plan file must be located in the [Application Load/Save Path](../settings_view/general.md#load_save_path).
 
-For more information see [Settings > General (Miscellaneous)](../SettingsView/General.md#autoload_missions).
+For more information see [Settings > General (Miscellaneous)](../settings_view/general.md#autoload_missions).
 
 ### Application Load/Save Path
 
 You can now specify a save path which QGC will use as the default location to save files such as Parameters, Telemetry or Mission Plans.
 
-For more information see [Settings > General (Miscellaneous)](../SettingsView/General.md#load_save_path).
+For more information see [Settings > General (Miscellaneous)](../settings_view/general.md#load_save_path).
 
 ### RTK GPS
 
 You can now specify the _Survey in accuracy_ and _Minimum observation duration_ for use with a connected RTK GPS.
 
-For more information see [Settings > General (RTK GPS)](../SettingsView/General.md#rtk_gps).
+For more information see [Settings > General (RTK GPS)](../settings_view/general.md#rtk_gps).
 
 ## Setup
 
@@ -50,13 +50,13 @@ Information about the format can be found in [Plan File Format](https://dev.qgro
 
 ![Plan Toolbar](../../../assets/plan/plan_toolbar.jpg)
 
-The new _Plan Toolbar_ is displayed at the top of the [PlanView](../PlanView/PlanView.md). It shows you information related to the currently selected waypoint as well as statistics for the entire mission.
+The new _Plan Toolbar_ is displayed at the top of the [PlanView](../plan_view/plan_view.md). It shows you information related to the currently selected waypoint as well as statistics for the entire mission.
 
 When connected to a vehicle it also shows an **Upload** button, which can be used to upload the plan to the vehicle.
 
 ### Mission Settings
 
-The [Mission Settings](../PlanView/PlanView.md#mission_settings) panel allows you to specify values which apply to the entire mission, or settings you want to control right at the beginning of a mission. This is the first item in the mission list on the right of the screen.
+The [Mission Settings](../plan_view/plan_view.md#mission_settings) panel allows you to specify values which apply to the entire mission, or settings you want to control right at the beginning of a mission. This is the first item in the mission list on the right of the screen.
 
 <img src="../../../assets/plan/mission/mission_settings.png" style="width: 150px;" />
 
@@ -133,7 +133,7 @@ This adds a landing pattern for fixed wings to your mission. The first point of 
 
 Both the loiter and land points can be dragged to adjust. Also all the various values associated with the pattern can be adjusted.
 
-For more information see [Fixed Wing Landing Pattern](../PlanView/pattern_fixed_wing_landing.md).
+For more information see [Fixed Wing Landing Pattern](../plan_view/pattern_fixed_wing_landing.md).
 
 #### Survey (new features)
 

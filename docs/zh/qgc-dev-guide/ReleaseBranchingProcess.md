@@ -56,7 +56,7 @@ Fixes continue in the stable branch until it is deemed ready to release (ideally
 
 ## Custom Builds
 
-A proposed strategy for branching on custom builds can be found [here](custom_build/ReleaseBranchingProcess.md).
+A proposed strategy for branching on custom builds can be found [here](custom_build/release_branching_process.md).
 
 ## Process to create a new Stable
 

@@ -49,7 +49,7 @@ Windows에서 *QGroundControl 프로그램이 응답하지 않습니다*라는 �
 
 ### 콘솔 로깅
 
-*콘솔 로그*는 _QGroundControl_ 문제 진단에 유용합니다. 자세한 내용은 [콘솔 로깅](../SettingsView/console_logging.md)를 참고하십시오.
+*콘솔 로그*는 _QGroundControl_ 문제 진단에 유용합니다. 자세한 내용은 [콘솔 로깅](../settings_view/console_logging.md)를 참고하십시오.
 
 ## 이 문서 개선 작업을 도와주십시오.
 
