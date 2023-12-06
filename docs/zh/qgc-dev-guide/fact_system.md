@@ -1,26 +1,30 @@
-# Fact System(事实系统)
+# Fact System
 
-Fact System(事实系统)提供一组标准化和简化QGC用户界面创建的功能。
+The Fact System provides a set of capabilities which standardizes and simplifies the creation of the QGC user interface.
 
 ## Fact {#fact}
 
-事实代表系统中的单个值。
+A Fact represents a single value within the system.
 
 ## FactMetaData
 
-与每个事实有FactMetaData相关联 它提供有关事实的详细信息，以便驱动自动用户界面生成和验证。
+There is `FactMetaData` associated with each fact. It provides details on the Fact in order to drive automatic user interface generation and validation.
 
-## 事实控制
+## Fact Controls
 
-事实控件是一个QML用户界面控件，它连接到Fact和它的FactMetaData，为用户提供控件以修改/显示与Fact相关的值。
+A Fact Control is a QML user interface control which connects to a Fact and it's `FactMetaData` to provide a control to the user to modify/display the value associated with the Fact.
 
-## FactGroup（事实小组）
+## FactGroup
 
-A _Fact Group_ is a group of [Facts](#fact). It is used to organise facts and manage user defined facts.
+A _Fact Group_ is a group of [Facts](#fact).
+It is used to organise facts and manage user defined facts.
 
 ## Custom Build Support
 
-User defined facts can be added by overriding `factGroups` function of `FirmwarePlugin` in a custom firmware plugin class. These functions return a name to fact group map that is used to identify added fact groups. A custom fact group can be added by extending `FactGroup` class. FactMetaDatas could be defined using the appopriate `FactGroup` constructor by providing a json file containing necessery information.
+User defined facts can be added by overriding `factGroups` function of `FirmwarePlugin` in a custom firmware plugin class.
+These functions return a name to fact group map that is used to identify added fact groups.
+A custom fact group can be added by extending `FactGroup` class.
+FactMetaDatas could be defined using the appopriate `FactGroup` constructor by providing a json file containing necessery information.
 
 Changing the metadata of existing facts is also possible by overriding `adjustMetaData` of `FirmwarePlugin` class.
 
