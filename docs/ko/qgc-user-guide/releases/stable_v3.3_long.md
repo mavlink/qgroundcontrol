@@ -1,6 +1,6 @@
 # QGroundControl v3.3 릴리스 노트(추가)
 
-이 섹션에는 버전 3.3에서 *QGroundControl*에 추가된 새 기능의 상위 수준 및 _전체_ 목록이 포함되어 있습니다.
+이 섹션에는 버전 3.3에서 _QGroundControl_에 추가된 새 기능의 상위 수준 및 _전체_ 목록이 포함되어 있습니다.
 
 ## 상세 참고 사항
 
@@ -10,7 +10,8 @@
 
 ![NMEA GPS 장치 지원](../../../assets/settings/general/NMEADevice.jpg)
 
-일반 페이지에서 이러한 장치 연결을 지정할 수 있습니다. GPS 정보는 지상국 위치 측정에 사용됩니다.
+일반 페이지에서 이러한 장치 연결을 지정할 수 있습니다.
+GPS 정보는 지상국 위치 측정에 사용됩니다.
 
 자세한 내용은 [설정 > 일반(다음 장치에 자동 연결)](../settings_view/general.md#auto_connect)을 참고하십시오.
 
@@ -18,15 +19,19 @@
 
 ![비디오 녹화](../../../assets/settings/video_recording.jpg)
 
-비디오는 QGroundControl 파일 저장 경로의 비디오 디렉토리에 저장됩니다. 비디오 파일들의 최대 저장 용량을 지정할 수 있습니다. 해당 크기를 초과하면 가장 오래된 비디오 파일을 삭제합니다. 비디오 녹화는 플라이 뷰의 비디오 위젯에서 켜고 끌 수 있습니다.
+비디오는 QGroundControl 파일 저장 경로의 비디오 디렉토리에 저장됩니다.
+비디오 파일들의 최대 저장 용량을 지정할 수 있습니다.
+해당 크기를 초과하면 가장 오래된 비디오 파일을 삭제합니다.
+비디오 녹화는 플라이 뷰의 비디오 위젯에서 켜고 끌 수 있습니다.
 
 자세한 내용은 [설정 > 일반(동영상/동영상 녹화)](../settings_view/general.md#video)을 참고하십시오.
 
-### 계획 화면 {#plan_view}
+### 계획 화면 {#plan\_view}
 
 #### 구조 스캔
 
-구조 스캔은 수직 표면(다각형 또는 원형) 위의 이미지를 캡처하는 격자 비행 패턴을 만들 수 있습니다. 일반적으로 육안 검사나 구조물의 3D 모델을 생성합니다.
+구조 스캔은 수직 표면(다각형 또는 원형) 위의 이미지를 캡처하는 격자 비행 패턴을 만들 수 있습니다.
+일반적으로 육안 검사나 구조물의 3D 모델을 생성합니다.
 
 자세한 내용은 [여기](../plan_view/pattern_structure_scan_v2.md)를 참고하십시오.
 
@@ -64,7 +69,7 @@ QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토
 
 <img src="../../../assets/plan/circular_polygon.jpg" height="200" />
 
-### 비행 화면
+### Fly View
 
 #### 비디오 녹화를 시작/중지
 
@@ -72,11 +77,11 @@ QGroundControl은 새로운 MAVLink GeoFence 및 Rally Point 사양과 프로토
 
 #### 다중 기체 표시기
 
-여러 기체에 연결되어 있는 경우, 기체 아이콘 아래에 기체 ID가 표시됩니다. 활성 기체는 불투명하고 비활성 기체는 반투명합니다.
+여러 기체에 연결되어 있는 경우, 기체 아이콘 아래에 기체 ID가 표시됩니다. The active vehicle will be opaque and the inactive vehicles will be semi-transparent.
 
 ![](../../../assets/fly/multi_vehicle_indicators.jpg)
 
-#### 다중 기체 화면은 일괄 명령을 지원합니다.
+#### Multi-Vehicle View supports batch commands
 
 다중 기체 목록은 이제 모든 기체에 적용되는 명령을 지원합니다.
 

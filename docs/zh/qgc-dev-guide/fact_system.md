@@ -8,7 +8,7 @@ Fact System(事实系统)提供一组标准化和简化QGC用户界面创建的�
 
 ## FactMetaData
 
-与每个事实有FactMetaData相关联 它提供有关事实的详细信息，以便驱动自动用户界面生成和验证。
+与每个事实有FactMetaData相关联 它提供有关事实的详细信息，以便驱动自动用户界面生成和验证。 It provides details on the Fact in order to drive automatic user interface generation and validation.
 
 ## 事实控制
 
@@ -16,11 +16,15 @@ Fact System(事实系统)提供一组标准化和简化QGC用户界面创建的�
 
 ## FactGroup（事实小组）
 
-A _Fact Group_ is a group of [Facts](#fact). It is used to organise facts and manage user defined facts.
+A _Fact Group_ is a group of [Facts](#fact).
+It is used to organise facts and manage user defined facts.
 
 ## Custom Build Support
 
-User defined facts can be added by overriding `factGroups` function of `FirmwarePlugin` in a custom firmware plugin class. These functions return a name to fact group map that is used to identify added fact groups. A custom fact group can be added by extending `FactGroup` class. FactMetaDatas could be defined using the appopriate `FactGroup` constructor by providing a json file containing necessery information.
+User defined facts can be added by overriding `factGroups` function of `FirmwarePlugin` in a custom firmware plugin class.
+These functions return a name to fact group map that is used to identify added fact groups.
+A custom fact group can be added by extending `FactGroup` class.
+FactMetaDatas could be defined using the appopriate `FactGroup` constructor by providing a json file containing necessery information.
 
 Changing the metadata of existing facts is also possible by overriding `adjustMetaData` of `FirmwarePlugin` class.
 

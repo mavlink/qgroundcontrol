@@ -11,6 +11,7 @@
 - **위치 컨트롤러 매개변수**는 3D 공간의 한 지점에서 차량의 위치를 지정하는 컨트롤러의 매개변수입니다. **Z** 매개변수는 깊이 제어가 작동하는 방식을 제어합니다(예: [_깊이 고정_](https://www.ardusub.com/operators-manual/flight-modes.html#depth-hold) 모드). **XY** 매개변수는 [_위치 활성화_](https://www.ardusub.com/operators-manual/flight-modes.html#position-enabled-modes) 모드에서 차량이 수평 위치를 제어하는 방법에 영향을 줍니다.
 
 - **웨이포인트 탐색 매개변수**는 **자동** 및 **안내** 모드에서 다음 웨이포인트를 담당하는 컨트롤러의 매개변수입니다.
+
   ::: warning
   **안내** 및 **자동** 모드는 현재 지원되지 않으며 QGroundControl의 일부 기능이 비활성화됩니다.
   :::
