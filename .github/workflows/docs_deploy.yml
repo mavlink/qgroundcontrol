@@ -1,7 +1,5 @@
 name: Deploy Docs to Pages
 
-
-
 on:
   push:
     branches:
