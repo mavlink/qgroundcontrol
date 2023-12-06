@@ -1,43 +1,43 @@
-# Parameters
+# Parametreler
 
-The _Parameters_ screen allows you to find and modify any of the parameters associated with the vehicle.
+_Parametreler_ ekranı, araçla ilişkili parametrelerden herhangi birini bulmanıza ve düzenlemenizi sağlar.
 
-![Parameters Screen](../../../assets/setup/parameters_px4.jpg)
-
-:::info
-PX4 Pro and ArduPilot use different parameter sets, but they are both managed as described in this section.
-:::
-
-## Finding a Parameter
-
-The parameters are organized in groups. Select a group of parameters to view by clicking on the buttons to the left (in the image above the _Battery Calibration_ group is selected).
-
-You can also _search_ for a parameter by entering a term in the _Search_ field. This will show you a list of all parameter names and descriptions that contain the entered substring (press **Clear** to reset the search).
-
-![Parameters Search](../../../assets/setup/parameters_search.jpg)
-
-## Changing a Parameter
-
-To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
-
-![Changing a parameter value](../../../assets/setup/parameters_changing.png)
+![Parametreler Ekranı](../../../assets/setup/parameters_px4.jpg)
 
 :::info
-When you click **Save** the parameter is automatically and silently uploaded to the connected vehicle. Depending on the parameter, you may then need to reboot the flight controller for the change to take effect.
+PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu bölümde açıklandığı gibi yönetilir.
 :::
 
-## Tools
+## Bir Parametreyi Bulma
 
-You can select additional options from the **Tools** menu on the top right hand side of the screen.
+Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde \_ Pil Kalibrasyonu \_ grubu seçilir).
 
-![Tools menu](../../../assets/setup/parameters_tools_menu.png)
+Ayrıca \_ Search\_ alanına bir terim girerek bir parametre için \_ arama \_ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için \*\* Clear \*\* tuşuna basın).
 
-**Refresh** <br>Refresh the parameter values by re-requesting all of them from the vehicle.
+![Parametreler Araması](../../../assets/setup/parameters_search.jpg)
 
-**Reset all to defaults** <br>Reset all parameters to their original default values.
+## Bir Parametreyi Değiştirme
 
-**Load from file / Save to file** <br>Load parameters from an existing file or save your current parameter settings to a file.
+Bir parametrenin değerini değiştirmek için bir grup ya da arama listesindeki parametre satırına tıklayın. Bu size değeri güncellemenizi sağlayacak bir yan diyalog açar (bu diyalog ayrıca parametre hakkında ek detaylı bilgilerde gösterir - değişikliğin etki etmesi için yeniden başlatmanın gerekip gerekmediği bilgisi de dahil).
 
-**Clear RC to Param** <br>This clears all associations between RC transmitter controls and parameters. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
+![Bir parametre değerini değiştirme](../../../assets/setup/parameters_changing.png)
 
-**Reboot Vehicle** <br>Reboot the vehicle (required after changing some parameters).
+:::info
+**Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir.
+:::
+
+## Araçlar
+
+Ekranın sağ üstündeki **Tools** menüsünden ek seçenekler seçebilirsiniz.
+
+![Araçlar Menüsü](../../../assets/setup/parameters_tools_menu.png)
+
+**Refresh** <br /> Tüm parametreleri araçtan tekrar isteyerek yenileyin.
+
+**Reset all to defaults** <br />Tüm parametleri varsayıla değerlerine sıfırlayın.
+
+**Load from file / Save to file** <br />Parametreleri var olan bir dosyadan yükleyin veya mevcut parametre ayarlarınızı bir dosyaya kaydedin.
+
+**Clear RC to Param** <br />Bu, RC verici kontrolleri ve parametreleri arasındaki tüm ilişkileri siler. Daha fazla bilgi için göz atın: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
+
+**Reboot Vehicle** <br />Aracı yeniden başlatın (bazı parametre değişimlerinden sonra gereklidir).
