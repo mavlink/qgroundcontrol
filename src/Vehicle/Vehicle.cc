@@ -4269,19 +4269,19 @@ void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
 qreal
 Vehicle::gimbalRoll() const
 {
-    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curRoll : NAN);
+    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curRoll() : NAN);
 }
 
 qreal
 Vehicle::gimbalPitch() const
 {
-    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curPitch : NAN);
+    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curPitch() : NAN);
 }
 
 qreal
 Vehicle::gimbalYaw() const
 {
-    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curYaw : NAN);
+    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curYaw() : NAN);
 }
 
 bool
@@ -4385,8 +4385,8 @@ void Vehicle::gimbalPitchStep(int direction)
 {
     if(gimbalData()) {
         //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
-        double p = static_cast<double>(_gimbalController->gimbals()[0]->curPitch + direction);
-        gimbalControlValue(p, static_cast<double>(_gimbalController->gimbals()[0]->curYaw));
+        double p = static_cast<double>(_gimbalController->gimbals()[0]->curPitch() + direction);
+        gimbalControlValue(p, static_cast<double>(_gimbalController->gimbals()[0]->curYaw()));
     }
 }
 
@@ -4394,8 +4394,8 @@ void Vehicle::gimbalYawStep(int direction)
 {
     if(gimbalData()) {
         //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
-        double y = static_cast<double>(_gimbalController->gimbals()[0]->curYaw + direction);
-        gimbalControlValue(static_cast<double>(_gimbalController->gimbals()[0]->curPitch), y);
+        double y = static_cast<double>(_gimbalController->gimbals()[0]->curYaw() + direction);
+        gimbalControlValue(static_cast<double>(_gimbalController->gimbals()[0]->curPitch()), y);
     }
 }
 void Vehicle::centerGimbal()
@@ -4420,8 +4420,8 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
 
             // TODO: move this into GimbalController and add gimbal selection.
             // For now, we just use the first gimbal.
-            float panDesired = panIncDesired + _gimbalController->gimbals()[0]->curYaw;
-            float tiltDesired = tiltIncDesired + _gimbalController->gimbals()[0]->curPitch;
+            float panDesired = panIncDesired + _gimbalController->gimbals()[0]->curYaw();
+            float tiltDesired = tiltIncDesired + _gimbalController->gimbals()[0]->curPitch();
             sendMavCommand(
                 _defaultComponentId,
                 MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
@@ -4443,8 +4443,8 @@ void Vehicle::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPo
             float panIncDesired  = panPct * maxSpeed  * 0.1f;
             float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
 
-            float panDesired = panIncDesired + _gimbalController->gimbals()[0]->curYaw;
-            float tiltDesired = tiltIncDesired + _gimbalController->gimbals()[0]->curPitch;
+            float panDesired = panIncDesired + _gimbalController->gimbals()[0]->curYaw();
+            float tiltDesired = tiltIncDesired + _gimbalController->gimbals()[0]->curPitch();
 
             qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
             
