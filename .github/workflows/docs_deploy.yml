@@ -60,7 +60,7 @@ jobs:
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v3
         with:
           path: docs/.vitepress/dist/
 
