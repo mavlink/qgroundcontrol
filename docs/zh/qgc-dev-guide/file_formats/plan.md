@@ -1,10 +1,10 @@
-# Plan File Format
+# 计划文件格式
 
-Plan files are stored in JSON file format and contain mission items and (optional) geo-fence and rally-points.
-Below you can see the top level format of a Plan file
+计划文件以JSON文件格式存储，包含任务项和（可选）地理围栏和集结点。 您可以在下面看到Plan文件的顶级格式
+地理围栏“多边形”计划格式的版本号。 记录的版本是2。
 
 :::tip
-This is "near-minimal" - a plan must contain at least one mission item.
+**提示：** 这是“接近最小” - 计划必须包含至少一个任务项目。 当没有任务运行时，计划围栏和集结点也用于模式。
 The plan fence and rally points are also used in modes when no mission is running.
 :::
 
@@ -26,21 +26,21 @@ The plan fence and rally points are also used in modes when no mission is runnin
 }
 ```
 
-The main fields are:
+主要领域是：
 
-| Key                            | Description                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------------ |
-| `version`                      | The version for this file. Current version is 1.                               |
-| `fileType`                     | Must be `"Plan"`.                                                              |
-| `groundStation`                | The name of the ground station which created this file (here _QGroundControl_) |
-| [`mission`](#mission)          | The mission associated with this flight plan.                                  |
-| [`geoFence`](#geofence)        | (Optional) Geofence information for this plan.                                 |
-| [`rallyPoints`](#rally_points) | (Optional) Rally/Safe point information for this plan                          |
+| 键                              | 描述                                                |
+| ------------------------------ | ------------------------------------------------- |
+| `version`                      | 地理围栏计划格式的版本号。 记录的版本是2。 地理围栏“圈子”计划格式的版本号。 记录的版本是1。 |
+| `fileType`                     | 必须是“计划”。                                          |
+| `groundStation`                | 创建此文件的地面站的名称（此处为QGroundControl）                   |
+| [`mission`](#mission)          | 与此飞行计划相关的任务。                                      |
+| [`geoFence`](#geofence)        | （可选）此计划的地理围栏信息。                                   |
+| [`rallyPoints`](#rally_points) | （可选）此计划的拉力/安全点信息                                  |
 
-## Mission Object {#mission}
+## 使命对象 {#mission}
 
 The structure of the mission object is shown below.
-The `items` field contains a comma-separated list of mission items (it must contain at least one mission item, as shown below).
+任务对象的结构如下所示。 items字段包含以逗号分隔的任务项列表（它必须包含至少一个任务项，如下所示）。 该列表可以是SimpleItem和ComplexItem对象的混合
 The list may be a mix of both [SimpleItem](#mission_simple_item) and [ComplexItem](#mission_complex_item) objects.
 
 ```json
@@ -80,12 +80,12 @@ The list may be a mix of both [SimpleItem](#mission_simple_item) and [ComplexIte
     },
 ```
 
-The following values are required:
+需要以下值：
 
-| Key                      | Description                                                                                                                                                                                   |
+| 键                        | 描述                                                                                                                                                                                            |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                | The version for the mission object. Current version is 2.                                                                                                                                     |
-| `firmwareType`           | The firmware type for which this mission was created. This is one of the [MAV\_AUTOPILOT](https://mavlink.io/en/messages/common.html#MAV_AUTOPILOT) enum values.                              |
+| `version`                | 任务对象的版本。 目前的版本是2。 Current version is 2.                                                                                                                                                       |
+| `firmwareType`           | 为此任务创建的固件类型。 这是MAV\_AUTOPILOT枚举值之一。 This is one of the [MAV\_AUTOPILOT](https://mavlink.io/en/messages/common.html#MAV_AUTOPILOT) enum values.                                                |
 | `globalPlanAltitudeMode` | The global plan-wide altitude mode setting. This is used by plan items that don't specify an `"AltitudeMode"`.                                                                                |
 | `vehicleType`            | The vehicle type for which this mission was created. This is one of the [MAV\_TYPE](https://mavlink.io/en/messages/common.html#MAV_TYPE) enum values.                                         |
 | `cruiseSpeed`            | The default forward speed for Fixed wing or VTOL vehicles (i.e. when moving between waypoints).                                                                                               |
@@ -93,14 +93,14 @@ The following values are required:
 | `items`                  | The list of mission item objects associated with the mission . The list may contain either/both [SimpleItem](#mission_simple_item) and [ComplexItem](#mission_complex_item) objects.          |
 | `plannedHomePosition`    | The planned home position is shown on the map and used for mission planning when no vehicle is connected. The array values shown above are (from top): latitude, longitude and AMSL altitude. |
 
-The format of the simple and complex items is given below.
+简单和复杂项目的格式如下。
 
-### `SimpleItem` - Simple Mission Item {#mission\_simple\_item}
+### SimpleItem - 简单的任务项目 {#mission\_simple\_item}
 
-A simple item represents a single MAVLink [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM) command.
+一个简单的项表示单个MAVLink MISSION\_ITEM命令。
 
 ```
-            {
+             {
                 "AMSLAltAboveTerrain": null,
                 "Altitude": 50,
                 "AltitudeMode": 0,
@@ -121,33 +121,33 @@ A simple item represents a single MAVLink [MISSION\_ITEM](https://mavlink.io/en/
             }
 ```
 
-The field mapping is shown below.
+字段映射如下所示。
 
-| Key                   | Description                                                                                                                                                                                    |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`                | `SimpleItem` for a simple item                                                                                                                                                                 |
-| `AMSLAltAboveTerrain` | Altitude value shown to the user.                                                                                                                                                              |
-| `Altitude`            |                                                                                                                                                                                                |
-| `AltitudeMode`        |                                                                                                                                                                                                |
-| `autoContinue`        | [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).autoContinue                                                                                                          |
-| `command`             | The command ([MAV\_CMD](https://mavlink.io/en/messages/common.html#MAV_CMD)) for this mission item - see [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).command.     |
-| `doJumpId`            | The target id for the current mission item in DO\_JUMP commands. These are auto-numbered from 1.                                                                                               |
-| `frame`               | [MAV\_FRAME](https://mavlink.io/en/messages/common.html#MAV_FRAME) (see [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).frame)                                        |
-| `params`              | [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).param1,2,3,4,x,y,z (values depends on the particular [MAV\_CMD](https://mavlink.io/en/messages/common.html#MAV_CMD)). |
+| 键                     | 描述                                                                                                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `type`                | SimpleItem用于简单的项目                                                                                                                                                                          |
+| `AMSLAltAboveTerrain` | 向用户显示的海拔高度值。                                                                                                                                                                               |
+| `Altitude`            |                                                                                                                                                                                            |
+| `AltitudeMode`        |                                                                                                                                                                                            |
+| `autoContinue`        | MISSION\_ITEM.autoContinue                                                                                                                                                                 |
+| `command`             | The command ([MAV\_CMD](https://mavlink.io/en/messages/common.html#MAV_CMD)) for this mission item - see [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).command. |
+| `doJumpId`            | DO\_JUMP命令中当前任务项的目标ID。 这些是从1自动编号。 These are auto-numbered from 1.                                                                                                                          |
+| `frame`               | [MAV\_FRAME](https://mavlink.io/en/messages/common.html#MAV_FRAME) (see [MISSION\_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).frame)                                    |
+| `params`              | MISSION\_ITEM.param1,2,3,4，x，y，z（值取决于特定的MAV\_CMD）。                                                                                                                                         |
 
-### Complex Mission Item {#mission\_complex\_item}
+### 复杂任务项目 {#mission\_complex\_item}
 
-A complex item is a higher level encapsulation of multiple `MISSION_ITEM` objects treated as a single entity.
+复杂项是对作为单个实体处理的多个MISSION\_ITEM对象的更高级别封装。
 
-There are currently three types of complex mission items:
+目前有三种类型的复杂任务项目：
 
-- [Survey](#survey)
-- [Corridor Scan](#corridor_scan)
-- [Structure Scan](#structure_scan)
+- 调查]\(#survey)
+- [走廊扫描](#corridor_scan)
+- [结构扫描](#structure_scan)
 
-#### Survey - Complex Mission Item {#survey}
+#### 调查 - 复杂任务项目 {#survey}
 
-The object definition for a `Survey` complex mission item is given below.
+调查复杂任务项目的对象定义如下。
 
 ```
 {
@@ -174,25 +174,25 @@ The object definition for a `Survey` complex mission item is given below.
             },
 ```
 
-Complex items have these values associated with them:
+复杂项目具有与之关联的这些值：
 
-| Key                                                     | Description                                                                                                                                                                                                                   |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                                               | The version number for this `survey` definition. Current version is 3.                                                                                                                                                        |
-| `type`                                                  | `ComplexItem` (this is a complex item).                                                                                                                                                                                       |
-| `complexItemType`                                       | `survey`                                                                                                                                                                                                                      |
-| [`TransectStyleComplexItem`](#TransectStyleComplexItem) | The common base definition for Survey and CorridorScan complex items.                                                                                                                                                         |
-| `angle`                                                 | The angle for the transect paths (degrees).                                                                                                                                                                                   |
-| `entryLocation`                                         | ?                                                                                                                                                                                                                             |
-| `flyAlternateTransects`                                 | If true, the vehicle will skip every other transect and then come back at the end and fly these alternates. This can be used for fixed wing aircraft when the turnaround would be too acute for the vehicle to make the turn. |
-| `polygon`                                               | The polygon array which represents the polygonal survey area. Each point is a latitude, longitude pair for a polygon vertex.                                                                                                  |
+| 键                                                        | 描述                                                                                                                                                                                                       |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`                                                | The version number for this `survey` definition. Current version is 3.                                                                                                                                   |
+| `type`                                                   | ComplexItem（这是一个复杂的项目）。                                                                                                                                                                                  |
+| `complexItemType`                                        | `survey`                                                                                                                                                                                                 |
+| [`TransectStyleComplexItem	`](#TransectStyleComplexItem) | Survey和CorridorScan复杂项目的通用基础定义。                                                                                                                                                                          |
+| `angle`                                                  | 横断面的角度（度数）。                                                                                                                                                                                              |
+| `entryLocation`                                          | ?                                                                                                                                                                                                        |
+| `flyAlternateTransects`                                  | 团结积分信息是可选的。 该计划可以包含任意数量的拉力点，每个拉力点具有纬度，经度和高度（高于原始位置）。 如果是，则载具会跳过每个其他横断面，然后在最后返回并飞行这些替代。 This can be used for fixed wing aircraft when the turnaround would be too acute for the vehicle to make the turn. |
+| `polygon`                                                | The polygon array which represents the polygonal survey area. Each point is a latitude, longitude pair for a polygon vertex.                                                                             |
 
-#### Corridor Scan {#corridor\_scan}
+#### 走廊扫描 {#corridor\_scan}
 
-The object definition for a `CorridorScan` complex mission item is given below.
+CorridorScan复杂任务项的对象定义如下。
 
 ```
-            {
+             {
                 "CorridorWidth": 50,
                 "EntryPoint": 0,
                 "TransectStyleComplexItem": {
@@ -216,22 +216,22 @@ The object definition for a `CorridorScan` complex mission item is given below.
             },
 ```
 
-| Key                                                     | Description                                                           |
-| ------------------------------------------------------- | --------------------------------------------------------------------- |
-| `version`                                               | The version for this `CorridorScan` definition. Current version is 3. |
-| `type`                                                  | `ComplexItem` (this is a complex item).                               |
-| `complexItemType`                                       | `CorridorScan`                                                        |
-| `CorridorWidth`                                         | ?                                                                     |
-| `EntryPoint`                                            | ?                                                                     |
-| [`TransectStyleComplexItem`](#TransectStyleComplexItem) | The common base definition for Survey and CorridorScan complex items. |
-| `polyline`                                              | ?                                                                     |
+| 键                                                        | 描述                                                 |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| `version`                                                | 此CorridorScan定义的版本。 目前的版本是3。 Current version is 3. |
+| `type`                                                   | ComplexItem（这是一个复杂的项目）。                            |
+| `complexItemType`                                        | `CorridorScan`                                     |
+| `CorridorWidth`                                          | ?                                                  |
+| `EntryPoint`                                             | ?                                                  |
+| [`TransectStyleComplexItem	`](#TransectStyleComplexItem) | Survey和CorridorScan复杂项目的通用基础定义。                    |
+| `polyline`                                               | ?                                                  |
 
-#### Structure Scan {#structure\_scan}
+#### 结构扫描 {#structure\_scan}
 
-The object definition for a `StructureScan` complex mission item is given below.
+StructureScan复杂任务项的对象定义如下。
 
 ```json
-            {
+               {
                 "Altitude": 50,
                 "CameraCalc": {
                     "AdjustedFootprintFrontal": 25,
@@ -261,33 +261,33 @@ The object definition for a `StructureScan` complex mission item is given below.
             }
 ```
 
-| Key                         | Description                                                            |
-| --------------------------- | ---------------------------------------------------------------------- |
-| `version`                   | The version for this `StructureScan` definition. Current version is 2. |
-| `type`                      | `ComplexItem` (this is a complex item).                                |
-| `complexItemType`           | `StructureScan`                                                        |
-| `Altitude`                  | ?                                                                      |
-| [`CameraCalc`](#CameraCalc) | ?                                                                      |
-| `Layers`                    | ?                                                                      |
-| `StructureHeight`           | ?                                                                      |
-| `altitudeRelative`          | `true`: `altitude` is relative to home, `false`: `altitude` is AMSL.   |
-| `polygon`                   | ?                                                                      |
+| 键                           | 描述                                                  |
+| --------------------------- | --------------------------------------------------- |
+| `version`                   | 此StructureScan定义的版本。 目前的版本是2。 Current version is 2. |
+| `type`                      | ComplexItem（这是一个复杂的项目）。                             |
+| `complexItemType`           | `StructureScan`                                     |
+| `Altitude`                  | ?                                                   |
+| [`CameraCalc`](#CameraCalc) | ?                                                   |
+| `Layers`                    | ?                                                   |
+| `StructureHeight`           | ?                                                   |
+| `altitudeRelative`          | true: altitude相对于主页，false: altitude是AMSL。           |
+| `polygon`                   | ?                                                   |
 
-#### `TransectStyleComplexItem` {#TransectStyleComplexItem}
+#### `TransectStyleComplexItem	` {#TransectStyleComplexItem}
 
-`TransectStyleComplexItem` contains the common base definition for [`survey`](#survey) and [`CorridorScan`](#CorridorScan) complex items.
+TransectStyleComplexItem contains the common base definition for survey and CorridorScan complex items.
 
 ```json
-                "TransectStyleComplexItem": {
+                 "TransectStyleComplexItem": {
                     "CameraCalc": {
                         ...
-                    },
+                     },
                     "CameraTriggerInTurnAround": true,
                     "FollowTerrain": false,
                     "HoverAndCapture": false,
                     "Items": [
                         ...
-                    ],
+                     ],
                     "Refly90Degrees": false,
                     "TurnAroundDistance": 10,
                     "VisualTransectPoints": [
@@ -305,21 +305,21 @@ The object definition for a `StructureScan` complex mission item is given below.
                 },
 ```
 
-| Key                         | Description                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| `version`                   | The version for this `TransectStyleComplexItem` definition. Current version is 1. |
-| [`CameraCalc`](#CameraCalc) | ?                                                                                 |
-| `CameraTriggerInTurnAround` | ? (boolean)                                                                       |
-| `FollowTerrain`             | ? (boolean)                                                                       |
-| `HoverAndCapture`           | ? (boolean)                                                                       |
-| `Items`                     | ?                                                                                 |
-| `Refly90Degrees`            | ? (boolean)                                                                       |
-| `TurnAroundDistance`        | The distance to fly past the polygon edge prior to turning for the next transect. |
-| `VisualTransectPoints`      | ?                                                                                 |
+| 键                            | 描述                                                      |
+| ---------------------------- | ------------------------------------------------------- |
+| `version`                    | 此TransectStyleComplexItem定义的版本。 当前版本为1。 此文件的版本。 当前版本为1。 |
+| [`CameraCalc`](#CameraCalc)  | ?                                                       |
+| `CameraTriggerInTurnAround	` | ? （布尔值）                                                 |
+| `FollowTerrain`              | ? （布尔值）                                                 |
+| `HoverAndCapture`            | ? （布尔值）                                                 |
+| `Items`                      | ?                                                       |
+| `Refly90Degrees`             | ? （布尔值）                                                 |
+| `TurnAroundDistance`         | 在转向下一个横断面之前飞过多边形边缘的距离。                                  |
+| `VisualTransectPoints`       | ?                                                       |
 
 ##### CameraCalc {#CameraCalc}
 
-The `CameraCalc` contains camera information used for a survey, corridor or structure scan.
+CameraCalc包含用于调查，走廊或结构扫描的摄像机信息。
 
 ```
                     "CameraCalc": {
@@ -344,36 +344,36 @@ The `CameraCalc` contains camera information used for a survey, corridor or stru
                     },
 ```
 
-| Key                         | Description                                                                                                                                                                                                                                                          |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                   | The version for this `CameraCalc` definition. Current version is 1.                                                                                                                                                                                                  |
-| `AdjustedFootprintFrontal`  | ?                                                                                                                                                                                                                                                                    |
-| `AdjustedFootprintSide`     | ?                                                                                                                                                                                                                                                                    |
-| `DistanceToSurface`         | ? Units?                                                                                                                                                                                                                                                             |
-| `DistanceToSurfaceRelative` | ?                                                                                                                                                                                                                                                                    |
-| `CameraName`                | Name of camera being used (must correspond to one of the cameras known to _QGroundControl_ or: `Manual (no camera specs)` for manual setup, `Custom Camera` for a custom setup. The keys listed after this point are not specified for a "Manual" camera definition. |
-| `FixedOrientation`          | ? (boolean)                                                                                                                                                                                                                                                          |
-| `FocalLength`               | Focal length of camera lens in millimeters.                                                                                                                                                                                                                          |
-| `FrontalOverlap`            | Percentage of frontal image overlap.                                                                                                                                                                                                                                 |
-| `ImageDensity`              | ?                                                                                                                                                                                                                                                                    |
-| `ImageHeight`               | Image height in px                                                                                                                                                                                                                                                   |
-| `ImageWidth`                | Image width in px                                                                                                                                                                                                                                                    |
-| `Landscape`                 | `true`: Camera installed in landscape orientation on vehicle, `false`: Camera installed in portrait orientation on vehicle.                                                                                                                                          |
-| `MinTriggerInterval`        | ?                                                                                                                                                                                                                                                                    |
-| `SensorHeight`              | Sensor height in millimeters.                                                                                                                                                                                                                                        |
-| `SensorWidth`               | Sensor width in millimeters.                                                                                                                                                                                                                                         |
-| `SideOverlap`               | Percentage of side image overlap.                                                                                                                                                                                                                                    |
-| `ValueSetIsDistance`        | ? (boolean)                                                                                                                                                                                                                                                          |
+| 键                           | 描述                                                                                                                                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`                   | 此CameraCalc定义的版本。 当前版本为1。 此调查定义的版本号。 目前的版本是3。                                                                                                                                                                                   |
+| `AdjustedFootprintFrontal`  | ?                                                                                                                                                                                                                               |
+| `AdjustedFootprintSide`     | ?                                                                                                                                                                                                                               |
+| `DistanceToSurface`         | ? 单位?                                                                                                                                                                                                                           |
+| `DistanceToSurfaceRelative` | ?                                                                                                                                                                                                                               |
+| `CameraName`                | 正在使用的摄像机名称（必须对应于QGroundControl已知的摄像机之一或： Manual (no camera specs) (手动（无摄像机规格）用于手动设置， Custom Camera (自定义摄像机)用于自定义设置。 未在“手动”摄像机定义中指定此点后列出的键。 The keys listed after this point are not specified for a "Manual" camera definition. |
+| `FixedOrientation`          | ? （布尔值）                                                                                                                                                                                                                         |
+| `FocalLength`               | 相机镜头的焦距，以毫米为单位。                                                                                                                                                                                                                 |
+| `FrontalOverlap`            | 正面图像重叠的百分比。                                                                                                                                                                                                                     |
+| `ImageDensity`              | ?                                                                                                                                                                                                                               |
+| `ImageHeight`               | 图像高度以px为单位                                                                                                                                                                                                                      |
+| `ImageWidth`                | 图像宽度以px为单位                                                                                                                                                                                                                      |
+| `景观`                        | true：相机以横向方向安装在载具上，false：相机以纵向方向安装在载具上。                                                                                                                                                                                         |
+| `MinTriggerInterval`        | ?                                                                                                                                                                                                                               |
+| `SensorHeight`              | 传感器高度，以毫米为单位。                                                                                                                                                                                                                   |
+| `SensorWidth`               | 传感器宽度，以毫米为单位。                                                                                                                                                                                                                   |
+| `SideOverlap`               | 侧面图像重叠的百分比。                                                                                                                                                                                                                     |
+| `ValueSetIsDistance`        | ? （布尔值）                                                                                                                                                                                                                         |
 
-## GeoFence {#geofence}
+## GeoFence (地理围栏) {#geofence}
 
 Geofence information is optional.
 The plan can contain an arbitrary number of geofences defined in terms of polygons and circles.
 
-The minimal definition is shown below.
+最小定义如下所示。
 
 ```json
-    "geoFence": {
+     "geoFence": {
         "circles": [
         ],
         "polygons": [
@@ -382,15 +382,15 @@ The minimal definition is shown below.
     },
 ```
 
-The fields are:
+主要领域是：
 
-| Key                             | Description                                                                   |
-| ------------------------------- | ----------------------------------------------------------------------------- |
-| `version`                       | The version number for the geofence plan format. The documented version is 2. |
-| [`circles`](#circle_geofence)   | List containing circle geofence definitions (comma separated).                |
-| [`polygons`](#polygon_geofence) | List containing polygon geofence definitions (comma separated).               |
+| 键                              | 描述                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| `version`                      | The version number for the geofence plan format. The documented version is 2. |
+| [`circles`](#circle_geofence)  | 包含圆形地理围栏定义的列表（以逗号分隔）。                                                         |
+| [`polygon`](#polygon_geofence) | 包含多边形地理围栏定义的列表（以逗号分隔）。                                                        |
 
-### Circle Geofence {#circle\_geofence}
+### Circle Geofence (圆形地理围栏) {#circle\_geofence}
 
 Each circular geofence is defined in a separate item, as shown below (multiple comma-separated items can be defined).
 The items define the centre and radius of the circle, and whether or not the specific geofence is activated.
@@ -406,15 +406,15 @@ The items define the centre and radius of the circle, and whether or not the spe
 }
 ```
 
-The fields are:
+主要领域是：
 
-| Key         | Description                                                                                        |
-| ----------- | -------------------------------------------------------------------------------------------------- |
-| `version`   | The version number for the geofence "circle" plan format. The documented version is 1.             |
-| `circle`    | The definition of the circle. Includes `centre` (latitude, longitude) and `radisu` as shown above. |
-| `inclusion` | Whether or not the geofence is enabled (true) or disabled.                                         |
+| 键           | 描述                                                                                                        |
+| ----------- | --------------------------------------------------------------------------------------------------------- |
+| `version`   | The version number for the geofence "circle" plan format. 拉力点计划格式的版本号。 记录的版本是2。                           |
+| `circle`    | 圆的定义。 包括 centre (中心)（纬度，经度）和半径，如上所示。 Includes `centre` (latitude, longitude) and `radisu` as shown above. |
+| `inclusion` | 地理围栏是否已启用（true）或已禁用。                                                                                      |
 
-### Polygon Geofence {#polygon\_geofence}
+### 多边形地理围栏 {#polygon\_geofence}
 
 Each polygon geofence is defined in a separate item, as shown below (multiple comma-separated items can be defined).
 The geofence includes a set of points defined with a clockwise winding (i.e. they must enclose an area).
@@ -447,24 +447,23 @@ The geofence includes a set of points defined with a clockwise winding (i.e. the
     }
 ```
 
-The fields are:
+这些领域是：
 
-| Key         | Description                                                                                                                    |
+| 键           | 描述                                                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `version`   | The version number for the geofence "polygon" plan format. The documented version is 2.                                        |
 | `polygon`   | A list of points for the polygon. Each point contains a latitude and longitude. The points are ordered in a clockwise winding. |
-| `inclusion` | Whether or not the geofence is enabled (true) or disabled.                                                                     |
+| `inclusion` | 地理围栏是否已启用（true）或已禁用。                                                                                                           |
 
-## Rally Points {#rally\_points}
+## 团结积分 {#rally\_points}
 
 Rally point information is optional.
 The plan can contain an arbitrary number of rally points, each of which has a latitude, longitude, and altitude (above home position).
 
-A definition with two points is shown below.
+有两点的定义如下所示。
 
 ```json
-
-    "rallyPoints": {
+<br />    "rallyPoints": {
         "points": [
             [
                 47.39760401,
@@ -481,9 +480,9 @@ A definition with two points is shown below.
     }
 ```
 
-The fields are:
+这些领域是：
 
-| Key       | Description                                                                      |
+| 键         | 描述                                                                               |
 | --------- | -------------------------------------------------------------------------------- |
 | `version` | The version number for the rally point plan format. The documented version is 2. |
-| `points`  | A list of rally points.                                                          |
+| `points`  | 拉力点列表。                                                                           |
