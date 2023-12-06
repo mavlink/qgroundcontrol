@@ -1,11 +1,13 @@
-# GeoTag 이미지(분석 화면)
+# GeoTag Images (Analyze View)
 
-_GeoTag 이미지_ 화면(**분석 > GeoTag 이미지**)에서는 비행 로그의 정보를 사용하여 측량 미션 이미지에 위치 정보 태그를 지정합니다.
+The _GeoTag Images_ screen (**Analyze > GeoTag Images**) allows you to geotag images from a survey mission using information in the flight log.
 
-::: info
-이 기능은 _PX4_ 비행 스택 로그에서만 작동합니다. ArduPilot 에서는 지원되지 않습니다.
+:::info
+This feature only works with _PX4_ flight stack logs.
+ArduPilot is not supported.
 :::
 
-![GeoTag 이미지 보기 분석](../../../assets/analyze/geotag_images.jpg)
+![Analyze View GeoTag Images](../../../assets/analyze/geotag_images.jpg)
 
-제공된 버튼을 사용하여 위치 정보 태그가 지정된 이미지에 대한 로그 파일, 이미지 디렉토리 및 (선택 사항) 출력 디렉토리를 선택합니다. **태깅 시작**을 클릭하여 위치정보 태그가 지정된 이미지를 생성합니다.
+Select the log file, image directory and (optionally) output directory for geotagged images using the buttons provided.
+Click **Start Tagging** to generate the geotagged images.
