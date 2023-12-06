@@ -1,97 +1,102 @@
-# Koridor Taraması (Plan Şablonu)
+# Corridor Scan (Plan Pattern)
 
-Koridor taraması, çoklu çizgileri takip eden bir uçuş şablonu oluşturmanıza olanak verir. Bu, mesela, bir yolu gözlemlemek için kullanılır. Tüm otopilot ve araç tiplerince desteklenir.
+A corridor scan allows you to create a flight pattern that follows a poly-line. This can be used to, for example, survey a road. It is supported on all autopilots and vehicle types.
 
-> **Important** Kamera özelliklerini kullanan bir Koridor Taraması planlarken, araştırma alanınızın zemin yüksekliklerinin kalkış/ev konumunuzla aynı yükseklikte olduğu varsayılır. Eğer araştırma alanınızın zemin yüksekliği fırlatma/ev konumunuzdan daha yüksek veya daha alçaksa, görüntülerinizdeki etkili örtüşme hesaplanandan daha az veya daha fazla (sırasıyla) olacaktır. Araştırma alanınızın zemin yüksekliği fırlatma/ev konumunuzdan önemli ölçüde daha yüksekse, aracın yanlışlıkla ağaçlara, engellere veya zemine çarpmasına neden olacak bir görev planlayabilirsiniz. Kalkış/ev rakımınızdan önemli yükseklik farklılıkları olan arazi üzerinde istenen yükseklik farkını daha yakından koruyan bir tarama oluşturmak için Terrain Follow'u kullanın.
+> **Important** When planning a Corridor Scan using camera specifications the ground elevations under your survey area are assumed to be at the same altitude as your launch/home location. If the ground elevation under your survey area is either higher or lower than your launch/home location the effective overlap in your images will be less or more (respectively) than calculated. If ground elevation under your survey area is significantly higher than your launch/home location you could inadvertently plan a mission which causes the vehicle to fly into trees, obstacles, or the ground. Use Terrain Follow to create a survey that more closely maintains the desired altitude above terrain that has significant elevation differences from your launch/home altitude.
 
-![Koridor Taraması](../../../assets/plan/corridor_scan.jpg)
+![Corridor Scan](../../../assets/plan/corridor_scan.jpg)
 
-Coğrafi etiketli görüntüler oluşturmak için uygun yolu, koridor genişliğini ve kamera ayarlarını özelleştirebilirsinz.
+You can specify the path, the width of the corridor, and camera settings appropriate for creating geotagged images.
 
-## Tarama Oluşturma
+## Creating a Scan
 
-Bir koridor taraması oluşturmak için:
+To create a corridor scan:
 
-1. [PlanView](../plan_view/plan_view.md)'den _Plan Tools_'u açın.
-2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Corridor Scan_'a tıklayın.
+1. Open [PlanView](../plan_view/plan_view.md) _Plan Tools_.
 
-![Koridor Taraması](../../../assets/plan/corridor_scan_menu.jpg)
+2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Corridor Scan_.
 
-Bu haritaya bir koridor ve görev listesine (sağda) bir _Corridor Scan_ öğesi ekleyecektir.
+   ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
 
-3. Koridorun uçlarını, sırasıyla taramanın başlangıç ve bitiş noktalarına sürükleyin.
+   This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
 
-4. Yeni bir köşe noktası oluşturmak için hattın ortasındaki `(+)` semboüne tıklayın. Yeni köşe noktası, istenen koridor yolunu takip edeceği bir noktaya sürüklenebilir.
+3. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 
-Koridor taraması ayarları bir sonraki bölümde ele alınmıştır.
+4. Click the `(+)` symbol at the centre of a line to create a new vertix.
+   The new vertix can then be dragged into position to follow the path of the desired corridor.
 
-## Ayarlar
+The corridor scan settings are covered in the next section.
 
-Koridor taraması, ilişkili görev öğesinde (Plan Görünümü'nün sağ tarafındaki görev öğesi listesinde) daha da yapılandırılabilir.
+## Settings
 
-### Kamera
+The corridor scan can be further configured in the associated mission item (in the mission item list on the right hand side of the Plan View).
 
-Kamera başlatma davranışı, kamera/kamera ayarlarına bağlıdır. Var olan bir kamerayı seçebilir ya da ayarları manuel olarak girebilirsiniz. Mevcut kameraların listesi (QGC 3.4) aşağıda verilmiştir.
+### Camera
 
-![Koridor Taraması - Kamera Seç](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
+Camera triggering behaviour depends on the camera/camera settings.
+You can select an existing camera or manually enter the settings.
+The list of available cameras (QGC 3.4) is given below.
 
-#### Bilinen Kamera
+![Corridor Scan - Select Camera](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
 
-Seçenekler açılır listesinden bilinen bir kamerayı seçmek, kameranın özelliklerine göre bir ızgara deseni oluşturmanıza olanak sağlar.
+#### Known Camera
 
-![Koridor Taraması - Canon SX260 Kamera Ayarları](../../../assets/plan/corridor_scan_settings_camera_canon_sx260.jpg)
+Selecting a known camera from the option dropdown allows you to generate a grid pattern based on the camera's specifications.
 
-Ayarlanabilir seçenekler şunlardır:
+![Corridor Scan - Camera Settings Canon SX260](../../../assets/plan/corridor_scan_settings_camera_canon_sx260.jpg)
 
-- **Landscape/Portrait** - Aracın "normal" yönüne göre kamera yönü.
-- **Image Overlap** - Her görüntü arasında örtüşme.
-- Birini Seç:
-  - **Altitude** - Tarama yüksekliği (bu yükseklik için zemin çözünürlüğü hesaplanacak/görüntülenecektir).
-  - **Ground resolution** - Her görüntü için zemin çözünürlüğü (bu çözünürlüğü sağlamak için gerekli yükseklik hesaplanacak/görüntülenecektir).
+The configurable options are:
 
-#### Manuel Kamera
+- **Landscape/Portrait** - Camera orientation relative to the "normal" orientation of the vehicle.
+- **Image Overlap** - Overlap between each image.
+- Select one of:
+  - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
+  - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
 
-Manuel kamera seçeneği, kameranız için istenen tarama yüksekliğini, deklanşör aralığını ve uygun ızgara aralığını belirlemenize olanak tanır.
+#### Manual Camera
 
-![Koridor Taraması - Manuel Kamera Ayarları](../../../assets/plan/corridor_scan_settings_camera_manual.jpg)
+The manual camera option allows you to specify desired survey height, trigger interval and appropriate grid spacing for your camera.
 
-Ayarlanabilir seçenekler şunlardır:
+![Corridor Scan - Manual Camera Settings](../../../assets/plan/corridor_scan_settings_camera_manual.jpg)
 
-- **Altitude** - Tarama yüksekliği.
-- **Trigger Distance** - Her bir kamera çekimi arasındaki zemin üzerinde alınan mesafe.
-- **Spacing** - Koridor boyunca bitişik ızgara (uçuş yolu) çizgileri arasındaki mesafe.
+The configurable options are:
 
-### Koridor
+- **Altitude** - Survey altitude.
+- **Trigger Distance** - The distance over ground between each camera shot.
+- **Spacing** - Distance between adjacent grid (flight path) lines across the corridor.
 
-![Koridor Taraması - Koridor Ayarları](../../../assets/plan/corridor_scan_settings_corridor.jpg)
+### Corridor
 
-Ayarlanabilir seçenekler şunlardır:
+![Corridor Scan - Corridor Settings](../../../assets/plan/corridor_scan_settings_corridor.jpg)
 
-- **Width** - Taramada, yolu tanımlayan çoklu çizgilerin etrafındaki genişliğini ayarlayın.
-- **Turnaround dist** - Aracın geri dönmesi için tarama alanının dışına eklenecek olan mesafe miktarı.
-- **Take images in turnarounds** Geri dönüş noktalarında da görüntü yakalanması için işaretleyin.
-- **Relative altitude** - Bağlı bir yüksekik belirtmek için işaretleyin. Bu özellik sadece [terrain following](#terrain_following) kullanmayan manuel ayarlanmış ızgaralarda desteklenir.
-- **Rotate entry point** - Koridor taramasının başlangıç ve bitiş noktasını birbirleriyle değiştirmek için butona basın.
+The configurable options are:
 
-### Arazi Takibi {#terrain_following}
+- **Width** - Set the width of the scan around the polyline that defines the path.
+- **Turnaround dist** - Amount of additional distance to add outside the survey area for vehicle turn around.
+- **Take images in turnarounds** - Check to enable image capture a turnaround points.
+- **Relative altitude** - Check to specify a relative altitude. This is only supported for manual grids that are not using [terrain following](#terrain_following).
+- **Rotate entry point** - Press button to swap the start and end point of the corridor scan.
 
-Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip edecektir. _Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
+### Terrain Following {#terrain\_following}
 
-![Koridor Taraması - Arazi Takibi Ayarları](../../../assets/plan/corridor_scan_settings_terrain.jpg)
+By default a flying vehicle will follow the corridor path at a fixed altitude.
+Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
-::: info
-Arazi takibi, _AirMap_ serverlarından sağlanan arazi yüksekliklerini kullanır.
+![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
+
+:::info
+Terrain following uses terrain heights queried from _AirMap_ servers.
 :::
 
-Ayarlanabilir seçenekler şunlardır:
+The configurable options are:
 
-- **Araç araziyi takip eder** - Arazi takibini etkinleştirmek için işaretleyin (ve aşağıdaki seçenekleri görüntüleyin).
-  - **Tolerance** - Hedeflenen yükseklikten kabul edilen sapma miktarı.
-  - **Max Climb Rate** - Araziyi takip ederken maksimum yükselme oranı.
-  - **Max Descent Rate** - Araziyi takip ederken maksimum alçalma oranı.
+- **Vehicle follows terrain** - Check to enable terrain following (and display the following options).
+  - **Tolerance** - The accepted deviation in altitude from the target altitude.
+  - **Max Climb Rate** - Maximum climb rate when following terrain.
+  - **Max Descent Rate** - Maximum descent rate when following terrain.
 
-### İstatistikler
+### Statistics
 
-_Statistics_ bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
+The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
 
-![Koridor Taraması - İstatistikler](../../../assets/plan/corridor_scan_settings_statistics.jpg)
+![Corridor Scan - Statistics](../../../assets/plan/corridor_scan_settings_statistics.jpg)
