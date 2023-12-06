@@ -86,3 +86,8 @@ src/latex/
 Qt*-linux*.tar.*
 
 .vs/
+
+# vitepress - user guide
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
