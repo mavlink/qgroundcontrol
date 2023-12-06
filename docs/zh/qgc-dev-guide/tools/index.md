@@ -1,6 +1,6 @@
-# Developer Tools
+# 开发者工具
 
-_QGroundControl_ makes a number of tools available primarily for autopilot developers.
+QGroundControl主要为自动驾驶开发人员提供了许多工具。 这些简化了常见的开发人员任务，包括设置模拟连接以进行测试，以及通过MAVLink访问系统Shell。
 These ease common developer tasks including setting up simulated connections for testing,
 and accessing the System Shell over MAVLink.
 
@@ -8,13 +8,13 @@ and accessing the System Shell over MAVLink.
 [Build the source in debug mode](https://github.com/mavlink/qgroundcontrol#supported-builds) to enable these tools.
 :::
 
-Tools include:
+工具包括：
 
-- **[Mock Link](../tools/mock_link.md)** (Daily Builds only) - Creates and stops multiple simulated vehicle links.
-- **[Replay Flight Data](https://docs.qgroundcontrol.com/en/app_menu/replay_flight_data.html)** - Replay a telemetry log (User Guide).
-- **[MAVLink Inspector](https://docs.qgroundcontrol.com/en/app_menu/mavlink_inspector.html)** - Display received MAVLink messages/values.
-- **[MAVLink Analyzer](https://docs.qgroundcontrol.com/en/app_menu/mavlink_analyzer.html)** - Plot trends for MAVLink messages/values.
-- **[Custom Command Widget](https://docs.qgroundcontrol.com/en/app_menu/custom_command_widget.html)** - Load custom/test QML UI at runtime.
+- 模拟链接（仅限每日构建） - 创建和停止多个模拟载具链接。
+- 重播飞行数据 - 重播遥测日志（用户指南）。
+- MAVLink Inspector - 显示收到的MAVLink消息/值。
+- MAVLink分析器 - 绘制MAVLink消息/值的趋势图。
+- 自定义命令小组件 - 在运行时加载自定义/测试QML UI。
 - **[Onboard Files](https://docs.qgroundcontrol.com/en/app_menu/onboard_files.html)** - Navigate vehicle file system and upload/download files.
-- **[HIL Config Widget](https://docs.qgroundcontrol.com/en/app_menu/hil_config.html)** - Settings for HIL simulators.
-- **[MAVLink Console](https://docs.qgroundcontrol.com/en/analyze_view/mavlink_console.html)** (PX4 Only) - Connect to the PX4 nsh shell and send commands.
+- HIL Config Widget - HIL模拟器的设置.
+- MAVLink控制台（仅限PX4） - 连接到PX4 nsh shell并发送命令。
