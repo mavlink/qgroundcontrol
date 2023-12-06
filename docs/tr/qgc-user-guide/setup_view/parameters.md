@@ -4,15 +4,15 @@ _Parametreler_ ekranı, araçla ilişkili parametrelerden herhangi birini bulman
 
 ![Parametreler Ekranı](../../../assets/setup/parameters_px4.jpg)
 
-::: info
+:::info
 PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu bölümde açıklandığı gibi yönetilir.
 :::
 
 ## Bir Parametreyi Bulma
 
-Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde _ Pil Kalibrasyonu _ grubu seçilir).
+Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde \_ Pil Kalibrasyonu \_ grubu seçilir).
 
-Ayrıca _ Search_ alanına bir terim girerek bir parametre için _ arama _ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için ** Clear ** tuşuna basın).
+Ayrıca \_ Search\_ alanına bir terim girerek bir parametre için \_ arama \_ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için \*\* Clear \*\* tuşuna basın).
 
 ![Parametreler Araması](../../../assets/setup/parameters_search.jpg)
 
@@ -22,7 +22,7 @@ Bir parametrenin değerini değiştirmek için bir grup ya da arama listesindeki
 
 ![Bir parametre değerini değiştirme](../../../assets/setup/parameters_changing.png)
 
-::: info
+:::info
 **Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir.
 :::
 
