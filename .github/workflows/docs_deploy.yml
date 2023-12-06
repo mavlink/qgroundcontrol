@@ -1,0 +1,79 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths:
+      - docs/**
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - docs/**
+
+  workflow_dispatch:
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Not needed if lastUpdated is not enabled
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build with VitePress
+        run: |
+          npm run docs:build
+          touch docs/.vitepress/dist/.nojekyll
+
+      - name: Upload artifact
+        if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: qgc_docs_build
+          path: docs/.vitepress/dist/
+          retention-days: 1
+
+  deploy:
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: qgc_docs_build
+          path: ~/_book
+        
+      - name: Deploy
+        run: |
+          git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
+          rm -rf docs.qgroundcontrol.com/${BRANCH_NAME}
+          mkdir -p docs.qgroundcontrol.com/${BRANCH_NAME}
+          cp -r ~/_book/* docs.qgroundcontrol.com/${BRANCH_NAME}/
+          cd docs.qgroundcontrol.com
+          git config user.email "bot@px4.io"
+          git config user.name "PX4BuildBot"
+          git add ${BRANCH_NAME}
+          git commit -a -m "QGC docs build update `date`"
+          git push origin master
+          
+        env:
+          GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
+          GIT_PASS: ${{ secrets.PX4BUILDBOT_PASS }}
