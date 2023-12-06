@@ -12,9 +12,9 @@ _QGroundControl_ can also install the firmware for SiK Radios and PX4 Flow devic
 
 1. First select the **Gear** icon (_Vehicle Setup_) in the top toolbar and then **Firmware** in the sidebar.
 
-   ![Firmware disconnected](../../../assets/setup/firmware/firmware_disconnected.jpg)
+![Firmware disconnected](../../../assets/setup/firmware/firmware_disconnected.jpg)
 
-2. Connect your device (Pixhawk, SiK Radio, PX4 Flow) directly to your computer via USB.
+1. Connect your device (Pixhawk, SiK Radio, PX4 Flow) directly to your computer via USB.
 
    ::: info
    Connect directly to a powered USB port on your machine (do not connect through a USB hub).
@@ -40,8 +40,10 @@ Once the device is connected you can choose which firmware to load (_QGroundCont
 
 1. Click the **OK** button to start the update.
 
-   The firmware will then proceed through a number of upgrade steps (downloading new firmware, erasing old firmware etc.). Each step is printed to the screen and overall progress is displayed on a progress bar.
+   The firmware will then proceed through a number of upgrade steps (downloading new firmware, erasing old firmware etc.).
+   Each step is printed to the screen and overall progress is displayed on a progress bar.
 
    ![Firmware Upgrade Complete](../../../assets/setup/firmware/firmware_upgrade_complete.jpg)
 
-Once the firmware has finished loading the device/vehicle will reboot and reconnect. Next you will need to configure the [airframe](../setup_view/airframe.md) (and then sensors, radio, etc.)
+Once the firmware has finished loading the device/vehicle will reboot and reconnect.
+Next you will need to configure the [airframe](../setup_view/airframe.md) (and then sensors, radio, etc.)
