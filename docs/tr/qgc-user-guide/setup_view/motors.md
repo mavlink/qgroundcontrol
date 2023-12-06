@@ -1,34 +1,32 @@
-# Motor Setup
+# Motor Kurulumu
 
-Motor Setup is used to test individual motors/servos (for example, to verify that motors spin in the correct direction).
+Motor Kurulumu, ayrı motorları / servoları test etmek için kullanılır (örneğin, motorların doğru yönde döndüğünü doğrulamak için).
 
 :::tip
-These instructions apply to PX4 and to most vehicle types on ArduPilot.
-Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../setup_view/motors_ardusub.md)).
+Bu talimatlar PX4 ve ArduPilot'taki çoğu araç türü için geçerlidir.
+Araca özel talimatlar, alt konular olarak sağlanır (örn. [ Motor Kurulumu (ArduSub) ](../setup_view/motors_ardusub.md)).
 :::
 
-![Motors Test](../../../assets/setup/Motors.png)
+![Motorların Testi](../../../assets/setup/Motors.png)
 
-## Test Steps
+## Test Adımları
 
-To test the motors:
+Motorları test etmek için:
 
-1. Remove all propellers.
+1. Tüm pervaneleri çıkarın.
 
-   ::: warning
-   You must remove props before activating the motors!
-   :::
+   > \*\* Uyarı \*\* Pervaneleri, motorları etkinleştirmeden önce çıkarmalısınız!
+   > :::
 
-2. (_PX4-only_) Enable safety switch - if used.
+2. (\_ yalnızca PX4 \_) güvenlik anahtarını etkinleştirin - varsa.
 
-3. Slide the switch to enable motor sliders (labeled: _Propellers are removed - Enable motor sliders_).
+3. Motor kaydırıcılarını etkinleştirmek için onaylayıcıyı (\_ Pervaneler çıkarıldı - Motor kaydırıcılarını etkinleştirin \_) kaydırın.
 
-4. Adjust the individual sliders to spin the motors and confirm they spin in the correct direction.
+4. Motorları döndürmek ve doğru yönde döndüklerini doğrulamak için tek tek kaydırıcıları ayarlayın.
 
-   ::: info
-   The motors only spin after you release the slider and will automatically stop spinning after 3 seconds.
-   :::
+   > \*\* Not \*\* Motorlar yalnızca kaydırıcıyı bıraktıktan sonra döner ve 3 saniye sonra otomatik olarak dönmeyi durdurur.
+   > :::
 
-## Additional Information
+## Ek Bilgi
 
-- [Basic Configuration > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 User Guide_) - This contains additional PX4-specific information.
+- [Basic Configuration > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 User Guide_) -Buradan, PX4 için ek bilgiler bulabilirsiniz.
