@@ -7,9 +7,13 @@ on:
       - 'Stable*'
     tags:
       - 'v*'
+    paths-ignore:
+      - 'docs/**'
   pull_request:
     branches:
-      - '*'
+    - '*'
+    paths-ignore:
+      - 'docs/**'
 
 defaults:
   run:
