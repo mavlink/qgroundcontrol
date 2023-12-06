@@ -6,11 +6,13 @@ on:
     - 'master'
     paths-ignore:
       - 'docs/**'
+      - '.github/workflows/**'
   pull_request:
     branches:
     - '*'
     paths-ignore:
       - 'docs/**'
+      - '.github/workflows/**'
 
 defaults:
   run:
