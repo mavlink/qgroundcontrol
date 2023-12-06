@@ -17,8 +17,8 @@ on:
 
   workflow_dispatch:
 
-    env:
-      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   # Build job
