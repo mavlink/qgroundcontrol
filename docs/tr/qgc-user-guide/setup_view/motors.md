@@ -1,22 +1,34 @@
-# Motor Kurulumu
+# Motor Setup
 
-Motor Kurulumu, ayrı motorları / servoları test etmek için kullanılır (örneğin, motorların doğru yönde döndüğünü doğrulamak için).
+Motor Setup is used to test individual motors/servos (for example, to verify that motors spin in the correct direction).
 
-::: tip
-Bu talimatlar PX4 ve ArduPilot'taki çoğu araç türü için geçerlidir. Araca özel talimatlar, alt konular olarak sağlanır (örn. [ Motor Kurulumu (ArduSub) ](../setup_view/motors_ardusub.md)).
+:::tip
+These instructions apply to PX4 and to most vehicle types on ArduPilot.
+Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../setup_view/motors_ardusub.md)).
 :::
 
-![Motorların Testi](../../../assets/setup/Motors.png)
+![Motors Test](../../../assets/setup/Motors.png)
 
-## Test Adımları
+## Test Steps
 
-Motorları test etmek için:
+To test the motors:
 
-1. Tüm pervaneleri çıkarın. > ** Uyarı ** Pervaneleri, motorları etkinleştirmeden önce çıkarmalısınız!
-2. (_ yalnızca PX4 _) güvenlik anahtarını etkinleştirin - varsa.
-3. Motor kaydırıcılarını etkinleştirmek için onaylayıcıyı (_ Pervaneler çıkarıldı - Motor kaydırıcılarını etkinleştirin _) kaydırın.
-4. Motorları döndürmek ve doğru yönde döndüklerini doğrulamak için tek tek kaydırıcıları ayarlayın. > ** Not ** Motorlar yalnızca kaydırıcıyı bıraktıktan sonra döner ve 3 saniye sonra otomatik olarak dönmeyi durdurur.
+1. Remove all propellers.
 
-## Ek Bilgi
+   ::: warning
+   You must remove props before activating the motors!
+   :::
 
-- [Basic Configuration > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 User Guide_) -Buradan, PX4 için ek bilgiler bulabilirsiniz.
+2. (_PX4-only_) Enable safety switch - if used.
+
+3. Slide the switch to enable motor sliders (labeled: _Propellers are removed - Enable motor sliders_).
+
+4. Adjust the individual sliders to spin the motors and confirm they spin in the correct direction.
+
+   ::: info
+   The motors only spin after you release the slider and will automatically stop spinning after 3 seconds.
+   :::
+
+## Additional Information
+
+- [Basic Configuration > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 User Guide_) - This contains additional PX4-specific information.
