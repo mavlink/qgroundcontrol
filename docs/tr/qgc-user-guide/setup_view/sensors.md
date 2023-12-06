@@ -1,7 +1,6 @@
 # Sensors
 
-The _Sensor Setup_ section allows you to configure and calibrate the vehicle's compass, gyroscope, accelerometer and any other sensors
-(the available sensors will depend on the autopilot firmware and vehicle type).
+The _Sensor Setup_ section allows you to configure and calibrate the vehicle's compass, gyroscope, accelerometer and any other sensors (the available sensors will depend on the autopilot firmware and vehicle type).
 
 Available sensors are displayed as a list of buttons beside the sidebar.
 Sensors marked with green are already calibrated, while sensors marked with red require calibration prior to flight.
