@@ -5,9 +5,8 @@ The _Flight Modes_ section allows you to configure which [flight modes](http://d
 ::: info
 In order to set up flight modes you must already have
 
-- [Configured your radio](../setup_view/radio.md) in order to set flight modes.
-- [Setup the RC transmitter](../setup_view/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
-  :::
+- In order to set up flight modes you must already have - [Configured your radio](../setup_view/radio.md) in order to set flight modes.
+- - [Setup the RC transmitter](../setup_view/FlightModes.md#transmitter-setup) (Flight Modes > Transmitter Setup)
 
 To access this section, select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Flight Modes** in the sidebar.
 
