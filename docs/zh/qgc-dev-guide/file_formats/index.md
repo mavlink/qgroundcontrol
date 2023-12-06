@@ -1,3 +1,3 @@
-# 文件格式
+# File Formats
 
-本节包含有关QGroundControl使用/支持的文件格式的主题。
+This section contains topics about the file formats used/supported by _QGroundControl_.
