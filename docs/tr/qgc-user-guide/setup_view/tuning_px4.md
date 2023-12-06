@@ -130,6 +130,4 @@ In overview:
 7. Switch to the other controllers and repeat the process.
    Screenshots of the tuning pages are shown below.
 
-   ![PX4 Tuning - Manual - Attitude controller](../../../assets/setup/tuning/px4_copter_manual_attitude.png)
-   ![PX4 Tuning - Manual - Velocity controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)
-   ![PX4 Tuning - Manual - Position controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)
+   ![PX4 Tuning - Manual - Attitude controller](../../../assets/setup/tuning/px4_copter_manual_attitude.png) ![PX4 Tuning - Manual - Velocity controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png) ![PX4 Tuning - Manual - Position controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)
