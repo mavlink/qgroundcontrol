@@ -8,6 +8,6 @@ PX4 안전설정은 아래와 같습니다.
 
 ![안전 설정 - PX4](../../../assets/setup/px4_safety.jpg)
 
-::: info
+:::info
 추가 PX4 안전 설정은 [안전 설정](https://docs.px4.io/en/config/safety.html)을 참고하십시오.
 :::
