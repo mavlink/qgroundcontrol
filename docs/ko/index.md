@@ -6,11 +6,11 @@ hero:
   actions:
     - theme: brand
       text: User Guide
-      link: /en/qgc-user-guide/index.md
+      link: /ko/qgc-user-guide/index.md
     - theme: brand
     - theme: brand
       text: Dev Guide
-      link: /en/qgc-dev-guide/index.md
+      link: /ko/qgc-dev-guide/index.md
 features:
   - title: Multiple flight stacks
     details: Full setup/configuration of ArduPilot and PX4 Pro powered vehicles
