@@ -13,15 +13,17 @@ You can specify the path, the width of the corridor, and camera settings appropr
 To create a corridor scan:
 
 1. Open [PlanView](../plan_view/plan_view.md) _Plan Tools_.
+
 2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Corridor Scan_.
 
-![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
+   ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
 
-This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
+   This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
 
 3. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 
-4. Click the `(+)` symbol at the centre of a line to create a new vertix. The new vertix can then be dragged into position to follow the path of the desired corridor.
+4. Click the `(+)` symbol at the centre of a line to create a new vertix.
+   The new vertix can then be dragged into position to follow the path of the desired corridor.
 
 The corridor scan settings are covered in the next section.
 
@@ -31,7 +33,9 @@ The corridor scan can be further configured in the associated mission item (in t
 
 ### Camera
 
-Camera triggering behaviour depends on the camera/camera settings. You can select an existing camera or manually enter the settings. The list of available cameras (QGC 3.4) is given below.
+Camera triggering behaviour depends on the camera/camera settings.
+You can select an existing camera or manually enter the settings.
+The list of available cameras (QGC 3.4) is given below.
 
 ![Corridor Scan - Select Camera](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
 
@@ -73,13 +77,14 @@ The configurable options are:
 - **Relative altitude** - Check to specify a relative altitude. This is only supported for manual grids that are not using [terrain following](#terrain_following).
 - **Rotate entry point** - Press button to swap the start and end point of the corridor scan.
 
-### Terrain Following {#terrain_following}
+### Terrain Following {#terrain\_following}
 
-By default a flying vehicle will follow the corridor path at a fixed altitude. Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
+By default a flying vehicle will follow the corridor path at a fixed altitude.
+Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
 ![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
 
-::: info
+:::info
 Terrain following uses terrain heights queried from _AirMap_ servers.
 :::
 
