@@ -1,73 +1,77 @@
-# Sabit Kanat İniş Yolu (Plan Şablonu)
+# Fixed Wing Landing Pattern (Plan Pattern)
 
-_Fixed Wing Landing Pattern_ aracı, göreve sabit kanat iniş yolu eklemenize olanak tanır. Hem ArduPilot hem de PX4'de desteklenir.
+The _Fixed Wing Landing Pattern_ tool allows you to add a fixed wing landing pattern to a mission.
+It is supported on both ArduPilot and PX4.
 
-![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern.jpg)
+![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern.jpg)
 
-Yolun ilk noktası, belirli bir yükseklikte oyalanacağı yer; ikincisi de iniş noktasıdır. Araç, ilk noktada hedeflenen yüksekliğe erişene kadar oyalanacaktır, ardından iniş için belirlenen iniş noktasına doğru alçalmaya başlayacaktır.
+The first point of the pattern is a loiter point with a specific altitude and the second is a landing point.
+The vehicle will loiter at the first point until it reaches the target altitude, and then begin the landing sequence to fly down to the specified landing spot.
 
-Hem oyalanma hem de iniş noktaları, istenilen yeni noktalara sürüklenebilir ve ilişkili görev öğesinden bir takım başka ayarlar yapılabilir.
+Both the loiter and land points can be dragged to new positions, and a number of other settings can be configured in the associated mission item.
 
-## İniş Yolu Oluşturma
+## Creating a Landing Pattern
 
-İniş yolu oluşturmak için:
+To create a landing pattern:
 
 1. Open [PlanView](../plan_view/plan_view.md) _Plan Tools_.
-2. _Plan Tools_ 'dan _Plan Tools_'u açın ve _Fixed Wing Landing Pattern_'i seçin.
 
-![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
+2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Fixed Wing Landing Pattern_.
 
-Bu, görev listesine (sağda) _Landing Pattern_ öğesi ekleyecektir.
+   ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
 
-![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+   This will add a _Landing Pattern_ item to the mission list (on the right).
 
-3. Click on the map to create both the loiter point and the landing point. Bu noktalar harita üzerinde hareket ettirilebilir.
+   ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
 
-Ek ayarlar bir sonraki bölümde ele alınmıştır.
+3. Click on the map to create both the loiter point and the landing point.
+   These can be moved on the map.
 
-## Ayarlar
+Additional settings are covered in the next section.
 
-İniş yolu, ilişkili görev öğesinde (Plan Görünümü'nün sağ tarafındaki görev öğesi listesinde) daha da yapılandırılabilir.
+## Settings
 
-### Oyalanma Noktası
+The landing pattern can be further configured in the associated mission item (in the mission item list on the right hand side of the Plan View).
 
-_Loiter Point_ ayarları, oyalanmanın yüksekliğini, yarı çapını ve yönünü ayarlamak için kullanılır.
+### Loiter Point
 
-![İniş Yolu - Oyalanma Noktası](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_loiter.jpg)
+The _Loiter Point_ settings are used to configure the loiter altitude, radius and direction.
 
-Ayarlanabilir seçenekler şunlardır:
+![Landing Pattern - Loiter Point](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_loiter.jpg)
 
-- **Altitude** - Oyalanma yüksekliği.
-- **Radius** - Oyalanma yarıçapı.
-- **Loiter clockwise** - Oyalanmanın yönünün saat yönü olması için işaretleyin (varsayılan olarak yön, saat yönünün tersidir).
+The configurable options are:
 
-### İniş noktası
+- **Altitude** - Loiter altitude.
+- **Radius** - Loiter radius.
+- **Loiter clockwise** - Check to loiter in a clockwise direction (anti-clockwise is the default).
 
-_Landing Point_ ayarları, iniş pozisyonunu ve yolunu ayarlamak için kullanılır.
+### Landing Point
 
-![İniş Yolu - İniş Noktası](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_landing.jpg)
+The _Landing Point_ settings are used to configure the landing position and path.
 
-Ayarlanabilir seçenekler şunlardır:
+![Landing Pattern - Landing Point](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_landing.jpg)
 
-- **Heading** - Oyalanma noktasından iniş noktasına yönelme.
-- **Altitude** - İniş noktası için yükseklik (nominal olarak sıfır).
-- _Radyo Butonları_
+The configurable options are:
+
+- **Heading** - Heading from loiter point to land point.
+- **Altitude** - Altitude for landing point (nominally zero).
+- _Radio Buttons_
   - **Landing Dist** - Distance between loiter point and landing point.
   - **Glide Slope** - Glide slope between loiter point and landing point.
-- **Altitudes relative to home** - Tüm yüksekliklerin ev konumuna bağlı olması için işaretleyin (varsayılan olarak deniz seviyesidir).
+- **Altitudes relative to home** - Check to set all altitudes in mission item to be relative to home (default is AMSL).
 
-## Uygulama
+## Implementation
 
-Bu şablon 3 gören öğresi oluşturur:
+This pattern creates three mission items:
 
-- `DO_LAND_START` - Eğer inişi iptal ederseniz araca `DO_GO_AROUND` komutunu gönderir ki bu komut aracın tekrar bu noktaya gelerek inmeye çalışmasına neden olur.
-- `NAV_LOITER_TO_ALT` - İniş için başlangıç noktası
-- `NAV_LAND` - İniş için bitiş noktası
+- `DO_LAND_START` - If you abort a landing it sends `DO_GO_AROUND` to the vehicle, which then causes the mission to return to this point and try to land again.
+- `NAV_LOITER_TO_ALT` - Start point for landing
+- `NAV_LAND` - End point for landing
 
-Araç, yazılım tarafından `NAV_LOITER_TO_ALT` ve `NAV_LAND` noktaları arasında oluşturulan yolu kullanarak inişe geçer.
+The vehicle flares to landing using a flight path generated by the firmware between the `NAV_LOITER_TO_ALT` point and the `NAV_LAND` point.
 
-Eğer bu 2 konum aracın iniş kısıtlamalarını ihlal ederse (ör. alçalma açısı çok dikse), araca bu geçersiz görev yüklendikten sonra bir hata ortaya çıkacaktır.
+If those two locations violate the vehicle's flare constraints (e.g. descent angle is too steep) an error will be raised after you upload the invalid mission to the vehicle.
 
-::: info
-PX4'te, yükleme esnasında iniş kısıtlamalarının ihlali yer istasyonuna bir hata mesajı gönderir, ve otopilot görevi başlatmayı reddeder (bütünlük kontrolünde başarısız olacağı için).
+:::info
+On PX4, violating the flare constraints sends an error message to the ground station at upload time, and the autopilot will refuse to start the mission (since it fails integrity checks).
 :::
