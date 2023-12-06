@@ -1,10 +1,10 @@
 # Plugin Architecture
 
-虽然MAVLink规范定义了与载具通信的标准通信协议。 There are many aspects of that spec that are up for interpretation by the firmware developers. Because of this there are many cases where communication with a vehicle running one firmware is be slightly different than communication with a vehicle running a different firmware in order to accomplish the same task. Also each firmware may implement a different subset of the MAVLink command set.
+Although the MAVLink spec defines a standard communication protocol to communicate with a vehicle. There are many aspects of that spec that are up for interpretation by the firmware developers. Because of this there are many cases where communication with a vehicle running one firmware is be slightly different than communication with a vehicle running a different firmware in order to accomplish the same task. Also each firmware may implement a different subset of the MAVLink command set.
 
-另一个主要问题是MAVLink规范不包括载具配置或通用参数集。 Due to this all code which relates to vehicle setup ends up being firmware specific. 此外，任何必须引用特定参数的代码也是特定于固件的。
+Another major issue is that the MAVLink spec does not cover vehicle configuration or a common parameter set. Due to this all code which relates to vehicle setup ends up being firmware specific. Also any code which must refer to a specific parameter is also firmware specific.
 
-鉴于固件实现之间的所有这些差异，创建单个地面站应用程序可能非常棘手，可以支持每个应用程序而不会使代码库降级为基于车辆使用的固件在任何地方遍布的大量if / then / else语句。
+Given all of these differences between firmware implementations it can be quite tricky to create a single ground station application that can support each without having the codebase degrade into a massive pile of if/then/else statements peppered everywhere based on the firmware the vehicle is using.
 
 QGC uses a plugin architecture to isolate the firmware specific code from the code which is generic to all firmwares. There are two main plugins which accomplish this `FirmwarePlugin` and `AutoPilotPlugin`.
 
