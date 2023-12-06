@@ -1,6 +1,7 @@
-# Gövde Kurulumu
+# Airframe Setup
 
-Bu sayfa, aracınızla ilişkili ana gövde seçimini yapılandırmanıza olanak tanır. Sayfanın görünümü/işlemi, kullanılan uçuş kontrolcüsünün yazılımına bağlı olarak biraz farklılık gösterir.
+This page allows you to configure the main airframe selection associated with your vehicle.
+The view/process differs slightly based on the flight controller firmware used.
 
-- [Göve (ArduPilot)](../setup_view/airframe_ardupilot.md)
-- [Gövde (PX4)](../setup_view/airframe_px4.md)
+- [Airframe (ArduPilot)](../setup_view/airframe_ardupilot.md)
+- [Airframe (PX4)](../setup_view/airframe_px4.md)
