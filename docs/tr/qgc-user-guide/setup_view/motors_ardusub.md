@@ -1,35 +1,43 @@
-# Motorların Kurulumu (ArduSub)
+# Motors Setup (ArduSub)
 
-ArduSub'un düzgün çalışması için motorların doğru şekilde kurulması gerekir.
+In order for ArduSub to function properly, the motors must be correctly set up.
 
-ROV'nuzu yeni monte ettiyseniz, önce ** Manuel Test ** bölümünde iticilerin doğru çıkışlara bağlandığından emin olun. Her kaydırıcıyı sürükleyin ve görüntülenen gövdeye göre _ doğru motorun _ döndüğünden emin olun.
+If you just assembled your ROV, first make sure that the thrusters are connected to the correct outputs in the **Manual Test** section.
+Drag each slider and make sure that the _correct motor_ spins accordingly to the frame displayed.
 
-İticilerinin uygun çıkışlara bağlandığından emin olduktan sonra,_ doğru yönü _ (ileri / geri) kontrol etmek için [ otomatik yön algılama ](#automatic) (ArduSub 4.0'dan iibaren tavsiye edilir) veya [ manuel test](#manual) seçeneklerinden birini kullanabilirsiniz.
+Once you know that the thrusters are connected to the proper outputs you can check for _correct direction_ (forward/reverse) using either [automatic direction detection](#automatic) (recommended from ArduSub 4.0) or the [manual test](#manual).
 
-> ** Note ** [ Manuel Test ](#manual) ArduSub tarafından 3.5 sürümüne kadar desteklenirken, ArduSub 4.0 hem [ Manuel Testi ](#manual) hem de [ otomatik yön algılamayı ](#automatic) destekler.
-
-## Manuel Test {#manual}
-
-ArduSub motor kurulumu, motorları teker teker test etmenize olanak sağlar. Kaydırıcılar, her motorun ileri veya geri modda döndürülmesine izin verir ve kaydırıcıların altındaki onay kutuları, tek tek iticilerin çalışmasını tersine çevrilmesine olanak tanır.
-
-Sağdaki resim, her bir iticinin konumu ve yönü ile birlikte şu anda kullanımda olan gövdeyi gösterir. Eğer gövde seçimi aracınıza uymuyorsa, önce [Frame ](../setup_view/airframe_ardupilot.md#ardusub) sekmesinden doğru gövdeyi seçin.
-
-Motorları manuel olarak kurmak ve test etmek için sayfadaki talimatları okuyun ve uygulayın.
-
-::: warning
-Aracı devreye almak ve testi etkinleştirmek için anahtarı kaydırmadan önce motorların ve pervanelerin engellerden uzak olduğundan emin olun!
+:::info
+[Manual Test](#manual) is supported by ArduSub up to 3.5, while ArduSub 4.0 supports both [Manual Test](#manual) and [automatic direction detection](#automatic).
 :::
 
-![Ardusub Motorların Testi](../../../assets/setup/motors-sub.jpg)
+## Manual Test {#manual}
 
-## Otomatik Yön Algılama {#automatic}
+The ArduSub motor setup allows you to test individual motors.
+The sliders allow spinning each motor in forward or reverse mode, and the checkboxes under the sliders allow reversing the operation of individual thrusters.
 
-Ardusub 4.0 ve daha yeni sürümler, motor yönlerinin otomatik olarak algılanmasını destekler. Bu, her motora sinyal göndererek, gövdenin beklendiği gibi tepki verip vermediğini kontrol ederek ve gerekirse motoru ters çevirerek çalışır. Bu işlem yaklaşık bir dakika sürer.
+The image at the right shows the frame currently in use, along with the location and orientation of each thruster.
+If the frame selection does not match your vehicle, first select the correct frame in the [Frame](../setup_view/airframe_ardupilot.md#ardusub) tab.
 
-Otomatik motor yönü algılamasını gerçekleştirmek için **Vehicle Setup->Motors ** sekmesine gidin, ** Auto-Detect Directions ** düğmesine tıklayın ve bekleyin. İşlemle ilgili ek çıktı, işlem gerçekleşirken düğmenin yanında gösterilecektir.
+To manually set up and test the motors, read and follow the instructions on the page.
 
-::: warning
-Bu prosedür hala motorların gövde görünümünde gösterildiği gibi _ doğru çıkışlara _ bağlanmasını gerektirir!
+:::warning
+Make sure the motors and propellers are clear from obstructions before sliding the switch to arm the vehicle and enable the test!
 :::
 
-![Ardusub Motorların Otomatik Kurulumu](../../../assets/setup/motors-sub-auto.jpg)
+![Ardusub Motors Test](../../../assets/setup/motors-sub.jpg)
+
+## Automatic Direction Detection {#automatic}
+
+Ardusub 4.0 and newer support automatic detection of the motor directions.
+This works by applying pulses to each motor, checking if the frame reacts as expected, and reversing the motor if necessary.
+The process takes around one minute.
+
+To perform the automatic motor direction detection, navigate to **Vehicle Setup->Motors** tab, click the **Auto-Detect Directions** button and wait.
+Additional output about the process will be shown next to the button as it runs.
+
+:::warning
+This procedure still requires that the motors are connected to the _correct outputs_ as shown in the frame view!
+:::
+
+![Ardusub Motors Auto-Setup](../../../assets/setup/motors-sub-auto.jpg)
