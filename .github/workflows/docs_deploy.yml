@@ -1,4 +1,4 @@
-name: Deploy Docs to Pages
+name: Deploy Docs
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        # if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
         uses: actions/upload-artifact@v3
         with:
           name: qgc_docs_build
@@ -50,7 +50,7 @@ jobs:
           retention-days: 1
 
   deploy:
-    # if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
     needs: build
     runs-on: ubuntu-latest
 
@@ -65,18 +65,13 @@ jobs:
         run: |
           git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
           rm -rf docs.qgroundcontrol.com/${BRANCH_NAME}
-          echo "mkdir"
           mkdir -p docs.qgroundcontrol.com/${BRANCH_NAME}
-          echo "cp"
           cp -r ~/_book/* docs.qgroundcontrol.com/${BRANCH_NAME}/
           cd docs.qgroundcontrol.com
           git config user.email "bot@px4.io"
           git config user.name "PX4BuildBot"
-          echo "add"
           git add ${BRANCH_NAME}
-          echo "commit"
           git commit -a -m "QGC docs build update `date`"
-          echo "push"
           git push origin master
           
         env:
