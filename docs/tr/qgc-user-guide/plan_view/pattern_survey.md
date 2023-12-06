@@ -1,130 +1,130 @@
-# Survey (Plan Pattern)
+# Gözlem (Plan Şablonu)
 
-A survey allows you to create a grid flight pattern over a polygonal area.
-You can specify an arbitrary polygon, the angle and other properties of the grid, and camera settings appropriate for creating geotagged images.
+Gözlem modu, poligonal bir alan üzerinde bir ızgara uçuş modeli oluşturmanıza olanak sağlar.
+İstediğiniz şekli, ızgaranın açısını ve diğer özelliklerini ve coğrafi etiketli görüntüler oluşturmak için uygun kamera ayarlarını belirtebilirsiniz.
 
 ::: warning
 If the survey area has significant elevation variation then consider enabling [Terrain Following](#terrain).
 
-When planning a Survey using camera specifications, the ground under the survey area are assumed to be flat - i.e. at the same altitude as the launch/home location.
-If the ground elevation under the survey is either higher or lower than the home location the effective overlap in images will be less or more (respectively) than calculated.
-If ground elevation under the survey area is _significantly_ higher than the home location you could inadvertently plan a mission path that causes the vehicle to fly into ground-level obstacles.
+Kamera özelliklerini kullanan bir Gözlem planlanırken, gözlem alanınızın zeminin düz olduğu varsayılır - ör. kalkış/rv konumuyla aynı yükseklik.
+Eğer araştırma alanınızın zemin yüksekliği ev konumunuzdan daha yüksek veya daha alçaksa, görüntülerinizdeki etkili örtüşme hesaplanandan daha az veya daha fazla (sırasıyla) olacaktır.
+Araştırma alanınızın zemin yüksekliği ev konumunuzdan _önemli_ ölçüde daha yüksekse, yanlışıla aracın zemin seviyesindeki engellere çarpmasına neden olacak bir görev planlayabilirsiniz.
 
-Using terrain following ensures that the survey more closely matches the desired altitude above terrain, and reduces the likelihood of planning a mission that is too close to ground level.
+Terrain Following'in kullanılması, araştırmanın arazi üzerinde istenen irtifaya daha yakın olmasını sağlar ve yer seviyesine çok yakın bir görev planlanması olasılığını azaltır.
 :::
 
-![Survey](../../../assets/plan/survey/survey.jpg)
+![Gözlem](../../../assets/plan/survey/survey.jpg)
 
 ## Creating a Survey
 
-To create a survey:
+Bir gözlem görevi oluşturmak için:
 
-1. Open [PlanView](../plan_view/plan_view.md) _Plan Tools_.
+1. [PlanView](../plan_view/plan_view.md)'den _Plan Tools_'u açın.
 
-2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Survey_.
+2. _Plan Tools_ 'dan _Pattern Tool_'u seçin ve _Survey_'e tıklayın.
 
-   ![Survey Menu](../../../assets/plan/survey/survey_menu.jpg)
+   ![Gözlem Menüsü](../../../assets/plan/survey/survey_menu.jpg)
 
-   This will add a survey grid to the map, and a _Survey_ item to the mission list (on the right).
+   Bu haritaya bir gözlem alanı ve görev listesine (sağda) bir _Survey_ öğesi ekleyecektir.
 
 3. On the map drag the vertices to change the shape of the polygon.
 
-4. Click the `(+)` symbol between existing vertices to create a new vertix.
-   The new vertix can then be dragged into a new position.
+4. Yeni bir köşe noktası oluşturmak için var olan köşelerin ortalarındaki `(+)` semboüne tıklayın.
+   Yeni köşe, yeni pozisyonlara çekilebilir.
 
-The survey settings are covered in the next section.
+Gözlem modu ayarları bir sonraki bölümde ele alınmıştır.
 
-## Settings
+## Ayarlar
 
-The survey can be further configured in the associated mission item (in the mission item list on the right hand side of the _Plan View_).
+Gözlem görevi, ilişkili görev öğesinde (_Plan View_'in sağ tarafındaki görev öğesi listesinde) daha da yapılandırılabilir.
 
-### Camera
+### Kamera
 
-Camera triggering behaviour depends on the camera/camera settings.
-You can select an existing camera, custom camera, or manually enter the settings.
-The list of available cameras (QGC 3.4) is given below.
+Kamera başlatma davranışı, kamera/kamera ayarlarına bağlıdır.
+Var olan veya özel bir kamerayı seçebilir ya da ayarları manuel olarak girebilirsiniz.
+Mevcut kameraların listesi (QGC 3.4) aşağıda verilmiştir.
 
-![Survey - Camera Select](../../../assets/plan/survey/survey_camera_select.jpg)
+![Gözlem - Kamera Seçimi](../../../assets/plan/survey/survey_camera_select.jpg)
 
-#### Known Camera {#known\_camera}
+#### Bilinen Kamera {#known\_camera}
 
-Selecting a known camera from the option dropdown generates a grid pattern based on the camera capabilities.
+Seçenekler açılır listesinden bilinen bir kamerayı seçmek, kameranın özelliklerine göre bir ızgara deseni oluşturur.
 
-![Survey - Camera Sony](../../../assets/plan/survey/survey_camera_sony.jpg)
+![Gözlem - Sony Kamera](../../../assets/plan/survey/survey_camera_sony.jpg)
 
-The default settings can be tuned for your survey using the configuration options:
+Varsayılan ayarlar, yapılandırma seçenekleri kullanılarak gözleminiz için ayarlanabilir:
 
-- **Landscape/Portrait** - Camera orientation relative to the "normal" orientation of the vehicle.
-- **Overlap** - Overlap between each image capture.
-  This can be configured separately for when flying along grid lines or across them.
-- Select one of:
-  - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
-  - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
+- **Landscape/Portrait** - Aracın "normal" yönüne göre kamera yönü.
+- **Overlap** - Yakalanan her görüntü arasında örtüşme.
+  Bu, ızgara hatları boyunca uçarken veya bu hatların üzerinden geçerken olmak üzere ayrı ayrı yapılandırılabilir.
+- Birini Seçin:
+  - **Altitude** - Tarama yüksekliği (bu yükseklik için zemin çözünürlüğü hesaplanacak/görüntülenecektir).
+  - **Ground resolution** - Her görüntü için zemin çözünürlüğü (bu çözünürlüğü sağlamak için gerekli yükseklik hesaplanacak/görüntülenecektir).
 
-#### Custom Camera {#custom\_camera}
+#### Özel Kamera {#custom\_camera}
 
-Selecting the custom camera option allows you to specify the settings for a new camera in a similar way to a known camera.
+Özel kamera seçeneğinin seçilmesi, yeni bir kamera için ayarları bilinen bir kameraya benzer şekilde belirlemenize olanak tanır.
 
-![Survey - Custom Camera](../../../assets/plan/survey/survey_camera_custom.jpg)
+![Gözlem - Özel Kamera](../../../assets/plan/survey/survey_camera_custom.jpg)
 
-The camera-specific settings are:
+Özel kameraya özgü ayarlar şunlardır:
 
-- **Sensor width/height** - The size of the image sensor of the camera.
-- **Image width/height** - The resolution of the image captured by the camera.
-- **Focal Length** - The focal length of the camera lens.
+- **Sensor width/height** - Kameranın fotoğraf sensörünün boyutu.
+- **Image width/height** - Kameranın çektiği görüntünün çözünürlüğü.
+- **Focal Length** - Kamera lensinin odak uzaklığı.
 
-The remaining settings are the same as for a [known camera](#known_camera).
+Geri kalan ayarlar [bilinen kamera](#known_camera) ile aynıdır.
 
-#### Manual Camera
+#### Manuel Kamera
 
-The manual camera option allows you to specify desired survey height, trigger interval and appropriate grid spacing for your camera.
+Manuel kamera seçeneği, kameranız için istenen tarama yüksekliğini, deklanşör aralığını ve uygun ızgara aralığını belirlemenize olanak tanır.
 
-![Survey - Manual Camera Settings](../../../assets/plan/survey/survey_camera_manual.jpg)
+![Gözlem - Manuel Kamera Ayarları](../../../assets/plan/survey/survey_camera_manual.jpg)
 
-The configurable options are:
+Ayarlanabilir seçenekler şunlardır:
 
-- **Altitude** - Survey altitude to fly the whole grid.
-- **Trigger Distance** - The distance over ground between each camera shot.
-- **Spacing** - Distance between adjacent grid (flight path) lines across the corridor.
+- **Altitude** - Tüm rotayı uçmak için gözlem irtifası.
+- **Trigger Distance** - Her bir kamera çekimi arasındaki zemin üzerinde alınan mesafe.
+- **Spacing** - Rota boyunca bitişik ızgara (uçuş yolu) çizgileri arasındaki mesafe.
 
 ### Transects
 
-The _Transects_ section is used for grid settings that are independent of the camera used.
+_Transects_ sekmesi kameradan bağımsız olan ızgara ayarları için kullanılır.
 
-![Survey - Transects](../../../assets/plan/survey/survey_transects.jpg)
+![Gözlem - Kesitler](../../../assets/plan/survey/survey_transects.jpg)
 
-The configurable options are:
+Ayarlanabilir seçenekler şunlardır:
 
-- **Angle** - The angle of the grid lines, relative to North.
-  ![Survey - Angle](../../../assets/plan/survey/survey_transects_angle.jpg)
-- **Turnaround dist** - Amount of additional distance to add outside the survey area for vehicle turn around.
-- **Rotate Entry Point** - Press button to swap the start and end point of the survey.
-- **Hover and capture image** - Hover to capture images (multicopter only).
-- **Refly at 90 degree offset** - Check to refly the whole mission at a 90 degree offset.
-  ![Survey - Fly Offset](../../../assets/plan/survey/survey_transects_offset.jpg)
-- **Images in turnarounds** - Check to take images when turning
-- **Relative altitude** - Check to make specified altitudes relative to home (if unchecked they are AMSL).
+- **Angle** - Kuzeye göre, ızgara çizgilerinin açısı.
+  ![Gözlem - Açı](../../../assets/plan/survey/survey_transects_angle.jpg)
+- **Turnaround dist** - Aracın geri dönmesi için tarama alanının dışına eklenecek olan mesafe miktarı.
+- **Rotate entry point** - Gözlem görevinin başlangıç ve bitiş noktasını birbirleriyle değiştirmek için butona basın.
+- **Hover and capture image** - Görüntü yakalamak için havada durmak (sadece multikopterler).
+- **Refly at 90 degree offset** - Tüm görevi 90 derece dönmüş şekliyle yeniden uçmak için işaretleyin.
+  ![Gözlem - Uçuş Açısı](../../../assets/plan/survey/survey_transects_offset.jpg)
+- **Images in turnarounds** - Dönüşlerde fotoğraf çekilmesi için işaretleyin
+- **Relative altitude** - Ev konumuna bağlı olarak belirli yükseklikleri ayarlamak için işaretleyin (işaretlenmezse ortalama deniz seviyesine göre olur).
 
-### Terrain
+### Arazi
 
-By default, a flying vehicle will follow the survey path at a fixed altitude.
-Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
+Varsayılan olarak, uçan bir araç sabit bir yükseklikte gözlem rotasını takip edecektir.
+_Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
 
-![Survey - Terrain Following Settings](../../../assets/plan/survey/survey_terrain.jpg)
+![Gözlem - Arazi Takibi Ayarları](../../../assets/plan/survey/survey_terrain.jpg)
 
 :::info
-Terrain following uses terrain heights queried from _AirMap_ servers.
+Arazi takibi, _AirMap_ serverlarından sağlanan arazi yüksekliklerini kullanır.
 :::
 
-The configurable options are:
+Ayarlanabilir seçenekler şunlardır:
 
-- **Vehicle follows terrain** - Check to enable terrain following (and display the following options).
-  - **Tolerance** - The accepted deviation in altitude from the target altitude.
-  - **Max Climb Rate** - Maximum climb rate when following terrain.
-  - **Max Descent Rate** - Maximum descent rate when following terrain.
+- **Araç araziyi takip eder** - Arazi takibini etkinleştirmek için işaretleyin (ve aşağıdaki seçenekleri görüntüleyin).
+  - **Tolerance** - Hedeflenen yükseklikten kabul edilen sapma miktarı.
+  - **Max Climb Rate** - Araziyi takip ederken maksimum yükselme oranı.
+  - **Max Descent Rate** - Araziyi takip ederken maksimum yükselme oranı.
 
-### Statistics
+### İstatistikler
 
-The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
+_Statistics_ bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
 
-![Survey - Statistics](../../../assets/plan/survey/survey_statistics.jpg)
+![Gözlem - İstatistikler](../../../assets/plan/survey/survey_statistics.jpg)
