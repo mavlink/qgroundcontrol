@@ -1,6 +1,7 @@
 # Support
 
-This user guide is meant to be the main provider of support for _QGroundControl_. If you find incorrect or missing information please report an [Issue](https://github.com/mavlink/qgc-user-guide/issues).
+This user guide is meant to be the main provider of support for _QGroundControl_.
+If you find incorrect or missing information please report an [Issue](https://github.com/mavlink/qgc-user-guide/issues).
 
 _Questions_ about how to use _QGroundControl_ should be raised in the discussion forum for the associated flight stack:
 
@@ -9,15 +10,15 @@ _Questions_ about how to use _QGroundControl_ should be raised in the discussion
 
 These forums are also the best place to start discussions on bugs/problems you are having with _QGroundControl_ and or feature requests you would like to make. From there you may be directed to entering information in a GitHub Issue for further resolution.
 
-### Developer Chat {#developer_chat}
+### Developer Chat {#developer\_chat}
 
-_QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl Slack channel](https://px4.slack.com/). You can [register to access the channel here](http://slack.px4.io/).
+_QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl channel on the Dronecode Discord](https://discord.gg/dronecode).
 
 ## GitHub Issues
 
 Issues are used to track bugs against _QGroundControl_ as well as feature requests for later versions. The current list of issues can be found on [GitHub here](https://github.com/mavlink/qgroundcontrol/issues).
 
-::: info
+:::info
 Please contact our developers using the support forums **before** creating GitHub issues for either bugs or feature requests.
 :::
 
