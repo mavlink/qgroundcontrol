@@ -8,21 +8,21 @@
 
 Windows命令提示符：
 
-```bash
+```sh
 cd "\Program Files (x86)\qgroundcontrol"
 qgroundcontrol --logging:full
 ```
 
 OSX终端应用程序（应用程序/实用程序）：
 
-```bash
+```sh
 cd /Applications/qgroundcontrol.app/Contents/MacOS/
 ./qgroundcontrol --logging:full
 ```
 
 Linux终端：
 
-```bash
+```sh
 ./qgroundcontrol-start.sh --logging:full
 ```
 
@@ -30,16 +30,16 @@ Linux终端：
 
 选项/命令行参数列在下表中。
 
-| 选项                                                        | 描述                                                                                                                                                 |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                                       |
-| `--logging:full`                                          | Turns on full logging. See [Console Logging](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html#logging-from-the-command-line). |
-| `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                                          |
-| `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                                             |
-| `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                                              |
-| `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.                                              |
-| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                              |
-| `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                                           |
+| 选项                                                        | 描述                                                                                                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                         |
+| `--logging:full`                                          | Turns on full logging. See [Console Logging](../../qgc-user-guide/settings_view/console_logging.html#logging-from-the-command-line). |
+| `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                            |
+| `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                               |
+| `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                                |
+| `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.                                |
+| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                |
+| `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                             |
 
 笔记：
 
