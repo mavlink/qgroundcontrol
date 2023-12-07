@@ -1,23 +1,27 @@
-# QGroundControl快速上手指南
+# QGroundControl Quick Start
 
-让 _QGroundControl_ 轻松入门上手使用：
+Getting _QGroundControl_ up and running is quick and easy:
 
-1. [下载并安装](../getting_started/download_and_install.md) 应用程序.
-2. 启动*QGroundControl*。
-3. 通过USB有线通讯线缆、无线数据传输或WiFi将您的设备与地面站设备相联接。 *QGroundControl*应检测您的设备并自动连接它。
+1. [Download and install](../getting_started/download_and_install.md) the application.
+2. Start _QGroundControl_.
+3. Attach your vehicle to the ground station device via USB, through a telemetry radio, or over WiFi. _QGroundControl_ should detect your vehicle and connect to it automatically.
 
-就这么简单！ 如果设备准备飞行（无人机是飞，其它设备是运行），*QGroundControl*应显示如下[Fly View](../fly_view/fly_view.md) (否则将打开[Setup View](../setup_view/setup_view.md))。
+That's it! If the vehicle is ready to fly, _QGroundControl_ should display [Fly View](../fly_view/fly_view.md) as shown below (otherwise it will open [Setup View](../setup_view/setup_view.md)).
 
 ![](../../../assets/quickstart/fly_view_connected_vehicle.jpg)
 
-要想把*QGroundControl*玩的纯熟，最好方法是亲自上手折腾：
+A good way to become familiar with _QGroundControl_ is to start experimenting:
 
-- 使用[工具栏](../toolbar/toolbar.md)在主视图之间切换：
-  - [Settings](../settings_view/settings_view.md)：配置 _QGroundControl_ 应用程序。
-  - [Setup](../setup_view/setup_view.md)：配置和调试你的设备。
-  - [Plan](../plan_view/plan_view.md)：创建自主自动执行的任务
-  - [Fly](../fly_view/fly_view.md)：在飞行时监测您的车辆，包括视频流。
-  - [Analyze] ** Description of Analyze view is missing **
-- 点击工具栏上的*Status 图标*来确认已连接设备的状态。
+- Use the [toolbar](../toolbar/toolbar.md) to switch between the main views:
+  - [Settings](../settings_view/settings_view.md): Configure the _QGroundControl_ application.
+  - [Setup](../setup_view/setup_view.md): Configure and tune your vehicle.
+  - [Plan](../plan_view/plan_view.md): Create autonomous missions.
+  - [Fly](../fly_view/fly_view.md): Monitor your vehicle(s) while flying, including streaming video.
+  - \[Analyze] \*\* Description of Analyze view is missing \*\*
+- Click the _Status icons_ on the toolbar to find out the status of the connected vehicle.
 
-虽然软件的界面相当直观亲和，但是这篇文档也能给您带来更多信息让您更加容易上手把玩QGC。
+While the UI is fairly intuitive, this documentation can also be referenced to find out more.
+
+:::info
+Make sure QGC has an internet connection when you connect a new vehicle. This will allow it to get the latest parameter and other metadata for the vehicle, along with [translations](../settings_view/general.md#miscellaneous).
+:::
