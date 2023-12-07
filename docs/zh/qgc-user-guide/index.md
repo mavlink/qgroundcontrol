@@ -23,5 +23,5 @@ The information provided should be correct, but you may find missing information
 :::
 
 :::tip
-关于 _QGroundControl_ 开发、架构、贡献和翻译的信息可在 [开发者指南](https://dev.qgroundcontrol.com/en/) 中找到。
+Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developer Guide](../qgc-dev-guide/index.md) section.
 :::
