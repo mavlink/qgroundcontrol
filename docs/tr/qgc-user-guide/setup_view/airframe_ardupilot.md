@@ -1,39 +1,41 @@
-# Gövde Kurulumu (ArduPilot)
+# Airframe Setup (ArduPilot)
 
-Gövde kurulumu, sınıfı ve modeli aracınızla eşleşen gövde seçiminde kullanılır
+Airframe Setup is used to select the frame class and type that matches your vehicle
 
-::: info
-Gövde Kurulumu sadece _ArduCopter_ ve _ArduSub_ araçları için mevcuttur (_ArduPilot_ arazi araçları ya da uçaklar için gösterilmez).
+:::info
+Airframe Setup is only available on _ArduCopter_ and _ArduSub_ vehicles (it is not shown for _ArduPilot_ Rover or Plane vehicles).
 :::
 
-## Arducopter Gövde Kurulumu
+## ArduCopter Airframe Setup
 
-Copter'den gövde seçmek için:
+To select the airframe in Copter:
 
-1. İlk olarak üstteki araç çubuğundan **dişli** simgesini (Vehicle Setup), daha sonra kenar çubuğundan **Airframe**'i seçin.
+1. First select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Airframe** in the sidebar.
 
-   ![Gövde Yapılandırması](../../../assets/setup/airframe/arducopter.jpg)
+   ![Airframe config](../../../assets/setup/airframe/arducopter.jpg)
 
-2. Aracınız için uygun olan _Frame Class_ 'ı seçin:
+2. Select the broad _Frame Class_ for your vehicle:
 
-   ![Gövde Modeli](../../../assets/setup/airframe/arducopter_class.jpg)
+   ![Airframe type](../../../assets/setup/airframe/arducopter_class.jpg)
 
    ::: info
-   Sınıf değişikliklerinin geçerli olması için aracı yeniden başlatmanız gerekecektir.
+   You will need to reboot the vehicle for class changes to take effect.
    :::
 
-3. Aracınız için spesifik _Frame Type_ 'ını seçin:
-   ![Gövde Modeli](../../../assets/setup/airframe/arducopter_type.jpg)
+3. Select the specific _Frame Type_ for your vehicle:
 
-## ArduSub Gövde Kurulumu {#ardusub}
+   ![Airframe type](../../../assets/setup/airframe/arducopter_type.jpg)
 
-Sub için gövde modelini seçmek için:
+## ArduSub Frame Setup {#ardusub}
 
-1. İlk olarak üstteki araç çubuğundan **dişli** simgesini (Vehicle Setup), daha sonra kenar çubuğundan **Frame**'i seçin.
-2. Aracınız için uygun olan gövde tipini seçin (bir gövde seçmek, seçimi uygular).
-3. Tüm ** yeşil ** iticilerin ** saat yönünde ** pervanelere ve tüm ** mavi ** iticilerin dede ** saat yönünün tersine ** pervanelere sahip olduğundan emin olun (veya tersi).
+To select the frame type for Sub:
 
-   ![Gövde Modeli Seçme](../../../assets/setup/airframe_ardusub.jpg)
+1. First select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Frame** in the sidebar.
+2. Select the frame type that matches your vehicle (selecting a frame applies the selection).
+3. Make sure that all **green** thrusters have **clockwise** propellers and all **blue** thrusters have **counter-clockwise** propellers (or vice-versa).
 
-- ArduSub için varsayılan parametre setini yüklemek için ** Load Vehicle Default Parameters** 'ye de tıklayabilirsiniz.
-  ![Araç parametrelerini yükle](../../../assets/setup/airframe_ardusub_parameters.jpg)
+   ![Select airframe type](../../../assets/setup/airframe_ardusub.jpg)
+
+   - You can also click **Load Vehicle Default Parameters** to load default parameter set for ArduSub.
+
+     ![Load vehicle params](../../../assets/setup/airframe_ardusub_parameters.jpg)
