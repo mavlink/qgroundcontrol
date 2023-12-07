@@ -1,12 +1,12 @@
-# QGroundControl 사용 문제 해결
+# Troubleshooting QGC Usage
 
-차량과 *QGroundControl*을 **연동**에 관련된 일반적인 문제들을 설명합니다.
+This section covers a number of common problems related to **using** _QGroundControl_ to interact with a vehicle:
 
-- [연결 문제](../troubleshooting/vehicle_connection.md)
-- [매개변수 다운로드 실패](../troubleshooting/parameter_download.md)
-- [계획 업로드 및 다운로드 실패](../troubleshooting/plan_upload_download.md)
-- [미션 재실행 실패](../troubleshooting/resume_mission.md)
+- [Connection problems](../troubleshooting/vehicle_connection.md)
+- [Parameter Download failures](../troubleshooting/parameter_download.md)
+- [Plan Upload/Download failures](../troubleshooting/plan_upload_download.md)
+- [Resume Mission failures](../troubleshooting/resume_mission.md)
 
-::: tip
-호스트 컴퓨터에서 **설치/실행**과 관련된 문제 *QGroundControl*은 [QGC 설정 문제 해결](../troubleshooting/qgc_setup.md)을 참고하십시오.
+:::tip
+Problems with **installing/running** _QGroundControl_ on the host computer are covered in [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md).
 :::
