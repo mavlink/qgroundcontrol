@@ -1,164 +1,205 @@
-# Joystick Kurulumu
+# Joystick Setup
 
-- QGroundControl \*, bir aracı RC Verici yerine bir joystick veya gamepad kullanarak kontrol etmenizi sağlar.
+_QGroundControl_ allows you to control a vehicle using a joystick or gamepad instead of an RC Transmitter.
 
-> ** Note ** Bir Joystick (veya [ sanal analoglar ](../settings_view/virtual_joystick.md)) ile uçmak, aracın kumanda kolu hareketlerine yanıt vermesini sağlamak için güvenilir bir yüksek bant genişliğine sahip telemetri kanalı gerektirir (çünkü joystick bilgileri MAVLink üzerinden gönderilir).
+:::info
+Flying with a Joystick (or [virtual thumb-sticks](../settings_view/virtual_joystick.md)) requires a reliable high bandwidth telemetry channel to ensure that the vehicle is responsive to joystick movements (because joystick information is sent over MAVLink).
+:::
 
-<span></span>
+:::info
+Joystick and Gamepad support is enabled using the cross-platform [SDL2](http://www.libsdl.org/index.php) library.
+Compatibility with a particular controller depends on SDL (all buttons that are exposed by that API are displayed through the _QGroundControl_ UI).
+A [number of common joysticks and gamepads](#supported-joysticks) are known to work.
+:::
 
-> ** Note ** Joystick ve Gamepad desteği, çapraz platform [ SDL2 ](http://www.libsdl.org/index.php) kitaplığı kullanılarak etkinleştirilir. Belirli bir kontrolcüyle uyumluluk, SDL'ye bağlıdır (bu API tarafından gösterilen tüm düğmeler, _ QGroundControl _ arayüzü aracılığıyla görüntülenir). [Çok sayıda yaygın oyun çubuğu ve oyun kolunun ](#supported-joysticks) çalıştığı bilinmektedir.
+:::info
+The joystick is _enabled_ as the last step of the calibration process.
+:::
 
-<span></span>
+## Enabling PX4 Joystick Support
 
-> ** Note ** Kumanda kolu, kalibrasyon işleminin son adımı olarak _ etkinleştirilir _.
+To enable Joystick support in PX4 you need to set the parameter \[`COM_RC_IN_MODE`]\(h[ttp://localhost:8080/px4\_user\_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
+If this parameter is `0` then _Joystick_ will not be offered as a setup option.
 
-## PX4 Joystick Desteğini Etkinleştirme
+This is enabled by default for PX4 SITL builds (see the [Parameters](../setup_view/parameters.md) topic for information on how to find and set a particular parameter).
 
-To enable Joystick support in PX4 you need to set the parameter [`COM_RC_IN_MODE`](h[ttp://localhost:8080/px4_user_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_. If this parameter is `0` then _Joystick_ will not be offered as a setup option.
+## Ardupilot Joystick Support
 
-Bu, PX4 SITL yapıları için varsayılan olarak etkindir (belirli bir parametrenin nasıl bulunacağı ve ayarlanacağı hakkında bilgi için [Parametreler](../setup_view/parameters.md) konusuna bakın).
+All ArduPilot vehicles are supported. No parameter configuration is necessary.
 
-## Ardupilot Joystick Desteği
+## Configuring the Joystick {#configure}
 
-Tüm ArduPilot araçları desteklenmektedir. Parametre yapılandırmasına gerek yoktur.
+To configure a joystick:
 
-## Joystick'i Ayarlama {#configure}
+1. Start _QGroundControl_ and connect to a vehicle.
 
-Joystick'i ayarlamak için:
+2. Connect the Joystick or Gamepad to a USB port.
 
-1. - QGroundControl \* 'ı başlatın ve bir araca bağlayın.
-2. Joystick ya da Gamepad'i bir USB portuna bağlayın.
-3. Üstteki araç çubuğundan **dişli** simgesini (Vechicle Setup), daha sonra kenar çubuğundan **Joystick**'i seçin. Aşağıdaki ekran görünecektir.
+3. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Joystick** in the sidebar.
+   The screen below will appear.
 
-   ![Joystick Kurulumu - Playstation](../../../assets/setup/joystick_sony_playstation.jpg)
+   ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
 
-4. ** Active joystick ** açılır menüsünde kumanda çubuğunuzun seçildiğinden emin olun.
+4. Make sure your joystick is selected in the **Active joystick** dropdown.
 
-5. **Calibrate ** Sekmesine gidin, ** Start ** tuşuna basın ve sonra çubukları kalibre etmek/hareket ettirmek için ekrandaki talimatları izleyin.
+5. Go to the **Calibrate** Tab, press the **Start** button and then follow the on-screen instructions to calibrate/move the sticks.
 
-   ![Joystick Kurulumu - Kalibrasyon](../../../assets/setup/joystick_calibration.jpg)
+   ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
 
-   Joystick, kalibrasyon işleminin son adımı olarak _ etkinleştirilir _.
+   The joystick is _enabled_ as the last step of the calibration process.
 
-6. Düğmelerin ve çubukların amaçlandığı gibi çalışıp çalışmadığını onlara basarak ve sonucu ** General ** sekmesindeki Axis/Buton monitöründe görüntüleyerek test edin.
+6. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
 
-7. Her bir kumanda kolu düğmesiyle etkinleştirilen uçuş modlarını/araç işlevlerini seçin. ![Joystick Kurulumu - Butonlar](../../../assets/setup/joystick_buttons.jpg)
+7. Select the flight modes/vehicle functions activated by each joystick button.
+   ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
 
-## Gelişmiş Seçenekler
+## Advanced Options
 
-Bazı ek Seçenekler ** Advanced ** sekmesinde mevcuttur. Bu seçenekler, duyarlılığı artırmak için belirli alışılmadık kurulumlarda ve sıkıntılı joystickleri kullanmak için yararlı olabilir.
+Some additional Options are available at the **Advanced** tab.
+These options may be useful for specific, unsual setups, for increasing sensibility, and for handling noisy joysticks.
 
-### Gaz Kolu Seçenekleri
+### Throttle Options
 
-![Joystick Kurulumu - Gaz Kolu Modları](../../../assets/setup/joystick_throttle_modes.jpg)
+![Joystick setup - Throttle Modes](../../../assets/setup/joystick_throttle_modes.jpg)
 
-- **Center stick is zero throttle**: Ortalanmış veya alçaltılmış gaz çubuğu [ MANUAL_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) ile 0, kaldırılmış gaz çubuğu 1000 gönderir.
-  - **Spring loaded throttle smoothing**: Bu modda gazın kendisini değil, artıp / azaldığı hızı kontrol edersiniz. Bu, gaz kolunun yaylı olduğu kurulumlar için kullanışlıdır, çünkü kullanıcı çubuğu bırakarak gazı istenen seviyede tutabilir.
-- **Full down stick is zero throttle**: Bu modda, alçaltılmış çubuk [ MANUAL_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) için 0, ortalanmış çubuk 500 ve kaldırılmış çubuk 1000 gönderir.
-- **Allow negative thrust**: ** Center stick is zero throttle ** modundayken, bu mod, kullanıcının çubuğu indirerek negatif değerler göndermesini sağlar. Böylece, indirilen çubuk [ MANUAL_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) 'de -1000 gönderir, ortalanmış çubuk 0 gönderir ve yükseltilmiş çubuk 1000 gönderir. Bu mod sadece [ Rover ](http://ardupilot.org/rover/index.html) gibi negatif itişi destekleyen araçlar için etkinleştirilebilir.
+- **Center stick is zero throttle**: Centered or lowered stick sends 0 in [MANUAL\_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), raised stick sends 1000.
+  - **Spring loaded throttle smoothing**: In this mode you control not the throttle itself, but the rate at which it increases/decreases.
+    This is useful for setups where the throttle stick is spring loaded, as the user can hold the desired throttle while releasing the stick.
+- **Full down stick is zero throttle**: In this mode, lowered stick sends 0 in [MANUAL\_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), centered stick 500, and raised 1000.
+- **Allow negative thrust**: When in **Center stick is zero throttle** mode, this allows the user to send negative values by lowering the stick.
+  So that lowered stick sends -1000 in [MANUAL\_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), centered sends zero, and raised stick sends 1000.
+  This mode is only enabled for vehicles that support negative thrust, such as [Rover](http://ardupilot.org/rover/index.html).
 
 ### Expo
 
-Expo kaydırıcısı, çubukları merkezde daha az hassas hale getirmenize ve bu bölgede daha iyi kontrol sağlamanıza olanak tanır.
+The expo slider allows you to make the sticks less sensitive in the center, allowing finer control in this zone.
 
-![Joystick Kurulumu - Expo](../../../assets/setup/joystick_throttle_expo.jpg)
+![Joystick setup - Expo](../../../assets/setup/joystick_throttle_expo.jpg)
 
-Kaydırıcı, üstel eğrinin eğriliğini ayarlar.
+The slider adjusts the curvature of the exponential curve.
 
-![Joystick Kurulumu - Expo Eğrisi](../../../assets/setup/joystick_throttle_expo_curve.jpg)
+![Joystick setup - Expo Curve](../../../assets/setup/joystick_throttle_expo_curve.jpg)
 
-Expo değeri ne kadar yüksekse, eğri merkezde o kadar düz ve kenarlarda diktir.
+The higher the Expo value, the flatter the curve is at the center, and steeper it is at the edges.
 
-### Gelişmiş Ayarlar
+### Advanced Settings
 
-Gelişmiş ayarlar, günlük kullanıcılar için önerilmez. Yanlış kullanılırlarsa beklenmeyen sonuçlara neden olabilirler.
+The advanced settings are not recommended for everyday users.
+They can cause unpredicted results if used incorrectly.
 
-![Joystick Kurulumu - Gelişmiş Seçenekler](../../../assets/setup/joystick_advanced.jpg)
+![Joystick setup - Advanced Settings](../../../assets/setup/joystick_advanced.jpg)
 
-Şu seçenekler mevcuttur:
+The following settings are available:
 
-- **Enable Gimbal Control**: Bir gimbali kontrol etmek için iki ek kanal etkinleştirilir.
+- **Enable Gimbal Control**: Enabled two additional channels for controlling a gimbal.
 
-- **Joystick Mode**: Joystick'in gerçekte neyi kontrol ettiğini ve araca gönderilen MAVLink mesajlarını değiştirir.
+- **Joystick Mode**: Changes what the joystick actually controls, and the MAVLink messages sent to the vehicle.
 
-  - **Normal**: Kullanıcı normal bir RC radyo kullanıyormuş gibi kontrol eder, MAVLink [ MANUAL_CONTROL ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) mesajları kullanılır.
-  - **Attitude**: Kullanıcı aracın duruşunu kontrol eder, MAVLink [ SET_ATTITUDE_TARGET ](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) mesajları kullanılır.
-  - **Position**: Kullanıcı araç konumunu kontrol eder, ** konumu ** için yalnızca bit maskeli MAVLink [ SET_POSITION_TARGET_LOCAL_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
-  - **Force**: Kullanıcı araca uygulanan kuvvetleri kontrol eder, ** kuvvet ** için yalnızca bit maskeli MAVLink [ SET_POSITION_TARGET_LOCAL_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
-  - **Velocity**: Kullanıcı araca uygulanan kuvvetleri kontrol eder, ** hız ** için yalnızca bit maskeli MAVLink [ SET_POSITION_TARGET_LOCAL_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
+  - **Normal**: User controls as if using a regular RC radio, MAVLink [MANUAL\_CONTROL](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) messages are used.
+  - **Attitude**: User controls the vehicle attitude, MAVLink [SET\_ATTITUDE\_TARGET](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) messages are used.
+  - **Position**: User controls the vehicle position, MAVLink [SET\_POSITION\_TARGET\_LOCAL\_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) messages with bitmask for **position** only are used.
+  - **Force**: User controls the forces applied to the vehicle, MAVLink [SET\_POSITION\_TARGET\_LOCAL\_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) messages with bitmask for **force** only are used.
+  - **Velocity**: User controls the forces applied to the vehicle, MAVLink [SET\_POSITION\_TARGET\_LOCAL\_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) messages with bitmask for **velocity** only are used.
 
-- **Axis Frequency**: Joystick boştayken (gelen veriler değişmiyorken), joystick komutları araca 5Hz'de gönderilir. Joystick kullanımdayken (giriş değerleri değişiyorken), joystick komutları araca bu ayarla yapılandırılan (daha yüksek) frekansta gönderilir. Varsayılan değer 25Hz'dir.
+- **Axis Frequency**: When the joystick is idle (inputs are not changing), the joystick commands are sent to the vehicle at 5Hz. When the joystick is in use (input values are changing), the joystick commands are sent to the vehicle at the (higher) frequency configured by this setting. The default is 25Hz.
 
-- **Button Frequency**: Tekrarlanan buton eylemlerinin gönderilme sıklığını kontrol eder.
+- **Button Frequency**: Controls the frequency at which repeated button actions are sent.
 
-- **Enable Circle Correction**: Uzaktan kumanda çubukları bir kareyi tanımlarken, kumanda çubukları genellikle bir daireyi tanımlar. Bu seçenek etkinleştirildiğinde, daha çok bir RC kontrolörü gibi olmasını sağlamak için joystick hareket alanının içine bir kare yazılır (böylece dört köşenin tamamına ulaşmak mümkündür). Çubuğun etkili hareket alanı azaldığından, çözünürlükte azalır.
+- **Enable Circle Correction**: RC controllers sticks describe a square, while joysticks usually describe a circle.
+  When this option is enabled a square is inscribed inside the joystick movement area to make it more like an RC controller (so it is possible to reach all four corners). The cost is decreased resolution, as the effective stick travel is reduced.
 
-  - **Disabled:**Bu ** devre dışı bırakıldığında ** joystick konumu değiştirilmeden araca gönderilir (joystick cihazından okunma şekli). Bazı oyun çubuklarında, (yuvarlanma, eğim) değerleri, bir karenin içindeki bir dairenin alanıyla sınırlıdır. Bu şekilde, B noktası tam adım ileri ve sağa tam yuvarlanma komutu verir, ancak kumanda kolu B noktasına ulaşamaz çünkü tutucu daireseldir. Bu, aynı anda tam roll ve adım pitch elde edemeyeceğiniz anlamına gelir.
+  - **Disabled:** When this is **disabled** the joystick position is sent to the vehicle unchanged (the way that it is read from the joystick device).
+    On some joysticks, the (roll, pitch) values are confined to the space of a circle inscribed inside of a square.
+    In this figure, point B would command full pitch forward and full roll right, but the joystick is not able to reach point B because the retainer is circular.
+    This means that you will not be able to achieve full roll and pitch deflection simultaneously.
 
-  ![](../../../assets/setup/joystick_circle_correction.jpg)
+    ![](../../../assets/setup/joystick_circle_correction.jpg)
 
-  - **Enabled:** Joystick değerleri, komut aralığını eksiksiz sağlamak için yazılımda ayarlanır. Kullanılabilir hareket alanı ve çözünürlük azalır, ancak şekilde gri ile vurgulanan alan artık kullanılmamaktadır.
+  - **Enabled:** The joystick values are adjusted in software to ensure full range of commands.
+    The usable area of travel and resolution is decreased, however, because the area highlighted grey in the figure is no longer used.
 
-  ![Daire düzeltmesi etkinleştirildi](../../../assets/setup/joystick_circle_correction2.jpg)
+    ![Circle correction enabled](../../../assets/setup/joystick_circle_correction2.jpg)
 
-- **Deadbands:**Deadbandler, çubuklar nötr konumlarına yakın olduğunda giriş değişikliklerinin göz ardı edilmesini sağlar. Bu, hassas çubuklarda komut olarak yorumlanabilecek parazitleri veya küçük salınımları ya da çubuklar yeniden ortalanmadığında küçük farkları önlemeye yardımcı olur. [ Kalibrasyonunun ](#configure) ilk adımı sırasında veya ilgili eksen monitöründe dikey olarak sürüklenerek ayarlanabilirler.
+- **Deadbands:** Deadbands allow input changes to be ignored when the sticks are near their neutral positions.
+  This helps to avoid noise or small oscillations on sensitive sticks which may be interpreted as commands, or small offsets when sticks do not re-center well.
+  They can be adjusted during the first step of the [calibration](#configure), or by dragging vertically on the corresponding axis monitor.
 
-## Desteklenen Joystickler
+## Supported Joysticks
 
-Aşağıdaki kumanda kollarının/kontrol cihazlarının nispeten yeni _ QGroundControl _ versiyonlarıyla çalıştığı görülmüştür.
+The following joysticks/controllers have been shown to work with relatively recent _QGroundControl_ builds.
 
-### Sony Playstation 3/4 Kontrolcüleri
+### Sony Playstation 3/4 Controllers
 
-Both these joysticks are highly recommended. "Kutudan çıkar çıkmaz" iyi çalışırlar ve uçuş modlarına eşleyebileceğiniz birçok düğme vardır.
+Both these joysticks are highly recommended.
+They work well "out of the box" and have many buttons that you can map to flight modes.
 
-#### Sony PS4 - DualShock 4 Kontrolcü V2 (Kablosuz kurulum)
+#### Sony PS4 - DualShock 4 Controller V2 (Wireless setup)
 
-Bu kontrolcü hem USB hem de Bluetooth kablosuz bağlantısını destekler. Kablolu USB bağlantısı genellikle kutudan çıkar çıkmaz çalışır. Kablosuz bağlantı için bazı kurulumlara ihtiyacı vardır.
+This controller supports both USB and Bluetooth wireless connection.
+Wired USB connection usually works out of the box.
+The wireless connection needs some setup.
 
-##### Linux Ubuntu'da Kurulumu
+##### Linux Ubuntu setup
 
-Kontrolcünün Linux altında kablosuz olarak çalışmasını sağlamak için [ jstest-gtk ](https://jstest-gtk.gitlab.io/) ve [ ds4drv ](https://github.com/chrippa/ds4drv) yardımcı programlarına ihtiyaç vardır.
+To make the controller work wirelessly under Linux the [jstest-gtk](https://jstest-gtk.gitlab.io/) and [ds4drv](https://github.com/chrippa/ds4drv) utilities are needed.
 
-Adımlar şunlardır:
+The steps are:
 
-1. - jstest-gtk \* 'yi yükleyin: `sudo apt install jstest-gtk`
-2. - ds4drv \* yükleyin: `sudo pip install ds4drv`
-3. Ds4drv'yi çalıştırın `sudo ds4drv`
-4. Kontrolcünün LED'i hızla yanıp sönmeye başlayana kadar ** Share ** düğmesini ve sonra ** PS ** düğmesini basılı tutun. Daha sonra _ ds4drv _ yeni bir aygıt algılamalıdır.
-5. Son olarak, _ jstest-gtk _ yardımcı programını çalıştırarak denetleyici kurulumunu kontrol etmelisiniz.
+1. Install _jstest-gtk_:
+   ```
+   sudo apt install jstest-gtk
+   ```
+2. Install _ds4drv_:
+   ```
+   sudo pip install ds4drv
+   ```
+3. Run ds4drv
+   ```
+   sudo ds4drv
+   ```
+4. Hold **Share** button and then **PS** button until controller LED starts blinking rapidly.
+   The _ds4drv_ should then detect a new device.
+5. Last of all, you should check the controller setup by running the _jstest-gtk_ utility.
 
 ### FrSky Taranis XD9 plus
 
-- FrSky Taranis XD9 plus \* uzaktan kumandası da bir joystick olarak bağlanabilir. Arkadaki USB bağlantı noktası üzerinden bağlanması gerekecektir.
+The _FrSky Taranis XD9 plus_ remote control can also be connected as a joystick.
+You will need to connect it via the USB port on the back.
 
-Taranis, düğme seçeneklerini kullanmanıza izin vermez (kesin olmak gerekirse, seçenekleri ayarlayabilirsiniz, ancak vericinizdeki düğmelerin değiştirilmesi, bunlara basılmasına neden olmaz).
+The Taranis does not allow you to use button options (to be precise, you can set the options, but toggling the buttons on your transmitter does not cause them to be pressed).
 
-> ** Note ** Taranis açık bir şekilde üzerinde çalışılan açık bir sistemdir. Yazma sırasında, bir joystick olarak etkili bir şekilde çalışmasına izin veren bir aygıt yazılımı veya konfigürasyon olması mümkündür.
+:::info
+The Taranis is an open system that is openly being worked on.
+It is possible that at time of writing there is a firmware or configuration that allows it to work effectively as a joystick.
+:::
 
 ### Logitech Gamepad F310
 
-Logitech Gamepad F310, MacOS "Sierra" üzerinde USB aracılığıyla test edilmiştir.
+The Logitech Gamepad F310 has been tested via USB on MacOSX "Sierra".
 
 ### Logitech Extreme 3D Pro
 
-[ Logitech Extreme 3D Pro ](http://gaming.logitech.com/en-ch/product/extreme-3d-pro-joystick) Joystick tüm platformlarda (Linux, Windows, Mac OSX) test edilmiştir. Bu, aynı zamanda bükülebilen tek çubuklu bir kontrolcüdür. Ana çubuk eksenleri eğim ve yuvarlanma için kullanılırken, bükme hareketi sapma için kullanılır. Gaz pedalı ayrı bir tekerleğe yerleştirilmiştir.
+The [Logitech Extreme 3D Pro](http://gaming.logitech.com/en-ch/product/extreme-3d-pro-joystick) Joystick has been tested on all platforms (Linux, Windows, Mac OSX).
+This is a single stick controller that can also be twisted. The main stick axes are used for pitch and roll, while the twist action is used for yaw. The throttle is mapped onto a separate wheel.
 
 ### Logitech F710 Gamepad
 
 <!-- This is from http://qgroundcontrol.org/users/joystick -->
 
-Bu oyun kumandası, QGroundControl aracılığıyla bir multirotoru manuel olarak uçurmak için mükemmeldir. Windows, Linux ve Mac OS üzerinde çalışır.
+This gamepad is great for flying a multirotor manually via QGroundControl. It works on Windows, Linux and Mac OS.
 
-#### Mac OS Leopard / Lion Kurulumu
+#### Mac OS Leopard / Lion Setup
 
-F710, Leopard / Lion'da algılanır, ancak otomatik olarak bir giriş cihazı olarak yapılandırılmaz. Çalışan bir konfigürasyon elde etmek için, F710'un _ Rumblepad2 _ olarak tanınması gerekir.
+The F710 is detected under Leopard / Lion but is not automatically configured as an input device.
+In order to get a working configuration, the F710 has to be recognised as _Rumblepad2_.
 
-Önce nasıl tanındığını kontrol edin: ** Apple> Bu Mac Hakkında> Ek Bilgi> Sistem Raporu> USB **. "Logitech Cordless RumblePad 2" olarak algılanmışsa bundan sonra başka bir işlem yapılmasına gerek yoktur.
+First check how it is recognised: **Apple > About this Mac > Additional Information > System Report > USB**.
+It is detected as "Logitech Cordless RumblePad 2" then nothing further needs to be done.
 
-"Logitech Wireless 710" olarak algılanırsa, şu adımları gerçekleştirin:
+If it is detected as a "Logitech Wireless 710", perform these steps:
 
-1. Oyun kumandasının USB alıcısını çıkarın
-2. Hızlı bir şekilde bir USB bağlantı noktasına takmaya hazırlanın
-3. Logitech düğmesine basın (kumandanın ortasında bulunan gümüş rengi Logitech logosu)
-4. USB alıcısını Mac'inize hızla bağlayın
-5. Kumanda artık sistem raporunda "Logitech Cordless RumblePad 2" olarak algılanmalıdır. Eğer algılanmazsa yukarıdaki adımları tekrar deneyin.
+1. Unplug the USB receiver of the gamepad
+2. Prepare to quickly plug it into a USB port
+3. Hit the Logitech button (its silver with the Logitech Logo on it in the center of the pad)
+4. Quickly connect the USB receiver to your Mac
+5. The pad should now be detected in the system report as "Logitech Cordless RumblePad 2". If not, retry the above steps.
