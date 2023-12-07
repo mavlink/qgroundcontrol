@@ -8,21 +8,21 @@ You will need to open a command prompt or terminal, change directory to where **
 
 Windows Command Prompt:
 
-```bash
+```sh
 cd "\Program Files (x86)\qgroundcontrol"
 qgroundcontrol --logging:full
 ```
 
 OSX Terminal app (**Applications/Utilities**):
 
-```bash
+```sh
 cd /Applications/qgroundcontrol.app/Contents/MacOS/
 ./qgroundcontrol --logging:full
 ```
 
 Linux Terminal:
 
-```bash
+```sh
 ./qgroundcontrol-start.sh --logging:full
 ```
 
@@ -30,16 +30,16 @@ Linux Terminal:
 
 The options/command line arguments are listed in the table below.
 
-| Option                                                    | Description                                                                                                                                       |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                                      |
-| `--logging:full`                                          | Turns on full logging. See [Console Logging](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html#logging-from-the-command-line). |
-| `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                                         |
-| `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                                            |
-| `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                                             |
-| `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.                                             |
-| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                             |
-| `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                                          |
+| Option                                                    | Description                                                                                                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                         |
+| `--logging:full`                                          | Turns on full logging. See [Console Logging](../../qgc-user-guide/settings_view/console_logging.html#logging-from-the-command-line). |
+| `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                            |
+| `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                               |
+| `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                                |
+| `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.                                |
+| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                |
+| `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                             |
 
 Notes:
 
