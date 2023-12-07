@@ -4,7 +4,7 @@ Radio Setup is used to configure the mapping of your main transmitter attitude c
 
 The main calibration process is identical for PX4 and ArduPilot (a number of additional flight-controller specific settings/tools are [detailed below](#additional-radio-setup)).
 
-::: info
+:::info
 Before you can calibrate the radio system the receiver and transmitter must be connected/bound. The process for binding a transmitter and receiver pair is hardware specific (see your manual for instructions).
 :::
 
@@ -15,7 +15,9 @@ The calibration process is straightforward - you will be asked to move the stick
 To calibrate the radio:
 
 1. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Radio** in the sidebar.
+
 2. Turn on your RC transmitter.
+
 3. Press **OK** to start the calibration.
 
    ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
@@ -51,7 +53,9 @@ Before you can calibrate the radio system the receiver and transmitter must be c
 To bind a Spektrum transmitter/receiver:
 
 1. Select the **Spektrum Bind** button
+
 2. Select the radio button for your receiver
+
 3. Press **OK**
 
    ![Spektrum Bind](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
@@ -65,7 +69,9 @@ This setting is used to copy the manual trim settings from your radio transmitte
 To copy the trims:
 
 1. Select **Copy Trims**.
+
 2. Center your sticks and move throttle all the way down.
+
 3. Press **Ok**.
 
    ![Copy Trims](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
@@ -89,7 +95,7 @@ The flight controller will pass through the unmodified values from the specified
 
 Tuning channels allow you to map a transmitter tuning knob to a parameter (so that you can dynamically modify a parameter from your transmitter).
 
-::: tip
+:::tip
 This feature is provided to enable manual in-flight tuning.
 :::
 
@@ -105,8 +111,11 @@ To set up tuning channels:
 To map a PARAM tuning channel to a parameter:
 
 1. Open the **Parameters** sidebar.
+
 2. Select the parameter to map to your transmitter (this will open the _Parameter Editor_).
+
 3. Check the **Advanced Settings** checkbox.
+
 4. Click the **Set RC to Param...** button (this will pop-up the foreground dialog displayed below)
 
    ![Map tuning channels to parameters](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
@@ -114,8 +123,9 @@ To map a PARAM tuning channel to a parameter:
 5. Select the tuning channel to map (1, 2 or 3) from the _Parameter Tuning ID_ selection list.
 
 6. Press **OK** to close the dialog.
+
 7. Press **Save** to save all changes and close the _Parameter Editor_.
 
-::: tip
+:::tip
 You can clear all parameter/tuning channel mappings by selecting menu **Tools > Clear RC to Param** at the top right of the _Parameters_ screen.
 :::
