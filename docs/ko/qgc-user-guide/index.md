@@ -23,5 +23,5 @@ _QGroundControl_을 이용하여 PX4나 ArduPilot 구동 차량을 설정하고 
 :::
 
 :::tip
-_QGroundControl_에 관련된 개발, 아키텍처, 기여 및 번역에 관련한 정보는 [개발자 가이드](https://dev.qgroundcontrol.com/en/)를 참고하십시오.
+Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developer Guide](../qgc-dev-guide/index.md) section.
 :::

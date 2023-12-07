@@ -47,7 +47,7 @@ _비행 후 텔레메트리 로그 저장_을 켠 경우 더 이상 차량이 �
 
 이전 버전의 _QGroundControl_은 미션, 지오펜스 및 집회 지점을 별도의 파일(**.mission**, **.fence**, **.rally**)에 저장하였습니다 . QGroundControl은 이제 비행 계획과 관련된 모든 정보를 파일 확장자를 **.plan**인 _계획 파일_을 사용합니다.
 
-형식에 대한 정보는 [계획 파일 형식](https://dev.qgroundcontrol.com/en/file_formats/plan.html)(QGroundControl 개발자 안내서)을 참고하십시오.
+Information about the format can be found in [Plan File Format](../../qgc-dev-guide/file_formats/plan.md) (QGC Developer Guide).
 
 ### 계획 툴바
 
