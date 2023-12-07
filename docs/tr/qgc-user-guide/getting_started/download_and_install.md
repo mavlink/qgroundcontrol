@@ -1,59 +1,66 @@
-# İndirme ve Kurulum
+# Download and Install
 
 The sections below can be used to download the [current stable release](../releases/release_notes.md) of _QGroundControl_ for each platform.
 
-::: tip
+:::tip
 See [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md) if _QGroundControl_ doesn't start and run properly after installation!
 :::
 
-## Sistem Gereksinimleri
+## System Requirements
 
-QGC tüm güncel bilgisayar ya da mobil cihazlarda iyi bir şekilde çalışacaktır. Performansı sistem ortamına, 3. taraf uygulamalara ve mevcut sistem kaynaklarına bağlıdır. Daha yüksek kapasiteli donanım daha iyi bir deneyim sunacaktır. En az 8 Gb Ram'e, SSD'ye, Nvidia ya da AMD ekran kartına ve i5 veya daha iyi bir işlemciye sahip bir bilgisayar çoğu uygulama için yeterince iyi olacaktır.
+QGC should run well on any modern computer or mobile device. Performance will depend on the system environment, 3rd party applications, and available system resources.
+More capable hardware will provide a better experience.
+A computer with at least 8Gb RAM, an SSD, Nvidia or AMD graphics and an i5 or better CPU will be suitable for most applications.
 
-En iyi deneyim ve uyumluluk için size işletim sisteminizin en yeni sürümünü kullanmanızı öneriyoruz.
+For the best experience and compatibility, we recommend you the newest version of your operating system.
 
 ## Windows {#windows}
 
-_QGroundControl_ Windows'un 64 bit versiyonlarına kurulabilir:
+_QGroundControl_ can be installed on 64 bit versions of Windows:
 
 1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
-2. Yükleyiciyi başlatmak için QGroundControl-installer. exe'ye çift tıklayın.
+2. Double click the executable to launch the installer.
 
-::: info
-Windows kurulum programı 3 kısayol oluşturur: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**. Eğer başlatma veya video işleme sorunları yaşamıyorsanız ilk kısayolu kullanın. For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
+:::info
+The Windows installer creates 3 shortcuts: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**.
+Use the first shortcut unless you experience startup or video rendering issues.
+For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
 :::
 
-::: info
-4.0'dan itibaren önceki _QGroundControl_ sürümleri sadece 64 bittir. Manuel olarak 32 bit sürümler oluşturmak mümkündür (bu, geliştirici ekip tarafından desteklenmez).
+:::info
+Prebuilt _QGroundControl_ versions from 4.0 onwards are 64-bit only.
+It is possible to manually build 32 bit versions (this is not supported by the dev team).
 :::
 
 ## Mac OS X {#macOS}
 
-_QGroundControl_ can be installed on macOS 10.11 or later: <!-- match version using https://dev.qgroundcontrol.com/master/en/getting_started/#native-builds -->
+_QGroundControl_ can be installed on macOS 10.11 or later:
+
+<!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
 <!-- usually based on Qt macOS dependency -->
 
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
-2. .dmg dosyasına çift tıklayın, ardından çıkan ekranda _QGroundControl_'ü _Application_ dosyasına sürükleyin.
+2. Double-click the .dmg file to mount it, then drag the _QGroundControl_ application to your _Application_ folder.
 
-   ::: info
-   QGroundControl imzasız olduğu için Catalina'da problem olmaya devam etmektedir. QGC uygulamasını ilk defa açmak için:
+::: info
+QGroundControl continues to not be signed which causes problem on Catalina. To open QGC app for the first time:
 
-   - QGC uygulama ikonuna sağ tıklayın, menüden Aç'ı seçin. Karşınıza yalnızca İptal Et seçeneği çıkacaktır. İptal Et'i seçin.
-   - QGC uygulama ikonuna tekrar sağ tıklayın, menüden Aç'ı seçin. Bu sefer Aç seçeneği de size sunulacaktır.
-
-   :::
+- Right-click the QGC app icon, select Open from the menu. You will only be presented with an option to Cancel. Select Cancel.
+- Right-click the QGC app icon again, Open from the menu. This time you will be presented with the option to Open.
+  :::
 
 ## Ubuntu Linux {#ubuntu}
 
 _QGroundControl_ can be installed/run on Ubuntu LTS 20.04 (and later).
 
-Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili kullanımına müdahale eden bir seri modem yöneticisi ile birlikte gelir. _ QGroundControl _ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz. Ayrıca video akışını desteklemek için _ GStreamer _ 'ı da yüklemeniz gerekmektedir.
+Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
+Before installing _QGroundControl_ you should remove the modem manager and grant yourself permissions to access the serial port.
+You also need to install _GStreamer_ in order to support video streaming.
 
-- QGroundControl \* 'ı ilk kez kurmadan önce:
+Before installing _QGroundControl_ for the first time:
 
 1. On the command prompt enter:
-
    ```sh
    sudo usermod -a -G dialout $USER
    sudo apt-get remove modemmanager -y
@@ -61,25 +68,26 @@ Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili k
    sudo apt install libqt5gui5 -y
    sudo apt install libfuse2 -y
    ```
-
    <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
-
 2. Logout and login again to enable the change to user permissions.
 
-&nbsp; _ QGroundControl _ yüklemek için:
+&nbsp;
+To install _QGroundControl_:
 
 1. Download [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage).
-2. Aşağıdaki terminal komutlarını kullanarak kurun (ve çalıştırın):
-   sh
+2. Install (and run) using the terminal commands:
+   ```sh
    chmod +x ./QGroundControl.AppImage
-   ./QGroundControl.AppImage (or double click)
+   ./QGroundControl.AppImage  (or double click)
+   ```
 
 ::: info
 There are known [video steaming issues](../troubleshooting/qgc_setup.md#dual_vga) on Ubuntu 18.04 systems with dual adaptors.
 :::
 
-::: info
-4.0'dan itibaren önceki _QGroundControl_ sürümleri Ubuntu 16.04'te çalıştırılamaz. Bu versiyonları Ubuntu 16.04'te çalıştırabilmek için [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
+:::info
+Prebuilt _QGroundControl_ versions from 4.0 cannot run on Ubuntu 16.04.
+To run these versions on Ubuntu 16.04 you can [build QGroundControl from source without video libraries](https://dev.qgroundcontrol.com/en/getting_started/).
 :::
 
 ## Android {#android}
