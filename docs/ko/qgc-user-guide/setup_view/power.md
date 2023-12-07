@@ -1,50 +1,53 @@
-# 전원 설정
+# Power Setup
 
-*전원 설정*은 배터리 매개변수를 설정과 프로펠러 고급 설정을 제공합니다.
+The _Power Setup_ screen is used to configure battery parameters and also provide advanced settings for propellers.
 
-![배터리 보정](../../../assets/setup/px4_power.jpg)
+![Battery Calibration](../../../assets/setup/px4_power.jpg)
 
-## 배터리 전압 및 전류 보정
+## Battery Voltage/Current Calibration
 
-데이터 시트에서 배터리 전력 모듈에 대한 다음의 데이터를 입력합니다: 셀 수, 셀당 최대 전압, 셀당 빈 전압. 전압 분배기 및 볼트당 암페어 정보도 입력하면 더욱 좋습니다.
+Enter data for your battery/power module from its data sheet: number of cells, full voltage per cell, empty voltage per cell. If provided, also enter voltage divider and amps-per-volt information.
 
-*QGroundControl*을 사용하여 측정에서 적절한 전압 분배기 및 볼트당 암페어 값을 계산할 수 있습니다.
+_QGroundControl_ can be used to calculate appropriate voltage divider and amps-per-volt values from measurements:
 
-1. 멀티미터를 사용하여 배터리의 전압을 측정합니다.
-2. _전압 분배기_ 필드 옆에 있는 **계산**을 클릭합니다. 표시된 프롬프트에서:
-   1. 측정 전압을 입력합니다.
-   2. 새 전압 분배기 값을 생성하려면 **계산**을 클릭합니다.
-   3. **닫기**를 클릭하여 값을 기본 양식에 저장합니다.
-3. 배터리의 전류를 측정합니다.
-4. _볼트당 암페어_ 필드 옆에 있는 **계산**을 클릭합니다. 표시된 프롬프트에서:
-   1. 측정한 전류를 입력합니다.
-   2. **계산**을 클릭하여 새로운 *볼트당 암페어*를 계산합니다.
-   3. **닫기**를 클릭하여 값을 기본 양식에 저장합니다.
+1. Measure the voltage from the battery using a multimeter.
+2. Click **Calculate** next to the _Voltage divider_ field. On the prompt that appears:
+3. Enter the measured voltage.
+4. Click **Calculate** to generate a new voltage-divider value.
+5. Click **Close** to save the value into the main form.
+6. Measure the current from the battery.
+7. Click **Calculate** next to the _Amps per volt_ field. On the prompt that appears:
+8. Enter the measured current.
+9. Click **Calculate** to generate a new _amps per volt_ value.
+10. Click **Close** to save the value into the main form.
 
-## 고급 전원 설정
+## Advanced Power Settings
 
-**고급 설정 표시** 확인을 클릭하여 고급 전원을 설정합니다.
+Click the **Show Advanced Settings** checkbox to specify advanced power settings.
 
-### 전체 부하시 전압 강하
+### Voltage Drop on Full Load
 
-배터리는 높은 스로틀에서 더 낮은 전압을 나타냅니다. 유휴 스로틀과 최대 스로틀 간의 볼트 차이를 배터리 셀 수로 나눈 값을 입력합니다. 확실하지 않은 경우 기본값을 사용하여야 합니다!
+Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full throttle, divided by the number of battery cells. The default value should be used if unsure!
 
-::: warning
-값이 너무 높으면 배터리가 과방전되어 손상될 수 있습니다.
+:::warning
+If the value is too high the battery may be deep-discharged and damaged.
 :::
 
-## ESC PWM 최소, 최대값 캘리브레이션
+## ESC PWM Minimum and Maximum Calibration
 
-ESC 최대/최소 PWM 값을 보정하려면:
+To calibrate the ESC max/min PWM values:
 
-1. 프로펠러를 분리하십시오.
-2. 반드시 USB를 사용하여 기체를 QGroundControl에 연결합니다.
-3. **보정** 버튼을 클릭합니다.
+1. Remove the propellers.
+2. Connect the vehicle to QGC via USB (only).
+3. Click the **Calibrate** button.
 
-> **경고** 프로펠러가 장착된 상태로 ESC 보정을 하지 마십시오.
->
-> ESC 캘리브레이션 중에는 모터가 회전하지 않아야 합니다. 그러나, ESC가 보정 시퀀스를 적절하게 지원하거나 감지하지 않으면 모터를 최대 속도로 실행하여 PWM 입력에 응답합니다.
+::: warning
+Never attempt ESC calibration with props on.
 
-## 기타 설정
+Motors should not spin during ESC calibration.
+However if an ESC doesn't properly support/detect the calibration sequence then it will respond to the PWM input by running the motor at maximum speed.
+:::
 
-UAVCAN 버스 구성 및 모터 인덱스 및 방향 할당에 대한 추가 설정에 액세스하려면 **UAVCAN 설정 표시** 확인란을 선택합니다.
+## Other Settings
+
+Select the **Show UAVCAN Settings** checkbox to access additional settings for UAVCAN Bus Configuration and motor index and direction assignment.
