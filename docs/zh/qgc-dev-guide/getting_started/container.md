@@ -1,21 +1,27 @@
 # Building using Containers
 
-The community created a docker image that makes it much easier to build a Linux-based QGC application. This can give you a massive boost in productivity and help with testing.
+The community created a docker image that makes it much easier to build a Linux-based QGC application.
+This can give you a massive boost in productivity and help with testing.
 
 ## About the Container
 
-The Container is located in the `./deploy/docker` directory. It's based on ubuntu 20.04. It pre-installs all the dependencies at build time, including Qt, thanks to a script located in the same directory, `install-qt-linux.sh`. The main advantage of using the container is the usage of the `CMake` build system and its many improvements over `qmake`
+The Container is located in the `./deploy/docker` directory.
+It's based on ubuntu 20.04.
+It pre-installs all the dependencies at build time, including Qt, thanks to a script located in the same directory, `install-qt-linux.sh`.
+The main advantage of using the container is the usage of the `CMake` build system and its many improvements over `qmake`
 
 ## Building the Container
 
-Before using the container, you have to build the image. You can accomplish this using docker, running the following script from the root of the QGC source code directory.
+Before using the container, you have to build the image.
+You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 
 ```
 docker build --file ./deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
 ```
 
-::: info
-The `-t` flag is essential. Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
+:::info
+The `-t` flag is essential.
+Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
 :::
 
 ::: info
@@ -35,7 +41,8 @@ qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or direc
 
 ## Building QGC using the Container
 
-To use the container to build QGC, you first need to define a directory to save the artifacts. We recommend you create a `build` directory on the source tree and then run the docker image using the tag provided above as follows, from the root directory:
+To use the container to build QGC, you first need to define a directory to save the artifacts.
+We recommend you create a `build` directory on the source tree and then run the docker image using the tag provided above as follows, from the root directory:
 
 ```
 mkdir build
@@ -43,7 +50,8 @@ docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-lin
 ```
 
 ::: info
-If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently. On Windows the docker command is:
+If using the script to build the Linux image on a Windows host, you would need to reference the PWD differently.
+On Windows the docker command is:
 
 ```
 docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-linux-docker
