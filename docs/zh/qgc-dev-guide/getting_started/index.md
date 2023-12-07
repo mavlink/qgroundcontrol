@@ -2,14 +2,15 @@
 qt_version: 5.15.2
 ---
 
-# Getting Started
+# Getting Started with Source and Builds
 
 本主题说明如何获取QGroundControl源代码并在本机或在Vagrant(虚拟机)环境中构建它。 本主题还提供其他可选功能信息及特定于操作系统的功能信息。
 It also provides information about optional or OS specific functionality.
 
 ## 每日构建
 
-如果您只是想测试 (而不是调试) 最近生成的 _QGroundControl_ ，那么请使用[Daily build](https://docs.qgroundcontrol.com/en/releases/daily_builds.html)。 官方提供了适用于所有平台的版本。 Versions are provided for all platforms.
+If you just want to test (and not debug) a recent build of _QGroundControl_ you can use the [Daily Build](../../qgc-user-guide/releases/daily_builds.md).
+Versions are provided for all platforms.
 
 ## 源代码
 
@@ -19,11 +20,14 @@ It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgro
 要获取源文件, 请执行以下操作:
 
 1. Clone the repo (or your fork) including submodules:
-   ```
+
+   ```sh
    克隆存储库 (或您的分叉), 包括子模块: `git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git`
    ```
+
 2. Update submodules (required each time you pull new source code):
-   ```
+
+   ```sh
    2.更新子模块（每次拉新源代码时都这样做）： `git submodule update --recursive`
    ```
 
@@ -133,9 +137,11 @@ To install Qt:
    :::
 
    - **Ubuntu:**
+
      - Airmap: Create a file named **user\_config.pri** (in the repo root directory) containing the text `DEFINES += DISABLE_AIRMAP`.
        This can be done in a bash terminal using the command:
-       ```
+
+       ```sh
        This can be done in a bash terminal using the command: `echo -e "DEFINES += DISABLE_AIRMAP\r\n" | tee user_config.pri`
        ```
 
@@ -168,25 +174,28 @@ To install Qt:
 Example commands to build a default QGC and run it afterwards:
 
 1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder: `cd qgroundcontrol`
-   ```
+
+   ```sh
    cd qgroundcontrol
    ```
 
 2. Create and enter a shadow build directory:
-   ```
+
+   ```sh
    mkdir build
    cd build
    ```
 
 3. Configure the build using the qmake script in the root of the repository: `qmake ../`
-   ```
+
+   ```sh
    入门指南
    ```
 
 4. Run make to compile and link.
    To accelerate the process things you can use the `-j{number of threads}` parameter.
 
-   ```
+   ```sh
    `make -j12`
    ```
 
@@ -194,14 +203,15 @@ Example commands to build a default QGC and run it afterwards:
    You can also specify build time flags here.
    For example, you could disable airmap inclusion using the command:
 
-   ```
+   ```sh
    DEFINES+=DISABLE_AIRMAP make build
    ```
 
    :::
 
 5. Run the QGroundcontrol binary that was just built: `./staging/QGroundControl`
-   ```
+
+   ```sh
    ./staging/QGroundControl
    ```
 
