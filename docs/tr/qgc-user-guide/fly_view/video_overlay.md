@@ -1,37 +1,42 @@
 # Video Overlay
 
-When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Telemetri [değerleri widget](FlyView.md#values-telemetry)ında gösterilmesi için hangi telemetri değerleri seçilirse seçilsin, onlar da overlaye aktarılacaktır. Overlay değerleri 1Hz hızla güncellenecektir.
+When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Whichever telemetry values are selected for display in the telemetry [values widget](FlyView.md#values-telemetry) will also be exported to the overlay. The overlay values are updated at 1Hz.
 
-![Değerler Widgetı](../../../assets/fly/overlay_widget.png)
+![Values Widget](../../../assets/fly/overlay_widget.png)
 
-Seçilen değerler ekran kullanımını optimize etmek için 3 sütun halinde düzenlenmiştir. ![İşlemde Overlay](../../../assets/fly/overlay_capture.png)
+The selected values are laid out in three columns to optimize the screen utilization.
+![Overlay in action](../../../assets/fly/overlay_capture.png)
 
-## Oynatma
+## Playing
 
-Overlay, [SubStation Alpha](https://en.wikipedia.org/wiki/SubStation_Alpha#Players_and_renderers) altyazı formatını destekleyen tüm oynatıcılarla birlikte kullanılabilir. Çoğu oynatıcı videoyu oynatmayı denediğinizde iki dosyayı birden açacaktır. QGC tarafından oluşturuldukları gibi, iki dosyanında aynı dosyada aynı isimle olması gerekmektedir.
+The overlay can be used with any player that [supports the SubStation Alpha](https://en.wikipedia.org/wiki/SubStation_Alpha#Players_and_renderers) subtitle format.
+Most players will open both files together when you try to play the video. They need to be in the same folder and with the same name, which is how they are created by QGC.
 
-## Handbrake'i Kullanarak Kalıcı Video Altyazıları
+## Permanent Video Subtitles using Handbrake
 
-Altyazılar [HandBrake](https://handbrake.fr/)'i kullanarak kalıcı olarak video dosyalarına eklenebilir. Bu, altyazıları tüm oynatıcılar için kalıcı olarak görünür yapacaktır.
+Subtitles can be permanently added to a video file using [HandBrake](https://handbrake.fr/).
+This will make the subtitles permanently visible on any video player.
 
-**HandBrake**'i açın, ana arayüzünü göreceksiniz. **Open**'a tıklayın ve video dosyasını seçin.
+Open **HandBrake**, you should see its main interface.
+Click **Open** and select the video file.
 
-![video dosyasını nasıl açılacağını gösteren Handbrake Kullanıcı Arayüzü](../../../assets/fly/video_overlay/1-open.png)
+![Handbrake UI showing how to open video file](../../../assets/fly/video_overlay/1-open.png)
 
-Video dosyası yüklenirken, subtitles sekmesine geçin. Altyazı dosyasını yüklemek için **Add**'e tıklayın.
+With the video file loaded, switch to the subtitles tab.
+Click **Add** to load the subtitle file.
 
-![altyazıların nasıl ekleneceğini gösteren Handbrake Kullanıcı Arayüzü ekran görüntüsü](../../../assets/fly/video_overlay/2-subtitles.png)
+![Handbrake UI screenshot showing how to add subtitles](../../../assets/fly/video_overlay/2-subtitles.png)
 
-**import SSA**'ı seçin ( [ASS](https://en.wikipedia.org/wiki/SubStation_Alpha#Advanced_SubStation_Alpha) SSA'nın bir uzantısıdır).
+Choose **import SSA** ([ASS](https://en.wikipedia.org/wiki/SubStation_Alpha#Advanced_SubStation_Alpha) is an extension of SSA).
 
-![SSA dosyasını içe aktar](../../../assets/fly/video_overlay/3-ssa.png)
+![Import SSA file](../../../assets/fly/video_overlay/3-ssa.png)
 
-Videonuza karşılık gelen **.ass** dosyasını videonuza yükleyin ve **Burn into video**'u işaretleyin.
+Load the **.ass** file corresponding to your video and tick the **Burn into video** checkbox.
 
-![yazma](../../../assets/fly/video_overlay/4-openandburn.png)
+![burn](../../../assets/fly/video_overlay/4-openandburn.png)
 
-Yeni dosyanın nereye kaydedilmesini istediğinizi seçin ve **Start**'a tıklayın.
+Choose where you want to save the new file and click **Start**.
 
-![Yeni bir dosya yazmaya başla](../../../assets/fly/video_overlay/5-start.png)
+![Start burning new file](../../../assets/fly/video_overlay/5-start.png)
 
-Bu, altyazıyı ve videoyu yeni bir dosyaya yazmaya başlayacaktır.
+This will start burning the subtitle and video to a new file.
