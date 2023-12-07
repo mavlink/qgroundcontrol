@@ -1,20 +1,20 @@
-# 가상 조이스틱
+# Virtual Joystick
 
-*QGroundControl*을 사용하면 화면의 가상 썸스틱으로 기체를 제어할 수 있습니다. 비행 화면에서 아래와 같이 표시됩니다.
+_QGroundControl_ allows you to control a vehicle with on-screen virtual thumbsticks. These are displayed as shown below in the flight view.
 
-![QGroundControl 기본 설정 > 가상 조이스틱 활성화](../../../assets/settings/joystick_virtual_joystick_displayed.jpg)
+![QGroundControl Preferences > Enable Virtual Joystick](../../../assets/settings/joystick_virtual_joystick_displayed.jpg)
 
-::: info
-Thumbstick 컨트롤은 RC 송신기를 사용하는 것처럼 반응하지 않습니다(정보가 MAVLink를 통하여 전송되기 때문에). 또 다른 대안은 [USB 조이스틱 및 게임패드](../setup_view/joystick.md)를 사용하는 것입니다.
+:::info
+Thumbstick control is not as responsive as using an RC Transmitter (because the information is sent over MAVLink). Another alternative is to use a [USB Joystick/Gamepad](../setup_view/joystick.md).
 :::
 
-## 썸스틱 활성화
+## Enable the thumbsticks
 
-가상 조이스틱을 활성화하려면:
+To enable the virtual joysticks:
 
-1. 상단 툴바에서 **Q** 아이콘을 선택합니다.
-2. **애플리케이션 설정**을 오픈합니다.
-3. **일반** 탭에 있는 지 확인합니다.
-4. **가상 조이스틱** 상자를 선택합니다.
+1. Select the **Q** icon from the top toolbar
+2. Open the **Application Settings**
+3. Make sure you're on the **General** tab
+4. Check the **Virtual joystick** box
 
-   ![QGroundControl 응용 프로그램 설정 > 가상 조이스틱 활성화](../../../assets/settings/joystick_virtual_joystick_enable.png)
+   ![QGroundControl Application Settings > Enable Virtual joystick](../../../assets/settings/joystick_virtual_joystick_enable.png)
