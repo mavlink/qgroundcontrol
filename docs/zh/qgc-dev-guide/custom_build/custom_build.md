@@ -1,6 +1,6 @@
-# 自定义构建
+# Custom Builds
 
-自定义构建允许第三方创建自己的QGC版本，使其能够轻松跟上常规QGC中所做的更改。 QGC has an architecture built into it which allows custom builds to modify and add to the feature set of regular QGC.
+A custom build allows third parties to create their own version of QGC in a way that allows them to easily keep up to date with changes which are being made in regular QGC. QGC has an architecture built into it which allows custom builds to modify and add to the feature set of regular QGC.
 
 Some possibilities with a custom build
 
@@ -23,8 +23,4 @@ There is also a mechanism which allows you to override resources so you can chan
 
 Also internal to QGC is the concept of an "Advanced Mode". Whereas a standard QGC builds always runs in advanced mode. A custom build always starts out in regular/not advanced mode. There is an easier mechanism in the build to turn on advanced mode which is to click the fly view button 5 times in a row fairly quickly. If you do this in a custom build you will be warned about entering advanced mode. The concept here is to hide things which normal users should not have access to behind advanced mode. For example a commercial vehicle will not need access to most setup pages which are oriented to DIY setup. So a custom build can hide this. The custom example code shows how to do this.
 
-If you want to understand the possibilities, the first step is to read through those files which document what is possible. Next look through the [
-
-    custom-example](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example) source code including the
-
-[README](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md).
+If you want to understand the possibilities, the first step is to read through those files which document what is possible. Next look through the [`custom-example`](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example) source code including the [README](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md).
