@@ -1,11 +1,11 @@
-# 用户界面设计
+# User Interface Design
 
-QGC中UI设计的主要模式是用QML编写的UI页面，多次与用C ++编写的自定义“Controller”进行通信。 这种设计模式有点沿用MVC设计模式，但也有显著不同之处。
+The main pattern for UI design in QGC is a UI page written in QML, many times communicating with a custom "Controller" written in C++. This follows a somewhat hacked variant of the MVC design pattern.
 
-QML代码通过以下机制绑定到与系统关联的信息：
+The QML code binds to information associated with the system through the following mechanisms:
 
-- 自定义控制器
-- 全局QGroundControl对象，提供对活动Vehicle等内容的访问
-- FactSystem提供对参数的访问，在某些情况下提供自定义事实。
+- The custom controller
+- The global `QGroundControl` object which provides access to things like the active Vehicle
+- The FactSystem which provides access to parameters and in some cases custom Facts.
 
-注意：由于QGC中使用的QML的复杂性以及它依赖于与C ++对象的通信来驱动ui，因此无法使用Qt提供的QML Designer来编辑QML。
+Note: Due to the complexity of the QML used in QGC as well as it's reliance on communication with C++ objects to drive the ui it is not possible to use the QML Designer provided by Qt to edit QML.
