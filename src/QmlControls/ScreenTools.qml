@@ -97,6 +97,7 @@ Item {
     property real implicitRadioButtonHeight:        implicitCheckBoxHeight
     property real implicitTextFieldWidth:           defaultFontPixelWidth * 15
     property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
+    property real implicitTextFieldWidth:           ScreenTools.defaultFontPixelWidth * 13
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real comboBoxPadding:                  defaultFontPixelWidth

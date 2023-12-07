@@ -4,6 +4,8 @@ AnalyzePage                             1.0 AnalyzePage.qml
 AppMessages                             1.0 AppMessages.qml
 AltModeDialog                           1.0 AltModeDialog.qml
 AxisMonitor                             1.0 AxisMonitor.qml
+BatteryIndicator                        1.0 BatteryIndicator.qml
+BatteryIndicatorContentItem             1.0 BatteryIndicatorContentItem.qml
 CameraCalcCamera                        1.0 CameraCalcCamera.qml
 CameraCalcGrid                          1.0 CameraCalcGrid.qml
 ContentAreaCalc                         1.0 ContentAreaCalc.qml
@@ -15,17 +17,22 @@ DropButton                              1.0 DropButton.qml
 DropPanel                               1.0 DropPanel.qml
 EditPositionDialog                      1.0 EditPositionDialog.qml
 ExclusiveGroupItem                      1.0 ExclusiveGroupItem.qml
+FactSlider                              1.0 FactSlider.qml
 FactSliderPanel                         1.0 FactSliderPanel.qml
 FirstRunPrompt                          1.0 FirstRunPrompt.qml
 FileButton                              1.0 FileButton.qml
+FlightModeIndicator                     1.0 FlightModeIndicator.qml
 FlightModeDropdown                      1.0 FlightModeDropdown.qml
 FlightModeMenu                          1.0 FlightModeMenu.qml
 GeoFenceEditor                          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals                      1.0 GeoFenceMapVisuals.qml
+GPSIndicatorPage                        1.0 GPSIndicatorPage.qml
 HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
 IndicatorButton                         1.0 IndicatorButton.qml
+IndicatorPageButtonRow                  1.0 IndicatorPageButtonRow.qml
+IndicatorPageGroupLayout                1.0 IndicatorPageGroupLayout.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml
 InstrumentValueValue                    1.0 InstrumentValueValue.qml
 InstrumentValueEditDialog               1.0 InstrumentValueEditDialog.qml
@@ -35,6 +42,7 @@ LogReplayStatusBar                      1.0 LogReplayStatusBar.qml
 MainStatusIndicator                     1.0 MainStatusIndicator.qml
 FlightModeMenuIndicator                 1.0 FlightModeMenuIndicator.qml
 MainToolBar                             1.0 MainToolBar.qml
+MainStatusIndicatorOfflinePage          1.0 MainStatusIndicatorOfflinePage.qml
 MainWindowSavedState                    1.0 MainWindowSavedState.qml
 MAVLinkMessageButton                    1.0 MAVLinkMessageButton.qml
 MissionCommandDialog                    1.0 MissionCommandDialog.qml
@@ -58,6 +66,7 @@ QGCButton                               1.0 QGCButton.qml
 QGCColumnButton                         1.0 QGCColumnButton.qml
 AutotuneUI                              1.0 AutotuneUI.qml
 QGCCheckBox                             1.0 QGCCheckBox.qml
+QGCCheckBoxSlider                       1.0 QGCCheckBoxSlider.qml
 QGCColoredImage                         1.0 QGCColoredImage.qml
 QGCComboBox                             1.0 QGCComboBox.qml
 QGCControlDebug                         1.0 QGCControlDebug.qml
@@ -71,6 +80,7 @@ QGCMapCircleVisuals                     1.0 QGCMapCircleVisuals.qml
 QGCMapLabel                             1.0 QGCMapLabel.qml
 QGCMapPolygonVisuals                    1.0 QGCMapPolygonVisuals.qml
 QGCMapPolylineVisuals                   1.0 QGCMapPolylineVisuals.qml
+QGCMarqueeLabel                         1.0 QGCMarqueeLabel.qml
 QGCMenu                                 1.0 QGCMenu.qml
 QGCMenuItem                             1.0 QGCMenuItem.qml
 QGCMenuSeparator                        1.0 QGCMenuSeparator.qml
@@ -103,6 +113,7 @@ SliderSwitch                            1.0 SliderSwitch.qml
 SubMenuButton                           1.0 SubMenuButton.qml
 SurveyMapVisuals                        1.0 SurveyMapVisuals.qml
 TerrainStatus                           1.0 TerrainStatus.qml
+ToolIndicatorPage                       1.0 ToolIndicatorPage.qml
 TransectStyleComplexItemEditor          1.0 TransectStyleComplexItemEditor.qml
 TransectStyleComplexItemStats           1.0 TransectStyleComplexItemStats.qml
 TransectStyleComplexItemTabBar          1.0 TransectStyleComplexItemTabBar.qml
