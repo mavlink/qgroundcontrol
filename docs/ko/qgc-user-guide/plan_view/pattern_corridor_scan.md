@@ -1,97 +1,102 @@
-# 복도 스캔 (계획 패턴)
+# Corridor Scan (Plan Pattern)
 
-복도 스캔은 폴리라인 형태의 비행 패턴을 생성합니다. 도로 측량 등에 사용할 수 있습니다. 대부분의 자동조종장치와 차량 유형에 적용하여 사용할 수 있습니다.
+A corridor scan allows you to create a flight pattern that follows a poly-line. This can be used to, for example, survey a road. It is supported on all autopilots and vehicle types.
 
-> **Important** 카메라를 이용한 복도 스캔 계획은 조사 영역의 지상 고도는 발사/홈 위치와 동일하다고 가정합니다. 조사 지역 아래의 지면 고도가 발사/홈 위치보다 높거나 낮으면 이미지의 효과적인 중첩이 계산된 것보다 (각각) 더 적거나 더 많이 발생합니다. 조사 지역 아래의 지상 고도가 발사/홈 위치보다 훨씬 높으면 차량이 나무, 장애물 또는 지상으로 날아가도록 하는 임무를 무심코 계획할 수 있습니다. 지형 추적을 사용하여 발사/홈 고도와 고도 차이가 큰 지형 위의 원하는 고도를 더 가깝게 유지하는 측량을 할 수 있습니다.
+> **Important** When planning a Corridor Scan using camera specifications the ground elevations under your survey area are assumed to be at the same altitude as your launch/home location. If the ground elevation under your survey area is either higher or lower than your launch/home location the effective overlap in your images will be less or more (respectively) than calculated. If ground elevation under your survey area is significantly higher than your launch/home location you could inadvertently plan a mission which causes the vehicle to fly into trees, obstacles, or the ground. Use Terrain Follow to create a survey that more closely maintains the desired altitude above terrain that has significant elevation differences from your launch/home altitude.
 
-![복도 스캔](../../../assets/plan/corridor_scan.jpg)
+![Corridor Scan](../../../assets/plan/corridor_scan.jpg)
 
-위치 태그가 지정된 이미지를 만드는 데 적합한 경로, 복도의 너비 및 카메라 설정을 지정할 수 있습니다.
+You can specify the path, the width of the corridor, and camera settings appropriate for creating geotagged images.
 
-## 스캔 생성
+## Creating a Scan
 
-복도 스캔을 생성하려면:
+To create a corridor scan:
 
-1. [계획 뷰](../plan_view/plan_view.md)에서 *계획 도구*를 엽니다.
-2. *계획 도구*에서 *패턴 도구*를 선택한 다음 *복도 스캔*을 선택합니다.
+1. Open [PlanView](../plan_view/plan_view.md) _Plan Tools_.
 
-![복도 스캔](../../../assets/plan/corridor_scan_menu.jpg)
+2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Corridor Scan_.
 
-그러면 지도에 복도 도형이 추가되고 임무 목록(오른쪽)에 _복도 스캔_ 항목이 추가됩니다.
+   ![Corridor Scan](../../../assets/plan/corridor_scan_menu.jpg)
 
-3. 지도에서 복도 끝을 스캔의 시작 위치와 끝 위치로 드래그합니다.
+   This will add a corridor to the map, and a _Corridor Scan_ item to the mission list (on the right).
 
-4. 선 중앙에 있는 `(+)` 기호를 클릭하여 정점을 추가합니다. 그런 다음, 새 정점을 원하는 복도 경로를 따라 위치로 끌어서 변경할 수 있습니다.
+3. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 
-복도 스캔에 관련된 설정은 다음 섹션에서 설명합니다.
+4. Click the `(+)` symbol at the centre of a line to create a new vertix.
+   The new vertix can then be dragged into position to follow the path of the desired corridor.
 
-## 설정
+The corridor scan settings are covered in the next section.
 
-복도 스캔에 연결된 미션 항목(플랜 보기의 오른쪽에 있는 미션 항목 목록)에서 추가하여 설정할 수 있습니다.
+## Settings
 
-### 카메라
+The corridor scan can be further configured in the associated mission item (in the mission item list on the right hand side of the Plan View).
 
-카메라 트리거 동작은 카메라/카메라 설정에 따라 변경됩니다. 기존 카메라를 선택하거나 수동으로 설정할 수 있습니다. 사용 가능한 카메라(QGC 3.4) 목록은 아래와 같습니다.
+### Camera
 
-![복도 스캔 - 카메라 선택](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
+Camera triggering behaviour depends on the camera/camera settings.
+You can select an existing camera or manually enter the settings.
+The list of available cameras (QGC 3.4) is given below.
 
-#### 알려진 카메라
+![Corridor Scan - Select Camera](../../../assets/plan/corridor_scan_settings_camera_select.jpg)
 
-옵션 드롭다운에서 알려진 카메라를 선택하면 카메라 사양에 따라 격자 패턴을 생성할 수 있습니다.
+#### Known Camera
 
-![복도 스캔 - Canon SX260 카메라 설정](../../../assets/plan/corridor_scan_settings_camera_canon_sx260.jpg)
+Selecting a known camera from the option dropdown allows you to generate a grid pattern based on the camera's specifications.
 
-설정 옵션은 다음과 같습니다:
+![Corridor Scan - Camera Settings Canon SX260](../../../assets/plan/corridor_scan_settings_camera_canon_sx260.jpg)
 
-- **가로/세로** - 차량의 "정상" 방향을 기준으로 한 카메라 방향입니다.
-- **영상 겹침** - 각 이미지 캡처 간에 겹칩니다.
-- 하나를 선택하십시오:
-  - **고도** - 조사 고도(지상 해상도가 이 고도에 대해 계산/표시됨).
-  - **지상 해상도** - 각 이미지의 지상 해상도(해상도를 계산하고 표시하는 데 필요한 고도).
+The configurable options are:
 
-#### 수동 카메라
+- **Landscape/Portrait** - Camera orientation relative to the "normal" orientation of the vehicle.
+- **Image Overlap** - Overlap between each image.
+- Select one of:
+  - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
+  - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
 
-수동 카메라 옵션을 사용하여 측량 높이, 트리거 간격 및 카메라에 적합한 격자 간격을 지정할 수 있습니다.
+#### Manual Camera
 
-![복도 스캔 - 수동 카메라 설정](../../../assets/plan/corridor_scan_settings_camera_manual.jpg)
+The manual camera option allows you to specify desired survey height, trigger interval and appropriate grid spacing for your camera.
 
-설정 옵션은 다음과 같습니다:
+![Corridor Scan - Manual Camera Settings](../../../assets/plan/corridor_scan_settings_camera_manual.jpg)
 
-- **고도** - 탐색 고도.
-- **트리거 거리** - 각 카메라 샷 사이의 지상 거리입니다.
-- **간격** - 복도를 가로지르는 인접한 그리드(비행 경로) 선 사이의 거리입니다.
+The configurable options are:
 
-### 복도
+- **Altitude** - Survey altitude.
+- **Trigger Distance** - The distance over ground between each camera shot.
+- **Spacing** - Distance between adjacent grid (flight path) lines across the corridor.
 
-![복도 스캔 - 복도 설정](../../../assets/plan/corridor_scan_settings_corridor.jpg)
+### Corridor
 
-설정 옵션은 다음과 같습니다:
+![Corridor Scan - Corridor Settings](../../../assets/plan/corridor_scan_settings_corridor.jpg)
 
-- **너비** - 경로를 정의하는 폴리라인 주변의 스캔 너비를 설정합니다.
-- **회전 거리** - 차량 회전을 위해 조사 영역 외부에 추가할 추가 거리입니다.
-- **회전 위치에서 영상 촬영** - 회전 지점에서 영상을 촬영시에 선택합니다.
-- **상대 고도** - 상대 고도를 지정하려면 선택합니다. 이것은 [지형 추적](#terrain_following)을 사용하지 않는 수동 그리드에만 지원됩니다.
-- **진입점 회전** - 버튼을 클릭하여 복도 스캔의 시작점과 끝점을 변경합니다.
+The configurable options are:
 
-### 지형 추적 {#terrain_following}
+- **Width** - Set the width of the scan around the polyline that defines the path.
+- **Turnaround dist** - Amount of additional distance to add outside the survey area for vehicle turn around.
+- **Take images in turnarounds** - Check to enable image capture a turnaround points.
+- **Relative altitude** - Check to specify a relative altitude. This is only supported for manual grids that are not using [terrain following](#terrain_following).
+- **Rotate entry point** - Press button to swap the start and end point of the corridor scan.
 
-기본적으로 기체는 고정 고도에서 복도 경로를 따라 비행합니다. *지형 추적*을 활성화시에는 기체는 지면에 대하여 일정한 고도를 유지합니다.
+### Terrain Following {#terrain\_following}
 
-![복도 스캔 - 지형 추적 설정](../../../assets/plan/corridor_scan_settings_terrain.jpg)
+By default a flying vehicle will follow the corridor path at a fixed altitude.
+Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
-::: info
-지형 추적은 _AirMap_ 서버에서 쿼리한 지형 높이를 사용합니다.
+![Corridor Scan - Terrain Following Settings](../../../assets/plan/corridor_scan_settings_terrain.jpg)
+
+:::info
+Terrain following uses terrain heights queried from _AirMap_ servers.
 :::
 
-설정 옵션은 다음과 같습니다:
+The configurable options are:
 
-- **기체 지형 추적** - 지형 추적을 활성화하려면 선택합니다(및 다음 옵션 표시).
-  - **허용 오차** - 목표 고도에서 허용되는 고도 편차입니다.
-  - **최대 상승률** - 지형을 따라갈 때의 최대 상승률입니다.
-  - **최대 하강 속도** - 지형을 따라갈 때의 최대 하강 속도.
+- **Vehicle follows terrain** - Check to enable terrain following (and display the following options).
+  - **Tolerance** - The accepted deviation in altitude from the target altitude.
+  - **Max Climb Rate** - Maximum climb rate when following terrain.
+  - **Max Descent Rate** - Maximum descent rate when following terrain.
 
-### 통계
+### Statistics
 
-_통계_ 섹션에는 계산된 조사 영역, 사진 간격, 사진 간격 및 계획된 사진 수가 표시됩니다.
+The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
 
-![복도 스캔 - 통계](../../../assets/plan/corridor_scan_settings_statistics.jpg)
+![Corridor Scan - Statistics](../../../assets/plan/corridor_scan_settings_statistics.jpg)
