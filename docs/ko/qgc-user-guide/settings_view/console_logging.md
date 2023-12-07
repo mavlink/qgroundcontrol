@@ -1,49 +1,57 @@
-# 콘솔 로그 설정
+# Console Logging
 
-*콘솔*은 _QGroundControl_ 문제를 진단하는 데 유용한 도구입니다. **설정 화면 > 콘솔**에서 설정할 수 있습니다.
+The _Console_ can be helpful tool for diagnosing _QGroundControl_ problems. It can be found in **SettingsView > Console**.
 
-![콘솔 로그](../../../assets/support/console.jpg)
+![Console logging](../../../assets/support/console.jpg)
 
-**로깅 설정** 버튼을 클릭하여 *QGroundControl*에 의해 표시되는 로깅 정보를 활성화 또는 비활성화합니다.
+Click the **Set Logging** button to enable/disable logging information displayed by _QGroundControl_.
 
-## 콜솔 로그 옵션
+## Common Logging Options
 
-가장 일반적인 로깅 옵션은 다음과 같습니다.
+The most commmonly used logging options are listed below.
 
-| 옵션                                                                                | 설명                                                                     |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `LinkManagerLog`, `MultiVehicleManagerLog`                                          | 디버그 연결 문제                                                         |
-| `LinkManagerVerboseLog`                                                             | 디버그 직렬 포트 미감지 사용 가능한 직렬 포트의 매우 시끄러운 연속 출력. |
-| `FirmwareUpgradeLog`                                                                | 펌웨어 플래시 문제를 디버그                                              |
-| `ParameterManagerLog`                                                               | 디버그 매개변수 로드 문제                                                |
-| `ParameterManagerDebugCacheFailureLog`                                              | 디버그 매개변수 캐시 crc가 누락                                          |
-| `PlanManagerLog`, `MissionManagerLog`, `GeoFenceManagerLog`, `RallyPointManagerLog` | 디버그 계획 업로드/다운로드 문제                                         |
-| `RadioComponentControllerLog`                                                       | 무선 보정 문제를 디버그                                                  |
+| Option(s)                                                                           | Description                                                                                    |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `LinkManagerLog`, `MultiVehicleManagerLog`                                          | Debug connection problems.                                                                     |
+| `LinkManagerVerboseLog`                                                             | Debug serial ports not being detected. Very noisy continuous output of available serial ports. |
+| `FirmwareUpgradeLog`                                                                | Debug firmware flash issues.                                                                   |
+| `ParameterManagerLog`                                                               | Debug parameter load problems.                                                                 |
+| `ParameterManagerDebugCacheFailureLog`                                              | Debug parameter cache crc misses.                                                              |
+| `PlanManagerLog`, `MissionManagerLog`, `GeoFenceManagerLog`, `RallyPointManagerLog` | Debug Plan upload/download issues.                                                             |
+| `RadioComponentControllerLog`                                                       | Debug Radio calibration issues.                                                                |
 
-## 명령줄 로깅
+## Logging from the Command Line
 
-로깅을 위한 대체 메커니즘은 `--logging` 명령줄 옵션을 사용하는 것입니다. 이는 *QGroundControl*이 충돌하는 상황에서 로그 조회시에 편리합니다.
+An alternate mechanism for logging is using the `--logging` command line option. This is handy if you are trying to get logs from a situation where _QGroundControl_ crashes.
 
-이 작업을 수행하는 방법과 추적 출력은 운영체제에 따라 조금씩 다릅니다.
+How you do this and where the traces are output vary by OS:
 
-- 윈도우
+- Windows
 
-  - 명령 프롬프트를 열고 디렉토리를 **qgroundcontrol.exe** 위치로 변경후 실행합니다.
-    bash
+  - You must open a command prompt, change directory to the **qgroundcontrol.exe** location, and run it from there:
+
+    ```sh
     cd "\Program Files (x86)\qgroundcontrol"
     qgroundcontrol --logging:full
-  - *QGroundControl*이 시작되면 로그 출력이 있는 별도의 콘솔 창을 사용합니다.
+    ```
+
+  - When _QGroundControl_ starts you should see a separate console window open which will have the log output
 
 - OSX
 
-  - 터미널에서 *QGroundControl*을 실행합니다. 터미널 앱은 응용 프로그램/유틸리티에 있습니다. 터미널이 열리면 다음을 입력합니다.
-    bash
+  - You must run _QGroundControl_ from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it:
+
+    ```sh
     cd /Applications/qgroundcontrol.app/Contents/MacOS/
     ./qgroundcontrol --logging:full
-  - 로그 추적은 터미널 창으로 출력됩니다.
+    ```
 
-- 리눅스
+  - Log traces will output to the Terminal window.
 
-  -     bash
-        ./qgroundcontrol-start.sh --logging:full
-  - 로그 추적은 실행 중인 셸에 출력됩니다.
+- Linux
+
+  ```sh
+  ./qgroundcontrol-start.sh --logging:full
+  ```
+
+  - Log traces will output to the shell you are running from.
