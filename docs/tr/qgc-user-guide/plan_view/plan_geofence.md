@@ -1,50 +1,60 @@
-# Plan Ekranı - Coğrafi Sınır
+# Plan View - GeoFence
 
-Coğrafi Sınırlar, aracınızın içinde uçmasına izin verilen ya da _izin verilmeyen_ sanal bölgeler oluşturmanıza olanak sağlar. Ayrıca eğer izin verilen alanın dışına çıkıldığında yaplıacak eylemi de ayarlayabilirsiniz.
+GeoFences allow you to create virtual regions within which the vehicle can fly, or in which it is _not allowed_ to fly.
+You can also configure the action taken if you fly outside permitted areas.
 
-![Coğrafi Sınır'a geneş bakış](../../../assets/plan/geofence/geofence_overview.jpg)
+![Geofence overview](../../../assets/plan/geofence/geofence_overview.jpg)
 
-::: info
-**ArduPilot users:** Coğrafi Sınır sadece Rover 3.6 ve Copter3.7 ve üzeri sürümlerde desteklenir. Ek olarak günlük sürümlerin ya da stabil 3.6 sürümünün (erişilebilir olduğunda) kullanılmasını gerektirir. Eğer bağlanan cihaz tarafından Coğrafi Sınır seçeneği desteklenmiyorsa _QGroundControl_ seçeneği göstermeyecektir.
+:::info
+**ArduPilot users:** GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available).
+_QGroundControl_ will not display the GeoFence options if they are not supported by the connected vehicle.
 :::
 
-## Coğrafi Sınır Oluşturma
+## Create a Geofence
 
-Coğrafi Sınır Oluşturmak için:
+To create a GeoFence:
 
-1. Plan Ekranı'na gidin
-2. Görev Komutları Listesi'nin üstünden _Geofence_'i seçin
+1. Navigate to the Plan View
 
-   ![Coğrafi Sınır butonunu seç](../../../assets/plan/geofence/geofence_select.jpg)
+2. Select the _Geofence_ radio button above the Mission Command List
 
-3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively. Haritaya yeni bir bölge ve butonların altına sınırlarla ilgili yeni bir liste eklenecektir.
-   ::: tip
-   Butonlara birden çok kez basarak birden çok bölge oluşturabilirsiniz, böylece karmaşık coğrafi sınırlar oluşturulabilir.
-   :::
+   ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
 
-- Dairesel Bölge:
+3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
+   A new region will be added to the map and to the associated list of fences below the buttons.
 
-  ![Dairesel Coğrafi Sınır](../../../assets/plan/geofence/geofence_circular.jpg)
+:::tip
+You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
+:::
 
-  - Merkezi noktayı kaydırarak bölgeyi haritada hareket ettirin
+- Circular region:
+
+  ![Circular Geofence](../../../assets/plan/geofence/geofence_circular.jpg)
+
+  - Move the region by dragging the central dot on the map
   - Resize the circle by dragging the dot on the edge of the circle (or you can change the radius value in the fence panel).
 
-- Çokgen Bölge:
-  ![Çokgen Coğrafi Sınır](../../../assets/plan/geofence/geofence_polygon.jpg)
-  - İçi dolu noktaları sürükleyerek köşeleri hareket ettirin
-  - İçi dolu noktaların arasındaki içi boş noktalara basarak yeni köşeler oluşturun.
-    1. Varsayılan olarak, _inclusion_ bölgeleri olarak yeni bölgeler oluşturulur (araçlar bölge içinde kalmalıdır). Sınır panelindeki _Inclusion_ onay kutusunun tikini kaldırarak, exclusion bölgelerine (aracın içinde uçamayacağı) dönüştürebilirsiniz.
+- Polygon region:
 
-## GeoFence Düzenleme/Silme
+  ![Polygon Geofence](../../../assets/plan/geofence/geofence_polygon.jpg)
 
-Coğrafi Sınır panelinde _Edit_ butonunu seçerek düzenlemek için bir coğrafi sınır bölgesi seçebilirsiniz. Daha sonra, önceki bölümde anlatıldığı gibi haritadaki bölgeyi düzenleyebilirsiniz.
+  - Move the vertices by dragging the filled dots
+  - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.
+
+1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
+   Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
+
+## Edit/Delete a GeoFence
+
+You can select a geofence region to edit by selecting its _Edit_ radio button in the GeoFence panel.
+You can then edit the region on the map as described in the previous section.
 
 Regions can be deleted by pressing the associated **Del** button.
 
-## Coğrafi Sınır Yükleme
+## Upload a GeoFence
 
-GeoFence bir görevle aynı şekilde yüklenir, [Plan tools](../plan_view/plan_view.md)'dan **File**'ı kullanarak.
+The GeoFence is uploaded in the same way as a mission, using **File** in the [Plan tools](../plan_view/plan_view.md).
 
-## Diğer Araçlar
+## Remaining tools
 
-Araçların geri kalanı, bir Görevi düzenlerken olduğu gibi çalışır.
+The rest of the tools work exactly as they do while editing a Mission.
