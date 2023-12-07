@@ -1,121 +1,131 @@
-# 라디오 설정
+# Radio Setup
 
-무선 조종기 설정은 주요 송신기 자세 제어 스틱(롤, 피치, 요, 스로틀)의 매핑 채널을 설정하고, 다른 모든 송신기 제어/RC 채널에 대한 최소, 최대, 트림 및 역방향 설정을 보정합니다.
+Radio Setup is used to configure the mapping of your main transmitter attitude control sticks (roll, pitch, yaw, throttle) to channels, and to calibrate the minimum, maximum, trim and reverse settings for all other transmitter controls/RC channels.
 
-주요 보정 프로세스는 PX4 및 ArduPilot에서 동일합니다(여러 추가 비행 컨트롤러 관련 설정/도구는 [아래에 자세히 설명되어 있음](#additional-radio-setup)).
+The main calibration process is identical for PX4 and ArduPilot (a number of additional flight-controller specific settings/tools are [detailed below](#additional-radio-setup)).
 
-::: info
-무선 조종기를 보정하려면, 수신기와 송신기를 먼저 바인딩하여야 합니다. 송신기와 수신기를 바인딩 프로세스는 하드웨어에 따라 조금씩 차이가 날 수 있습니다 (자세한 지침은 설명서 참조).
+:::info
+Before you can calibrate the radio system the receiver and transmitter must be connected/bound. The process for binding a transmitter and receiver pair is hardware specific (see your manual for instructions).
 :::
 
-## 보정 절차
+## Performing the Calibration
 
-보정 프로세스는 간단합니다. 화면 오른쪽 상단의 트랜스미터 다이어그램에 표시된 특정 패턴으로 스틱을 움직여야 합니다. 지침에 따라 보정을 완료합니다.
+The calibration process is straightforward - you will be asked to move the sticks in a specific pattern that is shown on the transmitter diagram on the top right of the screen. Simply follow the instructions to complete calibration.
 
-무선 조종기 보정 절차
+To calibrate the radio:
 
-1. 상단 도구 모음에서 **톱니 바퀴** 아이콘(기체 설정)을 선택한 다음 가장자리 표시줄에서 **무선 조종기**를 선택하십시오.
-2. RC 송신기를 켭니다.
-3. **확인**을 눌러 보정작업을 시작합니다.
+1. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Radio** in the sidebar.
 
-   ![무선 조종기 설정 - 시작하기 전에](../../../assets/setup/radio_start_setup.jpg)
+2. Turn on your RC transmitter.
+
+3. Press **OK** to start the calibration.
+
+   ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
 
    ::: info
-   위 이미지는 PX4 Pro용입니다. 보정/상단 섹션은 두 펌웨어 모두 동일하지만 _추가 라디오 설정_ 섹션은 다릅니다.
+   The image above is for PX4 Pro. Calibration/top section is the same for both firmware, but the _Additional Radio setup_ section will differ.
    :::
 
-4. 트랜스미터와 일치하는 _송신기 모드_ 라디오 버튼을 설정합니다 (이렇게하면 *QGroundControl*이 교정 중에 따라야 할 올바른 스틱 위치를 표시함).
+4. Set the _transmitter mode_ radio button that matches your transmitter configuration (this ensures that _QGroundControl_ displays the correct stick positions for you to follow during calibration).
 
-   ![ 무선 조종기 설정-스틱 이동](../../../assets/setup/radio_sticks_throttle.jpg)
+   ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)
 
-5. 스틱을 텍스트(및 송신기 이미지)에 표시된 위치로 이동합니다. 스틱이 제자리에 있으면 **다음**을 누르십시오. 모든 위치에 대하여 반복하십시오.
+5. Move the sticks to the positions indicated in the text (and on the transmitter image). Press **Next** when the sticks are in position. Repeat for all positions.
 
-6. 메시지가 표시되면 다른 모든 스위치와 다이얼을 전체 범위로 이동합니다 (*채널 모니터*에서 움직이는 것을 관찰 할 수 있습니다).
+6. When prompted, move all other switches and dials through their full range (you will be able to observe them moving on the _Channel Monitor_).
 
-7. **다음**를 클릭하여 설정을 저장합니다.
+7. Press **Next** to save the settings.
 
-무선 조종기 보정은 [자동 조종 장치 설정 동영상](https://youtu.be/91VGmdSlbo4?t=4m30s) (youtube)에 자세히 설명되어 있습니다.
+Radio calibration is demonstrated in the [PX4 setup video here](https://youtu.be/91VGmdSlbo4?t=4m30s) (youtube).
 
-## 추가 무선 조종기 설정
+## Additional Radio Setup
 
-_무선 설정_ 화면 하단에는 펌웨어 관련 _추가 무선 설정_ 섹션이 있습니다. 각 자동조종장치의 옵션은 다음과 같습니다.
+At the lower part of the _Radio Setup_ screen is firmware-specific _Additional Radio setup_ section. The options for each autopilot are shown below.
 
-| PX4                                                                                                                              | ArduPilot                                                                                                                                    |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="../../../assets/setup/radio_additional_radio_setup_px4.jpg" title="무선 조종기 설정 -  PX4 추가 설정" width="300px" /> | <img src="../../../assets/setup/radio_additional_radio_setup_ardupilot.jpg" title="무선 조종기 설정 -  ArduPilot 추가 설정" width="300px" /> |
+| PX4                                                                                                                                  | ArduPilot                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <img src="../../../assets/setup/radio_additional_radio_setup_px4.jpg" title="Radio setup - PX4 additional settings" width="300px" /> | <img src="../../../assets/setup/radio_additional_radio_setup_ardupilot.jpg" title="Radio setup - ArduPilot additional settings" width="300px" /> |
 
-### 스펙트럼 바인드(ArduPilot/PX4)
+### Spectrum Bind (ArduPilot/PX4)
 
-무선 시스템을 보정을 하기 위하여 우선 수신기와 송신기를 바인딩하여야 합니다. _Spektrum_ 수신기가있는 경우 아래와 같이 *QGroundControl*을 사용하여 *바인드 모드*로 설정할 수 있습니다. 차량의 수신기에 쉽게 물리적으로 접근할 수 있습니다.)
+Before you can calibrate the radio system the receiver and transmitter must be connected/bound. If you have a _Spektrum_ receiver you can put it in _bind mode_ using _QGroundControl_ as shown below (this can be particularly useful if you don't have easy physical access to the receiver on your vehicle).
 
-Spektrum 송신기/수신기 바인딩 절차
+To bind a Spektrum transmitter/receiver:
 
-1. **Spektrum Bind** 버튼을 선택합니다
-2. 수신기의 라디오 버튼을 선택하십시오.
-3. **Ok** 버튼을 누릅니다
+1. Select the **Spektrum Bind** button
 
-   ![Spektrum 바인딩](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
+2. Select the radio button for your receiver
 
-4. 바인드 버튼을 누른 상태에서 Spektrum 송신기의 전원을 켭니다.
+3. Press **OK**
 
-### 트림 복사(PX4)
+   ![Spektrum Bind](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
 
-이 설정은 자동 조종 장치 내에서 자동으로 적용될 수 있도록 무선 송신기에서 수동 트림 설정을 복사합니다. 이 작업이 끝나면 수동으로 설정한 트림을 제거하여야 합니다.
+4. Power on your Spektrum transmitter while holding down the bind button.
 
-트림 복사 절차
+### Copy Trims (PX4)
 
-1. **트림 복사**를 선택합니다.
-2. 스틱을 중앙에 놓고 스로틀을 끝까지 내립니다.
-3. **Ok** 버튼을 누릅니다.
+This setting is used to copy the manual trim settings from your radio transmitter so that they can be applied automatically within the autopilot. After this is done you will need to remove the manually set trims.
 
-   ![트림 복사](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
+To copy the trims:
 
-4. 송신기의 트림을 다시 0으로 설정하십시오.
+1. Select **Copy Trims**.
 
-### AUX 패스스루 채널(PX4)
+2. Center your sticks and move throttle all the way down.
 
-AUX 패스 스루 채널을 사용하면 송신기에서 임의의 옵션 하드웨어 (예 : 그리퍼)를 제어 할 수 있습니다.
+3. Press **Ok**.
 
-AUX 패스스루 채널을 사용하려면:
+   ![Copy Trims](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
 
-1. 최대 2 개의 송신기 컨트롤을 별도의 채널에 매핑합니다.
-2. 아래에 표시된 것처럼 이러한 채널을 지정하여 AUX1 및 AUX2 포트에 각각 매핑합니다. 값은 설정되는 즉시 기체에 저장됩니다.
+4. Reset the trims on your transmitter back to zero.
 
-   ![AUX1 및 AUX2 RC 패스 스루 채널](../../../assets/setup/radio_additional_setup_aux_passthrough_channels_px4.jpg)
+### AUX Passthrough Channels (PX4)
 
-비행 컨트롤러는 AUX1/AUX2의 지정된 채널에서 수정되지 않은 값을 통해 하드웨어를 구동하는 연결된 서보/릴레이로 전달합니다.
+AUX passthrough channels allow you to control arbitrary optional hardware from your transmitter (for example, a gripper).
 
-### 매개변수 튜닝 채널(PX4)
+To use the AUX passthrough channels:
 
-튜닝 채널을 사용하면 송신기 튜닝 노브를 매개변수에 매핑할 수 있습니다 (트랜스미터에서 매개변수를 동적으로 수정할 수 있음).
+1. Map up to 2 transmitter controls to separate channels.
+2. Specify these channels to map to the AUX1 and AUX2 ports respectively, as shown below. Values are saved to the vehicle as soon as they are set.
 
-::: tip
-이 기능은 수동으로 기내 튜닝을 활성화하기 위하여 제공됩니다.
+   ![AUX1 and AUX2 RC passthrough channels](../../../assets/setup/radio_additional_setup_aux_passthrough_channels_px4.jpg)
+
+The flight controller will pass through the unmodified values from the specified channels out of AUX1/AUX2 to the connected servos/relays that drive your hardware.
+
+### Param Tuning Channels (PX4)
+
+Tuning channels allow you to map a transmitter tuning knob to a parameter (so that you can dynamically modify a parameter from your transmitter).
+
+:::tip
+This feature is provided to enable manual in-flight tuning.
 :::
 
-매개 변수 튜닝에 사용되는 채널은 _라디오_ 설정 (여기!)에서 할당되며 각 튜닝 채널에서 관련 매개변수로의 매핑은 *매개변수 편집기*에서 정의됩니다.
+The channels used for parameter tuning are assigned in the _Radio_ setup (here!), while the mapping from each tuning channel to its associated parameter is defined in the _Parameter editor_.
 
-채널 튜닝 절차:
+To set up tuning channels:
 
-1. 최대 3 개의 송신기 컨트롤 (다이얼 또는 슬라이더)을 개별 채널에 매핑합니다.
-2. 선택 목록을 사용하여 라디오 채널에 대한 _PARAM Tuning Id_ 매핑을 선택합니다. 값은 설정되는 즉시 기체에 저장됩니다.
+1. Map up to 3 transmitter controls (dials or sliders) to separate channels.
+2. Select the mapping of _PARAM Tuning Id_ to radio channels, using the selection lists. Values are saved to the vehicle as soon as they are set.
 
-   ![라디오 채널을 튜닝 채널에 매핑](../../../assets/setup/radio_additional_radio_setup_param_tuning_px4.jpg)
+   ![Map radio channels to tuning channels](../../../assets/setup/radio_additional_radio_setup_param_tuning_px4.jpg)
 
-PARAM 튜닝 채널을 매개변수에 매핑하려면:
+To map a PARAM tuning channel to a parameter:
 
-1. **매개 변수** 사이드 바를 오픈합니다.
-2. 송신기에 매핑 할 매개 변수를 선택합니다 (이렇게하면 *매개 변수 편집기*가 열립니다).
-3. **고급 설정** 확인란을 선택합니다.
-4. **RC를 Param으로 설정 ...** 버튼을 클릭합니다 (아래에 표시된 전경 대화 상자가 팝업됩니다).
+1. Open the **Parameters** sidebar.
 
-   ![매개 변수에 튜닝 채널 매핑](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
+2. Select the parameter to map to your transmitter (this will open the _Parameter Editor_).
 
-5. _Parameter Tuning ID_ 선택 목록에서 매핑 할 튜닝 채널 (1, 2 또는 3)을 선택합니다.
+3. Check the **Advanced Settings** checkbox.
 
-6. 대화 상자를 닫으려면 **OK** 버튼을 클릭합니다.
-7. **저장**을 눌러 모든 변경 사항을 저장하고 *매개 변수 편집기*를 닫습니다.
+4. Click the **Set RC to Param...** button (this will pop-up the foreground dialog displayed below)
 
-::: tip
-_Parameters_ 화면의 오른쪽 상단에있는 메뉴 **Tools> Clear RC to Param**을 선택하여 모든 매개변수/튜닝 채널 매핑을 삭제할 수 있습니다.
+   ![Map tuning channels to parameters](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
+
+5. Select the tuning channel to map (1, 2 or 3) from the _Parameter Tuning ID_ selection list.
+
+6. Press **OK** to close the dialog.
+
+7. Press **Save** to save all changes and close the _Parameter Editor_.
+
+:::tip
+You can clear all parameter/tuning channel mappings by selecting menu **Tools > Clear RC to Param** at the top right of the _Parameters_ screen.
 :::
