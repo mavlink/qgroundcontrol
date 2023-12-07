@@ -1,13 +1,13 @@
-# 안전 설정
+# Safety Setup
 
-_안전 설정_ 페이지에서 가장 중요한 안전 장치를 설정합니다(다른 안전 장치 설정은 각 차량 유형에 대한 안전 장치 설명서에 설명된 [매개변수](../setup_view/parameters.md)를 통하여 설정할 수 있음).
+The _Safety Setup_ page allows you to configure the most important failsafe settings (other failsafe settings can be set via the [parameters](../setup_view/parameters.md) described in the failsafe documentation for each vehicle type).
 
-ArduPilot 안전 설정은 [안전(ArduPilot)](../setup_view/safety_ardupilot.md)을 참고하십시오.
+For ArduPilot safety page information see: [Safety (ArduPilot)](../setup_view/safety_ardupilot.md)
 
-PX4 안전설정은 아래와 같습니다.
+The PX4 page is shown below.
 
-![안전 설정 - PX4](../../../assets/setup/px4_safety.jpg)
+![Safety Setup - PX4](../../../assets/setup/px4_safety.jpg)
 
-::: info
-추가 PX4 안전 설정은 [안전 설정](https://docs.px4.io/en/config/safety.html)을 참고하십시오.
+:::info
+For additional PX4 safety settings and information see: [Safety Configuration](https://docs.px4.io/en/config/safety.html).
 :::
