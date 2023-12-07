@@ -1,56 +1,57 @@
-# 지원
+# Support
 
-이 사용자 가이드는 *QGroundControl*에 대한 주요 지원 제공자를 위한 것입니다. 올바르지 않거나 누락된 정보를 발견하면 [문제](https://github.com/mavlink/qgc-user-guide/issues)를 신고하여 주십시오.
+This user guide is meant to be the main provider of support for _QGroundControl_.
+If you find incorrect or missing information please report an [Issue](https://github.com/mavlink/qgc-user-guide/issues).
 
-_QGroundControl_ 사용 방법에 대한 *질문*은 관련 플라이트 스택에 대한 토론 포럼에서 제기하여야 합니다.
+_Questions_ about how to use _QGroundControl_ should be raised in the discussion forum for the associated flight stack:
 
-- [PX4 Pro Flight Stack](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage)(discuss.px4.io).
+- [PX4 Pro Flight Stack](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) (discuss.px4.io).
 - [ArduPilot Flight Stack](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol) (discuss.ardupilot.org).
 
-이 포럼은 또한 *QGroundControl*에 대한 버그, 문제 및 원하는 기능에 대한 토론을 시작하기에 가장 적합합니다. 거기에서 추가 해결을 위하여 GitHub 문제에 정보를 입력할 수 있습니다.
+These forums are also the best place to start discussions on bugs/problems you are having with _QGroundControl_ and or feature requests you would like to make. From there you may be directed to entering information in a GitHub Issue for further resolution.
 
-### 개발자 채팅 {#developer_chat}
+### Developer Chat {#developer\_chat}
 
-_QGroundControl_ 개발자(및 많은 일반/깊은 관련 사용자)는 [#QGroundControl Slack 채널](https://px4.slack.com/)에서 찾을 수 있습니다. [여기에서 채널에 액세스하려면 등록](http://slack.px4.io/)하십시오.
+_QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl channel on the Dronecode Discord](https://discord.gg/dronecode).
 
-## GitHub 이슈
+## GitHub Issues
 
-문제는 *QGroundControl*에 대한 버그와 이후 버전에 대한 기능 요청을 추적하는 데 사용됩니다. 현재 문제 목록은 [GitHub 여기](https://github.com/mavlink/qgroundcontrol/issues)에서 찾을 수 있습니다.
+Issues are used to track bugs against _QGroundControl_ as well as feature requests for later versions. The current list of issues can be found on [GitHub here](https://github.com/mavlink/qgroundcontrol/issues).
 
-::: info
-버그 또는 기능 요청에 대한 GitHub 문제를 생성하기 **전에** 지원 포럼을 사용하여 개발자에게 문의하십시오.
+:::info
+Please contact our developers using the support forums **before** creating GitHub issues for either bugs or feature requests.
 :::
 
-### 버그 신고
+### Reporting Bugs
 
-문제를 생성하라는 지시를 받은 경우 "버그 보고서" 템플릿을 사용하고 템플릿에 지정된 모든 정보를 제공합니다.
+If you are directed to create an issue, please use the "Bug report" template and provide all information specified in the template.
 
-##### Windows 빌드에서 충돌 보고
+##### Reporting Crashes from Windows Builds
 
-QGroundControl이 충돌하면 충돌 덤프 파일이 Users LocalAppData 디렉터리에 저장됩니다. 해당 디렉토리로 이동하려면 시작/실행 명령을 사용하십시오. WinKey+R 단축키를 이용하여 이 창을 열수 있습니다. 아래와 같이 입력합니다. `%localappdata%` 열기에 대해 확인을 클릭합니다. 크래시 덤프는 `QGCCrashDumps` 해당 디렉토리의 폴더에 저장됩니다. 새 **.dmp** 파일을 찾을 수 있습니다. 문제 보고시 GitHub 문제에 해당 파일에 대한 링크를 추가하십시오.
+When QGC crashes a crash dump file will be place in the Users LocalAppData directory. To navigate to that directory use the Start/Run command. You can bring this up window WinKey+R. Type into that `%localappdata%` for Open and click Ok. Crash dumps will be in a `QGCCrashDumps` folder in that directory. You should find a new **.dmp** file there. Add a link to that file in a GitHub Issue when reporting you problem.
 
-##### Windows 빌드에서 보고 중단
+##### Reporting Hangs from Windows Builds
 
-Windows에서 *QGroundControl 프로그램이 응답하지 않습니다*라는 메시지가 표시되면 다음 단계를 사용하여 중단을 보고합니다.
+If Windows is telling you the _QGroundControl program is unresponsive_ use the following steps to report the hang:
 
-1. _작업 관리자_ 오픈(작업 표시줄을 마우스 오른쪽 버튼으로 클릭하고 **작업 관리자** 선택) 합니다.
-2. 프로세스 탭과 로컬 **qgroundcontrol.exe**로 전환합니다.
-3. **groundcontrol.exe**를 마우스 오른쪽 버튼으로 클릭하고 **덤프 파일 만들기**를 선택합니다.
-4. 공용 위치에 덤프 파일을 배치합니다.
-5. GitHub 문제에서 **.dmp** 파일 및 위의 세부 정보에 대한 링크를 추가합니다.
+1. Open _Task Manager_ (right-click TaskBar, select **Task Manager**)
+2. Switch to the Processes tab and local **qgroundcontrol.exe**
+3. Right-click on **groundcontrol.exe** and select **Create Dump File**
+4. Place the dump file in a public location
+5. Add a link to the **.dmp** file and above details in the GitHub issue.
 
-### 기능 요청
+### Feature Requests
 
-지원 포럼에서 토론한 후 기능 요청을 생성하라는 지시를 받은 경우에는 필수 세부 정보에 대한 유용한 정보가 있는 "기능 요청" 템플릿을 사용하십시오.
+If you are directed to create a feature request after discussion on support forums please use the "Feature request" template which has some helpful information on required details.
 
-## 문제 해결
+## Troubleshooting
 
-문제 해결 정보는 [여기](../troubleshooting/index.md)를 참고하십시오.
+Troubleshooting information is linked from [here](../troubleshooting/index.md).
 
-### 콘솔 로깅
+### Console Logging
 
-*콘솔 로그*는 _QGroundControl_ 문제 진단에 유용합니다. 자세한 내용은 [콘솔 로깅](../settings_view/console_logging.md)를 참고하십시오.
+_Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For more information see: [Console Logging](../settings_view/console_logging.md).
 
-## 이 문서 개선 작업을 도와주십시오.
+## Help Improve these Docs!
 
-_QGroundControl_ 자체와 마찬가지로 사용자 가이드는 사용자가 만들고 GitBook을 지원하는 오픈 소스입니다. 수정 및/또는 업데이트에 대한 가이드에 대한 [풀 리퀘스트](https://github.com/mavlink/qgc-user-guide/pulls)를 환영합니다.
+Just like _QGroundControl_ itself, the user guide is an open source, user created and supported GitBook. We welcome [Pull Requests](https://github.com/mavlink/qgc-user-guide/pulls) against the guide for fixes and/or updates.
