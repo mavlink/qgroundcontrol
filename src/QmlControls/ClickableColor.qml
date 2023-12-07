@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
+import Qt.labs.platform
 
 Rectangle {
     id:             _root
