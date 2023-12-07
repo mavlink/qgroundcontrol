@@ -1,5 +1,5 @@
-# 미션 업로드 및 다운로드 실패
+# Mission Upload/Download failures
 
-계획(미션, 지오펜스, 랠리 포인트)을 기체에 업로드 및 다운로드하기 위한 프로토콜에는 재시도 로직이 포함되어 있지만, 여전히 높은 손실률로 실행되는 네트워크 장애 조치할 수 있습니다.
+Although the protocol for uploading and download Plans (Mission, GeoFence, Rally Points) to a vehicle includes retry logic it can still fail over a communication link which is running at a high loss rate.
 
-자세한 내용은 [계획 보기 > 미션(계획) 업로드/다운로드 실패](../plan_view/plan_view.md#plan_transfer_fail)를 참고하십시오.
+For more information see: [Plan View > Mission (Plan) Upload/Download Failures](../plan_view/plan_view.md#plan_transfer_fail)
