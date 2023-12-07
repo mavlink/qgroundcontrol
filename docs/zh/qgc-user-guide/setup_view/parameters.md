@@ -4,7 +4,7 @@ The _Parameters_ screen allows you to find and modify any of the parameters asso
 
 ![Parameters Screen](../../../assets/setup/parameters_px4.jpg)
 
-::: info
+:::info
 PX4 Pro and ArduPilot use different parameter sets, but they are both managed as described in this section.
 :::
 
@@ -22,7 +22,7 @@ To change the value of a parameter click on the parameter row in a group or sear
 
 ![Changing a parameter value](../../../assets/setup/parameters_changing.png)
 
-::: info
+:::info
 When you click **Save** the parameter is automatically and silently uploaded to the connected vehicle. Depending on the parameter, you may then need to reboot the flight controller for the change to take effect.
 :::
 
@@ -32,12 +32,12 @@ You can select additional options from the **Tools** menu on the top right hand 
 
 ![Tools menu](../../../assets/setup/parameters_tools_menu.png)
 
-**Refresh** <br />Refresh the parameter values by re-requesting all of them from the vehicle.
+**Refresh** <br>Refresh the parameter values by re-requesting all of them from the vehicle.
 
-**Reset all to defaults** <br />Reset all parameters to their original default values.
+**Reset all to defaults** <br>Reset all parameters to their original default values.
 
-**Load from file / Save to file** <br />Load parameters from an existing file or save your current parameter settings to a file.
+**Load from file / Save to file** <br>Load parameters from an existing file or save your current parameter settings to a file.
 
-**Clear RC to Param** <br />This clears all associations between RC transmitter controls and parameters. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
+**Clear RC to Param** <br>This clears all associations between RC transmitter controls and parameters. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
 
-**Reboot Vehicle** <br />Reboot the vehicle (required after changing some parameters).
+**Reboot Vehicle** <br>Reboot the vehicle (required after changing some parameters).
