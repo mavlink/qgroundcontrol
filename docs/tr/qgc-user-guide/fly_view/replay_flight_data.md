@@ -1,32 +1,40 @@
-# Uçuş Verilerini Yeniden Oynat
+# Replay Flight Data
 
-::: warning
-Bu özellik, öncelikle ** otopilot geliştiricileri ** / ** araç tasarlayıcıları ** için tasarlanmıştır. Bu özellik, sadece bilgisayar sürümlerinde desteklenmektedir (Windows, Linux, Mac OS).
+:::warning
+This feature is intended primarily for **autopilot developers**/**vehicle creators**.
+It is only supported on desktop builds (Windows, Linux, Mac OS).
 :::
 
-The _Replay Flight Data_ feature allows users to replay a telemetry log, enabling review of past or problematic flights. Uçuş başlatılabilir, duraklatılabilir, durdurulabilir, yeniden başlatılabilir vb.
+The _Replay Flight Data_ feature allows users to replay a telemetry log, enabling review of past or problematic flights.
+The flight can be started, paused, stopped, restarted etc.
 
-::: info
-_QGroundControl_ uçuş tekrarını aktif bir bağlantı gibi görür. Oynatmayı duraklattığınızda / durdurduğunuzda, yer istasyonu "İletişim Kaybı" olarak rapor edecek ve bağlantının kesilmesini veya daha fazla komut bekleyecektir.
+:::info
+_QGroundControl_ treats flight replay like an active connection.
+When you pause/stop playing, the ground station will report "Communication Lost" and wait for disconnection or for more messages.
 :::
 
-Bir uçuşu tekrar etmek için:
+To replay a flight:
 
-1. Tüm aktif bağlantıları kesin.
-1. **Application Settings > General > Fly View**'i seçin
-1. Ekranın altında uçuşu tekrar oynat butonunu görebilmek için **Show Telemetry Log Replay Status Bar**'ı işaretleyin.
+1. Disconnect any active connections.
 
-   ![Uçuş Tekrarını Aç / Kapat](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
+2. Select **Application Settings > General > Fly View**
 
-1. _file selection_ seçeneğine erişmek için **Load Telemetry Log**'a tıklayın.
-   - Tekrar oynatılması için uygun telemetri kayıtlarından bir kayıt dosyası seçin.
-   - - QGroundControl \*, kayıtı hemen oynatmaya başlar.
-1. Bir kayıt yüklendiğinde şunları kullanabilirsiniz:
-   - Oynatmayı durdurmak ve yeniden başlatmak için **Pause/Play** butonuna basın.
-   - Kayıtta yeni bir konuma ilerlemek için _Slider_.
+3. Check **Show Telemetry Log Replay Status Bar** to toggle the flight replay bar at the bottom of the screen.
+
+   ![Toggle Flight Replay](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
+
+4. Select the **Load Telemetry Log** button in the bar to display a _file selection_ dialog.
+   - Choose a log file to replay from the available telemetry logs.
+   - _QGroundControl_ will immediately start playing the log.
+
+5. When a log is loaded you can use the:
+   - **Pause/Play** button to pause and restart playing.
+   - _Slider_ to drag to a new position in the log.
    - _Rate_ selector to choose the playback speed.
-1. To stop replay (i.e. to load a new file to replay), first pause the flight, and then select **Disconnect** (when it appears). After disconnecting, the **Load Telemetry Log** button will be displayed.
 
-::: tip
-[ MAVLink Inspector ](../analyze_view/mavlink_inspector.md) 'ı kullanarak devam eden tekrarı daha ayrıntılı olarak inceleyebilirsiniz.
+6. To stop replay (i.e. to load a new file to replay), first pause the flight, and then select **Disconnect** (when it appears).
+   After disconnecting, the **Load Telemetry Log** button will be displayed.
+
+:::tip
+You can inspect the running replay in more detail using the [MAVLink Inspector](../analyze_view/mavlink_inspector.md).
 :::
