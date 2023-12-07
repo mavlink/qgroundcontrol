@@ -10,7 +10,8 @@ This topic contains a high level and _non-exhaustive_ list of new features added
 
 ![NMEA GPS Device support](../../../assets/settings/general/NMEADevice.jpg)
 
-You can specify a connection to one of these devices on the General page. The GPS information will then be used for ground station location and in turn follow me support.
+You can specify a connection to one of these devices on the General page.
+The GPS information will then be used for ground station location and in turn follow me support.
 
 For more information see [Settings > General (AutoConnect to the following devices)](../settings_view/general.md#auto_connect).
 
@@ -18,15 +19,19 @@ For more information see [Settings > General (AutoConnect to the following devic
 
 ![Video Recording](../../../assets/settings/video_recording.jpg)
 
-Videos will be saved to the Video directory of your QGC file save path. You can also specify the maximum amount of space you want video files to consume. After that size if exceeded the oldest video files will be removed. Video Recording is turned on/off from the Video widget in the Fly View.
+Videos will be saved to the Video directory of your QGC file save path.
+You can also specify the maximum amount of space you want video files to consume.
+After that size if exceeded the oldest video files will be removed.
+Video Recording is turned on/off from the Video widget in the Fly View.
 
 For more information see [Settings > General (Video / Video Recording)](../settings_view/general.md#video).
 
-### Plan View {#plan_view}
+### Plan View {#plan\_view}
 
 #### Structure Scan
 
-A Structure Scan allows you to create a grid flight pattern that captures images over vertical surfaces (polygonal or circular). These are typically used for the visual inspection or creation of 3d models of structures.
+A Structure Scan allows you to create a grid flight pattern that captures images over vertical surfaces (polygonal or circular).
+These are typically used for the visual inspection or creation of 3d models of structures.
 
 Details [here](../plan_view/pattern_structure_scan_v2.md).
 
