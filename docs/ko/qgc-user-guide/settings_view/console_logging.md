@@ -27,24 +27,34 @@ The most commmonly used logging options are listed below.
 이 작업을 수행하는 방법과 추적 출력은 운영체제에 따라 조금씩 다릅니다.
 
 - 윈도우
+
   - 명령 프롬프트를 열고 디렉토리를 **qgroundcontrol.exe** 위치로 변경후 실행합니다.
-    ```bash
+
+    ```sh
     bash
         cd "\Program Files (x86)\qgroundcontrol"
         qgroundcontrol --logging:full
     ```
+
   - _QGroundControl_이 시작되면 로그 출력이 있는 별도의 콘솔 창을 사용합니다.
+
 - OSX
+
   - 터미널에서 _QGroundControl_을 실행합니다. 터미널 앱은 응용 프로그램/유틸리티에 있습니다. 터미널이 열리면 다음을 입력합니다.
-    ```bash
+
+    ```sh
     bash
         cd /Applications/qgroundcontrol.app/Contents/MacOS/
         ./qgroundcontrol --logging:full
     ```
+
   - 로그 추적은 터미널 창으로 출력됩니다.
-- ## 리눅스
-  ```bash
+
+- Linux
+
+  ```sh
   bash
   ./qgroundcontrol-start.sh --logging:full
   ```
+
   - 로그 추적은 실행 중인 셸에 출력됩니다.

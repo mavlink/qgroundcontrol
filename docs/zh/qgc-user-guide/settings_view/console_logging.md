@@ -27,27 +27,37 @@ An alternate mechanism for logging is using the `--logging` command line option.
 How you do this and where the traces are output vary by OS:
 
 - Windows
+
   - You must open a command prompt, change directory to the **qgroundcontrol.exe** location, and run it from there:
     bash
     cd "\Program Files (x86)\qgroundcontrol"
     qgroundcontrol --logging:full
-    ```bash
+
+    ```sh
     cd "\Program Files (x86)\qgroundcontrol"
     qgroundcontrol --logging:full
     ```
+
   - When _QGroundControl_ starts you should see a separate console window open which will have the log output
+
 - OSX
+
   - You must run _QGroundControl_ from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it:
-    ```bash
+
+    ```sh
     Once Terminal is open paste the following into it:
         bash
         cd /Applications/qgroundcontrol.app/Contents/MacOS/
         ./qgroundcontrol --logging:full
     ```
+
   - Log traces will output to the Terminal window.
-- ## Linux
-  ```bash
+
+- Linux
+
+  ```sh
   bash
   ./qgroundcontrol-start.sh --logging:full
   ```
+
   - Log traces will output to the shell you are running from.
