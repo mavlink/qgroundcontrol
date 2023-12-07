@@ -39,7 +39,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # Stable or daily build option
-option(STABLE_BUILD "Stable build Rdsi-Nav" OFF)
+option(STABLE_BUILD "Stable build option" OFF)
 
 if (STABLE_BUILD)
     message(STATUS "Stable Build")
