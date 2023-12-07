@@ -1,34 +1,34 @@
-# Plan Ekranı - Mod Ön Ayarları
+# Plan View - Pattern Presets
 
-Yaygın olarak kullanılan ayarları adlandırılmış bir ön ayar olarak kaydetmenize olanak sağlar.
+Allows you to save commonly used settings as a named preset.
 
-::: info
-Şuan için sadece Gözlem modu tarafından desteklenmektedir. Diğer modların desteği için geliştirme devam etmektedir.
+:::info
+Currently only supported by Survey. Support for other Patterns is in development.
 :::
 
-## Ön Ayarları Yönetme
+## Managing Presets
 
-![Ön Ayar Kombosu](../../../assets/plan/pattern/pattern_preset_combo.jpg)
+![Preset Combo](../../../assets/plan/pattern/pattern_preset_combo.jpg)
 
-Mod öğelerinin üst kısmında ön ayarları yönetmenize izin veren bir seçenek vardır:
+Pattern items have a new selection at the top which allows you to manage presets:
 
-- **Custom (specify all settings)** Bu bir ön ayar _kullanmamanıza_ ve tüm ayarları manuel ayarlamanıza olanak verir.
-- **Save Settings As Preset** Mevcut ayarları adlandırılmış bir ön ayar olarak kaydeder.
-- **Delete Current Preset** Seçili olan ön ayarı siler.
-- **Presets:** Bu öğenin altında bu mod için mevcut ön ayarlar listelenecektir.
+- **Custom (specify all settings)** This allows you to _not_ use a preset and specify all settings manually.
+- **Save Settings As Preset** Saves the current settings as a named preset.
+- **Delete Current Preset** Deletes the currently selected preset.
+- **Presets:** Below this item will be listed the available presets for this pattern.
 
-## Ön Ayar Oluşturma/Güncelleme
+## Creating/Updating A Preset
 
-![Ön Ayarı Kaydet](../../../assets/plan/pattern/pattern_preset_save.jpg)
+![Preset Save](../../../assets/plan/pattern/pattern_preset_save.jpg)
 
-**Save Settings As Preset**'i seçtiğinizde sizden ön ayar için isim istenecektir. Varolan bir ön ayara yeni ayarlar kaydetmek için ön ayar seçiliyken **Save Settings As Preset**'i seçin.
+When you select **Save Settings As Preset** you will be prompted for the preset name. To save new settings for an existing preset select **Save Settings As Preset** while a preset is currently selected.
 
-Ayrıca o anda seçili olan kamerayı da ön ayara kaydetmek isteyip istemediğinizi de belirtebilirsiniz. Kamerayı ön ayar ile kaydetmemeyi seçerseniz, ön ayar yüklenirken mevcut kamera kullanılacaktır. Ayrıca ön ayarı kullanırken farklı bir kameraya da geçebilirsiniz. Aracınızı aynı ön ayarla farklı zamanlarda farklı kameralarla uçurmadığınız sürece, kamerayı ön ayara kaydetmeyi seçmelisiniz.
+You can also specify whether you want to save the currently selected camera in the preset. If you choose not to save the camera with the preset then the current camera will be used when loading the preset. You will also be able to change to a different camera when using the preset. Unless you fly your vehicle with different cameras at different times with the same preset you should select to save the camera in the preset.
 
-## Ön Ayar Ayarlarını Görüntüleme
+## Viewing Preset Settings
 
-Bir ön ayarın ayarlarının neler olduğunu görmek istiyorsanız **Custom (specify all settings)** seçeneğini seçin, tüm ayarları size gösterecektir. İşiniz bittiğinde adlandırılmış ön ayarı kullanmaya geri dönebilirsiniz.
+If you want to view what the exact settings are for a Preset switch back to **Custom (specify all settings)** which will show you all the settings. Then you can switch back to using the named preset when done.
 
-## Plan Dosyasında Ön Ayarlar
+## Presets In A Plan File
 
-Halihazırda seçili olan Ön Ayar Plan dosyasına da kaydedilir, böylece Planı geri yüklediğinizde ön ayar tekrar seçilebilecektir. Ön ayarların kullandığınız QGroundControl sürümüne özel olduğunu unutmayınız. If you share a Plan file with a preset with another user, incorrect behavior may occur if that other user also has a preset of the same name but different settings.
+The currently selected Preset is also saved in the Plan file such that when you load the Plan back the preset will once again be selected. Keep in mind that presets are specific to your version of QGroundControl. If you share a Plan file with a preset with another user, incorrect behavior may occur if that other user also has a preset of the same name but different settings.
