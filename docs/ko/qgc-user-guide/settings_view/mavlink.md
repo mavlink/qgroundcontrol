@@ -1,67 +1,81 @@
-# MAVLink 설정
+# MAVLink Settings
 
-MAVLink 설정(**설정 화면> MAVLink**)에서 MAVLink 통신과 관련된 옵션을 설정하고 정보를 조회합니다. 여기에는 *QGroundControl*에 대한 MAVLink 시스템 ID 설정 및 링크 품질 보기가 포함됩니다.
+The MAVLink settings (**SettingsView > MAVLink**) allow you to configure options and view information specific to MAVLink communications.
+This includes setting the MAVLink system ID for _QGroundControl_ and viewing link quality.
 
-또한 이 화면에서 *플라이트 리뷰에 로그 업로드 자동화*를 포함하여 [MAVLink 2 로그 스트리밍](#logging)(PX4만 해당)을 관리할 수 있습니다!
+The screen also allows you to manage [MAVLink 2 Log Streaming](#logging) (PX4 only), including _automating log upload to Flight Review_!
 
-![MAVLink 설정 화면](../../../assets/settings/mavlink/overview.png)
+![MAVLink settings screen](../../../assets/settings/mavlink/overview.png)
 
-## 지상국 {#ground_station}
+## Ground Station {#ground\_station}
 
-이 섹션은 *QGroundControl*의 MAVLink 속성과 동작을 설정합니다.
+This section sets the MAVLink properties and behaviour of _QGroundControl_.
 
-![지상국](../../../assets/settings/mavlink/ground_station.png)
+![Ground Station](../../../assets/settings/mavlink/ground_station.png)
 
-- **MAVLink 시스템 ID:** MAVLink 네트워크에서 *QGroundControl*의 시스템 ID(기본값: 255). 차량에는 일반적으로 1부터 ID가 할당됩니다. 네트워크에 여러 지상국 또는 MAVLink 애플리케이션이 있는 경우 다른 ID를 지정해야 할 수 있습니다.
-- **Emit heartbeat:** 일반 MAVLink HEARTBEAT 메시지의 방출을 비활성화합니다(기본값: True). 일반적으로 이 기능을 끄면 안 됩니다.
-- **동일한 프로토콜 버전의 MAV만 허용:** MAVLink 1 또는 MAVLink 2 차량에만 연결하려면 true로 설정합니다(기본값: True).
-- **MAVLink 전달 활성화:** 연결된 차량에서 다른 UDP 엔드포인트로 MAVLink 메시지를 전달하려면 *QGroundControl*을 활성화합니다(기본값: False). QGroundControl에서 지정된 호스트로 단방향으로 전달합니다. 지정된 호스트에서 수신된 모든 MAVLink 메시지는 무시됩니다.
+- **MAVLink System ID:** System ID of _QGroundControl_ on the MAVLink network (Default: 255).
+  Vehicles are typically allocated IDs from 1.
+  You may have to specify another ID if there are multiple ground stations or MAVLink applications on the network.
+- **Emit heartbeat:** Disable emission of regular MAVLink HEARTBEAT message (Default: True).
+  Generally speaking, you should not turn this off.
+- **Only accept MAVs with the same protocol version:** Set true to only connect to MAVLink 1 or to MAVLink 2 vehicles (Default: True).
+- **Enable MAVLink forwarding:** Enable _QGroundControl_ to forward MAVLink messages from connected vehicles to another UDP endpoint (Default: False).
+  Note that this forwarding is one-way: from QGC to the specified host.
+  Any MAVLink messages that are received from the specified host will be ignored.
 
-## 연결 상태 {#link_status}
+## Link Status {#link\_status}
 
-이것은 통신 링크를 통한 MAVLink 메시지 전송의 상태를 보여줍니다. **손실률**이 높으면 매개변수 다운로드 또는 미션 업로드 및 다운로드와 같은 프로토콜 오류가 발생할 수 있습니다.
+This shows the status of MAVLink message transfer over the communications link.
+A high **Loss rate** may lead to protocol errors for things like parameter download or mission upload/download.
 
-![연결 상태](../../../assets/settings/mavlink/link_status.jpg)
+![Link Status](../../../assets/settings/mavlink/link_status.jpg)
 
-## MAVLink 2 로깅(PX4만 해당) {#logging}
+## MAVLink 2 Logging (PX4 only) {#logging}
 
-_MAVLink 2 Logging_ 설정(PX4만 해당)은 PX4에서 *QGroundControl*으로의 실시간 로그 스트리밍과 [Flight Review](https://logs.px4.io)로의 로그 업로드를 설정합니다.
+The _MAVLink 2 Logging_ settings (PX4 only) configure real-time log streaming from PX4 to _QGroundControl_ and upload of logs to [Flight Review](https://logs.px4.io).
 
-::: warning
-MAVLink 2 Logging은 차량에 대한 지속적인 고속 MAVLink 연결이 필요하기 때문에 "기본" 설정에서 사용할 수 없습니다(WiFI를 통해 작동할 수 _ 있지만\*\* 원격 측정 링크에서는 작동하지 않습니다_.
+:::warning
+MAVLink 2 Logging cannot be used on "basic" setups because it requires a constant high-rate MAVLink connection to the vehicle (it _may_ work over WiFI but will _not_ work over a Telemetry link).
 :::
 
-::: tip
-이론상 로그 스트리밍을 사용하면 데이터를 실시간으로 분석할 수 있습니다. 작성 당시 실시간 분석은 아직 구현되지 않았습니다.
+:::tip
+In theory log streaming allows real time analysis of data.
+At time of writing real-time analysis has not yet been implemented.
 :::
 
-로그 형식은 SD 카드 로그와 동일하지만([Analyze View > Log Download](../analyze_view/log_download.md)를 사용하여 다운로드), 로그 시작/중지 시간이 \*QGroundControl<에 의해 제어되기 때문에 실제 로그된 데이터는 약간 다를 수 있습니다. 손실 채널을 통해 스트리밍할 때 일부 드롭아웃이 발생할 수 있기 때문입니다.
+The log format is the same as for SD Card logs (downloaded using [Analyze View > Log Download](../analyze_view/log_download.md)), but actual data logged may be slightly different because log start/stop time is controlled by _QGroundControl_ and because some dropouts may occur when streaming over a lossy channel.
 
-_MAVLink 2 로깅_ 섹션에서는 로깅을 수동으로 시작 및 중지하고 로그 자동 캡처를 활성화할 수 있습니다.
+The _MAVLink 2 Logging_ section allows you to manually start and stop logging, and to enable automatic capture of logs.
 
-![MAVLink 2 로깅](../../../assets/settings/mavlink/mavlink2_logging.jpg)
+![MAVLink 2 Logging](../../../assets/settings/mavlink/mavlink2_logging.jpg)
 
-_MAVLink 2 로그 업로드_ 섹션에서는 [비행 검토](https://logs.px4.io)에 대한 MAVLink 로그 업로드를 설정할 수 있습니다. 그렇지 않으면, 사이트에 직접 입력해야 하는 모든 필드를 지정할 수 있으며 로그를 자동으로 업로드할지 수동으로 업로드를 선택할 수 있습니다.
+The _MAVLink 2 Log Uploads_ section allows you configure uploading of MAVLink logs to [Flight Review](https://logs.px4.io).
+You can specify all the fields that you would otherwise have to directly enter in the site, and also choose whether logs are automatically or manually uploaded.
 
-![MAVLink 2 로그 업로드](../../../assets/settings/mavlink/mavlink2_log_uploads.jpg)
+![MAVLink 2 Log Uploads](../../../assets/settings/mavlink/mavlink2_log_uploads.jpg)
 
-항목들은 다음과 같습니다:
+The fields are:
 
-- **로그 업로드용 이메일 주소:** *항공편 검토*에서 이 주소로 업로드 링크를 이메일로 전송합니다. 그렇지 않으면, 업로드 후 비공개 로그에 액세스할 방법이 없기 때문에 이것은 중요합니다.
-- **기본 설명:** 로그에 사용되는 항공편의 설명/이름.
-- **기본 업로드 URL:** 로그/로그 메타데이터 업로드를 위한 URL입니다. 기본적으로 _항공편 검토_ URL로 설정됩니다.
-- **동영상 URL:** (선택 사항) 로그와 연결된 비행 동영상의 URL입니다. 이는 분석을 용이하게 하기 위해 항공편 검토 페이지에 포함될 수 있습니다.
-- **풍속:** (여러 항공편에서) 디버깅 및 필터링을 지원하는 데 사용됩니다. 허용되는 값: _Calm_ | _브리즈_ | _강풍_ | _폭풍_.
-- **비행 등급:** 디버깅 및 필터링을 지원하는 데 사용됩니다(여러 항공편에서). 허용되는 값: _크래시(파일럿 오류)_ | _크래시(소프트웨어 또는 하드웨어 문제)_ | _불만족_ | _좋음_ | _훌륭합니다_.
-- **추가 피드백:** (선택 사항). 비행 또는 행동에 대한 자세한 설명을 입력합니다.
-- **이 로그를 공개적으로 사용할 수 있도록 설정:** 설정하면 로그가 *항공편 검토*에서 표시되고 검색할 수 있습니다. 설정하지 않으면, 업로드 시 이메일로 전송된 링크를 통해서만 사용할 수 있습니다.
-- **자동 로그 업로드 사용:** 설정하면 완료 시 로그가 자동으로 업로드됩니다.
-- **업로드 후 로그 파일 삭제:** 설정하면 업로드 후 로그가 자동으로 삭제됩니다.
+- **Email address for Log Uploads:** _Flight Review_ will email you a link to the upload at this address.
+  This is important as otherwise you will have no way to access a non-public log after upload.
+- **Default Description:** Description/name of flight used for log.
+- **Default Upload URL:** URL for upload of the log/log metadata.
+  This is set by default to the _Flight Review_ URL.
+- **Video URL:** (Optional) URL for video of flight associated with log.
+  This may be included on the Flight Review page to ease analysis.
+- **Wind Speed:** Used to aid debugging and filtering (from multiple flights). Allowed values: _Calm_ | _Breeze_ | _Gale_ | _Storm_.
+- **Flight Rating:** Used to aid debugging and filtering (from multiple flights). Allowed values: _Crashed (Pilot Error)_ | _Crashed (Software or Hardware Issue)_ | _Unsatisfactory_ | _Good_ | _Great_.
+- **Additional Feedback:** (Optional). Enter a more detailed description of the flight or behaviour.
+- **Make this log publically available:** If set, the log will be visible and searchable on _Flight Review_.
+  If not set, it will only be available via the link emailed on upload.
+- **Enable automatic log uploads:** If set, the log will automatically be uploaded on completion.
+- **Delete log file after uploading:** If set, the log will automatically deleted after upload.
 
-_저장된 로그 파일_ 섹션은 로그 업로드를 수동으로 관리하는 데 사용됩니다. 확인란과 버튼을 사용하여 로그를 선택하고 삭제하거나 업로드합니다.
+The _Saved Log Files_ section is used to manually manage log uploads.
+Use the checkboxes and buttons to select logs, and either delete or upload them.
 
-::: tip
-위의 *MAVLink 2 로그 업로드*에서 매개변수를 변경하여 업로드된 로그에 대해 별도의 설명을 지정할 수 있습니다.
+:::tip
+You can change the parameters in _MAVLink 2 Log Uploads_ above to specify separate descriptions for uploaded logs.
 :::
 
-![저장된 로그 파일](../../../assets/settings/mavlink/saved_log_files.jpg)
+![Saved log files](../../../assets/settings/mavlink/saved_log_files.jpg)
