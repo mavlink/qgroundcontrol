@@ -1999,7 +1999,7 @@ QString Vehicle::formattedMessages()
 {
     QString messages;
     for(UASMessage* message: _toolbox->uasMessageHandler()->messages()) {
-        messages += message->getFormatedText();
+        messages.prepend(message->getFormatedText());
     }
     return messages;
 }
@@ -3819,6 +3819,14 @@ QString Vehicle::vehicleImageCompass() const
         return _firmwarePlugin->vehicleImageCompass(this);
     else
         return QString();
+}
+
+QVariant Vehicle::mainStatusIndicatorExpandedItem()
+{
+    if(_firmwarePlugin) {
+        return _firmwarePlugin->mainStatusIndicatorExpandedItem(this);
+    }
+    return QVariant();
 }
 
 const QVariantList& Vehicle::toolIndicators()
