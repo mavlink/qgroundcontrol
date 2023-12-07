@@ -47,7 +47,7 @@ This is now supported from the Copy Trims button on the Radio setup page.
 
 Previous version of _QGroundControl_ saved missions, geo-fences and rally points in separate files (**.mission**, **.fence**, **.rally**). QGC now save all information related to a flight plan into a single file called a _Plan File_ with a file extension of **.plan**.
 
-Information about the format can be found in [Plan File Format](https://dev.qgroundcontrol.com/en/file_formats/plan.html) (QGC Developer Guide).
+Information about the format can be found in [Plan File Format](../../qgc-dev-guide/file_formats/plan.md) (QGC Developer Guide).
 
 ### Plan Toolbar
 
