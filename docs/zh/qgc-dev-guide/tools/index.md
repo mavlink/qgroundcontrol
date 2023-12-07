@@ -11,10 +11,6 @@ and accessing the System Shell over MAVLink.
 工具包括：
 
 - 模拟链接（仅限每日构建） - 创建和停止多个模拟载具链接。
-- 重播飞行数据 - 重播遥测日志（用户指南）。
-- MAVLink Inspector - 显示收到的MAVLink消息/值。
-- MAVLink分析器 - 绘制MAVLink消息/值的趋势图。
-- 自定义命令小组件 - 在运行时加载自定义/测试QML UI。
-- **[Onboard Files](https://docs.qgroundcontrol.com/en/app_menu/onboard_files.html)** - Navigate vehicle file system and upload/download files.
-- HIL Config Widget - HIL模拟器的设置.
-- MAVLink控制台（仅限PX4） - 连接到PX4 nsh shell并发送命令。
+- **[Replay Flight Data](../../qgc-user-guide/fly_view/replay_flight_data.md)** - Replay a telemetry log (User Guide).
+- **[MAVLink Inspector](../../qgc-user-guide/analyze_view/mavlink_inspector.html)** - Display received MAVLink messages/values and plot trends.
+- **[MAVLink Console](../../qgc-user-guide/analyze_view/mavlink_console.html)** (PX4 Only) - Connect to the PX4 nsh shell and send commands.
