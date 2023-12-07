@@ -1,360 +1,437 @@
-# Uçuş Ekranı
+# Fly View
 
-Uçuş Ekranı, aracı uçarken izlemek ve araca komut vermek için kullanılır.
+The Fly View is used to command and monitor the vehicle when flying.
 
-Şunları yapmak için kullanabilirsiniz:
+You can use it to:
 
-- Otomatik şekilde [pre-flight checklist](#preflight_checklist) çalıştırın.
-- Görevleri kontrol edin: [start](#start_mission), [continue](#continue_mission), [pause](#pause), ve [resume](#resume_mission).
-- Aracı [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), belirli bir konuma [go to](#goto) veya [orbit](#orbit), ve [return/RTL](#rtl) için yönlendirin.
-- Harita görünümü ile video görünümü (eğer varsa) arasında geçiş yapın
-- Mevcut araç için video, görev, telemetri ve diğer bilgileri görüntüleyin ve ayrıca bağlı araçlar arasında geçiş yapın.
+- Run an automated [pre-flight checklist](#preflight_checklist).
+- Arm the vehicle (or check why it won't arm).
+- Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
+- Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), [go to](#goto) or [orbit](#orbit) a particular location, and [return/RTL](#rtl).
+- Switch between a map view and a video view (if available)
+- Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-![Uçuş Ekranı](../../../assets/fly/fly_view_overview.jpg)
+![Fly View](../../../assets/fly/fly_view_overview.jpg)
 
-## İzleme
+## UI Overview
 
-Yukarıdaki ekran görüntüsü, uçuş ekranının ana öğelerini gösterir:
+The screenshot above shows the main elements of the fly view:
 
-- **Harita:** Bağlı tüm araçların pozisyonlarını ve mevcut aracın görevini gösterir.
-  - Haritada gezinmek için haritayı sürükleyebilirsiniz (harita belirli bir süre sonra otomatik olarak yeniden ortalanır).
-  - Kalkıştan sonra, haritaya tıklayarak bir konuma [Go to](#goto) veya [Orbit at](#orbit) ayarlayabilirsiniz.
-- **Uçuş Araç Çubuğu:** Sensörler (GPS, pil, RC kontrolü) ve araç durumu (Uçuş modu, Etkin (armed) / Devre Dışı (disarmed) durumu) hakkında anahtar bilgiler.
-  - Daha fazla ayrıntı görmek için sensör göstergelerini seçin.
-  - Yeni bir mod seçmek için _ Flight mode _ metnine (ör. "Hold") tıklayın. Tüm modlar mevcut olmayabilir.
-  - Aracın uçuşa hazır olma durumunu değiştirmek için _Armed/Disarmed_ metnine tıklayın. While flying you can press this text for _Emergency Stop_.
-- **Uçuş araçları:** Şunları yapmak için kullanabilirsiniz:
-  - Kalkış/iniş arasında geçiş yapın.
-  - Mevcut işlemi durdur/tekrar başlat (ör. iniş, ya da görev).
-  - Güvenli geri dönüş (RTL ya da Return olarakta bilinir).
-  - _Action_ butonu mevcut durum için diğer uygun seçenekleri sunar (bunlar _Confirmation Slider_'ın üstünde gözükür). İşlemler, yüksekliği değiştirmeyi veya bir göreve devam etmeyi içerir.
-  - [preflight checklist](#preflight_checklist)'i etkinleştirin (varsayılan olarak devre dışıdır).
-- **[Bilgi Paneli](#instrument_panel):** Telemetri, kamera, video, sistem durumu ve titreşim dahil olmak üzere araç bilgilerini görüntüleyebileceğiniz çok sekmeli widget.
-- **[Video/Harita](#video_switcher):** Bir pencerede video ile harita arasında geçiş yapın.
-  - _Video_ ya da _Map_'i ön plana almak için öne almak istediğinize tıklayın.
-  - _QGroundControl_, aracınızın UDP bağlantısı üzerinden RTP ve RTSP video yayını yapmanızı destekler. It also supports directly connected UVC devices. QGC'nin video desteği hakkında daha ayrıntılı bilgiyi [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md)'de bulabilirsiniz.
-  - Bir [Telemetry Overlay](../fly_view/video_overlay.md) dosyası otomatik olarak oluşturulacaktır
-- **Kaydırmalı Onay Butonu:** İstenen işlemi gerçekleştirmek için onay butonu. Operasyonu başlatmak için kaydırın. İptal etmek için **X** 'e basın.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+  - You can drag the map to move it around (the map automatically re-centres after a certain amount of time).
+  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
+- **Fly Toolbar:** Key status information for sensors (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
+  - Select the sensor indicators to view more detail.
+  - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
+    Not every mode may be available.
+  - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem).
+    Select the text when the background is amber or red to find out the cause of any preflight issues (QGC 4.2.0 and later).
+    You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
+- **Fly tools:** You can use these to:
+  - Toggle between takeoff/land.
+  - Pause/restart the current operation (e.g. landing, or the mission).
+  - Safety return (also known as RTL or Return).
+  - The _Action_ button offers other appropriate options for the current state (these overlay the _Confirmation Slider_).
+    Actions include changing the altitude or continuing a mission.
+  - Enable the [preflight checklist](#preflight_checklist) (tool option disabled by default).
+- **[Instrument Panel](#instrument_panel):** A widget that displays vehicle telemetry.
+- **Attitude/Compass**: A widget that provides virtual horizon and heading information.
+- **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **[Video/Switcher](#video_switcher):** Toggle between video or map in a window.
+  - Press the element to switch _Video_ and _Map_ to foreground.
+  - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
+    It also supports directly connected UVC devices.
+    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
+  - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
+- **Confirmation Slider:** Context sensitive slider to confirm requested actions.
+  Slide to start operation. Press **X** to cancel.
 
-Ayrıca varsayılan olarak görüntülenmeyen/ belirli koşullarda görüntülenebilen bazı öğelerde var. Mesela, çoklu-araç seçici sadece birden çok aracınız varsa veya uçuş öncesi kontrol listesi eğer etkinleştirilmişse görüntülenir.
+There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
+For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
 
-## Bilgi Paneli {#instrument_panel}
+## Instrument Panel (Telemetry) {#instrument\_panel}
 
-Bilgi Paneli, telemetri, kamera, video, sistem durumu ve titreşim bilgileri dahil olmak üzere mevcut araç hakkında bilgileri görüntüleyebileceğiniz çok sekmeli bir widgettır.
+The instrument panel displays telemetry information about the current vehicle.
 
-The default page displays vehicle telemetry - use the drop down menu on the top right to select the other options.
+![Instrument Panel - for values/telemetry](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
 
-### Değerler (Telemetri)
+The default values include altitude (relative to the home location), horizontal and vertical speed, total flight time, and distance between vehicle and ground station.
 
-Değerler sayfası telemetri bilgilerini gösterir; varsayılan olarak rakım (ev konumuna göre) ve yer hızı.
+You can configure where the information is displayed by hovering over the panel and selecting the left-side square tool.
+This toggles the position of the panel between bottom centre and right-centre.
 
-![Bilgi Paneli - değerler ve telemetri için](../../../assets/fly/instrument_page_values.jpg)
+![Instrument Panel - hover for move/edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_move_edit.png)
 
-Panelin sol üst köşesindeki küçük dişli simgesine basarak hangi bilgilerin görüntüleneceğini ayarlayabilirsiniz. Her değeri ister normal isterse "büyük" boyutta görüntülenebilir (normal boyutta sayfadaki her satırda 2 değer varken, büyük boyutta sadece 1 değer olur).
+You configure what information is display by selecting the edit/pencil icon.
+The grid will then display "+" and "-" icons that you can use to add or remove rows and columns (and the pencil icon is replaced by a "lock" icon that you can use to save the settings).
 
-![Bilgi Paneli - değerlerin ayarları](../../../assets/fly/instrument_page_values_settings.jpg)
+![Instrument Panel - add rows/columns](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_on.png)
 
-### Kamera {#camera_instrument_page}
+Select a value to launch its "Value Display" editor.
+This allows you to change the icon, text, size, units and so on of the current telemetry value.
 
-Kamera sayfası, kamerayı ayarlamak ve kontrol etmek için kullanılır. Uçuş kontrolcüsüne direkt bağlı bir kamera için sadece kamerayı başlatma ayarı vardır:
+![Instrument Panel - edit a value](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
 
-![Bilgi Paneli - Kamera için](../../../assets/fly/instrument_page_camera.jpg)
+The selection list on the top left is used to change the source of the telemetry.
+By default this is the vehicle, but you can use the selector to choose a particular sensor type.
 
-[MAVLink Camera Protocol](https://mavlink.io/en/services/camera.html)'ü destekleyen bir kameraya bağlandığınızda ek olarak geçerli hale gelen diğer kamera özelliklerini ayarlayıp kullanabilirsiniz. Örnek olarak, eğer kameranız video modunu destekliyorsa, fotoğraf ve video modları arasında geçiş yapabilir, kaydı başlatıp/durdurabilirsiniz.
+![Instrument Panel - value type](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
 
-![Bilgi Paneli - Kameranın MAVLink ayarları](../../../assets/fly/instrument_page_camera_mavlink.jpg)
+The selection list on the top right is used to select a particular telemetry value for the vehicle or sensor.
 
-Gelişmiş ayarlara sayfanın sol üstündeki dişliye tıklayarak ulaşabilirsiniz.
+![Instrument Panel - value options](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
 
-![Bilgi Paneli - Kameranın MAVLink ayarları](../../../assets/fly/instrument_page_camera_mavlink_settings.jpg)
+### Camera {#camera\_instrument\_page}
+
+The camera panel is used to capture still images and video, and to configure the camera.
+
+![Camera Panel](../../../assets/fly/camera_panel/camera_mavlink.png)
+
+The camera capture and configuration options depend on the connected camera.
+The configuration options are selected using the panel gear icon.
+The configuration for a simple autopilot-connected camera are shown below.
+
+![Camera Panel - minimal settings](../../../assets/fly/camera_panel/camera_settings_minimal.png)
+
+When connected to camera that supports the [MAVLink Camera Protocol](https://mavlink.io/en/services/camera.html) you can additionally configure and use other camera services that it makes available.
+For example, if your camera supports video mode you will be able to switch between still image capture and video mode, and start/stop recording.
+
+![Camera Panel - MAVLink settings](../../../assets/fly/camera_panel/camera_settings_mavlink.png)
 
 ::: info
-Gösterilen ayarların çoğu kameraya bağlıdır (ayarlar [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)'da tanımlanmıştır). Sondaki bir kaç ortak ayar sabit olarak kodlanmıştır: Fotoğraf Modu (Tekli/Photolapse), Fotoğraf Aralığı (Timelapse için), Kamera Ayarlarını Varsayılana Sıfırla (kameraya bir sıfırlama komutu gönderir), Format (depolama)
-:::
+Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
 
-### Video Akışı {#video_instrument_page}
+> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
+> :::
 
-Video sayfası video akışını etkinleştirmek ve devre dışı bırakmak için kullanılır. Etkinleştirildiğinde, video akışını durdurup başlatabilir, ızgara çizgilerini açabilir, görüntünün ekrana nasıl sığacağını değiştirebilir ve videoyu yerel olarak QGC ile kaydedebilirsiniz.
+### Video Stream {#video\_instrument\_page}
 
-![Bilgi Paneli - Video Akışı](../../../assets/fly/instrument_page_video_stream.jpg)
+The video page is used to enable/disable video streaming.
+When enabled, you can start/stop the video stream, enable a grid overlay, change how the image fits the screen, and record the video locally with QGC.
 
-### Durum
+![Instrument Page - Video Stream](../../../assets/fly/instrument_page_video_stream.jpg)
 
-Durum sayfası aracınızdaki sistemin durumunu gösterir. _QGroundControl_ will switch to this page automatically if any system changes to unhealthy.
+## Actions/Tasks
 
-![Bilgi Paneli - Cihazın Durumu İyi](../../../assets/fly/instrument_page_health_good.jpg) ![Bilgi Paneli - Cihazın Durumu Kötü](../../../assets/fly/instrument_page_health_bad.jpg)
-
-### Titreşim
-
-Titreşim sayfası mevcut titreşim seviyelerini ve klips sayılarını gösterir.
-
-![Bilgi Paneli - Titreşim Klipsleri](../../../assets/fly/instrument_page_vibration.jpg)
-
-## İşlemler/Görevler
-
-Aşağıdaki bölümler, Uçuş Ekranı'nda genel işlemlerin / görevlerin nasıl gerçekleştirileceğini açıklamaktadır.
+The following sections describe how to perform common operations/tasks in the Fly View.
 
 ::: info
-Mevcut seçeneklerin çoğu, hem aracın türüne hem de mevcut durumuna bağlıdır.
+Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### Uçuş Öncesi Kontrol Listesi {#preflight_checklist}
+### Pre Flight Checklist {#preflight\_checklist}
 
-Aracın doğru ayarlandığını ve uçmak için güvenli olduğu gösteren standart kontrollerin yapılması için otomatik bir uçuş öncesi kontrol listesi kullanılabilir.
+An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
 
-To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox. Liste _Flight Tools_'a eklenecektir. Kontrol listesini oradan açabilirsiniz:
+To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
+The tool will then be added to the _Flight Tools_.
+Press it to open the checklist:
 
-![Uçuş Öncesi Kontrol Listesi](../../../assets/fly/pre_flight_checklist.jpg)
+![Pre Flight Checklist](../../../assets/fly/pre_flight_checklist.jpg)
 
 Once you have performed each test, select it on the UI to mark it as complete.
 
-### Aracı Devreye Alma {#arm}
+### Arming and Preflight Checks {#arm}
 
-::: tip
-Genel olarak _ QGroundControl _ aracı manuel olarak devreye almanızı gerektirmez; Bir göreve veya kalkışa başlarsanız bu sizin için yapılır.
+Arming a vehicle starts the motors in preparation for takeoff.
+You will only be able to arm the vehicle if it is safe and ready to fly.
+
+:::tip
+Generally, if the vehicle is ready to arm, _QGroundControl_ will arm the vehicle for you if you start a mission or takeoff.
 :::
 
-Bir aracı devreye almak, kalkışa hazırlık için motorları çalıştırır.
+The vehicle is ready to fly in all modes if the status text says "Ready to Fly" and the background is green.
 
-Aracı devreye almak için, _Fly Toolbar_'dan **Disarmed**'ı seçin ve kaydırmalı onay butonuyla onaylayın.
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
 
-![Aracı Devreye Alma](../../../assets/fly/arm.jpg)
+If the background is amber then it is ready to take off in the current mode, but may not be able to switch to other modes.
+If the background is red and the text is "Not Ready" then you will not be able to arm in the current mode.
+
+![Vehicle state - ready to fly amber/warning background](../../../assets/fly/vehicle_states/ready_to_fly_warning.png)
+![Vehicle state - not ready](../../../assets/fly/vehicle_states/not_ready.png)
+
+From QGC 4.2.0 (at time of writing, a daily build) you can find out the exact cause of the warning or error, and possible solutions, by pushing the status text.
+
+This launches the preflight arming checks popup with a list of all preflight warnings.
+The toggle on the right expands each error with additional information and possible solutions.
+
+![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
+
+Once each issue is resolved it will disappear from the UI.
+When all issues blocking arming have been removed you can use the arm button to display the arming confirmation slider, and arm the vehicle (or you can just take off - note that the vehicles will (by default) disarm automatically if you do not take off after a few seconds.
+
+![Arm confirmation slider](../../../assets/fly/vehicle_states/arming_slider.png)
 
 ::: info
-Eğer bir kaç saniye içinde kalkmazlarsa araçlar genellikle otomatik olarak kendilerini devre dışı bırakırlar.
-:::
+The status text also displays when flying.
 
-### Aracı Devre Dışı Bırakma {#disarm}
+> ![Vehicle state - armed](../../../assets/fly/vehicle_states/armed.png) > ![Vehicle state - flying](../../../assets/fly/vehicle_states/flying.png)
+>
+> The arming checks UI will open even when flying, allowing you to emergency disarm.
+> :::
 
-Aracı devre dışı bırakmak motorları durdurur (aracı güvenli hale getirir). Aracı devre dışı bırakmak için araç **landed** halindeyken _Fly Toolbar_ 'dan **Armed**'ı seçin.
+### Disarm {#disarm}
 
-![Aracı Devre Dışı Bırakma](../../../assets/fly/disarm.jpg)
+Disarming the vehicle when landed stops the motors (making the vehicle safe).
+
+Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
+
+If needed, you can do so from the Arming Preflight Checks UI.
+
+![Disarming](../../../assets/fly/vehicle_states/arming_ui_landed_disarm.png)
+
+You will then need to use the disarming slider.
+
+![disarm slider](../../../assets/fly/vehicle_states/disarm_slider.png)
 
 ::: info
-Aracı uçarken devre dışı bırakmak [Emergency Stop](#emergency_stop) olarak adlandırılır
+Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
 :::
 
-### Acil Durdurma {#emergency_stop}
+### Emergency Stop {#emergency\_stop}
 
-Emergency stop is effectively the same as disarming the vehicle while it is flying. Aracınız çarpacaktır/çakılacaktır!
+Emergency stop is effectively the same as disarming the vehicle while it is flying.
+Your vehicle will crash!
 
-Aracı devre dışı bırakmak için uçuş sırasında _Fly Toolbar_'dan **Armed**'ı seçin.
+If needed, you can do so from the Arming Preflight Checks UI.
 
-![Acil Durdurma](../../../assets/fly/emergency_stop.jpg)
+![Disarming when flying](../../../assets/fly/vehicle_states/arming_ui_flying_disarm.png)
 
-### Kalkış {#takeoff}
+You will then need to use the emergency disarming slider.
 
-::: tip
+![Emergency disarm slider](../../../assets/fly/vehicle_states/emergency_disarm_slider.png)
+
+### Takeoff {#takeoff}
+
+:::tip
 If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
 :::
 
-Kalkmak için (iniş yapıldığında):
+To takeoff (when landed):
 
-1. _Fly Tools_'dan **Takeoff** butonuna basın (kalkıştan sonra bu buton **Land** butonu olarak değişecektir).
-2. İsterseniz kalkış yüksekliğini sağda bulunan dikey kaydırıcıyla ayarlayabilirsiniz.
-3. Kaydırmalı onay butonunu kaydırarak kalkışı onaylayın.
+1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
+2. Optionally set the takeoff altitude in the right-side vertical slider.
+3. Confirm takeoff using the slider.
 
-![kalkış](../../../assets/fly/takeoff.jpg)
+![takeoff](../../../assets/fly/takeoff.jpg)
 
-### İniş {#land}
+### Land {#land}
 
-Uçuş sırasında istediğiniz zaman mevcut konuma inebilirsiniz:
+You can land at the current position at any time while flying:
 
-1. _Fly Tools_'dan **Land** butonuna basın (kalkıştan sonra bu buton **Takeoff** butonu olarak değişecektir).
-2. Kaydırmalı onay butonunu kaydırarak inişi onaylayın.
+1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
+2. Confirm landing using the slider.
 
-![iniş](../../../assets/fly/land.jpg)
+![land](../../../assets/fly/land.jpg)
 
-### RTL/Geri Dönüş
+### RTL/Return
 
 Return to a "safe point" at any time while flying:
 
-1. _Fly Tools_'dan **RTL** butonuna basın.
-2. Kaydırmalı onay butonunu kaydırarak RTL'i onaylayın.
+1. Press the **RTL** button in the _Fly Tools_.
+2. Confirm RTL using the slider.
 
 ![rtl](../../../assets/fly/rtl.jpg)
 
-::: info
-Vehicles commonly return to the "home" (takeoff) location and land. This behaviour depends on the vehicle type and configuration. For example, rally points or mission landings may be used as alternative return targets.
+:::info
+Vehicles commonly return to the "home" (takeoff) location and land.
+This behaviour depends on the vehicle type and configuration.
+For example, rally points or mission landings may be used as alternative return targets.
 :::
 
-### Yükleklik Değiştirme {#change_altitude}
+### Change Altitude {#change\_altitude}
 
-Uçuş esnasında eğer bir görevde değilse aracın yükseliği değiştirilebilir:
+You can change altitude while flying, except when in a mission:
 
-1. _Fly Tools_'dan **Action** butonuna basın
-2. İletişim kutusundan _Change Altitude_'ı seçin.
+1. Press the **Action** button on the _Fly Tools_
 
-![Göreve Devam Etme/Yüksekliği Değiştirme ](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+2. Select the _Change Altitude_ action from the dialog.
 
-3. Dikey kaydırıcıyla istenilen yüksekliği ayarlayın, ardından kaydırmalı onay butonu ile onaylayın.
+   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
-![Yüksekliği Değiştirme](../../../assets/fly/change_altitude.jpg)
+3. Move the vertical slider to the desired altitude, then drag the confirmation slider to start the action.
 
-### Hedef Konum {#goto}
+   ![Change altitude](../../../assets/fly/change_altitude.jpg)
 
-Kalkıştan sonra belirli bir konuma uçmayı ayarlayabilirsiniz.
+### Goto Location {#goto}
+
+After taking off you can specify that you want to fly to a particular location.
 
 1. Left click/Press on the map where you want the vehicle to move and select **Go to location** on the popup.
 
-![Hedefe gitme veya yörünge](../../../assets/fly/goto_or_orbit.jpg)
+![Goto or orbit](../../../assets/fly/goto_or_orbit.jpg)
 
-2. Konum harita üzerinde kaydırmalı onay butonuyla birlikte gözükecektir.
+1. The location will be displayed on the map, along with a confirmation slider.
 
-![Hedefe gitme onayı](../../../assets/fly/goto.jpg)
+   ![Goto confirmation](../../../assets/fly/goto.jpg)
 
-3. Hazır olduğunuzda kaydırarak onay verin (ya da **X**'e basarak iptal edin).
+2. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
 
-::: info
-Hedef konum aracın 1 km çevresinde seçilmelidir (QGC'de sabit olarak ayarlanmıştır).
+:::info
+Goto points must be set within 1 km of the vehicle (hard-coded in QGC).
 :::
 
-### Yörünge Konumu {#orbit}
+### Orbit Location {#orbit}
 
-Kalkıştan sonra belirli bir konumun çevresinde yörüngede dolaşmasını ayarlayabilirsiniz.
+After taking off you can specify that you want to orbit a particular location.
 
 1. Left click/Press on the map (near the centre of your desired orbit) and select **Orbit at location** on the popup.
 
-![Hedefe gitme veya yörünge](../../../assets/fly/goto_or_orbit.jpg)
+![Goto or orbit](../../../assets/fly/goto_or_orbit.jpg)
 
-2. Önerile yörünge kaydırmalı onay butonu ile harita üzerinde belirecektir.
+1. The proposed orbit will be displayed on the map, along with a confirmation sider.
 
-![Yörünge Onayı](../../../assets/fly/orbit.jpg)
+   ![Orbit confirmation](../../../assets/fly/orbit.jpg)
 
-- Yörüngenin konumunu değiştirmek için merkezini seçin ve kaydırın.
-- Yörüngenin yarıçapını, çemberin dışındaki noktayı seçip sürükleyerek ayarlayabilirsiniz.
+   - Select and drag the central marker to move the orbit location.
+   - Select and drag the dot on the outer circle to change the orbit radius
 
-3. Hazır olduğunuzda kaydırarak onay verin (ya da **X**'e basarak iptal edin).
+2. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
 
-### Duraklatma
+### Pause
 
-You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location. Duraklatıldığında aracın davranışı aracın tipine bağlıdır, genellikle multikopterler havada asılı kalırken sabit kanatlar çember çizer.
+You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location.
+The vehicle behaviour when paused depends on the vehicle type; typically a multicopter will hover, and a fixed wing vehicle will circle.
 
-::: info
-Bir _Goto location_ operasyonunu durduramazsınız.
+:::info
+You cannot pause a _Goto location_ operation.
 :::
 
-Durdurmak için:
+To pause:
 
-1. _Fly Tools_'dan **Pause** butonuna basın.
-2. İsterseniz yeni bir yüksekliği sağda bulunan dikey kaydırıcıyla ayarlayabilirsiniz.
-3. Kaydırmalı onay butonunu kaydırarak durdurmayı onaylayın.
+1. Press the **Pause** button in the _Fly Tools_.
+2. Optionally set a new altitude using the right-side vertical slider.
+3. Confirm the pause using the slider.
 
-![duraklatma](../../../assets/fly/pause.jpg)
+![pause](../../../assets/fly/pause.jpg)
 
-### Görevler
+### Missions
 
-#### Görevi Başlatma {#start_mission}
+#### Start Mission {#start\_mission}
 
-Araç inmiş durumdayken bir görevi başlatabilirsiniz (görevi başlatma onay kaydıracı varsayılan olarak çoğu kez gösterilir).
+You can start a mission when the vehicle is landed (the start mission confirmation slider is often displayed by default).
 
-Yerdeki bir aracın görevini başlatmak için:
+To start a mission from landed:
 
-1. _Fly Tools_'dan **Action** butonuna basın
-2. İletişim kutusundan _Start Mission_'ı seçin.
+1. Press the **Action** button on the _Fly Tools_
 
-![Görevi Başlatma Eylemi](../../../assets/fly/start_mission_action.jpg)
+2. Select the _Start Mission_ action from the dialog.
 
-      (kaydırmalı onay çubuğunu görüntülemek için)
+   ![Start mission action](../../../assets/fly/start_mission_action.jpg)
 
+   (to display the confirmation slider)
 
-3. Onay kaydıracı belirdiğinde görevi başlatmak için kaydırın.
+3. When the confirmation slider appears, drag it to start the mission.
 
-![Görevi Başlatma](../../../assets/fly/start_mission.jpg)
+   ![Start mission](../../../assets/fly/start_mission.jpg)
 
-#### Göreve Devam Etme (Continue Mission) {#continue_mission}
+#### Continue Mission {#continue\_mission}
 
-Göreve _sıradaki_ hedef noktanızdan _devam_ edebilirsiniz (_Continue Mission_ kaydırmalı onay butonu kalkıştan sonra çoğu kez varsayılan olarak gösterilir).
+You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation slider is often displayed by default after you takeoff).
 
-::: info
-Continue ve [Resume mission](#resume_mission) farklıdır! Continue komutu durdurulmuş bir görevi tekrar başlatmak veya zaten kalkmış bir araç için yani kalkış görevi komutunu kaçırmış durumdaysanız kullanılır. Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
+:::info
+Continue and [Resume mission](#resume_mission) are different!
+Continue is used to restart a mission that has been paused, or where you have taken off, so you've already missed a takeoff mission command.
+Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
 :::
 
-Görevinize aşağıdakileri yaparak devam edebilirsiniz (hali hazırda bir görevde değilseniz!):
+You can continue the current mission while (unless already in a mission!):
 
-1. _Fly Tools_'dan **Action** butonuna basın
-2. İletişim kutusundan _Continue Mission_'ı seçin.
+1. Press the **Action** button on the _Fly Tools_
 
-![Göreve Devam Etme/Yüksekliği Değiştirme](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+2. Select the _Continue Mission_ action from the dialog.
 
-3. Kaydırmalı onay butonunu kaydırarak göreve devam edin.
+   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
-![Göreve Devam Etme (Continue Mission)](../../../assets/fly/continue_mission.jpg)
+3. Drag the confirmation slider to continue the mission.
 
-#### Göreve Devam Etme (Resume Mission) {#resume_mission}
+   ![Continue Mission](../../../assets/fly/continue_mission.jpg)
 
-_Resume Mission_, bir görevin içinde [RTL/Return](#rtl) ya da [Land](#land) gerçekleştirdikten sonra (ör. batarya değiştirmek için) kullanılır.
+#### Resume Mission {#resume\_mission}
 
-::: info
-Eğer bataryayı değiştiricekseniz, bataryanın bağlantısını kestikten sonra QGC ile aracın bağlantısını **kesmeyin**. Yeni bataryayı yerleştirdikten sonra _QGroundControl_ cihazı tekrar tespit edip, bağlantıyı otomatik olarak yeniden kuracaktır.
+_Resume Mission_ is used to resume a mission after performing an [RTL/Return](#rtl) or [Land](#land) from within a mission (in order, for example, to perform a battery change).
+
+:::info
+If you are performing a battery change, **do not** disconnect QGC from the vehicle after disconnecting the battery.
+After you insert the new battery _QGroundControl_ will detect the vehicle again and automatically restore the connection.
 :::
 
-İnişten sonra size görev planını cihazdan kaldırma, cihazda bırakma ya da göreve kaldığı yerden devam etme seçeneklerini sunan bir _Flight Plan complete_ iletişim kutusu karşınıza çıkacaktır.
+After landing you will be prompted with a _Flight Plan complete_ dialog, which gives you the option to remove the plan from the vehicle, leave it on the vehicle, or to resume the mission from the last waypoint that was traveled through.
 
-![Göreve Devam Etme (Resume Mission)](../../../assets/fly/resume_mission.jpg)
+![Resume Mission](../../../assets/fly/resume_mission.jpg)
 
-Eğer göreve devam etmeyi düşünüyorsanız, _QGroundControl_ görevi yapılandırıp araca yükleyecektir. Ardından _Start Mission_ kaydıracıyla göreve devam edebilirsiniz.
+If you select to resume the mission, then _QGroundControl_ will rebuild the mission and upload it to the vehicle.
+Then use the _Start Mission_ slider to continue the mission.
 
-Aşağıdaki görüntü inişten sonra yeniden yapılandırılan bir görevi göstermektedir.
+The image below shows the mission that was rebuilt after the Return shown above.
 
-![Yapılandırılmış Göreve Devam Etme](../../../assets/fly/resume_mission_rebuilt.jpg)
+![Resume Rebuilt Mission](../../../assets/fly/resume_mission_rebuilt.jpg)
 
-::: info
-Bir görev, basit bir şekilde aracın son gerçekleştirdiği görev aşamasından devam edemez, çünkü son yapılan aşamada görevin sonraki aşamalarına etki edebilecek birden fazla etken olabilir (ör. hız komutları ya da kameranın kontrol komutları). Basit bir şekilde devam etmek yerine, _QGroundControl_ son gerçekleştirilen görev aşamasından başlayarak, ilgili komutları da dikkate alarak görevi tekrar yapılandırır.
+:::info
+A mission cannot simply resume from the last mission item that the vehicle executed, because there may be multiple items at the last waypoint that affect the next stage of the mission (e.g. speed commands or camera control commands).
+Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
 :::
 
-#### İnişten Sonra Görevi Kaldırma {#resume_mission_prompt}
+#### Remove Mission Prompt After Landing {#resume\_mission\_prompt}
 
-Görev bittikten sonra aracın inişi ve devre dışı bırakılmasının ardından görevi araçtan kaldırmanız istenecektir. Bunun amacı farkında olmadan araçta bırakılan görevlerin potansiyel olarak beklenmeyen davranışlar sergilemesinin önüne geçmektir.
+You will be prompted to remove the mission from the vehicle after the mission completes and the vehicle lands and disarms.
+This is meant to prevent issues where stale missions are unknowingly left on a vehicle, potentially resulting in unexpected behavior.
 
-### Videoyu Görüntüleme {#video_switcher}
+### Display Video {#video\_switcher}
 
-Video akışı etkinleştirildiğinde, _QGroundControl_ haritanın sol altında bulunan "videoya geçiş penceresi"nde videoyu göstermeye başlıyacaktır. You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
+When video streaming is enabled, _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
 
-![Video Akışı Kaydı](../../../assets/fly/video_record.jpg)
+![Video Stream Record](../../../assets/fly/video_record.jpg)
 
-::: info
-video akışı [Application Settings > General tab > Video](../settings_view/general.md#video)'dan etkinleştirilebilir/düzenlenebilir.
+:::info
+Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
 :::
 
-Video görüntüsünü geçiş penceresindeki kontrolleri kullanararak daha da düzenleyebilirsiniz:
+You can further configure video display using controls on the switcher:
 
-    ![Video Pop](../../../assets/fly/video_pop.jpg)
+![Video Pop](../../../assets/fly/video_pop.jpg)
 
 - Resize the switcher by dragging the icon in the top right corner.
-- Geçiş penceresini sol alt köşede bulunan ikona basarak gizleyebilirsiniz.
-- Sol üst köşedeki ikona basarak video geçiş pencersini ayırabilirsiniz. (ayrıldığında, işletim sisteminizdeki her hangi bir pencere gibi hareket ettirip tekrar boyutlandırabilirsiniz). Eğer ayrılan pencereyi kapatırsanız, geçiş penceresi tekrardan QGC uçuş görünüme sabitlenecektir.
+- Hide the switcher by pressing the toggle icon in the lower left.
+- Detach the video switcher window by pressing on the icon in its top left corner
+  (once detached, you can move and resize the window just like any other in your OS).
+  If you close the detached window the switcher will re-lock to the QGC Fly view.
 
-### Video Kaydı
+### Record Video
 
-Eğer araç ve kamera tarafından destekleniyorsa, _QGroundControl_ kendiliğinden video kaydını başlatıp durdurabilirsiniz. Ayrıca _QGroundControl_ videoyu yayınlayıp, yerel dosyalara kaydedebilir.
+If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.
 
-::: tip
-Kameranın kendisinde kaydedilen video daha kaliteli olacak olsa da, yüksek ihtimalle yer istasyonunun daha büyük kayıt kapasitesi olacaktır.
+:::tip
+Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
 :::
 
-#### Video Akışını Kaydetme (GCS'de)
+#### Record Video Stream (on GCS)
 
-Video akışı kaydı [video stream instrument page](#video_instrument_page)'dan kontrol edilir. Yeni bir video kaydı başlatmak için kırmızı daireye tıklayın (daireye her tıklanıldığında yeni bir video dosyası oluşturulur); kayıt devam ederken çember kırmızı bir kareye dönüşecektir.
+Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
+Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 
-![Video Akışı Kaydı](../../../assets/fly/video_record.jpg)
+![Video Stream Record](../../../assets/fly/video_record.jpg)
 
-Video akışı kaydı [Application Settings > General tab](../settings_view/general.md)'dan düzenlenir:
+Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
 
-- [Video Recording](../settings_view/general.md#video-recording) - kayıt dosyası formatını ve depolama sınırlarını belirtir.
+- [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
 
   ::: info
-  Videolar varsayılan olarak Matroska format (.mkv) olarak kaydedilir. Bu format, hata durumunda bozulmaya karşı nispeten dayanıklıdır.
+  Videos are saved in Matroska format (.mkv) by default.
+  This format is relatively robust against corruption in case of errors.
   :::
 
-- [Miscellaneous](../settings_view/general.md#miscellaneous) - Video **Application Load/Save Path**'e kaydedilir.
+- [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
 
-::: tip
-Kaydedilen video, sadece video akışının kendisini içerir. QGroundControl uygulamasının öğeleriyle videoyu kaydetmek için başka bir ekran kaydı uygulaması kullanmanız gerekir.
+:::tip
+The stored video includes just the video stream itself.
+To record video with QGroundControl application elements displayed, you should use separate screen recording software.
 :::
 
-#### Videoyu Kamerada Kaydetme
+#### Record Video on Camera
 
-_Kameranın kendisinde_ video kaydını durdurup/başlatmak için [camera instrument page](#camera_instrument_page)'i kullanabilirsiniz. İlk olarak video moduna geçiş yapın, ardından kırmızı butona basarak kaydı başlatabilirsiniz.
+Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
+First toggle to video mode, then select the red button to start recording.
 
-![Bilgi Paneli - Kameranın MAVLink ayarları](../../../assets/fly/instrument_page_camera_mavlink.jpg)
+![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)
