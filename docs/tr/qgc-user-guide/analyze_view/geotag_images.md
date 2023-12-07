@@ -1,11 +1,13 @@
-# GeoTag Görüntüleri (Analiz Görünümü)
+# GeoTag Images (Analyze View)
 
-_GeoTag Images_ ekranı (**Analyze > GeoTag Images**) uçuş kayıtlarındaki bilgileri kullanarak bir gözlem görevindeki görüntüleri çoğrafi etiketlemenize olanak tanır.
+The _GeoTag Images_ screen (**Analyze > GeoTag Images**) allows you to geotag images from a survey mission using information in the flight log.
 
-::: info
-Bu özellik sadece _PX4_ uçuş kayıtlarıyla çalışır. Ardupilot desteklenmemektedir.
+:::info
+This feature only works with _PX4_ flight stack logs.
+ArduPilot is not supported.
 :::
 
-![GeoTag Görüntüleri Analiz Ekranı](../../../assets/analyze/geotag_images.jpg)
+![Analyze View GeoTag Images](../../../assets/analyze/geotag_images.jpg)
 
-Kayıt dosyasını, görüntüyü ve (isterseniz) etiketlenmiş görüntülerin nereye kayıt edileceğini seçin. Görüntüleri coğrafi etiketlemeye başlamak için **Start Tagging** 'e tıklayın.
+Select the log file, image directory and (optionally) output directory for geotagged images using the buttons provided.
+Click **Start Tagging** to generate the geotagged images.
