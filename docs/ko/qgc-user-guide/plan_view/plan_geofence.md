@@ -1,50 +1,60 @@
-# 계획 뷰 - 지오펜스
+# Plan View - GeoFence
 
-GeoFences를 사용하면 비행이 가능한 가상 영역 또는 비행이 _허용되지 않는_ 가상 영역을 만들 수 있습니다. 또한 허용된 지역을 벗어나 비행하는 경우 취해야 할 조치를 설정할 수 있습니다.
+GeoFences allow you to create virtual regions within which the vehicle can fly, or in which it is _not allowed_ to fly.
+You can also configure the action taken if you fly outside permitted areas.
 
-![지오펜스 개요](../../../assets/plan/geofence/geofence_overview.jpg)
+![Geofence overview](../../../assets/plan/geofence/geofence_overview.jpg)
 
-::: info
-**ArduPilot 사용자:** GeoFence 지원은 Rover 3.6 및 Copter 3.7 이상에서만 지원됩니다. 또한 일일 빌드 또는 Stable 3.6버전을 사용하여야 합니다(한 번 사용 가능). 연결된 차량에서 지원하지 않는 경우에는 *QGroundControl*은 GeoFence 옵션을 표시하지 않습니다.
+:::info
+**ArduPilot users:** GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available).
+_QGroundControl_ will not display the GeoFence options if they are not supported by the connected vehicle.
 :::
 
-## 지오펜스 생성
+## Create a Geofence
 
-지오펜스를 생성하려면:
+To create a GeoFence:
 
-1. 계획 뷰로 이동
-2. 임무 명령 목록 위의 _지오펜스_ 라디오 버튼을 선택합니다.
+1. Navigate to the Plan View
 
-   ![지오펜스 선택 라디오 버튼](../../../assets/plan/geofence/geofence_select.jpg)
+2. Select the _Geofence_ radio button above the Mission Command List
 
-3. **원형 울타리** 또는 **폴리곤 울타리** 버튼을 각각 눌러 원형 또는 다각형 영역을 삽입합니다. 새로운 지역이 지도와 버튼 아래의 관련 울타리 목록에 추가됩니다.
-   ::: tip
-   버튼을 여러 번 눌러 여러 영역을 만들 수 있으므로 복잡한 지오펜스 정의를 생성할 수 있습니다.
-   :::
+   ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
 
-- 원형 영역:
+3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
+   A new region will be added to the map and to the associated list of fences below the buttons.
 
-  ![원형 지오펜스](../../../assets/plan/geofence/geofence_circular.jpg)
+:::tip
+You can create multiple regions by pressing the buttons multiple times, allowing complex geofence definitions to be created.
+:::
 
-  - 지도의 중앙 점을 드래그하여 지역을 이동
-  - 원의 가장자리에 있는 점을 드래그하여 원의 크기를 조정합니다(또는 펜스 패널에서 반경 값을 변경할 수 있음).
+- Circular region:
 
-- 다각형 영역:
-  ![폴리곤 지오펜스](../../../assets/plan/geofence/geofence_polygon.jpg)
-  - 채워진 점을 드래그하여 정점 이동
-  - 채워진 정점 사이의 선에서 "채워지지 않은" 점을 클릭하여 새 정점을 만듭니다.
-    1. 기본적으로 새 지역은 _포함_ 영역으로 생성됩니다(차량은 지역 내에 있어야 함). 울타리 패널에서 연결된 _포함_ 확인란을 선택 취소하여 차량이 이동할 수 없는 제외 구역으로 변경합니다.
+  ![Circular Geofence](../../../assets/plan/geofence/geofence_circular.jpg)
 
-## 지오펜스 편집/삭제
+  - Move the region by dragging the central dot on the map
+  - Resize the circle by dragging the dot on the edge of the circle (or you can change the radius value in the fence panel).
 
-GeoFence 패널에서 _편집_ 라디오 버튼을 선택하여 편집할 지오펜스 영역을 선택할 수 있습니다. 그런 다음 이전 섹션에서 설명한 대로 지도에서 지역을 편집할 수 있습니다.
+- Polygon region:
 
-지역은 연결된 **Del** 버튼을 눌러 삭제할 수 있습니다.
+  ![Polygon Geofence](../../../assets/plan/geofence/geofence_polygon.jpg)
 
-## 지오펜스 업로드
+  - Move the vertices by dragging the filled dots
+  - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.
 
-GeoFence는 [계획 도구](../plan_view/plan_view.md)의 **파일**을 사용하여 임무와 동일한 방식으로 업로드됩니다.
+1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
+   Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
 
-## 기타 도구
+## Edit/Delete a GeoFence
 
-나머지 도구는 임무를 편집할 때와 똑같이 동작합니다.
+You can select a geofence region to edit by selecting its _Edit_ radio button in the GeoFence panel.
+You can then edit the region on the map as described in the previous section.
+
+Regions can be deleted by pressing the associated **Del** button.
+
+## Upload a GeoFence
+
+The GeoFence is uploaded in the same way as a mission, using **File** in the [Plan tools](../plan_view/plan_view.md).
+
+## Remaining tools
+
+The rest of the tools work exactly as they do while editing a Mission.
