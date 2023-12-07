@@ -92,7 +92,7 @@ export default defineConfig({
           },
           {
             text: "Docs Source Code",
-            link: "https://github.com/mavlink/qgroundcontrol/tree/master/doc",
+            link: "https://github.com/mavlink/qgroundcontrol/tree/master/docs",
           },
         ],
       },
