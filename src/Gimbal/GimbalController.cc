@@ -202,12 +202,12 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     gimbal_it->neutral = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_NEUTRAL) > 0;
     gimbal_it->yawLock = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) > 0;
 
-    auto quat = Eigen::Quaternionf{attitude_status.q[0], attitude_status.q[1], attitude_status.q[2], attitude_status.q[3]};
-    auto euler = quat.toRotationMatrix().eulerAngles(2,0,1);
+    float roll, pitch, yaw;
+    mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
 
-    gimbal_it->_curYaw   = euler[0] * (180.0f / M_PI);
-    gimbal_it->_curRoll  = euler[1] * (180.0f / M_PI);
-    gimbal_it->_curPitch = euler[2] * (180.0f / M_PI);
+    gimbal_it->_curYaw   = yaw * (180.0f / M_PI);
+    gimbal_it->_curRoll  = roll * (180.0f / M_PI);
+    gimbal_it->_curPitch = pitch * (180.0f / M_PI);
 
     if (yaw_in_vehicle_frame) {
         gimbal_it->_curYaw += _vehicle->heading()->rawValue().toFloat();
