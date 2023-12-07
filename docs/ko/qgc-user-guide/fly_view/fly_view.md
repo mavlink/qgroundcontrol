@@ -1,355 +1,437 @@
-# 비행 화면
+# Fly View
 
-비행 화면은 비행중인 기체에 명령어를 실행하고 그 결과를 모니터링합니다.
+The Fly View is used to command and monitor the vehicle when flying.
 
-다음과 같은 목적으로 사용할 수 있습니다:
+You can use it to:
 
-- 자동화된 [비행 전 체크리스트](#preflight_checklist)를 제공합니다.
-- 미션 제어:: [시작](#start_mission), [계속](#continue_mission), [일시중지](#pause) 및 [재개](#resume_mission).
-- 기체의 [시동](#arm)/[시동 해제](#disarm)/[비상 정지](#emergency_stop), [이륙](#takeoff)/[착륙](#land), [고도 변경](#change_altitude), 특정 위치로 [이동](#goto) 또는 [궤도](#orbit), [복귀/RTL](#rtl)할 수 있습니다.
-- 지도 화면과 동영상 화면간의 전환(사용 가능한 경우)
-- 현 기체의 비디오 출력, 미션, 텔레메트리 및 기타 정보를 표시하고 연결된 기체간에 전환합니다.
+- Run an automated [pre-flight checklist](#preflight_checklist).
+- Arm the vehicle (or check why it won't arm).
+- Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
+- Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), [go to](#goto) or [orbit](#orbit) a particular location, and [return/RTL](#rtl).
+- Switch between a map view and a video view (if available)
+- Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-![비행 뷰](../../../assets/fly/fly_view_overview.jpg)
+![Fly View](../../../assets/fly/fly_view_overview.jpg)
 
-## UI 개요
+## UI Overview
 
-위의 스크린샷은 비행 화면의 주요 요소를 나타냅니다.
+The screenshot above shows the main elements of the fly view:
 
-- **지도:** 연결된 모든 기체의 위치와 현재 차량의 임무를 표시합니다.
-  - 지도를 드래그하여 이동할 수 있습니다(일정 시간이 지나면 지도가 자동으로 중앙에 위치함).
-  - 비행 후에는 지도를 클릭하여 [이동](#goto) 또는 [궤도](#orbit) 위치를 설정할 수 있습니다.
-- **비행 툴바:** 센서(GPS, 배터리, RC 제어) 및 차량 상태(비행 모드, 무장/해제 상태)에 대한 주요 상태 정보.
-  - 더 자세히 보려면 센서 표시기를 선택하십시오.
-  - 새 모드를 선택하려면 _비행 모드_ 텍스트(예: "Hold")를 누르십시오. 모든 모드를 사용할 수 있는 것은 아닙니다.
-  - 시동 상태를 전환하려면 _시동/시동 해제_ 텍스트를 클릭하십시오. 비행중에 이 텍스트를 누르면 *비상 정지*를 할 수 있습니다.
-- **비행 도구:** 다음과 같은 목적으로 사용할 수 있습니다:
-  - 이륙과 착륙을 전환합니다.
-  - 현재 작업(예: 착륙 또는 미션)을 일시 중지하거나 재시작합니다.
-  - 안전 복귀(RTL 또는 복귀라고도 함).
-  - _작업_ 버튼은 현재 상태에 대한 적절한 옵션을 제공합니다(이 옵션은 *확인 슬라이더*와 중첩됨). 조치에는 고도 변경과 미션 지속을 포함됩니다.
-  - [실행 전 체크리스트](#preflight_checklist)를 활성화합니다(도구 옵션은 기본적으로 비활성화되어 있음).
-- **[계측기 패널](#instrument_panel):** 텔레메트리, 카메라, 비디오, 시스템 상태 및 진동을 포함한 기체 정보를 표시하는 다중 페이지 위젯입니다.
-- **[동영상/전환기](#video_switcher):** 창에서 비디오 또는 지도를 전환합니다.
-  - 요소를 눌러 _동영상_ 및 *지도*를 전경으로 전환합니다.
-  - *QGroundControl*은 UDP 프로토콜을 이용하여 RTP 및 RTSP 비디오를 스트리밍합니다. 또한, 직접 연결된 UVC 장치를 지원합니다. QGroundControl 비디오 지원은 [비디오 README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md)을 참고하십시오.
-  - [텔레메트리 오버레이](../fly_view/video_overlay.md)가 자막 파일로 자동 생성됩니다.
-- **확인 슬라이더:** 요청된 작업을 확인하는 슬라이더입니다. 슬라이드하여 작동을 시작합니다. 취소하려면 **X**를 클릭하십시오.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+  - You can drag the map to move it around (the map automatically re-centres after a certain amount of time).
+  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
+- **Fly Toolbar:** Key status information for sensors (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
+  - Select the sensor indicators to view more detail.
+  - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
+    Not every mode may be available.
+  - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem).
+    Select the text when the background is amber or red to find out the cause of any preflight issues (QGC 4.2.0 and later).
+    You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
+- **Fly tools:** You can use these to:
+  - Toggle between takeoff/land.
+  - Pause/restart the current operation (e.g. landing, or the mission).
+  - Safety return (also known as RTL or Return).
+  - The _Action_ button offers other appropriate options for the current state (these overlay the _Confirmation Slider_).
+    Actions include changing the altitude or continuing a mission.
+  - Enable the [preflight checklist](#preflight_checklist) (tool option disabled by default).
+- **[Instrument Panel](#instrument_panel):** A widget that displays vehicle telemetry.
+- **Attitude/Compass**: A widget that provides virtual horizon and heading information.
+- **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **[Video/Switcher](#video_switcher):** Toggle between video or map in a window.
+  - Press the element to switch _Video_ and _Map_ to foreground.
+  - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
+    It also supports directly connected UVC devices.
+    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
+  - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
+- **Confirmation Slider:** Context sensitive slider to confirm requested actions.
+  Slide to start operation. Press **X** to cancel.
 
-기본적으로 표시되지 않거나 특정 조건에서만 표시되는 다른 요소들 많습니다. 예를 들어, 다중 기체 선택기는 여러 대의 기체가 연결된 경우에만 표시되며, 비행 전 체크리스트 도구 버튼은 적절한 설정이 활성화된 경우에만 표시됩니다.
+There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
+For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
 
-## 계기판 {#instrument_panel}
+## Instrument Panel (Telemetry) {#instrument\_panel}
 
-계기판은 텔레메트리, 카메라, 비디오, 시스템 상태 및 진동 정보를 포함하여 현재 기체 정보를 표시하는 다중 페이지 위젯입니다.
+The instrument panel displays telemetry information about the current vehicle.
 
-기본 페이지에는 기체의 텔레메트리 정보가 표출됩니다. 오른쪽 상단의 드롭다운 메뉴를 사용하여 다른 옵션을 선택할 수 있습니다.
+![Instrument Panel - for values/telemetry](../../../assets/fly/instrument_panel/instrument_panel_default_values.png)
 
-### 값(텔레메트리)
+The default values include altitude (relative to the home location), horizontal and vertical speed, total flight time, and distance between vehicle and ground station.
 
-값 페이지에는 텔레메트리 정보가 표출됩니다. 기본적으로 고도(홈 위치 기준) 및 지면 속도입니다.
+You can configure where the information is displayed by hovering over the panel and selecting the left-side square tool.
+This toggles the position of the panel between bottom centre and right-centre.
 
-![계기 페이지 - 값/원격 측정용](../../../assets/fly/instrument_page_values.jpg)
+![Instrument Panel - hover for move/edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_move_edit.png)
 
-패널 왼쪽 상단의 작은 톱니바퀴 아이콘을 눌러 표시할 정보를 설정할 수 있습니다. 각 값은 보통 또는 "큰" 크기로 표시될 수 있습니다(큰 크기는 페이지의 행당 하나의 값만 표시하고 보통은 2를 표시함).
+You configure what information is display by selecting the edit/pencil icon.
+The grid will then display "+" and "-" icons that you can use to add or remove rows and columns (and the pencil icon is replaced by a "lock" icon that you can use to save the settings).
 
-![계기 페이지 - 값 설정](../../../assets/fly/instrument_page_values_settings.jpg)
+![Instrument Panel - add rows/columns](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_on.png)
 
-### 카메라 {#camera_instrument_page}
+Select a value to launch its "Value Display" editor.
+This allows you to change the icon, text, size, units and so on of the current telemetry value.
 
-카메라 페이지는 카메라를 설정하고 제어합니다. 비행 콘트롤러에 직접 연결된 카메라에 사용할 수 있는 유일한 옵션은 카메라 트리거입니다.
+![Instrument Panel - edit a value](../../../assets/fly/instrument_panel/instrument_panel_tools_edit_value.png)
 
-![계기 페이지 - 카메라용](../../../assets/fly/instrument_page_camera.jpg)
+The selection list on the top left is used to change the source of the telemetry.
+By default this is the vehicle, but you can use the selector to choose a particular sensor type.
 
-[MAVLink 카메라 프로토콜](https://mavlink.io/en/services/camera.html)을 지원하는 카메라에 연결하면, 사용 가능한 다른 카메라 서비스를 추가로 설정하고 사용할 수 있습니다. 예를 들어, 카메라가 비디오 모드를 지원하는 경우 정지 이미지 캡처와 비디오 모드 사이를 전환하고 녹화를 시작하고 중지할 수 있습니다.
+![Instrument Panel - value type](../../../assets/fly/instrument_panel/instrument_panel_edit_value_type.png)
 
-![계기 페이지 - 카메라 MAVLink 설정](../../../assets/fly/instrument_page_camera_mavlink.jpg)
+The selection list on the top right is used to select a particular telemetry value for the vehicle or sensor.
 
-고급 설정은 페이지 왼쪽 상단의 톱니바퀴 아이콘을 사용하여 변경할 수 있습니다.
+![Instrument Panel - value options](../../../assets/fly/instrument_panel/instrument_panel_edit_value_options.png)
 
-![계기 페이지 - 카메라 MAVLink 설정](../../../assets/fly/instrument_page_camera_mavlink_settings.jpg)
+### Camera {#camera\_instrument\_page}
 
-::: info
-표시되는 대부분의 설정은 카메라에 따라 차이가 납니다([MAVLink 카메라 정의 파일](https://mavlink.io/en/services/camera_def.html)에 정의되어 있음). 마지막에 몇 가지 일반적인 설정이 하드 코딩되어 있습니다: 사진 모드(단일/인터벌), 사진 간격(인터벌인 경우), 카메라 기본값 재설정(카메라에 재설정 명령 전송), 포맷(저장)
-:::
+The camera panel is used to capture still images and video, and to configure the camera.
 
-### 비디오 스트림 {#video_instrument_page}
+![Camera Panel](../../../assets/fly/camera_panel/camera_mavlink.png)
 
-비디오 페이지는 비디오 스트리밍을 활성화 하거나 비활성화 합니다. 활성화시에는 비디오 스트림을 시작하고, 그리드 오버레이를 활성화하고, 이미지가 화면에 맞는 방식을 변경하고, QGroundControl을 사용하여 로컬로 비디오를 녹화할 수 있습니다.
+The camera capture and configuration options depend on the connected camera.
+The configuration options are selected using the panel gear icon.
+The configuration for a simple autopilot-connected camera are shown below.
 
-![계기 페이지 - 비디오 스트림](../../../assets/fly/instrument_page_video_stream.jpg)
+![Camera Panel - minimal settings](../../../assets/fly/camera_panel/camera_settings_minimal.png)
 
-### 상태
+When connected to camera that supports the [MAVLink Camera Protocol](https://mavlink.io/en/services/camera.html) you can additionally configure and use other camera services that it makes available.
+For example, if your camera supports video mode you will be able to switch between still image capture and video mode, and start/stop recording.
 
-상태 페이지는 차량 내부 시스템의 상태를 표시합니다. 시스템이 비정상으로 변경되면 *QGroundControl*이 자동으로 이 페이지로 전환합니다.
-
-![계기 페이지 - 차량 건강](../../../assets/fly/instrument_page_health_good.jpg) ![계기 페이지 - 차량 상태 불량](../../../assets/fly/instrument_page_health_bad.jpg)
-
-### 진동
-
-진동 페이지는 현재 진동 수준과 클립 수를 표시합니다.
-
-![계기 페이지 - 진동 클립](../../../assets/fly/instrument_page_vibration.jpg)
-
-## 액션/태스크
-
-다음 섹션에서는 비행 화면에서 일반적인 작업 수행 방법을 설명합니다.
-
-::: info
-사용 가능한 옵션은 기체 유형과 현재 상태에 따라 달라집니다.
-:::
-
-### 비행 전 점검 사항 {#preflight_checklist}
-
-자동 비행 전 점검을 통하여 기체의 설정과 비행 안전 여부를 검사합니다.
-
-적검 항목을 사용하려면 [애플리케이션 설정 > 일반 > 비행 화면](../settings_view/general.md)로 이동하고 **비행 전 점검 항목 사용**을 선택하여 도구를 활성화합니다. 그러면, *비행 도구*에 도구가 추가됩니다. 점검 항목들을 열려면 클릭합니다.
-
-![비행 전 점검 리스트](../../../assets/fly/pre_flight_checklist.jpg)
-
-각 테스트 수행 후 UI에서 해당 테스트를 선택하여 완료로 표시합니다.
-
-### 시동 {#arm}
-
-::: tip
-일반적으로 *QGroundControl*에서는 기체의 시동을 명시적으로 걸 필요는 없습니다. 미션 수행이나 이륙시 자동으로 시동이 걸립니다.
-:::
-
-기체에 시동이 걸리면 이륙을 위하여 모터가 시동됩니다.
-
-기체에 시동을 걸려면 *비행 툴바*에서 **시동 해제**를 선택한 다음, 확인 슬라이드를 사용하십시오.
-
-![시동](../../../assets/fly/arm.jpg)
+![Camera Panel - MAVLink settings](../../../assets/fly/camera_panel/camera_settings_mavlink.png)
 
 ::: info
-일반적으로 몇 초 후에 기체가 이륙하지 않으면, 시동이 자동으로 해제됩니다.
-:::
+Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
 
-### 시동 끄기 {#disarm}
+> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
+> :::
 
-기체의 시동이 꺼지면, 모터는 정지합니다(기체를 안전한 상태로 변경함). 기체의 시동을 꺼려면 기체가 **착륙**하였을 때 *비행 도구 모음*에서 **시동**을 선택하십시오.
+### Video Stream {#video\_instrument\_page}
 
-![시동 끄기](../../../assets/fly/disarm.jpg)
+The video page is used to enable/disable video streaming.
+When enabled, you can start/stop the video stream, enable a grid overlay, change how the image fits the screen, and record the video locally with QGC.
 
-::: info
-비행 중 기체의 시동을 꺼는 것을 [비상 정지](#emergency_stop)라고 합니다.
-:::
+![Instrument Page - Video Stream](../../../assets/fly/instrument_page_video_stream.jpg)
 
-### 비상 정지 {#emergency_stop}
+## Actions/Tasks
 
-비상 정지는 비행 중 기체의 시동을 꺼는 것과 동일합니다. 기체가 충돌할 수 있습니다!
-
-비행 중인 기체의 시동을 꺼려면 *비행 도구 모음*에서 **시동**을 선택합니다.
-
-![비상 정지](../../../assets/fly/emergency_stop.jpg)
-
-### 이륙 {#takeoff}
-
-::: tip
-멀티콥터의 미션을 시작하면, *QGroundControl*에서 자동으로 이륙 단계를 수행합니다.
-:::
-
-이륙 절차(착륙 후):
-
-1. *비행 도구*에서 **이륙** 버튼을 클릭합니다(이륙 후 **착륙** 버튼으로 전환됨).
-2. 오른쪽 수직 슬라이더에서 이륙 고도를 설정할 수 있습니다.
-3. 슬라이더를 사용하여 이륙 실행을 확인합니다.
-
-![이륙](../../../assets/fly/takeoff.jpg)
-
-### 착륙 {#land}
-
-비행 중에는 언제든 지 현재 위치에 착륙 가능합니다.
-
-1. *비행 도구*에서 **착륙** 버튼을 클릭합니다(착륙 시 **이륙** 버튼으로 전환됨).
-2. 슬라이더를 사용하여 착륙 실행을 확인합니다.
-
-![착륙](../../../assets/fly/land.jpg)
-
-### 착륙지 복귀(RTL)/복귀
-
-비행 중 언제든 지 "안전 지점"으로 복귀할 수 있습니다.
-
-1. *비행 도구*에서 **RTL** 버튼을 클릭합니다.
-2. 슬라이더를 사용하여 착륙지 복귀 실시를 확인합니다.
-
-![출발지복귀](../../../assets/fly/rtl.jpg)
+The following sections describe how to perform common operations/tasks in the Fly View.
 
 ::: info
-기체는 일반적으로 "홈"(이륙) 위치와 착륙 지점으로 복귀합니다. 이 동작은 기체 유형과 설정에 따라 차이가 날 수 있습니다. 예를 들어, 집결지나 임무 착륙을 대체 반환 목표로 사용할 수 있습니다.
+Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### 고도 변경 {#change_altitude}
+### Pre Flight Checklist {#preflight\_checklist}
 
-미션 수행중을 제외하고는, 비행 중 고도 변경이 가능합니다.
+An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
 
-1. *비행 도구*에서 **액션** 버튼을 클릭합니다.
-2. 대화상자에서 _고도 변경_ 작업을 선택합니다.
+To view the checklist, first enable the tool by navigating to [Application Settings > General > Fly View](../settings_view/general.md) and selecting the **Use preflight checklist** checkbox.
+The tool will then be added to the _Flight Tools_.
+Press it to open the checklist:
 
-![임무 계속/고도 변경 작업](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+![Pre Flight Checklist](../../../assets/fly/pre_flight_checklist.jpg)
 
-3. 수직 슬라이더를 원하는 고도로 이동한 다음 확인 슬라이더를 끌어 작업을 실행합니다.
+Once you have performed each test, select it on the UI to mark it as complete.
 
-![고도 변경](../../../assets/fly/change_altitude.jpg)
+### Arming and Preflight Checks {#arm}
 
-### 위치 이동 {#goto}
+Arming a vehicle starts the motors in preparation for takeoff.
+You will only be able to arm the vehicle if it is safe and ready to fly.
 
-이륙후 특정 위치 이동을 지정할 수 있습니다.
+:::tip
+Generally, if the vehicle is ready to arm, _QGroundControl_ will arm the vehicle for you if you start a mission or takeoff.
+:::
 
-1. 지도에서 기체의 이동 지점을 왼쪽 클릭 후, 팝업에서 **위치 이동**을 선택합니다.
+The vehicle is ready to fly in all modes if the status text says "Ready to Fly" and the background is green.
 
-![계속 또는 선회](../../../assets/fly/goto_or_orbit.jpg)
+![Vehicle state - ready to fly green/ready background](../../../assets/fly/vehicle_states/ready_to_fly_ok.png)
 
-2. 위치는 확인 슬라이더와 함께 지도에 표시됩니다.
+If the background is amber then it is ready to take off in the current mode, but may not be able to switch to other modes.
+If the background is red and the text is "Not Ready" then you will not be able to arm in the current mode.
 
-![계속 확인](../../../assets/fly/goto.jpg)
+![Vehicle state - ready to fly amber/warning background](../../../assets/fly/vehicle_states/ready_to_fly_warning.png)
+![Vehicle state - not ready](../../../assets/fly/vehicle_states/not_ready.png)
 
-3. 준비가 되면 슬라이더를 끌어 작업을 시작합니다(또는 **X** 아이콘을 눌러 취소).
+From QGC 4.2.0 (at time of writing, a daily build) you can find out the exact cause of the warning or error, and possible solutions, by pushing the status text.
+
+This launches the preflight arming checks popup with a list of all preflight warnings.
+The toggle on the right expands each error with additional information and possible solutions.
+
+![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
+
+Once each issue is resolved it will disappear from the UI.
+When all issues blocking arming have been removed you can use the arm button to display the arming confirmation slider, and arm the vehicle (or you can just take off - note that the vehicles will (by default) disarm automatically if you do not take off after a few seconds.
+
+![Arm confirmation slider](../../../assets/fly/vehicle_states/arming_slider.png)
 
 ::: info
-위치 이동 지점은 기체에서 1km 이내로 설정하여야 합니다(QGroundControl에 하드 코딩됨).
-:::
+The status text also displays when flying.
 
-### 선회 비행 {#orbit}
+> ![Vehicle state - armed](../../../assets/fly/vehicle_states/armed.png) > ![Vehicle state - flying](../../../assets/fly/vehicle_states/flying.png)
+>
+> The arming checks UI will open even when flying, allowing you to emergency disarm.
+> :::
 
-이륙 후 특정 위치 선회를 지정할 수 있습니다.
+### Disarm {#disarm}
 
-1. 지도(원하는 궤도의 중심 부근)를 마우스 왼쪽 버튼 클릭후, 팝업에서 **위치에서 궤도**를 선택합니다.
+Disarming the vehicle when landed stops the motors (making the vehicle safe).
 
-![계속 또는 선회](../../../assets/fly/goto_or_orbit.jpg)
+Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
 
-2. 예정 궤도는 확인 슬라이더와 함께 지도에 표시됩니다.
+If needed, you can do so from the Arming Preflight Checks UI.
 
-![선회 확인](../../../assets/fly/orbit.jpg)
+![Disarming](../../../assets/fly/vehicle_states/arming_ui_landed_disarm.png)
 
-- 중심 마커를 선택하고 끌어서 궤도 위치를 이동합니다.
-- 외부 원의 점을 선택하고 끌어 궤도 반경을 변경합니다.
+You will then need to use the disarming slider.
 
-3. 준비가 되면 슬라이더를 끌어서 작업을 시작합니다(또는 **X** 아이콘을 눌러 취소).
-
-### 일시 중지
-
-이륙, 착륙, RTL, 임무 실행 및 위치 궤도를 포함한 대부분의 작업을 일시 중지할 수 있습니다. 일시 정지 시 기체의 동작은 기체 유형에 따라 달라집니다. 일반적으로 멀티콥터는 호버링을 하고, 고정익은 선회 비행을합니다.
-
-::: tip
-_위치 이동_ 작업은 일시 중지가 불가능 합니다.
-:::
-
-일시 중지하려면:
-
-1. *비행 도구*에서 **일시중지** 버튼을 클릭합니다.
-2. 선택적으로 오른쪽 수직 슬라이더를 사용하여 새 고도를 설정합니다.
-3. 슬라이더를 사용하여 일시 중지를 확인합니다.
-
-![일시 중지](../../../assets/fly/pause.jpg)
-
-### 미션
-
-#### 미션 시작 {#start_mission}
-
-기체는 착륙후 미션를 시작할 수 있습니다(미션 시작 확인 슬라이더는 대부분 기본적으로 표시됩니다).
-
-착륙후 임무를 시작하려면:
-
-1. *비행 도구*에서 **액션** 버튼을 클릭합니다.
-2. 대화 상자에서 _미션 시작_ 작업을 선택합니다.
-
-![미션 액션 시작](../../../assets/fly/start_mission_action.jpg)
-
-      (확인 슬라이더를 표시하기 위하여)
-
-
-3. 확인 슬라이더가 나타나면 드래그하여 미션을 시작합니다.
-
-![미션 시작](../../../assets/fly/start_mission.jpg)
-
-#### 미션 지속 {#continue_mission}
-
-비행 중일 때 _다음_ 웨이포인트에서 미션을 *지속*할 수 있습니다(이륙 후에 _미션 지속_ 확인 슬라이더가 기본적으로 표시되는 경우가 많습니다).
+![disarm slider](../../../assets/fly/vehicle_states/disarm_slider.png)
 
 ::: info
-미션 지속과 [미션 재개](#resume_mission)는 차이가 있습니다. 지속은 일시 중지되었거나 이륙했기 때문에, 이륙 미션 명령을 놓친 미션를 다시 시작시에 사용합니다. 미션 재개는 착륙지 복귀를 사용하였거나 미션 중간 착륙시 사용합니다(예: 배터리 교체). 그런 다음 다음 미션 항목을 지속할 수 있습니다(즉, 미션에서 지속하는 것이 아니라 미션에 있었던 위치로 이동합니다).
+Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
 :::
 
-현재 임무를 계속할 수 있습니다(이미 임무에 참여하지 않는 한!):
+### Emergency Stop {#emergency\_stop}
 
-1. *비행 도구*에서 **액션** 버튼을 클릭합니다.
-2. 대화 상자에서 _임무 지속_ 작업을 선택합니다.
+Emergency stop is effectively the same as disarming the vehicle while it is flying.
+Your vehicle will crash!
 
-![임무 계속/고도 변경 작업](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+If needed, you can do so from the Arming Preflight Checks UI.
 
-3. 확인 슬라이더를 끌어 임무를 지속하십시오.
+![Disarming when flying](../../../assets/fly/vehicle_states/arming_ui_flying_disarm.png)
 
-![미션 계속](../../../assets/fly/continue_mission.jpg)
+You will then need to use the emergency disarming slider.
 
-#### 임무 재개 {#resume_mission}
+![Emergency disarm slider](../../../assets/fly/vehicle_states/emergency_disarm_slider.png)
 
-*임무 재개*는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](#land)을 수행 후 임무를 재개합니다 (예를 들어 배터리 교체).
+### Takeoff {#takeoff}
 
-::: info
-배터리를 교체하는 경우에는 배터리를 분리한 후 기체에서 QGroundControl를 분리하지 **마십시오**. 새 배터리를 교체하면 *QGroundControl*에서 차량을 다시 감지하고 자동으로 연결을 복원합니다.
+:::tip
+If you are starting a mission for a multicopter, _QGroundControl_ will automatically perform the takeoff step.
 :::
 
-착륙 후에는 _비행 계획 완료_ 대화상자가 표시되며, 이 대화상자에서는 계획을 기체에서 제거하거나, 기체에 그대로 두거나, 또는 통과한 마지막 웨이포인트에서 임무를 재개합니다.
+To takeoff (when landed):
 
-![임무 재개](../../../assets/fly/resume_mission.jpg)
+1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
+2. Optionally set the takeoff altitude in the right-side vertical slider.
+3. Confirm takeoff using the slider.
 
-임무 재개를 선택하면 *QGroundControl*에서 임무를 재구성하고 차량에 업로드합니다. 그런 다음 _임무 시작_ 슬라이더를 사용하여 임무를 계속 수행합니다.
+![takeoff](../../../assets/fly/takeoff.jpg)
 
-아래 이미지는 위의 귀환 이후 재건된 임무를 나타냅니다.
+### Land {#land}
 
-![재건 임무 재개](../../../assets/fly/resume_mission_rebuilt.jpg)
+You can land at the current position at any time while flying:
 
-::: info
-임무는 임무의 다음 단계에 영향을 미치는 마지막 웨이포인트에 여러 항목이 있을 수 있으므로, 기체가 실행한 마지막 미션 항목에서 단순히 재개할 수 없습니다(예: 속도 명령 또는 카메라 제어 명령). 대신 *QGroundControl*은 비행한 마지막 임무 항목부터 시작하여 임무를 재구성하고 자동으로 임무 앞에 관련 명령을 추가합니다.
+1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
+2. Confirm landing using the slider.
+
+![land](../../../assets/fly/land.jpg)
+
+### RTL/Return
+
+Return to a "safe point" at any time while flying:
+
+1. Press the **RTL** button in the _Fly Tools_.
+2. Confirm RTL using the slider.
+
+![rtl](../../../assets/fly/rtl.jpg)
+
+:::info
+Vehicles commonly return to the "home" (takeoff) location and land.
+This behaviour depends on the vehicle type and configuration.
+For example, rally points or mission landings may be used as alternative return targets.
 :::
 
-#### 착륙 후 임무 프롬프트 제거 {#resume_mission_prompt}
+### Change Altitude {#change\_altitude}
 
-임무가 완료후 기체가 착륙한 다음 시동이 해제되면 기체의 임무를 제거하라는 메시지가 표시됩니다. 이는 이전의 임무가 의도치 않게 기체에 저장되어, 예기치 않은 동작을 초래하는 문제를 방지합니다.
+You can change altitude while flying, except when in a mission:
 
-### 비디오 출력 {#video_switcher}
+1. Press the **Action** button on the _Fly Tools_
 
-비디오 스트리밍이 활성화되면, *QGroundControl*은 지도 왼쪽 하단의 "비디오 전환기 창"에 현재 선택된 기체의 비디오 스트림을 표시합니다. 아무 곳이나 스위처를 눌러 _동영상_ 및 *지도*를 전경으로 전환할 수 있습니다(아래 이미지에서 동영상은 전경에 표시됨).
+2. Select the _Change Altitude_ action from the dialog.
 
-![비디오 스트림 녹화](../../../assets/fly/video_record.jpg)
+   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
-::: info
-비디오 스트리밍은 [애플리케이션 설정 > 일반 탭 > 비디오](../settings_view/general.md#video)에서 활성화하거나 설정할 수 있습니다.
+3. Move the vertical slider to the desired altitude, then drag the confirmation slider to start the action.
+
+   ![Change altitude](../../../assets/fly/change_altitude.jpg)
+
+### Goto Location {#goto}
+
+After taking off you can specify that you want to fly to a particular location.
+
+1. Left click/Press on the map where you want the vehicle to move and select **Go to location** on the popup.
+
+![Goto or orbit](../../../assets/fly/goto_or_orbit.jpg)
+
+1. The location will be displayed on the map, along with a confirmation slider.
+
+   ![Goto confirmation](../../../assets/fly/goto.jpg)
+
+2. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
+
+:::info
+Goto points must be set within 1 km of the vehicle (hard-coded in QGC).
 :::
 
-스위처의 컨트롤을 사용하여, 비디오 디스플레이를 추가로 설정할 수 있습니다.
+### Orbit Location {#orbit}
 
-    ![Video Pop](../../../assets/fly/video_pop.jpg)
+After taking off you can specify that you want to orbit a particular location.
 
-- 오른쪽 상단 모서리에 있는 아이콘을 끌어 스위처의 크기를 조정합니다.
-- 왼쪽 하단의 토글 아이콘을 눌러 스위처를 숨깁니다.
-- 왼쪽 상단 모서리에 있는 아이콘을 눌러서 비디오 스위처 창을 분리합니다. (일단 분리되면 운영체제의 다른 창과 마찬가지로 창을 이동하고 크기를 조정할 수 있습니다.) 분리된 창을 닫으면 스위처가 QGroundControl의 비행 화면으로 다시 전환됩니다.
+1. Left click/Press on the map (near the centre of your desired orbit) and select **Orbit at location** on the popup.
 
-### 동영상 녹화
+![Goto or orbit](../../../assets/fly/goto_or_orbit.jpg)
 
-카메라와 기체에서 지원하는 경우 *QGroundControl*에서 카메라 자체의 동영상 녹화를 시작하거나 중지할 수 있습니다. *QGroundControl*은 또한 비디오 스트림을 녹화하고 로컬에 저장할 수 있습니다.
+1. The proposed orbit will be displayed on the map, along with a confirmation sider.
 
-::: tip
-카메라에 저장된 동영상의 품질은 훨씬 높을 수 있지만, 지상국의 녹화 용량은 훨씬 더 클 수 있습니다.
+   ![Orbit confirmation](../../../assets/fly/orbit.jpg)
+
+   - Select and drag the central marker to move the orbit location.
+   - Select and drag the dot on the outer circle to change the orbit radius
+
+2. When you're ready, drag the slider to start the operation (or press the **X** icon to cancel it).
+
+### Pause
+
+You can pause most operations, including taking off, landing, RTL, mission execution, orbit at location.
+The vehicle behaviour when paused depends on the vehicle type; typically a multicopter will hover, and a fixed wing vehicle will circle.
+
+:::info
+You cannot pause a _Goto location_ operation.
 :::
 
-#### 비디오 스트림 녹화(GCS에서)
+To pause:
 
-비디오 스트림 녹화는 [비디오 스트림 도구 페이지](#video_instrument_page)에서 제어합니다. 새 비디오 녹화를 시작하려면, 빨간색 원을 누르십시오(원을 누를 때마다 새 비디오 파일이 생성됨). 녹화가 진행되는 동안 원이 빨간색 사각형으로 바뀝니다.
+1. Press the **Pause** button in the _Fly Tools_.
+2. Optionally set a new altitude using the right-side vertical slider.
+3. Confirm the pause using the slider.
 
-![비디오 스트림 녹화](../../../assets/fly/video_record.jpg)
+![pause](../../../assets/fly/pause.jpg)
 
-비디오 스트림 녹화는 [애플리케이션 설정 > 일반 탭](../settings_view/general.md)에서 설정합니다.
+### Missions
 
-- [동영상 녹화](../settings_view/general.md#video-recording) - 녹화 파일 형식 및 저장 제한을 지정합니다. **참고** 동영상은 기본적으로 Matroska 형식(.mkv)으로 저장됩니다. 이 형식은 오류 발생으로 인한 손상에 대해 상대적으로 강건합니다.
-- [Miscellaneous](../settings_view/general.md#miscellaneous) - 스트리밍된 동영상은 **애플리케이션 로드/저장 경로** 아래에 저장됩니다.
+#### Start Mission {#start\_mission}
 
-::: tip
-저장된 동영상에는 동영상 스트림 자체만 포함됩니다. QGroundControl 애플리케이션을 포함하여 비디오를 녹화하려면 별도의 화면 녹화 프로그램을 사용하여야 합니다.
+You can start a mission when the vehicle is landed (the start mission confirmation slider is often displayed by default).
+
+To start a mission from landed:
+
+1. Press the **Action** button on the _Fly Tools_
+
+2. Select the _Start Mission_ action from the dialog.
+
+   ![Start mission action](../../../assets/fly/start_mission_action.jpg)
+
+   (to display the confirmation slider)
+
+3. When the confirmation slider appears, drag it to start the mission.
+
+   ![Start mission](../../../assets/fly/start_mission.jpg)
+
+#### Continue Mission {#continue\_mission}
+
+You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation slider is often displayed by default after you takeoff).
+
+:::info
+Continue and [Resume mission](#resume_mission) are different!
+Continue is used to restart a mission that has been paused, or where you have taken off, so you've already missed a takeoff mission command.
+Resume mission is used when you've used a RTL or landed midway through a mission (e.g. for a battery change) and then wish to continue the next mission item (i.e. it takes you to where you were up to in the mission, rather than continuing from your place in the mission).
 :::
 
-#### 카메라 비디오 녹화
+You can continue the current mission while (unless already in a mission!):
 
-[카메라 기기 페이지](#camera_instrument_page)를 사용하여 _카메라 자체에서_ 동영상 녹화를 시작하거나 중지합니다. 먼저 비디오 모드로 전환한 다음, 빨간색 버튼을 클릭하여 녹화를 시작합니다.
+1. Press the **Action** button on the _Fly Tools_
 
-![계기 페이지 - 카메라 MAVLink 설정](../../../assets/fly/instrument_page_camera_mavlink.jpg)
+2. Select the _Continue Mission_ action from the dialog.
+
+   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+
+3. Drag the confirmation slider to continue the mission.
+
+   ![Continue Mission](../../../assets/fly/continue_mission.jpg)
+
+#### Resume Mission {#resume\_mission}
+
+_Resume Mission_ is used to resume a mission after performing an [RTL/Return](#rtl) or [Land](#land) from within a mission (in order, for example, to perform a battery change).
+
+:::info
+If you are performing a battery change, **do not** disconnect QGC from the vehicle after disconnecting the battery.
+After you insert the new battery _QGroundControl_ will detect the vehicle again and automatically restore the connection.
+:::
+
+After landing you will be prompted with a _Flight Plan complete_ dialog, which gives you the option to remove the plan from the vehicle, leave it on the vehicle, or to resume the mission from the last waypoint that was traveled through.
+
+![Resume Mission](../../../assets/fly/resume_mission.jpg)
+
+If you select to resume the mission, then _QGroundControl_ will rebuild the mission and upload it to the vehicle.
+Then use the _Start Mission_ slider to continue the mission.
+
+The image below shows the mission that was rebuilt after the Return shown above.
+
+![Resume Rebuilt Mission](../../../assets/fly/resume_mission_rebuilt.jpg)
+
+:::info
+A mission cannot simply resume from the last mission item that the vehicle executed, because there may be multiple items at the last waypoint that affect the next stage of the mission (e.g. speed commands or camera control commands).
+Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
+:::
+
+#### Remove Mission Prompt After Landing {#resume\_mission\_prompt}
+
+You will be prompted to remove the mission from the vehicle after the mission completes and the vehicle lands and disarms.
+This is meant to prevent issues where stale missions are unknowingly left on a vehicle, potentially resulting in unexpected behavior.
+
+### Display Video {#video\_switcher}
+
+When video streaming is enabled, _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
+
+![Video Stream Record](../../../assets/fly/video_record.jpg)
+
+:::info
+Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
+:::
+
+You can further configure video display using controls on the switcher:
+
+![Video Pop](../../../assets/fly/video_pop.jpg)
+
+- Resize the switcher by dragging the icon in the top right corner.
+- Hide the switcher by pressing the toggle icon in the lower left.
+- Detach the video switcher window by pressing on the icon in its top left corner
+  (once detached, you can move and resize the window just like any other in your OS).
+  If you close the detached window the switcher will re-lock to the QGC Fly view.
+
+### Record Video
+
+If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.
+
+:::tip
+Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
+:::
+
+#### Record Video Stream (on GCS)
+
+Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
+Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
+
+![Video Stream Record](../../../assets/fly/video_record.jpg)
+
+Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
+
+- [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
+
+  ::: info
+  Videos are saved in Matroska format (.mkv) by default.
+  This format is relatively robust against corruption in case of errors.
+  :::
+
+- [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
+
+:::tip
+The stored video includes just the video stream itself.
+To record video with QGroundControl application elements displayed, you should use separate screen recording software.
+:::
+
+#### Record Video on Camera
+
+Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
+First toggle to video mode, then select the red button to start recording.
+
+![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)
