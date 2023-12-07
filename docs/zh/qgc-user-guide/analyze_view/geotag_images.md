@@ -1,11 +1,13 @@
-# GeoTag 图像（分析视图）
+# GeoTag Images (Analyze View)
 
-*GeoTag 图像*界面（**分析Analyze > GeoTag Images**）允许您使用飞行日志中的资料信息，从执行任务中查调地理标签图像。
+The _GeoTag Images_ screen (**Analyze > GeoTag Images**) allows you to geotag images from a survey mission using information in the flight log.
 
-::: info
-此功能仅适用于 _PX4_ 飞行日志。 ArduPilot 不支持。
+:::info
+This feature only works with _PX4_ flight stack logs.
+ArduPilot is not supported.
 :::
 
-![分析试图 - GeoTag 图像](../../../assets/analyze/geotag_images.jpg)
+![Analyze View GeoTag Images](../../../assets/analyze/geotag_images.jpg)
 
-使用所提供的功能按钮，选取地理标记图像的日志文档，图片目录和输出目录(可选项)。 点击 **Start Tagging** 生成地理标记的图像。
+Select the log file, image directory and (optionally) output directory for geotagged images using the buttons provided.
+Click **Start Tagging** to generate the geotagged images.
