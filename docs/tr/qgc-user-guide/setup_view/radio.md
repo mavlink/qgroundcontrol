@@ -1,39 +1,40 @@
-# Radyo Kurulumu
+# Radio Setup
 
-Radyo Kurulumu, ana vericinizin konum kontrol çubuklarını(dönüş, eğim, sapma, gaz kolu) kanallara eşlemesini yapılandırmak ve diğer tüm verici kontrolleri / RC kanalları için minimum, maksimum, trim ve geri ayarlarını kalibre etmek için kullanılır.
+Radio Setup is used to configure the mapping of your main transmitter attitude control sticks (roll, pitch, yaw, throttle) to channels, and to calibrate the minimum, maximum, trim and reverse settings for all other transmitter controls/RC channels.
 
-Ana kalibrasyon süreci PX4 ve ArduPilot için aynıdır (bazı ek uçuş kontrol cihazına özgü ayarlar / araçlar [ aşağıda ayrıntılı](#additional-radio-setup) olarak açıklanmıştır).
+The main calibration process is identical for PX4 and ArduPilot (a number of additional flight-controller specific settings/tools are [detailed below](#additional-radio-setup)).
 
-::: info
-Radyo sistemini kalibre etmeden önce, alıcı ve vericinin bağlanması gerekir. Bir alıcı ve verici çiftini bağlama işlemi donanıma özeldir ( talimatlar için kılavuzunuza bakın).
+:::info
+Before you can calibrate the radio system the receiver and transmitter must be connected/bound. The process for binding a transmitter and receiver pair is hardware specific (see your manual for instructions).
 :::
 
-## Kalibrasyonun Yapılması
+## Performing the Calibration
 
-Kalibrasyon işlemi basittir - çubukları ekranın sağ üst köşesindeki verici diyagramında gösterilen belirli bir düzende hareket ettirmeniz istenecektir. Kalibrasonu tamamlamak için talimatları izlemeniz yeterlidir.
+The calibration process is straightforward - you will be asked to move the sticks in a specific pattern that is shown on the transmitter diagram on the top right of the screen. Simply follow the instructions to complete calibration.
 
-Radyoyu kalibre etmek için:
+To calibrate the radio:
 
-1.  Üstteki araç çubuğundan **dişli** simgesini (Vechicle Setup), daha sonra kenar çubuğundan **Radio**'u seçin.
-2.  RC vericinizi açın.
-3.  Kalibrasyonu başlatmak için **OK**'a basın.
+1. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Radio** in the sidebar.
 
-        ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
+2. Turn on your RC transmitter.
 
-        ::: info
+3. Press **OK** to start the calibration.
 
-    Yukardaki görüntü PX4 Pro içindir. Her iki aygıt yazılımı için kalibrasyon/üst bölüm aynıdır, ancak _ Ek Radyo Ayarları _ bölümü farklı olacaktır.
-    :::
+   ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
 
-4.  Verici yapılandırmanıza uyan radyo _ verici modunu _ seçin (bu, _ QGroundControl _ 'ın kalibrasyon sırasında izlemeniz için doğru çubuk pozisyonlarını görüntülemesini sağlar).
+   ::: info
+   The image above is for PX4 Pro. Calibration/top section is the same for both firmware, but the _Additional Radio setup_ section will differ.
+   :::
 
-    ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)
+4. Set the _transmitter mode_ radio button that matches your transmitter configuration (this ensures that _QGroundControl_ displays the correct stick positions for you to follow during calibration).
 
-5.  Çubukları metinde (ve verici görüntüsünde) belirtilen pozisyonlara hareket ettirin. Çubuklar doğru pozisyondayken ** Next ** tuşuna basın. Tüm pozisyonlar için tekrar edin.
+   ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)
 
-6.  When prompted, move all other switches and dials through their full range (you will be able to observe them moving on the _Channel Monitor_).
+5. Move the sticks to the positions indicated in the text (and on the transmitter image). Press **Next** when the sticks are in position. Repeat for all positions.
 
-7.  Press **Next** to save the settings.
+6. When prompted, move all other switches and dials through their full range (you will be able to observe them moving on the _Channel Monitor_).
+
+7. Press **Next** to save the settings.
 
 Radio calibration is demonstrated in the [PX4 setup video here](https://youtu.be/91VGmdSlbo4?t=4m30s) (youtube).
 
@@ -52,7 +53,9 @@ Before you can calibrate the radio system the receiver and transmitter must be c
 To bind a Spektrum transmitter/receiver:
 
 1. Select the **Spektrum Bind** button
+
 2. Select the radio button for your receiver
+
 3. Press **OK**
 
    ![Spektrum Bind](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
@@ -66,7 +69,9 @@ This setting is used to copy the manual trim settings from your radio transmitte
 To copy the trims:
 
 1. Select **Copy Trims**.
+
 2. Center your sticks and move throttle all the way down.
+
 3. Press **Ok**.
 
    ![Copy Trims](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
@@ -90,7 +95,7 @@ The flight controller will pass through the unmodified values from the specified
 
 Tuning channels allow you to map a transmitter tuning knob to a parameter (so that you can dynamically modify a parameter from your transmitter).
 
-::: tip
+:::tip
 This feature is provided to enable manual in-flight tuning.
 :::
 
@@ -106,8 +111,11 @@ To set up tuning channels:
 To map a PARAM tuning channel to a parameter:
 
 1. Open the **Parameters** sidebar.
+
 2. Select the parameter to map to your transmitter (this will open the _Parameter Editor_).
+
 3. Check the **Advanced Settings** checkbox.
+
 4. Click the **Set RC to Param...** button (this will pop-up the foreground dialog displayed below)
 
    ![Map tuning channels to parameters](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
@@ -115,8 +123,9 @@ To map a PARAM tuning channel to a parameter:
 5. Select the tuning channel to map (1, 2 or 3) from the _Parameter Tuning ID_ selection list.
 
 6. Press **OK** to close the dialog.
+
 7. Press **Save** to save all changes and close the _Parameter Editor_.
 
-::: tip
+:::tip
 You can clear all parameter/tuning channel mappings by selecting menu **Tools > Clear RC to Param** at the top right of the _Parameters_ screen.
 :::
