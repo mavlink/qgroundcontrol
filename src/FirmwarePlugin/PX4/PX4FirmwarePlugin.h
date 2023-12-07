@@ -73,6 +73,8 @@ public:
     bool                supportsNegativeThrust          (Vehicle* vehicle) override;
     QString             getHobbsMeter                   (Vehicle* vehicle) override;
     bool                hasGripper                      (const Vehicle* vehicle) const override;
+    QVariant            mainStatusIndicatorExpandedItem(const Vehicle* vehicle) const override;
+    const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
 
 protected:
     typedef struct {

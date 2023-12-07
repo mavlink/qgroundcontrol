@@ -9,14 +9,13 @@ import QGroundControl.ScreenTools
 TextField {
     id:                 control
     color:              qgcPal.textFieldText
-    implicitHeight:     ScreenTools.implicitTextFieldHeight
     activeFocusOnPress: true
     antialiasing:       true
     font.pointSize:     ScreenTools.defaultFontPointSize
     font.family:        ScreenTools.normalFontFamily
     inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
-                          Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
-                          Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
+                            Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
+                            Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
     leftPadding:        _marginPadding
     rightPadding:       _marginPadding + unitsHelpLayout.width
     topPadding:         _marginPadding
@@ -58,6 +57,7 @@ TextField {
         color:          qgcPal.textField
         implicitWidth:  ScreenTools.implicitTextFieldWidth
         implicitHeight: ScreenTools.implicitTextFieldHeight
+        implicitWidth:  ScreenTools.implicitTextFieldWidth
 
         RowLayout {
             id:                     unitsHelpLayout

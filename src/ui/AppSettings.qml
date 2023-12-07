@@ -32,6 +32,16 @@ Rectangle {
 
     property bool _commingFromRIDSettings:  false
 
+    function showSettingsPage(settingsPage) {
+        for (var i=0; i<buttonRepeater.count; i++) {
+            var button = buttonRepeater.itemAt(i)
+            if (button.text === settingsPage) {
+                button.clicked()
+                break
+            }
+        }
+    }
+
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
@@ -63,7 +73,9 @@ Rectangle {
             property real _maxButtonWidth: 0
 
             Repeater {
+                id:     buttonRepeater
                 model:  QGroundControl.corePlugin.settingsPages
+
                 QGCButton {
                     height:             _buttonHeight
                     text:               modelData.title
