@@ -105,27 +105,27 @@ Item {
                 ToolStripAction {
                     text:               qsTr("RC target")
                     iconSource:         "/HA_Icons/PAYLOAD.png"
-                    onTriggered:        _activeVehicle ? _activeVehicle.setGimbalRcTargeting() : undefined
+                    onTriggered:        _activeVehicle ? _activeVehicle.gimbalController.setGimbalRcTargeting() : undefined
                 },
                 ToolStripAction {
                     text:               qsTr("Yaw Lock")
                     iconSource:         "/HA_Icons/YAW_LOCK.png"
-                    onTriggered:        _activeVehicle ? _activeVehicle.toggleGimbalYawLock(true, true) : undefined
+                    onTriggered:        _activeVehicle ? _activeVehicle.gimbalController.toggleGimbalYawLock(true, true) : undefined
                 },
                 ToolStripAction {
                     text:               qsTr("Yaw Follow")
                     iconSource:         "/HA_Icons/YAW_UNLOCK.png"
-                    onTriggered:        _activeVehicle ? _activeVehicle.toggleGimbalYawLock(true, false) : undefined
+                    onTriggered:        _activeVehicle ? _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) : undefined
                 },
                 ToolStripAction {
                     text:               qsTr("Retract")
                     iconSource:         "/HA_Icons/RETRACT_ON.png"
-                    onTriggered:        _activeVehicle ? _activeVehicle.toggleGimbalRetracted(true, true) : undefined
+                    onTriggered:        _activeVehicle ? _activeVehicle.gimbalController.toggleGimbalRetracted(true, true) : undefined
                 },
                 ToolStripAction {
                     text:               qsTr("Neutral")
                     iconSource:         "/HA_Icons/NEUTRAL.png"
-                    onTriggered:        _activeVehicle ? _activeVehicle.toggleGimbalNeutral(true, true) : undefined
+                    onTriggered:        _activeVehicle ? _activeVehicle.gimbalController.toggleGimbalNeutral(true, true) : undefined
                 }
             ]
         }
@@ -169,17 +169,17 @@ Item {
                                          qsTr("Do you want to take over gimbal control?"),
                                          StandardButton.Yes | StandardButton.Cancel,
                                          function() {
-                                            _activeVehicle.acquireGimbalControl()
-                                            _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                            _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                            _activeVehicle.gimbalController.acquireGimbalControl()
+                                            _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                            _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
                                          })
                                 } else if (!_activeVehicle.othersHaveControl) {
-                                    _activeVehicle.acquireGimbalControl()
-                                    _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                    _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                    _activeVehicle.gimbalController.acquireGimbalControl()
+                                    _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                    _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
                                 } else {
-                                    _activeVehicle.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                    _activeVehicle.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                    _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                    _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
                                 }
                             }
                         }
@@ -187,7 +187,7 @@ Item {
                     ToolStripAction {
                         text:               qsTr("Point Home")
                         iconSource:         "/HA_Icons/HOME.png"
-                        onTriggered:        _activeVehicle ? _activeVehicle.setGimbalHomeTargeting() : undefined
+                        onTriggered:        _activeVehicle ? _activeVehicle.gimbalController.setGimbalHomeTargeting() : undefined
                     },
                     ToolStripAction {
                         id:                 mapToolsToolStripAction

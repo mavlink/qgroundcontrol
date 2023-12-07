@@ -32,13 +32,13 @@ Item {
         clickAndPoint(x, y)
     }
 
-    // Sends a +-(0-1) xy value to vehicle.gimbalOnScreenControl
+    // Sends a +-(0-1) xy value to vehicle.gimbalController.gimbalOnScreenControl
     function clickAndPoint() {
         var xCoocked =  ( (screenX / parent.width)  * 2) - 1
         var yCoocked = -( (screenY / parent.height) * 2) + 1
         // console.log("X global: " + x + " Y global: " + y)
         // console.log("X coocked: " + xCoocked + " Y coocked: " + yCoocked)
-        _activeVehicle.gimbalOnScreenControl(xCoocked, yCoocked, true, false, false)
+        _activeVehicle.gimbalController.gimbalOnScreenControl(xCoocked, yCoocked, true, false, false)
     }
 
     function pressControl() {
@@ -63,7 +63,7 @@ Item {
         sendRateTimer.stop()
         screenXrateInitCoocked = null
         screenYrateInitCoocked = null 
-        // _activeVehicle.gimbalOnScreenControl(0, 0, false, true, true)
+        // _activeVehicle.gimbalController.gimbalOnScreenControl(0, 0, false, true, true)
     }
 
     Timer {
@@ -76,7 +76,7 @@ Item {
                 var yCoocked = -( ( screenY / parent.height) * 2) + 1
                 xCoocked -= screenXrateInitCoocked
                 yCoocked -= screenYrateInitCoocked
-                _activeVehicle.gimbalOnScreenControl(xCoocked, yCoocked, false, true, true)
+                _activeVehicle.gimbalController.gimbalOnScreenControl(xCoocked, yCoocked, false, true, true)
             }
         }
     }
