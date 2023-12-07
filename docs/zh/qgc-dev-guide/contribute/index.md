@@ -1,5 +1,7 @@
-# 代码提交
+# Code Submission
 
-本节包含有关贡献代码的主题，包括编码风格，测试和拉取请求的格式。
+This section contains topics about the contributing code, including coding style, testing and the format of pull requests.
 
-> 注意: QGroundControl（QGC）作为Apache 2.0和GPLv3双重许可。 所有代码贡献都必须在两个许可证下进行。
+:::info
+QGroundControl (QGC) is [dual-licensed as Apache 2.0 and GPLv3](../contribute/licences.md). All contributions have to be made under both licenses.
+:::
