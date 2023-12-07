@@ -1,43 +1,43 @@
-# 매개변수
+# Parameters
 
-_매개변수_ 화면은 기체와 관련된 매개변수를 검색하고 수정합니다.
+The _Parameters_ screen allows you to find and modify any of the parameters associated with the vehicle.
 
-![매개변수 화면](../../../assets/setup/parameters_px4.jpg)
+![Parameters Screen](../../../assets/setup/parameters_px4.jpg)
 
-::: info
-PX4 Pro와 ArduPilot은 매개변수들은 서로 다르지만, 모두 설정가능합니다.
+:::info
+PX4 Pro and ArduPilot use different parameter sets, but they are both managed as described in this section.
 :::
 
-## 매개변수 검색
+## Finding a Parameter
 
-매개변수는 그룹화되어 있습니다. 왼쪽에 있는 버튼을 클릭하여 보려는 매개변수 그룹을 선택합니다(위의 이미지에서 _Battery Calibration_ 그룹이 선택됨).
+The parameters are organized in groups. Select a group of parameters to view by clicking on the buttons to the left (in the image above the _Battery Calibration_ group is selected).
 
-_검색_ 필드에 용어를 입력하여 매개변수를 *검색*합니다. 그러면, 입력된 하위 문자열이 포함된 모든 매개변수 이름 및 설명 목록이 표시됩니다(검색을 재설정하려면 **지우기**를 누르십시오).
+You can also _search_ for a parameter by entering a term in the _Search_ field. This will show you a list of all parameter names and descriptions that contain the entered substring (press **Clear** to reset the search).
 
-![매개변수 검색](../../../assets/setup/parameters_search.jpg)
+![Parameters Search](../../../assets/setup/parameters_search.jpg)
 
-## 매개변수 변경
+## Changing a Parameter
 
-매개변수를 그룹 또는 검색 목록에서 변경할 매개변수를 클릭합니다. 그러면 값을 업데이트할 수 있는 사이드 대화 상자가 열립니다(이 대화 상자는 변경 사항을 적용하기 위해 재부팅이 필요한지 여부를 포함하여 매개변수에 대한 추가 세부 정보도 제공합니다).
+To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
 
-![파라미터 값 변경](../../../assets/setup/parameters_changing.png)
+![Changing a parameter value](../../../assets/setup/parameters_changing.png)
 
-::: info
-**저장** 버튼을 클릭하면 매개변수는 기체에 업로드됩니다. 매개변수에 따라 변경된 내용을 적용하기 위해서 비행 컨트롤러 재부팅이 필요할 수 있습니다.
+:::info
+When you click **Save** the parameter is automatically and silently uploaded to the connected vehicle. Depending on the parameter, you may then need to reboot the flight controller for the change to take effect.
 :::
 
-## 도구
+## Tools
 
-화면의 오른쪽 상단의 **도구** 메뉴에서 추가 옵션을 선택할 수 있습니다.
+You can select additional options from the **Tools** menu on the top right hand side of the screen.
 
-![도구 메뉴](../../../assets/setup/parameters_tools_menu.png)
+![Tools menu](../../../assets/setup/parameters_tools_menu.png)
 
-**새로 고침** <br />모든 매개변수를 기체로부터 재로딩합니다.
+**Refresh** <br>Refresh the parameter values by re-requesting all of them from the vehicle.
 
-**기본값으로 재설정** <br />모든 매개변수를 펌웨어의 기본값으로 재설정합니다.
+**Reset all to defaults** <br>Reset all parameters to their original default values.
 
-**파일에서 불러오기 / 파일에 저장** <br />기존 파일에서 매개변수를 불러오거나 현재 매개변수 설정을 파일에 저장합니다.
+**Load from file / Save to file** <br>Load parameters from an existing file or save your current parameter settings to a file.
 
-**RC를 Param으로 지우기** <br />이것은 RC 송신기 제어와 매개변수간의 연관성을 모두 삭제합니다. 자세한 내용은 [라디오 설정 > 매개변수 튜닝 채널](../setup_view/Radio.md#param-tuning-channels-px4)를 참고하십시오.
+**Clear RC to Param** <br>This clears all associations between RC transmitter controls and parameters. For more information see: [Radio Setup > Param Tuning Channels](../setup_view/Radio.md#param-tuning-channels-px4).
 
-**기체 재부팅** <br />기체을 재부팅합니다 (일부 매개변수를 변경후에 요구됩니다).
+**Reboot Vehicle** <br>Reboot the vehicle (required after changing some parameters).
