@@ -73,6 +73,21 @@ public:
 
     QVector<Gimbal*>& gimbals() { return _gimbals; }
 
+    void sendGimbalManagerPitchYawFlags         (uint32_t flags);
+    Q_INVOKABLE void gimbalControlValue         (double pitch, double yaw);
+    Q_INVOKABLE void gimbalPitchStep            (int direction);
+    Q_INVOKABLE void gimbalYawStep              (int direction);
+    Q_INVOKABLE void centerGimbal               ();
+    Q_INVOKABLE void gimbalOnScreenControl      (float panpct, float tiltpct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract = false, bool neutral = false, bool yawlock = false);
+    Q_INVOKABLE void sendGimbalManagerPitchYaw  (float pan, float tilt);
+    Q_INVOKABLE void toggleGimbalRetracted      (bool force = false, bool set = false);
+    Q_INVOKABLE void toggleGimbalNeutral        (bool force = false, bool set = false);
+    Q_INVOKABLE void toggleGimbalYawLock        (bool force = false, bool set = false);
+    Q_INVOKABLE void acquireGimbalControl       ();
+    Q_INVOKABLE void releaseGimbalControl       ();
+    Q_INVOKABLE void setGimbalRcTargeting       ();
+    Q_INVOKABLE void setGimbalHomeTargeting     ();
+
 signals:
     void    gimbalsChanged          ();
     void    gimbalLabelsChanged    ();
