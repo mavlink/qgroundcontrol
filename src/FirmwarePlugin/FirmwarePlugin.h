@@ -295,6 +295,9 @@ public:
     /// Return the resource file which contains the vehicle icon used in the compass
     virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
+    // This is the expanded item for the main status indicator
+    virtual QVariant mainStatusIndicatorExpandedItem(const Vehicle* vehicle) const;
+
     /// Returns the list of toolbar tool indicators associated with a vehicle
     ///     signals toolIndicatorsChanged
     /// @return A list of QUrl with the indicators
@@ -384,7 +387,7 @@ protected:
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
 
-private:
+protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
 

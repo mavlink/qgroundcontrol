@@ -243,6 +243,7 @@ public:
     Q_PROPERTY(unsigned int         telemetryTXBuffer           READ telemetryTXBuffer                                              NOTIFY telemetryTXBufferChanged)
     Q_PROPERTY(int                  telemetryLNoise             READ telemetryLNoise                                                NOTIFY telemetryLNoiseChanged)
     Q_PROPERTY(int                  telemetryRNoise             READ telemetryRNoise                                                NOTIFY telemetryRNoiseChanged)
+    Q_PROPERTY(QVariant         mainStatusIndicatorExpandedItem READ mainStatusIndicatorExpandedItem                                CONSTANT)
     Q_PROPERTY(QVariantList         toolIndicators              READ toolIndicators                                                 NOTIFY toolIndicatorsChanged)
     Q_PROPERTY(QVariantList         modeIndicators              READ modeIndicators                                                 NOTIFY modeIndicatorsChanged)
     Q_PROPERTY(bool              initialPlanRequestComplete     READ initialPlanRequestComplete                                     NOTIFY initialPlanRequestCompleteChanged)
@@ -882,9 +883,10 @@ public:
     QString vehicleImageOutline () const;
     QString vehicleImageCompass () const;
 
-    const QVariantList&         toolIndicators      ();
-    const QVariantList&         modeIndicators      ();
-    const QVariantList&         staticCameraList    () const;
+    QVariant                    mainStatusIndicatorExpandedItem ();
+    const QVariantList&         toolIndicators                  ();
+    const QVariantList&         modeIndicators                  ();
+    const QVariantList&         staticCameraList                () const;
 
     bool capabilitiesKnown      () const { return _capabilityBitsKnown; }
     uint64_t capabilityBits     () const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged

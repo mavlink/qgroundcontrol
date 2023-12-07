@@ -4,7 +4,6 @@
 	</qresource>
 	<qresource prefix="/toolbar">
 		<file alias="ArmedIndicator.qml">../src/ui/toolbar/ArmedIndicator.qml</file>
-		<file alias="BatteryIndicator.qml">../src/ui/toolbar/BatteryIndicator.qml</file>
 		<file alias="GPSIndicator.qml">../src/ui/toolbar/GPSIndicator.qml</file>
 		<file alias="GPSRTKIndicator.qml">../src/ui/toolbar/GPSRTKIndicator.qml</file>
 		<file alias="JoystickIndicator.qml">../src/ui/toolbar/JoystickIndicator.qml</file>
@@ -308,6 +307,7 @@
 		<file alias="EditPositionDialog.FactMetaData.json">../src/QmlControls/EditPositionDialog.FactMetaData.json</file>
 		<file alias="FirmwareUpgrade.SettingsGroup.json">../src/Settings/FirmwareUpgrade.SettingsGroup.json</file>
 		<file alias="FlightMap.SettingsGroup.json">../src/Settings/FlightMap.SettingsGroup.json</file>
+		<file alias="FlightMode.SettingsGroup.json">../src/Settings/FlightMode.SettingsGroup.json</file>
 		<file alias="FlyView.SettingsGroup.json">../src/Settings/FlyView.SettingsGroup.json</file>
 		<file alias="FWLandingPattern.FactMetaData.json">../src/MissionManager/FWLandingPattern.FactMetaData.json</file>
 		<file alias="MavCmdInfoCommon.json">../src/MissionManager/MavCmdInfoCommon.json</file>

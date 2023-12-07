@@ -32,6 +32,12 @@
         <file alias="QGroundControl/PX4/qmldir">../../QmlControls/QGroundControl/PX4/qmldir</file>
         <file alias="QGroundControl/PX4/BatteryParams.qml">../../AutoPilotPlugins/PX4/BatteryParams.qml</file>
     </qresource>
+    <qresource prefix="/PX4/Indicators">
+        <file alias="PX4FlightModeIndicator.qml">PX4FlightModeIndicator.qml</file>
+        <file alias="PX4BatteryIndicator.qml">PX4BatteryIndicator.qml</file>
+        <file alias="PX4MainStatusIndicatorExpandedItem.qml">PX4MainStatusIndicatorExpandedItem.qml</file>
+    </qresource>
+
     <qresource prefix="/json">
         <file alias="PX4-MavCmdInfoCommon.json">PX4-MavCmdInfoCommon.json</file>
         <file alias="PX4-MavCmdInfoFixedWing.json">PX4-MavCmdInfoFixedWing.json</file>

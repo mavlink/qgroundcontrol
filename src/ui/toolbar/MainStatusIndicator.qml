@@ -29,15 +29,17 @@ RowLayout {
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
 
-    QGCLabel {
+    QGCMarqueeLabel {
         id:             mainStatusLabel
         text:           mainStatusText()
-        font.pointSize: _vehicleInAir ? ScreenTools.defaultFontPointSize : ScreenTools.largeFontPointSize
+        font.pointSize: ScreenTools.largeFontPointSize
+        implicitWidth:  maxWidth
+        maxWidth:       ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 10
 
         property string _commLostText:      qsTr("Communication Lost")
         property string _readyToFlyText:    qsTr("Ready To Fly")
         property string _notReadyToFlyText: qsTr("Not Ready")
-        property string _disconnectedText:  qsTr("Disconnected")
+        property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
         property string _armedText:         qsTr("Armed")
         property string _flyingText:        qsTr("Flying")
         property string _landingText:       qsTr("Landing")
@@ -112,74 +114,56 @@ RowLayout {
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
             height:                 _root.height
-            enabled:                _activeVehicle
-            onClicked:              mainWindow.showIndicatorPopup(mainStatusLabel, sensorStatusInfoComponent)
+            onClicked:              mainWindow.showIndicatorDrawer(overallStatusComponent)
+
+            property Component overallStatusComponent: _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
         }
     }
 
     Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        height:                 1
-    }
-
-    FlightModeMenuIndicator {
-        id:                     flightModeMenu
-        Layout.preferredHeight: _root.height
-        fontPointSize:          _vehicleInAir ?  ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
-        visible:                _activeVehicle
-    }
-
-    Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        height:                 1
-        visible:                vtolModeLabel.visible
+        implicitWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        implicitHeight: 1
+        visible:        vtolModeLabel.visible
     }
 
     QGCLabel {
         id:                     vtolModeLabel
-        Layout.preferredHeight: _root.height
-        verticalAlignment:      Text.AlignVCenter
+        Layout.alignment:       Qt.AlignVCenter
         text:                   _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        font.pointSize:         ScreenTools.largeFontPointSize
-        visible:                _activeVehicle ? _activeVehicle.vtol && _vehicleInAir : false
+        font.pointSize:         enabled ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * text.length
+        visible:                _activeVehicle && _activeVehicle.vtol
+        enabled:                _activeVehicle && _activeVehicle.vtol && _vehicleInAir
 
         QGCMouseArea {
             anchors.fill:   parent
-            onClicked:      mainWindow.showIndicatorPopup(vtolModeLabel, vtolTransitionComponent)
+            onClicked:      mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
         }
     }
 
     Component {
-        id: sensorStatusInfoComponent
+        id: overallStatusOfflineIndicatorPage
 
-        Rectangle {
-            width:          flickable.width + (_margins * 2)
-            height:         flickable.height + (_margins * 2)
-            radius:         ScreenTools.defaultFontPixelHeight * 0.5
-            color:          qgcPal.window
-            border.color:   qgcPal.text
+        MainStatusIndicatorOfflinePage {
 
-            QGCFlickable {
-                id:                 flickable
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                width:              mainLayout.width
-                height:             mainWindow.contentItem.height - (indicatorPopup.padding * 2) - (_margins * 2)
-                flickableDirection: Flickable.VerticalFlick
-                contentHeight:      mainLayout.height
-                contentWidth:       mainLayout.width
+        }
+    }
 
-                ColumnLayout {
+    Component {
+        id: overallStatusIndicatorPage
+
+        ToolIndicatorPage {
+            showExpand: _activeVehicle.mainStatusIndicatorExpandedItem ? true : false
+
+            contentComponent: Component {
+                Column {
                     id:         mainLayout
                     spacing:    _spacing
 
                     QGCButton {
-                        Layout.leftMargin:  _healthAndArmingChecksSupported ? width / 2 : 0
-                        Layout.alignment:   _healthAndArmingChecksSupported ? Qt.AlignLeft : Qt.AlignHCenter
                         // FIXME: forceArm is not possible anymore if _healthAndArmingChecksSupported == true
-                        enabled:            _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
-                        text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
+                        enabled:    _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
+                        text:       _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
 
                         property bool forceArm: false
 
@@ -196,14 +180,14 @@ RowLayout {
                                 }
                             }
                             forceArm = false
-                            mainWindow.hideIndicatorPopup()
+                            drawer.close()()
                         }
                     }
 
                     QGCLabel {
-                        Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Sensor Status")
-                        visible:            !_healthAndArmingChecksSupported
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        text:                       qsTr("Sensor Status")
+                        visible:                    !_healthAndArmingChecksSupported
                     }
 
                     GridLayout {
@@ -215,35 +199,24 @@ RowLayout {
 
                         Repeater {
                             model: _activeVehicle.sysStatusSensorInfo.sensorNames
-
-                            QGCLabel {
-                                text: modelData
-                            }
+                            QGCLabel { text: modelData }
                         }
 
                         Repeater {
                             model: _activeVehicle.sysStatusSensorInfo.sensorStatus
-
-                            QGCLabel {
-                                text: modelData
-                            }
+                            QGCLabel { text: modelData }
                         }
                     }
 
-
                     QGCLabel {
-                        text:               qsTr("Arming Check Report:")
-                        visible:            _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
+                        text:       qsTr("Overall Status")
+                        visible:    _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
                     }
                     // List health and arming checks
-                    QGCListView {
-                        visible:            _healthAndArmingChecksSupported
-                        anchors.margins:    ScreenTools.defaultFontPixelHeight
-                        spacing:            ScreenTools.defaultFontPixelWidth
-                        width:              mainWindow.width * 0.66666
-                        height:             contentHeight
-                        model:              _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
-                        delegate:           listdelegate
+                    Repeater {
+                        visible:    _healthAndArmingChecksSupported
+                        model:      _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode : null
+                        delegate:   listdelegate
                     }
 
                     FactPanelController {
@@ -254,15 +227,13 @@ RowLayout {
                         id: listdelegate
 
                         Column {
-                            width:      parent ? parent.width : 0
                             Row {
-                                width:  parent.width
+                                spacing: ScreenTools.defaultFontPixelHeight
+
                                 QGCLabel {
                                     id:           message
                                     text:         object.message
-                                    wrapMode:     Text.WordWrap
                                     textFormat:   TextEdit.RichText
-                                    width:        parent.width - arrowDownIndicator.width
                                     color:        object.severity == 'error' ? qgcPal.colorRed : object.severity == 'warning' ? qgcPal.colorOrange : qgcPal.text
                                     MouseArea {
                                         anchors.fill: parent
@@ -275,6 +246,7 @@ RowLayout {
 
                                 QGCColoredImage {
                                     id:                     arrowDownIndicator
+                                    anchors.verticalCenter: parent.verticalCenter
                                     height:                 1.5 * ScreenTools.defaultFontPixelWidth
                                     width:                  height
                                     source:                 "/qmlimages/arrow-down.png"
@@ -286,53 +258,25 @@ RowLayout {
                                     }
                                 }
                             }
-                            Rectangle {
-                                property var margin:      ScreenTools.defaultFontPixelWidth
-                                id:                       descriptionRect
-                                width:                    parent.width
-                                height:                   description.height + margin
-                                color:                    qgcPal.windowShade
-                                visible:                  false
-                                Connections {
-                                    target:               object
-                                    function onExpandedChanged() {
-                                        if (object.expanded) {
-                                            description.height = description.preferredHeight
-                                        } else {
-                                            description.height = 0
-                                        }
-                                    }
-                                }
 
-                                Behavior on height {
-                                    NumberAnimation {
-                                        id: animation
-                                        duration: 150
-                                        onRunningChanged: {
-                                            descriptionRect.visible = animation.running || object.expanded
+                            QGCLabel {
+                                id:                 description
+                                text:               object.description
+                                textFormat:         TextEdit.RichText
+                                clip:               true
+                                visible:            object.expanded
+                                
+                                property var fact:  null
+
+                                onLinkActivated: {
+                                    if (link.startsWith('param://')) {
+                                        var paramName = link.substr(8);
+                                        fact = controller.getParameterFact(-1, paramName, true)
+                                        if (fact != null) {
+                                            paramEditorDialogComponent.createObject(mainWindow).open()
                                         }
-                                    }
-                                }
-                                QGCLabel {
-                                    id:                 description
-                                    anchors.centerIn:   parent
-                                    width:              parent.width - parent.margin * 2
-                                    height:             0
-                                    text:               object.description
-                                    textFormat:         TextEdit.RichText
-                                    wrapMode:           Text.WordWrap
-                                    clip:               true
-                                    property var fact:  null
-                                    onLinkActivated: {
-                                        if (link.startsWith('param://')) {
-                                            var paramName = link.substr(8);
-                                            fact = controller.getParameterFact(-1, paramName, true)
-                                            if (fact != null) {
-                                                paramEditorDialogComponent.createObject(mainWindow).open()
-                                            }
-                                        } else {
-                                            Qt.openUrlExternally(link);
-                                        }
+                                    } else {
+                                        Qt.openUrlExternally(link);
                                     }
                                 }
 
@@ -348,36 +292,34 @@ RowLayout {
                             }
                         }
                     }
+                }
+            }
 
+            expandedComponent: Component {
+                Loader {
+                    id:     expandedItemLoader
+                    source: _activeVehicle.mainStatusIndicatorExpandedItem
                 }
             }
         }
     }
 
     Component {
-        id: vtolTransitionComponent
+        id: vtolTransitionIndicatorPage
 
-        Rectangle {
-            width:          mainLayout.width   + (_margins * 2)
-            height:         mainLayout.height  + (_margins * 2)
-            radius:         ScreenTools.defaultFontPixelHeight * 0.5
-            color:          qgcPal.window
-            border.color:   qgcPal.text
+        ToolIndicatorPage {
+            contentComponent: Component {
+                QGCButton {
+                    text: _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
 
-            QGCButton {
-                id:                 mainLayout
-                anchors.margins:    _margins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                text:               _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
-
-                onClicked: {
-                    if (_vtolInFWDFlight) {
-                        mainWindow.vtolTransitionToMRFlightRequest()
-                    } else {
-                        mainWindow.vtolTransitionToFwdFlightRequest()
+                    onClicked: {
+                        if (_vtolInFWDFlight) {
+                            mainWindow.vtolTransitionToMRFlightRequest()
+                        } else {
+                            mainWindow.vtolTransitionToFwdFlightRequest()
+                        }
+                        drawer.close()
                     }
-                    mainWindow.hideIndicatorPopup()
                 }
             }
         }

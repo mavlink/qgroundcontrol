@@ -19,6 +19,7 @@
 #include "AutoConnectSettings.h"
 #include "VideoSettings.h"
 #include "FlightMapSettings.h"
+#include "FlightModeSettings.h"
 #include "RTKSettings.h"
 #include "FlyViewSettings.h"
 #include "PlanViewSettings.h"
@@ -43,6 +44,7 @@ public:
     Q_PROPERTY(QObject* autoConnectSettings             READ autoConnectSettings            CONSTANT)
     Q_PROPERTY(QObject* videoSettings                   READ videoSettings                  CONSTANT)
     Q_PROPERTY(QObject* flightMapSettings               READ flightMapSettings              CONSTANT)
+    Q_PROPERTY(QObject* flightModeSettings              READ flightModeSettings             CONSTANT)
     Q_PROPERTY(QObject* rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject* flyViewSettings                 READ flyViewSettings                CONSTANT)
     Q_PROPERTY(QObject* planViewSettings                READ planViewSettings               CONSTANT)
@@ -62,6 +64,7 @@ public:
     AutoConnectSettings*            autoConnectSettings         (void) { return _autoConnectSettings; }
     VideoSettings*                  videoSettings               (void) { return _videoSettings; }
     FlightMapSettings*              flightMapSettings           (void) { return _flightMapSettings; }
+    FlightModeSettings*             flightModeSettings          (void) { return _flightModeSettings; }
     RTKSettings*                    rtkSettings                 (void) { return _rtkSettings; }
     FlyViewSettings*                flyViewSettings             (void) { return _flyViewSettings; }
     PlanViewSettings*               planViewSettings            (void) { return _planViewSettings; }
@@ -79,6 +82,7 @@ private:
     AutoConnectSettings*            _autoConnectSettings;
     VideoSettings*                  _videoSettings;
     FlightMapSettings*              _flightMapSettings;
+    FlightModeSettings*             _flightModeSettings;
     RTKSettings*                    _rtkSettings;
     FlyViewSettings*                _flyViewSettings;
     PlanViewSettings*               _planViewSettings;

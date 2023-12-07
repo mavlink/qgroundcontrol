@@ -26,54 +26,7 @@ Item {
 
     property bool showIndicator: true
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-    Component {
-        id: gpsInfo
-
-        Rectangle {
-            width:  gpsCol.width   + ScreenTools.defaultFontPixelWidth  * 3
-            height: gpsCol.height  + ScreenTools.defaultFontPixelHeight * 2
-            radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
-            border.color:   qgcPal.text
-
-            Column {
-                id:                 gpsCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(gpsGrid.width, gpsLabel.width)
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
-                anchors.centerIn:   parent
-
-                QGCLabel {
-                    id:             gpsLabel
-                    text:           (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
-                    font.family:    ScreenTools.demiboldFontFamily
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                GridLayout {
-                    id:                 gpsGrid
-                    visible:            (_activeVehicle && _activeVehicle.gps.count.value >= 0)
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    columns: 2
-
-                    QGCLabel { text: qsTr("GPS Count:") }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.count.valueString : qsTr("N/A", "No data to display") }
-                    QGCLabel { text: qsTr("GPS Lock:") }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.lock.enumStringValue : qsTr("N/A", "No data to display") }
-                    QGCLabel { text: qsTr("HDOP:") }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.hdop.valueString : qsTr("--.--", "No data to display") }
-                    QGCLabel { text: qsTr("VDOP:") }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.vdop.valueString : qsTr("--.--", "No data to display") }
-                    QGCLabel { text: qsTr("Course Over Ground:") }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
-                }
-            }
-        }
-    }
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     QGCColoredImage {
         id:                 gpsIcon
@@ -110,8 +63,14 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked: {
-            mainWindow.showIndicatorPopup(_root, gpsInfo)
+        onClicked:      mainWindow.showIndicatorDrawer(gpsIndicatorPage)
+    }
+
+    Component {
+        id: gpsIndicatorPage
+
+        GPSIndicatorPage {
+
         }
     }
 }

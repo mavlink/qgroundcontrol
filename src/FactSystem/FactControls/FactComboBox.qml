@@ -25,7 +25,7 @@ QGCComboBox {
         })
     }
 
-    onActivated: {
+    onActivated: (index) => {
         if (indexModel) {
             fact.value = index
         } else {
