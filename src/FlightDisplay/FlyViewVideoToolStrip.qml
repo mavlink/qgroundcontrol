@@ -64,7 +64,6 @@ Item {
                     id:                actionsToolStripAction
                     text:              qsTr("")
                     iconSource:        "/HA_Icons/ACTIONS.png"
-                    onTriggered:       mainWindow.showFlyView()
                     checkable:         true
                     visible:           !toolStripPanelVideo.panelHidden
 
