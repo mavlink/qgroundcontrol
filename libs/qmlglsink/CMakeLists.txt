@@ -4,39 +4,17 @@ find_package(Qt6 ${QT_VERSION}  REQUIRED )
 find_package(OpenGL REQUIRED)
 
 add_library(qmlglsink
-    gst-plugins-good/ext/qt/gstplugin.cc
-    gst-plugins-good/ext/qt/gstqtglutility.cc
-    gst-plugins-good/ext/qt/gstqsgtexture.cc
-    gst-plugins-good/ext/qt/gstqtsink.cc
-    gst-plugins-good/ext/qt/gstqtsrc.cc
-    gst-plugins-good/ext/qt/qtwindow.cc
-    gst-plugins-good/ext/qt/qtitem.cc
-
-    gst-plugins-good/ext/qt/gstqsgtexture.h
-    gst-plugins-good/ext/qt/gstqtgl.h
-    gst-plugins-good/ext/qt/gstqtglutility.h
-    gst-plugins-good/ext/qt/gstqtsink.h
-    gst-plugins-good/ext/qt/gstqtsrc.h
-    gst-plugins-good/ext/qt/qtwindow.h
-    gst-plugins-good/ext/qt/qtitem.h
+    gst-plugins-good/ext/qt6/gstplugin.cc
+    gst-plugins-good/ext/qt6/gstqml6glsink.cc
+    gst-plugins-good/ext/qt6/gstqsg6glnode.cc
+    gst-plugins-good/ext/qt6/gstqt6element.cc
+    gst-plugins-good/ext/qt6/gstqt6glutility.cc
+    gst-plugins-good/ext/qt6/qt6glitem.cc
+    gst-plugins-good/ext/qt6/gstqt6gl.h
 )
 
 if(LINUX)
-	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND)
-
-#	find_package(Qt6 ${QT_VERSION}
-##		COMPONENTS
-##			X11Extras
-#		REQUIRED
-#		HINTS
-#			${QT_LIBRARY_HINTS}
-#	)
-
-#	target_link_libraries(qmlglsink
-#		PUBLIC
-#			Qt6::X11Extras
-#	)
-
+	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND HAVE_QT_QPA_HEADER)
 elseif(APPLE)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_MAC)
 elseif(IOS)

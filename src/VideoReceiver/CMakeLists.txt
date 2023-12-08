@@ -25,7 +25,6 @@ target_link_libraries(VideoReceiver
         Qt6::OpenGL
         Qt6::Quick
         ${EXTRA_LIBRARIES}
-        Settings
 )
 
 target_include_directories(VideoReceiver INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

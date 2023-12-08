@@ -2,7 +2,6 @@
 #include <QQmlApplicationEngine>
 
 #include <QQuickWindow>
-#include <QQuickItem>
 #include <QRunnable>
 #include <QCommandLineParser>
 #include <QTimer>
@@ -300,8 +299,6 @@ VideoReceiverApp::exec()
         Q_ASSERT(_widget != nullptr);
     }
 
-    startStreaming();
-
     QObject::connect(_receiver, &VideoReceiver::timeout, [](){
         qCDebug(AppLog) << "Streaming timeout";
      });
@@ -384,6 +381,7 @@ VideoReceiverApp::exec()
         });
      });
 
+    startStreaming();
 
     return _app.exec();
 }
@@ -482,17 +480,10 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-
     GStreamer::initialize(argc, argv, 3);
 
-    if (isQtApp(argv[0])) {
-        QGuiApplication app(argc, argv);
-        VideoReceiverApp videoApp(app, true);
-        return videoApp.exec();
-    } else {
-        QCoreApplication app(argc, argv);
-        VideoReceiverApp videoApp(app, false);
-        return videoApp.exec();
-    }
+    const bool runAsQtApp = isQtApp(argv[0]);
+    QGuiApplication app(argc, argv);
+    VideoReceiverApp videoApp(app, runAsQtApp);
+    return videoApp.exec();
 }
