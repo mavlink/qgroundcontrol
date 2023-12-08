@@ -117,6 +117,7 @@ Item {
         id:             pipMouseArea
         anchors.fill:   parent
         enabled:        _isExpanded
+        preventStealing: true
         hoverEnabled:   true
         onClicked:      _swapPip()
     }
@@ -128,6 +129,8 @@ Item {
         anchors.right:  parent.right
         height:         ScreenTools.minTouchPixels
         width:          height
+        preventStealing: true
+        cursorShape: Qt.PointingHandCursor
 
         property real initialX:     0
         property real initialWidth: 0

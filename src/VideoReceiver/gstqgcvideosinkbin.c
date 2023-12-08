@@ -129,8 +129,8 @@ _vsb_init(GTypeInstance *instanceData, void *vsbVoid)
             break;
         }
 
-        if ((vsb->qmlglsink = gst_element_factory_make("qmlglsink", NULL)) == NULL) {
-            GST_ERROR_OBJECT(vsb, "gst_element_factory_make('qmlglsink') failed");
+        if ((vsb->qmlglsink = gst_element_factory_make("qml6glsink", NULL)) == NULL) {
+            GST_ERROR_OBJECT(vsb, "gst_element_factory_make('qml6glsink') failed");
             break;
         }
 

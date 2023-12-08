@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2023 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -94,7 +94,7 @@ G_BEGIN_DECLS
     GST_PLUGIN_STATIC_DECLARE(applemedia);
 #endif
 #endif
-    GST_PLUGIN_STATIC_DECLARE(qmlgl);
+    GST_PLUGIN_STATIC_DECLARE(qml6);
     GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
@@ -107,7 +107,7 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 #endif
 
 void
-GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
+GStreamer::blacklist(VideoDecoderOptions option)
 {
     GstRegistry* registry = gst_registry_get();
 
@@ -133,29 +133,29 @@ GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
     changeRank("bcmdec", GST_RANK_NONE);
 
     switch (option) {
-        case VideoSettings::ForceVideoDecoderDefault:
+        case ForceVideoDecoderDefault:
             break;
-        case VideoSettings::ForceVideoDecoderSoftware:
+        case ForceVideoDecoderSoftware:
             for(auto name : {"avdec_h264", "avdec_h265"}) {
                 changeRank(name, GST_RANK_PRIMARY + 1);
             }
             break;
-        case VideoSettings::ForceVideoDecoderVAAPI:
+        case ForceVideoDecoderVAAPI:
             for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapih265dec", "vaapivc1dec"}) {
                 changeRank(name, GST_RANK_PRIMARY + 1);
             }
             break;
-        case VideoSettings::ForceVideoDecoderNVIDIA:
+        case ForceVideoDecoderNVIDIA:
             for(auto name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
                 changeRank(name, GST_RANK_PRIMARY + 1);
             }
             break;
-        case VideoSettings::ForceVideoDecoderDirectX3D:
+        case ForceVideoDecoderDirectX3D:
             for(auto name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
                 changeRank(name, GST_RANK_PRIMARY + 1);
             }
             break;
-        case VideoSettings::ForceVideoDecoderVideoToolbox:
+        case ForceVideoDecoderVideoToolbox:
             changeRank("vtdec", GST_RANK_PRIMARY + 1);
             break;
         default:
@@ -231,24 +231,7 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
     gst_ios_post_init();
 #endif
 
-    /* the plugin must be loaded before loading the qml file to register the
-     * GstGLVideoItem qml item
-     * FIXME Add a QQmlExtensionPlugin into qmlglsink to register GstGLVideoItem
-     * with the QML engine, then remove this */
-    GstElement *sink = gst_element_factory_make("qmlglsink", nullptr);
-
-    if (sink == nullptr) {
-        GST_PLUGIN_STATIC_REGISTER(qmlgl);
-        sink = gst_element_factory_make("qmlglsink", nullptr);
-    }
-
-    if (sink != nullptr) {
-        gst_object_unref(sink);
-        sink = nullptr;
-    } else {
-        qCCritical(GStreamerLog) << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
-    }
-
+    GST_PLUGIN_STATIC_REGISTER(qml6);
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 
