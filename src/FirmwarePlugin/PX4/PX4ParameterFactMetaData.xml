@@ -5591,6 +5591,92 @@
       <unit>deg/s</unit>
     </parameter>
   </group>
+  <group name="Multicopter Position Slow Mode">
+    <parameter name="MC_SLOW_DEF_HVEL" default="3." type="FLOAT">
+      <short_desc>Default horizontal velocity limit</short_desc>
+      <long_desc>This value is used in slow mode if no aux channel is mapped and no limit is commanded through MAVLink.</long_desc>
+      <min>0.1</min>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MC_SLOW_DEF_VVEL" default="1." type="FLOAT">
+      <short_desc>Default vertical velocity limit</short_desc>
+      <long_desc>This value is used in slow mode if no aux channel is mapped and no limit is commanded through MAVLink.</long_desc>
+      <min>0.1</min>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MC_SLOW_DEF_YAWR" default="45." type="FLOAT">
+      <short_desc>Default yaw rate limit</short_desc>
+      <long_desc>This value is used in slow mode if no aux channel is mapped and no limit is commanded through MAVLink.</long_desc>
+      <min>1</min>
+      <unit>deg/s</unit>
+      <decimal>0</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MC_SLOW_MAP_HVEL" default="0" type="INT32">
+      <short_desc>Manual input mapped to scale horizontal velocity in position slow mode</short_desc>
+      <values>
+        <value code="0">No rescaling</value>
+        <value code="1">AUX1</value>
+        <value code="2">AUX2</value>
+        <value code="3">AUX3</value>
+        <value code="4">AUX4</value>
+        <value code="5">AUX5</value>
+        <value code="6">AUX6</value>
+      </values>
+    </parameter>
+    <parameter name="MC_SLOW_MAP_VVEL" default="0" type="INT32">
+      <short_desc>Manual input mapped to scale vertical velocity in position slow mode</short_desc>
+      <values>
+        <value code="0">No rescaling</value>
+        <value code="1">AUX1</value>
+        <value code="2">AUX2</value>
+        <value code="3">AUX3</value>
+        <value code="4">AUX4</value>
+        <value code="5">AUX5</value>
+        <value code="6">AUX6</value>
+      </values>
+    </parameter>
+    <parameter name="MC_SLOW_MAP_YAWR" default="0" type="INT32">
+      <short_desc>Manual input mapped to scale yaw rate in position slow mode</short_desc>
+      <values>
+        <value code="0">No rescaling</value>
+        <value code="1">AUX1</value>
+        <value code="2">AUX2</value>
+        <value code="3">AUX3</value>
+        <value code="4">AUX4</value>
+        <value code="5">AUX5</value>
+        <value code="6">AUX6</value>
+      </values>
+    </parameter>
+    <parameter name="MC_SLOW_MIN_HVEL" default=".3" type="FLOAT">
+      <short_desc>Horizontal velocity lower limit</short_desc>
+      <long_desc>The lowest input maps and is clamped to this velocity.</long_desc>
+      <min>0.1</min>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MC_SLOW_MIN_VVEL" default=".3" type="FLOAT">
+      <short_desc>Vertical velocity lower limit</short_desc>
+      <long_desc>The lowest input maps and is clamped to this velocity.</long_desc>
+      <min>0.1</min>
+      <unit>m/s</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter name="MC_SLOW_MIN_YAWR" default="3." type="FLOAT">
+      <short_desc>Yaw rate lower limit</short_desc>
+      <long_desc>The lowest input maps and is clamped to this rate.</long_desc>
+      <min>1</min>
+      <unit>deg/s</unit>
+      <decimal>0</decimal>
+      <increment>0.1</increment>
+    </parameter>
+  </group>
   <group name="Multicopter Rate Control">
     <parameter name="MC_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
       <short_desc>Battery power level scaler</short_desc>
