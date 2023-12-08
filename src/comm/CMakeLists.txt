@@ -50,7 +50,10 @@ target_link_libraries(comm
 		Qt6::Test
 		Qt6::TextToSpeech
 		Qt6::Widgets
-		qmdnsengine
 )
+
+if (NOT QT6_DISABLE_DNSENGINE)
+	target_link_libraries(comm PUBLIC qmdnsengine)
+endif ()
 
 target_include_directories(comm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
