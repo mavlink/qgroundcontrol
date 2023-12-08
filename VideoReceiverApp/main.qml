@@ -1,6 +1,8 @@
-import QtQuick
-import QtQuick.Window
+import QtQuick 2.4
+import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
+import QtQuick.Window 2.4
 import org.freedesktop.gstreamer.GLVideoItem
 
 Window {

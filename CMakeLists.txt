@@ -52,9 +52,14 @@ endif ()
 #               Qt6 Configuration
 #######################################################
 
+option(QT6_DISABLE_DNSENGINE "Disable DNS Engine" ON)
+
 # Compilation error for deprecated functions
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
 add_compile_definitions(QT_DEBUG_FIND_PACKAGE=ON)
+if (QT6_DISABLE_DNSENGINE)
+    add_compile_definitions(QT6_DISABLE_DNSENGINE=ON)
+endif ()
 # Configure Qt6 to get necessary variables
 include(Qt6QGCConfiguration)
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
@@ -164,15 +169,15 @@ endif()
 #                GStreamer Configuration
 #######################################################
 
-# TODO(Sergii Lisovenko): Remove this option when video streaming will be enabled for Qt6 builds.
-option(ENABLE_VIDEOSTREAMING "Enable video streaming" OFF)
+option(ENABLE_VIDEOSTREAMING "Enable video streaming" ON)
 if (ENABLE_VIDEOSTREAMING)
+    message(STATUS "Enabling video streaming support")
     find_package(PkgConfig)
 
     set(GST_DEPENDENCIES
-            gstreamer-1.0>=1.14
-            gstreamer-video-1.0>=1.14
-            gstreamer-gl-1.0>=1.14
+            gstreamer-1.0>=1.20
+            gstreamer-video-1.0>=1.20
+            gstreamer-gl-1.0>=1.20
     )
 
     if (MSVC)
@@ -190,6 +195,7 @@ if (ENABLE_VIDEOSTREAMING)
         option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
         option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
     else ()
+        message(STATUS "Tried to enable video streaming support, but GStreamer libs not found")
         if (QGC_GST_MICROHARD_ENABLED OR QGC_GST_TAISYNC_ENABLED)
             message(FATAL_ERROR "You tried to enable Microhard or Taisync but gstreamer is not found. Make sure to set PKG_CONFIG_EXECUTABLE and/or PKG_CONFIG_PATH properly.")
         endif ()
@@ -224,7 +230,6 @@ set(QGC_RESOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
-        ${CMAKE_CURRENT_SOURCE_DIR}/VideoReceiverApp/qml.qrc
 )
 
 if (WIN32)
