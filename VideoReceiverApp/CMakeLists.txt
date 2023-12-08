@@ -30,7 +30,7 @@ set(QGC_ROOT ${CMAKE_SOURCE_DIR}/..)
 # Add folder where are supportive functions
 list(APPEND CMAKE_MODULE_PATH ${QGC_ROOT}/cmake)
 
-# Configure Qt5 to get necessary variables
+# Configure Qt6 to get necessary variables
 include(Qt6QGCConfiguration)
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt version: ${QT_VERSION}")
@@ -83,9 +83,9 @@ endif()
 #
 find_package(PkgConfig)
 pkg_check_modules(GST
-    gstreamer-1.0>=1.14
-    gstreamer-video-1.0>=1.14
-    gstreamer-gl-1.0>=1.14
+    gstreamer-1.0>=1.20
+    gstreamer-video-1.0>=1.20
+    gstreamer-gl-1.0>=1.20
     egl
     )
 
@@ -93,7 +93,9 @@ if (GST_FOUND)
     include_directories(
         ${GST_INCLUDE_DIRS}
         )
-endif()
+else ()
+    message(STATUS "No GStreamer!")
+endif ()
 
 #=============================================================================
 # Qt6
@@ -127,8 +129,9 @@ include(CompileOptions)
 
 include_directories(
     ${QGC_ROOT}/src
+    ${QGC_ROOT}/src/Settings
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${Qt5Location_PRIVATE_INCLUDE_DIRS}
+    ${Qt6Location_PRIVATE_INCLUDE_DIRS}
     VideoReceiver
     )
 
