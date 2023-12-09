@@ -1318,15 +1318,15 @@ SOURCES += \
     src/VideoManager/SubtitleWriter.cc \
     src/VideoManager/VideoManager.cc
 
-# # FIXME_QT6 - Video is disable until conversion is complete
-# CONFIG += DISABLE_VIDEOSTREAMING
-
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")
 # Otherwise the user can still disable this feature in the user_config.pri file.
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from user_config.pri)")
 } else {
+    QT += \
+        opengl \
+		gui-private
     include(src/VideoReceiver/VideoReceiver.pri)
 }
 
