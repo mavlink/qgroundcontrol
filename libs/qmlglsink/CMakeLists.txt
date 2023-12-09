@@ -4,7 +4,7 @@ find_package(Qt6 ${QT_VERSION}  REQUIRED )
 find_package(OpenGL REQUIRED)
 
 add_library(qmlglsink
-    gst-plugins-good/ext/qt6/gstplugin.cc
+	gst-plugins-good/ext/qt6/gstplugin.cc
     gst-plugins-good/ext/qt6/gstqml6glsink.cc
     gst-plugins-good/ext/qt6/gstqsg6glnode.cc
     gst-plugins-good/ext/qt6/gstqt6element.cc
