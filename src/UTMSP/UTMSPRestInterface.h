@@ -20,6 +20,7 @@
 #include <boost/asio/ssl.hpp>
 #include <QSharedPointer>
 #include <string>
+#include "qobject.h"
 
 namespace beast = boost::beast;
 namespace http = beast::http;

@@ -7,27 +7,25 @@
  *
  ****************************************************************************/
 
-import QtQuick                          2.11
-import QtQuick.Layouts                  1.2
-import QtQuick.Dialogs                  1.2
-import QtQuick.Extras                   1.4
-import QtQuick.Controls                 2.15
-import QtPositioning                    5.2
-import QtLocation                       5.12
-import QtGraphicalEffects               1.0
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtQuick.Controls
+import QtPositioning
+import QtLocation
 
-import QGroundControl                       1.0
-import QGroundControl.FlightMap             1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.Controllers           1.0
-import QGroundControl.ShapeFileHelper       1.0
-import QGroundControl.UTMSP                 1.0
-import QGroundControl.FlightDisplay         1.0
-import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl
+import QGroundControl.FlightMap
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.ShapeFileHelper
+import QGroundControl.UTMSP
+import QGroundControl.FlightDisplay
+import QGroundControl.MultiVehicleManager
 
 Item {
     id: _root
