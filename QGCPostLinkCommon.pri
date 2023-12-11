@@ -119,8 +119,8 @@ LinuxBuild {
 
     # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
     QT_LIB_OPTIONALS = \
-        libQt5WaylandClient.so.5 \
-        libQt5WaylandCompositor.so.5
+        libQt6WaylandClient.so \
+        libQt6WaylandCompositor.so
     for(QT_LIB, QT_LIB_OPTIONALS) {
         exists("$$[QT_INSTALL_LIBS]/$$QT_LIB") {
             QT_LIB_LIST += $$QT_LIB
@@ -154,7 +154,10 @@ LinuxBuild {
         position \
         sqldrivers \
         texttospeech \
-        multimedia
+        multimedia \
+        wayland-decoration-client \
+        wayland-graphics-integration-client \
+        wayland-shell-integration
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_PLUGIN_LIST += xcbglintegrations

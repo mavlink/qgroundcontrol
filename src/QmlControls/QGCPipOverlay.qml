@@ -106,10 +106,12 @@ Item {
         visible:    false
         onClosing: {
             var item = contentItem.children[0]
-            item.pipState.windowAboutToClose()
-            item.pipState.state = item.pipState.windowClosingState
-            item.pipState.state = item.pipState.pipState
-            item.visible = _root.show
+            if (item) {
+                item.pipState.windowAboutToClose()
+                item.pipState.state = item.pipState.windowClosingState
+                item.pipState.state = item.pipState.pipState
+                item.visible = _root.show
+            }
         }
     }
 
@@ -150,7 +152,7 @@ Item {
         }
 
         // Drag
-        onPositionChanged: {
+        onPositionChanged: (mouse) => {
             if (pipResize.pressed) {
                 var parentWidth = _root.parent.width
                 var newWidth = pipResize.initialWidth + mouse.x - pipResize.initialX
