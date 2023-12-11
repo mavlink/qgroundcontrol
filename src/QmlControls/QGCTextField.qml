@@ -56,6 +56,7 @@ TextField {
         border.width:   1
         border.color:   control.activeFocus ? "#47b" : "#999"
         color:          qgcPal.textField
+        implicitWidth:  ScreenTools.implicitTextFieldWidth
         implicitHeight: ScreenTools.implicitTextFieldHeight
 
         RowLayout {
