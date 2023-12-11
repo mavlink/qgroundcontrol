@@ -7,29 +7,23 @@
  *
  ****************************************************************************/
 
-import QtQuick                              2.11
-import QtQuick                              2.15
-import QtQuick.Controls                     2.4
-import QtPositioning                        5.2
-import QtLocation                           5.12
-import QtGraphicalEffects                   1.0
-import QtLocation                           5.3
-import QtPositioning                        5.3
-import QtQuick.Dialogs                      1.2
-import QtQuick.Layouts                      1.11
-import QtQuick.Extras                       1.4
-import QtQuick.Controls                     2.15
+import QtQuick
+import QtQuick.Controls
+import QtPositioning
+import QtLocation
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.FlightMap             1.0
-import QGroundControl.ShapeFileHelper       1.0
-import QGroundControl.UTMSP                 1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.MultiVehicleManager
+import QGroundControl.FlightMap
+import QGroundControl.ShapeFileHelper
+import QGroundControl.UTMSP
 
 QGCFlickable {
 
