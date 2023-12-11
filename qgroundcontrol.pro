@@ -1326,7 +1326,7 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 } else {
     QT += \
         opengl \
-		gui-private
+        gui-private
     include(src/VideoReceiver/VideoReceiver.pri)
 }
 
