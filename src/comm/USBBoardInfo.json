@@ -16,6 +16,7 @@
         { "vendorID": 12677, "productID": 51,       "boardClass": "Pixhawk",    "name": "PX4 FMU V5X" },
         { "vendorID": 7052, "productID": 54,        "boardClass": "Pixhawk",    "name": "PX4 FMU V6U" },
         { "vendorID": 12677, "productID": 53,       "boardClass": "Pixhawk",    "name": "PX4 FMU V6X" },
+        { "vendorID": 13891, "productID": 29,       "boardClass": "Pixhawk",    "name": "PX4 FMU V6XRT" },
         { "vendorID": 12677, "productID": 56,       "boardClass": "Pixhawk",    "name": "PX4 FMU V6C" },
         { "vendorID": 9900, "productID": 64,        "boardClass": "Pixhawk",    "name": "TAP V1" },
         { "vendorID": 9900, "productID": 65,        "boardClass": "Pixhawk",    "name": "ASC V1" },
