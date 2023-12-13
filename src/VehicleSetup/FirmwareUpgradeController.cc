@@ -62,7 +62,7 @@ static QMap<int, QString> px4_board_name_map {
     {54, "px4_fmu-v6u_default"},
     {56, "px4_fmu-v6c_default"},
     {57, "ark_fmu-v6x_default"},
-    {29, "px4_fmu-v6xrt_default"},
+    {35, "px4_fmu-v6xrt_default"},
     {55, "sky-drones_smartap-airlink_default"},
     {88, "airmind_mindpx-v2_default"},
     {12, "bitcraze_crazyflie_default"},
