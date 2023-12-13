@@ -10994,6 +10994,16 @@
     </parameter>
   </group>
   <group name="Miscellaneous">
+    <parameter name="SF1XX_MODE" default="1" type="INT32">
+      <short_desc>Lightware SF1xx/SF20/LW20 Operation Mode</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Enabled</value>
+        <value code="2">Disabled during VTOL fast forward flight</value>
+      </values>
+    </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
       <short_desc>Skip the controller</short_desc>
       <values>
