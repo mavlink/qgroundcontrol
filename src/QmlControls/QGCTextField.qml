@@ -57,7 +57,6 @@ TextField {
         color:          qgcPal.textField
         implicitWidth:  ScreenTools.implicitTextFieldWidth
         implicitHeight: ScreenTools.implicitTextFieldHeight
-        implicitWidth:  ScreenTools.implicitTextFieldWidth
 
         RowLayout {
             id:                     unitsHelpLayout

@@ -1,0 +1,15 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":         "display",
+    "shortDesc":    "Select values to display in indicator",
+    "enumStrings":  "Percentage,Voltage,Both",
+    "enumValues":   "0,1,2",
+    "type":         "uint32",
+    "default":      false
+}
+]
+}
