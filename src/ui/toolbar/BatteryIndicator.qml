@@ -31,7 +31,11 @@ Item {
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
     property Component  expandedPageComponent
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property Fact   _indicatorDisplay:  QGroundControl.settingsManager.batteryIndicatorSettings.display
+    property bool   _showPercentage:    _indicatorDisplay.rawValue === 0
+    property bool   _showVoltage:       _indicatorDisplay.rawValue === 1
+    property bool   _showBoth:          _indicatorDisplay.rawValue === 2
 
     Row {
         id:             batteryIndicatorRow
@@ -103,7 +107,16 @@ Item {
                 } else if (battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
                     return battery.chargeState.enumStringValue
                 }
-                return ""
+                return qsTr("n/a")
+            }
+
+           function getBatteryVoltageText() {
+                if (!isNaN(battery.voltage.rawValue)) {
+                    return battery.voltage.valueString + battery.voltage.units
+                } else if (battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
+                    return battery.chargeState.enumStringValue
+                }
+                return qsTr("n/a")
             }
 
             QGCColoredImage {
@@ -116,11 +129,28 @@ Item {
                 color:              getBatteryColor()
             }
 
-            QGCLabel {
-                text:                   getBatteryPercentageText()
-                font.pointSize:         ScreenTools.mediumFontPointSize
-                color:                  getBatteryColor()
-                anchors.verticalCenter: parent.verticalCenter
+           ColumnLayout {
+                id:                     batteryInfoColumn
+                anchors.top:            parent.top
+                anchors.bottom:         parent.bottom
+                spacing:                0
+
+                QGCLabel {
+                    Layout.alignment:       Qt.AlignHCenter
+                    verticalAlignment:      Text.AlignVCenter
+                    color:                  getBatteryColor()
+                    text:                   getBatteryPercentageText()
+                    font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
+                    visible:                _showBoth || _showPercentage
+                }
+
+                QGCLabel {
+                    Layout.alignment:       Qt.AlignHCenter
+                    font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
+                    color:                  getBatteryColor()
+                    text:                   getBatteryVoltageText()
+                    visible:                _showBoth || _showVoltage
+                }
             }
         }
     }
@@ -241,6 +271,25 @@ Item {
 
             Loader {
                 sourceComponent: expandedPageComponent
+            }
+
+            IndicatorPageGroupLayout {
+                Layout.fillWidth:  true
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Battery Display")
+                    }
+
+                    FactComboBox {
+                        id:             editModeCheckBox
+                        fact:           QGroundControl.settingsManager.batteryIndicatorSettings.display
+                        sizeToContents: true
+                    }
+                }
             }
 
             IndicatorPageGroupLayout {
