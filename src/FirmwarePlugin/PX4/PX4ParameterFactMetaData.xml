@@ -2713,6 +2713,7 @@
       <min>0.2</min>
       <max>1.0</max>
       <unit />
+      <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_LND_USETER" default="1" type="INT32">
