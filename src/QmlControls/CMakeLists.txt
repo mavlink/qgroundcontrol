@@ -61,7 +61,6 @@ add_custom_target(QmlControlsQml
 		HeightIndicator.qml
 		HorizontalFactValueGrid.qml
 		IndicatorButton.qml
-		InstrumentValueArea.qml
 		InstrumentValueEditDialog.qml
 		InstrumentValueLabel.qml
 		InstrumentValueValue.qml
