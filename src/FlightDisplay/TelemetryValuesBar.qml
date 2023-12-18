@@ -101,9 +101,10 @@ Rectangle {
         height:                     telemetryLayout.height
         hoverEnabled:               !ScreenTools.isMobile
         propagateComposedEvents:    true
+        visible:                    !valueArea.settingsUnlocked
 
         onClicked: (mouse) => {
-            if (ScreenTools.isMobile && !valueArea.settingsUnlocked) {
+            if (ScreenTools.isMobile) {
                 valueArea.settingsUnlocked = true
                 mouse.accepted = true
             } else {
