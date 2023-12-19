@@ -1,5 +1,10 @@
 LinuxBuild {
-    DEFINES += HAVE_QT_EGLFS HAVE_QT_WAYLAND HAVE_QT_QPA_HEADER
+    if (USE_WAYLAND) {
+        DEFINES += HAVE_QT_WAYLAND
+    } else {
+        DEFINES += HAVE_QT_X11
+    }
+    DEFINES += HAVE_QT_EGLFS HAVE_QT_QPA_HEADER
 } else:MacBuild {
     DEFINES += HAVE_QT_MAC
 } else:iOSBuild {
