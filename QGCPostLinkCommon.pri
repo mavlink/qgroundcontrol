@@ -118,9 +118,12 @@ LinuxBuild {
         libQt6Sql.so.6
 
     # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
-    QT_LIB_OPTIONALS = \
-        libQt6WaylandClient.so \
-        libQt6WaylandCompositor.so
+    QT_LIB_OPTIONALS = ""
+    UseWayland {
+        QT_LIB_OPTIONALS += \
+            libQt6WaylandClient.so \
+            libQt6WaylandCompositor.so
+    }
     for(QT_LIB, QT_LIB_OPTIONALS) {
         exists("$$[QT_INSTALL_LIBS]/$$QT_LIB") {
             QT_LIB_LIST += $$QT_LIB
@@ -154,10 +157,14 @@ LinuxBuild {
         position \
         sqldrivers \
         texttospeech \
-        multimedia \
-        wayland-decoration-client \
-        wayland-graphics-integration-client \
-        wayland-shell-integration
+        multimedia
+
+    UseWayland {
+        QT_PLUGIN_LIST += \
+            wayland-decoration-client \
+            wayland-graphics-integration-client \
+            wayland-shell-integration
+    }
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_PLUGIN_LIST += xcbglintegrations

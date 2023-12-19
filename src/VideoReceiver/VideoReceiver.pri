@@ -12,10 +12,12 @@
 #
 
 LinuxBuild {
-    QT += waylandclient
+    UseWayland {
+        QT += waylandclient
+    }
     CONFIG += link_pkgconfig
     packagesExist(gstreamer-1.0) {
-        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0 gstreamer-gl-1.0 egl
+        PKGCONFIG   += gstreamer-1.0 gstreamer-video-1.0 gstreamer-gl-1.0 egl
         CONFIG      += VideoEnabled
     }
 } else:MacBuild {
