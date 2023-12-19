@@ -36,123 +36,97 @@ AnalyzePage {
             width:  availableWidth
             height: availableHeight
 
-            Connections {
-                target: logController
-                onSelectionChanged: {
-                    tableView.selection.clear()
-                    for(var i = 0; i < logController.model.count; i++) {
-                        var o = logController.model.get(i)
-                        if (o && o.selected) {
-                            tableView.selection.select(i, i)
-                        }
-                    }
+            function columnWidthProvider(column) {
+                switch (column) {
+                case 0:
+                    return ScreenTools.defaultFontPixelWidth * 2
+                case 1:
+                    return ScreenTools.defaultFontPixelWidth * 2
+                case 2:
+                    return ScreenTools.defaultFontPixelWidth * 15
+                case 3:
+                    return ScreenTools.defaultFontPixelWidth * 10
+                case 4:
+                    return  ScreenTools.defaultFontPixelWidth * 15
+                default:
+                    return 0
                 }
             }
 
-            ColumnLayout {
+            QGCListView {
                 Layout.fillWidth:   true
                 Layout.fillHeight:  true
+                model:              logController.model
                 spacing:            0
 
-                HorizontalHeaderView {
-                    Layout.fillWidth:   true
-                    model:              [ qsTr("Id"), qsTr("Date"), qsTr("Size"), qsTr("Status") ]
-                    syncView:           tableView
-                    clip:               true
+                header: RowLayout {
+                    QGCCheckBox {
+                        id:         headerCheckBox
+                        enabled:    false
+                    }
+
+                    QGCLabel {
+                        Layout.preferredWidth:  columnWidthProvider(1)
+                        text:                   qsTr("Id")
+                    }
+
+                    QGCLabel {
+                        Layout.preferredWidth:  columnWidthProvider(2)
+                        text:                   qsTr("Date")
+                    }
+
+                    QGCLabel { 
+                        Layout.preferredWidth:  columnWidthProvider(3)
+                        text:                   qsTr("Size")
+                    }
+
+                    QGCLabel { 
+                        Layout.preferredWidth:  columnWidthProvider(4)
+                        text:                   qsTr("Status")
+                    }
                 }
 
-                TableView {
-                    id:                     tableView
-                    Layout.fillWidth:       true
-                    model:                  logController.model
-                    selectionBehavior:      TableView.SelectRows
-                    selectionMode:          TableView.ExtendedSelection
-                    columnWidthProvider:    columnWidth
-                    selectionModel:         ItemSelectionModel {}
+                delegate: RowLayout {
+                    QGCCheckBox {
+                        Binding on checkState {
+                            value: object.selected ? Qt.Checked : Qt.Unchecked
+                        }
 
-                    property int modelCount: model.count
+                        onClicked: object.selected = checked
+                    }
 
-                    onModelCountChanged: console.log("modelCount", modelCount)
+                    QGCLabel {
+                        Layout.preferredWidth:  columnWidthProvider(1)
+                        text:                   object.id 
+                    }
 
-                    onColumnsChanged: console.log("columns", columns)
-
-                    function columnWidth(column) {
-                        switch (column) {
-                        case 0:
-                            return ScreenTools.defaultFontPixelWidth * 6
-                        case 1:
-                            return ScreenTools.defaultFontPixelWidth * 34
-                        case 2:
-                            return ScreenTools.defaultFontPixelWidth * 18
-                        case 3:
-                            return  ScreenTools.defaultFontPixelWidth * 22
-                        default:
-                            return 0
+                    QGCLabel {
+                        Layout.preferredWidth: columnWidthProvider(2)
+                        text: {
+                            //-- Have we received this entry already?
+                            if (object.received) {
+                                var d = object.time
+                                if(d.getUTCFullYear() < 2010)
+                                    return qsTr("Date Unknown")
+                                else
+                                    return d.toLocaleString(undefined, "short")
+                            }
+                            return ""
                         }
                     }
 
-                    delegate: DelegateChooser {
-                        DelegateChoice { 
-                            column: 0
-                            delegate : Text  {
-                                color: qgcPal.text
-                                //horizontalAlignment: Text.AlignHCenter
-                                Component.onCompleted: console.log("index", index, text)
-                                text: {
-                                    var o = logController.model.get(index)
-                                    return o ? o.id : ""
-                                }
-                            }
-                        }
+                    QGCLabel { 
+                        Layout.preferredWidth:  columnWidthProvider(3)
+                        text:                   object.sizeStr 
+                    }
 
-                        DelegateChoice { 
-                            column: 1
-                            delegate: Text  {
-                                color: qgcPal.text
-                                text: {
-                                    var o = logController.model.get(index)
-                                    if (o) {
-                                        //-- Have we received this entry already?
-                                        if(logController.model.get(index).received) {
-                                            var d = logController.model.get(index).time
-                                            if(d.getUTCFullYear() < 2010)
-                                                return qsTr("Date Unknown")
-                                            else
-                                                return d.toLocaleString(undefined, "short")
-                                        }
-                                    }
-                                    return ""
-                                }
-                            }
-                        }
-
-                        DelegateChoice { 
-                            column: 2
-                            delegate : Text  {
-                                color: qgcPal.text
-                                //horizontalAlignment: Text.AlignRight
-                                Component.onCompleted: console.log("size", index, logController.model.get(index).sizeStr)
-                                text: {
-                                    var o = logController.model.get(index)
-                                    return o ? o.sizeStr : ""
-                                }
-                            }
-                        }
-
-                        DelegateChoice { 
-                            column: 3
-                            delegate : Text  {
-                                color: qgcPal.text
-                                //horizontalAlignment: Text.AlignHCenter
-                                text: {
-                                    var o = logController.model.get(index)
-                                    return o ? o.status : ""
-                                }
-                            }
-                        }
+                    QGCLabel { 
+                        Layout.preferredWidth:  columnWidthProvider(4)
+                        text:                   object.status 
                     }
                 }
             }
+
             Column {
                 spacing:            _margin
                 Layout.alignment:   Qt.AlignTop | Qt.AlignLeft
@@ -169,20 +143,24 @@ AnalyzePage {
                     }
                 }
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs && tableView.selectionModel.selectedIndexes.count > 0
+                    enabled:    !logController.requestingList && !logController.downloadingLogs
                     text:       qsTr("Download")
                     width:      _butttonWidth
+
                     onClicked: {
-                        //-- Clear selection
-                        for(var i = 0; i < logController.model.count; i++) {
+                        var logsSelected = false
+                        for (var i = 0; i < logController.model.count; i++) {
                             var o = logController.model.get(i)
-                            if (o) o.selected = false
+                            if (o.selected) {
+                                logsSelected = true
+                                break
+                            }
                         }
-                        //-- Flag selected log files
-                        tableView.selectionModel.selectedIndexes.forEach(function(rowIndex){
-                            var o = logController.model.get(rowIndex)
-                            if (o) o.selected = true
-                        })
+                        if (!logsSelected) {
+                            mainWindow.showMessageDialog(qsTr("Log Download"), qsTr("You must select at least one log file to download."))
+                            return
+                        }
+
                         if (ScreenTools.isMobile) {
                             // You can't pick folders in mobile, only default location is used
                             logController.download()
@@ -193,6 +171,7 @@ AnalyzePage {
                             fileDialog.openForLoad()
                         }
                     }
+
                     QGCFileDialog {
                         id: fileDialog
                         onAcceptedForLoad: (file) => {
@@ -201,6 +180,7 @@ AnalyzePage {
                         }
                     }
                 }
+
                 QGCButton {
                     enabled:    !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
                     text:       qsTr("Erase All")
@@ -210,6 +190,7 @@ AnalyzePage {
                                                              Dialog.Yes | Dialog.No,
                                                              function() { logController.eraseAll() })
                 }
+
                 QGCButton {
                     text:       qsTr("Cancel")
                     width:      _butttonWidth

@@ -10,7 +10,6 @@
 
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
-#include "QGCMAVLink.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
@@ -134,7 +133,7 @@ void
 LogDownloadController::_setActiveVehicle(Vehicle* vehicle)
 {
     if(_uas) {
-        _logEntriesModel.clear();
+        _logEntriesModel.clearAndDeleteContents();
         disconnect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
         disconnect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
         _uas = nullptr;
@@ -173,7 +172,7 @@ LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t 
         if(size || _vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA) {
             id -= _apmOneBased;
             if(id < _logEntriesModel.count()) {
-                QGCLogEntry* entry = _logEntriesModel[id];
+                QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(id);
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
                 entry->setReceived(true);
@@ -204,7 +203,7 @@ LogDownloadController::_entriesComplete()
     //-- Iterate entries and look for a gap
     int num_logs = _logEntriesModel.count();
     for(int i = 0; i < num_logs; i++) {
-        QGCLogEntry* entry = _logEntriesModel[i];
+        QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(i);
         if(entry) {
             if(!entry->received()) {
                return false;
@@ -220,7 +219,7 @@ LogDownloadController::_resetSelection(bool canceled)
 {
     int num_logs = _logEntriesModel.count();
     for(int i = 0; i < num_logs; i++) {
-        QGCLogEntry* entry = _logEntriesModel[i];
+        QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(i);
         if(entry) {
             if(entry->selected()) {
                 if(canceled) {
@@ -250,7 +249,7 @@ LogDownloadController::_findMissingEntries()
     int num_logs = _logEntriesModel.count();
     //-- Iterate entries and look for a gap
     for(int i = 0; i < num_logs; i++) {
-        QGCLogEntry* entry = _logEntriesModel[i];
+        QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(i);
         if(entry) {
             if(!entry->received()) {
                 if(start < 0)
@@ -269,7 +268,7 @@ LogDownloadController::_findMissingEntries()
         //-- Have we tried too many times?
         if(_retries++ > 2) {
             for(int i = 0; i < num_logs; i++) {
-                QGCLogEntry* entry = _logEntriesModel[i];
+                QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(i);
                 if(entry && !entry->received()) {
                     entry->setStatus(tr("Error"));
                 }
@@ -491,7 +490,7 @@ LogDownloadController::_requestLogData(uint16_t id, uint32_t offset, uint32_t co
 void
 LogDownloadController::refresh(void)
 {
-    _logEntriesModel.clear();
+    _logEntriesModel.clearAndDeleteContents();
     //-- Get first 50 entries
     _requestLogList(0, 49);
 }
@@ -550,7 +549,7 @@ void LogDownloadController::downloadToDirectory(const QString& dir)
         //-- Iterate selected entries and shown them as waiting
         int num_logs = _logEntriesModel.count();
         for(int i = 0; i < num_logs; i++) {
-            QGCLogEntry* entry = _logEntriesModel[i];
+            QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(i);
             if(entry) {
                 if(entry->selected()) {
                    entry->setStatus(tr("Waiting"));
@@ -571,7 +570,7 @@ LogDownloadController::_getNextSelected()
     //-- Iterate entries and look for a selected file
     int num_logs = _logEntriesModel.count();
     for(int i = 0; i < num_logs; i++) {
-        QGCLogEntry* entry = _logEntriesModel[i];
+        QGCLogEntry* entry = _logEntriesModel.value<QGCLogEntry*>(i);
         if(entry) {
             if(entry->selected()) {
                return entry;
@@ -711,95 +710,4 @@ LogDownloadController::cancel(void)
     }
     _resetSelection(true);
     _setDownloading(false);
-}
-
-//-----------------------------------------------------------------------------
-QGCLogModel::QGCLogModel(QObject* parent)
-    : QAbstractListModel(parent)
-{
-
-}
-
-//-----------------------------------------------------------------------------
-QGCLogEntry*
-QGCLogModel::get(int index)
-{
-    qDebug() << "QGCLogModel::get" << index;
-    if (index < 0 || index >= _logEntries.count()) {
-        qDebug() << "QGCLogModel::get failed";
-        return nullptr;
-    }
-    return _logEntries[index];
-}
-
-//-----------------------------------------------------------------------------
-int
-QGCLogModel::count() const
-{
-    return _logEntries.count();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCLogModel::append(QGCLogEntry* object)
-{
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
-    _logEntries.append(object);
-    endInsertRows();
-    emit countChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCLogModel::clear(void)
-{
-    if(!_logEntries.isEmpty()) {
-        beginRemoveRows(QModelIndex(), 0, _logEntries.count());
-        while (_logEntries.count()) {
-            QGCLogEntry* entry = _logEntries.last();
-            if(entry) entry->deleteLater();
-            _logEntries.removeLast();
-        }
-        endRemoveRows();
-        emit countChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-QGCLogEntry*
-QGCLogModel::operator[](int index)
-{
-    return get(index);
-}
-
-//-----------------------------------------------------------------------------
-int
-QGCLogModel::rowCount(const QModelIndex& /*parent*/) const
-{
-    return _logEntries.count();
-}
-
-//-----------------------------------------------------------------------------
-QVariant
-QGCLogModel::data(const QModelIndex & index, int role) const {
-    if (index.row() < 0 || index.row() >= _logEntries.count())
-        return QVariant();
-    if (role == ObjectRole)
-        return QVariant::fromValue(_logEntries[index.row()]);
-    return QVariant();
-}
-
-//-----------------------------------------------------------------------------
-QHash<int, QByteArray>
-QGCLogModel::roleNames() const {
-    QHash<int, QByteArray> roles;
-    roles[ObjectRole] = "logEntry";
-    return roles;
-}
-
-int QGCLogModel::columnCount(const QModelIndex &parent) const
-{
-    Q_UNUSED(parent);
-    return 4;
 }
