@@ -36,10 +36,8 @@ CheckBox {
         color:              control.textColor
     }
 
-    /*
-    // FIXME-QT6: Temporarily disabled, using standard Qt for now
     indicator:  Rectangle {
-        implicitWidth:  ScreenTools.checkBoxIndicatorSize
+        implicitWidth:  ScreenTools.implicitCheckBoxHeight
         implicitHeight: implicitWidth
         x:              control.leftPadding
         y:              parent.height / 2 - height / 2
@@ -49,16 +47,15 @@ CheckBox {
         opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
 
         QGCColoredImage {
-            source:     "/qmlimages/checkbox-check.svg"
-            color:      "black"
-            opacity:    control.checkedState === Qt.Checked ? (control.enabled ? 1 : 0.5) : 0
-            mipmap:     true
-            fillMode:   Image.PreserveAspectFit
-            width:      parent.width * 0.75
-            height:     width
-            sourceSize.height: height
-            anchors.centerIn:  parent
+            source:             "/qmlimages/checkbox-check.svg"
+            color:              "black"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            width:              parent.implicitWidth * 0.75
+            height:             width
+            sourceSize.height:  height
+            visible:            control.checked
+            anchors.centerIn:   parent
         }
     }
-    */
 }
