@@ -1,5 +1,5 @@
 LinuxBuild {
-    if (USE_WAYLAND) {
+    UseWayland: {
         DEFINES += HAVE_QT_WAYLAND
     } else {
         DEFINES += HAVE_QT_X11
