@@ -15,7 +15,8 @@ on:
     - '*'
     paths-ignore:
       - 'docs/**'
-      
+      - '.github/workflows/**'
+
 defaults:
   run:
     shell: bash
@@ -34,11 +35,11 @@ jobs:
        include:
          - architecture: 32bits
            eabi: armeabi-v7a
-           aqt-arch: android_armv7
+           arch: android_armv7
            ARTIFACT: QGroundControl32.apk
          - architecture: 64bits
            eabi: arm64-v8a
-           aqt-arch: android_arm64_v8a
+           arch: android_arm64_v8a
            ARTIFACT: QGroundControl64.apk
 
     steps:
@@ -52,6 +53,17 @@ jobs:
         run: |
           git fetch --all --tags -f --depth 1
 
+      - name: Install Qt6 for linux
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      ${{ env.QT_VERSION }}
+          aqtversion:   ==3.1.*
+          host:         linux
+          target:       desktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity
+          setup-python: true
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
@@ -59,10 +71,10 @@ jobs:
           aqtversion:   ==3.1.*
           host:         linux
           target:       android
-          arch:         ${{ matrix.aqt-arch }}
+          arch:         ${{ matrix.arch }}
           extra:        --autodesktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtimageformats qtshadertools qtconnectivity
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity
           setup-python: true
 
       - name: Remove Android SDKs to force usage of android-33 only
