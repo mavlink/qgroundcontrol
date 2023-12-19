@@ -14,7 +14,15 @@ add_library(qmlglsink
 )
 
 if(LINUX)
-	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND HAVE_QT_QPA_HEADER)
+	if (USE_WAYLAND)
+		message(STATUS "Using wayland for qmlglsink")
+		# use wayland
+		target_compile_definitions(qmlglsink PUBLIC HAVE_QT_WAYLAND)
+	else ()
+		message(STATUS "Using x11 for qmlglsink")
+		target_compile_definitions(qmlglsink PUBLIC HAVE_QT_X11)
+	endif ()
+	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_EGLFS HAVE_QT_QPA_HEADER)
 elseif(APPLE)
 	target_compile_definitions(qmlglsink PUBLIC HAVE_QT_MAC)
 elseif(IOS)
