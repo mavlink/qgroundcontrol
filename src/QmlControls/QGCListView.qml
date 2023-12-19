@@ -6,6 +6,7 @@ import QGroundControl.Palette
 ListView {
     id:             root
     boundsBehavior: Flickable.StopAtBounds
+    clip:           true
 
     property color indicatorColor: qgcPal.text
 
