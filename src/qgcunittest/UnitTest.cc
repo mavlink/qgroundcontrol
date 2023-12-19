@@ -431,9 +431,6 @@ QString UnitTest::createRandomFile(uint32_t byteCount)
 {
     QTemporaryFile tempFile;
 
-    QTime time = QTime::currentTime();
-    QRandomGenerator::global()->seed(time.msec());
-
     tempFile.setAutoRemove(false);
     if (tempFile.open()) {
         for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
