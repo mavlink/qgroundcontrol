@@ -425,7 +425,6 @@
       <short_desc>Index or primary airspeed measurement source</short_desc>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="-1">Disabled</value>
         <value code="0">Groundspeed minus windspeed</value>
         <value code="1">First airspeed sensor</value>
         <value code="2">Second airspeed sensor</value>
@@ -817,13 +816,6 @@
     </parameter>
   </group>
   <group name="Circuit Breaker">
-    <parameter name="CBRK_AIRSPD_CHK" default="0" type="INT32" category="Developer">
-      <short_desc>Circuit breaker for airspeed sensor</short_desc>
-      <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. The sensor driver will not be started and it cannot be calibrated. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
-      <min>0</min>
-      <max>162128</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="CBRK_BUZZER" default="0" type="INT32" category="Developer">
       <short_desc>Circuit breaker for disabling buzzer</short_desc>
       <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. Setting this parameter to 782090 will disable the startup tune, while keeping all others enabled.</long_desc>
@@ -3008,14 +3000,6 @@
       <max>720</max>
       <unit>deg</unit>
     </parameter>
-    <parameter name="FW_ARSP_MODE" default="0" type="INT32">
-      <short_desc>Airspeed mode</short_desc>
-      <long_desc>On vehicles without airspeed sensor this parameter can be used to enable flying without an airspeed reading</long_desc>
-      <values>
-        <value code="0">Use airspeed in controller</value>
-        <value code="1">Do not use airspeed in controller</value>
-      </values>
-    </parameter>
     <parameter name="FW_ARSP_SCALE_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable airspeed scaling</short_desc>
       <long_desc>This enables a logic that automatically adjusts the output of the rate controller to take into account the real torque produced by an aerodynamic control surface given the current deviation from the trim airspeed (FW_AIRSPD_TRIM). Enable when using aerodynamic control surfaces (e.g.: plane) Disable when using rotor wings (e.g.: autogyro)</long_desc>
@@ -3211,6 +3195,10 @@
         <value code="1">Flaps channel</value>
         <value code="2">Aux1</value>
       </values>
+    </parameter>
+    <parameter name="FW_USE_AIRSPD" default="1" type="INT32" boolean="true">
+      <short_desc>Use airspeed for control</short_desc>
+      <long_desc>If set to 1, the airspeed measurement data, if valid, is used in the following controllers: - Rate controller: output scaling - Attitude controller: coordinated turn controller - Position controller: airspeed setpoint tracking, takeoff logic - VTOL: transition logic</long_desc>
     </parameter>
     <parameter name="FW_YR_D" default="0.0" type="FLOAT">
       <short_desc>Yaw rate derivative gain</short_desc>
@@ -9567,6 +9555,12 @@
       <short_desc>Control if the vehicle has a magnetometer</short_desc>
       <long_desc>Set this to 0 if the board has no magnetometer. If set to 0, the preflight checks will not check for the presence of a magnetometer, otherwise N sensors are required.</long_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="SYS_HAS_NUM_ASPD" default="0" type="INT32">
+      <short_desc>Control if the vehicle has an airspeed sensor</short_desc>
+      <long_desc>Set this to 0 if the board has no airspeed sensor. If set to 0, the preflight checks will not check for the presence of an airspeed sensor.</long_desc>
+      <min>0</min>
+      <max>1</max>
     </parameter>
     <parameter name="SYS_HAS_NUM_DIST" default="0" type="INT32">
       <short_desc>Number of distance sensors to check being available</short_desc>
