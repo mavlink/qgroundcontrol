@@ -6910,24 +6910,6 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
-    <name>FlyViewAirspaceIndicator</name>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="46"/>
-      <source>Approval Pending</source>
-      <translation>승인대기 중</translation>
-    </message>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="48"/>
-      <source>Flight Approved</source>
-      <translation>비행 승인됨</translation>
-    </message>
-    <message>
-      <location filename="../src/FlightDisplay/FlyViewAirspaceIndicator.qml" line="50"/>
-      <source>Flight Rejected</source>
-      <translation>비행 거절됨</translation>
-    </message>
-  </context>
-  <context>
     <name>FlyViewMap</name>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="346"/>
