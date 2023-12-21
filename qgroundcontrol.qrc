@@ -19,7 +19,7 @@
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="VTOLModeIndicator.qml">src/ui/toolbar/VTOLModeIndicator.qml</file>
         <file alias="APMSupportForwardingIndicator.qml">src/ui/toolbar/APMSupportForwardingIndicator.qml</file>
-    </qresource>
+            </qresource>
     <qresource prefix="/checklists">
         <file alias="DefaultChecklist.qml">src/FlightDisplay/DefaultChecklist.qml</file>
         <file alias="MultiRotorChecklist.qml">src/FlightDisplay/MultiRotorChecklist.qml</file>
@@ -223,11 +223,13 @@
         <file alias="QGroundControl/FlightDisplay/GuidedActionList.qml">src/FlightDisplay/GuidedActionList.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionTakeoff.qml">src/FlightDisplay/GuidedActionTakeoff.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionGripper.qml">src/FlightDisplay/GuidedActionGripper.qml</file>
+        <file alias="QGroundControl/FlightDisplay/GuidedActionShowMet.qml">src/FlightDisplay/GuidedActionShowMet.qml</file>
         <file alias="QGroundControl/FlightDisplay/GripperMenu.qml">src/FlightDisplay/GripperMenu.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionPause.qml">src/FlightDisplay/GuidedActionPause.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionRTL.qml">src/FlightDisplay/GuidedActionRTL.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedValueSlider.qml">src/FlightDisplay/GuidedValueSlider.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedToolStripAction.qml">src/FlightDisplay/GuidedToolStripAction.qml</file>
+        <file alias="QGroundControl/FlightDisplay/MetDataWindow.qml">src/FlightDisplay/MetDataWindow.qml</file>
         <file alias="QGroundControl/FlightDisplay/MultiVehicleList.qml">src/FlightDisplay/MultiVehicleList.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightBatteryCheck.qml">src/FlightDisplay/PreFlightBatteryCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightGPSCheck.qml">src/FlightDisplay/PreFlightGPSCheck.qml</file>
