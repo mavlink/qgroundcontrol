@@ -19,9 +19,6 @@
 [submodule "libs/eigen"]
 	path = libs/eigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "libs/qmdnsengine"]
-	path = libs/qmdnsengine
-	url = https://github.com/patrickelectric/qmdnsengine
 [submodule "libs/shapelib"]
 	path = libs/shapelib
 	url = https://github.com/OSGeo/shapelib.git
