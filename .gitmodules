@@ -25,3 +25,6 @@
 [submodule "src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository"]
 	path = src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository
 	url = https://github.com/ArduPilot/ArduPilot-Parameter-Repository
+[submodule "libs/qmdnsengine"]
+	path = libs/qmdnsengine
+	url = https://github.com/nitroshare/qmdnsengine.git

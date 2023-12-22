@@ -8,12 +8,16 @@ add_library(Settings
 	AppSettings.h
 	AutoConnectSettings.cc
 	AutoConnectSettings.h
+	BatteryIndicatorSettings.cc
+	BatteryIndicatorSettings.h
 	BrandImageSettings.cc
 	BrandImageSettings.h
 	FirmwareUpgradeSettings.cc
 	FirmwareUpgradeSettings.h
 	FlightMapSettings.cc
 	FlightMapSettings.h
+	FlightModeSettings.cc
+	FlightModeSettings.h
 	FlyViewSettings.cc
 	FlyViewSettings.h
 	OfflineMapsSettings.cc
