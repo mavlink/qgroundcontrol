@@ -39,6 +39,7 @@ Item {
     readonly property string disarmTitle:                   qsTr("Disarm")
     readonly property string rtlTitle:                      qsTr("Return")
     readonly property string takeoffTitle:                  qsTr("Takeoff")
+    readonly property string metTitle:                      qsTr("Met")
     readonly property string gripperTitle:                  qsTr("Gripper Function")
     readonly property string landTitle:                     qsTr("Land")
     readonly property string startMissionTitle:             qsTr("Start Mission")
@@ -111,6 +112,7 @@ Item {
     readonly property int actionChangeSpeed:                25
     readonly property int actionGripper:                    26
     readonly property int actionSetHome:                    27
+    readonly property int actionShowMet:                    28
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -128,6 +130,7 @@ Item {
     property bool showRTL:              _guidedActionsEnabled && _vehicleArmed && _activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
     property bool showTakeoff:          _guidedActionsEnabled && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canTakeoff
     property bool showLand:             _guidedActionsEnabled && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
+    property bool showMet:              true
     property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
@@ -161,6 +164,7 @@ Item {
     property bool   _vehicleInMissionMode:  false
     property bool   _vehicleInRTLMode:      false
     property bool   _vehicleInLandMode:     false
+    property bool   _metDataVisible:        false
     property int    _missionItemCount:      missionController.missionItemCount
     property int    _currentMissionIndex:   missionController.currentMissionIndex
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
@@ -519,6 +523,10 @@ Item {
             confirmDialog.message = setHomeMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showSetHome })
             break
+        case actionShowMet:
+            // skip confirmation and execute
+            executeAction(actionShowMet)
+            return
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -615,6 +623,9 @@ Item {
             break
         case actionSetHome:
             _activeVehicle.doSetHome(actionData)
+            break
+        case actionShowMet:
+            _metDataVisible = !_metDataVisible
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

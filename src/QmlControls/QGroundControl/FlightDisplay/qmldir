@@ -17,6 +17,7 @@ GuidedActionConfirm             1.0 GuidedActionConfirm.qml
 GuidedActionsController         1.0 GuidedActionsController.qml
 GuidedActionLand                1.0 GuidedActionLand.qml
 GuidedActionList                1.0 GuidedActionList.qml
+GuidedActionShowMet             1.0 GuidedActionShowMet.qml
 GuidedActionPause               1.0 GuidedActionPause.qml
 GuidedActionRTL                 1.0 GuidedActionRTL.qml
 GuidedValueSlider               1.0 GuidedValueSlider.qml
@@ -33,6 +34,7 @@ ProximityRadarValues            1.0 ProximityRadarValues.qml
 ProximityRadarVideoView         1.0 ProximityRadarVideoView.qml
 TerrainProgress                 1.0 TerrainProgress.qml
 TelemetryValuesBar              1.0 TelemetryValuesBar.qml
+MetDataWindow                   1.0 MetDataWindow.qml
 VehicleWarnings                 1.0 VehicleWarnings.qml
 ObstacleDistanceOverlay         1.0 ObstacleDistanceOverlay.qml
 ObstacleDistanceOverlayMap      1.0 ObstacleDistanceOverlayMap.qml
