@@ -41,10 +41,10 @@ void LogDownloadTest::downloadTest(void)
     }
     _multiSpyLogDownloadController->clearAllSignals();
 
-    QGCLogModel* model = controller->model();
+    auto model = controller->model();
     QVERIFY(model);
     qDebug() << model->count();
-    (*model)[0]->setSelected(true);
+    model->value<QGCLogEntry*>(0)->setSelected(true);
 
     QString downloadTo = QDir::currentPath();
     qDebug() << "download to:" << downloadTo;
