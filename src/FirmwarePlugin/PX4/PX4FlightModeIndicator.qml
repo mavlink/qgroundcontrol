@@ -207,9 +207,10 @@ FlightModeIndicator {
                     }
 
                     QGCLabel {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
-                        wrapMode:           QGCLabel.WordWrap
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 30
+                        text:                   qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
+                        wrapMode:               QGCLabel.WordWrap
                     }
                 }
             }
