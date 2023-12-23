@@ -21,16 +21,6 @@
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-#include "TaisyncManager.h"
-#else
-class TaisyncManager;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-#include "MicrohardManager.h"
-#else
-class MicrohardManager;
-#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -78,10 +68,6 @@ public:
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
-    Q_PROPERTY(TaisyncManager*      taisyncManager          READ    taisyncManager          CONSTANT)
-    Q_PROPERTY(bool                 taisyncSupported        READ    taisyncSupported        CONSTANT)
-    Q_PROPERTY(MicrohardManager*    microhardManager        READ    microhardManager        CONSTANT)
-    Q_PROPERTY(bool                 microhardSupported      READ    microhardSupported      CONSTANT)
     Q_PROPERTY(bool                 supportsPairing         READ    supportsPairing         CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
@@ -182,20 +168,6 @@ public:
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
 
-    TaisyncManager*         taisyncManager      ()  { return _taisyncManager; }
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    bool                    taisyncSupported    ()  { return true; }
-#else
-    bool                    taisyncSupported    () { return false; }
-#endif
-
-    MicrohardManager*       microhardManager    () { return _microhardManager; }
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    bool                    microhardSupported  () { return true; }
-#else
-    bool                    microhardSupported  () { return false; }
-#endif
-
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -263,8 +235,6 @@ private:
     FirmwarePluginManager*  _firmwarePluginManager  = nullptr;
     SettingsManager*        _settingsManager        = nullptr;
     FactGroup*              _gpsRtkFactGroup        = nullptr;
-    TaisyncManager*         _taisyncManager         = nullptr;
-    MicrohardManager*       _microhardManager       = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
