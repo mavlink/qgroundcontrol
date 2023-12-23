@@ -10,9 +10,6 @@
 
 #include "MobileScreenMgr.h"
 
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
-
 //static const char* kJniClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 
 void MobileScreenMgr::setKeepScreenOn(bool /*keepScreenOn*/)

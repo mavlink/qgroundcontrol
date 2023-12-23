@@ -9,6 +9,12 @@
 
 QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in makefiles
 
+# These are disabled until proven correct
+DEFINES += QGC_GST_TAISYNC_DISABLED
+DEFINES += QGC_GST_MICROHARD_DISABLED
+
+message ("ANDROID_TARGET_ARCH $${ANDROID_TARGET_ARCH} $${QT_ARCH}")
+
 exists($${OUT_PWD}/qgroundcontrol.pro) {
     error("You must use shadow build (e.g. mkdir build; cd build; qmake ../qgroundcontrol.pro).")
 }
@@ -261,9 +267,7 @@ QT += \
         multimedia
 }
 
-AndroidBuild || iOSBuild {
-    # Android and iOS don't unclude these
-} else {
+!iOSBuild {
     QT += \
         serialport \
 }
@@ -767,9 +771,11 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
         src/PairingManager/PairingManager.h \
 }
 
+# FIXME-QT6: NYI
 AndroidBuild {
-HEADERS += \
-    src/Joystick/JoystickAndroid.h \
+    DEFINES += FIXME_QT6_DISABLE_ANDROID_JOYSTICK
+    #HEADERS += \
+    #    src/Joystick/JoystickAndroid.h \
 }
 
 DebugBuild {
@@ -828,8 +834,9 @@ iOSBuild {
 }
 
 AndroidBuild {
-    SOURCES += src/MobileScreenMgr.cc \
-    src/Joystick/JoystickAndroid.cc \
+    SOURCES += src/MobileScreenMgr.cc
+    # FIXME-QT6: NYI
+    #src/Joystick/JoystickAndroid.cc \
 }
 
 SOURCES += \
