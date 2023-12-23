@@ -9,13 +9,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <jni.h>
-#include <QtCore/private/qjni_p.h>
-#include <QtCore/private/qjnihelpers_p.h>
+#include <QString>
 
 class AndroidInterface
 {
 public:
+    static bool checkStoragePermissions();
     static QString getSDCardPath();
 };

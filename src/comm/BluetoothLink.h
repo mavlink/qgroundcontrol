@@ -20,7 +20,6 @@
 #include <qbluetoothserviceinfo.h>
 #include <qbluetoothservicediscoveryagent.h>
 
-#include "QGCConfig.h"
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
@@ -38,7 +37,7 @@ public:
     {
         *this = other;
     }
-    bool operator==(const BluetoothData& other)
+    bool operator==(const BluetoothData& other) const
     {
 #ifdef __ios__
         return uuid == other.uuid && name == other.name;

@@ -1,83 +1,69 @@
 <?xml version="1.0"?>
-<manifest package="%%QGC_INSERT_PACKAGE_NAME%%" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="-- %%INSERT_VERSION_NAME%% --" android:versionCode="-- %%INSERT_VERSION_CODE%% --" android:installLocation="auto">
-    <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
-         Remove the comment if you do not require these default permissions. -->
-    <!-- %%INSERT_PERMISSIONS -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.qtproject.example"
+    android:installLocation="auto"
+    
+    android:versionCode="-- %%INSERT_VERSION_CODE%% --"
+    android:versionName="-- %%INSERT_VERSION_NAME%% --">
 
-    <!-- The following comment will be replaced upon deployment with default features based on the dependencies of the application.
-         Remove the comment if you do not require these default features. -->
+    <!-- %%INSERT_PERMISSIONS -->
     <!-- %%INSERT_FEATURES -->
 
-    <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
-    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --" android:extractNativeLibs="true" android:icon="@drawable/icon">
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.mavlink.qgroundcontrol.QGCActivity" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:keepScreenOn="true">
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true" />
+
+    <application
+        android:name="org.qtproject.qt.android.bindings.QtApplication"
+        android:hardwareAccelerated="true"
+        android:label="-- %%INSERT_APP_NAME%% --"
+        android:requestLegacyExternalStorage="true"
+        android:allowBackup="true"
+        android:fullBackupOnly="false"
+        android:icon="@drawable/icon">
+        <activity
+            android:name="org.qtproject.qt.android.bindings.QtActivity"
+            android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
+            android:label="-- %%INSERT_APP_NAME%% --"
+            android:launchMode="singleTop"
+            android:screenOrientation="unspecified"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
 
                 <!-- %%QGC_INSERT_ACTIVITY_INTENT_FILTER -->
             </intent-filter>
 
             <!-- %%QGC_INSERT_ACTIVITY_META_DATA -->
 
-            <!-- Application arguments -->
-            <!-- meta-data android:name="android.app.arguments" android:value="arg1 arg2 arg3"/ -->
-            <!-- Application arguments -->
-            <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
-            <meta-data android:name="android.app.qt_sources_resource_id" android:resource="@array/qt_sources"/>
-            <meta-data android:name="android.app.repository" android:value="default"/>
-            <meta-data android:name="android.app.qt_libs_resource_id" android:resource="@array/qt_libs"/>
-            <meta-data android:name="android.app.bundled_libs_resource_id" android:resource="@array/bundled_libs"/>
-            <!-- Deploy Qt libs as part of package -->
-            <meta-data android:name="android.app.bundle_local_qt_libs" android:value="-- %%BUNDLE_LOCAL_QT_LIBS%% --"/>
-            <!-- Run with local libs -->
-            <meta-data android:name="android.app.use_local_qt_libs" android:value="-- %%USE_LOCAL_QT_LIBS%% --"/>
-            <meta-data android:name="android.app.libs_prefix" android:value="/data/local/tmp/qt/"/>
-            <meta-data android:name="android.app.load_local_libs_resource_id" android:resource="@array/load_local_libs"/>
-            <meta-data android:name="android.app.load_local_jars" android:value="-- %%INSERT_LOCAL_JARS%% --"/>
-            <meta-data android:name="android.app.static_init_classes" android:value="-- %%INSERT_INIT_CLASSES%% --"/>
-            <!-- Used to specify custom system library path to run with local system libs -->
-            <!-- <meta-data android:name="android.app.system_libs_prefix" android:value="/system/lib/"/> -->
-            <!--  Messages maps -->
-            <meta-data android:value="@string/ministro_not_found_msg" android:name="android.app.ministro_not_found_msg"/>
-            <meta-data android:value="@string/ministro_needed_msg" android:name="android.app.ministro_needed_msg"/>
-            <meta-data android:value="@string/fatal_error_msg" android:name="android.app.fatal_error_msg"/>
-            <meta-data android:value="@string/unsupported_android_version" android:name="android.app.unsupported_android_version"/>
-            <!--  Messages maps -->
-            <!-- Splash screen -->
-            <!-- Orientation-specific (portrait/landscape) data is checked first. If not available for current orientation,
-                 then android.app.splash_screen_drawable. For best results, use together with splash_screen_sticky and
-                 use hideSplashScreen() with a fade-out animation from Qt Android Extras to hide the splash screen when you
-                 are done populating your window with content. -->
-            <!-- meta-data android:name="android.app.splash_screen_drawable_portrait" android:resource="@drawable/logo_portrait" / -->
-            <!-- meta-data android:name="android.app.splash_screen_drawable_landscape" android:resource="@drawable/logo_landscape" / -->
-            <!-- meta-data android:name="android.app.splash_screen_drawable" android:resource="@drawable/logo"/ -->
-            <!-- meta-data android:name="android.app.splash_screen_sticky" android:value="true"/ -->
-            <!-- Splash screen -->
-            <!-- Background running -->
-            <!-- Warning: changing this value to true may cause unexpected crashes if the
-                          application still try to draw after
-                          "applicationStateChanged(Qt::ApplicationSuspended)"
-                          signal is sent! -->
-            <meta-data android:name="android.app.background_running" android:value="false"/>
-            <!-- Background running -->
-            <!-- auto screen scale factor -->
-            <meta-data android:name="android.app.auto_screen_scale_factor" android:value="false"/>
-            <!-- auto screen scale factor -->
-            <!-- extract android style -->
-            <!-- available android:values :
-                * default - In most cases this will be the same as "full", but it can also be something else if needed, e.g., for compatibility reasons
-                * full - useful QWidget & Quick Controls 1 apps
-                * minimal - useful for Quick Controls 2 apps, it is much faster than "full"
-                * none - useful for apps that don't use any of the above Qt modules
-                -->
-            <meta-data android:name="android.app.extract_android_style" android:value="default"/>
-            <!-- extract android style -->
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="-- %%INSERT_APP_LIB_NAME%% --" />
+
+            <meta-data
+                android:name="android.app.arguments"
+                android:value="-- %%INSERT_APP_ARGUMENTS%% --" />
+
+            <meta-data
+                android:name="android.app.extract_android_style"
+                android:value="minimal" />
         </activity>
-        <!-- For adding service(s) please check: https://wiki.qt.io/AndroidServices -->
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.qtprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/qtprovider_paths"/>
+        </provider>
     </application>
 
-    <uses-sdk android:targetSdkVersion="30"/>
+    <uses-sdk android:targetSdkVersion="33"/>
 
     <!-- Needed to keep working while 'asleep' -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
@@ -85,20 +71,10 @@
     <!-- Need MulticastLock to receive broadcast UDP packets  -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
 
-    <!-- Support devices without USB host mode since there are other connection types -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
-
-    <!-- Support devices without Bluetooth since there are other connection types -->
+    <uses-feature android:name="android.hardware.usb.accessory" android:required="false"/>
     <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
-
-    <!-- Support devices that don't have location services -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
     <uses-feature android:name="android.hardware.location.network" android:required="false"/>
     <uses-feature android:name="android.hardware.location" android:required="false"/>
-    <uses-feature android:name="android.hardware.usb.accessory" android:required="false"/>
-
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 </manifest>
