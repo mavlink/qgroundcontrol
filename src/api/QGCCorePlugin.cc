@@ -47,14 +47,6 @@ public:
             delete pCommLinks;
         if(pOfflineMaps)
             delete pOfflineMaps;
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        if(pTaisync)
-            delete pTaisync;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-        if(pMicrohard)
-            delete pMicrohard;
-#endif
         if(pMAVLink)
             delete pMAVLink;
         if(pConsole)
@@ -76,12 +68,6 @@ public:
     QmlComponentInfo* pGeneral                  = nullptr;
     QmlComponentInfo* pCommLinks                = nullptr;
     QmlComponentInfo* pOfflineMaps              = nullptr;
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    QmlComponentInfo* pTaisync                  = nullptr;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    QmlComponentInfo* pMicrohard                = nullptr;
-#endif
     QmlComponentInfo* pMAVLink                  = nullptr;
     QmlComponentInfo* pConsole                  = nullptr;
     QmlComponentInfo* pHelp                     = nullptr;
@@ -139,18 +125,6 @@ QVariantList &QGCCorePlugin::settingsPages()
                                                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                                                 QUrl::fromUserInput("qrc:/res/waves.svg"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pOfflineMaps)));
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        _p->pTaisync = new QmlComponentInfo(tr("Taisync"),
-                                            QUrl::fromUserInput("qrc:/qml/TaisyncSettings.qml"),
-                                            QUrl::fromUserInput(""));
-        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pTaisync)));
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-        _p->pMicrohard = new QmlComponentInfo(tr("Microhard"),
-                                              QUrl::fromUserInput("qrc:/qml/MicrohardSettings.qml"),
-                                              QUrl::fromUserInput(""));
-        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pMicrohard)));
-#endif
         _p->pMAVLink = new QmlComponentInfo(tr("MAVLink"),
                                             QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
                                             QUrl::fromUserInput("qrc:/res/waves.svg"));
