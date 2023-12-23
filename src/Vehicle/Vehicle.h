@@ -79,16 +79,17 @@ class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
 
-#ifndef OPAQUE_PTR_Vehicle
-    #define OPAQUE_PTR_Vehicle
-    Q_DECLARE_OPAQUE_POINTER(AutoPilotPlugin*)
-    Q_DECLARE_OPAQUE_POINTER(TrajectoryPoints*)
-    Q_DECLARE_OPAQUE_POINTER(ParameterManager*)
-    Q_DECLARE_OPAQUE_POINTER(VehicleObjectAvoidance*)
-    Q_DECLARE_OPAQUE_POINTER(Autotune*)
-    Q_DECLARE_OPAQUE_POINTER(RemoteIDManager*)
+Q_MOC_INCLUDE("AutoPilotPlugin.h")
+Q_MOC_INCLUDE("TrajectoryPoints.h")
+Q_MOC_INCLUDE("ParameterManager.h")
+Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
+Q_MOC_INCLUDE("Autotune.h")
+Q_MOC_INCLUDE("RemoteIDManager.h")
+Q_MOC_INCLUDE("QGCCameraManager.h")
+
+#ifndef OPAQUE_PTR_VEHICLE
+    #define OPAQUE_PTR_VEHICLE
     Q_DECLARE_OPAQUE_POINTER(Actuators*)
-    Q_DECLARE_OPAQUE_POINTER(QGCCameraManager*)
 #endif
 
 namespace events {
