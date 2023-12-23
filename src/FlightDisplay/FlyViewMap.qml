@@ -531,106 +531,100 @@ FlightMap {
         }
     }
 
+    Popup {
+        id: clickMenu
+        modal: true
 
-    // Handle guided mode clicks
-    MouseArea {
-        anchors.fill: parent
+        property var coord
 
-        Popup {
-            id: clickMenu
-            modal: true
+        function setCoordinates(mouseX, mouseY) {
+            var newX = mouseX
+            var newY = mouseY
 
-            property var coord
-
-            function setCoordinates(mouseX, mouseY) {
-                var newX = mouseX
-                var newY = mouseY
-
-                // Filtering coordinates
-                if (newX + clickMenu.width > _root.width) {
-                    newX = _root.width - clickMenu.width
-                }
-                if (newY + clickMenu.height > _root.height) {
-                    newY = _root.height - clickMenu.height
-                }
-
-                // Set coordiantes
-                x = newX
-                y = newY
+            // Filtering coordinates
+            if (newX + clickMenu.width > _root.width) {
+                newX = _root.width - clickMenu.width
+            }
+            if (newY + clickMenu.height > _root.height) {
+                newY = _root.height - clickMenu.height
             }
 
-            background: Rectangle {
-                radius: ScreenTools.defaultFontPixelHeight * 0.5
-                color: qgcPal.window
-                border.color: qgcPal.text
+            // Set coordiantes
+            x = newX
+            y = newY
+        }
+
+        background: Rectangle {
+            radius: ScreenTools.defaultFontPixelHeight * 0.5
+            color: qgcPal.window
+            border.color: qgcPal.text
+        }
+
+        ColumnLayout {
+            id: mainLayout
+            spacing: ScreenTools.defaultFontPixelWidth / 2
+
+            QGCButton {
+                Layout.fillWidth: true
+                text: "Go to location"
+                visible: globals.guidedControllerFlyView.showGotoLocation
+                onClicked: {
+                    if (clickMenu.opened) {
+                        clickMenu.close()
+                    }
+                    gotoLocationItem.show(clickMenu.coord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, clickMenu.coord, gotoLocationItem)
+                }
             }
 
-            ColumnLayout {
-                id: mainLayout
-                spacing: ScreenTools.defaultFontPixelWidth / 2
-
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "Go to location"
-                    visible: globals.guidedControllerFlyView.showGotoLocation
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        gotoLocationItem.show(clickMenu.coord)
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, clickMenu.coord, gotoLocationItem)
+            QGCButton {
+                Layout.fillWidth: true
+                text: "Orbit at location"
+                visible: globals.guidedControllerFlyView.showOrbit
+                onClicked: {
+                    if (clickMenu.opened) {
+                        clickMenu.close()
                     }
+                    orbitMapCircle.show(clickMenu.coord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, clickMenu.coord, orbitMapCircle)
                 }
+            }
 
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "Orbit at location"
-                    visible: globals.guidedControllerFlyView.showOrbit
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        orbitMapCircle.show(clickMenu.coord)
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, clickMenu.coord, orbitMapCircle)
+            QGCButton {
+                Layout.fillWidth: true
+                text: "ROI at location"
+                visible: globals.guidedControllerFlyView.showROI
+                onClicked: {
+                    if (clickMenu.opened) {
+                        clickMenu.close()
                     }
+                    roiLocationItem.show(clickMenu.coord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
                 }
+            }
 
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "ROI at location"
-                    visible: globals.guidedControllerFlyView.showROI
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        roiLocationItem.show(clickMenu.coord)
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
+            QGCButton {
+                Layout.fillWidth: true
+                text: "Set home here"
+                visible: globals.guidedControllerFlyView.showSetHome
+                onClicked: {
+                    if (clickMenu.opened) {
+                        clickMenu.close()
                     }
-                }
-
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "Set home here"
-                    visible: globals.guidedControllerFlyView.showSetHome
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, clickMenu.coord)
-                    }
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, clickMenu.coord)
                 }
             }
         }
+    }
 
-        onClicked: (mouse) => {
-            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
-                orbitMapCircle.hide()
-                gotoLocationItem.hide()
-                var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-                clickMenu.coord = clickCoord
-                clickMenu.setCoordinates(mouse.x, mouse.y)
-                clickMenu.open()
-            }
+    onMapClicked: (mouse) => {
+        if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
+            orbitMapCircle.hide()
+            gotoLocationItem.hide()
+            var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            clickMenu.coord = clickCoord
+            clickMenu.setCoordinates(mouse.x, mouse.y)
+            clickMenu.open()
         }
     }
 
