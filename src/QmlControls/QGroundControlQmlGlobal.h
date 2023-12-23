@@ -39,19 +39,14 @@ class MicrohardManager;
 class QGCToolbox;
 class LinkManager;
 
-#ifndef OPAQUE_PTR_QGFroundControlQmlGlobal
-    #define OPAQUE_PTR_QGFroundControlQmlGlobal
-    Q_DECLARE_OPAQUE_POINTER(LinkManager*)
-    Q_DECLARE_OPAQUE_POINTER(QGCMapEngineManager*)
-    Q_DECLARE_OPAQUE_POINTER(QGCPositionManager*)
-    Q_DECLARE_OPAQUE_POINTER(VideoManager*)
-    Q_DECLARE_OPAQUE_POINTER(MAVLinkLogManager*)
-    Q_DECLARE_OPAQUE_POINTER(SettingsManager*)
-    Q_DECLARE_OPAQUE_POINTER(QGCCorePlugin*)
-    Q_DECLARE_OPAQUE_POINTER(MissionCommandTree*)
-    Q_DECLARE_OPAQUE_POINTER(TaisyncManager*)
-    Q_DECLARE_OPAQUE_POINTER(MicrohardManager*)
-#endif
+Q_MOC_INCLUDE("LinkManager.h")
+Q_MOC_INCLUDE("QGCMapEngineManager.h")
+Q_MOC_INCLUDE("PositionManager.h")
+Q_MOC_INCLUDE("VideoManager.h")
+Q_MOC_INCLUDE("MAVLinkLogManager.h")
+Q_MOC_INCLUDE("SettingsManager.h")
+Q_MOC_INCLUDE("QGCCorePlugin.h")
+Q_MOC_INCLUDE("MissionCommandTree.h")
 
 class QGroundControlQmlGlobal : public QGCTool
 {

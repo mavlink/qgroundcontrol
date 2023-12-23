@@ -31,12 +31,9 @@ class TakeoffMissionItem;
 class QDomDocument;
 class PlanViewSettings;
 
-#ifndef OPAQUE_PTR_MissionController
-    #define OPAQUE_PTR_MissionController
-    Q_DECLARE_OPAQUE_POINTER(FlightPathSegment*)
-    Q_DECLARE_OPAQUE_POINTER(VisualMissionItem*)
-    Q_DECLARE_OPAQUE_POINTER(TakeoffMissionItem*)
-#endif
+Q_MOC_INCLUDE("FlightPathSegment.h")
+Q_MOC_INCLUDE("VisualMissionItem.h")
+Q_MOC_INCLUDE("TakeoffMissionItem.h")
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
