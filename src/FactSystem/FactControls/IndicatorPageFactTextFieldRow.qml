@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.15
-import QtQuick.Layouts  1.15
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 RowLayout {
     property alias label:                   _label.text
