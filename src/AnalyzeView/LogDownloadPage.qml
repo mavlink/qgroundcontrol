@@ -53,16 +53,34 @@ AnalyzePage {
                 }
             }
 
-            QGCListView {
+            QGCFlickable {
                 Layout.fillWidth:   true
                 Layout.fillHeight:  true
-                model:              logController.model
-                spacing:            0
+                contentWidth:       gridLayout.width
+                contentHeight:      gridLayout.height
 
-                header: RowLayout {
+                GridLayout {
+                    id:                 gridLayout
+                    rows:               logController.model.count + 1
+                    columns:            5
+                    flow:               GridLayout.TopToBottom
+                    rowSpacing:         0
+
                     QGCCheckBox {
                         id:         headerCheckBox
                         enabled:    false
+                    }
+
+                    Repeater {
+                        model: logController.model
+
+                        QGCCheckBox {
+                            Binding on checkState {
+                                value: object.selected ? Qt.Checked : Qt.Unchecked
+                            }
+
+                            onClicked: object.selected = checked
+                        }
                     }
 
                     QGCLabel {
@@ -70,9 +88,35 @@ AnalyzePage {
                         text:                   qsTr("Id")
                     }
 
+                    Repeater {
+                        model: logController.model
+
+                        QGCLabel {
+                            Layout.preferredWidth:  columnWidthProvider(1)
+                            text:                   object.id 
+                        }
+                    }
+
                     QGCLabel {
                         Layout.preferredWidth:  columnWidthProvider(2)
                         text:                   qsTr("Date")
+                    }
+
+                    Repeater {
+                        model: logController.model
+
+                        QGCLabel {
+                            text: {
+                                if (object.received) {
+                                    var d = object.time
+                                    if (d.getUTCFullYear() < 2010)
+                                        return qsTr("Date Unknown")
+                                    else
+                                        return d.toLocaleString(undefined)
+                                }
+                                return ""
+                            }
+                        }
                     }
 
                     QGCLabel { 
@@ -80,49 +124,21 @@ AnalyzePage {
                         text:                   qsTr("Size")
                     }
 
+                    Repeater {
+                        model: logController.model
+
+                        QGCLabel { text: object.sizeStr }
+                    }
+
                     QGCLabel { 
                         Layout.preferredWidth:  columnWidthProvider(4)
                         text:                   qsTr("Status")
                     }
-                }
 
-                delegate: RowLayout {
-                    QGCCheckBox {
-                        Binding on checkState {
-                            value: object.selected ? Qt.Checked : Qt.Unchecked
-                        }
+                    Repeater {
+                        model: logController.model
 
-                        onClicked: object.selected = checked
-                    }
-
-                    QGCLabel {
-                        Layout.preferredWidth:  columnWidthProvider(1)
-                        text:                   object.id 
-                    }
-
-                    QGCLabel {
-                        Layout.preferredWidth: columnWidthProvider(2)
-                        text: {
-                            //-- Have we received this entry already?
-                            if (object.received) {
-                                var d = object.time
-                                if(d.getUTCFullYear() < 2010)
-                                    return qsTr("Date Unknown")
-                                else
-                                    return d.toLocaleString(undefined, "short")
-                            }
-                            return ""
-                        }
-                    }
-
-                    QGCLabel { 
-                        Layout.preferredWidth:  columnWidthProvider(3)
-                        text:                   object.sizeStr 
-                    }
-
-                    QGCLabel { 
-                        Layout.preferredWidth:  columnWidthProvider(4)
-                        text:                   object.status 
+                        QGCLabel { text: object.status }
                     }
                 }
             }
