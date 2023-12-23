@@ -18,7 +18,7 @@ import QGroundControl.Palette
 import QGroundControl.FactSystem
 
 RowLayout {
-    id:         _root
+    id:         control
     spacing:    0
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -113,8 +113,8 @@ RowLayout {
             anchors.left:           parent.left
             anchors.right:          parent.right
             anchors.verticalCenter: parent.verticalCenter
-            height:                 _root.height
-            onClicked:              mainWindow.showIndicatorDrawer(overallStatusComponent)
+            height:                 control.height
+            onClicked:              mainWindow.showIndicatorDrawer(overallStatusComponent, control)
 
             property Component overallStatusComponent: _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
         }
