@@ -19,7 +19,7 @@ import QGroundControl.Palette
 //-------------------------------------------------------------------------
 //-- GPS Indicator
 Item {
-    id:             _root
+    id:             control
     width:          (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
@@ -63,7 +63,7 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showIndicatorDrawer(gpsIndicatorPage)
+        onClicked:      mainWindow.showIndicatorDrawer(gpsIndicatorPage, control)
     }
 
     Component {

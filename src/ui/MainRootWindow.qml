@@ -286,7 +286,7 @@ ApplicationWindow {
 
     function showToolSelectDialog() {
         if (!mainWindow.preventViewSwitch()) {
-            mainWindow.showIndicatorDrawer(toolSelectComponent)
+            mainWindow.showIndicatorDrawer(toolSelectComponent, null)
         }
     }
 
@@ -709,14 +709,15 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Indicator Drawer
 
-    function showIndicatorDrawer(drawerComponent) {
+    function showIndicatorDrawer(drawerComponent, indicatorItem) {
         indicatorDrawer.sourceComponent = drawerComponent
+        indicatorDrawer.indicatorItem = indicatorItem
         indicatorDrawer.open()
     }
 
     Popup {
         id:             indicatorDrawer
-        x:              _margins
+        x:              calcXPosition()
         y:              _margins
         leftInset:      0
         rightInset:     0
@@ -729,9 +730,19 @@ ApplicationWindow {
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         property var sourceComponent
+        property var indicatorItem
 
         property bool _expanded:    false
         property real _margins:     ScreenTools.defaultFontPixelHeight / 4
+
+        function calcXPosition() {
+            if (indicatorItem) {
+                var xCenter = indicatorItem.mapToItem(mainWindow.contentItem, indicatorItem.width / 2, 0).x
+                return Math.max(_margins, xCenter - (contentItem.implicitWidth / 2))
+            } else {
+                return _margins
+            }
+        }
 
         onOpened: {
             _expanded                               = false;
@@ -739,6 +750,7 @@ ApplicationWindow {
         }
         onClosed: {
             _expanded                               = false
+            indicatorItem                           = undefined
             indicatorDrawerLoader.sourceComponent   = undefined
         }
 

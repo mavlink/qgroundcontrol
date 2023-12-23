@@ -51,7 +51,7 @@ RowLayout {
 
             MouseArea {
                 anchors.fill:   parent
-                onClicked:      mainWindow.showIndicatorDrawer(drawerComponent)
+                onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
             }
         }
     }
