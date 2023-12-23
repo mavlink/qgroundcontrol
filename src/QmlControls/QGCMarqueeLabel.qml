@@ -1,8 +1,8 @@
-import QtQuick                  2.12
-import QtQuick.Controls         2.12
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Item {
     property color  color:          qgcPal.text
