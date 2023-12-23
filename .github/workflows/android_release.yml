@@ -36,9 +36,11 @@ jobs:
        include:
          - architecture: 32bits
            eabi: armeabi-v7a
+           aqt-arch: android_armv7
            ARTIFACT: QGroundControl32.apk
          - architecture: 64bits
            eabi: arm64-v8a
+           aqt-arch: android_arm64_v8a
            ARTIFACT: QGroundControl64.apk
 
     steps:
@@ -59,15 +61,17 @@ jobs:
           aqtversion:   ==3.1.*
           host:         linux
           target:       android
+          arch:         ${{ matrix.aqt-arch }}
+          extra:        --autodesktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtimageformats qtshadertools
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtimageformats qtshadertools qtconnectivity
           setup-python: true
 
       - name: Install Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
-          ndk-version: r21e
+          ndk-version: r25b
           add-to-path: false
 
       - name: Remove Android SDKs to force usage of android-33 only
@@ -124,6 +128,7 @@ jobs:
           ANDROID_NDK_LATEST_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
           ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         run:  |
+            ls /home/runner/work/_temp/Qt/6.6.1
             qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
             make -j2
 

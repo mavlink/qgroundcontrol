@@ -7,30 +7,38 @@
  *
  ****************************************************************************/
 
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
-#include "QGCApplication.h"
 #include "AndroidInterface.h"
-#include <QAndroidJniObject>
-#include <QtAndroid>
 
-QString AndroidInterface::getSDCardPath()
+#include <QJniObject>
+#include <QtCore/private/qandroidextras_p.h>
+
+bool AndroidInterface::checkStoragePermissions()
 {
-    QAndroidJniObject value = QAndroidJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "getSDCardPath",
-                            "()Ljava/lang/String;");
-    QString sdCardPath = value.toString();
-
     QString readPermission("android.permission.READ_EXTERNAL_STORAGE");
     QString writePermission("android.permission.WRITE_EXTERNAL_STORAGE");
 
-    if (QtAndroid::checkPermission(readPermission) == QtAndroid::PermissionResult::Denied ||
-            QtAndroid::checkPermission(writePermission) == QtAndroid::PermissionResult::Denied) {
-        QtAndroid::PermissionResultMap resultHash = QtAndroid::requestPermissionsSync(QStringList({ readPermission, writePermission }));
-        if (resultHash[readPermission] == QtAndroid::PermissionResult::Denied ||
-                resultHash[writePermission] == QtAndroid::PermissionResult::Denied) {
-            return QString();
+    QStringList permissions = { readPermission, writePermission };
+    for (const auto& permission: permissions) {
+        auto futurePermissionResult = QtAndroidPrivate::checkPermission(permission);
+        auto permissionResult = futurePermissionResult.result();
+        if (permissionResult == QtAndroidPrivate::PermissionResult::Denied) {
+            futurePermissionResult = QtAndroidPrivate::requestPermission(permission);
+            permissionResult = futurePermissionResult.result();
+            if (permissionResult == QtAndroidPrivate::PermissionResult::Denied) {
+                return false;
+            }
         }
     }
 
-    return sdCardPath;
+    return true;
+}
+
+QString AndroidInterface::getSDCardPath()
+{
+    if (!checkStoragePermissions()) {
+        return QString();
+    } else {
+        auto value = QJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "getSDCardPath", "()Ljava/lang/String;");
+        return value.toString();
+    }
 }
