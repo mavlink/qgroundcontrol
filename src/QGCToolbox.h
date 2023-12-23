@@ -36,12 +36,6 @@ class ADSBVehicleManager;
 #if defined(QGC_ENABLE_PAIRING)
 class PairingManager;
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-class TaisyncManager;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-class MicrohardManager;
-#endif
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -73,12 +67,6 @@ public:
 #ifndef __mobile__
     GPSManager*                 gpsManager              () { return _gpsManager; }
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    TaisyncManager*             taisyncManager          () { return _taisyncManager; }
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    MicrohardManager*           microhardManager        () { return _microhardManager; }
-#endif
 
 private:
     void setChildToolboxes(void);
@@ -109,12 +97,7 @@ private:
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager*             _pairingManager         = nullptr;
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    TaisyncManager*             _taisyncManager         = nullptr;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    MicrohardManager*           _microhardManager       = nullptr;
-#endif
+
     friend class QGCApplication;
 };
 

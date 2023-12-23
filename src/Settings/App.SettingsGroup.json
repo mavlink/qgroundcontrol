@@ -264,25 +264,11 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":             "enableTaisync",
-    "shortDesc": "Enable Taisync Module Support",
-    "longDesc":  "Enable Taisync Module Support",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "enableTaisyncVideo",
     "shortDesc": "Enable Taisync Video Support",
     "longDesc":  "Enable Taisync Video Support",
     "type":             "bool",
     "default":     true
-},
-{
-    "name":             "enableMicrohard",
-    "shortDesc": "Enable Microhard Module Support",
-    "longDesc":  "Enable Microhard Module Support",
-    "type":             "bool",
-    "default":     false
 },
 {
     "name":         "qLocaleLanguage",

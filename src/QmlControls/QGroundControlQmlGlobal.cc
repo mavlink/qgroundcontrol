@@ -82,12 +82,6 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = toolbox->pairingManager();
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    _taisyncManager         = toolbox->taisyncManager();
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    _microhardManager       = toolbox->microhardManager();
-#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
