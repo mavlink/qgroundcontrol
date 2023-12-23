@@ -38,10 +38,7 @@ class QGCCameraManager;
 class QGCCameraControl;
 class QQuickItem;
 
-#ifndef OPAQUE_PTR_QGCCorePlugin
-    #define OPAQUE_PTR_QGCCorePlugin
-    Q_DECLARE_OPAQUE_POINTER(QGCOptions*)
-#endif
+Q_MOC_INCLUDE("QGCOptions.h")
 
 class QGCCorePlugin : public QGCTool
 {
