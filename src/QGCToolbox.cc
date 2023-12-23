@@ -34,12 +34,6 @@
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-#include "TaisyncManager.h"
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-#include "MicrohardManager.h"
-#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -91,12 +85,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = new PairingManager            (app, this);
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    _taisyncManager         = new TaisyncManager            (app, this);
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    _microhardManager       = new MicrohardManager          (app, this);
-#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -124,12 +112,6 @@ void QGCToolbox::setChildToolboxes(void)
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
     _adsbVehicleManager->setToolbox(this);
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    _taisyncManager->setToolbox(this);
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    _microhardManager->setToolbox(this);
-#endif
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
 #endif
