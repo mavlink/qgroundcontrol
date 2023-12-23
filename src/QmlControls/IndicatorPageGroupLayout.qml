@@ -1,8 +1,8 @@
-import QtQuick          2.15
-import QtQuick.Layouts  1.15
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.ScreenTools
 
 ColumnLayout {
     id:         _root
