@@ -32,35 +32,29 @@ BatteryIndicator {
                 Layout.fillWidth:   true
                 heading:            qsTr("Low Battery")
 
-                GridLayout {
-                    columns: 2
-                    columnSpacing: ScreenTools.defaultFontPixelHeight
+                LabelledFactSlider {
+                    Layout.fillWidth:       true
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
+                    label:                  qsTr("Warning Level")
+                    fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
+                }   
 
-                    QGCLabel { text: qsTr("Warning Level") }
-                    FactSlider {
-                        Layout.fillWidth:       true
-                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
-                        fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
-                    }   
+                LabelledFactSlider {
+                    Layout.fillWidth:   true
+                    label:              qsTr("Failsafe Level")
+                    fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
+                }
 
-                    QGCLabel { text: qsTr("Failsafe Level") }
-                    FactSlider {
-                        Layout.fillWidth:   true
-                        fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
-                    }
+                LabelledFactSlider {
+                    Layout.fillWidth:   true
+                    label:              qsTr("Emergency Level")
+                    fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
+                }
 
-                    QGCLabel { text: qsTr("Failsafe Action") }
-                    FactComboBox {
-                        Layout.alignment:   Qt.AlignRight
-                        fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-                        indexModel:         false
-                    }
-
-                    QGCLabel { text: qsTr("Emergency Level") }
-                    FactSlider {
-                        Layout.fillWidth:   true
-                        fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
-                    }
+                LabelledFactComboBox {
+                    label:              qsTr("Failsafe Action")
+                    fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+                    indexModel:         false
                 }
             }
         }
