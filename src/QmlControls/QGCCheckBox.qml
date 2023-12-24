@@ -44,6 +44,7 @@ CheckBox {
         color:          control.enabled ? "white" : _qgcPal.text
         border.color:   _qgcPal.text
         border.width:   1
+        radius:         ScreenTools.buttonBorderRadius
         opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
 
         QGCColoredImage {

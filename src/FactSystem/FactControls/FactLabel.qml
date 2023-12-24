@@ -7,6 +7,8 @@ import QGroundControl.Palette
 import QGroundControl.Controls
 
 QGCLabel {
-    property Fact fact: Fact { }
-    text: fact.valueString
+    property bool showUnits:    true
+    property Fact fact:         Fact { }
+
+    text: fact.valueString + (showUnits ? " " + fact.units : "")
 }
