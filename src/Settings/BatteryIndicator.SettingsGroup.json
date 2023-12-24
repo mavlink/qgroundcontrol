@@ -6,7 +6,7 @@
 {
     "name":         "display",
     "shortDesc":    "Select values to display in indicator",
-    "enumStrings":  "Percentage,Voltage,Both",
+    "enumStrings":  "Percentage,Voltage,Percentage and Voltage",
     "enumValues":   "0,1,2",
     "type":         "uint32",
     "default":      false
