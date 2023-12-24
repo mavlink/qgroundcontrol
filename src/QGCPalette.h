@@ -119,6 +119,7 @@ public:
     DEFINE_QGC_COLOR(text,                          setText)
     DEFINE_QGC_COLOR(warningText,                   setWarningText)
     DEFINE_QGC_COLOR(button,                        setButton)
+    DEFINE_QGC_COLOR(buttonBorder,                  setButtonBorder)
     DEFINE_QGC_COLOR(buttonText,                    setButtonText)
     DEFINE_QGC_COLOR(buttonHighlight,               setButtonHighlight)
     DEFINE_QGC_COLOR(buttonHighlightText,           setButtonHighlightText)

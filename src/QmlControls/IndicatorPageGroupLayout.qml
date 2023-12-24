@@ -21,7 +21,7 @@ ColumnLayout {
     ColumnLayout {
         id:                 _contentItem
         Layout.fillWidth:   children[0].Layout.fillWidth
-        Layout.leftMargin:  heading === "" ? 0 : ScreenTools.defaultFontPixelWidth * 2
+        Layout.leftMargin:  heading === "" ? 0 : ScreenTools.defaultFontPixelWidth * 1.5
     }
 
     Rectangle {
