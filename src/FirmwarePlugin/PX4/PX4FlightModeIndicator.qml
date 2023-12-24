@@ -45,6 +45,7 @@ FlightModeIndicator {
                     Layout.fillWidth:       true
                     label:                  qsTr("RTL Altitude")
                     fact:                   controller.getParameterFact(-1, "RTL_RETURN_ALT")
+                    to:                     fact.maxIsDefaultForType ? QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(121.92) : fact.maximum
                     sliderPreferredWidth:   sliderWidth
                 }
 
