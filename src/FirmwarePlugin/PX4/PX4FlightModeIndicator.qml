@@ -34,26 +34,27 @@ FlightModeIndicator {
             property Fact mpc_z_vel_all:            controller.getParameterFact(-1, "MPC_Z_VEL_ALL", false)
             property var  qgcPal:                   QGroundControl.globalPalette
             property real margins:                  ScreenTools.defaultFontPixelHeight
-            property real valueColumnWidth:         Math.max(ScreenTools.implicitTextFieldWidth, precisionLandingCombo.implicitWidth)
+            property real sliderWidth:              ScreenTools.defaultFontPixelWidth * 25
 
             FactPanelController { id: controller }
 
             IndicatorPageGroupLayout {
                 Layout.fillWidth: true
 
-                IndicatorPageFactTextFieldRow {
-                    Layout.fillWidth:           true;
-                    label:                      qsTr("RTL Altitude")
-                    fact:                       controller.getParameterFact(-1, "RTL_RETURN_ALT")
-                    textFieldPreferredWidth:    valueColumnWidth
+                LabelledFactSlider {
+                    Layout.fillWidth:       true
+                    label:                  qsTr("RTL Altitude")
+                    fact:                   controller.getParameterFact(-1, "RTL_RETURN_ALT")
+                    sliderPreferredWidth:   sliderWidth
                 }
 
-                IndicatorPageFactTextFieldRow {
-                    Layout.fillWidth:           true;
-                    label:                      qsTr("Land Descent Rate")
-                    fact:                       mpcLandSpeedFact
-                    textFieldPreferredWidth:    valueColumnWidth
-                    visible:                    mpcLandSpeedFact && controller.vehicle && !controller.vehicle.fixedWing
+                LabelledFactSlider {
+                    Layout.fillWidth:       true
+                    label:                  qsTr("Land Descent Rate")
+                    fact:                   mpcLandSpeedFact
+                    to:                     fact.maxIsDefaultForType ? QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(4) : fact.maximum
+                    sliderPreferredWidth:   sliderWidth
+                    visible:                mpcLandSpeedFact && controller.vehicle && !controller.vehicle.fixedWing
                 }
 
                 RowLayout {
@@ -66,11 +67,8 @@ FlightModeIndicator {
                         text:               qsTr("Precision Landing")
                     }
                     FactComboBox {
-                        id:                     precisionLandingCombo
-                        Layout.minimumWidth:    ScreenTools.implicitTextFieldWidth
-                        fact:                   precisionLandingFact
-                        indexModel:             false
-                        sizeToContents:         true
+                        fact:       precisionLandingFact
+                        indexModel: false
                     }
                 }
             }
@@ -97,19 +95,11 @@ FlightModeIndicator {
                         }
                     }
 
-                    FactSlider {
-                        Layout.fillWidth:   true
-                        enabled:            responsivenessCheckBox.checked
-                        fact:               sys_vehicle_resp
-                        from:               0.01
-                        to:                 1
-                        stepSize:           0.01
-                    }
-
                     QGCLabel {
                         Layout.fillWidth:   true
                         enabled:            responsivenessCheckBox.checked
                         text:               qsTr("A higher value makes the vehicle react faster. Be aware that this affects braking as well, and a combination of slow responsiveness with high maximum velocity will lead to long braking distances.")
+                        font.pointSize:     ScreenTools.smallFontPointSize
                         wrapMode:           QGCLabel.WordWrap
                     }
                     QGCLabel {
@@ -117,7 +107,17 @@ FlightModeIndicator {
                         visible:            sys_vehicle_resp && sys_vehicle_resp.value > 0.8
                         color:              qgcPal.warningText
                         text:               qsTr("Warning: a high responsiveness requires a vehicle with large thrust-to-weight ratio. The vehicle might lose altitude otherwise.")
+                        font.pointSize:     ScreenTools.smallFontPointSize
                         wrapMode:           QGCLabel.WordWrap
+                    }
+
+                    FactSlider {
+                        Layout.fillWidth:   true
+                        enabled:            responsivenessCheckBox.checked
+                        fact:               sys_vehicle_resp
+                        from:               0.01
+                        to:                 1
+                        stepSize:           0.01
                     }
                 }
 
@@ -198,19 +198,20 @@ FlightModeIndicator {
 
                     QGCLabel { text: qsTr("Mission Turning Radius") }
 
+                    QGCLabel {
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 30
+                        text:                   qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        wrapMode:               QGCLabel.WordWrap
+                    }
+
                     FactSlider {
                         Layout.fillWidth:   true
                         fact:               controller.getParameterFact(-1, "NAV_ACC_RAD")
                         from:               2
                         to:                 16
                         stepSize:           0.5
-                    }
-
-                    QGCLabel {
-                        Layout.fillWidth:       true
-                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 30
-                        text:                   qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
-                        wrapMode:               QGCLabel.WordWrap
                     }
                 }
             }

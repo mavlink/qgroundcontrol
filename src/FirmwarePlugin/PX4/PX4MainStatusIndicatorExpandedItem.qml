@@ -23,8 +23,6 @@ IndicatorPageGroupLayout {
     spacing:        ScreenTools.defaultFontPixelHeight / 2
     showDivider:    false
 
-    property real valueColumnWidth:         Math.max(ScreenTools.implicitTextFieldWidth, failsafeActionCombo.implicitWidth)
-
     FactPanelController { id: controller }
 
     IndicatorPageGroupLayout {
@@ -41,18 +39,16 @@ IndicatorPageGroupLayout {
             }
             FactComboBox {
                 id:                     failsafeActionCombo
-                Layout.minimumWidth:    ScreenTools.implicitTextFieldWidth
                 fact:                   controller.getParameterFact(-1, "NAV_DLL_ACT")
                 indexModel:             false
-                sizeToContents:         true
             }
         }
 
-        IndicatorPageFactTextFieldRow {
-            Layout.fillWidth:           true;
-            label:                      qsTr("Data Link Loss Timeout")
-            fact:                       controller.getParameterFact(-1, "COM_DL_LOSS_T")
-            textFieldPreferredWidth:    valueColumnWidth
+        LabelledFactSlider {
+            Layout.fillWidth:       true
+            label:                  qsTr("Data Link Loss Timeout")
+            fact:                   controller.getParameterFact(-1, "COM_DL_LOSS_T")
+            sliderPreferredWidth:   ScreenTools.defaultFontPixelWidth * 20
         }
     }
 

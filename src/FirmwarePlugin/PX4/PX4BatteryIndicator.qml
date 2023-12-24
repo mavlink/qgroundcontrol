@@ -37,30 +37,29 @@ BatteryIndicator {
                     columnSpacing: ScreenTools.defaultFontPixelHeight
 
                     QGCLabel { text: qsTr("Warning Level") }
-                    FactTextField {
+                    FactSlider {
                         Layout.fillWidth:       true
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
                         fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
-                    }
+                    }   
 
                     QGCLabel { text: qsTr("Failsafe Level") }
-                    FactTextField {
-                        Layout.fillWidth:       true
-                        fact:                   controller.getParameterFact(-1, "BAT_CRIT_THR")
+                    FactSlider {
+                        Layout.fillWidth:   true
+                        fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
                     }
 
                     QGCLabel { text: qsTr("Failsafe Action") }
                     FactComboBox {
-                        Layout.fillWidth:       true
-                        Layout.preferredWidth:  ScreenTools.implicitTextFieldWidth
-                        fact:                   controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-                        indexModel:             false
-                        sizeToContents:         true
+                        Layout.alignment:   Qt.AlignRight
+                        fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+                        indexModel:         false
                     }
 
                     QGCLabel { text: qsTr("Emergency Level") }
-                    FactTextField {
-                        Layout.fillWidth:       true
-                        fact:                   controller.getParameterFact(-1, "BAT_EMERGEN_THR")
+                    FactSlider {
+                        Layout.fillWidth:   true
+                        fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
                     }
                 }
             }

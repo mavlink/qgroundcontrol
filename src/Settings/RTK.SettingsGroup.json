@@ -1,26 +1,30 @@
 {
     "version":      1,
-    "fileType":  "FactMetaData",
+    "fileType":     "FactMetaData",
     "QGC.MetaData.Facts":
 [
 {
     "name":                 "surveyInAccuracyLimit",
-    "shortDesc":     "Survey in accuracy (U-blox only)",
-    "longDesc":      "The minimum accuracy value that Survey-In must achieve before it can complete.",
+    "shortDesc":            "Survey in accuracy (U-blox only)",
+    "longDesc":             "The minimum accuracy value that Survey-In must achieve before it can complete.",
     "type":                 "double",
-    "default":         2.0,
+    "default":              2.0,
     "min":                  0.01,
+    "max":                  5.0,
+    "increment":            0.01,
     "units":                "m",
     "decimalPlaces":        2,
     "qgcRebootRequired":    true
 },
 {
     "name":                 "surveyInMinObservationDuration",
-    "shortDesc":     "Minimum observation time",
-    "longDesc":      "Defines the minimum amount of observation time for the position calculation.",
+    "shortDesc":            "Minimum observation time",
+    "longDesc":             "Defines the minimum amount of observation time for the position calculation.",
     "type":                 "Uint32",
-    "default":         180,
+    "default":              180,
     "min":                  1,
+    "max":                  360,
+    "increment":            1,
     "units":                "secs",
     "decimalPlaces":        0,
     "qgcRebootRequired":    true
