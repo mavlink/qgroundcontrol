@@ -17,10 +17,10 @@ import QGroundControl.ScreenTools
 
 Slider {
     id:             control
-    value:          fact.value
-    from:           fact.min
-    to:             fact.max
-    stepSize:       isNaN(fact.increment) ? 0 : fact.increment
+    value:          _fact.value
+    from:           _fact.min
+    to:             _fact.max
+    stepSize:       isNaN(_fact.increment) ? 0 : _fact.increment
     snapMode:       stepSize ? Slider.SnapAlways : Slider.NoSnap
     live:           true
     bottomPadding:  sliderValueLabel.contentHeight
@@ -32,11 +32,21 @@ Slider {
 
     property bool _loadComplete:            false
     property real _minMaxVisibilityPadding: ScreenTools.defaultFontPixelWidth
-
-    Component.onCompleted: _loadComplete = true
+    property Fact _nullFact:                Fact { }
+    property Fact _fact:                    fact ? fact : _nullFact
+    
+    Component.onCompleted: {
+        _loadComplete = true
+        if (fact && fact.minIsDefaultForType && fact.min == from) {
+            console.error("FactSlider: Fact is minIsDefaultForType", _fact.name)
+        }
+        if (fact && fact.maxIsDefaultForType && fact.max == to) {
+            console.error("FactSlider: Fact is maxIsDefaultForType", _fact.name)
+        }
+    }
 
     function valuePlusUnits(valueString) {
-        return valueString + (showUnits ? " " + fact.units : "")
+        return valueString + (showUnits ? " " + _fact.units : "")
     }
 
     Timer {
@@ -44,7 +54,7 @@ Slider {
         interval:       1000
         repeat:         false
         running:        false
-        onTriggered:    fact.value = control.value
+        onTriggered:    _fact.value = control.value
     }
 
     onValueChanged: {
@@ -74,7 +84,7 @@ Slider {
         }
 
         QGCLabel {
-            text:       control.from.toFixed(fact.decimalPlaces)
+            text:       control.from.toFixed(_fact.decimalPlaces)
             visible:    sliderValueLabel.x > x + contentWidth + _minMaxVisibilityPadding
             anchors {
                 left:   parent.left
@@ -83,7 +93,7 @@ Slider {
         }
 
         QGCLabel {
-            text:       control.to.toFixed(fact.decimalPlaces)
+            text:       control.to.toFixed(_fact.decimalPlaces)
             visible:    sliderValueLabel.x + sliderValueLabel.contentWidth < x - _minMaxVisibilityPadding
             anchors {
                 right:  parent.right
@@ -95,7 +105,7 @@ Slider {
             id:                     sliderValueLabel
             anchors.bottom:         parent.bottom
             x:                      control.leftPadding + (control.visualPosition * (control.availableWidth - width))
-            text:                   valuePlusUnits(control.value.toFixed(control.fact.decimalPlaces))
+            text:                   valuePlusUnits(control.value.toFixed(control._fact.decimalPlaces))
             horizontalAlignment:    Text.AlignHCenter
         }
     }
