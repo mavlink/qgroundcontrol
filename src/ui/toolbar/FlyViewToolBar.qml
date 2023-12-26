@@ -21,22 +21,16 @@ import QGroundControl.Controllers
 
 Rectangle {
     id:     _root
+    width:  parent.width
+    height: ScreenTools.toolbarHeight
     color:  qgcPal.toolbarBackground
-
-    property int currentToolbar: flyViewToolbar
-
-    readonly property int flyViewToolbar:   0
-    readonly property int planViewToolbar:  1
-    readonly property int simpleToolbar:    2
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
     property color  _mainStatusBGColor: qgcPal.brandingPurple
 
     function dropMessageIndicatorTool() {
-        if (currentToolbar === flyViewToolbar) {
-            indicatorLoader.item.dropMessageIndicatorTool();
-        }
+        toolIndicators.dropMessageIndicatorTool();
     }
 
     QGCPalette { id: qgcPal }
@@ -52,9 +46,8 @@ Rectangle {
     }
 
     Rectangle {
-        anchors.fill:   viewButtonRow
-        visible:        currentToolbar === flyViewToolbar
-
+        anchors.fill: viewButtonRow
+        
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0;                                     color: _mainStatusBGColor }
@@ -80,14 +73,13 @@ Rectangle {
 
         MainStatusIndicator {
             Layout.preferredHeight: viewButtonRow.height
-            visible:                currentToolbar === flyViewToolbar
         }
 
         QGCButton {
             id:                 disconnectButton
             text:               qsTr("Disconnect")
             onClicked:          _activeVehicle.closeVehicle()
-            visible:            _activeVehicle && _communicationLost && currentToolbar === flyViewToolbar
+            visible:            _activeVehicle && _communicationLost
         }
     }
 
@@ -99,18 +91,10 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
-        contentWidth:           indicatorLoader.x + indicatorLoader.width
+        contentWidth:           toolIndicators.width
         flickableDirection:     Flickable.HorizontalFlick
 
-        Loader {
-            id:                 indicatorLoader
-            anchors.left:       parent.left
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            source:             currentToolbar === flyViewToolbar ?
-                                    "qrc:/toolbar/MainToolBarIndicators.qml" :
-                                    (currentToolbar == planViewToolbar ? "qrc:/qml/PlanToolBarIndicators.qml" : "")
-        }
+        FlyViewToolBarIndicators { id: toolIndicators }
     }
 
     //-------------------------------------------------------------------------
@@ -120,7 +104,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
-        visible:                currentToolbar !== planViewToolbar && _activeVehicle && !_communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
+        visible:                _activeVehicle && !_communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
         mipmap:                 true
