@@ -7,6 +7,8 @@ FlyViewInstrumentPanel          1.0 FlyViewInstrumentPanel.qml
 FlyViewMap                      1.0 FlyViewMap.qml
 FlyViewMissionCompleteDialog    1.0 FlyViewMissionCompleteDialog.qml
 FlyViewPreFlightChecklistPopup  1.0 FlyViewPreFlightChecklistPopup.qml
+FlyViewToolBar                  1.0 FlyViewToolBar.qml
+FlyViewToolBarIndicators        1.0 FlyViewToolBarIndicators.qml
 FlyViewToolStrip                1.0 FlyViewToolStrip.qml
 FlyViewToolStripActionList      1.0 FlyViewToolStripActionList.qml
 FlyViewVideo                    1.0 FlyViewVideo.qml
