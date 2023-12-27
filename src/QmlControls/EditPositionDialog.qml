@@ -22,7 +22,7 @@ import QGroundControl.Controllers
 QGCPopupDialog {
     id:         root
     title:      qsTr("Edit Position")
-    buttons:    mainWindow.showDialogDefaultWidth, Dialog.Close
+    buttons:    Dialog.Close
 
     property alias coordinate: controller.coordinate
 
