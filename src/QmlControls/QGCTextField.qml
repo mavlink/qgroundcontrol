@@ -9,6 +9,8 @@ import QGroundControl.ScreenTools
 TextField {
     id:                 control
     color:              qgcPal.textFieldText
+    selectionColor:     qgcPal.textFieldText
+    selectedTextColor:  qgcPal.textField
     activeFocusOnPress: true
     antialiasing:       true
     font.pointSize:     ScreenTools.defaultFontPointSize

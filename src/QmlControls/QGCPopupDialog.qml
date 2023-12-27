@@ -40,14 +40,13 @@ import QGroundControl.ScreenTools
 //  * Dialog will automatically close after accepted/rejected signal processing. You can prevent this by setting
 //      preventClose = true prior to returning from your signal handlers.
 Popup {
-    id:                 _root
+    id:                 root
+    width:  mainWindow.width
+    height: mainWindow.height
     parent:             Overlay.overlay
-    anchors.centerIn:   parent
-    width:              mainColumnLayout.width + (padding * 2)
-    height:             mainColumnLayout.y + mainColumnLayout.height + padding
-    padding:            ScreenTools.defaultFontPixelHeight / 2
     modal:              true
     focus:              true
+    margins:            0
 
     property string title
     property var    buttons:                Dialog.Ok
@@ -62,23 +61,24 @@ Popup {
     signal accepted
     signal rejected
 
-    property var    _pal:               QGroundControl.globalPalette
+    property var    _qgcPal:            QGroundControl.globalPalette
     property real   _frameSize:         ScreenTools.defaultFontPixelWidth
     property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
-    property real   _popupDoubleInset:  ScreenTools.defaultFontPixelHeight * 2
-    property real   _maxContentWidth:   parent.width - _popupDoubleInset
-    property real   _maxContentHeight:  parent.height - titleRowLayout.height - _popupDoubleInset
 
-    background: Rectangle {
-        color:          _pal.windowShade
-        radius:         _root.padding / 2
-        border.width:   1
-        border.color:   _pal.windowShadeLight
+    background: QGCMouseArea {
+        width:  mainWindow.width
+        height: mainWindow.height
 
-        Rectangle {
-            anchors.margins:    _root.padding
-            anchors.fill:       parent
-            color:              _pal.window
+        onClicked: {
+            if (closePolicy & Popup.CloseOnPressOutside) {
+                if (rejectAllowed) {
+                    focus = true    // Take focus to force FactTextFields to validate
+                    _reject()
+                } else if (acceptAllowed) {
+                    focus = true    // Take focus to force FactTextFields to validate
+                    _accept()
+                }
+            }
         }
     }
 
@@ -92,12 +92,12 @@ Popup {
     onClosed: {
         Qt.inputMethod.hide()
         if (destroyOnClose) {
-            _root.destroy()
+            root.destroy()
         }
     }
 
     function _accept() {
-        if (acceptAllowed) {
+        if (acceptAllowed && !globals.validationError) {
             accepted()
             if (preventClose) {
                 preventClose = false
@@ -108,7 +108,7 @@ Popup {
     }
 
     function _reject() {
-        if (rejectAllowed) {
+        if (rejectAllowed && !globals.validationError) {
             rejected()
             if (preventClose) {
                 preventClose = false
@@ -181,12 +181,19 @@ Popup {
         }
 
         closePolicy = Popup.NoAutoClose
-        if (buttons === Dialog.Close || buttons === Dialog.Ok) {
-            acceptButton.visible = false
+
+        // If we only have a Close or Ok button on the dialog don't show them and just let the CloseOnPressOutside handle closing
+        if (buttons === Dialog.Close) {
+            rejectAllowed = true
             rejectButton.visible = false
             closePolicy = Popup.CloseOnPressOutside
+        } else if (buttons === Dialog.Ok) {
+            acceptAllowed = true
+            acceptButton.visible = false
+            closePolicy = Popup.CloseOnPressOutside
         }
-        if (rejectButton.visible) {
+
+        if (rejectAllowed) {
             closePolicy |= Popup.CloseOnEscape
         }
     }
@@ -196,23 +203,31 @@ Popup {
     }
 
     Rectangle {
-        width:  titleRowLayout.width
-        height: titleRowLayout.height
-        color:  qgcPal.windowShade
+        x:              mainLayout.x - _contentMargin
+        y:              mainLayout.y - _contentMargin
+        width:          mainLayout.width + _contentMargin * 2
+        height:         mainLayout.height + _contentMargin * 2
+        color:          _qgcPal.windowShade
+        radius:         root.padding / 2
+        border.width:   1
+        border.color:   _qgcPal.windowShadeLight
     }
 
     ColumnLayout {
-        id:         mainColumnLayout
+        id:                 mainLayout
+        anchors.centerIn:   parent
+        x:          _contentMargin
+        y:          _contentMargin
         spacing:    _contentMargin
 
         RowLayout {
-            id:                 titleRowLayout
-            Layout.fillWidth:   true
+            id:                     titleRowLayout
+            Layout.fillWidth:       true
+            spacing:                _contentMargin
 
             QGCLabel {
-                Layout.leftMargin:  ScreenTools.defaultFontPixelWidth
                 Layout.fillWidth:   true
-                text:               _root.title
+                text:               root.title
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 verticalAlignment:	Text.AlignVCenter
             }
@@ -229,27 +244,29 @@ Popup {
             }
         }
 
-        QGCFlickable {
-            id:                     mainFlickable
-            Layout.preferredWidth:  Math.min(Math.max(marginItem.width, mainColumnLayout.width), _maxContentWidth)
-            Layout.preferredHeight: Math.min(marginItem.height, _maxContentHeight)
-            contentWidth:           marginItem.width
-            contentHeight:          marginItem.height
+        Rectangle {
+            Layout.fillWidth:       true
+            Layout.preferredWidth:  Math.min(maxAvailableWidth, totalContentWidth)
+            Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
+            color:                  _qgcPal.window
 
-            Item {
-                id:     marginItem
-                width:  dialogContentParent.width + (_contentMargin * 2)
-                height: dialogContentParent.height + (_contentMargin * 2)
+            property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
+            property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5
+            property real totalContentWidth:    dialogContentParent.childrenRect.width + _contentMargin * 2
+            property real totalContentHeight:   dialogContentParent.childrenRect.height + _contentMargin * 2
+
+            QGCFlickable {
+                anchors.margins:    _contentMargin
+                anchors.fill:       parent
+                contentWidth:       dialogContentParent.childrenRect.width
+                contentHeight:      dialogContentParent.childrenRect.height
 
                 Item {
                     id:     dialogContentParent
-                    x:      _contentMargin
-                    width:  childrenRect.width
-                    height: childrenRect.height
                     focus:  true
 
                     Keys.onReleased: (event) => {
-                        if (event.key === Qt.Key_Escape) {
+                        if (event.key === Qt.Key_Escape && rejectAllowed) {
                             _reject()
                             event.accepted = true
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -257,7 +274,6 @@ Popup {
                             event.accepted = true
                         }
                     }
-
                 }
             }
         }

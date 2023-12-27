@@ -23,7 +23,7 @@ import QGroundControl.ScreenTools
 QGCPopupDialog {
     id:         root
     title:      qsTr("Parameter Editor")
-    buttons:    Dialog.Cancel | Dialog.Save
+    buttons:    Dialog.Save | (validate ? 0 : Dialog.Cancel)
 
     property Fact   fact
     property bool   showRCToParam:  false
@@ -31,13 +31,11 @@ QGCPopupDialog {
     property string validateValue
     property bool   setFocus:       true    ///< true: focus is set to text field on display, false: focus not set (works around strange virtual keyboard bug with FactValueSlider
 
-    signal valueChanged
-
     property real   _editFieldWidth:            ScreenTools.defaultFontPixelWidth * 20
     property bool   _longDescriptionAvailable:  fact.longDescription != ""
     property bool   _editingParameter:          fact.componentId != 0
-    property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI || !_editingParameter
-    property bool   _allowDefaultReset:         fact.defaultValueAvailable && (QGroundControl.corePlugin.showAdvancedUI || !_editingParameter)
+    property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI && _editingParameter
+    property bool   _allowDefaultReset:         fact.defaultValueAvailable
     property bool   _showCombo:                 fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
 
     ParameterEditorController { id: controller; }
@@ -48,16 +46,13 @@ QGCPopupDialog {
         if (bitmaskColumn.visible && !manualEntry.checked) {
             fact.value = bitmaskValue();
             fact.valueChanged(fact.value)
-            valueChanged()
         } else if (factCombo.visible && !manualEntry.checked) {
             fact.enumIndex = factCombo.currentIndex
-            valueChanged()
         } else {
             var errorString = fact.validate(valueField.text, forceSave.checked)
             if (errorString === "") {
                 fact.value = valueField.text
                 fact.valueChanged(fact.value)
-                valueChanged()
             } else {
                 validationError.text = errorString
                 if (_allowForceSave) {
@@ -66,11 +61,6 @@ QGCPopupDialog {
                 preventClose = true
             }
         }
-    }
-
-    function reject() {
-        fact.valueChanged(fact.value)
-        close()
     }
 
     function bitmaskValue() {
@@ -85,11 +75,15 @@ QGCPopupDialog {
     }
 
     Component.onCompleted: {
+        console.log("ParameterEditor")
         if (validate) {
+            valueField.text = validateValue
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             if (_allowForceSave) {
                 forceSave.visible = true
             }
+        } else {
+            valueField.text = fact.valueString
         }
     }
 
@@ -112,7 +106,6 @@ QGCPopupDialog {
             QGCTextField {
                 id:                 valueField
                 width:              _editFieldWidth
-                text:               validate ? validateValue : fact.valueString
                 unitsLabel:         fact.units
                 showUnits:          fact.units != ""
                 focus:              setFocus && visible
