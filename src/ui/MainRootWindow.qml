@@ -68,8 +68,6 @@ ApplicationWindow {
         }
     }
 
-    property var                _rgPreventViewSwitch:       [ false ]
-
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
 
     //-------------------------------------------------------------------------
@@ -86,6 +84,7 @@ ApplicationWindow {
 
         property var                planMasterControllerPlanView:   null
         property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
+        property bool               validationError:                false   // There is a FactTextField somewhere with a validation error
 
         // Property to manage RemoteID quick acces to settings page
         property bool               commingFromRIDIndicator:        false
@@ -107,23 +106,9 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global Scope Functions
 
-    /// Prevent view switching
-    function pushPreventViewSwitch() {
-        _rgPreventViewSwitch.push(true)
-    }
-
-    /// Allow view switching
-    function popPreventViewSwitch() {
-        if (_rgPreventViewSwitch.length == 1) {
-            console.warn("mainWindow.popPreventViewSwitch called when nothing pushed")
-            return
-        }
-        _rgPreventViewSwitch.pop()
-    }
-
     /// @return true: View switches are not currently allowed
     function preventViewSwitch() {
-        return _rgPreventViewSwitch[_rgPreventViewSwitch.length - 1]
+        return globals.validationError
     }
 
     function viewSwitch(currentToolbar) {
