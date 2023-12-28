@@ -15,7 +15,6 @@ add_custom_target(PlanViewQml
 		MissionSettingsEditor.qml
 		PlanEditToolbar.qml
 		PlanToolBarIndicators.qml
-		PlanToolBar.qml
 		PlanView.qml
 		RallyPointEditorHeader.qml
 		RallyPointItemEditor.qml
