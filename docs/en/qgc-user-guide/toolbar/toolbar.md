@@ -1,4 +1,4 @@
-# Main Toolbar
+# Main Toolbar changes
 
 The main toolbar provides access to select the different application views, and high level status information for connected vehicles.
 The toolbar is the same in all views except for "PlanView" (which has a single icon to take you back to "Fly" view).
