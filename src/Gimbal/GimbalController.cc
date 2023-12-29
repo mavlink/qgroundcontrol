@@ -308,16 +308,17 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
 // TODO - Manage multi gimbal here
 bool GimbalController::_tryGetGimbalControl()
 {
-    if (gimbals().size() < 1) {
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "_tryGetGimbalControl: active gimbal is nullptr, returning";
         return false;
     }
     // This means other component is in control, show popup
-    if (gimbals()[0]->gimbalOthersHaveControl()) {
+    if (_activeGimbal->gimbalOthersHaveControl()) {
         qCDebug(GimbalLog) << "Others in control, showing popup for user to confirm control..";
         emit showAcquireGimbalControlPopup();
         return false;
     // This means nobody is in control, so we can adquire directly and attempt to control
-    } else if (!gimbals()[0]->gimbalHaveControl()) {
+    } else if (!_activeGimbal->gimbalHaveControl()) {
         qCDebug(GimbalLog) << "Nobody in control, adquiring ourselves..";
         acquireGimbalControl();
     }
@@ -342,19 +343,27 @@ void GimbalController::gimbalControlValue(double pitch, double yaw)
 
 void GimbalController::gimbalPitchStep(int direction)
 {
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalPitchStep: active gimbal is nullptr, returning";
+        return;
+    }
     if(_vehicle->gimbalData()) {
         //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
-        double p = static_cast<double>(gimbals()[0]->curPitch() + direction);
-        gimbalControlValue(p, static_cast<double>(gimbals()[0]->curYaw()));
+        double p = static_cast<double>(_activeGimbal->curPitch() + direction);
+        gimbalControlValue(p, static_cast<double>(_activeGimbal->curYaw()));
     }
 }
 
 void GimbalController::gimbalYawStep(int direction)
 {
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
+        return;
+    }
     if(_vehicle->gimbalData()) {
         //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
-        double y = static_cast<double>(gimbals()[0]->curYaw() + direction);
-        gimbalControlValue(static_cast<double>(gimbals()[0]->curPitch()), y);
+        double y = static_cast<double>(_activeGimbal->curYaw() + direction);
+        gimbalControlValue(static_cast<double>(_activeGimbal->curPitch()), y);
     }
 }
 void GimbalController::centerGimbal()
@@ -367,83 +376,85 @@ void GimbalController::centerGimbal()
 // Pan and tilt comes as +-(0-1)
 void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract, bool neutral, bool yawlock)
 {
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalOnScreenControl: active gimbal is nullptr, returning";
+        return;
+    }
     if (!_tryGetGimbalControl()) {
         return;
     }
-    if (gimbals().size() > 0) {
+    // click and point, based on FOV
+    if (clickAndPoint) {
+        float hFov = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraHFov()->rawValue().toFloat();
+        float vFov = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
+        
+        float panIncDesired =  panPct  * hFov;
+        float tiltIncDesired = tiltPct * vFov;
+        
+        // TODO: move this into GimbalController and add gimbal selection.
+        // For now, we just use the first gimbal.
+        float panDesired = panIncDesired + _activeGimbal->curYaw() - _vehicle->heading()->rawValue().toFloat();
+        qDebug() << "pan desired: " << panDesired;
+        float tiltDesired = tiltIncDesired + _activeGimbal->curPitch();
+        _vehicle->sendMavCommand(
+            _vehicle->compId(),
+            MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+            true,
+            tiltDesired,
+            panDesired,
+            0,
+            0,
+            0,
+            0,
+            0); // Main mount instance TODO - Support multigimbal here
+    
+    // click and drag, based on maximum speed
+    } else if (clickAndDrag) {
+        // Should send rate commands, but it seems for some reason it is not working on AP side. 
+        // Pitch works ok but yaw doesn't stop, it keeps like inertia, like if it was buffering the messages.
+        // So we do a workaround with angle targets
+        float maxSpeed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
+        
+        float panIncDesired  = panPct * maxSpeed  * 0.1f;
+        float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
 
-        // click and point, based on FOV
-        if (clickAndPoint) {
-            float hFov = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraHFov()->rawValue().toFloat();
-            float vFov = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
+        float panDesired = panIncDesired + _activeGimbal->curYaw();
+        float tiltDesired = tiltIncDesired + _activeGimbal->curPitch();
 
-            float panIncDesired =  panPct  * hFov;
-            float tiltIncDesired = tiltPct * vFov;
-
-            // TODO: move this into GimbalController and add gimbal selection.
-            // For now, we just use the first gimbal.
-            float panDesired = panIncDesired + gimbals()[0]->curYaw() - _vehicle->heading()->rawValue().toFloat();
-            qDebug() << "pan desired: " << panDesired;
-            float tiltDesired = tiltIncDesired + gimbals()[0]->curPitch();
-            _vehicle->sendMavCommand(
-                _vehicle->compId(),
-                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-                true,
-                tiltDesired,
-                panDesired,
-                0,
-                0,
-                0,
-                0,
-                0);                              // Main mount instance
-        // click and drag, based on maximum speed
-        } else if (clickAndDrag) {
-            // Should send rate commands, but it seems for some reason it is not working on AP side. 
-            // Pitch works ok but yaw doesn't stop, it keeps like inertia, like if it was buffering the messages.
-            // So we do a workaround with angle targets
-            float maxSpeed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
-            
-            float panIncDesired  = panPct * maxSpeed  * 0.1f;
-            float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
-
-            float panDesired = panIncDesired + gimbals()[0]->curYaw();
-            float tiltDesired = tiltIncDesired + gimbals()[0]->curPitch();
-
-            qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
-            
-            _vehicle->sendMavCommand(
-                _vehicle->compId(),
-                MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-                false,
-                tiltDesired,
-                panDesired,
-                0,
-                0,
-                0,
-                0,
-                0); 
+        qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
+        
+        _vehicle->sendMavCommand(
+            _vehicle->compId(),
+            MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+            false,
+            tiltDesired,
+            panDesired,
+            0,
+            0,
+            0,
+            0,
+            0); 
 
         //     This is how it should be
+    
+    //     float maxSpeed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
+        
+    //     float panDesired  = panPct * maxSpeed;
+    //     float tiltDesired = tiltPct * maxSpeed;
 
-        //     float maxSpeed = qgcApp()->toolbox()->settingsManager()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
-            
-        //     float panDesired  = panPct * maxSpeed;
-        //     float tiltDesired = tiltPct * maxSpeed;
-
-        //     qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
-            
-        //     sendMavCommand(
-        //         _vehicle->compId(),
-        //         MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        //         false,
-        //         static_cast<float>(qQNaN()),
-        //         static_cast<float>(qQNaN()),
-        //         tiltDesired,
-        //         panDesired,
-        //         0,
-        //         0,
-        //         0); 
-        }
+    //     qDebug() << "pan: " << panPct << " " << panDesired << " tilt: "  << tiltPct << " " << tiltDesired;
+        
+    //     sendMavCommand(
+    //         _vehicle->compId(),
+    //         MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+    //         false,
+    //         static_cast<float>(qQNaN()),
+    //         static_cast<float>(qQNaN()),
+    //         tiltDesired,
+    //         panDesired,
+    //         0,
+    //         0,
+    //         0);
     }
 }
 
