@@ -52,7 +52,7 @@ MapQuickItem {
             property var gimbalYaw:       vehicle ? vehicle.gimbalYaw : undefined
             rotation:                     gimbalYaw + 180
             onGimbalYawChanged:           canvas.requestPaint()
-            visible:                      gimbalYaw
+            visible:                      vehicle && !isNaN(gimbalYaw)
 
             Canvas {
                 id:                           canvas
