@@ -79,9 +79,13 @@ public:
  
     // TODO: Some sort of selection of gimbal to access the API.
 
+    Q_PROPERTY(Gimbal*                       activeGimbal            READ activeGimbal     WRITE setActiveGimbal         NOTIFY activeGimbalChanged)
     Q_PROPERTY(QVector<Gimbal*>              gimbals                 READ gimbals                                        NOTIFY gimbalsChanged)
 
-    QVector<Gimbal*>& gimbals() { return _gimbals; }
+    Gimbal*           activeGimbal()    { return _activeGimbal; }
+    QVector<Gimbal*>& gimbals()         { return _gimbals; }
+
+    void setActiveGimbal(Gimbal* gimbal);
 
     void sendGimbalManagerPitchYawFlags         (uint32_t flags);
     Q_INVOKABLE void gimbalControlValue         (double pitch, double yaw);
@@ -99,6 +103,7 @@ public:
     Q_INVOKABLE void setGimbalHomeTargeting     ();
 
 signals:
+    void    activeGimbalChanged           ();
     void    gimbalsChanged                ();
     void    gimbalLabelsChanged           ();
     void    showAcquireGimbalControlPopup (); // This triggers a popup in QML asking the user for aproval to take control
@@ -118,6 +123,7 @@ private:
 
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
+    Gimbal*             _activeGimbal       = nullptr;
 
 
     QMap<uint8_t, GimbalManager> _potentialGimbalManagers;

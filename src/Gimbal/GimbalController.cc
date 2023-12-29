@@ -46,9 +46,25 @@ const Gimbal& Gimbal::operator=(const Gimbal& other)
 GimbalController::GimbalController(MAVLinkProtocol* mavlink, Vehicle* vehicle)
     : _mavlink(mavlink)
     , _vehicle(vehicle)
+    , _activeGimbal(nullptr)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
+}
+
+void 
+GimbalController::setActiveGimbal(Gimbal* gimbal)
+{
+    if (!gimbal) {
+        qCDebug(GimbalLog) << "Set active gimbal: attempted to set a nullptr, returning";
+        return;
+    }
+
+    if (gimbal != _activeGimbal) {
+        qCDebug(GimbalLog) << "Set active gimbal: " << gimbal;
+        _activeGimbal = gimbal;
+        emit activeGimbalChanged();
+    }
 }
 
 void
