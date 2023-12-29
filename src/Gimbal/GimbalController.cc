@@ -34,8 +34,8 @@ const Gimbal& Gimbal::operator=(const Gimbal& other)
     retracted                 = other.retracted;    
     neutral                   = other.neutral;    
     yawLock                   = other.yawLock;    
-    haveControl               = other.haveControl;        
-    othersHaveControl         = other.othersHaveControl;            
+    _haveControl              = other._haveControl;        
+    _othersHaveControl        = other._othersHaveControl;            
     _curRoll                  = other._curRoll;    
     _curPitch                 = other._curPitch;    
     _curYaw                   = other._curYaw;    
@@ -146,13 +146,13 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
 
     bool hasChanged = false;
 
-    if (gimbal.haveControl != haveControl) {
-        gimbal.haveControl = haveControl;
+    if (gimbal.gimbalHaveControl() != haveControl) {
+        gimbal.setGimbalHaveControl(haveControl);
         hasChanged = true;
     }
 
-    if (gimbal.othersHaveControl != othersHaveControl) {
-        gimbal.othersHaveControl = othersHaveControl;
+    if (gimbal.gimbalOthersHaveControl() != othersHaveControl) {
+        gimbal.setGimbalOthersHaveControl(othersHaveControl);
         hasChanged = true;
     }
 
@@ -289,6 +289,25 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
     _vehicle->gimbalDataChanged();
 }
 
+// TODO - Manage multi gimbal here
+bool GimbalController::_tryGetGimbalControl()
+{
+    if (gimbals().size() < 1) {
+        return false;
+    }
+    // This means other component is in control, show popup
+    if (gimbals()[0]->gimbalOthersHaveControl()) {
+        qCDebug(GimbalLog) << "Others in control, showing popup for user to confirm control..";
+        emit showAcquireGimbalControlPopup();
+        return false;
+    // This means nobody is in control, so we can adquire directly and attempt to control
+    } else if (!gimbals()[0]->gimbalHaveControl()) {
+        qCDebug(GimbalLog) << "Nobody in control, adquiring ourselves..";
+        acquireGimbalControl();
+    }
+    return true;
+}
+
 void GimbalController::gimbalControlValue(double pitch, double yaw)
 {
     //qDebug() << "Gimbal:" << pitch << yaw;
@@ -332,6 +351,9 @@ void GimbalController::centerGimbal()
 // Pan and tilt comes as +-(0-1)
 void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract, bool neutral, bool yawlock)
 {
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
     if (gimbals().size() > 0) {
 
         // click and point, based on FOV
@@ -410,7 +432,9 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
 }
 
 void GimbalController::sendGimbalManagerPitchYaw(float pan, float tilt) {
-
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
     unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
         | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
         | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
@@ -430,6 +454,9 @@ void GimbalController::sendGimbalManagerPitchYaw(float pan, float tilt) {
 
 void GimbalController::setGimbalHomeTargeting()
 {
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
     _vehicle->sendMavCommand(
                 _vehicle->compId(),
                 MAV_CMD_DO_MOUNT_CONTROL,
@@ -445,6 +472,9 @@ void GimbalController::setGimbalHomeTargeting()
 
 void GimbalController::toggleGimbalRetracted(bool force, bool set) 
 {
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
     bool setDesired;
     if (force) {
         setDesired = set;
@@ -466,6 +496,9 @@ void GimbalController::toggleGimbalRetracted(bool force, bool set)
 
 void GimbalController::toggleGimbalNeutral(bool force, bool set) 
 {
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
     bool setDesired;
     if (force) {
         setDesired = set;
@@ -485,6 +518,9 @@ void GimbalController::toggleGimbalNeutral(bool force, bool set)
 // Not implemented in Ardupilot yet
 void GimbalController::toggleGimbalYawLock(bool force, bool set) 
 {
+    if (!_tryGetGimbalControl()) {
+        return;
+    }
     // This needs to be generic
     if (_vehicle->apmFirmware()) {
         _vehicle->sendMavCommand(_vehicle->compId(),

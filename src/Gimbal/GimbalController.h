@@ -19,18 +19,28 @@ public:
     Gimbal(const Gimbal& other);
     const Gimbal& operator=(const Gimbal& other);
 
-    Q_PROPERTY(qreal curRoll         READ curRoll           NOTIFY curRollChanged)
-    Q_PROPERTY(qreal curPitch        READ curPitch          NOTIFY curPitchChanged)
-    Q_PROPERTY(qreal curYaw          READ curYaw            NOTIFY curYawChanged)
+    Q_PROPERTY(qreal curRoll                 READ curRoll                 NOTIFY curRollChanged)
+    Q_PROPERTY(qreal curPitch                READ curPitch                NOTIFY curPitchChanged)
+    Q_PROPERTY(qreal curYaw                  READ curYaw                  NOTIFY curYawChanged)
+    Q_PROPERTY(bool  gimbalHaveControl       READ gimbalHaveControl       NOTIFY gimbalHaveControlChanged)
+    Q_PROPERTY(bool  gimbalOthersHaveControl READ gimbalOthersHaveControl NOTIFY gimbalOthersHaveControlChanged)
 
-    qreal curRoll()  { return _curRoll; } 
-    qreal curPitch() { return _curPitch; }  
-    qreal curYaw()   { return _curYaw; }
+    // do this need to be const?
+    qreal curRoll()                 { return _curRoll; } 
+    qreal curPitch()                { return _curPitch; }  
+    qreal curYaw()                  { return _curYaw; }
+    bool  gimbalHaveControl()       { return _haveControl; }
+    bool  gimbalOthersHaveControl() { return _othersHaveControl; }
+    // This is called from c++, but must update QML emiting the signals
+    void  setGimbalHaveControl(bool set)        { _haveControl = set;       emit gimbalHaveControlChanged(); }
+    void  setGimbalOthersHaveControl(bool set)  { _othersHaveControl = set; emit gimbalOthersHaveControlChanged(); }
 
 signals:
     void curRollChanged();
     void curPitchChanged();
     void curYawChanged();
+    void gimbalHaveControlChanged();
+    void gimbalOthersHaveControlChanged();
 
 public:
     unsigned requestInformationRetries = 3;
@@ -44,13 +54,13 @@ public:
     bool retracted = false;
     bool neutral = false;
     bool yawLock = false;
-    bool haveControl = false;
-    bool othersHaveControl = false;
 
 private:
     float _curRoll = 0.0f;
     float _curPitch = 0.0f;
     float _curYaw = 0.0f;
+    bool  _haveControl = false;
+    bool  _othersHaveControl = false;
 
     friend class GimbalController;
 };
@@ -89,8 +99,9 @@ public:
     Q_INVOKABLE void setGimbalHomeTargeting     ();
 
 signals:
-    void    gimbalsChanged          ();
-    void    gimbalLabelsChanged    ();
+    void    gimbalsChanged                ();
+    void    gimbalLabelsChanged           ();
+    void    showAcquireGimbalControlPopup (); // This triggers a popup in QML asking the user for aproval to take control
 
 private slots:
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
@@ -103,6 +114,7 @@ private:
     void    _handleGimbalManagerStatus       (const mavlink_message_t& message);
     void    _handleGimbalDeviceAttitudeStatus(const mavlink_message_t& message);
     void    _checkComplete                   (Gimbal& gimbal, uint8_t compid);
+    bool    _tryGetGimbalControl             ();        
 
     MAVLinkProtocol*    _mavlink            = nullptr;
     Vehicle*            _vehicle            = nullptr;
