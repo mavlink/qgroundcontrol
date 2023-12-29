@@ -72,6 +72,13 @@ Item {
                     }
                 },
                 ToolStripAction {
+                    text:              qsTr("Release C.")
+                    iconSource:        "/HA_Icons/PAYLOAD.png"
+                    checkable:         true
+                    visible:           !toolStripPanelVideo.panelHidden
+                    onTriggered:       _activeVehicle ? _activeVehicle.gimbalController.releaseGimbalControl() : undefined
+                },
+                ToolStripAction {
                     id:                 selectToolStripAction
                     text:               qsTr("")
                     iconSource:         "/HA_Icons/SELECT.png"
