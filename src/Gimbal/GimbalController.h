@@ -24,6 +24,7 @@ public:
     Q_PROPERTY(qreal curYaw                  READ curYaw                  NOTIFY curYawChanged)
     Q_PROPERTY(bool  gimbalHaveControl       READ gimbalHaveControl       NOTIFY gimbalHaveControlChanged)
     Q_PROPERTY(bool  gimbalOthersHaveControl READ gimbalOthersHaveControl NOTIFY gimbalOthersHaveControlChanged)
+    Q_PROPERTY(uint  deviceId                READ deviceId                NOTIFY deviceIdChanged)
 
     // do this need to be const?
     qreal curRoll()                 { return _curRoll; } 
@@ -31,9 +32,12 @@ public:
     qreal curYaw()                  { return _curYaw; }
     bool  gimbalHaveControl()       { return _haveControl; }
     bool  gimbalOthersHaveControl() { return _othersHaveControl; }
+    uint  deviceId()                { return _deviceId; }
+
     // This is called from c++, but must update QML emiting the signals
     void  setGimbalHaveControl(bool set)        { _haveControl = set;       emit gimbalHaveControlChanged(); }
     void  setGimbalOthersHaveControl(bool set)  { _othersHaveControl = set; emit gimbalOthersHaveControlChanged(); }
+    void  setDeviceId(uint id)                  { _deviceId = id;           emit deviceIdChanged(); }
 
 signals:
     void curRollChanged();
@@ -41,12 +45,12 @@ signals:
     void curYawChanged();
     void gimbalHaveControlChanged();
     void gimbalOthersHaveControlChanged();
+    void deviceIdChanged();
 
 public:
     unsigned requestInformationRetries = 3;
     unsigned requestStatusRetries = 6;
     unsigned requestAttitudeRetries = 3;
-    uint8_t deviceId = 0;                       // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
     bool receivedInformation = false;
     bool receivedStatus = false;
     bool receivedAttitude = false;
@@ -61,6 +65,7 @@ private:
     float _curYaw = 0.0f;
     bool  _haveControl = false;
     bool  _othersHaveControl = false;
+    uint8_t _deviceId = 0;                       // Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
 
     friend class GimbalController;
 };

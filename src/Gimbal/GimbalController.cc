@@ -26,7 +26,6 @@ const Gimbal& Gimbal::operator=(const Gimbal& other)
     requestInformationRetries = other.requestInformationRetries;                    
     requestStatusRetries      = other.requestStatusRetries;                
     requestAttitudeRetries    = other.requestAttitudeRetries;                
-    deviceId                  = other.deviceId;    
     receivedInformation       = other.receivedInformation;                
     receivedStatus            = other.receivedStatus;        
     receivedAttitude          = other.receivedAttitude;            
@@ -39,6 +38,7 @@ const Gimbal& Gimbal::operator=(const Gimbal& other)
     _curRoll                  = other._curRoll;    
     _curPitch                 = other._curPitch;    
     _curYaw                   = other._curYaw;    
+    _deviceId                 = other._deviceId;    
 
     return *this;
 }
@@ -113,7 +113,7 @@ GimbalController::_handleGimbalManagerInformation(const mavlink_message_t& messa
     auto& gimbal = _potentialGimbals[information.gimbal_device_id];
 
     if (information.gimbal_device_id != 0) {
-        gimbal.deviceId = information.gimbal_device_id;
+        gimbal.setDeviceId(information.gimbal_device_id);
     }
 
     if (!gimbal.receivedInformation) {
@@ -143,7 +143,7 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
         return;
     }
 
-    gimbal.deviceId = status.gimbal_device_id;
+    gimbal.setDeviceId(status.gimbal_device_id);
 
     // Only log this message once
     if (!gimbal.receivedStatus) {
@@ -198,7 +198,7 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
 
     // We do a reverse lookup here
     auto gimbal_it = std::find_if(_potentialGimbals.begin(), _potentialGimbals.end(),
-                 [&](auto& gimbal) { return gimbal.deviceId == gimbal_device_id_or_compid; });
+                 [&](auto& gimbal) { return gimbal.deviceId() == gimbal_device_id_or_compid; });
 
     if (gimbal_it == _potentialGimbals.end()) {
         qCDebug(GimbalLog) << "_handleGimbalDeviceAttitudeStatus for unknown device id: " << gimbal_device_id_or_compid << " from component id: " << message.compid;
@@ -277,15 +277,15 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
                                  (gimbal.requestStatusRetries > 1) ? 0 : 5000000); // request default rate, if we don't succeed, last attempt is fixed 0.2 Hz instead
         --gimbal.requestStatusRetries;
         qCDebug(GimbalLog) << "attempt to set GIMBAL_MANAGER_STATUS message at" << (gimbal.requestStatusRetries > 1 ? "default rate" : "0.2 Hz") << "interval for device: "
-                           << gimbal.deviceId << "compID: " << compid << ", retries remaining: " << gimbal.requestStatusRetries;
+                           << gimbal.deviceId() << "compID: " << compid << ", retries remaining: " << gimbal.requestStatusRetries;
     }
 
     if (!gimbal.receivedAttitude && gimbal.requestAttitudeRetries > 0 &&
-        gimbal.receivedInformation && gimbal.deviceId != 0) {
+        gimbal.receivedInformation && gimbal.deviceId() != 0) {
         // We request the attitude directly from the gimbal device component.
         // We can only do that once we have received the gimbal manager information
         // telling us which gimbal device it is responsible for.
-        _vehicle->sendMavCommand(gimbal.deviceId,
+        _vehicle->sendMavCommand(gimbal.deviceId(),
                                  MAV_CMD_SET_MESSAGE_INTERVAL,
                                  false /* no error */,
                                  MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS,
@@ -406,7 +406,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
             0,
             0,
             0,
-            _activeGimbal->deviceId); // Main mount instance TODO - Support multigimbal here
+            _activeGimbal->deviceId()); // Main mount instance TODO - Support multigimbal here
     
     // click and drag, based on maximum speed
     } else if (clickAndDrag) {
@@ -433,7 +433,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
             0,
             0,
             0,
-            _activeGimbal->deviceId); 
+            _activeGimbal->deviceId()); 
 
         //     This is how it should be
     
@@ -476,7 +476,7 @@ void GimbalController::sendGimbalManagerPitchYaw(float pan, float tilt) {
                 0,
                 flags,
                 0,
-                _activeGimbal->deviceId);
+                _activeGimbal->deviceId());
 }
 
 void GimbalController::setGimbalHomeTargeting()
@@ -603,7 +603,7 @@ void GimbalController::sendGimbalManagerPitchYawFlags(uint32_t flags)
                 static_cast<float>(qQNaN()),
                 flags,
                 0,
-                _activeGimbal->deviceId);
+                _activeGimbal->deviceId());
 }
 
 void GimbalController::acquireGimbalControl()
@@ -618,7 +618,7 @@ void GimbalController::acquireGimbalControl()
         -1.f, // Leave secondary unchanged
         NAN, // Reserved
         NAN, // Reserved
-        _activeGimbal->deviceId); // All gimbal IDs, TODO: make gimbal specific
+        _activeGimbal->deviceId()); // All gimbal IDs, TODO: make gimbal specific
 }
 
 void GimbalController::releaseGimbalControl()
@@ -633,5 +633,5 @@ void GimbalController::releaseGimbalControl()
         -1.f, // Leave secondary control unchanged
         NAN, // Reserved
         NAN, // Reserved
-        _activeGimbal->deviceId); // All gimbal IDs, TODO: make gimbal specific
+        _activeGimbal->deviceId()); // All gimbal IDs, TODO: make gimbal specific
 }
