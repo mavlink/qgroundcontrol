@@ -16,15 +16,34 @@ Item {
     width:  toolStripPanelVideo.width
     height: toolStripPanelVideo.height
 
-    property alias maxWidth:                toolStripPanelVideo.maxWidth
-    property real  _margins:                ScreenTools.defaultFontPixelWidth * 0.75
-    property bool  _modesPanelVisible:      modesToolStripAction.checked
-    property bool  _actionsPanelVisible:    actionsToolStripAction.checked
-    property bool  _selectPanelVisible:     selectToolStripAction.checked
-    property bool  _actionsMapPanelVisible: mapToolsToolStripAction.checked && mapToolsToolStripAction.enabled
-    property var   _activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
-    property bool  _haveGimbalControl:      _activeVehicle ? _activeVehicle.gimbalHaveControl : false
-    property bool  _othersHaveGimbalControl: _activeVehicle ? _activeVehicle.gimbalOthersHaveControl : false
+    property alias maxWidth:                 toolStripPanelVideo.maxWidth
+    property real  _margins:                 ScreenTools.defaultFontPixelWidth * 0.75
+    property bool  _modesPanelVisible:       modesToolStripAction.checked
+    property bool  _actionsPanelVisible:     actionsToolStripAction.checked
+    property bool  _selectPanelVisible:      selectToolStripAction.checked
+    property bool  _actionsMapPanelVisible:  mapToolsToolStripAction.checked && mapToolsToolStripAction.enabled
+    property var   _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
+    property var   _gimbalController:        _activeVehicle ? _activeVehicle.gimbalController : undefined  
+
+    Connections {
+        // Setting target to null makes this connection efectively disabled, dealing with qml warnings
+        target: _gimbalController ? _gimbalController : null
+        onShowAcquireGimbalControlPopup: {
+            showAcquireGimbalControlPopup()
+        }
+    }
+    
+    function showAcquireGimbalControlPopup() {
+        // TODO: we should mention who is currently in control
+        mainWindow.showMessageDialog(
+            title,
+            qsTr("Do you want to take over gimbal control?"),
+            StandardButton.Yes | StandardButton.Cancel,
+            function() {
+               _activeVehicle.gimbalController.acquireGimbalControl()
+            }
+        )
+    }
 
     ToolStripHorizontal {
         id:                toolStripPanelVideo
@@ -71,6 +90,7 @@ Item {
                         checked = false
                     }
                 },
+                // Change here based on control status?
                 ToolStripAction {
                     text:              qsTr("Release C.")
                     iconSource:        "/HA_Icons/PAYLOAD.png"
@@ -170,24 +190,8 @@ Item {
                         iconSource:         "/HA_Icons/CAMERA_90.png"
                         onTriggered: { 
                             if (_activeVehicle) {
-                                if (_activeVehicle.gimbalOthersHaveControl) {
-                                     // TODO: we should mention who is currently in control
-                                     mainWindow.showMessageDialog(title,
-                                         qsTr("Do you want to take over gimbal control?"),
-                                         StandardButton.Yes | StandardButton.Cancel,
-                                         function() {
-                                            _activeVehicle.gimbalController.acquireGimbalControl()
-                                            _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                            _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
-                                         })
-                                } else if (!_activeVehicle.othersHaveControl) {
-                                    _activeVehicle.gimbalController.acquireGimbalControl()
-                                    _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                    _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
-                                } else {
-                                    _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                    _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
-                                }
+                                _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
+                                _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
                             }
                         }
                     },
