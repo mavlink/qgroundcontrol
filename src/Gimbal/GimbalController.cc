@@ -37,7 +37,9 @@ const Gimbal& Gimbal::operator=(const Gimbal& other)
     _othersHaveControl        = other._othersHaveControl;            
     _curRoll                  = other._curRoll;    
     _curPitch                 = other._curPitch;    
-    _curYaw                   = other._curYaw;    
+    _curYaw                   = other._curYaw;  
+    _haveControl              = other._haveControl;
+    _othersHaveControl        = other._othersHaveControl;  
     _deviceId                 = other._deviceId;    
 
     return *this;
