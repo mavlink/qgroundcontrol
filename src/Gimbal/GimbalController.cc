@@ -406,7 +406,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
             0,
             0,
             0,
-            0); // Main mount instance TODO - Support multigimbal here
+            _activeGimbal->deviceId); // Main mount instance TODO - Support multigimbal here
     
     // click and drag, based on maximum speed
     } else if (clickAndDrag) {
@@ -433,7 +433,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
             0,
             0,
             0,
-            0); 
+            _activeGimbal->deviceId); 
 
         //     This is how it should be
     
@@ -476,7 +476,7 @@ void GimbalController::sendGimbalManagerPitchYaw(float pan, float tilt) {
                 0,
                 flags,
                 0,
-                0);
+                _activeGimbal->deviceId);
 }
 
 void GimbalController::setGimbalHomeTargeting()
@@ -603,7 +603,7 @@ void GimbalController::sendGimbalManagerPitchYawFlags(uint32_t flags)
                 static_cast<float>(qQNaN()),
                 flags,
                 0,
-                0);
+                _activeGimbal->deviceId);
 }
 
 void GimbalController::acquireGimbalControl()
@@ -618,7 +618,7 @@ void GimbalController::acquireGimbalControl()
         -1.f, // Leave secondary unchanged
         NAN, // Reserved
         NAN, // Reserved
-        0); // All gimbal IDs, TODO: make gimbal specific
+        _activeGimbal->deviceId); // All gimbal IDs, TODO: make gimbal specific
 }
 
 void GimbalController::releaseGimbalControl()
@@ -633,5 +633,5 @@ void GimbalController::releaseGimbalControl()
         -1.f, // Leave secondary control unchanged
         NAN, // Reserved
         NAN, // Reserved
-        0); // All gimbal IDs, TODO: make gimbal specific
+        _activeGimbal->deviceId); // All gimbal IDs, TODO: make gimbal specific
 }
