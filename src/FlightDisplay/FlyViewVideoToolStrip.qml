@@ -21,7 +21,7 @@ Item {
     property bool  _modesPanelVisible:      modesToolStripAction.checked
     property bool  _actionsPanelVisible:    actionsToolStripAction.checked
     property bool  _selectPanelVisible:     selectToolStripAction.checked
-    property bool  _actionsMapPanelVisible: mapToolsToolStripAction.checked
+    property bool  _actionsMapPanelVisible: mapToolsToolStripAction.checked && mapToolsToolStripAction.enabled
     property var   _activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
     property bool  _haveGimbalControl:      _activeVehicle ? _activeVehicle.gimbalHaveControl : false
     property bool  _othersHaveGimbalControl: _activeVehicle ? _activeVehicle.gimbalOthersHaveControl : false
@@ -195,6 +195,7 @@ Item {
                         iconSource:         "/HA_Icons/MAP_CLICK.png"
                         checkable:          true
                         visible:            !toolStripPanelVideo.panelHidden
+                        enabled:            flightView._mainWindowIsMap
 
                         onVisibleChanged: {
                             if (!visible)
@@ -215,6 +216,10 @@ Item {
             anchors.right:  parent.right
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
+
+            onVisibleChanged: {
+                getFromMapButton.checked = false
+            }
 
             DeadMouseArea {
                 anchors.fill: parent
@@ -283,6 +288,7 @@ Item {
                     Layout.fillWidth:   true
                 }
                 QGCButton {
+                    id:                getFromMapButton
                     text:              qsTr("Get from map")
                     checkable:         true
                     Layout.columnSpan: 2
