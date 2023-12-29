@@ -4290,18 +4290,6 @@ Vehicle::gimbalData() const
     return _gimbalController->gimbals().size() > 0;
 }
 
-bool
-Vehicle::gimbalHaveControl() const
-{
-    return gimbalData() ? _gimbalController->gimbals()[0]->haveControl : false;
-}
-
-bool
-Vehicle::gimbalOthersHaveControl() const
-{
-    return gimbalData() ? _gimbalController->gimbals()[0]->othersHaveControl : false;
-}
-
 void Vehicle::_updateAltAboveTerrain()
 {
     // We won't do another query if the previous query was done closer than 2 meters from current position
