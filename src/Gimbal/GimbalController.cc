@@ -450,7 +450,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
     }
 }
 
-void GimbalController::sendGimbalManagerPitchYaw(float pan, float tilt) {
+void GimbalController::sendGimbalManagerPitchYaw(float pitch, float yaw) {
     if (!_tryGetGimbalControl()) {
         return;
     }
@@ -462,8 +462,8 @@ void GimbalController::sendGimbalManagerPitchYaw(float pan, float tilt) {
                 _vehicle->compId(),
                 MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
                 true,
-                tilt,
-                pan,
+                pitch,
+                yaw,
                 0,
                 0,
                 flags,
