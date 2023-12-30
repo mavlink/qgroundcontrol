@@ -82,13 +82,11 @@ public:
         bool receivedInformation = false;
     };
  
-    // TODO: Some sort of selection of gimbal to access the API.
-
     Q_PROPERTY(Gimbal*                       activeGimbal            READ activeGimbal     WRITE setActiveGimbal         NOTIFY activeGimbalChanged)
-    Q_PROPERTY(QVector<Gimbal*>              gimbals                 READ gimbals                                        NOTIFY gimbalsChanged)
+    Q_PROPERTY(QmlObjectListModel*           gimbals                 READ gimbals          CONSTANT)
 
-    Gimbal*           activeGimbal()    { return _activeGimbal; }
-    QVector<Gimbal*>& gimbals()         { return _gimbals; }
+    Gimbal*             activeGimbal()    { return _activeGimbal; }
+    QmlObjectListModel* gimbals()         { return &_gimbals; }
 
     void setActiveGimbal(Gimbal* gimbal);
 
@@ -109,7 +107,6 @@ public:
 
 signals:
     void    activeGimbalChanged           ();
-    void    gimbalsChanged                ();
     void    gimbalLabelsChanged           ();
     void    showAcquireGimbalControlPopup (); // This triggers a popup in QML asking the user for aproval to take control
 
@@ -133,5 +130,5 @@ private:
 
     QMap<uint8_t, GimbalManager> _potentialGimbalManagers;
     QMap<uint8_t, Gimbal> _potentialGimbals;
-    QVector<Gimbal*> _gimbals;
+    QmlObjectListModel _gimbals;
 };

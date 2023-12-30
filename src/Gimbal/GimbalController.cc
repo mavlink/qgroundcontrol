@@ -308,7 +308,7 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
         setActiveGimbal(&gimbal);
     }
 
-    _gimbals.push_back(&gimbal);
+    _gimbals.append(&gimbal);
     _vehicle->gimbalDataChanged();
 }
 
