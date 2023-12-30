@@ -195,7 +195,7 @@ Item {
                         onTriggered: { 
                             if (_activeVehicle) {
                                 _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
-                                _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(0, -90) // point gimbal down
+                                _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(-90, 0) // point gimbal down
                             }
                         }
                     },
