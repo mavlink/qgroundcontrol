@@ -4266,12 +4266,6 @@ void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
     _doSetHomeCoordinate = QGeoCoordinate(); // So isValid() will no longer return true, for extra safety
 }
     
-bool
-Vehicle::gimbalData() const
-{
-    return _gimbalController->activeGimbal() != nullptr;
-}
-
 void Vehicle::_updateAltAboveTerrain()
 {
     // We won't do another query if the previous query was done closer than 2 meters from current position

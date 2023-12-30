@@ -259,7 +259,6 @@ public:
     Q_PROPERTY(quint64              mavlinkLossCount            READ mavlinkLossCount                                               NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent          READ mavlinkLossPercent                                             NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(GimbalController*    gimbalController            READ gimbalController                                               NOTIFY gimbalControllerChanged)
-    Q_PROPERTY(bool                 gimbalData                  READ gimbalData                                                     NOTIFY gimbalDataChanged)
     Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
     Q_PROPERTY(bool                 gimbalRetracted             READ gimbalRetracted                                                NOTIFY gimbalRetractedChanged)
     Q_PROPERTY(bool                 gimbalNeutral               READ gimbalNeutral                                                  NOTIFY gimbalNeutralChanged)
@@ -922,7 +921,6 @@ public:
     quint64     mavlinkLossCount        () const{ return _mavlinkLossCount; }        /// Total number of lost messages
     float       mavlinkLossPercent      () const{ return _mavlinkLossPercent; }      /// Running loss rate
 
-    bool        gimbalData              () const;
     bool        isROIEnabled            () const{ return _isROIEnabled; }
 
     //uint32_t    gimbalStatusFlags         ()   const{ return _gimbalStatusFlags; }
@@ -1046,7 +1044,6 @@ signals:
     void requestProtocolVersion         (unsigned version);
     void mavlinkStatusChanged           ();
 
-    void gimbalDataChanged              ();
     void gimbalRetractedChanged         ();
     void gimbalNeutralChanged           ();
     void gimbalYawLockChanged           ();
