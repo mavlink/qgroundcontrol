@@ -4269,25 +4269,25 @@ void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
 qreal
 Vehicle::gimbalRoll() const
 {
-    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curRoll() : NAN);
+    return static_cast<qreal>(gimbalData() ? _gimbalController->activeGimbal()->curRoll() : NAN);
 }
 
 qreal
 Vehicle::gimbalPitch() const
 {
-    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curPitch() : NAN);
+    return static_cast<qreal>(gimbalData() ? _gimbalController->activeGimbal()->curPitch() : NAN);
 }
 
 qreal
 Vehicle::gimbalYaw() const
 {
-    return static_cast<qreal>(gimbalData() ? _gimbalController->gimbals()[0]->curYaw() : NAN);
+    return static_cast<qreal>(gimbalData() ? _gimbalController->activeGimbal()->curYaw() : NAN);
 }
 
 bool
 Vehicle::gimbalData() const
 {
-    return _gimbalController->gimbals().size() > 0;
+    return _gimbalController->activeGimbal() != nullptr;
 }
 
 void Vehicle::_updateAltAboveTerrain()
