@@ -303,6 +303,11 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
 
     gimbal.isComplete = true;
 
+    // If there is no current active gimbal, set this one as active
+    if (!_activeGimbal) {
+        setActiveGimbal(&gimbal);
+    }
+
     _gimbals.push_back(&gimbal);
     _vehicle->gimbalDataChanged();
 }
