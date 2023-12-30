@@ -34,4 +34,16 @@ Rectangle {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
     }
+
+    Rectangle {
+        color: qgcPal.window
+        width: parent.width
+        height: 250
+        anchors.bottom: parent.bottom
+        MetFactValueGrid {
+            id:                     valueArea
+            defaultSettingsGroup:   metDataDefaultSettingsGroup
+            anchors.fill: parent
+        }
+    }
 }

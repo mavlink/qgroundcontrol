@@ -246,6 +246,8 @@ Item {
     MetDataWindow {
         id:                 metDataWindow
         x:                  recalcXPosition()
+
+        anchors.bottom: parent.bottom
         anchors.margins:    _toolsMargin
         visible:            _guidedController._metDataVisible
 
@@ -254,18 +256,7 @@ Item {
 
 
         function recalcXPosition() {
-            // First try centered
-            var halfRootWidth   = _root.width / 2
-            var halfPanelWidth  = metDataWindow.width / 2
-            var leftX           = (halfRootWidth - halfPanelWidth) - _toolsMargin
-            var rightX          = (halfRootWidth + halfPanelWidth) + _toolsMargin
-            if (leftX >= parentToolInsets.leftEdgeBottomInset || rightX <= parentToolInsets.rightEdgeBottomInset ) {
-                // It will fit in the horizontalCenter
-                return halfRootWidth - halfPanelWidth
-            } else {
-                // Anchor to left edge
-                return parentToolInsets.leftEdgeBottomInset + _toolsMargin
-            }
+            return parentToolInsets.leftEdgeBottomInset + _toolsMargin
         }
     }
 
