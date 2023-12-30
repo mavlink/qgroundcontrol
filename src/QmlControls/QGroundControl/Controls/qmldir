@@ -121,6 +121,7 @@ TransectStyleMapVisuals                 1.0 TransectStyleMapVisuals.qml
 ToolStrip                               1.0 ToolStrip.qml
 ToolStripHorizontal                     1.0 ToolStripHorizontal.qml
 ToolStripHoverButton                    1.0 ToolStripHoverButton.qml
+FakeToolStripHoverButton                1.0 FakeToolStripHoverButton.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
 MAVLinkChart                            1.0 MAVLinkChart.qml
