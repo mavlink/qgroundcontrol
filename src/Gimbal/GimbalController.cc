@@ -300,7 +300,6 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
     }
 
     _gimbals.append(&gimbal);
-    _vehicle->gimbalDataChanged();
 }
 
 bool GimbalController::_tryGetGimbalControl()
@@ -344,11 +343,9 @@ void GimbalController::gimbalPitchStep(int direction)
         qCDebug(GimbalLog) << "gimbalPitchStep: active gimbal is nullptr, returning";
         return;
     }
-    if(_vehicle->gimbalData()) {
-        //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
-        double p = static_cast<double>(_activeGimbal->curPitch() + direction);
-        gimbalControlValue(p, static_cast<double>(_activeGimbal->curYaw()));
-    }
+    //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
+    double p = static_cast<double>(_activeGimbal->curPitch() + direction);
+    gimbalControlValue(p, static_cast<double>(_activeGimbal->curYaw()));
 }
 
 void GimbalController::gimbalYawStep(int direction)
@@ -357,17 +354,17 @@ void GimbalController::gimbalYawStep(int direction)
         qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
         return;
     }
-    if(_vehicle->gimbalData()) {
-        //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
-        double y = static_cast<double>(_activeGimbal->curYaw() + direction);
-        gimbalControlValue(static_cast<double>(_activeGimbal->curPitch()), y);
-    }
+    //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
+    double y = static_cast<double>(_activeGimbal->curYaw() + direction);
+    gimbalControlValue(static_cast<double>(_activeGimbal->curPitch()), y);
 }
 void GimbalController::centerGimbal()
 {
-    if(_vehicle->gimbalData()) {
-        gimbalControlValue(0.0, 0.0);
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
+        return;
     }
+    gimbalControlValue(0.0, 0.0);
 }
 
 // Pan and tilt comes as +-(0-1)
