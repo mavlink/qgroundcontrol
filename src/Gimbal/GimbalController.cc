@@ -304,7 +304,6 @@ GimbalController::_checkComplete(Gimbal& gimbal, uint8_t compid)
     _vehicle->gimbalDataChanged();
 }
 
-// TODO - Manage multi gimbal here
 bool GimbalController::_tryGetGimbalControl()
 {
     if (!_activeGimbal) {
@@ -390,8 +389,6 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         float panIncDesired =  panPct  * hFov;
         float tiltIncDesired = tiltPct * vFov;
         
-        // TODO: move this into GimbalController and add gimbal selection.
-        // For now, we just use the first gimbal.
         float panDesired = panIncDesired + _activeGimbal->curYaw() - _vehicle->heading()->rawValue().toFloat();
         qDebug() << "pan desired: " << panDesired;
         float tiltDesired = tiltIncDesired + _activeGimbal->curPitch();
@@ -405,7 +402,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
             0,
             0,
             0,
-            _activeGimbal->deviceId()); // Main mount instance TODO - Support multigimbal here
+            _activeGimbal->deviceId());
     
     // click and drag, based on maximum speed
     } else if (clickAndDrag) {
@@ -621,7 +618,7 @@ void GimbalController::acquireGimbalControl()
         -1.f, // Leave secondary unchanged
         NAN, // Reserved
         NAN, // Reserved
-        _activeGimbal->deviceId()); // All gimbal IDs, TODO: make gimbal specific
+        _activeGimbal->deviceId());
 }
 
 void GimbalController::releaseGimbalControl()
@@ -640,5 +637,5 @@ void GimbalController::releaseGimbalControl()
         -1.f, // Leave secondary control unchanged
         NAN, // Reserved
         NAN, // Reserved
-        _activeGimbal->deviceId()); // All gimbal IDs, TODO: make gimbal specific
+        _activeGimbal->deviceId());
 }
