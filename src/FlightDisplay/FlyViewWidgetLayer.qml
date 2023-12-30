@@ -334,10 +334,14 @@ Item {
         color: qgcPal.window
         opacity: 0.8
 
+        property var _gimbalController: _activeVehicle ? _activeVehicle.gimbalController : undefined  
+        property var _activeGimbal:     _gimbalController ? _gimbalController.activeGimbal : undefined
+        property bool _gimbalAvailable: _activeGimbal != undefined
+
         QGCLabel {
             id: gimbalPitchLabel
-            text: _activeVehicle && _activeVehicle.gimbalData ? "Tilt: " + _activeVehicle.gimbalPitch.toFixed(2) : ""
-            visible: _activeVehicle && _activeVehicle.gimbalData
+            text: pitchRollRectangle._gimbalAvailable ? "Tilt: " + pitchRollRectangle._activeGimbal.curPitch.toFixed(2) : ""
+            visible: pitchRollRectangle._gimbalAvailable
             anchors.top: parent.top
             anchors.left: parent.horizontalCenter
             anchors.margins: ScreenTools.defaultFontPixelWidth
@@ -345,8 +349,8 @@ Item {
 
         QGCLabel {
             id: gimbalPanLabel
-            text: _activeVehicle && _activeVehicle.gimbalData ? "Pan: " + _activeVehicle.gimbalYaw.toFixed(2) : ""
-            visible: _activeVehicle && _activeVehicle.gimbalData
+            text: pitchRollRectangle._gimbalAvailable ? "Pan: " + pitchRollRectangle._activeGimbal.curYaw.toFixed(2) : ""
+            visible: pitchRollRectangle._gimbalAvailable
             anchors.top: parent.top
             anchors.right: parent.horizontalCenter
             anchors.margins: ScreenTools.defaultFontPixelWidth
