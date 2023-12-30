@@ -4266,24 +4266,6 @@ void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
     _doSetHomeCoordinate = QGeoCoordinate(); // So isValid() will no longer return true, for extra safety
 }
     
-qreal
-Vehicle::gimbalRoll() const
-{
-    return static_cast<qreal>(gimbalData() ? _gimbalController->activeGimbal()->curRoll() : NAN);
-}
-
-qreal
-Vehicle::gimbalPitch() const
-{
-    return static_cast<qreal>(gimbalData() ? _gimbalController->activeGimbal()->curPitch() : NAN);
-}
-
-qreal
-Vehicle::gimbalYaw() const
-{
-    return static_cast<qreal>(gimbalData() ? _gimbalController->activeGimbal()->curYaw() : NAN);
-}
-
 bool
 Vehicle::gimbalData() const
 {

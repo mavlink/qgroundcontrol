@@ -259,9 +259,6 @@ public:
     Q_PROPERTY(quint64              mavlinkLossCount            READ mavlinkLossCount                                               NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent          READ mavlinkLossPercent                                             NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(GimbalController*    gimbalController            READ gimbalController                                               NOTIFY gimbalControllerChanged)
-    Q_PROPERTY(qreal                gimbalRoll                  READ gimbalRoll                                                     NOTIFY gimbalRollChanged)
-    Q_PROPERTY(qreal                gimbalPitch                 READ gimbalPitch                                                    NOTIFY gimbalPitchChanged)
-    Q_PROPERTY(qreal                gimbalYaw                   READ gimbalYaw                                                      NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData                  READ gimbalData                                                     NOTIFY gimbalDataChanged)
     Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
     Q_PROPERTY(bool                 gimbalRetracted             READ gimbalRetracted                                                NOTIFY gimbalRetractedChanged)
@@ -925,9 +922,6 @@ public:
     quint64     mavlinkLossCount        () const{ return _mavlinkLossCount; }        /// Total number of lost messages
     float       mavlinkLossPercent      () const{ return _mavlinkLossPercent; }      /// Running loss rate
 
-    qreal       gimbalRoll              () const;
-    qreal       gimbalPitch             () const;
-    qreal       gimbalYaw               () const;
     bool        gimbalData              () const;
     bool        isROIEnabled            () const{ return _isROIEnabled; }
 
@@ -1052,9 +1046,6 @@ signals:
     void requestProtocolVersion         (unsigned version);
     void mavlinkStatusChanged           ();
 
-    void gimbalRollChanged              ();
-    void gimbalPitchChanged             ();
-    void gimbalYawChanged               ();
     void gimbalDataChanged              ();
     void gimbalRetractedChanged         ();
     void gimbalNeutralChanged           ();
