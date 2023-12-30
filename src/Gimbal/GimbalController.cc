@@ -217,22 +217,21 @@ GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t& mes
     float roll, pitch, yaw;
     mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
 
-    gimbal_it->_curYaw   = yaw * (180.0f / M_PI);
     gimbal_it->_curRoll  = roll * (180.0f / M_PI);
+    gimbal_it->curRollChanged();
     gimbal_it->_curPitch = pitch * (180.0f / M_PI);
-
+    gimbal_it->curPitchChanged();
+    gimbal_it->_curYaw   = yaw * (180.0f / M_PI);
     if (yaw_in_vehicle_frame) {
         gimbal_it->_curYaw += _vehicle->heading()->rawValue().toFloat();
         if (gimbal_it->_curYaw > 180.0f) {
             gimbal_it->_curYaw -= 360.0f;
         }
     }
-
+    gimbal_it->curYawChanged();
     // qCDebug(GimbalLog) << "roll: " << gimbal_it->_curRoll << ", pitch: " << gimbal_it->_curPitch << ", yaw: " << gimbal_it->_curYaw;
 
     gimbal_it->receivedAttitude = true;
-    _vehicle->gimbalPitchChanged();
-    _vehicle->gimbalYawChanged();
 
     _checkComplete(*gimbal_it, message.compid);
 }
