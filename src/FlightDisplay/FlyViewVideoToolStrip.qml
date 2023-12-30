@@ -92,11 +92,15 @@ Item {
                 },
                 // Change here based on control status?
                 ToolStripAction {
-                    text:              qsTr("Release C.")
+                    text:              hasControl ? qsTr("Release C.") : qsTr("Acquuire C.")
                     iconSource:        "/HA_Icons/PAYLOAD.png"
-                    checkable:         true
-                    visible:           !toolStripPanelVideo.panelHidden
-                    onTriggered:       _activeVehicle ? _activeVehicle.gimbalController.releaseGimbalControl() : undefined
+                    checkable:         false
+                    visible:           !toolStripPanelVideo.panelHidden && _activeVehicle && _gimbalController.activeGimbal
+                    onTriggered:       _activeVehicle ? 
+                                            hasControl ? _gimbalController.releaseGimbalControl() : _gimbalController.acquireGimbalControl()
+                                                : undefined
+                
+                    property var hasControl: _gimbalController && _gimbalController.activeGimbal && _gimbalController.activeGimbal.gimbalHaveControl
                 },
                 ToolStripAction {
                     id:                 selectToolStripAction
