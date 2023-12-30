@@ -615,6 +615,10 @@ void GimbalController::sendGimbalManagerPitchYawFlags(uint32_t flags)
 
 void GimbalController::acquireGimbalControl()
 {
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "acquireGimbalControl: active gimbal is nullptr, returning";
+        return;
+    }
     _vehicle->sendMavCommand(
         _vehicle->compId(),
         MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
@@ -630,6 +634,10 @@ void GimbalController::acquireGimbalControl()
 
 void GimbalController::releaseGimbalControl()
 {
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "releaseGimbalControl: active gimbal is nullptr, returning";
+        return;
+    }
     _vehicle->sendMavCommand(
         _vehicle->compId(),
         MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
