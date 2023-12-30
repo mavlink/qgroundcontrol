@@ -162,20 +162,12 @@ GimbalController::_handleGimbalManagerStatus(const mavlink_message_t& message)
     const bool othersHaveControl = !haveControl &&
         (status.primary_control_sysid != 0 && status.primary_control_compid != 0);
 
-    bool hasChanged = false;
-
     if (gimbal.gimbalHaveControl() != haveControl) {
         gimbal.setGimbalHaveControl(haveControl);
-        hasChanged = true;
     }
 
     if (gimbal.gimbalOthersHaveControl() != othersHaveControl) {
         gimbal.setGimbalOthersHaveControl(othersHaveControl);
-        hasChanged = true;
-    }
-
-    if (hasChanged) {
-        //emit gimbalsChanged();
     }
 
     _checkComplete(gimbal, message.compid);
