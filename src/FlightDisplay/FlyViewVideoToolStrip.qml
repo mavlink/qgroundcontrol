@@ -104,10 +104,10 @@ Item {
                 },
                 ToolStripAction {
                     id:                 selectToolStripAction
-                    text:               qsTr("")
+                    text:               qsTr("Gimbal ") + (_gimbalController && _gimbalController.activeGimbal ? _gimbalController.activeGimbal.deviceId : "")
                     iconSource:         "/HA_Icons/SELECT.png"
                     checkable:          true
-                    visible:            !toolStripPanelVideo.panelHidden
+                    visible:            !toolStripPanelVideo.panelHidden && _gimbalController ? _gimbalController.gimbals.count : false
                     
                     onVisibleChanged: {
                         checked = false
@@ -379,32 +379,46 @@ Item {
         }
     }
 
-    ToolStrip {
-        id:        selectToolStrip
+    Rectangle {
+        id:        gimbalSelectorPanel
         width:     toolStripPanelVideo.height
-        maxHeight: width * 2
+        height:    panelHeight
         visible:   rootItem._selectPanelVisible
-        model:     selectToolStripActionList.model
-        fontSize:  ScreenTools.isMobile ? ScreenTools.smallFontPointSize * 0.7 : ScreenTools.smallFontPointSize
+        color:     qgcPal.windowShade
+        radius:    ScreenTools.defaultFontPixelWidth / 2
 
         anchors.top:                toolStripPanelVideo.bottom
         anchors.right:              toolStripPanelVideo.right
         anchors.topMargin:          _margins
 
-        ToolStripActionList {
-            id: selectToolStripActionList
-            model: [
-                ToolStripAction {
-                    text:               qsTr("Gimbal 1")
-                    iconSource:         "/HA_Icons/PAYLOAD.png"
-                    onTriggered:        undefined
-                },
-                ToolStripAction {
-                    text:               qsTr("Gimbal 2")
-                    iconSource:         "/HA_Icons/PAYLOAD.png"
-                    onTriggered:        undefined
+        property var buttonWidth:    width - _margins * 2
+        property var panelHeight:    gimbalSelectorContentGrid.childrenRect.height + _margins * 2
+        property var gridRowSpacing: _margins
+        property var buttonFontSize: ScreenTools.smallFontPointSize * 0.9
+
+        GridLayout {
+            id:               gimbalSelectorContentGrid
+            width:            parent.width
+            rowSpacing:       gimbalSelectorPanel.gridRowSpacing
+            columns:          1
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top:              parent.top
+            anchors.topMargin:        _margins
+
+            Repeater {
+                model: _gimbalController && _gimbalController.gimbals ? _gimbalController.gimbals : undefined
+                delegate: FakeToolStripHoverButton {
+                    Layout.preferredWidth:  gimbalSelectorPanel.buttonWidth
+                    Layout.preferredHeight: Layout.preferredWidth
+                    Layout.alignment:       Qt.AlignHCenter | Qt.AlignVCenter
+                    text:                   qsTr("Gimbal ") + object.deviceId
+                    fontPointSize:          gimbalSelectorPanel.buttonFontSize
+                    onClicked: {
+                        _gimbalController.activeGimbal = object
+                    }
                 }
-            ]
+            }
         }
     }
 }
