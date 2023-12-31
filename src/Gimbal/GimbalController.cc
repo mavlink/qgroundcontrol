@@ -321,50 +321,42 @@ bool GimbalController::_tryGetGimbalControl()
     return true;
 }
 
-void GimbalController::gimbalControlValue(double pitch, double yaw)
+void GimbalController::gimbalStepPitchYaw(float pitch, float yaw)
 {
-    //qDebug() << "Gimbal:" << pitch << yaw;
-    _vehicle->sendMavCommand(
-                _vehicle->compId(),
-                MAV_CMD_DO_MOUNT_CONTROL,
-                false,                               // show errors
-                static_cast<float>(pitch),           // Pitch 0 - 90
-                0,                                   // Roll (not used)
-                static_cast<float>(yaw),             // Yaw -180 - 180
-                0,                                   // Altitude (not used)
-                0,                                   // Latitude (not used)
-                0,                                   // Longitude (not used)
-                MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+    if (!_activeGimbal) {
+        qCDebug(GimbalLog) << "gimbalStepPitchYaw: active gimbal is nullptr, returning";
+        return;
+    }
+    sendGimbalManagerPitchYaw(_gimbalPitchStep(pitch), _gimbalYawStep(yaw));
 }
 
-void GimbalController::gimbalPitchStep(int direction)
+float GimbalController::_gimbalPitchStep(int direction)
 {
     if (!_activeGimbal) {
         qCDebug(GimbalLog) << "gimbalPitchStep: active gimbal is nullptr, returning";
-        return;
+        return 0.0f;
     }
-    //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
-    double p = static_cast<double>(_activeGimbal->curPitch() + direction);
-    gimbalControlValue(p, static_cast<double>(_activeGimbal->curYaw()));
+    float p = static_cast<float>(_activeGimbal->curPitch() + direction);
+    return p;
 }
 
-void GimbalController::gimbalYawStep(int direction)
+float GimbalController::_gimbalYawStep(int direction)
 {
     if (!_activeGimbal) {
         qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
-        return;
+        return 0.0f;
     }
-    //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
-    double y = static_cast<double>(_activeGimbal->curYaw() + direction);
-    gimbalControlValue(static_cast<double>(_activeGimbal->curPitch()), y);
+    float y = static_cast<float>(_activeGimbal->curYaw() - _vehicle->heading()->rawValue().toFloat() + direction);
+    return y;
 }
+
 void GimbalController::centerGimbal()
 {
     if (!_activeGimbal) {
         qCDebug(GimbalLog) << "gimbalYawStep: active gimbal is nullptr, returning";
         return;
     }
-    gimbalControlValue(0.0, 0.0);
+    sendGimbalManagerPitchYaw(0.0, 0.0);
 }
 
 // Pan and tilt comes as +-(0-1)

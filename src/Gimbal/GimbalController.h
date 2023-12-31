@@ -91,10 +91,6 @@ public:
     void setActiveGimbal(Gimbal* gimbal);
 
     void sendGimbalManagerPitchYawFlags         (uint32_t flags);
-    Q_INVOKABLE void gimbalControlValue         (double pitch, double yaw);
-    Q_INVOKABLE void gimbalPitchStep            (int direction);
-    Q_INVOKABLE void gimbalYawStep              (int direction);
-    Q_INVOKABLE void centerGimbal               ();
     Q_INVOKABLE void gimbalOnScreenControl      (float panpct, float tiltpct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract = false, bool neutral = false, bool yawlock = false);
     Q_INVOKABLE void sendGimbalManagerPitchYaw  (float pitch, float yaw);
     Q_INVOKABLE void toggleGimbalRetracted      (bool force = false, bool set = false);
@@ -104,6 +100,11 @@ public:
     Q_INVOKABLE void releaseGimbalControl       ();
     Q_INVOKABLE void setGimbalRcTargeting       ();
     Q_INVOKABLE void setGimbalHomeTargeting     ();
+    
+public slots:
+    // These slots are conected with joysticks for button control
+    Q_INVOKABLE void centerGimbal               ();
+    Q_INVOKABLE void gimbalStepPitchYaw         (float pitch, float yaw);
 
 signals:
     void    activeGimbalChanged           ();
@@ -115,6 +116,8 @@ private slots:
 
 private:
 
+    float   _gimbalPitchStep                 (int direction);
+    float   _gimbalYawStep                   (int direction);
     void    _requestGimbalInformation        (uint8_t compid);
     void    _handleHeartbeat                 (const mavlink_message_t& message);
     void    _handleGimbalManagerInformation  (const mavlink_message_t& message);
