@@ -718,7 +718,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle->gimbalController(), &GimbalController::gimbalControlValue);
+            disconnect(this, &Joystick::gimbalStepPitchYaw, _activeVehicle->gimbalController(), &GimbalController::gimbalStepPitchYaw);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
@@ -740,7 +740,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             connect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            connect(this, &Joystick::gimbalControlValue, _activeVehicle->gimbalController(), &GimbalController::gimbalControlValue);
+            connect(this, &Joystick::gimbalStepPitchYaw, _activeVehicle->gimbalController(), &GimbalController::gimbalStepPitchYaw);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             connect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             connect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
@@ -760,7 +760,7 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle->gimbalController(), &GimbalController::gimbalControlValue);
+            disconnect(this, &Joystick::gimbalStepPitchYaw, _activeVehicle->gimbalController(), &GimbalController::gimbalStepPitchYaw);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
@@ -1037,19 +1037,17 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionToggleVideoRecord) {
         if (buttonDown) emit toggleVideoRecord();
     } else if(action == _buttonActionGimbalUp) {
-        //if (buttonDown) _pitch(1);
+        if (buttonDown) emit gimbalStepPitchYaw(1, 0);
     } else if(action == _buttonActionGimbalDown) {
-        //if (buttonDown) _pitch(-1);
+        if (buttonDown) emit gimbalStepPitchYaw(-1, 0);
     } else if(action == _buttonActionGimbalLeft) {
-        //if (buttonDown) _yaw(-1);
+        if (buttonDown) emit gimbalStepPitchYaw(0, -1);
     } else if(action == _buttonActionGimbalRight) {
-        //if (buttonDown) _yaw(1);
+        if (buttonDown) emit gimbalStepPitchYaw(0, 1);
     } else if(action == _buttonActionGimbalCenter) {
-        if (buttonDown) {
-            emit gimbalControlValue(0.0, 0.0);
-        }
+        if (buttonDown) emit centerGimbal();
     } else if(action == _buttonActionEmergencyStop) {
-      if(buttonDown) emit emergencyStop();
+        if (buttonDown) emit emergencyStop();
     } else if(action == _buttonActionGripperGrab) {
         if(buttonDown) {
             emit gripperAction(GRIPPER_ACTION_GRAB);

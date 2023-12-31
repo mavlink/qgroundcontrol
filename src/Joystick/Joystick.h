@@ -213,7 +213,7 @@ signals:
     void gimbalPitchStep            (int direction);
     void gimbalYawStep              (int direction);
     void centerGimbal               ();
-    void gimbalControlValue         (double pitch, double yaw);
+    void gimbalStepPitchYaw         (double pitch, double yaw);
     void setArmed                   (bool arm);
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
