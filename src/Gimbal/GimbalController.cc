@@ -327,7 +327,8 @@ void GimbalController::gimbalStepPitchYaw(float pitch, float yaw)
         qCDebug(GimbalLog) << "gimbalStepPitchYaw: active gimbal is nullptr, returning";
         return;
     }
-    sendGimbalManagerPitchYaw(_gimbalPitchStep(pitch), _gimbalYawStep(yaw));
+    // The last argument is to show error for command's ack, we don't need it for joystick control
+    sendGimbalManagerPitchYaw(_gimbalPitchStep(pitch), _gimbalYawStep(yaw), false);
 }
 
 float GimbalController::_gimbalPitchStep(int direction)
