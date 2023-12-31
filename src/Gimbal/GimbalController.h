@@ -92,7 +92,7 @@ public:
 
     void sendGimbalManagerPitchYawFlags         (uint32_t flags);
     Q_INVOKABLE void gimbalOnScreenControl      (float panpct, float tiltpct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract = false, bool neutral = false, bool yawlock = false);
-    Q_INVOKABLE void sendGimbalManagerPitchYaw  (float pitch, float yaw);
+    Q_INVOKABLE void sendGimbalManagerPitchYaw  (float pitch, float yaw, bool showError = true);
     Q_INVOKABLE void toggleGimbalRetracted      (bool force = false, bool set = false);
     Q_INVOKABLE void toggleGimbalNeutral        (bool force = false, bool set = false);
     Q_INVOKABLE void toggleGimbalYawLock        (bool force = false, bool set = false);
