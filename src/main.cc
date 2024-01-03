@@ -19,7 +19,6 @@
 #include <QStringListModel>
 #include <QQuickStyle>
 #include <QQuickWindow>
-#include <QSerialPort>
 
 #include "QGC.h"
 #include "QGCApplication.h"
@@ -89,6 +88,9 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
+#if !defined(NO_SERIAL_LINK)
+#include "qserialport.h"
+#endif
 
 static jobject _class_loader = nullptr;
 static jobject _context = nullptr;
@@ -133,7 +135,7 @@ gst_android_init(JNIEnv* env, jobject context)
 }
 
 //-----------------------------------------------------------------------------
-static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
 void setNativeMethods(void)
 {
@@ -147,9 +149,9 @@ void setNativeMethods(void)
         jniEnv->ExceptionClear();
     }
 
-    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    jclass objectClass = jniEnv->FindClass(kJniQGCActivityClassName);
     if(!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniClassName;
+        qWarning() << "Couldn't find class:" << kJniQGCActivityClassName;
         return;
     }
 
@@ -172,6 +174,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     Q_UNUSED(reserved);
 
+    qDebug() << "JNI_OnLoa QGC called";
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
@@ -183,6 +186,10 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     // Tell the androidmedia plugin about the Java VM
     gst_amc_jni_set_java_vm(vm);
 #endif
+
+ #if !defined(NO_SERIAL_LINK)
+    QSerialPort::setNativeMethods();
+ #endif
 
 #ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
     JoystickAndroid::setNativeMethods();

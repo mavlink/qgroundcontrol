@@ -258,7 +258,7 @@ Q_SIGNALS:
     void dataErrorPolicyChanged(QSerialPort::DataErrorPolicy policy);
     void dataTerminalReadyChanged(bool set);
     void requestToSendChanged(bool set);
-    void error(QSerialPort::SerialPortError serialPortError);
+    void errorOccurred(QSerialPort::SerialPortError serialPortError);
     void settingsRestoredOnCloseChanged(bool restore);
 
 protected:

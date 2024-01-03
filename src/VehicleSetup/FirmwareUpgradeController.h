@@ -20,7 +20,11 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QQuickItem>
+#ifdef __android__
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 #include <stdint.h>
 

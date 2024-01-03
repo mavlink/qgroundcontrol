@@ -1,6 +1,6 @@
 android {
 
-    QT += androidextras core-private
+    QT += core-private
 
     INCLUDEPATH += $$PWD
 
