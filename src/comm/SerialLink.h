@@ -14,7 +14,11 @@
 #include <QMutex>
 #include <QString>
 
+#ifdef __android__
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 #include <QMetaType>
 #include <QLoggingCategory>
 

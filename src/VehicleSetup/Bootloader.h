@@ -11,7 +11,11 @@
 
 #include "FirmwareImage.h"
 
+#ifdef __android__
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 #include <stdint.h>
 

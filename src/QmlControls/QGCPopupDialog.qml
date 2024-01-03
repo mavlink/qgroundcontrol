@@ -185,11 +185,11 @@ Popup {
         // If we only have a Close or Ok button on the dialog don't show them and just let the CloseOnPressOutside handle closing
         if (buttons === Dialog.Close) {
             rejectAllowed = true
-            rejectButton.visible = false
+            //rejectButton.visible = false
             closePolicy = Popup.CloseOnPressOutside
         } else if (buttons === Dialog.Ok) {
             acceptAllowed = true
-            acceptButton.visible = false
+            //acceptButton.visible = false
             closePolicy = Popup.CloseOnPressOutside
         }
 
