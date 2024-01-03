@@ -84,7 +84,7 @@ private:
     QSerialPortInfo(const QSerialPortInfoPrivate &dd);
     friend QList<QSerialPortInfo> availablePortsByUdev(bool &ok);
     friend QList<QSerialPortInfo> availablePortsBySysfs(bool &ok);
-    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok);
+    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices();
 };
 
 inline bool QSerialPortInfo::isNull() const
