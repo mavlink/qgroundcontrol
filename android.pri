@@ -1,3 +1,8 @@
+include($$PWD/libs/qtandroidserialport/src/qtandroidserialport.pri)
+
+ANDROID_MIN_SDK_VERSION = 26
+ANDROID_TARGET_SDK_VERSSION = 33
+
 ANDROID_PACKAGE_SOURCE_DIR          = $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR  # Tells Qt location of package files for build
 ANDROID_PACKAGE_QGC_SOURCE_DIR      = $$PWD/android                         # Original location of QGC package files
 ANDROID_PACKAGE_CUSTOM_SOURCE_DIR   = $$PWD/custom/android                  # Original location for custom build override package files
@@ -79,7 +84,17 @@ exists($$PWD/custom/android/AndroidManifest.xml) {
 
 OTHER_FILES += \
     $$PWD/android/res/xml/device_filter.xml \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbId.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
+    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
     $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
+    $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java
