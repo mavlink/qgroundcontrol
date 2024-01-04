@@ -10,12 +10,11 @@
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPLogger.h"
 
-std::string UTMSPFlightPlanManager::_responseJSON;
-std::string UTMSPFlightPlanManager::_flightResponseID;
-bool        UTMSPFlightPlanManager::_responseStatus;
-
 UTMSPFlightPlanManager::UTMSPFlightPlanManager():
-    _currentState(FlightState::Idle)
+    _currentState(FlightState::Idle),
+    _responseJSON(""),
+    _responseStatus(false),
+    _flightResponseID("")
 {
 
 }

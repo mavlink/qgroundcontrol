@@ -15,22 +15,21 @@
 #include "UTMSPLogger.h"
 
 UTMSPVehicle::UTMSPVehicle(std::shared_ptr<Dispatcher> dispatcher, const Vehicle& vehicle):
-    _dispatcher(dispatcher)
+    _dispatcher(dispatcher),
+    _remoteIDFlag(false),
+    _stopFlag(false),
+    _flightID(""),
+    _vehicleSerialNumber(""),
+    _vehicleActivation(false)
 {
     UTMSP_LOG_INFO() << "UTMSPManagerLog: UTMSPVehicle Contructor";
     connect(&vehicle, &Vehicle::mavlinkMessageReceived, this, &UTMSPVehicle::triggerNetworkRemoteID);
     UTMSP_LOG_INFO() << "UTMSPManagerLog: UTMSPVehicle MAvlink msg slot connected";
-    _aircraftModel = aircraftModel();
-    _aircraftClass = aircraftClass();
-    _operatorID = operatorID();
-    _operatorClass = operatorClass();
+    _aircraftModel = _utmspAircraft.aircraftModel();
+    _aircraftClass = _utmspAircraft.aircraftClass();
+    _operatorID    = _utmspOperator.operatorID();
+    _operatorClass = _utmspOperator.operatorClass();
 }
-
-bool        UTMSPVehicle::_remoteIDFlag = false;
-bool        UTMSPVehicle::_stopFlag;
-std::string UTMSPVehicle::_flightID;
-QString     UTMSPVehicle::_vehicleSerialNumber;
-bool        UTMSPVehicle::_vehicleActivation;
 
 void UTMSPVehicle::loadTelemetryFlag(bool value){
     _remoteIDFlag = value;
@@ -44,21 +43,18 @@ void UTMSPVehicle::triggerFlightAuthorization()
 
 void UTMSPVehicle::triggerNetworkRemoteID(const mavlink_message_t &message)
 {
-    _aircraftType = aircraftType(message);
-    _aircraftSerialNumber = aircraftSerialNo(message);
-    _i++;
+    _aircraftType = _utmspAircraft.aircraftType(message);
+    _aircraftSerialNumber = _utmspAircraft.aircraftSerialNo(message);
 
-    if(_i>20 && _i<22) // First 20 Mavlink message are NIL
+    if(_aircraftSerialNumber != "0")
     {
         _vehicleSerialNumber = QString::fromStdString(_aircraftSerialNumber);
-        UTMSP_LOG_DEBUG() << "Serial Number" << _vehicleSerialNumber;
-        UTMSP_LOG_DEBUG() << "Aircraft Type" << _aircraftType;
         emit vehicleSerialNumberChanged();
     }
 
     if (_remoteIDFlag) {
         if (_stopFlag) {
-            updateFlightPlanState(UTMSPFlightPlanManager::FlightState::StopTelemetryStreaming);
+            _utmspFlightPlanManager.updateFlightPlanState(UTMSPFlightPlanManager::FlightState::StopTelemetryStreaming);
             _remoteIDFlag = false;
         } else {
             _stopFlag = networkRemoteID(message, _aircraftSerialNumber, _operatorID, _flightID);
@@ -66,7 +62,7 @@ void UTMSPVehicle::triggerNetworkRemoteID(const mavlink_message_t &message)
     }
 }
 
-void UTMSPVehicle::triggerUploadButton(bool flag){
+void UTMSPVehicle::triggerActivationStatusBar(bool flag){
     _vehicleActivation = flag;
     emit vehicleActivationChanged();
 }

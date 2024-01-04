@@ -1,47 +1,40 @@
 find_package(Threads REQUIRED)
 
-add_library(UTMSP
-        UTMSPLogger.h
-        UTMSPRestInterface.h
-        UTMSPRestInterface.cpp
-        UTMSPBlenderRestInterface.h
-        UTMSPBlenderRestInterface.cpp
-        UTMSPAuthorization.h
-        UTMSPAuthorization.cpp
-        UTMSPNetworkRemoteIDManager.h
-        UTMSPNetworkRemoteIDManager.cpp
-        UTMSPAircraft.h
-        UTMSPAircraft.cpp
-        UTMSPFlightDetails.h
-        UTMSPFlightDetails.cpp
-        UTMSPOperator.h
-        UTMSPOperator.cpp
-        UTMSPFlightPlanManager.h
-        UTMSPFlightPlanManager.cpp
-        UTMSPServiceController.h
-        UTMSPServiceController.cpp
-        UTMSPVehicle.h
-        UTMSPVehicle.cpp
-        UTMSPManager.h
-        UTMSPManager.cpp
-        utmsp.qrc
-        QGroundControl/UTMSP/UTMSPAdapterEditor.qml
-        QGroundControl/UTMSP/UTMSPMapVisuals.qml
-        QGroundControl/UTMSP/UTMSPActivationStatusBar.qml
-        )
+if(CONFIG_UTM_ADAPTER)
+    message(STATUS "UTMSP is Initialized")
+    add_library(UTMSP
+            UTMSPRestInterface.cpp
+            UTMSPBlenderRestInterface.cpp
+            UTMSPAuthorization.cpp
+            UTMSPNetworkRemoteIDManager.cpp
+            UTMSPAircraft.cpp
+            UTMSPOperator.cpp
+            UTMSPFlightPlanManager.cpp
+            UTMSPServiceController.cpp
+            UTMSPVehicle.cpp
+            UTMSPManager.cpp
+            utmsp.qrc
+            )
 
-        add_custom_target(UTMSPQml
-                SOURCES
-                UTMSPAdapterEditor.qml
-                UTMSPMapVisuals.qml
+    add_custom_target(UTMSPQml
+        SOURCES
+        UTMSPAdapterEditor.qml
+        UTMSPMapVisuals.qml
+        UTMSPActivationStatusBar.qml
         )
 
 else()
-        add_library(UTMSP
-                utmsp_dummy.qrc
-        )
-        target_include_directories(UTMSP PUBLIC dummy)
+    # If CONFIG_UTM_ADAPTER is not set, use utmsp_dummy.qrc
+    message("Dummy is Initialized")
+
+    add_library(UTMSP
+            dummy/utmsp_dummy.qrc
+    )
+
+    target_include_directories(UTMSP PUBLIC dummy)
+
 endif()
+
 target_include_directories(UTMSP PUBLIC services )
 
 target_link_libraries(UTMSP
@@ -49,11 +42,11 @@ target_link_libraries(UTMSP
 PRIVATE
         libevents_parser
 PUBLIC
-        Qt5::Core
-        Qt5::Location
-        Qt5::Widgets
+        Qt6::Core
+        Qt6::Location
+        Qt6::Widgets
         Threads::Threads
         qgc
 )
 
-target_include_directories(USSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(UTMSP INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -55,9 +55,10 @@ Item {
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
     property bool   _promptForPlanUsageShowing:         false
     property bool   _utmspEnabled:                      QGroundControl.utmspSupported
-    property bool   _resetTrigered:                     false   //Reset the Geofence Polygon
+    property bool   _resetGeofencePolygon:              false   //Reset the Geofence Polygon
     property var    _vehicleID
     property bool   _triggerSubmit
+    property bool   _resetRegisterFlightPlan
 
     readonly property var       _layers:                    [_layerMission, _layerGeoFence, _layerRallyPoints]
     readonly property var       _layersUTMSP:               [_layerMission, _layerRallyPoints, _layerUTMSP] //Adds additional UTMSP layer
@@ -415,8 +416,6 @@ Item {
                     opacity:     _editingLayer == _layerMission || _editingLayer == _layerUTMSP ? 1 : editorMap._nonInteractiveOpacity
                     interactive: _editingLayer == _layerMission || _editingLayer == _layerUTMSP
                     vehicle:     _planMasterController.controllerVehicle
-
-                    onClicked:(sequenceNumber) => { _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false) }
                 }
             }
 
@@ -527,12 +526,12 @@ Item {
                 homePosition:           _missionController.plannedHomePosition
                 planView:               true
                 opacity:                _editingLayer != _layerUTMSP ? editorMap._nonInteractiveOpacity : 1
-                resetCheck:             _resetTrigered
+                resetCheck:             _resetGeofencePolygon
             }
 
             Connections {
                 target: utmspEditor
-                function onResetTriggered() {
+                function onResetGeofencePolygonTriggered() {
                     resetTimer.start()
                 }
             }
@@ -542,7 +541,7 @@ Item {
                 running: false
                 repeat: false
                 onTriggered: {
-                    _resetTrigered = true
+                    _resetGeofencePolygon = true
                 }
             }
         }
@@ -592,7 +591,7 @@ Item {
                         text:       qsTr("Takeoff")
                         iconSource: "/res/takeoff.svg"
                         enabled:    _missionController.isInsertTakeoffValid
-                        visible:    toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover || toolStrip._isUtmspLayer && !_planMasterController.controllerVehicle.rover
+                        visible:    (toolStrip._isMissionLayer || toolStrip._isUtmspLayer) && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertTakeItemAfterCurrent()
@@ -722,7 +721,7 @@ Item {
                 QGCTabBar {
                     id:         layerTabBarUTMSP
                     width:      parent.width
-                    visible:    (!planControlColapsed || !_airspaceEnabled) && QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
+                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
                     QGCTabButton {
                         text:       qsTr("Mission")
                     }
@@ -812,17 +811,18 @@ Item {
             }
             UTMSPAdapterEditor{
                 id: utmspEditor
-                enabled:                _utmspEnabled
-                anchors.top:            rightControls.bottom
-                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.bottom:         parent.bottom
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                currentMissionItems:    _visualItems
-                myGeoFenceController:   _geoFenceController
-                flightMap:              editorMap
-                visible:                _editingLayer == _layerUTMSP
-                triggerSubmitButton:    _triggerSubmit
+                enabled:                 _utmspEnabled
+                anchors.top:             rightControls.bottom
+                anchors.topMargin:       ScreenTools.defaultFontPixelHeight * 0.25
+                anchors.bottom:          parent.bottom
+                anchors.left:            parent.left
+                anchors.right:           parent.right
+                currentMissionItems:     _visualItems
+                myGeoFenceController:    _geoFenceController
+                flightMap:               editorMap
+                visible:                 _editingLayer == _layerUTMSP
+                triggerSubmitButton:     _triggerSubmit
+                resetRegisterFlightPlan: _resetRegisterFlightPlan
             }
         }
 
@@ -919,7 +919,7 @@ Item {
         mainWindow.showMessageDialog(qsTr("Clear"),
                                      qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?"),
                                      Dialog.Yes | Dialog.Cancel,
-                                     function() { _planMasterController.removeAllFromVehicle(); _missionController.setCurrentPlanViewSeqNum(0, true) })
+                                     function() { _planMasterController.removeAllFromVehicle(); _missionController.setCurrentPlanViewSeqNum(0, true); if(_utmspEnabled){_resetRegisterFlightPlan = true; QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);}})
     }
 
     //- ToolStrip DropPanel Components
@@ -1302,5 +1302,12 @@ Item {
             _vehicleID = id
         }
     }
-
+    Connections {
+        target: utmspEditor
+        function onRemoveFlightPlanTriggered() {
+            _planMasterController.removeAllFromVehicle();
+            _missionController.setCurrentPlanViewSeqNum(0, true);
+            if(_utmspEnabled){_resetRegisterFlightPlan = true}
+        }
+    }
 }
