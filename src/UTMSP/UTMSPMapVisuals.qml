@@ -33,7 +33,7 @@ Item {
     property var    _breachReturnDragComponent
     property var    _paramCircleFenceComponent
     property var    _utmspPolygon:              myGeoFenceController.polygons
-    property color  _borderColor:               "green"
+    property color  _borderColor:               "orange"
     property int    _borderWidthInclusion:      2
     property int    _borderWidthExclusion:      0
     property color  _interiorColorExclusion:    "orange"
@@ -49,7 +49,7 @@ Item {
             parent:             _root
             mapControl:         map
             mapPolygon:         object
-            borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
+            borderWidth:        object.inclusion ? _borderWidthExclusion : _borderWidthInclusion
             borderColor:        _borderColor
             interiorColor:      object.inclusion ? _interiorColorExclusion : _interiorColorInclusion
             interiorOpacity:    object.inclusion ? _interiorOpacityExclusion : _interiorOpacityInclusion
