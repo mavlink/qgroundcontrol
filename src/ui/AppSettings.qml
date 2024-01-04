@@ -32,6 +32,17 @@ Rectangle {
 
     QGCPalette { id: qgcPal }
 
+    Loader {
+        id: flightTableLoader
+        onLoaded: item.show()
+    }
+    Connections {
+        target: flightTableLoader.item
+        function onClosing(event) {
+            flightTableLoader.setSource("")
+        }
+    }
+
     Component.onCompleted: {
         //-- Default Settings
         __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
@@ -63,6 +74,15 @@ Rectangle {
                 wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter
                 visible:                !ScreenTools.isShortScreen
+            }
+
+            QGCButton {
+                height: _buttonHeight
+                text: qsTr("Flight table")
+                Layout.fillWidth: true
+                onClicked: flightTableLoader.source == "" ?
+                               flightTableLoader.setSource("FlightTable.qml") :
+                               flightTableLoader.setSource("")
             }
 
             Repeater {
