@@ -592,7 +592,7 @@ Item {
                         text:       qsTr("Takeoff")
                         iconSource: "/res/takeoff.svg"
                         enabled:    _missionController.isInsertTakeoffValid
-                        visible:    toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover || toolStrip._isUtmspLayer && !_planMasterController.controllerVehicle.rover
+                        visible:    (toolStrip._isMissionLayer || toolStrip._isUtmspLayer) && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertTakeItemAfterCurrent()
@@ -722,7 +722,7 @@ Item {
                 QGCTabBar {
                     id:         layerTabBarUTMSP
                     width:      parent.width
-                    visible:    (!planControlColapsed || !_airspaceEnabled) && QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
+                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
                     QGCTabButton {
                         text:       qsTr("Mission")
                     }

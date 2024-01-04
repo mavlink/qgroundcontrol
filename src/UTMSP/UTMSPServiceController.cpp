@@ -12,7 +12,14 @@
 
 UTMSPServiceController::UTMSPServiceController(QObject *parent):
     QObject(parent),
-    UTMSPNetworkRemoteIDManager(std::make_shared<Dispatcher>())
+    _utmspNetworkRemoteIDManager(std::make_shared<Dispatcher>()),
+    _activationFlag(false),
+    _clientID(""),
+    _clientPassword(""),
+    _blenderToken(""),
+    _lastLatitude(0),
+    _lastLongitude(0),
+    _lastAltitude(0)
 {
 
 }
@@ -22,31 +29,15 @@ UTMSPServiceController::~UTMSPServiceController()
 
 }
 
-QString                 UTMSPServiceController::_responseJson;
-QString                 UTMSPServiceController::_responseFlightID;
-bool                    UTMSPServiceController::_responseFlag;
-bool                    UTMSPServiceController::_activationFlag;
-std::string             UTMSPServiceController::_clientID;
-std::string             UTMSPServiceController::_clientPassword;
-std::string             UTMSPServiceController::_blenderToken;
-QList<QGeoCoordinate>   UTMSPServiceController::_boundaryPolygon;
-std::string             UTMSPServiceController::_startDateTime;
-std::string             UTMSPServiceController::_endDateTime;
-int                     UTMSPServiceController::_minAltitude;
-int                     UTMSPServiceController::_maxAltitude;
-double                  UTMSPServiceController::_lastLatitude;
-double                  UTMSPServiceController::_lastLongitude;
-double                  UTMSPServiceController::_lastAltitude = 0;
-
 std::string UTMSPServiceController::flightPlanAuthorization()
 {
-    _currentState = getFlightPlanState();
+    _currentState = _utmspFlightPlanManager.getFlightPlanState();
 
     //Get the Token
-    _blenderToken = _utmspAuth.getOAuth2Token();
+    _blenderToken = _utmspAuthorizaton.getOAuth2Token();
 
     // State 1 --> Register
-    getFlightPlanState();
+    _utmspFlightPlanManager.getFlightPlanState();
     _currentState = UTMSPFlightPlanManager::FlightState::Register;
 
     _coordinateList = json::array();
@@ -55,9 +46,9 @@ std::string UTMSPServiceController::flightPlanAuthorization()
         json coordinateJson ={coordinates.latitude(),coordinates.longitude()};
         _coordinateList.push_back(coordinateJson);
     }
-    registerFlightPlan(_blenderToken, _coordinateList,_minAltitude,_maxAltitude,_startDateTime, _endDateTime);
+    _utmspFlightPlanManager.registerFlightPlan(_blenderToken, _coordinateList,_minAltitude,_maxAltitude,_startDateTime, _endDateTime);
     //TODO-> Find a correct way to assign min and max altitude for UTM mission
-    auto [responseJson, flightID, flag] = registerFlightPlanNotification();
+    auto [responseJson, flightID, flag] = _utmspFlightPlanManager.registerFlightPlanNotification();
     QString _Json = QString::fromStdString(responseJson);
     QString _flightID = QString::fromStdString(flightID);
     _responseFlightID = _flightID;
@@ -66,17 +57,17 @@ std::string UTMSPServiceController::flightPlanAuthorization()
     emit responseJsonChanged();
     _responseFlag = flag;
     emit responseFlagChanged();
-    updateFlightPlanState(_currentState);
+    _utmspFlightPlanManager.updateFlightPlanState(_currentState);
 
     // State 2 --> Activate Flight Plan
-    getFlightPlanState();
+    _utmspFlightPlanManager.getFlightPlanState();
     if(flag == true){
         _currentState = UTMSPFlightPlanManager::FlightState::Activated;
         _activationFlag = true;
         emit activationFlagChanged();
-        getCapabilty(_blenderToken);
-        updateFlightPlanState(_currentState);
-        getFlightPlanState();
+        _utmspNetworkRemoteIDManager.getCapabilty(_blenderToken);
+        _utmspFlightPlanManager.updateFlightPlanState(_currentState);
+        _utmspFlightPlanManager.getFlightPlanState();
     }
 
 
@@ -122,14 +113,14 @@ bool UTMSPServiceController::networkRemoteID(const mavlink_message_t& message,
         {
             // State 3 --> Start telemetry
             _currentState = UTMSPFlightPlanManager::FlightState::StartTelemetryStreaming;
-            startTelemetry(_vehicleLatitude, _vehicleLongitude, _vehicleAltitude, _vehicleHeading, _vehicleVelocityX, _vehicleVelocityY, _vehicleVelocityZ, _vehicleRelativeAltitude, serialNumber, operatorID, flightID);
-            updateFlightPlanState(_currentState);
+            _utmspNetworkRemoteIDManager.startTelemetry(_vehicleLatitude, _vehicleLongitude, _vehicleAltitude, _vehicleHeading, _vehicleVelocityX, _vehicleVelocityY, _vehicleVelocityZ, _vehicleRelativeAltitude, serialNumber, operatorID, flightID);
+            _utmspFlightPlanManager.updateFlightPlanState(_currentState);
             _streamingFlag = false;
         }
         else
         {
             // State 4 --> Stop telemetry
-            bool stopflag = stopTelemetry();
+            bool stopflag = _utmspNetworkRemoteIDManager.stopTelemetry();
             emit stopTelemetryFlagChanged(stopflag);
             _streamingFlag = true;
         }

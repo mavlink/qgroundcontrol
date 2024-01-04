@@ -350,15 +350,20 @@ QGCFlickable {
                     color:  qgcPal.windowShadeDark
                 }
 
-                SectionHeader {
+                Text{
+                    text:       "Flight Plan Information"
+                    font.bold:  true
+                    color:      qgcPal.buttonText
+                    visible:    !trigger.visible
+                }
+
+                Rectangle {
                     id:             flightinformation
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    Text{
-                        text: "Flight Plan Information"
-                        font.bold: true
-                        color: qgcPal.buttonText
-                    }
+                    width:          ScreenTools.defaultFontPixelWidth * 60
+                    height:         ScreenTools.defaultFontPixelHeight * 0.1
+                    color:          qgcPal.buttonText
                     visible:        !trigger.visible
                 }
 
@@ -1226,14 +1231,26 @@ QGCFlickable {
                 }
 
                 // Mission Altitude
-                QGCLabel {
-                    text:    qsTr("Mission Altitude")
-                    visible: !trigger.visible
-                }
-                FactTextField {
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 6.667
-                    fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                Column{
                     visible:                !trigger.visible
+                    QGCLabel        {
+                        text: qsTr("Mission Altitude")
+                    }
+
+                    FactTextField {
+                        width:                  ScreenTools.defaultFontPixelWidth * 50
+                        height:                 ScreenTools.defaultFontPixelHeight * 1.667
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 50
+                        fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                    }
+                }
+
+                Rectangle {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    width:          ScreenTools.defaultFontPixelWidth * 60
+                    height:         ScreenTools.defaultFontPixelHeight * 0.1
+                    color:          qgcPal.buttonText
                 }
 
                 Connections {
@@ -1241,12 +1258,6 @@ QGCFlickable {
                     onPolygonBoundarySent: function(coords) {
                         QGroundControl.utmspManager.utmspVehicle.updatePolygonBoundary(coords)
                     }
-                }
-
-                // Request Flight approval Interface
-                SectionHeader {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
                 }
 
                 QGCButton {

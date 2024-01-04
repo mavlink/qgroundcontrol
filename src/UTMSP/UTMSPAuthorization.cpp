@@ -15,10 +15,6 @@
 
 using json = nlohmann::ordered_json;
 
-std::string UTMSPAuthorization::_clientID;
-std::string UTMSPAuthorization::_clientSecret;
-std::string UTMSPAuthorization::_clientToken;
-
 UTMSPAuthorization::UTMSPAuthorization():
     UTMSPRestInterface("passport.utm.dev.airoplatform.com")
 {
@@ -29,6 +25,8 @@ UTMSPAuthorization::~UTMSPAuthorization()
 {
 
 }
+
+thread_local std::string clientToken = "";
 
 bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QString &clientSecret)
 {
@@ -69,7 +67,7 @@ bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QStr
     {
         try {
             json responseJson = json::parse(response);
-            _clientToken = responseJson["access_token"];
+            clientToken = responseJson["access_token"];
             _isValidToken = true;
         }
         catch (const json::parse_error& e) {
@@ -86,7 +84,7 @@ bool UTMSPAuthorization::requestOAuth2Client(const QString &clientID, const QStr
     return _isValidToken;
 }
 
-std::string UTMSPAuthorization::getOAuth2Token()
+const std::string &UTMSPAuthorization::getOAuth2Token()
 {
-    return _clientToken;
+    return clientToken;
 }

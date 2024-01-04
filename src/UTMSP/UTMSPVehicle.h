@@ -17,7 +17,7 @@
 
 // UTM-Adapter per vehicle management class.
 class Vehicle;
-class UTMSPVehicle : public UTMSPServiceController, public UTMSPAircraft, public UTMSPOperator, UTMSPFlightDetails
+class UTMSPVehicle : public UTMSPServiceController
 {
     Q_OBJECT
     Q_PROPERTY(QString                 vehicleSerialNumber            READ vehicleSerialNumber       NOTIFY vehicleSerialNumberChanged)
@@ -39,9 +39,13 @@ signals:
 protected slots:
     void triggerFlightAuthorization             (void);
     void triggerNetworkRemoteID                 (const mavlink_message_t &message) ;
-    void triggerUploadButton                    (bool flag);
+    void triggerActivationStatusBar             (bool flag);
 
 private:
+    UTMSPFlightPlanManager        _utmspFlightPlanManager;
+    UTMSPAircraft                 _utmspAircraft;
+    UTMSPOperator                 _utmspOperator;
+    UTMSPFlightDetails            _utmspFlightDetails;  //TODO:Will be used later
     std::string                   _aircraftSerialNumber;
     std::string                   _aircraftModel;
     std::string                   _aircraftType;
@@ -49,11 +53,9 @@ private:
     std::string                   _operatorID;
     std::string                   _operatorClass;
     std::shared_ptr<Dispatcher>   _dispatcher;
-    int                           _i=0;
-
-    static bool                   _remoteIDFlag;
-    static bool                   _stopFlag;
-    static std::string            _flightID;
-    static QString                _vehicleSerialNumber;
-    static bool                   _vehicleActivation;
+    bool                          _remoteIDFlag;
+    bool                          _stopFlag;
+    std::string                   _flightID;
+    QString                       _vehicleSerialNumber;
+    bool                          _vehicleActivation;
 };
