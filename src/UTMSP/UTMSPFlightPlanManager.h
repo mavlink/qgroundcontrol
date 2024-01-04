@@ -94,8 +94,7 @@ private:
     FlightData                 _flightData;
     json                       _flightDataJson;
     FlightState                _currentState;
-
-    static std::string         _responseJSON;
-    static bool                _responseStatus;
-    static std::string         _flightResponseID;
+    std::string                _responseJSON;
+    bool                       _responseStatus;
+    std::string                _flightResponseID;
 };
