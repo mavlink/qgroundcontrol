@@ -1352,9 +1352,9 @@ LinuxBuild {
 
 # UTM Adapter Enabled
 contains (DEFINES, CONFIG_UTM_ADAPTER) {
+    message("UTM enabled")
 
     #-- To test with UTM Adapter Enabled Flag
-    LIBS += -lboost_system -lboost_thread -lssl -lcrypto
     INCLUDEPATH += \
         src/UTMSP \
 

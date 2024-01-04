@@ -5,6 +5,7 @@
         <file alias="QGroundControl/UTMSP/qmldir">qmldir</file>
         <file alias="QGroundControl/UTMSP/UTMSPMapPolygonVisuals.qml">UTMSPMapPolygonVisuals.qml</file>
         <file alias="QGroundControl/UTMSP/UTMSPActivationStatusBar.qml">UTMSPActivationStatusBar.qml</file>
+        <file alias="QGroundControl/UTMSP/UTMSPStateStorage.qml">UTMSPStateStorage.qml</file>
     </qresource>
     <qresource prefix="/utmsp">
         <file alias="red.png">images/red.png</file>
