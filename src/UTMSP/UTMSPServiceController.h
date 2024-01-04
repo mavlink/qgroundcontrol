@@ -18,7 +18,7 @@
 #include "UTMSPFlightPlanManager.h"
 #include "UTMSPNetworkRemoteIDManager.h"
 
-class UTMSPServiceController : public QObject, public UTMSPFlightPlanManager, public UTMSPNetworkRemoteIDManager
+class UTMSPServiceController : public QObject
 {
     Q_OBJECT
 
@@ -50,7 +50,7 @@ signals:
     void stopTelemetryFlagChanged                (bool value);
 
 public slots:
-    void updatePolygonBoundary (const QList<QGeoCoordinate> &boundary)                   {_boundaryPolygon = boundary;};
+    void updatePolygonBoundary (const QList<QGeoCoordinate> &boundary)                   {_boundaryPolygon.clear();_boundaryPolygon.append(boundary);};
     void updateStartDateTime   (const QString &startDateTime)                            {_startDateTime = startDateTime.toStdString();};
     void updateEndDateTime     (const QString &endDateTime)                              {_endDateTime = endDateTime.toStdString();};
     void updateMinAltitude     (const int &minAltitude)                                  {_minAltitude = minAltitude;};
@@ -58,8 +58,10 @@ public slots:
     void updateLastCoordinates (const double &lastLatitude, const double &lastLongitude) {_lastLatitude = lastLatitude;_lastLongitude = lastLongitude;};
 
 private:
-    UTMSPAuthorization                    _utmspAuth;
+    UTMSPAuthorization                    _utmspAuthorizaton;
     UTMSPFlightPlanManager::FlightState   _currentState;
+    UTMSPFlightPlanManager                _utmspFlightPlanManager;
+    UTMSPNetworkRemoteIDManager           _utmspNetworkRemoteIDManager;
     float                                 _lastHdop = 1.f;
     QElapsedTimer                         _timerLastSent;
     double                                _vehicleLatitude;
@@ -72,21 +74,19 @@ private:
     double                                _vehicleRelativeAltitude;
     json                                  _coordinateList;
     bool                                  _streamingFlag;
-
-    static QList<QGeoCoordinate> _boundaryPolygon;
-    static std::string           _startDateTime;
-    static std::string           _endDateTime;
-    static int                   _minAltitude;
-    static int                   _maxAltitude;
-    static bool                  _responseFlag;
-    static QString               _responseFlightID;
-    static QString               _responseJson;
-    static bool                  _uploadFlag;
-    static bool                  _activationFlag;
-    static std::string           _clientID;
-    static std::string           _clientPassword;
-    static std::string           _blenderToken;
-    static double                _lastLatitude;
-    static double                _lastLongitude;
-    static double                _lastAltitude;
+    QList<QGeoCoordinate>                 _boundaryPolygon;
+    std::string                           _startDateTime;
+    std::string                           _endDateTime;
+    int                                   _minAltitude;
+    int                                   _maxAltitude;
+    bool                                  _responseFlag;
+    QString                               _responseFlightID;
+    QString                               _responseJson;
+    bool                                  _activationFlag;
+    std::string                           _clientID;
+    std::string                           _clientPassword;
+    std::string                           _blenderToken;
+    double                                _lastLatitude;
+    double                                _lastLongitude;
+    double                                _lastAltitude;
 };

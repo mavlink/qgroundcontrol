@@ -8,6 +8,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.Palette
+import QGroundControl.UTMSP
 
 // Toolbar for Plan View
 Item {
@@ -263,14 +264,12 @@ Item {
             enabled:     _utmspEnabled ? !_controllerSyncInProgress && responseFlag : !_controllerSyncInProgress
             visible:     !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
             primary:     _controllerDirty
-            onClicked:   {
-                if(_utmspEnabled){
-                    _planMasterController.upload()
-                    QGroundControl.utmspManager.utmspVehicle.triggerUploadButton(true)
+            onClicked: {
+                if (_utmspEnabled) {
+                    QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
+                    UTMSPStateStorage.removeFlightPlanState = true
                 }
-                else{
-                    _planMasterController.upload()
-                }
+                _planMasterController.upload();
             }
 
             PropertyAnimation on opacity {
