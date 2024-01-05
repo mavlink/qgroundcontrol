@@ -9,7 +9,6 @@
 
 #include "StructureScanPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "StructureScanComplexItem.h"
 
 StructureScanPlanCreator::StructureScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)
@@ -18,9 +17,12 @@ StructureScanPlanCreator::StructureScanPlanCreator(PlanMasterController* planMas
 
 }
 
-void StructureScanPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
+void StructureScanPlanCreator::createPlan(QVariantList coordList)
 {
-    _planMasterController->removeAll();
+    PlanCreator::createPlan(coordList);
+
+    auto mapCenterCoord = _coordRectCenter(_convertCoordList(coordList));
+
     VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
     _missionController->insertComplexMissionItem(StructureScanComplexItem::name, mapCenterCoord, -1)->setWizardMode(true);
     _missionController->insertLandItem(mapCenterCoord, -1);

@@ -63,6 +63,7 @@
         <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="MissionCommandTreeEditorTestWindow.qml">src/MissionManager/MissionCommandTreeEditorTestWindow.qml</file>
         <file alias="MissionSettingsEditor.qml">src/PlanView/MissionSettingsEditor.qml</file>
+        <file alias="PlanSettingsDialog.qml">src/PlanView/PlanSettingsDialog.qml</file>
         <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
         <file alias="MockLinkSettings.qml">src/ui/preferences/MockLinkSettings.qml</file>
         <file alias="MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
@@ -71,6 +72,7 @@
         <file alias="ActuatorSlider.qml">src/AutoPilotPlugins/PX4/ActuatorSlider.qml</file>
         <file alias="OfflineMap.qml">src/QtLocationPlugin/QMLControl/OfflineMap.qml</file>
         <file alias="PlanToolBarIndicators.qml">src/PlanView/PlanToolBarIndicators.qml</file>
+        <file alias="PlanUploadStatusDialog.qml">src/PlanView/PlanUploadStatusDialog.qml</file>
         <file alias="PlanView.qml">src/PlanView/PlanView.qml</file>
         <file alias="PlanViewToolBar.qml">src/ui/toolbar/PlanViewToolBar.qml</file>
         <file alias="PreFlightCheckList.qml">src/FlightDisplay/PreFlightCheckList.qml</file>
@@ -86,6 +88,7 @@
         <file alias="QGroundControl/Controls/CameraCalcCamera.qml">src/PlanView/CameraCalcCamera.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcGrid.qml">src/PlanView/CameraCalcGrid.qml</file>
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
+        <file alias="QGroundControl/Controls/CameraSection2.qml">src/PlanView/CameraSection2.qml</file>
         <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
         <file alias="QGroundControl/Controls/CorridorScanMapVisual.qml">src/PlanView/CorridorScanMapVisual.qml</file>
         <file alias="QGroundControl/Controls/DeadMouseArea.qml">src/QmlControls/DeadMouseArea.qml</file>
@@ -106,8 +109,9 @@
         <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/PlanView/GeoFenceMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/HorizontalFactValueGrid.qml">src/QmlControls/HorizontalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
-        <file alias="QGroundControl/Controls/IndicatorPageButtonRow.qml">src/QmlControls/IndicatorPageButtonRow.qml</file>
-        <file alias="QGroundControl/Controls/IndicatorPageGroupLayout.qml">src/QmlControls/IndicatorPageGroupLayout.qml</file>
+        <file alias="QGroundControl/Controls/LabelledButton.qml">src/QmlControls/LabelledButton.qml</file>
+        <file alias="QGroundControl/Controls/SettingsGroupLayout.qml">src/QmlControls/SettingsGroupLayout.qml</file>
+        <file alias="QGroundControl/Controls/SettingsGroupLayout2.qml">src/QmlControls/SettingsGroupLayout2.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueValue.qml">src/QmlControls/InstrumentValueValue.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueEditDialog.qml">src/QmlControls/InstrumentValueEditDialog.qml</file>
@@ -185,6 +189,7 @@
         <file alias="QGroundControl/Controls/SignalStrength.qml">src/ui/toolbar/SignalStrength.qml</file>
         <file alias="QGroundControl/Controls/SimpleItemMapVisual.qml">src/PlanView/SimpleItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/SliderSwitch.qml">src/QmlControls/SliderSwitch.qml</file>
+        <file alias="QGroundControl/Controls/StatsPanel.qml">src/PlanView/StatsPanel.qml</file>
         <file alias="QGroundControl/Controls/StructureScanMapVisual.qml">src/PlanView/StructureScanMapVisual.qml</file>
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/SurveyMapVisual.qml">src/PlanView/SurveyMapVisual.qml</file>
@@ -285,6 +290,8 @@
         <file alias="QGroundControl/ScreenTools/ScreenTools.qml">src/QmlControls/ScreenTools.qml</file>
         <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/Common/RadioComponent.qml</file>
+        <file alias="PlanCreateDialog.qml">src/PlanView/PlanCreateDialog.qml</file>
+        <file alias="PlanLoadDialog.qml">src/PlanView/PlanLoadDialog.qml</file>
         <file alias="SerialSettings.qml">src/ui/preferences/SerialSettings.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>

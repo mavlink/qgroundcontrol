@@ -248,7 +248,7 @@ void AppSettings::_indoorPaletteChanged(void)
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }
 
-QString AppSettings::missionSavePath(void)
+QString AppSettings::planSavePath(void)
 {
     QString path = savePath()->rawValue().toString();
     if (!path.isEmpty() && QDir(path).exists()) {

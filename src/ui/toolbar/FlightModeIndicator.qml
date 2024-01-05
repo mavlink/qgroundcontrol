@@ -165,7 +165,7 @@ RowLayout {
                 sourceComponent: expandedPageComponent
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:  true
 
                 RowLayout {
@@ -183,11 +183,11 @@ RowLayout {
                 }
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
                 showDivider:        false
 
-                IndicatorPageButtonRow {
+                LabelledButton {
                     Layout.fillWidth:   true
                     label:              qsTr("RC Transmitter Flight Modes")
                     buttonText:         qsTr("Configure")

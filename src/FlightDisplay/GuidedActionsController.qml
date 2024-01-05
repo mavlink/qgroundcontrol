@@ -27,7 +27,7 @@ import QGroundControl.FlightMap
 Item {
     id: _root
 
-    property var missionController
+    property var planController
     property var confirmDialog
     property var actionList
     property var guidedValueSlider
@@ -41,6 +41,7 @@ Item {
     readonly property string takeoffTitle:                  qsTr("Takeoff")
     readonly property string gripperTitle:                  qsTr("Gripper Function")
     readonly property string landTitle:                     qsTr("Land")
+    readonly property string clearPlanTitle:                qsTr("Clear Plan")
     readonly property string startMissionTitle:             qsTr("Start Mission")
     readonly property string mvStartMissionTitle:           qsTr("Start Mission (MV)")
     readonly property string continueMissionTitle:          qsTr("Continue Mission")
@@ -64,7 +65,8 @@ Item {
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
     readonly property string emergencyStopMessage:              qsTr("WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.")
     readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
-    readonly property string gripperMessage:                       qsTr("Grab or Release the cargo")
+    readonly property string gripperMessage:                    qsTr("Grab or Release the cargo")
+    readonly property string clearPlanMessage:                  qsTr("Clear plan from vehicle.")
     readonly property string startMissionMessage:               qsTr("Takeoff from ground and start the current mission.")
     readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint.")
     readonly property string resumeMissionUploadFailMessage:    qsTr("Upload of resume mission failed. Confirm to retry upload")
@@ -111,6 +113,7 @@ Item {
     readonly property int actionChangeSpeed:                25
     readonly property int actionGripper:                    26
     readonly property int actionSetHome:                    27
+    readonly property int actionClearPlan:                  28
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -128,6 +131,7 @@ Item {
     property bool showRTL:              _guidedActionsEnabled && _vehicleArmed && _activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
     property bool showTakeoff:          _guidedActionsEnabled && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canTakeoff
     property bool showLand:             _guidedActionsEnabled && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
+    property bool showClearPlan:        _guidedActionsEnabled && _planAvailable && !_missionActive && !_vehicleFlying
     property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
@@ -150,9 +154,11 @@ Item {
 
     property var    _corePlugin:            QGroundControl.corePlugin
     property var    _corePluginOptions:     QGroundControl.corePlugin.options
+    property var    _missionController:     planController.missionController
     property bool   _guidedActionsEnabled:  (!ScreenTools.isDebug && _corePluginOptions.guidedActionsRequireRCRSSI && _activeVehicle) ? _rcRSSIAvailable : _activeVehicle
     property string _flightMode:            _activeVehicle ? _activeVehicle.flightMode : ""
-    property bool   _missionAvailable:      missionController.containsItems
+    property bool   _planAvailable:         planController.containsItems
+    property bool   _missionAvailable:      _missionController.containsItems
     property bool   _missionActive:         _activeVehicle ? _vehicleArmed && (_vehicleInLandMode || _vehicleInRTLMode || _vehicleInMissionMode) : false
     property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed  : false
     property bool   _vehicleFlying:         _activeVehicle ? _activeVehicle.flying  : false
@@ -161,9 +167,9 @@ Item {
     property bool   _vehicleInMissionMode:  false
     property bool   _vehicleInRTLMode:      false
     property bool   _vehicleInLandMode:     false
-    property int    _missionItemCount:      missionController.missionItemCount
-    property int    _currentMissionIndex:   missionController.currentMissionIndex
-    property int    _resumeMissionIndex:    missionController.resumeMissionIndex
+    property int    _missionItemCount:      _missionController.missionItemCount
+    property int    _currentMissionIndex:   _missionController.currentMissionIndex
+    property int    _resumeMissionIndex:    _missionController.resumeMissionIndex
     property bool   _hideEmergenyStop:      !_corePluginOptions.flyView.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !_corePluginOptions.flyView.guidedBarShowOrbit
     property bool   _hideROI:               !_corePluginOptions.flyView.guidedBarShowROI
@@ -318,7 +324,7 @@ Item {
     }
 
     Connections {
-        target:                     missionController
+        target:                     _missionController
         function onResumeMissionUploadFail() { confirmAction(actionResumeMissionUploadFail) }
     }
 
@@ -407,6 +413,12 @@ Item {
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
             guidedValueSlider.visible = true
+            break;
+        case actionClearPlan:
+            showImmediate = false
+            confirmDialog.title = clearPlanTitle
+            confirmDialog.message = clearPlanMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showClearPlan })
             break;
         case actionStartMission:
             showImmediate = false
@@ -542,7 +554,10 @@ Item {
             break
         case actionResumeMission:
         case actionResumeMissionUploadFail:
-            missionController.resumeMission(missionController.resumeMissionIndex)
+            _missionController.resumeMission(_missionController.resumeMissionIndex)
+            break
+        case actionClearPlan:
+            planController.removeAllFromVehicle()
             break
         case actionStartMission:
         case actionContinueMission:

@@ -19,7 +19,7 @@
 #include "SurveyPlanCreator.h"
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
-#include "BlankPlanCreator.h"
+#include "WaypointsPlanCreator.h"
 
 #include <QDomDocument>
 #include <QJsonDocument>
@@ -29,6 +29,7 @@ QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanMasterControllerLog")
 
 const int   PlanMasterController::kPlanFileVersion =            1;
 const char* PlanMasterController::kPlanFileType =               "Plan";
+const char* PlanMasterController::kJsonPlanTypeKey =            "planType";
 const char* PlanMasterController::kJsonMissionObjectKey =       "mission";
 const char* PlanMasterController::kJsonGeoFenceObjectKey =      "geoFence";
 const char* PlanMasterController::kJsonRallyPointsObjectKey =   "rallyPoints";
@@ -41,6 +42,7 @@ PlanMasterController::PlanMasterController(QObject* parent)
     , _missionController    (this)
     , _geoFenceController   (this)
     , _rallyPointController (this)
+    , _appSettings          (qgcApp()->toolbox()->settingsManager()->appSettings())
 {
     _commonInit();
 }
@@ -131,9 +133,8 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         _managerVehicle = activeVehicle;
 
         // Update controllerVehicle to the currently connected vehicle
-        AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
-        appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(_managerVehicle->firmwareType()));
-        appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(_managerVehicle->vehicleType()));
+        _appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(_managerVehicle->firmwareType()));
+        _appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(_managerVehicle->vehicleType()));
 
         // We use these signals to sequence upload and download to the multiple controller/managers
         connect(_managerVehicle->missionManager(),      &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadMissionComplete);
@@ -158,37 +159,6 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
             // Fly view has changed to a new active vehicle, update to show correct mission
             qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly View - New active vehicle, loading new plan from manager vehicle";
             _showPlanFromManagerVehicle();
-        }
-    } else {
-        // We are in the Plan view.
-        if (containsItems()) {
-            // The plan view has a stale plan in it
-            if (dirty()) {
-                // Plan is dirty, the user must decide what to do in all cases
-                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous dirty plan exists, no new active vehicle, sending promptForPlanUsageOnVehicleChange signal";
-                emit promptForPlanUsageOnVehicleChange();
-            } else {
-                // Plan is not dirty
-                if (newOffline) {
-                    // The active vehicle went away with no new active vehicle
-                    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous clean plan exists, no new active vehicle, clear stale plan";
-                    removeAll();
-                } else {
-                    // We are transitioning from one active vehicle to another. Show the plan from the new vehicle.
-                    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous clean plan exists, new active vehicle, loading from new manager vehicle";
-                    _showPlanFromManagerVehicle();
-                }
-            }
-        } else {
-            // There is no previous Plan in the view
-            if (newOffline) {
-                // Nothing special to do in this case
-                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, no longer connected to vehicle, nothing to do";
-            } else {
-                // Just show the plan from the new vehicle
-                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, new active vehicle, loading from new manager vehicle";
-                _showPlanFromManagerVehicle();
-            }
         }
     }
 
@@ -331,7 +301,9 @@ void PlanMasterController::sendToVehicle(void)
     }
 }
 
-void PlanMasterController::loadFromFile(const QString& filename)
+/// @brief  Loads all types of plan files
+/// @param filename 
+void PlanMasterController::_loadWorker(const QString& filename)
 {
     QString errorString;
     QString errorMessage = tr("Error loading Plan file (%1). %2").arg(filename).arg("%1");
@@ -349,20 +321,11 @@ void PlanMasterController::loadFromFile(const QString& filename)
         return;
     }
 
-    bool success = false;
     if (fileInfo.suffix() == AppSettings::missionFileExtension) {
         if (!_missionController.loadJsonFile(file, errorString)) {
             qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
         }
-    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
-        if (!_missionController.loadTextFile(file, errorString)) {
-            qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
-    } else {
+    } else if (fileInfo.suffix() == AppSettings::planFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
 
@@ -382,6 +345,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         }
 
         QList<JsonHelper::KeyValidateInfo> rgKeyInfo = {
+            { kJsonPlanTypeKey,             QJsonValue::String, false },
             { kJsonMissionObjectKey,        QJsonValue::Object, true },
             { kJsonGeoFenceObjectKey,       QJsonValue::Object, true },
             { kJsonRallyPointsObjectKey,    QJsonValue::Object, true },
@@ -391,6 +355,15 @@ void PlanMasterController::loadFromFile(const QString& filename)
             return;
         }
 
+        // The planType key was not in the original file format.
+        QString planType;
+        if (json.contains(kJsonPlanTypeKey)) {
+            planType = json[kJsonPlanTypeKey].toString();
+        } else {
+            planType = tr("Mixed"); // Indicates any type of Plan elements can be added
+        }
+        setPlanType(planType);
+
         if (!_missionController.load(json[kJsonMissionObjectKey].toObject(), errorString) ||
                 !_geoFenceController.load(json[kJsonGeoFenceObjectKey].toObject(), errorString) ||
                 !_rallyPointController.load(json[kJsonRallyPointsObjectKey].toObject(), errorString)) {
@@ -398,20 +371,31 @@ void PlanMasterController::loadFromFile(const QString& filename)
         } else {
             //-- Allow plugins to post process the load
             qgcApp()->toolbox()->corePlugin()->postLoadFromJson(this, json);
-            success = true;
+        }
+    } else {
+        // Assume old style text format
+        if (!_missionController.loadTextFile(file, errorString)) {
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
         }
     }
+}
 
-    if(success){
-        _currentPlanFile = QString::asprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
-    } else {
-        _currentPlanFile.clear();
-    }
-    emit currentPlanFileChanged();
+void PlanMasterController::loadPlan(const QString& planName)
+{
+    _planName = planName;
+    emit planNameChanged(_planName);
+    _loadWorker(_fullyQualifiedPlanName(planName));
+    setDirty(false);
+}
 
-    if (!offline()) {
-        setDirty(true);
-    }
+void PlanMasterController::import(const QString& filename)
+{
+    _loadWorker(filename);
+    setDirty(false);
+
+    renamePlan(generateNewPlanName(tr("Imported")));
+
+    emit importComplete();
 }
 
 QJsonDocument PlanMasterController::saveToJson()
@@ -429,6 +413,7 @@ QJsonDocument PlanMasterController::saveToJson()
     qgcApp()->toolbox()->corePlugin()->postSaveToMissionJson(this, missionJson);
     _geoFenceController.save(fenceJson);
     _rallyPointController.save(rallyJson);
+    planJson[kJsonPlanTypeKey] = _planType;
     planJson[kJsonMissionObjectKey] = missionJson;
     planJson[kJsonGeoFenceObjectKey] = fenceJson;
     planJson[kJsonRallyPointsObjectKey] = rallyJson;
@@ -436,47 +421,27 @@ QJsonDocument PlanMasterController::saveToJson()
     return QJsonDocument(planJson);
 }
 
-void
-PlanMasterController::saveToCurrent()
+void PlanMasterController::savePlan(void)
 {
-    if(!_currentPlanFile.isEmpty()) {
-        saveToFile(_currentPlanFile);
-    }
-}
-
-void PlanMasterController::saveToFile(const QString& filename)
-{
-    if (filename.isEmpty()) {
+    if (_planName.isEmpty()) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::savePlan called with empty plan name";
         return;
     }
 
-    QString planFilename = filename;
-    if (!QFileInfo(filename).fileName().contains(".")) {
-        planFilename += QString(".%1").arg(fileExtension());
-    }
-
-    QFile file(planFilename);
+    QString filename = _fullyQualifiedPlanName(_planName);
+    QFile file(filename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qgcApp()->showAppMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
-        _currentPlanFile.clear();
-        emit currentPlanFileChanged();
     } else {
         QJsonDocument saveDoc = saveToJson();
         file.write(saveDoc.toJson());
-        if(_currentPlanFile != planFilename) {
-            _currentPlanFile = planFilename;
-            emit currentPlanFileChanged();
-        }
     }
 
-    // Only clear dirty bit if we are offline
-    if (offline()) {
-        setDirty(false);
-    }
+    setDirty(false);
 }
 
-void PlanMasterController::saveToKml(const QString& filename)
+void PlanMasterController::saveToKML(const QString& filename)
 {
     if (filename.isEmpty()) {
         return;
@@ -509,8 +474,8 @@ void PlanMasterController::removeAll(void)
         _missionController.setDirty(false);
         _geoFenceController.setDirty(false);
         _rallyPointController.setDirty(false);
-        _currentPlanFile.clear();
-        emit currentPlanFileChanged();
+        _planName.clear();
+        emit planNameChanged(_planName);
     }
 }
 
@@ -580,7 +545,7 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
     // Use a transient PlanMasterController to accomplish this
     PlanMasterController* controller = new PlanMasterController();
     controller->startStaticActiveVehicle(vehicle, true /* deleteWhenSendCompleted */);
-    controller->loadFromFile(filename);
+    controller->import(filename);
     controller->sendToVehicle();
 }
 
@@ -618,7 +583,7 @@ void PlanMasterController::_updatePlanCreatorsList(void)
     if (!_flyView) {
         if (!_planCreators) {
             _planCreators = new QmlObjectListModel(this);
-            _planCreators->append(new BlankPlanCreator(this, this));
+            _planCreators->append(new WaypointsPlanCreator(this, this));
             _planCreators->append(new SurveyPlanCreator(this, this));
             _planCreators->append(new CorridorScanPlanCreator(this, this));
             emit planCreatorsChanged(_planCreators);
@@ -646,5 +611,81 @@ void PlanMasterController::showPlanFromManagerVehicle(void)
         // We have a new active vehicle, show the plan from that
         qCDebug(PlanMasterControllerLog) << "showPlanFromManagerVehicle: Plan View - New vehicle available, show plan from new manager vehicle";
         _showPlanFromManagerVehicle();
+    }
+}
+
+QString PlanMasterController::_fullyQualifiedPlanName(const QString& planName) const
+{
+    return QString("%1/%2.%3").arg(_appSettings->planSavePath()).arg(planName).arg(AppSettings::planFileExtension);
+}
+
+QStringList PlanMasterController::availablePlanNames(void) const
+{
+    QStringList planNames;
+
+    QDir planDir(_appSettings->planSavePath());
+    QStringList nameFilters(QStringLiteral("*.%1").arg(AppSettings::planFileExtension));
+
+    QFileInfoList fileInfoList = planDir.entryInfoList(nameFilters,  QDir::Files, QDir::Name);
+    for (const QFileInfo& fileInfo: fileInfoList) {
+        planNames << fileInfo.baseName();
+    }
+
+    return planNames;
+}
+
+void PlanMasterController::renamePlan(const QString& planName)
+{
+    _planName = planName;
+    emit planNameChanged(_planName);
+}
+
+void PlanMasterController::closePlan()
+{
+    _planName.clear();
+    _planType.clear();
+    emit planNameChanged(_planName);
+    emit planTypeChanged(_planName);
+    removeAll();
+
+    emit planClosed();
+}
+
+void PlanMasterController::deletePlan()
+{
+    if (_planName.isEmpty()) {
+        qCWarning(PlanMasterControllerLog) << "PlanMasterController::deletePlan called with empty plan name";
+        return;
+    }
+
+    QString filename = _fullyQualifiedPlanName(_planName);
+    QFile file(filename);
+
+    if (!file.remove()) {
+        qgcApp()->showAppMessage(tr("Plan delete error %1 : %2").arg(filename).arg(file.errorString()));
+    } else {
+        closePlan();
+    }
+}
+
+QString PlanMasterController::generateNewPlanName (const QString& prefix) const
+{
+    auto    appSettings     = qgcApp()->toolbox()->settingsManager()->appSettings();
+    QString fullyQualified  = QStringLiteral("%1/%2").arg(appSettings->planSavePath()).arg("%1");
+    QString baseName        = tr("%1 Plan %2").arg(prefix).arg("%1");
+
+    int i = 1;
+    while (QFileInfo(fullyQualified.arg(baseName.arg(i))).exists()) {
+        i++;
+    }
+
+    return baseName.arg(i);
+}
+
+void PlanMasterController::setPlanType(const QString& planType)
+{
+    if (planType != _planType) {
+        _planType = planType;
+        emit planTypeChanged(_planType);
     }
 }

@@ -232,7 +232,7 @@ void MissionControllerTest::_testVehicleYawRecalc(void)
 void MissionControllerTest::_testLoadJsonSectionAvailable(void)
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
-    _masterController->loadFromFile(":/unittest/SectionTest.plan");
+    _masterController->import(":/unittest/SectionTest.plan");
 
     QmlObjectListModel* visualItems = _missionController->visualItems();
     QVERIFY(visualItems);

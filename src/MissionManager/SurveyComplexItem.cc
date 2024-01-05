@@ -670,7 +670,7 @@ double SurveyComplexItem::_turnaroundDistance(void) const
     return _turnAroundDistanceFact.rawValue().toDouble();
 }
 
-void SurveyComplexItem::_rebuildTransectsPhase1(void)
+void SurveyComplexItem::    _rebuildTransectsPhase1(void)
 {
     _rebuildTransectsPhase1WorkerSinglePolygon(false /* refly */);
     if (_refly90DegreesFact.rawValue().toBool()) {
@@ -845,7 +845,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
         transects[i] = transectVertices;
     }
 
-    // Convert to CoordInfo transects and append to _transects
+    // CoordInfo transects and append to _transects
     for (const QList<QGeoCoordinate>& transect : transects) {
         QGeoCoordinate                                  coord;
         QList<TransectStyleComplexItem::CoordInfo_t>    coordInfoTransect;

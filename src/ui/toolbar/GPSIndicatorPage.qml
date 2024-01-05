@@ -100,7 +100,7 @@ ToolIndicatorPage {
     }
 
     expandedComponent: Component {
-        IndicatorPageGroupLayout {
+        SettingsGroupLayout {
             heading:        qsTr("RTK GPS Settings")
             showDivider:    false
 

@@ -53,6 +53,12 @@ Rectangle {
             visible:    guidedController.showContinueMission
         },
         {
+            title:      guidedController.clearPlanTitle,
+            text:       guidedController.clearPlanMessage,
+            action:     guidedController.actionClearPlan,
+            visible:    guidedController.showClearPlan
+        },
+        {
             title:      guidedController.changeAltTitle,
             text:       guidedController.changeAltMessage,
             action:     guidedController.actionChangeAlt,

@@ -52,8 +52,8 @@ if(BUILD_TESTING)
 endif()
 
 add_library(MissionManager
-	BlankPlanCreator.cc
-	BlankPlanCreator.h
+	WaypointsPlanCreator.cc
+	WaypointsPlanCreator.h
 	CameraCalc.cc
 	CameraCalc.h
 	CameraSection.cc

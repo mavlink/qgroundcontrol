@@ -10,10 +10,16 @@
     "default":      false
 },
 {
-    "name":         "showMissionItemStatus",
-    "shortDesc":    "Show/Hide the mission item status display",
+    "name":         "showTerrainPanel",
+    "shortDesc":    "Show/Hide the terrain panel",
     "type":         "bool",
-    "default":      true
+    "default":      false
+},
+{
+    "name":         "showStatsPanel",
+    "shortDesc":    "Show/Hide the states panel",
+    "type":         "bool",
+    "default":      false
 },
 {
     "name":         "takeoffItemNotRequired",

@@ -21,12 +21,10 @@
 #include "StructureScanComplexItem.h"
 #include "CorridorScanComplexItem.h"
 #include "JsonHelper.h"
-#include "ParameterManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "MissionSettingsItem.h"
-#include "QGCQGeoCoordinate.h"
 #include "PlanMasterController.h"
 #include "KMLPlanDomDocument.h"
 #include "QGCCorePlugin.h"
@@ -146,22 +144,13 @@ void MissionController::_init(void)
 }
 
 // Called when new mission items have completed downloading from Vehicle
-void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllRequested)
+void MissionController::_newMissionItemsAvailableFromVehicle(bool /* removeAllRequested */)
 {
     qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle flyView:count" << _flyView << _missionManager->missionItems().count();
 
     // Fly view always reloads on _loadComplete
-    // Plan view only reloads if:
-    //  - Load was specifically requested
-    //  - There is no current Plan
-    if (_flyView || removeAllRequested || _itemsRequested || isEmpty()) {
-        // Fly Mode (accept if):
-        //      - Always accepts new items from the vehicle so Fly view is kept up to date
-        // Edit Mode (accept if):
-        //      - Remove all was requested from Fly view (clear mission on flight end)
-        //      - A load from vehicle was manually requested
-        //      - The initial automatic load from a vehicle completed and the current editor is empty
-
+    // Plan view never loads from vehicle
+    if (_flyView) {
         _deinitAllVisualItems();
         _visualItems->deleteLater();
         _visualItems  = nullptr;
@@ -357,11 +346,12 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
     return _insertSimpleMissionItemWorker(coordinate, MAV_CMD_NAV_WAYPOINT, visualItemIndex, makeCurrentItem);
 }
 
-VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
+VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
     _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem, false /* forLoad */);
     _takeoffMissionItem->setSequenceNumber(sequenceNumber);
+    _takeoffMissionItem->setCoordinate(coordinate);
     _initVisualItem(_takeoffMissionItem);
 
     if (_takeoffMissionItem->specifiesAltitude()) {

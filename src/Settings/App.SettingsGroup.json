@@ -21,20 +21,20 @@
 },
 {
     "name":             "offlineEditingCruiseSpeed",
-    "shortDesc": "Offline editing cruise speed",
-    "longDesc":  "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
+    "shortDesc":        "Default plan cruise speed",
+    "longDesc":         "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
-    "default":     15.0,
+    "default":          15.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
 },
 {
     "name":             "offlineEditingHoverSpeed",
-    "shortDesc": "Offline editing hover speed",
-    "longDesc":  "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
+    "shortDesc":        "Default plan hover speed",
+    "longDesc":         "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
-    "default":     5.0,
+    "default":          5.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
@@ -71,10 +71,10 @@
 },
 {
     "name":             "defaultMissionItemAltitude",
-    "shortDesc": "Default value for altitude",
-    "longDesc":  "This value specifies the default altitude for new items added to a mission.",
+    "shortDesc":        "Default plan altitude",
+    "longDesc":         "This value specifies the default altitude for new items added to a plan.",
     "type":             "double",
-    "default":     50.0,
+    "default":          50.0,
     "min":              0.0,
     "units":            "m",
     "decimalPlaces":    1

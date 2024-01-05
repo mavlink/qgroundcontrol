@@ -18,5 +18,5 @@ class SurveyPlanCreator : public PlanCreator
 public:
     SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
 
-    Q_INVOKABLE void createPlan(const QGeoCoordinate& mapCenterCoord) final;
+    Q_INVOKABLE void createPlan(QVariantList coordList) final;
 };

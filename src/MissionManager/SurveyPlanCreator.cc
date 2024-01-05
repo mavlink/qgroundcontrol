@@ -9,7 +9,6 @@
 
 #include "SurveyPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "SurveyComplexItem.h"
 
 SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent)
@@ -18,9 +17,12 @@ SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController,
 
 }
 
-void SurveyPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
+void SurveyPlanCreator::createPlan(QVariantList coordList)
 {
-    _planMasterController->removeAll();
+    PlanCreator::createPlan(coordList);
+
+    auto mapCenterCoord = _coordRectCenter(_convertCoordList(coordList));
+
     VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
     _missionController->insertComplexMissionItem(SurveyComplexItem::name, mapCenterCoord, -1);
     _missionController->insertLandItem(mapCenterCoord, -1);

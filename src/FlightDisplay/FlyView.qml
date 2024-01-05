@@ -122,9 +122,9 @@ Item {
 
         GuidedActionsController {
             id:                 guidedActionsController
-            missionController:  _missionController
+            planController:     _planController
             actionList:         _guidedActionList
-            guidedValueSlider:     _guidedValueSlider
+            guidedValueSlider:  _guidedValueSlider
         }
 
         GuidedActionList {

@@ -11,6 +11,7 @@ CameraCalcGrid                          1.0 CameraCalcGrid.qml
 ContentAreaCalc                         1.0 ContentAreaCalc.qml
 APMSubMotorDisplay                      1.0 APMSubMotorDisplay.qml
 CameraSection                           1.0 CameraSection.qml
+CameraSection2                          1.0 CameraSection2.qml
 ClickableColor                          1.0 ClickableColor.qml
 DeadMouseArea                           1.0 DeadMouseArea.qml
 DropButton                              1.0 DropButton.qml
@@ -31,8 +32,9 @@ HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
 IndicatorButton                         1.0 IndicatorButton.qml
-IndicatorPageButtonRow                  1.0 IndicatorPageButtonRow.qml
-IndicatorPageGroupLayout                1.0 IndicatorPageGroupLayout.qml
+LabelledButton                          1.0 LabelledButton.qml
+SettingsGroupLayout                     1.0 SettingsGroupLayout.qml
+SettingsGroupLayout2                    1.0 SettingsGroupLayout2.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml
 InstrumentValueValue                    1.0 InstrumentValueValue.qml
 InstrumentValueEditDialog               1.0 InstrumentValueEditDialog.qml
@@ -109,6 +111,7 @@ SetupPage                               1.0 SetupPage.qml
 SignalStrength                          1.0 SignalStrength.qml
 SimpleItemMapVisuals                    1.0 SimpleItemMapVisuals.qml
 SliderSwitch                            1.0 SliderSwitch.qml
+StatsPanel                              1.0 StatsPanel.qml
 SubMenuButton                           1.0 SubMenuButton.qml
 SurveyMapVisuals                        1.0 SurveyMapVisuals.qml
 TerrainStatus                           1.0 TerrainStatus.qml

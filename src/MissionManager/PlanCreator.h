@@ -11,7 +11,8 @@
 
 #include <QObject>
 #include <QString>
-#include "QGeoCoordinate"
+#include <QVariantList>
+#include <QGeoCoordinate>
 
 class PlanMasterController;
 class MissionController;
@@ -27,9 +28,20 @@ public:
     Q_PROPERTY(QString  name            MEMBER _name            CONSTANT)
     Q_PROPERTY(QString  imageResource   MEMBER _imageResource   CONSTANT)
 
-    Q_INVOKABLE virtual void createPlan(const QGeoCoordinate& mapCenterCoord) = 0;
+    Q_INVOKABLE virtual void createPlan(QVariantList coordList);
 
 protected:
+    typedef struct {
+        QGeoCoordinate  topLeftCoord;
+        QGeoCoordinate  topRightCoord;
+        QGeoCoordinate  bottomLeftCoord;
+        QGeoCoordinate  bottomRightCoord;
+    } CoordRect_t;
+
+    CoordRect_t _convertCoordList(const QVariantList& coordList);
+    CoordRect_t _insetCoordRect(const CoordRect_t& coordRect, double insetPercent);
+    QGeoCoordinate _coordRectCenter(const CoordRect_t& coordRect);
+
     PlanMasterController*   _planMasterController;
     MissionController*      _missionController;
     QString                 _name;

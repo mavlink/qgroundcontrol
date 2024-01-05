@@ -124,7 +124,7 @@ Item {
 
     QGCFileDialog {
         id:             kmlLoadDialog
-        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
+        folder:         QGroundControl.settingsManager.appSettings.planSavePath
         title:          qsTr("Select KML File")
         nameFilters:    ShapeFileHelper.fileDialogKMLFilters
 

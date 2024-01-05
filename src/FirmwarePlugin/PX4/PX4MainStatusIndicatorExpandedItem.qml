@@ -19,13 +19,13 @@ import QGroundControl.Palette
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
-IndicatorPageGroupLayout {
+SettingsGroupLayout {
     spacing:        ScreenTools.defaultFontPixelHeight / 2
     showDivider:    false
 
     FactPanelController { id: controller }
 
-    IndicatorPageGroupLayout {
+    SettingsGroupLayout {
         heading:            qsTr("Ground Control Data Link Loss")
         Layout.fillWidth:   true
 
@@ -52,7 +52,7 @@ IndicatorPageGroupLayout {
         }
     }
 
-    IndicatorPageGroupLayout {
+    SettingsGroupLayout {
         Layout.fillWidth:   true
         showDivider:        false
 

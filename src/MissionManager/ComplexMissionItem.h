@@ -66,7 +66,7 @@ public:
     /// @return true: load success, false: load failed, errorString set
     virtual bool load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString) = 0;
 
-    /// @return true: Represents a single coordinate (ex: MissionSettingsItem), false: Represents multiple items (ex: Survey)
+    /// @return true: Represents a single coordinate, false: Represents multiple items (ex: Survey)
     virtual bool isSingleItem(void) const { return false; }
 
     /// Loads the specified preset into the complex item.

@@ -273,7 +273,7 @@ Item {
                 sourceComponent: expandedPageComponent
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:  true
 
                 RowLayout {
@@ -292,7 +292,7 @@ Item {
                 }
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
                 showDivider:        false
 

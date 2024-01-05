@@ -307,3 +307,24 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
     // Should never get here but makes some compilers happy
     return QString();
 }
+
+QString QGroundControlQmlGlobal::altitudeModeLongDescription(AltMode altMode)
+{
+    switch (altMode) {
+    case AltitudeModeNone:
+        return QString();
+    case AltitudeModeRelative:
+        return tr("Specified altitudes are relative to launch position height.");
+    case AltitudeModeAbsolute:
+        return tr("Specified altitudes are Above Mean Sea Level.");
+    case AltitudeModeCalcAboveTerrain:
+        return tr("Specified altitudes are distance above terrain. Actual altitudes sent to vehicle are calculated from terrain data and sent as AMSL values.");
+    case AltitudeModeTerrainFrame:
+        return tr("Specified altitudes are distance above terrain. The actual altitude flown is controlled by the vehicle either from terrain height maps being sent to vehicle or a distance sensor.");
+    case AltitudeModeMixed:
+        return tr("The altitude mode can differ for each individual item.");
+    }
+
+    // Should never get here but makes some compilers happy
+    return QString();
+}

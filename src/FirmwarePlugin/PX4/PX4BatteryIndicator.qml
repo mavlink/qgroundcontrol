@@ -28,7 +28,7 @@ BatteryIndicator {
 
             FactPanelController { id: controller }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
                 heading:            qsTr("Low Battery")
 

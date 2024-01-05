@@ -70,7 +70,7 @@ ToolIndicatorPage {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 RowLayout {
                     QGCLabel { Layout.fillWidth: true; text: qsTr("Communication Links") }
                     
@@ -84,7 +84,7 @@ ToolIndicatorPage {
                 }
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 heading:        qsTr("AutoConnect")
                 visible:        autoConnectSettings.visible
                 showDivider:    false

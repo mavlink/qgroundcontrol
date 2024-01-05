@@ -18,7 +18,8 @@ DECLARE_SETTINGGROUP(PlanView, "PlanView")
 }
 
 DECLARE_SETTINGSFACT(PlanViewSettings, displayPresetsTabFirst)
-DECLARE_SETTINGSFACT(PlanViewSettings, showMissionItemStatus)
+DECLARE_SETTINGSFACT(PlanViewSettings, showTerrainPanel)
+DECLARE_SETTINGSFACT(PlanViewSettings, showStatsPanel)
 DECLARE_SETTINGSFACT(PlanViewSettings, useConditionGate)
 DECLARE_SETTINGSFACT(PlanViewSettings, takeoffItemNotRequired)
 DECLARE_SETTINGSFACT(PlanViewSettings, showGimbalOnlyWhenSet)

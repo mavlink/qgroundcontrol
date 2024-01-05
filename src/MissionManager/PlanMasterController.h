@@ -19,6 +19,10 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
+class AppSettings;
+class MissionControllerTest;
+class PlanMasterControllerTest;
+
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
 /// Master controller for mission, fence, rally
@@ -35,6 +39,8 @@ public:
 
     ~PlanMasterController();
 
+    Q_PROPERTY(QString                  planName                READ planName                               NOTIFY planNameChanged)
+    Q_PROPERTY(QString                  planType                READ planType                               NOTIFY planTypeChanged)
     Q_PROPERTY(bool                     flyView                 MEMBER _flyView)
     Q_PROPERTY(Vehicle*                 controllerVehicle       READ controllerVehicle                      CONSTANT)                       ///< Offline controller vehicle
     Q_PROPERTY(Vehicle*                 managerVehicle          READ managerVehicle                         NOTIFY managerVehicleChanged)   ///< Either active vehicle or _controllerVehicle if no active vehicle
@@ -47,7 +53,6 @@ public:
     Q_PROPERTY(bool                     dirty                   READ dirty                  WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
-    Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
@@ -72,32 +77,39 @@ public:
     ///     @param[in] filename Plan file to load
     static void sendPlanToVehicle(Vehicle* vehicle, const QString& filename);
 
+    Q_INVOKABLE QStringList availablePlanNames(void) const;
     Q_INVOKABLE void loadFromVehicle(void);
     Q_INVOKABLE void sendToVehicle(void);
-    Q_INVOKABLE void loadFromFile(const QString& filename);
-    Q_INVOKABLE void saveToCurrent();
-    Q_INVOKABLE void saveToFile(const QString& filename);
-    Q_INVOKABLE void saveToKml(const QString& filename);
+    Q_INVOKABLE void loadPlan(const QString& planName);     ///< Loads a plan from the default save location. planName is the name without the extension
+    Q_INVOKABLE void import(const QString& filename);       ///< Imports a plan from a file: .plan, .waypoints, .mission, ...
+    Q_INVOKABLE void deletePlan();
+    Q_INVOKABLE void closePlan();
+    Q_INVOKABLE void savePlan();
+    Q_INVOKABLE void saveToKML(const QString& filename);
     Q_INVOKABLE void removeAll(void);                       ///< Removes all from controller only, synce required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void);            ///< Removes all from vehicle and controller
+    Q_INVOKABLE void renamePlan(const QString& planName);
 
     MissionController*      missionController(void)     { return &_missionController; }
     GeoFenceController*     geoFenceController(void)    { return &_geoFenceController; }
     RallyPointController*   rallyPointController(void)  { return &_rallyPointController; }
 
-    bool        offline         (void) const { return _offline; }
-    bool        containsItems   (void) const;
-    bool        syncInProgress  (void) const;
-    bool        dirty           (void) const;
-    void        setDirty        (bool dirty);
-    QString     fileExtension   (void) const;
-    QString     kmlFileExtension(void) const;
-    QString     currentPlanFile (void) const { return _currentPlanFile; }
-    QStringList loadNameFilters (void) const;
-    QStringList saveNameFilters (void) const;
-    bool        isEmpty         (void) const;
+    bool        offline             (void) const { return _offline; }
+    bool        containsItems       (void) const;
+    bool        syncInProgress      (void) const;
+    bool        dirty               (void) const;
+    void        setDirty            (bool dirty);
+    QString     fileExtension       (void) const;
+    QString     kmlFileExtension    (void) const;
+    QStringList loadNameFilters     (void) const;
+    QStringList saveNameFilters     (void) const;
+    bool        isEmpty             (void) const;
+    QString     planName            (void) const { return _planName; }
+    QString     planType            (void) const { return _planType; }
+    QString     generateNewPlanName (const QString& prefix) const;
 
     void        setFlyView(bool flyView) { _flyView = flyView; }
+    void        setPlanType(const QString& planType);
 
     QJsonDocument saveToJson    ();
 
@@ -106,6 +118,7 @@ public:
 
     static const int    kPlanFileVersion;
     static const char*  kPlanFileType;
+    static const char*  kJsonPlanTypeKey;
     static const char*  kJsonMissionObjectKey;
     static const char*  kJsonGeoFenceObjectKey;
     static const char*  kJsonRallyPointsObjectKey;
@@ -115,10 +128,13 @@ signals:
     void syncInProgressChanged              (void);
     void dirtyChanged                       (bool dirty);
     void offlineChanged                     (bool offlineEditing);
-    void currentPlanFileChanged             (void);
+    void planNameChanged                    (QString planName);
+    void planTypeChanged                    (QString planType);
+    void planClosed                         (void);
     void planCreatorsChanged                (QmlObjectListModel* planCreators);
     void managerVehicleChanged              (Vehicle* managerVehicle);
     void promptForPlanUsageOnVehicleChange  (void);
+    void importComplete                     (void);
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);
@@ -131,8 +147,10 @@ private slots:
     void _updatePlanCreatorsList    (void);
 
 private:
-    void _commonInit                (void);
-    void _showPlanFromManagerVehicle(void);
+    void    _commonInit                 (void);
+    void    _showPlanFromManagerVehicle (void);
+    QString _fullyQualifiedPlanName     (const QString& planName) const;
+    void    _loadWorker                 (const QString& filename);
 
     MultiVehicleManager*    _multiVehicleMgr =          nullptr;
     Vehicle*                _controllerVehicle =        nullptr;    ///< Offline controller vehicle
@@ -146,7 +164,9 @@ private:
     bool                    _loadRallyPoints =          false;
     bool                    _sendGeoFence =             false;
     bool                    _sendRallyPoints =          false;
-    QString                 _currentPlanFile;
     bool                    _deleteWhenSendCompleted =  false;
     QmlObjectListModel*     _planCreators =             nullptr;
+    QString                 _planName;
+    QString                 _planType;
+    AppSettings*            _appSettings =              nullptr;
 };

@@ -143,6 +143,7 @@ public:
 
     Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
     Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
+    Q_INVOKABLE QString altitudeModeLongDescription(AltMode altMode);   ///< String shown when a user needs to select an altitude mode
 
     // Property accesors
 

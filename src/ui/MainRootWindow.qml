@@ -117,7 +117,7 @@ ApplicationWindow {
     }
 
     function showPlanView() {
-        stackView.push(planViewComponenent)
+        stackView.push(planView)
     }
 
     function popView() {
@@ -418,12 +418,9 @@ ApplicationWindow {
         }
     }
 
-    Component {
-        id: planViewComponenent
-
-        PlanView {
-            id: planView
-        }
+    PlanView {
+        id:         planView
+        visible:    false
     }
 
     Drawer {

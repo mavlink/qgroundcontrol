@@ -38,7 +38,7 @@ FlightModeIndicator {
 
             FactPanelController { id: controller }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth: true
 
                 LabelledFactSlider {
@@ -74,7 +74,7 @@ FlightModeIndicator {
                 }
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
                 visible:            sys_vehicle_resp
 
@@ -191,7 +191,7 @@ FlightModeIndicator {
                 }
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:  true
 
                 ColumnLayout {

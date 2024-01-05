@@ -87,7 +87,7 @@ void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& prese
     // Use this to save a survey preset as a JSON file to be included in the build
     // as a built-in survey preset that cannot be deleted.
     #if 0
-    QString savePath = _settingsManager->appSettings()->missionSavePath();
+    QString savePath = _settingsManager->appSettings()->planSavePath();
     QDir saveDir(savePath);
 
     QString fileName = saveDir.absoluteFilePath(name);

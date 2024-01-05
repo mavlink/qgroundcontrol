@@ -9,7 +9,6 @@
 
 #include "CorridorScanPlanCreator.h"
 #include "PlanMasterController.h"
-#include "MissionSettingsItem.h"
 #include "CorridorScanComplexItem.h"
 
 CorridorScanPlanCreator::CorridorScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)
@@ -18,9 +17,12 @@ CorridorScanPlanCreator::CorridorScanPlanCreator(PlanMasterController* planMaste
 
 }
 
-void CorridorScanPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
+void CorridorScanPlanCreator::createPlan(QVariantList coordList)
 {
-    _planMasterController->removeAll();
+    PlanCreator::createPlan(coordList);
+
+    auto mapCenterCoord = _coordRectCenter(_convertCoordList(coordList));
+
     VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
     _missionController->insertComplexMissionItem(CorridorScanComplexItem::name, mapCenterCoord, -1);
     _missionController->insertLandItem(mapCenterCoord, -1);
