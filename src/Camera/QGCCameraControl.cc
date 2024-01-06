@@ -186,6 +186,15 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     _recTimer.setSingleShot(false);
     _recTimer.setInterval(333);
     connect(&_recTimer, &QTimer::timeout, this, &QGCCameraControl::_recTimerHandler);
+    //-- Tracking
+    if(_info.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE) {
+        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_RECTANGLE);
+        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_SUPPORTED);
+    }
+    if(_info.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT) {
+        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_POINT);
+        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_SUPPORTED);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1613,6 +1622,45 @@ QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
 
 //-----------------------------------------------------------------------------
 void
+QGCCameraControl::handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t *tis)
+{
+    if (tis) {
+        _trackingImageStatus = *tis;
+
+        if (_trackingImageStatus.tracking_status == 0 || !trackingEnabled()) {
+            _trackingImageRect = {};
+            qCDebug(CameraControlLog) << "Tracking off";
+        } else {
+            if (_trackingImageStatus.tracking_mode == 2) {
+                _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
+                                            QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
+            } else {
+                float r = _trackingImageStatus.radius;
+                if (qIsNaN(r) || r <= 0 ) {
+                    r = 0.05f;
+                }
+                // Bottom is NAN so that we can draw perfect square using video aspect ratio
+                _trackingImageRect = QRectF(QPointF(_trackingImageStatus.point_x - r, _trackingImageStatus.point_y - r),
+                                            QPointF(_trackingImageStatus.point_x + r, NAN));
+            }
+            // get rectangle into [0..1] boundaries
+            _trackingImageRect.setLeft(std::min(std::max(_trackingImageRect.left(), 0.0), 1.0));
+            _trackingImageRect.setTop(std::min(std::max(_trackingImageRect.top(), 0.0), 1.0));
+            _trackingImageRect.setRight(std::min(std::max(_trackingImageRect.right(), 0.0), 1.0));
+            _trackingImageRect.setBottom(std::min(std::max(_trackingImageRect.bottom(), 0.0), 1.0));
+
+            qCDebug(CameraControlLog) << "Tracking Image Status [left:" << _trackingImageRect.left()
+                                      << "top:" << _trackingImageRect.top()
+                                      << "right:" << _trackingImageRect.right()
+                                      << "bottom:" << _trackingImageRect.bottom() << "]";
+        }
+
+        emit trackingImageStatusChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCCameraControl::setCurrentStream(int stream)
 {
     if(stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
@@ -2261,4 +2309,94 @@ QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
         emit infoChanged();
     }
     return changed;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setTrackingEnabled(bool set)
+{
+    if(set) {
+        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_ENABLED);
+    } else {
+        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus & ~TRACKING_ENABLED);
+    }
+    emit trackingEnabledChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::startTracking(QRectF rec)
+{
+    if(_trackingMarquee != rec) {
+        _trackingMarquee = rec;
+
+        qCDebug(CameraControlLog) << "Start Tracking (Rectangle: ["
+                                  << static_cast<float>(rec.x()) << ", "
+                                  << static_cast<float>(rec.y()) << "] - ["
+                                  << static_cast<float>(rec.x() + rec.width()) << ", "
+                                  << static_cast<float>(rec.y() + rec.height()) << "]";
+
+        _vehicle->sendMavCommand(_compID,
+                                 MAV_CMD_CAMERA_TRACK_RECTANGLE,
+                                 true,
+                                 static_cast<float>(rec.x()),
+                                 static_cast<float>(rec.y()),
+                                 static_cast<float>(rec.x() + rec.width()),
+                                 static_cast<float>(rec.y() + rec.height()));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::startTracking(QPointF point, double radius)
+{
+    if(_trackingPoint != point || _trackingRadius != radius) {
+        _trackingPoint  = point;
+        _trackingRadius = radius;
+
+        qCDebug(CameraControlLog) << "Start Tracking (Point: ["
+                                  << static_cast<float>(point.x()) << ", "
+                                  << static_cast<float>(point.y()) << "], Radius:  "
+                                  << static_cast<float>(radius);
+
+        _vehicle->sendMavCommand(_compID,
+                                 MAV_CMD_CAMERA_TRACK_POINT,
+                                 true,
+                                 static_cast<float>(point.x()),
+                                 static_cast<float>(point.y()),
+                                 static_cast<float>(radius));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::stopTracking()
+{
+    qCDebug(CameraControlLog) << "Stop Tracking";
+
+    //-- Stop Tracking
+    _vehicle->sendMavCommand(_compID,
+                             MAV_CMD_CAMERA_STOP_TRACKING,
+                             true);
+
+    //-- Stop Sending Tracking Status
+    _vehicle->sendMavCommand(_compID,
+                             MAV_CMD_SET_MESSAGE_INTERVAL,
+                             true,
+                             MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
+                             -1);
+
+    // reset tracking image rectangle
+    _trackingImageRect = {};
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_requestTrackingStatus()
+{
+    _vehicle->sendMavCommand(_compID,
+                             MAV_CMD_SET_MESSAGE_INTERVAL,
+                             true,
+                             MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
+                             500000); // Interval (us)
 }
