@@ -19,6 +19,9 @@ The following icons are used to switch between the main _Views_. These are displ
 ![Fly icon](../../../assets/toolbar/toolbar_view_select_fly.jpg) **[Fly](../fly_view/fly_view.md)**
 <br>Monitor your vehicle(s) while flying, including streaming video.
 
+![3D View icon](../../../assets/toolbar/toolbar_view_select_3D.jpg) **[3D View](../viewer_3d/viewer_3d.md)**
+<br>3D Visualization and monitoring of the vehicle and the environment while flying.
+
 ![Analyze icon](../../../assets/toolbar/toolbar_view_select_analyse.jpg) **[Analyze](../analyze_view/index.md)**
 <br>Download logs, geotag images from a survey mission, access the MAVLink console.
 

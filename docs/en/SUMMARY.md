@@ -8,6 +8,7 @@
 - [Fly](qgc-user-guide/fly_view/fly_view.md)
   - [Replay Flight Data](qgc-user-guide/fly_view/replay_flight_data.md)
   - [Video Overlay](qgc-user-guide/fly_view/video_overlay.md)
+- [3D View](qgc-user-guide/viewer_3d/viewer_3d.md)
 - [Plan](qgc-user-guide/plan_view/plan_view.md)
   - [GeoFence](qgc-user-guide/plan_view/plan_geofence.md)
   - [Rally Points](qgc-user-guide/plan_view/plan_rally_points.md)

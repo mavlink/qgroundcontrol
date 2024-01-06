@@ -259,7 +259,8 @@ QT += \
     xml \
     texttospeech \
     core-private \
-    core5compat
+    core5compat \
+    quick3d
 
 # Multimedia only used if QVC is enabled
 !contains (DEFINES, QGC_DISABLE_UVC) {
@@ -404,6 +405,8 @@ INCLUDEPATH += \
     src/ui/px4_configuration \
     src/ui/toolbar \
     src/ui/uas \
+    src/Viewer3D \
+    src/Viewer3D/earcut \
 
 #
 # Plugin API
@@ -734,6 +737,14 @@ HEADERS += \
     src/uas/UASMessageHandler.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
+    src/Viewer3D/CityMapGeometry.h \
+    src/Viewer3D/OsmParser.h \
+    src/Viewer3D/Viewer3DQmlBackend.h \
+    src/Viewer3D/Viewer3DQmlVariableTypes.h \
+    src/Viewer3D/Viewer3DUtils.h \
+    src/Viewer3D/Viewer3DManager.h \
+    src/Settings/Viewer3DSettings.h \
+
 
 AndroidBuild {
     HEADERS += \
@@ -983,6 +994,13 @@ SOURCES += \
     src/uas/UASMessageHandler.cc \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
+    src/Viewer3D/CityMapGeometry.cpp \
+    src/Viewer3D/OsmParser.cpp \
+    src/Viewer3D/Viewer3DQmlBackend.cpp \
+    src/Viewer3D/Viewer3DUtils.cpp \
+    src/Viewer3D/Viewer3DManager.cpp \
+    src/Settings/Viewer3DSettings.cpp \
+
 
 DebugBuild {
 SOURCES += \

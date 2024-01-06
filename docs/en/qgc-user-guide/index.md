@@ -11,6 +11,7 @@ It provides easy and straightforward usage for beginners, while still delivering
 - Flight support for vehicles running PX4 and ArduPilot (or any other autopilot that communicates using the MAVLink protocol).
 - Mission planning for autonomous flight.
 - Flight map display showing vehicle position, flight track, waypoints and vehicle instruments.
+- 3D viewer visualizing the 3D map of the environment (.osm file), the 3D model of the vehicle (only multi-rotors for the moment), and the mission 3D trajectory (including the waypoints).
 - Video streaming with instrument display overlays.
 - Support for managing multiple vehicles.
 - QGC runs on Windows, OS X, Linux platforms, iOS and Android devices.
