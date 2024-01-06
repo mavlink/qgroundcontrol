@@ -1,0 +1,7 @@
+Module Viewer3D.Models3D
+
+Viewer3DModel                          1.0     Viewer3DModel.qml
+CameraLightModel                        1.0     CameraLightModel.qml
+Waypoint3DModel                         1.0     Waypoint3DModel.qml
+Line3D                                  1.0     Line3D.qml
+Viewer3DVehicleItems                   1.0     Viewer3DVehicleItems.qml
