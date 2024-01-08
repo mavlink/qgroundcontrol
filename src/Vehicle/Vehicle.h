@@ -91,6 +91,7 @@ Q_MOC_INCLUDE("QGCCameraManager.h")
 #ifndef OPAQUE_PTR_VEHICLE
     #define OPAQUE_PTR_VEHICLE
     Q_DECLARE_OPAQUE_POINTER(Actuators*)
+    Q_DECLARE_OPAQUE_POINTER(GimbalController*)
 #endif
 
 namespace events {
@@ -462,7 +463,7 @@ public:
     Q_ENUM(PIDTuningTelemetryMode)
 
     Q_INVOKABLE void setPIDTuningTelemetryMode(PIDTuningTelemetryMode mode);
-    
+
     Q_INVOKABLE void forceArm           ();
 
     /// Sends PARAM_MAP_RC message to vehicle
@@ -549,20 +550,20 @@ public:
 
     /**
      * @brief Send MAV_CMD_DO_GRIPPER command to trigger specified action in the vehicle
-     * 
+     *
      * @param gripperAction Gripper action to trigger
     */
 
     enum    GRIPPER_OPTIONS
     {
-    Gripper_release = GRIPPER_ACTION_RELEASE, 
+    Gripper_release = GRIPPER_ACTION_RELEASE,
     Gripper_grab    = GRIPPER_ACTION_GRAB,
     Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
-    }; 
+    };
     Q_ENUM(GRIPPER_OPTIONS)
 
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
-    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption); 
+    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption);
 
     bool fixedWing() const;
     bool multiRotor() const;
@@ -805,7 +806,7 @@ public:
     // Callback info for sendMavCommandWithHandler
     typedef struct MavCmdAckHandlerInfo_s {
         MavCmdResultHandler     resultHandler;          ///> nullptr for no handler
-        void*                   resultHandlerData; 
+        void*                   resultHandlerData;
         MavCmdProgressHandler   progressHandler;
         void*                   progressHandlerData;    ///> nullptr for no handler
     } MavCmdAckHandlerInfo_t;
@@ -813,7 +814,7 @@ public:
     /// Sends the command and calls the callback with the result
     void sendMavCommandWithHandler(
         const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
-        int compId, MAV_CMD command, 
+        int compId, MAV_CMD command,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
     /// Sends the command and calls the callback with the result
@@ -821,7 +822,7 @@ public:
     ///     @param resultHandleData Opaque data passed through callback
     void sendMavCommandIntWithHandler(
         const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
-        int compId, MAV_CMD command, MAV_FRAME frame, 
+        int compId, MAV_CMD command, MAV_FRAME frame,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
 
     typedef enum {
@@ -1397,9 +1398,9 @@ private:
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
     void _sendMavCommandWorker  (
-            bool commandInt, bool showError, 
+            bool commandInt, bool showError,
             const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
-            int compId, MAV_CMD command, MAV_FRAME frame, 
+            int compId, MAV_CMD command, MAV_FRAME frame,
             float param1, float param2, float param3, float param4, double param5, double param6, float param7);
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);

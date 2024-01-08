@@ -1,15 +1,15 @@
-import QtQml.Models                 2.12
-import QtQuick                      2.12
-import QtQuick.Controls             2.15
-import QtQuick.Layouts              1.11
-import QtQuick.Dialogs              1.2
-import QtPositioning                5.3
+import QtQml.Models
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtPositioning
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
+import QGroundControl.ScreenTools
+import QGroundControl.FactControls
 
 Item {
     id:     rootItem

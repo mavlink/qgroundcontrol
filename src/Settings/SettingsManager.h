@@ -29,7 +29,6 @@
 #include "FirmwareUpgradeSettings.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "BatteryIndicatorSettings.h"
-#include "CameraControlSettings.h"
 #include "GimbalControllerSettings.h"
 #include <QVariantList>
 #include "RemoteIDSettings.h"
@@ -56,7 +55,6 @@ public:
     Q_PROPERTY(QObject* firmwareUpgradeSettings         READ firmwareUpgradeSettings        CONSTANT)
     Q_PROPERTY(QObject* adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
     Q_PROPERTY(QObject* batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
-    Q_PROPERTY(QObject* cameraControlSettings           READ cameraControlSettings          CONSTANT)
     Q_PROPERTY(QObject* gimbalControllerSettings        READ gimbalControllerSettings       CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
@@ -79,7 +77,6 @@ public:
     FirmwareUpgradeSettings*        firmwareUpgradeSettings     (void) { return _firmwareUpgradeSettings; }
     ADSBVehicleManagerSettings*     adsbVehicleManagerSettings  (void) { return _adsbVehicleManagerSettings; }
     BatteryIndicatorSettings*       batteryIndicatorSettings    (void) { return _batteryIndicatorSettings; }
-    CameraControlSettings*          cameraControlSettings       (void) { return _cameraControlSettings; }
     GimbalControllerSettings*       gimbalControllerSettings    (void) { return _gimbalControllerSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
@@ -100,7 +97,6 @@ private:
     FirmwareUpgradeSettings*        _firmwareUpgradeSettings;
     ADSBVehicleManagerSettings*     _adsbVehicleManagerSettings;
     BatteryIndicatorSettings*       _batteryIndicatorSettings;
-    CameraControlSettings*          _cameraControlSettings;
     GimbalControllerSettings*       _gimbalControllerSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;

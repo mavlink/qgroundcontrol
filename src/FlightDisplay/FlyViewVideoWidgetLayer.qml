@@ -1,10 +1,10 @@
-import QtQuick 2.12
+import QtQuick
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 Item {
     id:           rootItem

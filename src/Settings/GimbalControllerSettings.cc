@@ -15,7 +15,8 @@
 #include <QVariantList>
 
 #ifndef QGC_DISABLE_UVC
-#include <QCameraInfo>
+#include <QMediaDevices>
+#include <QCameraDevice>
 #endif
 
 DECLARE_SETTINGGROUP(GimbalController, "GimbalController")
