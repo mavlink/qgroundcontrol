@@ -85,9 +85,9 @@ Item {
         border.color:   qgcPal.textFieldText
         width:          ScreenTools.defaultFontPixelWidth * 83.33
         height:         ScreenTools.defaultFontPixelHeight * 8.33
-        y:              ScreenTools.defaultFontPixelHeight * 10
         anchors.right:  parent.right
-        opacity:        0.9
+        anchors.bottom: parent.bottom
+        opacity:        0.7
         visible:        activationApproval
         radius:         ScreenTools.defaultFontPixelWidth * 0.833
 

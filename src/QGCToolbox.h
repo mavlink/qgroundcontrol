@@ -40,6 +40,10 @@ class PairingManager;
 class UTMSPManager;
 #endif
 
+#ifdef CONFIG_UTM_ADAPTER
+class UTMSPManager;
+#endif
+
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
     Q_OBJECT

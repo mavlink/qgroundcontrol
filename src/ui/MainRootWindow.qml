@@ -19,8 +19,7 @@ import QGroundControl.Controls
 import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-
-import QGroundControl.UTMSP              1.0
+import QGroundControl.UTMSP
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -252,7 +251,7 @@ ApplicationWindow {
         id:             stackView
         anchors.fill:   parent
 
-        initialItem: FlyView { id: flightView }
+        initialItem: FlyView { id: flightView; utmspSendActTrigger: _utmspSendActTrigger}
     }
 
     footer: LogReplayStatusBar {
@@ -431,6 +430,13 @@ ApplicationWindow {
 
         PlanView {
             id: planView
+            onActivationParamsSent:{
+                if(_utmspEnabled){
+                    _startTimeStamp = startTime
+                    _showVisible = activate
+                    _flightID = flightID
+                }
+            }
         }
     }
 
@@ -821,14 +827,6 @@ ApplicationWindow {
     }
 
     Connections{
-         target: planView
-         function onActivationParamsSent(timestamp,activate,flightID){
-             _startTimeStamp = timestamp
-             _showVisible = activate
-             _flightID = flightID
-         }
-     }
-    Connections{
          target: activationbar
          function onActivationTriggered(value){
               _utmspSendActTrigger= value
@@ -838,7 +836,7 @@ ApplicationWindow {
     UTMSPActivationStatusBar{
          id:                         activationbar
          activationStartTimestamp:  _startTimeStamp
-         activationApproval:        _showVisible && planView.visible == false && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
+         activationApproval:        _showVisible && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
          flightID:                  _flightID
          anchors.fill:              parent
     }
