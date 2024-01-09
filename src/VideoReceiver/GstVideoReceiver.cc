@@ -385,10 +385,10 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if (_needDispatch()) {
         GstElement* videoSink = GST_ELEMENT(sink);
-        gst_object_ref(videoSink);
+        // gst_object_ref(videoSink);
         _slotHandler.dispatch([this, videoSink]() mutable {
             startDecoding(videoSink);
-            gst_object_unref(videoSink);
+            // gst_object_unref(videoSink);
         });
         return;
     }
