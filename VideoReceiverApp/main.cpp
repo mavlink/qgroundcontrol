@@ -1,14 +1,31 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
+#include <QCommandLineParser>
 #include <QQuickWindow>
 #include <QRunnable>
-#include <QCommandLineParser>
 #include <QTimer>
 
+#include "GstVideoReceiver.h"
 #include <gst/gst.h>
 
 #include "QGCLoggingCategory.h"
+
+static QString threadName() {
+    char name[16]; // Thread names in Linux are limited to 16 bytes including the null terminator
+    int retx = pthread_getname_np(pthread_self(), name, sizeof(name));
+    if (retx != 0) {
+        return "???";
+    } else {
+        return name;
+    }
+}
+
+#if defined(qCDebug)
+#undef qCDebug
+#define qCDebug(category, ...) QT_MESSAGE_LOGGER_COMMON(category, QtDebugMsg).debug(__VA_ARGS__) << "[" << threadName() << "]"
+#endif
+
 
 QGC_LOGGING_CATEGORY(AppLog, "VideoReceiverApp")
 
@@ -121,10 +138,18 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 class VideoReceiverApp : public QRunnable
 {
 public:
-    VideoReceiverApp(QCoreApplication& app, bool qmlAllowed)
+    VideoReceiverApp(const QCoreApplication &app, bool qmlAllowed)
         : _app(app)
         , _qmlAllowed(qmlAllowed)
     {}
+
+    ~VideoReceiverApp() override
+    {
+        qCDebug(AppLog) << "VideoReceiverApp::~VideoReceiverApp()";
+        if (this->_videoSink)
+            gst_object_unref (GST_ELEMENT(this->_videoSink));
+
+    }
 
     void run();
 
@@ -138,14 +163,14 @@ protected:
     void _dispatch(std::function<void()> code);
 
 private:
-    QCoreApplication& _app;
+    const QCoreApplication& _app;
     bool _qmlAllowed;
     VideoReceiver* _receiver = nullptr;
     QQuickWindow* _window = nullptr;
     QQuickItem* _widget = nullptr;
     void* _videoSink = nullptr;
     QString _url;
-    unsigned _timeout = 5;
+    unsigned _timeout = 20;
     unsigned _connect = 1;
     bool _decode = true;
     unsigned _stopDecodingAfter = 0;
@@ -162,12 +187,15 @@ private:
 void
 VideoReceiverApp::run()
 {
+    qCDebug(AppLog) << "VideoReceiverApp::run()";
     if((_videoSink = GStreamer::createVideoSink(nullptr, _widget)) == nullptr) {
         qCDebug(AppLog) << "createVideoSink failed";
         return;
     }
 
     _receiver->startDecoding(_videoSink);
+    qCDebug(AppLog) << "VideoReceiverApp::run() after startDecoding";
+
 }
 
 int
@@ -290,6 +318,7 @@ VideoReceiverApp::exec()
     QQmlApplicationEngine engine;
 
     if (_decode && _qmlAllowed) {
+        qCDebug(AppLog) << "Using QML";
         engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
         _window = static_cast<QQuickWindow*>(engine.rootObjects().first());
@@ -376,14 +405,24 @@ VideoReceiverApp::exec()
             } else {
                 qCDebug(AppLog) << "Closing...";
                 delete _receiver;
+                _receiver = nullptr;
                 _app.exit();
             }
         });
      });
 
     startStreaming();
+    qCDebug(AppLog) << "after startStreaming()";
 
-    return _app.exec();
+    int ret = _app.exec();
+    qCDebug(AppLog) << "VideoReceiverApp::exec()";
+    auto element = GST_ELEMENT(_videoSink);
+    gst_element_set_state (element, GST_STATE_NULL);
+    gst_object_unref (element);
+
+    gst_deinit ();
+
+    return ret;
 }
 
 void
@@ -403,6 +442,7 @@ VideoReceiverApp::startStreaming()
 void
 VideoReceiverApp::startDecoding()
 {
+    qCDebug(AppLog) << "VideoReceiverApp::startDecoding()";
     if (_qmlAllowed) {
         _window->scheduleRenderJob(this, QQuickWindow::BeforeSynchronizingStage);
     } else {
@@ -450,6 +490,7 @@ VideoReceiverApp::_dispatch(std::function<void()> code)
     timer->moveToThread(qApp->thread());
     timer->setSingleShot(true);
     QObject::connect(timer, &QTimer::timeout, [=](){
+        qCDebug(AppLog) << "dispatching code";
         code();
         timer->deleteLater();
     });
@@ -480,10 +521,16 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    GStreamer::initialize(argc, argv, 3);
+    int ret;
+    {
+        GStreamer::initialize(argc, argv, 3);
+        gst_init (&argc, &argv);
+        const bool runAsQtApp = true;//isQtApp(argv[0]);
+        QGuiApplication app(argc, argv);
+        VideoReceiverApp videoApp(app, runAsQtApp);
+        ret = videoApp.exec();
 
-    const bool runAsQtApp = isQtApp(argv[0]);
-    QGuiApplication app(argc, argv);
-    VideoReceiverApp videoApp(app, runAsQtApp);
-    return videoApp.exec();
+    }
+
+  return ret;
 }
