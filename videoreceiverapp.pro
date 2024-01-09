@@ -59,7 +59,7 @@ HEADERS += \
 
 
 SOURCES += \
-    VideoReceiverApp/main0.cpp \
+    VideoReceiverApp/main.cpp \
     src/QGCLoggingCategory.cc \
 
 RESOURCES += \
