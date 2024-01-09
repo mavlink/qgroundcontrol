@@ -45,7 +45,7 @@ jobs:
           setup-python: true
 
       - name: Install github environment dependencies for unit test running
-        run:  sudo apt-get install libxcb-xinerama0
+        run:  sudo apt-get update && sudo apt-get install libxcb-xinerama0
 
       - name: Install QGC source dependencies
         run:  sudo apt-get install -y libsdl2-dev
