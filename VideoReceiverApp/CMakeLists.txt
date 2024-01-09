@@ -69,7 +69,7 @@ endif()
 #=============================================================================
 # Debug QML
 #
-option(DEBUG_QML "Build VideoReceiverApp with QML debugging/profiling support." FALSE)
+option(DEBUG_QML "Build VideoReceiverApp with QML debugging/profiling support." OFF)
 add_feature_info(DEBUG_QML DEBUG_QML "Build VideoReceiverApp with QML debugging/profiling support.")
 if(DEBUG_QML)
     message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
@@ -78,14 +78,19 @@ if(DEBUG_QML)
     add_definitions(-DQT_QML_DEBUG)
 endif()
 
+if (LINUX)
+    # set to 0 to use X11 instead of Wayland
+    set(USE_WAYLAND 0)
+endif()
+
 #=============================================================================
 # GStreamer
 #
 find_package(PkgConfig)
 pkg_check_modules(GST
-    gstreamer-1.0>=1.20
-    gstreamer-video-1.0>=1.20
-    gstreamer-gl-1.0>=1.20
+    gstreamer-1.0>=1.18
+    gstreamer-video-1.0>=1.18
+    gstreamer-gl-1.0>=1.18
     egl
     )
 
@@ -138,7 +143,7 @@ include_directories(
 add_subdirectory(${QGC_ROOT}/libs/qmlglsink qmlglsink.build)
 add_subdirectory(${QGC_ROOT}/src/VideoReceiver VideoReceiver.build)
 
-set(VIDEORECIVERAPP_SOURCES main.cpp ${QGC_ROOT}/src/QGCLoggingCategory.cc)
+set(VIDEORECIVERAPP_SOURCES main.cpp main0.cpp ${QGC_ROOT}/src/QGCLoggingCategory.cc)
 set(VIDEORECIVERAPP_RESOURCES qml.qrc)
 
 if(ANDROID)
