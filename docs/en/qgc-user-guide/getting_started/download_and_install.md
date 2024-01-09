@@ -51,7 +51,7 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 
 ## Ubuntu Linux {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 20.04 (and later).
+_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later).
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
 Before installing _QGroundControl_ you should remove the modem manager and grant yourself permissions to access the serial port.

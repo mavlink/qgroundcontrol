@@ -52,7 +52,7 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 
 ## Ubuntu Linux {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 20.04 (and later).
+_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later).
 
 Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili kullanımına müdahale eden bir seri modem yöneticisi ile birlikte gelir.
 \_ QGroundControl \_ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz.

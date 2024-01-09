@@ -2,7 +2,7 @@
 # QGroundControl linux build environment
 #
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
 
 ARG QT_VERSION=5.15.2

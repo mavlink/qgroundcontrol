@@ -52,7 +52,7 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 
 ## 우분투 리눅스 {#ubuntu}
 
-_QGroundControl_은 Ubuntu LTS 20.04 이상의 버전에 설치됩니다.
+_QGroundControl_은 Ubuntu LTS 22.04 이상의 버전에 설치됩니다.
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
 _QGroundControl_을 설치 전에 모뎀 관리자를 제거하고, 직렬 포트 접근 권한을 부여합니다.

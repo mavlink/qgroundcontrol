@@ -6,7 +6,7 @@ This can give you a massive boost in productivity and help with testing.
 ## About the Container
 
 The Container is located in the `./deploy/docker` directory.
-It's based on ubuntu 20.04.
+It's based on ubuntu 22.04.
 It pre-installs all the dependencies at build time, including Qt, thanks to a script located in the same directory, `install-qt-linux.sh`.
 The main advantage of using the container is the usage of the `CMake` build system and its many improvements over `qmake`
 
