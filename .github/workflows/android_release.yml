@@ -123,10 +123,6 @@ jobs:
         working-directory: ${{ runner.temp }}/shadow_build_dir
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-          ANDROID_NDK_LATEST_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-          ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         run:  |
             ls /home/runner/work/_temp/Qt/6.6.1
             qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
