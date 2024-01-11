@@ -194,7 +194,6 @@ Item {
                         iconSource:         "/HA_Icons/CAMERA_90.png"
                         onTriggered: {
                             if (_activeVehicle) {
-                                _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
                                 _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(-90, 0) // point gimbal down
                             }
                         }
