@@ -23,7 +23,7 @@ Item {
     property bool  _selectPanelVisible:      selectToolStripAction.checked
     property bool  _actionsMapPanelVisible:  mapToolsToolStripAction.checked && mapToolsToolStripAction.enabled
     property var   _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
-    property var   _gimbalController:        _activeVehicle ? _activeVehicle.gimbalController : undefined  
+    property var   _gimbalController:        _activeVehicle ? _activeVehicle.gimbalController : undefined
 
     Connections {
         // Setting target to null makes this connection efectively disabled, dealing with qml warnings
@@ -32,7 +32,7 @@ Item {
             showAcquireGimbalControlPopup()
         }
     }
-    
+
     function showAcquireGimbalControlPopup() {
         // TODO: we should mention who is currently in control
         mainWindow.showMessageDialog(
@@ -49,13 +49,13 @@ Item {
         id:                toolStripPanelVideo
         model:             toolStripActionList.model
         forceImageScale11: true
-        
+
         property bool panelHidden: false
 
         function togglePanelVisibility() {
             if (panelHidden) {
                 panelHidden = false
-            } else { 
+            } else {
                 panelHidden = true
             }
         }
@@ -74,7 +74,7 @@ Item {
                     iconSource:         "/HA_Icons/MODES.png"
                     checkable:          true
                     visible:            !toolStripPanelVideo.panelHidden
-                    
+
                     onVisibleChanged: {
                         checked = false
                     }
@@ -96,10 +96,10 @@ Item {
                     iconSource:        "/HA_Icons/PAYLOAD.png"
                     checkable:         false
                     visible:           !toolStripPanelVideo.panelHidden && _activeVehicle && _gimbalController.activeGimbal
-                    onTriggered:       _activeVehicle ? 
+                    onTriggered:       _activeVehicle ?
                                             hasControl ? _gimbalController.releaseGimbalControl() : _gimbalController.acquireGimbalControl()
                                                 : undefined
-                
+
                     property var hasControl: _gimbalController && _gimbalController.activeGimbal && _gimbalController.activeGimbal.gimbalHaveControl
                 },
                 ToolStripAction {
@@ -108,7 +108,7 @@ Item {
                     iconSource:         "/HA_Icons/SELECT.png"
                     checkable:          true
                     visible:            !toolStripPanelVideo.panelHidden && _gimbalController ? _gimbalController.gimbals.count : false
-                    
+
                     onVisibleChanged: {
                         checked = false
                     }
@@ -192,7 +192,7 @@ Item {
                     ToolStripAction {
                         text:               qsTr("Tilt 90")
                         iconSource:         "/HA_Icons/CAMERA_90.png"
-                        onTriggered: { 
+                        onTriggered: {
                             if (_activeVehicle) {
                                 _activeVehicle.gimbalController.toggleGimbalYawLock(true, false) // we need yaw lock for this
                                 _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(-90, 0) // point gimbal down
@@ -215,7 +215,7 @@ Item {
                         onVisibleChanged: {
                             if (!visible)
                                 checked = false
-                        } 
+                        }
                     }
                 ]
             }
@@ -226,7 +226,7 @@ Item {
             color:   qgcPal.window
             radius:  ScreenTools.defaultFontPixelWidth / 2
             visible: rootItem._actionsMapPanelVisible && rootItem._actionsPanelVisible
-            
+
             anchors.left:   actionsToolStrip.right
             anchors.right:  parent.right
             anchors.top:    parent.top
@@ -239,7 +239,7 @@ Item {
             DeadMouseArea {
                 anchors.fill: parent
             }
-        
+
             QGCLabel {
                 id: gimbalMapActionsLabel
                 text: qsTr("Map ROI targetting tools")
@@ -311,7 +311,7 @@ Item {
                     pointSize:         ScreenTools.smallFontPointSize
                     implicitHeight:    ScreenTools.implicitButtonHeight * 0.6
                     backRadius:        ScreenTools.defaultFontPixelWidth / 2
-                    
+
                     onCheckedChanged: {
                         if (_activeVehicle) {
                             _activeVehicle.GimbalClickOnMapActive = checked
@@ -343,7 +343,7 @@ Item {
                     backRadius:         ScreenTools.defaultFontPixelWidth / 2
                     pointSize:          ScreenTools.smallFontPointSize
                     implicitHeight:     ScreenTools.implicitButtonHeight * 0.6
-                    
+
 
                     onClicked: {
                         var coordinate = QtPositioning.coordinate(_activeVehicle.gimbalTargetSetLatitude.rawValue, _activeVehicle.gimbalTargetSetLongitude.rawValue, _activeVehicle.gimbalTargetSetAltitude.rawValue)
@@ -368,7 +368,7 @@ Item {
                     implicitHeight:   ScreenTools.implicitButtonHeight * 0.6
                     backRadius:       ScreenTools.defaultFontPixelWidth / 2
                     Layout.fillWidth: true
-                    
+
                     onPressed: {
                         if (_activeVehicle) {
                             _activeVehicle.stopGuidedModeROI()
