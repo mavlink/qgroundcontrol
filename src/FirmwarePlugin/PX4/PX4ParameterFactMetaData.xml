@@ -3336,15 +3336,7 @@
     </parameter>
     <parameter name="FW_T_I_GAIN_PIT" default="0.1" type="FLOAT">
       <short_desc>Integrator gain pitch</short_desc>
-      <long_desc>This is the integrator gain on the pitch part of the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
-      <min>0.0</min>
-      <max>2.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_T_I_GAIN_THR" default="0.05" type="FLOAT">
-      <short_desc>Integrator gain throttle</short_desc>
-      <long_desc>This is the integrator gain on the throttle part of the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
+      <long_desc>Integrator gain on the pitch part of the control loop. Increase it to trim out speed and height offsets faster, with the downside of possible overshoots and oscillations.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
@@ -3440,13 +3432,21 @@
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_T_THR_DAMP" default="0.1" type="FLOAT">
+    <parameter name="FW_T_THR_DAMPING" default="0.05" type="FLOAT">
       <short_desc>Throttle damping factor</short_desc>
       <long_desc>This is the damping gain for the throttle demand loop. Increase to add damping to correct for oscillations in speed and height.</long_desc>
       <min>0.0</min>
-      <max>2.0</max>
-      <decimal>2</decimal>
-      <increment>0.1</increment>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_T_THR_INTEG" default="0.02" type="FLOAT">
+      <short_desc>Integrator gain throttle</short_desc>
+      <long_desc>Integrator gain on the throttle part of the control loop. Increase it to trim out speed and height offsets faster, with the downside of possible overshoots and oscillations.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
     </parameter>
     <parameter name="FW_T_VERT_ACC" default="7.0" type="FLOAT">
       <short_desc>Maximum vertical acceleration</short_desc>
