@@ -126,22 +126,6 @@ ApplicationWindow {
         return _rgPreventViewSwitch[_rgPreventViewSwitch.length - 1]
     }
 
-    function viewSwitch(currentToolbar) {
-        toolDrawer.visible      = false
-        toolDrawer.toolSource   = ""
-        flightView.visible      = false
-        planView.visible        = false
-        toolbar.currentToolbar  = currentToolbar
-    }
-
-    function showFlyView() {
-        if (!flightView.visible) {
-            mainWindow.showPreFlightChecklistIfNeeded()
-        }
-        viewSwitch(toolbar.flyViewToolbar)
-        flightView.visible = true
-    }
-
     function showPlanView() {
         viewSwitch(toolbar.planViewToolbar)
         planView.visible = true
