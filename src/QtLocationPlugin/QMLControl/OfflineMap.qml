@@ -449,11 +449,6 @@ Item {
             onWidthChanged:     handleChanges()
             onHeightChanged:    handleChanges()
 
-            // Used to make pinch zoom work
-            MouseArea {
-                anchors.fill: parent
-            }
-
             MapScale {
                 anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
                 anchors.bottomMargin:   anchors.leftMargin
