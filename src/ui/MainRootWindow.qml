@@ -111,11 +111,6 @@ ApplicationWindow {
         return globals.validationError
     }
 
-    function viewSwitch(currentToolbar) {
-        toolDrawer.visible      = false
-        toolDrawer.toolSource   = ""
-    }
-
     function showPlanView() {
         stackView.push(planViewComponenent)
     }
