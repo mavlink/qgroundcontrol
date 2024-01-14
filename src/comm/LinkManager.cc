@@ -37,13 +37,11 @@
 #include "MockLink.h"
 #endif
 
-#ifndef QT6_DISABLE_DNSENGINE
 #include <qmdnsengine/browser.h>
 #include <qmdnsengine/cache.h>
 #include <qmdnsengine/mdns.h>
 #include <qmdnsengine/server.h>
 #include <qmdnsengine/service.h>
-#endif
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
@@ -432,7 +430,6 @@ void LinkManager::_addMAVLinkForwardingLink(void)
 
 void LinkManager::_addZeroConfAutoConnectLink(void)
 {
-#ifndef QT6_DISABLE_DNSENGINE
     if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
         return;
     }
@@ -500,7 +497,6 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
             return;
         }
     });
-#endif
 }
 
 void LinkManager::_updateAutoConnectLinks(void)
