@@ -16,12 +16,12 @@ Item {
     property var screenXrateInitCoocked
     property var screenYrateInitCoocked
 
-    property var  _gimbalController:         _activeVehicle ? _activeVehicle.gimbalController : undefined  
+    property var  _gimbalController:         _activeVehicle ? _activeVehicle.gimbalController : undefined
     property var  _activeGimbal:             _gimbalController ? _gimbalController.activeGimbal : undefined
     property bool _gimbalAvailable:          _activeGimbal != undefined
     property var  _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
     property var  _activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
-    
+
     property bool shouldProcessClicks:   QGroundControl.videoManager.fullScreen || flyViewVideoWidgetLayer._gimbalControllerSettings.EnableOnScreenControl.value ||
                                          _activeVehicle
 
@@ -70,7 +70,7 @@ Item {
         }
         sendRateTimer.stop()
         screenXrateInitCoocked = null
-        screenYrateInitCoocked = null 
+        screenYrateInitCoocked = null
         // _activeVehicle.gimbalController.gimbalOnScreenControl(0, 0, false, true, true)
     }
 
@@ -94,7 +94,7 @@ Item {
     // Pitch/Roll indicators
     Rectangle {
         id: pitchRollRectangle
-        width: gimbalPitchLabel.width + gimbalPanLabel.width + ScreenTools.defaultFontPixelWidth * 5
+        width: gimbalPitchLabel.width + gimbalPanLabel.width + ScreenTools.defaultFontPixelWidth * 20
         height: gimbalPitchLabel.height + ScreenTools.defaultFontPixelWidth * 2
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
@@ -103,7 +103,7 @@ Item {
 
         QGCLabel {
             id: gimbalPitchLabel
-            text: rootItem._gimbalAvailable ? "Tilt: " + rootItem._gimbalController.activeGimbal.curPitch.toFixed(2) : ""
+            text: rootItem._gimbalAvailable ? "Tilt: " + rootItem._gimbalController.activeGimbal.absolutePitch.toFixed(1) : ""
             visible: rootItem._gimbalAvailable
             anchors.top: parent.top
             anchors.left: parent.horizontalCenter
@@ -112,7 +112,7 @@ Item {
 
         QGCLabel {
             id: gimbalPanLabel
-            text: rootItem._gimbalAvailable ? "Pan: " + rootItem._gimbalController.activeGimbal.curYaw.toFixed(2) : ""
+            text: rootItem._gimbalAvailable ? "Pan: " + rootItem._gimbalController.activeGimbal.bodyYaw.toFixed(1) + ", from North: " + rootItem._gimbalController.activeGimbal.absoluteYaw.toFixed(1): ""
             visible: rootItem._gimbalAvailable
             anchors.top: parent.top
             anchors.right: parent.horizontalCenter

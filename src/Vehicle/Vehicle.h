@@ -261,10 +261,6 @@ public:
     Q_PROPERTY(float                mavlinkLossPercent          READ mavlinkLossPercent                                             NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(GimbalController*    gimbalController            READ gimbalController                                               NOTIFY gimbalControllerChanged)
     Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
-    Q_PROPERTY(bool                 gimbalRetracted             READ gimbalRetracted                                                NOTIFY gimbalRetractedChanged)
-    Q_PROPERTY(bool                 gimbalNeutral               READ gimbalNeutral                                                  NOTIFY gimbalNeutralChanged)
-    Q_PROPERTY(bool                 gimbalYawLock               READ gimbalYawLock                                                  NOTIFY gimbalYawLockChanged)
-    Q_PROPERTY(bool                 gimbalClickOnMapActive      READ gimbalClickOnMapActive     WRITE setGimbalClickOnMapActive     NOTIFY gimbalClickOnMapActiveChanged)
     Q_PROPERTY(bool                 isROIEnabled                READ isROIEnabled                                                   NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState              READ checkListState             WRITE setCheckListState             NOTIFY checkListStateChanged)
     Q_PROPERTY(bool                 readyToFlyAvailable         READ readyToFlyAvailable                                            NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
@@ -924,12 +920,6 @@ public:
 
     bool        isROIEnabled            () const{ return _isROIEnabled; }
 
-    //uint32_t    gimbalStatusFlags         ()   const{ return _gimbalStatusFlags; }
-    bool        gimbalRetracted           ()   const{ return _gimbalRetracted; }
-    bool        gimbalNeutral             ()   const{ return _gimbalNeutral; }
-    bool        gimbalYawLock             ()   const{ return _gimbalYawLock; }
-    bool        gimbalClickOnMapActive    ()   const{ return _gimbalClickOnMapActive; }
-    void        setGimbalClickOnMapActive(bool set) { _gimbalClickOnMapActive = set; }
     GimbalController* gimbalController    () { return _gimbalController; }
 
     CheckList   checkListState          () { return _checkListState; }

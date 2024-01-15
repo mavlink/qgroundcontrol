@@ -194,7 +194,7 @@ Item {
                         iconSource:         "/HA_Icons/CAMERA_90.png"
                         onTriggered: {
                             if (_activeVehicle) {
-                                _activeVehicle.gimbalController.sendGimbalManagerPitchYaw(-90, 0) // point gimbal down
+                                _activeVehicle.gimbalController.sendPitchBodyYaw(-90, 0) // point gimbal down
                             }
                         }
                     },

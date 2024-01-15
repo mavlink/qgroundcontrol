@@ -718,7 +718,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            disconnect(this, &Joystick::gimbalStepPitchYaw, _activeVehicle->gimbalController(), &GimbalController::gimbalStepPitchYaw);
+            disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStep);
+            disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStep);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
@@ -740,7 +741,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             connect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            connect(this, &Joystick::gimbalStepPitchYaw, _activeVehicle->gimbalController(), &GimbalController::gimbalStepPitchYaw);
+            connect(this, &Joystick::gimbalPitchStep,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStep);
+            connect(this, &Joystick::gimbalYawStep,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStep);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             connect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             connect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
@@ -760,7 +762,8 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle->gimbalController(), &GimbalController::centerGimbal);
-            disconnect(this, &Joystick::gimbalStepPitchYaw, _activeVehicle->gimbalController(), &GimbalController::gimbalStepPitchYaw);
+            disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStep);
+            disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStep);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
@@ -1037,13 +1040,13 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
     } else if(action == _buttonActionToggleVideoRecord) {
         if (buttonDown) emit toggleVideoRecord();
     } else if(action == _buttonActionGimbalUp) {
-        if (buttonDown) emit gimbalStepPitchYaw(1, 0);
+        if (buttonDown) emit gimbalPitchStep(1);
     } else if(action == _buttonActionGimbalDown) {
-        if (buttonDown) emit gimbalStepPitchYaw(-1, 0);
+        if (buttonDown) emit gimbalPitchStep(-1);
     } else if(action == _buttonActionGimbalLeft) {
-        if (buttonDown) emit gimbalStepPitchYaw(0, -1);
+        if (buttonDown) emit gimbalYawStep(-1);
     } else if(action == _buttonActionGimbalRight) {
-        if (buttonDown) emit gimbalStepPitchYaw(0, 1);
+        if (buttonDown) emit gimbalYawStep(1);
     } else if(action == _buttonActionGimbalCenter) {
         if (buttonDown) emit centerGimbal();
     } else if(action == _buttonActionEmergencyStop) {

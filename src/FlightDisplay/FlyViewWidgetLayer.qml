@@ -288,7 +288,7 @@ Item {
     GripperMenu {
         id: gripperOptions
     }
-    
+
     // need to manage full screen here
     FlyViewVideoToolStrip {
         id:                     videoToolStrip
@@ -327,20 +327,20 @@ Item {
         // Pitch/Roll indicators
     Rectangle {
         id: pitchRollRectangle
-        width: gimbalPitchLabel.width + gimbalPanLabel.width + ScreenTools.defaultFontPixelWidth * 5
+        width: gimbalPitchLabel.width + gimbalPanLabel.width + ScreenTools.defaultFontPixelWidth * 20
         height: gimbalPitchLabel.height + ScreenTools.defaultFontPixelWidth * 2
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         color: qgcPal.window
         opacity: 0.8
 
-        property var _gimbalController: _activeVehicle ? _activeVehicle.gimbalController : undefined  
+        property var _gimbalController: _activeVehicle ? _activeVehicle.gimbalController : undefined
         property var _activeGimbal:     _gimbalController ? _gimbalController.activeGimbal : undefined
         property bool _gimbalAvailable: _activeGimbal != undefined
 
         QGCLabel {
             id: gimbalPitchLabel
-            text: pitchRollRectangle._gimbalAvailable ? "Tilt: " + pitchRollRectangle._activeGimbal.curPitch.toFixed(2) : ""
+            text: pitchRollRectangle._gimbalAvailable ? "Tilt: " + pitchRollRectangle._activeGimbal.absolutePitch.toFixed(1) : ""
             visible: pitchRollRectangle._gimbalAvailable
             anchors.top: parent.top
             anchors.left: parent.horizontalCenter
@@ -349,7 +349,7 @@ Item {
 
         QGCLabel {
             id: gimbalPanLabel
-            text: pitchRollRectangle._gimbalAvailable ? "Pan: " + pitchRollRectangle._activeGimbal.curYaw.toFixed(2) : ""
+            text: pitchRollRectangle._gimbalAvailable ? "Pan: " + pitchRollRectangle._activeGimbal.bodyYaw.toFixed(1) + ", from North: " + pitchRollRectangle._activeGimbal.absoluteYaw.toFixed(1) : ""
             visible: pitchRollRectangle._gimbalAvailable
             anchors.top: parent.top
             anchors.right: parent.horizontalCenter

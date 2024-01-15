@@ -514,7 +514,7 @@ void Vehicle::_commonInit()
 
     // enable Joystick if appropriate
     _loadJoystickSettings();
-    
+
     _gimbalController = new GimbalController(_mavlink, this);
 }
 
@@ -2773,8 +2773,8 @@ double Vehicle::minimumEquivalentAirspeed()
     return _firmwarePlugin->minimumEquivalentAirspeed(this);
 }
 
-bool Vehicle::hasGripper()  const 
-{ 
+bool Vehicle::hasGripper()  const
+{
     return _firmwarePlugin->hasGripper(this);
 }
 
@@ -2867,7 +2867,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
         return;
     }
     // Sanity check Ardupilot. Max altitude processed is 83000
-    if (apmFirmware()) { 
+    if (apmFirmware()) {
         if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000  )) {
             return;
         }
@@ -2905,7 +2905,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
 }
 
 void Vehicle::stopGuidedModeROI()
-{ 
+{
     if (!roiModeSupported()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
@@ -3082,7 +3082,9 @@ void Vehicle::sendMavCommandIntWithHandler(const MavCmdAckHandlerInfo_t* ackHand
 
 bool Vehicle::isMavCommandPending(int targetCompId, MAV_CMD command)
 {
-    return ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
+    bool pending = ((-1) < _findMavCommandListEntryIndex(targetCompId, command));
+    qDebug() << "Pending target: " << targetCompId << ", command: " << (int)command << ", pending: " << (pending ? "yes" : "no");
+    return pending;
 }
 
 int Vehicle::_findMavCommandListEntryIndex(int targetCompId, MAV_CMD command)
@@ -3143,12 +3145,12 @@ bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
 }
 
 void Vehicle::_sendMavCommandWorker(
-    bool        commandInt, 
-    bool        showError, 
+    bool        commandInt,
+    bool        showError,
     const MavCmdAckHandlerInfo_t* ackHandlerInfo,
-    int         targetCompId, 
-    MAV_CMD     command, 
-    MAV_FRAME   frame, 
+    int         targetCompId,
+    MAV_CMD     command,
+    MAV_FRAME   frame,
     float param1, float param2, float param3, float param4, double param5, double param6, float param7)
 {
     // We can't send commands to compIdAll using this method. The reason being that we would get responses back possibly from multiple components
@@ -3159,7 +3161,7 @@ void Vehicle::_sendMavCommandWorker(
         bool    compIdAll       = targetCompId == MAV_COMP_ID_ALL;
         QString rawCommandName  = _toolbox->missionCommandTree()->rawName(command);
 
-        qCDebug(VehicleLog) << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supportded" : "duplicate command") << rawCommandName;
+        qDebug() << QStringLiteral("_sendMavCommandWorker failing %1").arg(compIdAll ? "MAV_COMP_ID_ALL not supportded" : "duplicate command") << rawCommandName;
 
         MavCmdResultFailureCode_t failureCode = compIdAll ? MavCmdResultCommandResultOnly : MavCmdResultFailureDuplicateCommand;
         if (ackHandlerInfo && ackHandlerInfo->resultHandler) {
@@ -3313,7 +3315,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_msg_command_ack_decode(&message, &ack);
 
     QString rawCommandName  =_toolbox->missionCommandTree()->rawName(static_cast<MAV_CMD>(ack.command));
-    qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
+    qDebug() << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
 
     if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
         if (ack.result == MAV_RESULT_ACCEPTED) {
@@ -3969,7 +3971,7 @@ void Vehicle::_handleRawImuTemp(mavlink_message_t& message)
 {
     // This is used by compass calibration
     emit mavlinkRawImu(message);
-    
+
     mavlink_raw_imu_t imuRaw;
     mavlink_msg_raw_imu_decode(&message, &imuRaw);
 
@@ -4222,8 +4224,8 @@ void Vehicle::doSetHome(const QGeoCoordinate& coord)
             disconnect(_currentDoSetHomeTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_doSetHomeTerrainReceived);
             _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
         }
-        // Save the coord for using when our terrain data arrives. If there was a pending terrain query paired with an older coordinate it is safe to 
-        // Override now, as we just disconnected the signal that would trigger the command sending 
+        // Save the coord for using when our terrain data arrives. If there was a pending terrain query paired with an older coordinate it is safe to
+        // Override now, as we just disconnected the signal that would trigger the command sending
         _doSetHomeCoordinate = coord;
         // Now setup and trigger the new terrain query
         _currentDoSetHomeTerrainAtCoordinateQuery = new TerrainAtCoordinateQuery(true /* autoDelet */);
@@ -4265,7 +4267,7 @@ void Vehicle::_doSetHomeTerrainReceived(bool success, QList<double> heights)
     _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
     _doSetHomeCoordinate = QGeoCoordinate(); // So isValid() will no longer return true, for extra safety
 }
-    
+
 void Vehicle::_updateAltAboveTerrain()
 {
     // We won't do another query if the previous query was done closer than 2 meters from current position
@@ -4491,16 +4493,16 @@ void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
 void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
 {
     switch(gripperOption) {
-        case Gripper_release: 
+        case Gripper_release:
             setGripperAction(GRIPPER_ACTION_RELEASE);
             break;
-        case Gripper_grab: 
+        case Gripper_grab:
             setGripperAction(GRIPPER_ACTION_GRAB);
             break;
         case Invalid_option:
             qDebug("unknown function");
             break;
-        default: 
+        default:
         break;
     }
 }
