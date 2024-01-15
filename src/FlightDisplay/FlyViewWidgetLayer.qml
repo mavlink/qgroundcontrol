@@ -289,6 +289,18 @@ Item {
         id: gripperOptions
     }
 
+    // need to manage full screen here
+    FlyViewVideoToolStrip {
+        id:                     videoToolStrip
+        anchors.leftMargin:     _toolsMargin
+        anchors.topMargin:      _toolsMargin
+        anchors.left:           toolStrip.right
+        anchors.top:            parent.top
+        z:                      QGroundControl.zOrderWidgets
+        maxWidth:               parent.width * 0.5 - toolStrip.width + _toolsMargin
+        visible:                !QGroundControl.videoManager.fullScreen
+    }
+
     VehicleWarnings {
         anchors.centerIn:   parent
         z:                  QGroundControl.zOrderTopMost
@@ -297,7 +309,7 @@ Item {
     MapScale {
         id:                 mapScale
         anchors.margins:    _toolsMargin
-        anchors.left:       toolStrip.right
+        anchors.left:       videoToolStrip.right
         anchors.top:        parent.top
         mapControl:         _mapControl
         buttonsOnLeft:      true
@@ -309,6 +321,39 @@ Item {
     Component {
         id: preFlightChecklistPopup
         FlyViewPreFlightChecklistPopup {
+        }
+    }
+
+        // Pitch/Roll indicators
+    Rectangle {
+        id: pitchRollRectangle
+        width: gimbalPitchLabel.width + gimbalPanLabel.width + ScreenTools.defaultFontPixelWidth * 20
+        height: gimbalPitchLabel.height + ScreenTools.defaultFontPixelWidth * 2
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        color: qgcPal.window
+        opacity: 0.8
+
+        property var _gimbalController: _activeVehicle ? _activeVehicle.gimbalController : undefined
+        property var _activeGimbal:     _gimbalController ? _gimbalController.activeGimbal : undefined
+        property bool _gimbalAvailable: _activeGimbal != undefined
+
+        QGCLabel {
+            id: gimbalPitchLabel
+            text: pitchRollRectangle._gimbalAvailable ? "Tilt: " + pitchRollRectangle._activeGimbal.absolutePitch.toFixed(1) : ""
+            visible: pitchRollRectangle._gimbalAvailable
+            anchors.top: parent.top
+            anchors.left: parent.horizontalCenter
+            anchors.margins: ScreenTools.defaultFontPixelWidth
+        }
+
+        QGCLabel {
+            id: gimbalPanLabel
+            text: pitchRollRectangle._gimbalAvailable ? "Pan: " + pitchRollRectangle._activeGimbal.bodyYaw.toFixed(1) + ", from North: " + pitchRollRectangle._activeGimbal.absoluteYaw.toFixed(1) : ""
+            visible: pitchRollRectangle._gimbalAvailable
+            anchors.top: parent.top
+            anchors.right: parent.horizontalCenter
+            anchors.margins: ScreenTools.defaultFontPixelWidth
         }
     }
 }

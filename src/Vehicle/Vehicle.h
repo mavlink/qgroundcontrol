@@ -78,6 +78,7 @@ class LinkManager;
 class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
+class GimbalController;
 
 Q_MOC_INCLUDE("AutoPilotPlugin.h")
 Q_MOC_INCLUDE("TrajectoryPoints.h")
@@ -90,6 +91,7 @@ Q_MOC_INCLUDE("QGCCameraManager.h")
 #ifndef OPAQUE_PTR_VEHICLE
     #define OPAQUE_PTR_VEHICLE
     Q_DECLARE_OPAQUE_POINTER(Actuators*)
+    Q_DECLARE_OPAQUE_POINTER(GimbalController*)
 #endif
 
 namespace events {
@@ -257,10 +259,7 @@ public:
     Q_PROPERTY(quint64              mavlinkReceivedCount        READ mavlinkReceivedCount                                           NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkLossCount            READ mavlinkLossCount                                               NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent          READ mavlinkLossPercent                                             NOTIFY mavlinkStatusChanged)
-    Q_PROPERTY(qreal                gimbalRoll                  READ gimbalRoll                                                     NOTIFY gimbalRollChanged)
-    Q_PROPERTY(qreal                gimbalPitch                 READ gimbalPitch                                                    NOTIFY gimbalPitchChanged)
-    Q_PROPERTY(qreal                gimbalYaw                   READ gimbalYaw                                                      NOTIFY gimbalYawChanged)
-    Q_PROPERTY(bool                 gimbalData                  READ gimbalData                                                     NOTIFY gimbalDataChanged)
+    Q_PROPERTY(GimbalController*    gimbalController            READ gimbalController                                               NOTIFY gimbalControllerChanged)
     Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
     Q_PROPERTY(bool                 isROIEnabled                READ isROIEnabled                                                   NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState              READ checkListState             WRITE setCheckListState             NOTIFY checkListStateChanged)
@@ -325,6 +324,9 @@ public:
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
     Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
     Q_PROPERTY(Fact* imuTemp            READ imuTemp            CONSTANT)
+    Q_PROPERTY(Fact* gimbalTargetSetLatitude   READ gimbalTargetSetLatitude   CONSTANT)
+    Q_PROPERTY(Fact* gimbalTargetSetLongitude  READ gimbalTargetSetLongitude  CONSTANT)
+    Q_PROPERTY(Fact* gimbalTargetSetAltitude   READ gimbalTargetSetAltitude   CONSTANT)
 
     Q_PROPERTY(FactGroup*           gps             READ gpsFactGroup               CONSTANT)
     Q_PROPERTY(FactGroup*           gps2            READ gps2FactGroup              CONSTANT)
@@ -458,10 +460,6 @@ public:
 
     Q_INVOKABLE void setPIDTuningTelemetryMode(PIDTuningTelemetryMode mode);
 
-    Q_INVOKABLE void gimbalControlValue (double pitch, double yaw);
-    Q_INVOKABLE void gimbalPitchStep    (int direction);
-    Q_INVOKABLE void gimbalYawStep      (int direction);
-    Q_INVOKABLE void centerGimbal       ();
     Q_INVOKABLE void forceArm           ();
 
     /// Sends PARAM_MAP_RC message to vehicle
@@ -548,20 +546,20 @@ public:
 
     /**
      * @brief Send MAV_CMD_DO_GRIPPER command to trigger specified action in the vehicle
-     * 
+     *
      * @param gripperAction Gripper action to trigger
     */
 
     enum    GRIPPER_OPTIONS
     {
-    Gripper_release = GRIPPER_ACTION_RELEASE, 
+    Gripper_release = GRIPPER_ACTION_RELEASE,
     Gripper_grab    = GRIPPER_ACTION_GRAB,
     Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
-    }; 
+    };
     Q_ENUM(GRIPPER_OPTIONS)
 
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
-    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption); 
+    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption);
 
     bool fixedWing() const;
     bool multiRotor() const;
@@ -720,6 +718,9 @@ public:
     Fact* hobbs                             () { return &_hobbsFact; }
     Fact* throttlePct                       () { return &_throttlePctFact; }
     Fact* imuTemp                           () { return &_imuTempFact; }
+    Fact* gimbalTargetSetLatitude           () { return &_gimbalTargetSetLatitudeFact; }
+    Fact* gimbalTargetSetLongitude          () { return &_gimbalTargetSetLongitudeFact; }
+    Fact* gimbalTargetSetAltitude           () { return &_gimbalTargetSetAltitudeFact; }
 
     FactGroup* gpsFactGroup                 () { return &_gpsFactGroup; }
     FactGroup* gps2FactGroup                () { return &_gps2FactGroup; }
@@ -801,7 +802,7 @@ public:
     // Callback info for sendMavCommandWithHandler
     typedef struct MavCmdAckHandlerInfo_s {
         MavCmdResultHandler     resultHandler;          ///> nullptr for no handler
-        void*                   resultHandlerData; 
+        void*                   resultHandlerData;
         MavCmdProgressHandler   progressHandler;
         void*                   progressHandlerData;    ///> nullptr for no handler
     } MavCmdAckHandlerInfo_t;
@@ -809,7 +810,7 @@ public:
     /// Sends the command and calls the callback with the result
     void sendMavCommandWithHandler(
         const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
-        int compId, MAV_CMD command, 
+        int compId, MAV_CMD command,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
     /// Sends the command and calls the callback with the result
@@ -817,7 +818,7 @@ public:
     ///     @param resultHandleData Opaque data passed through callback
     void sendMavCommandIntWithHandler(
         const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
-        int compId, MAV_CMD command, MAV_FRAME frame, 
+        int compId, MAV_CMD command, MAV_FRAME frame,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, float param7 = 0.0f);
 
     typedef enum {
@@ -917,11 +918,9 @@ public:
     quint64     mavlinkLossCount        () const{ return _mavlinkLossCount; }        /// Total number of lost messages
     float       mavlinkLossPercent      () const{ return _mavlinkLossPercent; }      /// Running loss rate
 
-    qreal       gimbalRoll              () const{ return static_cast<qreal>(_curGimbalRoll);}
-    qreal       gimbalPitch             () const{ return static_cast<qreal>(_curGimbalPitch); }
-    qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGimbalYaw); }
-    bool        gimbalData              () const{ return _haveGimbalData; }
     bool        isROIEnabled            () const{ return _isROIEnabled; }
+
+    GimbalController* gimbalController    () { return _gimbalController; }
 
     CheckList   checkListState          () { return _checkListState; }
     void        setCheckListState       (CheckList cl)  { _checkListState = cl; emit checkListStateChanged(); }
@@ -1036,11 +1035,12 @@ signals:
     void requestProtocolVersion         (unsigned version);
     void mavlinkStatusChanged           ();
 
-    void gimbalRollChanged              ();
-    void gimbalPitchChanged             ();
-    void gimbalYawChanged               ();
-    void gimbalDataChanged              ();
+    void gimbalRetractedChanged         ();
+    void gimbalNeutralChanged           ();
+    void gimbalYawLockChanged           ();
+    void gimbalClickOnMapActiveChanged  ();
     void isROIEnabledChanged            ();
+    void gimbalControllerChanged        ();
     void initialConnectComplete         ();
 
     void sensorsParametersResetAck      (bool success);
@@ -1161,7 +1161,7 @@ private:
 
     bool            _joystickEnabled = false;
 
-    UAS* _uas = nullptr;
+    UAS*            _uas = nullptr;
 
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;
@@ -1225,6 +1225,7 @@ private:
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
+    GimbalController*               _gimbalController               = nullptr;
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT
@@ -1265,12 +1266,17 @@ private:
     uint8_t             _compID = 0;
     bool                _heardFrom = false;
 
-    float               _curGimbalRoll  = 0.0f;
-    float               _curGimbalPitch = 0.0f;
-    float               _curGimbalYaw  = 0.0f;
-    bool                _haveGimbalData = false;
     bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
+    bool                _gimbalRetracted = false;
+    bool                _gimbalNeutral = false;
+    bool                _gimbalYawLock = false;
+    bool                _roiApmCancelSent = false;
+    uint8_t             _gimbalPanChannel = 0;
+    uint8_t             _gimbalTiltChannel = 0;
+    uint8_t             _gimbalYawLockChannel = 0;
+    uint8_t             _gimbalRetractChannel = 0;
+    bool                _gimbalClickOnMapActive = false;
 
     bool _checkLatestStableFWDone = false;
     int _firmwareMajorVersion = versionNotSetValue;
@@ -1382,9 +1388,9 @@ private:
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
     void _sendMavCommandWorker  (
-            bool commandInt, bool showError, 
+            bool commandInt, bool showError,
             const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
-            int compId, MAV_CMD command, MAV_FRAME frame, 
+            int compId, MAV_CMD command, MAV_FRAME frame,
             float param1, float param2, float param3, float param4, double param5, double param6, float param7);
     void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
@@ -1430,6 +1436,9 @@ private:
     Fact _hobbsFact;
     Fact _throttlePctFact;
     Fact _imuTempFact;
+    Fact _gimbalTargetSetLatitudeFact;
+    Fact _gimbalTargetSetLongitudeFact;
+    Fact _gimbalTargetSetAltitudeFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
     VehicleGPS2FactGroup            _gps2FactGroup;
@@ -1491,6 +1500,9 @@ private:
     static const char* _hobbsFactName;
     static const char* _throttlePctFactName;
     static const char* _imuTempFactName;
+    static const char* _gimbalTargetSetLatitudeFactName;
+    static const char* _gimbalTargetSetLongitudeFactName;
+    static const char* _gimbalTargetSetAltitudeFactName;
 
     static const char* _gpsFactGroupName;
     static const char* _gps2FactGroupName;

@@ -213,14 +213,13 @@ signals:
     void gimbalPitchStep            (int direction);
     void gimbalYawStep              (int direction);
     void centerGimbal               ();
-    void gimbalControlValue         (double pitch, double yaw);
     void setArmed                   (bool arm);
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
     void emergencyStop              ();
     /**
      * @brief Send MAV_CMD_DO_GRIPPER command to the vehicle
-     * 
+     *
      * @param gripperAction (Open / Close) Gripper action to command
      */
     void gripperAction              (GRIPPER_ACTIONS gripperAction);
@@ -238,11 +237,6 @@ protected:
     void    _handleAxis             ();
     void    _handleButtons          ();
     void    _buildActionList        (Vehicle* activeVehicle);
-
-    void    _pitchStep              (int direction);
-    void    _yawStep                (int direction);
-    double  _localYaw       = 0.0;
-    double  _localPitch     = 0.0;
 
 private:
     virtual bool _open      ()          = 0;

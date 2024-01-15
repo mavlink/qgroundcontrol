@@ -163,6 +163,27 @@
     "shortDesc": "Imu temperature",
     "type":             "int16",
     "units":            "°C"
+},
+{
+    "name":             "gimbalTargetSetLatitude",
+    "shortDesc":        "Latitude saved to point gimbal to",
+    "type":             "double",
+    "units":            "",
+    "decimalPlaces":    7
+},
+{
+    "name":             "gimbalTargetSetLongitude",
+    "shortDesc":        "Longitude saved to point gimbal to",
+    "type":             "double",
+    "units":            "",
+    "decimalPlaces":    7
+},
+{
+    "name":             "gimbalTargetSetAltitude",
+    "shortDesc":        "Altitude saved to point gimbal to",
+    "type":             "double",
+    "units":            "",
+    "decimalPlaces":    7
 }
 ]
 }

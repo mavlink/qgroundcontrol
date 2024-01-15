@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 
@@ -18,20 +9,21 @@ import QGroundControl.Controls
 Rectangle {
     id:         _root
     color:      qgcPal.toolbarBackground
-    width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
-    height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
+    width:      Math.min(maxWidth, toolStripRow.width + (flickable.anchors.margins * 2))
+    height:      _idealHeight < repeater.contentHeight ? repeater.contentHeight : _idealHeight
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
     property alias  model:              repeater.model
-    property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
+    property real   maxWidth            ///< Maximum width for control, determines whether text is hidden to make control shorter
     property alias  title:              titleLabel.text
     property var    fontSize:           ScreenTools.smallFontPointSize
+    property var    forceImageScale11:  false
 
     property var _dropPanel: dropPanel
 
     function simulateClick(buttonIndex) {
         buttonIndex = buttonIndex + 1 // skip over title label
-        var button = toolStripColumn.children[buttonIndex]
+        var button = toolStripRow.children[buttonIndex]
         if (button.checkable) {
             button.checked = !button.checked
         }
@@ -39,7 +31,7 @@ Rectangle {
     }
 
     // Ensure we don't get narrower than content
-    property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
+    property real _idealHeight: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripRow.anchors.margins * 2
 
     signal dropped(int index)
 
@@ -52,25 +44,30 @@ Rectangle {
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
         anchors.top:        parent.top
         anchors.left:       parent.left
-        anchors.right:      parent.right
-        height:             parent.height - anchors.margins * 2
-        contentHeight:      toolStripColumn.height
-        flickableDirection: Flickable.VerticalFlick
+        anchors.bottom:     parent.bottom
+        width:              parent.width
+        contentWidth:       toolStripRow.width
+        flickableDirection: Flickable.HorizontalFlick
         clip:               true
 
-        Column {
-            id:             toolStripColumn
-            anchors.left:   parent.left
-            anchors.right:  parent.right
+        Row {
+            id:             toolStripRow
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
             spacing:        ScreenTools.defaultFontPixelWidth * 0.25
 
             QGCLabel {
                 id:                     titleLabel
-                anchors.left:           parent.left
-                anchors.right:          parent.right
+                anchors.top:            parent.top
+                anchors.bottom:         parent.bottom
+                width:                  parent.height
                 horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
                 visible:                title != ""
+                wrapMode:               Text.Wrap
+                maximumLineCount:       2
+                elide:                  Text.ElideRight
             }
 
             Repeater {
@@ -78,14 +75,15 @@ Rectangle {
 
                 ToolStripHoverButton {
                     id:                 buttonTemplate
-                    anchors.left:       toolStripColumn.left
-                    anchors.right:      toolStripColumn.right
-                    height:             width
+                    anchors.top:        toolStripRow.top
+                    anchors.bottom:     toolStripRow.bottom
+                    width:              height
                     radius:             ScreenTools.defaultFontPixelWidth / 2
                     fontPointSize:      _root.fontSize
                     toolStripAction:    modelData
                     dropPanel:          _dropPanel
-                    onDropped: (index) => _root.dropped(index)
+                    onDropped:          _root.dropped(index)
+                    forceImageScale11:  _root.forceImageScale11
 
                     onCheckedChanged: {
                         // We deal with exclusive check state manually since usinug autoExclusive caused all sorts of crazt problems

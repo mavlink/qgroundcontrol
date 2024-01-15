@@ -130,7 +130,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
 
-            if(_vehicle->parameterManager()->parameterExists(-1, "MNT_RC_IN_PAN")) {
+            if(_vehicle->parameterManager()->parameterExists(-1, "MNT1_TYPE")) {
                 _cameraComponent = new APMCameraComponent(_vehicle, this);
                 _cameraComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));

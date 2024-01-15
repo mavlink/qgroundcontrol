@@ -81,6 +81,7 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability | ROIModeCapability;
     if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
+        available |= ROIModeCapability;
     } else if (vehicle->vtol()) {
         available |= TakeoffVehicleCapability;
     }
@@ -548,6 +549,7 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         MAV_CMD_DO_SET_ROI,
         MAV_CMD_DO_DIGICAM_CONFIGURE, MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_DO_MOUNT_CONTROL,
+        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_DO_FENCE_ENABLE,
         MAV_CMD_DO_PARACHUTE,
