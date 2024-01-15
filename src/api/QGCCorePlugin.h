@@ -37,7 +37,8 @@ class PlanMasterController;
 class QGCCameraManager;
 class QGCCameraControl;
 class QQuickItem;
-class InstrumentValueAreaController;
+
+Q_MOC_INCLUDE("QGCOptions.h")
 
 class QGCCorePlugin : public QGCTool
 {

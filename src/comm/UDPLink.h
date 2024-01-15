@@ -54,7 +54,7 @@ public:
     UDPConfiguration(UDPConfiguration* source);
     ~UDPConfiguration();
 
-    quint16 localPort   () { return _localPort; }
+    quint16 localPort   () const{ return _localPort; }
 
     /// @param[in] host Host name in standard formatt, e.g. localhost:14551 or 192.168.1.1:14551
     Q_INVOKABLE void addHost (const QString host);
@@ -96,11 +96,9 @@ class UDPLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class UDPConfiguration;
-    friend class LinkManager;
-
 public:
-    ~UDPLink();
+    UDPLink(SharedLinkConfigurationPtr& config);
+    virtual ~UDPLink();
 
     // LinkInterface overrides
     bool isConnected(void) const override;
@@ -117,8 +115,6 @@ private slots:
     void _writeBytes(const QByteArray data) override;
 
 private:
-    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    UDPLink(SharedLinkConfigurationPtr& config);
 
     // LinkInterface overrides
     bool _connect(void) override;

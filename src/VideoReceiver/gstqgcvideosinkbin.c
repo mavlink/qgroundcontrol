@@ -16,6 +16,7 @@
 
 #include <glib-object.h>
 #include <gst/gst.h>
+#include <qglobal.h>
 
 GST_DEBUG_CATEGORY_STATIC(gst_qgc_video_sink_bin_debug);
 #define GST_CAT_DEFAULT gst_qgc_video_sink_bin_debug
@@ -64,12 +65,12 @@ enum {
 
 static GstBinClass *parent_class;
 
-static void _vsb_init(GstQgcVideoSinkBin *vsb);
+static void _vsb_init(GTypeInstance *instanceData, void *vsbVoid);
 static void _vsb_dispose(GObject *object);
 static void _vsb_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
 static void _vsb_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
 static GType _vsb_get_type(void);
-static void _vsb_class_init(GstQgcVideoSinkBinClass *klass);
+static void _vsb_class_init(void *klass, void *classData);
 
 static gboolean
 _vsb_sink_pad_query(GstPad* pad, GstObject* parent, GstQuery* query)
@@ -111,8 +112,13 @@ _vsb_sink_pad_query(GstPad* pad, GstObject* parent, GstQuery* query)
 }
 
 static void
-_vsb_init(GstQgcVideoSinkBin *vsb)
+_vsb_init(GTypeInstance *instanceData, void *vsbVoid)
 {
+    Q_UNUSED(vsbVoid);
+
+    GstQgcVideoSinkBin *vsb;
+    vsb = (GstQgcVideoSinkBin *)instanceData;
+
     gboolean initialized        = FALSE;
     GstElement* glcolorconvert  = NULL;
     GstPad* pad                 = NULL;
@@ -326,8 +332,10 @@ _vsb_get_type(void)
 }
 
 static void
-_vsb_class_init(GstQgcVideoSinkBinClass *klass)
+_vsb_class_init(void *klass, void *classData)
 {
+    Q_UNUSED(classData);
+
     GObjectClass *gobject_klass;
     GstElementClass *gstelement_klass;
 

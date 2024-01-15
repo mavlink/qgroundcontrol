@@ -76,7 +76,6 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
             break;
         default:
             qWarning() << "Unsupported fact type" << _fact->type() << "for" << _fact->name();
-            [[fallthrough]];
         case FactMetaData::valueTypeInt32:
             _mavParamType = MAV_PARAM_EXT_TYPE_INT32;
             break;
@@ -175,12 +174,11 @@ QGCCameraParamIO::_sendParameter()
         case FactMetaData::valueTypeCustom:
         {
             QByteArray custom = _fact->rawValue().toByteArray();
-            memcpy(union_value.bytes, custom.data(), static_cast<size_t>(std::max(custom.size(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN)));
+            memcpy(union_value.bytes, custom.data(), static_cast<size_t>(std::max(custom.size(), static_cast<qsizetype>(MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN))));
         }
             break;
         default:
             qCritical() << "Unsupported fact type" << factType << "for" << _fact->name();
-            [[fallthrough]];
         case FactMetaData::valueTypeInt32:
             union_value.param_int32 = static_cast<int32_t>(_fact->rawValue().toInt());
             break;
@@ -372,8 +370,7 @@ QGCCameraParamIO::paramRequest(bool reset)
                     static_cast<uint8_t>(_vehicle->id()),
                     static_cast<uint8_t>(_control->compID()),
                     param_id,
-                    -1,
-                    0);                                                 // trimmed messages = false
+                    -1);
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
     _paramRequestTimer.start();

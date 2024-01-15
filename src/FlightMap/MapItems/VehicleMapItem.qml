@@ -7,33 +7,34 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.3
-import QtLocation           5.3
-import QtPositioning        5.3
-import QtGraphicalEffects   1.0
+import QtQuick
+import QtLocation
+import QtPositioning
+import Qt5Compat.GraphicalEffects
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Controls
 
 /// Marker for displaying a vehicle location on the map
 MapQuickItem {
+    id: _root
+
     property var    vehicle                                                         /// Vehicle object, undefined for ADSB vehicle
     property var    map
     property double altitude:       Number.NaN                                      ///< NAN to not show
     property string callsign:       ""                                              ///< Vehicle callsign
     property double heading:        vehicle ? vehicle.heading.value : Number.NaN    ///< Vehicle heading, NAN for none
-    property real   size:           _adsbVehicle ? _adsbSize : _uavSize             /// Size for icon
+    property real   size:           ScreenTools.defaultFontPixelHeight * 3          /// Default size for icon, most usage overrides this
     property bool   alert:          false                                           /// Collision alert
 
     anchorPoint.x:  vehicleItem.width  / 2
     anchorPoint.y:  vehicleItem.height / 2
     visible:        coordinate.isValid
 
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _adsbVehicle:   vehicle ? false : true
-    property real   _uavSize:       ScreenTools.defaultFontPixelHeight * 5
-    property real   _adsbSize:      ScreenTools.defaultFontPixelHeight * 2.5
     property var    _map:           map
     property bool   _multiVehicle:  QGroundControl.multiVehicleManager.vehicles.count > 1
 
@@ -41,7 +42,7 @@ MapQuickItem {
         id:         vehicleItem
         width:      vehicleIcon.width
         height:     vehicleIcon.height
-        opacity:    vehicle ? (vehicle.active ? 1.0 : 0.5) : 1.0
+        opacity:    _adsbVehicle || vehicle === _activeVehicle ? 1.0 : 0.5
 
         Rectangle {
             id:                 vehicleShadow
@@ -64,8 +65,8 @@ MapQuickItem {
             id:                 vehicleIcon
             source:             _adsbVehicle ? (alert ? "/qmlimages/AlertAircraft.svg" : "/qmlimages/AwarenessAircraft.svg") : vehicle.vehicleImageOpaque
             mipmap:             true
-            width:              size
-            sourceSize.width:   size
+            width:              _root.size
+            sourceSize.width:   _root.size
             fillMode:           Image.PreserveAspectFit
             transform: Rotation {
                 origin.x:       vehicleIcon.width  / 2
@@ -84,7 +85,7 @@ MapQuickItem {
             visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
             property string vehicleLabelText: visible ?
                                                   (_adsbVehicle ?
-                                                       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(altitude).toFixed(0) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString :
+                                                       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(altitude).toFixed(0) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString + "\n" + callsign :
                                                        (_multiVehicle ? qsTr("Vehicle %1").arg(vehicle.id) : "")) :
                                                   ""
 

@@ -1,11 +1,11 @@
-import QtQuick 2.3
-import QtQuick.Controls 1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl              1.0
-import QGroundControl.FactSystem   1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Controls     1.0
-import QGroundControl.Palette      1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Item {
     anchors.fill:   parent
@@ -15,7 +15,7 @@ Item {
     FactPanelController { id: controller; }
 
     // Enable/Action parameters
-    property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT")
+    property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT", false)
     property Fact _failsafeEKFEnable:         controller.getParameterFact(-1, "FS_EKF_ACTION")
     property Fact _failsafeGCSEnable:         controller.getParameterFact(-1, "FS_GCS_ENABLE")
     property Fact _failsafeLeakEnable:        controller.getParameterFact(-1, "FS_LEAK_ENABLE")
@@ -30,8 +30,8 @@ Item {
     property Fact _failsafeLeakPin:              controller.getParameterFact(-1, "LEAK1_PIN")
     property Fact _failsafeLeakLogic:            controller.getParameterFact(-1, "LEAK1_LOGIC")
     property Fact _failsafeEKFThreshold:         controller.getParameterFact(-1, "FS_EKF_THRESH")
-    property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "r.BATT_LOW_VOLT")
-    property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "r.BATT_LOW_MAH")
+    property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "r.BATT_LOW_VOLT", false)
+    property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "r.BATT_LOW_MAH", false)
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
@@ -53,7 +53,17 @@ Item {
         VehicleSummaryRow {
             visible: !_firmware34
             labelText: qsTr("Battery failsafe:")
-            valueText: _firmware34 ? "" : _failsafeBatteryEnable.enumOrValueString
+            valueText: {
+                if(_firmware34) {
+                    return "Firmware not supported"
+                }
+
+                if (!_failsafeBatteryEnable) {
+                    return "Disabled"
+                }
+
+                return _failsafeBatteryEnable.enumOrValueString
+            }
         }
         VehicleSummaryRow {
             visible: !_firmware34

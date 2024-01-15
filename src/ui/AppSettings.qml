@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Rectangle {
     id:     settingsView
@@ -30,11 +30,28 @@ Rectangle {
 
     property bool _first: true
 
+    property bool _commingFromRIDSettings:  false
+
+    function showSettingsPage(settingsPage) {
+        for (var i=0; i<buttonRepeater.count; i++) {
+            var button = buttonRepeater.itemAt(i)
+            if (button.text === settingsPage) {
+                button.clicked()
+                break
+            }
+        }
+    }
+
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
         //-- Default Settings
-        __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+        if (globals.commingFromRIDIndicator) {
+            __rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
+            globals.commingFromRIDIndicator = false
+        } else {
+            __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+        }
     }
 
     QGCFlickable {
@@ -56,12 +73,15 @@ Rectangle {
             property real _maxButtonWidth: 0
 
             Repeater {
+                id:     buttonRepeater
                 model:  QGroundControl.corePlugin.settingsPages
+
                 QGCButton {
                     height:             _buttonHeight
                     text:               modelData.title
                     autoExclusive:      true
                     Layout.fillWidth:   true
+                    visible:            modelData.url != "qrc:/qml/RemoteIDSettings.qml" ? true : QGroundControl.settingsManager.remoteIDSettings.enable.rawValue
 
                     onClicked: {
                         if (mainWindow.preventViewSwitch()) {
@@ -74,9 +94,19 @@ Rectangle {
                     }
 
                     Component.onCompleted: {
+                        if (globals.commingFromRIDIndicator) {
+                            _commingFromRIDSettings = true
+                        }
                         if(_first) {
                             _first = false
                             checked = true
+                        }
+                        if (_commingFromRIDSettings) {
+                            checked = false
+                            _commingFromRIDSettings = false
+                            if (modelData.url == "qrc:/qml/RemoteIDSettings.qml") {
+                                checked = true
+                            }
                         }
                     }
                 }

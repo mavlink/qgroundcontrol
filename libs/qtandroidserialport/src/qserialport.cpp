@@ -1367,7 +1367,7 @@ void QSerialPort::setError(QSerialPort::SerialPortError serialPortError, const Q
     else
         setErrorString(errorString);
 
-    emit error(serialPortError);
+    emit errorOccurred(serialPortError);
 }
 
 void QSerialPort::setNativeMethods(void)

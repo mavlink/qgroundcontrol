@@ -17,6 +17,8 @@
 
 class PlanMasterController;
 
+Q_MOC_INCLUDE("PlanMasterController.h")
+
 /// This is the abstract base clas for Plan Element controllers.
 /// Examples of plan elements are: missions (MissionController), geofence (GeoFenceController)
 class PlanElementController : public QObject

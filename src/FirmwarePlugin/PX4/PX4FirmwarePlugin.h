@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef PX4FirmwarePlugin_H
-#define PX4FirmwarePlugin_H
+#pragma once
 
 #include "FirmwarePlugin.h"
 #include "ParameterManager.h"
@@ -25,6 +20,9 @@ class PX4FirmwarePlugin : public FirmwarePlugin
 public:
     PX4FirmwarePlugin   ();
     ~PX4FirmwarePlugin  () override;
+
+    // Called internally only
+    void _changeAltAfterPause(void* resultHandlerData, bool pauseSucceeded);
 
     // Overrides from FirmwarePlugin
 
@@ -48,9 +46,15 @@ public:
     void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeLand                  (Vehicle* vehicle) override;
     void                guidedModeTakeoff               (Vehicle* vehicle, double takeoffAltRel) override;
+    double              maximumHorizontalSpeedMultirotor(Vehicle* vehicle) override;
+    double              maximumEquivalentAirspeed(Vehicle* vehicle) override;
+    double              minimumEquivalentAirspeed(Vehicle* vehicle) override;
+    bool                mulirotorSpeedLimitsAvailable(Vehicle* vehicle) override;
+    bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
-    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel) override;
-    double              minimumTakeoffAltitude          (Vehicle* vehicle) override;
+    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel, bool pauseVehicle) override;
+    void                guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed) override;
+    void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
     void                startMission                    (Vehicle* vehicle) override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
     void                initializeVehicle               (Vehicle* vehicle) override;
@@ -66,7 +70,11 @@ public:
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
-    bool                supportsNegativeThrust          (Vehicle *vehicle) override;
+    bool                supportsNegativeThrust          (Vehicle* vehicle) override;
+    QString             getHobbsMeter                   (Vehicle* vehicle) override;
+    bool                hasGripper                      (const Vehicle* vehicle) const override;
+    QVariant            mainStatusIndicatorExpandedItem(const Vehicle* vehicle) const override;
+    const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
 
 protected:
     typedef struct {
@@ -107,9 +115,10 @@ private slots:
     void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:
-    void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
-    QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
-    QString _versionRegex() override;
+    void    _handleAutopilotVersion         (Vehicle* vehicle, mavlink_message_t* message);
+
+    QString _getLatestVersionFileUrl        (Vehicle* vehicle) override;
+    QString _versionRegex                   () override;
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into PX4FirmwarePluginInstanceData
@@ -124,5 +133,3 @@ public:
 
     bool versionNotified;  ///< true: user notified over version issue
 };
-
-#endif

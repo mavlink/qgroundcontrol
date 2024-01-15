@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             airframePage
@@ -37,7 +37,7 @@ SetupPage {
             property real _margins:             ScreenTools.defaultFontPixelWidth
             property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS")
             property Fact _frameType:           controller.getParameterFact(-1, "FRAME_TYPE", false)    // FRAME_TYPE is not available on all Rover versions
-            property bool _frameTypeAvailable:  controller.parameterExists(-1, "FRAME_TYPE")
+            property bool _frameTypeAvailable:  controller.vehicle.multiRotor
 
             readonly property real spacerHeight: ScreenTools.defaultFontPixelHeight
 
@@ -72,7 +72,7 @@ SetupPage {
                                          qsTr("Currently set to frame class '%1'").arg(_frameClass.enumStringValue) +
                                          (_frameTypeAvailable ?  qsTr(" and frame type '%2'").arg(_frameType.enumStringValue) : "") +
                                          qsTr(".", "period for end of sentence")) +
-                                    qsTr(" To change this configuration, select the desired frame class below and frame type.")
+                                    qsTr(" To change this configuration, select the desired frame class below and then reboot the vehicle.")
                 font.family:        ScreenTools.demiboldFontFamily
                 wrapMode:           Text.WordWrap
             }
@@ -88,7 +88,7 @@ SetupPage {
                 Layout.fillWidth:   true
                 spacing:            _boxSpace
 
-                ExclusiveGroup {
+                ButtonGroup {
                     id: airframeTypeExclusive
                 }
 
@@ -152,7 +152,7 @@ SetupPage {
                                     // Although this item is invisible we still use it to manage state
                                     id:             airframeCheckBox
                                     checked:        object.frameClass === _frameClass.rawValue
-                                    exclusiveGroup: airframeTypeExclusive
+                                    buttonGroup: airframeTypeExclusive
                                     visible:        false
 
                                     onCheckedChanged: {

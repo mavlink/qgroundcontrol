@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtLocation                   5.3
-import QtPositioning                5.3
-import QtQuick.Dialogs              1.2
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
+import QtQuick.Dialogs
 
-import QGroundControl                   1.0
-import QGroundControl.ScreenTools       1.0
-import QGroundControl.Palette           1.0
-import QGroundControl.Controls          1.0
-import QGroundControl.FlightMap         1.0
-import QGroundControl.ShapeFileHelper   1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.FlightMap
+import QGroundControl.ShapeFileHelper
 
 /// QGCMapPolyline map visuals
 Item {
@@ -126,10 +126,9 @@ Item {
         id:             kmlLoadDialog
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select KML File")
-        selectExisting: true
         nameFilters:    ShapeFileHelper.fileDialogKMLFilters
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             mapPolyline.loadKMLFile(file)
             close()
         }
@@ -153,7 +152,7 @@ Item {
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
-            onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+            onTriggered:    editPositionDialog.createObject(mainWindow, { coordinate: mapPolyline.path[menu._removeVertexIndex] }).open()
         }
     }
 
@@ -161,8 +160,7 @@ Item {
         id: editPositionDialog
 
         EditPositionDialog {
-            Component.onCompleted: coordinate = mapPolyline.path[menu._removeVertexIndex]
-            onCoordinateChanged:  mapPolyline.adjustVertex(menu._removeVertexIndex,coordinate)
+            onCoordinateChanged: mapPolyline.adjustVertex(menu._removeVertexIndex,coordinate)
         }
     }
 
@@ -372,7 +370,7 @@ Item {
             preventStealing:    true
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
-            onClicked: {
+            onClicked: (mouse) => {
                 if (mouse.button === Qt.LeftButton && _root.interactive) {
                     mapPolyline.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
                 }

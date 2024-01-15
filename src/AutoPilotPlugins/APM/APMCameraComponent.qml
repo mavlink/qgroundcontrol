@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             cameraPage
@@ -30,7 +30,7 @@ SetupPage {
 
             FactPanelController { id: controller; }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property Fact _mountRetractX:       controller.getParameterFact(-1, "MNT_RETRACT_X")
             property Fact _mountRetractY:       controller.getParameterFact(-1, "MNT_RETRACT_Y")
@@ -229,7 +229,7 @@ SetupPage {
                         anchors.top:        directionLabel.bottom
                         width:              mountAngMaxField.x + mountAngMaxField.width + _margins
                         height:             servoPWMMaxField.y + servoPWMMaxField.height + _margins
-                        color:              palette.windowShade
+                        color:              qgcPal.windowShade
 
                         FactCheckBox {
                             id:                 mountStabCheckBox
@@ -413,7 +413,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
                         height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                        color:              palette.windowShade
+                        color:              qgcPal.windowShade
 
                         QGCLabel {
                             id:                 gimbalTypeLabel

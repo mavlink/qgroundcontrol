@@ -81,6 +81,13 @@
     "units":            "m"
 },
 {
+    "name":             "altitudeAboveTerr",
+    "shortDesc": "Alt (Above Terrain)",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
     "name":             "flightDistance",
     "shortDesc": "Flight Distance",
     "type":             "double",
@@ -93,6 +100,13 @@
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
+},
+{
+    "name":             "timeToHome",
+    "shortDesc": "Time to Home",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "s"
 },
 {
     "name":             "headingToHome",
@@ -121,6 +135,13 @@
     "units":            "deg"
 },
 {
+    "name":             "distanceToNextWP",
+    "shortDesc": "Next WP distance",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "m"
+},
+{
     "name":             "flightTime",
     "shortDesc": "Flight Time",
     "type":             "elapsedSeconds",
@@ -136,6 +157,12 @@
     "shortDesc": "Throttle %",
     "type":             "uint16",
     "units":            "%"
+},
+{
+    "name":             "imuTemp",
+    "shortDesc": "Imu temperature",
+    "type":             "int16",
+    "units":            "°C"
 }
 ]
 }

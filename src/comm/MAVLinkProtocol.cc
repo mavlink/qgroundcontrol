@@ -171,7 +171,7 @@ void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
 
         b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
 
-        int len = b.count();
+        int len = b.length();
 
         if(_tempLogFile.write(b) != len)
         {
@@ -197,7 +197,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     // Since receiveBytes signals cross threads we can end up with signals in the queue
     // that come through after the link is disconnected. For these we just drop the data
     // since the link is closed.
-    if (!_linkMgr->containsLink(link)) {
+    SharedLinkInterfacePtr linkPtr = _linkMgr->sharedLinkInterfacePointerForLink(link, true);
+    if (!linkPtr) {
+        qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << b.size() << " bytes arrived too late";
         return;
     }
 
@@ -210,7 +212,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 link->setDecodedFirstMavlinkPacket(true);
                 mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
                 if (!(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) && (mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-                    qDebug() << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
+                    qCDebug(MAVLinkProtocolLog) << "Switching outbound to mavlink 2.0 due to incoming mavlink 2.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                     mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
                     // Set all links to v2
                     setVersion(200);
@@ -267,6 +269,18 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
                     int len = mavlink_msg_to_send_buffer(buf, &_message);
                     forwardingLink->writeBytesThreadSafe((const char*)buf, len);
+                }
+            }
+
+            // MAVLink forwarding support
+            bool forwardingSupportEnabled = _linkMgr->mavlinkSupportForwardingEnabled();
+            if (forwardingSupportEnabled) {
+                SharedLinkInterfacePtr forwardingSupportLink = _linkMgr->mavlinkForwardingSupportLink();
+
+                if (forwardingSupportLink) {
+                    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+                    int len = mavlink_msg_to_send_buffer(buf, &_message);
+                    forwardingSupportLink->writeBytesThreadSafe((const char*)buf, len);
                 }
             }
 
@@ -359,6 +373,13 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // kind of inefficient, but no issue for a groundstation pc.
             // It buys as reentrancy for the whole code over all threads
             emit messageReceived(link, _message);
+
+            // Anyone handling the message could close the connection, which deletes the link,
+            // so we check if it's expired
+            if (1 == linkPtr.use_count()) {
+                break;
+            }
+
             // Reset message parsing
             memset(&_status,  0, sizeof(_status));
             memset(&_message, 0, sizeof(_message));
@@ -375,7 +396,7 @@ QString MAVLinkProtocol::getName()
 }
 
 /** @return System id of this application */
-int MAVLinkProtocol::getSystemId()
+int MAVLinkProtocol::getSystemId() const
 {
     return systemId;
 }
@@ -452,7 +473,7 @@ void MAVLinkProtocol::_startLogging(void)
                 return;
             }
 
-            qDebug() << "Temp log" << _tempLogFile.fileName();
+            qCDebug(MAVLinkProtocolLog) << "Temp log" << _tempLogFile.fileName();
             emit checkTelemetrySavePath();
 
             _logSuspendError = false;

@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl.FactSystem 1.0
+import QGroundControl.FactSystem
 
 /// This is used to handle the various differences between firmware versions and missing parameters in each in a standard way.
 Item {
@@ -92,4 +92,24 @@ Item {
     property bool compass2Calibrated:               compass2Available ? compass2OfsXFact.value != 0.0  && compass2OfsYFact.value != 0.0  &&compass2OfsZFact.value != 0.0 : false
     property bool compass3Calibrated:               compass3Available ? compass3OfsXFact.value != 0.0  && compass3OfsYFact.value != 0.0  &&compass3OfsZFact.value != 0.0 : false
     property var  rgCompassCalibrated:              [ compass1Calibrated, compass2Calibrated, compass3Calibrated ]
+
+    property Fact declinationFact:                  factPanelController.getParameterFact(-1, "COMPASS_DEC")
+
+    // Deals with missing parameters in older fw
+    property bool ins1IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC_ID")
+    property bool ins2IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC2_ID")
+    property bool ins3IdParamAvailable:             factPanelController.parameterExists(-1, "INS_ACC3_ID")
+
+    property Fact ins1Id:                           ins1IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC_ID") : _noFact
+    property Fact ins2Id:                           ins2IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC2_ID") : _noFact
+    property Fact ins3Id:                           ins3IdParamAvailable ? factPanelController.getParameterFact(-1, "INS_ACC3_ID") : _noFact
+    property var  rgInsId:                          [ ins1Id, ins2Id, ins3Id ]
+
+    property bool baroIdAvailable:                  factPanelController.parameterExists(-1, "BARO1_DEVID")
+
+    property Fact baro1Id:                          baroIdAvailable ? factPanelController.getParameterFact(-1, "BARO1_DEVID") : _noFact
+    property Fact baro2Id:                          baroIdAvailable ? factPanelController.getParameterFact(-1, "BARO2_DEVID") : _noFact
+    property Fact baro3Id:                          baroIdAvailable ? factPanelController.getParameterFact(-1, "BARO3_DEVID") : _noFact
+    property var  rgBaroId:                         [ baro1Id, baro2Id, baro3Id ]
+
 }

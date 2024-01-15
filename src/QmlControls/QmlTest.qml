@@ -1,11 +1,11 @@
-import QtQuick                  2.11
-import QtQuick.Controls         2.4
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Layouts          1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Rectangle {
     id: _root
@@ -35,21 +35,21 @@ Rectangle {
 
     function exportTheme() {
         var themeObj = {"light": {}, "dark":{}}
-        var oldTheme = palette.globalTheme;
+        var oldTheme = qgcPal.globalTheme;
 
-        palette.globalTheme = QGCPalette.Light
-        palette.colorGroupEnabled = true
+        qgcPal.globalTheme = QGCPalette.Light
+        qgcPal.colorGroupEnabled = true
         themeObj.light["enabled"] = exportPaletteColors(palette);
-        palette.colorGroupEnabled = false
+        qgcPal.colorGroupEnabled = false
         themeObj.light["disabled"] = exportPaletteColors(palette);
-        palette.globalTheme = QGCPalette.Dark
-        palette.colorGroupEnabled = true
+        qgcPal.globalTheme = QGCPalette.Dark
+        qgcPal.colorGroupEnabled = true
         themeObj.dark["enabled"] = exportPaletteColors(palette);
-        palette.colorGroupEnabled = false
+        qgcPal.colorGroupEnabled = false
         themeObj.dark["disabled"] = exportPaletteColors(palette);
 
-        palette.globalTheme = oldTheme;
-        palette.colorGroupEnabled = true;
+        qgcPal.globalTheme = oldTheme;
+        qgcPal.colorGroupEnabled = true;
 
         var jsonString = JSON.stringify(themeObj, null, 4);
 
@@ -58,8 +58,8 @@ Rectangle {
 
     function exportThemeCPP() {
         var palToExport = ""
-        for(var i = 0; i < palette.colors.length; i++) {
-            var cs = palette.colors[i]
+        for(var i = 0; i < qgcPal.colors.length; i++) {
+            var cs = qgcPal.colors[i]
             var csc = cs + 'Colors'
             palToExport += 'DECLARE_QGC_COLOR(' + cs + ', \"' + palette[csc][1] + '\", \"' + palette[csc][0] + '\", \"' + palette[csc][3] + '\", \"' + palette[csc][2] + '\")\n'
         }
@@ -68,8 +68,8 @@ Rectangle {
 
     function exportThemePlugin() {
         var palToExport = ""
-        for(var i = 0; i < palette.colors.length; i++) {
-            var cs = palette.colors[i]
+        for(var i = 0; i < qgcPal.colors.length; i++) {
+            var cs = qgcPal.colors[i]
             var csc = cs + 'Colors'
             if(i > 0) {
                 palToExport += '\nelse '
@@ -88,21 +88,21 @@ Rectangle {
     function importTheme(jsonStr) {
         var jsonObj = JSON.parse(jsonStr)
         var themeObj = {"light": {}, "dark":{}}
-        var oldTheme = palette.globalTheme;
+        var oldTheme = qgcPal.globalTheme;
 
-        palette.globalTheme = QGCPalette.Light
-        palette.colorGroupEnabled = true
+        qgcPal.globalTheme = QGCPalette.Light
+        qgcPal.colorGroupEnabled = true
         fillPalette(palette, jsonObj.light.enabled)
-        palette.colorGroupEnabled = false
+        qgcPal.colorGroupEnabled = false
         fillPalette(palette, jsonObj.light.disabled);
-        palette.globalTheme = QGCPalette.Dark
-        palette.colorGroupEnabled = true
+        qgcPal.globalTheme = QGCPalette.Dark
+        qgcPal.colorGroupEnabled = true
         fillPalette(palette, jsonObj.dark.enabled);
-        palette.colorGroupEnabled = false
+        qgcPal.colorGroupEnabled = false
         fillPalette(palette, jsonObj.dark.disabled);
 
-        palette.globalTheme = oldTheme;
-        palette.colorGroupEnabled = true;
+        qgcPal.globalTheme = oldTheme;
+        qgcPal.colorGroupEnabled = true;
 
         paletteImportExportPopup.close()
     }
@@ -127,10 +127,10 @@ Rectangle {
         }
         background: Rectangle {
             anchors.fill:   parent
-            color:          palette.window
+            color:          qgcPal.window
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
             border.width:   1
-            border.color:   palette.text
+            border.color:   qgcPal.text
         }
         Column {
             id:             impCol
@@ -218,7 +218,7 @@ Rectangle {
         id:         _header
         width:      parent.width
         height:     themeChoice.height * 2
-        color:      palette.window
+        color:      qgcPal.window
         anchors.top: parent.top
         Row {
             id:         themeChoice
@@ -238,16 +238,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 QGCRadioButton {
                     text:       qsTr("Light")
-                    checked:    _root.palette.globalTheme === QGCPalette.Light
+                    checked:    _root.qgcPal.globalTheme === QGCPalette.Light
                     onClicked: {
-                        _root.palette.globalTheme = QGCPalette.Light
+                        _root.qgcPal.globalTheme = QGCPalette.Light
                     }
                 }
                 QGCRadioButton {
                     text:       qsTr("Dark")
-                    checked:    _root.palette.globalTheme === QGCPalette.Dark
+                    checked:    _root.qgcPal.globalTheme === QGCPalette.Dark
                     onClicked: {
-                        _root.palette.globalTheme = QGCPalette.Dark
+                        _root.qgcPal.globalTheme = QGCPalette.Dark
                     }
                 }
             }
@@ -463,19 +463,19 @@ Rectangle {
                             enabled: false
                         }
 
-                        // QGCHoverButton
+                        // ToolStripHoverButton
                         Loader {
                             sourceComponent: ctlRowHeader
-                            property string text: "QGCHoverButton"
+                            property string text: "ToolStripHoverButton"
                         }
-                        QGCHoverButton {
+                        ToolStripHoverButton {
                             width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
                             text:   qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                         }
-                        QGCHoverButton {
+                        ToolStripHoverButton {
                             width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
                             text:   qsTr("Hover Button")
@@ -624,13 +624,13 @@ Rectangle {
                         width:  previewGrid.width
                         height: 60
                         radius: 3
-                        color:  palette.alertBackground
-                        border.color: palette.alertBorder
+                        color:  qgcPal.alertBackground
+                        border.color: qgcPal.alertBorder
                         border.width: 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         Label {
                             text: "Alert Message"
-                            color: palette.alertText
+                            color: qgcPal.alertText
                             anchors.centerIn: parent
                         }
                     }

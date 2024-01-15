@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 /// The PreFlightCheckButton supports creating a button which the user then has to verify/click to confirm a check.
 /// It also supports failing the check based on values from within the system: telemetry or QGC app values. These
@@ -60,35 +60,30 @@ QGCButton {
                                           _pendingColor :
                                           _failedColor))
 
-    width:      40 * ScreenTools.defaultFontPixelWidth
+    width:          40 * ScreenTools.defaultFontPixelWidth
+    topPadding:     _verticalPadding
+    bottomPadding:  _verticalPadding
+    leftPadding:    (_horizontalPadding * 2) + _stateFlagWidth
+    rightPadding:   _horizontalPadding
 
-    style: ButtonStyle {
-        padding {
-            top:    _verticalPadding
-            bottom: _verticalPadding
-            left:   (_horizontalPadding * 2) + _stateFlagWidth
-            right:  _horizontalPadding
+    background: Rectangle {
+        color:          qgcPal.button
+        border.color:   qgcPal.button;
+
+        Rectangle {
+            color:          _color
+            anchors.left:   parent.left
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            width:          _stateFlagWidth
         }
+    }
 
-        background: Rectangle {
-            color:          qgcPal.button
-            border.color:   qgcPal.button;
-
-            Rectangle {
-                color:          _color
-                anchors.left:   parent.left
-                anchors.top:    parent.top
-                anchors.bottom: parent.bottom
-                width:          _stateFlagWidth
-            }
-        }
-
-        label: Label {
-            text:                   _text
-            wrapMode:               Text.WordWrap
-            horizontalAlignment:    Text.AlignHCenter
-            color:                  qgcPal.buttonText
-        }
+    contentItem: QGCLabel {
+        wrapMode:               Text.WordWrap
+        horizontalAlignment:    Text.AlignHCenter
+        color:                  qgcPal.buttonText
+        text:                   _text
     }
 
     function _updateTelemetryState() {

@@ -13,7 +13,11 @@
 #include <QString>
 #include <QThread>
 #include <QByteArray>
+#ifdef __android__
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 #include <atomic>
 
@@ -84,6 +88,7 @@ private:
     double  _fixedBaseLongitude;
     float   _fixedBaseAltitudeMeters;
     float   _fixedBaseAccuracyMeters;
+    GPSHelper::GPSConfig _gpsConfig{};
 
 	struct sensor_gps_s        _reportGpsPos;
 	struct satellite_info_s    *_pReportSatInfo = nullptr;

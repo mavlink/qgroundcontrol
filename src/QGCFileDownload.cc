@@ -20,9 +20,10 @@ QGCFileDownload::QGCFileDownload(QObject* parent)
 
 }
 
-bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
+bool QGCFileDownload::download(const QString& remoteFile, const QVector<QPair<QNetworkRequest::Attribute, QVariant>>& requestAttributes, bool redirect)
 {
     if (!redirect) {
+        _requestAttributes = requestAttributes;
         _originalRemoteFile = remoteFile;
     }
 
@@ -45,6 +46,10 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
     
     QNetworkRequest networkRequest(remoteUrl);
 
+    for (const auto& attribute : requestAttributes) {
+        networkRequest.setAttribute(attribute.first, attribute.second);
+    }
+
     QNetworkProxy tProxy;
     tProxy.setType(QNetworkProxy::DefaultProxy);
     setProxy(tProxy);
@@ -55,13 +60,11 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
         return false;
     }
 
+    setIgnoreSSLErrorsIfNeeded(*networkReply);
+
     connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
     connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCFileDownload::_downloadError);
-#else
     connect(networkReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_downloadError);
-#endif
     return true;
 }
 
@@ -80,7 +83,7 @@ void QGCFileDownload::_downloadFinished(void)
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (!redirectionTarget.isNull()) {
         QUrl redirectUrl = reply->url().resolved(redirectionTarget.toUrl());
-        download(redirectUrl.toString(), true /* redirect */);
+        download(redirectUrl.toString(), _requestAttributes, true /* redirect */);
         reply->deleteLater();
         return;
     }
@@ -146,4 +149,20 @@ void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
     }
 
     emit downloadComplete(_originalRemoteFile, QString(), errorMsg);
+}
+
+void QGCFileDownload::setIgnoreSSLErrorsIfNeeded(QNetworkReply& networkReply)
+{
+    // Some systems (like Ubuntu 22.04) only ship with OpenSSL 3.x, however Qt 5.15.2 links against OpenSSL 1.x.
+    // This results in unresolved symbols for EVP_PKEY_base_id and SSL_get_peer_certificate.
+    // To still get a connection we have to ignore certificate verification (connection is still encrypted but open to MITM attacks)
+    // See https://bugreports.qt.io/browse/QTBUG-115146
+    const bool sslLibraryBuildIs1x = (QSslSocket::sslLibraryBuildVersionNumber() & 0xf0000000) == 0x10000000;
+    const bool sslLibraryIs3x = (QSslSocket::sslLibraryVersionNumber() & 0xf0000000) == 0x30000000;
+    if (sslLibraryBuildIs1x && sslLibraryIs3x) {
+        qWarning() << "Ignoring ssl certificates due to OpenSSL version mismatch";
+        QList<QSslError> errorsThatCanBeIgnored;
+        errorsThatCanBeIgnored << QSslError(QSslError::NoPeerCertificate);
+        networkReply.ignoreSslErrors(errorsThatCanBeIgnored);
+    }
 }

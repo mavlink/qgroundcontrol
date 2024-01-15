@@ -7,28 +7,28 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Dialogs  1.3
-import QtQuick.Layouts  1.2
-import QtQuick.Controls 2.5
+import QtQuick
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controllers
+import QGroundControl.Palette
 
 QGCPopupDialog {
     id:         root
     title:      qsTr("Value Display")
-    buttons:    StandardButton.Close
+    buttons:    Dialog.Close
 
-    property var instrumentValueData: dialogProperties.instrumentValueData
+    property var instrumentValueData
 
-    QGCPalette { id: qgcPal;            colorGroupEnabled: parent.enabled }
-    QGCPalette { id: qgcPalDisabled;    colorGroupEnabled: false }
+    QGCPalette { id: qgcPal;        colorGroupEnabled: parent.enabled }
+    QGCPalette { id: qgcPalDisable; colorGroupEnabled: false }
 
     Loader {
         sourceComponent: instrumentValueData.fact ? editorComponent : noFactComponent
@@ -92,7 +92,7 @@ QGCPopupDialog {
                     instrumentValueData.text = ""
                     instrumentValueData.icon = instrumentValueData.factValueGrid.iconNames[0]
                     var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                    mainWindow.showPopupDialogFromComponent(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
+                    iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction }).open()
                 }
             }
 
@@ -106,14 +106,14 @@ QGCPopupDialog {
                 fillMode:           Image.PreserveAspectFit
                 mipmap:             true
                 smooth:             true
-                color:              enabled ? qgcPal.text : qgcPalDisabled.text
+                color:              enabled ? qgcPal.text : qgcPalDisable.text
                 enabled:            iconRadio.checked
 
                 MouseArea {
                     anchors.fill:   parent
                     onClicked: {
                         var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                        mainWindow.showPopupDialogFromComponent(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
+                        iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction }).open()
                     }
                 }
 
@@ -192,13 +192,19 @@ QGCPopupDialog {
                     case InstrumentValueData.OpacityRange:
                         sourceComponent = opacityRangeDialog
                         break
-                    case InstrumentValueData.IconSelvalueedectRange:
+                    case InstrumentValueData.IconSelectRange:
                         sourceComponent = iconRangeDialog
                         break
                     }
                 }
 
-                Component.onCompleted: updateSourceComponent()
+                Component.onCompleted: {
+                    updateSourceComponent()
+                    if (sourceComponent) {
+                        height = item.childrenRect.height
+                        width = item.childrenRect.width
+                    }
+                }
 
                 Connections {
                     target:             instrumentValueData
@@ -231,7 +237,7 @@ QGCPopupDialog {
             ColorDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
-                currentColor:   instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
+                selectedColor:  instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
                 onAccepted:     updateColorValue(colorIndex, color)
 
                 property int colorIndex: 0
@@ -329,7 +335,7 @@ QGCPopupDialog {
         id: iconRangeDialog
 
         Item {
-            width:  childrenRect.widthvalueed
+            width:  childrenRect.width
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
@@ -408,7 +414,7 @@ QGCPopupDialog {
                                     anchors.fill:   parent
                                     onClicked: {
                                         var updateFunction = function(icon){ updateIconValue(index, icon) }
-                                        mainWindow.showPopupDialogFromComponent(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction })
+                                        iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction }).open()
                                     }
                                 }
                             }
@@ -513,12 +519,12 @@ QGCPopupDialog {
         id: iconPickerDialog
 
         QGCPopupDialog {
-            property var     iconNames:             dialogProperties.iconNames
-            property string  icon:                  dialogProperties.icon
-            property var     updateIconFunction:    dialogProperties.updateIconFunction
-
             title:      qsTr("Select Icon")
-            buttons:    StandardButton.Close
+            buttons:    Dialog.Close
+
+            property var     iconNames
+            property string  icon
+            property var     updateIconFunction
 
             GridLayout {
                 columns:        10
@@ -551,7 +557,7 @@ QGCPopupDialog {
                                 onClicked:  {
                                     icon = modelData
                                     updateIconFunction(modelData)
-                                    hideDialog()
+                                    close()
                                 }
                             }
                         }

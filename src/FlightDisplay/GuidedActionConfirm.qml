@@ -7,25 +7,25 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Controls 2.4
-import QtQuick.Layouts  1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
-    id:                     _root
-    Layout.minimumWidth:    mainLayout.width + (_margins * 2)
-    Layout.preferredHeight: mainLayout.height + (_margins * 2)
-    radius:                 ScreenTools.defaultFontPixelWidth / 2
-    color:                  qgcPal.windowShadeLight
-    visible:                false
+    id:         _root
+    width:      ScreenTools.defaultFontPixelWidth * 45
+    height:     mainLayout.height + (_margins * 2)
+    radius:     ScreenTools.defaultFontPixelWidth / 2
+    color:      qgcPal.window
+    visible:    false
 
     property var    guidedController
-    property var    altitudeSlider
+    property var    guidedValueSlider
     property string title                                       // Currently unused
     property alias  message:            messageText.text
     property int    action
@@ -39,6 +39,12 @@ Rectangle {
     property bool _emergencyAction: action === guidedController.actionEmergencyStop
 
     Component.onCompleted: guidedController.confirmDialog = this
+
+    onVisibleChanged: {
+        if (visible) {
+            slider.focus = true
+        }
+    }
 
     onHideTriggerChanged: {
         if (hideTrigger) {
@@ -57,7 +63,7 @@ Rectangle {
     }
 
     function confirmCancelled() {
-        altitudeSlider.visible = false
+        guidedValueSlider.visible = false
         visible = false
         hideTrigger = false
         visibleTimer.stop()
@@ -77,15 +83,18 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     ColumnLayout {
-        id:                         mainLayout
-        anchors.horizontalCenter:   parent.horizontalCenter
-        spacing:                    _margins
+        id:                 mainLayout
+        anchors.margins:    _margins
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        spacing:            _margins
 
         QGCLabel {
             id:                     messageText
             Layout.fillWidth:       true
             horizontalAlignment:    Text.AlignHCenter
             wrapMode:               Text.WordWrap
+            font.pointSize:         ScreenTools.mediumFontPointSize
         }
 
         QGCCheckBox {
@@ -96,23 +105,23 @@ Rectangle {
         }
 
         RowLayout {
-            Layout.alignment:       Qt.AlignHCenter
-            spacing:                ScreenTools.defaultFontPixelWidth
+            Layout.fillWidth:   true
+            spacing:            ScreenTools.defaultFontPixelWidth
 
             SliderSwitch {
-                id:                     slider
-                confirmText:            qsTr("Slide to confirm")
-                Layout.minimumWidth:    Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 30)
+                id:                 slider
+                confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
+                Layout.fillWidth:   true
 
                 onAccept: {
                     _root.visible = false
-                    var altitudeChange = 0
-                    if (altitudeSlider.visible) {
-                        altitudeChange = altitudeSlider.getAltitudeChangeValue()
-                        altitudeSlider.visible = false
+                    var sliderOutputValue = 0
+                    if (guidedValueSlider.visible) {
+                        sliderOutputValue = guidedValueSlider.getOutputValue()
+                        guidedValueSlider.visible = false
                     }
                     hideTrigger = false
-                    guidedController.executeAction(_root.action, _root.actionData, altitudeChange, _root.optionChecked)
+                    guidedController.executeAction(_root.action, _root.actionData, sliderOutputValue, _root.optionChecked)
                     if (mapIndicator) {
                         mapIndicator.actionConfirmed()
                         mapIndicator = undefined

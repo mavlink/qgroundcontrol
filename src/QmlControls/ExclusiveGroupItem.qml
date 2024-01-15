@@ -1,18 +1,18 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
+import QtQuick
+import QtQuick.Controls
 
 
 /// The ExclusiveGroupItem control can be used as a base class for a control which
-/// needs support for ExclusiveGroup
+/// needs support for ButtonGroup
 Item {
     id: _root
 
     property bool checked: false
-    property ExclusiveGroup exclusiveGroup: null
+    property ButtonGroup buttonGroup: null
 
-    onExclusiveGroupChanged: {
-        if (exclusiveGroup) {
-            exclusiveGroup.bindCheckable(_root)
+    onButtonGroupChanged: {
+        if (buttonGroup) {
+            buttonGroup.bindCheckable(_root)
         }
     }
 }

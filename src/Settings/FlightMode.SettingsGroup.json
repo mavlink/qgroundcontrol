@@ -1,0 +1,19 @@
+{
+    "version":  1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":         "px4HiddenFlightModes",
+    "shortDesc":    "Comma separated list of hidden flight modes",
+    "type":         "string",
+    "default":      "Offboard"
+},
+{
+    "name":         "apmHiddenFlightModes",
+    "shortDesc":    "Comma separated list of hidden flight modes",
+    "type":         "string",
+    "default":      ""
+}
+]
+}

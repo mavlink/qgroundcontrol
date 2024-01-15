@@ -25,10 +25,7 @@ public:
         STEERING        = 3,
         HOLD            = 4,
         LOITER          = 5,
-#if 0
-    // Follow me not ready for Stable
         FOLLOW          = 6,
-#endif
         SIMPLE          = 7,
         AUTO            = 10,
         RTL             = 11,
@@ -50,16 +47,13 @@ public:
     // Overrides from FirmwarePlugin
     QString pauseFlightMode                         (void) const override { return QStringLiteral("Hold"); }
     QString followFlightMode                        (void) const override { return QStringLiteral("Follow"); }
-    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
+    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange, bool pauseVehicle) final;
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
     const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     bool    supportsNegativeThrust                  (Vehicle *) final;
     bool    supportsSmartRTL                        (void) const override { return true; }
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
-#if 0
-    // Follow me not ready for Stable
     void    sendGCSMotionReport                     (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
-#endif
 
 private:
     static bool _remapParamNameIntialized;

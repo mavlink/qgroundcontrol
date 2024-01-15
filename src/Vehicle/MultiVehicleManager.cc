@@ -41,15 +41,9 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
-
     _gcsHeartbeatEnabled = settings.value(_gcsHeartbeatEnabledKey, true).toBool();
-
     _gcsHeartbeatTimer.setInterval(_gcsHeartbeatRateMSecs);
     _gcsHeartbeatTimer.setSingleShot(false);
-    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
-    if (_gcsHeartbeatEnabled) {
-        _gcsHeartbeatTimer.start();
-    }
 }
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
@@ -64,6 +58,11 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
     qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
     connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
+
+    if (_gcsHeartbeatEnabled) {
+        _gcsHeartbeatTimer.start();
+    }
 
     _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, _firmwarePluginManager, this);
 }
@@ -91,6 +90,15 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
             return;
         }
     }
+
+#if !defined(NO_ARDUPILOT_DIALECT)
+    // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
+    // works this way. Because of this the vehicle type is not known at first connection. In order to make QGC work reasonably
+    // we assume ArduCopter for this case.
+    if (vehicleType == 0 && vehicleFirmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        vehicleType = MAV_TYPE_QUADROTOR;
+    }
+#endif
 
     if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
         return;
@@ -371,7 +379,8 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
     // Send a heartbeat out on each link
     for (int i=0; i<sharedLinks.count(); i++) {
         LinkInterface* link = sharedLinks[i].get();
-        if (link->isConnected() && !link->linkConfiguration()->isHighLatency()) {
+        auto linkConfiguration = link->linkConfiguration();
+        if (link->isConnected() && linkConfiguration && !linkConfiguration->isHighLatency()) {
             mavlink_message_t message;
             mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
                                             _mavlinkProtocol->getComponentId(),

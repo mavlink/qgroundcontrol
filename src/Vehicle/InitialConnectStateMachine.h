@@ -20,6 +20,8 @@ class Vehicle;
 
 class InitialConnectStateMachine : public StateMachine
 {
+    Q_OBJECT
+
 public:
     InitialConnectStateMachine(Vehicle* vehicle);
 
@@ -28,10 +30,20 @@ public:
     const StateFn*  rgStates        (void) const final;
     void            statesCompleted (void) const final;
 
+    void advance() override;
+
+signals:
+    void progressUpdate(float progress);
+
+private slots:
+    void gotProgressUpdate(float progressValue);
+    void standardModesRequestCompleted();
+
 private:
-    static void _stateRequestCapabilities               (StateMachine* stateMachine);
+    static void _stateRequestAutopilotVersion           (StateMachine* stateMachine);
     static void _stateRequestProtocolVersion            (StateMachine* stateMachine);
     static void _stateRequestCompInfo                   (StateMachine* stateMachine);
+    static void _stateRequestStandardModes              (StateMachine* stateMachine);
     static void _stateRequestCompInfoComplete           (void* requestAllCompleteFnData);
     static void _stateRequestParameters                 (StateMachine* stateMachine);
     static void _stateRequestMission                    (StateMachine* stateMachine);
@@ -39,14 +51,16 @@ private:
     static void _stateRequestRallyPoints                (StateMachine* stateMachine);
     static void _stateSignalInitialConnectComplete      (StateMachine* stateMachine);
 
-    static void _capabilitiesCmdResultHandler           (void* resultHandlerData, int compId, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode);
-    static void _protocolVersionCmdResultHandler        (void* resultHandlerData, int compId, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _autopilotVersionRequestMessageHandler  (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    static void _protocolVersionRequestMessageHandler   (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
-    static void _waitForAutopilotVersionResultHandler   (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
-    static void _waitForProtocolVersionResultHandler    (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
+    float _progress(float subProgress = 0.f);
 
     Vehicle* _vehicle;
 
     static const StateFn    _rgStates[];
+    static const int        _rgProgressWeights[];
     static const int        _cStates;
+
+    int _progressWeightTotal;
 };

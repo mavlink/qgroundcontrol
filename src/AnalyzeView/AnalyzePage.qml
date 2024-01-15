@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 /// Base view control for all Analyze pages
 Item {
@@ -26,6 +26,7 @@ Item {
     property alias  headerComponent:    headerLoader.sourceComponent
     property real   availableWidth:     width  - pageLoader.x
     property real   availableHeight:    height - mainContent.y
+    property bool   allowPopout:        false
     property bool   popped:             false
     property real   _margins:           ScreenTools.defaultFontPixelHeight * 0.5
 
@@ -86,7 +87,7 @@ Item {
         source:                 "/qmlimages/FloatingWindow.svg"
         fillMode:               Image.PreserveAspectFit
         color:                  qgcPal.text
-        visible:                !popped && !ScreenTools.isMobile
+        visible:                allowPopout && !popped && !ScreenTools.isMobile
         MouseArea {
             anchors.fill:   parent
             onClicked:      popout()

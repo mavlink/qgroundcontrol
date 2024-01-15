@@ -80,6 +80,7 @@ public:
     Q_PROPERTY(bool                     showMavlinkLogOptions           READ showMavlinkLogOptions          CONSTANT)
     Q_PROPERTY(bool                     enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
     Q_PROPERTY(QStringList              surveyBuiltInPresetNames        READ surveyBuiltInPresetNames       CONSTANT)
+    Q_PROPERTY(bool                     allowJoystickSelection          READ allowJoystickSelection         NOTIFY allowJoystickSelectionChanged)
 
     Q_PROPERTY(QGCFlyViewOptions*       flyView                         READ flyViewOptions                 CONSTANT)
 
@@ -125,6 +126,7 @@ public:
     virtual bool    disableVehicleConnection        () const { return false; }  ///< true: vehicle connection is disabled
     virtual bool    checkFirmwareVersion            () const { return true; }
     virtual bool    showMavlinkLogOptions           () const { return true; }
+    virtual bool    allowJoystickSelection          () const { return true; }   ///< false: custom build has automatically enabled a specific joystick
     /// Desktop builds save the main application size and position on close (and restore it on open)
     virtual bool    enableSaveMainWindowPosition    () const { return true; }
     virtual QStringList surveyBuiltInPresetNames    () const { return QStringList(); } // Built in presets cannot be deleted
@@ -155,6 +157,7 @@ signals:
     void showFirmwareUpgradeChanged             (bool show);
     void missionWaypointsOnlyChanged            (bool missionWaypointsOnly);
     void multiVehicleEnabledChanged             (bool multiVehicleEnabled);
+    void allowJoystickSelectionChanged          (bool allow);
     void showOfflineMapExportChanged            ();
     void showOfflineMapImportChanged            ();
     void showMissionAbsoluteAltitudeChanged     ();

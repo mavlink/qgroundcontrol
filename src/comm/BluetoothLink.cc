@@ -113,7 +113,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(qobject_cast<BluetoothConfiguration*>(_config.get())->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
+    _targetSocket->connectToService(QBluetoothAddress(qobject_cast<BluetoothConfiguration*>(_config.get())->device().address), QBluetoothUuid(QBluetoothUuid::ServiceClassUuid::SerialPort));
 #endif
     return true;
 }
@@ -131,8 +131,7 @@ void BluetoothLink::_createSocket()
     QObject::connect(_targetSocket, &QBluetoothSocket::readyRead, this, &BluetoothLink::readBytes);
     QObject::connect(_targetSocket, &QBluetoothSocket::disconnected, this, &BluetoothLink::deviceDisconnected);
 
-    QObject::connect(_targetSocket, static_cast<void (QBluetoothSocket::*)(QBluetoothSocket::SocketError)>(&QBluetoothSocket::error),
-            this, &BluetoothLink::deviceError);
+    QObject::connect(_targetSocket, &QBluetoothSocket::errorOccurred, this, &BluetoothLink::deviceError);
 }
 
 #ifdef __ios__
@@ -282,7 +281,6 @@ void BluetoothConfiguration::startScan()
     _nameList.clear();
     _deviceList.clear();
     emit nameListChanged();
-    _deviceDiscover->setInquiryType(QBluetoothDeviceDiscoveryAgent::GeneralUnlimitedInquiry);
     _deviceDiscover->start();
 }
 

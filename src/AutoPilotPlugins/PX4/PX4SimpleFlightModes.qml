@@ -7,44 +7,37 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 Item {
     id: root
 
-    property real _margins:             ScreenTools.defaultFontPixelHeight / 2
-    property var  _switchNameList:      [ "ACRO", "ARM", "GEAR", "KILL", "LOITER", "OFFB", "POSCTL", "RATT", "RETURN", "STAB" ]
-    property var  _switchFactList:      [ ]
-    property var  _switchTHFactList:    [ ]
+    property real _margins:         ScreenTools.defaultFontPixelHeight / 2
+    property var  _switchNameList:  [ "RC_MAP_ARM_SW", "RC_MAP_GEAR_SW", "RC_MAP_KILL_SW", "RC_MAP_LOITER_SW", "RC_MAP_OFFB_SW", "RC_MAP_RETURN_SW" ]
+    property var  _switchTHList:    [ "RC_ARMSWITCH_TH", "RC_GEAR_TH", "RC_KILLSWITCH_TH", "RC_LOITER_TH", "RC_OFFB_TH", "RC_RETURN_TH" ]
 
     readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 13
     readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 13
 
     Component.onCompleted: {
-        if (controller.vehicle.fixedWing) {
-            _switchNameList.push("MAN")
-        }
         if (controller.vehicle.vtol) {
-            _switchNameList.push("TRANS")
-        }
-        for (var i=0; i<_switchNameList.length; i++) {
-            _switchFactList.push("RC_MAP_" + _switchNameList[i] + "_SW")
-            _switchTHFactList.push("RC_" + _switchNameList[i] + "_TH")
+            _switchNameList.push("RC_MAP_TRANS_SW")
+            _switchTHList.push("RC_TRANS_TH")
         }
         if (controller.vehicle.fixedWing) {
-            _switchFactList.push("RC_MAP_FLAPS")
-            _switchTHFactList.push("")
+            _switchNameList.push("RC_MAP_FLAPS")
+            _switchTHList.push("")
         }
-        switchRepeater.model = _switchFactList
+        switchRepeater.model = _switchNameList
     }
 
     PX4SimpleFlightModesController {
@@ -157,8 +150,8 @@ Item {
                                     spacing:            ScreenTools.defaultFontPixelWidth
                                     Layout.fillWidth:   true
 
-                                    property string thFactName:     _switchTHFactList[index]
-                                    property bool   thFactExists:   thFactName == ""
+                                    property string thFactName:     _switchTHList[index]
+                                    property bool   thFactExists:   thFactName !== ""
                                     property Fact   swFact:         controller.getParameterFact(-1, modelData)
                                     property Fact   thFact:         thFactExists ? controller.getParameterFact(-1, thFactName) : null
                                     property real   thValue:        thFactExists ? thFact.rawValue : 0.5
@@ -191,14 +184,6 @@ Item {
                     }
                 } // Column - Switch settings
             } // Row - Settings
-
-            QGCButton {
-                text: "Use Multi Channel Mode Selection"
-                onClicked: {
-                    controller.getParameterFact(-1, "RC_MAP_MODE_SW").value = 5
-                    controller.getParameterFact(-1, "RC_MAP_FLTMODE").value = 0
-                }
-            }
         }
     }
 }

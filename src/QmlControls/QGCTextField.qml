@@ -1,26 +1,39 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 TextField {
-    id:                 root
-    textColor:          qgcPal.textFieldText
-    implicitHeight:     ScreenTools.implicitTextFieldHeight
+    id:                 control
+    color:              qgcPal.textFieldText
+    selectionColor:     qgcPal.textFieldText
+    selectedTextColor:  qgcPal.textField
     activeFocusOnPress: true
     antialiasing:       true
+    font.pointSize:     ScreenTools.defaultFontPointSize
+    font.family:        ScreenTools.normalFontFamily
+    inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
+                            Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
+                            Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
+    leftPadding:        _marginPadding
+    rightPadding:       _marginPadding + unitsHelpLayout.width
+    topPadding:         _marginPadding
+    bottomPadding:      _marginPadding
 
     property bool   showUnits:          false
     property bool   showHelp:           false
     property string unitsLabel:         ""
     property string extraUnitsLabel:    ""
-
-    signal helpClicked
+    property bool   numericValuesOnly:  false   // true: Used as hint for mobile devices to show numeric only keyboard
+    property alias textColor:           control.color
 
     property real _helpLayoutWidth: 0
+    property real _marginPadding:   ScreenTools.defaultFontPixelHeight / 3
+
+    signal helpClicked
 
     Component.onCompleted: selectAllIfActiveFocus()
     onActiveFocusChanged: selectAllIfActiveFocus()
@@ -40,95 +53,77 @@ TextField {
         }
     }
 
-    QGCLabel {
-        id:             unitsLabelWidthGenerator
-        text:           unitsLabel
-        width:          contentWidth + parent.__contentHeight * 0.666
-        visible:        false
-        antialiasing:   true
-    }
+    background: Rectangle {
+        border.width:   qgcPal.globalTheme === QGCPalette.Light ? 1 : 0
+        border.color:   qgcPal.buttonBorder
+        radius:         ScreenTools.buttonBorderRadius
+        color:          qgcPal.textField
+        implicitWidth:  ScreenTools.implicitTextFieldWidth
+        implicitHeight: ScreenTools.implicitTextFieldHeight
 
-    style: TextFieldStyle {
-        id:             tfs
-        font.pointSize: ScreenTools.defaultFontPointSize
-        font.family:    ScreenTools.normalFontFamily
-        renderType:     ScreenTools.isWindows ? Text.QtRendering : tfs.renderType   // This works around font rendering problems on windows
+        RowLayout {
+            id:                     unitsHelpLayout
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            anchors.right:          parent.right
+            anchors.rightMargin:    control.activeFocus ? 2 : control._marginPadding
+            spacing:                ScreenTools.defaultFontPixelWidth / 4
+            layoutDirection:        Qt.RightToLeft
 
-        background: Item {
-            id: backgroundItem
+            Component.onCompleted:  control._helpLayoutWidth = unitsHelpLayout.width
+            onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
 
-            property bool showHelp: control.showHelp && control.activeFocus
-
+            // Help button
             Rectangle {
-                anchors.fill:           parent
-                anchors.bottomMargin:   -1
-                color:                  "#44ffffff"
-            }
+                id:                     helpButton
+                Layout.margins:         2
+                Layout.leftMargin:      0
+                Layout.rightMargin:     1
+                Layout.fillHeight:      true
+                Layout.preferredWidth:  helpLabel.contentWidth * 3
+                Layout.alignment:       Qt.AlignVCenter
+                color:                  control.color
+                visible:                control.showHelp && control.activeFocus
 
-            Rectangle {
-                anchors.fill:           parent
-                border.width:           enabled ? 1 : 0
-                border.color:           root.activeFocus ? "#47b" : "#999"
-                color:                  qgcPal.textField
-            }
-
-            RowLayout {
-                id:                     unitsHelpLayout
-                anchors.top:            parent.top
-                anchors.bottom:         parent.bottom
-                anchors.rightMargin:    backgroundItem.showHelp ? 0 : control.__contentHeight * 0.333
-                anchors.right:          parent.right
-                spacing:                ScreenTools.defaultFontPixelWidth / 4
-
-                Component.onCompleted:  control._helpLayoutWidth = unitsHelpLayout.width
-                onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
-
-                Text {
-                    Layout.alignment:   Qt.AlignVCenter
-                    text:               control.unitsLabel
-                    font.pointSize:     backgroundItem.showHelp ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
-                    font.family:        ScreenTools.normalFontFamily
-                    antialiasing:       true
-                    color:              control.textColor
-                    visible:            control.showUnits && text !== ""
+                QGCLabel {
+                    id:                 helpLabel
+                    anchors.centerIn:   parent
+                    color:              qgcPal.textField
+                    text:               qsTr("?")
                 }
 
-                Text {
-                    Layout.alignment:   Qt.AlignVCenter
-                    text:               control.extraUnitsLabel
-                    font.pointSize:     ScreenTools.smallFontPointSize
-                    font.family:        ScreenTools.normalFontFamily
-                    antialiasing:       true
-                    color:              control.textColor
-                    visible:            control.showUnits && text !== ""
-                }
-
-                Rectangle {
-                    Layout.margins:     2
-                    Layout.leftMargin:  0
-                    Layout.rightMargin: 1
-                    Layout.fillHeight:  true
-                    width:              helpLabel.contentWidth * 3
-                    color:              control.textColor
-                    visible:            backgroundItem.showHelp
-
-                    QGCLabel {
-                        id:                 helpLabel
-                        anchors.centerIn:   parent
-                        color:              qgcPal.textField
-                        text:               qsTr("?")
-                    }
-                }
             }
 
-            MouseArea {
-                anchors.margins:    ScreenTools.isMobile ? -(ScreenTools.defaultFontPixelWidth * 0.66) : 0 // Larger touch area for mobile
-                anchors.fill:       unitsHelpLayout
-                enabled:            control.activeFocus
-                onClicked:          root.helpClicked()
+            // Extra units
+            Text {
+                Layout.alignment:   Qt.AlignVCenter
+                text:               control.extraUnitsLabel
+                font.pointSize:     ScreenTools.smallFontPointSize
+                font.family:        ScreenTools.normalFontFamily
+                antialiasing:       true
+                color:              control.color
+                visible:            control.showUnits && text !== ""
+            }
+
+            // Units
+            Text {
+                Layout.alignment:   Qt.AlignVCenter
+                text:               control.unitsLabel
+                font.pointSize:     control.activeFocus ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                font.family:        ScreenTools.normalFontFamily
+                antialiasing:       true
+                color:              control.color
+                visible:            control.showUnits && text !== ""
             }
         }
+    }
 
-        padding.right: control._helpLayoutWidth //control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight * 0.333
+    MouseArea {
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        anchors.right:  parent.right
+        width:          control._helpLayoutWidth
+        enabled:        helpButton.visible
+        onClicked:      control.helpClicked()
     }
 }

@@ -42,7 +42,7 @@ bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStri
         }
     }
 
-    if (missingKeys.count() != 0) {
+    if (missingKeys.length() != 0) {
         errorString = QObject::tr("The following required keys are missing: %1").arg(missingKeys);
         return false;
     }
@@ -68,7 +68,7 @@ bool JsonHelper::_loadGeoCoordinate(const QJsonValue&   jsonValue,
         return false;
     }
 
-    foreach(const QJsonValue& jsonValue, coordinateArray) {
+    for (const auto& jsonValue: coordinateArray) {
         if (jsonValue.type() != QJsonValue::Double && jsonValue.type() != QJsonValue::Null) {
             errorString = QObject::tr("Coordinate array may only contain double values, found: %1").arg(jsonValue.type());
             return false;
@@ -167,7 +167,7 @@ bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QSt
         return true;
     } else {
         int startPos = qMax(0, parseError.offset - 100);
-        int length = qMin(bytes.count() - startPos, 200);
+        int length = qMin(bytes.length() - startPos, 200);
         qDebug() << QStringLiteral("Json read error '%1'").arg(bytes.mid(startPos, length).constData());
         errorString = parseError.errorString();
         return false;

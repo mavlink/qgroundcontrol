@@ -8,14 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Column {
     /// ListModel must contains elements which look like this:
@@ -38,7 +40,7 @@ Column {
         id: controller
     }
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Column {
         id:                 sliderOuterColumn
@@ -55,7 +57,7 @@ Column {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             sliderColumn.y + sliderColumn.height + _margins
-                color:              palette.windowShade
+                color:              qgcPal.windowShade
 
                 Column {
                     id:                 sliderColumn
@@ -63,28 +65,93 @@ Column {
                     anchors.left:       parent.left
                     anchors.right:      parent.right
                     anchors.top:        sliderRect.top
-                    spacing:            _margins
 
                     QGCLabel {
                         text:           title
                         font.family:    ScreenTools.demiboldFontFamily
                     }
+                    Item {
+                        width: 1
+                        height: _margins
+                    }
 
                     Slider {
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        minimumValue:       min
-                        maximumValue:       max
+                        from:       min
+                        to:       max
                         stepSize:           step
-                        tickmarksEnabled:   true
+                        //tickmarksEnabled:   true  // FIXME_QT6
                         value:              _fact.value
+                        id:                 slider
+                        property int handleWidth: 0
 
                         property Fact _fact: controller.getParameterFact(-1, param)
 
                         onValueChanged: {
-                            if (_loadComplete) {
+                            if (_loadComplete && enabled) {
                                 _fact.value = value
                             }
+                        }
+
+                        // FIXME-QT6 - Controls 2 doesn't do styling this way
+                        /*
+                        style: SliderStyle {
+                            tickmarks: Repeater {
+                                id: repeater
+                                model: control.stepSize > 0 ? 1 + (control.to - control.from) / control.stepSize : 0
+                                property int unused: get()
+                                function get() {
+                                    slider.handleWidth = styleData.handleWidth
+                                    return 0
+                                }
+
+                                Rectangle {
+                                    color: Qt.hsla(qgcPal.text.hslHue, qgcPal.text.hslSaturation, qgcPal.text.hslLightness, 0.5)
+                                    width: 2
+                                    height: 4
+                                    y: repeater.height
+                                    x: styleData.handleWidth / 2 + index * ((repeater.width - styleData.handleWidth) / (repeater.count-1))
+                                }
+                            }
+                        }
+                        */
+                    }
+
+                    Item { // spacing
+                        width: 1
+                        height: 4
+                    }
+
+                    RowLayout {
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        QGCLabel {
+                            id: leftValueLabel
+                            text: slider.from
+                            horizontalAlignment: Text.AlignLeft
+                        }
+                        Item {
+                            QGCLabel {
+                                visible: slider.value != slider.from && slider.value != slider.to
+                                text: Math.round(slider._fact.value*100000)/100000
+                                x: getX()
+                                function getX() {
+                                    var span = slider.to - slider.from
+                                    var x = slider.handleWidth / 2 + (slider.value-slider.from)/span * (slider.width-slider.handleWidth) - width / 2
+                                    // avoid overlapping text
+                                    var minX = leftValueLabel.x + leftValueLabel.width + _margins/2
+                                    if (x < minX) x = minX
+                                    var maxX = rightValueLabel.x - _margins/2 - width
+                                    if (x > maxX) x = maxX
+                                    return x
+                                }
+                            }
+                        }
+                        QGCLabel {
+                            id: rightValueLabel
+                            text: slider.to
+                            Layout.alignment: Qt.AlignRight
                         }
                     }
 

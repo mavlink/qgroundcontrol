@@ -7,13 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.12
+import QtQuick
 
-import QGroundControl               1.0
-import QGroundControl.Airspace      1.0
-import QGroundControl.Airmap        1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 // This control contains the instruments as well and the instrument pages which include values, camera, ...
 Column {
@@ -22,13 +20,6 @@ Column {
     z:          QGroundControl.zOrderWidgets
 
     property real availableHeight
-
-    AirspaceControl {
-        id:                 airspaceControl
-        width:              parent.width
-        planView:           false
-        visible:            QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
-    }
 
     FlightDisplayViewWidgets {
         id:                 flightDisplayViewWidgets

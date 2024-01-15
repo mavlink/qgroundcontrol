@@ -1,26 +1,49 @@
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
-import QtQuick.Layouts              1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 ColumnLayout {
-    anchors.left:   parent.left
-    anchors.right:  parent.right
-    spacing:        _margin
-    visible:        tabBar.currentIndex === 2
+    spacing: _margin
+    visible: tabBar.currentIndex === 2
 
-    property var    missionItem
+    property var missionItem
 
-    QGCCheckBox {
-        id:         followsTerrainCheckBox
-        text:       qsTr("Vehicle follows terrain")
-        checked:    missionItem.followTerrain
-        onClicked:  missionItem.followTerrain = checked
+    MouseArea {
+        Layout.preferredWidth:  childrenRect.width
+        Layout.preferredHeight: childrenRect.height
+
+        onClicked: {
+            var removeModes = []
+            var updateFunction = function(altMode){ missionItem.cameraCalc.distanceMode = altMode }
+            removeModes.push(QGroundControl.AltitudeModeMixed)
+            if (!missionItem.masterController.controllerVehicle.supportsTerrainFrame) {
+                removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
+            }
+            if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || !_missionItem.cameraCalc.isManualCamera) {
+                removeModes.push(QGroundControl.AltitudeModeAbsolute)
+            }
+            altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
+        }
+
+        Component { id: altModeDialogComponent; AltModeDialog { } }
+
+        RowLayout {
+            spacing: ScreenTools.defaultFontPixelWidth / 2
+
+            QGCLabel { text: QGroundControl.altitudeModeShortDescription(missionItem.cameraCalc.distanceMode) }
+            QGCColoredImage {
+                height:     ScreenTools.defaultFontPixelHeight / 2
+                width:      height
+                source:     "/res/DropArrow.svg"
+                color:      qgcPal.text
+            }
+        }
     }
 
     GridLayout {
@@ -28,7 +51,7 @@ ColumnLayout {
         columnSpacing:      _margin
         rowSpacing:         _margin
         columns:            2
-        enabled:            followsTerrainCheckBox.checked
+        enabled:            missionItem.cameraCalc.distanceMode === QGroundControl.AltitudeModeCalcAboveTerrain
 
         QGCLabel { text: qsTr("Tolerance") }
         FactTextField {

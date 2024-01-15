@@ -8,18 +8,18 @@
  ****************************************************************************/
 
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 /// Joystick Config
 SetupPage {
@@ -48,7 +48,9 @@ SetupPage {
             height: bar.height + joyLoader.height
 
             readonly property real  labelToMonitorMargin:   ScreenTools.defaultFontPixelWidth * 3
-            property var            _activeJoystick:        joystickManager.activeJoystick
+
+            property var  _activeJoystick:          joystickManager.activeJoystick
+            property bool _allowJoystickSelection:  QGroundControl.corePlugin.options.allowJoystickSelection
 
             function setupPageCompleted() {
                 controller.start()
@@ -62,20 +64,31 @@ SetupPage {
                 id:             bar
                 width:          parent.width
                 Component.onCompleted: {
-                    currentIndex = _activeJoystick && _activeJoystick.calibrated ? 0 : 2
+                    if (_activeJoystick) {
+                        if (_activeJoystick.axisCount == 0) {
+                            currentIndex = _allowJoystickSelection ? 0 : 1
+                        } else {
+                            currentIndex = _activeJoystick.calibrated ? 0 : 2
+                        }
+                    } else {
+                        currentIndex = 0
+                    }
                 }
                 anchors.top:    parent.top
                 QGCTabButton {
                     text:       qsTr("General")
+                    visible:    _allowJoystickSelection
                 }
                 QGCTabButton {
                     text:       qsTr("Button Assigment")
                 }
                 QGCTabButton {
                     text:       qsTr("Calibration")
+                    visible:    _activeJoystick.axisCount != 0
                 }
                 QGCTabButton {
                     text:       qsTr("Advanced")
+                    visible:    _activeJoystick.axisCount != 0
                 }
             }
 

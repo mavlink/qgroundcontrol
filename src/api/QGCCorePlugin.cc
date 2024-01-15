@@ -47,18 +47,6 @@ public:
             delete pCommLinks;
         if(pOfflineMaps)
             delete pOfflineMaps;
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        if(pTaisync)
-            delete pTaisync;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-        if(pMicrohard)
-            delete pMicrohard;
-#endif
-#if defined(QGC_AIRMAP_ENABLED)
-        if(pAirmap)
-            delete pAirmap;
-#endif
         if(pMAVLink)
             delete pMAVLink;
         if(pConsole)
@@ -71,6 +59,8 @@ public:
         if(pQmlTest)
             delete pQmlTest;
 #endif
+        if(pRemoteID)
+            delete pRemoteID;
         if(defaultOptions)
             delete defaultOptions;
     }
@@ -78,15 +68,6 @@ public:
     QmlComponentInfo* pGeneral                  = nullptr;
     QmlComponentInfo* pCommLinks                = nullptr;
     QmlComponentInfo* pOfflineMaps              = nullptr;
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    QmlComponentInfo* pTaisync                  = nullptr;
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    QmlComponentInfo* pMicrohard                = nullptr;
-#endif
-#if defined(QGC_AIRMAP_ENABLED)
-    QmlComponentInfo* pAirmap                   = nullptr;
-#endif
     QmlComponentInfo* pMAVLink                  = nullptr;
     QmlComponentInfo* pConsole                  = nullptr;
     QmlComponentInfo* pHelp                     = nullptr;
@@ -95,6 +76,7 @@ public:
     QmlComponentInfo* pDebug                    = nullptr;
     QmlComponentInfo* pQmlTest                  = nullptr;
 #endif
+    QmlComponentInfo* pRemoteID                  = nullptr;
 
     QGCOptions*         defaultOptions          = nullptr;
     QVariantList        settingsList;
@@ -143,28 +125,13 @@ QVariantList &QGCCorePlugin::settingsPages()
                                                 QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
                                                 QUrl::fromUserInput("qrc:/res/waves.svg"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pOfflineMaps)));
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        _p->pTaisync = new QmlComponentInfo(tr("Taisync"),
-                                            QUrl::fromUserInput("qrc:/qml/TaisyncSettings.qml"),
-                                            QUrl::fromUserInput(""));
-        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pTaisync)));
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-        _p->pMicrohard = new QmlComponentInfo(tr("Microhard"),
-                                              QUrl::fromUserInput("qrc:/qml/MicrohardSettings.qml"),
-                                              QUrl::fromUserInput(""));
-        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pMicrohard)));
-#endif
-#if defined(QGC_AIRMAP_ENABLED)
-        _p->pAirmap = new QmlComponentInfo(tr("AirMap"),
-                                           QUrl::fromUserInput("qrc:/qml/AirmapSettings.qml"),
-                                           QUrl::fromUserInput(""));
-        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pAirmap)));
-#endif
         _p->pMAVLink = new QmlComponentInfo(tr("MAVLink"),
                                             QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
                                             QUrl::fromUserInput("qrc:/res/waves.svg"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pMAVLink)));
+        _p->pRemoteID = new QmlComponentInfo(tr("Remote ID"),
+                                            QUrl::fromUserInput("qrc:/qml/RemoteIDSettings.qml"));
+        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pRemoteID)));
         _p->pConsole = new QmlComponentInfo(tr("Console"),
                                             QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pConsole)));
@@ -195,7 +162,7 @@ QVariantList& QGCCorePlugin::analyzePages()
         _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),    QUrl::fromUserInput("qrc:/qml/GeoTagPage.qml"),             QUrl::fromUserInput("qrc:/qmlimages/GeoTagIcon"))));
 #endif
         _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),  QUrl::fromUserInput("qrc:/qml/MavlinkConsolePage.qml"),     QUrl::fromUserInput("qrc:/qmlimages/MavlinkConsoleIcon"))));
-#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
+#if !defined(QGC_DISABLE_MAVLINK_INSPECTOR)
         _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),QUrl::fromUserInput("qrc:/qml/MAVLinkInspectorPage.qml"),   QUrl::fromUserInput("qrc:/qmlimages/MAVLinkInspector"))));
 #endif
         _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Vibration"),        QUrl::fromUserInput("qrc:/qml/VibrationPage.qml"),          QUrl::fromUserInput("qrc:/qmlimages/VibrationPageIcon"))));
@@ -255,6 +222,13 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMeta
             return true;
         }
 #endif
+
+#ifndef __android__
+        if (metaData.name() == AppSettings::androidSaveToSDCardName) {
+            // This only shows on android builds
+            return false;
+        }
+#endif
     }
 
     return true; // Show setting in ui
@@ -293,7 +267,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
 {
     HorizontalFactValueGrid factValueGrid(defaultSettingsGroup);
 
-    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL;
+    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
     factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
 

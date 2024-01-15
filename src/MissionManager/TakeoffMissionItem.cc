@@ -20,27 +20,26 @@
 #include "SettingsManager.h"
 #include "PlanMasterController.h"
 
-TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad, QObject* parent)
-    : SimpleMissionItem (masterController, flyView, forLoad, parent)
+TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem (masterController, flyView, forLoad)
     , _settingsItem     (settingsItem)
 {
     _init(forLoad);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (masterController, flyView, false /* forLoad */, parent)
+TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem (masterController, flyView, false /* forLoad */)
     , _settingsItem     (settingsItem)
 {
     setCommand(takeoffCmd);
-    _init(false /* forLoad */);
+    _init(forLoad);
 }
 
-TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (masterController, flyView, missionItem, parent)
+TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
+    : SimpleMissionItem (masterController, flyView, missionItem)
     , _settingsItem     (settingsItem)
 {
-    _init(false /* forLoad */);
-    _wizardMode = false;
+    _init(forLoad);
 }
 
 TakeoffMissionItem::~TakeoffMissionItem()
@@ -76,17 +75,15 @@ void TakeoffMissionItem::_init(bool forLoad)
     }
 
     _initLaunchTakeoffAtSameLocation();
+    if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
+        SimpleMissionItem::setCoordinate(homePosition);
+    }
 
-    if (homePosition.isValid() && coordinate().isValid()) {
-        // Item already fully specified, most likely from mission load from storage
-        _wizardMode = false;
-    } else {
-        if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
-            _wizardMode = false;
-            SimpleMissionItem::setCoordinate(homePosition);
-        } else {
-            _wizardMode = true;
-        }
+    // Wizard mode is set if:
+    //  - Launch position is missing - requires prompt to user to click to set launch
+    //  - Fixed wing - warn about climb out position adjustment
+    if (!homePosition.isValid() || _controllerVehicle->fixedWing()) {
+        _wizardMode = true;
     }
 
     setDirty(false);

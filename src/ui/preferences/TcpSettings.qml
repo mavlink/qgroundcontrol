@@ -7,53 +7,37 @@
  *
  ****************************************************************************/
 
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Palette               1.0
+GridLayout {
+    columns:        2
+    rowSpacing:     _rowSpacing
+    columnSpacing:  _colSpacing
 
-Column {
-    id:                 tcpLinkSettings
-    spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-    anchors.margins:    ScreenTools.defaultFontPixelWidth
     function saveSettings() {
-        if(subEditConfig) {
-            subEditConfig.host = hostField.text
-            subEditConfig.port = parseInt(portField.text)
-        }
+        subEditConfig.host = hostField.text
+        subEditConfig.port = parseInt(portField.text)
     }
-    Row {
-        spacing:        ScreenTools.defaultFontPixelWidth
-        QGCLabel {
-            text:       qsTr("Host Address:")
-            width:      _firstColumn
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        QGCTextField {
-            id:         hostField
-            text:       subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeTcp ? subEditConfig.host : ""
-            width:      _secondColumn
-            anchors.verticalCenter: parent.verticalCenter
-        }
+
+    QGCLabel { text: qsTr("Server Address") }
+    QGCTextField {
+        id:                     hostField
+        Layout.preferredWidth:  _secondColumnWidth
+        text:                   subEditConfig.host
     }
-    Row {
-        spacing:        ScreenTools.defaultFontPixelWidth
-        QGCLabel {
-            text:       qsTr("TCP Port:")
-            width:      _firstColumn
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        QGCTextField {
-            id:         portField
-            text:       subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeTcp ? subEditConfig.port.toString() : ""
-            width:      _firstColumn
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
-            anchors.verticalCenter: parent.verticalCenter
-        }
+
+    QGCLabel { text: qsTr("Port") }
+    QGCTextField {
+        id:                     portField
+        Layout.preferredWidth:  _secondColumnWidth
+        text:                   subEditConfig.port.toString()
+        inputMethodHints:       Qt.ImhFormattedNumbersOnly
     }
 }

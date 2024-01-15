@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.AutoPilotPlugin       1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
+import QGroundControl
+import QGroundControl.AutoPilotPlugin
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
 
 Rectangle {
     id:     setupView
@@ -25,7 +25,7 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    ExclusiveGroup { id: setupButtonGroup }
+    ButtonGroup { id: setupButtonGroup }
 
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
@@ -88,6 +88,22 @@ Rectangle {
                     break;
                 }
             }
+        }
+    }
+
+    function showNamedComponentPanel(panelButtonName) {
+        if (mainWindow.preventViewSwitch()) {
+            return
+        }
+        for (var i=0; i<componentRepeater.count; i++) {
+            var panelButton = componentRepeater.itemAt(i)
+            if (panelButton.text === panelButtonName) {
+                showVehicleComponentPanel(panelButton.componentUrl)
+                break;
+            }
+        }
+        if (panelButtonName === parametersButton.text) {
+            parametersButton.clicked()
         }
     }
 
@@ -214,7 +230,7 @@ Rectangle {
                 SubMenuButton {
                     imageResource:      modelData.icon
                     setupIndicator:     false
-                    exclusiveGroup:     setupButtonGroup
+                    buttonGroup:     setupButtonGroup
                     text:               modelData.title
                     visible:            _corePlugin && _corePlugin.options.combineSettingsAndSetup
                     onClicked:          showPanel(this, modelData.url)
@@ -227,7 +243,7 @@ Rectangle {
                 imageResource:      "/qmlimages/VehicleSummaryIcon.png"
                 setupIndicator:     false
                 checked:            true
-                exclusiveGroup:     setupButtonGroup
+                buttonGroup:     setupButtonGroup
                 text:               qsTr("Summary")
                 Layout.fillWidth:   true
 
@@ -238,7 +254,7 @@ Rectangle {
                 id:                 firmwareButton
                 imageResource:      "/qmlimages/FirmwareUpgradeIcon.png"
                 setupIndicator:     false
-                exclusiveGroup:     setupButtonGroup
+                buttonGroup:     setupButtonGroup
                 visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade
                 text:               qsTr("Firmware")
                 Layout.fillWidth:   true
@@ -248,7 +264,7 @@ Rectangle {
 
             SubMenuButton {
                 id:                 px4FlowButton
-                exclusiveGroup:     setupButtonGroup
+                buttonGroup:     setupButtonGroup
                 visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.primaryLinkIsPX4Flow : false
                 setupIndicator:     false
                 text:               qsTr("PX4Flow")
@@ -258,13 +274,18 @@ Rectangle {
 
             SubMenuButton {
                 id:                 joystickButton
+                imageResource:      "/qmlimages/Joystick.png"
                 setupIndicator:     true
-                setupComplete:      joystickManager.activeJoystick ? joystickManager.activeJoystick.calibrated : false
-                exclusiveGroup:     setupButtonGroup
+                setupComplete:      _activeJoystick ? _activeJoystick.calibrated || _buttonsOnly : false
+                buttonGroup:     setupButtonGroup
                 visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
-                text:               qsTr("Joystick")
+                text:               _forcedToButtonsOnly ? qsTr("Buttons") : qsTr("Joystick")
                 Layout.fillWidth:   true
                 onClicked:          showPanel(this, "JoystickConfig.qml")
+
+                property var    _activeJoystick:        joystickManager.activeJoystick
+                property bool   _buttonsOnly:           _activeJoystick ? _activeJoystick.axisCount == 0 : false
+                property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }
 
             Repeater {
@@ -275,17 +296,20 @@ Rectangle {
                     imageResource:      modelData.iconResource
                     setupIndicator:     modelData.requiresSetup
                     setupComplete:      modelData.setupComplete
-                    exclusiveGroup:     setupButtonGroup
+                    buttonGroup:     setupButtonGroup
                     text:               modelData.name
                     visible:            modelData.setupSource.toString() !== ""
                     Layout.fillWidth:   true
-                    onClicked:          showVehicleComponentPanel(modelData)
+                    onClicked:          showVehicleComponentPanel(componentUrl)
+
+                    property var componentUrl: modelData
                 }
             }
 
             SubMenuButton {
+                id:                 parametersButton
                 setupIndicator:     false
-                exclusiveGroup:     setupButtonGroup
+                buttonGroup:     setupButtonGroup
                 visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
                                     !QGroundControl.multiVehicleManager.activeVehicle.usingHighLatencyLink &&
                                     _corePlugin.showAdvancedUI

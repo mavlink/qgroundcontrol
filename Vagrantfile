@@ -1,21 +1,38 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# if you update this file, please consider updating .travis.yml too
-
 require 'yaml'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
 configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
-travisfile     = YAML.load_file("#{current_dir}/.travis.yml")
 yaml_config    = configfile['configs']['dev']
+
+env_global = [
+  'JOBS=4',
+  'SHADOW_BUILD_DIR=/tmp/shadow_build_dir',
+  'CODESIGN=nocodesign',
+]
+
+packages = [
+  'build-essential',
+  'fuse',
+  'git',
+  'libgstreamer-plugins-base1.0-dev',
+  'libgstreamer1.0-0:amd64',
+  'libgstreamer1.0-dev',
+  'libsdl2-dev',
+  'libudev-dev',
+  'speech-dispatcher',
+  'wget'
+]
+
 
 Vagrant.configure(2) do |config|
   # This trick is used to prefer a VM box over docker
   config.vm.provider "virtualbox"
   config.vm.provider "vmware_fusion"
 
-  config.vm.box = "ubuntu/bionic64"
+  config.vm.box = "ubuntu/jammy64"
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
@@ -59,14 +76,23 @@ Vagrant.configure(2) do |config|
      echo 'Initialising submodules'
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
 
-     echo 'Saving %{qt_deps_tarball} from %{deps_url} to %{project_root_dir}'
-     su - vagrant -c 'wget --continue -q %{deps_url} -P %{project_root_dir}'
-     su - vagrant -c 'rm -rf %{qt_deps_unpack_dir}'
-     su - vagrant -c 'mkdir -p %{qt_deps_unpack_parent_dir}'
-     su - vagrant -c 'cd %{project_root_dir}; tar jxf "%{qt_deps_tarball}" -C  %{qt_deps_unpack_parent_dir}'
-     su - vagrant -c 'rm -rf %{shadow_build_dir}'
+     # with reference to https://github.com/jurplel/install-qt-action@v3/blob/master/src/main.ts and .github/workflows/linux_release.yml:
+     echo 'Installing QT'
+     apt-get install -y python3-pip
+     su - vagrant -c "pip3 install --user aqtinstall"
 
-     su - vagrant -c 'mkdir -p %{shadow_build_dir}'
+     apt-get install -y patchelf
+
+     dir="%{qt_deps_unpack_dir}"
+     version="5.15.2"
+     host="linux"
+     target="desktop"
+     modules="qtcharts"
+     su - vagrant -c "rm -rf ${dir}"
+     su - vagrant -c "mkdir -p ${dir}"
+     su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
+
+     mkdir -p /vagrant/shadow-build
 
      # write out a pair of scripts to make rebuilding on the VM easy:
      su - vagrant -c "cat <<QMAKE >do-qmake.sh
@@ -96,6 +122,10 @@ MAKE
 "
     su - vagrant -c "chmod +x do-qmake.sh do-make.sh"
 
+    # increase the allowed number of open files (the link step takes a
+    # lot of open filehandles!):
+echo '*               soft    nofile          2048' >/etc/security/limits.d/fileno.conf
+
     # now run the scripts:
     su - vagrant -c ./do-qmake.sh
     su - vagrant -c ./do-make.sh
@@ -107,9 +137,8 @@ MAKE
     :qt_deps_tarball => yaml_config['qt_deps_tarball'],
     :pro => yaml_config['pro'],
     :spec => yaml_config['spec'],
-    :deps_url => yaml_config['deps_url'],
-    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse', 'libsdl2-dev']).join(' '),
-    :build_env => travisfile['env']['global'].select { |item| item.is_a?(String) }.join(' '),
+    :apt_pkgs => (packages).join(' '),
+    :build_env => env_global.select { |item| item.is_a?(String) }.join(' '),
 
     :project_root_dir => yaml_config['project_root_dir'],
     :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],

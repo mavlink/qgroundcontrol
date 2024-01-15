@@ -34,26 +34,30 @@
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirMapManager.h"
-#else
-#include "AirspaceManager.h"
-#endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-#include "TaisyncManager.h"
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-#include "MicrohardManager.h"
-#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
 #endif
 
+ /**
+  * @brief Helper function to register a type with QML that is not creatable from QML
+  * @param uri The URI to register the type under
+  * @param majorVersion The major version of the type
+  * @param minorVersion The minor version of the type
+  * @param qmlName The name of the type in QML
+  */
+ template<class T>
+ void registerUncreatableQmlType(const char *uri, int majorVersion, int minorVersion, const char *qmlName)
+ {
+     qmlRegisterUncreatableType<T>(uri, majorVersion, minorVersion, qmlName, "Reference only");
+ }
+
 QGCToolbox::QGCToolbox(QGCApplication* app)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager        = new SettingsManager           (app, this);
+    registerUncreatableQmlType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager");
+
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
     _audioOutput            = new AudioOutput               (app, this);
@@ -69,28 +73,17 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _mapEngineManager       = new QGCMapEngineManager       (app, this);
+    registerUncreatableQmlType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager");
     _uasMessageHandler      = new UASMessageHandler         (app, this);
     _qgcPositionManager     = new QGCPositionManager        (app, this);
     _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
+    registerUncreatableQmlType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager");
+
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
     _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = new PairingManager            (app, this);
-#endif
-    //-- Airmap Manager
-    //-- This should be "pluggable" so an arbitrary AirSpace manager can be used
-    //-- For now, we instantiate the one and only AirMap provider
-#if defined(QGC_AIRMAP_ENABLED)
-    _airspaceManager        = new AirMapManager             (app, this);
-#else
-    _airspaceManager        = new AirspaceManager           (app, this);
-#endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    _taisyncManager         = new TaisyncManager            (app, this);
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    _microhardManager       = new MicrohardManager          (app, this);
 #endif
 }
 
@@ -118,14 +111,7 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
-    _airspaceManager->setToolbox(this);
     _adsbVehicleManager->setToolbox(this);
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    _taisyncManager->setToolbox(this);
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    _microhardManager->setToolbox(this);
-#endif
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager->setToolbox(this);
 #endif

@@ -45,7 +45,7 @@ const char* FactMetaData::_jsonMetaDataFactsName                = "QGC.MetaData.
 const char* FactMetaData::_enumStringsJsonKey                   = "enumStrings";
 const char* FactMetaData::_enumValuesJsonKey                    = "enumValues";
 
-// This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_INFORMATION parameter metadata for example.
+// This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_METADATA parameter metadata for example.
 const char* FactMetaData::_enumValuesArrayJsonKey               = "values";
 const char* FactMetaData::_enumBitmaskArrayJsonKey              = "bitmask";
 const char* FactMetaData::_enumValuesArrayValueJsonKey          = "value";
@@ -57,6 +57,7 @@ const char* FactMetaData::_enumBitmaskArrayDescriptionJsonKey   = "description";
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
     { "radians",        "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
+    { "rad",            "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
     { "gimbal-degrees", "deg",  FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees, FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees },
     { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
 };
@@ -140,6 +141,7 @@ const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_incrementJsonKey =           "increment";
 const char* FactMetaData::_hasControlJsonKey =          "control";
 const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
+const char* FactMetaData::_rebootRequiredJsonKey =      "rebootRequired";
 const char* FactMetaData::_categoryJsonKey =            "category";
 const char* FactMetaData::_groupJsonKey =               "group";
 const char* FactMetaData::_volatileJsonKey =            "volatile";
@@ -151,9 +153,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
     , _rawMax               (_maxForType())
-    , _maxIsDefaultForType  (true)
     , _rawMin               (_minForType())
-    , _minIsDefaultForType  (true)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
     , _vehicleRebootRequired(false)
@@ -175,9 +175,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
     , _rawMax               (_maxForType())
-    , _maxIsDefaultForType  (true)
     , _rawMin               (_minForType())
-    , _minIsDefaultForType  (true)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
     , _vehicleRebootRequired(false)
@@ -205,9 +203,7 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
     , _rawMax               (_maxForType())
-    , _maxIsDefaultForType  (true)
     , _rawMin               (_minForType())
-    , _minIsDefaultForType  (true)
     , _name                 (name)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
@@ -236,9 +232,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _group                  = other._group;
     _longDescription        = other._longDescription;
     _rawMax                 = other._rawMax;
-    _maxIsDefaultForType    = other._maxIsDefaultForType;
     _rawMin                 = other._rawMin;
-    _minIsDefaultForType    = other._minIsDefaultForType;
     _name                   = other._name;
     _shortDescription       = other._shortDescription;
     _type                   = other._type;
@@ -290,7 +284,6 @@ void FactMetaData::setRawMin(const QVariant& rawMin)
 {
     if (isInRawMinLimit(rawMin)) {
         _rawMin = rawMin;
-        _minIsDefaultForType = false;
     } else {
         qWarning() << "Attempt to set min below allowable value for fact: " << name()
                    << ", value attempted: " << rawMin
@@ -303,9 +296,10 @@ void FactMetaData::setRawMax(const QVariant& rawMax)
 {
     if (isInRawMaxLimit(rawMax)) {
         _rawMax = rawMax;
-        _maxIsDefaultForType = false;
     } else {
-        qWarning() << "Attempt to set max above allowable value";
+        qWarning() << "Attempt to set max above allowable value for fact: " << name()
+                   << ", value attempted: " << rawMax
+                   << ", type: " << type() << ", max for type: " << _maxForType();
         _rawMax = _maxForType();
     }
 }
@@ -370,9 +364,9 @@ bool FactMetaData::isInRawMaxLimit(const QVariant& variantValue) const
     return true;
 }
 
-QVariant FactMetaData::_minForType(void) const
+QVariant FactMetaData::minForType(ValueType_t type)
 {
-    switch (_type) {
+    switch (type) {
     case valueTypeUint8:
         return QVariant(std::numeric_limits<unsigned char>::min());
     case valueTypeInt8:
@@ -407,9 +401,9 @@ QVariant FactMetaData::_minForType(void) const
     return QVariant();
 }
 
-QVariant FactMetaData::_maxForType(void) const
+QVariant FactMetaData::maxForType(ValueType_t type)
 {
-    switch (_type) {
+    switch (type) {
     case valueTypeUint8:
         return QVariant(std::numeric_limits<unsigned char>::max());
     case valueTypeInt8:
@@ -707,6 +701,18 @@ void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
 {
     _enumStrings << name;
     _enumValues << value;
+}
+
+void FactMetaData::removeEnumInfo(const QVariant& value)
+{
+    const int index = _enumValues.indexOf(value);
+    if (index < 0) {
+        qWarning() << "Value does not exist in fact:" << value;
+        return;
+    }
+
+    _enumValues.removeAt(index);
+    _enumStrings.removeAt(index);
 }
 
 void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTranslator)
@@ -1186,6 +1192,26 @@ QVariant FactMetaData::appSettingsWeightUnitsToGrams(const QVariant& weight) {
     }
 }
 
+QVariant FactMetaData::metersSecondToAppSettingsSpeedUnits(const QVariant& metersSecond)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m/s", UnitSpeed);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->rawTranslator(metersSecond);
+    } else {
+        return metersSecond;
+    }
+}
+
+QVariant FactMetaData::appSettingsSpeedUnitsToMetersSecond(const QVariant& speed)
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m/s", UnitSpeed);
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedTranslator(speed);
+    } else {
+        return speed;
+    }
+}
+
 QString FactMetaData::appSettingsSpeedUnitsString()
 {
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsUnitsTranslation("m/s", UnitSpeed);
@@ -1256,6 +1282,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         { _maxJsonKey,                  QJsonValue::Double, false },
         { _hasControlJsonKey,           QJsonValue::Bool,   false },
         { _qgcRebootRequiredJsonKey,    QJsonValue::Bool,   false },
+        { _rebootRequiredJsonKey,       QJsonValue::Bool,   false },
         { _categoryJsonKey,             QJsonValue::String, false },
         { _groupJsonKey,                QJsonValue::String, false },
         { _volatileJsonKey,             QJsonValue::Bool,   false },
@@ -1282,6 +1309,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     QStringList     rgDescriptions;
     QList<double>   rgDoubleValues;
+    QList<int>      rgIntValues;
     QStringList     rgStringValues;
 
     bool foundBitmask = false;
@@ -1289,7 +1317,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseValueDescriptionArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
     }
     if (rgDescriptions.isEmpty()) {
-        if (!_parseBitmaskArray(json, rgDescriptions, rgDoubleValues, errorString)) {
+        if (!_parseBitmaskArray(json, rgDescriptions, rgIntValues, errorString)) {
             qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseBitmaskArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
         }
         foundBitmask = rgDescriptions.count() != 0;
@@ -1302,13 +1330,13 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 
     if (errorString.isEmpty() && rgDescriptions.count()) {
         for (int i=0; i<rgDescriptions.count(); i++) {
-            QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
-            QVariant    convertedValueVariant;
-            QString     errorString;
 
             if (foundBitmask) {
-                metaData->addBitmaskInfo(rgDescriptions[i], rawValueVariant);
+                metaData->addBitmaskInfo(rgDescriptions[i], 1 << rgIntValues[i]);
             } else {
+                QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
+                QVariant    convertedValueVariant;
+                QString     errorString;
                 if (metaData->convertAndValidateRaw(rawValueVariant, false /* validate */, convertedValueVariant, errorString)) {
                     metaData->addEnumInfo(rgDescriptions[i], convertedValueVariant);
                 } else {
@@ -1321,7 +1349,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         }
     }
 
-    metaData->setDecimalPlaces(json[_decimalPlacesJsonKey].toInt(0));
+    metaData->setDecimalPlaces(json[_decimalPlacesJsonKey].toInt(kUnknownDecimalPlaces));
     metaData->setShortDescription(json[_shortDescriptionJsonKey].toString());
     metaData->setLongDescription(json[_longDescriptionJsonKey].toString());
 
@@ -1410,6 +1438,12 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         qgcRebootRequired = json[_qgcRebootRequiredJsonKey].toBool();
     }
     metaData->setQGCRebootRequired(qgcRebootRequired);
+
+    bool rebootRequired = false;
+    if (json.contains(_rebootRequiredJsonKey)) {
+        rebootRequired = json[_rebootRequiredJsonKey].toBool();
+    }
+    metaData->setVehicleRebootRequired(rebootRequired);
 
     bool volatileValue = false;
     if (json.contains(_volatileJsonKey)) {
@@ -1518,18 +1552,10 @@ bool FactMetaData::_parseEnum(const QJsonObject& jsonObject, DefineMap_t defineM
     }
 
     QString strings = jsonObject.value(_enumStringsJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    rgDescriptions = defineMap.value(strings, strings).split(",", QString::SkipEmptyParts);
-#else
     rgDescriptions = defineMap.value(strings, strings).split(",", Qt::SkipEmptyParts);
-#endif
 
     QString values = jsonObject.value(_enumValuesJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    rgValues = defineMap.value(values, values).split(",", QString::SkipEmptyParts);
-#else
     rgValues = defineMap.value(values, values).split(",", Qt::SkipEmptyParts);
-#endif
 
     if (rgDescriptions.count() != rgValues.count()) {
         errorString = QStringLiteral("Enum strings/values count mismatch - strings:values %1:%2").arg(rgDescriptions.count()).arg(rgValues.count());
@@ -1574,7 +1600,7 @@ bool FactMetaData::_parseValuesArray(const QJsonObject& jsonObject, QStringList&
     return true;
 }
 
-bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString)
+bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<int>& rgValues, QString& errorString)
 {
     rgDescriptions.clear();
     rgValues.clear();
@@ -1603,7 +1629,7 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList
         }
 
         rgDescriptions.append(valueDescriptionObject[_enumBitmaskArrayDescriptionJsonKey].toString());
-        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toDouble());
+        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toInt());
     }
 
     return true;

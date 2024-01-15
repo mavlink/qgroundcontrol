@@ -19,6 +19,7 @@
 #include "AutoConnectSettings.h"
 #include "VideoSettings.h"
 #include "FlightMapSettings.h"
+#include "FlightModeSettings.h"
 #include "RTKSettings.h"
 #include "FlyViewSettings.h"
 #include "PlanViewSettings.h"
@@ -27,10 +28,9 @@
 #include "APMMavlinkStreamRateSettings.h"
 #include "FirmwareUpgradeSettings.h"
 #include "ADSBVehicleManagerSettings.h"
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirMapSettings.h"
-#endif
+#include "BatteryIndicatorSettings.h"
 #include <QVariantList>
+#include "RemoteIDSettings.h"
 
 /// Provides access to all app settings
 class SettingsManager : public QGCTool
@@ -40,14 +40,12 @@ class SettingsManager : public QGCTool
 public:
     SettingsManager(QGCApplication* app, QGCToolbox* toolbox);
 
-#if defined(QGC_AIRMAP_ENABLED)
-    Q_PROPERTY(QObject* airMapSettings                  READ airMapSettings                 CONSTANT)
-#endif
     Q_PROPERTY(QObject* appSettings                     READ appSettings                    CONSTANT)
     Q_PROPERTY(QObject* unitsSettings                   READ unitsSettings                  CONSTANT)
     Q_PROPERTY(QObject* autoConnectSettings             READ autoConnectSettings            CONSTANT)
     Q_PROPERTY(QObject* videoSettings                   READ videoSettings                  CONSTANT)
     Q_PROPERTY(QObject* flightMapSettings               READ flightMapSettings              CONSTANT)
+    Q_PROPERTY(QObject* flightModeSettings              READ flightModeSettings             CONSTANT)
     Q_PROPERTY(QObject* rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject* flyViewSettings                 READ flyViewSettings                CONSTANT)
     Q_PROPERTY(QObject* planViewSettings                READ planViewSettings               CONSTANT)
@@ -55,20 +53,20 @@ public:
     Q_PROPERTY(QObject* offlineMapsSettings             READ offlineMapsSettings            CONSTANT)
     Q_PROPERTY(QObject* firmwareUpgradeSettings         READ firmwareUpgradeSettings        CONSTANT)
     Q_PROPERTY(QObject* adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
+    Q_PROPERTY(QObject* batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
+    Q_PROPERTY(QObject* remoteIDSettings                READ remoteIDSettings               CONSTANT)
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
-#if defined(QGC_AIRMAP_ENABLED)
-    AirMapSettings*         airMapSettings      (void) { return _airMapSettings; }
-#endif
     AppSettings*                    appSettings                 (void) { return _appSettings; }
     UnitsSettings*                  unitsSettings               (void) { return _unitsSettings; }
     AutoConnectSettings*            autoConnectSettings         (void) { return _autoConnectSettings; }
     VideoSettings*                  videoSettings               (void) { return _videoSettings; }
     FlightMapSettings*              flightMapSettings           (void) { return _flightMapSettings; }
+    FlightModeSettings*             flightModeSettings          (void) { return _flightModeSettings; }
     RTKSettings*                    rtkSettings                 (void) { return _rtkSettings; }
     FlyViewSettings*                flyViewSettings             (void) { return _flyViewSettings; }
     PlanViewSettings*               planViewSettings            (void) { return _planViewSettings; }
@@ -76,18 +74,18 @@ public:
     OfflineMapsSettings*            offlineMapsSettings         (void) { return _offlineMapsSettings; }
     FirmwareUpgradeSettings*        firmwareUpgradeSettings     (void) { return _firmwareUpgradeSettings; }
     ADSBVehicleManagerSettings*     adsbVehicleManagerSettings  (void) { return _adsbVehicleManagerSettings; }
+    BatteryIndicatorSettings*       batteryIndicatorSettings    (void) { return _batteryIndicatorSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
+    RemoteIDSettings*               remoteIDSettings            (void) { return _remoteIDSettings; }
 private:
-#if defined(QGC_AIRMAP_ENABLED)
-    AirMapSettings*         _airMapSettings;
-#endif
     AppSettings*                    _appSettings;
     UnitsSettings*                  _unitsSettings;
     AutoConnectSettings*            _autoConnectSettings;
     VideoSettings*                  _videoSettings;
     FlightMapSettings*              _flightMapSettings;
+    FlightModeSettings*             _flightModeSettings;
     RTKSettings*                    _rtkSettings;
     FlyViewSettings*                _flyViewSettings;
     PlanViewSettings*               _planViewSettings;
@@ -95,9 +93,11 @@ private:
     OfflineMapsSettings*            _offlineMapsSettings;
     FirmwareUpgradeSettings*        _firmwareUpgradeSettings;
     ADSBVehicleManagerSettings*     _adsbVehicleManagerSettings;
+    BatteryIndicatorSettings*       _batteryIndicatorSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif
+    RemoteIDSettings*               _remoteIDSettings;
 };
 
 #endif

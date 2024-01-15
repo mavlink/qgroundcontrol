@@ -25,7 +25,7 @@ class FixedWingLandingComplexItem : public LandingComplexItem
     Q_OBJECT
 
 public:
-    FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent);
+    FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView);
 
     Q_PROPERTY(Fact*            valueSetIsDistance      READ    valueSetIsDistance                                          CONSTANT)
     Q_PROPERTY(Fact*            glideSlope              READ    glideSlope                                                  CONSTANT)
@@ -55,10 +55,11 @@ public:
     static const char* valueSetIsDistanceName;
 
 private slots:
-    void _glideSlopeChanged(void);
+    void _updateFlightPathSegmentsDontCallDirectly  (void) override;
+    void _glideSlopeChanged                         (void);
 
 private:
-    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView, QObject* parent) { return new FixedWingLandingComplexItem(masterController, flyView, parent); }
+    static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView) { return new FixedWingLandingComplexItem(masterController, flyView); }
     static bool                 _isValidLandItem(const MissionItem& missionItem);
 
     // Overrides from LandingComplexItem

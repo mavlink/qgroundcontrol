@@ -1,4 +1,6 @@
 
+add_subdirectory(Actuators)
+
 set(EXTRA_SRC)
 if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
@@ -16,26 +18,46 @@ if(BUILD_TESTING)
 endif()
 
 add_library(Vehicle
+	Autotune.cpp
+	Autotune.h
 	CompInfo.cc
 	CompInfo.h
+	CompInfoActuators.cc
+	CompInfoActuators.h
+	CompInfoEvents.cc
+	CompInfoEvents.h
 	CompInfoParam.cc
 	CompInfoParam.h
-	CompInfoVersion.cc
-	CompInfoVersion.h
+	CompInfoGeneral.cc
+	CompInfoGeneral.h
+	ComponentInformationCache.cc
+	ComponentInformationCache.h
 	ComponentInformationManager.cc
 	ComponentInformationManager.h
+	ComponentInformationTranslation.cc
+	ComponentInformationTranslation.h
+	EventHandler.cc
+	EventHandler.h
 	FTPManager.cc
 	FTPManager.h
 	GPSRTKFactGroup.cc
 	GPSRTKFactGroup.h
+	HealthAndArmingCheckReport.cc
+	HealthAndArmingCheckReport.h
+	ImageProtocolManager.cc
+	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
 	InitialConnectStateMachine.h
 	MAVLinkLogManager.cc
 	MAVLinkLogManager.h
+	MAVLinkStreamConfig.cc
+	MAVLinkStreamConfig.h
 	MultiVehicleManager.cc
 	MultiVehicleManager.h
 	StateMachine.cc
 	StateMachine.h
+	StandardModes.cc
+	StandardModes.h
 	SysStatusSensorInfo.cc
 	SysStatusSensorInfo.h
 	TerrainFactGroup.cc
@@ -51,12 +73,22 @@ add_library(Vehicle
 	VehicleClockFactGroup.h
 	VehicleDistanceSensorFactGroup.cc
 	VehicleDistanceSensorFactGroup.h
+	VehicleEFIFactGroup.cc
+	VehicleEFIFactGroup.h
 	VehicleEscStatusFactGroup.cc
 	VehicleEscStatusFactGroup.h
 	VehicleEstimatorStatusFactGroup.cc
 	VehicleEstimatorStatusFactGroup.h
+	VehicleGeneratorFactGroup.cc
+	VehicleGeneratorFactGroup.h
+	VehicleLocalPositionFactGroup.cc
+	VehicleLocalPositionFactGroup.h
+	VehicleLocalPositionSetpointFactGroup.cc
+	VehicleLocalPositionSetpointFactGroup.h
 	VehicleGPSFactGroup.cc
 	VehicleGPSFactGroup.h
+	VehicleGPS2FactGroup.cc
+	VehicleGPS2FactGroup.h
 	Vehicle.h
 	VehicleLinkManager.cc
 	VehicleLinkManager.h
@@ -70,13 +102,22 @@ add_library(Vehicle
 	VehicleVibrationFactGroup.h
 	VehicleWindFactGroup.cc
 	VehicleWindFactGroup.h
+        VehicleHygrometerFactGroup.cc
+        VehicleHygrometerFactGroup.h
+	RemoteIDManager.h
+	RemoteIDManager.cc
 
 	${EXTRA_SRC}
 )
 
 target_link_libraries(Vehicle
 	PRIVATE
+		Actuators
 		ui
+		compression
+		libevents_generated
+		libevents_parser
+		libevents_health_and_arming_checks
 	PUBLIC
 		qgc
 )

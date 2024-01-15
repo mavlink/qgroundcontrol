@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick  2.12
-import QtCharts 2.3
+import QtQuick
+import QtCharts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
     id:         root
@@ -30,15 +30,10 @@ Rectangle {
     property var  _visualItems:         missionController.visualItems
     property real _altRange:            _maxAMSLAltitude - _minAMSLAltitude
     property real _indicatorSpacing:    5
-    property real _minAMSLAltitude:     isNaN(missionController.minAMSLAltitude) ? 0 : missionController.minAMSLAltitude
-    property real _maxAMSLAltitude:     isNaN(missionController.maxAMSLAltitude) ? 100 : missionController.maxAMSLAltitude
+    property real _minAMSLAltitude:     isNaN(terrainProfile.minAMSLAlt) ? 0 : terrainProfile.minAMSLAlt
+    property real _maxAMSLAltitude:     isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
     property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
     property var  _unitsConversion:     QGroundControl.unitsConversion
-
-    function yPosFromAlt(alt) {
-        var fullHeight = terrainProfileFlickable.height
-        return ((alt - _minAMSLAltitude) / _fullHeight) * _fullHeight
-    }
 
     QGCPalette { id: qgcPal }
 
@@ -55,7 +50,6 @@ Rectangle {
 
     QGCFlickable {
         id:                 terrainProfileFlickable
-        //anchors.margins:    _margins
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         anchors.leftMargin: titleLabel.contentHeight

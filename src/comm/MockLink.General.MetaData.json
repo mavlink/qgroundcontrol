@@ -1,0 +1,10 @@
+{
+    "version":                      1,
+    "vendorName":                   "QGC MockLink Vendor",
+    "modelName":                    "QGC MockLink Model",
+    "firmwareVersion":              "1.0.0",
+    "hardwareVersion":              "1.0.0",
+	"metadataTypes": [
+		{"type": 1, "uri": "mftp://[;comp=1]parameter.json.xz", "fileCrc": 1}
+	]
+} 

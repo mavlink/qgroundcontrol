@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
-import QtQuick.Dialogs              1.2
-import QtQuick.Layouts              1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Item {
     id:         _root
@@ -36,8 +36,6 @@ Item {
     ParameterEditorController {
         id: controller
     }
-
-    ExclusiveGroup { id: sectionGroup }
 
     //---------------------------------------------
     //-- Header
@@ -95,7 +93,6 @@ Item {
         anchors.bottom: header.bottom
         anchors.right:  parent.right
         text:           qsTr("Tools")
-        visible:        !_searchFilter
         onClicked:      toolsMenu.popup()
     }
 
@@ -107,19 +104,24 @@ Item {
         }
         QGCMenuItem {
             text:           qsTr("Reset all to firmware's defaults")
-            onTriggered:    mainWindow.showComponentDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+            onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
+                                                         qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations."),
+                                                         Dialog.Cancel | Dialog.Reset,
+                                                         function() { controller.resetAllToDefaults() })
         }
         QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
             visible:        !_activeVehicle.apmFirmware
-            onTriggered:    mainWindow.showComponentDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+            onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
+                                                         qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults."),
+                                                         Dialog.Cancel | Dialog.Reset,
+                                                         function() { controller.resetAllToVehicleConfiguration() })
         }
         QGCMenuSeparator { }
         QGCMenuItem {
             text:           qsTr("Load from file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
-                fileDialog.selectExisting = true
                 fileDialog.openForLoad()
             }
         }
@@ -127,7 +129,6 @@ Item {
             text:           qsTr("Save to file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Save Parameters")
-                fileDialog.selectExisting = false
                 fileDialog.openForSave()
             }
         }
@@ -140,7 +141,10 @@ Item {
         QGCMenuSeparator { }
         QGCMenuItem {
             text:           qsTr("Reboot Vehicle")
-            onTriggered:    mainWindow.showComponentDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+            onTriggered:    mainWindow.showMessageDialog(qsTr("Reboot Vehicle"),
+                                                         qsTr("Select Ok to reboot vehicle."),
+                                                         Dialog.Cancel | Dialog.Ok,
+                                                         function() { _activeVehicle.rebootVehicle() })
         }
     }
 
@@ -176,7 +180,6 @@ Item {
                         anchors.right:  parent.right
                         text:           object.name
                         checked:        object == controller.currentCategory
-                        exclusiveGroup: sectionGroup
 
                         onCheckedChanged: {
                             if (checked) {
@@ -243,7 +246,17 @@ Item {
                     id:     valueLabel
                     width:  ScreenTools.defaultFontPixelWidth  * 20
                     color:  factRow.modelFact.defaultValueAvailable ? (factRow.modelFact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText) : qgcPal.text
-                    text:   factRow.modelFact.enumStrings.length === 0 ? factRow.modelFact.valueString + " " + factRow.modelFact.units : factRow.modelFact.enumStringValue
+                    text:   {
+                        if(factRow.modelFact.enumStrings.length === 0) {
+                            return factRow.modelFact.valueString + " " + factRow.modelFact.units
+                        }
+
+                        if(factRow.modelFact.bitmaskStrings.length != 0) {
+                            return factRow.modelFact.selectedBitmaskStrings.join(',')
+                        }
+
+                        return factRow.modelFact.enumStringValue
+                    }
                     clip:   true
                 }
 
@@ -272,7 +285,7 @@ Item {
                 acceptedButtons:    Qt.LeftButton
                 onClicked: {
                     _editorDialogFact = factRow.modelFact
-                    mainWindow.showComponentDialog(editorDialogComponent, qsTr("Parameter Editor"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                    editorDialogComponent.createObject(mainWindow).open()
                 }
             }
         }
@@ -281,17 +294,17 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings.parameterSavePath
-        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*.*)") ]
+        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
 
-        onAcceptedForSave: {
+        onAcceptedForSave: (file) => {
             controller.saveToFile(file)
             close()
         }
 
-        onAcceptedForLoad: {
+        onAcceptedForLoad: (file) => {
             close()
             if (controller.buildDiffFromFile(file)) {
-                mainWindow.showPopupDialogFromComponent(parameterDiffDialog)
+                parameterDiffDialog.createObject(mainWindow).open()
             }
         }
     }
@@ -302,53 +315,6 @@ Item {
         ParameterEditorDialog {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
-        }
-    }
-
-    Component {
-        id: resetToDefaultConfirmComponent
-        QGCViewDialog {
-            function accept() {
-                controller.resetAllToDefaults()
-                hideDialog()
-            }
-            QGCLabel {
-                width:              parent.width
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes.")
-            }
-        }
-    }
-
-    Component {
-        id: resetToVehicleConfigurationConfirmComponent
-        QGCViewDialog {
-            function accept() {
-                controller.resetAllToVehicleConfiguration()
-                hideDialog()
-            }
-            QGCLabel {
-                width:              parent.width
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults.")
-            }
-        }
-    }
-
-    Component {
-        id: rebootVehicleConfirmComponent
-
-        QGCViewDialog {
-            function accept() {
-                hideDialog()
-                _activeVehicle.rebootVehicle()
-            }
-
-            QGCLabel {
-                width:              parent.width
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Select Ok to reboot vehicle.")
-            }
         }
     }
 

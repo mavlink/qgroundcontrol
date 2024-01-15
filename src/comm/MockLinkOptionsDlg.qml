@@ -7,23 +7,23 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Layouts  1.2
-import QtQuick.Controls 2.5
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controllers
 
 QGCPopupDialog {
     title:      qsTr("MockLink Options")
-    buttons:    StandardButton.Close
+    buttons:    Dialog.Close
 
-    property var link: dialogProperties.link
+    property var link
 
     ColumnLayout {
         spacing: ScreenTools.defaultFontPixelHeight / 2
@@ -33,7 +33,7 @@ QGCPopupDialog {
             text:               qsTr("Stop Heartbeats")
             onClicked: {
                 link.setCommLost(true)
-                reject()
+                close()
             }
         }
 
@@ -42,7 +42,7 @@ QGCPopupDialog {
             text:               qsTr("Start Heartbeats")
             onClicked: {
                 link.setCommLost(false)
-                reject()
+                close()
             }
         }
 
@@ -51,7 +51,7 @@ QGCPopupDialog {
             text:               qsTr("Connection Removed")
             onClicked: {
                 link.simulateConnectionRemoved()
-                reject()
+                close()
             }
         }
     }

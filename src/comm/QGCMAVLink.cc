@@ -16,6 +16,7 @@ constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
 
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassAirship;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassFixedWing;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassRoverBoat;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassSub;
@@ -79,6 +80,11 @@ QString QGCMAVLink::firmwareClassToString(FirmwareClass_t firmwareClass)
     }
 }
 
+bool QGCMAVLink::isAirship(MAV_TYPE mavType)
+{
+    return vehicleClass(mavType) == VehicleClassAirship;
+}
+
 bool QGCMAVLink::isFixedWing(MAV_TYPE mavType)
 {
     return vehicleClass(mavType) == VehicleClassFixedWing;
@@ -110,6 +116,8 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
         return VehicleClassRoverBoat;
+    case MAV_TYPE_SUBMARINE:
+        return VehicleClassSub;
     case MAV_TYPE_QUADROTOR:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
@@ -117,16 +125,18 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
         return VehicleClassMultiRotor;
-    case MAV_TYPE_VTOL_DUOROTOR:
-    case MAV_TYPE_VTOL_QUADROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
     case MAV_TYPE_VTOL_TILTROTOR:
-    case MAV_TYPE_VTOL_RESERVED2:
-    case MAV_TYPE_VTOL_RESERVED3:
-    case MAV_TYPE_VTOL_RESERVED4:
+    case MAV_TYPE_VTOL_FIXEDROTOR:
+    case MAV_TYPE_VTOL_TAILSITTER:
+    case MAV_TYPE_VTOL_TILTWING:
     case MAV_TYPE_VTOL_RESERVED5:
         return VehicleClassVTOL;
     case MAV_TYPE_FIXED_WING:
         return VehicleClassFixedWing;
+    case MAV_TYPE_AIRSHIP:
+        return VehicleClassAirship;
     default:
         return VehicleClassGeneric;
     }
@@ -135,6 +145,8 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
 QString QGCMAVLink::vehicleClassToString(VehicleClass_t vehicleClass)
 {
     switch (vehicleClass) {
+    case VehicleClassAirship:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Airship");
     case VehicleClassFixedWing:
         return QT_TRANSLATE_NOOP("Vehicle Class", "Fixed Wing");
     case VehicleClassRoverBoat:
@@ -210,6 +222,7 @@ QString QGCMAVLink::mavSysStatusSensorToString(MAV_SYS_STATUS_SENSOR sysStatusSe
         { MAV_SYS_STATUS_SENSOR_SATCOM,                 QT_TRANSLATE_NOOP("MAVLink SYS_STATUS_SENSOR value", "Satellite Communication") },
         { MAV_SYS_STATUS_PREARM_CHECK,                  QT_TRANSLATE_NOOP("MAVLink SYS_STATUS_SENSOR value", "Pre-Arm Check") },
         { MAV_SYS_STATUS_OBSTACLE_AVOIDANCE,            QT_TRANSLATE_NOOP("MAVLink SYS_STATUS_SENSOR value", "Avoidance/collision prevention") },
+        { MAV_SYS_STATUS_SENSOR_PROPULSION,             QT_TRANSLATE_NOOP("MAVLink SYS_STATUS_SENSOR value", "Propulsion") }
     };
 
     for (size_t i=0; i<sizeof(rgSensorInfo)/sizeof(sensorInfo_s); i++) {

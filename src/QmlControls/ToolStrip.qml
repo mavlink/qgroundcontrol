@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
-import QtQuick.Controls 2.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.Controls
 
 Rectangle {
     id:         _root
@@ -26,9 +26,15 @@ Rectangle {
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
     property alias  title:              titleLabel.text
 
+    property var _dropPanel: dropPanel
+
     function simulateClick(buttonIndex) {
-        buttonIndex = buttonIndex + 1 // skip over title
-        toolStripColumn.children[buttonIndex].clicked()
+        buttonIndex = buttonIndex + 1 // skip over title label
+        var button = toolStripColumn.children[buttonIndex]
+        if (button.checkable) {
+            button.checked = !button.checked
+        }
+        button.clicked()
     }
 
     // Ensure we don't get narrower than content
@@ -46,7 +52,7 @@ Rectangle {
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        height:             parent.height
+        height:             parent.height - anchors.margins * 2
         contentHeight:      toolStripColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true
@@ -69,34 +75,28 @@ Rectangle {
             Repeater {
                 id: repeater
 
-                QGCHoverButton {
-                    id:             buttonTemplate
+                ToolStripHoverButton {
+                    id:                 buttonTemplate
+                    anchors.left:       toolStripColumn.left
+                    anchors.right:      toolStripColumn.right
+                    height:             width
+                    radius:             ScreenTools.defaultFontPixelWidth / 2
+                    fontPointSize:      ScreenTools.smallFontPointSize
+                    toolStripAction:    modelData
+                    dropPanel:          _dropPanel
+                    onDropped: (index) => _root.dropped(index)
 
-                    anchors.left:   toolStripColumn.left
-                    anchors.right:  toolStripColumn.right
-                    height:         width
-                    radius:         ScreenTools.defaultFontPixelWidth / 2
-                    fontPointSize:  ScreenTools.smallFontPointSize
-                    autoExclusive:  true
-
-                    enabled:        modelData.enabled
-                    visible:        modelData.visible
-                    imageSource:    modelData.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
-                    text:           modelData.text
-                    checked:        modelData.checked
-                    checkable:      modelData.dropPanelComponent || modelData.checkable
-
-                    onCheckedChanged: modelData.checked = checked
-
-                    onClicked: {
-                        dropPanel.hide()
-                        if (!modelData.dropPanelComponent) {
-                            modelData.triggered(this)
-                        } else if (checked) {
-                            var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                            dropPanel.show(panelEdgeTopPoint, modelData.dropPanelComponent, this)
-                            checked = true
-                            _root.dropped(index)
+                    onCheckedChanged: {
+                        // We deal with exclusive check state manually since usinug autoExclusive caused all sorts of crazt problems
+                        if (checked) {
+                            for (var i=0; i<repeater.count; i++) {
+                                if (i != index) {
+                                    var button = repeater.itemAt(i)
+                                    if (button.checked) {
+                                        button.checked = false
+                                    }
+                                }
+                            }
                         }
                     }
                 }

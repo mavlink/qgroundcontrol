@@ -152,11 +152,8 @@ add_custom_Target(MisionManagerQml
 
 target_link_libraries(MissionManager
 	PUBLIC
-		Qt5::Xml
-                qgc
-	PRIVATE
+		Qt6::Xml
 		qgc
 )
 
 target_include_directories(MissionManager INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-

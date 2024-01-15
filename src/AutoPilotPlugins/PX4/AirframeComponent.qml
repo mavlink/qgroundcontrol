@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Dialogs 1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.Controllers 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             airframePage
@@ -97,27 +97,6 @@ SetupPage {
                 }
             }
 
-            Component {
-                id: applyRestartDialogComponent
-
-                QGCViewDialog {
-                    id: applyRestartDialog
-
-                    function accept() {
-                        controller.changeAutostart()
-                        applyRestartDialog.hideDialog()
-                    }
-
-                    QGCLabel {
-                        anchors.fill:   parent
-                        wrapMode:       Text.WordWrap
-                        text:           qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
-All vehicle parameters other than Radio Calibration will be reset.<br><br>\
-Your vehicle will also be restarted in order to complete the process.")
-                    }
-                }
-            }
-
             Item {
                 id:             helpApplyRow
                 anchors.left:   parent.left
@@ -139,8 +118,13 @@ Your vehicle will also be restarted in order to complete the process.")
                     id:             applyButton
                     anchors.right:  parent.right
                     text:           qsTr("Apply and Restart")
+                    onClicked:      mainWindow.showMessageDialog(qsTr("Apply and Restart"),
+                                                                 qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
+                                                                        All vehicle parameters other than Radio Calibration will be reset.<br><br>\
+                                                                        Your vehicle will also be restarted in order to complete the process."),
+                                                                 Dialog.Apply | Dialog.Cancel,
+                                                                 function() { controller.changeAutostart() })
 
-                    onClicked:      mainWindow.showComponentDialog(applyRestartDialogComponent, qsTr("Apply and Restart"), mainWindow.showDialogDefaultWidth, StandardButton.Apply | StandardButton.Cancel)
                 }
             }
 
@@ -155,7 +139,7 @@ Your vehicle will also be restarted in order to complete the process.")
                 width:      parent.width
                 spacing:    _boxSpace
 
-                ExclusiveGroup {
+                ButtonGroup {
                     id: airframeTypeExclusive
                 }
 
@@ -210,7 +194,7 @@ Your vehicle will also be restarted in order to complete the process.")
                                 // Although this item is invisible we still use it to manage state
                                 id:             airframeCheckBox
                                 checked:        modelData.name === controller.currentAirframeType
-                                exclusiveGroup: airframeTypeExclusive
+                                buttonGroup: airframeTypeExclusive
                                 visible:        false
 
                                 onCheckedChanged: {

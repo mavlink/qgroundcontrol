@@ -20,7 +20,6 @@
 #include <qbluetoothserviceinfo.h>
 #include <qbluetoothservicediscoveryagent.h>
 
-#include "QGCConfig.h"
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
@@ -38,7 +37,7 @@ public:
     {
         *this = other;
     }
-    bool operator==(const BluetoothData& other)
+    bool operator==(const BluetoothData& other) const
     {
 #ifdef __ios__
         return uuid == other.uuid && name == other.name;
@@ -119,11 +118,9 @@ class BluetoothLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class BluetoothConfiguration;
-    friend class LinkManager;
-
 public:
-    ~BluetoothLink();
+    BluetoothLink(SharedLinkConfigurationPtr& config);
+    virtual ~BluetoothLink();
 
     // Overrides from QThread
     void run(void) override;
@@ -147,7 +144,6 @@ private slots:
     void _writeBytes(const QByteArray bytes) override;
 
 private:
-    BluetoothLink(SharedLinkConfigurationPtr& config);
 
     // LinkInterface overrides
     bool _connect(void) override;

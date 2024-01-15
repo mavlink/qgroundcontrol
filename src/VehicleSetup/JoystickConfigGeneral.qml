@@ -7,23 +7,28 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Item {
-    width:                  mainCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-    height:                 mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+    width:  mainCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+    height: mainCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+
     readonly property real axisMonitorWidth: ScreenTools.defaultFontPixelWidth * 32
+
+    property bool _buttonsOnly:         _activeJoystick.axisCount == 0
+    property bool _requiresCalibration: !_activeJoystick.calibrated && !_buttonsOnly
+
     Column {
         id:                 mainCol
         anchors.centerIn:   parent
@@ -35,14 +40,17 @@ Item {
             //---------------------------------------------------------------------
             //-- Enable Joystick
             QGCLabel {
-                text:               _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
+                text:               _requiresCalibration ? qsTr("Enable not allowed (Calibrate First)") : qsTr("Enable joystick input")
                 Layout.alignment:   Qt.AlignVCenter
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 36
             }
             QGCCheckBox {
                 id:             enabledSwitch
-                enabled:        _activeJoystick ? _activeJoystick.calibrated : false
-                onClicked:      globals.activeVehicle.joystickEnabled = checked
+                enabled:        !_requiresCalibration
+                onClicked:      {
+                    globals.activeVehicle.joystickEnabled = checked
+                    globals.activeVehicle.saveJoystickSettings()
+                }
                 Component.onCompleted: {
                     checked = globals.activeVehicle.joystickEnabled
                 }
@@ -96,9 +104,11 @@ Item {
             QGCLabel {
                 text:               qsTr("RC Mode:")
                 Layout.alignment:   Qt.AlignVCenter
+                visible:            !_buttonsOnly
             }
             Row {
                 spacing:            ScreenTools.defaultFontPixelWidth
+                visible:            !_buttonsOnly
                 QGCRadioButton {
                     text:       "1"
                     checked:    controller.transmitterMode === 1
@@ -141,6 +151,7 @@ Item {
                 radius:             ScreenTools.defaultFontPixelWidth * 0.5
                 width:              axisGrid.width  + (ScreenTools.defaultFontPixelWidth  * 2)
                 height:             axisGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+                visible:            !_buttonsOnly
                 GridLayout {
                     id:                 axisGrid
                     columns:            2
@@ -205,44 +216,6 @@ Item {
                             pitchAxis.axisValue     = pitch * 32768.0
                             yawAxis.axisValue       = yaw   * 32768.0
                             throttleAxis.axisValue  = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
-                        }
-                    }
-
-                    QGCLabel {
-                        id:                 gimbalPitchLabel
-                        width:              _attitudeLabelWidth
-                        text:               qsTr("Gimbal Pitch")
-                        visible:            controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                    }
-                    AxisMonitor {
-                        id:                 gimbalPitchAxis
-                        height:             ScreenTools.defaultFontPixelHeight
-                        width:              axisMonitorWidth
-                        mapped:             controller.gimbalPitchAxisMapped
-                        reversed:           controller.gimbalPitchAxisReversed
-                        visible:            controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                    }
-
-                    QGCLabel {
-                        id:                 gimbalYawLabel
-                        width:              _attitudeLabelWidth
-                        text:               qsTr("Gimbal Yaw")
-                        visible:            controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                    }
-                    AxisMonitor {
-                        id:                 gimbalYawAxis
-                        height:             ScreenTools.defaultFontPixelHeight
-                        width:              axisMonitorWidth
-                        mapped:             controller.gimbalYawAxisMapped
-                        reversed:           controller.gimbalYawAxisReversed
-                        visible:            controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                    }
-
-                    Connections {
-                        target:             _activeJoystick
-                        onManualControlGimbal:  {
-                            gimbalPitchAxis.axisValue = gimbalPitch * 32768.0
-                            gimbalYawAxis.axisValue   = gimbalYaw   * 32768.0
                         }
                     }
                 }

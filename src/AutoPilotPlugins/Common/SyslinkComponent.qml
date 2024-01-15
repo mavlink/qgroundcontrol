@@ -9,16 +9,16 @@
 
 
 
-import QtQuick          2.2
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 SetupPage {
     id:             syslinkPage
@@ -103,7 +103,7 @@ SetupPage {
                         Layout.fillWidth:   true
                         font.pointSize:     ScreenTools.smallFontPointSize
                         wrapMode:           Text.WordWrap
-                        text:               "Address in hex. Default is E7E7E7E7E7."
+                        text:               qsTr("Address in hex. Default is E7E7E7E7E7.")
                     }
 
 
@@ -123,7 +123,7 @@ SetupPage {
                     }
 
                     QGCButton {
-                        text:                           "Restore Defaults"
+                        text:                           qsTr("Restore Defaults")
                         width:                          textEditWidth
                         onClicked: {
                             controller.resetDefaults()

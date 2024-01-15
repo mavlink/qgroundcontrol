@@ -12,13 +12,13 @@
 ///     @brief Battery, propeller and magnetometer summary
 ///     @author Gus Grubba <gus@auterion.com>
 
-import QtQuick 2.3
-import QtQuick.Controls 1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.FactControls 1.0
-import QGroundControl.Controls 1.0
-import QGroundControl.Palette 1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Item {
     anchors.fill:   parent
@@ -26,9 +26,9 @@ Item {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; }
 
-    property Fact batVChargedFact:  controller.getParameterFact(-1, "BAT_V_CHARGED")
-    property Fact batVEmptyFact:    controller.getParameterFact(-1, "BAT_V_EMPTY")
-    property Fact batCellsFact:     controller.getParameterFact(-1, "BAT_N_CELLS")
+    property Fact batVChargedFact:  controller.getParameterFact(-1, "BAT1_V_CHARGED")
+    property Fact batVEmptyFact:    controller.getParameterFact(-1, "BAT1_V_EMPTY")
+    property Fact batCellsFact:     controller.getParameterFact(-1, "BAT1_N_CELLS")
 
     Column {
         anchors.fill:       parent

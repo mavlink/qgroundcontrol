@@ -7,14 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             motorPage
@@ -62,14 +62,14 @@ SetupPage {
                             id:                         slider
                             height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
                             orientation:                Qt.Vertical
-                            minimumValue:               0
-                            maximumValue:               100
+                            from:               0
+                            to:               100
                             stepSize:                   1
                             value:                      0
-                            updateValueWhileDragging:   false
+                            live:   false
 
                             onValueChanged: {
-                                controller.vehicle.motorTest(index + 1, value, value == 0 ? 0 : _motorTimeoutSecs)
+                                controller.vehicle.motorTest(index + 1, value, value == 0 ? 0 : _motorTimeoutSecs, true)
                                 if (value != 0) {
                                     motorTimer.restart()
                                 }
@@ -100,11 +100,11 @@ SetupPage {
                         id:                         allSlider
                         height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
                         orientation:                Qt.Vertical
-                        minimumValue:               0
-                        maximumValue:               100
+                        from:               0
+                        to:               100
                         stepSize:                   1
                         value:                      0
-                        updateValueWhileDragging:   false
+                        live:   false
 
                         onValueChanged: {
                             for (var sliderIndex=0; sliderIndex<sliderRepeater.count; sliderIndex++) {

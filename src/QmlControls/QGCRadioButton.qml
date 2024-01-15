@@ -1,17 +1,18 @@
-import QtQuick                  2.11
-import QtQuick.Controls         2.4
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 RadioButton {
-    id: control
-    property color  textColor:          _qgcPal.text
-    property bool   textBold:           false
-    property real   textFontPointSize:  ScreenTools.defaultFontPointSize
-    property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
-    property bool   _noText:            text === ""
+    id:             control
+    font.family:    ScreenTools.normalFontFamily
+    font.pointSize: ScreenTools.defaultFontPointSize
+
+    property color  textColor:  _qgcPal.text
+    property var    _qgcPal:    QGCPalette { colorGroupEnabled: enabled }
+    property bool   _noText:    text === ""
 
     indicator: Rectangle {
         implicitWidth:          ScreenTools.radioButtonIndicatorSize
@@ -36,9 +37,9 @@ RadioButton {
 
     contentItem: Text {
         text:               control.text
-        font.family:        ScreenTools.normalFontFamily
-        font.pointSize:     textFontPointSize
-        font.bold:          control.textBold
+        font.family:        control.font.pointSize
+        font.pointSize:     control.font.pointSize
+        font.bold:          control.font.bold
         color:              control.textColor
         opacity:            enabled ? 1.0 : 0.3
         verticalAlignment:  Text.AlignVCenter

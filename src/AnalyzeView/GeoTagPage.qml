@@ -7,24 +7,23 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 AnalyzePage {
     id:                 geoTagPage
     pageComponent:      pageComponent
-    pageName:           qsTr("GeoTag Images")
-    pageDescription:    qsTr("GeoTag Images is used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
+    pageDescription:    qsTr("Used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
 
     readonly property real _margin:     ScreenTools.defaultFontPixelWidth * 2
     readonly property real _minWidth:   ScreenTools.defaultFontPixelWidth * 20
@@ -66,20 +65,18 @@ AnalyzePage {
             //-- Log File
             QGCButton {
                 text:               qsTr("Select log file")
-                onClicked:          openLogFile.open()
+                onClicked:          openLogFile.openForLoad()
                 Layout.minimumWidth:_minWidth
                 Layout.maximumWidth:_maxWidth
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                FileDialog {
+                QGCFileDialog {
                     id:             openLogFile
                     title:          qsTr("Select log file")
-                    folder:         shortcuts.home
-                    nameFilters:    [qsTr("ULog file (*.ulg)"), qsTr("PX4 log file (*.px4log)"), qsTr("All Files (*.*)")]
+                    nameFilters:    [qsTr("ULog file (*.ulg)"), qsTr("PX4 log file (*.px4log)"), qsTr("All Files (*)")]
                     defaultSuffix:  "ulg"
-                    selectExisting: true
-                    onAccepted: {
-                        geoController.logFile = openLogFile.fileUrl
+                    onAcceptedForLoad: (file) => {
+                        geoController.logFile = openLogFile.file
                         close()
                     }
                 }
@@ -94,19 +91,17 @@ AnalyzePage {
             //-- Image Directory
             QGCButton {
                 text:               qsTr("Select image directory")
-                onClicked:          selectImageDir.open()
+                onClicked:          selectImageDir.openForLoad()
                 Layout.minimumWidth:_minWidth
                 Layout.maximumWidth:_maxWidth
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                FileDialog {
+                QGCFileDialog {
                     id:             selectImageDir
                     title:          qsTr("Select image directory")
-                    folder:         shortcuts.home
                     selectFolder:   true
-                    selectExisting: true
-                    onAccepted: {
-                        geoController.imageDirectory = selectImageDir.folder
+                    onAcceptedForLoad: (file) => {
+                        geoController.imageDirectory = selectImageDir.file
                         close()
                     }
                 }
@@ -121,25 +116,23 @@ AnalyzePage {
             //-- Save Directory
             QGCButton {
                 text:               qsTr("(Optionally) Select save directory")
-                onClicked:          selectDestDir.open()
+                onClicked:          selectDestDir.openForLoad()
                 Layout.minimumWidth:_minWidth
                 Layout.maximumWidth:_maxWidth
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                FileDialog {
+                QGCFileDialog {
                     id:             selectDestDir
                     title:          qsTr("Select save directory")
-                    folder:         shortcuts.home
                     selectFolder:   true
-                    selectExisting: true
-                    onAccepted: {
-                        geoController.saveDirectory = selectDestDir.folder
+                    onAcceptedForLoad: (file) => {
+                        geoController.saveDirectory = selectDestDir.file
                         close()
                     }
                 }
             }
             QGCLabel {
-                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? "/TAGGED folder in your image folder" : geoController.imageDirectory + "/TAGGED") : geoController.saveDirectory
+                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? qsTr("/TAGGED folder in your image folder") : geoController.imageDirectory + qsTr("/TAGGED")) : geoController.saveDirectory
                 elide:              Text.ElideLeft
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter

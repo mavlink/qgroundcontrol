@@ -8,21 +8,21 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.Controllers           1.0
-import QGroundControl.SettingsManager       1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.SettingsManager
 
 Rectangle {
     id:                 _root
@@ -39,7 +39,7 @@ Rectangle {
 
     property real   _labelWidth:                ScreenTools.defaultFontPixelWidth * 20
     property real   _comboFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
-    property real   _valueFieldWidth:           ScreenTools.defaultFontPixelWidth * 10
+    property real   _valueFieldWidth:           ScreenTools.defaultFontPixelWidth * 15
     property string _mapProvider:               QGroundControl.settingsManager.flightMapSettings.mapProvider.value
     property string _mapType:                   QGroundControl.settingsManager.flightMapSettings.mapType.value
     property Fact   _followTarget:              QGroundControl.settingsManager.appSettings.followTarget
@@ -48,7 +48,7 @@ Rectangle {
     property var    _planViewSettings:          QGroundControl.settingsManager.planViewSettings
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property var    _videoSettings:             QGroundControl.settingsManager.videoSettings
-    property string _videoSource:               _videoSettings.videoSource.value
+    property string _videoSource:               _videoSettings.videoSource.rawValue
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
     property bool   _isUDP264:                  _isGst && _videoSource === _videoSettings.udp264VideoSource
     property bool   _isUDP265:                  _isGst && _videoSource === _videoSettings.udp265VideoSource
@@ -156,6 +156,7 @@ Rectangle {
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
                             }
+
                             FactCheckBox {
                                 text:       qsTr("Show additional heading indicators on Compass")
                                 visible:    _showAdditionalIndicatorsCompass.visible
@@ -163,12 +164,91 @@ Rectangle {
 
                                 property Fact _showAdditionalIndicatorsCompass: QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
                             }
+
                             FactCheckBox {
                                 text:       qsTr("Lock Compass Nose-Up")
                                 visible:    _lockNoseUpCompass.visible
                                 fact:       _lockNoseUpCompass
 
                                 property Fact _lockNoseUpCompass: QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Show simple camera controls (DIGICAM_CONTROL)")
+                                visible:    _showDumbCameraControl.visible
+                                fact:       _showDumbCameraControl
+
+                                property Fact _showDumbCameraControl: QGroundControl.settingsManager.flyViewSettings.showSimpleCameraControl
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Update home position based on device location. This will affect return to home")
+                                fact:       _updateHomePosition
+                                visible:    _updateHomePosition.visible
+                                property Fact _updateHomePosition: QGroundControl.settingsManager.flyViewSettings.updateHomePosition
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Enable Custom Actions")
+                                visible:    _enableCustomActions.visible
+                                fact:       _enableCustomActions
+
+                                property Fact _enableCustomActions: QGroundControl.settingsManager.flyViewSettings.enableCustomActions
+                            }
+
+                            //-----------------------------------------------------------------
+                            //-- CustomAction definition path
+                            GridLayout {
+                                id: customActions
+
+                                columns:  2
+                                visible:  QGroundControl.settingsManager.flyViewSettings.enableCustomActions.rawValue
+
+                                onVisibleChanged: {
+                                    if (jsonFile.rawValue === "" && ScreenTools.isMobile) {
+                                        jsonFile.rawValue = _defaultFile
+                                    }
+                                }
+
+                                property Fact   jsonFile:     QGroundControl.settingsManager.flyViewSettings.customActionDefinitions
+                                property string _defaultDir:  QGroundControl.settingsManager.appSettings.customActionsSavePath
+                                property string _defaultFile: _defaultDir + "/CustomActions.json"
+
+                                QGCLabel {
+                                    text: qsTr("Custom Action Definitions")
+
+                                    Layout.columnSpan:  2
+                                    Layout.alignment:   Qt.AlignHCenter
+                                }
+
+                                QGCTextField {
+                                    Layout.fillWidth:   true
+                                    readOnly:           true
+                                    text:               customActions.jsonFile.rawValue === "" ? qsTr("<not set>") : customActions.jsonFile.rawValue
+                                }
+                                QGCButton {
+                                    visible:    !ScreenTools.isMobile
+                                    text:       qsTr("Browse")
+                                    onClicked:  customActionPathBrowseDialog.openForLoad()
+                                    QGCFileDialog {
+                                        id:             customActionPathBrowseDialog
+                                        title:          qsTr("Choose the Custom Action Definitions file")
+                                        folder:         customActions.jsonFile.rawValue
+                                        selectFolder:   false
+                                        onAcceptedForLoad: customActions.jsonFile.rawValue = file
+                                        nameFilters: ["JSON files (*.json)"]
+                                    }
+                                }
+                                // The file loader on Android doesn't work, so we hard code the path to the
+                                // JSON file. However, we need a button to force a refresh if the JSON file
+                                // is changed.
+                                QGCButton {
+                                    visible:    ScreenTools.isMobile
+                                    text:       qsTr("Reload")
+                                    onClicked:  {
+                                        customActions.jsonFile.valueChanged(customActions.jsonFile.rawValue)
+                                    }
+                                }
                             }
 
                             GridLayout {
@@ -283,7 +363,7 @@ Rectangle {
 
                                 QGCLabel {
                                     id:         videoFileFormatLabel
-                                    text:       qsTr("File Format")
+                                    text:       qsTr("Record File Format")
                                     visible:    _showSaveVideoSettings && _videoSettings.recordingFormat.visible
                                 }
                                 FactComboBox {
@@ -301,6 +381,19 @@ Rectangle {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   _videoSettings.maxVideoSize
                                     visible:                _showSaveVideoSettings && _videoSettings.enableStorageLimit.value && maxSavedVideoStorageLabel.visible
+                                }
+
+                                QGCLabel {
+                                    id:         videoDecodeLabel
+                                    text:       qsTr("Video decode priority")
+                                    visible:    forceVideoDecoderComboBox.visible
+                                }
+                                FactComboBox {
+                                    id:                     forceVideoDecoderComboBox
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    fact:                   _videoSettings.forceVideoDecoder
+                                    visible:                fact.visible
+                                    indexModel:             false
                                 }
 
                                 Item { width: 1; height: 1}
@@ -398,14 +491,14 @@ Rectangle {
                             Layout.fillWidth:           false
                             anchors.horizontalCenter:   parent.horizontalCenter
                             flow:                       GridLayout.TopToBottom
-                            rows:                       4
+                            rows:                       5
 
                             Repeater {
-                                model: [ qsTr("Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature") ]
+                                model: [ qsTr("Horizontal Distance"), qsTr("Vertical Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature") ]
                                 QGCLabel { text: modelData }
                             }
                             Repeater {
-                                model:  [ QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
+                                model:  [ QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits, QGroundControl.settingsManager.unitsSettings.verticalDistanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   modelData
@@ -443,13 +536,13 @@ Rectangle {
 
                                 QGCLabel {
                                     text:           qsTr("Language")
-                                    visible: QGroundControl.settingsManager.appSettings.language.visible
+                                    visible: QGroundControl.settingsManager.appSettings.qLocaleLanguage.visible
                                 }
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   QGroundControl.settingsManager.appSettings.language
+                                    fact:                   QGroundControl.settingsManager.appSettings.qLocaleLanguage
                                     indexModel:             false
-                                    visible:                QGroundControl.settingsManager.appSettings.language.visible
+                                    visible:                QGroundControl.settingsManager.appSettings.qLocaleLanguage.visible
                                 }
 
                                 QGCLabel {
@@ -592,6 +685,13 @@ Rectangle {
                                 }
 
                                 FactCheckBox {
+                                    text:       qsTr("Save application data to SD Card")
+                                    fact:       _androidSaveToSDCard
+                                    visible:    _androidSaveToSDCard.visible
+                                    property Fact _androidSaveToSDCard: QGroundControl.settingsManager.appSettings.androidSaveToSDCard
+                                }
+
+                                FactCheckBox {
                                     text:       qsTr("Check for Internet connection")
                                     fact:       _checkInternet
                                     visible:    _checkInternet && _checkInternet.visible
@@ -608,25 +708,35 @@ Rectangle {
                                     MessageDialog {
                                         id:                 clearDialog
                                         visible:            false
-                                        icon:               StandardIcon.Warning
-                                        standardButtons:    StandardButton.Yes | StandardButton.No
+                                        //icon:               StandardIcon.Warning
+                                        buttons:            MessageDialog.Yes | MessageDialog.No
                                         title:              qsTr("Clear Settings")
                                         text:               qsTr("All saved settings will be reset the next time you start %1. Is this really what you want?").arg(QGroundControl.appName)
-                                        onYes: {
-                                            QGroundControl.deleteAllSettingsNextBoot()
-                                            clearDialog.visible = false
-                                        }
-                                        onNo: {
-                                            clearCheck.checked  = false
-                                            clearDialog.visible = false
+                                        onButtonClicked: function (button, role) {
+                                            switch (button) {
+                                            case MessageDialog.Yes:
+                                                QGroundControl.deleteAllSettingsNextBoot()
+                                                //clearDialog.visible = false
+                                                break;
+                                            case MessageDialog.No:
+                                                clearCheck.checked  = false
+                                                //clearDialog.visible = false
+                                                break;
+                                            }
                                         }
                                     }
+                                }
+
+                                // Check box to show/hide Remote ID submenu in App settings
+                                FactCheckBox {
+                                    text:       qsTr("Enable Remote ID")
+                                    fact:       _remoteIDEnable
+                                    visible:    _remoteIDEnable.visible
+                                    property Fact _remoteIDEnable: QGroundControl.settingsManager.remoteIDSettings.enable
                                 }
                             }
                         }
 
-                        //-----------------------------------------------------------------
-                        //-- Save path
                         RowLayout {
                             id:                 pathRow
                             anchors.margins:    _margins
@@ -648,7 +758,6 @@ Rectangle {
                                     id:             savePathBrowseDialog
                                     title:          qsTr("Choose the location to save/load files")
                                     folder:         _savePath.rawValue
-                                    selectExisting: true
                                     selectFolder:   true
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
@@ -732,10 +841,11 @@ Rectangle {
                                         QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow,
                                         QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot,
                                         QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP,
-                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS,
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectZeroConf,
                                     ]
 
-                                    property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("RTK GPS") ]
+                                    property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("RTK GPS"), qsTr("Zero-Conf") ]
 
                                     FactCheckBox {
                                         text:       autoConnectRepeater.names[index]
@@ -791,7 +901,7 @@ Rectangle {
                                     visible:                nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
                                     id:                     nmeaBaudCombo
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    model:                  [4800, 9600, 19200, 38400, 57600, 115200]
+                                    model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 
                                     onActivated: {
                                         if (index != -1) {
@@ -999,7 +1109,7 @@ Rectangle {
                             FactTextField {
                                 fact:                   adsbGrid.adsbSettings.adsbServerHostAddress
                                 visible:                adsbGrid.adsbSettings.adsbServerHostAddress.visible
-                                Layout.preferredWidth:  _valueFieldWidth
+                                Layout.fillWidth:       true
                             }
 
                             QGCLabel {
@@ -1051,7 +1161,6 @@ Rectangle {
                                     id:                 userBrandImageIndoorBrowseDialog
                                     title:              qsTr("Choose custom brand image file")
                                     folder:             _userBrandImageIndoor.rawValue.replace("file:///","")
-                                    selectExisting:     true
                                     selectFolder:       false
                                     onAcceptedForLoad:  _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
@@ -1073,7 +1182,6 @@ Rectangle {
                                     id:                 userBrandImageOutdoorBrowseDialog
                                     title:              qsTr("Choose custom brand image file")
                                     folder:             _userBrandImageOutdoor.rawValue.replace("file:///","")
-                                    selectExisting:     true
                                     selectFolder:       false
                                     onAcceptedForLoad:  _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }

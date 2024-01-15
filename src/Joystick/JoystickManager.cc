@@ -18,8 +18,10 @@
     #define __sdljoystick__
 #endif
 
+#ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
 #ifdef __android__
     #include "JoystickAndroid.h"
+#endif
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
@@ -38,6 +40,7 @@ JoystickManager::~JoystickManager() {
     QMap<QString, Joystick*>::iterator i;
     for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
         qCDebug(JoystickManagerLog) << "Releasing joystick:" << i.key();
+        i.value()->stop();
         delete i.value();
     }
     qDebug() << "Done";
@@ -59,10 +62,12 @@ void JoystickManager::init() {
     }
     _setActiveJoystickFromSettings();
 #elif defined(__android__)
+#ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
     if (!JoystickAndroid::init(this)) {
         return;
     }
     connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, &JoystickManager::restartJoystickCheckTimer);
+#endif
 #endif
     connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
     _joystickCheckTimerCounter = 5;
@@ -77,7 +82,9 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
+#ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
     newMap = JoystickAndroid::discover(_multiVehicleManager);
+#endif
 #endif
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
@@ -174,14 +181,15 @@ QString JoystickManager::activeJoystickName(void)
     return _activeJoystick ? _activeJoystick->name() : QString();
 }
 
-void JoystickManager::setActiveJoystickName(const QString& name)
+bool JoystickManager::setActiveJoystickName(const QString& name)
 {
-    if (!_name2JoystickMap.contains(name)) {
+    if (_name2JoystickMap.contains(name)) {
+        setActiveJoystick(_name2JoystickMap[name]);
+        return true;
+    } else {
         qCWarning(JoystickManagerLog) << "Set active not in map" << name;
-        return;
+        return false;
     }
-
-    setActiveJoystick(_name2JoystickMap[name]);
 }
 
 /*

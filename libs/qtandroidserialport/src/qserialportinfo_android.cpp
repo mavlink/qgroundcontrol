@@ -39,8 +39,8 @@
 
 #include <QtCore/qscopedpointer.h>
 #include <QtCore/qstringlist.h>
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
+#include <QJniObject>
+#include <QJniEnvironment>
 
 #include <android/log.h>
 
@@ -50,31 +50,21 @@ static const char V_TAG[] {"QGC_QSerialPortInfo"};
 
 extern void cleanJavaException();
 
-static int gErrorCount = 0;
-
-QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
+QList<QSerialPortInfo> availablePortsByFiltersOfDevices()
 {
     QList<QSerialPortInfo> serialPortInfoList;
 
-    //__android_log_print(ANDROID_LOG_INFO, V_TAG, "Collecting device list");
-    QAndroidJniObject resultL = QAndroidJniObject::callStaticObjectMethod(
+    QJniObject resultL = QJniObject::callStaticObjectMethod(
         V_jniClassName,
         "availableDevicesInfo",
         "()[Ljava/lang/String;");
     
     if (!resultL.isValid()) {
-        //-- If 5 consecutive errors, ignore it.
-        if(gErrorCount < 5) {
-            gErrorCount++;
-            __android_log_print(ANDROID_LOG_ERROR, V_TAG, "Error from availableDevicesInfo");
-        }
-        ok = false;
+        // No devices found
         return serialPortInfoList;
-    } else {
-        gErrorCount = 0;
     }
 
-    QAndroidJniEnvironment envL;
+    QJniEnvironment envL;
     jobjectArray objArrayL = resultL.object<jobjectArray>();
     int countL = envL->GetArrayLength(objArrayL);
 
@@ -83,9 +73,10 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
         QSerialPortInfoPrivate priv;
         jstring stringL = (jstring)(envL->GetObjectArrayElement(objArrayL, iL));
         const char *rawStringL = envL->GetStringUTFChars(stringL, 0);
-        //__android_log_print(ANDROID_LOG_INFO, V_TAG, "Adding device: %s", rawStringL);
+        __android_log_print(ANDROID_LOG_INFO, V_TAG, "Adding device: %s", rawStringL);
         QStringList strListL = QString::fromUtf8(rawStringL).split(QStringLiteral(":"));
         envL->ReleaseStringUTFChars(stringL, rawStringL);
+        envL->DeleteLocalRef(stringL);
 
         priv.portName               = strListL[0];
         priv.device                 = strListL[0];
@@ -103,20 +94,17 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
 
 QList<QSerialPortInfo> availablePortsBySysfs()
 {
-    bool ok;
-    return availablePortsByFiltersOfDevices(ok);
+    return availablePortsByFiltersOfDevices();
 }
 
 QList<QSerialPortInfo> availablePortsByUdev()
 {
-    bool ok;
-    return availablePortsByFiltersOfDevices(ok);
+    return availablePortsByFiltersOfDevices();
 }
 
 QList<QSerialPortInfo> QSerialPortInfo::availablePorts()
 {
-    bool ok;
-    return availablePortsByFiltersOfDevices(ok);
+    return availablePortsByFiltersOfDevices();
 }
 
 QList<qint32> QSerialPortInfo::standardBaudRates()
@@ -126,9 +114,9 @@ QList<qint32> QSerialPortInfo::standardBaudRates()
 
 bool QSerialPortInfo::isBusy() const
 {
-    QAndroidJniObject jstrL = QAndroidJniObject::fromString(d_ptr->portName);
+    QJniObject jstrL = QJniObject::fromString(d_ptr->portName);
     cleanJavaException();
-    jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
+    jboolean resultL = QJniObject::callStaticMethod<jboolean>(
         V_jniClassName,
         "isDeviceNameOpen",
         "(Ljava/lang/String;)Z",
@@ -139,9 +127,9 @@ bool QSerialPortInfo::isBusy() const
 
 bool QSerialPortInfo::isValid() const
 {
-    QAndroidJniObject jstrL = QAndroidJniObject::fromString(d_ptr->portName);
+    QJniObject jstrL = QJniObject::fromString(d_ptr->portName);
     cleanJavaException();
-    jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
+    jboolean resultL = QJniObject::callStaticMethod<jboolean>(
         V_jniClassName,
         "isDeviceNameValid",
         "(Ljava/lang/String;)Z",

@@ -119,14 +119,17 @@
     "shortDesc": "Auto-Center Throttle",
     "longDesc":  "If enabled the throttle stick will snap back to center when released.",
     "type":             "bool",
-    "default":     false
+    "default":     true
 },
 {
-    "name":             "gstDebugLevel",
-    "shortDesc": "Video streaming debug",
-    "longDesc":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
-    "type":             "uint8",
-    "default":     0
+    "name":                 "gstDebugLevel",
+    "shortDesc":            "Video streaming debug",
+    "longDesc":             "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
+    "type":                 "uint8",
+    "enumStrings":          "Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace",
+    "enumValues":           "0,1,2,3,4,5,6,7",
+    "default":              0,
+    "qgcRebootRequired":    true
 },
 {
     "name":             "useChecklist",
@@ -171,9 +174,17 @@
 {
     "name":             "savePath",
     "shortDesc": "Application save directory",
-    "longDesc":  "Directory to which all data files  are saved/loaded from",
+    "longDesc":  "Directory to which all data files are saved/loaded from",
     "type":             "string",
     "default":     ""
+},
+{
+    "name":                 "androidSaveToSDCard",
+    "shortDesc":            "Save to SD card",
+    "longDesc":             "Application data is saved to the sd card",
+    "type":                 "bool",
+    "default":              false,
+    "qgcRebootRequired":    true
 },
 {
     "name":             "userBrandImageIndoor",
@@ -218,6 +229,20 @@
     "default":     ""
 },
 {
+    "name":             "customURL",
+    "shortDesc": "Custom Map URL",
+    "longDesc":  "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "vworldToken",
+    "shortDesc": "VWorld Token",
+    "longDesc":  "Your personal access token for VWorld maps",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "defaultFirmwareType",
     "shortDesc": "Default firmware type for flashing",
     "type":             "uint32",
@@ -239,13 +264,6 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":             "enableTaisync",
-    "shortDesc": "Enable Taisync Module Support",
-    "longDesc":  "Enable Taisync Module Support",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":             "enableTaisyncVideo",
     "shortDesc": "Enable Taisync Video Support",
     "longDesc":  "Enable Taisync Video Support",
@@ -253,19 +271,13 @@
     "default":     true
 },
 {
-    "name":             "enableMicrohard",
-    "shortDesc": "Enable Microhard Module Support",
-    "longDesc":  "Enable Microhard Module Support",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "language",
-    "shortDesc": "Language",
-    "type":             "uint32",
-    "enumStrings":      "System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish),Azerbaijani (Azerbaijani)",
-    "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
-    "default":     0
+    "name":         "qLocaleLanguage",
+    "shortDesc":    "Language",
+    "type":         "uint32",
+    "enumStrings":  "System,Azerbaijani (Azerbaijani),български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
+    "enumValues":   "0,12,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125",
+    "comment":      "enumValues uses Qt QLocale::Language values",
+    "default":      0
 },
 {
     "name":             "disableAllPersistence",
@@ -307,6 +319,13 @@
     "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
     "type":             "string",
     "default":     "localhost:14445"
+},
+{
+    "name":      "forwardMavlinkAPMSupportHostName",
+    "shortDesc": "Ardupilot Support Host name",
+    "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
+    "type":      "string",
+    "default":   "support.ardupilot.org:xxxx"
 }
 ]
 }

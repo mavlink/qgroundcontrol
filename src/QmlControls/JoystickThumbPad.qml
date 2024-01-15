@@ -1,9 +1,9 @@
-import QtQuick                  2.12
-import QtQuick.Controls         1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Item {
     id:             _joyRoot
@@ -20,16 +20,26 @@ Item {
     property bool   _processTouchPoints:    false
     property color  _fgColor:               QGroundControl.globalPalette.text
     property color  _bgColor:               QGroundControl.globalPalette.window
+    property real   _hatWidth:              ScreenTools.defaultFontPixelHeight
+    property real   _hatWidthHalf:          _hatWidth / 2
+
     property real   stickPositionX:         _centerXY
     property real   stickPositionY:         yAxisReCenter ? _centerXY : height
 
     QGCMapPalette { id: mapPal }
 
-    onWidthChanged:                     calculateXAxis()
     onStickPositionXChanged:            calculateXAxis()
-    onHeightChanged:                    calculateYAxis()
     onStickPositionYChanged:            calculateYAxis()
     onYAxisPositiveRangeOnlyChanged:    calculateYAxis()
+    onHeightChanged:                    { 
+                                            calculateYAxis()
+                                            reCenter() 
+                                        }
+    onWidthChanged:                     { 
+                                            calculateXAxis()
+                                            reCenter() 
+                                        }
+    //We prevent Joystick to move while the screen is resizing 
 
     function calculateXAxis() {
         if(!_joyRoot.visible) {
@@ -176,17 +186,14 @@ Item {
     }
 
     Rectangle {
-        width:          hatWidth
-        height:         hatWidth
-        radius:         hatWidthHalf
+        width:          _hatWidth
+        height:         _hatWidth
+        radius:         _hatWidthHalf
         border.color:   _fgColor
         border.width:   1
         color:          Qt.rgba(_fgColor.r, _fgColor.g, _fgColor.b, 0.5)
-        x:              stickPositionX - hatWidthHalf
-        y:              stickPositionY - hatWidthHalf
-
-        readonly property real hatWidth:        ScreenTools.defaultFontPixelHeight
-        readonly property real hatWidthHalf:    ScreenTools.defaultFontPixelHeight / 2
+        x:              stickPositionX - _hatWidthHalf
+        y:              stickPositionY - _hatWidthHalf
     }
 
     Connections {
@@ -205,11 +212,12 @@ Item {
     }
 
     MultiPointTouchArea {
-        anchors.fill:       parent
-        minimumTouchPoints: 1
-        maximumTouchPoints: 1
-        touchPoints:        [ TouchPoint { id: touchPoint } ]
-        onPressed:          _joyRoot.thumbDown(touchPoints)
-        onReleased:         _joyRoot.reCenter()
+        anchors.fill:           parent
+        anchors.bottomMargin:   yAxisReCenter ? 0 : -_hatWidthHalf
+        minimumTouchPoints:     1
+        maximumTouchPoints:     1
+        touchPoints:            [ TouchPoint { id: touchPoint } ]
+        onPressed:              _joyRoot.thumbDown(touchPoints)
+        onReleased:             _joyRoot.reCenter()
     }
 }

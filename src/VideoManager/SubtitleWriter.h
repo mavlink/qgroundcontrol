@@ -17,6 +17,7 @@
 #pragma once
 
 #include "QGCLoggingCategory.h"
+#include "Fact.h"
 #include <QObject>
 #include <QTimer>
 #include <QDateTime>
@@ -42,9 +43,9 @@ private slots:
 
 private:
     QTimer _timer;
-    QStringList _values;
-    QDateTime _startTime;
+    QList<Fact*> _facts;
+    QTime _lastEndTime;
     QFile _file;
 
-    static const int _sampleRate;
+    static const int _sampleRate; // Sample rate in Hz for getting telemetry data, most players do weird stuff when > 1Hz
 };

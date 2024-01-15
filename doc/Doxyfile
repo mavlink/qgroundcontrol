@@ -142,15 +142,11 @@ FILE_PATTERNS          = *.c \
                          *.py \
                          *.qml
 RECURSIVE              = YES
-EXCLUDE                = ../src/Airmap/QJsonWebToken \
-                         ../src/PairingManager/NfcLibrary \
+EXCLUDE                = ../src/PairingManager/NfcLibrary \
                          ../src/PairingManager/NfcTask \
                          ../src/PairingManager/TML \
                          ../src/GPS/Drivers \
                          ../src/GPS/RTCM \
-                         ../src/Airmap/QJsonWebToken \
-                         ../src/Airmap/README.md \
-                         ../src/QtLocationPlugin/qtlocation/README.md \
                          ../src/VideoStreaming/README.md
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = *Test.*

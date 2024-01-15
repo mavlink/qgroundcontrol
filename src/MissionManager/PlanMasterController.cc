@@ -20,9 +20,6 @@
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "BlankPlanCreator.h"
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceFlightPlanProvider.h"
-#endif
 
 #include <QDomDocument>
 #include <QJsonDocument>
@@ -96,14 +93,6 @@ void PlanMasterController::start(void)
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);
 
     _updatePlanCreatorsList();
-
-#if defined(QGC_AIRMAP_ENABLED)
-    //-- This assumes there is one single instance of PlanMasterController in edit mode.
-    if(!flyView) {
-        // Wait for signal confirming AirMap client connection before starting flight planning
-        connect(qgcApp()->toolbox()->airspaceManager(), &AirspaceManager::connectStatusChanged, this, &PlanMasterController::_startFlightPlanning);
-    }
-#endif
 }
 
 void PlanMasterController::startStaticActiveVehicle(Vehicle* vehicle, bool deleteWhenSendCompleted)
@@ -127,9 +116,9 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
     if (_managerVehicle) {
         // Disconnect old vehicle. Be careful of wildcarding disconnect too much since _managerVehicle may equal _controllerVehicle
-        disconnect(_managerVehicle->missionManager(),       nullptr, nullptr, nullptr);
-        disconnect(_managerVehicle->geoFenceManager(),      nullptr, nullptr, nullptr);
-        disconnect(_managerVehicle->rallyPointManager(),    nullptr, nullptr, nullptr);
+        disconnect(_managerVehicle->missionManager(),       nullptr, this, nullptr);
+        disconnect(_managerVehicle->geoFenceManager(),      nullptr, this, nullptr);
+        disconnect(_managerVehicle->rallyPointManager(),    nullptr, this, nullptr);
     }
 
     bool newOffline = false;
@@ -316,15 +305,6 @@ void PlanMasterController::_sendRallyPointsComplete(void)
     }
 }
 
-#if defined(QGC_AIRMAP_ENABLED)
-void PlanMasterController::_startFlightPlanning(void) {
-    if (qgcApp()->toolbox()->airspaceManager()->connected()) {
-        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_startFlightPlanning client connected, start flight planning";
-        qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
-    }
-}
-#endif
-
 void PlanMasterController::sendToVehicle(void)
 {
     WeakLinkInterfacePtr weakLink = _managerVehicle->vehicleLinkManager()->primaryLink();
@@ -370,7 +350,19 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 
     bool success = false;
-    if(fileInfo.suffix() == AppSettings::planFileExtension) {
+    if (fileInfo.suffix() == AppSettings::missionFileExtension) {
+        if (!_missionController.loadJsonFile(file, errorString)) {
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
+        }
+    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
+        if (!_missionController.loadTextFile(file, errorString)) {
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
+        }
+    } else {
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
 
@@ -408,20 +400,6 @@ void PlanMasterController::loadFromFile(const QString& filename)
             qgcApp()->toolbox()->corePlugin()->postLoadFromJson(this, json);
             success = true;
         }
-    } else if (fileInfo.suffix() == AppSettings::missionFileExtension) {
-        if (!_missionController.loadJsonFile(file, errorString)) {
-            qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
-    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
-        if (!_missionController.loadTextFile(file, errorString)) {
-            qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
-    } else {
-        //-- TODO: What then?
     }
 
     if(success){
@@ -584,7 +562,7 @@ QStringList PlanMasterController::loadNameFilters(void) const
     QStringList filters;
 
     filters << tr("Supported types (*.%1 *.%2 *.%3 *.%4)").arg(AppSettings::planFileExtension).arg(AppSettings::missionFileExtension).arg(AppSettings::waypointsFileExtension).arg("txt") <<
-               tr("All Files (*.*)");
+               tr("All Files (*)");
     return filters;
 }
 
@@ -593,7 +571,7 @@ QStringList PlanMasterController::saveNameFilters(void) const
 {
     QStringList filters;
 
-    filters << tr("Plan Files (*.%1)").arg(fileExtension()) << tr("All Files (*.*)");
+    filters << tr("Plan Files (*.%1)").arg(fileExtension()) << tr("All Files (*)");
     return filters;
 }
 

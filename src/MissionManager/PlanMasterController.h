@@ -29,7 +29,7 @@ class PlanMasterController : public QObject
 public:
     PlanMasterController(QObject* parent = nullptr);
 #ifdef QT_DEBUG
-    // Used by test code to create master controll with specific firmware/vehicle type
+    // Used by test code to create master controller with specific firmware/vehicle type
     PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent = nullptr);
 #endif
 
@@ -129,9 +129,6 @@ private slots:
     void _sendGeoFenceComplete      (void);
     void _sendRallyPointsComplete   (void);
     void _updatePlanCreatorsList    (void);
-#if defined(QGC_AIRMAP_ENABLED)
-    void _startFlightPlanning       (void);
-#endif
 
 private:
     void _commonInit                (void);

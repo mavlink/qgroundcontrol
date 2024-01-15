@@ -11,7 +11,6 @@ add_custom_target(FligthMapWidgetsQml
 		QGCCompassWidget.qml
 		QGCInstrumentWidgetAlternate.qml
 		QGCInstrumentWidget.qml
-		QGCMapToolButton.qml
 		QGCPitchIndicator.qml
 		QGCWaypointEditor.qml
 )

@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
+import QGroundControl
+import QGroundControl.Controls
 
 /// Corridor Scan Complex Mission Item visuals
 TransectStyleMapVisuals {

@@ -1,16 +1,16 @@
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Controls.Styles      1.4
-import QtQuick.Dialogs              1.2
-import QtQml                        2.2
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQml
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.Palette
 
 
 /// Mission item edit control
@@ -71,8 +71,8 @@ Rectangle {
         id: editPositionDialog
 
         EditPositionDialog {
-            coordinate: missionItem.coordinate
-            onCoordinateChanged: missionItem.coordinate = coordinate
+            coordinate:             missionItem.isSurveyItem ?  missionItem.centerCoordinate : missionItem.coordinate
+            onCoordinateChanged:    missionItem.isSurveyItem ?  missionItem.centerCoordinate = coordinate : missionItem.coordinate = coordinate
         }
     }
 
@@ -152,7 +152,7 @@ Rectangle {
 
             QGCMouseArea {
                 fillItem:   parent
-                onClicked:  mainWindow.showComponentDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+                onClicked:  commandDialog.createObject(mainWindow).open()
             }
 
             Component {
@@ -204,8 +204,7 @@ Rectangle {
 
                 QGCMenuItem {
                     text:           qsTr("Move to vehicle position")
-                    visible:        missionItem.specifiesCoordinate
-                    enabled:        _activeVehicle
+                    enabled:        _activeVehicle && missionItem.specifiesCoordinate
                     onTriggered:    missionItem.coordinate = _activeVehicle.coordinate
 
                     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
@@ -213,25 +212,25 @@ Rectangle {
 
                 QGCMenuItem {
                     text:           qsTr("Move to previous item position")
-                    visible:        _missionController.previousCoordinate.isValid
+                    enabled:        _missionController.previousCoordinate.isValid
                     onTriggered:    missionItem.coordinate = _missionController.previousCoordinate
                 }
 
                 QGCMenuItem {
                     text:           qsTr("Edit position...")
-                    visible:        missionItem.specifiesCoordinate
-                    onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                    enabled:        missionItem.specifiesCoordinate
+                    onTriggered:    editPositionDialog.createObject(mainWindow).open()
                 }
 
                 QGCMenuSeparator {
-                    visible: missionItem.isSimpleItem && !_waypointsOnlyMode
+                    //visible: missionItem.isSimpleItem && !_waypointsOnlyMode
                 }
 
                 QGCMenuItem {
                     text:       qsTr("Show all values")
                     checkable:  true
                     checked:    missionItem.isSimpleItem ? missionItem.rawEdit : false
-                    visible:    missionItem.isSimpleItem && !_waypointsOnlyMode
+                    enabled:    missionItem.isSimpleItem && !_waypointsOnlyMode
 
                     onTriggered:    {
                         if (missionItem.rawEdit) {

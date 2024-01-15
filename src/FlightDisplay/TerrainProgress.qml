@@ -7,14 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.12
-import QtQuick.Layouts              1.12
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
     height:     mainLayout.height + (_margins * 2)

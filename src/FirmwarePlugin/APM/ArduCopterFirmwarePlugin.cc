@@ -43,11 +43,12 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { GUIDED_NOGPS, "Guided No GPS"},
         { SMART_RTL,    "Smart RTL"},
         { FLOWHOLD,     "Flow Hold" },
-#if 0
-    // Follow me not ready for Stable
         { FOLLOW,       "Follow" },
-#endif
         { ZIGZAG,       "ZigZag" },
+        { SYSTEMID,     "SystemID" },
+        { AUTOROTATE,   "AutoRotate" },
+        { AUTO_RTL,     "AutoRTL" },
+        { TURTLE,       "Turtle" },
     });
 }
 
@@ -74,11 +75,12 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::GUIDED_NOGPS,  true),
         APMCopterMode(APMCopterMode::SMART_RTL,     true),
         APMCopterMode(APMCopterMode::FLOWHOLD,      true),
-#if 0
-    // Follow me not ready for Stable
         APMCopterMode(APMCopterMode::FOLLOW,        true),
-#endif
         APMCopterMode(APMCopterMode::ZIGZAG,        true),
+        APMCopterMode(APMCopterMode::SYSTEMID,      true),
+        APMCopterMode(APMCopterMode::AUTOROTATE,    true),
+        APMCopterMode(APMCopterMode::AUTO_RTL,      true),
+        APMCopterMode(APMCopterMode::TURTLE,        true),
     });
 
     if (!_remapParamNameIntialized) {
@@ -134,10 +136,7 @@ bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle* vehicle)
     return vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "FRAME")->rawValue().toInt() != 0;
 }
 
-#if 0
-    // Follow me not ready for Stable
 void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
 {
     _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
 }
-#endif

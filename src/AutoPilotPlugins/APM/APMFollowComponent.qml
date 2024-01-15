@@ -8,18 +8,18 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 SetupPage {
     id:             followPage
@@ -432,7 +432,7 @@ SetupPage {
                     MouseArea {
                         anchors.fill: parent
 
-                        onClicked: {
+                        onClicked: (mouse) => {
                             // Translate x,y to centered
                             var x = mouse.x - (width / 2)
                             var y = (height - mouse.y) - (height / 2)

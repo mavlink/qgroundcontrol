@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Item {
     height:                 calCol.height + ScreenTools.defaultFontPixelHeight * 2
@@ -90,44 +90,6 @@ Item {
                         x:      (parent.width  * controller.stickPositions[2]) - (width  * 0.5)
                         y:      (parent.height * controller.stickPositions[3]) - (height * 0.5)
                     }
-                    //---------------------------------------------------------
-                    //-- Gimbal Pitch
-                    Rectangle {
-                        width:      ScreenTools.defaultFontPixelWidth * 0.125
-                        height:     parent.height * 0.2
-                        color:      qgcPal.text
-                        visible:    controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * 0.5) - (width  * 0.5)
-                        y:          (parent.height * 0.5) - (height * 0.5)
-                    }
-                    Rectangle {
-                        color:      qgcPal.colorGreen
-                        width:      parent.width * 0.035
-                        height:     width
-                        radius:     width * 0.5
-                        visible:    controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * controller.gimbalPositions[0]) - (width  * 0.5)
-                        y:          (parent.height * controller.gimbalPositions[1]) - (height * 0.5)
-                    }
-                    //---------------------------------------------------------
-                    //-- Gimbal Yaw
-                    Rectangle {
-                        width:      parent.width * 0.2
-                        height:     ScreenTools.defaultFontPixelWidth * 0.125
-                        color:      qgcPal.text
-                        visible:    controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * 0.5) - (width  * 0.5)
-                        y:          (parent.height * 0.3) - (height * 0.5)
-                    }
-                    Rectangle {
-                        color:      qgcPal.colorGreen
-                        width:      parent.width * 0.035
-                        height:     width
-                        radius:     width * 0.5
-                        visible:    controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                        x:          (parent.width  * controller.gimbalPositions[2]) - (width  * 0.5)
-                        y:          (parent.height * controller.gimbalPositions[3]) - (height * 0.5)
-                    }
                 }
             }
             //---------------------------------------------------------------------
@@ -176,7 +138,7 @@ Item {
                                 preventStealing:    true
                                 property real startX
                                 property real direction
-                                onPressed: {
+                                onPressed: (mouse) => {
                                     startX = mouseX
                                     direction = startX > width/2 ? 1 : -1
                                     parent.item.deadbandColor = "#3C6315"

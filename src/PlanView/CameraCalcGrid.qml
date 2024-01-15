@@ -1,28 +1,24 @@
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl                   1.0
-import QGroundControl.ScreenTools       1.0
-import QGroundControl.Controls          1.0
-import QGroundControl.FactControls      1.0
-import QGroundControl.Palette           1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.Palette
 
 // Camera calculator "Grid" section for mission item editors
 Column {
-    anchors.left:   parent.left
-    anchors.right:  parent.right
-    spacing:        _margin
+    spacing: _margin
 
     property var    cameraCalc
     property bool   vehicleFlightIsFrontal:         true
     property string distanceToSurfaceLabel
-    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
-    property string _cameraName:        cameraCalc.cameraName.value
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
     property var    _cameraList:        [ ]
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
@@ -95,7 +91,7 @@ Column {
 
             AltitudeFactTextField {
                 fact:                       cameraCalc.distanceToSurface
-                altitudeMode:               distanceToSurfaceAltitudeMode
+                altitudeMode:               cameraCalc.distanceMode
                 enabled:                    fixedDistanceRadio.checked
                 Layout.fillWidth:           true
             }
@@ -128,7 +124,7 @@ Column {
         QGCLabel { text: distanceToSurfaceLabel }
         AltitudeFactTextField {
             fact:                       cameraCalc.distanceToSurface
-            altitudeMode:               distanceToSurfaceAltitudeMode
+            altitudeMode:               cameraCalc.distanceMode
             Layout.fillWidth:           true
         }
 

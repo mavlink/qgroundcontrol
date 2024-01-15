@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick                          2.11
-import QtQuick.Controls                 2.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl                   1.0
-import QGroundControl.FlightDisplay     1.0
-import QGroundControl.FlightMap         1.0
-import QGroundControl.ScreenTools       1.0
-import QGroundControl.Controls          1.0
-import QGroundControl.Palette           1.0
-import QGroundControl.Vehicle           1.0
-import QGroundControl.Controllers       1.0
+import QGroundControl
+import QGroundControl.FlightDisplay
+import QGroundControl.FlightMap
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Vehicle
+import QGroundControl.Controllers
 
 Item {
     id:     root
@@ -38,19 +38,32 @@ Item {
 
     property double _thermalHeightFactor: 0.85 //-- TODO
 
-    Rectangle {
-        id:             noVideo
-        anchors.fill:   parent
-        color:          Qt.rgba(0,0,0,0.75)
-        visible:        !(QGroundControl.videoManager.decoding)
-        QGCLabel {
-            text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-            font.family:        ScreenTools.demiboldFontFamily
-            color:              "white"
-            font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
-            anchors.centerIn:   parent
+        Image {
+            id:             noVideo
+            anchors.fill:   parent
+            source:         "/res/NoVideoBackground.jpg"
+            fillMode:       Image.PreserveAspectCrop
+            visible:        !(QGroundControl.videoManager.decoding)
+
+            Rectangle {
+                anchors.centerIn:   parent
+                width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
+                height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
+                radius:             ScreenTools.defaultFontPixelWidth / 2
+                color:              "black"
+                opacity:            0.5
+            }
+
+            QGCLabel {
+                id:                 noVideoLabel
+                text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+                font.family:        ScreenTools.demiboldFontFamily
+                color:              "white"
+                font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
+                anchors.centerIn:   parent
+            }
         }
-    }
+
     Rectangle {
         anchors.fill:   parent
         color:          "black"
@@ -79,7 +92,7 @@ Item {
 
                 Connections {
                     target: QGroundControl.videoManager
-                    onImageFileChanged: {
+                    function onImageFileChanged() {
                         videoContent.grabToImage(function(result) {
                             if (!result.saveToFile(QGroundControl.videoManager.imageFile)) {
                                 console.error('Error capturing video frame');

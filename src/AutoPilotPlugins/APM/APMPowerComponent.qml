@@ -8,16 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             powerPage
@@ -82,6 +82,7 @@ SetupPage {
                                 id:         monitor1Combo
                                 fact:       _batt1Monitor
                                 indexModel: false
+                                sizeToContents: true
                             }
                         }
 
@@ -130,8 +131,9 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN", false /* reportMissing */)
-                        property Fact vehicleVoltage:   controller.vehicle.battery.voltage
-                        property Fact vehicleCurrent:   controller.vehicle.battery.current
+                        property FactGroup  _batteryFactGroup:  _batt1FullSettings.visible ? controller.vehicle.getFactGroup("battery0") : null
+                        property Fact vehicleVoltage:   _batteryFactGroup ? _batteryFactGroup.voltage : null
+                        property Fact vehicleCurrent:   _batteryFactGroup ? _batteryFactGroup.current : null
                     }
                 }
             }
@@ -167,6 +169,7 @@ SetupPage {
                                 id:         monitor2Combo
                                 fact:       _batt2Monitor
                                 indexModel: false
+                                sizeToContents: true
                             }
                         }
 
@@ -215,8 +218,9 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT2_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT2_VOLT_PIN", false /* reportMissing */)
-                        property Fact vehicleVoltage:   controller.vehicle.battery2.voltage
-                        property Fact vehicleCurrent:   controller.vehicle.battery2.current
+                        property FactGroup  _batteryFactGroup:  batt2FullSettings.visible ? controller.vehicle.getFactGroup("battery1") : null
+                        property Fact vehicleVoltage:   _batteryFactGroup ? _batteryFactGroup.voltage : null
+                        property Fact vehicleCurrent:   _batteryFactGroup ? _batteryFactGroup.current : null
                     }
                 }
             }
@@ -292,8 +296,8 @@ SetupPage {
 
             function calcSensor() {
                 for (var i=0; i<sensorModel.count - 1; i++) {
-                    if (sensorModel.get(i).voltPin == battVoltPin.value &&
-                            sensorModel.get(i).currPin == battCurrPin.value &&
+                    if (sensorModel.get(i).voltPin === battVoltPin.value &&
+                            sensorModel.get(i).currPin === battCurrPin.value &&
                             Math.abs(sensorModel.get(i).voltMult - battVoltMult.value) < 0.001 &&
                             Math.abs(sensorModel.get(i).ampPerVolt - battAmpPerVolt.value) < 0.0001 &&
                             Math.abs(sensorModel.get(i).ampOffset - battAmpOffset.value) < 0.0001) {
@@ -304,7 +308,7 @@ SetupPage {
                 sensorCombo.currentIndex = sensorModel.count - 1
             }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             ListModel {
                 id: sensorModel
@@ -337,9 +341,18 @@ SetupPage {
                 }
 
                 ListElement {
-                    text:       qsTr("Blue Robotics Power Sense Module R2")
+                    text:       qsTr("Blue Robotics Power Sense Module")
                     voltPin:    2
                     currPin:    3
+                    voltMult:   11.000
+                    ampPerVolt: 37.8788
+                    ampOffset:  0.330
+                }
+
+                ListElement {
+                    text:       qsTr("Navigator w/ Blue Robotics Power Sense Module")
+                    voltPin:    5
+                    currPin:    4
                     voltMult:   11.000
                     ampPerVolt: 37.8788
                     ampOffset:  0.330
@@ -362,6 +375,7 @@ SetupPage {
                     id:         monitorCombo
                     fact:       battMonitor
                     indexModel: false
+                    sizeToContents: true
                 }
 
                 QGCLabel {
@@ -425,6 +439,7 @@ SetupPage {
                     fact:                   battCurrPin
                     indexModel:             false
                     visible:                _showAdvanced
+                    sizeToContents:         true
                 }
 
                 QGCLabel {
@@ -439,6 +454,7 @@ SetupPage {
                     fact:                   battVoltPin
                     indexModel:             false
                     visible:                _showAdvanced
+                    sizeToContents:         true
                 }
 
                 QGCLabel {
@@ -457,13 +473,7 @@ SetupPage {
                 QGCButton {
                     text:       qsTr("Calculate")
                     visible:    _showAdvanced
-
-                    onClicked: {
-                        _calcVoltageDlgVehicleVoltage = vehicleVoltage
-                        _calcVoltageDlgBattVoltMultParam = battVoltMult
-                        mainWindow.showComponentDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
-                    }
-
+                    onClicked:  calcVoltageMultiplierDlgComponent.createObject(mainWindow, { vehicleVoltageFact: vehicleVoltage, battVoltMultFact: battVoltMult }).open()
                 }
 
                 QGCLabel {
@@ -489,12 +499,7 @@ SetupPage {
                 QGCButton {
                     text:       qsTr("Calculate")
                     visible:    _showAdvanced
-
-                    onClicked: {
-                        _calcAmpsPerVoltDlgVehicleCurrent = vehicleCurrent
-                        _calcAmpsPerVoltDlgBattAmpPerVoltParam = battAmpPerVolt
-                        mainWindow.showComponentDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
-                    }
+                    onClicked:  calcAmpsPerVoltDlgComponent.createObject(mainWindow, { vehicleCurrentFact: vehicleCurrent, battAmpPerVoltFact: battAmpPerVolt }).open()
                 }
 
                 QGCLabel {
@@ -530,127 +535,109 @@ SetupPage {
         } // Column
     } // Component - powerSetupComponent
 
-    // Must be set prior to use of calcVoltageMultiplierDlgComponent
-    property Fact _calcVoltageDlgVehicleVoltage
-    property Fact _calcVoltageDlgBattVoltMultParam
-
     Component {
         id: calcVoltageMultiplierDlgComponent
 
-        QGCViewDialog {
-            id: calcVoltageMultiplierDlg
+        QGCPopupDialog {
+            title:      qsTr("Calculate Voltage Multiplier")
+            buttons:    Dialog.Close
 
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  column.height
-                contentWidth:   column.width
+            property Fact vehicleVoltageFact
+            property Fact battVoltMultFact
 
-                Column {
-                    id:         column
-                    width:      calcVoltageMultiplierDlg.width
-                    spacing:    ScreenTools.defaultFontPixelHeight
+            ColumnLayout {
+                spacing: ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    Layout.preferredWidth:  gridLayout.width
+                    wrapMode:               Text.WordWrap
+                    text:                   qsTr("Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new adjusted voltage multiplier.")
+                }
+
+                GridLayout {
+                    id:         gridLayout
+                    columns:    2
 
                     QGCLabel {
-                        width:      parent.width
-                        wrapMode:   Text.WordWrap
-                        text:       qsTr("Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new adjusted voltage multiplier.")
+                        text: qsTr("Measured voltage:")
                     }
+                    QGCTextField { id: measuredVoltage }
 
-                    Grid {
-                        columns: 2
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
-                        verticalItemAlignment: Grid.AlignVCenter
+                    QGCLabel { text: qsTr("Vehicle voltage:") }
+                    FactLabel { fact: vehicleVoltageFact }
 
-                        QGCLabel {
-                            text: qsTr("Measured voltage:")
+                    QGCLabel { text: qsTr("Voltage multiplier:") }
+                    FactLabel { fact: battVoltMultFact }
+                }
+
+                QGCButton {
+                    text: qsTr("Calculate And Set")
+
+                    onClicked:  {
+                        var measuredVoltageValue = parseFloat(measuredVoltage.text)
+                        if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue) || !vehicleVoltageFact || !battVoltMultFact) {
+                            return
                         }
-                        QGCTextField { id: measuredVoltage }
-
-                        QGCLabel { text: qsTr("Vehicle voltage:") }
-                        FactLabel { fact: _calcVoltageDlgVehicleVoltage }
-
-                        QGCLabel { text: qsTr("Voltage multiplier:") }
-                        FactLabel { fact: _calcVoltageDlgBattVoltMultParam }
-                    }
-
-                    QGCButton {
-                        text: qsTr("Calculate And Set")
-
-                        onClicked:  {
-                            var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                            if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
-                                return
-                            }
-                            var newVoltageMultiplier = (measuredVoltageValue * _calcVoltageDlgBattVoltMultParam.value) / _calcVoltageDlgVehicleVoltage.value
-                            if (newVoltageMultiplier > 0) {
-                                _calcVoltageDlgBattVoltMultParam.value = newVoltageMultiplier
-                            }
+                        var newVoltageMultiplier = (vehicleVoltageFact.value !== 0) ? (measuredVoltageValue * battVoltMultFact.value) / vehicleVoltageFact.value : 0
+                        if (newVoltageMultiplier > 0) {
+                            battVoltMultFact.value = newVoltageMultiplier
                         }
                     }
-                } // Column
-            } // QGCFlickable
-        } // QGCViewDialog
-    } // Component - calcVoltageMultiplierDlgComponent
-
-    // Must be set prior to use of calcAmpsPerVoltDlgComponent
-    property Fact _calcAmpsPerVoltDlgVehicleCurrent
-    property Fact _calcAmpsPerVoltDlgBattAmpPerVoltParam
+                }
+            }
+        }
+    }
 
     Component {
         id: calcAmpsPerVoltDlgComponent
 
-        QGCViewDialog {
-            id: calcAmpsPerVoltDlg
+        QGCPopupDialog {
+            title:      qsTr("Calculate Amps per Volt")
+            buttons:    Dialog.Close
 
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  column.height
-                contentWidth:   column.width
+            property Fact vehicleCurrentFact
+            property Fact battAmpPerVoltFact
 
-                Column {
-                    id:         column
-                    width:      calcAmpsPerVoltDlg.width
-                    spacing:    ScreenTools.defaultFontPixelHeight
+            ColumnLayout {
+                spacing: ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    Layout.preferredWidth:  gridLayout.width
+                    wrapMode:               Text.WordWrap
+                    text:                   qsTr("Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value.")
+                }
+
+                GridLayout {
+                    id:         gridLayout
+                    columns:    2
 
                     QGCLabel {
-                        width:      parent.width
-                        wrapMode:   Text.WordWrap
-                        text:       qsTr("Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value.")
+                        text: qsTr("Measured current:")
                     }
+                    QGCTextField { id: measuredCurrent }
 
-                    Grid {
-                        columns: 2
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
-                        verticalItemAlignment: Grid.AlignVCenter
+                    QGCLabel { text: qsTr("Vehicle current:") }
+                    FactLabel { fact: vehicleCurrentFact }
 
-                        QGCLabel {
-                            text: qsTr("Measured current:")
+                    QGCLabel { text: qsTr("Amps per volt:") }
+                    FactLabel { fact: battAmpPerVoltFact }
+                }
+
+                QGCButton {
+                    text: qsTr("Calculate And Set")
+
+                    onClicked:  {
+                        var measuredCurrentValue = parseFloat(measuredCurrent.text)
+                        if (measuredCurrentValue === 0 || isNaN(measuredCurrentValue) || !vehicleCurrentFact || !battAmpPerVoltFact) {
+                            return
                         }
-                        QGCTextField { id: measuredCurrent }
-
-                        QGCLabel { text: qsTr("Vehicle current:") }
-                        FactLabel { fact: _calcAmpsPerVoltDlgVehicleCurrent }
-
-                        QGCLabel { text: qsTr("Amps per volt:") }
-                        FactLabel { fact: _calcAmpsPerVoltDlgBattAmpPerVoltParam }
-                    }
-
-                    QGCButton {
-                        text: qsTr("Calculate And Set")
-
-                        onClicked:  {
-                            var measuredCurrentValue = parseFloat(measuredCurrent.text)
-                            if (measuredCurrentValue == 0) {
-                                return
-                            }
-                            var newAmpsPerVolt = (measuredCurrentValue * _calcAmpsPerVoltDlgBattAmpPerVoltParam.value) / _calcAmpsPerVoltDlgVehicleCurrent.value
-                            if (newAmpsPerVolt != 0) {
-                                _calcAmpsPerVoltDlgBattAmpPerVoltParam.value = newAmpsPerVolt
-                            }
+                        var newAmpsPerVolt = (vehicleCurrentFact.value !== 0) ? (measuredCurrentValue * battAmpPerVoltFact.value) / vehicleCurrentFact.value : 0
+                        if (newAmpsPerVolt !== 0) {
+                            battAmpPerVoltFact.value = newAmpsPerVolt
                         }
                     }
-                } // Column
-            } // QGCFlickable
-        } // QGCViewDialog
-    } // Component - calcAmpsPerVoltDlgComponent
+                }
+            }
+        }
+    }
 } // SetupPage

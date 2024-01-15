@@ -126,6 +126,9 @@ private:
     bool    _fillIndexBatchQueue                (bool waitingParamTimeout);
     void    _updateProgressBar                  (void);
     void    _checkInitialLoadComplete           (void);
+    void    _ftpDownloadComplete                (const QString& fileName, const QString& errorMsg);
+    void    _ftpDownloadProgress                (float progress);
+    bool    _parseParamFile                     (const QString& filename);
 
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
 
@@ -183,8 +186,6 @@ private:
 
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
-    static const char* _jsonParametersKey;
-    static const char* _jsonCompIdKey;
-    static const char* _jsonParamNameKey;
-    static const char* _jsonParamValueKey;
+    /* MavFTP */
+    bool               _tryftp;
 };

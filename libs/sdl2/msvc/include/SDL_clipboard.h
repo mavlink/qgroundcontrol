@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,8 +25,8 @@
  * Include file for SDL clipboard handling
  */
 
-#ifndef _SDL_clipboard_h
-#define _SDL_clipboard_h
+#ifndef SDL_clipboard_h_
+#define SDL_clipboard_h_
 
 #include "SDL_stdinc.h"
 
@@ -39,23 +39,46 @@ extern "C" {
 /* Function prototypes */
 
 /**
- * \brief Put UTF-8 text into the clipboard
+ * Put UTF-8 text into the clipboard.
  *
- * \sa SDL_GetClipboardText()
+ * \param text the text to store in the clipboard
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetClipboardText
+ * \sa SDL_HasClipboardText
  */
 extern DECLSPEC int SDLCALL SDL_SetClipboardText(const char *text);
 
 /**
- * \brief Get UTF-8 text from the clipboard, which must be freed with SDL_free()
+ * Get UTF-8 text from the clipboard, which must be freed with SDL_free().
  *
- * \sa SDL_SetClipboardText()
+ * This functions returns empty string if there was not enough memory left for
+ * a copy of the clipboard's content.
+ *
+ * \returns the clipboard text on success or an empty string on failure; call
+ *          SDL_GetError() for more information. Caller must call SDL_free()
+ *          on the returned pointer when done with it (even if there was an
+ *          error).
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_HasClipboardText
+ * \sa SDL_SetClipboardText
  */
 extern DECLSPEC char * SDLCALL SDL_GetClipboardText(void);
 
 /**
- * \brief Returns a flag indicating whether the clipboard exists and contains a text string that is non-empty
+ * Query whether the clipboard exists and contains a non-empty text string.
  *
- * \sa SDL_GetClipboardText()
+ * \returns SDL_TRUE if the clipboard has text, or SDL_FALSE if it does not.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetClipboardText
+ * \sa SDL_SetClipboardText
  */
 extern DECLSPEC SDL_bool SDLCALL SDL_HasClipboardText(void);
 
@@ -66,6 +89,6 @@ extern DECLSPEC SDL_bool SDLCALL SDL_HasClipboardText(void);
 #endif
 #include "close_code.h"
 
-#endif /* _SDL_clipboard_h */
+#endif /* SDL_clipboard_h_ */
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -54,6 +54,7 @@ public:
     void mavlinkMessageReceived(const mavlink_message_t& message);
 
     void enableRandromDrops(bool enable) { _randomDropsEnabled = enable; }
+    void enableBinParamFile(bool enable) { _BinParamFileEnabled = enable; }
 
     static const char* sizeFilenamePrefix;
 
@@ -92,6 +93,7 @@ private:
     uint16_t                _lastReplySequence  = 0;
     mavlink_message_t       _lastReply;
     bool                    _randomDropsEnabled = false;
+    bool                    _BinParamFileEnabled = false;
 
     static const uint8_t    _sessionId          = 1;    ///< We only support a single fixed session
 };

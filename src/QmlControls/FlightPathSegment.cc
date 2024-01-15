@@ -12,13 +12,14 @@
 
 QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "FlightPathSegmentLog")
 
-FlightPathSegment::FlightPathSegment(const QGeoCoordinate& coord1, double amslCoord1Alt, const QGeoCoordinate& coord2, double amslCoord2Alt, bool queryTerrainData, QObject* parent)
+FlightPathSegment::FlightPathSegment(SegmentType segmentType, const QGeoCoordinate& coord1, double amslCoord1Alt, const QGeoCoordinate& coord2, double amslCoord2Alt, bool queryTerrainData, QObject* parent)
     : QObject           (parent)
     , _coord1           (coord1)
     , _coord2           (coord2)
     , _coord1AMSLAlt     (amslCoord1Alt)
     , _coord2AMSLAlt     (amslCoord2Alt)
     , _queryTerrainData (queryTerrainData)
+    , _segmentType      (segmentType)
 {
     _delayedTerrainPathQueryTimer.setSingleShot(true);
     _delayedTerrainPathQueryTimer.setInterval(200);
@@ -142,19 +143,30 @@ void FlightPathSegment::_updateTotalDistance(void)
 
 void FlightPathSegment::_updateTerrainCollision(void)
 {
-    double slope =      (_coord2AMSLAlt - _coord1AMSLAlt) / _totalDistance;
-    double yIntercept = _coord1AMSLAlt;
-
     bool newTerrainCollision = false;
-    double x = 0;
-    for (int i=0; i<_amslTerrainHeights.count(); i++) {
-        double y = _amslTerrainHeights[i].value<double>();
-        if (y > (slope * x) + yIntercept) {
-            newTerrainCollision = true;
-            break;
-        }
-        if (i > 0) {
-            if (i == _amslTerrainHeights.count() - 1) {
+
+    if (_segmentType != SegmentTypeTerrainFrame) {
+        double slope =      (_coord2AMSLAlt - _coord1AMSLAlt) / _totalDistance;
+        double yIntercept = _coord1AMSLAlt;
+
+        double x = 0;
+        for (int i=0; i<_amslTerrainHeights.count(); i++) {
+            bool ignoreCollision = false;
+            if (_segmentType == SegmentTypeTakeoff && x < _collisionIgnoreMeters) {
+                ignoreCollision = true;
+            } else if (_segmentType == SegmentTypeLand && x > _totalDistance - _collisionIgnoreMeters) {
+                ignoreCollision = true;
+            }
+
+            if (!ignoreCollision) {
+                double y = _amslTerrainHeights[i].value<double>();
+                if (y > (slope * x) + yIntercept) {
+                    newTerrainCollision = true;
+                    break;
+                }
+            }
+
+            if (i == _amslTerrainHeights.count() - 2) {
                 x += _finalDistanceBetween;
             } else {
                 x += _distanceBetween;
@@ -162,7 +174,7 @@ void FlightPathSegment::_updateTerrainCollision(void)
         }
     }
 
-    qCDebug(FlightPathSegmentLog) << this << "_updateTerrainCollision" << newTerrainCollision;
+    qCDebug(FlightPathSegmentLog) << this << "_updateTerrainCollision new:old" << newTerrainCollision << _terrainCollision;
 
     if (newTerrainCollision != _terrainCollision) {
         _terrainCollision = newTerrainCollision;

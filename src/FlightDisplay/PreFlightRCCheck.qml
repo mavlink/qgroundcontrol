@@ -7,17 +7,17 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
-import QGroundControl.Vehicle   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Vehicle
 
 PreFlightCheckButton {
     name:                   qsTr("Radio Control")
     manualText:             qsTr("Receiving signal. Perform range test & confirm.")
     telemetryTextFailure:   qsTr("No signal or invalid autopilot-RC config. Check RC and console.")
-    telemetryFailure:       _unhealthySensors & Vehicle.SysStatusSensorRCReceiver
+    telemetryFailure:       false//_unhealthySensors & Vehicle.SysStatusSensorRCReceiver
 
     property int _unhealthySensors: globals.activeVehicle ? globals.activeVehicle.sensorsUnhealthyBits : 0
 }

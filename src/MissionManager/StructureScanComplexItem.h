@@ -29,7 +29,7 @@ class StructureScanComplexItem : public ComplexMissionItem
 public:
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
     /// @param kmlOrSHPFile Polygon comes from this file, empty for default polygon
-    StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrSHPFile, QObject* parent);
+    StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrSHPFile);
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
     Q_PROPERTY(Fact*            entranceAlt                 READ entranceAlt                                                CONSTANT)
@@ -134,8 +134,6 @@ private slots:
     void _recalcScanDistance                        (void);
     void _updateWizardMode                          (void);
     void _updateFlightPathSegmentsDontCallDirectly  (void);
-    void _minAMSLAltChanged                         (void);
-    void _maxAMSLAltChanged                         (void);
 
 private:
     void    _setCameraShots                 (int cameraShots);

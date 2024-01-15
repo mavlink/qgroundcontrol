@@ -108,7 +108,6 @@ bool Bootloader::getBoardInfo(uint32_t& bootloaderVersion, uint32_t& boardID, ui
             QString boardIdStr = _getNextLine(2000);
             bool ok = false;
             _boardID = boardIdStr.toInt(&ok);
-            _boardID = 130;
             if (boardIdStr.isEmpty() || !ok) {
                 _errorString = tr("Radio did not return board id");
                 goto Error;
@@ -423,7 +422,7 @@ bool Bootloader::_ihxProgram(const FirmwareImage* image)
             return false;
         }
         
-        qCDebug(FirmwareUpgradeVerboseLog) << QString("Bootloader::_ihxProgram - address:0x%1 size:%2 block:%3").arg(flashAddress, 8, 16, QLatin1Char('0')).arg(bytes.count()).arg(index);
+        qCDebug(FirmwareUpgradeVerboseLog) << QString("Bootloader::_ihxProgram - address:0x%1 size:%2 block:%3").arg(flashAddress, 8, 16, QLatin1Char('0')).arg(bytes.length()).arg(index);
         
         // Set flash address
         
@@ -446,7 +445,7 @@ bool Bootloader::_ihxProgram(const FirmwareImage* image)
         // Flash
         
         int bytesIndex = 0;
-        uint16_t bytesLeftToWrite = bytes.count();
+        uint16_t bytesLeftToWrite = bytes.length();
         
         while (bytesLeftToWrite > 0) {
             uint8_t bytesToWrite;
@@ -595,7 +594,7 @@ bool Bootloader::_ihxVerifyBytes(const FirmwareImage* image)
             return false;
         }
         
-        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxVerifyBytes - address:0x%1 size:%2 block:%3").arg(readAddress, 8, 16, QLatin1Char('0')).arg(imageBytes.count()).arg(index);
+        qCDebug(FirmwareUpgradeLog) << QString("Bootloader::_ihxVerifyBytes - address:0x%1 size:%2 block:%3").arg(readAddress, 8, 16, QLatin1Char('0')).arg(imageBytes.length()).arg(index);
         
         // Set read address
         
@@ -618,7 +617,7 @@ bool Bootloader::_ihxVerifyBytes(const FirmwareImage* image)
         // Read back
         
         int         bytesIndex = 0;
-        uint16_t    bytesLeftToRead = imageBytes.count();
+        uint16_t    bytesLeftToRead = imageBytes.length();
         
         while (bytesLeftToRead > 0) {
             uint8_t bytesToRead;

@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,8 +25,8 @@
  *  Functions for fiddling with bits and bitmasks.
  */
 
-#ifndef _SDL_bits_h
-#define _SDL_bits_h
+#ifndef SDL_bits_h_
+#define SDL_bits_h_
 
 #include "SDL_stdinc.h"
 
@@ -45,12 +45,21 @@ extern "C" {
  *  with 0. This operation can also be stated as "count leading zeroes" and
  *  "log base 2".
  *
- *  \return Index of the most significant bit, or -1 if the value is 0.
+ *  \return the index of the most significant bit, or -1 if the value is 0.
  */
+#if defined(__WATCOMC__) && defined(__386__)
+extern __inline int _SDL_bsr_watcom(Uint32);
+#pragma aux _SDL_bsr_watcom = \
+    "bsr eax, eax" \
+    parm [eax] nomemory \
+    value [eax] \
+    modify exact [eax] nomemory;
+#endif
+
 SDL_FORCE_INLINE int
 SDL_MostSignificantBitIndex32(Uint32 x)
 {
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if defined(__GNUC__) && (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
     /* Count Leading Zeroes builtin in GCC.
      * http://gcc.gnu.org/onlinedocs/gcc-4.3.4/gcc/Other-Builtins.html
      */
@@ -58,6 +67,17 @@ SDL_MostSignificantBitIndex32(Uint32 x)
         return -1;
     }
     return 31 - __builtin_clz(x);
+#elif defined(__WATCOMC__) && defined(__386__)
+    if (x == 0) {
+        return -1;
+    }
+    return _SDL_bsr_watcom(x);
+#elif defined(_MSC_VER)
+    unsigned long index;
+    if (_BitScanReverse(&index, x)) {
+        return index;
+    }
+    return -1;
 #else
     /* Based off of Bit Twiddling Hacks by Sean Eron Anderson
      * <seander@cs.stanford.edu>, released in the public domain.
@@ -86,12 +106,21 @@ SDL_MostSignificantBitIndex32(Uint32 x)
 #endif
 }
 
+SDL_FORCE_INLINE SDL_bool
+SDL_HasExactlyOneBitSet32(Uint32 x)
+{
+    if (x && !(x & (x - 1))) {
+        return SDL_TRUE;
+    }
+    return SDL_FALSE;
+}
+
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
 }
 #endif
 #include "close_code.h"
 
-#endif /* _SDL_bits_h */
+#endif /* SDL_bits_h_ */
 
 /* vi: set ts=4 sw=4 expandtab: */

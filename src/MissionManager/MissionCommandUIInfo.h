@@ -55,6 +55,8 @@ public:
     Q_PROPERTY(int          param           READ param          CONSTANT)
     Q_PROPERTY(QString      units           READ units          CONSTANT)
     Q_PROPERTY(bool         nanUnchanged    READ nanUnchanged   CONSTANT)
+    Q_PROPERTY(double       min             READ min            CONSTANT)
+    Q_PROPERTY(double       max             READ max            CONSTANT)
 
     int             decimalPlaces   (void) const { return _decimalPlaces; }
     double          defaultValue    (void) const { return _defaultValue; }
@@ -64,6 +66,8 @@ public:
     int             param           (void) const { return _param; }
     QString         units           (void) const { return _units; }
     bool            nanUnchanged    (void) const { return _nanUnchanged; }
+    double          min             (void) const { return _min; }
+    double          max             (void) const { return _max; }
 
 private:
     int             _decimalPlaces;
@@ -74,6 +78,8 @@ private:
     int             _param;
     QString         _units;
     bool            _nanUnchanged;
+    double          _min;
+    double          _max;
 
     friend class MissionCommandTree;
     friend class MissionCommandUIInfo;
@@ -122,6 +128,7 @@ public:
     Q_PROPERTY(bool     specifiesAltitudeOnly   READ specifiesAltitudeOnly  CONSTANT)
     Q_PROPERTY(bool     isLandCommand           READ isLandCommand          CONSTANT)
     Q_PROPERTY(bool     isTakeoffCommand        READ isTakeoffCommand       CONSTANT)
+    Q_PROPERTY(bool     isLoiterCommand         READ isLoiterCommand        CONSTANT)
     Q_PROPERTY(int      command                 READ intCommand             CONSTANT)
 
     MAV_CMD command(void) const { return _command; }
@@ -137,6 +144,7 @@ public:
     bool    specifiesAltitudeOnly   (void) const;
     bool    isLandCommand           (void) const;
     bool    isTakeoffCommand        (void) const;
+    bool    isLoiterCommand         (void) const;
 
     /// Load the data in the object from the specified json
     ///     @param jsonObject Json object to load from
@@ -183,6 +191,8 @@ private:
     static const char* _idJsonKey;
     static const char* _labelJsonKey;
     static const char* _mavCmdInfoJsonKey;
+    static const char* _maxJsonKey;
+    static const char* _minJsonKey;
     static const char* _param1JsonKey;
     static const char* _param2JsonKey;
     static const char* _param3JsonKey;
@@ -198,6 +208,7 @@ private:
     static const char* _specifiesAltitudeOnlyJsonKey;
     static const char* _isLandCommandJsonKey;
     static const char* _isTakeoffCommandJsonKey;
+    static const char* _isLoiterCommandJsonKey;
     static const char* _unitsJsonKey;
     static const char* _commentJsonKey;    
     static const char* _advancedCategory;

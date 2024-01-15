@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
 
-import QGroundControl                 1.0
-import QGroundControl.FactSystem      1.0
-import QGroundControl.FactControls    1.0
-import QGroundControl.Palette         1.0
-import QGroundControl.Controls        1.0
-import QGroundControl.ScreenTools     1.0
-import QGroundControl.SettingsManager 1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.SettingsManager
 
 SetupPage {
     id:             cameraPage
@@ -33,7 +33,7 @@ SetupPage {
 
             FactPanelController { id: controller; }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property bool _oldFW:               !(globals.activeVehicle.firmwareMajorVersion > 3 || globals.activeVehicle.firmwareMinorVersion > 5 || globals.activeVehicle.firmwarePatchVersion >= 2)
 
@@ -70,6 +70,8 @@ SetupPage {
             property Fact _rc12Function:        controller.getParameterFact(-1, "r.SERVO12_FUNCTION")
             property Fact _rc13Function:        controller.getParameterFact(-1, "r.SERVO13_FUNCTION")
             property Fact _rc14Function:        controller.getParameterFact(-1, "r.SERVO14_FUNCTION")
+            property Fact _rc15Function:        controller.getParameterFact(-1, "r.SERVO15_FUNCTION")
+            property Fact _rc16Function:        controller.getParameterFact(-1, "r.SERVO16_FUNCTION")
 
             // These enable/disable the options for setting up each axis
             property bool _tiltEnabled:         false
@@ -87,7 +89,7 @@ SetupPage {
             readonly property int   _rcFunctionMountTilt:           7
             readonly property int   _rcFunctionMountRoll:           8
             readonly property int   _firstGimbalOutChannel:         5
-            readonly property int   _lastGimbalOutChannel:          14
+            readonly property int   _lastGimbalOutChannel:          16
             readonly property int   _mountDefaultModeRCTargetting:  3
 
             Component.onCompleted: {
@@ -95,8 +97,8 @@ SetupPage {
                     gimbalSettingsLoader.sourceComponent = gimbalSettings
                 }
                 calcGimbalOutValues()
-                slide.minimumValue = 10
-                slide.maximumValue = 127
+                slide.from = 10
+                slide.to = 127
                 slide.value = slide._fact.value
                 slide._loadComplete = true
             }
@@ -161,6 +163,8 @@ SetupPage {
             Connections { target: _rc12Function; onValueChanged: calcGimbalOutValues() }
             Connections { target: _rc13Function; onValueChanged: calcGimbalOutValues() }
             Connections { target: _rc14Function; onValueChanged: calcGimbalOutValues() }
+            Connections { target: _rc15Function; onValueChanged: calcGimbalOutValues() }
+            Connections { target: _rc16Function; onValueChanged: calcGimbalOutValues() }
 
             // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targeting
             Connections {
@@ -191,16 +195,18 @@ SetupPage {
                 ListElement { text: qsTr("Channel 12"); value: 12 }
                 ListElement { text: qsTr("Channel 13"); value: 13 }
                 ListElement { text: qsTr("Channel 14"); value: 14 }
+                ListElement { text: qsTr("Channel 15"); value: 15 }
+                ListElement { text: qsTr("Channel 16"); value: 16 }
             }
 
             QGCCheckBox {
                 id:     _allVisible
-                text:   "Show all settings (advanced)"
+                text:   qsTr("Show all settings (advanced)")
             }
 
             QGCLabel {
                 visible:     !_oldFW
-                text:        "Camera mount tilt speed:"
+                text:        qsTr("Camera mount tilt speed:")
                 font.family: ScreenTools.demiboldFontFamily
             }
 
@@ -213,6 +219,8 @@ SetupPage {
                 property var  _fact:            controller.getParameterFact(-1, "MNT_JSTICK_SPD")
                 property bool _loadComplete:    false
 
+                /*
+                // FIXME-QT6 - Controls 2 doesn't style controls this way
                 // Override style to make handles smaller than default
                 style: SliderStyle {
                     handle: Rectangle {
@@ -227,6 +235,7 @@ SetupPage {
                         property real _radius: Math.round(ScreenTools.defaultFontPixelHeight * 0.35)
                     }
                 }
+                */
 
                 onValueChanged: {
                     if (_loadComplete) {
@@ -236,15 +245,15 @@ SetupPage {
 
                 MouseArea {
                     anchors.fill: parent
-                    onWheel: {
+                    onWheel: (wheel) => {
                         // do nothing
                         wheel.accepted = true;
                     }
-                    onPressed: {
+                    onPressed: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }
-                    onReleased: {
+                    onReleased: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }
@@ -288,7 +297,7 @@ SetupPage {
                             id:     rectangle
                             height: innerColumn.height + _margins*2
                             width:  innerColumn.width + _margins*2
-                            color:  palette.windowShade
+                            color:  qgcPal.windowShade
 
                             // Section Content - 3 Rows
                             Column {
@@ -452,7 +461,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
                         height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                        color:              palette.windowShade
+                        color:              qgcPal.windowShade
 
                         QGCLabel {
                             id:                 gimbalTypeLabel

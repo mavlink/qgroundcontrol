@@ -20,9 +20,12 @@ public:
     
     /// Download the specified remote file.
     ///     @param remoteFile   File to download. Can be http address or file system path.
+    ///     @param requestAttributes   Optional request attributes to set
     ///     @param redirect     true: call is internal due to redirect
     /// @return true: Asynchronous download has started, false: Download initialization failed
-    bool download(const QString& remoteFile, bool redirect = false);
+    bool download(const QString& remoteFile, const QVector<QPair<QNetworkRequest::Attribute, QVariant>>& requestAttributes={}, bool redirect = false);
+
+    static void setIgnoreSSLErrorsIfNeeded(QNetworkReply& networkReply);
 
 signals:
     void downloadProgress(qint64 curr, qint64 total);
@@ -33,4 +36,5 @@ private:
     void _downloadError(QNetworkReply::NetworkError code);
 
     QString _originalRemoteFile;
+    QVector<QPair<QNetworkRequest::Attribute, QVariant>> _requestAttributes;
 };

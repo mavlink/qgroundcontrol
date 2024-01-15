@@ -10,9 +10,10 @@
 #pragma once
 
 #include <QElapsedTimer>
-#include <QMap>
-#include <QLoggingCategory>
 #include <QGeoCoordinate>
+#include <QLoggingCategory>
+#include <QMap>
+#include <QMutex>
 
 #include "MockLinkMissionItemHandler.h"
 #include "MockLinkFTP.h"
@@ -39,24 +40,31 @@ public:
     int     firmware                (void)                      { return (int)_firmwareType; }
     void    setFirmware             (int type)                  { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
     int     vehicle                 (void)                      { return (int)_vehicleType; }
-    bool    incrementVehicleId      (void)                      { return _incrementVehicleId; }
+    bool    incrementVehicleId      (void) const                     { return _incrementVehicleId; }
     void    setVehicle              (int type)                  { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
     void    setIncrementVehicleId   (bool incrementVehicleId)   { _incrementVehicleId = incrementVehicleId; emit incrementVehicleIdChanged(); }
 
 
     MAV_AUTOPILOT   firmwareType        (void)                          { return _firmwareType; }
+    uint16_t        boardVendorId       (void)                          { return _boardVendorId; }
+    uint16_t        boardProductId      (void)                          { return _boardProductId; }
     MAV_TYPE        vehicleType         (void)                          { return _vehicleType; }
-    bool            sendStatusText      (void)                          { return _sendStatusText; }
+    bool            sendStatusText      (void) const                         { return _sendStatusText; }
 
     void            setFirmwareType     (MAV_AUTOPILOT firmwareType)    { _firmwareType = firmwareType; emit firmwareChanged(); }
+    void            setBoardVendorProduct(uint16_t vendorId, uint16_t productId) { _boardVendorId = vendorId; _boardProductId = productId; }
     void            setVehicleType      (MAV_TYPE vehicleType)          { _vehicleType = vehicleType; emit vehicleChanged(); }
     void            setSendStatusText   (bool sendStatusText)           { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
     typedef enum {
-        FailNone,                           // No failures
-        FailParamNoReponseToRequestList,    // Do no respond to PARAM_REQUEST_LIST
-        FailMissingParamOnInitialReqest,    // Not all params are sent on initial request, should still succeed since QGC will re-query missing params
-        FailMissingParamOnAllRequests,      // Not all params are sent on initial request, QGC retries will fail as well
+        FailNone,                                                   // No failures
+        FailParamNoReponseToRequestList,                            // Do no respond to PARAM_REQUEST_LIST
+        FailMissingParamOnInitialReqest,                            // Not all params are sent on initial request, should still succeed since QGC will re-query missing params
+        FailMissingParamOnAllRequests,                              // Not all params are sent on initial request, QGC retries will fail as well
+        FailInitialConnectRequestMessageAutopilotVersionFailure,    // REQUEST_MESSAGE:AUTOPILOT_VERSION returns failure
+        FailInitialConnectRequestMessageAutopilotVersionLost,       // REQUEST_MESSAGE:AUTOPILOT_VERSION success, AUTOPILOT_VERSION never sent
+        FailInitialConnectRequestMessageProtocolVersionFailure,     // REQUEST_MESSAGE:PROTOCOL_VERSION returns failure
+        FailInitialConnectRequestMessageProtocolVersionLost,        // REQUEST_MESSAGE:PROTOCOL_VERSION success, PROTOCOL_VERSION never sent
     } FailureMode_t;
     FailureMode_t failureMode(void) { return _failureMode; }
     void setFailureMode(FailureMode_t failureMode) { _failureMode = failureMode; }
@@ -81,6 +89,8 @@ private:
     bool            _sendStatusText     = false;
     FailureMode_t   _failureMode        = FailNone;
     bool            _incrementVehicleId = true;
+    uint16_t        _boardVendorId      = 0;
+    uint16_t        _boardProductId     = 0;
 
     static const char* _firmwareTypeKey;
     static const char* _vehicleTypeKey;
@@ -95,9 +105,9 @@ class MockLink : public LinkInterface
 
 public:
     MockLink(SharedLinkConfigurationPtr& config);
-    ~MockLink(void);
+    virtual ~MockLink();
 
-    int             vehicleId           (void)                                          { return _vehicleSystemId; }
+    int             vehicleId           (void) const                                         { return _vehicleSystemId; }
     MAV_AUTOPILOT   getFirmwareType     (void)                                          { return _firmwareType; }
     void            setFirmwareType     (MAV_AUTOPILOT autopilot)                       { _firmwareType = autopilot; }
     void            setSendStatusText   (bool sendStatusText)                           { _sendStatusText = sendStatusText; }
@@ -152,24 +162,25 @@ public:
     static MockLink* startAPMArduSubMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduRoverMockLink      (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
-    // Special commands for testing COMMAND_LONG handlers. By default all commands except for MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY should retry.
+    // Special commands for testing Vehicle::sendMavCommandWithHandler
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED            = MAV_CMD_USER_1;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED              = MAV_CMD_USER_2;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED    = MAV_CMD_USER_3;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED      = MAV_CMD_USER_4;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE                       = MAV_CMD_USER_5;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY              = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 1);
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED       = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 2);
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED         = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 3);
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK         = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 4);
 
-    void clearSendMavCommandCounts(void) { _sendMavCommandCountMap.clear(); }
-    int sendMavCommandCount(MAV_CMD command) { return _sendMavCommandCountMap[command]; }
+    void clearReceivedMavCommandCounts(void) { _receivedMavCommandCountMap.clear(); }
+    int receivedMavCommandCount(MAV_CMD command) { return _receivedMavCommandCountMap[command]; }
 
-    // Special message ids for testing requestMessage support
     typedef enum {
         FailRequestMessageNone,
         FailRequestMessageCommandAcceptedMsgNotSent,
         FailRequestMessageCommandUnsupported,
         FailRequestMessageCommandNoResponse,
-        FailRequestMessageCommandAcceptedSecondAttempMsgSent,
     } RequestMessageFailureMode_t;
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
 
@@ -181,14 +192,19 @@ private slots:
     // LinkInterface overrides
     void _writeBytes(const QByteArray bytes) final;
 
-    void _writeBytesQueued(const QByteArray bytes);
-    void _run1HzTasks(void);
-    void _run10HzTasks(void);
-    void _run500HzTasks(void);
+    void _writeBytesQueued      (const QByteArray bytes);
+    void _run1HzTasks           (void);
+    void _run10HzTasks          (void);
+    void _run500HzTasks         (void);
+    void _sendStatusTextMessages(void);
 
 private:
     // LinkInterface overrides
-    bool _connect(void) override;
+    bool _connect                       (void) override;
+    bool _allocateMavlinkChannel        () override;
+    void _freeMavlinkChannel            () override;
+    uint8_t mavlinkAuxChannel           (void) const;
+    bool mavlinkAuxChannelIsSet         (void) const;
 
     // QThread override
     void run(void) final;
@@ -198,6 +214,7 @@ private:
     void _sendHighLatency2              (void);
     void _handleIncomingNSHBytes        (const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes    (const uint8_t* bytes, int cBytes);
+    void _handleIncomingMavlinkMsg      (const mavlink_message_t& msg);
     void _loadParams                    (void);
     void _handleHeartBeat               (const mavlink_message_t& msg);
     void _handleSetMode                 (const mavlink_message_t& msg);
@@ -206,6 +223,7 @@ private:
     void _handleParamRequestRead        (const mavlink_message_t& msg);
     void _handleFTP                     (const mavlink_message_t& msg);
     void _handleCommandLong             (const mavlink_message_t& msg);
+    void _handleInProgressCommandLong   (const mavlink_command_long_t& request);
     void _handleManualControl           (const mavlink_message_t& msg);
     void _handlePreFlightCalibration    (const mavlink_command_long_t& request);
     void _handleLogRequestList          (const mavlink_message_t& msg);
@@ -219,7 +237,6 @@ private:
     void _sendVibration                 (void);
     void _sendSysStatus                 (void);
     void _sendBatteryStatus             (void);
-    void _sendStatusTextMessages        (void);
     void _sendChunkedStatusText         (uint16_t chunkId, bool missingChunks);
     void _respondWithAutopilotVersion   (void);
     void _sendRCChannels                (void);
@@ -227,17 +244,18 @@ private:
     void _logDownloadWorker             (void);
     void _sendADSBVehicles              (void);
     void _moveADSBVehicle               (void);
-    void _sendVersionMetaData           (void);
-    void _sendParameterMetaData         (void);
+    void _sendGeneralMetaData           (void);
 
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
+
+    uint8_t                     _mavlinkAuxChannel              = std::numeric_limits<uint8_t>::max();
+    QMutex                      _mavlinkAuxMutex;
 
     MockLinkMissionItemHandler  _missionItemHandler;
 
     QString                     _name;
     bool                        _connected;
-    int                         _mavlinkChannel;
 
     uint8_t                     _vehicleSystemId;
     uint8_t                     _vehicleComponentId             = MAV_COMP_ID_AUTOPILOT1;
@@ -266,6 +284,12 @@ private:
     bool                        _commLost                       = false;
     bool                        _highLatencyTransmissionEnabled = true;
 
+    // These are just set for reporting the fields in _respondWithAutopilotVersion()
+    // and ensuring that the Vehicle reports the fields in Vehicle::firmwareBoardVendorId etc.
+    // They do not control any mock simulation (and it is up to the Custom build to do that).
+    uint16_t                    _boardVendorId      = 0;
+    uint16_t                    _boardProductId     = 0;
+
     MockLinkFTP* _mockLinkFTP = nullptr;
 
     bool _sendStatusText;
@@ -290,7 +314,7 @@ private:
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
 
-    QMap<MAV_CMD, int>  _sendMavCommandCountMap;
+    QMap<MAV_CMD, int>                          _receivedMavCommandCountMap;
     QMap<int, QMap<QString, QVariant>>          _mapParamName2Value;
     QMap<int, QMap<QString, MAV_PARAM_TYPE>>    _mapParamName2MavParamType;
 

@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQml.Models 2.12
+import QtQml.Models
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
+import QGroundControl
+import QGroundControl.Controls
 
 ToolStripActionList {
     id: _root
@@ -28,6 +28,7 @@ ToolStripActionList {
         GuidedActionLand { },
         GuidedActionRTL { },
         GuidedActionPause { },
-        GuidedActionActionList { }
+        GuidedActionActionList { },
+        GuidedActionGripper { }
     ]
 }

@@ -7,7 +7,6 @@ add_custom_target(FligthDisplayQml
 		FlightDisplayViewUVC.qml
 		FlightDisplayViewVideo.qml
 		FlightDisplayViewWidgets.qml
-		FlyViewAirspaceIndicator.qml
 		FlyViewCustomLayer.qml
 		FlyViewInstrumentPanel.qml
 		FlyViewMap.qml
@@ -26,7 +25,9 @@ add_custom_target(FligthDisplayQml
 		GuidedActionRTL.qml
 		GuidedActionsController.qml
 		GuidedActionTakeoff.qml
-		GuidedAltitudeSlider.qml
+		GuidedActionGripper.qml
+		GripperMenu.qml
+		GuidedValueSlider.qml
 		GuidedToolStripAction.qml
 		MultiRotorChecklist.qml
 		MultiVehicleList.qml
@@ -46,5 +47,8 @@ add_custom_target(FligthDisplayQml
 		VehicleWarnings.qml
 		VirtualJoystick.qml
 		VTOLChecklist.qml
+		ObstacleDistanceOverlay.qml
+		ObstacleDistanceOverlayMap.qml
+		ObstacleDistanceOverlayVideo.qml
 )
 

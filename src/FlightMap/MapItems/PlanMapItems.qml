@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick
+import QtLocation
+import QtPositioning
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
-import QGroundControl.FlightMap 1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 // Adds visual items associated with the Flight Plan to the map.
 // Currently only used by Fly View even though it's called PlanMapItems!
@@ -27,9 +27,9 @@ Item {
 
     property var    _map:                       map
     property var    _vehicle:                   vehicle
-    property var    _missionController:         masterController.missionController
-    property var    _geoFenceController:        masterController.geoFenceController
-    property var    _rallyPointController:      masterController.rallyPointController
+    property var    _missionController:         planMasterController.missionController
+    property var    _geoFenceController:        planMasterController.geoFenceController
+    property var    _rallyPointController:      planMasterController.rallyPointController
     property var    _guidedController:          globals.guidedControllerFlyView
     property var    _missionLineViewComponent
 

@@ -7,14 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
-import QtQuick.Layouts  1.11
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Palette               1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.MultiVehicleManager
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 // Joystick Indicator
 Item {
@@ -58,12 +58,12 @@ Item {
 
                     QGCLabel { text: qsTr("Connected:") }
                     QGCLabel {
-                        text:  joystickManager.activeJoystick ? "Yes" : "No"
+                        text:  joystickManager.activeJoystick ? qsTr("Yes") : qsTr("No")
                         color: joystickManager.activeJoystick ? qgcPal.buttonText : "red"
                     }
                     QGCLabel { text: qsTr("Enabled:") }
                     QGCLabel {
-                        text:  globals.activeVehicle && globals.activeVehicle.joystickEnabled ? "Yes" : "No"
+                        text:  globals.activeVehicle && globals.activeVehicle.joystickEnabled ? qsTr("Yes") : qsTr("No")
                         color: globals.activeVehicle && globals.activeVehicle.joystickEnabled ? qgcPal.buttonText : "red"
                     }
                 }
@@ -84,7 +84,18 @@ Item {
             sourceSize.height:  height
             source:             "/qmlimages/Joystick.png"
             fillMode:           Image.PreserveAspectFit
-            color:              globals.activeVehicle && globals.activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
+            color: {
+                if(globals.activeVehicle && joystickManager.activeJoystick) {
+                    if(globals.activeVehicle.joystickEnabled) {
+                        // Everything ready to use joystick
+                        return qgcPal.buttonText
+                    }
+                    // Joystick is not enabled in the joystick configuration page
+                    return "yellow"
+                }
+                // Joystick not available or there is no active vehicle
+                return "red"
+            }
         }
     }
 

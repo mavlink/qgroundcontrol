@@ -19,6 +19,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapEngineManager.h"
+#include "QGCFileDownload.h"
 #include "TerrainTile.h"
 
 #include <QSettings>
@@ -67,49 +68,49 @@ QGCCachedTileSet::~QGCCachedTileSet()
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::errorCountStr()
+QGCCachedTileSet::errorCountStr() const
 {
     return QGCMapEngine::numberToString(_errorCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::totalTileCountStr()
+QGCCachedTileSet::totalTileCountStr() const
 {
     return QGCMapEngine::numberToString(_totalTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::totalTilesSizeStr()
+QGCCachedTileSet::totalTilesSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_totalTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::uniqueTileSizeStr()
+QGCCachedTileSet::uniqueTileSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_uniqueTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::uniqueTileCountStr()
+QGCCachedTileSet::uniqueTileCountStr() const
 {
     return QGCMapEngine::numberToString(_uniqueTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::savedTileCountStr()
+QGCCachedTileSet::savedTileCountStr() const
 {
     return QGCMapEngine::numberToString(_savedTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::savedTileSizeStr()
+QGCCachedTileSet::savedTileSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_savedTileSize);
 }
@@ -249,12 +250,9 @@ void QGCCachedTileSet::_prepareDownload()
 #endif
             QNetworkReply* reply = _networkManager->get(request);
             reply->setParent(0);
+            QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*reply);
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-            connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCCachedTileSet::_networkReplyError);
-#else
             connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
-#endif
             _replies.insert(tile->hash(), reply);
 #if !defined(__mobile__)
             _networkManager->setProxy(proxy);
@@ -290,9 +288,9 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            QString type = getQGCMapEngine()->hashToType(hash);
-            if (type == "Airmap Elevation" ) {
-                image = TerrainTile::serialize(image);
+            QString type = getQGCMapEngine()->tileHashToType(hash);
+            if (type == UrlFactory::kCopernicusElevationProviderKey) {
+                image = TerrainTile::serializeFromAirMapJson(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
             if(!format.isEmpty()) {

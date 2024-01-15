@@ -15,7 +15,6 @@
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
 #include "APMSensorsComponent.h"
-#include "APMCompassCal.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog)
@@ -80,7 +79,8 @@ public:
     Q_PROPERTY(double compass3CalFitness                    READ compass3CalFitness                         NOTIFY compass3CalFitnessChanged)
 
     Q_INVOKABLE void calibrateCompass           (void);
-    Q_INVOKABLE void calibrateAccel             (void);
+    Q_INVOKABLE void calibrateAccel             (bool doSimpleAccelCal);
+    Q_INVOKABLE void calibrateCompassNorth      (float lat, float lon, int mask);
     Q_INVOKABLE void calibrateGyro              (void);
     Q_INVOKABLE void calibrateMotorInterference (void);
     Q_INVOKABLE void levelHorizon               (void);
@@ -96,10 +96,10 @@ public:
         CalTypeAccel,
         CalTypeGyro,
         CalTypeOnboardCompass,
-        CalTypeOffboardCompass,
         CalTypeLevelHorizon,
         CalTypeCompassMot,
         CalTypePressure,
+        CalTypeAccelFast,
         CalTypeNone
     } CalType_t;
     Q_ENUM(CalType_t)
@@ -159,7 +159,6 @@ private:
     
     void _updateAndEmitShowOrientationCalArea(bool show);
 
-    APMCompassCal           _compassCal;
     APMSensorsComponent*    _sensorsComponent;
 
     QQuickItem* _statusLog;

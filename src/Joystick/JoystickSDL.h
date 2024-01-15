@@ -27,7 +27,7 @@ public:
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
     static bool init(void);
 
-    int index(void) { return _index; }
+    int index(void) const { return _index; }
     void setIndex(int index) { _index = index; }
 
     // This can be uncommented to hide the calibration buttons for gamecontrollers in the future

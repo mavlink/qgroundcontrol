@@ -22,7 +22,13 @@
         {
             "id":           22,
             "comment":      "MAV_CMD_NAV_TAKEOFF",
-            "paramRemove":  "1"
+            "param4": {
+                "label":            "Yaw",
+                "units":            "deg",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2
+            }
         },
         {
             "id":           31,

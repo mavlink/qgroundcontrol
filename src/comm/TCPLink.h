@@ -42,11 +42,9 @@ public:
     TCPConfiguration(const QString& name);
     TCPConfiguration(TCPConfiguration* source);
 
-    quint16             port        (void)                          { return _port; }
-    const QHostAddress& address     (void)                          { return _address; }
-    const QString       host        (void)                          { return _address.toString(); }
+    quint16             port        (void) const                         { return _port; }
+    QString             host        (void) const                         { return _host; }
     void                setPort     (quint16 port);
-    void                setAddress  (const QHostAddress& address);
     void                setHost     (const QString host);
 
     //LinkConfiguration overrides
@@ -62,7 +60,7 @@ signals:
     void hostChanged(void);
 
 private:
-    QHostAddress    _address;
+    QString         _host;
     quint16         _port;
 };
 
@@ -70,12 +68,9 @@ class TCPLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class TCPLinkTest;
-    friend class TCPConfiguration;
-    friend class LinkManager;
-
 public:
-    ~TCPLink();
+    TCPLink(SharedLinkConfigurationPtr& config);
+    virtual ~TCPLink();
 
     QTcpSocket* getSocket           (void) { return _socket; }
     void        signalBytesWritten  (void);
@@ -84,25 +79,14 @@ public:
     bool isConnected(void) const override;
     void disconnect (void) override;
 
-public slots:
-    void waitForBytesWritten(int msecs);
-    void waitForReadyRead   (int msecs);
-
-protected slots:
-    void _socketError   (QAbstractSocket::SocketError socketError);
-    void readBytes      (void);
-
-protected:
-    // QThread overrides
-    void run(void) override;
-
 private slots:
+    void _socketError   (QAbstractSocket::SocketError socketError);
+    void _readBytes     (void);
+
     // LinkInterface overrides
     void _writeBytes(const QByteArray data) override;
 
 private:
-    TCPLink(SharedLinkConfigurationPtr& config);
-
     // LinkInterface overrides
     bool _connect(void) override;
 

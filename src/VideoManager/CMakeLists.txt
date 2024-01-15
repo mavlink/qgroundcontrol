@@ -10,8 +10,8 @@ add_library(VideoManager
 target_link_libraries(VideoManager
     PUBLIC
         qgc
-        Qt5::Multimedia
-        Qt5::OpenGL
+        Qt6::Multimedia
+        Qt6::OpenGL
         VideoReceiver
 )
 

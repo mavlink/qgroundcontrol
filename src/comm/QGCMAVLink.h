@@ -63,11 +63,12 @@ public:
     static constexpr FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
     static constexpr FirmwareClass_t FirmwareClassGeneric   = MAV_AUTOPILOT_GENERIC;
 
+    static constexpr VehicleClass_t VehicleClassAirship     = MAV_TYPE_AIRSHIP;
     static constexpr VehicleClass_t VehicleClassFixedWing   = MAV_TYPE_FIXED_WING;
     static constexpr VehicleClass_t VehicleClassRoverBoat   = MAV_TYPE_GROUND_ROVER;
     static constexpr VehicleClass_t VehicleClassSub         = MAV_TYPE_SUBMARINE;
     static constexpr VehicleClass_t VehicleClassMultiRotor  = MAV_TYPE_QUADROTOR;
-    static constexpr VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_QUADROTOR;
+    static constexpr VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
     static constexpr VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
 
     static bool                     isPX4FirmwareClass          (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
@@ -78,6 +79,7 @@ public:
     static QString                  firmwareClassToString       (FirmwareClass_t firmwareClass);
     static QList<FirmwareClass_t>   allFirmwareClasses          (void);
 
+    static bool                     isAirship                   (MAV_TYPE mavType);
     static bool                     isFixedWing                 (MAV_TYPE mavType);
     static bool                     isRoverBoat                 (MAV_TYPE mavType);
     static bool                     isSub                       (MAV_TYPE mavType);

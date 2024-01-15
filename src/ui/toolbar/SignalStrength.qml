@@ -14,10 +14,10 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl.Controls  1.0
-import QGroundControl.Palette   1.0
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Item {
     id:     signalRoot

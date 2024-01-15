@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.12
+import QtQuick
 
 // Used to manage state for itesm using with QGCPipOveral
 Item {

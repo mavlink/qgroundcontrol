@@ -16,30 +16,15 @@ Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 class TerrainTile
 {
 public:
-    TerrainTile();
+    TerrainTile() = default;
     ~TerrainTile();
-
-    /**
-    * Constructor from json doc with elevation data (either from file or web)
-    *
-    * @param document
-    */
-    TerrainTile(QJsonDocument document);
 
     /**
     * Constructor from serialized elevation data (either from file or web)
     *
     * @param document
     */
-    TerrainTile(QByteArray byteArray);
-
-    /**
-    * Check for whether a coordinate lies within this tile
-    *
-    * @param coordinate
-    * @return true if within
-    */
-    bool isIn(const QGeoCoordinate& coordinate) const;
+    TerrainTile(const QByteArray& byteArray);
 
     /**
     * Check whether valid data is loaded
@@ -61,35 +46,29 @@ public:
     *
     * @return minimum elevation
     */
-    double minElevation(void) const { return _minElevation; }
+    double minElevation(void) const { return _isValid ? static_cast<double>(_tileInfo.minElevation) : qQNaN(); }
 
     /**
     * Accessor for the maximum elevation of the tile
     *
     * @return maximum elevation
     */
-    double maxElevation(void) const { return _maxElevation; }
+    double maxElevation(void) const { return _isValid ? static_cast<double>(_tileInfo.maxElevation) : qQNaN(); }
 
     /**
     * Accessor for the average elevation of the tile
     *
     * @return average elevation
     */
-    double avgElevation(void) const { return _avgElevation; }
+    double avgElevation(void) const { return _isValid ? _tileInfo.avgElevation : qQNaN(); }
 
     /**
     * Accessor for the center coordinate
     *
     * @return center coordinate
     */
-    QGeoCoordinate centerCoordinate(void) const;
 
-    /**
-    * Serialize data
-    *
-    * @return serialized data
-    */
-    static QByteArray serialize(QByteArray input);
+    static QByteArray serializeFromAirMapJson(const QByteArray& input);
 
     static constexpr double tileSizeDegrees         = 0.01;         ///< Each terrain tile represents a square area .01 degrees in lat/lon
     static constexpr double tileValueSpacingDegrees = 1.0 / 3600;   ///< 1 Arc-Second spacing of elevation values
@@ -97,7 +76,7 @@ public:
 
 private:
     typedef struct {
-        double  swLat,swLon, neLat, neLon;
+        double  swLat, swLon, neLat, neLon;
         int16_t minElevation;
         int16_t maxElevation;
         double  avgElevation;
@@ -105,21 +84,10 @@ private:
         int16_t gridSizeLon;
     } TileInfo_t;
 
-    double  _swCornerClampedLatitude    (double latitude) const;
-    double  _swCornerClampedLongitude   (double longitude) const;
-    int     _latToDataIndex             (double latitude) const;
-    int     _lonToDataIndex             (double longitude) const;
-
-    QGeoCoordinate      _southWest;                                     /// South west corner of the tile
-    QGeoCoordinate      _northEast;                                     /// North east corner of the tile
-
-    int16_t             _minElevation;                                  /// Minimum elevation in tile
-    int16_t             _maxElevation;                                  /// Maximum elevation in tile
-    double              _avgElevation;                                  /// Average elevation of the tile
-
+    TileInfo_t          _tileInfo;
     int16_t**           _data;                                          /// 2D elevation data array
-    int16_t             _gridSizeLat;                                   /// data grid size in latitude direction
-    int16_t             _gridSizeLon;                                   /// data grid size in longitude direction
+    double              _cellSizeLat;                                   /// data grid size in latitude direction
+    double              _cellSizeLon;                                   /// data grid size in longitude direction
     bool                _isValid;                                       /// data loaded is valid
 
     // Json keys

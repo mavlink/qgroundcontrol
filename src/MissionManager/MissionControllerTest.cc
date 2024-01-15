@@ -18,9 +18,6 @@
 #include "AppSettings.h"
 
 MissionControllerTest::MissionControllerTest(void)
-    : _multiSpyMissionController(nullptr)
-    , _multiSpyMissionItem(nullptr)
-    , _missionController(nullptr)
 {
     
 }
@@ -28,13 +25,13 @@ MissionControllerTest::MissionControllerTest(void)
 void MissionControllerTest::cleanup(void)
 {
     delete _masterController;
-    _masterController = nullptr;
-
     delete _multiSpyMissionController;
-    _multiSpyMissionController = nullptr;
-
     delete _multiSpyMissionItem;
-    _multiSpyMissionItem = nullptr;
+
+    _masterController           = nullptr;
+    _missionController          = nullptr;
+    _multiSpyMissionController  = nullptr;
+    _multiSpyMissionItem        = nullptr;
 
     MissionControllerManagerTest::cleanup();
 }
@@ -172,6 +169,7 @@ void MissionControllerTest::_testGimbalRecalc(void)
     SimpleMissionItem* item = _missionController->visualItems()->value<SimpleMissionItem*>(yawIndex);
     item->cameraSection()->setSpecifyGimbal(true);
     item->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    qgcApp()->toolbox()->settingsManager()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
     QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
         //qDebug() << i;
@@ -260,13 +258,13 @@ void MissionControllerTest::_testGlobalAltMode(void)
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
     struct  _globalAltMode_s {
-        QGroundControlQmlGlobal::AltitudeMode   altMode;
+        QGroundControlQmlGlobal::AltMode   altMode;
         MAV_FRAME                               expectedMavFrame;
     } altModeTestCases[] = {
-        { QGroundControlQmlGlobal::AltitudeModeRelative,        MAV_FRAME_GLOBAL_RELATIVE_ALT },
-        { QGroundControlQmlGlobal::AltitudeModeAbsolute,        MAV_FRAME_GLOBAL },
-        { QGroundControlQmlGlobal::AltitudeModeAboveTerrain,    MAV_FRAME_GLOBAL },
-        { QGroundControlQmlGlobal::AltitudeModeTerrainFrame,    MAV_FRAME_GLOBAL_TERRAIN_ALT },
+        { QGroundControlQmlGlobal::AltitudeModeRelative,            MAV_FRAME_GLOBAL_RELATIVE_ALT },
+        { QGroundControlQmlGlobal::AltitudeModeAbsolute,            MAV_FRAME_GLOBAL },
+        { QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain,    MAV_FRAME_GLOBAL },
+        { QGroundControlQmlGlobal::AltitudeModeTerrainFrame,        MAV_FRAME_GLOBAL_TERRAIN_ALT },
     };
 
     for (const _globalAltMode_s& testCase: altModeTestCases) {

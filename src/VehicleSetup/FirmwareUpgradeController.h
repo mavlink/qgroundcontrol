@@ -20,7 +20,11 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QQuickItem>
+#ifdef __android__
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 #include <stdint.h>
 
@@ -37,7 +41,7 @@ public:
             AutoPilotStackAPM,
             PX4FlowPX4,
             PX4FlowAPM,
-            ThreeDRRadio,
+            SiKRadio,
             SingleFirmwareMode
         } AutoPilotStackType_t;
 
@@ -78,7 +82,7 @@ public:
 
         // members
         AutoPilotStackType_t    autopilotStackType;
-        FirmwareBuildType_t          firmwareType;
+        FirmwareBuildType_t     firmwareType;
         FirmwareVehicleType_t   firmwareVehicleType;
     };
 
@@ -155,7 +159,7 @@ public:
 
 signals:
     void boardFound                     (void);
-    void bootloaderFound                (void);
+    void showFirmwareSelectDlg          (void);
     void noBoardFound                   (void);
     void boardGone                      (void);
     void flashComplete                  (void);
@@ -203,29 +207,8 @@ private:
     QString _portDescription;
 
     // Firmware hashes
-    QHash<FirmwareIdentifier, QString> _rgFMUV5Firmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUV4PROFirmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUV4Firmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUV3Firmware;
-    QHash<FirmwareIdentifier, QString> _rgPX4FMUV2Firmware;
-    QHash<FirmwareIdentifier, QString> _rgAeroCoreFirmware;
-    QHash<FirmwareIdentifier, QString> _rgAUAVX2_1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgMindPXFMUV2Firmware;
-    QHash<FirmwareIdentifier, QString> _rgTAPV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgASCV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgCrazyflie2Firmware;
-    QHash<FirmwareIdentifier, QString> _rgOmnibusF4SDFirmware;
-    QHash<FirmwareIdentifier, QString> _rgKakuteF7Firmware;
-    QHash<FirmwareIdentifier, QString> _rgDurandalV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUK66V3Firmware;
-    QHash<FirmwareIdentifier, QString> _rgModalFCV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgmRoCtrlZeroF7Firmware;
-    QHash<FirmwareIdentifier, QString> _rgUVifyCoreFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
-    QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
-    QHash<FirmwareIdentifier, QString> _rgPX4CUAVX7Fireware;
-    QHash<FirmwareIdentifier, QString> _rgCUAVNoraFireware;
-
+    QHash<FirmwareIdentifier, QString> _rgSiKRadioFirmware;
 
     // Hash map for ArduPilot ChibiOS lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;
@@ -246,9 +229,6 @@ private:
     QPixmap _boardIcon;             ///< Icon used to display image of board
     
     QString _firmwareFilename;      ///< Image which we are going to flash to the board
-    
-    QNetworkAccessManager*  _downloadManager;       ///< Used for firmware file downloading across the internet
-    QNetworkReply*          _downloadNetworkReply;  ///< Used for firmware file downloading across the internet
     
     /// @brief Thread controller which is used to run bootloader commands on separate thread
     PX4FirmwareUpgradeThreadController* _threadController;

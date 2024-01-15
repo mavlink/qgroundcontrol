@@ -7,11 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.12
+import QtQuick
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 Item {
     id:         _root
@@ -60,17 +61,45 @@ Item {
         id:             cameraLoader
         anchors.fill:   parent
         visible:        !QGroundControl.videoManager.isGStreamer
-        source:         visible ? (QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml") : ""
+        source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
+    }
+
+    QGCLabel {
+        text: qsTr("Double-click to exit full screen")
+        font.pointSize: ScreenTools.largeFontPointSize
+        visible: QGroundControl.videoManager.fullScreen && flyViewVideoMouseArea.containsMouse
+        anchors.centerIn: parent
+
+        onVisibleChanged: {
+            if (visible) {
+                labelAnimation.start()
+            }
+        }
+
+        PropertyAnimation on opacity {
+            id: labelAnimation
+            duration: 10000
+            from: 1.0
+            to: 0.0
+            easing.type: Easing.InExpo
+        }
     }
 
     MouseArea {
+        id: flyViewVideoMouseArea
         anchors.fill:       parent
         enabled:            pipState.state === pipState.fullState
+        hoverEnabled: true
         onDoubleClicked:    QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
     }
 
     ProximityRadarVideoView{
         anchors.fill:   parent
         vehicle:        QGroundControl.multiVehicleManager.activeVehicle
+    }
+
+    ObstacleDistanceOverlayVideo {
+        id: obstacleDistance
+        showText: pipState.state === pipState.fullState
     }
 }

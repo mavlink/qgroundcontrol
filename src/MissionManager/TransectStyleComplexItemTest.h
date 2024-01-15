@@ -10,7 +10,7 @@
 #pragma once
 
 #include "TransectStyleComplexItemTestBase.h"
-#include "MultiSignalSpy.h"
+#include "MultiSignalSpyV2.h"
 #include "CorridorScanComplexItem.h"
 #include "PlanMasterController.h"
 
@@ -33,45 +33,11 @@ private slots:
     void _testDirty             (void);
     void _testRebuildTransects  (void);
     void _testDistanceSignalling(void);
-    void _testAltMode           (void);
+    void _testAltitudes         (void);
     void _testFollowTerrain     (void);
 
 private:
-    enum {
-        // These signals are from TransectStyleComplexItem
-        cameraShotsChangedIndex = 0,
-        timeBetweenShotsChangedIndex,
-        visualTransectPointsChangedIndex,
-        coveredAreaChangedIndex,
-        // These signals are from ComplexItem
-        dirtyChangedIndex,
-        complexDistanceChangedIndex,
-        greatestDistanceToChangedIndex,
-        additionalTimeDelayChangedIndex,
-        // These signals are from VisualMissionItem
-        lastSequenceNumberChangedIndex,
-        maxSignalIndex
-    };
-
-    enum {
-        // These signals are from TransectStyleComplexItem
-        cameraShotsChangedMask =                1 << cameraShotsChangedIndex,
-        timeBetweenShotsChangedMask =           1 << timeBetweenShotsChangedIndex,
-        visualTransectPointsChangedMask =       1 << visualTransectPointsChangedIndex,
-        coveredAreaChangedMask =                1 << coveredAreaChangedIndex,
-        // These signals are from ComplexItem
-        dirtyChangedMask =                      1 << dirtyChangedIndex,
-        complexDistanceChangedMask =            1 << complexDistanceChangedIndex,
-        greatestDistanceToChangedMask =         1 << greatestDistanceToChangedIndex,
-        additionalTimeDelayChangedMask =        1 << additionalTimeDelayChangedIndex,
-        // These signals are from VisualMissionItem
-        lastSequenceNumberChangedMask =         1 << lastSequenceNumberChangedIndex,
-    };
-
-    static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
-
-    MultiSignalSpy*         _multiSpy =             nullptr;
+    MultiSignalSpyV2*       _multiSpy =             nullptr;
     TestTransectStyleItem*  _transectStyleItem =    nullptr;
 };
 
@@ -80,7 +46,9 @@ class TestTransectStyleItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    TestTransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
+    TestTransectStyleItem(PlanMasterController* masterController);
+
+    void adjustSurveAreaPolygon(void);
 
     // Overrides from ComplexMissionItem
     QString patternName         (void) const final { return QString(); }
@@ -95,10 +63,6 @@ public:
     bool rebuildTransectsPhase1Called;
     bool recalcComplexDistanceCalled;
     bool recalcCameraShotsCalled;
-    void _adjustSurveAreaPolygon(void);
-    QList<QList<CoordInfo_t>> transects() const {
-        return _transects;
-    }
 
 private slots:
     // Overrides from TransectStyleComplexItem

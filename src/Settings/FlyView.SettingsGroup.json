@@ -48,12 +48,43 @@
     "default":     false
 },
 {
+    "name":         "showSimpleCameraControl",
+    "shortDesc":    "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
+    "type":         "bool",
+    "default":      true
+},
+{
+    "name":         "showObstacleDistanceOverlay",
+    "shortDesc":    "Show obstacle distance overlay on map and video.",
+    "type":         "bool",
+    "default":      false
+},
+{
     "name":             "maxGoToLocationDistance",
     "shortDesc": "Maximum distance allowed for Go To Location.",
     "type":             "double",
     "units":            "m",
     "default":     1000,
     "min":              1
+},
+{
+    "name":             "updateHomePosition",
+    "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
+    "type":                 "bool",
+    "default":              false
+},
+{
+    "name":      "enableCustomActions",
+    "shortDesc": "Enable Custom Actions",
+    "type":      "bool",
+    "default":   false
+},
+{
+    "name":      "customActionDefinitions",
+    "shortDesc": "Custom Action Definitions",
+    "longDesc":  "File that defines custom actions to send connected vehicle",
+    "type":      "string",
+    "default":   ""
 }
 ]
 }

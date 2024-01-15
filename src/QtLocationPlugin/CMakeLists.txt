@@ -27,8 +27,8 @@ add_library(QtLocationPlugin
 
 target_link_libraries(QtLocationPlugin
 	PUBLIC
-		Qt5::Location
-		Qt5::Sql
+		Qt6::Location
+		Qt6::Sql
 
 		qgc
 )

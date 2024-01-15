@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 /// Simple Mission Item visuals
 Item {
@@ -148,13 +148,17 @@ Item {
 
             readonly property int   _decimalPlaces: 8
 
-            onClicked: {
+            onClicked: (mouse) => {
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                 _missionItem.launchCoordinate = coordinate
-                if (_missionItem.launchTakeoffAtSameLocation) {
+
+                // We drop out of wizard mode after launch position is set if:
+                //  - Takeoff location is same as launch position so nothing left to do
+                //  - Not a fixed wing. Fixed wing require warning about tweaking climb out position
+                if (_missionItem.launchTakeoffAtSameLocation || !vehicle.fixedWing) {
                     _missionItem.wizardMode = false
                 }
                 _objMgrMouseClick.destroyObjects()

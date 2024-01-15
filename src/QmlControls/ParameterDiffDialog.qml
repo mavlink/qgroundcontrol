@@ -7,28 +7,25 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Layouts  1.2
-import QtQuick.Controls 2.5
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controllers
 
 QGCPopupDialog {
     title:      qsTr("Load Parameters")
-    buttons:    StandardButton.Cancel | (paramController.diffList.count ? StandardButton.Ok : 0)
+    buttons:    Dialog.Cancel | (paramController.diffList.count ? Dialog.Ok : 0)
 
     property var paramController
 
-    function accept() {
-        hideDialog()
-        paramController.sendDiff();
-    }
+    onAccepted: paramController.sendDiff()
 
     Component.onDestruction: paramController.clearDiff();
 

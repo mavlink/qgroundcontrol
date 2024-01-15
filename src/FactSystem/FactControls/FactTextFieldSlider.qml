@@ -1,12 +1,12 @@
-import QtQuick              2.7
-import QtQuick.Controls     1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl.FactSystem
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactControls
 
 
 Row {
@@ -26,8 +26,8 @@ Row {
     }
 
     Component.onCompleted: {
-        slide.minimumValue = fact.min
-        slide.maximumValue = fact.max
+        slide.from = fact.min
+        slide.to = fact.max
         slide.value = fact.value
         _loadComplete = true
     }
@@ -62,7 +62,7 @@ Row {
                 anchors.verticalCenter: parent.verticalCenter
 
                 QGCLabel {
-                    text:                   "Value: "
+                    text:                   qsTr("Value: ")
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -132,15 +132,15 @@ Row {
 
                 MouseArea {
                     anchors.fill: parent
-                    onWheel: {
+                    onWheel: (wheel) => {
                         // do nothing
                         wheel.accepted = true;
                     }
-                    onPressed: {
+                    onPressed: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }
-                    onReleased: {
+                    onReleased: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }

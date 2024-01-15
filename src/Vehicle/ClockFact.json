@@ -9,6 +9,11 @@
     "type":             "string"
 },
 {
+    "name":             "currentUTCTime",
+    "shortDesc": "UTC Time",
+    "type":             "string"
+},
+{
     "name":             "currentDate",
     "shortDesc": "Date",
     "type":             "string"

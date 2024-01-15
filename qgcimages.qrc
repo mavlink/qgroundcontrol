@@ -25,6 +25,7 @@
         <file alias="Airframe/QuadRotorWide">src/AutoPilotPlugins/Common/Images/QuadRotorWide.svg</file>
         <file alias="Airframe/QuadRotorX">src/AutoPilotPlugins/Common/Images/QuadRotorX.svg</file>
         <file alias="Airframe/Rover">src/AutoPilotPlugins/Common/Images/Rover.svg</file>
+        <file alias="Airframe/Vectored6DofUUV">src/AutoPilotPlugins/Common/Images/Vectored6DofUUV.svg</file>
         <file alias="Airframe/VTOLDuoRotorTailSitter">src/AutoPilotPlugins/Common/Images/VTOLDuoRotorTailSitter.svg</file>
         <file alias="Airframe/VTOLPlane">src/AutoPilotPlugins/Common/Images/VTOLPlane.svg</file>
         <file alias="Airframe/VTOLPlaneOcto">src/AutoPilotPlugins/Common/Images/VTOLPlaneOcto.svg</file>
@@ -148,6 +149,14 @@
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
         <file alias="Quad.svg">src/ui/toolbar/Images/Quad.svg</file>
         <file alias="RadioComponentIcon.png">src/AutoPilotPlugins/Common/Images/RadioComponentIcon.png</file>
+        <file alias="RidEmergencyBackgroundHighlight.svg">src/ui/toolbar/Images/RidEmergencyBackgroundHighlight.svg</file>
+        <file alias="RidEmergencyBackground.svg">src/ui/toolbar/Images/RidEmergencyBackground.svg</file>
+        <file alias="RidFlagBackgroundGreen.svg">src/ui/toolbar/Images/RidFlagBackgroundGreen.svg</file>
+        <file alias="RidFlagBackgroundRed.svg">src/ui/toolbar/Images/RidFlagBackgroundRed.svg</file>
+        <file alias="RidIconGreen.svg">src/ui/toolbar/Images/RidIconGreen.svg</file>
+        <file alias="RidIconGrey.svg">src/ui/toolbar/Images/RidIconGrey.svg</file>
+        <file alias="RidIconRed.svg">src/ui/toolbar/Images/RidIconRed.svg</file>
+        <file alias="RidIconYellow.svg">src/ui/toolbar/Images/RidIconYellow.svg</file>
         <file alias="RC.svg">src/ui/toolbar/Images/RC.svg</file>
         <file alias="RCLoss.svg">src/AutoPilotPlugins/PX4/Images/RCLoss.svg</file>
         <file alias="RCLossLight.svg">src/AutoPilotPlugins/PX4/Images/RCLossLight.svg</file>
@@ -171,6 +180,8 @@
         <file alias="Signal80.svg">src/ui/toolbar/Images/Signal80.svg</file>
         <file alias="StationMode.svg">src/AutoPilotPlugins/Common/Images/StationMode.svg</file>
         <file alias="SubFrameComponentIcon.png">src/AutoPilotPlugins/APM/Images/SubFrameComponentIcon.png</file>
+        <file alias="ForwardingSupportIcon.svg">src/AutoPilotPlugins/APM/Images/ForwardingSupportIcon.svg</file>
+        <file alias="ForwardingSupportIconGreen.svg">src/AutoPilotPlugins/APM/Images/ForwardingSupportIconGreen.svg</file>
         <file alias="subMenuButtonImage.png">resources/CogWheels.png</file>
         <file alias="subVehicleArrowOpaque.png">src/FlightMap/Images/sub.png</file>
         <file alias="TelemRSSI.svg">src/ui/toolbar/Images/TelemRSSI.svg</file>

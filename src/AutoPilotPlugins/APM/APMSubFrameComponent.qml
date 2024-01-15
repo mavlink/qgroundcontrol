@@ -8,25 +8,53 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Dialogs      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 SetupPage {
     id:                 subFramePage
     pageComponent:      subFramePageComponent
 
     property bool _oldFW:   globals.activeVehicle.versionCompare(3 ,5 ,2) < 0
+    property bool _hasSensibledefaults:   globals.activeVehicle.versionCompare(4 ,1 ,0) >= 0
+
+    property var frameModelSelected: undefined
 
     APMAirframeComponentController { id: controller; }
+
+    property Fact _frameConfig: controller.getParameterFact(-1, "FRAME_CONFIG")
+
+    function setFrameConfig(frameNumber) {
+        _frameConfig.value = frameNumber
+    }
+
+    function loadFrameDefaultParameters(frameName) {
+        controller.loadParameters(subFramePage.getParametersFile(frameName))
+    }
+
+    function getParametersFile(frameName) {
+        let version = "3_5"
+
+        if (globals.activeVehicle.versionCompare(4, 0, 0) >= 0) {
+            version = "4_0_0"
+        } else if (globals.activeVehicle.versionCompare(3, 5, 4) >= 0) {
+            version = "3_5_4"
+        } else if (globals.activeVehicle.versionCompare(3, 5, 2) >= 0) {
+            version = "3_5_2"
+        }
+
+        return `Sub/${frameName}-${version}.params`
+    }
 
     Component {
         id: subFramePageComponent
@@ -35,13 +63,7 @@ SetupPage {
             id:     mainColumn
             width:  availableWidth
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
-
-            property Fact _frameConfig: controller.getParameterFact(-1, "FRAME_CONFIG")
-
-            function setFrameConfig(frame) {
-                _frameConfig.value = frame;
-            }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property real _minW:        ScreenTools.defaultFontPixelWidth * 30
             property real _boxWidth:    _minW
@@ -84,12 +106,14 @@ SetupPage {
                     name: "BlueROV2/Vectored"
                     resource: "qrc:///qmlimages/Frames/Vectored.png"
                     paramValue: 1
+                    paramFileName: "bluerov2"
                 }
 
                 ListElement {
                     name: "Vectored-6DOF"
                     resource: "qrc:///qmlimages/Frames/Vectored6DOF.png"
                     paramValue: 2
+                    paramFileName: "bluerov2-heavy"
                 }
 
                 ListElement {
@@ -108,19 +132,6 @@ SetupPage {
                     name: "SimpleROV-5"
                     resource: "qrc:///qmlimages/Frames/SimpleROV-5.png"
                     paramValue: 6
-                }
-            }
-
-            Item {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                height: defaultsButton.height
-
-                QGCButton {
-                    id: defaultsButton
-                    anchors.left: parent.left
-                    text:       qsTr("Load Vehicle Default Parameters")
-                    onClicked:  mainWindow.showComponentDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
 
@@ -164,7 +175,17 @@ SetupPage {
 
                             MouseArea {
                                 anchors.fill: parent
-                                onClicked: setFrameConfig(subFrameModel.get(index).paramValue)
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    frameModelSelected = subFrameModel.get(index)
+                                    if (_hasSensibledefaults) {
+                                        // No need to suggest loading the default parameters.
+                                        // The firmware default should be good enough.
+                                        setFrameConfig(frameModelSelected.paramValue)
+                                        return
+                                    }
+                                    confirmFrameComponent.createObject(mainWindow).open()
+                                }
                             }
                         }
                     }
@@ -173,52 +194,49 @@ SetupPage {
         } // Column
     } // Component
 
-
     Component {
-        id: selectParamFileDialogComponent
+        id: confirmFrameComponent
 
-        QGCViewDialog {
-            QGCLabel {
-                id:                 applyParamsText
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.margins:    _margins
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Select your vehicle to load the default parameters:")
-            }
+        QGCPopupDialog {
+            id:         confirmFrameDialog
+            title:      qsTr("Frame selection")
+            buttons:    Dialog.Close
 
-            Flow {
-                anchors.margins:    _margins
-                anchors.top:        applyParamsText.bottom
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.bottom:     parent.bottom
-                spacing :           _margins
-                layoutDirection:    Qt.Vertical;
+            ColumnLayout {
+                QGCLabel {
+                    id:                 applyParamsText
+                    width:              firstButton.width
+                    wrapMode:           Text.WordWrap
+                    text:               frameModelSelected.paramFileName != undefined ?
+                                            qsTr("Would you like to load the default parameters for the frame?") :
+                                            qsTr("Would you like to set the desired frame?")
+                }
 
                 QGCButton {
-                    width:  parent.width
-                    text:   "Blue Robotics BlueROV2"
-                    property var file:   _oldFW ? "Sub/bluerov2-3_5.params" : "Sub/bluerov2-3_5_2.params"
+                    id:                 firstButton
+                    Layout.fillWidth:   true
+                    text:               qsTr("Yes, Load default parameter set for %1").arg(frameModelSelected.name)
+                    visible:            frameModelSelected.paramFileName != undefined
 
-                    onClicked : {
-                        controller.loadParameters(file)
-                        hideDialog()
+                    onClicked: {
+                        setFrameConfig(frameModelSelected.paramValue)
+                        loadFrameDefaultParameters(frameModelSelected.paramFileName)
+                        confirmFrameDialog.close()
                     }
                 }
 
                 QGCButton {
-                    width:  parent.width
-                    text:   "Blue Robotics BlueROV2 Heavy"
-                    property var file:  "Sub/bluerov2-heavy-3_5_2.params"
+                    Layout.fillWidth:   true
+                    text:               frameModelSelected.paramFileName != undefined ?
+                                            qsTr("No, set frame only") :
+                                            qsTr("Confirm frame %1").arg(frameModelSelected.name)
 
-                    onClicked : {
-                        controller.loadParameters(file)
-                        hideDialog()
+                    onClicked: {
+                        setFrameConfig(frameModelSelected.paramValue)
+                        confirmFrameDialog.close()
                     }
                 }
             }
         }
     }
-} // SetupPage
+}

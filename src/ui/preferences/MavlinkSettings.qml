@@ -8,19 +8,19 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Palette               1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Palette
 
 Rectangle {
     id:             __mavlinkRoot
@@ -33,7 +33,10 @@ Rectangle {
     property real _columnSpacing:       ScreenTools.defaultFontPixelHeight * 0.25
     property bool _uploadedSelected:    false
     property bool _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
-    property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible
+    property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible && _isAPM
+    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property bool _isPX4:               _activeVehicle ? _activeVehicle.px4Firmware : false
+    property bool _isAPM:               _activeVehicle ? _activeVehicle.apmFirmware : false
     property Fact _disableDataPersistenceFact: QGroundControl.settingsManager.appSettings.disableAllPersistence
     property bool _disableDataPersistence:     _disableDataPersistenceFact ? _disableDataPersistenceFact.rawValue : false
 
@@ -77,8 +80,8 @@ Rectangle {
     MessageDialog {
         id:         emptyEmailDialog
         visible:    false
-        icon:       StandardIcon.Warning
-        standardButtons: StandardButton.Close
+        //icon:       StandardIcon.Warning
+        buttons:    MessageDialog.Close
         title:      qsTr("MAVLink Logging")
         text:       qsTr("Please enter an email address before uploading MAVLink log files.")
     }
@@ -369,7 +372,7 @@ Rectangle {
                 height:             mavlogLabel.height
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible:            _showMavlinkLog
+                visible:            _showMavlinkLog && _isPX4
                 QGCLabel {
                     id:             mavlogLabel
                     text:           qsTr("MAVLink 2.0 Logging (PX4 Pro Only)")
@@ -382,7 +385,7 @@ Rectangle {
                 color:          qgcPal.windowShade
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible:        _showMavlinkLog
+                visible:        _showMavlinkLog && _isPX4
                 Column {
                     id:         mavlogColumn
                     width:      gcsColumn.width
@@ -432,7 +435,7 @@ Rectangle {
                 height:             logLabel.height
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible:            _showMavlinkLog
+                visible:            _showMavlinkLog && _isPX4
                 QGCLabel {
                     id:             logLabel
                     text:           qsTr("MAVLink 2.0 Log Uploads (PX4 Pro Only)")
@@ -445,7 +448,7 @@ Rectangle {
                 color:          qgcPal.windowShade
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible:        _showMavlinkLog
+                visible:        _showMavlinkLog && _isPX4
                 Column {
                     id:         logColumn
                     spacing:    _columnSpacing
@@ -546,11 +549,11 @@ Rectangle {
                             textRole:   "text"
                             model: ListModel {
                                 id: windItems
-                                ListElement { text: "Please Select"; value: -1 }
-                                ListElement { text: "Calm";     value: 0 }
-                                ListElement { text: "Breeze";   value: 5 }
-                                ListElement { text: "Gale";     value: 8 }
-                                ListElement { text: "Storm";    value: 10 }
+                                ListElement { text: qsTr("Please Select"); value: -1 }
+                                ListElement { text: qsTr("Calm");     value: 0 }
+                                ListElement { text: qsTr("Breeze");   value: 5 }
+                                ListElement { text: qsTr("Gale");     value: 8 }
+                                ListElement { text: qsTr("Storm");    value: 10 }
                             }
                             onActivated: {
                                 saveItems();
@@ -584,12 +587,12 @@ Rectangle {
                             textRole:   "text"
                             model: ListModel {
                                 id: ratingItems
-                                ListElement { text: "Please Select";            value: "notset"}
-                                ListElement { text: "Crashed (Pilot Error)";    value: "crash_pilot" }
-                                ListElement { text: "Crashed (Software or Hardware issue)";   value: "crash_sw_hw" }
-                                ListElement { text: "Unsatisfactory";           value: "unsatisfactory" }
-                                ListElement { text: "Good";                     value: "good" }
-                                ListElement { text: "Great";                    value: "great" }
+                                ListElement { text: qsTr("Please Select");            value: "notset"}
+                                ListElement { text: qsTr("Crashed (Pilot Error)");    value: "crash_pilot" }
+                                ListElement { text: qsTr("Crashed (Software or Hardware issue)");   value: "crash_sw_hw" }
+                                ListElement { text: qsTr("Unsatisfactory");           value: "unsatisfactory" }
+                                ListElement { text: qsTr("Good");                     value: "good" }
+                                ListElement { text: qsTr("Great");                    value: "great" }
                             }
                             onActivated: {
                                 saveItems();
@@ -619,14 +622,11 @@ Rectangle {
                             id:                 feedbackTextArea
                             width:              _valueWidth
                             height:             ScreenTools.defaultFontPixelHeight * 4
-                            frameVisible:       false
                             font.pointSize:     ScreenTools.defaultFontPointSize
                             text:               QGroundControl.mavlinkLogManager.feedback
                             enabled:            !_disableDataPersistence
-                            style: TextAreaStyle {
-                                textColor:          qgcPal.windowShade
-                                backgroundColor:    qgcPal.text
-                            }
+                            color:              qgcPal.textFieldText
+                            background:         Rectangle { color: qgcPal.textField }
                         }
                     }
                     //-----------------------------------------------------------------
@@ -748,8 +748,8 @@ Rectangle {
                                         width:      ScreenTools.defaultFontPixelWidth * 20;
                                         height:     ScreenTools.defaultFontPixelHeight
                                         anchors.verticalCenter: parent.verticalCenter
-                                        minimumValue:   0
-                                        maximumValue:   100
+                                        from:   0
+                                        to:   100
                                         value:          object.progress * 100.0
                                     }
                                 }
@@ -786,12 +786,16 @@ Rectangle {
                             MessageDialog {
                                 id:         deleteDialog
                                 visible:    false
-                                icon:       StandardIcon.Warning
-                                standardButtons: StandardButton.Yes | StandardButton.No
+                                //icon:       StandardIcon.Warning
+                                buttons:    MessageDialog.Yes | MessageDialog.No
                                 title:      qsTr("Delete Selected Log Files")
                                 text:       qsTr("Confirm deleting selected log files?")
-                                onYes: {
-                                    QGroundControl.mavlinkLogManager.deleteLog()
+                                onButtonClicked: function (button, role) {
+                                    switch (button) {
+                                    case MessageDialog.Yes:
+                                        QGroundControl.mavlinkLogManager.deleteLog()
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -809,12 +813,16 @@ Rectangle {
                             MessageDialog {
                                 id:         uploadDialog
                                 visible:    false
-                                icon:       StandardIcon.Question
-                                standardButtons: StandardButton.Yes | StandardButton.No
+                                //icon:       StandardIcon.Question
+                                buttons:    MessageDialog.Yes | MessageDialog.No
                                 title:      qsTr("Upload Selected Log Files")
                                 text:       qsTr("Confirm uploading selected log files?")
-                                onYes: {
-                                    QGroundControl.mavlinkLogManager.uploadLog()
+                                onButtonClicked: function (button, role) {
+                                    switch (button) {
+                                    case MessageDialog.Yes:
+                                        QGroundControl.mavlinkLogManager.uploadLog()
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -826,12 +834,16 @@ Rectangle {
                             MessageDialog {
                                 id:         cancelDialog
                                 visible:    false
-                                icon:       StandardIcon.Warning
-                                standardButtons: StandardButton.Yes | StandardButton.No
+                                //icon:       StandardIcon.Warning
+                                buttons:    MessageDialog.Yes | MessageDialog.No
                                 title:      qsTr("Cancel Upload")
                                 text:       qsTr("Confirm canceling the upload process?")
-                                onYes: {
-                                    QGroundControl.mavlinkLogManager.cancelUpload()
+                                onButtonClicked: function (button, role) {
+                                    switch (button) {
+                                    case MessageDialog.Yes:
+                                        QGroundControl.mavlinkLogManager.cancelUpload()
+                                        break;
+                                    }
                                 }
                             }
                         }

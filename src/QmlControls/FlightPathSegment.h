@@ -24,7 +24,15 @@ class FlightPathSegment : public QObject
     Q_OBJECT
     
 public:
-    FlightPathSegment(const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt, bool queryTerrainData, QObject* parent);
+    enum SegmentType {
+        SegmentTypeTakeoff,         // Takeoff segments ignore the first part of the segment for terrain collisions
+        SegmentTypeGeneric,         // Generic segments take into account the entire segment for terrain collisions
+        SegmentTypeLand,            // Land segments ignore the last part of the segment for terrain collisions
+        SegmentTypeTerrainFrame,    // Flight path in between the two coords follows terrain
+    };
+    Q_ENUM(SegmentType)
+
+    FlightPathSegment(SegmentType segmentType, const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt, bool queryTerrainData, QObject* parent);
 
     Q_PROPERTY(QGeoCoordinate   coordinate1             MEMBER _coord1                                          NOTIFY coordinate1Changed)
     Q_PROPERTY(QGeoCoordinate   coordinate2             MEMBER _coord2                                          NOTIFY coordinate2Changed)
@@ -35,7 +43,8 @@ public:
     Q_PROPERTY(double           distanceBetween         MEMBER _distanceBetween                                 NOTIFY distanceBetweenChanged)
     Q_PROPERTY(double           finalDistanceBetween    MEMBER _finalDistanceBetween                            NOTIFY finalDistanceBetweenChanged)
     Q_PROPERTY(double           totalDistance           MEMBER _totalDistance                                   NOTIFY totalDistanceChanged)
-    Q_PROPERTY(bool             terrainCollision        MEMBER _terrainCollision                                NOTIFY terrainCollisionChanged);
+    Q_PROPERTY(bool             terrainCollision        MEMBER _terrainCollision                                NOTIFY terrainCollisionChanged)
+    Q_PROPERTY(SegmentType      segmentType             MEMBER _segmentType                                     CONSTANT)
 
     QGeoCoordinate      coordinate1         (void) const { return _coord1; }
     QGeoCoordinate      coordinate2         (void) const { return _coord2; }
@@ -47,6 +56,7 @@ public:
     double              totalDistance       (void) const { return _totalDistance; }
     bool                specialVisual       (void) const { return _specialVisual; }
     bool                terrainCollision    (void) const { return _terrainCollision; }
+    SegmentType         segmentType         (void) const { return _segmentType; }
 
     void setSpecialVisual(bool specialVisual);
 
@@ -88,4 +98,7 @@ private:
     double              _distanceBetween =              0;
     double              _finalDistanceBetween =         0;
     double              _totalDistance =                0;
+    SegmentType         _segmentType =                  SegmentTypeGeneric;
+
+    static constexpr double _collisionIgnoreMeters =    10; // Distance to ignore for takeoff/land segments
 };

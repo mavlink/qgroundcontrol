@@ -31,7 +31,7 @@ class MapProvider : public QObject {
 
 public:
     MapProvider(const QString& referrer, const QString& imageFormat, const quint32 averageSize,
-        const QGeoMapType::MapStyle mapType = QGeoMapType::CustomMap, QObject* parent = nullptr);
+        const QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap, QObject* parent = nullptr);
 
     virtual QNetworkRequest getTileURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager);
 
@@ -39,7 +39,7 @@ public:
 
     quint32 getAverageSize() const { return _averageSize; }
 
-    QGeoMapType::MapStyle getMapStyle() { return _mapType; }
+    QGeoMapType::MapStyle getMapStyle() { return _mapStyle; }
 
     virtual int long2tileX(const double lon, const int z) const;
 
@@ -64,6 +64,6 @@ protected:
     quint32     _averageSize;
     QByteArray  _userAgent;
     QString     _language;
-    QGeoMapType::MapStyle _mapType;
+    QGeoMapType::MapStyle _mapStyle;
 
 };

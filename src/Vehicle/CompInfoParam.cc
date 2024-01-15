@@ -17,10 +17,10 @@
 #include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QtCore5Compat/QRegExp>
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 
-const char* CompInfoParam::_jsonScopeKey                = "scope";
 const char* CompInfoParam::_jsonParametersKey           = "parameters";
 const char* CompInfoParam::_cachedMetaDataFilePrefix    = "ParameterFactMetaData";
 const char* CompInfoParam::_indexedNameTag              = "{n}";
@@ -31,9 +31,9 @@ CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
 
 }
 
-void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& translationJsonFileName)
+void CompInfoParam::setJson(const QString& metadataJsonFileName)
 {
-    qCDebug(CompInfoParamLog) << "setJson: metadataJsonFileName:translationJsonFileName" << metadataJsonFileName << translationJsonFileName;
+    qCDebug(CompInfoParamLog) << "setJson: metadataJsonFileName" << metadataJsonFileName;
 
     if (metadataJsonFileName.isEmpty()) {
         // This will fall back to using the old FirmwarePlugin mechanism for parameter meta data.
@@ -54,7 +54,6 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& 
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
-        { _jsonScopeKey,                QJsonValue::String, true },
         { _jsonParametersKey,           QJsonValue::Array,  true },
     };
     if (!JsonHelper::validateKeys(jsonObj, keyInfoList, errorString)) {

@@ -8,15 +8,15 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtLocation
+import QtPositioning
 
-import QGroundControl               1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl.Controls      1.0
+import QGroundControl
+import QGroundControl.FlightMap
+import QGroundControl.Controls
 
 /// The MissionItemView control is used to add Mission Item Indicators to a FlightMap.
 MapItemView {

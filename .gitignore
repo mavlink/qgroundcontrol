@@ -1,3 +1,7 @@
+.idea/
+.vscode/
+cmake-build-*/
+out/
 libs/lib/Frameworks/GStreamer.framework
 *_qmlcache.qrc
 *.swp
@@ -54,7 +58,6 @@ thirdParty/qserialport/lib/
 libs/thirdParty/libxbee/lib/
 GeneratedFiles/
 gstreamer-1.0-android*
-src/Airmap/Airmap_api_key.h
 localization/qgroundcontrol/
 
 *.autosave
@@ -84,4 +87,7 @@ Qt*-linux*.tar.*
 
 .vs/
 
-libs/airmapd/include/boost
+# vitepress - user guide
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/

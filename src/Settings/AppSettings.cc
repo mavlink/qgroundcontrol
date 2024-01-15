@@ -12,6 +12,10 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
+#ifdef __android__
+#include "AndroidInterface.h"
+#endif
+
 #include <QQmlEngine>
 #include <QtQml>
 #include <QStandardPaths>
@@ -34,6 +38,21 @@ const char* AppSettings::logDirectory =             QT_TRANSLATE_NOOP("AppSettin
 const char* AppSettings::videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
 const char* AppSettings::photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
 const char* AppSettings::crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
+const char* AppSettings::customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
+
+// Release languages are 90%+ complete
+QList<int> AppSettings::_rgReleaseLanguages = {
+    QLocale::AnyLanguage,  // System
+    QLocale::Chinese,
+    QLocale::English,
+    QLocale::Korean,
+    QLocale::Azerbaijani,
+};
+// Partial languages are 40%+ complete
+QList<int> AppSettings::_rgPartialLanguages = {
+    QLocale::German,
+    QLocale::Turkish,
+};
 
 DECLARE_SETTINGGROUP(App, "")
 {
@@ -80,10 +99,26 @@ DECLARE_SETTINGGROUP(App, "")
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.absolutePath());
     #else
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
-        savePathFact->setRawValue(rootDir.filePath(appName));
+        QString rootDirPath;
+        #ifdef __android__
+        if (androidSaveToSDCard()->rawValue().toBool()) {
+                rootDirPath = AndroidInterface::getSDCardPath();
+            qDebug() << "AndroidInterface::getSDCardPath();" << rootDirPath;
+                if (rootDirPath.isEmpty() || !QDir(rootDirPath).exists()) {
+                    rootDirPath.clear();
+                    qgcApp()->showAppMessage(tr("Save to SD card specified for application data. But no SD card present. Using internal storage."));
+                } else if (!QFileInfo(rootDirPath).isWritable()) {
+                    rootDirPath.clear();
+                    qgcApp()->showAppMessage(tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
+                }
+            }
+        #endif
+        if (rootDirPath.isEmpty()) {
+            rootDirPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        }
+        savePathFact->setRawValue(QDir(rootDirPath).filePath(appName));
     #endif
-        savePathFact->setVisible(false);
+    savePathFact->setVisible(false);
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.filePath(appName));
@@ -94,9 +129,6 @@ DECLARE_SETTINGGROUP(App, "")
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
 
     _checkSavePathDirectories();
-    //-- Keep track of language changes
-    SettingsFact* languageFact = qobject_cast<SettingsFact*>(language());
-    connect(languageFact, &Fact::rawValueChanged, this, &AppSettings::_languageChanged);
 }
 
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingFirmwareClass)
@@ -116,26 +148,27 @@ DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
+DECLARE_SETTINGSFACT(AppSettings, androidSaveToSDCard)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)
 DECLARE_SETTINGSFACT(AppSettings, mapboxToken)
 DECLARE_SETTINGSFACT(AppSettings, mapboxAccount)
 DECLARE_SETTINGSFACT(AppSettings, mapboxStyle)
 DECLARE_SETTINGSFACT(AppSettings, esriToken)
+DECLARE_SETTINGSFACT(AppSettings, customURL)
+DECLARE_SETTINGSFACT(AppSettings, vworldToken)
 DECLARE_SETTINGSFACT(AppSettings, defaultFirmwareType)
 DECLARE_SETTINGSFACT(AppSettings, gstDebugLevel)
 DECLARE_SETTINGSFACT(AppSettings, followTarget)
 DECLARE_SETTINGSFACT(AppSettings, apmStartMavlinkStreams)
-DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
-DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
-DECLARE_SETTINGSFACT(AppSettings, language)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, usePairing)
 DECLARE_SETTINGSFACT(AppSettings, saveCsvTelemetry)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlink)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkHostName)
+DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkAPMSupportHostName)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -146,7 +179,47 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
     return _indoorPaletteFact;
 }
 
-void AppSettings::_languageChanged()
+DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
+{
+    if (!_qLocaleLanguageFact) {
+        _qLocaleLanguageFact = _createSettingsFact(qLocaleLanguageName);
+        connect(_qLocaleLanguageFact, &Fact::rawValueChanged, this, &AppSettings::_qLocaleLanguageChanged);
+
+        FactMetaData*   metaData            = _qLocaleLanguageFact->metaData();
+        QStringList     rgOriginalStrings   = metaData->enumStrings();
+        QVariantList    rgOriginalValues    = metaData->enumValues();
+        QStringList     rgUpdatedStrings;
+        QVariantList    rgUpdatedValues;
+
+        // All builds contains released and partial languages
+        for (int i=0; i<rgOriginalStrings.count(); i++) {
+            if (_rgReleaseLanguages.contains(rgOriginalValues[i].toInt())) {
+                rgUpdatedStrings.append(rgOriginalStrings[i]);
+                rgUpdatedValues.append(rgOriginalValues[i]);
+            }
+        }
+        for (int i=0; i<rgOriginalStrings.count(); i++) {
+            if (_rgPartialLanguages.contains(rgOriginalValues[i].toInt())) {
+                rgUpdatedStrings.append(rgOriginalStrings[i] + AppSettings::tr(" (Partial)"));
+                rgUpdatedValues.append(rgOriginalValues[i].toInt());
+            }
+        }
+#ifdef DAILY_BUILD
+        // Only daily builds include full set
+        for (int i=0; i<rgOriginalStrings.count(); i++) {
+            int languageId = rgOriginalValues[i].toInt();
+            if (!_rgReleaseLanguages.contains(languageId)  || !_rgPartialLanguages.contains(languageId)) {
+                rgUpdatedStrings.append(rgOriginalStrings[i] + AppSettings::tr(" (Test only)"));
+                rgUpdatedValues.append(rgOriginalValues[i].toInt());
+            }
+        }
+#endif
+        metaData->setEnumInfo(rgUpdatedStrings, rgUpdatedValues);
+    }
+    return _qLocaleLanguageFact;
+}
+
+void AppSettings::_qLocaleLanguageChanged()
 {
     qgcApp()->setLanguage();
 }
@@ -165,6 +238,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(videoDirectory);
         savePathDir.mkdir(photoDirectory);
         savePathDir.mkdir(crashDirectory);
+        savePathDir.mkdir(customActionsDirectory);
     }
 }
 
@@ -243,15 +317,21 @@ QString AppSettings::crashSavePath(void)
     return QString();
 }
 
+QString AppSettings::customActionsSavePath(void)
+{
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(customActionsDirectory);
+    }
+    return QString();
+}
+
 QList<int> AppSettings::firstRunPromptsIdsVariantToList(const QVariant& firstRunPromptIds)
 {
     QList<int> rgIds;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QStringList strIdList = firstRunPromptIds.toString().split(",", QString::SkipEmptyParts);
-#else
     QStringList strIdList = firstRunPromptIds.toString().split(",", Qt::SkipEmptyParts);
-#endif
 
     for (const QString& strId: strIdList) {
         rgIds.append(strId.toInt());
@@ -277,10 +357,35 @@ void AppSettings::firstRunPromptIdsMarkIdAsShown(int id)
     }
 }
 
-int AppSettings::_languageID(void)
+/// Hack to provide language settings as early in the boot process as possible. Must be known
+/// prior to loading any json files.
+QLocale::Language AppSettings::_qLocaleLanguageID(void)
 {
-    // Hack to provide language settings as early in the boot process as possible. Must be know
-    // prior to loading any json files.
     QSettings settings;
-    return settings.value("language", 0).toInt();
+
+    if (settings.childKeys().contains("language")) {
+        // We need to convert to the new settings key/values
+#if 0
+        // Old vales
+        "enumStrings":      "System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本語 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish),Azerbaijani (Azerbaijani)",
+        "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+#endif
+        static QList<int> rgNewValues = { 0,20,25,30,31,36,37,42,43,48,58,59,66,85,90,91,96,111,114,125,15 };
+
+        int oldValue = settings.value("language").toInt();
+        settings.setValue(qLocaleLanguageName, rgNewValues[oldValue]);
+        settings.remove("language");
+    }
+
+    QLocale::Language id = settings.value(qLocaleLanguageName, QLocale::AnyLanguage).value<QLocale::Language>();
+    if (id == QLocale::AnyLanguage) {
+#ifndef DAILY_BUILD
+        // Stable builds only support released and partial languages
+        if (!_rgReleaseLanguages.contains(id) && _rgPartialLanguages.contains(id)) {
+            id = QLocale::English;
+        }
+#endif
+    }
+
+    return id;
 }

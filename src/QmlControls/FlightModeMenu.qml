@@ -7,29 +7,30 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 // Label control whichs pop up a flight mode change menu when clicked
 QGCLabel {
-    id:     flightModeMenuLabel
+    id:     _root
     text:   currentVehicle ? currentVehicle.flightMode : qsTr("N/A", "No data to display")
 
     property var    currentVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property real   mouseAreaLeftMargin:    0
 
-    QGCMenu {
+    Menu {
         id: flightModesMenu
     }
 
     Component {
         id: flightModeMenuItemComponent
 
-        QGCMenuItem {
+        MenuItem {
+            enabled: true
             onTriggered: currentVehicle.flightMode = text
         }
     }
@@ -53,11 +54,11 @@ QGCLabel {
         }
     }
 
-    Component.onCompleted: flightModeMenuLabel.updateFlightModesMenu()
+    Component.onCompleted: _root.updateFlightModesMenu()
 
     Connections {
         target:                 QGroundControl.multiVehicleManager
-        onActiveVehicleChanged: flightModeMenuLabel.updateFlightModesMenu()
+        function onActiveVehicleChanged(activeVehicle) { _root.updateFlightModesMenu() }
     }
 
     MouseArea {
@@ -65,6 +66,6 @@ QGCLabel {
         visible:            currentVehicle && currentVehicle.flightModeSetAvailable
         anchors.leftMargin: mouseAreaLeftMargin
         anchors.fill:       parent
-        onClicked:          flightModesMenu.popup()
+        onClicked:          flightModesMenu.popup((_root.width - flightModesMenu.width) / 2, _root.height)
     }
 }

@@ -7,31 +7,26 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
-import QtQuick.Dialogs  1.2
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
+import QtQuick.Dialogs
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FlightMap             1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Vehicle               1.0
-import QGroundControl.QGCPositionManager    1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.Controls
+import QGroundControl.FlightMap
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Vehicle
+import QGroundControl.QGCPositionManager
 
 Map {
     id: _map
 
-    //-- Qt 5.9 has rotation gesture enabled by default. Here we limit the possible gestures.
-    gesture.acceptedGestures:   MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
-    gesture.flickDeceleration:  3000
-    plugin:                     Plugin { name: "QGroundControl" }
-
-    // https://bugreports.qt.io/browse/QTBUG-82185
-    opacity:                    0.99
+    plugin:     Plugin { name: "QGroundControl" }
+    opacity:    0.99 // https://bugreports.qt.io/browse/QTBUG-82185
 
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
@@ -66,12 +61,13 @@ Map {
     }
 
     function centerToSpecifiedLocation() {
-        mainWindow.showComponentDialog(specifyMapPositionDialog, qsTr("Specify Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+        specifyMapPositionDialog.createObject(mainWindow).open()
     }
 
     Component {
         id: specifyMapPositionDialog
         EditPositionDialog {
+            title:                  qsTr("Specify Position")
             coordinate:             center
             onCoordinateChanged:    center = coordinate
         }
@@ -102,19 +98,74 @@ Map {
 
     on_ActiveVehicleCoordinateChanged: _possiblyCenterToVehiclePosition()
 
-    Component.onCompleted: {
-        updateActiveMapType()
-        _possiblyCenterToVehiclePosition()
+    onMapReadyChanged: {
+        if (_map.mapReady) {
+            updateActiveMapType()
+            _possiblyCenterToVehiclePosition()
+        }
     }
 
     Connections {
         target:             QGroundControl.settingsManager.flightMapSettings.mapType
-        onRawValueChanged:  updateActiveMapType()
+        function onRawValueChanged() { updateActiveMapType() }
     }
 
     Connections {
         target:             QGroundControl.settingsManager.flightMapSettings.mapProvider
-        onRawValueChanged:  updateActiveMapType()
+        function onRawValueChanged() { updateActiveMapType() }
+    }
+
+    signal mapPanStart
+    signal mapPanStop
+    signal mapClicked(var mouse)
+    
+    MouseArea {
+        anchors.fill:       parent
+        acceptedButtons:    Qt.LeftButton
+
+        property real startMouseX: 0
+        property real startMouseY: 0
+        property real lastMouseX: 0
+        property real lastMouseY: 0
+
+        onClicked: (mouse) => {
+            var deltaX = Math.abs(startMouseX - lastMouseX)
+            var deltaY = Math.abs(startMouseY - lastMouseY)
+            if (deltaX < 5 && deltaY < 5) {
+                mapClicked(mouse)
+            }
+        }
+
+        onPressed: (mouse) => {
+            lastMouseX = Math.round(mouse.x)
+            lastMouseY = Math.round(mouse.y)
+            startMouseX = lastMouseX
+            startMouseY = lastMouseY
+            mapPanStart()
+        }
+
+        onPositionChanged: (mouse) => { 
+            var newMouseX = Math.round(mouse.x)
+            var newMouseY = Math.round(mouse.y)
+            _map.pan(lastMouseX - newMouseX, lastMouseY - newMouseY)     
+            lastMouseX = newMouseX
+            lastMouseY = newMouseY
+        }
+
+        onReleased: {
+            mapPanStop()
+        }
+    }
+
+    WheelHandler {
+        // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
+        // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
+        // and we don't yet distinguish mice and trackpads on Wayland either
+        acceptedDevices: Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland"
+                         ? PointerDevice.Mouse | PointerDevice.TouchPad
+                         : PointerDevice.Mouse
+        rotationScale: 1/120
+        property: "zoomLevel"
     }
 
     /// Ground Station location

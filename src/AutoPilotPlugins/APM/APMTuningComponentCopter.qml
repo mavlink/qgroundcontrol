@@ -8,15 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Layouts      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 SetupPage {
     id:             tuningPage
@@ -27,6 +28,7 @@ SetupPage {
 
         Column {
             width: availableWidth
+            height: availableHeight
 
             FactPanelController { id: controller; }
 
@@ -154,12 +156,12 @@ SetupPage {
                                 text: qsTr("Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 rollPitch
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0.08
-                                maximumValue:       0.4
+                                from:       0.08
+                                to:       0.4
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
 
@@ -187,12 +189,12 @@ SetupPage {
                                 text: qsTr("Slide to the right to climb more aggressively or slide to the left to climb more gently")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 climb
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0.3
-                                maximumValue:       1.0
+                                from:       0.3
+                                to:       1.0
                                 stepSize:           0.02
                                 tickmarksEnabled:   true
                                 value:              _rateClimbP.value
@@ -220,12 +222,12 @@ SetupPage {
                                 text: qsTr("Slide to the left for soft control, slide to the right for crisp control")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 atcInputTC
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       _atcInputTC.min
-                                maximumValue:       _atcInputTC.max
+                                from:       _atcInputTC.min
+                                to:       _atcInputTC.max
                                 stepSize:           _atcInputTC.increment
                                 tickmarksEnabled:   true
 
@@ -250,11 +252,11 @@ SetupPage {
                                 text: qsTr("Adjust the amount the motors spin to indicate armed")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0
-                                maximumValue:       Math.max(0.3, _motSpinArm.rawValue)
+                                from:       0
+                                to:       Math.max(0.3, _motSpinArm.rawValue)
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
                                 value:              _motSpinArm.rawValue
@@ -286,11 +288,11 @@ SetupPage {
                                 visible:    _motSpinMin.rawValue < _motSpinArm.rawValue
                             }
 
-                            Slider {
+                            QGCSlider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0
-                                maximumValue:       Math.max(0.3, _motSpinMin.rawValue)
+                                from:       0
+                                to:       Math.max(0.3, _motSpinMin.rawValue)
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
                                 value:              _motSpinMin.rawValue
@@ -459,19 +461,128 @@ SetupPage {
                 PIDTuning {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
-                    tuneList:            [ qsTr("Roll"), qsTr("Pitch"), qsTr("Yaw") ]
-                    params:              [
-                        [ controller.getParameterFact(-1, "ATC_ANG_RLL_P"),
-                         controller.getParameterFact(-1, "ATC_RAT_RLL_P"),
-                         controller.getParameterFact(-1, "ATC_RAT_RLL_I"),
-                         controller.getParameterFact(-1, "ATC_RAT_RLL_D") ],
-                        [ controller.getParameterFact(-1, "ATC_ANG_PIT_P"),
-                         controller.getParameterFact(-1, "ATC_RAT_PIT_P"),
-                         controller.getParameterFact(-1, "ATC_RAT_PIT_I"),
-                         controller.getParameterFact(-1, "ATC_RAT_PIT_D") ],
-                        [ controller.getParameterFact(-1, "ATC_ANG_YAW_P"),
-                         controller.getParameterFact(-1, "ATC_RAT_YAW_P"),
-                         controller.getParameterFact(-1, "ATC_RAT_YAW_I") ] ]
+                    height: availableHeight
+
+                    property var roll: QtObject {
+                        property string name: qsTr("Roll")
+                        property var plot: [
+                            { name: "Response", value: globals.activeVehicle.rollRate.value },
+                            { name: "Setpoint", value: globals.activeVehicle.setpoint.rollRate.value }
+                        ]
+                        property var params: ListModel {
+                            ListElement {
+                                title:          qsTr("Roll axis angle controller P gain")
+                                param:          "ATC_ANG_RLL_P"
+                                description:    ""
+                                min:            3
+                                max:            12
+                                step:           1
+                            }
+                            ListElement {
+                                title:          qsTr("Roll axis rate controller P gain")
+                                param:          "ATC_RAT_RLL_P"
+                                description:    ""
+                                min:            0.001
+                                max:            0.5
+                                step:           0.025
+                            }
+                            ListElement {
+                                title:          qsTr("Roll axis rate controller I gain")
+                                param:          "ATC_RAT_RLL_I"
+                                description:    ""
+                                min:            0.01
+                                max:            2
+                                step:           0.05
+                            }
+                            ListElement {
+                                title:          qsTr("Roll axis rate controller D gain")
+                                param:          "ATC_RAT_RLL_D"
+                                description:    ""
+                                min:            0.0
+                                max:            0.05
+                                step:           0.001
+                            }
+                        }
+                    }
+                    property var pitch: QtObject {
+                        property string name: qsTr("Pitch")
+                        property var plot: [
+                            { name: "Response", value: globals.activeVehicle.pitchRate.value },
+                            { name: "Setpoint", value: globals.activeVehicle.setpoint.pitchRate.value }
+                        ]
+                        property var params: ListModel {
+                            ListElement {
+                                title:          qsTr("Pitch axis angle controller P gain")
+                                param:          "ATC_ANG_PIT_P"
+                                description:    ""
+                                min:            3
+                                max:            12
+                                step:           1
+                            }
+                            ListElement {
+                                title:          qsTr("Pitch axis rate controller P gain")
+                                param:          "ATC_RAT_PIT_P"
+                                description:    ""
+                                min:            0.001
+                                max:            0.5
+                                step:           0.025
+                            }
+                            ListElement {
+                                title:          qsTr("Pitch axis rate controller I gain")
+                                param:          "ATC_RAT_PIT_I"
+                                description:    ""
+                                min:            0.01
+                                max:            2
+                                step:           0.05
+                            }
+                            ListElement {
+                                title:          qsTr("Pitch axis rate controller D gain")
+                                param:          "ATC_RAT_PIT_D"
+                                description:    ""
+                                min:            0.0
+                                max:            0.05
+                                step:           0.001
+                            }
+                        }
+                    }
+                    property var yaw: QtObject {
+                        property string name: qsTr("Yaw")
+                        property var plot: [
+                            { name: "Response", value: globals.activeVehicle.yawRate.value },
+                            { name: "Setpoint", value: globals.activeVehicle.setpoint.yawRate.value }
+                        ]
+                        property var params: ListModel {
+                            ListElement {
+                                title:          qsTr("Yaw axis angle controller P gain")
+                                param:          "ATC_ANG_YAW_P"
+                                description:    ""
+                                min:            3
+                                max:            12
+                                step:           1
+                            }
+                            ListElement {
+                                title:          qsTr("Yaw axis rate controller P gain")
+                                param:          "ATC_RAT_YAW_P"
+                                description:    ""
+                                min:            0.1
+                                max:            2.5
+                                step:           0.05
+                            }
+                            ListElement {
+                                title:          qsTr("Yaw axis rate controller I gain")
+                                param:          "ATC_RAT_YAW_I"
+                                description:    ""
+                                min:            0.01
+                                max:            1
+                                step:           0.05
+                            }
+                        }
+                    }
+                    title: "Rate"
+                    tuningMode: Vehicle.ModeDisabled
+                    unit: "deg/s"
+                    axis: [ roll, pitch, yaw ]
+                    chartDisplaySec: 3
                 }
             } // Component - Advanced Page
         } // Column

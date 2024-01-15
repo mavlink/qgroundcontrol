@@ -1,4 +1,4 @@
-import QtQuick 2.3
+import QtQuick
 
 Rectangle {
     id:                    horizontalIndicator
@@ -22,9 +22,9 @@ Rectangle {
 
     Connections {
         target:                    horizontalIndicator.parent
-        onMovementStarted:         horizontalIndicator.opacity = 1.0
-        onMovementEnded:           animateOpacity.restart()
-        onContentHeightChanged:    animateOpacity.restart()
+        function onMovementStarted()         { horizontalIndicator.opacity = 1.0 }
+        function onMovementEnded()           { animateOpacity.restart() }
+        function onContentHeightChanged()  { animateOpacity.restart() }
     }
 
     NumberAnimation {

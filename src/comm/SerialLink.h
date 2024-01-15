@@ -52,12 +52,12 @@ public:
     Q_PROPERTY(QString  portDisplayName READ portDisplayName                                NOTIFY portDisplayNameChanged)
     Q_PROPERTY(bool     usbDirect       READ usbDirect          WRITE setUsbDirect          NOTIFY usbDirectChanged)        ///< true: direct usb connection to board
 
-    int  baud()         { return _baud; }
-    int  dataBits()     { return _dataBits; }
-    int  flowControl()  { return _flowControl; }    ///< QSerialPort Enums
-    int  stopBits()     { return _stopBits; }
-    int  parity()       { return _parity; }         ///< QSerialPort Enums
-    bool usbDirect()    { return _usbDirect; }
+    int  baud() const        { return _baud; }
+    int  dataBits() const    { return _dataBits; }
+    int  flowControl() const { return _flowControl; }    ///< QSerialPort Enums
+    int  stopBits() const    { return _stopBits; }
+    int  parity() const      { return _parity; }         ///< QSerialPort Enums
+    bool usbDirect() const   { return _usbDirect; }
 
     const QString portName          () { return _portName; }
     const QString portDisplayName   () { return _portDisplayName; }
@@ -109,10 +109,10 @@ class SerialLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class SerialConfiguration;
-    friend class LinkManager;
-
 public:
+    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
+    virtual ~SerialLink();
+
     // LinkInterface overrides
     bool isConnected(void) const override;
     void disconnect (void) override;
@@ -130,9 +130,6 @@ private slots:
     void _readBytes     (void);
 
 private:
-    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
-    ~SerialLink();
 
     // LinkInterface overrides
     bool _connect(void) override;

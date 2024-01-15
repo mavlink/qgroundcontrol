@@ -25,11 +25,12 @@ class SurveyComplexItem : public TransectStyleComplexItem
 public:
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
     /// @param kmlOrShpFile Polygon comes from this file, empty for default polygon
-    SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile, QObject* parent);
+    SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile);
 
-    Q_PROPERTY(Fact* gridAngle              READ gridAngle              CONSTANT)
-    Q_PROPERTY(Fact* flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
-    Q_PROPERTY(Fact* splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
+    Q_PROPERTY(Fact*            gridAngle              READ gridAngle              CONSTANT)
+    Q_PROPERTY(Fact*            flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
+    Q_PROPERTY(Fact*            splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
+    Q_PROPERTY(QGeoCoordinate   centerCoordinate       READ centerCoordinate       WRITE setCenterCoordinate)
 
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
@@ -38,12 +39,15 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-    QString patternName         (void) const final { return name; }
-    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    QString mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
-    QString presetsSettingsGroup(void) { return settingsGroup; }
-    void    savePreset          (const QString& name);
-    void    loadPreset          (const QString& name);
+    QString         patternName         (void) const final { return name; }
+    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    QString         mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
+    QString         presetsSettingsGroup(void) { return settingsGroup; }
+    void            savePreset          (const QString& name);
+    void            loadPreset          (const QString& name);
+    bool            isSurveyItem        (void) const final { return true; }
+    QGeoCoordinate  centerCoordinate    (void) const { return _surveyAreaPolygon.center(); }
+    void            setCenterCoordinate (const QGeoCoordinate& coordinate) { _surveyAreaPolygon.setCenter(coordinate); }
 
     // Overrides from TransectStyleComplexItem
     void    save                (QJsonArray&  planItems) final;
@@ -118,17 +122,24 @@ private:
     bool _hoverAndCaptureEnabled(void) const;
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets);
-    void _saveWorker(QJsonObject& complexObject);
+    void _saveCommon(QJsonObject& complexObject);
     void _rebuildTransectsPhase1Worker(bool refly);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
-    void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
     /// Adds to the _transects array from one polygon
     void _rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
+
+#if 0
+    // Splitting polygons is not supported since this code would get stuck in a infinite loop
+    // Code is left here in case someone wants to try to resurrect it
+
+    void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
+
     // Decompose polygon into list of convex sub polygons
     void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons);
     // return true if vertex a can see vertex b
     bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* vertexA, const QPointF* vertexB);
-    bool _VertexIsReflex(const QPolygonF& polygon, const QPointF* vertex);
+    bool _VertexIsReflex(const QPolygonF& polygon, QList<QPointF>::const_iterator& vertexIter);
+#endif
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

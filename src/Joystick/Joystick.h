@@ -14,13 +14,16 @@
 
 #include <QObject>
 #include <QThread>
+#include <atomic>
 
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
+#include "JoystickMavCommand.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
+// JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
+Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
 
 /// Action assigned to button
 class AssignedButtonAction : public QObject {
@@ -40,7 +43,7 @@ public:
     Q_PROPERTY(QString  action      READ action     CONSTANT)
     Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
     QString action      () { return _action; }
-    bool    canRepeat   () { return _repeat; }
+    bool    canRepeat   () const{ return _repeat; }
 private:
     QString _action;
     bool    _repeat = false;
@@ -53,7 +56,7 @@ class Joystick : public QThread
 public:
     Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager);
 
-    ~Joystick();
+    virtual ~Joystick();
 
     typedef struct Calibration_t {
         int     min;
@@ -99,7 +102,6 @@ public:
     Q_PROPERTY(QStringList assignableActionTitles       READ assignableActionTitles     NOTIFY      assignableActionsChanged)
     Q_PROPERTY(QString  disabledActionName              READ disabledActionName         CONSTANT)
 
-    Q_PROPERTY(bool     gimbalEnabled           READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
     Q_PROPERTY(int      throttleMode            READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
     Q_PROPERTY(float    axisFrequencyHz         READ axisFrequencyHz        WRITE setAxisFrequency      NOTIFY axisFrequencyHzChanged)
     Q_PROPERTY(float    minAxisFrequencyHz      MEMBER _minAxisFrequencyHz                              CONSTANT)
@@ -120,16 +122,13 @@ public:
     // Property accessors
 
     QString     name                () { return _name; }
-    int         totalButtonCount    () { return _totalButtonCount; }
-    int         axisCount           () { return _axisCount; }
-    bool        gimbalEnabled       () { return _gimbalEnabled; }
+    int         totalButtonCount    () const{ return _totalButtonCount; }
+    int         axisCount           () const{ return _axisCount; }
     QStringList buttonActions       ();
 
     QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
     QStringList assignableActionTitles      () { return _availableActionTitles; }
     QString     disabledActionName          () { return _buttonActionNone; }
-
-    void setGimbalEnabled           (bool set);
 
     /// Start the polling thread which will in turn emit joystick signals
     void startPolling(Vehicle* vehicle);
@@ -141,6 +140,7 @@ public:
     void setFunctionAxis(AxisFunction_t function, int axis);
     int getFunctionAxis(AxisFunction_t function);
 
+    void stop();
 
 /*
     // Joystick index used by sdl library
@@ -153,19 +153,19 @@ public:
     int   throttleMode      ();
     void  setThrottleMode   (int mode);
 
-    bool  negativeThrust    ();
+    bool  negativeThrust    () const;
     void  setNegativeThrust (bool allowNegative);
 
-    float exponential       ();
+    float exponential       () const;
     void  setExponential    (float expo);
 
-    bool  accumulator       ();
+    bool  accumulator       () const;
     void  setAccumulator    (bool accu);
 
-    bool  deadband          ();
+    bool  deadband          () const;
     void  setDeadband       (bool accu);
 
-    bool  circleCorrection  ();
+    bool  circleCorrection  () const;
     void  setCircleCorrection(bool circleCorrection);
 
     void  setTXMode         (int mode);
@@ -175,12 +175,12 @@ public:
     void  setCalibrationMode (bool calibrating);
 
     /// Get joystick message rate (in Hz)
-    float axisFrequencyHz     () { return _axisFrequencyHz; }
+    float axisFrequencyHz     () const{ return _axisFrequencyHz; }
     /// Set joystick message rate (in Hz)
     void  setAxisFrequency  (float val);
 
     /// Get joystick button repeat rate (in Hz)
-    float buttonFrequencyHz   () { return _buttonFrequencyHz; }
+    float buttonFrequencyHz   () const{ return _buttonFrequencyHz; }
     /// Set joystick button repeat rate (in Hz)
     void  setButtonFrequency(float val);
 
@@ -198,11 +198,9 @@ signals:
     void enabledChanged             (bool enabled);
     void circleCorrectionChanged    (bool circleCorrection);
     void axisValues                 (float roll, float pitch, float yaw, float throttle);
-    void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
 
-    void gimbalEnabledChanged       ();
-    void axisFrequencyHzChanged       ();
-    void buttonFrequencyHzChanged     ();
+    void axisFrequencyHzChanged     ();
+    void buttonFrequencyHzChanged   ();
     void startContinuousZoom        (int direction);
     void stopContinuousZoom         ();
     void stepZoom                   (int direction);
@@ -220,6 +218,12 @@ signals:
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
     void emergencyStop              ();
+    /**
+     * @brief Send MAV_CMD_DO_GRIPPER command to the vehicle
+     * 
+     * @param gripperAction (Open / Close) Gripper action to command
+     */
+    void gripperAction              (GRIPPER_ACTIONS gripperAction);
 
 protected:
     void    _setDefaultCalibration  ();
@@ -229,8 +233,8 @@ protected:
     float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
     void    _executeButtonAction    (const QString& action, bool buttonDown);
     int     _findAssignableButtonAction(const QString& action);
-    bool    _validAxis              (int axis);
-    bool    _validButton            (int button);
+    bool    _validAxis              (int axis) const;
+    bool    _validButton            (int button) const;
     void    _handleAxis             ();
     void    _handleButtons          ();
     void    _buildActionList        (Vehicle* activeVehicle);
@@ -269,7 +273,7 @@ protected:
 
     uint8_t*_rgButtonValues         = nullptr;
 
-    bool    _exitThread             = false;    ///< true: signal thread to exit
+    std::atomic<bool> _exitThread{false};    ///< true: signal thread to exit
     bool    _calibrationMode        = false;
     int*    _rgAxisValues           = nullptr;
     Calibration_t* _rgCalibration   = nullptr;
@@ -282,7 +286,6 @@ protected:
     float   _axisFrequencyHz        = _defaultAxisFrequencyHz;
     float   _buttonFrequencyHz      = _defaultButtonFrequencyHz;
     Vehicle* _activeVehicle         = nullptr;
-    bool    _gimbalEnabled          = false;
 
     bool    _pollingStartedForCalibration = false;
 
@@ -303,6 +306,8 @@ protected:
     QStringList                     _availableActionTitles;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
+    QList<JoystickMavCommand> _customMavCommands;
+
     static const float  _minAxisFrequencyHz;
     static const float  _maxAxisFrequencyHz;
     static const float  _minButtonFrequencyHz;
@@ -316,6 +321,7 @@ private:
     static const char* _buttonActionNameKey;
     static const char* _buttonActionRepeatKey;
     static const char* _throttleModeSettingsKey;
+    static const char* _negativeThrustSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
@@ -328,7 +334,6 @@ private:
     static const char* _roverTXModeSettingsKey;
     static const char* _vtolTXModeSettingsKey;
     static const char* _submarineTXModeSettingsKey;
-    static const char* _gimbalSettingsKey;
 
     static const char* _buttonActionNone;
     static const char* _buttonActionArm;
@@ -354,7 +359,12 @@ private:
     static const char* _buttonActionGimbalRight;
     static const char* _buttonActionGimbalCenter;
     static const char* _buttonActionEmergencyStop;
+    static const char* _buttonActionGripperGrab;
+    static const char* _buttonActionGripperRelease;
+
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
+    void _vehicleCountChanged(int count);
+    void _flightModesChanged();
 };

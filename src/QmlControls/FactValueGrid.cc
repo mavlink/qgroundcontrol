@@ -136,13 +136,8 @@ void FactValueGrid::_saveValueData(QSettings& settings, InstrumentValueData* val
         break;
     }
 
-    if (value->fact()) {
-        settings.setValue(_factGroupNameKey,    value->factGroupName());
-        settings.setValue(_factNameKey,         value->factName());
-    } else {
-        settings.setValue(_factGroupNameKey,    "");
-        settings.setValue(_factNameKey,         "");
-    }
+    settings.setValue(_factGroupNameKey,    value->factGroupName());
+    settings.setValue(_factNameKey,         value->factName());
 }
 
 void FactValueGrid::_loadValueData(QSettings& settings, InstrumentValueData* value)
@@ -240,6 +235,7 @@ void FactValueGrid::deleteLastColumn(void)
 {
     if (_columns->count() > 1) {
         _columns->removeAt(_columns->count() - 1)->deleteLater();
+        _saveSettings();
     }
 }
 

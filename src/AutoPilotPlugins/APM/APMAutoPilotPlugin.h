@@ -27,6 +27,7 @@ class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
 class APMHeliComponent;
+class APMRemoteSupportComponent;
 class APMFollowComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
@@ -57,6 +58,7 @@ protected:
     APMTuningComponent*         _tuningComponent;
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
+    APMRemoteSupportComponent*  _apmRemoteSupportComponent;
 #if 0
     // Follow me not ready for Stable
     APMFollowComponent*         _followComponent;

@@ -28,6 +28,7 @@
 class Vehicle;
 class QGCCameraControl;
 class QGCCameraManager;
+class Autotune;
 
 /// This is the base class for Firmware specific plugins
 ///
@@ -41,6 +42,8 @@ class FirmwarePlugin : public QObject
     Q_OBJECT
 
 public:
+    FirmwarePlugin ();
+
     /// Set of optional capabilites which firmware may support
     typedef enum {
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
@@ -85,10 +88,6 @@ public:
     /// list available from the firmware. Call will be made again if advanced mode changes.
     virtual QStringList flightModes(Vehicle* /*vehicle*/) { return QStringList(); }
 
-    /// Returns the list of additional flight modes to add to the list for joystick button actions.
-    /// Call will be made again if advanced mode changes.
-    virtual QStringList extraJoystickFlightModes(Vehicle* /*vehicle*/) { return QStringList(); }
-
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
     ///     @param custom_mode Custom mode from mavlink HEARTBEAT message
@@ -98,6 +97,9 @@ public:
     ///     @param[out] base_mode Base mode for SET_MODE mavlink message
     ///     @param[out] custom_mode Custom mode for SET_MODE mavlink message
     virtual bool setFlightMode(const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode);
+
+    /// returns true if this flight stack supports MAV_CMD_DO_SET_MODE
+    virtual bool MAV_CMD_DO_SET_MODE_is_supported() const { return false; }
 
     /// Returns The flight mode which indicates the vehicle is paused
     virtual QString pauseFlightMode(void) const { return QString(); }
@@ -147,6 +149,24 @@ public:
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     virtual double minimumTakeoffAltitude(Vehicle* /*vehicle*/) { return 10; }
 
+    /// @return The maximum horizontal groundspeed for a multirotor.
+    virtual double maximumHorizontalSpeedMultirotor(Vehicle* /*vehicle*/) { return NAN; }
+
+    /// @return The maximum equivalent airspeed setpoint.
+    virtual double maximumEquivalentAirspeed(Vehicle* /*vehicle*/) { return NAN; }
+
+    /// @return The minimum equivalent airspeed setpoint
+    virtual double minimumEquivalentAirspeed(Vehicle* /*vehicle*/) { return NAN; }
+
+    /// @return Return true if the GCS has enabled Grip_enable option
+    virtual bool hasGripper(const Vehicle* /*vehicle*/) const { return false; } 
+    
+    /// @return Return true if we have received the ground speed limits for the mulirotor.
+    virtual bool mulirotorSpeedLimitsAvailable(Vehicle* /*vehicle*/) { return false; }
+
+    /// @return Return true if we have received the airspeed limits for fixed wing.
+    virtual bool fixedWingAirSpeedLimitsAvailable(Vehicle* /*vehicle*/) { return false; }
+
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
 
@@ -155,7 +175,16 @@ public:
 
     /// Command vehicle to change altitude
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
-    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
+    ///     @param pauseVehicle true: pause vehicle prior to altitude change
+    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
+
+        /// Command vehicle to change groundspeed
+    ///     @param groundspeed Groundspeed in m/s
+    virtual void guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed);
+
+    /// Command vehicle to change equivalent airspeed
+    ///     @param airspeed_equiv Equivalent airspeed in m/s
+    virtual void guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv);
 
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
@@ -266,6 +295,9 @@ public:
     /// Return the resource file which contains the vehicle icon used in the compass
     virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
+    // This is the expanded item for the main status indicator
+    virtual QVariant mainStatusIndicatorExpandedItem(const Vehicle* vehicle) const;
+
     /// Returns the list of toolbar tool indicators associated with a vehicle
     ///     signals toolIndicatorsChanged
     /// @return A list of QUrl with the indicators
@@ -327,6 +359,12 @@ public:
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
 
+    // gets hobbs meter from autopilot. This should be reimplmeented for each firmware
+    virtual QString getHobbsMeter(Vehicle* vehicle) { Q_UNUSED(vehicle); return "Not Supported"; }
+
+    /// Creates Autotune object.
+    virtual Autotune* createAutotune(Vehicle *vehicle);
+
 signals:
     void toolIndicatorsChanged(void);
     void modeIndicatorsChanged(void);
@@ -349,7 +387,7 @@ protected:
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
 
-private:
+protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
 

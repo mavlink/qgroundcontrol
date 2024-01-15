@@ -7,16 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Layouts  1.2
-import QtQuick.Controls 2.5
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Templates     1.0
-import QGroundControl.Templates     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 ColumnLayout {
     property var    instrumentValueData:            null
@@ -38,6 +36,7 @@ ColumnLayout {
         id:                 label
         Layout.alignment:   Qt.AlignVCenter
         font.pointSize:     _fontSize
+        color:              instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
         text:               valueText()
 
         function valueText() {

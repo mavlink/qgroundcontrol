@@ -16,25 +16,29 @@
 #include <QVariantList>
 
 #ifndef QGC_DISABLE_UVC
-#include <QCameraInfo>
+#include <QMediaDevices>
+#include <QCameraDevice>
 #endif
 
-const char* VideoSettings::videoSourceNoVideo           = "No Video Available";
-const char* VideoSettings::videoDisabled                = "Video Stream Disabled";
-const char* VideoSettings::videoSourceRTSP              = "RTSP Video Stream";
-const char* VideoSettings::videoSourceUDPH264           = "UDP h.264 Video Stream";
-const char* VideoSettings::videoSourceUDPH265           = "UDP h.265 Video Stream";
-const char* VideoSettings::videoSourceTCP               = "TCP-MPEG2 Video Stream";
-const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video Stream";
-const char* VideoSettings::videoSource3DRSolo           = "3DR Solo";
-const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
+const char* VideoSettings::videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
+const char* VideoSettings::videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
+const char* VideoSettings::videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
+const char* VideoSettings::videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
+const char* VideoSettings::videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
+const char* VideoSettings::videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");
+const char* VideoSettings::videoSourceMPEGTS            = QT_TRANSLATE_NOOP("VideoSettings", "MPEG-TS (h.264) Video Stream");
+const char* VideoSettings::videoSource3DRSolo           = QT_TRANSLATE_NOOP("VideoSettings", "3DR Solo (requires restart)");
+const char* VideoSettings::videoSourceParrotDiscovery   = QT_TRANSLATE_NOOP("VideoSettings", "Parrot Discovery");
+const char* VideoSettings::videoSourceYuneecMantisG     = QT_TRANSLATE_NOOP("VideoSettings", "Yuneec Mantis G");
+const char* VideoSettings::videoSourceHerelinkAirUnit   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink AirUnit");
+const char* VideoSettings::videoSourceHerelinkHotspot   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink Hotspot");
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data
-    QStringList videoSourceList;
+    QVariantList videoSourceList;
 #ifdef QGC_GST_STREAMING
     videoSourceList.append(videoSourceRTSP);
 #ifndef NO_UDP_VIDEO
@@ -45,11 +49,19 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceMPEGTS);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
+    videoSourceList.append(videoSourceYuneecMantisG);
 #endif
+
+#ifdef QGC_HERELINK_AIRUNIT_VIDEO
+    videoSourceList.append(videoSourceHerelinkAirUnit);
+#else
+    videoSourceList.append(videoSourceHerelinkHotspot);
+#endif
+
 #ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    for (const QCameraInfo &cameraInfo: cameras) {
-        videoSourceList.append(cameraInfo.description());
+    QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
+    for (const auto& cameraDevice: videoInputs) {
+        videoSourceList.append(cameraDevice.description());
     }
 #endif
     if (videoSourceList.count() == 0) {
@@ -58,11 +70,40 @@ DECLARE_SETTINGGROUP(Video, "Video")
     } else {
         videoSourceList.insert(0, videoDisabled);
     }
-    QVariantList videoSourceVarList;
-    for (const QString& videoSource: videoSourceList) {
-        videoSourceVarList.append(QVariant::fromValue(videoSource));
+
+    // make translated strings
+    QStringList videoSourceCookedList;
+    for (const QVariant& videoSource: videoSourceList) {
+        videoSourceCookedList.append( VideoSettings::tr(videoSource.toString().toStdString().c_str()) );
     }
-    _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
+
+    _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
+
+    const QVariantList removeForceVideoDecodeList{
+#ifdef Q_OS_LINUX
+        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+#endif
+#ifdef Q_OS_WIN
+        VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+#endif
+#ifdef Q_OS_MAC
+        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        VideoDecoderOptions::ForceVideoDecoderVAAPI,
+#endif
+#ifdef Q_OS_ANDROID
+        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+#endif
+    };
+
+    for(const auto& value : removeForceVideoDecodeList) {
+        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
+    }
+
     // Set default value for videoSource
     _setDefaults();
 }
@@ -93,7 +134,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
         //-- Check for sources no longer available
-        if(!_videoSourceFact->enumStrings().contains(_videoSourceFact->rawValue().toString())) {
+        if(!_videoSourceFact->enumValues().contains(_videoSourceFact->rawValue().toString())) {
             if (_noVideo) {
                 _videoSourceFact->setRawValue(videoSourceNoVideo);
             } else {
@@ -103,6 +144,24 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
         connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _videoSourceFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
+{
+    if (!_forceVideoDecoderFact) {
+        _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
+
+        _forceVideoDecoderFact->setVisible(
+#ifdef Q_OS_IOS
+            false
+#else
+            true
+#endif
+        );
+
+        connect(_forceVideoDecoderFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _forceVideoDecoderFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
@@ -166,6 +225,16 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
+    }
+    //-- If Herelink Air unit, good to go
+    if(vSource == videoSourceHerelinkAirUnit) {
+        qCDebug(VideoManagerLog) << "Stream configured for Herelink Air Unit";
+        return true;
+    }
+    //-- If Herelink Hotspot, good to go
+    if(vSource == videoSourceHerelinkHotspot) {
+        qCDebug(VideoManagerLog) << "Stream configured for Herelink Hotspot";
+        return true;
     }
     return false;
 }

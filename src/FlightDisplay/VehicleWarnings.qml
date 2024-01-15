@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 Rectangle {
     anchors.margins:    -ScreenTools.defaultFontPixelHeight
@@ -22,8 +22,8 @@ Rectangle {
     visible:            _noGPSLockVisible || _prearmErrorVisible
 
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _noGPSLockVisible:    _activeVehicle && !_activeVehicle.coordinate.isValid
-    property bool _prearmErrorVisible:  _activeVehicle && !_activeVehicle.armed && _activeVehicle.prearmError
+    property bool _noGPSLockVisible:    _activeVehicle && _activeVehicle.requiresGpsFix && !_activeVehicle.coordinate.isValid
+    property bool _prearmErrorVisible:  _activeVehicle && !_activeVehicle.armed && _activeVehicle.prearmError && !_activeVehicle.healthAndArmingCheckReport.supported
 
     Column {
         id:         warningsCol
