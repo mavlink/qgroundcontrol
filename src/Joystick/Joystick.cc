@@ -67,6 +67,8 @@ const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Cente
 const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
 const char* Joystick::_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
 const char* Joystick::_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
+const char* Joystick::_buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
+const char* Joystick::_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -721,6 +723,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
+            disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
+            disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
         // Always set up the new vehicle
@@ -745,6 +749,8 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             connect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
+            connect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
+            connect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             connect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
     }
@@ -766,6 +772,8 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
+            disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
+            disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
         _exitThread = true;
@@ -1064,6 +1072,10 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if(buttonDown) {
             emit gripperAction(GRIPPER_ACTION_RELEASE);
         }
+    } else if(action == _buttonActionLandingGearDeploy) {
+        if (buttonDown) emit landingGearDeploy();
+    } else if(action == _buttonActionLandingGearRetract) {
+        if (buttonDown) emit landingGearRetract();
     } else {
         if (buttonDown && _activeVehicle) {
             for (auto& item : _customMavCommands) {
@@ -1158,6 +1170,8 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearDeploy));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearRetract));
 
     for (auto& item : _customMavCommands) {
         _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
