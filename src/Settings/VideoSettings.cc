@@ -164,13 +164,13 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
     return _forceVideoDecoderFact;
 }
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpUrl)
 {
-    if (!_udpPortFact) {
-        _udpPortFact = _createSettingsFact(udpPortName);
-        connect(_udpPortFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    if (!_udpUrlFact) {
+        _udpUrlFact = _createSettingsFact(udpUrlName);
+        connect(_udpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
-    return _udpPortFact;
+    return _udpUrlFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
@@ -206,10 +206,10 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
         return false;
     }
-    //-- If UDP, check if port is set
+    //-- If UDP, check for URL
     if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
-        qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpPort()->rawValue().toInt();
-        return udpPort()->rawValue().toInt() != 0;
+        qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpUrl()->rawValue().toString();
+        return udpUrl()->rawValue().toString().isEmpty();
     }
     //-- If RTSP, check for URL
     if(vSource == videoSourceRTSP) {
@@ -221,10 +221,10 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoManagerLog) << "Testing configuration for TCP Stream:" << tcpUrl()->rawValue().toString();
         return !tcpUrl()->rawValue().toString().isEmpty();
     }
-    //-- If MPEG-TS, check if port is set
+    //-- If MPEG-TS, check for URL
     if(vSource == videoSourceMPEGTS) {
-        qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
-        return udpPort()->rawValue().toInt() != 0;
+        qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpUrl()->rawValue().toString();
+        return udpUrl()->rawValue().toString().isEmpty();
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {

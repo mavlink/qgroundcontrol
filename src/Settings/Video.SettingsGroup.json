@@ -11,12 +11,11 @@
     "default":     ""
 },
 {
-    "name":             "udpPort",
-    "shortDesc": "Video UDP Port",
-    "longDesc":  "UDP port to bind to for video stream.",
-    "type":             "uint16",
-    "min":              1025,
-    "default":     5600
+    "name":             "udpUrl",
+    "shortDesc": "Video UDP Url",
+    "longDesc":  "UDP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
+    "type":             "string",
+    "default":     "0.0.0.0:5600"
 },
 {
     "name":             "rtspUrl",

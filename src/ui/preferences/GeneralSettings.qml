@@ -319,14 +319,14 @@ Rectangle {
                                 }
 
                                 QGCLabel {
-                                    id:         udpPortLabel
-                                    text:       qsTr("UDP Port")
-                                    visible:    !_videoAutoStreamConfig && (_isUDP264 || _isUDP265 || _isMPEGTS) && _videoSettings.udpPort.visible
+                                    id:         udpUrlLabel
+                                    text:       qsTr("UDP URL")
+                                    visible:    !_videoAutoStreamConfig && (_isUDP264 || _isUDP265 || _isMPEGTS) && _videoSettings.udpUrl.visible
                                 }
                                 FactTextField {
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   _videoSettings.udpPort
-                                    visible:                udpPortLabel.visible
+                                    fact:                   _videoSettings.udpUrl
+                                    visible:                udpUrlLabel.visible
                                 }
 
                                 QGCLabel {

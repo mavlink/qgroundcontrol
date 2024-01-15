@@ -2911,10 +2911,10 @@
       <translation type="unfinished">Video Display Fit</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[udpPort].longDescription, </extracomment>
+      <extracomment>.QGC.MetaData.Facts[udpUrl].longDescription, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>UDP port to bind to for video stream.</source>
-      <translation type="unfinished">UDP port to bind to for video stream.</translation>
+      <source>URL address and port to bind to for video stream.</source>
+      <translation type="unfinished">URL address and port to bind to for video stream.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].longDescription, </extracomment>
@@ -2989,10 +2989,10 @@
       <translation type="unfinished">Displays a grid overlaid over the video view.</translation>
     </message>
     <message>
-      <extracomment>.QGC.MetaData.Facts[udpPort].shortDescription, </extracomment>
+      <extracomment>.QGC.MetaData.Facts[udpUrl].shortDescription, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
-      <source>Video UDP Port</source>
-      <translation type="unfinished">Video UDP Port</translation>
+      <source>Video UDP URL</source>
+      <translation type="unfinished">Video UDP URL</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tcpUrl].longDescription, </extracomment>

@@ -779,8 +779,21 @@ GstVideoReceiver::_makeSource(const QString& uri)
                 g_object_set(static_cast<gpointer>(source), "location", qPrintable(uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
             }
         } else if(isUdp264 || isUdp265 || isUdpMPEGTS || isTaisync) {
-            if ((source = gst_element_factory_make("udpsrc", "source")) != nullptr) {
-                g_object_set(static_cast<gpointer>(source), "uri", QString("udp://%1:%2").arg(qPrintable(url.host()), QString::number(url.port())).toUtf8().data(), nullptr);
+            int port_validated = url.port(); //Get port component or default to 0 (used for checking validity later)
+            QString host_validated = QString("0.0.0.0");
+            //If we have a port, then we probably have a host
+            if(port_validated > 0) {
+                host_validated = url.host();
+            } else {
+                //Use default host (accept any) and use "host" as port to accept legacy parameters
+                //Simply take the rest of the uri without the scheme
+                port_validated = uri.midRef(url.scheme().length() + 3).toInt();    //Defaults to '0' on failure, +3 to account for '://'
+            }
+
+            if (port_validated < 1025) {
+                qCDebug(VideoReceiverLog) << "URL port not valid";
+            } else if ((source = gst_element_factory_make("udpsrc", "source")) != nullptr) {
+                g_object_set(static_cast<gpointer>(source), "uri", QString("udp://%1:%2").arg(qPrintable(host_validated), QString::number(port_validated)).toUtf8().data(), nullptr);
 
                 GstCaps* caps = nullptr;
 
