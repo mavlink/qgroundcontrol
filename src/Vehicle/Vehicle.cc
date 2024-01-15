@@ -2954,6 +2954,26 @@ void Vehicle::emergencyStop()
                 21196.0f);  // Magic number for emergency stop
 }
 
+void Vehicle::landingGearDeploy()
+{
+    sendMavCommand(
+                defaultComponentId(),
+                MAV_CMD_AIRFRAME_CONFIGURATION,
+                true,       // show error if fails
+                -1.0f,      // all gears
+                0.0f);      // down
+}
+
+void Vehicle::landingGearRetract()
+{
+    sendMavCommand(
+                defaultComponentId(),
+                MAV_CMD_AIRFRAME_CONFIGURATION,
+                true,       // show error if fails
+                -1.0f,      // all gears
+                1.0f);      // up
+}
+
 void Vehicle::setCurrentMissionSequence(int seq)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
