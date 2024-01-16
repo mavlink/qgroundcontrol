@@ -30,6 +30,7 @@ const char* AppSettings::telemetryFileExtension =   "tlog";
 const char* AppSettings::kmlFileExtension =         "kml";
 const char* AppSettings::shpFileExtension =         "shp";
 const char* AppSettings::logFileExtension =         "ulg";
+const char* AppSettings::tilesetFileExtension =     "qgctiledb";
 
 const char* AppSettings::parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
 const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
