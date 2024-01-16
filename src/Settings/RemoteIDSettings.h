@@ -20,6 +20,7 @@ public:
 
     DEFINE_SETTINGFACT(enable)
     DEFINE_SETTINGFACT(operatorID)
+    DEFINE_SETTINGFACT(operatorIDChecked)
     DEFINE_SETTINGFACT(operatorIDType)
     DEFINE_SETTINGFACT(sendOperatorID)
     DEFINE_SETTINGFACT(selfIDFree)

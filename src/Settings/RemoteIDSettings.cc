@@ -19,6 +19,7 @@ DECLARE_SETTINGGROUP(RemoteID, "RemoteID")
 
 DECLARE_SETTINGSFACT(RemoteIDSettings,  enable)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorID)
+DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorIDChecked)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorIDType)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  sendOperatorID)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  selfIDFree)

@@ -22,7 +22,7 @@ Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 class RemoteIDSettings;
 class QGCPositionManager;
 
-// Supporting Opend Dron ID protocol
+// Supporting Open Drone ID protocol
 class RemoteIDManager : public QObject
 {
     Q_OBJECT
@@ -39,8 +39,8 @@ public:
     Q_PROPERTY (bool    operatorIDGood      READ operatorIDGood     NOTIFY operatorIDGoodChanged)
 
 
-    // Check that the information filled by the pilot operatorID is good
-    Q_INVOKABLE void checkOperatorID();
+    Q_INVOKABLE void setOperatorID(const QString& operatorID);
+    Q_INVOKABLE void checkOperatorID(bool save);
 
     // Declare emergency
     Q_INVOKABLE void setEmergency(bool declare);
@@ -84,7 +84,7 @@ private slots:
 private:
     void _handleArmStatus(mavlink_message_t& message);
 
-    // Self ID 
+    // Self ID
     void        _sendSelfIDMsg ();
     const char* _getSelfIDDescription();
 
@@ -97,7 +97,10 @@ private:
 
     // Basic ID
     void        _sendBasicID();
-    
+
+    bool _isEUOperatorIDValid(const QString& operatorID) const;
+    QChar _calculateLuhnMod36(const QString& input) const;
+
     MAVLinkProtocol*    _mavlink;
     Vehicle*            _vehicle;
     RemoteIDSettings*   _settings;
@@ -119,7 +122,7 @@ private:
 
     // After emergency cleared, this makes sure the non emergency selfID message makes it to the vehicle
     bool        _enforceSendingSelfID;
-    
+
     static const uint8_t* _id_or_mac_unknown;
 
     // Timers

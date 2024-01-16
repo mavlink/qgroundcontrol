@@ -17,6 +17,13 @@
     "default":      ""
 },
 {
+    "name":         "operatorIDChecked",
+    "shortDesc":    "Operator ID checked",
+    "longDesc":     "Operator ID has been checked using checksum.",
+    "type":         "bool",
+    "default":      false
+},
+{
     "name":         "operatorIDType",
     "shortDesc":    "Operator ID type",
     "type":         "uint8",
