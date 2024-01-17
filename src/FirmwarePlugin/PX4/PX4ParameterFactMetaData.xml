@@ -1868,7 +1868,7 @@
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_GRAV_NOISE" default="1.0" type="FLOAT">
+    <parameter name="EKF2_GRAV_NOISE" default="5.0" type="FLOAT">
       <short_desc>Accelerometer measurement noise for gravity based observations</short_desc>
       <min>0.1</min>
       <max>10.0</max>
@@ -1930,7 +1930,7 @@
         <value code="3">Vision</value>
       </values>
     </parameter>
-    <parameter name="EKF2_IMU_CTRL" default="3" type="INT32">
+    <parameter name="EKF2_IMU_CTRL" default="7" type="INT32">
       <short_desc>IMU control</short_desc>
       <min>0</min>
       <max>7</max>
