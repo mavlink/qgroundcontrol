@@ -525,7 +525,7 @@ int main(int argc, char *argv[])
     {
         GStreamer::initialize(argc, argv, 3);
         gst_init (&argc, &argv);
-        const bool runAsQtApp = true;//isQtApp(argv[0]);
+        const bool runAsQtApp = isQtApp(argv[0]);
         QGuiApplication app(argc, argv);
         VideoReceiverApp videoApp(app, runAsQtApp);
         ret = videoApp.exec();

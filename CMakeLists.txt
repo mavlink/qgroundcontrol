@@ -60,12 +60,13 @@ endif ()
 #               Qt6 Configuration
 #######################################################
 
-option(QT6_DISABLE_DNSENGINE "Disable DNS Engine" ON)
+option(QT6_DISABLE_DNSENGINE "Disable DNS Engine" OFF)
 
 # Compilation error for deprecated functions
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
 add_compile_definitions(QT_DEBUG_FIND_PACKAGE=ON)
 if (QT6_DISABLE_DNSENGINE)
+    message(STATUS "DNS Engine disabled")
     add_compile_definitions(QT6_DISABLE_DNSENGINE=ON)
 endif ()
 # Configure Qt6 to get necessary variables
@@ -111,6 +112,13 @@ if(NOT QT_MKSPEC MATCHES "winrt")
             ${QT_LIBRARY_HINTS}
     )
 endif()
+
+# this is required since user can have Qt5 and Qt6 installed at the same time, and then Qt_DIR
+# might point to Qt5, but we want to use Qt6
+# especially qmdnsengine uses Qt_DIR to choose Qt version
+if (Qt6_DIR)
+    set(QT_DIR ${Qt6_DIR})
+endif ()
 
 #######################################################
 #                QML Configuration
