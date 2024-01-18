@@ -20,16 +20,16 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
 RowLayout {
-    layoutDirection: Qt.RightToLeft
+    spacing: _margins
 
+    property real   availableHeight
     property var    axis
     property string unit
     property string title
     property var    tuningMode
-    property double chartDisplaySec:     8 // number of seconds to display
-    property bool   showAutoModeChange:  false
-    property bool   showAutoTuning:      false
-    property alias  autotuningEnabled:   autotuningEnabled.checked
+    property double chartDisplaySec:    8 // number of seconds to display
+    property bool   showAutoModeChange: false
+    property bool   showAutoTuning:     false
 
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property int    _currentAxis:       0
@@ -171,132 +171,22 @@ RowLayout {
         property int _maxPointCount:    10000 / interval
     }
 
-    QGCFlickable {
-        contentWidth:           parent.width * 0.4
-        contentHeight:          rightColumn.height
-        Layout.fillHeight:      true
-        Layout.minimumWidth:    contentWidth
-        Layout.maximumWidth:    contentWidth
-        Layout.alignment:       Qt.AlignTop
-
-        Column {
-            spacing:            _margins
-            Layout.alignment:   Qt.AlignTop
-
-            width:          parent.width
-            id:             rightColumn
-
-            Row {
-                id:        _autotuneSelectRow
-                spacing:   _margins
-                visible:   showAutoTuning
-
-                Switch {
-                    id:        autotuningEnabled
-                    checked:   true
-                }
-
-                QGCLabel {
-                    color:   qgcPal.text
-                    text:    autotuningEnabled.checked ? qsTr("Autotune enabled") : qsTr("Autotune disabled")
-                }
-            }
-
-            Column {
-                width:     parent.width
-                visible:   _autotuneSelectRow.visible && autotuningEnabled.checked
-
-                AutotuneUI {
-                    anchors {
-                        top:         parent.top
-                        topMargin:   _margins * 2
-                    }
-
-                    width:     parent.width
-                }
-            }
-
-            Column {
-                width:     parent.width
-                visible:   !_autotuneSelectRow.visible || !autotuningEnabled.checked
-
-                Column {
-                    RowLayout {
-                        spacing: _margins
-                        visible: axis.length > 1
-
-                        QGCLabel { text: qsTr("Select Tuning:") }
-
-                        Repeater {
-                            model: axis
-                            QGCRadioButton {
-                                text:           modelData.name
-                                checked:        index == _currentAxis
-                                onClicked: _currentAxis = index
-                            }
-                        }
-                    }
-                }
-
-                // Instantiate all sliders (instead of switching the model), so that
-                // values are not changed unexpectedly if they do not match with a tick
-                // value
-                Repeater {
-                    model: axis
-                    FactSliderPanel {
-                        width:       parent.width
-                        visible:     _currentAxis === index
-                        sliderModel: axis[index].params
-                    }
-                }
-
-                Column {
-                    QGCLabel { text: qsTr("Clipboard Values:") }
-
-                    GridLayout {
-                        rows:           savedRepeater.model.length
-                        flow:           GridLayout.TopToBottom
-                        rowSpacing:     0
-                        columnSpacing:  _margins
-
-                        Repeater {
-                            model: axis[_currentAxis].params
-
-                            QGCLabel { text: param }
-                        }
-
-                        Repeater {
-                            id: savedRepeater
-
-                            QGCLabel { text: modelData }
-                        }
-                    }
-                }
-
-                RowLayout {
-                    spacing: _margins
-
-                    QGCButton {
-                        text:       qsTr("Save To Clipboard")
-                        onClicked:  saveTuningParamValues()
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Restore From Clipboard")
-                        onClicked:  resetToSavedTuningParamValues()
-                    }
-                }
-            }
-        }
-    }
-
     ColumnLayout {
+        Layout.fillWidth:       true
+        Layout.preferredHeight: Math.max(availableHeight, ScreenTools.defaultFontPixelHeight * 20)
+
         ChartView {
-            id:                 chart
-            antialiasing:       true
-            legend.alignment:   Qt.AlignBottom
-            Layout.fillHeight:  true
-            Layout.fillWidth:   true
+            id:                     chart
+            antialiasing:           true
+            legend.alignment:       Qt.AlignBottom
+            Layout.fillWidth:       true
+            Layout.fillHeight:      true
+            margins.top:            _chartMargin
+            margins.bottom:         _chartMargin
+            margins.left:           _chartMargin
+            margins.right:          _chartMargin
+
+            property real _chartMargin: ScreenTools.defaultFontPixelHeight / 2
 
             // enable mouse dragging
             MouseArea {
@@ -387,4 +277,101 @@ RowLayout {
             }
         }
     }
+
+    ColumnLayout {
+        Layout.alignment: Qt.AlignTop
+
+        RowLayout {
+            visible: showAutoTuning
+
+            QGCRadioButton {
+                id:         useAutoTuningRadio
+                text:       qsTr("Use auto-tuning")
+                checked:    useAutoTuning
+                onClicked:  useAutoTuning = true
+            }
+            QGCRadioButton {
+                id:         useManualTuningRadio
+                text:       qsTr("Use manual tuning")
+                checked:    !useAutoTuning
+                onClicked:  useAutoTuning = false
+            }
+        }
+
+        AutotuneUI {
+            visible: showAutoTuning && useAutoTuningRadio.checked
+        }
+
+        ColumnLayout {
+            visible: !showAutoTuning || useManualTuningRadio.checked
+
+            Column {
+                RowLayout {
+                    spacing: _margins
+                    visible: axis.length > 1
+
+                    QGCLabel { text: qsTr("Select Tuning:") }
+
+                    Repeater {
+                        model: axis
+                        QGCRadioButton {
+                            text:           modelData.name
+                            checked:        index == _currentAxis
+                            onClicked: _currentAxis = index
+                        }
+                    }
+                }
+            }
+
+            // Instantiate all sliders (instead of switching the model), so that
+            // values are not changed unexpectedly if they do not match with a tick
+            // value
+            Repeater {
+                model: axis
+                FactSliderPanel {
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
+                    visible:                _currentAxis === index
+                    sliderModel:            axis[index].params
+                }
+            }
+
+            Column {
+                QGCLabel { text: qsTr("Clipboard Values:") }
+
+                GridLayout {
+                    rows:           savedRepeater.model.length
+                    flow:           GridLayout.TopToBottom
+                    rowSpacing:     0
+                    columnSpacing:  _margins
+
+                    Repeater {
+                        model: axis[_currentAxis].params
+
+                        QGCLabel { text: param }
+                    }
+
+                    Repeater {
+                        id: savedRepeater
+
+                        QGCLabel { text: modelData }
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: _margins
+
+                QGCButton {
+                    text:       qsTr("Save To Clipboard")
+                    onClicked:  saveTuningParamValues()
+                }
+
+                QGCButton {
+                    text:       qsTr("Restore From Clipboard")
+                    onClicked:  resetToSavedTuningParamValues()
+                }
+            }
+        }
+    }
+
 } // RowLayout

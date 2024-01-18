@@ -19,19 +19,17 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
 ColumnLayout {
-    width: availableWidth
-    anchors.fill: parent
-    property Fact _airmode:           controller.getParameterFact(-1, "MC_AIRMODE", false)
-    property Fact _thrustModelFactor: controller.getParameterFact(-1, "THR_MDL_FAC", false)
-    property alias autotuningEnabled: pidTuning.autotuningEnabled
+    property real _availableHeight:     availableHeight
+    property Fact _airmode:             controller.getParameterFact(-1, "MC_AIRMODE", false)
+    property Fact _thrustModelFactor:   controller.getParameterFact(-1, "THR_MDL_FAC", false)
 
-    GridLayout {
-        columns: 2
+    RowLayout {
+        spacing: ScreenTools.defaultFontPixelWidth
 
         QGCLabel {
             textFormat:         Text.RichText
-            text:               qsTr("Airmode (disable during tuning) <b><a href=\"https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation\">?</a></b>:")
-            onLinkActivated:    Qt.openUrlExternally(link)
+            text:               qsTr("Airmode (disable during tuning) <b><a href=\"https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation\">?</a></b>")
+            onLinkActivated:    (link) => Qt.openUrlExternally(link)
             visible:            _airmode
         }
         FactComboBox {
@@ -40,10 +38,15 @@ ColumnLayout {
             visible:            _airmode
         }
 
+        Item {
+            width: 1
+            height: 1
+        }
+
         QGCLabel {
             textFormat:         Text.RichText
-            text:               qsTr("Thrust curve <b><a href=\"https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve\">?</a></b>:")
-            onLinkActivated:    Qt.openUrlExternally(link)
+            text:               qsTr("Thrust curve <b><a href=\"https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve\">?</a></b>")
+            onLinkActivated:    (link) => Qt.openUrlExternally(link)
             visible:            _thrustModelFactor
         }
         FactTextField {
@@ -51,9 +54,18 @@ ColumnLayout {
             visible:            _thrustModelFactor
         }
     }
+
     PIDTuning {
-        width: availableWidth
-        id:    pidTuning
+        id:                 pidTuning
+        Layout.fillWidth:   true
+        availableHeight:    _availableHeight - pidTuning.y
+        title:              qsTr("Rate")
+        tuningMode:         Vehicle.ModeRateAndAttitude
+        unit:               qsTr("deg/s")
+        axis:               [ roll, pitch, yaw ]
+        chartDisplaySec:    3
+        showAutoModeChange: true
+        showAutoTuning:     true
 
         property var roll: QtObject {
             property string name: qsTr("Roll")
@@ -146,13 +158,6 @@ ColumnLayout {
                 }
             }
         }
-        title: "Rate"
-        tuningMode: Vehicle.ModeRateAndAttitude
-        unit: "deg/s"
-        axis: [ roll, pitch, yaw ]
-        chartDisplaySec: 3
-        showAutoModeChange: true
-        showAutoTuning:     true
     }
 }
 

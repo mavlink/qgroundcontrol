@@ -19,9 +19,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
 ColumnLayout {
-    width: availableWidth
-    anchors.fill: parent
-    property Fact _mcPosMode:       controller.getParameterFact(-1, "MPC_POS_MODE", false)
+    property Fact _mcPosMode: controller.getParameterFact(-1, "MPC_POS_MODE", false)
 
     GridLayout {
         columns: 2
@@ -38,7 +36,10 @@ ColumnLayout {
     }
 
     PIDTuning {
-        width: availableWidth
+        id:                 pidTuning
+        Layout.fillWidth:   true
+        availableHeight:    _availableHeight - pidTuning.y
+
         property var horizontal: QtObject {
             property string name: qsTr("Horizontal")
             property string plotTitle: qsTr("Horizontal (Y direction, sidewards)")

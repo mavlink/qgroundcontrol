@@ -19,11 +19,11 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
 ColumnLayout {
-    width: availableWidth
-    anchors.fill: parent
-
     PIDTuning {
-        width: availableWidth
+        id:                 pidTuning
+        Layout.fillWidth:   true
+        availableHeight:    _availableHeight - pidTuning.y
+
         property var data: QtObject {
             property string name: qsTr("Altitude & Airspeed")
             property var plot: [
