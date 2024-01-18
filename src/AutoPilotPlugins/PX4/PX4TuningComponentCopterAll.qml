@@ -16,55 +16,23 @@ import QGroundControl.Controls
 import QGroundControl.FactSystem
 import QGroundControl.ScreenTools
 
-Item {
-    width:                            availableWidth
-    property bool _autotuningEnabled: true // used to restore setting when switching between tabs
-
-    FactPanelController {
-        id:         controller
-    }
-
-    QGCTabBar {
-        id:             bar
-        width:          parent.width
-        anchors.top:    parent.top
-        QGCTabButton {
-            text:       qsTr("Rate Controller")
+PX4TuningComponent {
+    model: ListModel {
+        ListElement { 
+            buttonText: qsTr("Rate Controller")
+            tuningPage: "PX4TuningComponentCopterRate.qml"
         }
-        QGCTabButton {
-            text:       qsTr("Attitude Controller")
+        ListElement { 
+            buttonText: qsTr("Attitude Controller")
+            tuningPage: "PX4TuningComponentCopterAttitude.qml"
         }
-        QGCTabButton {
-            text:       qsTr("Velocity Controller")
+        ListElement { 
+            buttonText: qsTr("Velocity Controller")
+            tuningPage: "PX4TuningComponentCopterVelocity.qml"
         }
-        QGCTabButton {
-            text:       qsTr("Position Controller")
-        }
-        onCurrentIndexChanged: {
-            if (typeof loader.item.autotuningEnabled !== "undefined") {
-                _autotuningEnabled = loader.item.autotuningEnabled;
-            }
-        }
-    }
-
-    property var pages:  [
-        "PX4TuningComponentCopterRate.qml",
-        "PX4TuningComponentCopterAttitude.qml",
-        "PX4TuningComponentCopterVelocity.qml",
-        "PX4TuningComponentCopterPosition.qml"
-    ]
-
-    Loader {
-        id:                loader
-        source:            pages[bar.currentIndex]
-        width:             parent.width
-        anchors.top:       bar.bottom
-        anchors.topMargin: ScreenTools.defaultFontPixelWidth
-        anchors.bottom:    parent.bottom
-        onLoaded: {
-            if (typeof loader.item.autotuningEnabled !== "undefined") {
-                loader.item.autotuningEnabled = _autotuningEnabled;
-            }
+        ListElement { 
+            buttonText: qsTr("Position Controller")
+            tuningPage: "PX4TuningComponentCopterPosition.qml"
         }
     }
 }

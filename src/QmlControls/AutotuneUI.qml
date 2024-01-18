@@ -9,7 +9,7 @@
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
+import QtQuick.Layouts
 
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
@@ -18,75 +18,34 @@ import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
-Item {
-    id: _root
+ColumnLayout {
+    spacing: ScreenTools.defaultFontPixelHeight
 
-    property var  _autotune:   globals.activeVehicle.autotune
-    property real _margins:    ScreenTools.defaultFontPixelHeight
+    property var  _activeVehicle:   globals.activeVehicle
+    property var  _autotuneManager: _activeVehicle.autotune
+    property real _margins:         ScreenTools.defaultFontPixelHeight
 
-    readonly property string dialogTitle: qsTr("Autotune")
+    QGCButton {
+        id:        autotuneButton
+        primary:   true
+        text:      qsTr("Start AutoTune")
+        enabled:   _activeVehicle.flying && !_activeVehicle.landing && !_autotuneManager.autotuneInProgress
 
-    QGCPalette {
-        id:                palette
-        colorGroupEnabled: enabled
+        onClicked: mainWindow.showMessageDialog(autotuneButton.text,
+                                                qsTr("WARNING!\
+        \n\nThe auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure! \
+        \n\nBefore starting the auto-tuning process, make sure that: \
+        \n1. You have read the auto-tuning guide and have followed the preliminary steps \
+        \n2. The current control gains are good enough to stabilize the drone in presence of medium disturbances \
+        \n3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens. \
+        \n\nClick Ok to start the auto-tuning process.\n"),
+                                                Dialog.Ok | Dialog.Cancel,
+                                                function() { _autotuneManager.autotuneRequest() })
     }
 
-    Rectangle {
-        width:   _root.width
-        height:  statusColumn.height + (2 * _margins)
-        color:   qgcPal.windowShade
-        enabled: _autotune.autotuneEnabled
+    QGCLabel { text: _autotuneManager.autotuneStatus }
 
-        QGCButton {
-            id:        autotuneButton
-            primary:   true
-            text:      dialogTitle
-            enabled:   !_autotune.autotuneInProgress
-            anchors {
-                left:             parent.left
-                leftMargin:       _margins
-                verticalCenter:   parent.verticalCenter
-            }
-
-            onClicked: mainWindow.showMessageDialog(dialogTitle,
-                                                    qsTr("WARNING!\
-            \n\nThe auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure! \
-            \n\nBefore starting the auto-tuning process, make sure that: \
-            \n1. You have read the auto-tuning guide and have followed the preliminary steps \
-            \n2. The current control gains are good enough to stabilize the drone in presence of medium disturbances \
-            \n3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens. \
-            \n\nClick Ok to start the auto-tuning process.\n"),
-                                                    Dialog.Ok | Dialog.Cancel,
-                                                    function() { _autotune.autotuneRequest() })
-        }
-
-        Column {
-            id:      statusColumn
-            spacing: _margins
-            anchors  {
-                left:             autotuneButton.right
-                right:            parent.right
-                leftMargin:       _margins
-                rightMargin:      _margins
-                verticalCenter:   parent.verticalCenter
-            }
-
-            QGCLabel {
-                text:   _autotune.autotuneStatus
-
-                anchors {
-                    left: parent.left
-                }
-            }
-
-            ProgressBar {
-                value:   _autotune.autotuneProgress
-
-                anchors {
-                    left:             parent.left
-                    right:            parent.right
-                }
-            }
-        }
+    ProgressBar {
+        value: _autotuneManager.autotuneProgress
     }
 }

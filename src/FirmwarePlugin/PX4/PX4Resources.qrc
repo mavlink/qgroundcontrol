@@ -11,6 +11,7 @@
         <file alias="PX4RadioComponentSummary.qml">../../AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml</file>
         <file alias="PX4SimpleFlightModes.qml">../../AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml</file>
         <file alias="PX4FlightBehaviorCopter.qml">../../AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml</file>
+        <file alias="PX4TuningComponent.qml">../../AutoPilotPlugins/PX4/PX4TuningComponent.qml</file>
         <file alias="PX4TuningComponentCopter.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml</file>
         <file alias="PX4TuningComponentCopterAll.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml</file>
         <file alias="PX4TuningComponentCopterAttitude.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml</file>
