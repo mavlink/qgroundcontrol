@@ -16,35 +16,15 @@ import QGroundControl.Controls
 import QGroundControl.FactSystem
 import QGroundControl.ScreenTools
 
-Item {
-    width: availableWidth
-
-    FactPanelController {
-        id:         controller
-    }
-
-    QGCTabBar {
-        id:             bar
-        width:          parent.width
-        anchors.top:    parent.top
-        QGCTabButton {
-            text:       qsTr("Rate Controller")
+PX4TuningComponent {
+    model: ListModel {
+        ListElement { 
+            buttonText: qsTr("Rate Controller")
+            tuningPage: "PX4TuningComponentPlaneRate.qml" 
         }
-        QGCTabButton {
-            text:       qsTr("Attitude Controller")
+        ListElement { 
+            buttonText: qsTr("Rate Controller")
+            tuningPage: "PX4TuningComponentPlaneAttitude.qml" 
         }
-    }
-
-    property var pages:  [
-        "PX4TuningComponentPlaneRate.qml",
-        "PX4TuningComponentPlaneAttitude.qml",
-    ]
-
-    Loader {
-        source:            pages[bar.currentIndex]
-        width:             parent.width
-        anchors.top:       bar.bottom
-        anchors.topMargin: ScreenTools.defaultFontPixelWidth
-        anchors.bottom:    parent.bottom
     }
 }

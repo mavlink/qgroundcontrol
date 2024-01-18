@@ -18,9 +18,6 @@ Autotune::Autotune(Vehicle *vehicle) :
     QObject(vehicle)
     , _vehicle(vehicle)
 {
-    connect(_vehicle, &Vehicle::flyingChanged,  this, &Autotune::handleEnabled);
-    connect(_vehicle, &Vehicle::landingChanged, this, &Autotune::handleEnabled);
-
     _pollTimer.setInterval(1000); // 1s for the polling interval
     _pollTimer.setSingleShot(false);
     connect(&_pollTimer, &QTimer::timeout, this, &Autotune::sendMavlinkRequest);
@@ -81,20 +78,6 @@ void Autotune::progressHandler(void* progressHandlerData, int compId, const mavl
         qWarning() << "Ack received for a command different from MAV_CMD_DO_AUTOTUNE_ENABLE ot wrong UI state.";
     }
 }
-
-//-----------------------------------------------------------------------------
-bool Autotune::autotuneEnabled()
-{
-    return _vehicle->flying() || _autotuneInProgress;
-}
-
-
-//-----------------------------------------------------------------------------
-void Autotune::handleEnabled()
-{
-    emit autotuneChanged();
-}
-
 
 //-----------------------------------------------------------------------------
 void Autotune::handleAckStatus(uint8_t ackProgress)
