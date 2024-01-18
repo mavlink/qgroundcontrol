@@ -4408,120 +4408,6 @@
       <long_desc>If set to 1 incoming HIL GPS messages are parsed.</long_desc>
     </parameter>
   </group>
-  <group name="MODAL IO">
-    <parameter name="MODAL_IO_BAUD" default="250000" type="INT32">
-      <short_desc>UART ESC baud rate</short_desc>
-      <long_desc>Default rate is 250Kbps, which is used in off-the-shelf MoadalAI ESC products.</long_desc>
-      <unit>bit/s</unit>
-    </parameter>
-    <parameter name="MODAL_IO_CONFIG" default="0" type="INT32">
-      <short_desc>UART ESC configuration</short_desc>
-      <long_desc>Selects what type of UART ESC, if any, is being used.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">- Disabled</value>
-        <value code="1">- VOXL ESC</value>
-      </values>
-    </parameter>
-    <parameter name="MODAL_IO_MODE" default="0" type="INT32">
-      <short_desc>UART ESC Mode</short_desc>
-      <long_desc>Selects what type of mode is enabled, if any</long_desc>
-      <min>0</min>
-      <max>2</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">- None</value>
-        <value code="1">- Turtle Mode enabled via AUX1</value>
-        <value code="2">- Turtle Mode enabled via AUX2</value>
-        <value code="3">- UART Passthrough Mode</value>
-      </values>
-    </parameter>
-    <parameter name="MODAL_IO_RPM_MAX" default="15000" type="INT32">
-      <short_desc>UART ESC RPM Max</short_desc>
-      <long_desc>Maximum RPM for ESC</long_desc>
-      <unit>rpm</unit>
-    </parameter>
-    <parameter name="MODAL_IO_RPM_MIN" default="5500" type="INT32">
-      <short_desc>UART ESC RPM Min</short_desc>
-      <long_desc>Minimum RPM for ESC</long_desc>
-      <unit>rpm</unit>
-    </parameter>
-    <parameter name="MODAL_IO_SDIR1" default="0" type="INT32">
-      <short_desc>UART ESC ID 1 Spin Direction Flag</short_desc>
-      <values>
-        <value code="0">- Default</value>
-        <value code="1">- Reverse</value>
-      </values>
-    </parameter>
-    <parameter name="MODAL_IO_SDIR2" default="0" type="INT32">
-      <short_desc>UART ESC ID 2 Spin Direction Flag</short_desc>
-      <values>
-        <value code="0">- Default</value>
-        <value code="1">- Reverse</value>
-      </values>
-    </parameter>
-    <parameter name="MODAL_IO_SDIR3" default="0" type="INT32">
-      <short_desc>UART ESC ID 3 Spin Direction Flag</short_desc>
-      <values>
-        <value code="0">- Default</value>
-        <value code="1">- Reverse</value>
-      </values>
-    </parameter>
-    <parameter name="MODAL_IO_SDIR4" default="0" type="INT32">
-      <short_desc>UART ESC ID 4 Spin Direction Flag</short_desc>
-      <values>
-        <value code="0">- Default</value>
-        <value code="1">- Reverse</value>
-      </values>
-    </parameter>
-    <parameter name="MODAL_IO_T_COSP" default="0.990" type="FLOAT">
-      <short_desc>UART ESC Turtle Mode Cosphi</short_desc>
-      <min>0.000</min>
-      <max>1.000</max>
-      <decimal>10</decimal>
-      <increment>0.001</increment>
-    </parameter>
-    <parameter name="MODAL_IO_T_DEAD" default="20" type="INT32">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor Deadband</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="MODAL_IO_T_EXPO" default="35" type="INT32">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor expo</short_desc>
-      <min>0</min>
-      <max>100</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="MODAL_IO_T_MINF" default="0.15" type="FLOAT">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor STICK_MINF</short_desc>
-      <min>0.0</min>
-      <max>100.0</max>
-      <decimal>10</decimal>
-      <increment>1.0</increment>
-    </parameter>
-    <parameter name="MODAL_IO_T_PERC" default="90" type="INT32">
-      <short_desc>UART ESC Turtle Mode Crash Flip Motor Percent</short_desc>
-      <min>1</min>
-      <max>100</max>
-      <decimal>10</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="MODAL_IO_VLOG" default="0" type="INT32">
-      <short_desc>UART ESC verbose logging</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">- Disabled</value>
-        <value code="1">- Enabled</value>
-      </values>
-    </parameter>
-  </group>
   <group name="Magnetometer Bias Estimator">
     <parameter name="MBE_ENABLE" default="1" type="INT32" boolean="true">
       <short_desc>Enable online mag bias calibration</short_desc>
@@ -10676,6 +10562,152 @@
         <value code="0">Position Control</value>
         <value code="1">Stabilization Mode</value>
       </values>
+    </parameter>
+  </group>
+  <group name="VOXL ESC">
+    <parameter name="VOXL_ESC_BAUD" default="250000" type="INT32">
+      <short_desc>UART ESC baud rate</short_desc>
+      <long_desc>Default rate is 250Kbps, which is used in off-the-shelf MoadalAI ESC products.</long_desc>
+      <unit>bit/s</unit>
+    </parameter>
+    <parameter name="VOXL_ESC_CONFIG" default="0" type="INT32">
+      <short_desc>UART ESC configuration</short_desc>
+      <long_desc>Selects what type of UART ESC, if any, is being used.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+        <value code="1">- VOXL ESC</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_MODE" default="0" type="INT32">
+      <short_desc>UART ESC Mode</short_desc>
+      <long_desc>Selects what type of mode is enabled, if any</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- None</value>
+        <value code="1">- Turtle Mode enabled via AUX1</value>
+        <value code="2">- Turtle Mode enabled via AUX2</value>
+        <value code="3">- UART Passthrough Mode</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_PUB_BST" default="1" type="INT32">
+      <short_desc>UART ESC Enable publishing of battery status</short_desc>
+      <long_desc>Only applicable to ESCs that report total battery voltage and current</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+        <value code="1">- Enabled</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_RPM_MAX" default="15000" type="INT32">
+      <short_desc>UART ESC RPM Max</short_desc>
+      <long_desc>Maximum RPM for ESC</long_desc>
+      <unit>rpm</unit>
+    </parameter>
+    <parameter name="VOXL_ESC_RPM_MIN" default="5500" type="INT32">
+      <short_desc>UART ESC RPM Min</short_desc>
+      <long_desc>Minimum RPM for ESC</long_desc>
+      <unit>rpm</unit>
+    </parameter>
+    <parameter name="VOXL_ESC_SDIR1" default="0" type="INT32">
+      <short_desc>UART ESC ID 1 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_SDIR2" default="0" type="INT32">
+      <short_desc>UART ESC ID 2 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_SDIR3" default="0" type="INT32">
+      <short_desc>UART ESC ID 3 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_SDIR4" default="0" type="INT32">
+      <short_desc>UART ESC ID 4 Spin Direction Flag</short_desc>
+      <values>
+        <value code="0">- Default</value>
+        <value code="1">- Reverse</value>
+      </values>
+    </parameter>
+    <parameter name="VOXL_ESC_T_COSP" default="0.990" type="FLOAT">
+      <short_desc>UART ESC Turtle Mode Cosphi</short_desc>
+      <min>0.000</min>
+      <max>1.000</max>
+      <decimal>10</decimal>
+      <increment>0.001</increment>
+    </parameter>
+    <parameter name="VOXL_ESC_T_DEAD" default="20" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor Deadband</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="VOXL_ESC_T_EXPO" default="35" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor expo</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="VOXL_ESC_T_MINF" default="0.15" type="FLOAT">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor STICK_MINF</short_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <decimal>10</decimal>
+      <increment>1.0</increment>
+    </parameter>
+    <parameter name="VOXL_ESC_T_PERC" default="90" type="INT32">
+      <short_desc>UART ESC Turtle Mode Crash Flip Motor Percent</short_desc>
+      <min>1</min>
+      <max>100</max>
+      <decimal>10</decimal>
+      <increment>1</increment>
+    </parameter>
+    <parameter name="VOXL_ESC_VLOG" default="0" type="INT32">
+      <short_desc>UART ESC verbose logging</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+        <value code="1">- Enabled</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="VOXL2 IO">
+    <parameter name="VOXL2_IO_BAUD" default="921600" type="INT32">
+      <short_desc>UART M0065 baud rate</short_desc>
+      <long_desc>Default rate is 921600, which is used for communicating with M0065.</long_desc>
+      <unit>bit/s</unit>
+    </parameter>
+    <parameter name="VOXL2_IO_MAX" default="2000" type="INT32">
+      <short_desc>M0065 PWM Max</short_desc>
+      <long_desc>Maximum duration (microseconds) for M0065 PWM</long_desc>
+      <min>0</min>
+      <max>2000</max>
+      <unit>us</unit>
+    </parameter>
+    <parameter name="VOXL2_IO_MIN" default="1000" type="INT32">
+      <short_desc>M0065 PWM Min</short_desc>
+      <long_desc>Minimum duration (microseconds) for M0065 PWM</long_desc>
+      <min>0</min>
+      <max>2000</max>
+      <unit>us</unit>
     </parameter>
   </group>
   <group name="VTOL Attitude Control">
