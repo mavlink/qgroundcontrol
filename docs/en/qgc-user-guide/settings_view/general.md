@@ -241,6 +241,12 @@ The settings are:
 - **Max Storage Usage**: Maximum video file storage before video files are auto deleted.
 - **Video File Format**: File format for the saved video recording: mkv, mov, mp4.
 
+## Setup Checklist
+
+<img src="C:\Users\siddiqui\Desktop\Project\Images\Setup Checklist.JPG" alt="Setup Checklist">
+
+
+
 ## Brand Image
 
 This setting specifies the _brand image_ used for indoor/outdoor colour schemes.
