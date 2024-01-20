@@ -427,13 +427,13 @@ void MockLink::_sendSysStatus(void)
                 _vehicleComponentId,
                 static_cast<uint8_t>(mavlinkChannel()),
                 &msg,
-                0,          // onboard_control_sensors_present
-                0,          // onboard_control_sensors_enabled
-                0,          // onboard_control_sensors_health
-                250,        // load
-                4200 * 4,   // voltage_battery
-                8000,       // current_battery
-                _battery1PctRemaining, // battery_remaining
+                MAV_SYS_STATUS_SENSOR_GPS,  // onboard_control_sensors_present
+                0,                          // onboard_control_sensors_enabled
+                0,                          // onboard_control_sensors_health
+                250,                        // load
+                4200 * 4,                   // voltage_battery
+                8000,                       // current_battery
+                _battery1PctRemaining,      // battery_remaining
                 0,0,0,0,0,0,0,0,0);
     respondWithMavlinkMessage(msg);
 }
