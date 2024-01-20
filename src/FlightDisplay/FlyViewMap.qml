@@ -614,11 +614,24 @@ FlightMap {
                     globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, clickMenu.coord)
                 }
             }
+
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Set Estimator Origin")
+                visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
+                onClicked: {
+                    if (clickMenu.opened) {
+                        clickMenu.close()
+                    }
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, clickMenu.coord)
+                }
+            }        
         }
     }
 
     onMapClicked: (mouse) => {
-        if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
+        if (!globals.guidedControllerFlyView.guidedUIVisible && 
+            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
             orbitMapCircle.hide()
             gotoLocationItem.hide()
             var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
