@@ -4541,6 +4541,29 @@ void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
             qDebug("unknown function");
             break;
         default: 
-        break;
+            break;
     }
+}
+
+void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "setEstimatorOrigin: primary link gone!";
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_msg_set_gps_global_origin_pack_chan(
+        _mavlink->getSystemId(),
+        _mavlink->getComponentId(),
+        sharedLink->mavlinkChannel(),
+        &msg,
+        id(),
+        centerCoord.latitude() * 1e7,
+        centerCoord.longitude() * 1e7,
+        centerCoord.altitude() * 1e3,
+        static_cast<float>(qQNaN())
+    );
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
