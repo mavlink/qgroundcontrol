@@ -203,7 +203,6 @@ target_link_libraries(${PROJECT_NAME}
             Settings
             Terrain
             uas
-            ui
             Vehicle
             VehicleSetup
             VideoManager

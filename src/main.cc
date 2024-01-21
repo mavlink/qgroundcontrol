@@ -85,9 +85,6 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
 #include "JoystickAndroid.h"
 #endif
-#if defined(QGC_ENABLE_PAIRING)
-#include "PairingManager.h"
-#endif
 #if !defined(NO_SERIAL_LINK)
 #include "qserialport.h"
 #endif
@@ -193,10 +190,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
 #ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
     JoystickAndroid::setNativeMethods();
-#endif
-
-#if defined(QGC_ENABLE_PAIRING)
-    PairingManager::setNativeMethods();
 #endif
 
     return JNI_VERSION_1_6;

@@ -16,11 +16,8 @@ add_library(Joystick
 )
 
 target_link_libraries(Joystick
-        PRIVATE
-            ui
 	PUBLIC
 		qgc
-		ui
 )
 
 target_include_directories(Joystick PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

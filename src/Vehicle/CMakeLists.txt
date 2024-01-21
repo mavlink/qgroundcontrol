@@ -113,7 +113,6 @@ add_library(Vehicle
 target_link_libraries(Vehicle
 	PRIVATE
 		Actuators
-		ui
 		compression
 		libevents_generated
 		libevents_parser

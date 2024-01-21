@@ -31,9 +31,6 @@
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "ADSBVehicleManager.h"
-#if defined(QGC_ENABLE_PAIRING)
-#include "PairingManager.h"
-#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -82,9 +79,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
     _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
-#if defined(QGC_ENABLE_PAIRING)
-    _pairingManager         = new PairingManager            (app, this);
-#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -112,9 +106,6 @@ void QGCToolbox::setChildToolboxes(void)
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
     _adsbVehicleManager->setToolbox(this);
-#if defined(QGC_ENABLE_PAIRING)
-    _pairingManager->setToolbox(this);
-#endif
 }
 
 void QGCToolbox::_scanAndLoadPlugins(QGCApplication* app)

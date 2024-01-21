@@ -194,15 +194,6 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
 bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
     if (settingsGroup == AppSettings::settingsGroup) {
-#if !defined(QGC_ENABLE_PAIRING)
-        //-- If we don't support pairing, disable it.
-        if (metaData.name() == AppSettings::usePairingName) {
-            metaData.setRawDefaultValue(false);
-            //-- And hide the option
-            return false;
-        }
-#endif
-
         //-- Default Palette
         if (metaData.name() == AppSettings::indoorPaletteName) {
             QVariant outdoorPalette;
