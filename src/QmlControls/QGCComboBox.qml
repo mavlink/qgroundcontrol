@@ -105,7 +105,7 @@ T.ComboBox {
         height:                 ScreenTools.defaultFontPixelWidth
         width:                  height
         source:                 "/qmlimages/arrow-down.png"
-        color:                  qgcPal.text
+        color:                  qgcPal.buttonText
     }
 
     // The label of the button
@@ -115,7 +115,7 @@ T.ComboBox {
         anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
         text:                       control.alternateText === "" ? control.currentText : control.alternateText
         font:                       control.font
-        color:                      qgcPal.text
+        color:                      qgcPal.buttonText
     }
 
     background: Rectangle {

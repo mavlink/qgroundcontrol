@@ -31,8 +31,9 @@ HackFileDialog                          1.0 HackFileDialog.qml
 HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
 IndicatorButton                         1.0 IndicatorButton.qml
-IndicatorPageButtonRow                  1.0 IndicatorPageButtonRow.qml
-IndicatorPageGroupLayout                1.0 IndicatorPageGroupLayout.qml
+LabelledButton                          1.0 LabelledButton.qml
+LabelledLabel                           1.0 LabelledLabel.qml
+SettingsGroupLayout                     1.0 SettingsGroupLayout.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml
 InstrumentValueValue                    1.0 InstrumentValueValue.qml
 InstrumentValueEditDialog               1.0 InstrumentValueEditDialog.qml

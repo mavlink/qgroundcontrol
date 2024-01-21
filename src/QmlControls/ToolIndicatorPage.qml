@@ -54,7 +54,7 @@ RowLayout {
         id:                     divider
         Layout.preferredWidth:  visible ? 1 : -1
         Layout.fillHeight:      true
-        color:                  QGroundControl.globalPalette.text
+        border.color:           Qt.darker(QGroundControl.globalPalette.text, 4)
         visible:                expanded
     }
 

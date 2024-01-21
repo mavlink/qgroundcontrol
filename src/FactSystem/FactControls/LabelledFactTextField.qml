@@ -16,18 +16,18 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 RowLayout {
-    property alias label:                   _label.text
-    property alias fact:                    _factTextField.fact
-    property real  textFieldPreferredWidth: -1
-    property alias textFieldUnitsLabel:     _factTextField.unitsLabel
-    property alias textFieldShowUnits:      _factTextField.showUnits
-    property alias textFieldShowHelp:       _factTextField.showHelp
+    property string label:                   fact.shortDescription
+    property alias  fact:                    _factTextField.fact
+    property real   textFieldPreferredWidth: -1
+    property alias  textFieldUnitsLabel:     _factTextField.unitsLabel
+    property alias  textFieldShowUnits:      _factTextField.showUnits
+    property alias  textFieldShowHelp:       _factTextField.showHelp
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
 
     QGCLabel {
-        id:                 _label  
         Layout.fillWidth:   true
+        text:               label
     }
 
     FactTextField {

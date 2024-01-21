@@ -21,7 +21,6 @@ import QGroundControl.FactControls
 ToolIndicatorPage {
     showExpand: true
 
-    property real   margins:            ScreenTools.defaultFontPixelHeight
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property string na:                 qsTr("N/A", "No data to display")
     property string valueNA:            qsTr("--.--", "No data to display")
@@ -30,79 +29,67 @@ ToolIndicatorPage {
 
     contentComponent: Component {
         ColumnLayout {
-            spacing: margins
+            spacing: ScreenTools.defaultFontPixelHeight / 2
 
-            QGCLabel {
-                Layout.alignment:   Qt.AlignHCenter
-                text:               qsTr("Vehicle GPS Status")
-                font.family:        ScreenTools.demiboldFontFamily
-            }
+            SettingsGroupLayout {
+                heading: qsTr("Vehicle GPS Status")
 
-            GridLayout {
-                Layout.fillWidth:   true
-                columnSpacing:      margins
-                columns:            2
-
-                QGCLabel { Layout.fillWidth: true; text: qsTr("Satellites") }
-                QGCLabel { text: activeVehicle ? activeVehicle.gps.count.valueString : na }
-
-                QGCLabel { Layout.fillWidth: true; text: qsTr("GPS Lock") }
-                QGCLabel { text: activeVehicle ? activeVehicle.gps.lock.enumStringValue : na }
-
-                QGCLabel { Layout.fillWidth: true; text: qsTr("HDOP") }
-                QGCLabel { text: activeVehicle ? activeVehicle.gps.hdop.valueString : valueNA }
-
-                QGCLabel { Layout.fillWidth: true; text: qsTr("VDOP") }
-                QGCLabel { text: activeVehicle ? activeVehicle.gps.vdop.valueString : valueNA }
-
-                QGCLabel { Layout.fillWidth: true; text: qsTr("Course Over Ground") }
-                QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : valueNA }
-            }
-
-            QGCLabel {
-                Layout.alignment:   Qt.AlignHCenter
-                text:               qsTr("RTK GPS Status")
-                font.family:        ScreenTools.demiboldFontFamily
-                visible:            QGroundControl.gpsRtk.connected.value
-            }
-
-            GridLayout {
-                Layout.fillWidth:   true
-                columnSpacing:      margins
-                columns:            2
-                visible:            QGroundControl.gpsRtk.connected.value
-
-                QGCLabel {
-                    Layout.alignment:   Qt.AlignLeft
-                    Layout.columnSpan:  2
-                    text:               (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
+                LabelledLabel {
+                    label:      qsTr("Satellites")
+                    labelText:  activeVehicle ? activeVehicle.gps.count.valueString : na
                 }
 
-                QGCLabel { Layout.fillWidth: true; text: qsTr("Satellites") }
-                QGCLabel { text: QGroundControl.gpsRtk.numSatellites.value }
-
-                QGCLabel { Layout.fillWidth: true; text: qsTr("Duration") }
-                QGCLabel { text: QGroundControl.gpsRtk.currentDuration.value + ' s' }
-
-                QGCLabel {
-                    // during survey-in show the current Accuracy, after that show the final Accuracy
-                    id:                 accuracyLabel
-                    Layout.fillWidth:   true
-                    text:               QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
-                    visible:            QGroundControl.gpsRtk.currentAccuracy.value > 0
+                LabelledLabel {
+                    label:      qsTr("GPS Lock")
+                    labelText:  activeVehicle ? activeVehicle.gps.lock.enumStringValue : na
                 }
+
+                LabelledLabel {
+                    label:      qsTr("HDOP")
+                    labelText:  activeVehicle ? activeVehicle.gps.hdop.valueString : valueNA
+                }
+
+                LabelledLabel {
+                    label:      qsTr("VDOP")
+                    labelText:  activeVehicle ? activeVehicle.gps.vdop.valueString : valueNA
+                }
+
+                LabelledLabel {
+                    label:      qsTr("Course Over Ground")
+                    labelText:  activeVehicle ? activeVehicle.gps.courseOverGround.valueString : valueNA
+                }
+            }
+
+            SettingsGroupLayout {
+                heading:    qsTr("RTK GPS Status")
+                visible:    QGroundControl.gpsRtk.connected.value
+
                 QGCLabel {
-                    text:       QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-                    visible:    accuracyLabel.visible
+                    text: (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
+                }
+
+                LabelledLabel {
+                    label:      qsTr("Satellites")
+                    labelText:  QGroundControl.gpsRtk.numSatellites.value
+                }
+
+                LabelledLabel {
+                    label:      qsTr("Duration")
+                    labelText:  QGroundControl.gpsRtk.currentDuration.value + ' s'
+                }
+
+                LabelledLabel {
+                    label:      QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
+                    labelText:  QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+                    visible:    QGroundControl.gpsRtk.currentAccuracy.value > 0
                 }
             }
         }
     }
 
     expandedComponent: Component {
-        IndicatorPageGroupLayout {
+        SettingsGroupLayout {
             heading:        qsTr("RTK GPS Settings")
-            showDivider:    false
 
             FactCheckBoxSlider {
                 Layout.fillWidth:   true
