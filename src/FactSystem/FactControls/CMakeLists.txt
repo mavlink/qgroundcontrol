@@ -15,6 +15,9 @@ add_custom_target(FactControlsQml
 		FactTextFieldRow.qml
 		FactTextFieldSlider.qml
 		FactValueSlider.qml
+        LabelledFactComboBox.qml
+        LabelledFactTextField.qml
+        LabelledFactSlider.qml
 )
 
 target_link_libraries(FactControls qgc)

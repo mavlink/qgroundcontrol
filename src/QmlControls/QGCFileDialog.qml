@@ -100,10 +100,11 @@ Item {
         defaultSuffix:  _root.defaultSuffix
 
         onAccepted: {
+            var fullPath = controller.urlToLocalFile(selectedFile)
             if (fileMode == FileDialog.OpenFile) {
-                _root.acceptedForLoad(controller.urlToLocalFile(selectedFile))
+                _root.acceptedForLoad(fullPath)
             } else {
-                _root.acceptedForSave(controller.urlToLocalFile(selectedFile))
+                _root.acceptedForSave(fullPath)
             }
         }
         onRejected: _root.rejected()

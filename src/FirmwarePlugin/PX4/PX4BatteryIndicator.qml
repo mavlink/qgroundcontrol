@@ -23,39 +23,35 @@ BatteryIndicator {
     waitForParameters: true
 
     expandedPageComponent: Component {
-        ColumnLayout {
-            spacing: ScreenTools.defaultFontPixelHeight / 2
+        SettingsGroupLayout {
+            Layout.fillWidth:   true
+            heading:            qsTr("Low Battery")
 
             FactPanelController { id: controller }
 
-            IndicatorPageGroupLayout {
+            LabelledFactSlider {
+                Layout.fillWidth:       true
+                Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
+                label:                  qsTr("Warning Level")
+                fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
+            }   
+
+            LabelledFactSlider {
                 Layout.fillWidth:   true
-                heading:            qsTr("Low Battery")
+                label:              qsTr("Failsafe Level")
+                fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
+            }
 
-                LabelledFactSlider {
-                    Layout.fillWidth:       true
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
-                    label:                  qsTr("Warning Level")
-                    fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
-                }   
+            LabelledFactSlider {
+                Layout.fillWidth:   true
+                label:              qsTr("Emergency Level")
+                fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
+            }
 
-                LabelledFactSlider {
-                    Layout.fillWidth:   true
-                    label:              qsTr("Failsafe Level")
-                    fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
-                }
-
-                LabelledFactSlider {
-                    Layout.fillWidth:   true
-                    label:              qsTr("Emergency Level")
-                    fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
-                }
-
-                LabelledFactComboBox {
-                    label:              qsTr("Failsafe Action")
-                    fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
-                    indexModel:         false
-                }
+            LabelledFactComboBox {
+                label:              qsTr("Failsafe Action")
+                fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+                indexModel:         false
             }
         }
     }

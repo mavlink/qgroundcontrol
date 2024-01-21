@@ -38,7 +38,7 @@ FlightModeIndicator {
 
             FactPanelController { id: controller }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth: true
 
                 LabelledFactSlider {
@@ -74,7 +74,7 @@ FlightModeIndicator {
                 }
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:   true
                 visible:            sys_vehicle_resp
 
@@ -191,29 +191,17 @@ FlightModeIndicator {
                 }
             }
 
-            IndicatorPageGroupLayout {
-                Layout.fillWidth:  true
+            SettingsGroupLayout {
+                Layout.fillWidth:   true
+                heading:            qsTr("Mission Turning Radius")
+                headingDescription: qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-
-                    QGCLabel { text: qsTr("Mission Turning Radius") }
-
-                    QGCLabel {
-                        Layout.fillWidth:       true
-                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 30
-                        text:                   qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
-                        font.pointSize:         ScreenTools.smallFontPointSize
-                        wrapMode:               QGCLabel.WordWrap
-                    }
-
-                    FactSlider {
-                        Layout.fillWidth:   true
-                        fact:               controller.getParameterFact(-1, "NAV_ACC_RAD")
-                        from:               2
-                        to:                 16
-                        stepSize:           0.5
-                    }
+                FactSlider {
+                    Layout.fillWidth:   true
+                    fact:               controller.getParameterFact(-1, "NAV_ACC_RAD")
+                    from:               2
+                    to:                 16
+                    stepSize:           0.5
                 }
             }
         }
