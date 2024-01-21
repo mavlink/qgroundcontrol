@@ -165,7 +165,7 @@ RowLayout {
                 sourceComponent: expandedPageComponent
             }
 
-            IndicatorPageGroupLayout {
+            SettingsGroupLayout {
                 Layout.fillWidth:  true
 
                 RowLayout {
@@ -177,17 +177,11 @@ RowLayout {
                     }
 
                     QGCCheckBoxSlider {
-                        id:         editModeCheckBox
-                        onClicked:  control.editMode = checked
+                        onClicked: control.editMode = checked
                     }
                 }
-            }
 
-            IndicatorPageGroupLayout {
-                Layout.fillWidth:   true
-                showDivider:        false
-
-                IndicatorPageButtonRow {
+                LabelledButton {
                     Layout.fillWidth:   true
                     label:              qsTr("RC Transmitter Flight Modes")
                     buttonText:         qsTr("Configure")
