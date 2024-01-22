@@ -10466,6 +10466,11 @@
       <long_desc>Enable UAVCAN GPS subscriptions. uavcan::equipment::gnss::Fix uavcan::equipment::gnss::Fix2 uavcan::equipment::gnss::Auxiliary</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_SUB_GPS_R" default="1" type="INT32" boolean="true">
+      <short_desc>subscription GPS Relative</short_desc>
+      <long_desc>Enable UAVCAN GPS Relative subscription. ardupilot::gnss::RelPosHeading</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="UAVCAN_SUB_HYGRO" default="0" type="INT32" boolean="true">
       <short_desc>subscription hygrometer</short_desc>
       <long_desc>Enable UAVCAN hygrometer subscriptions. dronecan::sensors::hygrometer::Hygrometer</long_desc>
