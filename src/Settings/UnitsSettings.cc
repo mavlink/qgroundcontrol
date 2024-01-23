@@ -28,7 +28,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, horizontalDistanceUnits)
                    << QVariant::fromValue(static_cast<uint32_t>(HorizontalDistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(horizontalDistanceUnitsName);
-        metaData->setShortDescription(UnitsSettings::tr("Distance units"));
+        metaData->setShortDescription(UnitsSettings::tr("Horizontal Distance"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         HorizontalDistanceUnits defaultHorizontalDistanceUnit = HorizontalDistanceUnitsMeters;
@@ -59,7 +59,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, verticalDistanceUnits)
                    << QVariant::fromValue(static_cast<uint32_t>(VerticalDistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(verticalDistanceUnitsName);
-        metaData->setShortDescription(UnitsSettings::tr("Altitude units"));
+        metaData->setShortDescription(UnitsSettings::tr("Vertical Distance"));
         metaData->setEnumInfo(enumStrings, enumValues);
         VerticalDistanceUnits defaultVerticalAltitudeUnit = VerticalDistanceUnitsMeters;
         switch(QLocale::system().measurementSystem()) {
@@ -94,7 +94,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)
             QVariant::fromValue(static_cast<uint32_t>(AreaUnitsSquareMiles));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(areaUnitsName);
-        metaData->setShortDescription(UnitsSettings::tr("Area units"));
+        metaData->setShortDescription(UnitsSettings::tr("Area"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         AreaUnits defaultAreaUnit = AreaUnitsSquareMeters;
@@ -129,7 +129,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, speedUnits)
             QVariant::fromValue(static_cast<uint32_t>(SpeedUnitsKnots));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(speedUnitsName);
-        metaData->setShortDescription(UnitsSettings::tr("Speed units"));
+        metaData->setShortDescription(UnitsSettings::tr("Speed"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         SpeedUnits defaultSpeedUnit = SpeedUnitsMetersPerSecond;
@@ -159,7 +159,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         enumValues << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsCelsius)) << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsFarenheit));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(temperatureUnitsName);
-        metaData->setShortDescription(UnitsSettings::tr("Temperature units"));
+        metaData->setShortDescription(UnitsSettings::tr("Temperature"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         TemperatureUnits defaultTemperatureUnit = TemperatureUnitsCelsius;
@@ -193,7 +193,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, weightUnits)
             << QVariant::fromValue(static_cast<uint32_t>(WeightUnitsLbs));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(weightUnitsName);
-        metaData->setShortDescription(UnitsSettings::tr("Weight units"));
+        metaData->setShortDescription(UnitsSettings::tr("Weight"));
         metaData->setEnumInfo(enumStrings, enumValues);
         WeightUnits defaultWeightUnit = WeightUnitsGrams;
         switch(QLocale::system().measurementSystem()) {

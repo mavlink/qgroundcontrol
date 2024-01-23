@@ -33,6 +33,7 @@
         <file alias="QGroundControl/Controls/TransectStyleMapVisuals.qml">src/PlanView/TransectStyleMapVisuals.qml</file>
         <file alias="QGroundControl/FlightMap/MapLineArrow.qml">src/MissionManager/MapLineArrow.qml</file>
         <file alias="QGroundControl/FlightMap/SplitIndicator.qml">src/FlightMap/MapItems/SplitIndicator.qml</file>
+        <file alias="ADSBServerSettings.qml">src/ui/preferences/ADSBServerSettings.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
@@ -45,8 +46,10 @@
         <file alias="FirmwareUpgrade.qml">src/VehicleSetup/FirmwareUpgrade.qml</file>
         <file alias="FlightDisplayViewDummy.qml">src/FlightDisplay/FlightDisplayViewDummy.qml</file>
         <file alias="FlightDisplayViewUVC.qml">src/FlightDisplay/FlightDisplayViewUVC.qml</file>
+        <file alias="FlyViewSettings.qml">src/ui/preferences/FlyViewSettings.qml</file>
         <file alias="FWLandingPatternEditor.qml">src/PlanView/FWLandingPatternEditor.qml</file>
         <file alias="GeneralSettings.qml">src/ui/preferences/GeneralSettings.qml</file>
+        <file alias="GeneralSettings2.qml">src/ui/preferences/GeneralSettings2.qml</file>
         <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
         <file alias="HelpSettings.qml">src/ui/preferences/HelpSettings.qml</file>
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
@@ -72,6 +75,7 @@
         <file alias="OfflineMap.qml">src/QtLocationPlugin/QMLControl/OfflineMap.qml</file>
         <file alias="PlanToolBarIndicators.qml">src/PlanView/PlanToolBarIndicators.qml</file>
         <file alias="PlanView.qml">src/PlanView/PlanView.qml</file>
+        <file alias="PlanViewSettings.qml">src/ui/preferences/PlanViewSettings.qml</file>
         <file alias="PlanViewToolBar.qml">src/ui/toolbar/PlanViewToolBar.qml</file>
         <file alias="PreFlightCheckList.qml">src/FlightDisplay/PreFlightCheckList.qml</file>
         <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>
@@ -107,6 +111,7 @@
         <file alias="QGroundControl/Controls/HorizontalFactValueGrid.qml">src/QmlControls/HorizontalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/LabelledButton.qml">src/QmlControls/LabelledButton.qml</file>
+        <file alias="QGroundControl/Controls/LabelledComboBox.qml">src/QmlControls/LabelledComboBox.qml</file>
         <file alias="QGroundControl/Controls/LabelledLabel.qml">src/QmlControls/LabelledLabel.qml</file>
         <file alias="QGroundControl/Controls/SettingsGroupLayout.qml">src/QmlControls/SettingsGroupLayout.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
@@ -289,6 +294,8 @@
         <file alias="SerialSettings.qml">src/ui/preferences/SerialSettings.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
         <file alias="SetupView.qml">src/VehicleSetup/SetupView.qml</file>
+        <file alias="SettingsPage.qml">src/ui/preferences/SettingsPage.qml</file>
+        <file alias="SettingsPagesModel.qml">src/ui/SettingsPagesModel.qml</file>
         <file alias="SimpleItemEditor.qml">src/PlanView/SimpleItemEditor.qml</file>
         <file alias="StructureScanEditor.qml">src/PlanView/StructureScanEditor.qml</file>
         <file alias="SurveyItemEditor.qml">src/PlanView/SurveyItemEditor.qml</file>
@@ -298,6 +305,7 @@
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
+        <file alias="VideoSettings.qml">src/ui/preferences/VideoSettings.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
         <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
