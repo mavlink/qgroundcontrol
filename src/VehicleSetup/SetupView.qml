@@ -224,20 +224,6 @@ Rectangle {
             id:         buttonColumn
             spacing:    _defaultTextHeight / 2
 
-            Repeater {
-                model:                  _corePlugin ? _corePlugin.settingsPages : []
-                visible:                _corePlugin && _corePlugin.options.combineSettingsAndSetup
-                SubMenuButton {
-                    imageResource:      modelData.icon
-                    setupIndicator:     false
-                    buttonGroup:     setupButtonGroup
-                    text:               modelData.title
-                    visible:            _corePlugin && _corePlugin.options.combineSettingsAndSetup
-                    onClicked:          showPanel(this, modelData.url)
-                    Layout.fillWidth:   true
-                }
-            }
-
             SubMenuButton {
                 id:                 summaryButton
                 imageResource:      "/qmlimages/VehicleSummaryIcon.png"
