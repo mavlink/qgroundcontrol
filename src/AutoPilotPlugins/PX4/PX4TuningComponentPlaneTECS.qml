@@ -19,9 +19,12 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
 ColumnLayout {
+    property real _availableHeight: availableHeight
+    property real _availableWidth:  availableWidth
+
     PIDTuning {
         id:                 pidTuning
-        Layout.fillWidth:   true
+        availableWidth:     _availableWidth
         availableHeight:    _availableHeight - pidTuning.y
 
         property var data: QtObject {

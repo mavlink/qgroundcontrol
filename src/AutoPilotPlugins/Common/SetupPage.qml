@@ -60,6 +60,7 @@ Item {
             width:              availableWidth
             spacing:            _margins
             layoutDirection:    Qt.RightToLeft
+            visible:            showAdvanced || (pageDescription !== "" && !ScreenTools.isShortScreen)
 
             QGCCheckBox {
                 id:         advancedCheckBox
@@ -86,11 +87,13 @@ Item {
                 }
             }
         }
+
         Loader {
             id:                 pageLoader
             anchors.topMargin:  _margins
             anchors.top:        headingRow.bottom
         }
+
         // Overlay to display when vehicle is armed and this setup page needs
         // to be disabled
         Rectangle {
