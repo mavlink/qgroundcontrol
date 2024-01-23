@@ -17,6 +17,7 @@ ColumnLayout {
 
     property string heading
     property string headingDescription
+    property bool   showDividers:       true
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 2
 
@@ -27,8 +28,9 @@ ColumnLayout {
         visible:            heading !== ""
 
         QGCLabel { 
-            text:       heading
-            font.bold:  true
+            text:           heading
+            font.pointSize: ScreenTools.defaultFontPointSize + 1
+            font.bold:      true
         }
 
         QGCLabel { 
@@ -51,15 +53,15 @@ ColumnLayout {
         radius:             ScreenTools.defaultFontPixelHeight / 2
 
         Repeater {
-            model: 0 // _contentLayout.children.length - still nto working correctly, also not sure I want this
+            model: showDividers? _contentLayout.children.length : 0
 
             Rectangle {
-                x:                  0
-                y:                  _contentItem.y + _contentItem.height + _margins + (_margins / 2)
-                width:              parent.width
+                x:                  _margins
+                y:                  _contentItem.y + _contentItem.height + _margins + _margins
+                width:              parent.width - (_margins * 2)
                 height:             1
                 color:              outerRect.border.color
-                visible:            index < _contentLayout.children.length - 1
+                visible:            _contentItem.visible && index < _contentLayout.children.length - 1
 
                 property var _contentItem: _contentLayout.children[index]
             }
@@ -70,7 +72,7 @@ ColumnLayout {
             x:                  _margins
             y:                  _margins
             width:              parent.width - (_margins * 2)
-            spacing:            _margins
+            spacing:            _margins * 2
         }
     }
 }

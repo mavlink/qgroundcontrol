@@ -12,13 +12,10 @@ import QtQuick.Layouts
 
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
-import QGroundControl.FactControls
 
 RowLayout {
     property alias label:                   label.text
-    property alias fact:                    _comboBox.fact
-    property alias indexModel:              _comboBox.indexModel
+    property alias model:                   _comboBox.model
     property var   comboBox:                _comboBox
     property real  comboBoxPreferredWidth:  -1
 
@@ -31,10 +28,9 @@ RowLayout {
         Layout.fillWidth:   true
     }
 
-    FactComboBox {
+    QGCComboBox {
         id:                     _comboBox
         Layout.preferredWidth:  comboBoxPreferredWidth
         onActivated: (index) => { parent.activated(index) }
     }
 }
-
