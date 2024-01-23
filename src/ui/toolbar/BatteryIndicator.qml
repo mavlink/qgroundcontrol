@@ -196,6 +196,7 @@ Item {
                 SettingsGroupLayout {
                     heading:        qsTr("Battery %1").arg(_activeVehicle.batteries.length === 1 ? qsTr("Status") : object.id.rawValue)
                     contentSpacing: 0
+                    showDividers:   false
 
                     property var batteryValuesAvailable: batteryValuesAvailableLoader.item
 

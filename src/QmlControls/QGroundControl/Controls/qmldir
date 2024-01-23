@@ -32,6 +32,7 @@ HeightIndicator                         1.0 HeightIndicator.qml
 HorizontalFactValueGrid                 1.0 HorizontalFactValueGrid.qml
 IndicatorButton                         1.0 IndicatorButton.qml
 LabelledButton                          1.0 LabelledButton.qml
+LabelledComboBox                        1.0 LabelledComboBox.qml
 LabelledLabel                           1.0 LabelledLabel.qml
 SettingsGroupLayout                     1.0 SettingsGroupLayout.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml

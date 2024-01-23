@@ -67,6 +67,7 @@ add_custom_target(QmlControlsQml
 		JoystickThumbPad.qml
 		KMLOrSHPFileDialog.qml
         LabelledButton.qml
+        LabelledComboBox.qml
         LabelledLabel.qml
 		LogReplayStatusBar.qml
 		MainWindowSavedState.qml

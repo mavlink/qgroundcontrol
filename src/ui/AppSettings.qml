@@ -47,10 +47,10 @@ Rectangle {
     Component.onCompleted: {
         //-- Default Settings
         if (globals.commingFromRIDIndicator) {
-            __rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
+            rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
             globals.commingFromRIDIndicator = false
         } else {
-            __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+            rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
         }
     }
 
@@ -68,27 +68,36 @@ Rectangle {
 
         ColumnLayout {
             id:         buttonColumn
-            spacing:    _verticalMargin
+            spacing:    ScreenTools.defaultFontPixelHeight / 4
 
             property real _maxButtonWidth: 0
 
             Repeater {
                 id:     buttonRepeater
-                model:  QGroundControl.corePlugin.settingsPages
+                model:  SettingsPagesModel {}
 
-                QGCButton {
-                    height:             _buttonHeight
-                    text:               modelData.title
+                Button {
+                    padding:            ScreenTools.defaultFontPixelWidth / 2
                     autoExclusive:      true
                     Layout.fillWidth:   true
-                    visible:            modelData.url != "qrc:/qml/RemoteIDSettings.qml" ? true : QGroundControl.settingsManager.remoteIDSettings.enable.rawValue
+                    visible:            pageVisible()
+
+                    background: Rectangle {
+                        color:  checked ? qgcPal.buttonHighlight : "transparent"
+                        radius: ScreenTools.defaultFontPixelWidth / 2
+                    }
+
+                    contentItem: QGCLabel {
+                        text:   name
+                        color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                    }
 
                     onClicked: {
                         if (mainWindow.preventViewSwitch()) {
                             return
                         }
-                        if (__rightPanel.source !== modelData.url) {
-                            __rightPanel.source = modelData.url
+                        if (rightPanel.source !== url) {
+                            rightPanel.source = url
                         }
                         checked = true
                     }
@@ -104,7 +113,7 @@ Rectangle {
                         if (_commingFromRIDSettings) {
                             checked = false
                             _commingFromRIDSettings = false
-                            if (modelData.url == "qrc:/qml/RemoteIDSettings.qml") {
+                            if (modelData.url == "/qml/RemoteIDSettings.qml") {
                                 checked = true
                             }
                         }
@@ -128,7 +137,7 @@ Rectangle {
 
     //-- Panel Contents
     Loader {
-        id:                     __rightPanel
+        id:                     rightPanel
         anchors.leftMargin:     _horizontalMargin
         anchors.rightMargin:    _horizontalMargin
         anchors.topMargin:      _verticalMargin
