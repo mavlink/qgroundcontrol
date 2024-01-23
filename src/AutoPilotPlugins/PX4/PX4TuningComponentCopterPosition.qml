@@ -19,7 +19,9 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 
 ColumnLayout {
-    property Fact _mcPosMode: controller.getParameterFact(-1, "MPC_POS_MODE", false)
+    property real _availableHeight: availableHeight
+    property real _availableWidth:  availableWidth
+    property Fact _mcPosMode:       controller.getParameterFact(-1, "MPC_POS_MODE", false)
 
     GridLayout {
         columns: 2
@@ -37,7 +39,7 @@ ColumnLayout {
 
     PIDTuning {
         id:                 pidTuning
-        Layout.fillWidth:   true
+        availableWidth:     _availableWidth
         availableHeight:    _availableHeight - pidTuning.y
 
         property var horizontal: QtObject {

@@ -23,6 +23,7 @@ RowLayout {
     spacing: _margins
 
     property real   availableHeight
+    property real   availableWidth
     property var    axis
     property string unit
     property string title
@@ -114,20 +115,28 @@ RowLayout {
     on_CurrentAxisChanged: axisIndexChanged()
 
     ValueAxis {
-        id:             xAxis
-        min:            0
-        max:            0
-        labelFormat:    "%.2f"
-        titleText:      qsTr("sec")
-        tickCount:      11
+        id:                     xAxis
+        min:                    0
+        max:                    0
+        labelFormat:            "%.1f"
+        titleText:              ScreenTools.isShortScreen ? "" : qsTr("sec") // Save space on small screens
+        tickCount:              Math.min(Math.max(Math.floor(chart.width / (ScreenTools.defaultFontPixelWidth * 7)), 4), 11)
+        labelsFont.pointSize:   ScreenTools.defaultFontPointSize
+        labelsFont.family:      ScreenTools.normalFontFamily
+        titleFont.pointSize:    ScreenTools.defaultFontPointSize
+        titleFont.family:       ScreenTools.normalFontFamily
     }
 
     ValueAxis {
-        id:         yAxis
-        min:        0
-        max:        10
-        titleText:  unit
-        tickCount:  Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
+        id:                     yAxis
+        min:                    0
+        max:                    10
+        titleText:              unit
+        tickCount:              Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
+        labelsFont.pointSize:   ScreenTools.defaultFontPointSize
+        labelsFont.family:      ScreenTools.normalFontFamily
+        titleFont.pointSize:    ScreenTools.defaultFontPointSize
+        titleFont.family:       ScreenTools.normalFontFamily
     }
 
     Timer {
@@ -171,22 +180,30 @@ RowLayout {
         property int _maxPointCount:    10000 / interval
     }
 
-    ColumnLayout {
-        Layout.fillWidth:       true
-        Layout.preferredHeight: Math.max(availableHeight, ScreenTools.defaultFontPixelHeight * 20)
+    Column {
+        id:                 leftPanel
+        Layout.alignment:   Qt.AlignTop
+        spacing:            ScreenTools.defaultFontPixelHeight / 4
+        clip:               true // chart has redraw problems
 
         ChartView {
             id:                     chart
+            width:                  Math.max(_minChartWidth, availableWidth - rightPanel.width - parent.spacing)
+            height:                 Math.max(_minChartHeight, availableHeight - leftPanelBottomColumn.height - parent.spacing)
             antialiasing:           true
             legend.alignment:       Qt.AlignBottom
-            Layout.fillWidth:       true
-            Layout.fillHeight:      true
+            legend.font.pointSize:  ScreenTools.defaultFontPointSize
+            legend.font.family:     ScreenTools.normalFontFamily
+            titleFont.pointSize:    ScreenTools.defaultFontPointSize
+            titleFont.family:       ScreenTools.normalFontFamily
             margins.top:            _chartMargin
             margins.bottom:         _chartMargin
             margins.left:           _chartMargin
             margins.right:          _chartMargin
 
-            property real _chartMargin: ScreenTools.defaultFontPixelHeight / 2
+            property real _chartMargin: 0
+            property real _minChartWidth:   ScreenTools.defaultFontPixelWidth * 40
+            property real _minChartHeight:  ScreenTools.defaultFontPixelHeight * 15
 
             // enable mouse dragging
             MouseArea {
@@ -223,63 +240,67 @@ RowLayout {
             }
         }
 
-        Item { width: 1; height: 1 }
-
-        RowLayout {
-            spacing: _margins
-
-            QGCButton {
-                text:       qsTr("Clear")
-                onClicked:  resetGraphs()
-            }
-
-            QGCButton {
-                text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
-                onClicked: {
-                    dataTimer.running = !dataTimer.running
-                    _last_t = 0
-                    if (showAutoModeChange && autoModeChange.checked) {
-                        globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
-                    }
-                }
-            }
-            Connections {
-                target: globals.activeVehicle
-                onArmedChanged: {
-                    if (armed && !dataTimer.running) { // start plotting on arming if not already running
-                        dataTimer.running = true
-                        _last_t = 0
-                    }
-                }
-            }
-        }
-
-        QGCCheckBox {
-            visible: showAutoModeChange
-            id:     autoModeChange
-            text:   qsTr("Automatic Flight Mode Switching")
-            onClicked: {
-                if (checked)
-                    dataTimer.running = false
-            }
-        }
-
         Column {
-            visible: autoModeChange.checked
-            QGCLabel {
-                text:            qsTr("Switches to 'Stabilized' when you click Start.")
-                font.pointSize:     ScreenTools.smallFontPointSize
+            id:         leftPanelBottomColumn
+            spacing:    ScreenTools.defaultFontPixelHeight / 4
+
+            RowLayout {
+                spacing: _margins
+
+                QGCButton {
+                    text:       qsTr("Clear")
+                    onClicked:  resetGraphs()
+                }
+
+                QGCButton {
+                    text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
+                    onClicked: {
+                        dataTimer.running = !dataTimer.running
+                        _last_t = 0
+                        if (showAutoModeChange && autoModeChange.checked) {
+                            globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
+                        }
+                    }
+                }
+                Connections {
+                    target: globals.activeVehicle
+                    onArmedChanged: {
+                        if (armed && !dataTimer.running) { // start plotting on arming if not already running
+                            dataTimer.running = true
+                            _last_t = 0
+                        }
+                    }
+                }
             }
 
-            QGCLabel {
-                text:            qsTr("Switches to '%1' when you click Stop.").arg(globals.activeVehicle.pauseFlightMode)
-                font.pointSize:     ScreenTools.smallFontPointSize
+            QGCCheckBox {
+                visible: showAutoModeChange
+                id:     autoModeChange
+                text:   qsTr("Automatic Flight Mode Switching")
+                onClicked: {
+                    if (checked)
+                        dataTimer.running = false
+                }
+            }
+
+            Column {
+                visible: autoModeChange.checked
+                QGCLabel {
+                    text:            qsTr("Switches to 'Stabilized' when you click Start.")
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                }
+
+                QGCLabel {
+                    text:            qsTr("Switches to '%1' when you click Stop.").arg(globals.activeVehicle.pauseFlightMode)
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                }
             }
         }
     }
 
     ColumnLayout {
-        Layout.alignment: Qt.AlignTop
+        id:                 rightPanel
+        Layout.alignment:   Qt.AlignTop
 
         RowLayout {
             visible: showAutoTuning
