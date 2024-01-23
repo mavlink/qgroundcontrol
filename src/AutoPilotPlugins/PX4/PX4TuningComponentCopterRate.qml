@@ -20,6 +20,7 @@ import QGroundControl.Vehicle
 
 ColumnLayout {
     property real _availableHeight:     availableHeight
+    property real _availableWidth:      availableWidth
     property Fact _airmode:             controller.getParameterFact(-1, "MC_AIRMODE", false)
     property Fact _thrustModelFactor:   controller.getParameterFact(-1, "THR_MDL_FAC", false)
 
@@ -57,7 +58,7 @@ ColumnLayout {
 
     PIDTuning {
         id:                 pidTuning
-        Layout.fillWidth:   true
+        availableWidth:     _availableWidth
         availableHeight:    _availableHeight - pidTuning.y
         title:              qsTr("Rate")
         tuningMode:         Vehicle.ModeRateAndAttitude

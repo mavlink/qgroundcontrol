@@ -18,21 +18,19 @@ import QGroundControl.ScreenTools
 
 ColumnLayout {
     id:         root
-    width:      availableWidth
-    spacing:    ScreenTools.defaultFontPixelWidth
+    spacing:    ScreenTools.defaultFontPixelWidth / 4
 
     property var model
 
-    property real _availableHeight:  availableHeight
+    property real _availableHeight: availableHeight
+    property real _availableWidth:  availableWidth
 
     FactPanelController {
         id:         controller
     }
 
     QGCTabBar {
-        id:                 tabBar
-        Layout.fillWidth:   true
-        width:              parent.width
+        id: tabBar
 
         Repeater {
             model: root.model
@@ -43,11 +41,11 @@ ColumnLayout {
     }
 
     Loader {
-        id:                loader
-        source:            model.get(tabBar.currentIndex).tuningPage
-        Layout.fillWidth:   true
+        id:     loader
+        source: model.get(tabBar.currentIndex).tuningPage
 
         property bool useAutoTuning:    true
+        property real availableWidth:   _availableWidth
         property real availableHeight:  _availableHeight - loader.y
     }
 }
