@@ -12,29 +12,24 @@ import QtQuick.Layouts
 
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
-import QGroundControl.FactControls
 
 RowLayout {
     property alias label:                   label.text
-    property alias fact:                    _comboBox.fact
-    property alias indexModel:              _comboBox.indexModel
-    property var   comboBox:                _comboBox
-    property real  comboBoxPreferredWidth:  -1
+    property alias fact:                    factSlider.fact
+    property alias from:                    factSlider.from
+    property alias to:                      factSlider.to
+    property real  sliderPreferredWidth:    -1
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
-
-    signal activated(int index)
 
     QGCLabel {
         id:                 label  
         Layout.fillWidth:   true
     }
 
-    FactComboBox {
-        id:                     _comboBox
-        Layout.preferredWidth:  comboBoxPreferredWidth
-        onActivated: (index) => { parent.activated(index) }
+    QGCSlider {
+        id:                     factSlider
+        Layout.preferredWidth:  sliderPreferredWidth
     }
 }
 
