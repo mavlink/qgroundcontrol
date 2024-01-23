@@ -10,47 +10,54 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls
-import QtQuick.Templates as T
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
-T.TabButton {
-    id: control
+TabButton {
+    id:             control
+    topPadding:     _verticalPadding
+    bottomPadding:  _verticalPadding
+    leftPadding:    _horizontalPadding
+    rightPadding:   _horizontalPadding
+    focusPolicy:    Qt.ClickFocus
+    //implicitWidth:  Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
+    //implicitHeight:     Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
 
-    implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding)
+    property bool   primary:        false                               ///< primary button for a group of buttons
+    property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
+    property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
+    property real   backRadius:     ScreenTools.buttonBorderRadius
+    property real   heightFactor:   0.5
+
+    property alias wrapMode:            text.wrapMode
+    property alias horizontalAlignment: text.horizontalAlignment
+
+    property bool   _showHighlight:     enabled && (pressed | checked)
+
+    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth
+    property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    font.pointSize: ScreenTools.defaultFontPointSize
-    font.family:    ScreenTools.normalFontFamily
-
-    padding: 6
-    spacing: 6
-
-    //icon.width: 24
-    icon.height: ScreenTools.defaultFontPixelHeight
-    icon.color: checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-
-
-    contentItem: IconLabel {
-        spacing: control.spacing
-        mirrored: control.mirrored
-        display: control.display
-
-        icon: control.icon
-        text: control.text
-        font: control.font
-        color: checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    background: Rectangle {
+        id:             backRect
+        implicitWidth:  ScreenTools.implicitButtonWidth
+        implicitHeight: ScreenTools.implicitButtonHeight
+        //radius:         backRadius
+        border.width:   showBorder ? 1 : 0
+        border.color:   qgcPal.buttonBorder
+        color:          _showHighlight ? qgcPal.buttonHighlight : qgcPal.button
     }
 
-    background: Rectangle {
-        implicitHeight: 40
-        color: checked ? qgcPal.buttonHighlight : qgcPal.button
-        /*color: Color.blend(control.checked ? control.qgcPal.window : control.qgcPal.dark,
-                                             control.qgcPal.mid, control.down ? 0.5 : 0.0)*/
+    contentItem: Text {
+        id:                     text
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        antialiasing:           true
+        text:                   control.text
+        font.pointSize:         pointSize
+        font.family:            ScreenTools.normalFontFamily
+        color:                  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
     }
 }
