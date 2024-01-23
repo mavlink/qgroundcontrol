@@ -47,7 +47,6 @@ public:
     QGCCorePlugin(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList         settingsPages                   READ settingsPages                                  NOTIFY settingsPagesChanged)
     Q_PROPERTY(QVariantList         analyzePages                    READ analyzePages                                   NOTIFY analyzePagesChanged)
     Q_PROPERTY(int                  defaultSettings                 READ defaultSettings                                CONSTANT)
     Q_PROPERTY(QGCOptions*          options                         READ options                                        CONSTANT)
@@ -62,10 +61,6 @@ public:
     Q_PROPERTY(int                  offlineVehicleFirstRunPromptId  MEMBER offlineVehicleFirstRunPromptId               CONSTANT)
 
     Q_INVOKABLE bool guidedActionsControllerLogging() const;
-
-    /// The list of settings under the Settings Menu
-    /// @return A list of QGCSettings
-    virtual QVariantList& settingsPages();
 
     /// The list of pages/buttons under the Analyze Menu
     /// @return A list of QmlPageInfo

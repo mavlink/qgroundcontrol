@@ -50,9 +50,12 @@ Rectangle {
             rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
             globals.commingFromRIDIndicator = false
         } else {
-            rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+            rightPanel.source =  "/qml/GeneralSettings.qml"
         }
     }
+
+
+    SettingsPagesModel { id: settingsPagesModel }
 
     QGCFlickable {
         id:                 buttonList
@@ -74,7 +77,7 @@ Rectangle {
 
             Repeater {
                 id:     buttonRepeater
-                model:  SettingsPagesModel {}
+                model:  settingsPagesModel
 
                 Button {
                     padding:            ScreenTools.defaultFontPixelWidth / 2
