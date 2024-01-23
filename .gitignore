@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.cache/
 cmake-build-*/
 out/
 libs/lib/Frameworks/GStreamer.framework
