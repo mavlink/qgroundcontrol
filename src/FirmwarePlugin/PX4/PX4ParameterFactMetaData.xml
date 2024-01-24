@@ -1872,7 +1872,7 @@
       <short_desc>Accelerometer measurement noise for gravity based observations</short_desc>
       <min>0.1</min>
       <max>10.0</max>
-      <unit>g</unit>
+      <unit>g0</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter name="EKF2_GSF_TAS" default="15.0" type="FLOAT">
