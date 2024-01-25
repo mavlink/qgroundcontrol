@@ -38,6 +38,12 @@ ListModel {
     }
 
     ListElement {
+        name: qsTr("Telemetry")
+        url: "/qml/TelemetrySettings.qml"
+        pageVisible: function() { return true }
+    }
+
+    ListElement {
         name: qsTr("ADSB Server")
         url: "/qml/ADSBServerSettings.qml"
         pageVisible: function() { return true }

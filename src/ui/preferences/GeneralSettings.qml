@@ -31,7 +31,6 @@ SettingsPage {
     property Fact   _userBrandImageIndoor:      _brandImageSettings.userBrandImageIndoor
     property Fact   _userBrandImageOutdoor:     _brandImageSettings.userBrandImageOutdoor
     property Fact   _appSavePath:               _appSettings.savePath
-    property bool   _disableAllDataPersistence: _appSettings.disableAllPersistence.rawValue
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
@@ -211,35 +210,6 @@ SettingsPage {
                 fact:                   modelData
                 indexModel:             false
             }
-        }
-    }
-
-    SettingsGroupLayout {
-        Layout.fillWidth:   true
-        heading:            qsTr("Telemetry Logging")
-        visible:            !_disableAllDataPersistence
-
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Save log after each flight")
-            fact:               _telemetrySave
-            visible:            fact.visible
-            property Fact _telemetrySave: _appSettings.telemetrySave
-        }
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Save logs even if vehicle was not armed")
-            fact:               _telemetrySaveNotArmed
-            visible:            fact.visible
-            enabled:            _appSettings.telemetrySave.rawValue
-            property Fact _telemetrySaveNotArmed: _appSettings.telemetrySaveNotArmed
-        }
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Save CSV log of telemetry data")
-            fact:               _saveCsvTelemetry
-            visible:            fact.visible
-            property Fact _saveCsvTelemetry: _appSettings.saveCsvTelemetry
         }
     }
 
