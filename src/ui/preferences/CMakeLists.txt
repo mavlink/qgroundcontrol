@@ -15,6 +15,7 @@ add_custom_target(UiPreferencesQml
         PlanViewSettings.qml
 		SerialSettings.qml
 		TcpSettings.qml
+        TelemetrySettings.qml
 		UdpSettings.qml
         VideoSettings.qml
 )
