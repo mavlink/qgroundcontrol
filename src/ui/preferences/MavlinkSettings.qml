@@ -35,8 +35,8 @@ Rectangle {
     property bool _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
     property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible && _isAPM
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _isPX4:               _activeVehicle ? _activeVehicle.px4Firmware : false
-    property bool _isAPM:               _activeVehicle ? _activeVehicle.apmFirmware : false
+    property bool _isPX4:               _activeVehicle ? _activeVehicle.px4Firmware : true
+    property bool _isAPM:               _activeVehicle ? _activeVehicle.apmFirmware : true
     property Fact _disableDataPersistenceFact: QGroundControl.settingsManager.appSettings.disableAllPersistence
     property bool _disableDataPersistence:     _disableDataPersistenceFact ? _disableDataPersistenceFact.rawValue : false
 
