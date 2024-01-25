@@ -67,7 +67,7 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     _targetSystem = _vehicle->id();
     _targetComponent = _vehicle->compId();
 
-    if (_settings->operatorIDChecked()->rawValue() == true) {
+    if (_settings->operatorIDValid()->rawValue() == true) {
         // If it was already checked, we can flag this as good to go.
         // We don't do a fresh verification because we don't store the private part of the ID.
         _operatorIDGood = true;
@@ -404,43 +404,28 @@ void RemoteIDManager::_checkGCSBasicID()
     }
 }
 
-void RemoteIDManager::setOperatorID(const QString& operatorID)
+void RemoteIDManager::checkOperatorID(const QString& operatorID)
 {
     // We overwrite the fact that is also set by the text input but we want to update
     // after every letter rather than when editing is done.
     // We check whether it actually changed to avoid triggering this on startup.
     if (operatorID != _settings->operatorID()->rawValueString()) {
-        _settings->operatorID()->setRawValue(operatorID);
-        _settings->operatorIDChecked()->setRawValue(false);
-        checkOperatorID(false);
+        _settings->operatorIDValid()->setRawValue(_isEUOperatorIDValid(operatorID));
     }
 }
 
-void RemoteIDManager::checkOperatorID(bool save)
+void RemoteIDManager::setOperatorID()
 {
-    if (_settings->operatorIDChecked()->rawValue() == true) {
-        // Already checked, we can ignore it
-        return;
-    }
-
     QString operatorID = _settings->operatorID()->rawValue().toString();
 
     if (_settings->region()->rawValue().toInt() == Region::EU) {
-        // In the EU, the operator ID needs to be checked.
-        _operatorIDGood = _isEUOperatorIDValid(operatorID);
-
-        if (save) {
-            // Save for next time because we don't save the private part,
-            // so we can't re-verify next time and just trust the value
-            // in the settings.
-            if (_operatorIDGood) {
-                _settings->operatorIDChecked()->setRawValue(true);
-                // Strip private part
-                _settings->operatorID()->setRawValue(operatorID.sliced(0, 16));
-
-            } else {
-                _settings->operatorIDChecked()->setRawValue(false);
-            }
+        // Save for next time because we don't save the private part,
+        // so we can't re-verify next time and just trust the value
+        // in the settings.
+        _operatorIDGood = _settings->operatorIDValid()->rawValue() == true;
+        if (_operatorIDGood) {
+            // Strip private part
+            _settings->operatorID()->setRawValue(operatorID.sliced(0, 16));
         }
 
     } else {

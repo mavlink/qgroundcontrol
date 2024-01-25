@@ -39,8 +39,8 @@ public:
     Q_PROPERTY (bool    operatorIDGood      READ operatorIDGood     NOTIFY operatorIDGoodChanged)
 
 
-    Q_INVOKABLE void setOperatorID(const QString& operatorID);
-    Q_INVOKABLE void checkOperatorID(bool save);
+    Q_INVOKABLE void checkOperatorID(const QString& operatorID);
+    Q_INVOKABLE void setOperatorID();
 
     // Declare emergency
     Q_INVOKABLE void setEmergency(bool declare);

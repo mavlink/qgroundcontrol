@@ -243,7 +243,7 @@ Rectangle {
                         id:                     operatorIDFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
-                        color:                  qgcPal.colorRed //_activeRID ? (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : (_offlineVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed)
+                        color:                  _activeRID ? (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
                         visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
 
@@ -771,12 +771,8 @@ Rectangle {
                     Layout.fillWidth:       true
 
                     border.width:   _borderWidth
-                    border.color:   (_regionOperation == RemoteIDSettings.RegionOperation.EU ||
-                                     QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value) ?
-                                      (_activeRID ?
-                                        (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) :
-                                         (_offlineVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed)) :
-                                       color
+                    border.color:   (_regionOperation == RemoteIDSettings.RegionOperation.EU || QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value) ?
+                                    (_activeRID && !_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorRed : color) : color
 
                     GridLayout {
                         id:                         operatorIDGrid
@@ -819,31 +815,35 @@ Rectangle {
                             visible:            QGroundControl.settingsManager.remoteIDSettings.operatorID.visible
                             Layout.fillWidth:   true
                             maximumLength:      20 // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
-                            property bool editing: false
 	                    onTextChanged: {
-                                // Usually changes are only saved when editing is finished (enter, out of focus)
-                                // but we want to track changes as letters are entered. Therefore, we set the new
-                                // text directly.
-                                // We also need to keep track of when this is being changed from within C++, so when the secret part
-                                // is removed. That's what the editing flag is for.
-                                if (editing) {
-                                    return
-                                }
                                 if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.setOperatorID(text)
+                                    _activeVehicle.remoteIDManager.checkOperatorID(text)
                                 } else {
-                                    _offlineVehicle.remoteIDManager.setOperatorID(text)
+                                    _offlineVehicle.remoteIDManager.checkOperatorID(text)
                                 }
                             }
                             onEditingFinished: {
-                                editing = true
                                 if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.checkOperatorID(true)
+                                    _activeVehicle.remoteIDManager.setOperatorID()
                                 } else {
-                                    _offlineVehicle.remoteIDManager.checkOperatorID(true)
+                                    _offlineVehicle.remoteIDManager.setOperatorID()
                                 }
-                                editing = false
                             }
+                        }
+
+                        // Spacer
+                        QGCLabel {
+                            text:               ""
+                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.fillWidth:   true
+                        }
+
+                        QGCLabel {
+                            text:               QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(QGroundControl.settingsManager.remoteIDSettings.operatorIDValid.rawValue == true ? " valid" : " invalid")
+                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.fillWidth:   true
                         }
 
                         QGCLabel {
@@ -857,7 +857,7 @@ Rectangle {
                             onClicked: {
                                 if (checked) {
                                     if (_activeVehicle) {
-                                        _activeVehicle.remoteIDManager.checkOperatorID(false)
+                                        _activeVehicle.remoteIDManager.setOperatorID()
                                     }
                                 }
                             }

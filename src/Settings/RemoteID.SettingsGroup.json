@@ -17,8 +17,8 @@
     "default":      ""
 },
 {
-    "name":         "operatorIDChecked",
-    "shortDesc":    "Operator ID checked",
+    "name":         "operatorIDValid",
+    "shortDesc":    "Operator ID is valid",
     "longDesc":     "Operator ID has been checked using checksum.",
     "type":         "bool",
     "default":      false
