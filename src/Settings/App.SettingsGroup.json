@@ -318,7 +318,8 @@
     "shortDesc": "Host name",
     "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
     "type":             "string",
-    "default":     "localhost:14445"
+    "default":     "localhost:14445",
+    "qgcRebootRequired":    true
 },
 {
     "name":      "forwardMavlinkAPMSupportHostName",
