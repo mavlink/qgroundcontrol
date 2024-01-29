@@ -7,10 +7,11 @@ Item {
     property var    flightMap
     property var    currentMissionItems
     property bool   triggerSubmitButton
+    property bool   resetRegisterFlightPlan
     // Dummy Signals
      signal responseSent(string response)
      signal vehicleIDSent(int id)
-     signal resetTriggered()
+     signal resetGeofencePolygonTriggered()
      signal timeStampSent(string timestamp, bool activateflag, string id)
-     signal approvalSent(bool approval)
+     signal removeFlightPlanTriggered()
 }
