@@ -216,6 +216,13 @@ Vehicle::Vehicle(LinkInterface*             link,
         _settingsManager->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPManager* utmspManager = _toolbox->utmspManager();
+    if (utmspManager) {
+        _utmspVehicle = utmspManager->instantiateVehicle(*this);
+    }
+#endif
+
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
     _autopilotPlugin->setParent(this);
 
@@ -515,6 +522,10 @@ Vehicle::~Vehicle()
 
     delete _mav;
     _mav = nullptr;
+
+#ifdef CONFIG_UTM_ADAPTER
+    delete _utmspVehicle;
+#endif
 }
 
 void Vehicle::prepareDelete()
