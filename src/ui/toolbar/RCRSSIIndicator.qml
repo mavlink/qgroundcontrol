@@ -24,10 +24,11 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property bool showIndicator: _activeVehicle.supportsRadio && _rcRSSIAvailable
+    property bool showIndicator: _activeVehicle && QGroundControl.settingsManager.appSettings.showRcRssiIndicator.rawValue
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _rcRSSIAvailable:   _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false
+
 
     Component {
         id: rcRSSIInfo

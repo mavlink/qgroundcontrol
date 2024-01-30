@@ -731,6 +731,12 @@ Rectangle {
                                     visible:    _remoteIDEnable.visible
                                     property Fact _remoteIDEnable: QGroundControl.settingsManager.remoteIDSettings.enable
                                 }
+
+                                 FactCheckBox {
+                                     text:       qsTr("Show RC RSSI Indicator")
+                                     fact:       QGroundControl.settingsManager.appSettings.showRcRssiIndicator
+                                     visible:    true
+                                }
                             }
                         }
 

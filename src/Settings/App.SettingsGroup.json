@@ -340,6 +340,13 @@
     "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
     "type":      "string",
     "default":   "support.ardupilot.org:xxxx"
+    },
+ {
+     "name": "showRcRssiIndicator",
+     "type": "bool",
+     "shortDescription": "Show RC RSSI Indicator",
+     "longDescription": "Enable or disable the RC RSSI Indicator in the Fly View.",
+     "defaultValue": true
 }
 ]
 }
