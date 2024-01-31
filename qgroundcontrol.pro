@@ -658,7 +658,6 @@ HEADERS += \
     src/Settings/FlightMapSettings.h \
     src/Settings/FlightModeSettings.h \
     src/Settings/FlyViewSettings.h \
-    src/Settings/MavlinkLogSettings.h \
     src/Settings/OfflineMapsSettings.h \
     src/Settings/PlanViewSettings.h \
     src/Settings/RTKSettings.h \
@@ -910,7 +909,6 @@ SOURCES += \
     src/Settings/FlightMapSettings.cc \
     src/Settings/FlightModeSettings.cc \
     src/Settings/FlyViewSettings.cc \
-    src/Settings/MavlinkLogSettings.cc \
     src/Settings/OfflineMapsSettings.cc \
     src/Settings/PlanViewSettings.cc \
     src/Settings/RTKSettings.cc \
@@ -1350,4 +1348,50 @@ LinuxBuild {
     share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
 
     INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
+}
+
+# UTM Adapter Enabled
+contains (DEFINES, CONFIG_UTM_ADAPTER) {
+    message("UTM enabled")
+
+    #-- To test with UTM Adapter Enabled Flag
+    INCLUDEPATH += \
+        src/UTMSP \
+
+    RESOURCES += \
+        src/UTMSP/utmsp.qrc
+
+    HEADERS += \
+        src/UTMSP/UTMSPLogger.h \
+        src/UTMSP/UTMSPRestInterface.h \
+        src/UTMSP/UTMSPBlenderRestInterface.h \
+        src/UTMSP/UTMSPAuthorization.h \
+        src/UTMSP/UTMSPNetworkRemoteIDManager.h \
+        src/UTMSP/UTMSPAircraft.h \
+        src/UTMSP/UTMSPFlightDetails.h \
+        src/UTMSP/UTMSPOperator.h \
+        src/UTMSP/UTMSPFlightPlanManager.h \
+        src/UTMSP/UTMSPServiceController.h \
+        src/UTMSP/UTMSPVehicle.h \
+        src/UTMSP/UTMSPManager.h
+
+    SOURCES += \
+        src/UTMSP/UTMSPRestInterface.cpp \
+        src/UTMSP/UTMSPBlenderRestInterface.cpp \
+        src/UTMSP/UTMSPAuthorization.cpp \
+        src/UTMSP/UTMSPNetworkRemoteIDManager.cpp \
+        src/UTMSP/UTMSPAircraft.cpp \
+        src/UTMSP/UTMSPFlightDetails.cpp \
+        src/UTMSP/UTMSPOperator.cpp \
+        src/UTMSP/UTMSPFlightPlanManager.cpp \
+        src/UTMSP/UTMSPServiceController.cpp \
+        src/UTMSP/UTMSPVehicle.cpp \
+        src/UTMSP/UTMSPManager.cpp
+}
+else {
+   #-- Dummy UTM Adapter resource file created to override UTM adapter qml files
+   INCLUDEPATH += \
+       src/UTMSP/dummy
+   RESOURCES += \
+       src/UTMSP/dummy/utmsp_dummy.qrc
 }
