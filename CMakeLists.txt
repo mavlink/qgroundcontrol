@@ -196,31 +196,29 @@ if (ENABLE_VIDEOSTREAMING)
             gstreamer-gl-1.0>=1.20
     )
 
-    if (LINUX OR ANDROID)
-        set(GST_DEPENDENCIES ${GST_DEPENDENCIES} egl)
-    endif ()
-
-    pkg_check_modules(GST
-            ${GST_DEPENDENCIES}
-    )
-
-    message(STATUS "GStreamer libs: ${GST_LIBRARIES}")
-    message(STATUS "GStreamer include dirs: ${GST_INCLUDE_DIRS}")
-    message(STATUS "GStreamer link dirs: ${GST_LIBRARY_DIRS}")
-    message(STATUS "GStreamer cflags: ${GST_CFLAGS}")
-    message(STATUS "GStreamer ldflags: ${GST_LDFLAGS}")
-    message(STATUS "GStreamer libs: ${GST_LIBS}")
-
-    if (LINUX OR ANDROID)
+    if (MSVC)
+        pkg_check_modules(GST
+                ${GST_DEPENDENCIES}
+        )
+    else ()
+        pkg_check_modules(GST
+                ${GST_DEPENDENCIES}
+                egl
+        )
+        message(STATUS "GStreamer libs: ${GST_LIBRARIES}")
+        message(STATUS "GStreamer include dirs: ${GST_INCLUDE_DIRS}")
+        message(STATUS "GStreamer link dirs: ${GST_LIBRARY_DIRS}")
+        message(STATUS "GStreamer cflags: ${GST_CFLAGS}")
+        message(STATUS "GStreamer ldflags: ${GST_LDFLAGS}")
+        message(STATUS "GStreamer libs: ${GST_LIBS}")
         message(STATUS "GStreamer egl libs: ${GST_EGL_LIBRARIES}")
         message(STATUS "GStreamer egl include dirs: ${GST_EGL_INCLUDE_DIRS}")
         message(STATUS "GStreamer egl link dirs: ${GST_EGL_LIBRARY_DIRS}")
         message(STATUS "GStreamer egl cflags: ${GST_EGL_CFLAGS}")
         message(STATUS "GStreamer egl ldflags: ${GST_EGL_LDFLAGS}")
         message(STATUS "GStreamer egl libs: ${GST_EGL_LIBS}")
+        message(STATUS "gst found ${GST_FOUND}")
     endif ()
-
-    message(STATUS "gst found ${GST_FOUND}")
     if (GST_FOUND)
         add_definitions(-DQGC_GST_STREAMING)
         option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)

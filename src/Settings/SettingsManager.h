@@ -29,6 +29,7 @@
 #include "FirmwareUpgradeSettings.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "BatteryIndicatorSettings.h"
+#include "MavlinkLogSettings.h"
 #include <QVariantList>
 #include "RemoteIDSettings.h"
 
@@ -54,10 +55,12 @@ public:
     Q_PROPERTY(QObject* firmwareUpgradeSettings         READ firmwareUpgradeSettings        CONSTANT)
     Q_PROPERTY(QObject* adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
     Q_PROPERTY(QObject* batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
+    Q_PROPERTY(QObject* remoteIDSettings                READ remoteIDSettings               CONSTANT)
+    Q_PROPERTY(QObject* mavlinkLogSettings              READ mavlinkLogSettings             CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
-    Q_PROPERTY(QObject* remoteIDSettings                READ remoteIDSettings               CONSTANT)
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -75,10 +78,12 @@ public:
     FirmwareUpgradeSettings*        firmwareUpgradeSettings     (void) { return _firmwareUpgradeSettings; }
     ADSBVehicleManagerSettings*     adsbVehicleManagerSettings  (void) { return _adsbVehicleManagerSettings; }
     BatteryIndicatorSettings*       batteryIndicatorSettings    (void) { return _batteryIndicatorSettings; }
+    RemoteIDSettings*               remoteIDSettings            (void) { return _remoteIDSettings; }
+    MavlinkLogSettings*             mavlinkLogSettings          (void) { return _mavlinkLogSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
-    RemoteIDSettings*               remoteIDSettings            (void) { return _remoteIDSettings; }
+
 private:
     AppSettings*                    _appSettings;
     UnitsSettings*                  _unitsSettings;
@@ -94,10 +99,11 @@ private:
     FirmwareUpgradeSettings*        _firmwareUpgradeSettings;
     ADSBVehicleManagerSettings*     _adsbVehicleManagerSettings;
     BatteryIndicatorSettings*       _batteryIndicatorSettings;
+    RemoteIDSettings*               _remoteIDSettings;
+    MavlinkLogSettings*             _mavlinkLogSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif
-    RemoteIDSettings*               _remoteIDSettings;
 };
 
 #endif

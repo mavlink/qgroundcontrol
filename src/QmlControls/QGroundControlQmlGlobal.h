@@ -18,9 +18,6 @@
 #include "ADSBVehicleManager.h"
 #include "QGCPalette.h"
 #include "QmlUnitsConversion.h"
-#ifdef CONFIG_UTM_ADAPTER
-#include "UTMSPManager.h"
-#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -105,12 +102,6 @@ public:
     Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              CONSTANT)
     Q_PROPERTY(QString  elevationProviderNotice         READ elevationProviderNotice            CONSTANT)
 
-    Q_PROPERTY(bool              utmspSupported           READ    utmspSupported              CONSTANT)
-
-#ifdef CONFIG_UTM_ADAPTER
-    Q_PROPERTY(UTMSPManager*     utmspManager             READ    utmspManager                CONSTANT)
-#endif
-
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -162,11 +153,6 @@ public:
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
 
-
-#ifdef CONFIG_UTM_ADAPTER
-    UTMSPManager*            utmspManager         ()  {return _utmspManager;}
-#endif
-
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -210,12 +196,6 @@ public:
 
     QString qgcVersion              (void) const;
 
-#ifdef CONFIG_UTM_ADAPTER
-    bool    utmspSupported() { return true; }
-#else
-    bool    utmspSupported() { return false; }
-#endif
-
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
 
@@ -243,9 +223,6 @@ private:
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
     QmlUnitsConversion      _unitsConversion;
-#ifdef CONFIG_UTM_ADAPTER
-    UTMSPManager*            _utmspManager;
-#endif
 
     bool                    _skipSetupPage          = false;
     QStringList             _altitudeModeEnumString;

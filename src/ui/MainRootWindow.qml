@@ -20,8 +20,6 @@ import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
-import QGroundControl.UTMSP
-
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
@@ -29,12 +27,6 @@ ApplicationWindow {
     minimumWidth:   ScreenTools.isMobile ? Screen.width  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
     minimumHeight:  ScreenTools.isMobile ? Screen.height : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
-
-    property string _startTimeStamp
-    property bool   _showVisible
-    property string _flightID
-    property bool   _utmspSendActTrigger
-    property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
         //-- Full screen on mobile or tiny screens
@@ -252,7 +244,7 @@ ApplicationWindow {
         id:             stackView
         anchors.fill:   parent
 
-        initialItem: FlyView { id: flightView; utmspSendActTrigger: _utmspSendActTrigger}
+        initialItem: FlyView { id: flightView }
     }
 
     footer: LogReplayStatusBar {
@@ -431,13 +423,6 @@ ApplicationWindow {
 
         PlanView {
             id: planView
-            onActivationParamsSent:{
-                if(_utmspEnabled){
-                    _startTimeStamp = startTime
-                    _showVisible = activate
-                    _flightID = flightID
-                }
-            }
         }
     }
 
@@ -825,20 +810,5 @@ ApplicationWindow {
                 source = ""
             }
         }
-    }
-
-    Connections{
-         target: activationbar
-         function onActivationTriggered(value){
-              _utmspSendActTrigger= value
-         }
-    }
-
-    UTMSPActivationStatusBar{
-         id:                         activationbar
-         activationStartTimestamp:  _startTimeStamp
-         activationApproval:        _showVisible && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
-         flightID:                  _flightID
-         anchors.fill:              parent
     }
 }
