@@ -20,8 +20,8 @@ add_library(Settings
 	FlightModeSettings.h
 	FlyViewSettings.cc
 	FlyViewSettings.h
-    MavLinkLogSettings.cc
-    MavLinkLogSettings.h
+    MavlinkLogSettings.cc
+    MavlinkLogSettings.h
 	OfflineMapsSettings.cc
 	OfflineMapsSettings.h
 	PlanViewSettings.cc
