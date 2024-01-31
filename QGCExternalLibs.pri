@@ -104,6 +104,91 @@ SOURCES += \
 INCLUDEPATH += \
         libs/libevents \
         libs/libevents/libs/cpp/parse
+
+#
+# [REQUIRED] NetCDF submodule
+HEADERS+= \
+        libs/netcdf-cxx4/cxx4/ncAtt.h \
+        libs/netcdf-cxx4/cxx4/ncByte.h \
+        libs/netcdf-cxx4/cxx4/ncChar.h \
+        libs/netcdf-cxx4/cxx4/ncCheck.h \
+        libs/netcdf-cxx4/cxx4/ncCompoundType.h \
+        libs/netcdf-cxx4/cxx4/ncDim.h \
+        libs/netcdf-cxx4/cxx4/ncDouble.h \
+        libs/netcdf-cxx4/cxx4/ncEnumType.h \
+        libs/netcdf-cxx4/cxx4/ncException.h \
+        libs/netcdf-cxx4/cxx4/ncFile.h \
+        libs/netcdf-cxx4/cxx4/ncFill.h \
+        libs/netcdf-cxx4/cxx4/ncFilter.h \
+        libs/netcdf-cxx4/cxx4/ncFloat.h \
+        libs/netcdf-cxx4/cxx4/ncGroup.h \
+        libs/netcdf-cxx4/cxx4/ncGroupAtt.h \
+        libs/netcdf-cxx4/cxx4/ncInt.h \
+        libs/netcdf-cxx4/cxx4/ncInt64.h \
+        libs/netcdf-cxx4/cxx4/ncOpaqueType.h \
+        libs/netcdf-cxx4/cxx4/ncShort.h \
+        libs/netcdf-cxx4/cxx4/ncString.h \
+        libs/netcdf-cxx4/cxx4/ncType.h \
+        libs/netcdf-cxx4/cxx4/ncUbyte.h \
+        libs/netcdf-cxx4/cxx4/ncUint.h \
+        libs/netcdf-cxx4/cxx4/ncUint64.h \
+        libs/netcdf-cxx4/cxx4/ncUshort.h \
+        libs/netcdf-cxx4/cxx4/ncVar.h \
+        libs/netcdf-cxx4/cxx4/ncVarAtt.h \
+        libs/netcdf-cxx4/cxx4/ncVlenType.h \
+        libs/netcdf-cxx4/cxx4/netcdf \
+        libs/netcdf-cxx4/cxx4/test_utilities.h
+SOURCES += \
+#        libs/netcdf-cxx4/cxx4/example1.cpp \
+        libs/netcdf-cxx4/cxx4/ncAtt.cpp \
+        libs/netcdf-cxx4/cxx4/ncByte.cpp \
+        libs/netcdf-cxx4/cxx4/ncChar.cpp \
+        libs/netcdf-cxx4/cxx4/ncCheck.cpp \
+        libs/netcdf-cxx4/cxx4/ncCompoundType.cpp \
+        libs/netcdf-cxx4/cxx4/ncDim.cpp \
+        libs/netcdf-cxx4/cxx4/ncDouble.cpp \
+        libs/netcdf-cxx4/cxx4/ncEnumType.cpp \
+        libs/netcdf-cxx4/cxx4/ncException.cpp \
+        libs/netcdf-cxx4/cxx4/ncFile.cpp \
+        libs/netcdf-cxx4/cxx4/ncFill.cpp \
+        libs/netcdf-cxx4/cxx4/ncFilter.cpp \
+        libs/netcdf-cxx4/cxx4/ncFloat.cpp \
+        libs/netcdf-cxx4/cxx4/ncGroup.cpp \
+        libs/netcdf-cxx4/cxx4/ncGroupAtt.cpp \
+        libs/netcdf-cxx4/cxx4/ncInt.cpp \
+        libs/netcdf-cxx4/cxx4/ncInt64.cpp \
+        libs/netcdf-cxx4/cxx4/ncOpaqueType.cpp \
+        libs/netcdf-cxx4/cxx4/ncShort.cpp \
+        libs/netcdf-cxx4/cxx4/ncString.cpp \
+        libs/netcdf-cxx4/cxx4/ncType.cpp \
+        libs/netcdf-cxx4/cxx4/ncUbyte.cpp \
+        libs/netcdf-cxx4/cxx4/ncUint.cpp \
+        libs/netcdf-cxx4/cxx4/ncUint64.cpp \
+        libs/netcdf-cxx4/cxx4/ncUshort.cpp \
+        libs/netcdf-cxx4/cxx4/ncVar.cpp \
+        libs/netcdf-cxx4/cxx4/ncVarAtt.cpp \
+        libs/netcdf-cxx4/cxx4/ncVlenType.cpp \
+#        libs/netcdf-cxx4/cxx4/temp.c \
+#        libs/netcdf-cxx4/cxx4/test2.cpp \
+#        libs/netcdf-cxx4/cxx4/test_att.cpp \
+#        libs/netcdf-cxx4/cxx4/test_classic.cpp \
+#        libs/netcdf-cxx4/cxx4/test_dim.cpp \
+#        libs/netcdf-cxx4/cxx4/test_filter.cpp \
+#        libs/netcdf-cxx4/cxx4/test_group.cpp \
+#        libs/netcdf-cxx4/cxx4/test_ncFile_Flags.cpp \
+#        libs/netcdf-cxx4/cxx4/test_open_close.cpp \
+#        libs/netcdf-cxx4/cxx4/test_type.cpp \
+#        libs/netcdf-cxx4/cxx4/test_type2.cpp \
+#        libs/netcdf-cxx4/cxx4/test_type3.cpp \
+#        libs/netcdf-cxx4/cxx4/test_type4.c \
+#        libs/netcdf-cxx4/cxx4/test_type4.cpp \
+#        libs/netcdf-cxx4/cxx4/test_type5.cpp \
+#        libs/netcdf-cxx4/cxx4/test_var.cpp \
+#        libs/netcdf-cxx4/cxx4/test_var2.cpp
+
+INCLUDEPATH += \
+        libs/netcdf-cxx4/cxx4
+
 #
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib
@@ -264,3 +349,15 @@ contains (DEFINES, DISABLE_ZEROCONF) {
 } else {
     message("Skipping support for Zeroconf (unsupported platform)")
 }
+
+#DISTFILES += \
+#    $$PWD/libs/netcdf-cxx4/cxx4/CMakeLists.txt \
+#    $$PWD/libs/netcdf-cxx4/cxx4/Doxyfile \
+#    $$PWD/libs/netcdf-cxx4/cxx4/findplugin.in \
+#    $$PWD/libs/netcdf-cxx4/cxx4/mainPage \
+#    $$PWD/libs/netcdf-cxx4/cxx4/test10_1.cdl \
+#    $$PWD/libs/netcdf-cxx4/cxx4/test10_2.cdl \
+#    $$PWD/libs/netcdf-cxx4/cxx4/test9_1.cdl \
+#    $$PWD/libs/netcdf-cxx4/cxx4/test9_2.cdl \
+#    $$PWD/libs/netcdf-cxx4/cxx4/testx.cdl \
+#    $$PWD/libs/netcdf-cxx4/cxx4/tst_filter.sh

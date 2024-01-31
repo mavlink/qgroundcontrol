@@ -88,7 +88,7 @@ linux {
         QMAKE_CXXFLAGS -= -Zc:strictStrings
         QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
         QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-        QMAKE_CXXFLAGS_WARN_ON += /WX /W3 \
+        QMAKE_CXXFLAGS_WARN_ON += /W3 \ # removed /WX so netcdf-cxx4 would compile
             /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
             /wd4290 \   # ignore exception specifications
             /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
