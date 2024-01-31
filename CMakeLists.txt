@@ -270,6 +270,16 @@ if (WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/windows/QGroundControl.rc)
 endif()
 
+if(CONFIG_UTM_ADAPTER)
+    list(APPEND QGC_RESOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/UTMSP/utmsp.qrc
+    )
+else()
+    list(APPEND QGC_RESOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/UTMSP/dummy/utmsp_dummy.qrc
+    )
+endif()
+
 if(BUILD_TESTING)
     list(APPEND QGC_RESOURCES
             UnitTest.qrc

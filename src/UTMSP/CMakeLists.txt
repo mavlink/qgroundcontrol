@@ -13,7 +13,6 @@ if(CONFIG_UTM_ADAPTER)
             UTMSPServiceController.cpp
             UTMSPVehicle.cpp
             UTMSPManager.cpp
-            utmsp.qrc
             )
 
     add_custom_target(UTMSPQml
@@ -25,7 +24,7 @@ if(CONFIG_UTM_ADAPTER)
 
 else()
     # If CONFIG_UTM_ADAPTER is not set, use utmsp_dummy.qrc
-    message("Dummy is Initialized")
+    message(STATUS "UTMSP: Dummy is Initialized")
 
     add_library(UTMSP
             dummy/utmsp_dummy.qrc
