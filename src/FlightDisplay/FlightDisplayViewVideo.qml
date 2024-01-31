@@ -36,6 +36,13 @@ Item {
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
 
+    function getWidth() {
+        return videoBackground.getWidth()
+    }
+    function getHeight() {
+        return videoBackground.getHeight()
+    }
+
     property double _thermalHeightFactor: 0.85 //-- TODO
 
         Image {
@@ -65,6 +72,7 @@ Item {
         }
 
     Rectangle {
+        id:             videoBackground
         anchors.fill:   parent
         color:          "black"
         visible:        QGroundControl.videoManager.decoding

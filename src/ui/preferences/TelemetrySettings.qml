@@ -71,6 +71,27 @@ SettingsPage {
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
+        heading:            qsTr("MAVLink Forwarding")
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Enable")
+            fact:               _appSettings.forwardMavlink
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    ScreenTools.defaultFontPixelWidth * 20
+            label:                      qsTr("Host name")
+            fact:                       _appSettings.forwardMavlinkHostName
+            visible:                    fact.visible
+            enabled:                    _appSettings.forwardMavlink.rawValue
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
         heading:            qsTr("Logging")
         visible:            !_disableAllDataPersistence
 
@@ -167,27 +188,6 @@ SettingsPage {
             fact:               _settingsManager.apmMavlinkStreamRateSettings.streamRateExtra3
             indexModel:         false
             enabled:            !controllerByVehicleCheckBox.checked
-        }
-    }
-
-    SettingsGroupLayout {
-        Layout.fillWidth:   true
-        heading:            qsTr("MAVLink Forwarding")
-
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Enable")
-            fact:               _appSettings.forwardMavlink
-            visible:            fact.visible
-        }
-
-        LabelledFactTextField {
-            Layout.fillWidth:           true
-            textFieldPreferredWidth:    ScreenTools.defaultFontPixelWidth * 20
-            label:                      qsTr("Host name")
-            fact:                       _appSettings.forwardMavlinkHostName
-            visible:                    fact.visible
-            enabled:                    _appSettings.forwardMavlink.rawValue
         }
     }
 

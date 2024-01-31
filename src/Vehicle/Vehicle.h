@@ -52,6 +52,11 @@
 #include "VehicleGeneratorFactGroup.h"
 #include "VehicleEFIFactGroup.h"
 
+#ifdef CONFIG_UTM_ADAPTER
+#include "UTMSPVehicle.h"
+#include "UTMSPManager.h"
+#endif
+
 class Actuators;
 class EventHandler;
 class UAS;
@@ -78,6 +83,9 @@ class LinkManager;
 class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
+#ifdef CONFIG_UTM_ADAPTER
+class UTMSPVehicle;
+#endif
 
 Q_MOC_INCLUDE("AutoPilotPlugin.h")
 Q_MOC_INCLUDE("TrajectoryPoints.h")
@@ -555,20 +563,20 @@ public:
 
     /**
      * @brief Send MAV_CMD_DO_GRIPPER command to trigger specified action in the vehicle
-     * 
+     *
      * @param gripperAction Gripper action to trigger
     */
 
     enum    GRIPPER_OPTIONS
     {
-    Gripper_release = GRIPPER_ACTION_RELEASE, 
+    Gripper_release = GRIPPER_ACTION_RELEASE,
     Gripper_grab    = GRIPPER_ACTION_GRAB,
     Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
-    }; 
+    };
     Q_ENUM(GRIPPER_OPTIONS)
 
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
-    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption); 
+    Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption);
 
     bool fixedWing() const;
     bool multiRotor() const;
@@ -1233,6 +1241,10 @@ private:
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
+
+#ifdef CONFIG_UTM_ADAPTER
+    UTMSPVehicle*                    _utmspVehicle                    = nullptr;
+#endif
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT

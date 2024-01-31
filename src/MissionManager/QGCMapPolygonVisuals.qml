@@ -639,8 +639,15 @@ Item {
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
             onClicked: (mouse) => {
-                if (mouse.button === Qt.LeftButton && _root.interactive) {
-                    mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
+                if(_utmspEnabled){
+                    if (mouse.button === Qt.LeftButton) {
+                        mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
+                    }
+                }
+                else{
+                    if (mouse.button === Qt.LeftButton && _root.interactive) {
+                        mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
+                    }
                 }
             }
         }

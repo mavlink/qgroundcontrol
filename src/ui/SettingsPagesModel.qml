@@ -68,9 +68,9 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("PX4 Logging")
+        name: qsTr("MAVLink")
         url: "/qml/MavlinkSettings.qml"
-        pageVisible: function() { return globals.activeVehicle ? globals.activeVehicle.px4Firmware : QGroundControl.px4ProFirmwareSupported }
+        pageVisible: function() { return true }
     }
 
     ListElement {
