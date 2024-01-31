@@ -100,6 +100,272 @@ Rectangle {
             spacing:            ScreenTools.defaultFontPixelHeight * 0.5
             anchors.margins:    ScreenTools.defaultFontPixelWidth
             //-----------------------------------------------------------------
+            //-- Ground Station
+            Item {
+                width:              __mavlinkRoot.width * 0.8
+                height:             gcsLabel.height
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:             gcsLabel
+                    text:           qsTr("Ground Station")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:         gcsColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:          __mavlinkRoot.width * 0.8
+                color:          qgcPal.windowShade
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:         gcsColumn
+                    spacing:    _columnSpacing
+                    anchors.centerIn: parent
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   sysidField.baseline
+                            text:               qsTr("MAVLink System ID:")
+                        }
+                        QGCTextField {
+                            id:     sysidField
+                            text:   QGroundControl.mavlinkSystemID.toString()
+                            width:  _valueWidth
+                            inputMethodHints:       Qt.ImhFormattedNumbersOnly
+                            anchors.verticalCenter: parent.verticalCenter
+                            onEditingFinished: {
+                                saveItems();
+                            }
+                        }
+                    }
+
+                    QGCCheckBox {
+                        text:       qsTr("Emit heartbeat")
+                        checked:    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled
+                        onClicked: {
+                            QGroundControl.multiVehicleManager.gcsHeartBeatEnabled = checked
+                        }
+                    }
+
+                    QGCCheckBox {
+                        text:       qsTr("Only accept MAVs with same protocol version")
+                        checked:    QGroundControl.isVersionCheckEnabled
+                        onClicked: {
+                            QGroundControl.isVersionCheckEnabled = checked
+                        }
+                    }
+
+                    FactCheckBox {
+                        id:         mavlinkForwardingChecked
+                        text:       qsTr("Enable MAVLink forwarding")
+                        fact:       QGroundControl.settingsManager.appSettings.forwardMavlink
+                        visible:    QGroundControl.settingsManager.appSettings.forwardMavlink.visible
+                    }
+
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   mavlinkForwardingHostNameField.baseline
+                            visible:            QGroundControl.settingsManager.appSettings.forwardMavlinkHostName.visible
+                            text:               qsTr("Host name:")
+                        }
+                        FactTextField {
+                            id:                     mavlinkForwardingHostNameField
+                            fact:                   QGroundControl.settingsManager.appSettings.forwardMavlinkHostName
+                            width:                  _valueWidth
+                            visible:                QGroundControl.settingsManager.appSettings.forwardMavlinkHostName.visible
+                            enabled:                QGroundControl.settingsManager.appSettings.forwardMavlink.rawValue
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                    }
+                   QGCLabel {
+                        text:       qsTr("<i> Changing the host name requires restart of application. </i>")
+                        visible:    QGroundControl.settingsManager.appSettings.forwardMavlinkHostName.visible
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
+            //-- Stream Rates
+            Item {
+                id:                         apmStreamRatesLabel
+                width:                      __mavlinkRoot.width * 0.8
+                height:                     streamRatesLabel.height
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                visible:                    _showAPMStreamRates
+                QGCLabel {
+                    id:             streamRatesLabel
+                    text:           qsTr("Telemetry Stream Rates (ArduPilot Only)")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:                     streamRatesColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:                      __mavlinkRoot.width * 0.8
+                color:                      qgcPal.windowShade
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                visible:                    _showAPMStreamRates
+
+                ColumnLayout {
+                    id:                 streamRatesColumn
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    anchors.centerIn:   parent
+
+                    property bool allStreamsControlledByVehicle: !QGroundControl.settingsManager.appSettings.apmStartMavlinkStreams.rawValue
+
+                    QGCCheckBox {
+                        text:               qsTr("All Streams Controlled By Vehicle Settings")
+                        checked:            streamRatesColumn.allStreamsControlledByVehicle
+                        onClicked:          QGroundControl.settingsManager.appSettings.apmStartMavlinkStreams.rawValue = !checked
+                    }
+
+                    GridLayout {
+                        columns:    2
+                        enabled:    !streamRatesColumn.allStreamsControlledByVehicle
+
+                        QGCLabel { text:  qsTr("Raw Sensors") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRawSensors : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extended Status") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtendedStatus : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("RC Channel") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRCChannels : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Position") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRatePosition : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extra 1") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra1 : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extra 2") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra2 : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extra 3") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra3 : null
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
+            //-- Mavlink Status
+            Item {
+                width:              __mavlinkRoot.width * 0.8
+                height:             mavStatusLabel.height
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:             mavStatusLabel
+                    text:           qsTr("MAVLink Link Status (Current Vehicle)")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:         mavStatusColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:          __mavlinkRoot.width * 0.8
+                color:          qgcPal.windowShade
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:         mavStatusColumn
+                    width:      gcsColumn.width
+                    spacing:    _columnSpacing
+                    anchors.centerIn: parent
+                    //-----------------------------------------------------------------
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            width:              _labelWidth
+                            text:               qsTr("Total messages sent (computed):")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCLabel {
+                            width:              _valueWidth
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkSentCount : qsTr("Not Connected")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            width:              _labelWidth
+                            text:               qsTr("Total messages received:")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCLabel {
+                            width:              _valueWidth
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            width:              _labelWidth
+                            text:               qsTr("Total message loss:")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCLabel {
+                            width:              _valueWidth
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkLossCount : qsTr("Not Connected")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            width:              _labelWidth
+                            text:               qsTr("Loss rate:")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCLabel {
+                            width:              _valueWidth
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
             //-- Mavlink Logging
             Item {
                 width:              __mavlinkRoot.width * 0.8
@@ -122,6 +388,7 @@ Rectangle {
                 visible:        _showMavlinkLog && _isPX4
                 Column {
                     id:         mavlogColumn
+                    width:      gcsColumn.width
                     spacing:    _columnSpacing
                     anchors.centerIn: parent
                     //-----------------------------------------------------------------

@@ -16,6 +16,7 @@ import QGroundControl
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 SettingsPage {
     property var    _settingsManager:            QGroundControl.settingsManager
@@ -29,9 +30,12 @@ SettingsPage {
     property bool   _isMPEGTS:                  _isGst && _videoSource === _videoSettings.mpegtsVideoSource
     property bool   _videoAutoStreamConfig:     QGroundControl.videoManager.autoStreamConfigured
     property bool   _showSaveVideoSettings:     _isGst || _videoAutoStreamConfig
+    property real   _urlFieldWidth:             ScreenTools.defaultFontPixelWidth * 25
+    property bool   _requiresUDPPort:           _isUDP264 || _isUDP265 || _isMPEGTS
 
     SettingsGroupLayout {
-        Layout.fillWidth: true
+        Layout.fillWidth:   true
+        heading:            qsTr("Video Source")
 
         LabelledFactComboBox {
             Layout.fillWidth:   true
@@ -40,27 +44,40 @@ SettingsPage {
             fact:               _videoSettings.videoSource
             visible:            fact.visible
         }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
+        heading:            qsTr("Connection")
+        visible:            !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPPort)
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("RTSP URL")
+            fact:                       _videoSettings.rtspUrl
+            visible:                    _isRTSP && _videoSettings.rtspUrl.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            label:                      qsTr("TCP URL")
+            textFieldPreferredWidth:    _urlFieldWidth
+            fact:                       _videoSettings.tcpUrl
+            visible:                    _isTCP && _videoSettings.tcpUrl.visible
+        }
 
         LabelledFactTextField {
             Layout.fillWidth:   true
             label:              qsTr("UDP Port")
             fact:               _videoSettings.udpPort
-            visible:            !_videoAutoStreamConfig && (_isUDP264 || _isUDP265 || _isMPEGTS) && _videoSettings.udpPort.visible
+            visible:            _requiresUDPPort && _videoSettings.udpPort.visible
         }
+    }
 
-        LabelledFactTextField {
-            Layout.fillWidth:   true
-            label:              qsTr("RTSP URL")
-            fact:               _videoSettings.rtspUrl
-            visible:            !_videoAutoStreamConfig && _isRTSP && _videoSettings.rtspUrl.visible
-        }
-
-        LabelledFactTextField {
-            Layout.fillWidth:   true
-            label:              qsTr("TCP URL")
-            fact:               _videoSettings.tcpUrl
-            visible:            !_videoAutoStreamConfig && _isTCP && _videoSettings.tcpUrl.visible
-        }
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
+        heading:            qsTr("Settings")
 
         LabelledFactTextField {
             Layout.fillWidth:   true
@@ -69,31 +86,9 @@ SettingsPage {
             visible:            !_videoAutoStreamConfig && _isGst && _videoSettings.aspectRatio.visible
         }
 
-        LabelledFactComboBox {
-            Layout.fillWidth:   true
-            label:              qsTr("Record File Format")
-            fact:               _videoSettings.recordingFormat
-            visible:            _showSaveVideoSettings && _videoSettings.recordingFormat.visible
-        }
-
-        LabelledFactTextField {
-            Layout.fillWidth:   true
-            label:              qsTr("Max Storage Usage")
-            fact:               _videoSettings.maxVideoSize
-            visible:            _showSaveVideoSettings && _videoSettings.enableStorageLimit.value && maxSavedVideoStorageLabel.visible
-        }
-
-        LabelledFactComboBox {
-            Layout.fillWidth:   true
-            label:              qsTr("Video decode priority")
-            fact:               _videoSettings.forceVideoDecoder
-            visible:            fact.visible
-            indexModel:         false
-        }
-
         FactCheckBoxSlider {
             Layout.fillWidth:   true
-            text:               qsTr("Disable When Disarmed")
+            text:               qsTr("Stop recording when disarmed")
             fact:               _videoSettings.disableWhenDisarmed
             visible:            !_videoAutoStreamConfig && _isGst && fact.visible
         }
@@ -104,12 +99,41 @@ SettingsPage {
             fact:               _videoSettings.lowLatencyMode
             visible:            !_videoAutoStreamConfig && _isGst && fact.visible
         }
+        
+        LabelledFactComboBox {
+            Layout.fillWidth:   true
+            label:              qsTr("Video decode priority")
+            fact:               _videoSettings.forceVideoDecoder
+            visible:            fact.visible
+            indexModel:         false
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth: true
+        heading:            qsTr("Video Storage")
+        visible:            _showSaveVideoSettings
+        
+        LabelledFactComboBox {
+            Layout.fillWidth:   true
+            label:              qsTr("Record File Format")
+            fact:               _videoSettings.recordingFormat
+            visible:            _videoSettings.recordingFormat.visible
+        }
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true
             text:               qsTr("Auto-Delete Saved Recordings")
             fact:               _videoSettings.enableStorageLimit
-            visible:            _showSaveVideoSettings && fact.visible
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Max Storage Usage")
+            fact:               _videoSettings.maxVideoSize
+            visible:            fact.visible
+            enabled:            _videoSettings.enableStorageLimit.rawValue
         }
     }
 }
