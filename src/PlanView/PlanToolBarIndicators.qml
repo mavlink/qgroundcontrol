@@ -8,7 +8,6 @@ import QGroundControl.ScreenTools
 import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.Palette
-import QGroundControl.UTMSP
 
 // Toolbar for Plan View
 Item {
@@ -68,22 +67,6 @@ Item {
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        qsTr("N/A") : _batteriesRequired
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
-
-    // Properties of UTM adapter
-    property var    _utmspController:                    _planMasterController.geoFenceController
-    property bool   _utmspEnabled:                       QGroundControl.utmspSupported
-    property bool  responseFlag
-    // Dummy object when utm adapter flag is not enabled
-    QtObject {
-        id: dummyTarget
-        signal uploadFlagSent(bool flag)
-    }
-    Connections {
-        target: _utmspEnabled ? _utmspController: dummyTarget
-        onUploadFlagSent: function(flag) {
-            responseFlag = flag
-        }
-    }
 
     function getMissionTime() {
         if (!_missionTime) {
@@ -261,16 +244,10 @@ Item {
         QGCButton {
             id:          uploadButton
             text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-            enabled:     _utmspEnabled ? !_controllerSyncInProgress && responseFlag : !_controllerSyncInProgress
+            enabled:     !_controllerSyncInProgress
             visible:     !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
             primary:     _controllerDirty
-            onClicked: {
-                if (_utmspEnabled) {
-                    QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
-                    UTMSPStateStorage.removeFlightPlanState = true
-                }
-                _planMasterController.upload();
-            }
+            onClicked:   _planMasterController.upload()
 
             PropertyAnimation on opacity {
                 easing.type:    Easing.OutQuart
