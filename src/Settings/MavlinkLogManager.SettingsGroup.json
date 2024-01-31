@@ -1,0 +1,65 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":         "emailAddress",
+    "shortDesc":    "Email address to send link to flight review.",
+    "type":         "string"
+},
+{
+    "name":         "description",
+    "shortDesc":    "Flight log description.",
+    "type":         "string",
+    "default":      "QGroundControl Session"
+},
+{
+    "name":         "uploadURL",
+    "shortDesc":    "URL of flight review server.",
+    "type":         "string",
+    "default":      "https://logs.px4.io/upload"
+},
+{
+    "name":         "videoURL",
+    "shortDesc":    "URL to video for upload",
+    "type":         "string"
+},
+{
+    "name":         "autoStartEnabled",
+    "shortDesc":    "Automatically download log from vehicle for each flight.",
+    "type":         "bool",
+    "default":      false
+},
+{
+    "name":         "autoUploadEnabled",
+    "shortDesc":    "Automatically upload flight log after flight.",
+    "type":         "bool",
+    "default":      false
+},
+{
+    "name":         "deleteAferUpload",
+    "shortDesc":    "Delete flight log after upload.",
+    "type":         "bool",
+    "default":      false
+},
+{
+    "name":         "windSpeed",
+    "shortDesc":    "Wind speed for flight.",
+    "type":         "bool",
+    "default":      -1
+},
+{
+    "name":         "rating",
+    "shortDesc":    "Rating for flight.",
+    "type":         "bool",
+    "default":      "notset"
+},
+{
+    "name":         "isPulicLog",
+    "shortDesc":    "Make this log publicly available.",
+    "type":         "bool",
+    "default":      true
+}
+]
+}

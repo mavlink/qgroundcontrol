@@ -341,6 +341,7 @@
         <file alias="MavCmdInfoRover.json">src/MissionManager/MavCmdInfoRover.json</file>
         <file alias="MavCmdInfoSub.json">src/MissionManager/MavCmdInfoSub.json</file>
         <file alias="MavCmdInfoVTOL.json">src/MissionManager/MavCmdInfoVTOL.json</file>
+        <file alias="MavlinkLogManager.SettingsGroup.json">src/Settings/MavlinkLogManager.SettingsGroup.json</file>
         <file alias="MissionSettings.FactMetaData.json">src/MissionManager/MissionSettings.FactMetaData.json</file>
         <file alias="OfflineMaps.SettingsGroup.json">src/Settings/OfflineMaps.SettingsGroup.json</file>
         <file alias="PlanView.SettingsGroup.json">src/Settings/PlanView.SettingsGroup.json</file>

@@ -48,8 +48,6 @@ Item {
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property alias  _gripperMenu:           gripperOptions
 
-    property bool utmspActTrigger
-
     QGCToolInsets {
         id:                     _totalToolInsets
         leftEdgeTopInset:       toolStrip.leftEdgeTopInset
@@ -115,7 +113,6 @@ Item {
         z:                          QGroundControl.zOrderTopMost
         guidedController:           _guidedController
         guidedValueSlider:          _guidedValueSlider
-        utmspSliderTrigger:          utmspActTrigger
     }
 
     FlyViewInstrumentPanel {

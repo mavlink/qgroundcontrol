@@ -28,10 +28,11 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _firmwareUpgradeSettings      (nullptr)
     , _adsbVehicleManagerSettings   (nullptr)
     , _batteryIndicatorSettings     (nullptr)
+    , _remoteIDSettings             (nullptr)
+    , _mavlinkLogSettings           (nullptr)
 #if !defined(NO_ARDUPILOT_DIALECT)
     , _apmMavlinkStreamRateSettings (nullptr)
 #endif
-    , _remoteIDSettings             (nullptr)
 {
 
 }
@@ -56,8 +57,9 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _firmwareUpgradeSettings =      new FirmwareUpgradeSettings     (this);
     _adsbVehicleManagerSettings =   new ADSBVehicleManagerSettings  (this);
     _batteryIndicatorSettings =     new BatteryIndicatorSettings    (this);
+    _remoteIDSettings =             new RemoteIDSettings            (this); 
+    _mavlinkLogSettings =           new MavlinkLogSettings          (this);
 #if !defined(NO_ARDUPILOT_DIALECT)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 #endif
-    _remoteIDSettings =             new RemoteIDSettings            (this); 
 }
