@@ -33,9 +33,6 @@ class MAVLinkLogManager;
 class QGCCorePlugin;
 class SettingsManager;
 class ADSBVehicleManager;
-#ifdef CONFIG_UTM_ADAPTER
-class UTMSPManager;
-#endif
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -63,9 +60,6 @@ public:
     ADSBVehicleManager*         adsbVehicleManager      () { return _adsbVehicleManager; }
 #ifndef __mobile__
     GPSManager*                 gpsManager              () { return _gpsManager; }
-#endif
-#ifdef CONFIG_UTM_ADAPTER
-    UTMSPManager*                utmspManager             () { return _utmspManager; }
 #endif
 
 private:
@@ -95,9 +89,6 @@ private:
     SettingsManager*            _settingsManager        = nullptr;
     ADSBVehicleManager*         _adsbVehicleManager     = nullptr;
 
-#ifdef CONFIG_UTM_ADAPTER
-    UTMSPManager*                _utmspManager            = nullptr;
-#endif
     friend class QGCApplication;
 };
 

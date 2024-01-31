@@ -22,7 +22,7 @@ Rectangle {
     height:     mainLayout.height + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
     color:      qgcPal.window
-    visible:    _utmspEnabled === true ? utmspSliderTrigger: false
+    visible:    false
 
     property var    guidedController
     property var    guidedValueSlider
@@ -37,10 +37,6 @@ Rectangle {
 
     property real _margins:         ScreenTools.defaultFontPixelWidth / 2
     property bool _emergencyAction: action === guidedController.actionEmergencyStop
-
-    // Properties of UTM adapter
-    property bool   utmspSliderTrigger
-    property bool   _utmspEnabled:                       QGroundControl.utmspSupported
 
     Component.onCompleted: guidedController.confirmDialog = this
 
@@ -116,8 +112,6 @@ Rectangle {
                 id:                 slider
                 confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
                 Layout.fillWidth:   true
-                enabled: _utmspEnabled === true? utmspSliderTrigger : true
-                opacity: if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}
 
                 onAccept: {
                     _root.visible = false
