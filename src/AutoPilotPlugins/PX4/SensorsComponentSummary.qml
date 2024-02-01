@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Controls
 
 import QGroundControl.FactSystem
 import QGroundControl.FactControls

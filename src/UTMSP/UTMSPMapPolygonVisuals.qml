@@ -677,7 +677,7 @@ Item {
             anchors.fill:       mapControl
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
-            onClicked: {
+            onClicked: (mouse) => {
                 if (mouse.button === Qt.LeftButton) {
                     mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
 
