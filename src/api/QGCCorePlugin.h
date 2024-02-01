@@ -198,7 +198,6 @@ public:
     static const int firstRunPromptIdsFirstCustomId = 10000;
 
 signals:
-    void settingsPagesChanged       ();
     void analyzePagesChanged        ();
     void showTouchAreasChanged      (bool showTouchAreas);
     void showAdvancedUIChanged      (bool showAdvancedUI);
