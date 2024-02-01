@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQml
 import QtQuick.Layouts
