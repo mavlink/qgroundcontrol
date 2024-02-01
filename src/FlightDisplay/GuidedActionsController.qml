@@ -9,7 +9,6 @@
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Controls
 import QtQuick.Dialogs
 import QtLocation
 import QtPositioning

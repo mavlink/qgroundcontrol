@@ -106,7 +106,7 @@ Item {
 
         onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
 
-        onPressed: {
+        onPressed:(mouse) => {
             _track_rec_x = mouse.x
             _track_rec_y = mouse.y
 
@@ -120,7 +120,7 @@ Item {
                 }
             }
         }
-        onPositionChanged: {
+        onPositionChanged: (mouse) => {
             //on move, update the width of rectangle
             if (trackingROI !== null) {
                 if (mouse.x < trackingROI.x) {
@@ -137,7 +137,7 @@ Item {
                 }
             }
         }
-        onReleased: {
+        onReleased: (mouse) => {
             //if there is already a selection, delete it
             if (trackingROI !== null) {
                 trackingROI.destroy();
