@@ -5,12 +5,7 @@
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 
-#include <jni.h>
-#include <QtCore/private/qjni_p.h>
-#include <QtCore/private/qjnihelpers_p.h>
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
-
+#include <QtCore/private/qandroidextras_p.h>
 
 class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
 {
