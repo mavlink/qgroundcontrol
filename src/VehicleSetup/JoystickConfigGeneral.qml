@@ -233,7 +233,7 @@ Item {
                     anchors.centerIn:   parent
                     Connections {
                         target:     _activeJoystick
-                        onRawButtonPressedChanged: {
+                        onRawButtonPressedChanged: (index, pressed) => {
                             if (buttonMonitorRepeater.itemAt(index)) {
                                 buttonMonitorRepeater.itemAt(index).pressed = pressed
                             }
