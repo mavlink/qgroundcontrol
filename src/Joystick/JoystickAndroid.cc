@@ -1,8 +1,9 @@
 #include "JoystickAndroid.h"
-
-#include "QGCApplication.h"
+#include "JoystickManager.h"
 
 #include <QQmlEngine>
+#include <QJniEnvironment>
+#include <QJniObject>
 
 int JoystickAndroid::_androidBtnListCount;
 int *JoystickAndroid::_androidBtnList;
@@ -12,7 +13,7 @@ QMutex JoystickAndroid::m_mutex;
 
 static void clear_jni_exception()
 {
-    QAndroidJniEnvironment jniEnv;
+    QJniEnvironment jniEnv;
     if (jniEnv->ExceptionCheck()) {
         jniEnv->ExceptionDescribe();
         jniEnv->ExceptionClear();
@@ -25,14 +26,14 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
 {
     int i;
     
-    QAndroidJniEnvironment env;
-    QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", id);
+    QJniEnvironment env;
+    QJniObject inputDevice = QJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", id);
 
     //set button mapping (number->code)
     jintArray b = env->NewIntArray(_androidBtnListCount);
     env->SetIntArrayRegion(b,0,_androidBtnListCount,_androidBtnList);
 
-    QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", b);
+    QJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", b);
     jbooleanArray jSupportedButtons = btns.object<jbooleanArray>();
     jboolean* supportedButtons = env->GetBooleanArrayElements(jSupportedButtons, nullptr);
     //create a mapping table (btnCode) that maps button number with button code
@@ -52,9 +53,9 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     // set axis mapping (number->code)
     axisValue = new int[_axisCount];
     axisCode = new int[_axisCount];
-    QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
+    QJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
     for (i = 0; i < _axisCount; i++) {
-        QAndroidJniObject range = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",i);
+        QJniObject range = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",i);
         axisCode[i] = range.callMethod<jint>("getAxis");
         // Don't allow two axis with the same code
         for (int j = 0; j < i; j++) {
@@ -87,19 +88,19 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
     QMutexLocker lock(&m_mutex);
 
-    QAndroidJniEnvironment env;
-    QAndroidJniObject o = QAndroidJniObject::callStaticObjectMethod<jintArray>("android/view/InputDevice", "getDeviceIds");
+    QJniEnvironment env;
+    QJniObject o = QJniObject::callStaticObjectMethod<jintArray>("android/view/InputDevice", "getDeviceIds");
     jintArray jarr = o.object<jintArray>();
     int sz = env->GetArrayLength(jarr);
     jint *buff = env->GetIntArrayElements(jarr, nullptr);
 
-    int SOURCE_GAMEPAD = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_GAMEPAD");
-    int SOURCE_JOYSTICK = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_JOYSTICK");
+    int SOURCE_GAMEPAD = QJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_GAMEPAD");
+    int SOURCE_JOYSTICK = QJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_JOYSTICK");
 
     QList<QString> names;
 
     for (int i = 0; i < sz; ++i) {
-        QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", buff[i]);
+        QJniObject inputDevice = QJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", buff[i]);
         int sources = inputDevice.callMethod<jint>("getSources", "()I");
         if (((sources & SOURCE_GAMEPAD) != SOURCE_GAMEPAD) //check if the input device is interesting to us
                 && ((sources & SOURCE_JOYSTICK) != SOURCE_JOYSTICK)) continue;
@@ -115,13 +116,13 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         }
 
         // get number of axis
-        QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
+        QJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
         int axisCount = rangeListNative.callMethod<jint>("size");
 
         // get number of buttons
         jintArray a = env->NewIntArray(_androidBtnListCount);
         env->SetIntArrayRegion(a,0,_androidBtnListCount,_androidBtnList);
-        QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", a);
+        QJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", a);
         jbooleanArray jSupportedButtons = btns.object<jbooleanArray>();
         jboolean* supportedButtons = env->GetBooleanArrayElements(jSupportedButtons, nullptr);
         int buttonCount = 0;
@@ -149,7 +150,7 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
 
 bool JoystickAndroid::handleKeyEvent(jobject event) {
-    QJNIObjectPrivate ev(event);
+    QJniObject ev(event);
     QMutexLocker lock(&m_mutex);
     const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
     if (_deviceId!=deviceId) return false;
@@ -168,7 +169,7 @@ bool JoystickAndroid::handleKeyEvent(jobject event) {
 }
 
 bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
-    QJNIObjectPrivate ev(event);
+    QJniObject ev(event);
     QMutexLocker lock(&m_mutex);
     const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
     if (_deviceId!=deviceId) return false;
@@ -225,28 +226,28 @@ bool JoystickAndroid::init(JoystickManager *manager) {
     clear_jni_exception();
     for (i = 1; i <= 16; i++) {
         QString name = "KEYCODE_BUTTON_"+QString::number(i);
-        ret[i-1] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", name.toStdString().c_str());
+        ret[i-1] = QJniObject::getStaticField<jint>("android/view/KeyEvent", name.toStdString().c_str());
     }
     i--;
 
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_A");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_B");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_C");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_L1");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_L2");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_R1");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_R2");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_MODE");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_SELECT");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_START");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_THUMBL");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_THUMBR");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_X");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_Y");
-    ret[i++] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_Z");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_A");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_B");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_C");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_L1");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_L2");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_R1");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_R2");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_MODE");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_SELECT");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_START");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_THUMBL");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_THUMBR");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_X");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_Y");
+    ret[i++] = QJniObject::getStaticField<jint>("android/view/KeyEvent", "KEYCODE_BUTTON_Z");
 
-    ACTION_DOWN = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_DOWN");
-    ACTION_UP = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_UP");
+    ACTION_DOWN = QJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_DOWN");
+    ACTION_UP = QJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_UP");
 
     return true;
 }
@@ -274,7 +275,7 @@ void JoystickAndroid::setNativeMethods()
     };
 
     clear_jni_exception();
-    QAndroidJniEnvironment jniEnv;
+    QJniEnvironment jniEnv;
     jclass objectClass = jniEnv->FindClass(kJniClassName);
     if(!objectClass) {
         clear_jni_exception();

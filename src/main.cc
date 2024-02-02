@@ -82,9 +82,7 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #if defined(__android__)
 #include <jni.h>
 #include "AndroidInterface.h"
-#ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
 #include "JoystickAndroid.h"
-#endif
 #if !defined(NO_SERIAL_LINK)
 #include "qserialport.h"
 #endif
@@ -188,9 +186,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     QSerialPort::setNativeMethods();
  #endif
 
-#ifndef FIXME_QT6_DISABLE_ANDROID_JOYSTICK
     JoystickAndroid::setNativeMethods();
-#endif
 
     return JNI_VERSION_1_6;
 }
