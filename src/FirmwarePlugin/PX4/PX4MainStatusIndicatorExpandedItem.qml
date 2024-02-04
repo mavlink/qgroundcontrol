@@ -65,7 +65,7 @@ ColumnLayout {
                 text: qsTr("Configure")
                 onClicked: {                            
                     mainWindow.showVehicleSetupTool(qsTr("Parameters"))
-                    drawer.close()
+                    mainWindow.closeIndicatorDrawer()
                 }
             }
 
@@ -74,7 +74,7 @@ ColumnLayout {
                 text: qsTr("Configure")
                 onClicked: {                            
                     mainWindow.showVehicleSetupTool()
-                    drawer.close()
+                    mainWindow.closeIndicatorDrawer()
                 }
             }
         }
