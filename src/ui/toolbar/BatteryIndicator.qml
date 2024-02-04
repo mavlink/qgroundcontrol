@@ -285,7 +285,7 @@ Item {
                         text: qsTr("Configure")
                         onClicked: {
                             mainWindow.showVehicleSetupTool(qsTr("Power"))
-                            indicatordrawer.close()
+                            mainWindow.closeIndicatorDrawer()
                         }
                     }
                 }

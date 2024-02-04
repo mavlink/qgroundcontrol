@@ -127,7 +127,7 @@ RowLayout {
                                 parent.children[1].clicked()
                             } else {
                                 activeVehicle.flightMode = modelData
-                                drawer.close()
+                                mainWindow.closeIndicatorDrawer()
                             }
                         }
                     }
@@ -188,7 +188,7 @@ RowLayout {
 
                     onClicked: {
                         mainWindow.showVehicleSetupTool(qsTr("Radio"))
-                        drawer.close()
+                        mainWindow.closeIndicatorDrawer()
                     }
                 }
             }

@@ -175,7 +175,7 @@ Item {
                     fillItem: parent
                     onClicked: {
                         _activeVehicle.clearMessages()
-                        drawer.close()
+                        mainWindow.closeIndicatorDrawer()
                     }
                 }
             }
