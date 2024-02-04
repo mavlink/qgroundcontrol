@@ -120,7 +120,7 @@ Item {
 
             Connections {
                 target:                 _activeVehicle
-                onNewFormattedMessage:  messageText.insert(0, formatMessage(formattedMessage))
+                onNewFormattedMessage: (formattedMessage) => { messageText.insert(0, formatMessage(formattedMessage)) }
             }
 
             FactPanelController {
