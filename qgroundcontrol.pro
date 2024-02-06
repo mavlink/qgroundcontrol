@@ -25,6 +25,7 @@ message(Qt version $$[QT_VERSION])
     }
 }
 
+# these are unused until if/when we start building our own netCDF libs
 # Specify the path where you want to build netCDF-C++
 NETCDF_BUILD_PATH = $$OUT_PWD/netcdf-cxx4-build
 
@@ -32,7 +33,7 @@ NETCDF_BUILD_PATH = $$OUT_PWD/netcdf-cxx4-build
 NETCDF_SOURCE_PATH = $$OUT_PWD/libs/netcdf-cxx4
 
 # Execute the build commands for netCDF-C++
-system("mkdir $$NETCDF_BUILD_PATH") # Create the build directory
+# system("mkdir $$NETCDF_BUILD_PATH") # Create the build directory
 # system("cd $$NETCDF_BUILD_PATH && $$NETCDF_SOURCE_PATH/configure")
 # system("cd $$NETCDF_BUILD_PATH && make")
 # system("cd $$NETCDF_BUILD_PATH && make install") # You might need sudo for this line
@@ -1462,18 +1463,7 @@ LinuxBuild {
     INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
 }
 
-# LIBS += -L$$PWD/$$quote("../../../../Program Files/netCDF 4.9.2/lib/") -lnetcdf -lhdf -lhdf5 -lhdf5_hl -lhdf5_tools -ljpeg -llibcurl_imp -llibhdf -llibhdf5 -llibhdf5_hl -llibhdf5_tools -llibmfhdf -llibxdr -lmfhdf -lxdr -lzlib -lzlibstatic
+LIBS += -L$$quote("C:/Program Files/netCDF 4.9.2/lib/") -lnetcdf -lhdf -lhdf5 -lhdf5_hl -lhdf5_tools -ljpeg -llibcurl_imp -llibhdf -llibhdf5 -llibhdf5_hl -llibhdf5_tools -llibmfhdf -llibxdr -lmfhdf -lxdr -lzlib -lzlibstatic
+INCLUDEPATH += $$quote("C:/Program Files/netCDF 4.9.2/include")
+DEPENDPATH += $$quote("C:/Program Files/netCDF 4.9.2/include")
 
-# INCLUDEPATH += $$PWD/$$quote("../../../../Program Files/netCDF 4.9.2/include")
-
-# unix|win32: LIBS += -L$$PWD/../../../../netCDF/4.9.2/lib/ -lnetcdf
-LIBS += -L$$PWD/../../../../netCDF/4.9.2/lib/ -lnetcdf
-INCLUDEPATH += $$PWD/../../../../netCDF/4.9.2/include
-DEPENDPATH += $$PWD/../../../../netCDF/4.9.2/include
-
-# win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../netCDF/4.9.2/release/ -lnetcdf
-# else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../netCDF/4.9.2/debug/ -lnetcdf
-# else:unix: LIBS += -L$$PWD/../../../../netCDF/4.9.2/ -lnetcdf
-
-# INCLUDEPATH += $$PWD/../../../../netCDF/4.9.2/include
-# DEPENDPATH += $$PWD/../../../../netCDF/4.9.2/include

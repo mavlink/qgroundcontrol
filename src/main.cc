@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 {
 
     // Open the file. TODO: delete this after testing
-    netCDF::NcFile dataFile("pres_temp_4D.nc", netCDF::NcFile::read);
+    // netCDF::NcFile dataFile("pres_temp_4D.nc", netCDF::NcFile::read);
 
 #ifndef __mobile__
     // We make the runguard key different for custom and non custom
