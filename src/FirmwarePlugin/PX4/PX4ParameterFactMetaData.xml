@@ -7814,6 +7814,10 @@
       <unit>s</unit>
       <increment>1</increment>
     </parameter>
+    <parameter name="SIM_BAT_ENABLE" default="1" type="INT32" boolean="true">
+      <short_desc>Simulator Battery enabled</short_desc>
+      <long_desc>Enable or disable the internal battery simulation. This is useful when the battery is simulated externally and interfaced with PX4 through MAVLink for example.</long_desc>
+    </parameter>
     <parameter name="SIM_BAT_MIN_PCT" default="50.0" type="FLOAT">
       <short_desc>Simulator Battery minimal percentage</short_desc>
       <long_desc>Can be used to alter the battery level during SITL- or HITL-simulation on the fly. Particularly useful for testing different low-battery behaviour.</long_desc>
