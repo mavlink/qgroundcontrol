@@ -8473,7 +8473,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigButtons.qml" line="45"/>
       <source> Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</source>
-      <translation>Eyni hərəkəti bir neçə düyməyə təyin etmək, hərəkət üçün bütün bu düymələrin basılmasını tələb edir. Bu, Xodlama və ya Təcili Yardım kimi kritik hərəkətlər üçün təsadüfi düymələrin basılmasının qarşısını almaq üçün faydalıdır.</translation>
+      <translation type="unfinished"> Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigButtons.qml" line="94"/>
