@@ -5,7 +5,7 @@ Araç çubuğu, "PlanView" haricindeki tüm ekranlarda aynıdır (sizi "Fly" gö
 
 ## Seç-Görüntüle Simgeler
 
-Aşağıdaki simgeler ana \_Views \_ arasında geçiş yapmak için kullanılır. Hiçbir araç bağlı olmasa bile bu simgeler ekranda bulunur.
+Aşağıdaki simgeler ana _Views _ arasında geçiş yapmak için kullanılır. Hiçbir araç bağlı olmasa bile bu simgeler ekranda bulunur.
 
 ![Ayarlar ekranı simgesi](../../../assets/toolbar/toolbar_view_select_settings.jpg) **[Settings](../settings_view/settings_view.md)** <br />_QGroundControl_ uygulamasını düzenleyin.
 

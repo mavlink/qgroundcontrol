@@ -23,7 +23,7 @@ Toparlanma Noktası oluşturmak için:
    - şu anda aktif olan işaretçi farklı bir renge (yeşil) sahiptir ve _Rally Point_ paneli kullanılarak düzenlenebilir.
 4. Harita üzerinde seçerek herhangi bir toplanma noktasını etkinleştirin:
    - Seçilen toplanma noktasını harita üzerinde sürükleyerek veya paneldeki konumu düzenleyerek hareket ettirin.
-   - Aktif toplanma noktasını \_ Rally Point\_ panelindeki menü seçeneğini seçerek silin ![Toplanma Noktasını Sil](../../../assets/plan/rally/rally_points_delete.jpg)
+   - Aktif toplanma noktasını _ Rally Point_ panelindeki menü seçeneğini seçerek silin ![Toplanma Noktasını Sil](../../../assets/plan/rally/rally_points_delete.jpg)
 
 ## Upload Rally Points
 

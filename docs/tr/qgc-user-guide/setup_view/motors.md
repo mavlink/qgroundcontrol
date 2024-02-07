@@ -18,9 +18,9 @@ Motorları test etmek için:
    > \*\* Uyarı \*\* Pervaneleri, motorları etkinleştirmeden önce çıkarmalısınız!
    > :::
 
-2. (\_ yalnızca PX4 \_) güvenlik anahtarını etkinleştirin - varsa.
+2. (_ yalnızca PX4 _) güvenlik anahtarını etkinleştirin - varsa.
 
-3. Motor kaydırıcılarını etkinleştirmek için onaylayıcıyı (\_ Pervaneler çıkarıldı - Motor kaydırıcılarını etkinleştirin \_) kaydırın.
+3. Motor kaydırıcılarını etkinleştirmek için onaylayıcıyı (_ Pervaneler çıkarıldı - Motor kaydırıcılarını etkinleştirin _) kaydırın.
 
 4. Motorları döndürmek ve doğru yönde döndüklerini doğrulamak için tek tek kaydırıcıları ayarlayın.
 

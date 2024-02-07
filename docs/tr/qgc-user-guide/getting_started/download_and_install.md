@@ -36,7 +36,7 @@ Manuel olarak 32 bit sürümler oluşturmak mümkündür (bu, geliştirici ekip 
 
 _QGroundControl_ can be installed on macOS 10.11 or later: <!-- match version using https://dev.qgroundcontrol.com/master/en/getting_started/#native-builds -->
 
-<!-- match version using https://dev.qgroundcontrol.com/master/en/getting_started/#native-builds -->
+<!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
 <!-- usually based on Qt macOS dependency -->
 
@@ -55,8 +55,8 @@ QGroundControl continues to not be signed which causes problem on Catalina. To o
 _QGroundControl_ can be installed/run on Ubuntu LTS 20.04 (and later).
 
 Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili kullanımına müdahale eden bir seri modem yöneticisi ile birlikte gelir.
-\_ QGroundControl \_ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz.
-Ayrıca video akışını desteklemek için \_ GStreamer \_ 'ı da yüklemeniz gerekmektedir.
+_ QGroundControl _ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz.
+Ayrıca video akışını desteklemek için _ GStreamer _ 'ı da yüklemeniz gerekmektedir.
 
 QGroundControl \* 'ı ilk kez kurmadan önce:
 
@@ -71,7 +71,7 @@ QGroundControl \* 'ı ilk kez kurmadan önce:
    <!-- Note, remove install of libqt5gui5 https://github.com/mavlink/qgroundcontrol/issues/10176 fixed -->
 2. Logout and login again to enable the change to user permissions.
 
-&nbsp; \_ QGroundControl \_ yüklemek için:
+&nbsp; _ QGroundControl _ yüklemek için:
 
 1. Download [QGroundControl.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage).
 2. Install (and run) using the terminal commands:

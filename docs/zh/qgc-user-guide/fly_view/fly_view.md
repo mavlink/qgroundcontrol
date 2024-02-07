@@ -49,7 +49,7 @@
 There are a number of other elements that are not displayed by default/are only displayed in certain conditions.
 For example, the multi-vehicle selector is only displayed if you have multiple vehicles, and the preflight checklist tool button is only displayed if the appropriate setting is enabled.
 
-## Instrument Panel {#instrument\_panel}
+## Instrument Panel {#instrument_panel}
 
 The instrument panel is a multi-page widget that displays information about the current vehicle, including: telemetry, camera, video, system health, and vibration information.
 
@@ -81,7 +81,7 @@ The selection list on the top right is used to select a particular telemetry val
 
 ![Instrument Page - values settings](../../../assets/fly/instrument_page_values_settings.jpg)
 
-### Camera {#camera\_instrument\_page}
+### Camera {#camera_instrument_page}
 
 The camera page is used to configure and control the camera.
 
@@ -103,7 +103,7 @@ Most of the settings that are displayed depend on the camera (they are defined i
 
 > A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
 
-### Video Stream {#video\_instrument\_page}
+### Video Stream {#video_instrument_page}
 
 The video page is used to enable/disable video streaming.
 When enabled, you can start/stop the video stream, enable a grid overlay, change how the image fits the screen, and record the video locally with QGC.
@@ -117,7 +117,7 @@ The following sections describe how to perform common operations/tasks in the Fl
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### Pre Flight Checklist {#preflight\_checklist}
+### Pre Flight Checklist {#preflight_checklist}
 
 An automated preflight checklist can be used to run through standard checks that the vehicle is configured correctly and it is safe to fly.
 
@@ -184,7 +184,7 @@ You will then need to use the disarming slider.
 
 Disarming the vehicle while it is flying is called an [Emergency Stop](#emergency_stop)
 
-### Emergency Stop {#emergency\_stop}
+### Emergency Stop {#emergency_stop}
 
 Emergency stop is effectively the same as disarming the vehicle while it is flying.
 Your vehicle will crash!
@@ -235,7 +235,7 @@ This behaviour depends on the vehicle type and configuration.
 For example, rally points or mission landings may be used as alternative return targets.
 :::
 
-### Change Altitude {#change\_altitude}
+### Change Altitude {#change_altitude}
 
 You can change altitude while flying, except when in a mission:
 
@@ -303,7 +303,7 @@ To pause:
 
 ### Missions
 
-#### Start Mission {#start\_mission}
+#### Start Mission {#start_mission}
 
 You can start a mission when the vehicle is landed (the start mission confirmation slider is often displayed by default).
 
@@ -321,7 +321,7 @@ To start a mission from landed:
 
    ![Start mission](../../../assets/fly/start_mission.jpg)
 
-#### Continue Mission {#continue\_mission}
+#### Continue Mission {#continue_mission}
 
 You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation slider is often displayed by default after you takeoff).
 
@@ -343,7 +343,7 @@ You can continue the current mission while (unless already in a mission!):
 
    ![Continue Mission](../../../assets/fly/continue_mission.jpg)
 
-#### Resume Mission {#resume\_mission}
+#### Resume Mission {#resume_mission}
 
 _Resume Mission_ is used to resume a mission after performing an [RTL/Return](#rtl) or [Land](#land) from within a mission (in order, for example, to perform a battery change).
 
@@ -368,12 +368,12 @@ A mission cannot simply resume from the last mission item that the vehicle execu
 Instead _QGroundControl_ rebuilds the mission, starting from the last mission item flown, and automatically prepending any relevant commands to the front of the mission.
 :::
 
-#### Remove Mission Prompt After Landing {#resume\_mission\_prompt}
+#### Remove Mission Prompt After Landing {#resume_mission_prompt}
 
 You will be prompted to remove the mission from the vehicle after the mission completes and the vehicle lands and disarms.
 This is meant to prevent issues where stale missions are unknowingly left on a vehicle, potentially resulting in unexpected behavior.
 
-### Display Video {#video\_switcher}
+### Display Video {#video_switcher}
 
 When video streaming is enabled, _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
 You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
