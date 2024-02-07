@@ -44,7 +44,7 @@ You need to rotate the vehicle randomly around all axes until the progress bar f
 
 This shows you the quality of the calibration for each compass. Using these values you can determine whether you may want to turn off usage of poorly performing compasses.
 
-## Level Horizon {#level\_horizon}
+## Level Horizon {#level_horizon}
 
 If the horizon (as shown in the HUD) is not level after completing accelerometer calibration you can calibrate the level horizon for your vehicle.
 You will be asked to place the vehicle in a level orientation while it captures the information.
@@ -93,7 +93,7 @@ To perform **CompassMot** calibration:
 
    ![CompassMot calibration](../../../assets/setup/sensor_compass_mot.jpg)
 
-## Sensor Settings {#sensor\_settings}
+## Sensor Settings {#sensor_settings}
 
 The _Sensor Settings_ section allows you to specify the compass orientation and which compasses are enabled.
 

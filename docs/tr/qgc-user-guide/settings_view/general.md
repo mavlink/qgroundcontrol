@@ -64,7 +64,7 @@ The settings are:
 
 - <span id="load_save_path"></span>**Application Load/Save Path**: Default location for loading/saving application files, including: parameters, telemetry logs, and mission plans.
 
-## Data Persistence {#data\_persistence}
+## Data Persistence {#data_persistence}
 
 ![Data Persistence Settings](../../../assets/settings/general/data_persistence.jpg)
 
@@ -72,7 +72,7 @@ The settings are:
 
 - **Disable all data persistence**: Check to prevent any data being saved or cached: logs, map tiles etc.
 
-## Telemetry Logs from Vehicle {#telemetry\_logs}
+## Telemetry Logs from Vehicle {#telemetry_logs}
 
 ![Telemetry Logs from Vehicle Settings](../../../assets/settings/general/telemetry_logs.jpg)
 
@@ -83,7 +83,7 @@ The settings are:
   Stops logging when the last vehicle disconnects.
 - [**CSV Logging**](csv.md): Log subset of telemetry data to a CSV file.
 
-## Fly View {#fly\_view}
+## Fly View {#fly_view}
 
 ![Fly View Settings](../../../assets/settings/general/fly_view.jpg)
 
@@ -117,7 +117,7 @@ The settings are:
 
 - **Go To Location Max Distance**: The maximum distance that a Go To location can be set from the current vehicle location (in guided mode).
 
-## Plan View {#plan\_view}
+## Plan View {#plan_view}
 
 ![Plan View Settings](../../../assets/settings/general/plan_view.jpg)
 
@@ -125,7 +125,7 @@ The settings are:
 
 - **Default Mission Altitude**: The default altitude used for the Mission Start Panel, and hence for the first waypoint.
 
-## AutoConnect to the following devices {#auto\_connect}
+## AutoConnect to the following devices {#auto_connect}
 
 This section defines the set of devices to which _QGroundControl_ will auto-connect.
 
@@ -141,7 +141,7 @@ Settings include:
 - **RTK GPS:** Autoconnect to RTK GPS device
 - **NMEA GPS Device:** Autoconnect to an external GPS device to get ground station position ([see below](#nmea_gps))
 
-### Ground Station Location (NMEA GPS Device) {#nmea\_gps}
+### Ground Station Location (NMEA GPS Device) {#nmea_gps}
 
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
@@ -173,7 +173,7 @@ Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device a
   - **NMEA GPS Device:** _UDP Port_.
   - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
 
-## RTK GPS {#rtk\_gps}
+## RTK GPS {#rtk_gps}
 
 This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
 
@@ -203,7 +203,7 @@ The settings are:
   - **Base Position Accuracy:** Accuracy of base station position information.
   - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
 
-## ADSB Server {#adsb\_server}
+## ADSB Server {#adsb_server}
 
 ![ADSB\_Server Settings](../../../assets/settings/general/adbs_server.jpg)
 

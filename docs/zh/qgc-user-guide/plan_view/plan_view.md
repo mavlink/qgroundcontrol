@@ -7,7 +7,7 @@ It is also use to configure the [GeoFence](plan_geofence.md) and [Rally Points](
 <span id="plan_screenshot"></span>
 ![Plan View](../../../assets/plan/plan_view_overview.jpg)
 
-## UI Overview {#ui\_overview}
+## UI Overview {#ui_overview}
 
 The [screenshot above](#plan_screenshot) shows a simple mission plan that starts with a takeoff at the [Planned Home](#planned_home) position (H), flies through three waypoints, and then lands on the last waypoint (i.e. waypoint 3).
 
@@ -24,7 +24,7 @@ The main elements of the UI are:
 
 It shows you information related to the currently selected waypoint as well as statistics for the entire mission.
 
-## Planning a Mission {#plan\_mission}
+## Planning a Mission {#plan_mission}
 
 At very high level, the steps to create a mission are:
 
@@ -35,7 +35,7 @@ At very high level, the steps to create a mission are:
 
 The following sections explain some of the details in the view.
 
-## Planned Home Position {#planned\_home}
+## Planned Home Position {#planned_home}
 
 The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
 It is used by QGC to estimate mission times and to draw waypoint lines.
@@ -51,7 +51,7 @@ The altitude for the planned home position is set in the [Mission Settings](#mis
 The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
 :::
 
-## Plan Tools {#plan\_tools}
+## Plan Tools {#plan_tools}
 
 The plan tools are used for adding individual waypoints, easing mission creation for complicated geometries, uploading/downloading/saving/restoring missions, and for navigating the map. The main tools are described below.
 
@@ -86,7 +86,7 @@ The _File tools_ provide the following functionality:
 
 The [Pattern](Pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
 
-## Mission Command List {#mission\_command\_list}
+## Mission Command List {#mission_command_list}
 
 Mission commands for the current mission are listed on the right side of the view.
 At the top are a set of options to switch between editing the mission, GeoFence and rally points.
@@ -94,7 +94,7 @@ Within the list you can select individual mission items to edit their values.
 
 ![Mission Command List](../../../assets/plan/mission/mission_command_list.jpg)
 
-### Mission Command Editors {#mission\_command\_editors}
+### Mission Command Editors {#mission_command_editors}
 
 Click on a mission command in the list to display its editor (in which you can set/change the command attributes).
 
@@ -111,7 +111,7 @@ The list of available commands will depend on firmware and vehicle type.
 Examples may include: Waypoint, Start image capture, Jump to item (to repeat mission) and other commands.
 :::
 
-### Mission Settings {#mission\_settings}
+### Mission Settings {#mission_settings}
 
 The _Mission Start_ panel is the first item that appears in the [mission command list](#mission_command_list).
 It may be used to specify a number default settings that may affect the start or end of the mission.
@@ -181,7 +181,7 @@ By specifying this value, total mission or survey times can be approximated even
 
 ## Troubleshooting
 
-### Mission (Plan) Upload/Download Failures {#plan\_transfer\_fail}
+### Mission (Plan) Upload/Download Failures {#plan_transfer_fail}
 
 Plan uploading and downloading can fail over a noisy communication link (affecting missions, GeoFence, and rally points).
 If a failure occurs you should see a status message in the QGC UI similar to:

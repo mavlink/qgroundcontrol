@@ -22,10 +22,10 @@ Radyoyu kalibre etmek için:
 
    ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)::: info
 
-   Yukardaki görüntü PX4 Pro içindir. Her iki aygıt yazılımı için kalibrasyon/üst bölüm aynıdır, ancak \_ Ek Radyo Ayarları \_ bölümü farklı olacaktır.
+   Yukardaki görüntü PX4 Pro içindir. Her iki aygıt yazılımı için kalibrasyon/üst bölüm aynıdır, ancak _ Ek Radyo Ayarları _ bölümü farklı olacaktır.
    :::
 
-4. Verici yapılandırmanıza uyan radyo \_ verici modunu \_ seçin (bu, \_ QGroundControl \_ 'ın kalibrasyon sırasında izlemeniz için doğru çubuk pozisyonlarını görüntülemesini sağlar).
+4. Verici yapılandırmanıza uyan radyo _ verici modunu _ seçin (bu, _ QGroundControl _ 'ın kalibrasyon sırasında izlemeniz için doğru çubuk pozisyonlarını görüntülemesini sağlar).
 
    ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)
 

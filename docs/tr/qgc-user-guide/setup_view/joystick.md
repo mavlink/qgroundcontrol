@@ -8,17 +8,17 @@ QGroundControl \*, bir aracı RC Verici yerine bir joystick veya gamepad kullana
 
 :::info
 \*\* Note \*\* Joystick ve Gamepad desteği, çapraz platform [ SDL2 ](http://www.libsdl.org/index.php) kitaplığı kullanılarak etkinleştirilir.
-Belirli bir kontrolcüyle uyumluluk, SDL'ye bağlıdır (bu API tarafından gösterilen tüm düğmeler, \_ QGroundControl \_ arayüzü aracılığıyla görüntülenir).
+Belirli bir kontrolcüyle uyumluluk, SDL'ye bağlıdır (bu API tarafından gösterilen tüm düğmeler, _ QGroundControl _ arayüzü aracılığıyla görüntülenir).
 [Çok sayıda yaygın oyun çubuğu ve oyun kolunun ](#supported-joysticks) çalıştığı bilinmektedir.
 :::
 
 :::info
-\*\* Note \*\* Kumanda kolu, kalibrasyon işleminin son adımı olarak \_ etkinleştirilir \_.
+\*\* Note \*\* Kumanda kolu, kalibrasyon işleminin son adımı olarak _ etkinleştirilir _.
 :::
 
 ## PX4 Joystick Desteğini Etkinleştirme
 
-To enable Joystick support in PX4 you need to set the parameter \[`COM_RC_IN_MODE`]\(h[ttp://localhost:8080/px4\_user\_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
+To enable Joystick support in PX4 you need to set the parameter [`COM_RC_IN_MODE`](h[ttp://localhost:8080/px4_user_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
 If this parameter is `0` then _Joystick_ will not be offered as a setup option.
 
 Bu, PX4 SITL yapıları için varsayılan olarak etkindir (belirli bir parametrenin nasıl bulunacağı ve ayarlanacağı hakkında bilgi için [Parametreler](../setup_view/parameters.md) konusuna bakın).
@@ -46,7 +46,7 @@ Joystick'i ayarlamak için:
 
    ![Joystick Kurulumu - Kalibrasyon](../../../assets/setup/joystick_calibration.jpg)
 
-   Joystick, kalibrasyon işleminin son adımı olarak \_ etkinleştirilir \_.
+   Joystick, kalibrasyon işleminin son adımı olarak _ etkinleştirilir _.
 
 6. Düğmelerin ve çubukların amaçlandığı gibi çalışıp çalışmadığını onlara basarak ve sonucu \*\* General \*\* sekmesindeki Axis/Buton monitöründe görüntüleyerek test edin.
 
@@ -62,12 +62,12 @@ Bu seçenekler, duyarlılığı artırmak için belirli alışılmadık kuruluml
 
 ![Joystick Kurulumu - Gaz Kolu Modları](../../../assets/setup/joystick_throttle_modes.jpg)
 
-- **Center stick is zero throttle**: Ortalanmış veya alçaltılmış gaz çubuğu [ MANUAL\_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) ile 0, kaldırılmış gaz çubuğu 1000 gönderir.
+- **Center stick is zero throttle**: Ortalanmış veya alçaltılmış gaz çubuğu [ MANUAL_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) ile 0, kaldırılmış gaz çubuğu 1000 gönderir.
   - **Spring loaded throttle smoothing**: Bu modda gazın kendisini değil, artıp / azaldığı hızı kontrol edersiniz.
     This is useful for setups where the throttle stick is spring loaded, as the user can hold the desired throttle while releasing the stick.
-- **Full down stick is zero throttle**: Bu modda, alçaltılmış çubuk [ MANUAL\_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) için 0, ortalanmış çubuk 500 ve kaldırılmış çubuk 1000 gönderir.
+- **Full down stick is zero throttle**: Bu modda, alçaltılmış çubuk [ MANUAL_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) için 0, ortalanmış çubuk 500 ve kaldırılmış çubuk 1000 gönderir.
 - **Allow negative thrust**: \*\* Center stick is zero throttle \*\* modundayken, bu mod, kullanıcının çubuğu indirerek negatif değerler göndermesini sağlar.
-  Böylece, indirilen çubuk [ MANUAL\_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) 'de -1000 gönderir, ortalanmış çubuk 0 gönderir ve yükseltilmiş çubuk 1000 gönderir.
+  Böylece, indirilen çubuk [ MANUAL_CONTROL **z** ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) 'de -1000 gönderir, ortalanmış çubuk 0 gönderir ve yükseltilmiş çubuk 1000 gönderir.
   Bu mod sadece [ Rover ](http://ardupilot.org/rover/index.html) gibi negatif itişi destekleyen araçlar için etkinleştirilebilir.
 
 ### Expo
@@ -95,11 +95,11 @@ Yanlış kullanılırlarsa beklenmeyen sonuçlara neden olabilirler.
 
 - **Joystick Mode**: Joystick'in gerçekte neyi kontrol ettiğini ve araca gönderilen MAVLink mesajlarını değiştirir.
 
-  - **Normal**: Kullanıcı normal bir RC radyo kullanıyormuş gibi kontrol eder, MAVLink [ MANUAL\_CONTROL ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) mesajları kullanılır.
-  - **Attitude**: Kullanıcı aracın duruşunu kontrol eder, MAVLink [ SET\_ATTITUDE\_TARGET ](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) mesajları kullanılır.
-  - **Position**: Kullanıcı araç konumunu kontrol eder, \*\* konumu \*\* için yalnızca bit maskeli MAVLink [ SET\_POSITION\_TARGET\_LOCAL\_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
-  - **Force**: Kullanıcı araca uygulanan kuvvetleri kontrol eder, \*\* kuvvet \*\* için yalnızca bit maskeli MAVLink [ SET\_POSITION\_TARGET\_LOCAL\_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
-  - **Velocity**: Kullanıcı araca uygulanan kuvvetleri kontrol eder, \*\* hız \*\* için yalnızca bit maskeli MAVLink [ SET\_POSITION\_TARGET\_LOCAL\_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
+  - **Normal**: Kullanıcı normal bir RC radyo kullanıyormuş gibi kontrol eder, MAVLink [ MANUAL_CONTROL ](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) mesajları kullanılır.
+  - **Attitude**: Kullanıcı aracın duruşunu kontrol eder, MAVLink [ SET_ATTITUDE_TARGET ](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) mesajları kullanılır.
+  - **Position**: Kullanıcı araç konumunu kontrol eder, \*\* konumu \*\* için yalnızca bit maskeli MAVLink [ SET_POSITION_TARGET_LOCAL_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
+  - **Force**: Kullanıcı araca uygulanan kuvvetleri kontrol eder, \*\* kuvvet \*\* için yalnızca bit maskeli MAVLink [ SET_POSITION_TARGET_LOCAL_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
+  - **Velocity**: Kullanıcı araca uygulanan kuvvetleri kontrol eder, \*\* hız \*\* için yalnızca bit maskeli MAVLink [ SET_POSITION_TARGET_LOCAL_NED ](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) mesajları kullanılır.
 
 - **Axis Frequency**: Joystick boştayken (gelen veriler değişmiyorken), joystick komutları araca 5Hz'de gönderilir. Joystick kullanımdayken (giriş değerleri değişiyorken), joystick komutları araca bu ayarla yapılandırılan (daha yüksek) frekansta gönderilir. Varsayılan değer 25Hz'dir.
 
@@ -126,7 +126,7 @@ Yanlış kullanılırlarsa beklenmeyen sonuçlara neden olabilirler.
 
 ## Desteklenen Joystickler
 
-Aşağıdaki kumanda kollarının/kontrol cihazlarının nispeten yeni \_ QGroundControl \_ versiyonlarıyla çalıştığı görülmüştür.
+Aşağıdaki kumanda kollarının/kontrol cihazlarının nispeten yeni _ QGroundControl _ versiyonlarıyla çalıştığı görülmüştür.
 
 ### Sony Playstation 3/4 Kontrolcüleri
 
@@ -158,8 +158,8 @@ Adımlar şunlardır:
    <span></span>
    ```
 4. Kontrolcünün LED'i hızla yanıp sönmeye başlayana kadar \*\* Share \*\* düğmesini ve sonra \*\* PS \*\* düğmesini basılı tutun.
-   Daha sonra \_ ds4drv \_ yeni bir aygıt algılamalıdır.
-5. Son olarak, \_ jstest-gtk \_ yardımcı programını çalıştırarak denetleyici kurulumunu kontrol etmelisiniz.
+   Daha sonra _ ds4drv _ yeni bir aygıt algılamalıdır.
+5. Son olarak, _ jstest-gtk _ yardımcı programını çalıştırarak denetleyici kurulumunu kontrol etmelisiniz.
 
 ### FrSky Taranis XD9 plus
 
@@ -191,7 +191,7 @@ Bu oyun kumandası, QGroundControl aracılığıyla bir multirotoru manuel olara
 #### Mac OS Leopard / Lion Kurulumu
 
 F710, Leopard / Lion'da algılanır, ancak otomatik olarak bir giriş cihazı olarak yapılandırılmaz.
-Çalışan bir konfigürasyon elde etmek için, F710'un \_ Rumblepad2 \_ olarak tanınması gerekir.
+Çalışan bir konfigürasyon elde etmek için, F710'un _ Rumblepad2 _ olarak tanınması gerekir.
 
 Önce nasıl tanındığını kontrol edin: \*\* Apple> Bu Mac Hakkında> Ek Bilgi> Sistem Raporu> USB \*\*.
 "Logitech Cordless RumblePad 2" olarak algılanmışsa bundan sonra başka bir işlem yapılmasına gerek yoktur.

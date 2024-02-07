@@ -7,7 +7,7 @@ The screen also allows you to manage [MAVLink 2 Log Streaming](#logging) (PX4 on
 
 ![MAVLink settings screen](../../../assets/settings/mavlink/overview.png)
 
-## Ground Station {#ground\_station}
+## Ground Station {#ground_station}
 
 This section sets the MAVLink properties and behaviour of _QGroundControl_.
 
@@ -23,7 +23,7 @@ This section sets the MAVLink properties and behaviour of _QGroundControl_.
   Note that this forwarding is one-way: from QGC to the specified host.
   Any MAVLink messages that are received from the specified host will be ignored.
 
-## Link Status {#link\_status}
+## Link Status {#link_status}
 
 This shows the status of MAVLink message transfer over the communications link.
 A high **Loss rate** may lead to protocol errors for things like parameter download or mission upload/download.
