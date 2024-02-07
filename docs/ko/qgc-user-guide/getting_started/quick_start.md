@@ -17,7 +17,7 @@ QGroundControl에 자주 사용하는 것이 익숙해 질 수 있는 최선의 
   - [설정](../setup_view/setup_view.md): 기체를 설정하고 튜닝합니다.
   - [계획](../plan_view/plan_view.md): 자율 비행 미션을 생성합니다.
   - [비행](../fly_view/fly_view.md): 스트리밍 비디오를 포함하여 비행중 기체를 모니터링합니다.
-  - \[분석] \*\* 분석 보기에 대한 설명이 누락되었습니다 \*\*
+  - [분석] \*\* 분석 보기에 대한 설명이 누락되었습니다 \*\*
 - 툴바에서 _상태 아이콘_을 클릭하여 연결된 기체의 상태를 확인할 수 있습니다.
 
 While the UI is fairly intuitive, this documentation can also be referenced to find out more.
