@@ -36,7 +36,7 @@ _QGroundControl_ 4.0 버전 이상의 사전 빌드 버전은 64비트 전용입
 
 _QGroundControl_은 MacOS 10.11 이상에서 설치할 수 있습니다.
 
-<!-- match version using https://dev.qgroundcontrol.com/master/en/getting_started/#native-builds -->
+<!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
 <!-- usually based on Qt macOS dependency -->
 
