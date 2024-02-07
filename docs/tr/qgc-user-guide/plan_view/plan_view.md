@@ -1,13 +1,13 @@
 # Plan Ekranı
 
-_Plan View_, aracınız için \_ otonom görevler \_ planlamak ve onları araca yüklemek için kullanılır. Görev [planlanıp](#plan_mission) araca gönderildiğinde, görevi gerçekleştirmek için [Uçuş Ekranı](../fly_view/fly_view.md)'na geçillir.
+_Plan View_, aracınız için _ otonom görevler _ planlamak ve onları araca yüklemek için kullanılır. Görev [planlanıp](#plan_mission) araca gönderildiğinde, görevi gerçekleştirmek için [Uçuş Ekranı](../fly_view/fly_view.md)'na geçillir.
 
 Ayrıca eğer yazılım tarafından destekleniyorsa [GeoFence](plan_geofence.md) ve [Rally Points](plan_rally_points.md)'leri ayalarmak için kullanılır.
 
 <span id="plan_screenshot"></span>
 ![Plan Ekranı](../../../assets/plan/plan_view_overview.jpg)
 
-## Kullanıcı Arayüzü'ne Genel Bakış {#ui\_overview}
+## Kullanıcı Arayüzü'ne Genel Bakış {#ui_overview}
 
 Yukarıdaki [ ekran görüntüsü ](#plan_screenshot), [ Planlanan Ev ](#planned_home) konumundan (H) kalkışla başlayan basit bir görev planını gösterir, üç hedef noktadan geçer ve ardından son hedef noktaya (yani hedef noktası 3) iner.
 
@@ -24,7 +24,7 @@ Arayüzün temel elemanları şunlardır:
 
 Size o anda seçili olan hedef noktasıyla ilgili bilgilerin yanı sıra tüm görevin istatistiklerini gösterir.
 
-## Görev Planlama {#plan\_mission}
+## Görev Planlama {#plan_mission}
 
 At very high level, the steps to create a mission are:
 
@@ -35,7 +35,7 @@ At very high level, the steps to create a mission are:
 
 Aşağıdaki bölümler, ekrandaki bazı ayrıntıları açıklamaktadır.
 
-## Planlanmış Ev Konumu {#planned\_home}
+## Planlanmış Ev Konumu {#planned_home}
 
 The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
 QGC tarafından görev sürelerini tahmin etmek ve hedef noktalar arası çizgileri çizmek için kullanılır.
@@ -51,7 +51,7 @@ Planlanan ana konumun yüksekliği, [ Mission Settings ](#mission_settings) pane
 The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
 :::
 
-## Plan Araçları {#plan\_tools}
+## Plan Araçları {#plan_tools}
 
 Plan araçları, ara noktalar eklemek, karmaşık yerler için görev oluşturmayı kolaylaştırmak, görevleri yüklemek/indirmek/kaydetmek/geri yüklemek ve haritada gezinmek için kullanılır. Ana araçlar aşağıda açıklanmıştır.
 
@@ -80,13 +80,13 @@ _Dosya araçları_ aşağıdaki fonksiyonları sağlar:
 - İndir (Araçtan yüklemek)
 - KML dosyası dahil olmak üzere Dosyaya Kaydet/Farklı Kaydet.
 - Dosyadan Yükle
-- Tümünü Kaldır (tüm görev hedef noktalarını \_ Plan ekranından\_ ve araçtan kaldırır)
+- Tümünü Kaldır (tüm görev hedef noktalarını _ Plan ekranından_ ve araçtan kaldırır)
 
 ### Şablon
 
 [Pattern](Pattern.md) aracı, [gözlem](../plan_view/pattern_survey.md) ve [yapı taramaları](../plan_view/pattern_structure_scan_v2.md) da dahil olmak üzere karmaşık şekillerin uçulması için görevlerin oluşturulmasını basitleştirir.
 
-## Görev Komutları Listesi {#mission\_command\_list}
+## Görev Komutları Listesi {#mission_command_list}
 
 Mission commands for the current mission are listed on the right side of the view.
 En üstte görev, coğrafi sınır ve toparlanma noktaları arasında geçiş yapmak için bir dizi seçenek vardır.
@@ -94,24 +94,24 @@ Listede, değerlerini düzenlemek için görev öğelerini ayrı ayrı seçebili
 
 ![Görev Komutları Listesi](../../../assets/plan/mission/mission_command_list.jpg)
 
-### Görev Komutları Düzenleyicisi {#mission\_command\_editors}
+### Görev Komutları Düzenleyicisi {#mission_command_editors}
 
 Düzenleyicisini görüntülemek için listedeki bir görev komutuna tıklayın (buradan komut özellikerini ayarlayabilir/değiştirebilirsiniz).
 
 Komut adına tıklayarak komutun \*\* tipini \*\* değiştirebilirsiniz (örneğin: _Waypoint_).
-Bu, aşağıda gösterilen \_ Select Mission Command\_ diyaloğunu görüntüler.
+Bu, aşağıda gösterilen _ Select Mission Command_ diyaloğunu görüntüler.
 Varsayılan olarak bu sadece "Temel Komutlar" görüntülenir, daha fazlasını görüntülemek için \*\* Category\*\* açılır menüsünü kullanabilirsiniz (örneğin tüm seçenekleri görmek için \*\* All commands \*\* 'ı seçin).
 
 <img src="../../../assets/plan/mission/mission_commands.jpg" style="width: 200px;"/>
 
-Her komut adının sağında, \_ Ekle \_ ve \_ Sil \_ gibi ek seçeneklere erişmek için tıklayabileceğiniz bir menü bulunur.
+Her komut adının sağında, _ Ekle _ ve _ Sil _ gibi ek seçeneklere erişmek için tıklayabileceğiniz bir menü bulunur.
 
 :::info
 Kullanılabilir komutların listesi aracın yazılımına ve türüne bağlıdır.
 Örnek olarak şunlar verilebilir: Hedef nokta, Görüntü yakalamayı başlat, Öğeye atla (görevi tekrarlamak için) ve diğer komutlar.
 :::
 
-### Görev Ayarları {#mission\_settings}
+### Görev Ayarları {#mission_settings}
 
 _Mission Start_ paneli [ görev komut listesinde ](#mission_command_list) görünen ilk öğedir.
 Görevin başlangıcını veya sonunu etkileyebilecek bir takım varsayılan ayarı düzenlemek için kullanılabilir.
@@ -145,7 +145,7 @@ Bu, kalkıştan görevin tamamlanmasına kadar aracınızın hedef noktalar aras
 ![Görev Ayarları Planlanmış Ev Konumu Bölümü](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
 
 :::info
-Bu yalnızca \_ planlanan \_ ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır.
+Bu yalnızca _ planlanan _ ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır.
 Görevin gerçekleşmesinde gerçek bir etkisi yoktur.
 Asıl ev konumu, araç tarafından devreye alınırken ayarlanır.
 :::
@@ -181,7 +181,7 @@ Bu değer belirtilerek, bir araca bağlı olmasa bile toplam görev veya anket s
 
 ## Sorun Giderme
 
-### Görev (Plan) Yükleme/İndirme Hataları {#plan\_transfer\_fail}
+### Görev (Plan) Yükleme/İndirme Hataları {#plan_transfer_fail}
 
 Plan yükleme ve indirme, kötü bir iletişim bağlantısında hata verebilir (görevleri, coğrafi sınırları ve toparlanma noktalarını etkiler).
 Bir arıza meydana gelirse, QGC kullanıcı arayüzünde aşağıdakine benzer bir durum mesajı görmelisiniz:

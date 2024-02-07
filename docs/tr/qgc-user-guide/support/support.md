@@ -10,7 +10,7 @@ _Questions_ about how to use _QGroundControl_ should be raised in the discussion
 
 These forums are also the best place to start discussions on bugs/problems you are having with _QGroundControl_ and or feature requests you would like to make. From there you may be directed to entering information in a GitHub Issue for further resolution.
 
-### Developer Chat {#developer\_chat}
+### Developer Chat {#developer_chat}
 
 _QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl Slack channel](https://px4.slack.com/).
 

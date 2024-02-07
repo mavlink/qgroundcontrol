@@ -80,7 +80,7 @@ QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다.
     카메라 선택, 카메라 모드, 사진/동영상 시작/중지, 스토리지 관리 등등
   - **궤도** 회전 방향 변경 지원.
   - **계기판**
-    - 새로운 estimatorStatus Vehicle FactGroup에 ESTIMATOR\_STATUS 값을 추가하였습니다.
+    - 새로운 estimatorStatus Vehicle FactGroup에 ESTIMATOR_STATUS 값을 추가하였습니다.
       이제 계기판에 표시할 수 있습니다.
     - 계기판에서 표시할 수 있도록 GCS까지의 거리를 설정합니다.
     - Make Heading to Home available for display from instrument panel.
@@ -136,7 +136,7 @@ QGroundControl의 설정 형식은 이번 배포판에서 변경되었습니다.
   - **ArduPlane** QuadPlane 지원을 포함하여 안내 명령에 대한 지원이 향상되었습니다.
   - **높은 대기 시간 링크** 위성 연결과 같은 대기 시간이 긴 링크를 지원합니다.
     비용을 줄이기 위하여 이러한 링크에서 QGroundControl에서 기체 트래픽을 제한합니다.
-    HIGH\_LATENCY MavLink 메시지를 지원합니다.
+    HIGH_LATENCY MavLink 메시지를 지원합니다.
     듀얼 링크 설정으로, 높은 대기 시간에서 일반 링크로의 장애 복구를 지원합니다.
 
 ## 안정 버전 3.3

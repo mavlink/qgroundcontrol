@@ -80,7 +80,7 @@ This section contains a high level and _non-exhaustive_ list of new features add
     Camera select, camera mode, start/stop photo/video, storage mangement...
   - **Orbit** Support for changing rotation direction.
   - **Instrument Panel**
-    - Added ESTIMATOR\_STATUS values to new estimatorStatus Vehicle FactGroup.
+    - Added ESTIMATOR_STATUS values to new estimatorStatus Vehicle FactGroup.
       These are now available to display in instrument panel.
     - Make Distance to GCS available for display from instrument panel.
     - Make Heading to Home available for display from instrument panel.
@@ -137,7 +137,7 @@ This section contains a high level and _non-exhaustive_ list of new features add
   - **ArduPlane** Much better support for guided commands including QuadPlane support.
   - **High Latency Links** Support for high latency links such as satellite connections.
     Limits the traffic from QGC up to Vehicle on these links to reduce cost.
-    Supports HIGH\_LATENCY MavLink message.
+    Supports HIGH_LATENCY MavLink message.
     Supports failover back/forth from high latency to normal link with dual link setup.
 
 ## Stable Version 3.3

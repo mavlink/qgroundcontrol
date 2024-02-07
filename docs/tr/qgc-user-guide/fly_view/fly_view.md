@@ -22,7 +22,7 @@ Yukarıdaki ekran görüntüsü, uçuş ekranının ana öğelerini gösterir:
   - Kalkıştan sonra, haritaya tıklayarak bir konuma [Go to](#goto) veya [Orbit at](#orbit) ayarlayabilirsiniz.
 - **Uçuş Araç Çubuğu:** Sensörler (GPS, pil, RC kontrolü) ve araç durumu (Uçuş modu, Etkin (armed) / Devre Dışı (disarmed) durumu) hakkında anahtar bilgiler.
   - Daha fazla ayrıntı görmek için sensör göstergelerini seçin.
-  - Yeni bir mod seçmek için \_ Flight mode \_ metnine (ör. "Hold") tıklayın.
+  - Yeni bir mod seçmek için _ Flight mode _ metnine (ör. "Hold") tıklayın.
     Tüm modlar mevcut olmayabilir.
   - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem).
     Select the text when the background is amber or red to find out the cause of any preflight issues (QGC 4.2.0 and later).
@@ -49,7 +49,7 @@ Yukarıdaki ekran görüntüsü, uçuş ekranının ana öğelerini gösterir:
 Ayrıca varsayılan olarak görüntülenmeyen/ belirli koşullarda görüntülenebilen bazı öğelerde var.
 Mesela, çoklu-araç seçici sadece birden çok aracınız varsa veya uçuş öncesi kontrol listesi eğer etkinleştirilmişse görüntülenir.
 
-## Bilgi Paneli {#instrument\_panel}
+## Bilgi Paneli {#instrument_panel}
 
 The instrument panel displays telemetry information about the current vehicle.
 
@@ -81,7 +81,7 @@ The selection list on the top right is used to select a particular telemetry val
 
 Aracı devre dışı bırakmak için araç **landed** halindeyken _Fly Toolbar_ 'dan **Armed**'ı seçin.
 
-### Kamera {#camera\_instrument\_page}
+### Kamera {#camera_instrument_page}
 
 Kamera sayfası, kamerayı ayarlamak ve kontrol etmek için kullanılır.
 
@@ -103,7 +103,7 @@ Most of the settings that are displayed depend on the camera (they are defined i
 
 > Sondaki bir kaç ortak ayar sabit olarak kodlanmıştır: Fotoğraf Modu (Tekli/Photolapse), Fotoğraf Aralığı (Timelapse için), Kamera Ayarlarını Varsayılana Sıfırla (kameraya bir sıfırlama komutu gönderir), Format (depolama)
 
-### Video Akışı {#video\_instrument\_page}
+### Video Akışı {#video_instrument_page}
 
 Video sayfası video akışını etkinleştirmek ve devre dışı bırakmak için kullanılır.
 Etkinleştirildiğinde, video akışını durdurup başlatabilir, ızgara çizgilerini açabilir, görüntünün ekrana nasıl sığacağını değiştirebilir ve videoyu yerel olarak QGC ile kaydedebilirsiniz.
@@ -117,7 +117,7 @@ Aşağıdaki bölümler, Uçuş Ekranı'nda genel işlemlerin / görevlerin nas�
 Mevcut seçeneklerin çoğu, hem aracın türüne hem de mevcut durumuna bağlıdır.
 :::
 
-### Uçuş Öncesi Kontrol Listesi {#preflight\_checklist}
+### Uçuş Öncesi Kontrol Listesi {#preflight_checklist}
 
 Aracın doğru ayarlandığını ve uçmak için güvenli olduğu gösteren standart kontrollerin yapılması için otomatik bir uçuş öncesi kontrol listesi kullanılabilir.
 
@@ -135,7 +135,7 @@ Bir aracı devreye almak, kalkışa hazırlık için motorları çalıştırır.
 You will only be able to arm the vehicle if it is safe and ready to fly.
 
 :::tip
-Genel olarak \_ QGroundControl \_ aracı manuel olarak devreye almanızı gerektirmez; Bir göreve veya kalkışa başlarsanız bu sizin için yapılır.
+Genel olarak _ QGroundControl _ aracı manuel olarak devreye almanızı gerektirmez; Bir göreve veya kalkışa başlarsanız bu sizin için yapılır.
 :::
 
 The vehicle is ready to fly in all modes if the status text says "Ready to Fly" and the background is green.
@@ -184,7 +184,7 @@ You will then need to use the disarming slider.
 
 Aracı uçarken devre dışı bırakmak [Emergency Stop](#emergency_stop) olarak adlandırılır
 
-### Acil Durdurma {#emergency\_stop}
+### Acil Durdurma {#emergency_stop}
 
 Emergency stop is effectively the same as disarming the vehicle while it is flying.
 Aracınız çarpacaktır/çakılacaktır!
@@ -235,7 +235,7 @@ This behaviour depends on the vehicle type and configuration.
 For example, rally points or mission landings may be used as alternative return targets.
 :::
 
-### Yükleklik Değiştirme {#change\_altitude}
+### Yükleklik Değiştirme {#change_altitude}
 
 Uçuş esnasında eğer bir görevde değilse aracın yükseliği değiştirilebilir:
 
@@ -303,7 +303,7 @@ Durdurmak için:
 
 ### Görevler
 
-#### Görevi Başlatma {#start\_mission}
+#### Görevi Başlatma {#start_mission}
 
 Araç inmiş durumdayken bir görevi başlatabilirsiniz (görevi başlatma onay kaydıracı varsayılan olarak çoğu kez gösterilir).
 
@@ -321,7 +321,7 @@ Yerdeki bir aracın görevini başlatmak için:
 
    ![Görevi Başlatma](../../../assets/fly/start_mission.jpg)
 
-#### Göreve Devam Etme (Continue Mission) {#continue\_mission}
+#### Göreve Devam Etme (Continue Mission) {#continue_mission}
 
 Göreve _sıradaki_ hedef noktanızdan _devam_ edebilirsiniz (_Continue Mission_ kaydırmalı onay butonu kalkıştan sonra çoğu kez varsayılan olarak gösterilir).
 
@@ -343,7 +343,7 @@ Görevinize aşağıdakileri yaparak devam edebilirsiniz (hali hazırda bir gör
 
    ![Göreve Devam Etme (Continue Mission)](../../../assets/fly/continue_mission.jpg)
 
-#### Göreve Devam Etme (Resume Mission) {#resume\_mission}
+#### Göreve Devam Etme (Resume Mission) {#resume_mission}
 
 _Resume Mission_, bir görevin içinde [RTL/Return](#rtl) ya da [Land](#land) gerçekleştirdikten sonra (ör. batarya değiştirmek için) kullanılır.
 
@@ -368,12 +368,12 @@ Bir görev, basit bir şekilde aracın son gerçekleştirdiği görev aşamasın
 Basit bir şekilde devam etmek yerine, _QGroundControl_ son gerçekleştirilen görev aşamasından başlayarak, ilgili komutları da dikkate alarak görevi tekrar yapılandırır.
 :::
 
-#### İnişten Sonra Görevi Kaldırma {#resume\_mission\_prompt}
+#### İnişten Sonra Görevi Kaldırma {#resume_mission_prompt}
 
 Görev bittikten sonra aracın inişi ve devre dışı bırakılmasının ardından görevi araçtan kaldırmanız istenecektir.
 This is meant to prevent issues where stale missions are unknowingly left on a vehicle, potentially resulting in unexpected behavior.
 
-### Videoyu Görüntüleme {#video\_switcher}
+### Videoyu Görüntüleme {#video_switcher}
 
 Video akışı etkinleştirildiğinde, _QGroundControl_ haritanın sol altında bulunan "videoya geçiş penceresi"nde videoyu göstermeye başlıyacaktır.
 You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).

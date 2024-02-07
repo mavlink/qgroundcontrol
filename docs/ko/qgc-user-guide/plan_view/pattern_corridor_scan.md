@@ -77,7 +77,7 @@ The corridor scan settings are covered in the next section.
 - **상대 고도** - 상대 고도를 지정하려면 선택합니다. 이것은 [지형 추적](#terrain_following)을 사용하지 않는 수동 그리드에만 지원됩니다.
 - **진입점 회전** - 버튼을 클릭하여 복도 스캔의 시작점과 끝점을 변경합니다.
 
-### 지형 추적 {#terrain\_following}
+### 지형 추적 {#terrain_following}
 
 기본적으로 기체는 고정 고도에서 복도 경로를 따라 비행합니다.
 Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
