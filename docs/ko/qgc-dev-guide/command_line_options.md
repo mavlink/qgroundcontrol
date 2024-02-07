@@ -32,12 +32,12 @@ The options/command line arguments are listed in the table below.
 
 | Option                                                    | Description                                                                                                                          |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                         |
+| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                      |
 | `--logging:full`                                          | Turns on full logging. See [Console Logging](../../qgc-user-guide/settings_view/console_logging.html#logging-from-the-command-line). |
 | `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                            |
 | `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                               |
-| `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                                |
-| `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.                                |
+| `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                             |
+| `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests.             |
 | `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                |
 | `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                             |
 
