@@ -10,9 +10,9 @@ PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu 
 
 ## Bir Parametreyi Bulma
 
-Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde \_ Pil Kalibrasyonu \_ grubu seçilir).
+Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde _ Pil Kalibrasyonu _ grubu seçilir).
 
-Ayrıca \_ Search\_ alanına bir terim girerek bir parametre için \_ arama \_ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için \*\* Clear \*\* tuşuna basın).
+Ayrıca _ Search_ alanına bir terim girerek bir parametre için _ arama _ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için \*\* Clear \*\* tuşuna basın).
 
 ![Parametreler Araması](../../../assets/setup/parameters_search.jpg)
 
