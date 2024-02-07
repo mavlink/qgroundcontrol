@@ -8472,8 +8472,8 @@ Click Ok to start the auto-tuning process.
     <name>JoystickConfigButtons</name>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigButtons.qml" line="45"/>
-      <source>Assigning the same action to multiple buttons requires the press of all those buttons for the action to be taken. This is useful to prevent accidental button presses for critical actions like Arm or Emergency Stop.</source>
-      <translation>将相同动作分配给多个按钮需要按下所有这些按钮才能进行操作。 这有助于防止对诸如解锁或紧急站等关键行动的意外按键按下。</translation>
+      <source> Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</source>
+      <translation type="unfinished"> Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigButtons.qml" line="94"/>
