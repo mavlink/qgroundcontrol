@@ -26,7 +26,7 @@ Video Recording is turned on/off from the Video widget in the Fly View.
 
 For more information see [Settings > General (Video / Video Recording)](../settings_view/general.md#video).
 
-### Plan View {#plan\_view}
+### Plan View {#plan_view}
 
 #### Structure Scan
 
