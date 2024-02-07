@@ -4,11 +4,11 @@ QGroundControl \*'ün \*\* masaüstü \*\* sürümleri [ PX4 Pro ](http://px4.io
 
 QGroundControl \* ayrıca SiK Radyoları ve PX4 Flow cihazları için yazılımları da yükleyebilir.
 
-> **Caution** Yazılım Yükleme özelliği şu anda \_ QGroundControl \_ tablet veya telefon sürümlerinde kullanılamamaktadır.
+> **Caution** Yazılım Yükleme özelliği şu anda _ QGroundControl _ tablet veya telefon sürümlerinde kullanılamamaktadır.
 
 ## Yazılım Güncellemesi için Cihazı Bağlayın
 
-> **Caution** **Before you start installing Firmware** all USB connections to your vehicle must be _disconnected_ (both direct or through a telemetry radio). Araca bir batarya ile \_ güç verilmemelidir \_.
+> **Caution** **Before you start installing Firmware** all USB connections to your vehicle must be _disconnected_ (both direct or through a telemetry radio). Araca bir batarya ile _ güç verilmemelidir _.
 
 1. İlk olarak üstteki araç çubuğundan **dişli** simgesini (_Vehicle Setup_), daha sonra kenar çubuğundan **Firmware**'i seçin.
 
@@ -22,9 +22,9 @@ QGroundControl \* ayrıca SiK Radyoları ve PX4 Flow cihazları için yazılıml
 
 ## Yüklenecek Yazılımı Seçin
 
-Cihaz bağlandıktan sonra, hangi aygıt yazılımının yükleneceğini seçebilirsiniz (\_ QGroundControl \_, bağlı donanıma göre mantıklı seçenekler sunar).
+Cihaz bağlandıktan sonra, hangi aygıt yazılımının yükleneceğini seçebilirsiniz (_ QGroundControl _, bağlı donanıma göre mantıklı seçenekler sunar).
 
-1. Pixhawk uyumlu bir anakart için \_ mevcut kararlı sürümü \_ indirmek için \*\* PX4 Flight Stack vX.X.X Stable Release \*\* veya \*\* ArduPilot Flight Stack \*\* seçeneklerinden birini seçin.
+1. Pixhawk uyumlu bir anakart için _ mevcut kararlı sürümü _ indirmek için \*\* PX4 Flight Stack vX.X.X Stable Release \*\* veya \*\* ArduPilot Flight Stack \*\* seçeneklerinden birini seçin.
 
    ![PX4'ü seçin](../../../assets/setup/firmware/firmware_select_default_px4.jpg)
 

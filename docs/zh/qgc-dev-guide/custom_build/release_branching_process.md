@@ -1,4 +1,4 @@
-# Release Process for Custom Builds \[WIP Docs]
+# Release Process for Custom Builds [WIP Docs]
 
 One of the trickier aspects of creating your own custom build is the process to keep it up to date with regular QGC. This document describes a suggested process to follow. But in reality you are welcome to use whatever branching and release strategy you want for your custom builds.
 

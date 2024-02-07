@@ -17,7 +17,7 @@ The current stable build is the highest quality build available for QGC.
 Stable builds are built from a separate branch that is named with the format: `Stable_VX.Y` (note, there is no patch number!)
 The branch has one or more git tags for each patch release (with the format `vX.Y.Z`), indicating the point in the repo source code that the associated patch release was created from.
 
-### Patch Releases {#patch\_releases}
+### Patch Releases {#patch_releases}
 
 A patch release contains fixes to the stable release that are important enough to _require_ an update, and are safe enough that the stable release continues to maintain high quality.
 

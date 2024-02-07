@@ -10,6 +10,6 @@ In order to add support for a new set of messages you should add them to [develo
 To modify the version of MAVLink used by QGC:
 
 - Replace the pre-build C library at [/qgroundcontrol/libs/mavlink/include/mavlink](https://github.com/mavlink/qgroundcontrol/tree/master/libs/mavlink/include/mavlink).
-  - By default this is a submodule importing https\://github.com/mavlink/c\_library\_v2
+  - By default this is a submodule importing https\://github.com/mavlink/c_library_v2
   - You can change the submodule, or [build your own libraries](https://mavlink.io/en/getting_started/generate_libraries.html) using the MAVLink toolchain.
 - You can change the whole dialect used by setting it in [`MAVLINK_CONF`](https://github.com/mavlink/qgroundcontrol/blob/master/QGCExternalLibs.pri#L52) when running _qmake_.

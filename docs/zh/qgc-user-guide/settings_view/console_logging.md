@@ -10,7 +10,7 @@ Click the **Set Logging** button to enable/disable logging information displayed
 
 The most commmonly used logging options are listed below.
 
-| Option(s)                                                                           | Description                                                                                    |
+| Option(s)                                                        | Description                                                                                    |
 | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `LinkManagerLog`, `MultiVehicleManagerLog`                                          | Debug connection problems.                                                                     |
 | `LinkManagerVerboseLog`                                                             | Debug serial ports not being detected. Very noisy continuous output of available serial ports. |

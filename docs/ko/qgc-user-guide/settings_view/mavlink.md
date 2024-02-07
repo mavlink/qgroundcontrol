@@ -7,7 +7,7 @@ MAVLink 설정(**설정 화면> MAVLink**)에서 MAVLink 통신과 관련된 옵
 
 ![MAVLink 설정 화면](../../../assets/settings/mavlink/overview.png)
 
-## 지상국 {#ground\_station}
+## 지상국 {#ground_station}
 
 이 섹션은 _QGroundControl_의 MAVLink 속성과 동작을 설정합니다.
 
@@ -23,7 +23,7 @@ MAVLink 설정(**설정 화면> MAVLink**)에서 MAVLink 통신과 관련된 옵
   Note that this forwarding is one-way: from QGC to the specified host.
   지정된 호스트에서 수신된 모든 MAVLink 메시지는 무시됩니다.
 
-## 연결 상태 {#link\_status}
+## 연결 상태 {#link_status}
 
 이것은 통신 링크를 통한 MAVLink 메시지 전송의 상태를 보여줍니다.
 **손실률**이 높으면 매개변수 다운로드 또는 미션 업로드 및 다운로드와 같은 프로토콜 오류가 발생할 수 있습니다.
@@ -35,7 +35,7 @@ MAVLink 설정(**설정 화면> MAVLink**)에서 MAVLink 통신과 관련된 옵
 _MAVLink 2 Logging_ 설정(PX4만 해당)은 PX4에서 _QGroundControl_으로의 실시간 로그 스트리밍과 [Flight Review](https://logs.px4.io)로의 로그 업로드를 설정합니다.
 
 :::warning
-MAVLink 2 Logging은 차량에 대한 지속적인 고속 MAVLink 연결이 필요하기 때문에 "기본" 설정에서 사용할 수 없습니다(WiFI를 통해 작동할 수 \_ 있지만\*\* 원격 측정 링크에서는 작동하지 않습니다\_.
+MAVLink 2 Logging은 차량에 대한 지속적인 고속 MAVLink 연결이 필요하기 때문에 "기본" 설정에서 사용할 수 없습니다(WiFI를 통해 작동할 수 _ 있지만\*\* 원격 측정 링크에서는 작동하지 않습니다_.
 :::
 
 :::tip

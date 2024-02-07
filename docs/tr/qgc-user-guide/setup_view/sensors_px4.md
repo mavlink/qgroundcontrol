@@ -132,7 +132,7 @@ To calibrate the airspeed sensor:
 
 5. Wait for 2-3 seconds before removing the covering (calibration completes silently after several seconds)
 
-## Set Orientations {#flight\_controller\_orientation}
+## Set Orientations {#flight_controller_orientation}
 
 :::tip
 You can skip this section if the flight controller and compass are mounted upright on the vehicle and facing the front (this is the default orientation - `ROTATION_NONE`).

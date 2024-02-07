@@ -36,7 +36,7 @@ It is possible to manually build 32 bit versions (this is not supported by the d
 
 _QGroundControl_ can be installed on macOS 10.11 or later: <!-- match version using https://dev.qgroundcontrol.com/master/en/getting_started/#native-builds -->
 
-<!-- match version using https://dev.qgroundcontrol.com/master/en/getting_started/#native-builds -->
+<!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
 <!-- usually based on Qt macOS dependency -->
 
