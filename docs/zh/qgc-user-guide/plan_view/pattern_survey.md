@@ -46,7 +46,7 @@ The list of available cameras (QGC 3.4) is given below.
 
 ![Survey - Camera Select](../../../assets/plan/survey/survey_camera_select.jpg)
 
-#### Known Camera {#known\_camera}
+#### Known Camera {#known_camera}
 
 Selecting a known camera from the option dropdown generates a grid pattern based on the camera capabilities.
 
@@ -61,7 +61,7 @@ The default settings can be tuned for your survey using the configuration option
   - **Altitude** - Survey altitude (ground resolution will be calculated/displayed for this altitude).
   - **Ground resolution** - Ground resolution for each image (altitude required to achieve this resolution calculated and shown).
 
-#### Custom Camera {#custom\_camera}
+#### Custom Camera {#custom_camera}
 
 Selecting the custom camera option allows you to specify the settings for a new camera in a similar way to a known camera.
 
