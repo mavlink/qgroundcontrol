@@ -18,7 +18,7 @@ _QGroundControl_은 RC 송신기 대신 조이스틱이나 게임패드로 기�
 
 ## PX4 조이스틱 활성화
 
-PX4에서 조이스틱 지원을 활성화하려면 매개변수 \[`COM_RC_IN_MODE`]\(h[ttp://localhost:8080/px4\_user\_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE)을 `1</0)로 설정합니다.
+PX4에서 조이스틱 지원을 활성화하려면 매개변수 [`COM_RC_IN_MODE`](h[ttp://localhost:8080/px4_user_guide/en](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE)을 `1</0)로 설정합니다.
 이 매개변수가 <code>0`이면 _조이스틱_이 설정 옵션으로 제공되지 않습니다.
 
 This is enabled by default for PX4 SITL builds (see the [Parameters](../setup_view/parameters.md) topic for information on how to find and set a particular parameter).
@@ -62,12 +62,12 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 
 ![조이스틱 설정 - 스로틀 모드](../../../assets/setup/joystick_throttle_modes.jpg)
 
-- **조이스틱의 중앙을 스로틀 0으로 설정**: [MANUAL\_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL)에서 중앙 또는 아래로 향한 스틱은 0을 전송하고, 위로 올린 스틱은 1000을 전송합니다.
+- **조이스틱의 중앙을 스로틀 0으로 설정**: [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL)에서 중앙 또는 아래로 향한 스틱은 0을 전송하고, 위로 올린 스틱은 1000을 전송합니다.
   - **스프링 로드 스로틀 스무딩**: 이 모드에서는 스로틀 자체가 아니라 스로틀이 증감하는 속도를 제어합니다.
     이것은 사용자가 원하는 스로틀을 잡고 스틱을 놓을 수 있으므로, 스로틀 스틱에 스프링이 장착된 설정에 유용합니다.
-- **풀다운 스틱은 제로 스로틀**: 이 모드에서 스틱을 내리면 [MANUAL\_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL)에서 0, 중앙에 500, 올리면 1000이 전송됩니다.
+- **풀다운 스틱은 제로 스로틀**: 이 모드에서 스틱을 내리면 [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL)에서 0, 중앙에 500, 올리면 1000이 전송됩니다.
 - **음수 추력 허용**: **중앙 스틱이 0 스로틀** 모드에 있을 때 사용자가 스틱을 내려 음수 값을 전송할 수 있습니다.
-  내려진 스틱은 [MANUAL\_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL)에서 -1000을 전송하고, 중앙에 있는 스틱은 0을 전송하고, 올려진 스틱은 1000을 전송합니다.
+  내려진 스틱은 [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL)에서 -1000을 전송하고, 중앙에 있는 스틱은 0을 전송하고, 올려진 스틱은 1000을 전송합니다.
   이 모드는 [Rover](http://ardupilot.org/rover/index.html)와 같이 음의 추력을 지원하는 차량에만 사용할 수 있습니다.
 
 ### Expo
@@ -95,11 +95,11 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 
 - **조이스틱 모드**: 조이스틱이 실제로 제어하는 것과 차량에 전송되는 MAVLink 메시지를 변경합니다.
 
-  - **일반**: 일반 RC 라디오를 사용하는 것처럼 사용자가 제어하며, MAVLink [MANUAL\_CONTROL](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) 메시지를 사용합니다.
-  - **자세**: 사용자가 차량의 자세를 제어하며 MAVLink [SET\_ATTITUDE\_TARGET](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) 메시지를 사용합니다.
-  - MAVLink [SET\_POSITION\_TARGET\_LOCAL\_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) 메시지에는 **위치**에 대한 비트마스크만을 사용합니다.
-  - MAVLink [SET\_POSITION\_TARGET\_LOCAL\_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) 메시지는 **force** 전용 비트마스크를 사용합니다.
-  - **속도**: 사용자가 차량에 가해지는 힘을 제어하며, **속도**에 대한 비트마스크가 있는 MAVLink [SET\_POSITION\_TARGET\_LOCAL\_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) 메시지를 사용합니다.
+  - **일반**: 일반 RC 라디오를 사용하는 것처럼 사용자가 제어하며, MAVLink [MANUAL_CONTROL](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) 메시지를 사용합니다.
+  - **자세**: 사용자가 차량의 자세를 제어하며 MAVLink [SET_ATTITUDE_TARGET](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) 메시지를 사용합니다.
+  - MAVLink [SET_POSITION_TARGET_LOCAL_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) 메시지에는 **위치**에 대한 비트마스크만을 사용합니다.
+  - MAVLink [SET_POSITION_TARGET_LOCAL_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) 메시지는 **force** 전용 비트마스크를 사용합니다.
+  - **속도**: 사용자가 차량에 가해지는 힘을 제어하며, **속도**에 대한 비트마스크가 있는 MAVLink [SET_POSITION_TARGET_LOCAL_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) 메시지를 사용합니다.
 
 - **축 주파수**: 조이스틱이 유휴 상태일 때(입력이 변경되지 않음) 조이스틱 명령이 5Hz로 차량에 전송됩니다. 조이스틱이 사용 중일 때(입력 값이 변경됨) 조이스틱 명령은 이 설정에 의한 (더 높은) 주파수가 기체에 전송됩니다. 기본값은 25Hz입니다.
 
