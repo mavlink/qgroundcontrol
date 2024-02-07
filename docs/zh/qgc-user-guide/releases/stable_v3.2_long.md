@@ -41,7 +41,7 @@ This is now supported from the Sensors page.
 
 This is now supported from the Copy Trims button on the Radio setup page.
 
-## Plan View {#plan\_view}
+## Plan View {#plan_view}
 
 ### Plan Files
 
