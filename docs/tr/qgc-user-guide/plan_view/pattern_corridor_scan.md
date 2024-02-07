@@ -77,7 +77,7 @@ Ayarlanabilir seçenekler şunlardır:
 - **Relative altitude** - Bağlı bir yüksekik belirtmek için işaretleyin. Bu özellik sadece [terrain following](#terrain_following) kullanmayan manuel ayarlanmış ızgaralarda desteklenir.
 - **Rotate entry point** - Koridor taramasının başlangıç ve bitiş noktasını birbirleriyle değiştirmek için butona basın.
 
-### Arazi Takibi {#terrain\_following}
+### Arazi Takibi {#terrain_following}
 
 Varsayılan olarak, uçan bir araç sabit bir yükseklikte koridor yolunu takip edecektir.
 _Terrain Following_'i aktif hale getirmek, aracın yere göre sabit bir yükseklikte devam etmesini sağlar.
