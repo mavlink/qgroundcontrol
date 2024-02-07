@@ -64,7 +64,7 @@ Values are settable even if no vehicle is connected. 차량 재시동이 필요�
 
 - <span id="load_save_path"></span>**애플리케이션 로드/저장 경로**: 매개변수, 원격 측정 로그 및 임무 계획을 포함하여 애플리케이션 파일을 로드 및 저장하는 기본 위치입니다.
 
-## 데이터 지속성 {#data\_persistence}
+## 데이터 지속성 {#data_persistence}
 
 ![데이터 복원 설정](../../../assets/settings/general/data_persistence.jpg)
 
@@ -72,7 +72,7 @@ Values are settable even if no vehicle is connected. 차량 재시동이 필요�
 
 - **모든 데이터 지속성 사용 안함**: 로그, 지도 타일 등 데이터가 저장되거나 캐시되지 않도록 확인합니다.
 
-## 기체의 텔레메트리 로그 {#telemetry\_logs}
+## 기체의 텔레메트리 로그 {#telemetry_logs}
 
 ![기체 설정의 텔레메트리 로그](../../../assets/settings/general/telemetry_logs.jpg)
 
@@ -83,7 +83,7 @@ Values are settable even if no vehicle is connected. 차량 재시동이 필요�
   차량 연결이 끊어지면 기록을 중지합니다.
 - [**CSV 로깅**](csv.md): 원격 측정 데이터의 하위 집합을 CSV 파일에 기록합니다.
 
-## 비행 화면 {#fly\_view}
+## 비행 화면 {#fly_view}
 
 ![비행 화면 설정](../../../assets/settings/general/fly_view.jpg)
 
@@ -117,7 +117,7 @@ Values are settable even if no vehicle is connected. 차량 재시동이 필요�
 
 - **이동 위치 최대 거리**: 이동 위치가 현재 차량 위치에서 설정될 수 있는 최대 거리(안내 모드에서).
 
-## 계획 화면 {#plan\_view}
+## 계획 화면 {#plan_view}
 
 ![계획 화면 설정](../../../assets/settings/general/plan_view.jpg)
 
@@ -125,7 +125,7 @@ Values are settable even if no vehicle is connected. 차량 재시동이 필요�
 
 - **기본 임무 고도**: 임무 시작 패널 및 첫 번째 웨이포인트의 기본 고도입니다.
 
-## 다음 장치에 자동으로 연결 {#auto\_connect}
+## 다음 장치에 자동으로 연결 {#auto_connect}
 
 이 섹션은 _QGroundControl_이 자동으로 연결할 기기 세트를 정의합니다.
 
@@ -141,7 +141,7 @@ Values are settable even if no vehicle is connected. 차량 재시동이 필요�
 - **RTK GPS:** RTK GPS 기기에 자동 연결
 - **NMEA GPS 장치:** 외부 GPS 장치에 자동 연결하여 지상국 위치를 획득합니다([아래 참조](#nmea_gps)).
 
-### 지상국 위치(NMEA GPS 장치) {#nmea\_gps}
+### 지상국 위치(NMEA GPS 장치) {#nmea_gps}
 
 _QGroundControl_은 자동으로 내부 GPS를 사용하여 자주색 `Q` 아이콘으로 지도에 자신의 위치를 표시합니다(GPS가 방향을 제공하는 경우 이는 아이콘으로도 표시됩니다.
 현재 [PX4 멀티콥터에서만](https://docs.px4.io/en/flight_modes/follow_me.html) 지원됩니다.
@@ -173,7 +173,7 @@ _NMEA GPS 장치_ 드롭다운 선택기를 사용하여 GPS 장치 및 기타 �
   - **NMEA GPS 장치:** _UDP 포트_.
   - **NMEA 스트림 UDP 포트**: QGC가 NMEA 데이터를 수신할 UDP 포트(QGC는 포트를 서버로 바인딩)
 
-## RTK GPS {#rtk\_gps}
+## RTK GPS {#rtk_gps}
 
 이 섹션에서는 RTK GPS "측량" 설정을 지정하고, 측량 작업의 결과를 저장 및 재사용하거나, 베이스 스테이션에 대해 알려진 다른 위치를 직접 입력할 수 있습니다.
 
@@ -203,7 +203,7 @@ _설문조사_ 프로세스는 기지국 위치의 정확한 추정치를 얻기
   - **기지 위치 정확도:** 기지국 위치 정보의 정확도.
   - **현재 베이스 위치 저장**(버튼): 마지막 Survey-In 작업의 설정을 위의 _지정된 베이스 위치 사용_ 필드에 복사하려면 누릅니다.
 
-## ADSB 서버 {#adsb\_server}
+## ADSB 서버 {#adsb_server}
 
 ![ADSB 서버 설정](../../../assets/settings/general/adbs_server.jpg)
 
