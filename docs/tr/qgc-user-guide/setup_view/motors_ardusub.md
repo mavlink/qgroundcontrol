@@ -3,9 +3,9 @@
 ArduSub'un düzgün çalışması için motorların doğru şekilde kurulması gerekir.
 
 ROV'nuzu yeni monte ettiyseniz, önce \*\* Manuel Test \*\* bölümünde iticilerin doğru çıkışlara bağlandığından emin olun.
-Her kaydırıcıyı sürükleyin ve görüntülenen gövdeye göre \_ doğru motorun \_ döndüğünden emin olun.
+Her kaydırıcıyı sürükleyin ve görüntülenen gövdeye göre _ doğru motorun _ döndüğünden emin olun.
 
-İticilerinin uygun çıkışlara bağlandığından emin olduktan sonra,\_ doğru yönü \_ (ileri / geri) kontrol etmek için [ otomatik yön algılama ](#automatic) (ArduSub 4.0'dan iibaren tavsiye edilir) veya [ manuel test](#manual) seçeneklerinden birini kullanabilirsiniz.
+İticilerinin uygun çıkışlara bağlandığından emin olduktan sonra,_ doğru yönü _ (ileri / geri) kontrol etmek için [ otomatik yön algılama ](#automatic) (ArduSub 4.0'dan iibaren tavsiye edilir) veya [ manuel test](#manual) seçeneklerinden birini kullanabilirsiniz.
 
 :::info
 \*\* Note \*\* [ Manuel Test ](#manual) ArduSub tarafından 3.5 sürümüne kadar desteklenirken, ArduSub 4.0 hem [ Manuel Testi ](#manual) hem de [ otomatik yön algılamayı ](#automatic) destekler.
@@ -37,7 +37,7 @@ Otomatik motor yönü algılamasını gerçekleştirmek için \*\*Vehicle Setup-
 İşlemle ilgili ek çıktı, işlem gerçekleşirken düğmenin yanında gösterilecektir.
 
 :::warning
-Bu prosedür hala motorların gövde görünümünde gösterildiği gibi \_ doğru çıkışlara \_ bağlanmasını gerektirir!
+Bu prosedür hala motorların gövde görünümünde gösterildiği gibi _ doğru çıkışlara _ bağlanmasını gerektirir!
 :::
 
 ![Ardusub Motorların Otomatik Kurulumu](../../../assets/setup/motors-sub-auto.jpg)
