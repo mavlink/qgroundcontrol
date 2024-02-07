@@ -11,7 +11,7 @@ The two main areas that are most problematic are:
 In order for the _QGroundControl_ development team to debug these issues the following information **must be supplied** in any github issue entered against _Resume Mission_.
 :::
 
-## Common Steps for Resume Mission Dialog/Generation {#common\_steps}
+## Common Steps for Resume Mission Dialog/Generation {#common_steps}
 
 The following steps are required for debugging both types of problems:
 

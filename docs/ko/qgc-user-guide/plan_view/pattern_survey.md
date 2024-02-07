@@ -46,7 +46,7 @@ The survey settings are covered in the next section.
 
 ![탐사 - 카메라 선택](../../../assets/plan/survey/survey_camera_select.jpg)
 
-#### 알려진 카메라 {#known\_camera}
+#### 알려진 카메라 {#known_camera}
 
 드롭다운 옵션에서 알려진 카메라를 선택하면 카메라 기능을 기반으로 격자 패턴이 생성됩니다.
 
@@ -61,7 +61,7 @@ The survey settings are covered in the next section.
   - **고도** - 조사 고도(지상 해상도가 이 고도에 대해 계산/표시됨).
   - **지상 해상도** - 각 이미지의 지상 해상도(해상도를 계산하고 표시하는 데 필요한 고도).
 
-#### 카메라 최적화 {#custom\_camera}
+#### 카메라 최적화 {#custom_camera}
 
 사용자 정의 카메라 옵션을 선택하면 알려진 카메라와 유사한 방식으로 새 카메라에 대한 설정을 지정할 수 있습니다.
 

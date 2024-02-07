@@ -43,7 +43,7 @@ ArduPilot은 보다 정확한 보정을 가능한 온보드 보정 기능을 사
 
 이것은 각 나침반에 대한 보정 품질을 보여줍니다. 이 값을 사용하여 성능이 좋지 않은 나침반의 사용 여부를 결정합니다.
 
-## 수평 보정 {#level\_horizon}
+## 수평 보정 {#level_horizon}
 
 가속도계 보정 후, 수평선(HUD에 표시됨)이 수평이 아닌 경우 차량의 수평 수평을 보정할 수 있습니다.
 정보를 캡처하는 동안 기체를 수평 방향으로 배치하라는 메시지가 표시됩니다.
@@ -91,7 +91,7 @@ CompassMot only works well if you have a battery current monitor because the mag
 
    ![CompassMot 보정](../../../assets/setup/sensor_compass_mot.jpg)
 
-## 센서 설정 {#sensor\_settings}
+## 센서 설정 {#sensor_settings}
 
 _센서 설정_ 섹션에서 나침반 방향과 활성화된 나침반을 지정할 수 있습니다.
 

@@ -22,7 +22,7 @@ Uçuş yolundaki yeşil numaralı daire, taramaya giriş/çıkış noktasıdır 
 
 ![Yapı Taraması](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
 
-Tarama, yapıyı eşit olarak katmanlara ayırır; araç, yapının çevresinde belirli bir irtifada ve yapıya \_ scan distance\_'den uçar, ardından tüm yüzey taranana kadar işlemi her katmanda tekrarlar.
+Tarama, yapıyı eşit olarak katmanlara ayırır; araç, yapının çevresinde belirli bir irtifada ve yapıya _ scan distance_'den uçar, ardından tüm yüzey taranana kadar işlemi her katmanda tekrarlar.
 
 ![Katman JPG](../../../assets/plan/structure_scan_v2/layers.jpg)
 
