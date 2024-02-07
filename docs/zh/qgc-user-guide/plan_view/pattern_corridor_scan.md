@@ -77,7 +77,7 @@ The configurable options are:
 - **Relative altitude** - Check to specify a relative altitude. This is only supported for manual grids that are not using [terrain following](#terrain_following).
 - **Rotate entry point** - Press button to swap the start and end point of the corridor scan.
 
-### Terrain Following {#terrain\_following}
+### Terrain Following {#terrain_following}
 
 By default a flying vehicle will follow the corridor path at a fixed altitude.
 Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
