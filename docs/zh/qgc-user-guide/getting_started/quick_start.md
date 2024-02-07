@@ -17,7 +17,7 @@ That's it! 就这么简单！ 如果设备准备飞行（无人机是飞，其�
   - [Setup](../setup_view/setup_view.md)：配置和调试你的设备。
   - [Plan](../plan_view/plan_view.md)：创建自主自动执行的任务
   - [Fly](../fly_view/fly_view.md)：在飞行时监测您的车辆，包括视频流。
-  - \[Analyze] \*\* Description of Analyze view is missing \*\*
+  - [Analyze] \*\* Description of Analyze view is missing \*\*
 - 点击工具栏上的_Status 图标_来确认已连接设备的状态。
 
 While the UI is fairly intuitive, this documentation can also be referenced to find out more.
