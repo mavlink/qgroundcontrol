@@ -20,7 +20,7 @@ The Copter safety page is shown below.
 For additional safety settings and information see: [Failsafe](http://ardupilot.org/copter/docs/failsafe-landing-page.html).
 :::
 
-### Battery Failsafe {#battery\_failsafe\_copter}
+### Battery Failsafe {#battery_failsafe_copter}
 
 This panel sets the [Battery Failsafe](http://ardupilot.org/copter/docs/failsafe-battery.html) parameters.
 You can set low and critical thresholds for voltage and/or remaining capacity and define the action if the failsafe value is breached.
@@ -34,14 +34,14 @@ If there is a second battery (enabled in the [Power Setup](../setup_view/power.m
 
 The configuration options are:
 
-- **Low action** ([BATT\_FS\_LOW\_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action)) - Select one of: None, Land, RTL, SmartRTL, SmartRTL or Land, Terminate.
-- **Critical action** ([BATT\_FS\_CRT\_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-crt-act-critical-battery-failsafe-action)) - Select one of: None, Land, RTL, SmartRTL, SmartRTL or Land, Terminate.
-- **Low voltage threshold** ([BATT\_LOW\_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-low-volt-low-battery-voltage)) - Battery voltage that triggers the _low action_.
-- **Critical voltage threshold** ([BATT\_CRT\_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-crt-volt-critical-battery-voltage))- Battery voltage that triggers the _critical action_.
-- **Low mAh threshold** ([BATT\_LOW\_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-low-mah-low-battery-capacity)) - Battery capacity that triggers the _low action_.
-- **Critical mAh threshold** ([BATT\_CRT\_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-crt-mah-battery-critical-capacity)) - Battery capacity that triggers the _critical action_.
+- **Low action** ([BATT_FS_LOW_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action)) - Select one of: None, Land, RTL, SmartRTL, SmartRTL or Land, Terminate.
+- **Critical action** ([BATT_FS_CRT_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-crt-act-critical-battery-failsafe-action)) - Select one of: None, Land, RTL, SmartRTL, SmartRTL or Land, Terminate.
+- **Low voltage threshold** ([BATT_LOW_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-low-volt-low-battery-voltage)) - Battery voltage that triggers the _low action_.
+- **Critical voltage threshold** ([BATT_CRT_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-crt-volt-critical-battery-voltage))- Battery voltage that triggers the _critical action_.
+- **Low mAh threshold** ([BATT_LOW_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-low-mah-low-battery-capacity)) - Battery capacity that triggers the _low action_.
+- **Critical mAh threshold** ([BATT_CRT_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-crt-mah-battery-critical-capacity)) - Battery capacity that triggers the _critical action_.
 
-### General Failsafe Triggers {#failsafe\_triggers\_copter}
+### General Failsafe Triggers {#failsafe_triggers_copter}
 
 This panel enables the [GCS Failsafe](http://ardupilot.org/copter/docs/gcs-failsafe.html) and enables/configures the throttle failsafe.
 
@@ -51,9 +51,9 @@ The configuration options are:
 
 - **Ground Station failsafe** - Disabled, Enabled always RTL, Enabled Continue with Mission in Auto Mode, Enabled Always SmartRTL or RTL, Enabled Always SmartRTL or Land.
 - **Throttle failsafe** - Disabled, Always RTL, Continue with Mission in Auto Mode, Always land.
-- **PWM Threshold** ([FS\_THR\_VALUE](http://ardupilot.org/copter/docs/parameters.html#fs-thr-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
+- **PWM Threshold** ([FS_THR_VALUE](http://ardupilot.org/copter/docs/parameters.html#fs-thr-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
 
-### Geofence {#geofence\_copter}
+### Geofence {#geofence_copter}
 
 This panel sets the parameters for the cylindrical [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html).
 You can set whether the fence radius or height are enabled, the maximum values for causing a breach, and the action in the event of a breach.
@@ -62,15 +62,15 @@ You can set whether the fence radius or height are enabled, the maximum values f
 
 The configuration options are:
 
-- **Circle GeoFence enabled** ([FENCE\_TYPE](http://ardupilot.org/copter/docs/parameters.html#fence-type-fence-type), [FENCE\_ENABLE](http://ardupilot.org/copter/docs/parameters.html#fence-enable-fence-enable-disable)) - Enable the circular geofence.
-- **Altitude GeoFence enabled** ([FENCE\_TYPE](http://ardupilot.org/copter/docs/parameters.html#fence-type-fence-type), [FENCE\_ENABLE](http://ardupilot.org/copter/docs/parameters.html#fence-enable-fence-enable-disable)) - Enable altitude geofence.
-- Fence action ([FENCE\_ACTION](http://ardupilot.org/copter/docs/parameters.html#fence-action-fence-action)) One of:
+- **Circle GeoFence enabled** ([FENCE_TYPE](http://ardupilot.org/copter/docs/parameters.html#fence-type-fence-type), [FENCE_ENABLE](http://ardupilot.org/copter/docs/parameters.html#fence-enable-fence-enable-disable)) - Enable the circular geofence.
+- **Altitude GeoFence enabled** ([FENCE_TYPE](http://ardupilot.org/copter/docs/parameters.html#fence-type-fence-type), [FENCE_ENABLE](http://ardupilot.org/copter/docs/parameters.html#fence-enable-fence-enable-disable)) - Enable altitude geofence.
+- Fence action ([FENCE_ACTION](http://ardupilot.org/copter/docs/parameters.html#fence-action-fence-action)) One of:
   - **Report only** - Report fence breach.
   - **RTL or Land** - RTL or land on fence breach.
-- **Max radius** ([FENCE\_RADIUS](http://ardupilot.org/copter/docs/parameters.html#fence-radius-circular-fence-radius)) - Circular fence radius that when broken causes RTL.
-- **Max altitude** ([FENCE\_ALT\_MAX](http://ardupilot.org/copter/docs/parameters.html#fence-alt-max-fence-maximum-altitude))- Fence maximum altitude to trigger altitude geofence.
+- **Max radius** ([FENCE_RADIUS](http://ardupilot.org/copter/docs/parameters.html#fence-radius-circular-fence-radius)) - Circular fence radius that when broken causes RTL.
+- **Max altitude** ([FENCE_ALT_MAX](http://ardupilot.org/copter/docs/parameters.html#fence-alt-max-fence-maximum-altitude))- Fence maximum altitude to trigger altitude geofence.
 
-### Return to Launch {#rtl\_copter}
+### Return to Launch {#rtl_copter}
 
 This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) behaviour.
 
@@ -78,15 +78,15 @@ This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) b
 
 The configuration options are:
 
-- Select RTL return altitude ([RTL\_ALT](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-rtl-altitude)):
+- Select RTL return altitude ([RTL_ALT](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-rtl-altitude)):
   - **Return at current altitude** - Return at current altitude.
   - **Return at specified altitude** - Ascend to specified altitude to return if below current altitude.
-- **Loiter above home for** ([RTL\_LOIT\_TIME](http://ardupilot.org/copter/docs/parameters.html#rtl-loit-time-rtl-loiter-time)) - Check to set a loiter time before landing.
+- **Loiter above home for** ([RTL_LOIT_TIME](http://ardupilot.org/copter/docs/parameters.html#rtl-loit-time-rtl-loiter-time)) - Check to set a loiter time before landing.
 - One of
-  - **Land with descent speed** ([LAND\_SPEED](http://ardupilot.org/copter/docs/parameters.html#land-speed-land-speed)) - Select final descent speed.
-  - **Final loiter altitude** ([RTL\_ALT\_FINAL](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-final-rtl-final-altitude)) - Select and set final altitude for landing after RTL or mission (set to 0 to land).
+  - **Land with descent speed** ([LAND_SPEED](http://ardupilot.org/copter/docs/parameters.html#land-speed-land-speed)) - Select final descent speed.
+  - **Final loiter altitude** ([RTL_ALT_FINAL](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-final-rtl-final-altitude)) - Select and set final altitude for landing after RTL or mission (set to 0 to land).
 
-### Arming Checks {#arming\_checks\_copter}
+### Arming Checks {#arming_checks_copter}
 
 This panel sets which [Pre-ARM Safety Checks](http://ardupilot.org/copter/docs/prearm_safety_check.html) are enabled.
 
@@ -94,7 +94,7 @@ This panel sets which [Pre-ARM Safety Checks](http://ardupilot.org/copter/docs/p
 
 The configuration options are:
 
-- **Arming Checks to perform** ([ARMING\_CHECK](http://ardupilot.org/copter/docs/parameters.html#arming-check-arm-checks-to-peform-bitmask)) - Check all appropriate: Barometer, Compass, GPS lock, INS, Parameters, RC Channels, Board voltage, Battery Level, Airspeed, Logging Available, Hardware safety switch, GPS Configuration, System.
+- **Arming Checks to perform** ([ARMING_CHECK](http://ardupilot.org/copter/docs/parameters.html#arming-check-arm-checks-to-peform-bitmask)) - Check all appropriate: Barometer, Compass, GPS lock, INS, Parameters, RC Channels, Board voltage, Battery Level, Airspeed, Logging Available, Hardware safety switch, GPS Configuration, System.
 
 ## Plane
 
@@ -106,13 +106,13 @@ The Plane safety page is shown below.
 For additional safety settings and information see: [Plane Failsafe Function](http://ardupilot.org/plane/docs/apms-failsafe-function.html) and [Advanced Failsafe Configuration](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html).
 :::
 
-### Battery Failsafe {#battery\_failsafe\_plane}
+### Battery Failsafe {#battery_failsafe_plane}
 
 The plane battery failsafe is the same as for copter except there are different options for the [Low](http://ardupilot.org/plane/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action) and [Critical](http://ardupilot.org/plane/docs/parameters.html#batt-fs-crt-act-critical-battery-failsafe-action) actions: None, RTL, Land, Terminate.
 
 For more information see: [battery failsafe](#battery_failsafe_copter) (copter).
 
-### Failsafe Triggers {#failsafe\_triggers\_plane}
+### Failsafe Triggers {#failsafe_triggers_plane}
 
 This panel enables the [GCS Failsafe](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html#ground-station-communications-loss) and enables/configures the throttle failsafe.
 
@@ -120,10 +120,10 @@ This panel enables the [GCS Failsafe](http://ardupilot.org/plane/docs/advanced-f
 
 The configuration options are:
 
-- **Throttle PWM threshold** ([THR\_FS\_VALUE](http://ardupilot.org/plane/docs/parameters.html#thr-fs-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
-- **GCS failsafe** ([FS\_GCS\_ENABL](http://ardupilot.org/plane/docs/parameters.html#fs-gcs-enabl-gcs-failsafe-enable)) - Check to enable GCS failsafe.
+- **Throttle PWM threshold** ([THR_FS_VALUE](http://ardupilot.org/plane/docs/parameters.html#thr-fs-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
+- **GCS failsafe** ([FS_GCS_ENABL](http://ardupilot.org/plane/docs/parameters.html#fs-gcs-enabl-gcs-failsafe-enable)) - Check to enable GCS failsafe.
 
-### Return to Launch {#rtl\_plane}
+### Return to Launch {#rtl_plane}
 
 This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) behaviour.
 
@@ -131,11 +131,11 @@ This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) b
 
 The configuration options are:
 
-- Select RTL return altitude ([RTL\_ALT](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-rtl-altitude)):
+- Select RTL return altitude ([RTL_ALT](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-rtl-altitude)):
   - **Return at current altitude** - Return at current altitude.
   - **Return at specified altitude** - Ascend to specified altitude to return if below current altitude.
 
-### Arming Checks {#arming\_checks\_plane}
+### Arming Checks {#arming_checks_plane}
 
 [Arming Checks](#arming_checks_copter) are the same as for copter.
 
@@ -149,11 +149,11 @@ The Rover safety page is shown below.
 For additional safety settings and information see: [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
 :::
 
-### Battery Failsafe {#battery\_failsafe\_rover}
+### Battery Failsafe {#battery_failsafe_rover}
 
 The rover battery failsafe is the same as for [copter](#battery_failsafe_copter).
 
-### Failsafe Triggers {#failsafe\_triggers\_rover}
+### Failsafe Triggers {#failsafe_triggers_rover}
 
 This panel enables the rover [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
 
@@ -161,12 +161,12 @@ This panel enables the rover [Failsafes](http://ardupilot.org/rover/docs/rover-f
 
 The configuration options are:
 
-- **Ground Station failsafe** ([FS\_GCS\_ENABL](http://ardupilot.org/rover/docs/parameters.html#fs-gcs-enable-gcs-failsafe-enable)) - Check to enable GCS failsafe.
-- **Throttle failsafe** ([FS\_THR\_ENABLE](http://ardupilot.org/rover/docs/parameters.html#fs-thr-enable-throttle-failsafe-enable)) - Enable/disable throttle failsafe (value is _PWM threshold_ below).
-- **PWM threshold** ([FS\_THR\_VALUE](http://ardupilot.org/rover/docs/parameters.html#fs-thr-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
-- **Failsafe Crash Check** ([FS\_CRASH\_CHECK](http://ardupilot.org/rover/docs/parameters.html#fs-crash-check-crash-check-action)) - What to do in the event of a crash: Disabled, Hold, HoldAndDisarm
+- **Ground Station failsafe** ([FS_GCS_ENABL](http://ardupilot.org/rover/docs/parameters.html#fs-gcs-enable-gcs-failsafe-enable)) - Check to enable GCS failsafe.
+- **Throttle failsafe** ([FS_THR_ENABLE](http://ardupilot.org/rover/docs/parameters.html#fs-thr-enable-throttle-failsafe-enable)) - Enable/disable throttle failsafe (value is _PWM threshold_ below).
+- **PWM threshold** ([FS_THR_VALUE](http://ardupilot.org/rover/docs/parameters.html#fs-thr-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
+- **Failsafe Crash Check** ([FS_CRASH_CHECK](http://ardupilot.org/rover/docs/parameters.html#fs-crash-check-crash-check-action)) - What to do in the event of a crash: Disabled, Hold, HoldAndDisarm
 
-### Arming Checks {#arming\_checks\_rover}
+### Arming Checks {#arming_checks_rover}
 
 [Arming Checks](#arming_checks_copter) are the same as for copter.
 
@@ -180,7 +180,7 @@ The Sub safety page is shown below.
 For additional safety settings and information see: [Failsafes](https://www.ardusub.com/operators-manual/failsafes.html).
 :::
 
-### Failsafe Actions {#failsafe\_actions\_sub}
+### Failsafe Actions {#failsafe_actions_sub}
 
 The configuration options are:
 
@@ -194,6 +194,6 @@ The configuration options are:
 - **Internal Temperature** - Select one of: Disabled, Warn only.
 - **Internal Pressure** - Select one of: Disabled, Warn only.
 
-### Arming Checks {#arming\_checks\_sub}
+### Arming Checks {#arming_checks_sub}
 
 [Arming Checks](#arming_checks_copter) are the same as for copter.
