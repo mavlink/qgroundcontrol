@@ -49,7 +49,7 @@
 기본적으로 표시되지 않거나 특정 조건에서만 표시되는 다른 요소들 많습니다.
 예를 들어, 다중 기체 선택기는 여러 대의 기체가 연결된 경우에만 표시되며, 비행 전 체크리스트 도구 버튼은 적절한 설정이 활성화된 경우에만 표시됩니다.
 
-## 계기판 {#instrument\_panel}
+## 계기판 {#instrument_panel}
 
 The instrument panel displays telemetry information about the current vehicle.
 
@@ -81,7 +81,7 @@ The selection list on the top right is used to select a particular telemetry val
 
 비행 중인 기체의 시동을 꺼려면 _비행 도구 모음_에서 **시동**을 선택합니다.
 
-### 카메라 {#camera\_instrument\_page}
+### 카메라 {#camera_instrument_page}
 
 The camera panel is used to capture still images and video, and to configure the camera.
 
@@ -103,7 +103,7 @@ Most of the settings that are displayed depend on the camera (they are defined i
 
 > 마지막에 몇 가지 일반적인 설정이 하드 코딩되어 있습니다: 사진 모드(단일/인터벌), 사진 간격(인터벌인 경우), 카메라 기본값 재설정(카메라에 재설정 명령 전송), 포맷(저장)
 
-### 비디오 스트림 {#video\_instrument\_page}
+### 비디오 스트림 {#video_instrument_page}
 
 비디오 페이지는 비디오 스트리밍을 활성화 하거나 비활성화 합니다.
 활성화시에는 비디오 스트림을 시작하고, 그리드 오버레이를 활성화하고, 이미지가 화면에 맞는 방식을 변경하고, QGroundControl을 사용하여 로컬로 비디오를 녹화할 수 있습니다.
@@ -118,7 +118,7 @@ Most of the settings that are displayed depend on the camera (they are defined i
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### 비행 전 점검 사항 {#preflight\_checklist}
+### 비행 전 점검 사항 {#preflight_checklist}
 
 자동 비행 전 점검을 통하여 기체의 설정과 비행 안전 여부를 검사합니다.
 
@@ -185,7 +185,7 @@ You will then need to use the disarming slider.
 
 비행 중 기체의 시동을 꺼는 것을 [비상 정지](#emergency_stop)라고 합니다.
 
-### 비상 정지 {#emergency\_stop}
+### 비상 정지 {#emergency_stop}
 
 비상 정지는 비행 중 기체의 시동을 꺼는 것과 동일합니다.
 Your vehicle will crash!
@@ -236,7 +236,7 @@ You will then need to use the emergency disarming slider.
 예를 들어, 집결지나 임무 착륙을 대체 반환 목표로 사용할 수 있습니다.
 :::
 
-### 고도 변경 {#change\_altitude}
+### 고도 변경 {#change_altitude}
 
 미션 수행중을 제외하고는, 비행 중 고도 변경이 가능합니다.
 
@@ -304,7 +304,7 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
 ### 미션
 
-#### 미션 시작 {#start\_mission}
+#### 미션 시작 {#start_mission}
 
 기체는 착륙후 미션를 시작할 수 있습니다(미션 시작 확인 슬라이더는 대부분 기본적으로 표시됩니다).
 
@@ -322,7 +322,7 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
    ![미션 시작](../../../assets/fly/start_mission.jpg)
 
-#### 미션 지속 {#continue\_mission}
+#### 미션 지속 {#continue_mission}
 
 비행 중일 때 _다음_ 웨이포인트에서 미션을 _지속_할 수 있습니다(이륙 후에 _미션 지속_ 확인 슬라이더가 기본적으로 표시되는 경우가 많습니다).
 
@@ -344,7 +344,7 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
    ![미션 계속](../../../assets/fly/continue_mission.jpg)
 
-#### 임무 재개 {#resume\_mission}
+#### 임무 재개 {#resume_mission}
 
 _임무 재개_는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](#land)을 수행 후 임무를 재개합니다 (예를 들어 배터리 교체).
 
@@ -369,12 +369,12 @@ _임무 재개_는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](
 대신 _QGroundControl_은 비행한 마지막 임무 항목부터 시작하여 임무를 재구성하고 자동으로 임무 앞에 관련 명령을 추가합니다.
 :::
 
-#### 착륙 후 임무 프롬프트 제거 {#resume\_mission\_prompt}
+#### 착륙 후 임무 프롬프트 제거 {#resume_mission_prompt}
 
 임무가 완료후 기체가 착륙한 다음 시동이 해제되면 기체의 임무를 제거하라는 메시지가 표시됩니다.
 이는 이전의 임무가 의도치 않게 기체에 저장되어, 예기치 않은 동작을 초래하는 문제를 방지합니다.
 
-### 비디오 출력 {#video\_switcher}
+### 비디오 출력 {#video_switcher}
 
 비디오 스트리밍이 활성화되면, _QGroundControl_은 지도 왼쪽 하단의 "비디오 전환기 창"에 현재 선택된 기체의 비디오 스트림을 표시합니다.
 아무 곳이나 스위처를 눌러 _동영상_ 및 _지도_를 전경으로 전환할 수 있습니다(아래 이미지에서 동영상은 전경에 표시됨).
