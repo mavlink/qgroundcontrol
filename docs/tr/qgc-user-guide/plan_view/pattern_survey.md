@@ -46,7 +46,7 @@ Mevcut kameraların listesi (QGC 3.4) aşağıda verilmiştir.
 
 ![Gözlem - Kamera Seçimi](../../../assets/plan/survey/survey_camera_select.jpg)
 
-#### Bilinen Kamera {#known\_camera}
+#### Bilinen Kamera {#known_camera}
 
 Seçenekler açılır listesinden bilinen bir kamerayı seçmek, kameranın özelliklerine göre bir ızgara deseni oluşturur.
 
@@ -61,7 +61,7 @@ Varsayılan ayarlar, yapılandırma seçenekleri kullanılarak gözleminiz için
   - **Altitude** - Tarama yüksekliği (bu yükseklik için zemin çözünürlüğü hesaplanacak/görüntülenecektir).
   - **Ground resolution** - Her görüntü için zemin çözünürlüğü (bu çözünürlüğü sağlamak için gerekli yükseklik hesaplanacak/görüntülenecektir).
 
-#### Özel Kamera {#custom\_camera}
+#### Özel Kamera {#custom_camera}
 
 Özel kamera seçeneğinin seçilmesi, yeni bir kamera için ayarları bilinen bir kameraya benzer şekilde belirlemenize olanak tanır.
 
