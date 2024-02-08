@@ -9,6 +9,7 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
@@ -16,7 +17,7 @@ import QGroundControl.Vehicle
 import QGroundControl.Palette
 
 Rectangle {
-    id:                 _root
+    width: mainLayout.x + mainLayout.width + mainLayout.anchors.margins
 
     property var  _flyViewSettings:     QGroundControl.settingsManager.flyViewSettings
     property real _vehicleAltitude:     _activeVehicle ? _activeVehicle.altitudeRelative.rawValue : 0
@@ -88,26 +89,27 @@ Rectangle {
         }
     }
 
-    Column {
-        id:                 headerColumn
+    ColumnLayout {
+        id:                 mainLayout
         anchors.margins:    _margins
-        anchors.top:        parent.top
         anchors.left:       parent.left
-        anchors.right:      parent.right
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        spacing:            0
 
         QGCLabel {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
+            Layout.preferredWidth:  1
+            Layout.alignment:       Qt.AlignHCenter
             wrapMode:               Text.WordWrap
-            horizontalAlignment:    Text.AlignHCenter
             text:                   _displayText
+            horizontalAlignment:    Text.AlignHCenter
         }
 
         QGCLabel {
-            id:                         valueField
-            anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       newValueAppUnits + " " + (_speedSlider ? QGroundControl.unitsConversion.appSettingsSpeedUnitsString
-                                                                               : QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
+            id:                 valueField
+            Layout.alignment:   Qt.AlignHCenter
+            text:               newValueAppUnits + " " + 
+                                    (_speedSlider ? QGroundControl.unitsConversion.appSettingsSpeedUnitsString : QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString)
 
             property real   newValue
             property string newValueAppUnits
@@ -154,26 +156,23 @@ Rectangle {
                 }
             }
         }
-    }
 
-    QGCSlider {
-        id:                 valueSlider
-        anchors.margins:    _margins
-        anchors.top:        headerColumn.bottom
-        anchors.bottom:     parent.bottom
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        orientation:        Qt.Vertical
-        from:               -1
-        to:                 1
-        zeroCentered:       false
-        rotation:           180
+        QGCSlider {
+            id:                 valueSlider
+            Layout.alignment:   Qt.AlignHCenter
+            Layout.fillHeight:  true
+            orientation:        Qt.Vertical
+            from:               -1
+            to:                 1
+            zeroCentered:       false
+            rotation:           180
 
-        // We want slide up to be positive values
-        transform: Rotation {
-            origin.x:   valueSlider.width  / 2
-            origin.y:   valueSlider.height / 2
-            angle:      180
+            // We want slide up to be positive values
+            transform: Rotation {
+                origin.x:   valueSlider.width  / 2
+                origin.y:   valueSlider.height / 2
+                angle:      180
+            }
         }
     }
 }
