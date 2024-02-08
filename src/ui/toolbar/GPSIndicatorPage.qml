@@ -91,6 +91,8 @@ ToolIndicatorPage {
         SettingsGroupLayout {
             heading:        qsTr("RTK GPS Settings")
 
+            property real sliderWidth: ScreenTools.defaultFontPixelWidth * 32 // Size is tuned so expanded page fits Herelink screen without horiz scrolling
+
             FactCheckBoxSlider {
                 Layout.fillWidth:   true
                 text:               qsTr("AutoConnect")
@@ -108,6 +110,7 @@ ToolIndicatorPage {
             }
 
             LabelledFactSlider {
+                sliderPreferredWidth:   sliderWidth
                 label:                  rtkSettings.surveyInAccuracyLimit.shortDescription
                 fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
                 visible:                rtkSettings.surveyInAccuracyLimit.visible
@@ -117,6 +120,7 @@ ToolIndicatorPage {
             }
 
             LabelledFactSlider {
+                sliderPreferredWidth:   sliderWidth
                 label:                  rtkSettings.surveyInMinObservationDuration.shortDescription
                 fact:                   rtkSettings.surveyInMinObservationDuration
                 visible:                rtkSettings.surveyInMinObservationDuration.visible
