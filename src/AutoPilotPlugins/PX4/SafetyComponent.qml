@@ -37,7 +37,7 @@ SetupPage {
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _labelWidth:      ScreenTools.defaultFontPixelWidth  * 30
-            property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth  * 24
+            property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth  * 20
             property real _imageHeight:     ScreenTools.defaultFontPixelHeight * 3
             property real _imageWidth:      _imageHeight * 2
 
