@@ -235,17 +235,8 @@ void sigHandler(int s)
  * @return exit code, 0 for normal exit and !=0 for error cases
  */
 
-using namespace std;
-// TODO: delete this after testing
-#include "netcdf.h"
-#include "libs/netcdf-cxx4/cxx4/ncFile.h"
-
 int main(int argc, char *argv[])
 {
-
-    // Open the file. TODO: delete this after testing
-    // netCDF::NcFile dataFile("pres_temp_4D.nc", netCDF::NcFile::read);
-
 #ifndef __mobile__
     // We make the runguard key different for custom and non custom
     // builds, so they can be executed together in the same device.
