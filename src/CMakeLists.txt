@@ -169,6 +169,7 @@ add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoManager)
 add_subdirectory(VideoReceiver)
+add_subdirectory(Viewer3D)
 
 #######################################################
 #               Linking Libraries
@@ -208,6 +209,7 @@ target_link_libraries(${PROJECT_NAME}
             Vehicle
             VehicleSetup
             VideoManager
+            Viewer3D
             z # zlib
 )
 
