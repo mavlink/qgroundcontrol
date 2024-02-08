@@ -44,7 +44,7 @@ void OsmParser::parseOsmFile(QString filePath)
     QFile f(filePath);
     if (!f.open(QIODevice::ReadOnly )) {
         // Error while loading file
-        qDebug() << "Error while loading file";
+        qDebug() << "Error while loading OSM file" << filePath;
         return;
     }
     qDebug("Loading the OSM file!!!");

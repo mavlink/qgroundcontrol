@@ -34,6 +34,8 @@ add_library(Settings
 	UnitsSettings.h
 	VideoSettings.cc
 	VideoSettings.h
+    Viewer3DSettings.cc
+    Viewer3DSettings.h
 	RemoteIDSettings.h
 	RemoteIDSettings.cc
 )
