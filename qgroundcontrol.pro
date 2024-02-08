@@ -406,7 +406,6 @@ INCLUDEPATH += \
     src/ui/toolbar \
     src/ui/uas \
     src/Viewer3D \
-    src/Viewer3D/earcut \
 
 #
 # Plugin API
@@ -994,12 +993,12 @@ SOURCES += \
     src/uas/UASMessageHandler.cc \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
-    src/Viewer3D/CityMapGeometry.cpp \
-    src/Viewer3D/OsmParser.cpp \
-    src/Viewer3D/Viewer3DQmlBackend.cpp \
-    src/Viewer3D/Viewer3DUtils.cpp \
-    src/Viewer3D/Viewer3DManager.cpp \
-    src/Settings/Viewer3DSettings.cpp \
+    src/Viewer3D/CityMapGeometry.cc \
+    src/Viewer3D/OsmParser.cc \
+    src/Viewer3D/Viewer3DQmlBackend.cc \
+    src/Viewer3D/Viewer3DUtils.cc \
+    src/Viewer3D/Viewer3DManager.cc \
+    src/Settings/Viewer3DSettings.cc \
 
 
 DebugBuild {

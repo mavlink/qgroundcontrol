@@ -17,6 +17,7 @@ class GeoCoordinateType: public QObject
 
 public:
     explicit GeoCoordinateType(QObject *parent = nullptr)
+        : QObject(parent)
     {
     }
 
