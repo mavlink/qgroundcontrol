@@ -18,7 +18,7 @@ import QGroundControl.Palette
 
 Rectangle {
     id:         _root
-    width:      ScreenTools.defaultFontPixelWidth * 45
+    width:      ScreenTools.defaultFontPixelWidth * 35
     height:     mainLayout.height + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
     color:      qgcPal.window
@@ -98,7 +98,8 @@ Rectangle {
             Layout.fillWidth:       true
             horizontalAlignment:    Text.AlignHCenter
             wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.mediumFontPointSize
+            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.bold:              true
         }
 
         QGCCheckBox {
