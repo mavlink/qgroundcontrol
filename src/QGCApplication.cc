@@ -220,9 +220,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
             }
             permFile.close();
         }
-
-        // Always set style to default, this way QT_QUICK_CONTROLS_STYLE environment variable doesn't cause random changes in ui
-        QQuickStyle::setStyle("Default");
     }
 #endif
 #endif
