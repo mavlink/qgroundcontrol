@@ -788,7 +788,8 @@ HEADERS += \
     src/GPS/RTCM/RTCMMavlink.h \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
-    src/GPS/vehicle_gps_position.h \
+    src/GPS/sensor_gps.h \
+    src/GPS/sensor_gnss_relative.h \
     src/Joystick/JoystickSDL.h \
     src/RunGuard.h \
 }
