@@ -75,9 +75,16 @@ Item {
         return Screen.pixelDensity
     }
 
+    // These properties allow us to create simulated mobile sizing for a desktop build.
+    // This makes testing the UI for smaller mobile sizing much easier.
+    // The 731x411 size is the size of the Herelink screen which is our target lower bound
+    property real screenWidth:  ScreenToolsController.fakeMobile ? 731 : Screen.width
+    property real screenHeight: ScreenToolsController.fakeMobile ? 411 : Screen.height
+
     property bool isAndroid:                        ScreenToolsController.isAndroid
     property bool isiOS:                            ScreenToolsController.isiOS
     property bool isMobile:                         ScreenToolsController.isMobile
+    property bool isFakeMobile:                     ScreenToolsController.fakeMobile
     property bool isWindows:                        ScreenToolsController.isWindows
     property bool isDebug:                          ScreenToolsController.isDebug
     property bool isMac:                            ScreenToolsController.isMacOS
