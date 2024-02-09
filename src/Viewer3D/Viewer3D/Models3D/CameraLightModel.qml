@@ -11,7 +11,7 @@ Node {
 
     property real _tilt: 0.001
     property real _pan: 0.001
-    property real _zoom: 1000
+    property real _zoom: 1500
 
 
     DirectionalLight {
@@ -57,6 +57,10 @@ Node {
                 PerspectiveCamera {
 
                     id: cameraPerspectiveOne
+
+                    eulerRotation{
+                        x: -90
+                    }
 
                 }
             }

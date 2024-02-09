@@ -24,7 +24,6 @@ public:
     void init(Viewer3DSettings* viewerSettingThr,  OsmParser* osmThr=nullptr);
 
     QGeoCoordinate gpsRef(){return _gpsRef;}
-    void setGpsRef(const QGeoCoordinate& gpsRef);
 
 signals:
     void gpsRefChanged();
@@ -36,10 +35,16 @@ private:
 
     QString _osmFilePath;
     QGeoCoordinate _gpsRef;
+    uint8_t _gpsRefSet;
     float _altitudeBias;
+
+    Vehicle *_activeVehicle;
+
 
 protected slots:
     void _gpsRefChangedEvent(QGeoCoordinate newGpsRef);
+    void _activeVehicleChangedEvent(Vehicle* vehicle);
+    void _activeVehicleCoordinateChanged(QGeoCoordinate newCoordinate);
 };
 
 #endif // Viewer3DQmlBackend_H

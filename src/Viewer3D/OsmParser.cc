@@ -69,8 +69,8 @@ void OsmParser::parseOsmFile(QString filePath)
         component = component.nextSibling().toElement();
     }
     _mapLoadedFlag = true;
-    emit newMapLoaded();
-    qDebug() << _mapBuildings.size() << " Buildings added to the 3D viewer!!!";
+    emit mapChanged();
+    qDebug() << _mapBuildings.size() << " Buildings loaded!!!";
 }
 
 void OsmParser::decodeNodeTags(QDomElement &xmlComponent, QMap<uint64_t, QGeoCoordinate> &nodeMap)

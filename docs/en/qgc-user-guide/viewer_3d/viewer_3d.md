@@ -16,11 +16,24 @@ You can use it to:
 ![3D View](../../../assets/viewer_3d/viewer_3d_overview.jpg)
 
 # UI Overview
-The screenshot above shows the main elements of the 3D View. You can navigate through the 3D View by using the mouse as follows:
-- **To move horizontally and vertically**: Press and hold mouse left click, then move the cursor.
-- **To rotate**: Press and hold mouse right click, then move the cursor.
-- **To zoom**: Use the mouse wheel\middle button.
+The screenshot above shows the main elements of the 3D View. 
 
+To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), from the toolbar on the left, select the 3D View icon as shown below:
+
+![3D View](../../../assets/viewer_3d/open_3d_viewer.jpg)
+
+Once the 3D View is opened, you can navigate through the 3D environment by using either a mouse or a touchscreen as follows:
+- **Mouse:**
+    - **To move horizontally and vertically**: Press and hold the mouse left-click, then move the cursor.
+    - **To rotate**: Press and hold the mouse right-click, then move the cursor.
+    - **To zoom**: Use the mouse wheel\middle button.
+
+- **Touchscreen:**
+    - **To move horizontally and vertically**: Use a single finger, then tap and move your finger.
+    - **To rotate**: Use two fingers, then tap and move your fingers while keeping them together.
+    - **To zoom**: Use a pinch with two fingers and move them together or apart to zoom in or out.
+
+To visualize the 3D map of a particular area in the 3D viewer, you have to download the .osm file of that area from the [OpenStreetMap](https://www.openstreetmap.org/#map=16/47.3964/8.5498) website and then import it through the Setting menu. More details on the Setting menu can be found in the next section.
 # Setting icon ![Setting icons](../../../assets/viewer_3d/icon_3d_view.jpg) 
 This icon will open a pop-up window for setting up the 3D View as shown below:
 
