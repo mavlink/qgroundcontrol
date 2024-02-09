@@ -9,9 +9,6 @@ CityMapGeometry::CityMapGeometry()
     _modelName = "city_map_defualt_name";
     _vertexData.clear();
     _mapLoadedFlag = 0;
-
-    connect(this, &CityMapGeometry::osmFilePathChanged, this, &CityMapGeometry::updateData);
-    connect(this, &CityMapGeometry::osmParserChanged, this, &CityMapGeometry::updateData);
 }
 
 void CityMapGeometry::setModelName(QString modelName)
@@ -31,8 +28,7 @@ void CityMapGeometry::setOsmFilePath(QString filePath)
     _mapLoadedFlag = 0;
     _osmFilePath = filePath;
     emit osmFilePathChanged();
-
-    updateData();
+    loadOsmMap();
 }
 
 void CityMapGeometry::setOsmParser(OsmParser *newOsmParser)
@@ -40,13 +36,28 @@ void CityMapGeometry::setOsmParser(OsmParser *newOsmParser)
     _osmParser = newOsmParser;
 
     if(_osmParser){
-        connect(_osmParser, &OsmParser::buildingLevelHeightChanged, this, &CityMapGeometry::updateData);
+        connect(_osmParser, &OsmParser::buildingLevelHeightChanged, this, &CityMapGeometry::updateViewer);
+        connect(_osmParser, &OsmParser::mapChanged, this, &CityMapGeometry::updateViewer);
     }
     emit osmParserChanged();
+    loadOsmMap();
 }
 
-//! [update data]
-void CityMapGeometry::updateData()
+bool CityMapGeometry::loadOsmMap()
+{
+    if(_mapLoadedFlag){
+        return true;
+    }
+
+    if(!_osmParser){
+        return false;
+    }
+    _mapLoadedFlag = 1;
+    _osmParser->parseOsmFile(_osmFilePath);
+    return true;
+}
+
+void CityMapGeometry::updateViewer()
 {
     clear();
 
@@ -54,12 +65,7 @@ void CityMapGeometry::updateData()
         return;
     }
 
-    if(_mapLoadedFlag == 0){
-        _osmParser->parseOsmFile(_osmFilePath);
-        _mapLoadedFlag = 1;
-    }
-
-    if(_mapLoadedFlag){
+    if(loadOsmMap()){
         _vertexData = _osmParser->buildingToMesh();
 
         int stride = 3 * sizeof(float);
@@ -72,7 +78,6 @@ void CityMapGeometry::updateData()
             addAttribute(QQuick3DGeometry::Attribute::PositionSemantic,
                          0,
                          QQuick3DGeometry::Attribute::F32Type);
-
         }
         update();
     }

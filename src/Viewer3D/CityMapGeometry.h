@@ -29,14 +29,15 @@ public:
     OsmParser* osmParser(){ return _osmParser;}
     void setOsmParser(OsmParser* newOsmParser);
 
+    bool loadOsmMap();
+
 signals:
     void modelNameChanged();
     void osmFilePathChanged();
-    void gpsRefChanged();
     void osmParserChanged();
 
 private:
-    void updateData();
+    void updateViewer();
 
     QString _modelName;
     QString _osmFilePath;
