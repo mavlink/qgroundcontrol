@@ -27,6 +27,10 @@ public:
 private slots:
     void _pres_temp_4D_wr_test(void);
     void _pres_temp_4D_rd_test(void);
-
+    void _sfc_pres_temp_wr_test(void);
+    void _sfc_pres_temp_rd_test(void);
+    void _simple_xy_wr_test(void);
+    void _simple_xy_wr_formats_test(void);
+    void _simple_xy_rd_test(void);
 };
 

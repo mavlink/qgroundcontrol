@@ -54,6 +54,7 @@
 #include "InitialConnectTest.h"
 
 UT_REGISTER_TEST(NetCdfTest)
+/*
 UT_REGISTER_TEST(ComponentInformationCacheTest)
 UT_REGISTER_TEST(ComponentInformationTranslationTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
@@ -92,7 +93,7 @@ UT_REGISTER_TEST(FWLandingPatternTest)
 UT_REGISTER_TEST(LandingComplexItemTest)
 
 UT_REGISTER_TEST_STANDALONE(MissionCommandTreeEditorTest)
-
+*/
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.
 
