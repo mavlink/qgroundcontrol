@@ -9,7 +9,7 @@ add_custom_target(UiPreferencesQml
 		HelpSettings.qml
 		LinkSettings.qml
 		LogReplaySettings.qml
-		MavlinkSettings.qml
+		PX4LogTransferSettings.qml
 		MockLink.qml
 		MockLinkSettings.qml
         PlanViewSettings.qml

@@ -77,7 +77,7 @@ public:
     Q_PROPERTY(float                    devicePixelRatio                READ devicePixelRatio               NOTIFY devicePixelRatioChanged)
     Q_PROPERTY(float                    devicePixelDensity              READ devicePixelDensity             NOTIFY devicePixelDensityChanged)
     Q_PROPERTY(bool                     checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
-    Q_PROPERTY(bool                     showMavlinkLogOptions           READ showMavlinkLogOptions          CONSTANT)
+    Q_PROPERTY(bool                     showPX4LogTransferOptions       READ showPX4LogTransferOptions      CONSTANT)
     Q_PROPERTY(bool                     enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
     Q_PROPERTY(QStringList              surveyBuiltInPresetNames        READ surveyBuiltInPresetNames       CONSTANT)
     Q_PROPERTY(bool                     allowJoystickSelection          READ allowJoystickSelection         NOTIFY allowJoystickSelectionChanged)
@@ -125,7 +125,7 @@ public:
     virtual bool    showSimpleMissionStart          () const { return false; }
     virtual bool    disableVehicleConnection        () const { return false; }  ///< true: vehicle connection is disabled
     virtual bool    checkFirmwareVersion            () const { return true; }
-    virtual bool    showMavlinkLogOptions           () const { return true; }
+    virtual bool    showPX4LogTransferOptions       () const { return true; }
     virtual bool    allowJoystickSelection          () const { return true; }   ///< false: custom build has automatically enabled a specific joystick
     /// Desktop builds save the main application size and position on close (and restore it on open)
     virtual bool    enableSaveMainWindowPosition    () const { return true; }
