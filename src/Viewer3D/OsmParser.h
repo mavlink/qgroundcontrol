@@ -57,7 +57,7 @@ private:
 
 signals:
     void gpsRefChanged(QGeoCoordinate newGpsRef);
-    void newMapLoaded();
+    void mapChanged();
     void buildingLevelHeightChanged(void);
 
 };

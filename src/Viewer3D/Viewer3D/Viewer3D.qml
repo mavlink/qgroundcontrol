@@ -17,8 +17,20 @@ Item{
     property bool viewer3DOpen: false
     property bool settingMenuOpen: false
 
-    Viewer3DManager{
-        id: _viewer3DManager
+    Component{
+        id: viewer3DManagerComponent
+
+        Viewer3DManager{
+            id: _viewer3DManager
+        }
+    }
+
+    Loader{
+        id: view3DManagerLoader
+
+        onLoaded: {
+            view3DLoader.source = "Models3D/Viewer3DModel.qml"
+        }
     }
 
     Loader{
@@ -26,12 +38,19 @@ Item{
         anchors.fill: parent
 
         onLoaded: {
-            item.viewer3DManager = _viewer3DManager
+            item.viewer3DManager = view3DManagerLoader.item
         }
     }
 
+    Binding{
+        target: view3DLoader.item
+        property: "viewer3DOpen"
+        value: viewer3DOpen
+        when: view3DLoader.status == Loader.Ready
+    }
+
     onViewer3DOpenChanged: {
-        view3DLoader.source = "Models3D/Viewer3DModel.qml"
+        view3DManagerLoader.sourceComponent = viewer3DManagerComponent
         if(viewer3DOpen){
             viewer3DBody.z = 1
         }else{
@@ -50,12 +69,12 @@ Item{
 
         QGCPopupDialog{
             id: settingMenuDialog
-            title:      qsTr("3D view setting")
+            title:      qsTr("3D view settings")
             buttons:    Dialog.Ok | Dialog.Cancel
 
             Viewer3DSettingMenu{
                 id:                     viewer3DSettingMenu
-                viewer3DManager:        _viewer3DManager
+                viewer3DManager:        view3DManagerLoader.item
                 visible:                true
             }
 
