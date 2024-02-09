@@ -37,7 +37,6 @@ ApplicationWindow {
     property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
-        console.log("SCreenTools.isMobile: ", ScreenTools.isMobile, ScreenTools.isFakeMobile)
         //-- Full screen on mobile or tiny screens
         if (!ScreenTools.isFakeMobile && (ScreenTools.isMobile || Screen.height / ScreenTools.realPixelDensity < 120)) {
             mainWindow.showFullScreen()
