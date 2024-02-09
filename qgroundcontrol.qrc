@@ -63,7 +63,7 @@
         <file alias="MainRootWindow.qml">src/ui/MainRootWindow.qml</file>
         <file alias="MavlinkConsolePage.qml">src/AnalyzeView/MavlinkConsolePage.qml</file>
         <file alias="MAVLinkInspectorPage.qml">src/AnalyzeView/MAVLinkInspectorPage.qml</file>
-        <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
+        <file alias="PX4LogTransferSettings.qml">src/ui/preferences/PX4LogTransferSettings.qml</file>
         <file alias="MissionCommandTreeEditorTestWindow.qml">src/MissionManager/MissionCommandTreeEditorTestWindow.qml</file>
         <file alias="MissionSettingsEditor.qml">src/PlanView/MissionSettingsEditor.qml</file>
         <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
