@@ -34,6 +34,7 @@ IndicatorButton                         1.0 IndicatorButton.qml
 LabelledButton                          1.0 LabelledButton.qml
 LabelledComboBox                        1.0 LabelledComboBox.qml
 LabelledLabel                           1.0 LabelledLabel.qml
+SelectableControl                       1.0 SelectableControl.qml
 SettingsGroupLayout                     1.0 SettingsGroupLayout.qml
 InstrumentValueLabel                    1.0 InstrumentValueLabel.qml
 InstrumentValueValue                    1.0 InstrumentValueValue.qml
