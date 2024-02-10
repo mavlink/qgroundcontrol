@@ -49,12 +49,6 @@ ListModel {
         pageVisible: function() { return true }
     }
 
-    //ListElement {
-    //    name: qsTr("General Old")
-    //    url: "/qml/GeneralSettings2.qml"
-    //    pageVisible: function() { return true }
-    //}
-
     ListElement {
         name: qsTr("Comm Links")
         url: "/qml/LinkSettings.qml"
