@@ -21,11 +21,14 @@ import QGroundControl.Palette
 ColumnLayout {
     id:         root
     spacing:    ScreenTools.defaultFontPixelHeight / 4
+    width:      Math.min(_defaultWidth, _maxWidth)
 
-    property real   _innerRadius:           (width - (_topBottomMargin * 3)) / 4
-    property real   _outerRadius:           _innerRadius + _topBottomMargin
-    property real   _spacing:               ScreenTools.defaultFontPixelHeight * 0.33
-    property real   _topBottomMargin:       (width * 0.05) / 2
+    property real   _defaultWidth:      mainWindow.width * 0.2
+    property real   _maxWidth:          ScreenTools.defaultFontPixelHeight * 15
+    property real   _innerRadius:       (width - (_topBottomMargin * 3)) / 4
+    property real   _outerRadius:       _innerRadius + _topBottomMargin
+    property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
+    property real   _topBottomMargin:   (width * 0.05) / 2
 
     QGCPalette { id: qgcPal }
 
@@ -55,9 +58,5 @@ ColumnLayout {
             vehicle:                globals.activeVehicle
             anchors.verticalCenter: parent.verticalCenter
         }
-    }
-
-    TerrainProgress {
-        Layout.fillWidth: true
     }
 }

@@ -123,7 +123,6 @@ Item {
         anchors.margins:            _toolsMargin
         anchors.top:                multiVehiclePanelSelector.visible ? multiVehiclePanelSelector.bottom : parent.top
         anchors.right:              parent.right
-        width:                      _rightPanelWidth
         spacing:                    _toolsMargin
         visible:                    QGroundControl.corePlugin.options.flyView.showInstrumentPanel && multiVehiclePanelSelector.showSingleVehiclePanel
         availableHeight:            parent.height - y - _toolsMargin
@@ -135,32 +134,11 @@ Item {
     PhotoVideoControl {
         id:                     photoVideoControl
         anchors.margins:        _toolsMargin
+        anchors.top:            instrumentPanel.bottom
         anchors.right:          parent.right
         width:                  _rightPanelWidth
 
         property real rightEdgeCenterInset: visible ? parent.width - x : 0
-
-        state:                  _verticalCenter ? "verticalCenter" : "topAnchor"
-        states: [
-            State {
-                name: "verticalCenter"
-                AnchorChanges {
-                    target:                 photoVideoControl
-                    anchors.top:            undefined
-                    anchors.verticalCenter: _root.verticalCenter
-                }
-            },
-            State {
-                name: "topAnchor"
-                AnchorChanges {
-                    target:                 photoVideoControl
-                    anchors.verticalCenter: undefined
-                    anchors.top:            instrumentPanel.bottom
-                }
-            }
-        ]
-
-        property bool _verticalCenter: !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue
     }
 
     TelemetryValuesBar {

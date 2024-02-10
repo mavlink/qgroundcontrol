@@ -68,9 +68,6 @@ Item {
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
         toolstrip.adjustToolInset(newToolInset)
-        if (QGroundControl.corePlugin.options.instrumentWidget) {
-            flightDisplayViewWidgets.adjustToolInset(newToolInset)
-        }
     }
 
     QGCToolInsets {
