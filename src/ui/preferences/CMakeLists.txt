@@ -5,7 +5,6 @@ add_custom_target(UiPreferencesQml
 		DebugWindow.qml
         FlyViewSettings.qml
 		GeneralSettings.qml
-		GeneralSettings2.qml
 		HelpSettings.qml
 		LinkSettings.qml
 		LogReplaySettings.qml

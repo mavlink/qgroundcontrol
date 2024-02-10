@@ -49,7 +49,6 @@
         <file alias="FlyViewSettings.qml">src/ui/preferences/FlyViewSettings.qml</file>
         <file alias="FWLandingPatternEditor.qml">src/PlanView/FWLandingPatternEditor.qml</file>
         <file alias="GeneralSettings.qml">src/ui/preferences/GeneralSettings.qml</file>
-        <file alias="GeneralSettings2.qml">src/ui/preferences/GeneralSettings2.qml</file>
         <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
         <file alias="HelpSettings.qml">src/ui/preferences/HelpSettings.qml</file>
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
