@@ -25,7 +25,6 @@ SettingsPage {
     property var    _settingsManager:                   QGroundControl.settingsManager
     property Fact   _virtualJoystick:                   _settingsManager.appSettings.virtualJoystick
     property Fact   _virtualJoystickAutoCenterThrottle: _settingsManager.appSettings.virtualJoystickAutoCenterThrottle
-    property Fact   _alternateInstrumentPanel:          _settingsManager.flyViewSettings.alternateInstrumentPanel
     property Fact   _showAdditionalIndicatorsCompass:   _settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
     property Fact   _lockNoseUpCompass:                 _settingsManager.flyViewSettings.lockNoseUpCompass
     property Fact   _guidedMinimumAltitude:             _settingsManager.flyViewSettings.guidedMinimumAltitude
@@ -139,14 +138,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Instrument Panel")
-        visible:            _alternateInstrumentPanel.visible || _showAdditionalIndicatorsCompass.visible || _lockNoseUpCompass.visible
-
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Use Vertical Instruments")
-            visible:            _alternateInstrumentPanel.visible
-            fact:               _alternateInstrumentPanel
-        }
+        visible:            _showAdditionalIndicatorsCompass.visible || _lockNoseUpCompass.visible
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true

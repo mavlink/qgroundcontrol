@@ -6,7 +6,6 @@ add_custom_target(FligthDisplayQml
 		FlightDisplayViewDummy.qml
 		FlightDisplayViewUVC.qml
 		FlightDisplayViewVideo.qml
-		FlightDisplayViewWidgets.qml
 		FlyViewCustomLayer.qml
 		FlyViewInstrumentPanel.qml
 		FlyViewMap.qml
