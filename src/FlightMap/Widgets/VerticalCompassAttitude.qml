@@ -17,6 +17,7 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 
 Rectangle {
+    width:  ScreenTools.defaultFontPixelHeight * 10
     height: _outerRadius * 4
     radius: _outerRadius
     color:  QGroundControl.globalPalette.window
