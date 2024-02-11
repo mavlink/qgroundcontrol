@@ -19,9 +19,6 @@ using namespace std;
 using namespace netCDF;
 using namespace netCDF::exceptions;
 
-// This is the name of the data file we will create.
-#define FILE_NAME "pres_temp_4D.nc"
-
 // We are writing 4D data, a 2 x 6 x 12 lvl-lat-lon grid, with 2
 // timesteps of data.
 #define NDIMS 4
@@ -53,6 +50,7 @@ NetCdfTest::NetCdfTest(void)
 
 void NetCdfTest::_pres_temp_4D_wr_test(void)
 {
+    string FILENAME = "pres_temp_4D.nc";
     string UNITS = "units";
     string DEGREES_EAST = "degrees_east";
     string DEGREES_NORTH = "degrees_north";
@@ -94,7 +92,7 @@ void NetCdfTest::_pres_temp_4D_wr_test(void)
     {
 
         // Create the file.
-        NcFile test(FILE_NAME, NcFile::replace);
+        NcFile test(FILENAME, NcFile::replace);
 
         // Define the dimensions. NetCDF will hand back an ncDim object for
         // each.
@@ -158,7 +156,7 @@ void NetCdfTest::_pres_temp_4D_wr_test(void)
         // up any internal netCDF resources associated with the file, and
         // flushes any buffers.
 
-        cout << "*** SUCCESS writing example file " << FILE_NAME << "!" << endl;
+        cout << "*** SUCCESS writing example file " << FILENAME << "!" << endl;
         result = 0;
     }
     catch (NcException &e)
@@ -174,6 +172,7 @@ void NetCdfTest::_pres_temp_4D_wr_test(void)
 
 void NetCdfTest::_pres_temp_4D_rd_test(void)
 {
+    string FILENAME = "pres_temp_4D.nc";
     // These arrays will store the latitude and longitude values.
     float lats[NLAT], lons[NLON];
 
@@ -186,7 +185,7 @@ void NetCdfTest::_pres_temp_4D_rd_test(void)
     try
     {
         // Open the file.
-        NcFile dataFile("pres_temp_4D.nc", NcFile::read);
+        NcFile dataFile(FILENAME, NcFile::read);
 
         // Get the latitude and longitude variables and read data.
         NcVar latVar, lonVar;
@@ -250,7 +249,7 @@ void NetCdfTest::_pres_temp_4D_rd_test(void)
         // up any internal netCDF resources associated with the file, and
         // flushes any buffers.
 
-        cout << "*** SUCCESS reading example file pres_temp_4D.nc!" << endl;
+        cout << "*** SUCCESS reading example file " << FILENAME << "!" << endl;
     }
     catch (NcException &e)
     {
@@ -265,6 +264,7 @@ void NetCdfTest::_pres_temp_4D_rd_test(void)
 
 int sfc_pres_temp_wr(void)
 {
+    string FILENAME = "sfc_pres_temp.nc";
     string UNITS = "units";
     string DEGREES_EAST = "degrees_east";
     string DEGREES_NORTH = "degrees_north";
@@ -298,10 +298,9 @@ int sfc_pres_temp_wr(void)
 
     try
     {
-
         // Create the file. The Replace parameter tells netCDF to overwrite
         // this file, if it already exists.
-        NcFile sfc(FILE_NAME, NcFile::replace);
+        NcFile sfc(FILENAME, NcFile::replace);
 
         // Define the dimensions. NetCDF will hand back an ncDim object for
         // each.
@@ -351,7 +350,7 @@ int sfc_pres_temp_wr(void)
         // up any internal netCDF resources associated with the file, and
         // flushes any buffers.
 
-        // cout << "*** SUCCESS writing example file " << FILE_NAME << "!" << endl;
+        cout << "*** SUCCESS writing example file " << FILENAME << "!" << endl;
         return 0;
     }
     catch (NcException &e)
@@ -370,6 +369,7 @@ void NetCdfTest::_sfc_pres_temp_wr_test(void)
 
 int sfc_pres_temp_rd(void)
 {
+    string FILENAME = "sfc_pres_temp.nc";
     // These will hold our pressure and temperature data.
     float presIn[NLAT][NLON];
     float tempIn[NLAT][NLON];
@@ -381,7 +381,7 @@ int sfc_pres_temp_rd(void)
     try
     {
         // Open the file and check to make sure it's valid.
-        NcFile dataFile("sfc_pres_temp.nc", NcFile::read);
+        NcFile dataFile(FILENAME, NcFile::read);
 
         // There are a number of inquiry functions in netCDF which can be
         // used to learn about an unknown netCDF file. In this case we know
@@ -484,7 +484,7 @@ int sfc_pres_temp_rd(void)
         // The file will be automatically closed by the destructor. This
         // frees up any internal netCDF resources associated with the file,
         // and flushes any buffers.
-        // cout << "*** SUCCESS reading example file sfc_pres_temp.nc!" << endl;
+        cout << "*** SUCCESS reading example file " << FILENAME << "!" << endl;
         return 0;
     }
     catch (NcException &e)
@@ -503,6 +503,7 @@ void NetCdfTest::_sfc_pres_temp_rd_test(void)
 
 int simple_xy_wr(void)
 {
+    string FILENAME = "simple_xy.nc";
     static const int NX = 6;
     static const int NY = 12;
     // This is the data array we will write. It will just be filled
@@ -522,7 +523,7 @@ int simple_xy_wr(void)
     {
         // Create the file. The Replace parameter tells netCDF to overwrite
         // this file, if it already exists.
-        NcFile dataFile("simple_xy.nc", NcFile::replace);
+        NcFile dataFile(FILENAME, NcFile::replace);
 
         // Create netCDF dimensions
         NcDim xDim = dataFile.addDim("x", NX);
@@ -544,7 +545,7 @@ int simple_xy_wr(void)
         // out of scope. This frees up any internal netCDF resources
         // associated with the file, and flushes any buffers.
 
-        // cout << "*** SUCCESS writing example file simple_xy.nc!" << endl;
+        cout << "*** SUCCESS writing example file " << FILENAME << "!" << endl;
         return 0;
     }
     catch (NcException &e)
@@ -609,7 +610,7 @@ int create_file(string filename, NcFile::FileFormat format)
         // out of scope. This frees up any internal netCDF resources
         // associated with the file, and flushes any buffers.
 
-        // cout << "*** SUCCESS writing example file simple_xy.nc!" << endl;
+        cout << "*** SUCCESS writing example file " << filename << "!" << endl;
         return 0;
     }
     catch (NcException &e)
@@ -650,6 +651,7 @@ void NetCdfTest::_simple_xy_wr_formats_test(void)
 
 int simple_xy_rd()
 {
+    string FILENAME = "simple_xy.nc";
     static const int NX = 6;
     static const int NY = 12;
     try
@@ -658,7 +660,7 @@ int simple_xy_rd()
         int dataIn[NX][NY];
 
         // Open the file for read access
-        NcFile dataFile("simple_xy.nc", NcFile::read);
+        NcFile dataFile(FILENAME, NcFile::read);
 
         // Retrieve the variable named "data"
         NcVar data = dataFile.getVar("data");
@@ -673,7 +675,7 @@ int simple_xy_rd()
                     return NC_ERR;
 
         // The netCDF file is automatically closed by the NcFile destructor
-        // cout << "*** SUCCESS reading example file simple_xy.nc!" << endl;
+        cout << "*** SUCCESS reading example file " << FILENAME << "!" << endl;
 
         return 0;
     }
