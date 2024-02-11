@@ -17,7 +17,6 @@
 #include <QObject>
 #include <QQuickItem>
 
-#include "UASInterface.h"
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
 

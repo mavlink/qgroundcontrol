@@ -9,7 +9,6 @@
 
 #include "MavlinkConsoleController.h"
 #include "QGCApplication.h"
-#include "UAS.h"
 
 #include <QClipboard>
 

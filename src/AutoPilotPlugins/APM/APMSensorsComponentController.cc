@@ -10,7 +10,6 @@
 
 #include "APMSensorsComponentController.h"
 #include "QGCMAVLink.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 #include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"

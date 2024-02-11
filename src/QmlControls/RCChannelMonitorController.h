@@ -14,7 +14,6 @@
 #include <QTimer>
 
 #include "FactPanelController.h"
-#include "UASInterface.h"
 #include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
 

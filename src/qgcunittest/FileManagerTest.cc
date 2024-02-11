@@ -13,7 +13,6 @@
 
 #include "FileManagerTest.h"
 #include "MultiVehicleManager.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 
 FileManagerTest::FileManagerTest(void)
@@ -33,9 +32,6 @@ void FileManagerTest::init(void)
 
     _fileServer = _mockLink->getFileServer();
     QVERIFY(_fileServer != NULL);
-    
-    _fileManager = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->uas()->getFileManager();
-    QVERIFY(_fileManager != NULL);
     
     Q_ASSERT(_multiSpy == NULL);
     

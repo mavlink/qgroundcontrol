@@ -16,7 +16,6 @@
 #include <QList>
 #include <QStringList>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 #include "Vehicle.h"

@@ -14,7 +14,6 @@
 #include <QTimer>
 #include <QQueue>
 
-#include "UASInterface.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 
