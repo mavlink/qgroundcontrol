@@ -10,7 +10,6 @@
 #include "MultiVehicleManager.h"
 #include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 #include "FollowMe.h"
 #include "ParameterManager.h"
@@ -204,8 +203,6 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     if (!found) {
         qWarning() << "Vehicle not found in map!";
     }
-
-    vehicle->uas()->shutdownVehicle();
 
     // First we must signal that a vehicle is no longer available.
     _activeVehicleAvailable = false;

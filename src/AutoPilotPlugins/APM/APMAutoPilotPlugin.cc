@@ -9,7 +9,6 @@
 
 
 #include "APMAutoPilotPlugin.h"
-#include "UAS.h"
 #include "APMParameterMetaData.h"
 #include "APMFirmwarePlugin.h"
 #include "ArduCopterFirmwarePlugin.h"

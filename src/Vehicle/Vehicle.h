@@ -60,7 +60,6 @@
 class Actuators;
 class EventHandler;
 class UAS;
-class UASInterface;
 class FirmwarePlugin;
 class FirmwarePluginManager;
 class AutoPilotPlugin;
@@ -538,9 +537,6 @@ public:
     /// guarantee that it makes it to the vehicle.
     void sendMessageMultiple(mavlink_message_t message);
 
-    /// Provides access to uas from vehicle. Temporary workaround until UAS is fully phased out.
-    UAS* uas() { return _uas; }
-
     /// Provides access to uas from vehicle. Temporary workaround until AutoPilotPlugin is fully phased out.
     AutoPilotPlugin* autopilotPlugin() { return _autopilotPlugin; }
 
@@ -577,6 +573,8 @@ public:
 
     void setGripperAction(GRIPPER_ACTIONS gripperAction);
     Q_INVOKABLE void sendGripperAction(GRIPPER_OPTIONS gripperOption);
+
+    void pairRX(int rxType, int rxSubType);
 
     bool fixedWing() const;
     bool multiRotor() const;
@@ -630,7 +628,6 @@ public:
     QString         formattedMessages           ();
     float           latitude                    () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude                   () { return static_cast<float>(_coordinate.longitude()); }
-    bool            mavPresent                  () { return _mav != nullptr; }
     int             rcRSSI                      () const{ return _rcRSSI; }
     bool            px4Firmware                 () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware                 () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
@@ -1061,6 +1058,9 @@ signals:
 
     void sensorsParametersResetAck      (bool success);
 
+    void logEntry                       (uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
+    void logData                        (uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data);
+
 private slots:
     void _mavlinkMessageReceived            (LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext           ();
@@ -1183,7 +1183,6 @@ private:
     QGeoCoordinate  _homePosition;
     QGeoCoordinate  _armedPosition;
 
-    UASInterface*   _mav = nullptr;
     int             _currentMessageCount = 0;
     int             _messageCount = 0;
     int             _currentErrorCount = 0;

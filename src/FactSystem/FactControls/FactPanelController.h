@@ -16,7 +16,6 @@
 #include <QObject>
 #include <QQuickItem>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "QGCLoggingCategory.h"
 
@@ -50,7 +49,6 @@ protected:
     void _reportMissingParameter(int componentId, const QString& name);
 
     Vehicle*            _vehicle    = nullptr;
-    UASInterface*       _uas        = nullptr;
     AutoPilotPlugin*    _autopilot  = nullptr;
 
 private slots:

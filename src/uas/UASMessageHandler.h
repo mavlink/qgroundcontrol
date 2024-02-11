@@ -16,7 +16,6 @@
 #include "QGCToolbox.h"
 
 class Vehicle;
-class UASInterface;
 class UASMessageHandler;
 class QGCApplication;
 

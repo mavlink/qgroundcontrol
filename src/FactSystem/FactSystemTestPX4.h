@@ -15,7 +15,6 @@
 #define FactSystemTestPX4_H
 
 #include "FactSystemTestBase.h"
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 
 // Unit Test for Fact System on PX4 autopilot

@@ -17,7 +17,6 @@
 #include "MockLink.h"
 #include "QGCTemporaryFile.h"
 #include "QGCApplication.h"
-#include "UAS.h"
 #include "MultiVehicleManager.h"
 
 const char* MavlinkLogTest::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
