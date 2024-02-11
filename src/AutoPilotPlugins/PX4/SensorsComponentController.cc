@@ -9,7 +9,6 @@
 
 #include "SensorsComponentController.h"
 #include "QGCMAVLink.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 

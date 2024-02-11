@@ -11,7 +11,6 @@
 #define SyslinkComponentController_H
 
 #include "FactPanelController.h"
-#include "UASInterface.h"
 #include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
 

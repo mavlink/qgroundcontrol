@@ -10,7 +10,6 @@
 
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
 #include "QGCMapEngine.h"
@@ -103,8 +102,7 @@ QGCLogEntry::sizeStr() const
 
 //----------------------------------------------------------------------------------------
 LogDownloadController::LogDownloadController(void)
-    : _uas(nullptr)
-    , _downloadData(nullptr)
+    : _downloadData(nullptr)
     , _vehicle(nullptr)
     , _requestingLogEntries(false)
     , _downloadingLogs(false)
@@ -132,26 +130,24 @@ LogDownloadController::_processDownload()
 void
 LogDownloadController::_setActiveVehicle(Vehicle* vehicle)
 {
-    if(_uas) {
+    if(_vehicle) {
         _logEntriesModel.clearAndDeleteContents();
-        disconnect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
-        disconnect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
-        _uas = nullptr;
+        disconnect(_vehicle, &Vehicle::logEntry, this, &LogDownloadController::_logEntry);
+        disconnect(_vehicle, &Vehicle::logData,  this, &LogDownloadController::_logData);
     }
     _vehicle = vehicle;
     if(_vehicle) {
-        _uas = vehicle->uas();
-        connect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
-        connect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
+        connect(_vehicle, &Vehicle::logEntry, this, &LogDownloadController::_logEntry);
+        connect(_vehicle, &Vehicle::logData,  this, &LogDownloadController::_logData);
     }
 }
 
 //----------------------------------------------------------------------------------------
 void
-LogDownloadController::_logEntry(UASInterface* uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t /*last_log_num*/)
+LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t /*last_log_num*/)
 {
     //-- Do we care?
-    if(!_uas || uas != _uas || !_requestingLogEntries) {
+    if(!_requestingLogEntries) {
         return;
     }
     //-- If this is the first, pre-fill it
@@ -312,9 +308,9 @@ void LogDownloadController::_updateDataRate(void)
 
 //----------------------------------------------------------------------------------------
 void
-LogDownloadController::_logData(UASInterface* uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data)
+LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t* data)
 {
-    if(!_uas || uas != _uas || !_downloadData) {
+    if(!_downloadData) {
         return;
     }
     //-- APM "Fix"
@@ -499,7 +495,7 @@ LogDownloadController::refresh(void)
 void
 LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
 {
-    if(_vehicle && _uas) {
+    if(_vehicle) {
         qCDebug(LogDownloadLog) << "Request log entry list (" << start << "through" << end << ")";
         _setListing(true);
         WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
@@ -675,7 +671,7 @@ LogDownloadController::_setListing(bool active)
 void
 LogDownloadController::eraseAll(void)
 {
-    if(_vehicle && _uas) {
+    if(_vehicle) {
         WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
         if (!weakLink.expired()) {
             SharedLinkInterfacePtr sharedLink = weakLink.lock();
@@ -697,9 +693,7 @@ LogDownloadController::eraseAll(void)
 void
 LogDownloadController::cancel(void)
 {
-    if(_uas){
-        _receivedAllEntries();
-    }
+    _receivedAllEntries();
     if(_downloadData) {
         _downloadData->entry->setStatus(tr("Canceled"));
         if (_downloadData->file.exists()) {

@@ -14,7 +14,6 @@
 
 #include "ESP8266ComponentController.h"
 #include "QGCApplication.h"
-#include "UAS.h"
 #include "ParameterManager.h"
 
 #include <QHostAddress>

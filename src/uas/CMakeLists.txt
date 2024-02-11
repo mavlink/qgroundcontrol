@@ -1,8 +1,5 @@
 
 add_library(uas
-	UAS.cc
-	UAS.h
-	UASInterface.h
 	UASMessageHandler.cc
 	UASMessageHandler.h
 )

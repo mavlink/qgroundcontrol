@@ -19,7 +19,6 @@
 #include "FirmwarePluginManager.h"
 #include "LinkManager.h"
 #include "FirmwarePlugin.h"
-#include "UAS.h"
 #include "JoystickManager.h"
 #include "MissionManager.h"
 #include "MissionController.h"
@@ -201,9 +200,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(_toolbox->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &Vehicle::_vehicleParamLoaded);
 
-    _uas = new UAS(_mavlink, this, _firmwarePluginManager);
-    _uas->setParent(this);
-
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
     _commonInit();
@@ -241,8 +237,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _chunkedStatusTextTimer.setSingleShot(true);
     _chunkedStatusTextTimer.setInterval(1000);
     connect(&_chunkedStatusTextTimer, &QTimer::timeout, this, &Vehicle::_chunkedStatusTextTimeout);
-
-    _mav = uas();
 
     // Listen for system messages
     connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
@@ -519,9 +513,6 @@ Vehicle::~Vehicle()
 
     delete _autopilotPlugin;
     _autopilotPlugin = nullptr;
-
-    delete _mav;
-    _mav = nullptr;
 
 #ifdef CONFIG_UTM_ADAPTER
     delete _utmspVehicle;
@@ -822,13 +813,25 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleRangefinder(message);
         break;
 #endif
+    case MAVLINK_MSG_ID_LOG_ENTRY:
+    {
+        mavlink_log_entry_t log;
+        mavlink_msg_log_entry_decode(&message, &log);
+        emit logEntry(log.time_utc, log.size, log.id, log.num_logs, log.last_log_num);
+        break;
+    }
+    case MAVLINK_MSG_ID_LOG_DATA:
+    {
+        mavlink_log_data_t log;
+        mavlink_msg_log_data_decode(&message, &log);
+        emit logData(log.ofs, log.id, log.count, log.data);
+        break;
+    }
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
     // does processing.
     emit mavlinkMessageReceived(message);
-
-    _uas->receiveMessage(message);
 }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -4582,4 +4585,13 @@ void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
         static_cast<float>(qQNaN())
     );
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
+void Vehicle::pairRX(int rxType, int rxSubType)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_START_RX_PAIR,
+                   true,
+                   rxType,
+                   rxSubType);
 }

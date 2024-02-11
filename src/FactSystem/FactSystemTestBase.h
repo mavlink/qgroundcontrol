@@ -15,7 +15,6 @@
 #define FactSystemTestBase_H
 
 #include "UnitTest.h"
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 
 // Base class for FactSystemTest[PX4|Generic] unit tests
