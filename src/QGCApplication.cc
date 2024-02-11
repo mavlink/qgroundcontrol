@@ -208,24 +208,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                     "sudo apt-get remove modemmanager</pre>").arg(qgcApp()->applicationName())));
             return;
         }
-        // Determine if we have the correct permissions to access USB serial devices
-        QFile permFile("/etc/group");
-        if(permFile.open(QIODevice::ReadOnly)) {
-            while(!permFile.atEnd()) {
-                QString line = permFile.readLine();
-                if (line.contains("dialout") && !line.contains(getenv("USER"))) {
-                    permFile.close();
-                    _exitWithError(QString(
-                        tr("The current user does not have the correct permissions to access serial devices. "
-                           "You should also remove modemmanager since it also interferes.<br/><br/>"
-                           "If you are using Ubuntu, execute the following commands to fix these issues:<br/>"
-                           "<pre>sudo usermod -a -G dialout $USER<br/>"
-                           "sudo apt-get remove modemmanager</pre>")));
-                    return;
-                }
-            }
-            permFile.close();
-        }
     }
 #endif
 #endif
@@ -575,6 +557,33 @@ bool QGCApplication::_initForNormalAppBoot()
     if (msgHandler) {
         msgHandler->showErrorsInToolbar();
     }
+
+    #ifdef Q_OS_LINUX
+    #ifndef __mobile__
+    #ifndef NO_SERIAL_LINK
+        if (!_runningUnitTests) {
+            // Determine if we have the correct permissions to access USB serial devices
+            QFile permFile("/etc/group");
+            if(permFile.open(QIODevice::ReadOnly)) {
+                while(!permFile.atEnd()) {
+                    QString line = permFile.readLine();
+                    if (line.contains("dialout") && !line.contains(getenv("USER"))) {
+                        permFile.close();
+                        showAppMessage(QString(
+                            tr("The current user does not have the correct permissions to access serial devices. "
+                               "You should also remove modemmanager since it also interferes.<br/><br/>"
+                               "If you are using Ubuntu, execute the following commands to fix these issues:<br/>"
+                               "<pre>sudo usermod -a -G dialout $USER<br/>"
+                               "sudo apt-get remove modemmanager</pre>")));
+                        break;
+                    }
+                }
+                permFile.close();
+            }
+        }
+    #endif
+    #endif
+    #endif
 
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
