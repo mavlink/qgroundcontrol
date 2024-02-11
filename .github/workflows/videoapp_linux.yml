@@ -1,4 +1,4 @@
-name: Linux Debug and Test
+name: Video App Linux
 
 on:
   push:
