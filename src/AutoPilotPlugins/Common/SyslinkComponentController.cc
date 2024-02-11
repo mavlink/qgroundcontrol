@@ -9,7 +9,6 @@
 
 #include "SyslinkComponentController.h"
 #include "QGCApplication.h"
-#include "UAS.h"
 #include "ParameterManager.h"
 
 #include <QHostAddress>

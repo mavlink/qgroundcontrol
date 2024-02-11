@@ -11,7 +11,6 @@
 
 #include <QObject>
 
-#include "UASInterface.h"
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
 #include "APMSensorsComponent.h"

@@ -25,10 +25,9 @@ QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "PX4AirframeLoaderLog")
 
 bool PX4AirframeLoader::_airframeMetaDataLoaded = false;
 
-PX4AirframeLoader::PX4AirframeLoader(AutoPilotPlugin* autopilot, UASInterface* uas, QObject* parent)
+PX4AirframeLoader::PX4AirframeLoader(AutoPilotPlugin* autopilot, QObject* parent)
 {
     Q_UNUSED(autopilot);
-    Q_UNUSED(uas);
     Q_UNUSED(parent);
 }
 

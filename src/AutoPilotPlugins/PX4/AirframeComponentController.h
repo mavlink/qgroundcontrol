@@ -18,7 +18,6 @@
 #include <QQuickItem>
 #include <QList>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 

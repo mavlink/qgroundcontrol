@@ -18,7 +18,6 @@
 
 #include "ParameterManager.h"
 #include "FactSystem.h"
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 
 /// @file PX4AirframeLoader.h
@@ -34,7 +33,7 @@ class PX4AirframeLoader : QObject
 
 public:
     /// @param uas Uas which this set of facts is associated with
-    PX4AirframeLoader(AutoPilotPlugin* autpilot,UASInterface* uas, QObject* parent = nullptr);
+    PX4AirframeLoader(AutoPilotPlugin* autpilot, QObject* parent = nullptr);
 
     static void loadAirframeMetaData(void);
 

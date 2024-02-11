@@ -14,7 +14,6 @@
 #include <QList>
 #include <QAbstractListModel>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 

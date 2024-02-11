@@ -13,7 +13,6 @@
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
-#include "UAS.h"
 #include "JsonHelper.h"
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
