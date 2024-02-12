@@ -16,9 +16,6 @@
 [submodule "libs/libevents/libevents"]
 	path = libs/libevents/libevents
 	url = https://github.com/mavlink/libevents.git
-[submodule "libs/eigen"]
-	path = libs/eigen
-	url = https://gitlab.com/libeigen/eigen.git
 [submodule "libs/shapelib"]
 	path = libs/shapelib
 	url = https://github.com/OSGeo/shapelib.git
