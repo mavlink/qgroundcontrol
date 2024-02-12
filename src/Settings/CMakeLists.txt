@@ -20,6 +20,8 @@ add_library(Settings
 	FlightModeSettings.h
 	FlyViewSettings.cc
 	FlyViewSettings.h
+    MapsSettings.cc
+    MapsSettings.h
 	OfflineMapsSettings.cc
 	OfflineMapsSettings.h
 	PlanViewSettings.cc

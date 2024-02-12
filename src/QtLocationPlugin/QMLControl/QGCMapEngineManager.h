@@ -44,8 +44,6 @@ public:
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
     Q_PROPERTY(QStringList          mapProviderList READ    mapProviderList CONSTANT)
-    Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
-    Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
     Q_PROPERTY(bool                 fetchElevation  READ    fetchElevation  WRITE   setFetchElevation   NOTIFY  fetchElevationChanged)
     //-- Disk Space in MB
@@ -81,8 +79,6 @@ public:
     QStringList                     mapProviderList         ();
     Q_INVOKABLE QStringList         mapTypeList             (QString provider);
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
-    quint32                         maxMemCache             ();
-    quint32                         maxDiskCache            ();
     QString                         errorMessage            () { return _errorMessage; }
     bool                            fetchElevation          () const{ return _fetchElevation; }
     quint64                         freeDiskSpace           () const{ return _freeDiskSpace; }
@@ -92,8 +88,6 @@ public:
     ImportAction                    importAction            () { return _importAction; }
     bool                            importReplace           () const{ return _importReplace; }
 
-    void                            setMaxMemCache          (quint32 size);
-    void                            setMaxDiskCache         (quint32 size);
     void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
     void                            setImportAction         (ImportAction action)  {_importAction = action; emit importActionChanged(); }
     void                            setErrorMessage         (const QString& error) { _errorMessage = error; emit errorMessageChanged(); }
