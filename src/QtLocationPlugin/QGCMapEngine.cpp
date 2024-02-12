@@ -17,10 +17,10 @@
  */
 #include "QGCApplication.h"
 #include "AppSettings.h"
+#include "MapsSettings.h"
 #include "SettingsManager.h"
 
 #include <math.h>
-#include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
 #include <stdio.h>
@@ -41,9 +41,6 @@ struct stQGeoTileCacheQGCMapTypes {
     const char* name;
     QString type;
 };
-
-static const char* kMaxDiskCacheKey = "MaxDiskCache";
-static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
 //-----------------------------------------------------------------------------
 // Singleton
@@ -85,8 +82,6 @@ QGCMapEngine::QGCMapEngine()
         , _userAgent("Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0")
     #endif
 #endif
-    , _maxDiskCache(0)
-    , _maxMemCache(0)
     , _prunning(false)
     , _cacheWasReset(false)
     , _isInternetActive(false)
@@ -265,50 +260,14 @@ QGCMapEngine::getMapNameList()
 quint32
 QGCMapEngine::getMaxDiskCache()
 {
-    if(!_maxDiskCache) {
-        QSettings settings;
-        _maxDiskCache = settings.value(kMaxDiskCacheKey, 1024).toUInt();
-    }
-    return _maxDiskCache;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setMaxDiskCache(quint32 size)
-{
-    QSettings settings;
-    settings.setValue(kMaxDiskCacheKey, size);
-    _maxDiskCache = size;
+    return qgcApp()->toolbox()->settingsManager()->mapsSettings()->maxCacheDiskSize()->rawValue().toUInt();
 }
 
 //-----------------------------------------------------------------------------
 quint32
 QGCMapEngine::getMaxMemCache()
 {
-    if(!_maxMemCache) {
-        QSettings settings;
-#ifdef __mobile__
-        _maxMemCache = settings.value(kMaxMemCacheKey, 16).toUInt();
-#else
-        _maxMemCache = settings.value(kMaxMemCacheKey, 128).toUInt();
-#endif
-    }
-    //-- Size in MB
-    if(_maxMemCache > 1024)
-        _maxMemCache = 1024;
-    return _maxMemCache;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setMaxMemCache(quint32 size)
-{
-    //-- Size in MB
-    if(size > 1024)
-        size = 1024;
-    QSettings settings;
-    settings.setValue(kMaxMemCacheKey, size);
-    _maxMemCache = size;
+    return qgcApp()->toolbox()->settingsManager()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt();
 }
 
 //-----------------------------------------------------------------------------

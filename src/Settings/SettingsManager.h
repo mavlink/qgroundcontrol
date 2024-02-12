@@ -22,6 +22,7 @@
 #include "FlightModeSettings.h"
 #include "RTKSettings.h"
 #include "FlyViewSettings.h"
+#include "MapsSettings.h"
 #include "PlanViewSettings.h"
 #include "BrandImageSettings.h"
 #include "OfflineMapsSettings.h"
@@ -54,6 +55,7 @@ public:
     Q_PROPERTY(QObject* firmwareUpgradeSettings         READ firmwareUpgradeSettings        CONSTANT)
     Q_PROPERTY(QObject* adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
     Q_PROPERTY(QObject* batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
+    Q_PROPERTY(QObject* mapsSettings                    READ mapsSettings       CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
@@ -75,6 +77,7 @@ public:
     FirmwareUpgradeSettings*        firmwareUpgradeSettings     (void) { return _firmwareUpgradeSettings; }
     ADSBVehicleManagerSettings*     adsbVehicleManagerSettings  (void) { return _adsbVehicleManagerSettings; }
     BatteryIndicatorSettings*       batteryIndicatorSettings    (void) { return _batteryIndicatorSettings; }
+    MapsSettings*                   mapsSettings                (void) { return _mapsSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
@@ -94,6 +97,7 @@ private:
     FirmwareUpgradeSettings*        _firmwareUpgradeSettings;
     ADSBVehicleManagerSettings*     _adsbVehicleManagerSettings;
     BatteryIndicatorSettings*       _batteryIndicatorSettings;
+    MapsSettings*                   _mapsSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif
