@@ -61,7 +61,9 @@ ColumnLayout {
                 width:              parent.width - (_margins * 2)
                 height:             1
                 color:              outerRect.border.color
-                visible:            _contentItem.visible && index < _contentLayout.children.length - 1
+                visible:            _contentItem.visible && 
+                                        _contentItem.width !== 0 && _contentItem.height !== 0 &&
+                                        index < _contentLayout.children.length - 1
 
                 property var _contentItem: _contentLayout.children[index]
             }
