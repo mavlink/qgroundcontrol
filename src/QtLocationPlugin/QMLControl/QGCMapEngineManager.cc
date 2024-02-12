@@ -242,34 +242,6 @@ QGCMapEngineManager::mapTypeList(QString provider)
 }
 
 //-----------------------------------------------------------------------------
-quint32
-QGCMapEngineManager::maxMemCache()
-{
-    return getQGCMapEngine()->getMaxMemCache();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::setMaxMemCache(quint32 size)
-{
-    getQGCMapEngine()->setMaxMemCache(size);
-}
-
-//-----------------------------------------------------------------------------
-quint32
-QGCMapEngineManager::maxDiskCache()
-{
-    return getQGCMapEngine()->getMaxDiskCache();
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngineManager::setMaxDiskCache(quint32 size)
-{
-    getQGCMapEngine()->setMaxDiskCache(size);
-}
-
-//-----------------------------------------------------------------------------
 void
 QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
 {
