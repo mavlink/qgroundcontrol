@@ -98,8 +98,8 @@ linux {
         QMAKE_CXXFLAGS += -fvisibility=hidden
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
             -Wno-unused-parameter \         # gst-plugins-good
-            -Wno-unused-but-set-variable \ # eigen & QGCTileCacheWorker.cpp
-            -Wno-deprecated-declarations    # eigen
+            -Wno-unused-but-set-variable \ # QGCTileCacheWorker.cpp
+            -Wno-deprecated-declarations
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
@@ -246,8 +246,6 @@ AndroidBuild {
 
     QMAKE_LFLAGS += -Wl,-Bsymbolic
 }
-
-DEFINES += EIGEN_MPL2_ONLY
 
 # Installer configuration
 
