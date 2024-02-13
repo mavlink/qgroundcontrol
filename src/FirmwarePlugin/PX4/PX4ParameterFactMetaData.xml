@@ -7416,15 +7416,6 @@
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="RTL_HDG_MD" default="0" type="INT32">
-      <short_desc>RTL heading mode</short_desc>
-      <long_desc>Defines the heading behavior during RTL</long_desc>
-      <values>
-        <value code="0">Towards next waypoint.</value>
-        <value code="1">Heading matches destination.</value>
-        <value code="2">Use current heading.</value>
-      </values>
-    </parameter>
     <parameter name="RTL_LAND_DELAY" default="0.0" type="FLOAT">
       <short_desc>Return mode delay</short_desc>
       <long_desc>Delay before landing (after initial descent) in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
