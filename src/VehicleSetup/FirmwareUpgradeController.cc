@@ -91,6 +91,7 @@ static QMap<int, QString> px4_board_name_map {
     {1009, "cuav_nora_default"},
     {1010, "cuav_x7pro_default"},
     {1017, "mro_pixracerpro_default"},
+    {1022, "mro_ctrl-zero-classic_default"},
     {1023, "mro_ctrl-zero-h7_default"},
     {1024, "mro_ctrl-zero-h7-oem_default"},
     {1048, "holybro_kakuteh7_default"},
