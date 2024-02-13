@@ -8,7 +8,9 @@ add_custom_target(UiPreferencesQml
 		HelpSettings.qml
 		LinkSettings.qml
 		LogReplaySettings.qml
+        OfflineMapInfo.qml
 		PX4LogTransferSettings.qml
+        MapSettings.qml
 		MockLink.qml
 		MockLinkSettings.qml
         PlanViewSettings.qml
