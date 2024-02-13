@@ -25,8 +25,6 @@ SettingsPage {
     property var    _settingsManager:           QGroundControl.settingsManager
     property var    _appSettings:               _settingsManager.appSettings
     property var    _brandImageSettings:        _settingsManager.brandImageSettings
-    property string _mapProvider:               _settingsManager.flightMapSettings.mapProvider.value
-    property string _mapType:                   _settingsManager.flightMapSettings.mapType.value
     property Fact   _appFontPointSize:          _appSettings.appFontPointSize
     property Fact   _userBrandImageIndoor:      _brandImageSettings.userBrandImageIndoor
     property Fact   _userBrandImageOutdoor:     _brandImageSettings.userBrandImageOutdoor
@@ -48,35 +46,6 @@ SettingsPage {
             fact:       _appSettings.indoorPalette
             indexModel: false
             visible:    _appSettings.indoorPalette.visible
-        }
-
-        LabelledComboBox {
-            label:      qsTr("Map Provider")
-            model:      QGroundControl.mapEngineManager.mapProviderList
-
-            onActivated: (index) => {
-                _mapProvider = comboBox.textAt(index)
-                _mapType = QGroundControl.mapEngineManager.mapTypeList(comboBox.textAt(index))[0]
-            }
-
-            Component.onCompleted: {
-                var index = comboBox.find(_mapProvider)
-                if (index < 0) index = 0
-                comboBox.currentIndex = index
-            }
-        }
-
-        LabelledComboBox {
-            label: qsTr("Map Type")
-            model: QGroundControl.mapEngineManager.mapTypeList(_mapProvider)
-
-            onActivated: (index) => { _mapType = comboBox.textAt(index) }
-
-            Component.onCompleted: {
-                var index = comboBox.find(_mapType)
-                if (index < 0) index = 0
-                comboBox.currentIndex = index
-            }
         }
 
         FactCheckBoxSlider {
