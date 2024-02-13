@@ -9320,18 +9320,6 @@
       <min>0</min>
       <max>50</max>
     </parameter>
-    <parameter name="SIM_GZ_HOME_ALT" default="488.0" type="FLOAT">
-      <short_desc>simulator origin altitude</short_desc>
-      <unit>m</unit>
-    </parameter>
-    <parameter name="SIM_GZ_HOME_LAT" default="47.397742" type="FLOAT">
-      <short_desc>simulator origin latitude</short_desc>
-      <unit>deg</unit>
-    </parameter>
-    <parameter name="SIM_GZ_HOME_LON" default="8.545594" type="FLOAT">
-      <short_desc>simulator origin longitude</short_desc>
-      <unit>deg</unit>
-    </parameter>
     <parameter name="SIM_MAG_OFFSET_X" default="0.0" type="FLOAT">
       <short_desc>simulated magnetometer X offset</short_desc>
       <unit>gauss</unit>
