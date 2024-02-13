@@ -62,6 +62,7 @@
         <file alias="LogDownloadPage.qml">src/AnalyzeView/LogDownloadPage.qml</file>
         <file alias="LogReplaySettings.qml">src/ui/preferences/LogReplaySettings.qml</file>
         <file alias="MainRootWindow.qml">src/ui/MainRootWindow.qml</file>
+        <file alias="MapSettings.qml">src/ui/preferences/MapSettings.qml</file>
         <file alias="MavlinkConsolePage.qml">src/AnalyzeView/MavlinkConsolePage.qml</file>
         <file alias="MAVLinkInspectorPage.qml">src/AnalyzeView/MAVLinkInspectorPage.qml</file>
         <file alias="PX4LogTransferSettings.qml">src/ui/preferences/PX4LogTransferSettings.qml</file>
@@ -73,7 +74,6 @@
         <file alias="ActuatorComponent.qml">src/AutoPilotPlugins/PX4/ActuatorComponent.qml</file>
         <file alias="ActuatorFact.qml">src/AutoPilotPlugins/PX4/ActuatorFact.qml</file>
         <file alias="ActuatorSlider.qml">src/AutoPilotPlugins/PX4/ActuatorSlider.qml</file>
-        <file alias="OfflineMap.qml">src/QtLocationPlugin/QMLControl/OfflineMap.qml</file>
         <file alias="PlanToolBarIndicators.qml">src/PlanView/PlanToolBarIndicators.qml</file>
         <file alias="PlanView.qml">src/PlanView/PlanView.qml</file>
         <file alias="PlanViewSettings.qml">src/ui/preferences/PlanViewSettings.qml</file>
@@ -135,6 +135,8 @@
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MultiRotorMotorDisplay.qml">src/QmlControls/MultiRotorMotorDisplay.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">src/QmlControls/OfflineMapButton.qml</file>
+        <file alias="QGroundControl/Controls/OfflineMapEditor.qml">src/QtLocationPlugin/QMLControl/OfflineMapEditor.qml</file>
+        <file alias="QGroundControl/Controls/OfflineMapInfo.qml">src/ui/preferences/OfflineMapInfo.qml</file>
         <file alias="QGroundControl/Controls/ParameterDiffDialog.qml">src/QmlControls/ParameterDiffDialog.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditorDialog.qml">src/QmlControls/ParameterEditorDialog.qml</file>
@@ -375,6 +377,7 @@
         <file alias="FlightMode.SettingsGroup.json">src/Settings/FlightMode.SettingsGroup.json</file>
         <file alias="FlyView.SettingsGroup.json">src/Settings/FlyView.SettingsGroup.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
+        <file alias="Maps.SettingsGroup.json">src/Settings/Maps.SettingsGroup.json</file>
         <file alias="MavCmdInfoCommon.json">src/MissionManager/MavCmdInfoCommon.json</file>
         <file alias="MavCmdInfoFixedWing.json">src/MissionManager/MavCmdInfoFixedWing.json</file>
         <file alias="MavCmdInfoMultiRotor.json">src/MissionManager/MavCmdInfoMultiRotor.json</file>
