@@ -267,7 +267,7 @@ SetupPage {
 
                                 ActuatorSlider {
                                     channel: object
-                                    onActuatorValueChanged: {
+                                    onActuatorValueChanged: (value) =>{
                                         if (isNaN(value)) {
                                             actuators.actuatorTest.stopControl(index);
                                             stop();
