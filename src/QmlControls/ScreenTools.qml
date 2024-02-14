@@ -94,8 +94,8 @@ Item {
     property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
     property bool isSerialAvailable:                ScreenToolsController.isSerialAvailable
 
-    readonly property real minTouchMillimeters:     10      ///< Minimum touch size in millimeters
-    property real minTouchPixels:                   0       ///< Minimum touch size in pixels
+    readonly property real minTouchMillimeters:     5   ///< Minimum touch size in millimeters
+    property real minTouchPixels:                   0   ///< Minimum touch size in pixels (calculatedd from minTouchMillimeters and realPixelDensity)
 
     // The implicit heights/widths for our custom control set
     property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
@@ -159,7 +159,7 @@ Item {
             // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing
             minTouchPixels      = defaultFontPixelHeight * 3
         }
-        toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
+        toolbarHeight           = defaultFontPixelHeight * 3
         toolbarHeight           = toolbarHeight * QGroundControl.corePlugin.options.toolbarHeightMultiplier
     }
 

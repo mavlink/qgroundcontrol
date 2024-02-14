@@ -18,7 +18,7 @@ import QGroundControl.Controls
 Rectangle {
     id:         _root
     color:      qgcPal.toolbarBackground
-    width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
+    width:      ScreenTools.defaultFontPixelWidth * 8
     height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
@@ -36,9 +36,6 @@ Rectangle {
         }
         button.clicked()
     }
-
-    // Ensure we don't get narrower than content
-    property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
     signal dropped(int index)
 
