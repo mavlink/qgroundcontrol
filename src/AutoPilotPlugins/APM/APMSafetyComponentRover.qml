@@ -130,7 +130,7 @@ SetupPage {
                         model:              [qsTr("Disabled"), qsTr("Hold"), qsTr("Hold and Disarm")]
                         currentIndex:       _failsafeCrashCheck.value
 
-                        onActivated: _failsafeCrashCheck.value = index
+                        onActivated: (index) => { _failsafeCrashCheck.value = index }
                     }
                  } // Rectangle - Failsafe Settings
             } // Column - Failsafe Settings

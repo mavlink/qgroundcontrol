@@ -56,7 +56,7 @@ QGCPopupDialog {
                 model:                  instrumentValueData.factGroupNames
                 sizeToContents:         true
                 Component.onCompleted:  currentIndex = find(instrumentValueData.factGroupName)
-                onActivated: {
+                onActivated: (index) => {
                     instrumentValueData.setFact(currentText, "")
                     instrumentValueData.icon = ""
                     instrumentValueData.text = instrumentValueData.fact.shortDescription
@@ -73,7 +73,7 @@ QGCPopupDialog {
                 model:                  instrumentValueData.factValueNames
                 sizeToContents:         true
                 Component.onCompleted:  currentIndex = find(instrumentValueData.factName)
-                onActivated: {
+                onActivated: (index) => {
                     instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
                     instrumentValueData.icon = ""
                     instrumentValueData.text = instrumentValueData.fact.shortDescription
@@ -151,7 +151,7 @@ QGCPopupDialog {
                 model:              instrumentValueData.factValueGrid.fontSizeNames
                 currentIndex:       instrumentValueData.factValueGrid.fontSize
                 sizeToContents:     true
-                onActivated:        instrumentValueData.factValueGrid.fontSize = index
+                onActivated: (index) => { instrumentValueData.factValueGrid.fontSize = index }
             }
 
             QGCCheckBox {
@@ -169,7 +169,7 @@ QGCPopupDialog {
                 model:              instrumentValueData.rangeTypeNames
                 currentIndex:       instrumentValueData.rangeType
                 sizeToContents:     true
-                onActivated:        instrumentValueData.rangeType = index
+                onActivated: (index) => { instrumentValueData.rangeType = index }
             }
 
             Loader {

@@ -377,7 +377,7 @@ SetupPage {
                                     currentIndex:       _failsafeThrEnable.value
                                     Layout.fillWidth:   true
 
-                                    onActivated: _failsafeThrEnable.value = index
+                                    onActivated: (index) => { _failsafeThrEnable.value = index }
                                 }
 
                                 QGCLabel { text: qsTr("PWM threshold:") }

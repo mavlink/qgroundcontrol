@@ -189,7 +189,7 @@ SetupPage {
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.fillWidth:   true
                                 currentIndex:       _objectAvoidance ? (_objectAvoidance.value === 0 ? 0 : 1) : 0
-                                onActivated: {
+                                onActivated: (index) => {
                                     if(_objectAvoidance) {
                                         _objectAvoidance.value = index > 0 ? 1 : 0
                                     }
@@ -612,7 +612,7 @@ SetupPage {
                                 Component.onCompleted: {
                                     currentIndex = _enableLogging ? (_enableLogging.value >= 0 ? 1 : 0) : 0
                                 }
-                                onActivated: {
+                                onActivated: (index) => {
                                     if(_enableLogging) {
                                         _enableLogging.value = index > 0 ? 0 : -1
                                     }

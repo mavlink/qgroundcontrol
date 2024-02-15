@@ -382,7 +382,7 @@ SetupPage {
 
                                 Component.onCompleted: selectPriorityfromParams()
 
-                                onActivated: {
+                                onActivated: (index) => {
                                     if (index == 3) {
                                         // User cannot select Not Set
                                         selectPriorityfromParams()
