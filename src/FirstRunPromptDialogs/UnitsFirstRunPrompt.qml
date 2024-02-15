@@ -96,7 +96,7 @@ FirstRunPrompt {
                     sizeToContents:     true
                     model:              [ qsTr("Metric System"), qsTr("Imperial System") ]
                     currentIndex:       _unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsMeters ? 0 : 1
-                    onActivated:        changeSystemOfUnits(currentIndex === 0 /* metric */)
+                    onActivated: (index) => { changeSystemOfUnits(currentIndex === 0 /* metric */) }
                 }
 
                 Repeater {

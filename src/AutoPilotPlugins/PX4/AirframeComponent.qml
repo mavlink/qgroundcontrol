@@ -220,7 +220,7 @@ SetupPage {
                                     }
                                 }
 
-                                onActivated: {
+                                onActivated: (index) => {
                                     applyButton.primary = true
                                     airframeCheckBox.checked = true;
                                     console.log("combo change", index)

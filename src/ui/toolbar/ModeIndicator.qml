@@ -32,7 +32,7 @@ QGCComboBox {
     property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
     property var _flightModes:      _activeVehicle ? _activeVehicle.flightModes : [ ]
 
-    onActivated: {
+    onActivated: (index) => {
         _activeVehicle.flightMode = _flightModes[index]
         currentIndex = -1
     }

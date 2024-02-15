@@ -117,7 +117,7 @@ SetupPage {
                         Layout.fillWidth:       true
                         model:                  controller.radioRates
                         currentIndex:           controller.radioRate
-                        onActivated: {
+                        onActivated: (index) => {
                             controller.radioRate = index
                         }
                     }
