@@ -506,8 +506,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
 {
     Q_ASSERT(_statusLog);
     
-    QVariant returnedValue;
-    QVariant varText;
+    QString varText;
     
     if (critical) {
         varText = QString("<font color=\"yellow\">%1</font>").arg(text);
@@ -517,8 +516,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
     
     QMetaObject::invokeMethod(_statusLog,
                               "append",
-                              Q_RETURN_ARG(QVariant, returnedValue),
-                              Q_ARG(QVariant, varText));
+                              Q_ARG(QString, varText));
 }
 
 void FirmwareUpgradeController::_errorCancel(const QString& msg)
