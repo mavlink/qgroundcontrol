@@ -71,7 +71,7 @@ Rectangle {
                 ListElement { text: "10x";  value: 10 }
             }
 
-            onActivated: controller.playbackSpeed = model.get(currentIndex).value
+            onActivated: (index) => { controller.playbackSpeed = model.get(currentIndex).value }
         }
 
         QGCLabel { text: controller.playheadTime }

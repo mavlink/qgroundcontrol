@@ -35,7 +35,7 @@ ColumnLayout {
             Layout.fillWidth:   true
             model:              cameraCalc.cameraBrandList
             onModelChanged:     selectCurrentBrand()
-            onActivated:        cameraCalc.cameraBrand = currentText
+            onActivated: (index) => { cameraCalc.cameraBrand = currentText }
 
             Connections {
                 target:                 cameraCalc
@@ -53,7 +53,7 @@ ColumnLayout {
             model:              cameraCalc.cameraModelList
             visible:            !cameraCalc.isManualCamera && !cameraCalc.isCustomCamera
             onModelChanged:     selectCurrentModel()
-            onActivated:        cameraCalc.cameraModel = currentText
+            onActivated: (index) => { cameraCalc.cameraModel = currentText }
 
             Connections {
                 target:                 cameraCalc

@@ -97,7 +97,7 @@ ChartView {
                 height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.timeScales
                 currentIndex:       chartController ? chartController.rangeXIndex : 0
-                onActivated:        { if(chartController) chartController.rangeXIndex = index; }
+                onActivated: (index) => { if(chartController) chartController.rangeXIndex = index; }
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCLabel {
@@ -110,7 +110,7 @@ ChartView {
                 height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.rangeList
                 currentIndex:       chartController ? chartController.rangeYIndex : 0
-                onActivated:        { if(chartController) chartController.rangeYIndex = index; }
+                onActivated: (index) => { if(chartController) chartController.rangeYIndex = index; }
                 Layout.alignment:   Qt.AlignVCenter
             }
         }

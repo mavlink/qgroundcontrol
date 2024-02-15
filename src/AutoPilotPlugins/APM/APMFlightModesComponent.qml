@@ -90,7 +90,7 @@ SetupPage {
                                     qsTr("Channel 6"),    qsTr("Channel 7"), qsTr("Channel 8") ]
 
                                 currentIndex:   _fltmodeCh.value
-                                onActivated:    _fltmodeCh.value = index
+                                onActivated: (index) => { _fltmodeCh.value = index }
                             }
                         }
 
@@ -170,7 +170,7 @@ SetupPage {
                             QGCComboBox {
                                 model:          controller.simpleModeNames
                                 currentIndex:   controller.simpleMode
-                                onActivated:    controller.simpleMode = index
+                                onActivated: (index) => { controller.simpleMode = index }
                             }
                         }
                     } // Column - Flight Modes

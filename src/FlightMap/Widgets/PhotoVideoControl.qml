@@ -450,7 +450,7 @@ Rectangle {
                         model:              _mavlinkCameraManager ? _mavlinkCameraManager.cameraLabels : []
                         currentIndex:       _mavlinkCameraManagerCurCameraIndex
                         visible:            _multipleMavlinkCameras
-                        onActivated:        _mavlinkCameraManager.currentCamera = index
+                        onActivated: (index) => { _mavlinkCameraManager.currentCamera = index }
                     }
 
                     QGCComboBox {
@@ -459,7 +459,7 @@ Rectangle {
                         model:              _mavlinkCamera ? _mavlinkCamera.streamLabels : []
                         currentIndex:       _mavlinCameraCurStreamIndex
                         visible:            _multipleMavlinkCameraStreams
-                        onActivated:        _mavlinkCamera.currentStream = index
+                        onActivated: (index) => { _mavlinkCamera.currentStream = index }
                     }
 
                     QGCComboBox {
@@ -468,7 +468,7 @@ Rectangle {
                         model:              [ qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture") ]
                         currentIndex:       _mavlinkCamera ? _mavlinkCamera.thermalMode : -1
                         visible:            _mavlinkCameraHasThermalVideoStream
-                        onActivated:        _mavlinkCamera.thermalMode = index
+                        onActivated: (index) => { _mavlinkCamera.thermalMode = index }
                     }
 
                     QGCSlider {
@@ -542,7 +542,7 @@ Rectangle {
                         model:              [ qsTr("Single"), qsTr("Time Lapse") ]
                         currentIndex:       _mavlinkCamera ? _mavlinkCamera.photoMode : 0
                         visible:            _mavlinkCameraHasModes
-                        onActivated:        _mavlinkCamera.photoMode = index
+                        onActivated: (index) => { _mavlinkCamera.photoMode = index }
                     }
 
                     QGCSlider {

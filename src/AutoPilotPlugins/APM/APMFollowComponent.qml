@@ -251,7 +251,7 @@ SetupPage {
                             Layout.fillWidth:   true
                             model:              [ qsTr("Maintain Current Offsets"), qsTr("Specify Offsets")]
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (index == 0) {
                                     _followOffsetX.rawValue = _followOffsetY.rawValue = _followOffsetZ.rawValue = 0
                                     _setUIFromParams()
@@ -270,7 +270,7 @@ SetupPage {
                             Layout.fillWidth:       true
                             model:                  rgText
                             visible:                !_roverFirmware
-                            onActivated:            _followYawBehavior.rawValue = rgValues[index]
+                            onActivated: (index) => { _followYawBehavior.rawValue = rgValues[index] }
 
                             property var rgText:    [ qsTr("Maintain current vehicle orientation"), qsTr("Point at ground station location"), qsTr("Same direction as ground station movement") ]
                             property var rgValues:  [ _followYawBehaviorNone, _followYawBehaviorFace, _followYawBehaviorFlight ]
