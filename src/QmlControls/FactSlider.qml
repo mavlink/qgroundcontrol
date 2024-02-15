@@ -26,9 +26,10 @@ Slider {
     bottomPadding:  sliderValueLabel.contentHeight
     leftPadding:    0
     rightPadding:   0
+    enabled:        fact
 
-    property Fact fact
-    property bool showUnits: true
+    property Fact fact:         undefined
+    property bool showUnits:    true
 
     property bool _loadComplete:            false
     property real _minMaxVisibilityPadding: ScreenTools.defaultFontPixelWidth
@@ -85,7 +86,7 @@ Slider {
 
         QGCLabel {
             text:       control.from.toFixed(_fact.decimalPlaces)
-            visible:    sliderValueLabel.x > x + contentWidth + _minMaxVisibilityPadding
+            visible:    fact && sliderValueLabel.x > x + contentWidth + _minMaxVisibilityPadding
             anchors {
                 left:   parent.left
                 bottom: parent.bottom
@@ -94,7 +95,7 @@ Slider {
 
         QGCLabel {
             text:       control.to.toFixed(_fact.decimalPlaces)
-            visible:    sliderValueLabel.x + sliderValueLabel.contentWidth < x - _minMaxVisibilityPadding
+            visible:    fact && sliderValueLabel.x + sliderValueLabel.contentWidth < x - _minMaxVisibilityPadding
             anchors {
                 right:  parent.right
                 bottom: parent.bottom
@@ -105,7 +106,7 @@ Slider {
             id:                     sliderValueLabel
             anchors.bottom:         parent.bottom
             x:                      control.leftPadding + (control.visualPosition * (control.availableWidth - width))
-            text:                   valuePlusUnits(control.value.toFixed(control._fact.decimalPlaces))
+            text:                   fact ? valuePlusUnits(control.value.toFixed(control._fact.decimalPlaces)) : qsTr("N/A")
             horizontalAlignment:    Text.AlignHCenter
         }
     }
