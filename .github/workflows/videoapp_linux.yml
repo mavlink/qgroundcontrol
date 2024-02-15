@@ -43,6 +43,7 @@ jobs:
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools
           setup-python: true
+          cache: true
 
       - name: Install github environment dependencies for unit test running
         run:  sudo apt-get install libxcb-xinerama0

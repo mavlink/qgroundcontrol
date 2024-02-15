@@ -51,6 +51,7 @@ jobs:
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtquick3d
           setup-python: false
+          cache: true
 
       - name: Download JOM
         uses: suisei-cn/actions-download-file@v1.6.0
