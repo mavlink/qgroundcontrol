@@ -99,6 +99,10 @@ LinuxBuild {
         libQt6Network.so.6 \ 
         libQt6QmlXmlListModel.so.6 \
         libQt6Quick.so.6 \
+        libQt6Quick3D.so.6 \
+        libQt6Quick3DRuntimeRender.so.6 \
+        libQt6Quick3DUtils.so.6 \
+        libQt6Concurrent.so.6 \
         libQt6Xml.so.6 \
         libQt6Core.so.6 \
         libQt6OpenGL.so.6 \
