@@ -19,6 +19,8 @@ AbstractButton   {
     checkable:      true
     padding:        0
 
+    property bool   _showBorder: qgcPal.globalTheme === QGCPalette.Light
+
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
     contentItem: Item {
@@ -40,6 +42,8 @@ AbstractButton   {
             width:                  height * 2
             radius:                 height / 2
             color:                  control.checked ? qgcPal.primaryButton : qgcPal.button
+            border.width:           _showBorder ? 1 : 0
+            border.color:           qgcPal.buttonBorder
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
