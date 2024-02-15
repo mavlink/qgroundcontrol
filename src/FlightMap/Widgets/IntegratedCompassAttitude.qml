@@ -41,68 +41,6 @@ Item {
         transformOrigin:        Item.Center
         rotation:               90
     }
-
-    /*
-    // Roll background
-    Canvas {
-        anchors.fill: parent
-
-        onPaint: {
-            var centerX = width / 2
-            var centerY = height / 2
-            var ctx = getContext("2d")
-            ctx.reset()
-            ctx.strokeStyle = qgcPal.window
-            ctx.lineWidth = attitudeSize
-            ctx.beginPath()
-            ctx.arc(centerX, centerY, attitudeRadius, zeroRollRadians - maxRadians, zeroRollRadians + maxRadians)
-            ctx.stroke()
-        }
-    }
-
-    // Roll value indicator
-    Canvas {
-        id:             rollIndicator
-        anchors.fill:   parent
-        visible:        Math.abs(rollAngle) > 1
-
-        property real startRollRadiansRaw:      zeroRollRadians
-        property real endRollRadiansRaw:        zeroRollRadians + (rollAnglePercent * maxRadians)
-        property real startRollRadiansOrdered:  Math.min(startRollRadiansRaw, endRollRadiansRaw)
-        property real endRollRadiansOrdered:    Math.max(startRollRadiansRaw, endRollRadiansRaw)
-
-        onPaint: {
-            var centerX = width / 2
-            var centerY = height / 2
-            var ctx = getContext("2d")
-            ctx.reset()
-            ctx.strokeStyle = qgcPal.text
-            ctx.lineWidth = attitudeSize
-            ctx.beginPath()
-            ctx.arc(centerX, centerY, attitudeRadius, startRollRadiansOrdered, endRollRadiansOrdered)
-            ctx.stroke()
-        }
-    }
-
-    // Roll 0 value tick mark
-    Canvas {
-        anchors.fill: parent
-
-        onPaint: {
-            var centerX = width / 2
-            var centerY = height / 2
-            var ctx = getContext("2d")
-            ctx.reset()
-            ctx.strokeStyle = qgcPal.text
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(centerX, 0)
-            ctx.lineTo(centerX, attitudeSize)
-            ctx.stroke()
-        }
-    }
-    */
-
     Rectangle {
         anchors.centerIn:   parent
         width:              compassRadius * 2
