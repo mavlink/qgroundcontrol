@@ -50,6 +50,7 @@ jobs:
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtquick3d
           setup-python: true
+          cache: true
 
       - name: Install QGC source dependencies
         run:  sudo apt-get install -y libsdl2-dev
