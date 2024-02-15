@@ -51,7 +51,7 @@ QGCPopupDialog {
                     categorySelected(category)
                 }
 
-                onActivated: categorySelected(textAt(index))
+                onActivated: (index) => { categorySelected(textAt(index)) }
             }
         }
 

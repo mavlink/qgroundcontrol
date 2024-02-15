@@ -93,7 +93,7 @@ ColumnLayout {
 
                         Component.onCompleted:  _findCurrentButtonAction()
                         onModelChanged:         _findCurrentButtonAction()
-                        onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
+                        onActivated: (index) => { _activeJoystick.setButtonAction(modelData, textAt(index)) }
                     }
                     QGCCheckBox {
                         id:                         repeatCheck

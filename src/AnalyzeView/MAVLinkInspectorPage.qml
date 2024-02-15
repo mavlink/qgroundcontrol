@@ -52,7 +52,7 @@ AnalyzePage {
                     model:          controller.systemNames
                     sizeToContents: true
                     visible:        controller.systemNames.length > 1
-                    onActivated:    controller.setActiveSystem(controller.systems.get(index).id);
+                    onActivated: (index) =>  { controller.setActiveSystem(controller.systems.get(index).id) }
 
                     Connections {
                         target: controller
@@ -73,7 +73,7 @@ AnalyzePage {
                     model:          curSystem ? curSystem.compIDsStr : []
                     sizeToContents: true
                     visible:        curSystem ? curSystem.compIDsStr.length > 2 : false
-                    onActivated: {
+                    onActivated: (index) => {
                         if(curSystem && curSystem.compIDsStr.length > 1) {
                             if(index < 1)
                                 curCompID = 0

@@ -32,7 +32,7 @@ QGCComboBox {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _armed:         _activeVehicle ? _activeVehicle.armed : false
 
-    onActivated: {
+    onActivated: (index) => {
         if (index == 0) {
             mainWindow.armVehicleRequest()
         } else {

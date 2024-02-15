@@ -414,7 +414,7 @@ SetupPage {
                     model:                  sensorModel
                     textRole:               "text"
 
-                    onActivated: {
+                    onActivated: (index) => {
                         if (index < sensorModel.count - 1) {
                             battVoltPin.value = sensorModel.get(index).voltPin
                             battCurrPin.value = sensorModel.get(index).currPin

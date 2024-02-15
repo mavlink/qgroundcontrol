@@ -128,7 +128,7 @@ SetupPage {
                             enabled:            !_rebooting
                             Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
-                            onActivated: {
+                            onActivated: (index) => {
                                 applyAndRestart.visible = true
                             }
                         }
@@ -143,7 +143,7 @@ SetupPage {
                             enabled:            !_rebooting && (_camTriggerInterface ? true : false)
                             Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
-                            onActivated: {
+                            onActivated: (index) => {
                                 applyAndRestart.visible = true
                             }
                         }

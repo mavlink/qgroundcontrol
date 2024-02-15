@@ -149,7 +149,7 @@ Item {
                                     width:                  _editFieldWidth
                                     model:                  ["Access Point Mode", "Station Mode"]
                                     currentIndex:           wifiMode ? wifiMode.value : 0
-                                    onActivated: {
+                                    onActivated: (index) => {
                                         wifiMode.value = index
                                     }
                                 }
@@ -166,7 +166,7 @@ Item {
                                     enabled:                wifiMode ? wifiMode.value === 0 : true
                                     model:                  controller.wifiChannels
                                     currentIndex:           wifiChannel ? wifiChannel.value - 1 : 0
-                                    onActivated: {
+                                    onActivated: (index) => {
                                         wifiChannel.value = index + 1
                                     }
                                 }
@@ -248,7 +248,7 @@ Item {
                                     width:                  _editFieldWidth
                                     model:                  controller.baudRates
                                     currentIndex:           controller.baudIndex
-                                    onActivated: {
+                                    onActivated: (index) => {
                                         controller.baudIndex = index
                                     }
                                 }

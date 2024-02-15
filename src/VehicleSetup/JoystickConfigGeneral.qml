@@ -80,7 +80,7 @@ Item {
                 width:              ScreenTools.defaultFontPixelWidth * 40
                 Layout.alignment:   Qt.AlignVCenter
                 model:              joystickManager.joystickNames
-                onActivated:        joystickManager.activeJoystickName = textAt(index)
+                onActivated: (index) => { joystickManager.activeJoystickName = textAt(index) }
                 Component.onCompleted: {
                     var index = joystickCombo.find(joystickManager.activeJoystickName)
                     if (index === -1) {

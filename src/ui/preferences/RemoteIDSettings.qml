@@ -377,7 +377,7 @@ Rectangle {
                             sizeToContents:     true
                             // In case we change from EU to FAA having the location Type to FIXED, since its not supported in FAA
                             // we need to change it to Live GNSS
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (currentIndex == RemoteIDSettings.RegionOperation.FAA && QGroundControl.settingsManager.remoteIDSettings.locationType.value != RemoteIDSettings.LocationType.LIVE)
                                 QGroundControl.settingsManager.remoteIDSettings.locationType.value = RemoteIDSettings.LocationType.LIVE
                             }
@@ -473,7 +473,7 @@ Rectangle {
                             Layout.fillWidth:   true
                             sizeToContents:     true
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 // FAA doesnt allow to set a Fixed position. Is either Live GNSS or Takeoff
                                 if (_regionOperation == RemoteIDSettings.RegionOperation.FAA) {
                                     if (currentIndex != 1) {
@@ -608,7 +608,7 @@ Rectangle {
                             model:  ListModel {
                             }
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (index != -1) {
                                     QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
                                 }
@@ -638,7 +638,7 @@ Rectangle {
                             Layout.preferredWidth:  _comboFieldWidth
                             model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (index != -1) {
                                     QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
                                 }
