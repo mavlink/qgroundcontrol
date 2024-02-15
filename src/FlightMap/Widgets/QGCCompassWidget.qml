@@ -7,15 +7,7 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief QGC Compass Widget
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
-import Qt5Compat.GraphicalEffects
 
 import QGroundControl
 import QGroundControl.Controls
@@ -23,181 +15,136 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 import QGroundControl.Palette
 
-Item {
+Rectangle {
     id:     root
     width:  size
     height: size
+    radius: width / 2
+    color:  qgcPal.window
 
-    property real size:     _defaultSize
-    property var  vehicle:  null
+    property real size:                         _defaultSize
+    property var  vehicle:                      null
+    property bool usedByMultipleVehicleList:    false
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property real _defaultSize:         ScreenTools.defaultFontPixelHeight * (10)
-    property real _sizeRatio:           ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property int  _fontSize:            ScreenTools.defaultFontPointSize * _sizeRatio
-    property real _heading:             vehicle ? vehicle.heading.rawValue : 0
-    property real _headingToHome:       vehicle ? vehicle.headingToHome.rawValue : 0
-    property real _groundSpeed:         vehicle ? vehicle.groundSpeed.rawValue : 0
-    property real _headingToNextWP:     vehicle ? vehicle.headingToNextWP.rawValue : 0
-    property real _courseOverGround:    _activeVehicle ? _activeVehicle.gps.courseOverGround.rawValue : 0
+    property real _defaultSize:                 ScreenTools.defaultFontPixelHeight * (10)
+    property real _sizeRatio:                   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
+    property int  _fontSize:                    ScreenTools.defaultFontPointSize * _sizeRatio < 8 ? 8 : ScreenTools.defaultFontPointSize * _sizeRatio
+    property real _heading:                     vehicle ? vehicle.heading.rawValue : 0
+    property real _headingToHome:               vehicle ? vehicle.headingToHome.rawValue : 0
+    property real _groundSpeed:                 vehicle ? vehicle.groundSpeed.rawValue : 0
+    property real _headingToNextWP:             vehicle ? vehicle.headingToNextWP.rawValue : 0
+    property real _courseOverGround:            vehicle ? vehicle.gps.courseOverGround.rawValue : 0
+    property var  _flyViewSettings:             QGroundControl.settingsManager.flyViewSettings
+    property bool _showAdditionalIndicators:    _flyViewSettings.showAdditionalIndicatorsCompass.value && !usedByMultipleVehicleList
+    property bool _lockNoseUpCompass:           _flyViewSettings.lockNoseUpCompass.value
 
-    property bool usedByMultipleVehicleList:  false
-
-    function isCOGAngleOK(){
-        if(_groundSpeed < 0.5){
+    function showCOG(){
+        if (_groundSpeed < 0.5) {
             return false
+        } else{
+            return vehicle && _showAdditionalIndicators
         }
-        else{
-            return vehicle && _showAdditionalIndicatorsCompass
-        }
     }
 
-    function isHeadingHomeOK(){
-        return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToHome)
+    function showHeadingHome() {
+        return vehicle && _showAdditionalIndicators && !isNaN(_headingToHome)
     }
 
-    function isHeadingToNextWPOK(){
-        return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToNextWP)
+    function showHeadingToNextWP() {
+        return vehicle && _showAdditionalIndicators && !isNaN(_headingToNextWP)
     }
 
-    function isNoseUpLocked(){
-        return _lockNoseUpCompass
-    }
+    function translateCenterToAngleX(radius, angle) {
+        return radius * Math.sin(angle * (Math.PI / 180))
+    } 
 
-    readonly property bool _showAdditionalIndicatorsCompass:     QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass.value && !usedByMultipleVehicleList
-    readonly property bool _lockNoseUpCompass:        QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass.value
+    function translateCenterToAngleY(radius, angle) {
+        return -radius * Math.cos(angle * (Math.PI / 180))
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    Rectangle {
-        id:             borderRect
-        anchors.fill:   parent
-        radius:         width / 2
-        color:          qgcPal.window
-        border.color:   qgcPal.text
-        border.width:   1
-    }
-
     Item {
-        id:             instrument
+        id:             rotationParent
         anchors.fill:   parent
-        visible:        false
 
+        transform: Rotation {
+            origin.x:       rotationParent.width  / 2
+            origin.y:       rotationParent.height / 2
+            angle:         _lockNoseUpCompass ? -_heading : 0
+        }
+
+        CompassDial {
+            anchors.fill: parent
+        }
+
+        CompassHeadingIndicator {
+            compassSize:    size
+            heading:        _heading
+        }
 
         Image {
-            id:                 cOGPointer
-            source:             isCOGAngleOK() ? "/qmlimages/cOGPointer.svg" : ""
+            id:                 cogPointer
+            source:             "/qmlimages/cOGPointer.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
             sourceSize.height:  parent.height
+            visible:            showCOG()
 
             transform: Rotation {
-                property var _angle:isNoseUpLocked()?_courseOverGround-_heading:_courseOverGround
-                origin.x:       cOGPointer.width  / 2
-                origin.y:       cOGPointer.height / 2
-                angle:         _angle
+                origin.x:   cogPointer.width  / 2
+                origin.y:   cogPointer.height / 2
+                angle:      _courseOverGround
             }
         }
 
         Image {
             id:                 nextWPPointer
-            source:             isHeadingToNextWPOK() ? "/qmlimages/compassDottedLine.svg":"" 
+            source:             "/qmlimages/compassDottedLine.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
             sourceSize.height:  parent.height
+            visible:            showHeadingToNextWP()
 
             transform: Rotation {
-                property var _angle: isNoseUpLocked()?_headingToNextWP-_heading:_headingToNextWP
-                origin.x:       cOGPointer.width  / 2
-                origin.y:       cOGPointer.height / 2
-                angle:         _angle
+                origin.x:   nextWPPointer.width  / 2
+                origin.y:   nextWPPointer.height / 2
+                angle:      _headingToNextWP
             }
         }
 
-        Image {
-            id:                     homePointer
-            width:                  size * 0.1
-            source:                 isHeadingHomeOK()  ? "/qmlimages/Home.svg" : ""
-            mipmap:                 true
-            fillMode:               Image.PreserveAspectFit
-            anchors.centerIn:   	parent
-            sourceSize.width:       width
-
-            transform: Translate {
-                property double _angle: isNoseUpLocked()?-_heading+_headingToHome:_headingToHome
-                x: size/2.3 * Math.sin((_angle)*(3.14/180))
-                y: - size/2.3 * Math.cos((_angle)*(3.14/180))
-            }
-        }
-
-        Image {
-            id:                 pointer
-            width:              size * 0.65
-            source:             vehicle ? vehicle.vehicleImageCompass : ""
-            mipmap:             true
-            sourceSize.width:   width
-            fillMode:           Image.PreserveAspectFit
-            anchors.centerIn:   parent
-            transform: Rotation {
-                origin.x:       pointer.width  / 2
-                origin.y:       pointer.height / 2
-                angle:          isNoseUpLocked()?0:_heading
-            }
-        }
-
-
-        QGCColoredImage {
-            id:                 compassDial
-            source:             "/qmlimages/compassInstrumentDial.svg"
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.fill:       parent
-            sourceSize.height:  parent.height
-            color:              qgcPal.text
-            transform: Rotation {
-                origin.x:       compassDial.width  / 2
-                origin.y:       compassDial.height / 2
-                angle:          isNoseUpLocked()?-_heading:0
-            }
-        }
-
-
+        // Launch location indicator
         Rectangle {
+            width:              Math.max(label.contentWidth, label.contentHeight)
+            height:             width
+            color:              qgcPal.mapIndicator
+            radius:             width / 2
             anchors.centerIn:   parent
-            width:              size * 0.35
-            height:             size * 0.2
-            border.color:       qgcPal.text
-            color:              qgcPal.window
-            opacity:            0.65
+            visible:            showHeadingHome()
 
             QGCLabel {
-                text:               _headingString3
-                font.family:        vehicle ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                font.pointSize:     _fontSize < 8 ? 8 : _fontSize;
+                id:                 label
+                text:               qsTr("L")
+                font.bold:          true
                 color:              qgcPal.text
                 anchors.centerIn:   parent
+            }
 
-                property string _headingString: vehicle ? _heading.toFixed(0) : "OFF"
-                property string _headingString2: _headingString.length === 1 ? "0" + _headingString : _headingString
-                property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
+            transform: Translate {
+                property double _angle: _headingToHome
+
+                x: translateCenterToAngleX(parent.width / 2, _angle)
+                y: translateCenterToAngleY(parent.height / 2, _angle)
             }
         }
     }
 
-    Rectangle {
-        id:             mask
-        anchors.fill:   instrument
-        radius:         width / 2
-        color:          "black"
-        visible:        false
+    QGCLabel {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        y:                          size * 0.74
+        text:                       vehicle ? _heading.toFixed(0) + "°" : ""
+        horizontalAlignment:        Text.AlignHCenter
     }
-
-    OpacityMask {
-        anchors.fill:   instrument
-        source:         instrument
-        maskSource:     mask
-    }
-
 }
