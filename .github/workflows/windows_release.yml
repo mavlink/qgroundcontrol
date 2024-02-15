@@ -35,6 +35,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-Release
+          restore-keys: ${{ runner.os }}-Release
+          max-size: "2G"
+          append-timestamp: true
+          variant: "sccache"
+
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |

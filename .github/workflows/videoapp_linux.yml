@@ -33,6 +33,17 @@ jobs:
         with:
           submodules: recursive
 
+      - run: sudo apt update
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-Debug
+          restore-keys: ${{ runner.os }}-Debug
+          max-size: "1G"
+          append-timestamp: true
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
@@ -56,31 +67,8 @@ jobs:
       - name: Install Gstreamer dev packages
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
-      - name: Install ccache
-        run:  sudo apt-get install ccache
-
       - name: Install post-link dependencies
         run:  sudo apt-get install -y binutils patchelf
-
-      - name: Prepare ccache timestamp
-        id: ccache_cache_timestamp
-        run: echo "name=timestamp::$(date --utc +'%Y-%m-%d-%H\;%M\;%S')" >> $GITHUB_OUTPUT
-
-      - name: ccache cache files
-        uses: actions/cache@v4
-        with:
-          path:         ~/.ccache
-          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{ runner.os }}-ccache-
-
-      - name: Setup ccache
-        run: |
-          mkdir -p ~/.ccache
-          echo "base_dir = ${GITHUB_WORKSPACE}" > ~/.ccache/ccache.conf
-          echo "compression = true" >> ~/.ccache/ccache.conf
-          echo "compression_level = 5" >> ~/.ccache/ccache.conf
-          ccache -s
-          ccache -z
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
@@ -90,6 +78,3 @@ jobs:
         run:  |
           qmake -r ${SOURCE_DIR}/videoreceiverapp.pro CONFIG+=debug CONFIG+=${BUILD_TYPE}
           make -j2
-
-      - name: ccache post-run
-        run:  ccache -s
