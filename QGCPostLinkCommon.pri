@@ -115,7 +115,8 @@ LinuxBuild {
         libQt6LabsAnimation.so.6 \
         libQt6Positioning.so.6 \
         libQt6QuickDialogs2.so.6 \
-        libQt6Sql.so.6
+        libQt6Sql.so.6 \
+        libQt6Quick3D.so.6
 
     # Not all Qt libs are built in all systems. CI doesn't build Wayland, for example.
     QT_LIB_OPTIONALS = ""
