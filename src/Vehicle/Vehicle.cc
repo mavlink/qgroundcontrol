@@ -3856,14 +3856,6 @@ QString Vehicle::vehicleImageOutline() const
         return QString();
 }
 
-QString Vehicle::vehicleImageCompass() const
-{
-    if(_firmwarePlugin)
-        return _firmwarePlugin->vehicleImageCompass(this);
-    else
-        return QString();
-}
-
 QVariant Vehicle::mainStatusIndicatorExpandedItem()
 {
     if(_firmwarePlugin) {
