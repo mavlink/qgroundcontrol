@@ -48,6 +48,17 @@ jobs:
         with:
           submodules: recursive
 
+      - run: sudo apt update
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-${{ matrix.arch }}-Release
+          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-Release
+          max-size: "2G"
+          append-timestamp: false
+
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |
@@ -74,29 +85,6 @@ jobs:
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34"
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34-ext8"
 
-      - name: Install ccache
-        run:  sudo apt-get install ccache
-
-      - name: Prepare ccache timestamp
-        id: ccache_cache_timestamp
-        run: echo "name=timestamp::$(date --utc +'%Y-%m-%d-%H\;%M\;%S')" >> $GITHUB_OUTPUT
-
-      - name: ccache cache files
-        uses: actions/cache@v4
-        with:
-          path:         ~/.ccache
-          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{ runner.os }}-ccache-
-
-      - name: Setup ccache
-        run: |
-            mkdir -p ~/.ccache
-            echo "base_dir = ${GITHUB_WORKSPACE}" > ~/.ccache/ccache.conf
-            echo "compression = true" >> ~/.ccache/ccache.conf
-            echo "compression_level = 5" >> ~/.ccache/ccache.conf
-            ccache -s
-            ccache -z
-
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
@@ -120,9 +108,6 @@ jobs:
             ls /home/runner/work/_temp/Qt/${{ env.QT_VERSION }}
             qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
             make -j2
-
-      - name: ccache post-run
-        run:  ccache -s
 
       - name: Save artifact
         uses: actions/upload-artifact@master
