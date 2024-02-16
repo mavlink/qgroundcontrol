@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/org/freedesktop/gstreamer/qml6">
+        <file>vertex.vert.qsb</file>
+        <file>RGBA.frag.qsb</file>
+        <file>YUV_TRIPLANAR.frag.qsb</file>
+    </qresource>
+</RCC>

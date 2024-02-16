@@ -68,8 +68,8 @@ jobs:
 
       - name: Install Gstreamer
         run: |
-            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-devel-1.18.6-x86_64.pkg
-            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-1.18.6-x86_64.pkg
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.24.0/gstreamer-1.0-devel-1.24.0-universal.pkg
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.24.0/gstreamer-1.0-1.24.0-universal.pkg
             for package in *.pkg ;
               do sudo installer -verbose -pkg "$package" -target /
             done
