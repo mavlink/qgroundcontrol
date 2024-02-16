@@ -301,6 +301,10 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
 
+if(ANDROID)
+    add_android_openssl_libraries(${PROJECT_NAME})
+endif()
+
 #######################################################
 #		Install Configuration
 #######################################################
