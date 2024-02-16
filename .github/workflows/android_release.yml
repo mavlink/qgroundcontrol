@@ -109,24 +109,9 @@ jobs:
             qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=${BUILD_TYPE} CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
             make -j2
 
-      - name: Save artifact
-        uses: actions/upload-artifact@master
+      - name: Upload Build File
+        uses: ./.github/actions/upload
         with:
-          name: ${{ matrix.ARTIFACT }}
-          path: ${{ runner.temp }}/shadow_build_dir/package/${{ matrix.ARTIFACT }}
-
-      - name: Upload build to S3 Bucket
-        if:                 github.event_name == 'push'
-        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
-        run: |
-              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${{ matrix.ARTIFACT }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ matrix.ARTIFACT }} --region us-west-2 --acl public-read
-
-      - name: Upload tagged stable build to S3 latest Bucket
-        if:                 github.event_name == 'push' && github.ref_type == 'tag'
-        working-directory:  ${{ runner.temp }}/shadow_build_dir/package
-        run: |
-              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${{ matrix.ARTIFACT }} s3://qgroundcontrol/latest/${{ matrix.ARTIFACT }} --region us-west-2 --acl public-read
+          artifact_name: ${{ matrix.ARTIFACT }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
