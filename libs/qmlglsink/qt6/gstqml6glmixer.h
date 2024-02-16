@@ -1,6 +1,6 @@
 /*
  * GStreamer
- * Copyright (C) 2016 Freescale Semiconductor, Inc. All rights reserved.
+ * Copyright (C) 2020 Matthew Waters <matthew@centricular.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,35 +18,23 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __QML6_GL_UTILS_H__
-#define __QML6_GL_UTILS_H__
+#ifndef __GST_QML6_GL_MIXER_H__
+#define __GST_QML6_GL_MIXER_H__
 
 #include <gst/gst.h>
+#include <gst/video/video.h>
 #include <gst/gl/gl.h>
-
-#include <QVariant>
-#include <QRunnable>
-#include <QOpenGLContext>
+#include "qt6glrenderer.h"
+#include "qt6glitem.h"
 
 G_BEGIN_DECLS
 
-struct RenderJob : public QRunnable {
-    using Callable = std::function<void()>;
+#define GST_TYPE_QML6_GL_MIXER_PAD (gst_qml6_gl_mixer_pad_get_type())
+G_DECLARE_FINAL_TYPE(GstQml6GLMixerPad, gst_qml6_gl_mixer_pad, GST, QML6_GL_MIXER_PAD, GstGLMixerPad);
 
-    explicit RenderJob(Callable c) : _c(c) { }
-
-    void run() { _c(); }
-
-private:
-    Callable _c;
-};
-
-GstGLDisplay * gst_qml6_get_gl_display (gboolean sink);
-gboolean       gst_qml6_get_gl_wrapcontext (GstGLDisplay * display,
-    GstGLContext **wrap_glcontext, GstGLContext **context);
+#define GST_TYPE_QML6_GL_MIXER (gst_qml6_gl_mixer_get_type())
+G_DECLARE_FINAL_TYPE(GstQml6GLMixer, gst_qml6_gl_mixer, GST, QML6_GL_MIXER, GstGLMixer);
 
 G_END_DECLS
 
-QOpenGLContext *        qt_opengl_native_context_from_gst_gl_context     (GstGLContext * context);
-
-#endif /* __QML6_GL_UTILS_H__ */
+#endif /* __GST_QML6_GL_MIXER_H__ */

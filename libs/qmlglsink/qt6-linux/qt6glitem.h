@@ -27,9 +27,9 @@
 #include "gstqt6gl.h"
 #include <QtCore/QMutex>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/QQuickWindow> // QGC
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
+#include <QtQuick/QQuickWindow>
 
 typedef struct _Qt6GLVideoItemPrivate Qt6GLVideoItemPrivate;
 

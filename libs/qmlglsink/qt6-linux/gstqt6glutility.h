@@ -26,7 +26,6 @@
 
 #include <QVariant>
 #include <QRunnable>
-#include <QOpenGLContext>
 
 G_BEGIN_DECLS
 
@@ -47,6 +46,10 @@ gboolean       gst_qml6_get_gl_wrapcontext (GstGLDisplay * display,
 
 G_END_DECLS
 
-QOpenGLContext *        qt_opengl_native_context_from_gst_gl_context     (GstGLContext * context);
+#if 0
+#if defined(__cplusplus)
+QVariant       qt_opengl_native_context_from_gst_gl_context     (GstGLContext * context);
+#endif
+#endif
 
 #endif /* __QML6_GL_UTILS_H__ */

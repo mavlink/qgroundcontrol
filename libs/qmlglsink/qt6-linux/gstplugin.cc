@@ -23,32 +23,28 @@
 #endif
 
 #include "gstqt6elements.h"
-///////////////////////////////////
 #include "qt6glitem.h"
+
 #include <QtConstructorMacros>
-///////////////////////////////////
 
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gboolean ret = FALSE;
-
-  ret |= GST_ELEMENT_REGISTER (qml6glsink, plugin);
-  ret |= GST_ELEMENT_REGISTER (qml6glsrc, plugin);
-  ret |= GST_ELEMENT_REGISTER (qml6glmixer, plugin);
-  ret |= GST_ELEMENT_REGISTER (qml6gloverlay, plugin);
+// TODO(zdanek) fix after switching to gstreamer 1.20.0+
+// original code from 1.20.0
+//  ret |= GST_ELEMENT_REGISTER (qml6glsink, plugin);
+  ret |= gst_element_register_qml6glsink (plugin);
 
   return ret;
 }
 
-///////////////////////////////////
 static void registerMetatypes()
 {
     qmlRegisterType<Qt6GLVideoItem> ("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
 }
 
 Q_CONSTRUCTOR_FUNCTION(registerMetatypes)
-///////////////////////////////////
 
 #ifndef GST_PACKAGE_NAME
 #define GST_PACKAGE_NAME   "GStreamer Bad Plug-ins (qmake)"

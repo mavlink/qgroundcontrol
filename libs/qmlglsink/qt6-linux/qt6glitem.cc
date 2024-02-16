@@ -26,13 +26,14 @@
 
 #include <gst/video/video.h>
 #include "qt6glitem.h"
+#include "gstqsg6glnode.h"
 #include "gstqt6glutility.h"
-#include "gstqsg6material.h"
 
 #include <QtCore/QMutexLocker>
 #include <QtCore/QPointer>
 #include <QtGui/QGuiApplication>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGSimpleTextureNode>
 
 /**
  * SECTION:Qt6GLVideoItem
@@ -87,6 +88,8 @@ struct _Qt6GLVideoItemPrivate
    * FIXME: Ideally we would use fences for this but there seems to be no
    * way to reliably "try wait" on a fence */
   GQueue potentially_unbound_buffers;
+
+  GstQSG6OpenGLNode *m_node;
 };
 
 Qt6GLVideoItem::Qt6GLVideoItem()
@@ -273,56 +276,28 @@ Qt6GLVideoItem::updatePaintNode(QSGNode * oldNode,
     UpdatePaintNodeData * updatePaintNodeData)
 {
   GstBuffer *old_buffer;
-  GstQSGMaterial *tex = nullptr;
-  QSGGeometry *geometry = nullptr;
-  bool was_bound = false;
 
   if (!this->priv->initted)
     return oldNode;
 
-  QSGGeometryNode *texNode = static_cast<QSGGeometryNode *> (oldNode);
+  GstQSG6OpenGLNode *texNode = static_cast<GstQSG6OpenGLNode *> (oldNode);
   GstVideoRectangle src, dst, result;
 
   g_mutex_lock (&this->priv->lock);
 
   GST_TRACE ("%p updatePaintNode", this);
 
-  if (!this->priv->caps) {
-    GST_LOG ("%p no caps yet", this);
-    g_mutex_unlock (&this->priv->lock);
-    return NULL;
-  }
-
   if (gst_gl_context_get_current() == NULL)
     gst_gl_context_activate (this->priv->other_context, TRUE);
 
-  if (texNode) {
-    tex = static_cast<GstQSGMaterial *>(texNode->material());
-    if (tex && !tex->compatibleWith(&this->priv->v_info)) {
-      delete texNode;
-      texNode = nullptr;
-    }
-  }
-
   if (!texNode) {
-    bool is_smooth = this->smooth ();
-    texNode = new QSGGeometryNode();
-    geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4);
-    texNode->setGeometry(geometry);
-    texNode->setFlag(QSGGeometryNode::OwnsGeometry);
-    tex = GstQSGMaterial::new_for_format(GST_VIDEO_INFO_FORMAT (&this->priv->v_info));
-    tex->setFiltering(is_smooth ? QSGTexture::Filtering::Linear :
-        QSGTexture::Filtering::Nearest);
-    texNode->setMaterial(tex);
-    texNode->setFlag(QSGGeometryNode::OwnsMaterial);
+    texNode = new GstQSG6OpenGLNode (this);
+    this->priv->m_node = texNode;
   }
 
-  if ((old_buffer = tex->getBuffer(&was_bound))) {
+  if ((old_buffer = texNode->getBuffer())) {
     if (old_buffer == this->priv->buffer) {
       /* same buffer */
-      gst_buffer_unref (old_buffer);
-    } else if (!was_bound) {
-      GST_TRACE ("old buffer %p was not bound yet, unreffing", old_buffer);
       gst_buffer_unref (old_buffer);
     } else {
       GstBuffer *tmp_buffer;
@@ -348,8 +323,8 @@ Qt6GLVideoItem::updatePaintNode(QSGNode * oldNode,
     old_buffer = NULL;
   }
 
-  tex->setCaps (this->priv->caps);
-  tex->setBuffer (this->priv->buffer);
+  texNode->setCaps (this->priv->caps);
+  texNode->setBuffer (this->priv->buffer);
 
   if (this->priv->force_aspect_ratio && this->priv->caps) {
     src.w = this->priv->display_width;
@@ -368,10 +343,7 @@ Qt6GLVideoItem::updatePaintNode(QSGNode * oldNode,
     result.h = boundingRect().height();
   }
 
-  geometry = texNode->geometry();
-  QRectF rect(result.x, result.y, result.w, result.h);
-  QRectF sourceRect(0, 0, 1, 1);
-  QSGGeometry::updateTexturedRectGeometry(geometry, rect, sourceRect);
+  texNode->setRect (QRectF (result.x, result.y, result.w, result.h));
 
   g_mutex_unlock (&this->priv->lock);
 
@@ -441,44 +413,10 @@ Qt6GLVideoItem::mapPointToStreamSize(QPointF pos)
   return QPointF(stream_x, stream_y);
 }
 
-static GstNavigationModifierType
-translateModifiers(Qt::KeyboardModifiers modifiers)
-{
-  return (GstNavigationModifierType)(
-    ((modifiers & Qt::KeyboardModifier::ShiftModifier) ? GST_NAVIGATION_MODIFIER_SHIFT_MASK : 0) |
-    ((modifiers & Qt::KeyboardModifier::ControlModifier) ? GST_NAVIGATION_MODIFIER_CONTROL_MASK : 0) |
-    ((modifiers & Qt::KeyboardModifier::AltModifier) ? GST_NAVIGATION_MODIFIER_MOD1_MASK : 0) |
-    ((modifiers & Qt::KeyboardModifier::MetaModifier) ? GST_NAVIGATION_MODIFIER_META_MASK : 0));
-}
-
-static GstNavigationModifierType
-translateMouseButtons(Qt::MouseButtons buttons)
-{
-  return (GstNavigationModifierType)(
-    ((buttons & Qt::LeftButton) ? GST_NAVIGATION_MODIFIER_BUTTON1_MASK : 0) |
-    ((buttons & Qt::RightButton) ? GST_NAVIGATION_MODIFIER_BUTTON2_MASK : 0) |
-    ((buttons & Qt::MiddleButton) ? GST_NAVIGATION_MODIFIER_BUTTON3_MASK : 0) |
-    ((buttons & Qt::BackButton) ? GST_NAVIGATION_MODIFIER_BUTTON4_MASK : 0) |
-    ((buttons & Qt::ForwardButton) ? GST_NAVIGATION_MODIFIER_BUTTON5_MASK : 0));
-}
-
 void
 Qt6GLVideoItem::wheelEvent(QWheelEvent * event)
 {
-  g_mutex_lock (&this->priv->lock);
-  QPoint delta = event->angleDelta();
-  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
-
-  if (element != NULL) {
-    auto position = event->position();
-    gst_navigation_send_event_simple (GST_NAVIGATION (element),
-        gst_navigation_event_new_mouse_scroll (position.x(), position.y(),
-                                               delta.x(), delta.y(),
-                                               (GstNavigationModifierType) (
-                                                 translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))));
-    g_object_unref (element);
-  }
-  g_mutex_unlock (&this->priv->lock);
+    // noop
 }
 
 void
@@ -496,136 +434,19 @@ Qt6GLVideoItem::hoverLeaveEvent(QHoverEvent *)
 void
 Qt6GLVideoItem::hoverMoveEvent(QHoverEvent * event)
 {
-  if (!mouseHovering)
-    return;
-
-  g_mutex_lock (&this->priv->lock);
-
-  /* can't do anything when we don't have input format */
-  if (!this->priv->caps) {
-    g_mutex_unlock (&this->priv->lock);
-    return;
-  }
-
-  if (event->position() != event->oldPos()) {
-    QPointF pos = mapPointToStreamSize(event->position());
-    GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
-
-    if (element != NULL) {
-      gst_navigation_send_event_simple (GST_NAVIGATION (element),
-          gst_navigation_event_new_mouse_move (pos.x(), pos.y(),
-                                               translateModifiers(event->modifiers())));
-      g_object_unref (element);
-    }
-  }
-  g_mutex_unlock (&this->priv->lock);
+    // noop
 }
 
 void
 Qt6GLVideoItem::touchEvent(QTouchEvent * event)
 {
-  g_mutex_lock (&this->priv->lock);
-
-  /* can't do anything when we don't have input format */
-  if (!this->priv->caps) {
-    g_mutex_unlock (&this->priv->lock);
-    return;
-  }
-
-  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
-  if (element == NULL)
-    return;
-
-  if (event->type() == QEvent::TouchCancel) {
-    gst_navigation_send_event_simple (GST_NAVIGATION (element),
-        gst_navigation_event_new_touch_cancel (translateModifiers(event->modifiers())));
-  } else {
-    const QList<QTouchEvent::TouchPoint> points = event->points();
-    gboolean sent_event = FALSE;
-
-    for (int i = 0; i < points.count(); i++) {
-      GstEvent *nav_event;
-      QPointF pos = mapPointToStreamSize(points[i].position());
-
-      switch (points[i].state()) {
-        case QEventPoint::Pressed:
-          nav_event = gst_navigation_event_new_touch_down ((guint) points[i].id(),
-              pos.x(), pos.y(), (gdouble) points[i].pressure(), translateModifiers(event->modifiers()));
-          break;
-        case QEventPoint::Updated:
-          nav_event = gst_navigation_event_new_touch_motion ((guint) points[i].id(),
-              pos.x(), pos.y(), (gdouble) points[i].pressure(), translateModifiers(event->modifiers()));
-          break;
-        case QEventPoint::Released:
-          nav_event = gst_navigation_event_new_touch_up ((guint) points[i].id(),
-              pos.x(), pos.y(), translateModifiers(event->modifiers()));
-          break;
-        /* Don't send an event if the point did not change */
-        default:
-          nav_event = NULL;
-          break;
-      }
-
-      if (nav_event) {
-        gst_navigation_send_event_simple (GST_NAVIGATION (element), nav_event);
-        sent_event = TRUE;
-      }
-    }
-
-    /* Group simultaneos touch events with a frame event */
-    if (sent_event) {
-      gst_navigation_send_event_simple (GST_NAVIGATION (element),
-          gst_navigation_event_new_touch_frame (translateModifiers(event->modifiers())));
-    }
-  }
-
-  g_object_unref (element);
-  g_mutex_unlock (&this->priv->lock);
+    // noop
 }
 
 void
 Qt6GLVideoItem::sendMouseEvent(QMouseEvent * event, gboolean is_press)
 {
-  quint32 button = 0;
-
-  switch (event->button()) {
-  case Qt::LeftButton:
-    button = 1;
-    break;
-  case Qt::RightButton:
-    button = 2;
-    break;
-  default:
-    break;
-  }
-
-  mousePressedButton = button;
-
-  g_mutex_lock (&this->priv->lock);
-
-  /* can't do anything when we don't have input format */
-  if (!this->priv->caps) {
-    g_mutex_unlock (&this->priv->lock);
-    return;
-  }
-
-  QPointF pos = mapPointToStreamSize(event->pos());
-  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
-
-  if (element != NULL) {
-    gst_navigation_send_event_simple (GST_NAVIGATION (element),
-        (is_press) ? gst_navigation_event_new_mouse_button_press (button,
-                pos.x(), pos.y(),
-                (GstNavigationModifierType) (
-                  translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))) :
-            gst_navigation_event_new_mouse_button_release (button, pos.x(),
-                pos.y(),
-                (GstNavigationModifierType) (
-                  translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))));
-    g_object_unref (element);
-  }
-
-  g_mutex_unlock (&this->priv->lock);
+  // noop
 }
 
 void
@@ -722,6 +543,7 @@ Qt6GLVideoItem::onSceneGraphInitialized ()
 
   this->priv->qt_context = gl_context;
   if (this->priv->qt_context == NULL) {
+    GST_ERROR ("%p failed to retrieve Qt GL context", this);
     g_assert_not_reached ();
     return;
   }
@@ -738,6 +560,7 @@ Qt6GLVideoItem::onSceneGraphInitialized ()
 void
 Qt6GLVideoItem::onSceneGraphInvalidated ()
 {
+  this->priv->m_node = nullptr;
   GST_FIXME ("%p scene graph invalidated", this);
 }
 
@@ -814,11 +637,13 @@ Qt6GLVideoItem::handleWindowChanged (QQuickWindow * win)
     this->priv->qt_context = NULL;
     this->priv->initted = FALSE;
   }
+  this->priv->m_node = nullptr;
 }
 
 void
 Qt6GLVideoItem::releaseResources()
 {
+  this->priv->m_node = nullptr;
 }
 
 gboolean

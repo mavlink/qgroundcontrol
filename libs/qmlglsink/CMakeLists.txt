@@ -2,6 +2,8 @@ option(QGC_ENABLE_VIDEOSTREAMING "Enable video streaming" ON)
 if(QGC_ENABLE_VIDEOSTREAMING)
 	message(STATUS "Enabling video streaming support")
 
+	# include(DownloadGstreamer)
+
 	if(ANDROID)
 		set(GST_STATIC_BUILD ON)
 	else()
@@ -9,11 +11,11 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 	endif()
 
     if(LINUX)
-	    set(GST_TARGET_VERSION 1.16)
+	    set(GST_TARGET_VERSION 1.16.0)
 	elseif(ANDROID)
-		set(GST_TARGET_VERSION 1.18.5)
+		set(GST_TARGET_VERSION 1.24.2)
 	else()
-		set(GST_TARGET_VERSION 1.18)
+		set(GST_TARGET_VERSION 1.24.0)
 	endif()
 
 	set(GST_TARGET_PLUGINS
@@ -46,7 +48,38 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 	)
 	if(LINUX)
 		list(APPEND GST_TARGET_MODULES egl)
+		# gstreamer-gl-x11-1.0
+		# gstreamer-gl-wayland-1.0
+		# gstreamer-gl-egl-1.0
 	endif()
+
+#     gstreamer-rtsp-1.0
+#     gstreamer-audio-1.0
+#     # gstreamer-plugins-base-1.0
+#     gstreamer-codecparsers-1.0
+#     gstreamer-rtp-1.0
+#     gstreamer-pbutils-1.0
+#     gstreamer-net-1.0
+#     gstreamer-tag-1.0
+#     gstreamer-mpegts-1.0
+#     gstreamer-riff-1.0
+#     gstreamer-photography-1.0
+#     gstreamer-controller-1.0
+#     gmodule-2.0
+#     graphene-1.0
+#     orc-0.4
+#     bzip2
+#     libffi
+#     libpcre2-8
+#     zlib
+#     # libpng
+#     # libjpeg
+#     # libavcodec
+#     # libavfilter
+#     # libavformat
+#     # libavutil
+#     # x264
+# )
 
 	# find_library(GSTREAMER_${_upper_name}_LIBRARY
     #      NAMES
@@ -76,14 +109,15 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 	elseif(MACOS)
 		set(GSTREAMER_ROOT "/Library/Frameworks/GStreamer.framework")
 	elseif(ANDROID)
+		set(GSTREAMER_ROOT ${CMAKE_SOURCE_DIR}/gstreamer-1.0-android-universal-${GST_TARGET_VERSION})
 		if(${ANDROID_ABI} STREQUAL armeabi-v7a)
-            set(GSTREAMER_ROOT ${CMAKE_SOURCE_DIR}/gstreamer-1.0-android-universal-${GST_TARGET_VERSION}/armv7)
+            set(GSTREAMER_ROOT ${GSTREAMER_ROOT}/armv7)
         elseif(${ANDROID_ABI} STREQUAL arm64-v8a)
-            set(GSTREAMER_ROOT ${CMAKE_SOURCE_DIR}/gstreamer-1.0-android-universal-${GST_TARGET_VERSION}/arm64)
+            set(GSTREAMER_ROOT ${GSTREAMER_ROOT}/arm64)
         elseif(${ANDROID_ABI} STREQUAL x86)
-            set(GSTREAMER_ROOT ${CMAKE_SOURCE_DIR}/gstreamer-1.0-android-universal-${GST_TARGET_VERSION}/x86)
+            set(GSTREAMER_ROOT ${GSTREAMER_ROOT}/x86)
         elseif(${ANDROID_ABI} STREQUAL x86_64)
-            set(GSTREAMER_ROOT ${CMAKE_SOURCE_DIR}/gstreamer-1.0-android-universal-${GST_TARGET_VERSION}/x86_64)
+            set(GSTREAMER_ROOT ${GSTREAMER_ROOT}/x86_64)
         endif()
 	endif()
 
@@ -159,6 +193,15 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 		    	endif()
 	    	endif()
 	    	# file(GET_RUNTIME_DEPENDENCIES)
+	    	# target_link_libraries(qmlglsink
+			#     PUBLIC
+			#         iconv
+			#         # x264
+			#         z
+			#         png16
+			#         jpeg
+			#         android
+			# )
 		endif()
 	else()
 		message(WARNING "Gstreamer Not Found")
@@ -166,21 +209,49 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 
 	if(GST_FOUND)
 		message(STATUS "GST Modules Found")
-		target_sources(qmlglsink
-	        PRIVATE
-	            qt6/gstplugin.cc
-	            qt6/gstqml6glsink.cc
-	            qt6/gstqml6glsink.h
-	            qt6/gstqsg6glnode.cc
-	            qt6/gstqsg6glnode.h
-	            qt6/gstqt6element.cc
-	            qt6/gstqt6elements.h
-	            qt6/gstqt6gl.h
-	            qt6/gstqt6glutility.cc
-	            qt6/gstqt6glutility.h
-	            qt6/qt6glitem.cc
-	            qt6/qt6glitem.h
-	    )
+		if(LINUX)
+			target_sources(qmlglsink
+		        PRIVATE
+		            qt6-linux/gstplugin.cc
+		            qt6-linux/gstqml6glsink.cc
+		            qt6-linux/gstqml6glsink.h
+		            qt6-linux/gstqsg6glnode.cc
+		            qt6-linux/gstqsg6glnode.h
+		            qt6-linux/gstqt6element.cc
+		            qt6-linux/gstqt6elements.h
+		            qt6-linux/gstqt6gl.h
+		            qt6-linux/gstqt6glutility.cc
+		            qt6-linux/gstqt6glutility.h
+		            qt6-linux/qt6glitem.cc
+		            qt6-linux/qt6glitem.h
+		    )
+		else()
+		    target_sources(qmlglsink
+			    PRIVATE
+			        qt6/gstplugin.cc
+			        qt6/gstqml6glmixer.cc
+			        qt6/gstqml6glmixer.h
+			        qt6/gstqml6gloverlay.cc
+			        qt6/gstqml6gloverlay.h
+			        qt6/gstqml6glsink.cc
+			        qt6/gstqml6glsink.h
+			        qt6/gstqml6glsrc.cc
+			        qt6/gstqml6glsrc.h
+			        qt6/gstqsg6material.cc
+			        qt6/gstqsg6material.h
+			        qt6/gstqt6element.cc
+			        qt6/gstqt6elements.h
+			        qt6/gstqt6gl.h
+			        qt6/gstqt6glutility.cc
+			        qt6/gstqt6glutility.h
+			        qt6/qt6glitem.cc
+			        qt6/qt6glitem.h
+			        qt6/qt6glrenderer.cc
+			        qt6/qt6glrenderer.h
+			        qt6/qt6glwindow.cc
+			        qt6/qt6glwindow.h
+			)
+		endif()
 
 		find_package(Qt6 REQUIRED COMPONENTS Core Gui OpenGL Qml Quick)
 	    target_link_libraries(qmlglsink
@@ -203,6 +274,9 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 		endif()
 
 	    target_include_directories(qmlglsink PUBLIC qt6)
+	    if(WIN32)
+	    	# target_include_directories(qmlglsink PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/windows)
+	    endif()
 
 	    target_compile_definitions(qmlglsink
 	        PRIVATE
@@ -239,6 +313,19 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 	                -Wno-unused-private-field
 	        )
 	    endif()
+
+	    qt_add_resources(qmlglsink "gst"
+		    PREFIX "/org/freedesktop/gstreamer/qml6"
+		    FILES
+		        qt6/RGBA.frag
+		        qt6/vertex.vert
+		        qt6/YUV_TRIPLANAR.frag
+		)
+		# qt_add_qml_module(qmlglsink
+		#     URI org.freedesktop.gstreamer.qml6
+		#     VERSION 1.0
+		#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+		# )
 
 	    message(STATUS "GStreamer version: ${GST_gstreamer-1.0_VERSION}")
 	    message(STATUS "GStreamer prefix: ${GST_gstreamer-1.0_PREFIX}")
@@ -283,5 +370,5 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 		message(WARNING "GST Modules Not Found")
     endif()
 else()
-    message(STATUS "Video streaming disabled")
+        message(STATUS "Video streaming disabled")
 endif()

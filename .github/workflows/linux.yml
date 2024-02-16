@@ -59,11 +59,45 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: true
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          tools: 'tools_cmake tools_ninja'
 
       - name: Install Dependencies
         run:  |
               chmod a+x ./tools/setup/ubuntu.sh
               ./tools/setup/ubuntu.sh
+              python3 -m pip install meson ninja
+
+      - uses: actions/checkout@v4
+        with:
+          repository: GStreamer/gstreamer
+          ref: 1.24.2
+          path: ${{ runner.temp }}/gstreamer
+
+      # - name: Clone GStreamer
+      #   working-directory: ${{ runner.temp }}
+      #   run: git clone --depth 1 --branch 1.24.2 https://github.com/GStreamer/gstreamer.git
+
+      - name: Configure GStreamer
+        working-directory: ${{ runner.temp }}/gstreamer
+        run: meson setup
+          --prefix=${{ runner.temp }}/gst
+          -Dgst-full-target-type=static_library
+          -Dauto_features=disabled
+          build
+          # --prefix=${{ runner.temp }}/gst
+          # --buildtype=${{ matrix.BuildType }}
+          # -Dauto_features=disabled -Dgood=enabled -Dgst-plugins-good:qml6=enabled -Dgst-plugins-good:qt-egl=enabled -Dgst-plugins-good:qt-wayland=enabled -Dgst-plugins-good:qt-x11=enabled -Dbase=enabled -Dgst-plugins-base:gl=enabled -Dgst-plugins-base:gl_platform=glx,egl -Dgst-plugins-base:gl_winsys=x11,wayland -Dgst-plugins-base:x11=enabled build
+          # -Dgst-full-target-type=static_library
+          # --default-library=static -Dgst-full-libraries=app,video
+          # -Dges=disabled -Dtests=disabled -Dexamples=disabled -Dgst-examples=disabled -Ddoc=disabled -Dgtk_doc=disabled -Dgpl=enabled build
+
+      - name: Compile GStreamer
+        working-directory: ${{ runner.temp }}/gstreamer
+        run: meson compile -C build
+
+      - name: Install GStreamer
+        working-directory: ${{ runner.temp }}/gstreamer
+        run: meson install -C build
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir

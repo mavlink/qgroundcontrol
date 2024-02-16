@@ -18,35 +18,45 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __QML6_GL_UTILS_H__
-#define __QML6_GL_UTILS_H__
+#ifndef __GST_QML6_GL_SRC_H__
+#define __GST_QML6_GL_SRC_H__
 
 #include <gst/gst.h>
+#include <gst/base/gstpushsrc.h>
+#include <gst/video/video.h>
 #include <gst/gl/gl.h>
-
-#include <QVariant>
-#include <QRunnable>
-#include <QOpenGLContext>
+#include "qt6glwindow.h"
 
 G_BEGIN_DECLS
 
-struct RenderJob : public QRunnable {
-    using Callable = std::function<void()>;
+#define GST_TYPE_QML6_GL_SRC (gst_qml6_gl_src_get_type())
+G_DECLARE_FINAL_TYPE (GstQml6GLSrc, gst_qml6_gl_src, GST, QML6_GL_SRC, GstPushSrc)
+#define GST_QML6_GL_SRC_CAST(obj) ((GstQml6GLSrc*)(obj))
 
-    explicit RenderJob(Callable c) : _c(c) { }
+/**
+ * GstQml6GLSrc:
+ *
+ * Opaque #GstQml6GLSrc object
+ */
+struct _GstQml6GLSrc
+{
+  /* <private> */
+  GstPushSrc            parent;
 
-    void run() { _c(); }
+  QQuickWindow         *qwindow;
+  Qt6GLWindow          *window;
 
-private:
-    Callable _c;
+  GstVideoInfo          v_info;
+
+  GstGLDisplay         *display;
+  GstGLContext         *context;
+  GstGLContext         *qt_context;
+
+  gboolean              default_fbo;
+  gboolean              downstream_supports_affine_meta;
+  gboolean              pending_image_orientation;
 };
-
-GstGLDisplay * gst_qml6_get_gl_display (gboolean sink);
-gboolean       gst_qml6_get_gl_wrapcontext (GstGLDisplay * display,
-    GstGLContext **wrap_glcontext, GstGLContext **context);
 
 G_END_DECLS
 
-QOpenGLContext *        qt_opengl_native_context_from_gst_gl_context     (GstGLContext * context);
-
-#endif /* __QML6_GL_UTILS_H__ */
+#endif /* __GST_QML6_GL_SRC_H__ */

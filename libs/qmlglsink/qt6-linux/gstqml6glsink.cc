@@ -43,30 +43,29 @@
  * #GstGLDisplay object and as Qt cannot currently share an existing window
  * system display connection, GStreamer must use the window system display
  * connection provided by Qt.  This window system display connection can be
- * retrieved by either a `qml6glsink` element, a `qml6gloverlay` element, or a
- * `qml6glmixer` element. The recommended usage is to have either element
- * (`qml6glsink`, or `qml6gloverlay`, or `qml6glmixer`) be the first to
- * propagate the #GstGLDisplay for the entire pipeline to use by setting either
- * element to the READY element state before any other OpenGL element in the
+ * retrieved by either a qmlglsink element or a qmlgloverlay element. The
+ * recommended usage is to have either element (qmlglsink or qmlgloverlay)
+ * be the first to propagate the #GstGLDisplay for the entire pipeline to use by
+ * setting either element to the READY element state before any other OpenGL
+ * element in the pipeline.
+ *
+ * In a dynamically adding qmlglsink (or qmlgloverlay) to a pipeline case,
+ * there are some considerations for ensuring that the window system display
+ * and OpenGL contexts are compatible with Qt.  When the qmlgloverlay (or
+ * qmlglsink) element is added and brought up to READY, it will propagate it's
+ * own #GstGLDisplay using the #GstContext mechanism regardless of any existing
+ * #GstGLDisplay used by the pipeline previously.  In order for the new
+ * #GstGLDisplay to be used, the application must then set the provided
+ * #GstGLDisplay containing #GstContext on the pipeline.  This may effectively
+ * cause each OpenGL element to replace the window system display and also the
+ * OpenGL context it is using.  As such this process may take a significant
+ * amount of time and resources as objects are recreated in the new OpenGL
+ * context.
+ *
+ * All instances of qmlglsink and qmlgloverlay will return the exact same
+ * #GstGLDisplay object while the pipeline is running regardless of whether
+ * any qmlglsink or qmlgloverlay elements are added or removed from the
  * pipeline.
- *
- * In the dynamically adding `qml6glsink` (or `qml6gloverlay`, or `qml6glmixer`)
- * to a pipeline case, there are some considerations for ensuring that the
- * window system display and OpenGL contexts are compatible with Qt.  When the
- * `qml6gloverlay` (or `qml6glsink`, or `qml6glmixer`) element is added and
- * brought up to READY, it will propagate it's own #GstGLDisplay using the
- * #GstContext mechanism regardless of any existing #GstGLDisplay used by the
- * pipeline previously.  In order for the new #GstGLDisplay to be used, the
- * application must then set the provided #GstGLDisplay containing #GstContext
- * on the pipeline.  This may effectively cause each OpenGL element to replace
- * the window system display and also the OpenGL context it is using.  As such
- * this process may take a significant amount of time and resources as objects
- * are recreated in the new OpenGL context.
- *
- * All instances of `qml6glsink`, `qml6gloverlay`, and `qml6glmixer` will
- * return the exact same #GstGLDisplay object while the pipeline is running
- * regardless of whether any `qml6glsink` or `qml6gloverlay` elements are
- * added or removed from the pipeline.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -109,7 +108,7 @@ GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("video/x-raw(" GST_CAPS_FEATURE_MEMORY_GL_MEMORY "), "
-    "format = (string) { RGBA, BGRA, RGB, YV12 }, "
+    "format = (string) { RGB, RGBA }, "
     "width = " GST_VIDEO_SIZE_RANGE ", "
     "height = " GST_VIDEO_SIZE_RANGE ", "
     "framerate = " GST_VIDEO_FPS_RANGE ", "
@@ -139,8 +138,16 @@ G_DEFINE_TYPE_WITH_CODE (GstQml6GLSink, gst_qml6_gl_sink,
         "qtsink", 0, "Qt Video Sink");
     G_IMPLEMENT_INTERFACE (GST_TYPE_NAVIGATION,
         gst_qml6_gl_sink_navigation_interface_init));
-GST_ELEMENT_REGISTER_DEFINE_WITH_CODE (qml6glsink, "qml6glsink",
-    GST_RANK_NONE, GST_TYPE_QML6_GL_SINK, qt6_element_init (plugin));
+G_BEGIN_DECLS gboolean G_PASTE(gst_element_register_, qml6glsink)(GstPlugin *plugin)
+{
+    {
+        {
+            qt6_element_init(plugin);
+        }
+    }
+    return gst_element_register(plugin, "qml6glsink", GST_RANK_NONE, (gst_qml6_gl_sink_get_type()));
+}
+G_END_DECLS;
 
 static void
 gst_qml6_gl_sink_class_init (GstQml6GLSinkClass * klass)
@@ -555,29 +562,15 @@ config_failed:
 
 static void
 gst_qml6_gl_sink_navigation_send_event (GstNavigation * navigation,
-                                   GstEvent * event)
+                                   GstStructure *structure)
 {
   GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (navigation);
-  GstPad *pad;
-
-  pad = gst_pad_get_peer (GST_VIDEO_SINK_PAD (qt_sink));
-
   GST_TRACE_OBJECT (qt_sink, "navigation event %" GST_PTR_FORMAT,
-      gst_event_get_structure(event));
-
-  if (GST_IS_PAD (pad) && GST_IS_EVENT (event)) {
-    if (!gst_pad_send_event (pad, gst_event_ref (event))) {
-      /* If upstream didn't handle the event we'll post a message with it
-       * for the application in case it wants to do something with it */
-      gst_element_post_message (GST_ELEMENT_CAST (qt_sink),
-                                gst_navigation_message_new_event (GST_OBJECT_CAST (qt_sink), event));
-    }
-    gst_event_unref (event);
-    gst_object_unref (pad);
-  }
+      structure);
+  // TODO(zdanek) this will be available from gstreamer 1.22
 }
 
 static void gst_qml6_gl_sink_navigation_interface_init (GstNavigationInterface * iface)
 {
-  iface->send_event_simple = gst_qml6_gl_sink_navigation_send_event;
+  iface->send_event = gst_qml6_gl_sink_navigation_send_event;
 }

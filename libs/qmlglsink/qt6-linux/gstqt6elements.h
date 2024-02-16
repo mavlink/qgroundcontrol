@@ -26,10 +26,11 @@ G_BEGIN_DECLS
 
 void qt6_element_init (GstPlugin * plugin);
 
-GST_ELEMENT_REGISTER_DECLARE (qml6glsink);
-GST_ELEMENT_REGISTER_DECLARE (qml6glsrc);
-GST_ELEMENT_REGISTER_DECLARE (qml6glmixer);
-GST_ELEMENT_REGISTER_DECLARE (qml6gloverlay);
+// TODO(zdanek) fix after switching to gstreamer 1.20.0+
+// original code from 1.20.0
+// GST_ELEMENT_REGISTER_DECLARE (qml6glsink);
+// backported to:
+extern "C" { gboolean gst_element_register_qml6glsink (GstPlugin * plugin); };
 
 G_END_DECLS
 
