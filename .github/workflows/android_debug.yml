@@ -99,9 +99,9 @@ jobs:
       - name:               Install gstreamer
         working-directory:  ${{ github.workspace }}
         run: |
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz
-            mkdir gstreamer-1.0-android-universal-1.18.5
-            tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.24.0/gstreamer-1.0-android-universal-1.24.0.tar.xz
+            mkdir gstreamer-1.0-android-universal
+            tar xf gstreamer-1.0-android-universal-1.24.0.tar.xz -C gstreamer-1.0-android-universal
 
       - name: Update android manifest
         if: github.ref_name != 'Stable'
