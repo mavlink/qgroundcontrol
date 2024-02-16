@@ -4,8 +4,6 @@ add_library(sdl2 SHARED IMPORTED GLOBAL)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)  # 64 bits
     set(SDL2_LIB_BASE_PATH ${SDL2_LIB_BASE_PATH}/x64)
-elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)  # 32 bits
-    set(SDL2_LIB_BASE_PATH ${SDL2_LIB_BASE_PATH}/x86)
 endif()
 
 target_link_libraries(sdl2 INTERFACE ${SDL2_LIB_BASE_PATH}/SDL2.lib)
