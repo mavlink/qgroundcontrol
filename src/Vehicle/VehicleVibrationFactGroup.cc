@@ -10,13 +10,6 @@
 #include "VehicleVibrationFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleVibrationFactGroup::_xAxisFactName =      "xAxis";
-const char* VehicleVibrationFactGroup::_yAxisFactName =      "yAxis";
-const char* VehicleVibrationFactGroup::_zAxisFactName =      "zAxis";
-const char* VehicleVibrationFactGroup::_clipCount1FactName = "clipCount1";
-const char* VehicleVibrationFactGroup::_clipCount2FactName = "clipCount2";
-const char* VehicleVibrationFactGroup::_clipCount3FactName = "clipCount3";
-
 VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
     : FactGroup         (1000, ":/json/Vehicle/VibrationFact.json", parent)
     , _xAxisFact        (0, _xAxisFactName,         FactMetaData::valueTypeDouble)

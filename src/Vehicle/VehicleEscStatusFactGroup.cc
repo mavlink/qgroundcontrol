@@ -10,23 +10,6 @@
 #include "VehicleEscStatusFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleEscStatusFactGroup::_indexFactName =                             "index";
-
-const char* VehicleEscStatusFactGroup::_rpmFirstFactName =                          "rpm1";
-const char* VehicleEscStatusFactGroup::_rpmSecondFactName =                         "rpm2";
-const char* VehicleEscStatusFactGroup::_rpmThirdFactName =                          "rpm3";
-const char* VehicleEscStatusFactGroup::_rpmFourthFactName =                         "rpm4";
-
-const char* VehicleEscStatusFactGroup::_currentFirstFactName =                      "current1";
-const char* VehicleEscStatusFactGroup::_currentSecondFactName =                     "current2";
-const char* VehicleEscStatusFactGroup::_currentThirdFactName =                      "current3";
-const char* VehicleEscStatusFactGroup::_currentFourthFactName =                     "current4";
-
-const char* VehicleEscStatusFactGroup::_voltageFirstFactName =                      "voltage1";
-const char* VehicleEscStatusFactGroup::_voltageSecondFactName =                     "voltage2";
-const char* VehicleEscStatusFactGroup::_voltageThirdFactName =                      "voltage3";
-const char* VehicleEscStatusFactGroup::_voltageFourthFactName =                     "voltage4";
-
 VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject* parent)
     : FactGroup                         (1000, ":/json/Vehicle/EscStatusFactGroup.json", parent)
     , _indexFact                        (0, _indexFactName,                         FactMetaData::valueTypeUint8)

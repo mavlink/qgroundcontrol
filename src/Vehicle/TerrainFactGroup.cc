@@ -9,9 +9,6 @@
 
 #include "TerrainFactGroup.h"
 
-const char* TerrainFactGroup::_blocksPendingFactName =  "blocksPending";
-const char* TerrainFactGroup::_blocksLoadedFactName =   "blocksLoaded";
-
 TerrainFactGroup::TerrainFactGroup(QObject* parent)
     : FactGroup         (1000, ":/json/Vehicle/TerrainFactGroup.json", parent)
     , _blocksPendingFact(0, _blocksPendingFactName, FactMetaData::valueTypeDouble)

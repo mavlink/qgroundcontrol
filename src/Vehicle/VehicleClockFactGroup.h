@@ -29,16 +29,16 @@ public:
     Fact* currentUTCTime () { return &_currentUTCTimeFact; }
     Fact* currentDate () { return &_currentDateFact; }
 
-    static const char* _currentTimeFactName;
-    static const char* _currentUTCTimeFactName;
-    static const char* _currentDateFactName;
 
-    static const char* _settingsGroup;
 
 private slots:
     void _updateAllValues() override;
 
 private:
+    const QString _currentTimeFactName = QStringLiteral("currentTime");
+    const QString _currentUTCTimeFactName = QStringLiteral("currentUTCTime");
+    const QString _currentDateFactName = QStringLiteral("currentDate");
+
     Fact            _currentTimeFact;
     Fact            _currentUTCTimeFact;
     Fact            _currentDateFact;

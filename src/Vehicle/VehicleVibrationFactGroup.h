@@ -36,14 +36,16 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _xAxisFactName;
-    static const char* _yAxisFactName;
-    static const char* _zAxisFactName;
-    static const char* _clipCount1FactName;
-    static const char* _clipCount2FactName;
-    static const char* _clipCount3FactName;
+
 
 private:
+    const QString _xAxisFactName =      QStringLiteral("xAxis");
+    const QString _yAxisFactName =      QStringLiteral("yAxis");
+    const QString _zAxisFactName =      QStringLiteral("zAxis");
+    const QString _clipCount1FactName = QStringLiteral("clipCount1");
+    const QString _clipCount2FactName = QStringLiteral("clipCount2");
+    const QString _clipCount3FactName = QStringLiteral("clipCount3");
+
     Fact        _xAxisFact;
     Fact        _yAxisFact;
     Fact        _zAxisFact;
