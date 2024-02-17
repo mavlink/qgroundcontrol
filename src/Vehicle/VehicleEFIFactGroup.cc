@@ -1,24 +1,6 @@
 #include "VehicleEFIFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleEFIFactGroup::_healthFactName =          "health";
-const char* VehicleEFIFactGroup::_ecuIndexFactName =        "ecuIndex";
-const char* VehicleEFIFactGroup::_rpmFactName =             "rpm";
-const char* VehicleEFIFactGroup::_fuelConsumedFactName =    "fuelConsumed";
-const char* VehicleEFIFactGroup::_fuelFlowFactName =        "fuelFlow";
-const char* VehicleEFIFactGroup::_engineLoadFactName =      "engineLoad";
-const char* VehicleEFIFactGroup::_throttlePosFactName =     "throttlePos";
-const char* VehicleEFIFactGroup::_sparkTimeFactName =       "sparkTime";
-const char* VehicleEFIFactGroup::_baroPressFactName =       "baroPress";
-const char* VehicleEFIFactGroup::_intakePressFactName =     "intakePress";
-const char* VehicleEFIFactGroup::_intakeTempFactName =      "intakeTemp";
-const char* VehicleEFIFactGroup::_cylinderTempFactName =    "cylinderTemp";
-const char* VehicleEFIFactGroup::_ignTimeFactName =         "ignTime";
-const char* VehicleEFIFactGroup::_injTimeFactName =         "injTime";
-const char* VehicleEFIFactGroup::_exGasTempFactName =       "exGasTemp";
-const char* VehicleEFIFactGroup::_throttleOutFactName =     "throttleOut";
-const char* VehicleEFIFactGroup::_ptCompFactName =          "ptComp";
-
 
 VehicleEFIFactGroup::VehicleEFIFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/EFIFact.json", parent)

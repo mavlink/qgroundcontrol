@@ -9,16 +9,6 @@
 
 #include "GPSRTKFactGroup.h"
 
-const char* GPSRTKFactGroup::_connectedFactName =                "connected";
-const char* GPSRTKFactGroup::_currentAccuracyFactName =          "currentAccuracy";
-const char* GPSRTKFactGroup::_currentDurationFactName =          "currentDuration";
-const char* GPSRTKFactGroup::_currentLatitudeFactName =          "currentLatitude";
-const char* GPSRTKFactGroup::_currentLongitudeFactName =         "currentLongitude";
-const char* GPSRTKFactGroup::_currentAltitudeFactName =          "currentAltitude";
-const char* GPSRTKFactGroup::_validFactName =                    "valid";
-const char* GPSRTKFactGroup::_activeFactName =                   "active";
-const char* GPSRTKFactGroup::_numSatellitesFactName =            "numSatellites";
-
 GPSRTKFactGroup::GPSRTKFactGroup(QObject* parent)
     : FactGroup             (1000, ":/json/Vehicle/GPSRTKFact.json", parent)
     , _connected            (0, _connectedFactName,         FactMetaData::valueTypeBool)

@@ -26,10 +26,10 @@ public:
     Fact* blocksPending () { return &_blocksPendingFact; }
     Fact* blocksLoaded  () { return &_blocksLoadedFact; }
 
-    static const char* _blocksPendingFactName;
-    static const char* _blocksLoadedFactName;
-
 private:
+    const QString _blocksPendingFactName =  QStringLiteral("blocksPending");
+    const QString _blocksLoadedFactName =   QStringLiteral("blocksLoaded");
+
     Fact _blocksPendingFact;
     Fact _blocksLoadedFact;
 };

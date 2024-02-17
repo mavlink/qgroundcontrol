@@ -10,27 +10,6 @@
 #include "VehicleEstimatorStatusFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleEstimatorStatusFactGroup::_goodAttitudeEstimateFactName =        "goodAttitudeEsimate";
-const char* VehicleEstimatorStatusFactGroup::_goodHorizVelEstimateFactName =        "goodHorizVelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodVertVelEstimateFactName =         "goodVertVelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodHorizPosRelEstimateFactName =     "goodHorizPosRelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodHorizPosAbsEstimateFactName =     "goodHorizPosAbsEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodVertPosAbsEstimateFactName =      "goodVertPosAbsEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodVertPosAGLEstimateFactName =      "goodVertPosAGLEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodConstPosModeEstimateFactName =    "goodConstPosModeEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodPredHorizPosRelEstimateFactName = "goodPredHorizPosRelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodPredHorizPosAbsEstimateFactName = "goodPredHorizPosAbsEstimate";
-const char* VehicleEstimatorStatusFactGroup::_gpsGlitchFactName =                   "gpsGlitch";
-const char* VehicleEstimatorStatusFactGroup::_accelErrorFactName =                  "accelError";
-const char* VehicleEstimatorStatusFactGroup::_velRatioFactName =                    "velRatio";
-const char* VehicleEstimatorStatusFactGroup::_horizPosRatioFactName =               "horizPosRatio";
-const char* VehicleEstimatorStatusFactGroup::_vertPosRatioFactName =                "vertPosRatio";
-const char* VehicleEstimatorStatusFactGroup::_magRatioFactName =                    "magRatio";
-const char* VehicleEstimatorStatusFactGroup::_haglRatioFactName =                   "haglRatio";
-const char* VehicleEstimatorStatusFactGroup::_tasRatioFactName =                    "tasRatio";
-const char* VehicleEstimatorStatusFactGroup::_horizPosAccuracyFactName =            "horizPosAccuracy";
-const char* VehicleEstimatorStatusFactGroup::_vertPosAccuracyFactName =             "vertPosAccuracy";
-
 VehicleEstimatorStatusFactGroup::VehicleEstimatorStatusFactGroup(QObject* parent)
     : FactGroup                         (500, ":/json/Vehicle/EstimatorStatusFactGroup.json", parent)
     , _goodAttitudeEstimateFact         (0, _goodAttitudeEstimateFactName,          FactMetaData::valueTypeBool)

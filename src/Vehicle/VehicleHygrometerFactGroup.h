@@ -30,12 +30,12 @@ public:
     // Overrides from FactGroup
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _hygroIDFactName;
-    static const char* _hygroTempFactName;
-    static const char* _hygroHumiFactName;
-
 protected:
     void _handleHygrometerSensor        (mavlink_message_t& message);
+
+    const QString _hygroHumiFactName =      QStringLiteral("humidity");
+    const QString _hygroTempFactName =    QStringLiteral("temperature");
+    const QString _hygroIDFactName =    QStringLiteral("hygrometerid");
 
     Fact _hygroTempFact;
     Fact _hygroHumiFact;

@@ -11,10 +11,6 @@
 #include "Vehicle.h"
 #include "QGCGeo.h"
 
-const char* VehicleHygrometerFactGroup::_hygroHumiFactName =      "humidity";
-const char* VehicleHygrometerFactGroup::_hygroTempFactName =    "temperature";
-const char* VehicleHygrometerFactGroup::_hygroIDFactName =    "hygrometerid";
-
 VehicleHygrometerFactGroup::VehicleHygrometerFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/HygrometerFact.json", parent)
     , _hygroTempFact             (0, _hygroTempFactName,         FactMetaData::valueTypeDouble)
