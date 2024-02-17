@@ -757,8 +757,8 @@ HEADERS += \
 }
 
 WindowsBuild {
-    PRECOMPILED_HEADER += src/stable_headers.h
-    HEADERS += src/stable_headers.h
+    PRECOMPILED_HEADER += src/pch.h
+    HEADERS += src/pch.h
     CONFIG -= silent
     OTHER_FILES += .appveyor.yml
 }
