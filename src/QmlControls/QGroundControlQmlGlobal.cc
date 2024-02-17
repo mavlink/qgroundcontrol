@@ -13,6 +13,9 @@
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
+#ifdef QT_DEBUG
+#include "MockLink.h"
+#endif
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 

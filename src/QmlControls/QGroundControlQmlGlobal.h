@@ -22,10 +22,6 @@
 #include "UTMSPManager.h"
 #endif
 
-#ifdef QT_DEBUG
-#include "MockLink.h"
-#endif
-
 class QGCToolbox;
 class LinkManager;
 

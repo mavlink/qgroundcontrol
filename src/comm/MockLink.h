@@ -249,6 +249,10 @@ private:
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
 
+    /// Creates a file with random contents of the specified size.
+    /// @return Fully qualified path to created file
+    static QString _createRandomFile(uint32_t byteCount);
+
     uint8_t                     _mavlinkAuxChannel              = std::numeric_limits<uint8_t>::max();
     QMutex                      _mavlinkAuxMutex;
 
