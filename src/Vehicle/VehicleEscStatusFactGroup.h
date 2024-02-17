@@ -58,23 +58,24 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _indexFactName;
-
-    static const char* _rpmFirstFactName;
-    static const char* _rpmSecondFactName;
-    static const char* _rpmThirdFactName;
-    static const char* _rpmFourthFactName;
-
-    static const char* _currentFirstFactName;
-    static const char* _currentSecondFactName;
-    static const char* _currentThirdFactName;
-    static const char* _currentFourthFactName;
-
-    static const char* _voltageFirstFactName;
-    static const char* _voltageSecondFactName;
-    static const char* _voltageThirdFactName;
-    static const char* _voltageFourthFactName;
 private:
+    const QString _indexFactName =                            QStringLiteral("index");
+
+    const QString _rpmFirstFactName =                         QStringLiteral("rpm1");
+    const QString _rpmSecondFactName =                        QStringLiteral("rpm2");
+    const QString _rpmThirdFactName =                         QStringLiteral("rpm3");
+    const QString _rpmFourthFactName =                        QStringLiteral("rpm4");
+
+    const QString _currentFirstFactName =                     QStringLiteral("current1");
+    const QString _currentSecondFactName =                    QStringLiteral("current2");
+    const QString _currentThirdFactName =                     QStringLiteral("current3");
+    const QString _currentFourthFactName =                    QStringLiteral("current4");
+
+    const QString _voltageFirstFactName =                     QStringLiteral("voltage1");
+    const QString _voltageSecondFactName =                    QStringLiteral("voltage2");
+    const QString _voltageThirdFactName =                     QStringLiteral("voltage3");
+    const QString _voltageFourthFactName =                    QStringLiteral("voltage4");
+
     Fact _indexFact;
 
     Fact _rpmFirstFact;

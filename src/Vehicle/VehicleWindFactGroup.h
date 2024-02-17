@@ -30,10 +30,6 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _directionFactName;
-    static const char* _speedFactName;
-    static const char* _verticalSpeedFactName;
-
 private:
     void _handleHighLatency (mavlink_message_t& message);
     void _handleHighLatency2(mavlink_message_t& message);
@@ -41,6 +37,10 @@ private:
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleWind        (mavlink_message_t& message);
 #endif
+
+    const QString _directionFactName =      QStringLiteral("direction");
+    const QString _speedFactName =          QStringLiteral("speed");
+    const QString _verticalSpeedFactName =  QStringLiteral("verticalSpeed");
 
     Fact        _directionFact;
     Fact        _speedFact;

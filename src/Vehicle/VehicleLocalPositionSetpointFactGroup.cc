@@ -12,13 +12,6 @@
 
 #include <QtMath>
 
-const char* VehicleLocalPositionSetpointFactGroup::_xFactName =     "x";
-const char* VehicleLocalPositionSetpointFactGroup::_yFactName =     "y";
-const char* VehicleLocalPositionSetpointFactGroup::_zFactName =     "z";
-const char* VehicleLocalPositionSetpointFactGroup::_vxFactName =    "vx";
-const char* VehicleLocalPositionSetpointFactGroup::_vyFactName =    "vy";
-const char* VehicleLocalPositionSetpointFactGroup::_vzFactName =    "vz";
-
 VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QObject* parent)
     : FactGroup     (1000, ":/json/Vehicle/LocalPositionSetpointFact.json", parent)
     , _xFact    (0, _xFactName,     FactMetaData::valueTypeDouble)

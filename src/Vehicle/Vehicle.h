@@ -1418,6 +1418,56 @@ private:
 
     // FactGroup facts
 
+    const QString _settingsGroup =               QStringLiteral("Vehicle%1");        // %1 replaced with mavlink system id
+    const QString _joystickEnabledSettingsKey =  QStringLiteral("JoystickEnabled");
+
+    const QString _rollFactName =                QStringLiteral("roll");
+    const QString _pitchFactName =               QStringLiteral("pitch");
+    const QString _headingFactName =             QStringLiteral("heading");
+    const QString _rollRateFactName =             QStringLiteral("rollRate");
+    const QString _pitchRateFactName =           QStringLiteral("pitchRate");
+    const QString _yawRateFactName =             QStringLiteral("yawRate");
+    const QString _airSpeedFactName =            QStringLiteral("airSpeed");
+    const QString _airSpeedSetpointFactName =    QStringLiteral("airSpeedSetpoint");
+    const QString _xTrackErrorFactName =         QStringLiteral("xTrackError");
+    const QString _rangeFinderDistFactName =     QStringLiteral("rangeFinderDist");
+    const QString _groundSpeedFactName =         QStringLiteral("groundSpeed");
+    const QString _climbRateFactName =           QStringLiteral("climbRate");
+    const QString _altitudeRelativeFactName =    QStringLiteral("altitudeRelative");
+    const QString _altitudeAMSLFactName =        QStringLiteral("altitudeAMSL");
+    const QString _altitudeAboveTerrFactName =   QStringLiteral("altitudeAboveTerr");
+    const QString _altitudeTuningFactName =      QStringLiteral("altitudeTuning");
+    const QString _altitudeTuningSetpointFactName = QStringLiteral("altitudeTuningSetpoint");
+    const QString _flightDistanceFactName =      QStringLiteral("flightDistance");
+    const QString _flightTimeFactName =          QStringLiteral("flightTime");
+    const QString _distanceToHomeFactName =      QStringLiteral("distanceToHome");
+    const QString _timeToHomeFactName =          QStringLiteral("timeToHome");
+    const QString _missionItemIndexFactName =    QStringLiteral("missionItemIndex");
+    const QString _headingToNextWPFactName =     QStringLiteral("headingToNextWP");
+    const QString _distanceToNextWPFactName =    QStringLiteral("distanceToNextWP");
+    const QString _headingToHomeFactName =       QStringLiteral("headingToHome");
+    const QString _distanceToGCSFactName =       QStringLiteral("distanceToGCS");
+    const QString _hobbsFactName =               QStringLiteral("hobbs");
+    const QString _throttlePctFactName =         QStringLiteral("throttlePct");
+    const QString _imuTempFactName =             QStringLiteral("imuTemp");
+
+    const QString _gpsFactGroupName =                QStringLiteral("gps");
+    const QString _gps2FactGroupName =               QStringLiteral("gps2");
+    const QString _windFactGroupName =               QStringLiteral("wind");
+    const QString _vibrationFactGroupName =          QStringLiteral("vibration");
+    const QString _temperatureFactGroupName =        QStringLiteral("temperature");
+    const QString _clockFactGroupName =              QStringLiteral("clock");
+    const QString _setpointFactGroupName =           QStringLiteral("setpoint");
+    const QString _distanceSensorFactGroupName =     QStringLiteral("distanceSensor");
+    const QString _localPositionFactGroupName =      QStringLiteral("localPosition");
+    const QString _localPositionSetpointFactGroupName = QStringLiteral("localPositionSetpoint");
+    const QString _escStatusFactGroupName =          QStringLiteral("escStatus");
+    const QString _estimatorStatusFactGroupName =    QStringLiteral("estimatorStatus");
+    const QString _terrainFactGroupName =            QStringLiteral("terrain");
+    const QString _hygrometerFactGroupName =         QStringLiteral("hygrometer");
+    const QString _generatorFactGroupName =          QStringLiteral("generator");
+    const QString _efiFactGroupName =                QStringLiteral("efi");
+
     Fact _rollFact;
     Fact _pitchFact;
     Fact _headingFact;
@@ -1479,58 +1529,7 @@ private:
     RemoteIDManager*                _remoteIDManager            = nullptr;
     StandardModes*                  _standardModes              = nullptr;
 
-    static const char* _rollFactName;
-    static const char* _pitchFactName;
-    static const char* _headingFactName;
-    static const char* _rollRateFactName;
-    static const char* _pitchRateFactName;
-    static const char* _yawRateFactName;
-    static const char* _groundSpeedFactName;
-    static const char* _airSpeedFactName;
-    static const char* _airSpeedSetpointFactName;
-    static const char* _climbRateFactName;
-    static const char* _altitudeRelativeFactName;
-    static const char* _altitudeAMSLFactName;
-    static const char* _altitudeAboveTerrFactName;
-    static const char* _altitudeTuningFactName;
-    static const char* _altitudeTuningSetpointFactName;
-    static const char* _xTrackErrorFactName;
-    static const char* _rangeFinderDistFactName;
-    static const char* _flightDistanceFactName;
-    static const char* _flightTimeFactName;
-    static const char* _distanceToHomeFactName;
-    static const char* _timeToHomeFactName;
-    static const char* _missionItemIndexFactName;
-    static const char* _headingToNextWPFactName;
-    static const char* _distanceToNextWPFactName;
-    static const char* _headingToHomeFactName;
-    static const char* _distanceToGCSFactName;
-    static const char* _hobbsFactName;
-    static const char* _throttlePctFactName;
-    static const char* _imuTempFactName;
-
-    static const char* _gpsFactGroupName;
-    static const char* _gps2FactGroupName;
-    static const char* _windFactGroupName;
-    static const char* _vibrationFactGroupName;
-    static const char* _temperatureFactGroupName;
-    static const char* _clockFactGroupName;
-    static const char* _setpointFactGroupName;
-    static const char* _distanceSensorFactGroupName;
-    static const char* _localPositionFactGroupName;
-    static const char* _localPositionSetpointFactGroupName;
-    static const char* _escStatusFactGroupName;
-    static const char* _estimatorStatusFactGroupName;
-    static const char* _hygrometerFactGroupName;
-    static const char* _generatorFactGroupName;
-    static const char* _efiFactGroupName;
-    static const char* _terrainFactGroupName;
-
     static const int _vehicleUIUpdateRateMSecs      = 100;
-
-    // Settings keys
-    static const char* _settingsGroup;
-    static const char* _joystickEnabledSettingsKey;
 
     // Terrain query members, used to get terrain altitude for doSetHome()
     TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;

@@ -11,22 +11,7 @@
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
-const char* VehicleBatteryFactGroup::_batteryFactGroupNamePrefix    = "battery";
-
-const char* VehicleBatteryFactGroup::_batteryIdFactName             = "id";
-const char* VehicleBatteryFactGroup::_batteryFunctionFactName       = "batteryFunction";
-const char* VehicleBatteryFactGroup::_batteryTypeFactName           = "batteryType";
-const char* VehicleBatteryFactGroup::_voltageFactName               = "voltage";
-const char* VehicleBatteryFactGroup::_percentRemainingFactName      = "percentRemaining";
-const char* VehicleBatteryFactGroup::_mahConsumedFactName           = "mahConsumed";
-const char* VehicleBatteryFactGroup::_currentFactName               = "current";
-const char* VehicleBatteryFactGroup::_temperatureFactName           = "temperature";
-const char* VehicleBatteryFactGroup::_instantPowerFactName          = "instantPower";
-const char* VehicleBatteryFactGroup::_timeRemainingFactName         = "timeRemaining";
-const char* VehicleBatteryFactGroup::_timeRemainingStrFactName      = "timeRemainingStr";
-const char* VehicleBatteryFactGroup::_chargeStateFactName           = "chargeState";
-
-const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
+const char* VehicleBatteryFactGroup::_batteryFactGroupNamePrefix = "battery";
 
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(uint8_t batteryId, QObject* parent)
     : FactGroup             (1000, ":/json/Vehicle/BatteryFact.json", parent)

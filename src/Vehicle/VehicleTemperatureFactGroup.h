@@ -30,20 +30,16 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _temperature1FactName;
-    static const char* _temperature2FactName;
-    static const char* _temperature3FactName;
-
-    static const char* _settingsGroup;
-
-    static const double _temperatureUnavailable;
-
 private:
     void _handleScaledPressure  (mavlink_message_t& message);
     void _handleScaledPressure2 (mavlink_message_t& message);
     void _handleScaledPressure3 (mavlink_message_t& message);
     void _handleHighLatency     (mavlink_message_t& message);
     void _handleHighLatency2    (mavlink_message_t& message);
+
+    const QString _temperature1FactName =      QStringLiteral("temperature1");
+    const QString _temperature2FactName =      QStringLiteral("temperature2");
+    const QString _temperature3FactName =      QStringLiteral("temperature3");
 
     Fact            _temperature1Fact;
     Fact            _temperature2Fact;

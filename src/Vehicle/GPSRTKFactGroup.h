@@ -39,17 +39,17 @@ public:
     Fact* active            (void) { return &_active; }
     Fact* numSatellites     (void) { return &_numSatellites; }
 
-    static const char* _connectedFactName;
-    static const char* _currentDurationFactName;
-    static const char* _currentAccuracyFactName;
-    static const char* _currentLatitudeFactName;
-    static const char* _currentLongitudeFactName;
-    static const char* _currentAltitudeFactName;
-    static const char* _validFactName;
-    static const char* _activeFactName;
-    static const char* _numSatellitesFactName;
-
 private:
+    const QString _connectedFactName =                QStringLiteral("connected");
+    const QString _currentAccuracyFactName =          QStringLiteral("currentAccuracy");
+    const QString _currentDurationFactName =          QStringLiteral("currentDuration");
+    const QString _currentLatitudeFactName =          QStringLiteral("currentLatitude");
+    const QString _currentLongitudeFactName =         QStringLiteral("currentLongitude");
+    const QString _currentAltitudeFactName =          QStringLiteral("currentAltitude");
+    const QString _validFactName =                    QStringLiteral("valid");
+    const QString _activeFactName =                   QStringLiteral("active");
+    const QString _numSatellitesFactName =            QStringLiteral("numSatellites");
+
     Fact _connected;        ///< is an RTK gps connected?
     Fact _currentDuration;  ///< survey-in status in [s]
     Fact _currentAccuracy;  ///< survey-in accuracy in [mm]
