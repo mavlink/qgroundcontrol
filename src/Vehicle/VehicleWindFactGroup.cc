@@ -12,10 +12,6 @@
 
 #include <QtMath>
 
-const char* VehicleWindFactGroup::_directionFactName =      "direction";
-const char* VehicleWindFactGroup::_speedFactName =          "speed";
-const char* VehicleWindFactGroup::_verticalSpeedFactName =  "verticalSpeed";
-
 VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/WindFact.json", parent)
     , _directionFact    (0, _directionFactName,     FactMetaData::valueTypeDouble)

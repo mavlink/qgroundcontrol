@@ -10,19 +10,6 @@
 #include "VehicleDistanceSensorFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleDistanceSensorFactGroup::_rotationNoneFactName =     "rotationNone";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw45FactName =    "rotationYaw45";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw90FactName =    "rotationYaw90";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw135FactName =   "rotationYaw135";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw180FactName =   "rotationYaw180";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw225FactName =   "rotationYaw225";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw270FactName =   "rotationYaw270";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw315FactName =   "rotationYaw315";
-const char* VehicleDistanceSensorFactGroup::_rotationPitch90FactName =  "rotationPitch90";
-const char* VehicleDistanceSensorFactGroup::_rotationPitch270FactName = "rotationPitch270";
-const char* VehicleDistanceSensorFactGroup::_minDistanceFactName =      "minDistance";
-const char* VehicleDistanceSensorFactGroup::_maxDistanceFactName =      "maxDistance";
-
 VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     : FactGroup             (1000, ":/json/Vehicle/DistanceSensorFact.json", parent)
     , _rotationNoneFact     (0, _rotationNoneFactName,      FactMetaData::valueTypeDouble)

@@ -40,19 +40,19 @@ public:
     // Overrides from FactGroup
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _latFactName;
-    static const char* _lonFactName;
-    static const char* _mgrsFactName;
-    static const char* _hdopFactName;
-    static const char* _vdopFactName;
-    static const char* _courseOverGroundFactName;
-    static const char* _countFactName;
-    static const char* _lockFactName;
-
 protected:
     void _handleGpsRawInt   (mavlink_message_t& message);
     void _handleHighLatency (mavlink_message_t& message);
     void _handleHighLatency2(mavlink_message_t& message);
+
+    const QString _latFactName =                 QStringLiteral("lat");
+    const QString _lonFactName =                 QStringLiteral("lon");
+    const QString _mgrsFactName =                QStringLiteral("mgrs");
+    const QString _hdopFactName =                QStringLiteral("hdop");
+    const QString _vdopFactName =                QStringLiteral("vdop");
+    const QString _courseOverGroundFactName =    QStringLiteral("courseOverGround");
+    const QString _countFactName =               QStringLiteral("count");
+    const QString _lockFactName =                QStringLiteral("lock");
 
     Fact _latFact;
     Fact _lonFact;

@@ -39,24 +39,24 @@ public:
     // Overrides from FactGroup
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _statusFactName;
-    static const char* _genSpeedFactName;
-    static const char* _batteryCurrentFactName;
-    static const char* _loadCurrentFactName;
-    static const char* _powerGeneratedFactName;
-    static const char* _busVoltageFactName;
-    static const char* _rectifierTempFactName;
-    static const char* _batCurrentSetpointFactName;
-    static const char* _genTempFactName;
-    static const char* _runtimeFactName;
-    static const char* _timeMaintenanceFactName;
-
 signals:
     void flagsListGeneratorChanged();
 
 protected:
     void _handleGeneratorStatus(mavlink_message_t& message);
     void _updateGeneratorFlags();
+
+    const QString _statusFactName =                QStringLiteral("status");
+    const QString _genSpeedFactName =              QStringLiteral("genSpeed");
+    const QString _batteryCurrentFactName =        QStringLiteral("batteryCurrent");
+    const QString _loadCurrentFactName =           QStringLiteral("loadCurrent");
+    const QString _powerGeneratedFactName =        QStringLiteral("powerGenerated");
+    const QString _busVoltageFactName =            QStringLiteral("busVoltage");
+    const QString _rectifierTempFactName =         QStringLiteral("rectifierTemp");
+    const QString _batCurrentSetpointFactName =    QStringLiteral("batCurrentSetpoint");
+    const QString _genTempFactName =               QStringLiteral("genTemp");
+    const QString _runtimeFactName =               QStringLiteral("runtime");
+    const QString _timeMaintenanceFactName =       QStringLiteral("timeMaintenance");
 
     Fact _statusFact;
     Fact _genSpeedFact;

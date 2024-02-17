@@ -51,27 +51,26 @@ public:
     // Overrides from FactGroup
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _healthFactName;
-    static const char* _ecuIndexFactName;
-    static const char* _rpmFactName;
-    static const char* _fuelConsumedFactName;
-    static const char* _fuelFlowFactName;
-    static const char* _engineLoadFactName;
-    static const char* _throttlePosFactName;
-    static const char* _sparkTimeFactName;
-    static const char* _baroPressFactName;
-    static const char* _intakePressFactName;
-    static const char* _intakeTempFactName;
-    static const char* _cylinderTempFactName;
-    static const char* _ignTimeFactName;
-    static const char* _injTimeFactName;
-    static const char* _exGasTempFactName;
-    static const char* _throttleOutFactName;
-    static const char* _ptCompFactName;
-    static const char* _ignVoltageFactName;
-
-protected:
+private:
     void _handleEFIStatus(mavlink_message_t& message);
+
+    const QString _healthFactName =         QStringLiteral("health");
+    const QString _ecuIndexFactName =       QStringLiteral("ecuIndex");
+    const QString _rpmFactName =            QStringLiteral("rpm");
+    const QString _fuelConsumedFactName =   QStringLiteral("fuelConsumed");
+    const QString _fuelFlowFactName =       QStringLiteral("fuelFlow");
+    const QString _engineLoadFactName =     QStringLiteral("engineLoad");
+    const QString _throttlePosFactName =    QStringLiteral("throttlePos");
+    const QString _sparkTimeFactName =      QStringLiteral("sparkTime");
+    const QString _baroPressFactName =      QStringLiteral("baroPress");
+    const QString _intakePressFactName =    QStringLiteral("intakePress");
+    const QString _intakeTempFactName =     QStringLiteral("intakeTemp");
+    const QString _cylinderTempFactName =   QStringLiteral("cylinderTemp");
+    const QString _ignTimeFactName =        QStringLiteral("ignTime");
+    const QString _injTimeFactName =        QStringLiteral("injTime");
+    const QString _exGasTempFactName =      QStringLiteral("exGasTemp");
+    const QString _throttleOutFactName =    QStringLiteral("throttleOut");
+    const QString _ptCompFactName =         QStringLiteral("ptComp");
 
     Fact _healthFact;
     Fact _ecuIndexFact;

@@ -47,21 +47,6 @@ public:
     Fact* timeRemainingStr          () { return &_timeRemainingStrFact; }
     Fact* chargeState               () { return &_chargeStateFact; }
 
-    static const char* _batteryIdFactName;
-    static const char* _batteryFunctionFactName;
-    static const char* _batteryTypeFactName;
-    static const char* _temperatureFactName;
-    static const char* _voltageFactName;
-    static const char* _currentFactName;
-    static const char* _mahConsumedFactName;
-    static const char* _percentRemainingFactName;
-    static const char* _timeRemainingFactName;
-    static const char* _timeRemainingStrFactName;
-    static const char* _chargeStateFactName;
-    static const char* _instantPowerFactName;
-
-    static const char* _settingsGroup;
-
     /// Creates a new fact group for the battery id as needed and updates the Vehicle with it
     static void handleMessageForFactGroupCreation(Vehicle* vehicle, mavlink_message_t& message);
 
@@ -77,6 +62,21 @@ private:
     static void                     _handleBatteryStatus        (Vehicle* vehicle, mavlink_message_t& message);
     static VehicleBatteryFactGroup* _findOrAddBatteryGroupById  (Vehicle* vehicle, uint8_t batteryId);
 
+    static const char* _batteryFactGroupNamePrefix;
+
+    const QString _batteryIdFactName             = QStringLiteral("id");
+    const QString _batteryFunctionFactName       = QStringLiteral("batteryFunction");
+    const QString _batteryTypeFactName           = QStringLiteral("batteryType");
+    const QString _voltageFactName               = QStringLiteral("voltage");
+    const QString _percentRemainingFactName      = QStringLiteral("percentRemaining");
+    const QString _mahConsumedFactName           = QStringLiteral("mahConsumed");
+    const QString _currentFactName               = QStringLiteral("current");
+    const QString _temperatureFactName           = QStringLiteral("temperature");
+    const QString _instantPowerFactName          = QStringLiteral("instantPower");
+    const QString _timeRemainingFactName         = QStringLiteral("timeRemaining");
+    const QString _timeRemainingStrFactName      = QStringLiteral("timeRemainingStr");
+    const QString _chargeStateFactName           = QStringLiteral("chargeState");
+
     Fact            _batteryIdFact;
     Fact            _batteryFunctionFact;
     Fact            _batteryTypeFact;
@@ -89,6 +89,4 @@ private:
     Fact            _timeRemainingStrFact;
     Fact            _chargeStateFact;
     Fact            _instantPowerFact;
-
-    static const char* _batteryFactGroupNamePrefix;
 };
