@@ -81,6 +81,8 @@ endif ()
 #######################################################
 #             Source Files
 #######################################################
+target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
+
 add_library(${PROJECT_NAME} STATIC
         ${EXTRA_SRC}
 
@@ -124,7 +126,6 @@ add_library(${PROJECT_NAME} STATIC
         ShapeFileHelper.h
         SHPFileHelper.cc
         SHPFileHelper.h
-        stable_headers.h
         TerrainTile.cc
         TerrainTile.h
 )
