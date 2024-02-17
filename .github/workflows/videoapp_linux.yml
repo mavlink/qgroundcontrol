@@ -41,7 +41,7 @@ jobs:
           host:         linux
           target:       desktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools
+          modules:      qtmultimedia
           setup-python: true
 
       - name: Install github environment dependencies for unit test running
@@ -58,6 +58,9 @@ jobs:
 
       - name: Install ccache
         run:  sudo apt-get install ccache
+
+      - name: Install ninja
+        run:  sudo apt-get install ninja-build
 
       - name: Install post-link dependencies
         run:  sudo apt-get install -y binutils patchelf
@@ -88,8 +91,8 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-          qmake -r ${SOURCE_DIR}/videoreceiverapp.pro CONFIG+=debug CONFIG+=${BUILD_TYPE}
-          make -j2
+          cmake -S ${SOURCE_DIR}/VideoReceiverApp -B ${SOURCE_DIR}/VideoReceiverApp/build/ -G Ninja
+          cmake --build ${SOURCE_DIR}/VideoReceiverApp/build/ --target all
 
       - name: ccache post-run
         run:  ccache -s
