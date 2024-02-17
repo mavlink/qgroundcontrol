@@ -2,7 +2,6 @@ add_custom_target(UiPreferencesQml
 	SOURCES
         ADSBServerSettings.qml
 		BluetoothSettings.qml
-		DebugWindow.qml
         FlyViewSettings.qml
 		GeneralSettings.qml
 		HelpSettings.qml
@@ -11,8 +10,6 @@ add_custom_target(UiPreferencesQml
         OfflineMapInfo.qml
 		PX4LogTransferSettings.qml
         MapSettings.qml
-		MockLink.qml
-		MockLinkSettings.qml
         PlanViewSettings.qml
 		SerialSettings.qml
 		TcpSettings.qml

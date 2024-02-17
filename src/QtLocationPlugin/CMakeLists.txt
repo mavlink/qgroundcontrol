@@ -28,6 +28,7 @@ add_library(QtLocationPlugin
 target_link_libraries(QtLocationPlugin
 	PUBLIC
 		Qt6::Location
+		Qt6::LocationPrivate
 		Qt6::Sql
 
 		qgc

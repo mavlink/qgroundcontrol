@@ -427,24 +427,6 @@ void UnitTest::_linkDeleted(LinkInterface* link)
     }
 }
 
-QString UnitTest::createRandomFile(uint32_t byteCount)
-{
-    QTemporaryFile tempFile;
-
-    tempFile.setAutoRemove(false);
-    if (tempFile.open()) {
-        for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
-            unsigned char byte = (QRandomGenerator::global()->generate() * 0xFF) / RAND_MAX;
-            tempFile.write((char *)&byte, 1);
-        }
-        tempFile.close();
-        return tempFile.fileName();
-    } else {
-        qWarning() << "UnitTest::createRandomFile open failed" << tempFile.errorString();
-        return QString();
-    }
-}
-
 bool UnitTest::fileCompare(const QString& file1, const QString& file2)
 {
     QFile f1(file1);
