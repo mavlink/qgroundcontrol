@@ -1,7 +1,4 @@
 <RCC>
-    <qresource prefix="/unittest">
-        <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
-    </qresource>
     <qresource prefix="/toolbar">
         <file alias="ArmedIndicator.qml">src/ui/toolbar/ArmedIndicator.qml</file>
         <file alias="GPSIndicator.qml">src/ui/toolbar/GPSIndicator.qml</file>
@@ -38,7 +35,6 @@
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
-        <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="RemoteIDSettings.qml">src/ui/preferences/RemoteIDSettings.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
         <file alias="ESP8266ComponentSummary.qml">src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml</file>
@@ -66,10 +62,7 @@
         <file alias="MavlinkConsolePage.qml">src/AnalyzeView/MavlinkConsolePage.qml</file>
         <file alias="MAVLinkInspectorPage.qml">src/AnalyzeView/MAVLinkInspectorPage.qml</file>
         <file alias="PX4LogTransferSettings.qml">src/ui/preferences/PX4LogTransferSettings.qml</file>
-        <file alias="MissionCommandTreeEditorTestWindow.qml">src/MissionManager/MissionCommandTreeEditorTestWindow.qml</file>
         <file alias="MissionSettingsEditor.qml">src/PlanView/MissionSettingsEditor.qml</file>
-        <file alias="MockLink.qml">src/ui/preferences/MockLink.qml</file>
-        <file alias="MockLinkSettings.qml">src/ui/preferences/MockLinkSettings.qml</file>
         <file alias="MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
         <file alias="ActuatorComponent.qml">src/AutoPilotPlugins/PX4/ActuatorComponent.qml</file>
         <file alias="ActuatorFact.qml">src/AutoPilotPlugins/PX4/ActuatorFact.qml</file>
@@ -151,7 +144,6 @@
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
         <file alias="QGroundControl/Controls/QGCCheckBoxSlider.qml">src/QmlControls/QGCCheckBoxSlider.qml</file>
         <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
-        <file alias="QGroundControl/Controls/QGCControlDebug.qml">src/QmlControls/QGCControlDebug.qml</file>
         <file alias="QGroundControl/Controls/QGCComboBox.qml">src/QmlControls/QGCComboBox.qml</file>
         <file alias="QGroundControl/Controls/QGCFileDialog.qml">src/QmlControls/QGCFileDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickable.qml">src/QmlControls/QGCFlickable.qml</file>
@@ -293,7 +285,6 @@
         <file alias="QGroundControl/FlightMap/VehicleMapItem.qml">src/FlightMap/MapItems/VehicleMapItem.qml</file>
         <file alias="QGroundControl/ScreenTools/qmldir">src/QmlControls/QGroundControl/ScreenTools/qmldir</file>
         <file alias="QGroundControl/ScreenTools/ScreenTools.qml">src/QmlControls/ScreenTools.qml</file>
-        <file alias="QmlTest.qml">src/QmlControls/QmlTest.qml</file>
         <file alias="RadioComponent.qml">src/AutoPilotPlugins/Common/RadioComponent.qml</file>
         <file alias="SerialSettings.qml">src/ui/preferences/SerialSettings.qml</file>
         <file alias="SetupParameterEditor.qml">src/VehicleSetup/SetupParameterEditor.qml</file>
@@ -306,14 +297,12 @@
         <file alias="SyslinkComponent.qml">src/AutoPilotPlugins/Common/SyslinkComponent.qml</file>
         <file alias="TcpSettings.qml">src/ui/preferences/TcpSettings.qml</file>
         <file alias="TelemetrySettings.qml">src/ui/preferences/TelemetrySettings.qml</file>
-        <file alias="test.qml">src/test.qml</file>
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
         <file alias="VideoSettings.qml">src/ui/preferences/VideoSettings.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
-        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewInsetViewer.qml">src/FlightDisplay/FlyViewInsetViewer.qml</file>
         <file alias="Viewer3D/Viewer3DSettingMenu.qml">src/Viewer3D/Viewer3D/Viewer3DSettingMenu.qml</file>
         <file alias="Viewer3D/Viewer3D.qml">src/Viewer3D/Viewer3D/Viewer3D.qml</file>

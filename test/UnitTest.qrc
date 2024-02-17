@@ -1,0 +1,30 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="MockLink.qml">ui/preferences/MockLink.qml</file>
+        <file alias="MockLinkSettings.qml">ui/preferences/MockLinkSettings.qml</file>
+        <file alias="QGroundControl/Controls/MockLinkOptionsDlg.qml">comm/MockLinkOptionsDlg.qml</file>
+        <file alias="QGroundControl/Controls/QGCControlDebug.qml">QmlControls/QGCControlDebug.qml</file>
+        <file alias="DebugWindow.qml">ui/preferences/DebugWindow.qml</file>
+        <file alias="QmlTest.qml">QmlControls/QmlTest.qml</file>
+    </qresource>
+    <qresource prefix="/unittest">
+        <file alias="PolygonAreaTest.kml">MissionManager/PolygonAreaTest.kml</file>
+        <file alias="PolygonBadCoordinatesNode.kml">MissionManager/PolygonBadCoordinatesNode.kml</file>
+        <file alias="PolygonBadXml.kml">MissionManager/PolygonBadXml.kml</file>
+        <file alias="PolygonGood.kml">MissionManager/PolygonGood.kml</file>
+        <file alias="PolygonMissingNode.kml">MissionManager/PolygonMissingNode.kml</file>
+        <file alias="SectionTest.plan">MissionManager/SectionTest.plan</file>
+        <file alias="TranslationTest.json">qgcunittest/TranslationTest.json</file>
+        <file alias="TranslationTest_de_DE.ts">qgcunittest/TranslationTest_de_DE.ts</file>
+        <file alias="FactSystemTest.qml">FactSystem/FactSystemTest.qml</file>
+        <file alias="MissionPlanner.waypoints">MissionManager/MissionPlanner.waypoints</file>
+        <file alias="MockLinkOptionsDlg.qml">comm/MockLinkOptionsDlg.qml</file>
+        <file alias="OldFileFormat.mission">MissionManager/OldFileFormat.mission</file>
+        <file alias="UT-MavCmdInfoCommon.json">MissionManager/UT-MavCmdInfoCommon.json</file>
+        <file alias="UT-MavCmdInfoFixedWing.json">MissionManager/UT-MavCmdInfoFixedWing.json</file>
+        <file alias="UT-MavCmdInfoMultiRotor.json">MissionManager/UT-MavCmdInfoMultiRotor.json</file>
+        <file alias="UT-MavCmdInfoRover.json">MissionManager/UT-MavCmdInfoRover.json</file>
+        <file alias="UT-MavCmdInfoSub.json">MissionManager/UT-MavCmdInfoSub.json</file>
+        <file alias="UT-MavCmdInfoVTOL.json">MissionManager/UT-MavCmdInfoVTOL.json</file>
+    </qresource>
+</RCC>

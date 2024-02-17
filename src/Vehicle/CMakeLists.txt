@@ -1,22 +1,6 @@
 
 add_subdirectory(Actuators)
 
-set(EXTRA_SRC)
-if(BUILD_TESTING)
-	list(APPEND EXTRA_SRC
-		FTPManagerTest.cc
-		FTPManagerTest.h
-		RequestMessageTest.cc
-		RequestMessageTest.h
-		SendMavCommandWithHandlerTest.cc
-		SendMavCommandWithHandlerTest.h
-		SendMavCommandWithSignallingTest.cc
-		SendMavCommandWithSignallingTest.h
-		VehicleLinkManagerTest.cc
-		VehicleLinkManagerTest.h
-	)
-endif()
-
 add_library(Vehicle
 	Autotune.cpp
 	Autotune.h
@@ -106,8 +90,6 @@ add_library(Vehicle
         VehicleHygrometerFactGroup.h
 	RemoteIDManager.h
 	RemoteIDManager.cc
-
-	${EXTRA_SRC}
 )
 
 target_link_libraries(Vehicle
