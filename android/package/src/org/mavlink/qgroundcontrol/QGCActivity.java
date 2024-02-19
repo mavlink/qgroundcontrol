@@ -81,11 +81,14 @@ public class QGCActivity extends QtActivity
     private static ExecutorService                      _usbExecutor;
     private static UsbManager                           _usbManager;
     private static List<UsbSerialDriver>                _usbdrivers;
+    private static List<UsbSerialPort>                  _usbPorts;
+    private static List<SerialInputOutputManager>       _usbIoManagers;
+    private static List<UsbDeviceConnection>            _usbConnections;
     private static HashMap<Integer, Long>               _usbIds;
     private static PendingIntent                        _usbPermissionIntent;
-    private static HashMap<Integer, UsbIoManager>       _usbIoManagers;
-    private static UsbIoManager.Listener                _usbListener;
+    private static SerialInputOutputManager.Listener    _usbListener;
     private static BroadcastReceiver                    _usbReceiver;
+    private static UsbSerialProber                      _usbProber;
 
     // Native C++ functions which connect back to QSerialPort code
     private static native void nativeDeviceHasDisconnected(long userData);
@@ -136,7 +139,7 @@ public class QGCActivity extends QtActivity
             Log.i(TAG, "MulticastLock not acquired!!!");
         }
 
-        initUsbHandler()
+        createUsbHandler();
 
         nativeInit();
     }
@@ -169,13 +172,21 @@ public class QGCActivity extends QtActivity
 
     }
 
-    private static void initUsbHandler()
+    private static void createUsbHandler()
     {
         _usbdrivers = new ArrayList<UsbSerialDriver>();
         _usbIds = new HashMap<Integer, Long>();
         _usbIoManagers = new HashMap<Integer, UsbIoManager>();
 
         _usbExecutor = Executors.newSingleThreadExecutor();
+
+        /* TODO: Create custom prober */
+        /* ProbeTable customTable = new ProbeTable();
+        customTable.addProduct(0x1234, 0x0001, FtdiSerialDriver.class);
+        customTable.addProduct(0x1234, 0x0002, FtdiSerialDriver.class);
+
+        _usbProber = new UsbSerialProber(customTable); */
+        _usbProber = UsbSerialProber.getDefaultProber();
 
         _usbListener = new UsbIoManager.Listener()
         {
@@ -283,7 +294,7 @@ public class QGCActivity extends QtActivity
     /// Incrementally updates the list of drivers connected to the device
     private static void updateCurrentDrivers()
     {
-        List<UsbSerialDriver> currentDrivers = UsbSerialProber.findAllDevices(_usbManager);
+        List<UsbSerialDriver> currentDrivers = _usbProber.findAllDrivers(_usbManager);
 
         // Remove stale drivers
         for (int i=_usbdrivers.size()-1; i>=0; i--) {
