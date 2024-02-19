@@ -1205,7 +1205,7 @@ AndroidBuild {
     contains (CONFIG, DISABLE_BUILTIN_ANDROID) {
         message("Skipping builtin support for Android")
     } else {
-        include(android.pri)
+        include(android/android.pri)
     }
 }
 

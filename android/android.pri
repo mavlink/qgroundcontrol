@@ -1,11 +1,11 @@
-include($$PWD/libs/qtandroidserialport/src/qtandroidserialport.pri)
+include($$PWD/libs/qtandroidserialport/qtandroidserialport.pri)
 
 ANDROID_MIN_SDK_VERSION = 26
 ANDROID_TARGET_SDK_VERSION = 33
 
 ANDROID_PACKAGE_SOURCE_DIR          = $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR  # Tells Qt location of package files for build
-ANDROID_PACKAGE_QGC_SOURCE_DIR      = $$PWD/android                         # Original location of QGC package files
-ANDROID_PACKAGE_CUSTOM_SOURCE_DIR   = $$PWD/custom/android                  # Original location for custom build override package files
+ANDROID_PACKAGE_QGC_SOURCE_DIR      = $$PWD/package                         # Original location of QGC package files
+ANDROID_PACKAGE_CUSTOM_SOURCE_DIR   = $$PWD/../custom/android                  # Original location for custom build override package files
 
 # We always move the package files to the ANDROID_PACKAGE_SOURCE_DIR build dir so we can modify the manifest as needed
 
@@ -21,14 +21,14 @@ exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml) {
     android_source_dir_target.depends = $$ANDROID_PACKAGE_QGC_SOURCE_DIR/AndroidManifest.xml
 }
 
-# Custom builds can override android package file
-
- equals(QMAKE_HOST.os, Darwin) {
+equals(QMAKE_HOST.os, Darwin) {
     # Latest Mac OSX has different sed than regular linux.
     SED_I = '$$QMAKE_STREAM_EDITOR -i \"\"'
 } else {
     SED_I = '$$QMAKE_STREAM_EDITOR -i'
 }
+
+# Custom builds can override android package file
 
 exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR) {
     message("Merging$$ $$ANDROID_PACKAGE_QGC_SOURCE_DIR and $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR to $$ANDROID_PACKAGE_SOURCE_DIR")
@@ -71,8 +71,6 @@ contains(DEFINES, NO_SERIAL_LINK) {
     android_source_dir_target.commands = $$android_source_dir_target.commands && \
         $$SED_I \"s/<!-- %%QGC_INSERT_ACTIVITY_META_DATA -->/<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_DEVICE_ATTACHED\\\"\\\/>\r\n<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_DEVICE_DETACHED\\\"\\\/>\r\n<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_ACCESSORY_ATTACHED\\\"\\\/>/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
 }
-
-# OTHER_FILES makes the specified files be visible in Qt Creator for editing
 
 exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml) {
     DISTFILES += \
