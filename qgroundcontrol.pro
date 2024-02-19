@@ -1204,8 +1204,7 @@ AndroidBuild {
     contains (CONFIG, DISABLE_BUILTIN_ANDROID) {
         message("Skipping builtin support for Android")
     } else {
-        QT -= core-private
-        include(android.pri)
+        include(android/android.pri)
     }
 }
 

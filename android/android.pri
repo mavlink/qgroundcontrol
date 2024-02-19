@@ -1,11 +1,11 @@
-include($$PWD/libs/qtandroidserialport/src/qtandroidserialport.pri)
+include($$PWD/libs/qtandroidserialport/qtandroidserialport.pri)
 
 ANDROID_MIN_SDK_VERSION = 26
 ANDROID_TARGET_SDK_VERSION = 33
 
 ANDROID_PACKAGE_SOURCE_DIR          = $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR  # Tells Qt location of package files for build
-ANDROID_PACKAGE_QGC_SOURCE_DIR      = $$PWD/android                         # Original location of QGC package files
-ANDROID_PACKAGE_CUSTOM_SOURCE_DIR   = $$PWD/custom/android                  # Original location for custom build override package files
+ANDROID_PACKAGE_QGC_SOURCE_DIR      = $$PWD/package                         # Original location of QGC package files
+ANDROID_PACKAGE_CUSTOM_SOURCE_DIR   = $$PWD/../custom/android                  # Original location for custom build override package files
 
 # We always move the package files to the ANDROID_PACKAGE_SOURCE_DIR build dir so we can modify the manifest as needed
 
@@ -21,14 +21,14 @@ exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml) {
     android_source_dir_target.depends = $$ANDROID_PACKAGE_QGC_SOURCE_DIR/AndroidManifest.xml
 }
 
-# Custom builds can override android package file
-
- equals(QMAKE_HOST.os, Darwin) {
+equals(QMAKE_HOST.os, Darwin) {
     # Latest Mac OSX has different sed than regular linux.
     SED_I = '$$QMAKE_STREAM_EDITOR -i \"\"'
 } else {
     SED_I = '$$QMAKE_STREAM_EDITOR -i'
 }
+
+# Custom builds can override android package file
 
 exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR) {
     message("Merging$$ $$ANDROID_PACKAGE_QGC_SOURCE_DIR and $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR to $$ANDROID_PACKAGE_SOURCE_DIR")
@@ -72,47 +72,45 @@ contains(DEFINES, NO_SERIAL_LINK) {
         $$SED_I \"s/<!-- %%QGC_INSERT_ACTIVITY_META_DATA -->/<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_DEVICE_ATTACHED\\\"\\\/>\r\n<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_DEVICE_DETACHED\\\"\\\/>\r\n<meta-data android:resource=\\\"@xml\\\/device_filter\\\" android:name=\\\"android.hardware.usb.action.USB_ACCESSORY_ATTACHED\\\"\\\/>/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
 }
 
-# OTHER_FILES makes the specified files be visible in Qt Creator for editing
-
-exists($$PWD/custom/android/AndroidManifest.xml) {
+exists($$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml) {
     DISTFILES += \
-        $$PWD/custom/android/AndroidManifest.xml
+        $$ANDROID_PACKAGE_CUSTOM_SOURCE_DIR/AndroidManifest.xml
 } else {
     DISTFILES += \
-        $$PWD/android/AndroidManifest.xml
+        $$ANDROID_PACKAGE_QGC_SOURCE_DIR/AndroidManifest.xml
 }
 
 DISTFILES += \
-    $$PWD/android/build.gradle \
-    $$PWD/android/gradle/wrapper/gradle-wrapper.jar \
-    $$PWD/android/gradle/wrapper/gradle-wrapper.properties \
-    $$PWD/android/gradlew \
-    $$PWD/android/gradlew.bat \
-    $$PWD/android/res/values/libs.xml \
-    $$PWD/android/res/xml/device_filter.xml \
-    $$PWD/android/res/xml/network_security_config.xml \
-    $$PWD/android/res/xml/qtprovider_paths.xml \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbId.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
-    $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
-    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
-    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
-    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java \
-    $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
-    $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/build.gradle \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradle/wrapper/gradle-wrapper.jar \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradle/wrapper/gradle-wrapper.properties \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradlew \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradlew.bat \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/libs.xml \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/device_filter.xml \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/network_security_config.xml \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/qtprovider_paths.xml \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbId.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/mavlink/qgroundcontrol/QGCActivity.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/mavlink/qgroundcontrol/UsbIoManager.java
 
 SOURCES += \
-    $$PWD/android/src/AndroidInterface.cc \
-    $$PWD/android/src/AndroidInit.cpp
+    $$PWD/src/AndroidInterface.cc \
+    $$PWD/src/AndroidInit.cpp
 
 HEADERS += \
-    $$PWD/android/src/AndroidInterface.h
+    $$PWD/src/AndroidInterface.h
 
 INCLUDEPATH += \
-    $$PWD/android/src
+    $$PWD/src
