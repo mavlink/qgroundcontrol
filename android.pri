@@ -75,15 +75,23 @@ contains(DEFINES, NO_SERIAL_LINK) {
 # OTHER_FILES makes the specified files be visible in Qt Creator for editing
 
 exists($$PWD/custom/android/AndroidManifest.xml) {
-    OTHER_FILES += \
-    $$PWD/custom/android/AndroidManifest.xml
+    DISTFILES += \
+        $$PWD/custom/android/AndroidManifest.xml
 } else {
-    OTHER_FILES += \
-    $$PWD/android/AndroidManifest.xml
+    DISTFILES += \
+        $$PWD/android/AndroidManifest.xml
 }
 
-OTHER_FILES += \
+DISTFILES += \
+    $$PWD/android/build.gradle \
+    $$PWD/android/gradle/wrapper/gradle-wrapper.jar \
+    $$PWD/android/gradle/wrapper/gradle-wrapper.properties \
+    $$PWD/android/gradlew \
+    $$PWD/android/gradlew.bat \
+    $$PWD/android/res/values/libs.xml \
     $$PWD/android/res/xml/device_filter.xml \
+    $$PWD/android/res/xml/network_security_config.xml \
+    $$PWD/android/res/xml/qtprovider_paths.xml \
     $$PWD/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
@@ -93,19 +101,11 @@ OTHER_FILES += \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
-    $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
-    $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
     $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
-    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java
-
-DISTFILES += \
-    $$PWD/android/gradle/wrapper/gradle-wrapper.jar \
-    $$PWD/android/gradlew \
-    $$PWD/android/res/values/libs.xml \
-    $$PWD/android/build.gradle \
-    $$PWD/android/gradle/wrapper/gradle-wrapper.properties \
-    $$PWD/android/gradlew.bat
+    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java \
+    $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
+    $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java
 
 SOURCES += \
     $$PWD/android/src/AndroidInterface.cc \
