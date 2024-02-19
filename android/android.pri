@@ -91,14 +91,19 @@ DISTFILES += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/network_security_config.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/qtprovider_paths.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/Ch34xSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/ChromeCcdSerialDriver.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
-    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/Cp21xxSerialDriver.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/GsmModemSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/ProbeTable.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/SerialTimeoutException.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbId.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialPort.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
-    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java \
