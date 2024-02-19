@@ -108,7 +108,8 @@ DISTFILES += \
     $$PWD/android/gradlew.bat
 
 SOURCES += \
-    $$PWD/android/src/AndroidInterface.cc
+    $$PWD/android/src/AndroidInterface.cc \
+    $$PWD/android/src/AndroidInit.cpp
 
 HEADERS += \
     $$PWD/android/src/AndroidInterface.h
