@@ -5,23 +5,27 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.1'
+        classpath 'com.android.tools.build:gradle:8.2.2'
     }
 }
 
 repositories {
     google()
     mavenCentral()
+    // maven { url 'https://jitpack.io' }
 }
 
 apply plugin: 'com.android.application'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    implementation 'androidx.core:core:1.10.1'
+    implementation 'androidx.core:core:1.12.0'
+    // implementation 'com.github.mik3y:usb-serial-for-android:3.7.0'
 }
 
 android {
+    namespace "org.zatqgc.zenith"
+
     /*******************************************************
      * The following variables:
      * - androidBuildToolsVersion,
@@ -75,8 +79,21 @@ android {
 
     defaultConfig {
         resConfig "en"
-        minSdkVersion 25
+        minSdkVersion qtMinSdkVersion
         targetSdkVersion qtTargetSdkVersion
         ndk.abiFilters = qtTargetAbiList.split(",")
+        // versionCode = 1.0
+        // versionName = "1.0"
     }
+
+    println "minSdkVersion: ${minSdkVersion}"
+    println "targetSdkVersion: ${targetSdkVersion}"
+    println "ndk.abiFilters: ${ndk.abiFilters}"
+    println "versionCode: ${versionCode}"
+    println "versionName: ${versionName}"
+    println "androidCompileSdkVersion: ${compileSdkVersion}"
+    println "androidBuildToolsVersion: ${buildToolsVersion}"
+    println "androidNdkVersion: ${ndkVersion}"
+    println "project.name: ${project.name}"
+    println "qtAndroidDir: ${qtAndroidDir}"
 }
