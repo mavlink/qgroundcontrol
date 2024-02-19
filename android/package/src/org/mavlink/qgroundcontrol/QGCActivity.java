@@ -60,6 +60,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.hoho.android.usbserial.driver.*;
+
 import org.qtproject.qt.android.bindings.QtActivity;
 
 public class QGCActivity extends QtActivity
@@ -77,70 +78,14 @@ public class QGCActivity extends QtActivity
     /* USB */
     private static final int                            BAD_DEVICE_ID = 0;
     private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
-    private static final ExecutorService                _executor = Executors.newSingleThreadExecutor();
-    private static Context                              _context;
-    private static UsbManager                           _usbManager = null;
-    private static List<UsbSerialDriver>                _drivers;
-    private static HashMap<Integer, Long>               _userDataHashByDeviceId;
-    private static PendingIntent                        _usbPermissionIntent = null;
-    private static HashMap<Integer, UsbIoManager>       _ioManager;
-
-    private static final UsbIoManager.Listener          _Listener = new UsbIoManager.Listener()
-        {
-            @Override
-            public void onRunError(Exception eA, long userData)
-            {
-                Log.e(TAG, "onRunError Exception");
-                nativeDeviceException(userData, eA.getMessage());
-            }
-
-            @Override
-            public void onNewData(final byte[] dataA, long userData)
-            {
-                nativeDeviceNewData(userData, dataA);
-            }
-        };
-
-    private static final BroadcastReceiver              _usbReceiver = new BroadcastReceiver()
-        {
-            public void onReceive(Context context, Intent intent)
-            {
-                String action = intent.getAction();
-                Log.i(TAG, "BroadcastReceiver USB action " + action);
-
-                if (ACTION_USB_PERMISSION.equals(action)) {
-                    synchronized (_instance) {
-                        UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                        if (device != null) {
-                            UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
-
-                            if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                                qgcLogDebug("Permission granted to " + device.getDeviceName());
-                                driver.setPermissionStatus(UsbSerialDriver.permissionStatusSuccess);
-                            } else {
-                                qgcLogDebug("Permission denied for " + device.getDeviceName());
-                                driver.setPermissionStatus(UsbSerialDriver.permissionStatusDenied);
-                            }
-                        }
-                    }
-                } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                    UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                    if (device != null) {
-                        if (_userDataHashByDeviceId.containsKey(device.getDeviceId())) {
-                            nativeDeviceHasDisconnected(_userDataHashByDeviceId.get(device.getDeviceId()));
-                        }
-                    }
-                }
-
-
-                // FIXME-QT6: Not ye converted to Qt6
-                //try {
-                //    nativeUpdateAvailableJoysticks();
-                //} catch(Exception e) {
-                //    Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()");
-                //}
-            }
-        };
+    private static ExecutorService                      _usbExecutor;
+    private static UsbManager                           _usbManager;
+    private static List<UsbSerialDriver>                _usbdrivers;
+    private static HashMap<Integer, Long>               _usbIds;
+    private static PendingIntent                        _usbPermissionIntent;
+    private static HashMap<Integer, UsbIoManager>       _usbIoManagers;
+    private static UsbIoManager.Listener                _usbListener;
+    private static BroadcastReceiver                    _usbReceiver;
 
     // Native C++ functions which connect back to QSerialPort code
     private static native void nativeDeviceHasDisconnected(long userData);
@@ -164,13 +109,8 @@ public class QGCActivity extends QtActivity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        _drivers = new ArrayList<UsbSerialDriver>();
-        _userDataHashByDeviceId = new HashMap<Integer, Long>();
-        _ioManager = new HashMap<Integer, UsbIoManager>();
 
-        nativeInit();
-
-        PowerManager pm = (PowerManager)_instance.getSystemService(Context.POWER_SERVICE);
+        PowerManager pm = (PowerManager) _instance.getSystemService(Context.POWER_SERVICE);
         _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
         if(_wakeLock != null)
         {
@@ -182,18 +122,23 @@ public class QGCActivity extends QtActivity
         }
         _instance.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        initUsbHandler()
-
         // Workaround for QTBUG-73138
-        if (_wifiMulticastLock == null)
+        WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
+        _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
+        if(_wakeLock != null)
         {
-            WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
-            _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
             _wifiMulticastLock.setReferenceCounted(true);
+            _wifiMulticastLock.acquire();
+            Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+        }
+        else
+        {
+            Log.i(TAG, "MulticastLock not acquired!!!");
         }
 
-        _wifiMulticastLock.acquire();
-        Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+        initUsbHandler()
+
+        nativeInit();
     }
 
     @Override
@@ -226,6 +171,68 @@ public class QGCActivity extends QtActivity
 
     private static void initUsbHandler()
     {
+        _usbdrivers = new ArrayList<UsbSerialDriver>();
+        _usbIds = new HashMap<Integer, Long>();
+        _usbIoManagers = new HashMap<Integer, UsbIoManager>();
+
+        _usbExecutor = Executors.newSingleThreadExecutor();
+
+        _usbListener = new UsbIoManager.Listener()
+        {
+            @Override
+            public void onRunError(Exception eA, long userData)
+            {
+                Log.e(TAG, "onRunError Exception");
+                nativeDeviceException(userData, eA.getMessage());
+            }
+
+            @Override
+            public void onNewData(final byte[] dataA, long userData)
+            {
+                nativeDeviceNewData(userData, dataA);
+            }
+        };
+
+        _usbReceiver = new BroadcastReceiver()
+        {
+            public void onReceive(Context context, Intent intent)
+            {
+                String action = intent.getAction();
+                Log.i(TAG, "BroadcastReceiver USB action " + action);
+
+                if (ACTION_USB_PERMISSION.equals(action)) {
+                    synchronized (_instance) {
+                        UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                        if (device != null) {
+                            UsbSerialDriver driver = _findDriverByDeviceId(device.getDeviceId());
+
+                            if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                                qgcLogDebug("Permission granted to " + device.getDeviceName());
+                                driver.setPermissionStatus(UsbSerialDriver.permissionStatusSuccess);
+                            } else {
+                                qgcLogDebug("Permission denied for " + device.getDeviceName());
+                                driver.setPermissionStatus(UsbSerialDriver.permissionStatusDenied);
+                            }
+                        }
+                    }
+                } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+                    UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    if (device != null) {
+                        if (_usbIds.containsKey(device.getDeviceId())) {
+                            nativeDeviceHasDisconnected(_usbIds.get(device.getDeviceId()));
+                        }
+                    }
+                }
+
+                // FIXME-QT6: Not ye converted to Qt6
+                //try {
+                //    nativeUpdateAvailableJoysticks();
+                //} catch(Exception e) {
+                //    Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()");
+                //}
+            }
+        };
+
         _usbManager = (UsbManager)_instance.getSystemService(Context.USB_SERVICE);
 
         // Register for USB Detach and USB Permission intent
@@ -247,7 +254,7 @@ public class QGCActivity extends QtActivity
 
     private static UsbSerialDriver _findDriverByDeviceId(int deviceId)
     {
-        for (UsbSerialDriver driver: _drivers)
+        for (UsbSerialDriver driver: _usbdrivers)
         {
             if (driver.getDevice().getDeviceId() == deviceId)
             {
@@ -259,7 +266,7 @@ public class QGCActivity extends QtActivity
 
     private static UsbSerialDriver _findDriverByDeviceName(String deviceName)
     {
-        for (UsbSerialDriver driver: _drivers)
+        for (UsbSerialDriver driver: _usbdrivers)
         {
             if (driver.getDevice().getDeviceName().equals(deviceName))
             {
@@ -275,26 +282,26 @@ public class QGCActivity extends QtActivity
         List<UsbSerialDriver> currentDrivers = UsbSerialProber.findAllDevices(_usbManager);
 
         // Remove stale drivers
-        for (int i=_drivers.size()-1; i>=0; i--) {
+        for (int i=_usbdrivers.size()-1; i>=0; i--) {
             boolean found = false;
             for (UsbSerialDriver currentDriver: currentDrivers) {
-                if (_drivers.get(i).getDevice().getDeviceId() == currentDriver.getDevice().getDeviceId()) {
+                if (_usbdrivers.get(i).getDevice().getDeviceId() == currentDriver.getDevice().getDeviceId()) {
                     found = true;
                     break;
                 }
             }
 
             if (!found) {
-                qgcLogDebug("Remove stale driver " + _drivers.get(i).getDevice().getDeviceName());
-                _drivers.remove(i);
+                qgcLogDebug("Remove stale driver " + _usbdrivers.get(i).getDevice().getDeviceName());
+                _usbdrivers.remove(i);
             }
         }
 
         // Add new drivers
         for (int i=0; i<currentDrivers.size(); i++) {
             boolean found = false;
-            for (int j=0; j<_drivers.size(); j++) {
-                if (currentDrivers.get(i).getDevice().getDeviceId() == _drivers.get(j).getDevice().getDeviceId()) {
+            for (int j=0; j<_usbdrivers.size(); j++) {
+                if (currentDrivers.get(i).getDevice().getDeviceId() == _usbdrivers.get(j).getDevice().getDeviceId()) {
                     found = true;
                     break;
                 }
@@ -305,7 +312,7 @@ public class QGCActivity extends QtActivity
                 UsbDevice       device =        newDriver.getDevice();
                 String          deviceName =    device.getDeviceName();
 
-                _drivers.add(newDriver);
+                _usbdrivers.add(newDriver);
                 qgcLogDebug("Adding new driver " + deviceName);
 
                 // Request permission if needed
@@ -327,16 +334,16 @@ public class QGCActivity extends QtActivity
     {
         updateCurrentDrivers();
 
-        if (_drivers.size() <= 0)
+        if (_usbdrivers.size() <= 0)
         {
             return null;
         }
 
         List<String> deviceInfoList = new ArrayList<String>();
 
-        for (int i=0; i<_drivers.size(); i++) {
+        for (int i=0; i<_usbdrivers.size(); i++) {
             String          deviceInfo;
-            UsbSerialDriver driver = _drivers.get(i);
+            UsbSerialDriver driver = _usbdrivers.get(i);
 
             if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
                 continue;
@@ -379,8 +386,6 @@ public class QGCActivity extends QtActivity
     {
         int deviceId = BAD_DEVICE_ID;
 
-        _context = parentContext;
-
         UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
         if (driver == null) {
             qgcLogWarning("Attempt to open unknown device " + deviceName);
@@ -400,20 +405,20 @@ public class QGCActivity extends QtActivity
             driver.open();
             driver.setPermissionStatus(UsbSerialDriver.permissionStatusOpen);
 
-            _userDataHashByDeviceId.put(deviceId, userData);
+            _usbIds.put(deviceId, userData);
 
-            UsbIoManager ioManager = new UsbIoManager(driver, _Listener, userData);
-            _ioManager.put(deviceId, ioManager);
-            _executor.submit(ioManager);
+            UsbIoManager ioManager = new UsbIoManager(driver, _usbListener, userData);
+            _usbIoManagers.put(deviceId, ioManager);
+            _usbExecutor.submit(ioManager);
 
             qgcLogDebug("Port open successful");
         } catch(IOException exA) {
             driver.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
-            _userDataHashByDeviceId.remove(deviceId);
+            _usbIds.remove(deviceId);
 
-            if(_ioManager.get(deviceId) != null) {
-                _ioManager.get(deviceId).stop();
-                _ioManager.remove(deviceId);
+            if(_usbIoManagers.get(deviceId) != null) {
+                _usbIoManagers.get(deviceId).stop();
+                _usbIoManagers.remove(deviceId);
             }
             qgcLogWarning("Port open exception: " + exA.getMessage());
             return BAD_DEVICE_ID;
@@ -424,7 +429,7 @@ public class QGCActivity extends QtActivity
 
     public static void startIoManager(int idA)
     {
-        if (_ioManager.get(idA) != null)
+        if (_usbIoManagers.get(idA) != null)
             return;
 
         UsbSerialDriver driverL = _findDriverByDeviceId(idA);
@@ -432,18 +437,18 @@ public class QGCActivity extends QtActivity
         if (driverL == null)
             return;
 
-        UsbIoManager managerL = new UsbIoManager(driverL, _Listener, _userDataHashByDeviceId.get(idA));
-        _ioManager.put(idA, managerL);
-        _executor.submit(managerL);
+        UsbIoManager managerL = new UsbIoManager(driverL, _usbListener, _usbIds.get(idA));
+        _usbIoManagers.put(idA, managerL);
+        _usbExecutor.submit(managerL);
     }
 
     public static void stopIoManager(int idA)
     {
-        if(_ioManager.get(idA) == null)
+        if(_usbIoManagers.get(idA) == null)
             return;
 
-        _ioManager.get(idA).stop();
-        _ioManager.remove(idA);
+        _usbIoManagers.get(idA).stop();
+        _usbIoManagers.remove(idA);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -496,7 +501,7 @@ public class QGCActivity extends QtActivity
         try
         {
             stopIoManager(idA);
-            _userDataHashByDeviceId.remove(idA);
+            _usbIds.remove(idA);
             driverL.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
             driverL.close();
 
@@ -535,7 +540,7 @@ public class QGCActivity extends QtActivity
             return 0;
         }
         /*
-        UsbIoManager managerL = _ioManager.get(idA);
+        UsbIoManager managerL = _usbIoManagers.get(idA);
 
         if(managerL != null)
         {
@@ -549,7 +554,7 @@ public class QGCActivity extends QtActivity
 
     public static boolean isDeviceNameValid(String nameA)
     {
-        for (UsbSerialDriver driver: _drivers) {
+        for (UsbSerialDriver driver: _usbdrivers) {
             if (driver.getDevice().getDeviceName() == nameA)
                 return true;
         }
@@ -559,7 +564,7 @@ public class QGCActivity extends QtActivity
 
     public static boolean isDeviceNameOpen(String nameA)
     {
-        for (UsbSerialDriver driverL: _drivers) {
+        for (UsbSerialDriver driverL: _usbdrivers) {
             if (nameA.equals(driverL.getDevice().getDeviceName()) && driverL.permissionStatus() == UsbSerialDriver.permissionStatusOpen) {
                 return true;
             }

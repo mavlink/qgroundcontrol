@@ -64,6 +64,10 @@
             <meta-data
                 android:name="android.app.extract_android_style"
                 android:value="minimal" />
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
         </activity>
 
         <provider
