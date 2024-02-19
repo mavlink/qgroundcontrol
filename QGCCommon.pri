@@ -242,7 +242,11 @@ AndroidBuild {
 
     message(Android version info: $${ANDROID_VERSION_CODE} bitness:$${ANDROID_VERSION_BITNESS} major:$${MAJOR_VERSION} minor:$${MINOR_VERSION} patch:$${PATCH_VERSION} dev:$${DEV_VERSION})
 
+<<<<<<< HEAD
     ANDROID_VERSION_NAME    = $${APP_VERSION_STR}
+=======
+    ANDROID_VERSION_NAME    = $$APP_VERSION_STR
+>>>>>>> aad28aa40 (separate android init code)
 
     QMAKE_LFLAGS += -Wl,-Bsymbolic
 }

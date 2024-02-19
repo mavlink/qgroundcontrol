@@ -23,6 +23,9 @@
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "AppMessages.h"
+#ifdef __android__
+    #include "AndroidInterface.h"
+#endif
 
 #include <iostream>
 

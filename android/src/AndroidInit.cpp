@@ -14,7 +14,6 @@
 
 //-----------------------------------------------------------------------------
 
-extern int main(int argc, char *argv[]);
 static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 static Q_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.init");
 static jobject _context = nullptr;
@@ -51,13 +50,13 @@ static void jniInit(JNIEnv* env, jobject context)
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
     const jclass context_cls = env->GetObjectClass(context);
-    if(!context_cls)
+    if (!context_cls)
     {
         return;
     }
 
     const jmethodID get_class_loader_id = env->GetMethodID(context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-    if(env->ExceptionCheck())
+    if (env->ExceptionCheck())
     {
         env->ExceptionDescribe();
         env->ExceptionClear();
@@ -120,7 +119,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
     JNIEnv* env;
-    if(vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
     {
         return JNI_ERR;
     }
