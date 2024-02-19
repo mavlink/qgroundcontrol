@@ -45,7 +45,7 @@ else
     VERSIONCODE=66$VERSIONCODE
 fi
 
-MANIFEST_FILE=android/AndroidManifest.xml
+MANIFEST_FILE=android/package/AndroidManifest.xml
 
 # manifest package
 if [ "$2" = "master" ]; then

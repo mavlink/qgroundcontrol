@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MANIFEST_FILE=android/AndroidManifest.xml
+MANIFEST_FILE=android/package/AndroidManifest.xml
 
 echo "Adjusting package name for daily build"
 QGC_PKG_NAME="org.mavlink.qgroundcontrolbeta"
