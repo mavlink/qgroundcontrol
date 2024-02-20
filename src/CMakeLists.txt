@@ -27,8 +27,6 @@ endif ()
 #######################################################
 #             Source Files
 #######################################################
-target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
-
 add_library(${PROJECT_NAME} STATIC
         ${EXTRA_SRC}
 
@@ -75,6 +73,8 @@ add_library(${PROJECT_NAME} STATIC
         TerrainTile.cc
         TerrainTile.h
 )
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS APP_VERSION_STR="${APP_VERSION_STR}")
 
