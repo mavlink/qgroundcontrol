@@ -20,6 +20,9 @@
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
+#ifndef QGC_AIRLINK_DISABLED
+#include <AirlinkLink.h>
+#endif
 
 #define LINK_SETTING_ROOT "LinkConfigurations"
 
@@ -93,6 +96,11 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
             config = new MockConfiguration(name);
             break;
 #endif
+#ifndef QGC_AIRLINK_DISABLED
+        case LinkConfiguration::Airlink:
+            config = new AirlinkConfiguration(name);
+            break;
+#endif
     }
     return config;
 }
@@ -127,6 +135,11 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
 #ifdef QT_DEBUG
         case TypeMock:
             dupe = new MockConfiguration(qobject_cast<MockConfiguration*>(source));
+            break;
+#endif
+#ifndef QGC_AIRLINK_DISABLED
+        case Airlink:
+            dupe = new AirlinkConfiguration(qobject_cast<AirlinkConfiguration*>(source));
             break;
 #endif
         case TypeLast:
