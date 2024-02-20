@@ -3,7 +3,16 @@ package org.mavlink.qgroundcontrol;
 public final class QGCUsbId {
 
     public static final int VENDOR_PX4 = 0x26AC;
-    public static final int DEVICE_PX4FMU = 0x11;
+    public static final int DEVICE_PX4FMU_V2 = 0x0011;
+    public static final int DEVICE_PX4FMU_V3 = 0x0011;
+    public static final int DEVICE_PX4FMU_V4 = 0x0012;
+    public static final int DEVICE_PX4FMU_V4PRO = 0x0013;
+    public static final int DEVICE_PX4FMU_V5 = 0x0032;
+    public static final int DEVICE_PX4FMU_V5X = 0x0033;
+    public static final int DEVICE_PX4FMU_V6C = 0x0038;
+    public static final int DEVICE_PX4FMU_V6U = 0x0036;
+    public static final int DEVICE_PX4FMU_V6X = 0x0035;
+    public static final int DEVICE_PX4FMU_V6XRT = 0x001D;
 
     public static final int VENDOR_ATMEL = 0x03EB;
     public static final int DEVICE_ATMEL_LUFA_CDC_DEMO_APP = 0x2044;
@@ -43,6 +52,16 @@ public final class QGCUsbId {
 
     public static final int VENDOR_DRAGONLINK = 0x1FC9;
     public static final int DEVICE_DRAGONLINK = 0x0083;
+
+    public static final int VENDOR_CUBEPILOT = 0x2DAE;
+    public static final int DEVICE_CUBE_ORANGE = 0x1016;
+    public static final int DEVICE_CUBE_ORANGEPLUS = 0x1058;
+    public static final int DEVICE_CUBE_YELLOW = 0x1012;
+
+    public static final int VENDOR_CUAV = 0x3163;
+    public static final int DEVICE_CUAV_NORA = 0x004C;
+    public static final int DEVICE_CUAV_X7PRO = 0x004C;
+
 
     private UsbId()
     {
