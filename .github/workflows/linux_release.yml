@@ -44,7 +44,7 @@ jobs:
           key: ${{ runner.os }}-Release
           restore-keys: ${{ runner.os }}-Release
           max-size: "2G"
-          append-timestamp: true
+          append-timestamp: false
 
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
