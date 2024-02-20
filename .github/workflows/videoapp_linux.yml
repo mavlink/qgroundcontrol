@@ -42,7 +42,7 @@ jobs:
           key: ${{ runner.os }}-Debug
           restore-keys: ${{ runner.os }}-Debug
           max-size: "1G"
-          append-timestamp: true
+          append-timestamp: false
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
