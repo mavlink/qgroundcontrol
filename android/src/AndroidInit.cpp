@@ -15,7 +15,6 @@
 //-----------------------------------------------------------------------------
 
 static Q_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.init");
-static const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 static jobject _context = nullptr;
 static jobject _class_loader = nullptr;
 
@@ -137,17 +136,21 @@ static jint jniSetNativeMethods(void)
     cleanJavaException();
 
     QJniEnvironment jniEnv;
-    jclass objectClass = jniEnv->FindClass(kJniQGCActivityClassName);
-    if(!objectClass) {
-        qCWarning(AndroidInitLog) << "Couldn't find class:" << kJniQGCActivityClassName;
+    jclass objectClass = jniEnv->FindClass(AndroidInterface::getQGCActivityClassName());
+    if(!objectClass)
+    {
+        qCWarning(AndroidInitLog) << "Couldn't find class:" << AndroidInterface::getQGCActivityClassName();
         return JNI_ERR;
     }
 
     const jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
-    if (val < 0) {
+    if (val < 0)
+    {
         qCWarning(AndroidInitLog) << "Error registering methods: " << val;
         return JNI_ERR;
-    } else {
+    }
+    else
+    {
         qCDebug(AndroidInitLog) << "Main Native Functions Registered";
     }
 

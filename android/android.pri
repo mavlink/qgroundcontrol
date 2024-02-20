@@ -85,8 +85,6 @@ DISTFILES += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradlew \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradlew.bat \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/arrays.xml \
-    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/enumFields.xml \
-    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/enumMethods.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/libs.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/strings.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/device_filter.xml \
