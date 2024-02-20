@@ -74,14 +74,6 @@ static void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
 //-----------------------------------------------------------------------------
 #ifndef NO_SERIAL_LINK
 
-static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jlong userDataA)
-{
-    Q_UNUSED(envA);
-    Q_UNUSED(thizA);
-
-    AndroidSerial::onDisconnect(userDataA);
-}
-
 static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyteArray dataA)
 {
     Q_UNUSED(thizA);
@@ -91,20 +83,6 @@ static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyte
     QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytesL), lenL);
     AndroidSerial::onNewData(userDataA, data);
     envA->ReleaseByteArrayElements(dataA, bytesL, JNI_ABORT);
-}
-
-static void jniDeviceException(JNIEnv *envA, jobject thizA, jlong userDataA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
-    QString strL = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    if(envA->ExceptionCheck())
-    {
-        envA->ExceptionClear();
-    }
-    AndroidSerial::onException(userDataA, strL);
 }
 
 #endif
@@ -150,12 +128,10 @@ static jint jniSetNativeMethods(void)
     {
         {"nativeInit", "()V", reinterpret_cast<void *>(jniInit)},
         #ifndef NO_SERIAL_LINK
-            {"nativeDeviceHasDisconnected", "(J)V", reinterpret_cast<void *>(jniDeviceHasDisconnected)},
             {"nativeDeviceNewData", "(J[B)V", reinterpret_cast<void *>(jniDeviceNewData)},
-            {"nativeDeviceException", "(JLjava/lang/String;)V", reinterpret_cast<void *>(jniDeviceException)},
         #endif
-        {"qgcLogDebug", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogDebug)},
-        {"qgcLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)}
+        {"nativeLogDebug", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogDebug)},
+        {"nativeLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)}
     };
 
     cleanJavaException();
