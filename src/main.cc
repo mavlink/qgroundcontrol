@@ -37,13 +37,6 @@
     #include "RunGuard.h"
 #endif
 
-#ifdef Q_OS_ANDROID
-    #include "AndroidInterface.h"
-    #ifndef NO_SERIAL_LINK
-        #include "qserialport.h"
-    #endif
-#endif
-
 #ifdef UNITTEST_BUILD
     #include "UnitTest.h"
 #endif
@@ -179,9 +172,6 @@ int main(int argc, char *argv[])
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says
     // anyway to silence the debug output.
-#ifndef NO_SERIAL_LINK
-    qRegisterMetaType<QSerialPort::SerialPortError>();
-#endif
 #ifdef QGC_ENABLE_BLUETOOTH
     qRegisterMetaType<QBluetoothSocket::SocketError>();
     qRegisterMetaType<QBluetoothServiceInfo>();

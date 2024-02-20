@@ -112,8 +112,6 @@ public:
 
     qint64 pendingBytesWritten;
 
-    static void setNativeMethods(void);
-
 private:
     QIODevice::OpenMode rwMode;
     int deviceId;

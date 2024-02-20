@@ -172,6 +172,39 @@ public class QGCActivity extends QtActivity
 
     }
 
+    public static String getSDCardPath() {
+        StorageManager storageManager = (StorageManager)_instance.getSystemService(Activity.STORAGE_SERVICE);
+        List<StorageVolume> volumes = storageManager.getStorageVolumes();
+        Method mMethodGetPath;
+        String path = "";
+        for (StorageVolume vol : volumes) {
+            try {
+                mMethodGetPath = vol.getClass().getMethod("getPath");
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                continue;
+            }
+            try {
+                path = (String) mMethodGetPath.invoke(vol);
+            } catch (Exception e) {
+                e.printStackTrace();
+                continue;
+            }
+
+            if (vol.isRemovable() == true) {
+                Log.i(TAG, "removable sd card mounted " + path);
+                return path;
+            } else {
+                Log.i(TAG, "storage mounted " + path);
+            }
+        }
+        return "";
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    // USB Private Helpers
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+
     private static void createUsbHandler()
     {
         _usbdrivers = new ArrayList<UsbSerialDriver>();
@@ -343,6 +376,10 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    // USB QSerialPort Public Interface
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /// Returns array of device info for each unopened device.
     /// @return Device info format DeviceName:Company:ProductId:VendorId
     public static String[] availableDevicesInfo()
@@ -394,6 +431,30 @@ public class QGCActivity extends QtActivity
         return rgDeviceInfo;
     }
 
+    public static void startIoManager(int idA)
+    {
+        if (_usbIoManagers.get(idA) != null)
+            return;
+
+        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
+
+        if (driverL == null)
+            return;
+
+        UsbIoManager managerL = new UsbIoManager(driverL, _usbListener, _usbIds.get(idA));
+        _usbIoManagers.put(idA, managerL);
+        _usbExecutor.submit(managerL);
+    }
+
+    public static void stopIoManager(int idA)
+    {
+        if(_usbIoManagers.get(idA) == null)
+            return;
+
+        _usbIoManagers.get(idA).stop();
+        _usbIoManagers.remove(idA);
+    }
+
     /// Open the specified device
     ///     @param userData Data to associate with device and pass back through to native calls.
     /// @return Device id
@@ -440,30 +501,6 @@ public class QGCActivity extends QtActivity
         }
 
         return deviceId;
-    }
-
-    public static void startIoManager(int idA)
-    {
-        if (_usbIoManagers.get(idA) != null)
-            return;
-
-        UsbSerialDriver driverL = _findDriverByDeviceId(idA);
-
-        if (driverL == null)
-            return;
-
-        UsbIoManager managerL = new UsbIoManager(driverL, _usbListener, _usbIds.get(idA));
-        _usbIoManagers.put(idA, managerL);
-        _usbExecutor.submit(managerL);
-    }
-
-    public static void stopIoManager(int idA)
-    {
-        if(_usbIoManagers.get(idA) == null)
-            return;
-
-        _usbIoManagers.get(idA).stop();
-        _usbIoManagers.remove(idA);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -694,34 +731,4 @@ public class QGCActivity extends QtActivity
         else
             return connectL.getFileDescriptor();
     }
-
-    public static String getSDCardPath() {
-        StorageManager storageManager = (StorageManager)_instance.getSystemService(Activity.STORAGE_SERVICE);
-        List<StorageVolume> volumes = storageManager.getStorageVolumes();
-        Method mMethodGetPath;
-        String path = "";
-        for (StorageVolume vol : volumes) {
-            try {
-                mMethodGetPath = vol.getClass().getMethod("getPath");
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-                continue;
-            }
-            try {
-                path = (String) mMethodGetPath.invoke(vol);
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
-
-            if (vol.isRemovable() == true) {
-                Log.i(TAG, "removable sd card mounted " + path);
-                return path;
-            } else {
-                Log.i(TAG, "storage mounted " + path);
-            }
-        }
-        return "";
-    }
 }
-

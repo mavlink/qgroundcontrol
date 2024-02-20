@@ -56,81 +56,6 @@ QT_BEGIN_NAMESPACE
 
 #define BAD_PORT 0
 
-static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
-
-static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jlong userDataA)
-{
-    Q_UNUSED(envA);
-    Q_UNUSED(thizA);
-
-    qCDebug(AndroidSerialPortLog) << "Device disconnected";
-
-    if (userDataA != 0) {
-        auto serialPort = reinterpret_cast<QSerialPortPrivate*>(userDataA);
-        qCDebug(AndroidSerialPortLog) << "Device disconnected" << serialPort->systemLocation.toLatin1().data();
-        serialPort->q_ptr->close();
-    }
-}
-
-static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyteArray dataA)
-{
-    Q_UNUSED(thizA);
-    if (userDataA != 0)
-    {
-        jbyte *bytesL = envA->GetByteArrayElements(dataA, nullptr);
-        jsize lenL = envA->GetArrayLength(dataA);
-        (reinterpret_cast<QSerialPortPrivate*>(userDataA))->newDataArrived(reinterpret_cast<char*>(bytesL), lenL);
-        envA->ReleaseByteArrayElements(dataA, bytesL, JNI_ABORT);
-    }
-}
-
-static void jniDeviceException(JNIEnv *envA, jobject thizA, jlong userDataA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-    if(userDataA != 0)
-    {
-        const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
-        QString strL = QString::fromUtf8(stringL);
-        envA->ReleaseStringUTFChars(messageA, stringL);
-        if(envA->ExceptionCheck())
-            envA->ExceptionClear();
-        (reinterpret_cast<QSerialPortPrivate*>(userDataA))->exceptionArrived(strL);
-    }
-}
-
-static void jniLogDebug(JNIEnv *envA, jobject thizA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
-    QString logMessage = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    if (envA->ExceptionCheck())
-        envA->ExceptionClear();
-    qCDebug(AndroidSerialPortLog) << logMessage;
-}
-
-static void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
-    QString logMessage = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    if (envA->ExceptionCheck())
-        envA->ExceptionClear();
-    qWarning() << logMessage;
-}
-
-void cleanJavaException()
-{
-    QJniEnvironment env;
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
-}
-
 QSerialPortPrivate::QSerialPortPrivate(QSerialPort *q)
     : QSerialPortPrivateData(q)
     , descriptor(-1)
@@ -143,45 +68,6 @@ QSerialPortPrivate::QSerialPortPrivate(QSerialPort *q)
     , internalWriteTimeoutMsec(0)
     , isReadStopped(true)
 {
-}
-
-void QSerialPortPrivate::setNativeMethods(void)
-{
-    qCDebug(AndroidSerialPortLog) << "Registering Native Functions";
-
-    //  REGISTER THE C++ FUNCTION WITH JNI
-    JNINativeMethod javaMethods[] {
-        {"nativeDeviceHasDisconnected", "(J)V",                     reinterpret_cast<void *>(jniDeviceHasDisconnected)},
-        {"nativeDeviceNewData",         "(J[B)V",                   reinterpret_cast<void *>(jniDeviceNewData)},
-        {"nativeDeviceException",       "(JLjava/lang/String;)V",   reinterpret_cast<void *>(jniDeviceException)},
-        {"qgcLogDebug",                 "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogDebug)},
-        {"qgcLogWarning",               "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogWarning)}
-    };
-
-    QJniEnvironment jniEnv;
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
-
-    jclass objectClass = jniEnv->FindClass(kJniQGCActivityClassName);
-    if(!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniQGCActivityClassName;
-        return;
-    }
-
-    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
-
-    if (val < 0) {
-        qWarning() << "Error registering methods: " << val;
-    } else {
-        qCDebug(AndroidSerialPortLog) << "Native Functions Registered";
-    }
-
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
 }
 
 bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
