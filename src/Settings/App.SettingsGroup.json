@@ -327,6 +327,18 @@
     "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
     "type":      "string",
     "default":   "support.ardupilot.org:xxxx"
+},
+{
+    "name": "loginAirLink",
+    "shortDesc": "AirLink User Name",
+    "type": "string",
+    "default": ""
+},
+{
+    "name": "passAirLink",
+    "shortDesc": "AirLink Password",
+    "type": "string",
+    "default": ""
 }
 ]
 }
