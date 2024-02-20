@@ -48,7 +48,15 @@ QT_BEGIN_NAMESPACE
 static const char V_jniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 static const char V_TAG[] {"QGC_QSerialPortInfo"};
 
-extern void cleanJavaException();
+static void cleanJavaException()
+{
+    QJniEnvironment env;
+    if (env->ExceptionCheck())
+    {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
 
 QList<QSerialPortInfo> availablePortsByFiltersOfDevices()
 {

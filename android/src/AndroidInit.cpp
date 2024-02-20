@@ -86,7 +86,7 @@ static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyte
 {
     Q_UNUSED(thizA);
 
-    const jbyte *bytesL = envA->GetByteArrayElements(dataA, nullptr);
+    jbyte *bytesL = envA->GetByteArrayElements(dataA, nullptr);
     const jsize lenL = envA->GetArrayLength(dataA);
     QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytesL), lenL);
     AndroidSerial::onNewData(userDataA, data);
@@ -148,7 +148,7 @@ static jint jniSetNativeMethods(void)
 
     const JNINativeMethod javaMethods[]
     {
-        {"nativeInit", "()V", reinterpret_cast<void *>(jniInit)}
+        {"nativeInit", "()V", reinterpret_cast<void *>(jniInit)},
         #ifndef NO_SERIAL_LINK
             {"nativeDeviceHasDisconnected", "(J)V", reinterpret_cast<void *>(jniDeviceHasDisconnected)},
             {"nativeDeviceNewData", "(J[B)V", reinterpret_cast<void *>(jniDeviceNewData)},

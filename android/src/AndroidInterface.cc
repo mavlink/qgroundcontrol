@@ -20,6 +20,8 @@ static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCAct
 
 bool AndroidInterface::checkStoragePermissions()
 {
+    qCDebug(AndroidInterfaceLog) << Q_FUNC_INFO;
+
     QString readPermission("android.permission.READ_EXTERNAL_STORAGE");
     QString writePermission("android.permission.WRITE_EXTERNAL_STORAGE");
 
@@ -41,6 +43,8 @@ bool AndroidInterface::checkStoragePermissions()
 
 QString AndroidInterface::getSDCardPath()
 {
+    qCDebug(AndroidInterfaceLog) << Q_FUNC_INFO;
+
     if (!checkStoragePermissions()) {
         return QString();
     } else {

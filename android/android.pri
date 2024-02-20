@@ -113,9 +113,14 @@ DISTFILES += \
 SOURCES += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidInterface.cc
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidInit.cpp
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidSerial.cpp
 
 HEADERS += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidInterface.h
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidSerial.h
+
+HEADERS += \
+    $$PWD/src/AndroidInterface.h \
 
 INCLUDEPATH += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src
