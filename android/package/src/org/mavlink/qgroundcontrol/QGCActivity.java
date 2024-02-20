@@ -198,7 +198,6 @@ public class QGCActivity extends QtActivity
         for (StorageVolume vol : volumes)
         {
             Method mMethodGetPath;
-            String path;
 
             try
             {
@@ -210,6 +209,8 @@ public class QGCActivity extends QtActivity
                 e.printStackTrace();
                 continue;
             }
+
+            String path;
 
             try
             {
@@ -337,6 +338,10 @@ public class QGCActivity extends QtActivity
                 nativeLogDebug("Permission denied for " + device.getDeviceName());
             }
         }
+        else
+        {
+            _usbPermission = UsbPermission.Unknown;
+        }
     }
 
     private static void _handleUsbAttached(Context context, Intent intent)
@@ -374,24 +379,24 @@ public class QGCActivity extends QtActivity
                 try
                 {
                     usbSerialPort.open(usbConnection);
-                    try
-                    {
-                        usbSerialPort.setParameters(baudRate, 8, 1, UsbSerialPort.PARITY_NONE);
-                    }
-                    catch (UnsupportedOperationException ex)
-                    {
-                        status("unsupported setParameters");
-                    }
-                    if(withIoManager)
-                    {
-                        usbIoManager = new SerialInputOutputManager(usbSerialPort, this);
-                        usbIoManager.start();
-                    }
-                    connected = true;
-                    controlLines.start();
-                } catch (Exception e) {
-                    status("connection failed: " + e.getMessage());
-                    disconnect();
+                }
+                catch (IOException ex)
+                {
+                    nativeLogWarning("_handleUsbAttached exception: " + ex.getMessage());
+                }
+
+                try
+                {
+                    usbSerialPort.setParameters(baudRate, 8, 1, UsbSerialPort.PARITY_NONE);
+                }
+                catch (UnsupportedOperationException ex)
+                {
+                    nativeLogWarning("unsupported setParameters: " + ex.getMessage());
+                }
+
+                if(usbSerialPort.isOpen())
+                {
+                    _createUsbIoManager(usbSerialPort);
                 }
             }
         }
@@ -402,11 +407,22 @@ public class QGCActivity extends QtActivity
         final UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if(device != null)
         {
-            final int deviceId = device.getDeviceId();
-            if(_findDriver(deviceId) != null)
+            SerialInputOutputManager usbIoManager; // = _usbIoManagers
+            if(usbIoManager != null)
             {
-
+                usbIoManager.setListener(null);
+                usbIoManager.stop();
             }
+            // _usbIoManagers.remove();
+            try
+            {
+                usbSerialPort.close();
+            }
+            catch (IOException ex)
+            {
+                nativeLogWarning("getDataSetReady exception: " + ex.getMessage());
+            }
+            usbSerialPort = null;
         }
     }
 
@@ -479,60 +495,9 @@ public class QGCActivity extends QtActivity
         return result;
     }
 
-    private static void _updateCurrentDrivers()
+    private static void _createUsbIoManager(UsbSerialPort port)
     {
-        List<UsbSerialDriver> drivers = _usbProber.findAllDrivers(_usbManager);
-
-        for (int i = _usbDrivers.size() - 1; i >= 0; i--)
-        {
-            boolean found = false;
-            for (UsbSerialDriver driver: drivers)
-            {
-                if (_usbDrivers.get(i).getDevice().getDeviceId() == driver.getDevice().getDeviceId())
-                {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found)
-            {
-                _usbDrivers.remove(i);
-            }
-        }
-
-        for (UsbSerialDriver newDriver: drivers)
-        {
-            boolean found = false;
-            UsbDevice device = newDriver.getDevice();
-            for (UsbSerialDriver driver: _usbDrivers)
-            {
-                if (device.getDeviceId() == driver.getDevice().getDeviceId())
-                {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found)
-            {
-                _usbDrivers.add(newDriver);
-                _createUsbIoManager(newDriver);
-                nativeLogDebug("Adding new driver " + device.getDeviceName());
-
-                if (!_usbManager.hasPermission(device))
-                {
-                    nativeLogDebug("Requesting permission to use device " + device.getDeviceName());
-                    _usbManager.requestPermission(device, _usbPermissionIntent);
-                    _usbPermission = UsbPermission.Requested;
-                }
-            }
-        }
-    }
-
-    private static void _createUsbIoManager(UsbSerialDriver driver)
-    {
-        final int deviceId = driver.getDevice().getDeviceId();
+        final int deviceId = port.getDevice().getDeviceId();
 
         SerialInputOutputManager.Listener usbListener = new UsbIoManager.Listener()
         {
@@ -550,7 +515,6 @@ public class QGCActivity extends QtActivity
             }
         };
 
-        UsbSerialPort port = driver.getPorts().get(0);
         SerialInputOutputManager manager = new SerialInputOutputManager(port, usbListener);
         _usbIoManagers.add(manager);
     }
@@ -581,11 +545,9 @@ public class QGCActivity extends QtActivity
 
     public static String[] availableDevicesInfo()
     {
-        _updateCurrentDrivers();
-
         List<String> deviceInfoList = new ArrayList<String>();
 
-        for (UsbSerialDriver driver: _usbDrivers)
+        for (UsbSerialDriver driver: _usbProber.findAllDrivers(_usbManager))
         {
             final UsbDevice device = driver.getDevice();
             String deviceInfo = device.getDeviceName() + ":";
