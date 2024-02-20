@@ -50,7 +50,18 @@
 #include "qserialport_android_p.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "AndroidSerialPortLog")
+static Q_LOGGING_CATEGORY(AndroidSerialPortLog, "qgc.android.serialport");
+static const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
+
+static void cleanJavaException()
+{
+    QJniEnvironment env;
+    if (env->ExceptionCheck())
+    {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
 
 QT_BEGIN_NAMESPACE
 

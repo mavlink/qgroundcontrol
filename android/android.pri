@@ -112,10 +112,12 @@ DISTFILES += \
 
 SOURCES += \
     $$PWD/src/AndroidInterface.cc \
-    $$PWD/src/AndroidInit.cpp
+    $$PWD/src/AndroidInit.cpp \
+    $$PWD/src/AndroidSerial.cpp
 
 HEADERS += \
-    $$PWD/src/AndroidInterface.h
+    $$PWD/src/AndroidInterface.h \
+    $$PWD/src/AndroidSerial.h
 
 INCLUDEPATH += \
     $$PWD/src
