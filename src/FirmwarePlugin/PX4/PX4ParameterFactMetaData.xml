@@ -5123,8 +5123,8 @@
     </parameter>
     <parameter name="MPC_MAN_TILT_MAX" default="35." type="FLOAT">
       <short_desc>Maximal tilt angle in Stabilized or Altitude mode</short_desc>
-      <min>0</min>
-      <max>90</max>
+      <min>1</min>
+      <max>70</max>
       <unit>deg</unit>
       <decimal>0</decimal>
       <increment>1</increment>
