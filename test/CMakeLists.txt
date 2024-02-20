@@ -2,6 +2,7 @@ if (BUILD_TESTING)
     qt_add_library(qgctest
         STATIC
             UnitTestList.cc
+            UnitTest.qrc
     )
 
     add_custom_target(check
@@ -71,7 +72,5 @@ if (BUILD_TESTING)
             uiTest
             VehicleTest
     )
-
-    qt_add_binary_resources(qgctest UnitTest.qrc)
 
 endif ()
