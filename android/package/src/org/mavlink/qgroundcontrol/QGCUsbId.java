@@ -1,22 +1,8 @@
-/* Copyright 2011-2013 Google Inc.
- * Copyright 2013 mike wakerly <opensource@hoho.com>
- *
- * Project home page: https://github.com/mik3y/usb-serial-for-android
- */
-
 package org.mavlink.qgroundcontrol;
 
-/**
- * Registry of USB vendor/product ID constants.
- *
- * Culled from various sources; see
- * <a href="http://www.linux-usb.org/usb.ids">usb.ids</a> for one listing.
- *
- * @author mike wakerly (opensource@hoho.com)
- */
 public final class QGCUsbId {
 
-    public static final int VENDOR_PX4    = 0x26AC;
+    public static final int VENDOR_PX4 = 0x26AC;
     public static final int DEVICE_PX4FMU = 0x11;
 
     public static final int VENDOR_ATMEL = 0x03EB;
@@ -53,13 +39,13 @@ public final class QGCUsbId {
 
     public static final int VENDOR_ARDUPILOT_CHIBIOS1 = 0x0483;
     public static final int VENDOR_ARDUPILOT_CHIBIOS2 = 0x1209;
-    public static final int DEVICE_ARDUPILOT_CHIBIOS =  0x5740;
+    public static final int DEVICE_ARDUPILOT_CHIBIOS = 0x5740;
 
     public static final int VENDOR_DRAGONLINK = 0x1FC9;
     public static final int DEVICE_DRAGONLINK = 0x0083;
 
-    private UsbId() {
+    private UsbId()
+    {
         throw new IllegalAccessError("Non-instantiable class");
     }
-
 }
