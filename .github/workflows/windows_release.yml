@@ -42,7 +42,7 @@ jobs:
           key: ${{ runner.os }}-Release
           restore-keys: ${{ runner.os }}-Release
           max-size: "2G"
-          append-timestamp: true
+          append-timestamp: false
           variant: "sccache"
 
       - name: Get all tags for correct version determination
