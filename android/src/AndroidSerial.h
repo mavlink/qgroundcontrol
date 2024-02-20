@@ -24,5 +24,5 @@ public:
     static bool getRequestToSend(int deviceId);
     static void setRequestToSend(int deviceId, bool set);
     static void flush(int deviceId, bool input, bool output);
-    static void setBreak(int deviceId, bool on);
+    static void setBreak(int deviceId, bool set);
 };

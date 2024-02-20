@@ -60,7 +60,6 @@ public class QGCActivity extends QtActivity
 {
     /* General */
     private static final String TAG = getSimpleName();
-    private static BroadcastReceiver _receiver;
 
     /* Multicasting */
     private static WifiManager.MulticastLock _wifiMulticastLock;
@@ -110,7 +109,7 @@ public class QGCActivity extends QtActivity
             Log.i(TAG, "WifiMulticastLock not acquired");
         }
 
-        _receiver = new BroadcastReceiver()
+        BroadcastReceiver receiver = new BroadcastReceiver()
         {
             public void onReceive(Context context, Intent intent)
             {
@@ -145,13 +144,13 @@ public class QGCActivity extends QtActivity
         IntentFilter bluetoothFilter = new IntentFilter();
         bluetoothFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         bluetoothFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        registerReceiver(_receiver, bluetoothFilter);
+        registerReceiver(receiver, bluetoothFilter);
 
         IntentFilter usbFilter = new IntentFilter();
         usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         usbFilter.addAction(ACTION_USB_PERMISSION);
-        registerReceiver(_receiver, usbFilter);
+        registerReceiver(receiver, usbFilter);
 
         _usbDrivers = new ArrayList<UsbSerialDriver>();
         _usbIoManagers = new ArrayList<UsbIoManager>();
@@ -168,17 +167,17 @@ public class QGCActivity extends QtActivity
     @Override
     protected void onDestroy()
     {
-        try
+        if (_wifiMulticastLock != null)
         {
-            if (_wifiMulticastLock != null)
+            try
             {
                 _wifiMulticastLock.release();
                 Log.d(TAG, "WifiMulticastLock released.");
             }
-        }
-        catch(Exception ex)
-        {
-           Log.e(TAG, "Exception onDestroy WifiMulticastLock: " + ex.getMessage());
+            catch(Exception ex)
+            {
+               Log.e(TAG, "Exception onDestroy WifiMulticastLock: " + ex.getMessage());
+            }
         }
 
         super.onDestroy();
@@ -203,7 +202,7 @@ public class QGCActivity extends QtActivity
             {
                 mMethodGetPath = vol.getClass().getMethod("getPath");
             }
-            catch (NoSuchMethodException e)
+            catch (NoSuchMethodException ex)
             {
                 Log.e(TAG, "Exception getSDCardPath mMethodGetPath: " + ex.getMessage());
                 e.printStackTrace();
