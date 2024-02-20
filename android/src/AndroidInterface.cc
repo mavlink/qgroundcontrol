@@ -9,8 +9,14 @@
 
 #include "AndroidInterface.h"
 
+#include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
+#include <QtCore/QDebug>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/private/qandroidextras_p.h>
+
+static Q_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.interface");
+static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
 bool AndroidInterface::checkStoragePermissions()
 {
@@ -38,7 +44,7 @@ QString AndroidInterface::getSDCardPath()
     if (!checkStoragePermissions()) {
         return QString();
     } else {
-        auto value = QJniObject::callStaticObjectMethod("org/mavlink/qgroundcontrol/QGCActivity", "getSDCardPath", "()Ljava/lang/String;");
+        auto value = QJniObject::callStaticObjectMethod(kJniQGCActivityClassName, "getSDCardPath", "()Ljava/lang/String;");
         return value.toString();
     }
 }

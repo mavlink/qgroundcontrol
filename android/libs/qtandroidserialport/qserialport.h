@@ -247,8 +247,6 @@ public:
 
     Handle handle() const;
 
-    static void setNativeMethods(void);
-
 Q_SIGNALS:
     void baudRateChanged(qint32 baudRate, QSerialPort::Directions directions);
     void dataBitsChanged(QSerialPort::DataBits dataBits);

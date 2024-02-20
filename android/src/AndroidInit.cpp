@@ -1,8 +1,8 @@
 #include "AndroidInterface.h"
-#include "JoystickAndroid.h"
 #ifndef NO_SERIAL_LINK
-    #include "qserialport.h"
+    #include "AndroidSerial.h"
 #endif
+#include "JoystickAndroid.h"
 
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
@@ -14,7 +14,7 @@
 
 //-----------------------------------------------------------------------------
 
-static Q_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.init")
+static Q_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.init");
 static const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 static jobject _context = nullptr;
 static jobject _class_loader = nullptr;
@@ -31,6 +31,83 @@ extern "C"
     }
 }
 
+//-----------------------------------------------------------------------------
+
+static void cleanJavaException()
+{
+    QJniEnvironment env;
+    if (env->ExceptionCheck())
+    {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
+}
+
+static void jniLogDebug(JNIEnv *envA, jobject thizA, jstring messageA)
+{
+    Q_UNUSED(thizA);
+
+    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
+    QString logMessage = QString::fromUtf8(stringL);
+    envA->ReleaseStringUTFChars(messageA, stringL);
+    if (envA->ExceptionCheck())
+    {
+        envA->ExceptionClear();
+    }
+    qCDebug(AndroidInitLog) << logMessage;
+}
+
+static void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
+{
+    Q_UNUSED(thizA);
+
+    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
+    QString logMessage = QString::fromUtf8(stringL);
+    envA->ReleaseStringUTFChars(messageA, stringL);
+    if (envA->ExceptionCheck())
+    {
+        envA->ExceptionClear();
+    }
+    qCWarning(AndroidInitLog) << logMessage;
+}
+
+//-----------------------------------------------------------------------------
+#ifndef NO_SERIAL_LINK
+
+static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jlong userDataA)
+{
+    Q_UNUSED(envA);
+    Q_UNUSED(thizA);
+
+    AndroidSerial::onDisconnect(userDataA);
+}
+
+static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyteArray dataA)
+{
+    Q_UNUSED(thizA);
+
+    const jbyte *bytesL = envA->GetByteArrayElements(dataA, nullptr);
+    const jsize lenL = envA->GetArrayLength(dataA);
+    QByteArray data = QByteArray::fromRawData(reinterpret_cast<char*>(bytesL), lenL);
+    AndroidSerial::onNewData(userDataA, data);
+    envA->ReleaseByteArrayElements(dataA, bytesL, JNI_ABORT);
+}
+
+static void jniDeviceException(JNIEnv *envA, jobject thizA, jlong userDataA, jstring messageA)
+{
+    Q_UNUSED(thizA);
+
+    const char *stringL = envA->GetStringUTFChars(messageA, nullptr);
+    QString strL = QString::fromUtf8(stringL);
+    envA->ReleaseStringUTFChars(messageA, stringL);
+    if(envA->ExceptionCheck())
+    {
+        envA->ExceptionClear();
+    }
+    AndroidSerial::onException(userDataA, strL);
+}
+
+#endif
 //-----------------------------------------------------------------------------
 
 static void jniInit(JNIEnv* env, jobject context)
@@ -72,6 +149,13 @@ static jint jniSetNativeMethods(void)
     const JNINativeMethod javaMethods[]
     {
         {"nativeInit", "()V", reinterpret_cast<void *>(jniInit)}
+        #ifndef NO_SERIAL_LINK
+            {"nativeDeviceHasDisconnected", "(J)V", reinterpret_cast<void *>(jniDeviceHasDisconnected)},
+            {"nativeDeviceNewData", "(J[B)V", reinterpret_cast<void *>(jniDeviceNewData)},
+            {"nativeDeviceException", "(JLjava/lang/String;)V", reinterpret_cast<void *>(jniDeviceException)},
+        #endif
+        {"qgcLogDebug", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogDebug)},
+        {"qgcLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)}
     };
 
     QJniEnvironment jniEnv;
@@ -123,10 +207,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
     #ifdef QGC_GST_STREAMING
         gst_amc_jni_set_java_vm(vm);
-    #endif
-
-    #ifndef NO_SERIAL_LINK
-        QSerialPort::setNativeMethods();
     #endif
 
     JoystickAndroid::setNativeMethods();
