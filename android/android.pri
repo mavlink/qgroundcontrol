@@ -1,5 +1,3 @@
-include($$PWD/libs/qtandroidserialport/qtandroidserialport.pri)
-
 ANDROID_MIN_SDK_VERSION = 26
 ANDROID_TARGET_SDK_VERSION = 33
 
@@ -86,7 +84,9 @@ DISTFILES += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradle/wrapper/gradle-wrapper.properties \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradlew \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/gradlew.bat \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/arrays.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/libs.xml \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/values/strings.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/device_filter.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/network_security_config.xml \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/res/xml/qtprovider_paths.xml \

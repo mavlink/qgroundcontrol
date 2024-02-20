@@ -1,14 +1,12 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.zatqgc.zenith"
+    package="org.mavlink.qgroundcontrol"
     android:installLocation="auto"
 
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">
 
     <!-- %%INSERT_PERMISSIONS -->
-    <!-- Needed to keep working while 'asleep' -->
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <!-- Need MulticastLock to receive broadcast UDP packets  -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>

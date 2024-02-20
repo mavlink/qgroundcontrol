@@ -8,12 +8,14 @@ qt_add_library(qgcandroid
 
 target_link_libraries(qgcandroid
 	PRIVATE
+		Qt6::SerialPortPrivate
 		Joystick
 	PUBLIC
 		Qt6::Core
-		qtandroidserialport
+		Qt6::SerialPort
 )
 
 target_include_directories(qgcandroid
 	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR})
+		${CMAKE_CURRENT_SOURCE_DIR}
+)
