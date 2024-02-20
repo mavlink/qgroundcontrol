@@ -109,6 +109,9 @@ add_subdirectory(Settings)
 if (${QGC_GST_TAISYNC_ENABLED})
     add_subdirectory(Taisync)
 endif ()
+if (NOT ${QGC_AIRLINK_DISABLED})
+    add_subdirectory(AirLink)
+endif()
 add_subdirectory(Terrain)
 add_subdirectory(uas)
 add_subdirectory(UTMSP)
@@ -171,6 +174,12 @@ if (GST_FOUND)
         target_link_libraries(${PROJECT_NAME} PUBLIC Taisync)
     endif ()
 endif ()
+
+if (NOT ${QGC_AIRLINK_DISABLED})
+    target_link_libraries(${PROJECT_NAME} PUBLIC AirLink)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC QGC_AIRLINK_DISABLED)
+endif()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC

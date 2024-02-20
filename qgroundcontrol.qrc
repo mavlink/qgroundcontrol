@@ -31,6 +31,7 @@
         <file alias="QGroundControl/FlightMap/MapLineArrow.qml">src/MissionManager/MapLineArrow.qml</file>
         <file alias="QGroundControl/FlightMap/SplitIndicator.qml">src/FlightMap/MapItems/SplitIndicator.qml</file>
         <file alias="ADSBServerSettings.qml">src/ui/preferences/ADSBServerSettings.qml</file>
+        <file alias="AirLinkSettings.qml">src/AirLink/AirLinkSettings.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
