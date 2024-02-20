@@ -21,7 +21,7 @@ defaults:
 
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   6.6.1
+  QT_VERSION:   6.6.*
   ARTIFACT:     QGroundControl-installer.exe
   BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
@@ -34,6 +34,16 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-Release
+          restore-keys: ${{ runner.os }}-Release
+          max-size: "2G"
+          append-timestamp: true
+          variant: "sccache"
 
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
@@ -51,6 +61,7 @@ jobs:
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtquick3d
           setup-python: false
+          cache: true
 
       - name: Download JOM
         uses: suisei-cn/actions-download-file@v1.6.0

@@ -90,7 +90,6 @@ add_custom_target(QmlControlsQml
 		QGCCheckBox.qml
 		QGCColoredImage.qml
 		QGCComboBox.qml
-		QGCControlDebug.qml
 		QGCDynamicObjectManager.qml
 		QGCFileDialog.qml
 		QGCFlickableHorizontalIndicator.qml
@@ -122,7 +121,6 @@ add_custom_target(QmlControlsQml
 		QGCViewDialogContainer.qml
 		QGCViewDialog.qml
 		QGCViewMessage.qml
-		QmlTest.qml
 		RCChannelMonitor.qml
 		RCToParamDialog.qml
 		QGCRoundButton.qml

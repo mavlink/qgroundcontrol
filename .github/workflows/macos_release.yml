@@ -21,7 +21,7 @@ defaults:
 
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   6.6.1
+  QT_VERSION:   6.6.*
   ARTIFACT:     QGroundControl.dmg
   BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
@@ -34,6 +34,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-Release
+          restore-keys: ${{ runner.os }}-Release
+          max-size: "2G"
+          append-timestamp: true
 
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
@@ -50,6 +59,7 @@ jobs:
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtquick3d
           setup-python: false
+          cache: true
 
       - name: Install Gstreamer
         run: |
@@ -58,29 +68,6 @@ jobs:
             for package in *.pkg ;
               do sudo installer -verbose -pkg "$package" -target /
             done
-
-      - name: Install ccache
-        run:  brew install ccache
-
-      - name: Prepare ccache timestamp
-        id: ccache_cache_timestamp
-        run: echo "name=timestamp::$(date --utc +'%Y-%m-%d-%H\;%M\;%S')" >> $GITHUB_OUTPUT
-
-      - name: ccache cache files
-        uses: actions/cache@v4
-        with:
-          path:         ~/.ccache
-          key:          ${{ runner.os }}-ccache-${{steps.ccache_cache_timestamp.outputs.timestamp}}
-          restore-keys: ${{ runner.os }}-ccache-
-
-      - name: Setup ccache
-        run: |
-            mkdir -p ~/.ccache
-            echo "base_dir = ${GITHUB_WORKSPACE}" > ~/.ccache/ccache.conf
-            echo "compression = true" >> ~/.ccache/ccache.conf
-            echo "compression_level = 5" >> ~/.ccache/ccache.conf
-            ccache -s
-            ccache -z
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
@@ -91,9 +78,6 @@ jobs:
               export JOBS=$((`sysctl -n hw.ncpu`+1))
               qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${BUILD_TYPE}
               make -j$JOBS
-
-      - name: ccache post-run
-        run:  ccache -s
 
       - name: Save artifact
         uses: actions/upload-artifact@master

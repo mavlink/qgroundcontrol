@@ -330,7 +330,7 @@ SetupPage {
                                                 textRole:       "text"
                                                 currentIndex:   gimbalOutIndex
 
-                                                onActivated: setRCFunction(gimbalOutModel.get(index).value, rcFunction)
+                                                onActivated: (index) => { setRCFunction(gimbalOutModel.get(index).value, rcFunction) }
                                             }
                                         }
 

@@ -426,7 +426,7 @@ SetupPage {
                             textRole:           "text"
                             model:              _singleFirmwareMode ? singleFirmwareModeTypeList : (px4Flow ? px4FlowTypeList : firmwareBuildTypeList)
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 controller.selectedFirmwareBuildType = model.get(index).firmwareType
                                 if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
                                     firmwareWarningMessageVisible = true

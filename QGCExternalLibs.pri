@@ -110,7 +110,7 @@ SOURCES += \
 WindowsBuild {
     INCLUDEPATH +=  $$SOURCE_DIR/libs/zlib/windows/include
     LIBS += -L$$SOURCE_DIR/libs/zlib/windows/lib
-    LIBS += -lzlibstat
+    LIBS += -lzlibstatic
 } else {
     LIBS += -lz
 }

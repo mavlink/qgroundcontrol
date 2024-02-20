@@ -60,6 +60,6 @@ Item {
             }
         }
 
-        onActivated: activeVehicle.flightMode = textAt(index)
+        onActivated: (index) => { activeVehicle.flightMode = textAt(index) }
     }
 }

@@ -72,7 +72,7 @@ Rectangle {
                     currentIndex:   modeChannelIndex
                     enabled:        modeChannelEnabled
 
-                    onActivated: modeChannelIndexSelected(index)
+                    onActivated: (index) =>  { modeChannelIndexSelected(index) }
                 }
 
                 QGCLabel {

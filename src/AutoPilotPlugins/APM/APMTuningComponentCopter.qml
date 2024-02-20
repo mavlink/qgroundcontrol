@@ -358,7 +358,7 @@ SetupPage {
                                         model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
                                         currentIndex:   _autoTuneSwitchChannelIndex
 
-                                        onActivated: {
+                                        onActivated: (index) => {
                                             var channel = index
 
                                             if (channel > 0) {

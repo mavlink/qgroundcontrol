@@ -66,28 +66,28 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _goodAttitudeEstimateFactName;
-    static const char* _goodHorizVelEstimateFactName;
-    static const char* _goodVertVelEstimateFactName;
-    static const char* _goodHorizPosRelEstimateFactName;
-    static const char* _goodHorizPosAbsEstimateFactName;
-    static const char* _goodVertPosAbsEstimateFactName;
-    static const char* _goodVertPosAGLEstimateFactName;
-    static const char* _goodConstPosModeEstimateFactName;
-    static const char* _goodPredHorizPosRelEstimateFactName;
-    static const char* _goodPredHorizPosAbsEstimateFactName;
-    static const char* _gpsGlitchFactName;
-    static const char* _accelErrorFactName;
-    static const char* _velRatioFactName;
-    static const char* _horizPosRatioFactName;
-    static const char* _vertPosRatioFactName;
-    static const char* _magRatioFactName;
-    static const char* _haglRatioFactName;
-    static const char* _tasRatioFactName;
-    static const char* _horizPosAccuracyFactName;
-    static const char* _vertPosAccuracyFactName;
-
 private:
+    const QString _goodAttitudeEstimateFactName =        QStringLiteral("goodAttitudeEsimate");
+    const QString _goodHorizVelEstimateFactName =        QStringLiteral("goodHorizVelEstimate");
+    const QString _goodVertVelEstimateFactName =         QStringLiteral("goodVertVelEstimate");
+    const QString _goodHorizPosRelEstimateFactName =     QStringLiteral("goodHorizPosRelEstimate");
+    const QString _goodHorizPosAbsEstimateFactName =     QStringLiteral("goodHorizPosAbsEstimate");
+    const QString _goodVertPosAbsEstimateFactName =      QStringLiteral("goodVertPosAbsEstimate");
+    const QString _goodVertPosAGLEstimateFactName =      QStringLiteral("goodVertPosAGLEstimate");
+    const QString _goodConstPosModeEstimateFactName =    QStringLiteral("goodConstPosModeEstimate");
+    const QString _goodPredHorizPosRelEstimateFactName = QStringLiteral("goodPredHorizPosRelEstimate");
+    const QString _goodPredHorizPosAbsEstimateFactName = QStringLiteral("goodPredHorizPosAbsEstimate");
+    const QString _gpsGlitchFactName =                   QStringLiteral("gpsGlitch");
+    const QString _accelErrorFactName =                  QStringLiteral("accelError");
+    const QString _velRatioFactName =                    QStringLiteral("velRatio");
+    const QString _horizPosRatioFactName =               QStringLiteral("horizPosRatio");
+    const QString _vertPosRatioFactName =                QStringLiteral("vertPosRatio");
+    const QString _magRatioFactName =                    QStringLiteral("magRatio");
+    const QString _haglRatioFactName =                   QStringLiteral("haglRatio");
+    const QString _tasRatioFactName =                    QStringLiteral("tasRatio");
+    const QString _horizPosAccuracyFactName =            QStringLiteral("horizPosAccuracy");
+    const QString _vertPosAccuracyFactName =             QStringLiteral("vertPosAccuracy");
+
     Fact _goodAttitudeEstimateFact;
     Fact _goodHorizVelEstimateFact;
     Fact _goodVertVelEstimateFact;

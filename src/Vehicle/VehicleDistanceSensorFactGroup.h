@@ -50,20 +50,20 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
 
-    static const char* _rotationNoneFactName;
-    static const char* _rotationYaw45FactName;
-    static const char* _rotationYaw90FactName;
-    static const char* _rotationYaw135FactName;
-    static const char* _rotationYaw180FactName;
-    static const char* _rotationYaw225FactName;
-    static const char* _rotationYaw270FactName;
-    static const char* _rotationYaw315FactName;
-    static const char* _rotationPitch90FactName;
-    static const char* _rotationPitch270FactName;
-    static const char* _minDistanceFactName;
-    static const char* _maxDistanceFactName;
-
 private:
+    const QString _rotationNoneFactName =     QStringLiteral("rotationNone");
+    const QString _rotationYaw45FactName =    QStringLiteral("rotationYaw45");
+    const QString _rotationYaw90FactName =    QStringLiteral("rotationYaw90");
+    const QString _rotationYaw135FactName =   QStringLiteral("rotationYaw135");
+    const QString _rotationYaw180FactName =   QStringLiteral("rotationYaw180");
+    const QString _rotationYaw225FactName =   QStringLiteral("rotationYaw225");
+    const QString _rotationYaw270FactName =   QStringLiteral("rotationYaw270");
+    const QString _rotationYaw315FactName =   QStringLiteral("rotationYaw315");
+    const QString _rotationPitch90FactName =  QStringLiteral("rotationPitch90");
+    const QString _rotationPitch270FactName = QStringLiteral("rotationPitch270");
+    const QString _minDistanceFactName =      QStringLiteral("minDistance");
+    const QString _maxDistanceFactName =      QStringLiteral("maxDistance");
+
     Fact _rotationNoneFact;
     Fact _rotationYaw45Fact;
     Fact _rotationYaw90Fact;

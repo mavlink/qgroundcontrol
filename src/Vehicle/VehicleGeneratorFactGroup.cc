@@ -2,18 +2,6 @@
 #include "Vehicle.h"
 #include <bitset>
 
-const char* VehicleGeneratorFactGroup::_statusFactName =                "status";
-const char* VehicleGeneratorFactGroup::_genSpeedFactName =              "genSpeed";
-const char* VehicleGeneratorFactGroup::_batteryCurrentFactName =        "batteryCurrent";
-const char* VehicleGeneratorFactGroup::_loadCurrentFactName =           "loadCurrent";
-const char* VehicleGeneratorFactGroup::_powerGeneratedFactName =        "powerGenerated";
-const char* VehicleGeneratorFactGroup::_busVoltageFactName =            "busVoltage";
-const char* VehicleGeneratorFactGroup::_rectifierTempFactName =         "rectifierTemp";
-const char* VehicleGeneratorFactGroup::_batCurrentSetpointFactName =    "batCurrentSetpoint";
-const char* VehicleGeneratorFactGroup::_genTempFactName =               "genTemp";
-const char* VehicleGeneratorFactGroup::_runtimeFactName =               "runtime";
-const char* VehicleGeneratorFactGroup::_timeMaintenanceFactName =       "timeMaintenance";
-
 VehicleGeneratorFactGroup::VehicleGeneratorFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GeneratorFact.json", parent)
     , _statusFact               (0, _statusFactName,                FactMetaData::valueTypeUint64)

@@ -4503,6 +4503,7 @@
         <value code="2">Require a landing</value>
         <value code="3">Require a takeoff and a landing</value>
         <value code="4">Require both a takeoff and a landing, or neither</value>
+        <value code="5">Same as previous, but require a landing if in air and no valid VTOL landing approach is present</value>
       </values>
     </parameter>
     <parameter name="MIS_YAW_ERR" default="12.0" type="FLOAT">
@@ -5122,8 +5123,8 @@
     </parameter>
     <parameter name="MPC_MAN_TILT_MAX" default="35." type="FLOAT">
       <short_desc>Maximal tilt angle in Stabilized or Altitude mode</short_desc>
-      <min>0</min>
-      <max>90</max>
+      <min>1</min>
+      <max>70</max>
       <unit>deg</unit>
       <decimal>0</decimal>
       <increment>1</increment>

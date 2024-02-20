@@ -120,6 +120,14 @@ if (Qt6_DIR)
     set(QT_DIR ${Qt6_DIR})
 endif ()
 
+qt_policy(
+    SET QTP0001 NEW
+    SET QTP0002 NEW
+)
+
+set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
+set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml" CACHE STRING "Extra QML Import Paths" FORCE)
+
 #######################################################
 #                QML Configuration
 #######################################################
@@ -279,8 +287,9 @@ else()
 endif()
 
 if(BUILD_TESTING)
+    add_subdirectory(test)
     list(APPEND QGC_RESOURCES
-            UnitTest.qrc
+            ${CMAKE_CURRENT_SOURCE_DIR}/test/UnitTest.qrc
     )
 endif()
 
@@ -300,6 +309,18 @@ else()
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
+
+if(ANDROID)
+    add_android_openssl_libraries(${PROJECT_NAME})
+endif()
+
+#######################################################
+#               Testing Configuration
+#######################################################
+
+if(BUILD_TESTING)
+    target_link_libraries(qgc PRIVATE qgctest)
+endif()
 
 #######################################################
 #		Install Configuration
@@ -334,14 +355,6 @@ install(
         FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
 )
-
-#######################################################
-#               Testing Configuration
-#######################################################
-
-if(BUILD_TESTING)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Test)
-endif()
 
 #######################################################
 #               Serial Port Configuration

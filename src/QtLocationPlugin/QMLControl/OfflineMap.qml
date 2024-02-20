@@ -805,7 +805,7 @@ Item {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             model:          QGroundControl.mapEngineManager.mapList
-                            onActivated: {
+                            onActivated: (index) => {
                                 mapType = textAt(index)
                             }
                             Component.onCompleted: {

@@ -32,7 +32,7 @@ QGCComboBox {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _fwdFlight:     _activeVehicle.vtolInFwdFlight
 
-    onActivated: {
+    onActivated: (index) => {
         if (index == 0) {
             if (_fwdFlight) {
                 mainWindow.vtolTransitionToMRFlightRequest()
