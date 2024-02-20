@@ -286,13 +286,6 @@ else()
     )
 endif()
 
-if(BUILD_TESTING)
-    add_subdirectory(test)
-    list(APPEND QGC_RESOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/test/UnitTest.qrc
-    )
-endif()
-
 #######################################################
 #               QGroundControl Target
 #######################################################
@@ -319,6 +312,7 @@ endif()
 #######################################################
 
 if(BUILD_TESTING)
+    add_subdirectory(test)
     target_link_libraries(qgc PRIVATE qgctest)
 endif()
 
