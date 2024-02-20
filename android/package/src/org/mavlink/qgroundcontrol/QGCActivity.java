@@ -75,6 +75,7 @@ public class QGCActivity extends QtActivity
     private static List<UsbSerialDriver>                _usbDrivers;
     private static List<SerialInputOutputManager>       _usbIoManagers;
     private static UsbSerialProber                      _usbProber;
+    private static ProbeTable                           _usbProbeTable;
     private static PendingIntent                        _usbPermissionIntent;
 
     // Native C++ functions which connect back to QSerialPort code
@@ -110,10 +111,7 @@ public class QGCActivity extends QtActivity
 
                 if(action.equals(ACTION_USB_PERMISSION))
                 {
-                    synchronized(context)
-                    {
-                        _handleUsbPermissions(intent);
-                    }
+                    _handleUsbPermissions(intent);
                 }
                 else if(action.equals(UsbManager.ACTION_USB_DEVICE_DETACHED))
                 {
@@ -150,7 +148,7 @@ public class QGCActivity extends QtActivity
         _usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
+        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, QGCActivity.class.getSimpleName());
         if(_wakeLock != null)
         {
             _wakeLock.acquire();
@@ -158,13 +156,13 @@ public class QGCActivity extends QtActivity
         }
         else
         {
-            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired!!!");
+            Log.i(TAG, "SCREEN_BRIGHT_WAKE_LOCK not acquired");
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Workaround for QTBUG-73138
         WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
+        _wifiMulticastLock = wifi.createMulticastLock(QGCActivity.class.getSimpleName());
         if(_wakeLock != null)
         {
             _wifiMulticastLock.setReferenceCounted(true);
@@ -173,18 +171,17 @@ public class QGCActivity extends QtActivity
         }
         else
         {
-            Log.i(TAG, "WifiMulticastLock not acquired!!!");
+            Log.i(TAG, "WifiMulticastLock not acquired");
         }
 
         _usbDrivers = new ArrayList<UsbSerialDriver>();
         _usbIoManagers = new ArrayList<UsbIoManager>();
 
-        /* TODO: Create custom prober */
-        /* ProbeTable customTable = new ProbeTable();
-        customTable.addProduct(0x1234, 0x0001, FtdiSerialDriver.class);
-        _usbProber = new UsbSerialProber(customTable); */
-        _usbProber = UsbSerialProber.getDefaultProber();
-        _usbManager = (UsbManager)getSystemService(Context.USB_SERVICE);
+        _usbProbeTable = getDefaultProbeTable();
+        _addUsbIdsToProbeTable();
+        _usbProber = new UsbSerialProber(_usbProbeTable);
+
+        _usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 
         nativeInit();
     }
@@ -292,6 +289,42 @@ public class QGCActivity extends QtActivity
     // USB Private Helpers
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private static void _addUsbIdsToProbeTable()
+    {
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_PX4, QGCUsbId.DEVICE_PX4FMU, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ATMEL, QGCUsbId.ATMEL_LUFA_CDC_DEMO_APP, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_UNO, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_MEGA_2560, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_SERIAL_ADAPTER, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_MEGA_ADK, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_MEGA_2560_R3, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_UNO_R3, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_MEGA_ADK_R3, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_SERIAL_ADAPTER_R3, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUINO, QGCUsbId.ARDUINO_LEONARDO, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_VAN_OOIJEN_TECH, QGCUsbId.VAN_OOIJEN_TECH_TEENSYDUINO_SERIAL, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_LEAFLABS, QGCUsbId.LEAFLABS_MAPLE, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_5, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_6, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_7, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_8, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_OPENPILOT, QGCUsbId.DEVICE_REVOLUTION, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_OPENPILOT, QGCUsbId.DEVICE_OPLINK, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_OPENPILOT, QGCUsbId.DEVICE_SPARKY2, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_OPENPILOT, QGCUsbId.DEVICE_CC3D, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUPILOT_CHIBIOS1, QGCUsbId.DEVICE_ARDUPILOT_CHIBIOS, CdcAcmSerialDriver.class);
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_ARDUPILOT_CHIBIOS2, QGCUsbId.DEVICE_ARDUPILOT_CHIBIOS, CdcAcmSerialDriver.class);
+
+        _usbProbeTable.addProduct(QGCUsbId.VENDOR_DRAGONLINK, QGCUsbId.DEVICE_DRAGONLINK, CdcAcmSerialDriver.class);
+    }
+
     private static void _handleUsbPermissions(Intent intent)
     {
         final UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -364,6 +397,11 @@ public class QGCActivity extends QtActivity
         }
 
         return result;
+    }
+
+    private static UsbSerialDriver _findDriver(UsbDevice usbDevice)
+    {
+        return _usbProbeTable.findDriver(usbDevice);
     }
 
     private static SerialInputOutputManager _findUsbIoManager(int deviceId)

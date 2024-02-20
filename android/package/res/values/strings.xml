@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices">USB Devices</string>
+    <string name="CdcAcm">CDC ACM USB Device</string>
+    <string name="ChromeCcd">Chrome CCD USB Device</string>
+    <string name="Cp21xx">CP21XX USB Device</string>
+    <string name="FTDI">FTDI USB Device</string>
+    <string name="GsmModem">GSM Modem USB Device</string>
+    <string name="Prolific">Prolific USB Device</string>
+    <string name="Unknown">Unknown USB Device</string>
+</resources>
