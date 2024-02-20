@@ -4,6 +4,7 @@ qt_add_library(qgcandroid
 	STATIC
 	${CMAKE_CURRENT_SOURCE_DIR}/AndroidInit.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/AndroidInterface.cc ${CMAKE_CURRENT_SOURCE_DIR}/AndroidInterface.h
+	${CMAKE_CURRENT_SOURCE_DIR}/AndroidSerial.cpp ${CMAKE_CURRENT_SOURCE_DIR}/AndroidSerial.h
 )
 
 target_link_libraries(qgcandroid

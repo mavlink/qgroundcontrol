@@ -157,7 +157,7 @@ public class UsbSerialInterface implements SerialInputOutputManager.Listener
             {
                 if(usbPermission == UsbPermission.Unknown && !_usbManager.hasPermission(device))
                 {
-                    final int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_MUTABLE : 0;
+                    final int flags = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0;
                     Intent intent = new Intent(INTENT_ACTION_GRANT_USB);
                     intent.setPackage(context.getPackageName());
                     PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(context, 0, intent, flags);

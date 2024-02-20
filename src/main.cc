@@ -79,17 +79,6 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-<<<<<<< HEAD
-#if defined(Q_OS_ANDROID)
-#include <jni.h>
-#include "AndroidInterface.h"
-#include "JoystickAndroid.h"
-#if !defined(NO_SERIAL_LINK)
-#include "qserialport.h"
-#endif
-=======
->>>>>>> 178f241aa (separate android init code)
-
 
 // To shut down QGC on Ctrl+C on Linux
 #ifdef Q_OS_LINUX
