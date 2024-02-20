@@ -69,8 +69,7 @@ bool AndroidSerial::open(QString portName)
     deviceId = QJniObject::callStaticMethod<jint>(
         kJniQGCActivityClassName,
         "open",
-        "(Landroid/content/Context;Ljava/lang/String;J)I",
-        QNativeInterface::QAndroidApplication::context(),
+        "(Ljava/lang/String;J)I",
         jnameL.object<jstring>(),
         reinterpret_cast<jlong>(this)
     );
