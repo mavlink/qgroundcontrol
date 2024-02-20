@@ -19,8 +19,6 @@ import android.os.storage.StorageVolume;
 import android.util.Log;
 import android.view.WindowManager;
 
-import com.hoho.android.usbserial.driver.*;
-
 import org.qtproject.qt.android.bindings.QtActivity;
 
 public class QGCActivity extends QtActivity
@@ -93,7 +91,7 @@ public class QGCActivity extends QtActivity
         bluetoothFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(receiver, bluetoothFilter);
 
-        _usbSerialInterface = new UsbSerialInterface();
+        _usbSerialInterface = new UsbSerialInterface(this);
 
         nativeInit();
     }

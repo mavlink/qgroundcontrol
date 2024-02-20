@@ -24,7 +24,7 @@ dependencies {
 }
 
 android {
-    namespace "org.zatqgc.zenith"
+    namespace "org.mavlink.qgroundcontrol"
 
     /*******************************************************
      * The following variables:
