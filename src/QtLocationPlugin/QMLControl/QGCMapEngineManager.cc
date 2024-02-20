@@ -222,10 +222,15 @@ QGCMapEngineManager::mapList()
 QStringList
 QGCMapEngineManager::mapProviderList()
 {
-    // Extract Provider name from MapName ( format : "Provider Type")
     QStringList mapList = getQGCMapEngine()->getMapNameList();
+
+    // Don't return the Elevations provider. This is not selectable as a map provider by the user.
+    mapList.removeAll(UrlFactory::kCopernicusElevationProviderKey);
+
+    // Extract Provider name from MapName ( format : "Provider Type")
     mapList.replaceInStrings(QRegularExpression("^([^\\ ]*) (.*)$"),"\\1");
     mapList.removeDuplicates();
+
     return mapList;
 }
 
