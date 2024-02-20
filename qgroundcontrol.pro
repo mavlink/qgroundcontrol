@@ -12,6 +12,7 @@ QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in mak
 # These are disabled until proven correct
 DEFINES += QGC_GST_TAISYNC_DISABLED
 DEFINES += QGC_GST_MICROHARD_DISABLED
+# DEFINES += QGC_AIRLINK_DISABLED
 
 message ("ANDROID_TARGET_ARCH $${ANDROID_TARGET_ARCH} $${QT_ARCH}")
 
@@ -1137,6 +1138,24 @@ contains (DEFINES, QGC_DISABLE_MAVLINK_INSPECTOR) {
         src/AnalyzeView/MAVLinkInspectorController.cc
     QT += \
         charts
+}
+
+#-------------------------------------------------------------------------------------
+# Airlink
+contains (DEFINES, QGC_AIRLINK_DISABLED) {
+    message("AirLink disabled")
+} else {
+    message("AirLink enabled")
+    INCLUDEPATH += \
+        src/AirLink
+
+    HEADERS += \
+        src/AirLink/AirlinkLink.h \
+        src/AirLink/AirLinkManager.h
+
+    SOURCES += \
+        src/AirLink/AirlinkLink.cc \
+        src/AirLink/AirLinkManager.cc
 }
 
 #-------------------------------------------------------------------------------------

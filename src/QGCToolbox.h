@@ -33,6 +33,9 @@ class MAVLinkLogManager;
 class QGCCorePlugin;
 class SettingsManager;
 class ADSBVehicleManager;
+#ifndef QGC_AIRLINK_DISABLED
+class AirLinkManager;
+#endif
 #ifdef CONFIG_UTM_ADAPTER
 class UTMSPManager;
 #endif
@@ -64,6 +67,9 @@ public:
 #ifndef __mobile__
     GPSManager*                 gpsManager              () { return _gpsManager; }
 #endif
+#ifndef QGC_AIRLINK_DISABLED
+    AirLinkManager*              airlinkManager          () { return _airlinkManager; }
+#endif
 #ifdef CONFIG_UTM_ADAPTER
     UTMSPManager*                utmspManager             () { return _utmspManager; }
 #endif
@@ -94,6 +100,9 @@ private:
     QGCCorePlugin*              _corePlugin             = nullptr;
     SettingsManager*            _settingsManager        = nullptr;
     ADSBVehicleManager*         _adsbVehicleManager     = nullptr;
+#ifndef QGC_AIRLINK_DISABLED
+    AirLinkManager*             _airlinkManager         = nullptr;
+#endif
 
 #ifdef CONFIG_UTM_ADAPTER
     UTMSPManager*                _utmspManager            = nullptr;

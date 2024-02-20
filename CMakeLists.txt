@@ -241,6 +241,8 @@ if (ENABLE_VIDEOSTREAMING)
     endif ()
 endif ()
 
+option(QGC_AIRLINK_DISABLED "Enable airlink" OFF)
+
 # Sets the default flags for compilation and linking.
 include(CompileOptions)
 
