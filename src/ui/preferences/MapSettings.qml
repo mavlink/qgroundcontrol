@@ -28,12 +28,12 @@ Item {
     property var    _settingsManager:               QGroundControl.settingsManager
     property var    _appSettings:                   _settingsManager.appSettings
     property var    _mapsSettings:                  _settingsManager.mapsSettings
-    property string _mapProvider:                   _settingsManager.flightMapSettings.mapProvider.value
-    property string _mapType:                       _settingsManager.flightMapSettings.mapType.value
     property var    _mapEngineManager:              QGroundControl.mapEngineManager
     property bool   _currentlyImportOrExporting:    _mapEngineManager.importAction === QGCMapEngineManager.ActionExporting || _mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
     property real   _largeTextFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
 
+    property Fact   _mapProviderFact:   _settingsManager.flightMapSettings.mapProvider
+    property Fact   _mapTypeFact:       _settingsManager.flightMapSettings.mapType
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
@@ -62,12 +62,12 @@ Item {
                 model:      _mapEngineManager.mapProviderList
 
                 onActivated: (index) => {
-                    _mapProvider = comboBox.textAt(index)
-                    _mapType = _mapEngineManager.mapTypeList(comboBox.textAt(index))[0]
+                    _mapProviderFact.rawValue = comboBox.textAt(index)
+                    _mapTypeFact.rawValue = _mapEngineManager.mapTypeList(comboBox.textAt(index))[0]
                 }
 
                 Component.onCompleted: {
-                    var index = comboBox.find(_mapProvider)
+                    var index = comboBox.find(_mapProviderFact.rawValue)
                     if (index < 0) index = 0
                     comboBox.currentIndex = index
                 }
@@ -75,12 +75,12 @@ Item {
 
             LabelledComboBox {
                 label: qsTr("Type")
-                model: _mapEngineManager.mapTypeList(_mapProvider)
+                model: _mapEngineManager.mapTypeList(_mapProviderFact.rawValue)
 
-                onActivated: (index) => { _mapType = comboBox.textAt(index) }
+                onActivated: (index) => { _mapTypeFact.rawValue = comboBox.textAt(index) }
 
                 Component.onCompleted: {
-                    var index = comboBox.find(_mapType)
+                    var index = comboBox.find(_mapTypeFact.rawValue)
                     if (index < 0) index = 0
                     comboBox.currentIndex = index
                 }
