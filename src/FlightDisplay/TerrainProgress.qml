@@ -17,9 +17,9 @@ import QGroundControl.Controls
 import QGroundControl.Palette
 
 Rectangle {
-    height:     mainLayout.height + (_margins * 2)
-    visible:    false
-    color:      qgcPal.window
+    implicitHeight: mainLayout.height + (_margins * 2)
+    visible:        false
+    color:          qgcPal.window
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
