@@ -229,16 +229,6 @@ if (ENABLE_VIDEOSTREAMING)
     endif ()
 
     message(STATUS "gst found ${GST_FOUND}")
-    if (GST_FOUND)
-        add_definitions(-DQGC_GST_STREAMING)
-        option(QGC_GST_MICROHARD_ENABLED "Enable microhard" OFF)
-        option(QGC_GST_TAISYNC_ENABLED "Enable taisyng" OFF)
-    else ()
-        message(STATUS "Tried to enable video streaming support, but GStreamer libs not found")
-        if (QGC_GST_MICROHARD_ENABLED OR QGC_GST_TAISYNC_ENABLED)
-            message(FATAL_ERROR "You tried to enable Microhard or Taisync but gstreamer is not found. Make sure to set PKG_CONFIG_EXECUTABLE and/or PKG_CONFIG_PATH properly.")
-        endif ()
-    endif ()
 endif ()
 
 # Sets the default flags for compilation and linking.

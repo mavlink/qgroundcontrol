@@ -58,8 +58,6 @@ for example:
  
  ```udp265://<interface>:<port>``` - H.265 over RTP/UDP
  
- ```tsusb://<interface>:<port>``` - Taisync's forwarded H.264 byte aligned NALU stream over UDP
- 
  ```tcp://<host>:<port>``` - MPEG-2 TS over TCP
  
  ```mpegts://<interface>:<port>``` - MPEG-2 TS over UDP
