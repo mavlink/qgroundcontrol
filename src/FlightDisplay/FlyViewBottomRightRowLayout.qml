@@ -8,16 +8,20 @@
  ****************************************************************************/
 
 import QtQuick
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightDisplay
 
-SelectableControl {
-    z:                      QGroundControl.zOrderWidgets
-    selectionUIRightAnchor: true
-    selectedControl:        QGroundControl.settingsManager.flyViewSettings.instrumentQmlFile
+RowLayout {
+    TelemetryValuesBar {
+        Layout.alignment:   Qt.AlignBottom
+        extraWidth:         instrumentPanel.extraValuesWidth
+    }
 
-    property var  missionController:    _missionController
-    property real extraInset:           innerControl.extraInset
-    property real extraValuesWidth:     innerControl.extraValuesWidth
+    FlyViewInstrumentPanel {
+        id:         instrumentPanel
+        visible:    QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI
+    }
 }

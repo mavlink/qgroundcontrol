@@ -5,6 +5,8 @@ add_custom_target(FligthMapWidgetsQml
         CompassDial.qml
         CompassHeadingIndicator.qml
 		HorizontalCompassAttitude.qml
+        IntegratedAttitudeIndicator.qml
+        IntegratedCompassAttitude.qml
 		MapFitFunctions.qml
 		PhotoVideoControl.qml
 		QGCArtificialHorizon.qml

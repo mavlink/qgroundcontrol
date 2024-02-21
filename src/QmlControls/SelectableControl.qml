@@ -31,6 +31,7 @@ Control {
     
     property Fact selectedControl               ///< Fact which has enumStrings/Values where values are the qml file for the control
     property bool selectionUIRightAnchor: false
+    property var  innerControl:           loader.item
 
     property bool _showSelectionUI: false
 
