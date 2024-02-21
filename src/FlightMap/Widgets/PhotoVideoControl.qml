@@ -23,10 +23,10 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Rectangle {
-    height:     mainLayout.height + (_margins * 2)
-    color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
-    radius:     _margins
-    visible:    (_mavlinkCamera || _videoStreamAvailable || _simpleCameraAvailable) && multiVehiclePanelSelector.showSingleVehiclePanel
+    implicitHeight: mainLayout.height + (_margins * 2)
+    color:          Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
+    radius:         _margins
+    visible:        (_mavlinkCamera || _videoStreamAvailable || _simpleCameraAvailable) && _showSingleVehicleUI
 
     property real   _margins:                                   ScreenTools.defaultFontPixelHeight / 2
     property var    _activeVehicle:                             QGroundControl.multiVehicleManager.activeVehicle

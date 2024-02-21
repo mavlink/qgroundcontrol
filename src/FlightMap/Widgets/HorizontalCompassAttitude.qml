@@ -23,6 +23,9 @@ ColumnLayout {
     spacing:    ScreenTools.defaultFontPixelHeight / 4
     width:      Math.min(_defaultWidth, _maxWidth)
 
+    property real extraInset:           0
+    property real extraValuesWidth:     _outerRadius
+
     property real   _defaultWidth:      mainWindow.width * 0.2
     property real   _maxWidth:          ScreenTools.defaultFontPixelHeight * 15
     property real   _innerRadius:       (width - (_topBottomMargin * 3)) / 4
