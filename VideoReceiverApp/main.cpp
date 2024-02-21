@@ -1,139 +1,25 @@
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-
-#include <QCommandLineParser>
-#include <QQuickWindow>
-#include <QRunnable>
-#include <QTimer>
+#include <QtCore/QCommandLineParser>
+#include <QtCore/QDebug>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMessageLogContext>
+#include <QtCore/QRunnable>
+#include <QtCore/QTimer>
+#include <QtCore/QtLogging>
+#include <QtGui/QGuiApplication>
+#include <QtQml/QQmlApplicationEngine>
+#include <QtQuick/QQuickWindow>
 
 #include "GstVideoReceiver.h"
+#include "GStreamer.h"
+#include "VideoReceiver.h"
 #include <gst/gst.h>
 
-#include "QGCLoggingCategory.h"
+static Q_LOGGING_CATEGORY(AppLog, "VideoReceiverApp")
 
-static QString threadName() {
-    char name[16]; // Thread names in Linux are limited to 16 bytes including the null terminator
-    int retx = pthread_getname_np(pthread_self(), name, sizeof(name));
-    if (retx != 0) {
-        return "???";
-    } else {
-        return name;
-    }
-}
-
-#if defined(qCDebug)
-#undef qCDebug
-#define qCDebug(category, ...) QT_MESSAGE_LOGGER_COMMON(category, QtDebugMsg).debug(__VA_ARGS__) << "[" << threadName() << "]"
-#endif
-
-
-QGC_LOGGING_CATEGORY(AppLog, "VideoReceiverApp")
-
-#if defined(__android__)
-#include <QtAndroidExtras>
-
-#include <jni.h>
-
-#include <android/log.h>
-
-static jobject _class_loader = nullptr;
-static jobject _context = nullptr;
-
-extern "C" {
-    void gst_amc_jni_set_java_vm(JavaVM *java_vm);
-
-    jobject gst_android_get_application_class_loader(void) {
-        return _class_loader;
-    }
-}
-
-static void
-gst_android_init(JNIEnv* env, jobject context)
+void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-    jobject class_loader = nullptr;
-
-    jclass context_cls = env->GetObjectClass(context);
-
-    if (!context_cls) {
-        return;
-    }
-
-    jmethodID get_class_loader_id = env->GetMethodID(context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        return;
-    }
-
-    class_loader = env->CallObjectMethod(context, get_class_loader_id);
-
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        return;
-    }
-
-    _context = env->NewGlobalRef(context);
-    _class_loader = env->NewGlobalRef(class_loader);
+    (void) fprintf(stderr, "%s", qPrintable(qFormatLogMessage(type, context, msg)));
 }
-
-static const char kJniClassName[] {"labs/mavlink/VideoReceiverApp/QGLSinkActivity"};
-
-static void setNativeMethods(void)
-{
-    JNINativeMethod javaMethods[] {
-        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
-    };
-
-    QAndroidJniEnvironment jniEnv;
-
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
-
-    jclass objectClass = jniEnv->FindClass(kJniClassName);
-
-    if (!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniClassName;
-        return;
-    }
-
-    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
-
-    if (val < 0) {
-        qWarning() << "Error registering methods: " << val;
-    } else {
-        qDebug() << "Main Native Functions Registered";
-    }
-
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
-}
-
-jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-    Q_UNUSED(reserved);
-
-    JNIEnv* env;
-
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-        return -1;
-    }
-
-    setNativeMethods();
-
-    gst_amc_jni_set_java_vm(vm);
-
-    return JNI_VERSION_1_6;
-}
-#endif
-
-#include <GStreamer.h>
-#include <VideoReceiver.h>
 
 class VideoReceiverApp : public QRunnable
 {
@@ -497,40 +383,20 @@ VideoReceiverApp::_dispatch(std::function<void()> code)
     QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
 }
 
-
-static bool isQtApp(const char* app)
-{
-    const char* s;
-
-#if defined(Q_OS_WIN)
-    if ((s = strrchr(app, '\\')) != nullptr) {
-#else
-    if ((s = strrchr(app, '/')) != nullptr) {
-#endif
-        s += 1;
-    } else {
-        s = app;
-    }
-
-    return s[0] == 'Q' || s[0] == 'q';
-}
-
 int main(int argc, char *argv[])
 {
-    if (argc < 1) {
-        return 0;
-    }
+    if (argc < 1) return 0;
 
-    int ret;
-    {
-        GStreamer::initialize(argc, argv, 3);
-        gst_init (&argc, &argv);
-        const bool runAsQtApp = isQtApp(argv[0]);
-        QGuiApplication app(argc, argv);
-        VideoReceiverApp videoApp(app, runAsQtApp);
-        ret = videoApp.exec();
+    GStreamer::initialize(argc, argv, 3);
+    gst_init(&argc, &argv);
 
-    }
+    qSetMessagePattern("%{category} %{type}: %{message} (%{file}:%{line})\n");
+    #ifndef Q_OS_ANDROID
+        (void) qInstallMessageHandler(myMessageHandler);
+    #endif
+    QGuiApplication app(argc, argv);
+    const bool runAsQtApp = QString(argv[0]).startsWith("q",  Qt::CaseInsensitive);
+    VideoReceiverApp videoApp(app, runAsQtApp);
 
-  return ret;
+    return videoApp.exec();
 }
