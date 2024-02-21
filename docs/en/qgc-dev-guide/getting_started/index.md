@@ -78,6 +78,10 @@ To install Qt:
 
    Then install the following components:
 
+::: info
+To see a complete list of all available components in the installer _Select Components_ dialog, you might need to check the **"Archive"** box in the right column under the **"Categories"** tab, then click on **"Filter"**.
+:::
+
    - Under _Qt _{{ $frontmatter.qt_version }}_ select:
        - Depending on the OS you want to build for:
 			- **Windows**: _MSVC 2019 64 bit_
