@@ -111,6 +111,7 @@ void OsmParser::decodeNodeTags(QDomElement &xmlComponent, QMap<uint64_t, QGeoCoo
     int64_t id_tmp=0;
     QGeoCoordinate gps_tmp;
     QString attribute;
+
     if (xmlComponent.tagName()=="node") {
 
         attribute = xmlComponent.attribute("id","-1");
@@ -159,9 +160,12 @@ void OsmParser::decodeBuildings(QDomElement &xmlComponent, QMap<uint64_t, Buildi
     QVector3D local_pt_tmp;
     std::vector<QGeoCoordinate> bld_points;
     std::vector<QVector2D> bld_points_local;
+    double bld_lon_max, bld_lon_min, bld_lat_max, bld_lat_min;
     double bld_x_max, bld_x_min, bld_y_max, bld_y_min;
     bld_x_max = bld_y_max = -1e10;
     bld_x_min = bld_y_min = 1e10;
+    bld_lon_max = bld_lat_max = -1e10;
+    bld_lon_min = bld_lat_min = 1e10;
 
     int64_t ref_id;
     QDomElement Child = xmlComponent.firstChild().toElement();
@@ -184,6 +188,11 @@ void OsmParser::decodeBuildings(QDomElement &xmlComponent, QMap<uint64_t, Buildi
                 bld_y_max = (bld_y_max < local_pt_tmp.y())?(local_pt_tmp.y()):(bld_y_max);
                 bld_x_min = (bld_x_min > local_pt_tmp.x())?(local_pt_tmp.x()):(bld_x_min);
                 bld_y_min = (bld_y_min > local_pt_tmp.y())?(local_pt_tmp.y()):(bld_y_min);
+
+                bld_lon_max = fmax(bld_lon_max, gps_pt_tmp.longitude());
+                bld_lat_max = fmax(bld_lat_max, gps_pt_tmp.latitude());
+                bld_lon_min = fmin(bld_lon_min, gps_pt_tmp.longitude());
+                bld_lat_min = fmin(bld_lat_min, gps_pt_tmp.latitude());
             }
         }else if (Child.tagName()=="tag") {
             attribute = Child.attribute("k","0");
@@ -212,6 +221,12 @@ void OsmParser::decodeBuildings(QDomElement &xmlComponent, QMap<uint64_t, Buildi
     if(bld_points.size() > 2) {
         //        float bld_height = (bld_tmp.height >= bld_tmp.levels * _buildingLevelHeight)?(bld_tmp.height):(bld_tmp.levels * _buildingLevelHeight);
         //        bld_tmp.height = bld_height;
+        if(bld_tmp.levels > 0 || bld_tmp.height > 0){
+            _coordinate_min.setLatitude(fmin(_coordinate_min.latitude(), bld_lat_min));
+            _coordinate_min.setLongitude(fmin(_coordinate_min.longitude(), bld_lon_min));
+            _coordinate_max.setLatitude(fmax(_coordinate_max.latitude(), bld_lat_max));
+            _coordinate_max.setLongitude(fmax(_coordinate_max.longitude(), bld_lon_max));
+        }
         bld_tmp.points_gps = bld_points;
         bld_tmp.points_local = bld_points_local;
         bld_tmp.bb_max = QVector2D(bld_x_max, bld_y_max);

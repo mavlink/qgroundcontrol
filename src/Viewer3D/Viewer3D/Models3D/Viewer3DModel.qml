@@ -2,7 +2,9 @@ import QtQuick3D
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
+import QtPositioning
 
+import Viewer3D
 import Viewer3D.Models3D.Drones
 import Viewer3D.Models3D
 import QGroundControl.Viewer3D
@@ -20,12 +22,19 @@ import QGroundControl.Vehicle
 
 View3D {
     id: topView
-    property var viewer3DManager: null
-    readonly property var _gpsRef: viewer3DManager.qmlBackend.gpsRef
-    property bool isViewer3DOpen: false
-    property real rotationSpeed: 0.1
-    property real movementSpeed: 1
-    property real zoomSpeed: 0.3
+    property var viewer3DManager:               null
+    readonly property var _gpsRef:              (viewer3DManager)?(viewer3DManager.qmlBackend.gpsRef):(QtPositioning.coordinate(0, 0, 0))
+    property bool isViewer3DOpen:               false
+    property real rotationSpeed:                0.1
+    property real movementSpeed:                1
+    property real zoomSpeed:                    0.3
+    property bool _viewer3DEnabled:             QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
+
+
+    function movementSpeedAdjustment(adjustmentScale, maxValue){
+        let _adjustmentValue = standAloneScene.cameraTwoPosition.length() / adjustmentScale;
+        return Math.min(Math.max(1, _adjustmentValue), maxValue)
+    }
 
     function rotateCamera(newPose: vector2d, lastPose: vector2d) {
         let rotation_vec = Qt.vector2d(newPose.y - lastPose.y, newPose.x - lastPose.x);
@@ -41,8 +50,8 @@ View3D {
         let _roll = standAloneScene.cameraOneRotation.x * (3.1415/180)
         let _pitch = standAloneScene.cameraOneRotation.y * (3.1415/180)
 
-        let dx_l = (newPose.x - lastPose.x) * movementSpeed
-        let dy_l = (newPose.y - lastPose.y) * movementSpeed
+        let dx_l = (newPose.x - lastPose.x) * movementSpeed * movementSpeedAdjustment(2000.0, 4)
+        let dy_l = (newPose.y - lastPose.y) * movementSpeed * movementSpeedAdjustment(2000.0, 4)
 
         //Note: Rotation Matrix is computed as: R = R(-_pitch) * R(_roll)
         // Then the corerxt tramslation is: d = R * [dx_l; dy_l; dz_l]
@@ -57,7 +66,7 @@ View3D {
     }
 
     function zoomCamera(zoomValue){
-        let dz_l = zoomValue * zoomSpeed;
+        let dz_l = zoomValue * zoomSpeed * movementSpeedAdjustment(2000.0, 4);
 
         let _roll = standAloneScene.cameraOneRotation.x * (3.1415/180)
         let _pitch = standAloneScene.cameraOneRotation.y * (3.1415/180)
@@ -71,8 +80,18 @@ View3D {
         standAloneScene.cameraTwoPosition.z += dz
     }
 
+    on_Viewer3DEnabledChanged: {
+        if(_viewer3DEnabled === false){
+            mapGeometryLoader.active = false;
+            vehicle3DLoader.active = false;
+            viewer3DManager = null;
+        }
+    }
+
     on_GpsRefChanged:{
-        standAloneScene.resetCamera();
+        if(_viewer3DEnabled){
+            standAloneScene.resetCamera();
+        }
     }
 
     camera: standAloneScene.cameraOne
@@ -87,26 +106,94 @@ View3D {
         backgroundMode: SceneEnvironment.Color
     }
 
-    Model {
-        id: cityMapModel
-        visible: true
-        scale: Qt.vector3d(10, 10, 10)
-        geometry: CityMapGeometry {
-            id: cityMapGeometry
-            modelName: "city_map"
-            osmParser: (viewer3DManager)?(viewer3DManager.osmParser):(null)
+    Viewer3DProgressBar{
+        id: _terrainProgressBar
+        anchors{
+            bottom: parent.bottom
+            horizontalCenter: parent.horizontalCenter
+            margins: ScreenTools.defaultFontPixelWidth
         }
+        width:          ScreenTools.screenWidth * 0.2
+        progressText: "Loading Map: "
+    }
 
-        materials: [
-            PrincipledMaterial {
-                baseColor: "gray"
-                metalness: 0.1
-                roughness: 0.5
-                specularAmount: 1.0
-                indexOfRefraction: 4.0
-                opacity: 1.0
+    Binding{
+        target: _terrainProgressBar
+        property: "progressValue"
+        value: (mapGeometryLoader.active)?(mapGeometryLoader.item.textureDownloadProgress):(100)
+        when: mapGeometryLoader.status == Loader.Ready
+    }
+
+    Component{
+        id: buildingsGeometryComponent
+
+        Node{
+            property real textureDownloadProgress: _terrainTextureManager.textureDownloadProgress
+
+            Model {
+                id: cityMapModel
+                visible: true
+                scale: Qt.vector3d(10, 10, 10)
+                geometry: CityMapGeometry {
+                    id: cityMapGeometry
+                    modelName: "city_map"
+                    osmParser: (viewer3DManager)?(viewer3DManager.osmParser):(null)
+                }
+
+                materials: [
+                    PrincipledMaterial {
+                        baseColor: "gray"
+                        metalness: 0.1
+                        roughness: 0.5
+                        specularAmount: 1.0
+                        indexOfRefraction: 4.0
+                        opacity: 1.0
+                    }
+                ]
             }
-        ]
+
+            Model {
+                id: pointModel
+                visible: true
+                scale: Qt.vector3d(10, 10, 10)
+
+                geometry: Viewer3DTerrainGeometry {
+                    id: terrainGeometryManager
+                    refCoordinate: _gpsRef
+                }
+
+                materials: CustomMaterial {
+                    vertexShader: "/ShaderVertex/earthMaterial.vert"
+                    fragmentShader: "/ShaderFragment/earthMaterial.frag"
+                    property TextureInput someTextureMap: TextureInput {
+                        texture: Texture {
+                            textureData: _terrainTextureManager
+                        }
+                    }
+                }
+            }
+
+            Viewer3DTerrainTexture {
+                id: _terrainTextureManager
+                osmParser: (viewer3DManager)?(viewer3DManager.osmParser):(null)
+
+                onTextureGeometryDoneChanged: {
+                    if(textureGeometryDone === true){
+                        terrainGeometryManager.sectorCount = tileCount.width
+                        terrainGeometryManager.stackCount = tileCount.height
+                        terrainGeometryManager.roiMin = roiMinCoordinate;
+                        terrainGeometryManager.roiMax = roiMaxCoordinate;
+                        terrainGeometryManager.updateEarthData();
+                    }
+                }
+            }
+        }
+    }
+
+    Loader3D{
+        id: mapGeometryLoader
+        active: false
+        sourceComponent: buildingsGeometryComponent
     }
 
     Component{
@@ -129,10 +216,15 @@ View3D {
 
     Loader3D{
         id: vehicle3DLoader
+        active: false
+        sourceComponent: vehicle3DComponent
     }
 
     onViewer3DManagerChanged: {
-        vehicle3DLoader.sourceComponent = vehicle3DComponent
+        if(viewer3DManager){
+            vehicle3DLoader.active = true;
+            mapGeometryLoader.active = true;
+        }
     }
 
     DragHandler {
