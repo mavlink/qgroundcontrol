@@ -109,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: qgroundcontrol.pdb
-          path: ${{ runner.temp }}\shadow_build_dir\package\qgroundcontrol.pdb
+          path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
 
       - name: Upload Build File
         uses: ./.github/actions/upload
@@ -117,3 +117,4 @@ jobs:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          source: 'staging'
