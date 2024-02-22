@@ -111,6 +111,8 @@
 #include "Viewer3DQmlVariableTypes.h"
 #include "OsmParser.h"
 #include "Viewer3DManager.h"
+#include "Viewer3DTerrainGeometry.h"
+#include "Viewer3DTerrainTexture.h"
 
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
@@ -428,6 +430,8 @@ void QGCApplication::_initCommon()
     qmlRegisterType<Viewer3DManager>                    (kQGCViewer3D, 1, 0, "Viewer3DManager");
     qmlRegisterUncreatableType<Viewer3DQmlBackend>      (kQGCViewer3D, 1, 0, "Viewer3DQmlBackend",          kRefOnly);
     qmlRegisterUncreatableType<OsmParser>               (kQGCViewer3D, 1, 0, "OsmParser",                   kRefOnly);
+    qmlRegisterType<Viewer3DTerrainGeometry>                       (kQGCViewer3D, 1, 0, "Viewer3DTerrainGeometry");
+    qmlRegisterType<Viewer3DTerrainTexture>                   (kQGCViewer3D, 1, 0, "Viewer3DTerrainTexture");
     
     qmlRegisterUncreatableType<Vehicle>                 (kQGCVehicle,                       1, 0, "Vehicle",                    kRefOnly);
     qmlRegisterUncreatableType<MissionManager>          (kQGCVehicle,                       1, 0, "MissionManager",             kRefOnly);

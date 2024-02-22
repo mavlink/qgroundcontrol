@@ -4,9 +4,14 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FlightDisplay
+import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
-import QGroundControl.Controls
+import QGroundControl.Vehicle
 
 import QGroundControl.Viewer3D
 import Viewer3D.Models3D
@@ -16,13 +21,13 @@ import Viewer3D.Models3D
 
 Item{
     id: viewer3DBody
+
     property bool isOpen: false
     property bool   _viewer3DEnabled:        QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
-
+    property bool _loaderSourceSet: false
 
     function open(){
         if(_viewer3DEnabled === true){
-            view3DManagerLoader.sourceComponent = viewer3DManagerComponent
             view3DManagerLoader.active = true;
             isOpen = true;
         }
@@ -38,7 +43,6 @@ Item{
     on_Viewer3DEnabledChanged: {
         if(_viewer3DEnabled === false){
             viewer3DBody.close();
-            view3DLoader.active = false;
             view3DManagerLoader.active = false;
         }
     }
@@ -53,16 +57,23 @@ Item{
 
     Loader{
         id: view3DManagerLoader
+        active: false
+        sourceComponent: viewer3DManagerComponent
 
         onLoaded: {
-            view3DLoader.source = "Models3D/Viewer3DModel.qml"
-            view3DLoader.active = true;
+            if(view3DLoader.active === true){
+                view3DLoader.item.viewer3DManager = view3DManagerLoader.item
+            }else{
+                view3DLoader.active = true
+            }
         }
     }
 
     Loader{
         id: view3DLoader
         anchors.fill: parent
+        active: false
+        source: "Models3D/Viewer3DModel.qml"
 
         onLoaded: {
             item.viewer3DManager = view3DManagerLoader.item

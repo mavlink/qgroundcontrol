@@ -13,6 +13,15 @@ qt_add_library(Viewer3D STATIC
     Viewer3DQmlVariableTypes.h
     Viewer3DUtils.cc
     Viewer3DUtils.h
+    Viewer3DTileReply.h
+    Viewer3DTileReply.cc
+    Viewer3DTerrainGeometry.h
+    Viewer3DTerrainGeometry.cc
+    Viewer3DTerrainTexture.h
+    Viewer3DTerrainTexture.cc
+    Viewer3DTileQuery.h
+    Viewer3DTileQuery.cc
+
 )
 
 target_link_libraries(Viewer3D
