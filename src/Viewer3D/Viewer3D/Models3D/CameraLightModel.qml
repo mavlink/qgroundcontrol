@@ -57,6 +57,7 @@ Node {
                 PerspectiveCamera {
 
                     id: cameraPerspectiveOne
+                    clipFar: 100000
 
                     eulerRotation{
                         x: -90
