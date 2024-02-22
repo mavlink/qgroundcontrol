@@ -345,6 +345,7 @@
         <file alias="Viewer3D/Models3D/Waypoint3DModel.qml">src/Viewer3D/Viewer3D/Models3D/Waypoint3DModel.qml</file>
         <file alias="Viewer3D/Models3D/Line3D.qml">src/Viewer3D/Viewer3D/Models3D/Line3D.qml</file>
         <file alias="Viewer3D/Models3D/Viewer3DVehicleItems.qml">src/Viewer3D/Viewer3D/Models3D/Viewer3DVehicleItems.qml</file>
+        <file alias="Viewer3D/Viewer3DProgressBar.qml">src/Viewer3D/Viewer3D/Viewer3DProgressBar.qml</file>
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>
@@ -421,5 +422,11 @@
         <file alias="Parameter.MetaData.json.xz">src/comm/MockLink.Parameter.MetaData.json.xz</file>
         <file alias="Parameter.MetaData.json">src/comm/MockLink.Parameter.MetaData.json</file>
         <file alias="Arduplane.params.ftp.bin">src/comm/Mocklink.Arduplane.params.ftp.bin</file>
+    </qresource>
+    <qresource prefix="/ShaderVertex">
+        <file alias="earthMaterial.vert">src/Viewer3D/Shaders/earthMaterial.vert</file>
+    </qresource>
+    <qresource prefix="/ShaderFragment">
+        <file alias="earthMaterial.frag">src/Viewer3D/Shaders/earthMaterial.frag</file>
     </qresource>
 </RCC>

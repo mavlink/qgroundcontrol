@@ -27,22 +27,71 @@ Node {
     property var _altitudeBias:                 _viewer3DSetting.altitudeBias.rawValue
 
 
+    function isItemAcceptable(missionItem){
+        const acceptableCmdIds = [
+                                   16, // Waypoint
+                                   20, // Return To Launch
+                                   22, //Takeoff
+                                   195, // ROI
+                               ]; // based on MavCmdInfoCommon.json file
+        return acceptableCmdIds.includes(missionItem.command);
+    }
+
+    function isLaunchItem(missionItem){
+        return missionItem.abbreviation === "L";
+    }
+
+    function isReturnToLaunchItem(missionItem){
+        return missionItem.command === 20;
+    }
+
+
+    function getItemName(missionItem){
+        if(isLaunchItem(missionItem) || isReturnToLaunchItem(missionItem)){
+            return qsTr("L");
+        }
+
+        if(missionItem.specifiesCoordinate){
+            switch(missionItem.command){
+            case 16:
+                return qsTr("W"); //Waypoint
+            case 22:
+                return qsTr("T"); //Takeoff
+            case 195:
+                return qsTr("R"); //ROI
+            }
+        }
+        return qsTr("null")
+    }
+
     function addMissionItemsToListModel() {
         missionWaypointListModel.clear()
         var _geo2EnuCopy = goe2Enu
+        var launchItemCoordinate;
+        var _missionItemPrevious;
 
-        for (var i = 1; i < _missionController.visualItems.count; i++) {
+        for (var i = 0; i < _missionController.visualItems.count; i++) {
             var _missionItem = _missionController.visualItems.get(i); // list of all properties in VisualMissionItem.h and SimpleMissionItem.h
-            if(_missionItem.specifiesCoordinate){
-                _geo2EnuCopy.coordinate = _missionItem.coordinate;
-                _geo2EnuCopy.coordinate.altitude = 0;
+            if(isLaunchItem(_missionItem)){
+                launchItemCoordinate = _missionItem.coordinate;
+                continue;
+            }
+            if(isItemAcceptable(_missionItem)){
+                if(isReturnToLaunchItem(_missionItem)){
+                    _geo2EnuCopy.coordinate = launchItemCoordinate;
+                    _geo2EnuCopy.coordinate.altitude = _missionItemPrevious.altitude.value;
+                }else{
+                    _geo2EnuCopy.coordinate = _missionItem.coordinate;
+                    _geo2EnuCopy.coordinate.altitude = _missionItem.altitude.value;
+                }
                 missionWaypointListModel.append({
                                                     "x": _geo2EnuCopy.localCoordinate.x,
                                                     "y": _geo2EnuCopy.localCoordinate.y,
-                                                    "z": _missionItem.altitude.value,
-                                                    "abbreviation": _missionItem.abbreviation,
+                                                    "z": _geo2EnuCopy.coordinate.altitude,
+                                                    "itemName": getItemName(_missionItem),
                                                     "index": _missionItem.sequenceNumber,
                                                 });
+                _missionItemPrevious = _missionItem;
             }
         }
     }
@@ -51,17 +100,36 @@ Node {
         missionPathModel.clear()
         var _geo2EnuCopy = goe2Enu
 
-        var _missionItemPrevious = _missionController.visualItems.get(1)
-        for (var i = 2; i < _missionController.visualItems.count; i++) {
-            var _missionItem = _missionController.visualItems.get(i)
-            if(_missionItem.abbreviation !== "ROI" && _missionItem.specifiesCoordinate){
-                _geo2EnuCopy.coordinate = _missionItemPrevious.coordinate;
-                _geo2EnuCopy.coordinate.altitude = 0;
-                var p1 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _missionItemPrevious.altitude.value);
+        var _missionItem;
+        var _missionItemPrevious = null
+        var launchItemCoordinate;
 
-                _geo2EnuCopy.coordinate = _missionItem.coordinate;
-                _geo2EnuCopy.coordinate.altitude = 0;
-                var p2 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _missionItem.altitude.value);
+        for (var i = 0; i < _missionController.visualItems.count; i++) {
+            _missionItem = _missionController.visualItems.get(i);
+            if(isLaunchItem(_missionItem)){
+                launchItemCoordinate = _missionItem.coordinate;
+                continue;
+            }
+            if(_missionItem.isTakeoffItem){
+                _missionItemPrevious = _missionItem;
+                continue;
+            }
+            if(_missionItemPrevious === null){
+                continue;
+            }
+            if(getItemName(_missionItem) === "L" || getItemName(_missionItem) === "W"){
+                _geo2EnuCopy.coordinate = _missionItemPrevious.coordinate;
+                _geo2EnuCopy.coordinate.altitude = _missionItemPrevious.altitude.value;
+                var p1 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _geo2EnuCopy.coordinate.altitude);
+
+                if(isReturnToLaunchItem(_missionItem)){
+                    _geo2EnuCopy.coordinate = launchItemCoordinate;
+                    _geo2EnuCopy.coordinate.altitude = _missionItemPrevious.altitude.value;
+                }else{
+                    _geo2EnuCopy.coordinate = _missionItem.coordinate;
+                    _geo2EnuCopy.coordinate.altitude = _missionItem.altitude.value;
+                }
+                var p2 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _geo2EnuCopy.coordinate.altitude);
 
                 missionPathModel.append({
                                             "x_1": p1.x,
@@ -70,6 +138,7 @@ Node {
                                             "x_2": p2.x,
                                             "y_2": p2.y,
                                             "z_2": p2.z,
+                                            "color": (isReturnToLaunchItem(_missionItem))?("red"):("orange"),
                                         });
                 _missionItemPrevious = _missionItem;
             }
@@ -116,7 +185,7 @@ Node {
             p_1: Qt.vector3d(model.x_1 * 10, model.y_1 * 10, (model.z_1 + _altitudeBias) * 10)
             p_2: Qt.vector3d(model.x_2 * 10, model.y_2 * 10, (model.z_2 + _altitudeBias) * 10)
             lineWidth:8
-            color: "orange"
+            color: model.color
         }
     }
 
