@@ -88,7 +88,7 @@ QGCPopupDialog {
     }
 
     ColumnLayout {
-        width:      editRow.width
+        width:      Math.min(mainWindow.width * .75, Math.max(ScreenTools.defaultFontPixelWidth * 60, editRow.width))
         spacing:    globals.defaultTextHeight
 
         QGCLabel {
