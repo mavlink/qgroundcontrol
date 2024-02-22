@@ -44,7 +44,7 @@ SetupPage {
                         font.pointSize:         ScreenTools.mediumFontPointSize
                         visible:                actuators.mixer.helpUrl
                         textFormat:             Text.RichText
-                        onLinkActivated: {
+                        onLinkActivated: (link) => {
                             Qt.openUrlExternally(link);
                         }
                     }
