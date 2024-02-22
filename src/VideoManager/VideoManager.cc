@@ -475,8 +475,7 @@ VideoManager::_updateUVC()
         for (const auto& cameraDevice: videoInputs) {
             if (cameraDevice.description() == videoSource) {
                 _uvcVideoSourceID = cameraDevice.description();
-                qCDebug(VideoManagerLog)
-                    << "Found USB source:" << _uvcVideoSourceID << " Name:" << videoSource;
+                qCDebug(VideoManagerLog) << "Found USB source:" << _uvcVideoSourceID << " Name:" << videoSource;
                 break;
             }
         }
@@ -484,10 +483,19 @@ VideoManager::_updateUVC()
 
     if (oldUvcVideoSrcID != _uvcVideoSourceID) {
         qCDebug(VideoManagerLog) << "UVC changed from [" << oldUvcVideoSrcID << "] to [" << _uvcVideoSourceID << "]";
+#if QT_CONFIG(permissions)
+        QCameraPermission cameraPermission;
+        if (qApp->checkPermission(cameraPermission) == Qt::PermissionStatus::Undetermined) {
+            qApp->requestPermission(cameraPermission, [](const QPermission &permission) {
+                if (permission.status() == Qt::PermissionStatus::Granted) {
+                    qgcApp()->showRebootAppMessage(tr("Restart application for changes to take effect."));
+                }
+            });
+        }
+#endif
         emit uvcVideoSourceIDChanged();
         emit isUvcChanged();
     }
-
 #endif
 }
 
