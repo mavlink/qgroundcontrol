@@ -55,6 +55,7 @@ class OsmParser : public QObject
 public:
     explicit OsmParser(QObject *parent = nullptr);
 
+    bool mapLoaded(){return _mapLoadedFlag;}
     void setGpsRef(QGeoCoordinate gpsRef);
     void resetGpsRef();
     QGeoCoordinate getGpsRef(){ return _gpsRefPoint;}
@@ -69,12 +70,14 @@ public:
 
     void trianglateWallsExtrudedPolygon(std::vector<QVector3D>& triangulatedMesh, std::vector<QVector2D> verticesCcw, float h, bool inverseOrder=0, bool duplicateStartEndPoint=0);
     void trianglateRectangle(std::vector<QVector3D>& triangulatedMesh, std::vector<QVector3D> verticesCcw, bool invertNormal);
+    std::pair<QGeoCoordinate, QGeoCoordinate> getMapBoundingBoxCoordinate(){ return std::pair(_coordinate_min, _coordinate_max);}
 
 private:
     QGeoCoordinate _gpsRefPoint;
     QMap<uint64_t, QGeoCoordinate> _mapNodes;
     QMap<uint64_t, BuildingType> _mapBuildings;
     QGeoCoordinate _coordinate_min, _coordinate_max; //Osm map bounding boxes in global coordinate
+
 
     bool _gpsRefSet;
     float _buildingLevelHeight;
