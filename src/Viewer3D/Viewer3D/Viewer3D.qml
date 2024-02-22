@@ -7,15 +7,16 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 
-// 3D Viewer modules
 import QGroundControl.Viewer3D
 import Viewer3D.Models3D
 
 
+///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
+
 Item{
     id: viewer3DBody
     property bool viewer3DOpen: false
-    property bool settingMenuOpen: false
+    property bool settingsDialogOpen: false
 
     Component{
         id: viewer3DManagerComponent
@@ -58,36 +59,22 @@ Item{
         }
     }
 
-    onSettingMenuOpenChanged:{
-        if(settingMenuOpen === true){
-            settingMenuComponent.createObject(mainWindow).open()
+    onSettingsDialogOpenChanged:{
+        if(settingsDialogOpen === true){
+            settingsDialogComponent.createObject(mainWindow).open()
         }
     }
 
     Component {
-        id: settingMenuComponent
+        id: settingsDialogComponent
 
-        QGCPopupDialog{
-            id: settingMenuDialog
-            title:      qsTr("3D view settings")
-            buttons:    Dialog.Ok | Dialog.Cancel
+        Viewer3DSettingsDialog{
+            id:                     view3DSettingsDialog
+            viewer3DManager:        view3DManagerLoader.item
+            visible:                true
 
-            Viewer3DSettingMenu{
-                id:                     viewer3DSettingMenu
-                viewer3DManager:        view3DManagerLoader.item
-                visible:                true
-            }
-
-            onRejected: {
-                settingMenuOpen = false
-                viewer3DSettingMenu.menuClosed(false)
-                settingMenuDialog.close()
-            }
-
-            onAccepted: {
-                settingMenuOpen = false
-                viewer3DSettingMenu.menuClosed(true)
-                settingMenuDialog.close()
+            onClosed:{
+                settingsDialogOpen = false
             }
         }
     }
