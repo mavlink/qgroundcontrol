@@ -19,44 +19,57 @@ Rectangle {
     color:              Qt.rgba(0,0,0,0.75)
     clip:               true
     anchors.centerIn:   parent
-    visible:        QGroundControl.videoManager.isUvc
+    visible:            _videoManager.isUvc
 
-    function adjustAspectRatio()
-    {
+    property var _videoManager: QGroundControl.videoManager
+
+    function adjustAspectRatio() {
         //-- Set aspect ratio
-        var size = camera.viewfinder.resolution
-        if(size.height > 0 && size.width > 0) {
-            var ar = size.width / size.height
-            _root.height = parent.height * ar
+        var resolution = camera.cameraFormat.resolution
+        if (resolution.height > 0 && resolution.width > 0) {
+            var aspectRatio = resolution.width / resolution.height
+            _root.height = parent.height * aspectRatio
         }
     }
 
-    Camera {
-        id:             camera
-        deviceId:       QGroundControl.videoManager.uvcVideoSourceID
-        captureMode:    Camera.CaptureViewfinder
-        onDeviceIdChanged: {
-            adjustAspectRatio()
+    MediaDevices {
+        id: mediaDevices
+
+        function findCameraDevice(cameraId) {
+            var videoInputs = mediaDevices.videoInputs
+            for (var i = 0; i < videoInputs.length; i++) {
+                if (videoInputs[i].description === cameraId) {
+                    return videoInputs[i]
+                }
+            }
+            return mediaDevices.defaultVideoInput
         }
-        onCameraStateChanged: {
-            if(camera.cameraStatus === Camera.ActiveStatus) {
-                adjustAspectRatio()
+    }
+
+    CaptureSession {
+        camera: Camera {
+            id:             camera
+            cameraDevice:   mediaDevices.findCameraDevice(_videoManager.uvcVideoSourceID)
+            active:         _videoManager.isUvc
+
+            onCameraDeviceChanged: {
+                if (active) {
+                    adjustAspectRatio()
+                }
+            }
+
+            onActiveChanged: {
+                if (active) {
+                    adjustAspectRatio()
+                }
             }
         }
+        videoOutput: videoOutput
     }
+
     VideoOutput {
-        source:         camera
+        id:             videoOutput
         anchors.fill:   parent
         fillMode:       VideoOutput.PreserveAspectCrop
-        visible:        QGroundControl.videoManager.isUvc
-
-        onVisibleChanged: {
-            console.log('UVC Video output visible: ', visible);
-            if (visible) {
-                camera.start()
-            } else {
-                camera.stop()
-            }
-        }
     }
 }
