@@ -2,12 +2,12 @@
 
 Note: This file only contains high level features or important fixes.
 
-# Major Updates In This Release
+## 5.0 - Daily Build
 
 * New combined compass and attitude instrument
 * You can select between multiple instruments by clicking on the instrument conntrol on a desktop build or press and hold on mobile builds
 
-## 4.1 - Daily build
+## 4.1
 
 ### 4.1.2 - Not yet released
 * Bug: Radio setup - Fix double send of `MAV_CMD_PREFLIGHT_CALIBRATION` causing "Unable to send command" error.
