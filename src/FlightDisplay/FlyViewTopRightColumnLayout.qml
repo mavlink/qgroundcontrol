@@ -18,54 +18,42 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
 ColumnLayout {
-    Layout.fillHeight: true
+    width: _rightPanelWidth
 
-    ColumnLayout {
+    RowLayout {
+        id:                 multiVehiclePanelSelector
         Layout.alignment:   Qt.AlignTop
-        Layout.fillHeight:  false
-        spacing:            parent.spacing
+        spacing:            ScreenTools.defaultFontPixelWidth
+        visible:            QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.flyView.showMultiVehicleList
 
-        RowLayout {
-            id:                 multiVehiclePanelSelector
-            Layout.fillWidth:   false
-            Layout.fillHeight:  false
-            spacing:            ScreenTools.defaultFontPixelWidth
-            visible:            QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.flyView.showMultiVehicleList
+        QGCMapPalette { id: mapPal; lightColors: true }
 
-            QGCMapPalette { id: mapPal; lightColors: true }
-
-            QGCRadioButton {
-                id:             singleVehicleRadio
-                text:           qsTr("Single")
-                checked:        _showSingleVehicleUI
-                onClicked:      _showSingleVehicleUI = true
-                textColor:      mapPal.text
-            }
-
-            QGCRadioButton {
-                text:           qsTr("Multi-Vehicle")
-                textColor:      mapPal.text
-                onClicked:      _showSingleVehicleUI = false
-            }
+        QGCRadioButton {
+            id:             singleVehicleRadio
+            text:           qsTr("Single")
+            checked:        _showSingleVehicleUI
+            onClicked:      _showSingleVehicleUI = true
+            textColor:      mapPal.text
         }
 
-        ColumnLayout {
-            Layout.fillHeight:      false
-            Layout.preferredWidth:  _rightPanelWidth
-            spacing:                parent.spacing
-            visible:                _showSingleVehicleUI
-
-            TerrainProgress {
-                Layout.fillWidth: true
-            }
-
-            PhotoVideoControl {
-                id:                     photoVideoControl
-                Layout.fillWidth:       true
-
-                property real rightEdgeCenterInset: visible ? parent.width - x : 0
-            }
+        QGCRadioButton {
+            text:           qsTr("Multi-Vehicle")
+            textColor:      mapPal.text
+            onClicked:      _showSingleVehicleUI = false
         }
+    }
+
+    TerrainProgress {
+        Layout.alignment:       Qt.AlignTop
+        Layout.preferredWidth:  _rightPanelWidth
+    }
+
+    PhotoVideoControl {
+        id:                     photoVideoControl
+        Layout.alignment:       Qt.AlignVCenter
+        Layout.fillWidth:       true
+
+        property real rightEdgeCenterInset: visible ? parent.width - x : 0
     }
 
     MultiVehicleList {
