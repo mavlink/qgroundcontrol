@@ -7,41 +7,24 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
 
-import QGroundControl.Viewer3D
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
-Flickable {
-
-    signal menuClosed(bool accept)
-
+QGCPopupDialog{
     property var viewer3DManager: null
-    property int leftMarginSpace: ScreenTools.defaultFontPixelWidth
 
-    id: window_body
-    clip: true
-    visible: true
-    width: Screen.width * 0.25
-    height: Screen.height * 0.2
-    contentWidth: width;
-    contentHeight: main_column.height
-    boundsBehavior: Flickable.StopAtBounds
-    ScrollBar.vertical: ScrollBar {}
+    title:      qsTr("3D view settings")
+    buttons:    Dialog.Ok | Dialog.Cancel
 
-    Column {
-        id: main_column
-        anchors{
-            right: parent.right
-            left: parent.left
-            margins:    ScreenTools.defaultFontPixelWidth
-        }
-        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+    ColumnLayout {
+        property int leftMarginSpace: ScreenTools.defaultFontPixelWidth
 
+        id: window_body
+        clip: true
+        visible: true
+        spacing: ScreenTools.defaultFontPixelHeight / 2
         RowLayout{
-            anchors{
-                right: parent.right
-                left: parent.left
-            }
+            Layout.fillWidth:   true
             QGCLabel {
                 wrapMode:           Text.WordWrap
                 visible:            true
@@ -55,19 +38,19 @@ Flickable {
                 showUnits:          false
                 visible:            true
                 Layout.fillWidth:   true
+                implicitWidth: ScreenTools.defaultFontPixelWidth * 50
+
+
                 readOnly: true
 
                 text: (viewer3DManager)?(viewer3DManager.viewer3DSetting.osmFilePath.rawValue):("nan")
             }
         }
         RowLayout{
-            anchors{
-                right: parent.right
-                left: parent.left
-            }
+            Layout.alignment: Qt.AlignRight
+
             QGCButton {
                 id: map_file_btn
-                Layout.alignment: Qt.AlignRight
 
                 visible:    true
                 text:       qsTr("Select File")
@@ -89,15 +72,14 @@ Flickable {
         }
 
         GridLayout{
-            anchors{
-                left: parent.left
-            }
             columns:        2
             columnSpacing:  ScreenTools.defaultFontPixelHeight
             rowSpacing:     ScreenTools.defaultFontPixelWidth
+            Layout.fillWidth:   true
 
             QGCLabel {
                 wrapMode:           Text.WordWrap
+                Layout.fillWidth:   true
                 text: qsTr("Average Building Level Height:")
             }
 
@@ -124,6 +106,7 @@ Flickable {
             QGCLabel {
                 wrapMode:           Text.WordWrap
                 visible:            true
+                Layout.fillWidth:   true
                 text: qsTr("Vehicles Altitude Bias:")
             }
 
@@ -149,16 +132,14 @@ Flickable {
         }
     }
 
-    onMenuClosed: function (accept){
-        if(accept === true){
-            viewer3DManager.qmlBackend.osmFilePath = map_file_text_feild.text
-            viewer3DManager.qmlBackend.altitudeBias = parseFloat(height_bias_textfeild.text)
+    onAccepted: {
+        viewer3DManager.qmlBackend.osmFilePath = map_file_text_feild.text
+        viewer3DManager.qmlBackend.altitudeBias = parseFloat(height_bias_textfeild.text)
 
-            viewer3DManager.viewer3DSetting.osmFilePath.rawValue = map_file_text_feild.text
-            viewer3DManager.viewer3DSetting.buildingLevelHeight.rawValue = parseFloat(bld_level_height_textfeild.text)
-            viewer3DManager.viewer3DSetting.altitudeBias.rawValue = parseFloat(height_bias_textfeild.text)
+        viewer3DManager.viewer3DSetting.osmFilePath.rawValue = map_file_text_feild.text
+        viewer3DManager.viewer3DSetting.buildingLevelHeight.rawValue = parseFloat(bld_level_height_textfeild.text)
+        viewer3DManager.viewer3DSetting.altitudeBias.rawValue = parseFloat(height_bias_textfeild.text)
 
-            viewer3DManager.osmParser.buildingLevelHeight = parseFloat(bld_level_height_textfeild.text)
-        }
+        viewer3DManager.osmParser.buildingLevelHeight = parseFloat(bld_level_height_textfeild.text)
     }
 }
