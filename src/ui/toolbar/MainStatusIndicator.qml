@@ -268,7 +268,7 @@ RowLayout {
                                 
                                 property var fact:  null
 
-                                onLinkActivated: {
+                                onLinkActivated: (link) => {
                                     if (link.startsWith('param://')) {
                                         var paramName = link.substr(8);
                                         fact = controller.getParameterFact(-1, paramName, true)
