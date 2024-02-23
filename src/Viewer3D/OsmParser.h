@@ -9,8 +9,11 @@
 #include <QVector3D>
 #include <QVector2D>
 #include "qgeocoordinate.h"
+#include <QVariant>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
+
+class Viewer3DSettings;
 
 class OsmParser : public QObject
 {
@@ -26,14 +29,14 @@ class OsmParser : public QObject
 
     Q_OBJECT
 
-    Q_PROPERTY(float buildingLevelHeight READ buildingLevelHeight WRITE setBuildingLevelHeight NOTIFY buildingLevelHeightChanged)
+    // Q_PROPERTY(float buildingLevelHeight READ buildingLevelHeight WRITE setBuildingLevelHeight NOTIFY buildingLevelHeightChanged)
 
 public:
     explicit OsmParser(QObject *parent = nullptr);
 
     void setGpsRef(QGeoCoordinate gpsRef);
     QGeoCoordinate getGpsRef(){ return _gpsRefPoint;}
-    void setBuildingLevelHeight(float levelHeight){_buildingLevelHeight = levelHeight; emit buildingLevelHeightChanged();}
+
     float buildingLevelHeight(void){return _buildingLevelHeight;}
     void parseOsmFile(QString filePath);
     void decodeNodeTags(QDomElement& xmlComponent, QMap<uint64_t, QGeoCoordinate> &nodeMap);
@@ -45,7 +48,6 @@ public:
     void trianglateRectangle(std::vector<QVector3D>& triangulatedMesh, std::vector<QVector3D> verticesCcw, bool invertNormal);
 
 private:
-    QThread* _mainThread;
     QGeoCoordinate _gpsRefPoint;
     QMap<uint64_t, QGeoCoordinate> _mapNodes;
     QMap<uint64_t, BuildingType> _mapBuildings;
@@ -53,12 +55,16 @@ private:
     bool _gpsRefSet;
     float _buildingLevelHeight;
     bool _mapLoadedFlag;
+    Viewer3DSettings* _viewer3DSettings = nullptr;
 
 
 signals:
     void gpsRefChanged(QGeoCoordinate newGpsRef);
     void mapChanged();
     void buildingLevelHeightChanged(void);
+
+private slots:
+    void setBuildingLevelHeight(QVariant value);
 
 };
 

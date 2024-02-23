@@ -23,6 +23,9 @@ Node {
     property var  _vehicle:                     null
     property var  _planMasterController:        null
     property var  _missionController:           (_planMasterController)?(_planMasterController.missionController):(null)
+    property var _viewer3DSetting:              QGroundControl.settingsManager.viewer3DSettings
+    property var _altitudeBias:                 _viewer3DSetting.altitudeBias.rawValue
+
 
     function addMissionItemsToListModel() {
         missionWaypointListModel.clear()
@@ -85,7 +88,7 @@ Node {
         id: droneDji3DModel
         vehicle: _vehicle
         modelScale: Qt.vector3d(0.05, 0.05, 0.05)
-        altitudeBias: _backendQml.altitudeBias
+        altitudeBias: _altitudeBias
         gpsRef: _backendQml.gpsRef
     }
 
@@ -96,7 +99,7 @@ Node {
         delegate: Waypoint3DModel{
             opacity: 0.8
             missionItem: model
-            altitudeBias: _backendQml.altitudeBias
+            altitudeBias: _altitudeBias
         }
     }
 
@@ -105,8 +108,8 @@ Node {
         model: missionPathModel
 
         delegate: Line3D{
-            p_1: Qt.vector3d(model.x_1 * 10, model.y_1 * 10, (model.z_1 + _backendQml.altitudeBias) * 10)
-            p_2: Qt.vector3d(model.x_2 * 10, model.y_2 * 10, (model.z_2 + _backendQml.altitudeBias) * 10)
+            p_1: Qt.vector3d(model.x_1 * 10, model.y_1 * 10, (model.z_1 + _altitudeBias) * 10)
+            p_2: Qt.vector3d(model.x_2 * 10, model.y_2 * 10, (model.z_2 + _altitudeBias) * 10)
             lineWidth:8
             color: "orange"
         }

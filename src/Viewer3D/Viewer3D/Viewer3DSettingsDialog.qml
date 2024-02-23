@@ -3,15 +3,18 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
-
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 QGCPopupDialog{
-    property var viewer3DManager: null
+    property var viewer3DManager:                       null
+    property var _viewer3DSetting:                   QGroundControl.settingsManager.viewer3DSettings
 
     title:      qsTr("3D view settings")
     buttons:    Dialog.Ok | Dialog.Cancel
@@ -43,7 +46,7 @@ QGCPopupDialog{
 
                 readOnly: true
 
-                text: (viewer3DManager)?(viewer3DManager.viewer3DSetting.osmFilePath.rawValue):("nan")
+                text: _viewer3DSetting.osmFilePath.rawValue
             }
         }
         RowLayout{
@@ -71,75 +74,22 @@ QGCPopupDialog{
             }
         }
 
-        GridLayout{
-            columns:        2
-            columnSpacing:  ScreenTools.defaultFontPixelHeight
-            rowSpacing:     ScreenTools.defaultFontPixelWidth
+        LabelledFactTextField {
             Layout.fillWidth:   true
+            label:              qsTr("Average Building Level Height")
+            fact:               _viewer3DSetting.buildingLevelHeight
+            visible:            fact.visible
+        }
 
-            QGCLabel {
-                wrapMode:           Text.WordWrap
-                Layout.fillWidth:   true
-                text: qsTr("Average Building Level Height:")
-            }
-
-            QGCTextField{
-                id:                 bld_level_height_textfeild
-                width:              ScreenTools.defaultFontPixelWidth * 15
-                unitsLabel:         "m"
-                showUnits:          true
-                numericValuesOnly:  true
-                visible:            true
-
-                text: (viewer3DManager)?(Number(viewer3DManager.viewer3DSetting.buildingLevelHeight.rawValue)):("nan")
-
-                validator: RegularExpressionValidator{
-                    regularExpression: /(-?\d{1,10})([.]\d{1,6})?$/
-                }
-
-                onAccepted:
-                {
-                    focus = false
-                }
-            }
-
-            QGCLabel {
-                wrapMode:           Text.WordWrap
-                visible:            true
-                Layout.fillWidth:   true
-                text: qsTr("Vehicles Altitude Bias:")
-            }
-
-            QGCTextField {
-                id:                 height_bias_textfeild
-                width:              ScreenTools.defaultFontPixelWidth * 15
-                unitsLabel:         "m"
-                showUnits:          true
-                numericValuesOnly:  true
-                visible:            true
-
-                text: (viewer3DManager)?(Number(viewer3DManager.viewer3DSetting.altitudeBias.rawValue)):("nan")
-
-                validator: RegularExpressionValidator{
-                    regularExpression: /(-?\d{1,10})([.]\d{1,6})?$/
-                }
-
-                onAccepted:
-                {
-                    focus = false
-                }
-            }
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Vehicles Altitude Bias")
+            fact:               _viewer3DSetting.altitudeBias
+            visible:            fact.visible
         }
     }
 
     onAccepted: {
-        viewer3DManager.qmlBackend.osmFilePath = map_file_text_feild.text
-        viewer3DManager.qmlBackend.altitudeBias = parseFloat(height_bias_textfeild.text)
-
-        viewer3DManager.viewer3DSetting.osmFilePath.rawValue = map_file_text_feild.text
-        viewer3DManager.viewer3DSetting.buildingLevelHeight.rawValue = parseFloat(bld_level_height_textfeild.text)
-        viewer3DManager.viewer3DSetting.altitudeBias.rawValue = parseFloat(height_bias_textfeild.text)
-
-        viewer3DManager.osmParser.buildingLevelHeight = parseFloat(bld_level_height_textfeild.text)
+        _viewer3DSetting.osmFilePath.value = map_file_text_feild.text
     }
 }
