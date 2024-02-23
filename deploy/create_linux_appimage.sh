@@ -43,7 +43,7 @@ APPDIR=${TMPDIR}/$APP".AppDir"
 mkdir -p ${APPDIR}
 
 cd ${TMPDIR}
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/libs/libsdl2/libsdl2-2.0-0_2.0.2%2bdfsg1-6_amd64.deb
+wget -c --quiet http://ftp.us.debian.org/debian/pool/main/libs/libsdl2/libsdl2-2.0-0_2.0.9%2bdfsg1-1_amd64.deb
 
 cd ${APPDIR}
 find ../ -name *.deb -exec dpkg -x {} . \;
