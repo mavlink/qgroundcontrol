@@ -97,3 +97,14 @@ QString QGCFileDialogController::fullFolderPathToShortMobilePath(const QString& 
     return fullFolderPath;
 #endif
 }
+
+QString QGCFileDialogController::urlToLocalFile(QUrl url)
+{
+    // For some strange reason on Qt6 running on Linux files returned by FileDialog are not returned as local file urls.
+    // Seems to be new behavior with Qt6.
+    if (url.isLocalFile()) {
+        return url.toLocalFile();
+    } else {
+        return url.toString();
+    }
+}
