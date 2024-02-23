@@ -15,8 +15,22 @@ import Viewer3D.Models3D
 
 Item{
     id: viewer3DBody
-    property bool viewer3DOpen: false
-    property bool settingsDialogOpen: false
+    property bool isOpen: false
+
+    function open(){
+        view3DManagerLoader.sourceComponent = viewer3DManagerComponent
+        viewer3DBody.z = 1
+        isOpen = true;
+    }
+
+    function close(){
+        viewer3DBody.z = 0
+        isOpen = false;
+    }
+
+    function showSettingsDialog(){
+        settingsDialogComponent.createObject(mainWindow).open()
+    }
 
     Component{
         id: viewer3DManagerComponent
@@ -45,24 +59,9 @@ Item{
 
     Binding{
         target: view3DLoader.item
-        property: "viewer3DOpen"
-        value: viewer3DOpen
+        property: "isViewer3DOpen"
+        value: isOpen
         when: view3DLoader.status == Loader.Ready
-    }
-
-    onViewer3DOpenChanged: {
-        view3DManagerLoader.sourceComponent = viewer3DManagerComponent
-        if(viewer3DOpen){
-            viewer3DBody.z = 1
-        }else{
-            viewer3DBody.z = 0
-        }
-    }
-
-    onSettingsDialogOpenChanged:{
-        if(settingsDialogOpen === true){
-            settingsDialogComponent.createObject(mainWindow).open()
-        }
     }
 
     Component {
@@ -72,10 +71,6 @@ Item{
             id:                     view3DSettingsDialog
             viewer3DManager:        view3DManagerLoader.item
             visible:                true
-
-            onClosed:{
-                settingsDialogOpen = false
-            }
         }
     }
 }
