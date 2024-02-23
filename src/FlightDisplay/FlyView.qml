@@ -163,6 +163,7 @@ Item {
             pipMode:                !_mainWindowIsMap
             toolInsets:             customOverlay.totalToolInsets
             mapName:                "FlightDisplayView"
+            enabled:                !viewer3DWindow.isOpen
         }
 
         FlyViewVideo {

@@ -21,7 +21,7 @@ import QGroundControl.Vehicle
 View3D {
     id: topView
     property var viewer3DManager: null
-    property bool viewer3DOpen: false
+    property bool isViewer3DOpen: false
     property real rotationSpeed: 0.1
     property real movementSpeed: 1
     property real zoomSpeed: 0.3
@@ -89,7 +89,6 @@ View3D {
         geometry: CityMapGeometry {
             id: cityMapGeometry
             modelName: "city_map"
-            osmFilePath: (viewer3DManager)?(viewer3DManager.qmlBackend.osmFilePath):("nan")
             osmParser: (viewer3DManager)?(viewer3DManager.osmParser):(null)
         }
 
@@ -133,7 +132,7 @@ View3D {
         target: null
         acceptedModifiers: Qt.NoModifier
         acceptedButtons: Qt.LeftButton
-        enabled: viewer3DOpen
+        enabled: isViewer3DOpen
 
         onCentroidChanged: {
             if(_isMoving){
@@ -161,7 +160,7 @@ View3D {
         acceptedModifiers: Qt.NoModifier
         acceptedButtons: Qt.RightButton
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        enabled: viewer3DOpen
+        enabled: isViewer3DOpen
 
         onCentroidChanged: {
             if(_isRotating){
@@ -187,7 +186,7 @@ View3D {
         property bool _isRotating: false
         property point _lastPose;
         property real _lastZoomValue;
-        enabled: viewer3DOpen
+        enabled: isViewer3DOpen
 
         onCentroidChanged: {
             if(_isRotating){
@@ -217,7 +216,7 @@ View3D {
         orientation: Qt.Vertical
         target: null
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        enabled: viewer3DOpen
+        enabled: isViewer3DOpen
 
         onWheel: event => {
                      zoomCamera(-event.angleDelta.y)
