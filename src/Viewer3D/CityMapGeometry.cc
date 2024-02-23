@@ -2,6 +2,9 @@
 
 #include<QThread>
 
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+
 
 CityMapGeometry::CityMapGeometry()
 {
@@ -9,6 +12,11 @@ CityMapGeometry::CityMapGeometry()
     _modelName = "city_map_defualt_name";
     _vertexData.clear();
     _mapLoadedFlag = 0;
+
+    _viewer3DSettings = qgcApp()->toolbox()->settingsManager()->viewer3DSettings();
+
+    setOsmFilePath(_viewer3DSettings->osmFilePath()->rawValue());
+    connect(_viewer3DSettings->osmFilePath(), &Fact::rawValueChanged, this, &CityMapGeometry::setOsmFilePath);
 }
 
 void CityMapGeometry::setModelName(QString modelName)
@@ -19,14 +27,14 @@ void CityMapGeometry::setModelName(QString modelName)
     emit modelNameChanged();
 }
 
-void CityMapGeometry::setOsmFilePath(QString filePath)
+void CityMapGeometry::setOsmFilePath(QVariant value)
 {
-    if(_osmFilePath.compare(filePath) == 0){
+    if(_osmFilePath.compare(value.toString()) == 0){
         return;
     }
 
     _mapLoadedFlag = 0;
-    _osmFilePath = filePath;
+    _osmFilePath = value.toString();
     emit osmFilePathChanged();
     loadOsmMap();
 }

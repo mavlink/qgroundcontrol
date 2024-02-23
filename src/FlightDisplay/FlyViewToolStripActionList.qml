@@ -31,31 +31,25 @@ ToolStripActionList {
             text:           qsTr("3D View")
             iconSource:     "/qmlimages/Viewer3D/City3DMapIcon.svg"
             onTriggered:{
-                if(viewer3DWindow.viewer3DOpen === false)
-                {
+                if(viewer3DWindow.isOpen === false){
                     show3dMap();
-                }
-                else
-                {
+                }else{
                     showFlyMap();
                 }
             }
 
-            function show3dMap()
-            {
-                viewer3DWindow.viewer3DOpen = true
+            function show3dMap(){
+                viewer3DWindow.open()
                 map_icon.iconSource =     "/qmlimages/PaperPlane.svg"
                 text=           qsTr("Fly")
                 city_map_setting_icon.enabled = true
             }
 
-            function showFlyMap()
-            {
-                viewer3DWindow.viewer3DOpen = false
+            function showFlyMap(){
+                viewer3DWindow.close()
                 iconSource =     "/qmlimages/Viewer3D/City3DMapIcon.svg"
                 text =           qsTr("3D View")
                 city_map_setting_icon.enabled = false
-                viewer3DWindow.settingsDialogOpen = false
                 city_map_setting_icon.checked = false
             }
         },
@@ -66,7 +60,7 @@ ToolStripActionList {
             enabled: false
             visible: enabled
             onTriggered:{
-                viewer3DWindow.settingsDialogOpen = !viewer3DWindow.settingsDialogOpen
+                viewer3DWindow.showSettingsDialog()
             }
         },
         PreFlightCheckListShowAction { onTriggered: displayPreFlightChecklist() },

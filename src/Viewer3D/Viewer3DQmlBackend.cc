@@ -4,6 +4,7 @@
 #include <QUrl>
 
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 
 #define GPS_REF_NOT_SET                 0
 #define GPS_REF_SET_BY_MAP              1
@@ -14,13 +15,11 @@ Viewer3DQmlBackend::Viewer3DQmlBackend(QObject *parent)
 {
     _gpsRefSet = GPS_REF_NOT_SET;
     _activeVehicle = nullptr;
+    _viewer3DSettings = qgcApp()->toolbox()->settingsManager()->viewer3DSettings();
 }
 
-void Viewer3DQmlBackend::init(Viewer3DSettings *viewerSettingThr, OsmParser* osmThr)
+void Viewer3DQmlBackend::init(OsmParser* osmThr)
 {
-    _altitudeBias = viewerSettingThr->altitudeBias()->rawValue().toFloat();
-    _osmFilePath = viewerSettingThr->osmFilePath()->rawValue().toString();
-
     _osmParserThread = osmThr;
     _activeVehicleChangedEvent(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle());
 
