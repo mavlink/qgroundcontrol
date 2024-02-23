@@ -205,7 +205,11 @@ public class QGCActivity extends QtActivity
         _instance.registerReceiver(_instance._usbReceiver, filter);
 
         // Create intent for usb permission request
-        _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        int intentFlags = 0;
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            intentFlags = PendingIntent.FLAG_IMMUTABLE;
+        }
+        _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), intentFlags);
 
         // Workaround for QTBUG-73138
         if (_wifiMulticastLock == null)
