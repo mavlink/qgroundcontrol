@@ -57,11 +57,15 @@ void Viewer3DQmlBackend::_activeVehicleCoordinateChanged(QGeoCoordinate newCoord
     }
 }
 
-void Viewer3DQmlBackend::_gpsRefChangedEvent(QGeoCoordinate newGpsRef)
-{   
-    _gpsRef = newGpsRef;
-    _gpsRefSet = GPS_REF_SET_BY_MAP;
-    emit gpsRefChanged();
+void Viewer3DQmlBackend::_gpsRefChangedEvent(QGeoCoordinate newGpsRef, bool isRefSet)
+{
+    if(isRefSet){
+        _gpsRef = newGpsRef;
+        _gpsRefSet = GPS_REF_SET_BY_MAP;
+        emit gpsRefChanged();
+    }else{
+        _gpsRefSet = GPS_REF_NOT_SET;
+    }
 
     qDebug() << "3D viewer gps reference set by osm map:" << _gpsRef.latitude() << _gpsRef.longitude() << _gpsRef.altitude();
 }

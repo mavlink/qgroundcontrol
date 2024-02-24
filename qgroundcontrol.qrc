@@ -307,7 +307,6 @@
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewInsetViewer.qml">src/FlightDisplay/FlyViewInsetViewer.qml</file>
-        <file alias="Viewer3D/Viewer3DSettingsDialog.qml">src/Viewer3D/Viewer3D/Viewer3DSettingsDialog.qml</file>
         <file alias="Viewer3D/Viewer3D.qml">src/Viewer3D/Viewer3D/Viewer3D.qml</file>
         <file alias="Viewer3D/qmldir">src/Viewer3D/Viewer3D/qmldir</file>
         <file alias="Viewer3D/Models3D/CameraLightModel.qml">src/Viewer3D/Viewer3D/Models3D/CameraLightModel.qml</file>

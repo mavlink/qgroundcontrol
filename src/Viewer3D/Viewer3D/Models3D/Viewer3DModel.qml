@@ -21,6 +21,7 @@ import QGroundControl.Vehicle
 View3D {
     id: topView
     property var viewer3DManager: null
+    readonly property var _gpsRef: viewer3DManager.qmlBackend.gpsRef
     property bool isViewer3DOpen: false
     property real rotationSpeed: 0.1
     property real movementSpeed: 1
@@ -68,6 +69,10 @@ View3D {
         standAloneScene.cameraTwoPosition.x -= dx
         standAloneScene.cameraTwoPosition.y += dy
         standAloneScene.cameraTwoPosition.z += dz
+    }
+
+    on_GpsRefChanged:{
+        standAloneScene.resetCamera();
     }
 
     camera: standAloneScene.cameraOne

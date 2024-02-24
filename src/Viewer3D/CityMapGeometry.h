@@ -38,6 +38,7 @@ signals:
 
 private:
     void updateViewer();
+    void clearViewer();
 
     QString _modelName;
     QString _osmFilePath;

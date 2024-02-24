@@ -23,6 +23,7 @@ OsmParser::OsmParser(QObject *parent)
     _viewer3DSettings = qgcApp()->toolbox()->settingsManager()->viewer3DSettings();
 
     _gpsRefSet = false;
+    _mapLoadedFlag = false;
 
     setBuildingLevelHeight(_viewer3DSettings->buildingLevelHeight()->rawValue()); // meters
     connect(_viewer3DSettings->buildingLevelHeight(), &Fact::rawValueChanged, this, &OsmParser::setBuildingLevelHeight);
@@ -32,7 +33,14 @@ void OsmParser::setGpsRef(QGeoCoordinate gpsRef)
 {
     _gpsRefPoint = gpsRef;
     _gpsRefSet = true;
-    emit gpsRefChanged(_gpsRefPoint);
+    emit gpsRefChanged(_gpsRefPoint, _gpsRefSet);
+}
+
+void OsmParser::resetGpsRef()
+{
+    _gpsRefPoint = QGeoCoordinate(0, 0, 0);
+    _gpsRefSet = false;
+    emit gpsRefChanged(_gpsRefPoint, _gpsRefSet);
 }
 
 void OsmParser::setBuildingLevelHeight(QVariant value)
@@ -43,6 +51,20 @@ void OsmParser::setBuildingLevelHeight(QVariant value)
 
 void OsmParser::parseOsmFile(QString filePath)
 {
+    if(filePath == "Please select an OSM file"){
+        if(_mapLoadedFlag){
+            qDebug("The 3D View has been cleared!");
+            _mapNodes.clear();
+            _mapBuildings.clear();
+            _gpsRefSet = false;
+            _mapLoadedFlag = false;
+            resetGpsRef();
+        }else{
+            qDebug("No OSM File is selected!");
+        }
+        return;
+    }
+
     //The QDomDocument class represents an XML document.
     QDomDocument xml_content;
 // Load xml file as raw data
@@ -64,11 +86,6 @@ void OsmParser::parseOsmFile(QString filePath)
     QDomElement root = xml_content.documentElement();
 
     QDomElement component = root.firstChild().toElement();
-
-    _mapNodes.clear();
-    _mapBuildings.clear();
-    _gpsRefSet = false;
-    _mapLoadedFlag = false;
 
     while(!component.isNull()) {
         decodeNodeTags(component, _mapNodes);

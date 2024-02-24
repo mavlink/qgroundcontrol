@@ -39,7 +39,7 @@ private:
 
 
 protected slots:
-    void _gpsRefChangedEvent(QGeoCoordinate newGpsRef);
+    void _gpsRefChangedEvent(QGeoCoordinate newGpsRef, bool isRefSet);
     void _activeVehicleChangedEvent(Vehicle* vehicle);
     void _activeVehicleCoordinateChanged(QGeoCoordinate newCoordinate);
 };
