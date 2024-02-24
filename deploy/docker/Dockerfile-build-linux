@@ -5,7 +5,8 @@
 FROM ubuntu:20.04
 LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
 
-ARG QT_VERSION=5.15.2
+ARG QT_VERSION=6.6.1
+ARG QT_MODULES="qtlocation qtpositioning qtspeech qt5compat qtquick3d qtmultimedia qtserialport qtcharts qtshadertools"
 
 ENV DEBIAN_FRONTEND noninteractive
 
