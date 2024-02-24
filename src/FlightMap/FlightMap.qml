@@ -157,6 +157,20 @@ Map {
         }
     }
 
+    PinchHandler {
+        id:                 pinch
+        target:             null
+        grabPermissions:    PointerHandler.TakeOverForbidden
+
+        onActiveChanged: if (active) {
+            _map.startCentroid = _map.toCoordinate(pinch.centroid.position, false)
+        }
+        onScaleChanged: (delta) => {
+            _map.zoomLevel += Math.log2(delta)
+            _map.alignCoordinateToPoint(_map.startCentroid, pinch.centroid.position)
+        }
+    }
+
     WheelHandler {
         // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
         // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
