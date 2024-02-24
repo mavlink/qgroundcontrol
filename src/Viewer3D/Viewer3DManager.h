@@ -21,6 +21,8 @@ class Viewer3DManager : public QObject
 public:
     explicit Viewer3DManager();
 
+    ~Viewer3DManager();
+
 protected:
     OsmParser *_osmParser = nullptr;
     Viewer3DQmlBackend *_qmlBackend = nullptr;

@@ -35,6 +35,7 @@ public:
     explicit OsmParser(QObject *parent = nullptr);
 
     void setGpsRef(QGeoCoordinate gpsRef);
+    void resetGpsRef();
     QGeoCoordinate getGpsRef(){ return _gpsRefPoint;}
 
     float buildingLevelHeight(void){return _buildingLevelHeight;}
@@ -59,7 +60,7 @@ private:
 
 
 signals:
-    void gpsRefChanged(QGeoCoordinate newGpsRef);
+    void gpsRefChanged(QGeoCoordinate newGpsRef, bool isRefSet);
     void mapChanged();
     void buildingLevelHeightChanged(void);
 

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
+import QGroundControl
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
@@ -16,11 +17,16 @@ import Viewer3D.Models3D
 Item{
     id: viewer3DBody
     property bool isOpen: false
+    property bool   _viewer3DEnabled:        QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
+
 
     function open(){
-        view3DManagerLoader.sourceComponent = viewer3DManagerComponent
-        viewer3DBody.z = 1
-        isOpen = true;
+        if(_viewer3DEnabled === true){
+            view3DManagerLoader.sourceComponent = viewer3DManagerComponent
+            view3DManagerLoader.active = true;
+            viewer3DBody.z = 1
+            isOpen = true;
+        }
     }
 
     function close(){
@@ -28,8 +34,12 @@ Item{
         isOpen = false;
     }
 
-    function showSettingsDialog(){
-        settingsDialogComponent.createObject(mainWindow).open()
+    on_Viewer3DEnabledChanged: {
+        if(_viewer3DEnabled === false){
+            viewer3DBody.close();
+            view3DLoader.active = false;
+            view3DManagerLoader.active = false;
+        }
     }
 
     Component{
@@ -45,6 +55,7 @@ Item{
 
         onLoaded: {
             view3DLoader.source = "Models3D/Viewer3DModel.qml"
+            view3DLoader.active = true;
         }
     }
 
@@ -62,15 +73,5 @@ Item{
         property: "isViewer3DOpen"
         value: isOpen
         when: view3DLoader.status == Loader.Ready
-    }
-
-    Component {
-        id: settingsDialogComponent
-
-        Viewer3DSettingsDialog{
-            id:                     view3DSettingsDialog
-            viewer3DManager:        view3DManagerLoader.item
-            visible:                true
-        }
     }
 }
