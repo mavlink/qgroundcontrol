@@ -4,6 +4,12 @@
     "QGC.MetaData.Facts":
 [
 {
+    "name":             "enabled",
+    "shortDesc":        "Enable the 3D viewer",
+    "type":             "bool",
+    "default":          false
+},
+{
     "name":             "osmFilePath",
     "shortDesc":        "Path to the OSM file for the 3D viewer.",
     "type":             "string",
