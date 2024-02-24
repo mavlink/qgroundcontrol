@@ -27,8 +27,6 @@ endif ()
 #######################################################
 #             Source Files
 #######################################################
-target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
-
 add_library(${PROJECT_NAME} STATIC
         ${EXTRA_SRC}
 
@@ -76,6 +74,8 @@ add_library(${PROJECT_NAME} STATIC
         TerrainTile.h
 )
 
+target_precompile_headers(${PROJECT_NAME} PRIVATE pch.h)
+
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS APP_VERSION_STR="${APP_VERSION_STR}")
 
 # Subdirectories
@@ -103,6 +103,9 @@ add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
+if (NOT ${QGC_AIRLINK_DISABLED})
+    add_subdirectory(AirLink)
+endif()
 add_subdirectory(Terrain)
 add_subdirectory(uas)
 add_subdirectory(UTMSP)
@@ -153,6 +156,12 @@ target_link_libraries(${PROJECT_NAME}
             Viewer3D
             z # zlib
 )
+
+if (NOT ${QGC_AIRLINK_DISABLED})
+    target_link_libraries(${PROJECT_NAME} PUBLIC AirLink)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC QGC_AIRLINK_DISABLED)
+endif()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC

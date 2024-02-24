@@ -31,6 +31,9 @@
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "ADSBVehicleManager.h"
+#ifndef QGC_AIRLINK_DISABLED
+#include "AirLinkManager.h"
+#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -83,6 +86,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
     _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
+#ifndef QGC_AIRLINK_DISABLED
+    _airlinkManager         = new AirLinkManager            (app, this);
+#endif
 #ifdef CONFIG_UTM_ADAPTER
     _utmspManager            = new UTMSPManager               (app, this);
 #endif
@@ -113,6 +119,9 @@ void QGCToolbox::setChildToolboxes(void)
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
     _adsbVehicleManager->setToolbox(this);
+#ifndef QGC_AIRLINK_DISABLED
+    _airlinkManager->setToolbox(this);
+#endif
 #ifdef CONFIG_UTM_ADAPTER
     _utmspManager->setToolbox(this);
 #endif

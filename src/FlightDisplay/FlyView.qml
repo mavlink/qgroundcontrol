@@ -72,8 +72,8 @@ Item {
 
     QGCToolInsets {
         id:                     _toolInsets
-        leftEdgeBottomInset:    _pipOverlay.visible ? _pipOverlay.x + _pipOverlay.width : 0
-        bottomEdgeLeftInset:    _pipOverlay.visible ? parent.height - _pipOverlay.y : 0
+        leftEdgeBottomInset:    _pipOverlay.leftEdgeBottomInset
+        bottomEdgeLeftInset:    _pipOverlay.bottomEdgeLeftInset
     }
 
     FlyViewToolBar {
@@ -110,19 +110,17 @@ Item {
             visible:            !QGroundControl.videoManager.fullScreen
         }
 
-        // Development tool for visualizing the insets for a paticular layer, enable if needed
-        /*
+        // Development tool for visualizing the insets for a paticular layer, show if needed
         FlyViewInsetViewer {
             id:                     widgetLayerInsetViewer
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.left:           parent.left
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
-
             z:                      widgetLayer.z + 1
-
-            insetsToView:           customOverlay.totalToolInsets
-        }*/
+            insetsToView:           widgetLayer.totalToolInsets
+            visible:                false
+        }
 
         GuidedActionsController {
             id:                 guidedActionsController
@@ -183,6 +181,9 @@ Item {
             pipZOrder:              _pipItemZorder
             show:                   !QGroundControl.videoManager.fullScreen &&
                                         (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
+
+            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
+            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
         }
     }
 }

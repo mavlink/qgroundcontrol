@@ -34,5 +34,9 @@
     <string>${MACOSX_BUNDLE_COPYRIGHT}</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Camera devices used for FPV</string>
+    <key>NSLocationUsageDescription</key>
+    <string>Location used for ground control station position</string>
 </dict>
 </plist>

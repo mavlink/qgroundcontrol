@@ -42,7 +42,7 @@ jobs:
           key: ${{ runner.os }}-Debug
           restore-keys: ${{ runner.os }}-Debug
           max-size: "1G"
-          append-timestamp: true
+          append-timestamp: false
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -52,7 +52,7 @@ jobs:
           host:         linux
           target:       desktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools
+          modules:      qtmultimedia
           setup-python: true
           cache: true
 
@@ -68,6 +68,9 @@ jobs:
       - name: Install Gstreamer dev packages
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
+      - name: Install ninja
+        run:  sudo apt-get install ninja-build
+
       - name: Install post-link dependencies
         run:  sudo apt-get install -y binutils patchelf
 
@@ -77,5 +80,6 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-          qmake -r ${SOURCE_DIR}/videoreceiverapp.pro CONFIG+=debug CONFIG+=${BUILD_TYPE}
-          make -j2
+          cmake -S ${SOURCE_DIR}/VideoReceiverApp -B ${SOURCE_DIR}/VideoReceiverApp/build/ -G Ninja
+          cmake --build ${SOURCE_DIR}/VideoReceiverApp/build/ --target all
+

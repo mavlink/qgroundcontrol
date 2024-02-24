@@ -9,6 +9,8 @@
 
 QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in makefiles
 
+# DEFINES += QGC_AIRLINK_DISABLED
+
 message ("ANDROID_TARGET_ARCH $${ANDROID_TARGET_ARCH} $${QT_ARCH}")
 
 exists($${OUT_PWD}/qgroundcontrol.pro) {
@@ -660,7 +662,8 @@ HEADERS += \
     src/GPS/RTCM/RTCMMavlink.h \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
-    src/GPS/vehicle_gps_position.h \
+    src/GPS/sensor_gps.h \
+    src/GPS/sensor_gnss_relative.h \
     src/Joystick/JoystickSDL.h \
     src/RunGuard.h \
 }
@@ -1133,6 +1136,24 @@ contains (DEFINES, QGC_DISABLE_MAVLINK_INSPECTOR) {
         src/AnalyzeView/MAVLinkInspectorController.cc
     QT += \
         charts
+}
+
+#-------------------------------------------------------------------------------------
+# Airlink
+contains (DEFINES, QGC_AIRLINK_DISABLED) {
+    message("AirLink disabled")
+} else {
+    message("AirLink enabled")
+    INCLUDEPATH += \
+        src/AirLink
+
+    HEADERS += \
+        src/AirLink/AirlinkLink.h \
+        src/AirLink/AirLinkManager.h
+
+    SOURCES += \
+        src/AirLink/AirlinkLink.cc \
+        src/AirLink/AirLinkManager.cc
 }
 
 #-------------------------------------------------------------------------------------

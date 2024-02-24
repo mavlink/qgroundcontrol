@@ -16,57 +16,32 @@ import QGroundControl.Vehicle
 import QGroundControl.Controls
 import QGroundControl.Palette
 
-Rectangle {
-    id:                 telemetryPanel
-    height:             telemetryLayout.height + (_toolsMargin * 2)
-    width:              telemetryLayout.width + (_toolsMargin * 2)
-    color:              qgcPal.window
-    radius:             ScreenTools.defaultFontPixelWidth / 2
+Item {
+    id:             control
+    implicitWidth:  mainLayout.width + (_toolsMargin * 2)
+    implicitHeight: mainLayout.height + (_toolsMargin * 2)
 
-    property bool       bottomMode: true
+    property real extraWidth: 0 ///< Extra width to add to the background rectangle
 
-    DeadMouseArea { anchors.fill: parent }
+    Rectangle {
+        id:         backgroundRect
+        width:      control.width + extraWidth
+        height:     control.height
+        color:      qgcPal.window
+        radius:     ScreenTools.defaultFontPixelWidth / 2
+        opacity:    0.75
+    }
+
+    //DeadMouseArea { anchors.fill: parent }
 
     ColumnLayout {
-        id:                 telemetryLayout
+        id:                 mainLayout
         anchors.margins:    _toolsMargin
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
 
-         RowLayout {
+        RowLayout {
             visible: mouseArea.containsMouse || valueArea.settingsUnlocked
-
-            QGCColoredImage {
-                source:             "/res/layout-bottom.svg"
-                mipmap:             true
-                width:              ScreenTools.minTouchPixels * 0.75
-                height:             width
-                sourceSize.width:   width
-                color:              qgcPal.text
-                fillMode:           Image.PreserveAspectFit
-                visible:            !bottomMode
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  bottomMode = true
-                }
-            }
-
-            QGCColoredImage {
-                source:             "/res/layout-right.svg"
-                mipmap:             true
-                width:              ScreenTools.minTouchPixels * 0.75
-                height:             width
-                sourceSize.width:   width
-                color:              qgcPal.text
-                fillMode:           Image.PreserveAspectFit
-                visible:            bottomMode
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  bottomMode = false
-                }
-            }
 
             QGCColoredImage {
                 source:             valueArea.settingsUnlocked ? "/res/LockOpen.svg" : "/res/pencil.svg"
@@ -95,10 +70,10 @@ Rectangle {
 
     QGCMouseArea {
         id:                         mouseArea
-        x:                          telemetryLayout.x
-        y:                          telemetryLayout.y
-        width:                      telemetryLayout.width
-        height:                     telemetryLayout.height
+        x:                          mainLayout.x
+        y:                          mainLayout.y
+        width:                      mainLayout.width
+        height:                     mainLayout.height
         hoverEnabled:               !ScreenTools.isMobile
         propagateComposedEvents:    true
         visible:                    !valueArea.settingsUnlocked

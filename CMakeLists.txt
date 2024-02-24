@@ -231,6 +231,8 @@ if (ENABLE_VIDEOSTREAMING)
     message(STATUS "gst found ${GST_FOUND}")
 endif ()
 
+option(QGC_AIRLINK_DISABLED "Enable airlink" OFF)
+
 # Sets the default flags for compilation and linking.
 include(CompileOptions)
 
@@ -277,10 +279,7 @@ else()
 endif()
 
 if(BUILD_TESTING)
-    add_subdirectory(test)
-    list(APPEND QGC_RESOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/test/UnitTest.qrc
-    )
+    list(APPEND QGC_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/test/UnitTest.qrc)
 endif()
 
 #######################################################
@@ -309,6 +308,7 @@ endif()
 #######################################################
 
 if(BUILD_TESTING)
+    add_subdirectory(test)
     target_link_libraries(qgc PRIVATE qgctest)
 endif()
 

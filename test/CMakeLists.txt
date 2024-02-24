@@ -72,6 +72,4 @@ if (BUILD_TESTING)
             VehicleTest
     )
 
-    qt_add_binary_resources(qgctest UnitTest.qrc)
-
 endif ()

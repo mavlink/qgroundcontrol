@@ -42,7 +42,7 @@ jobs:
           key: ${{ runner.os }}-Release
           restore-keys: ${{ runner.os }}-Release
           max-size: "2G"
-          append-timestamp: true
+          append-timestamp: false
           variant: "sccache"
 
       - name: Get all tags for correct version determination
@@ -105,31 +105,16 @@ jobs:
               qmake -r ${{ env.SOURCE_DIR }}\qgroundcontrol.pro CONFIG+=installer CONFIG+=${{ env. BUILD_TYPE }}
               ${{ runner.temp }}\jom\jom -j2
 
-      - name: Save installer artifact
-        uses: actions/upload-artifact@master
-        with:
-          name: ${{ env.ARTIFACT }}
-          path: ${{ runner.temp }}\shadow_build_dir\staging\${{ env.ARTIFACT }}
-
       - name: Save PDB artifact
         uses: actions/upload-artifact@master
         with:
           name: qgroundcontrol.pdb
           path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
 
-      - name: Upload build to S3 Bucket
-        if:                 github.event_name == 'push'
-        working-directory:  ${{ runner.temp }}\shadow_build_dir\staging
-        run: |
-              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ env.ARTIFACT }} --region us-west-2 --acl public-read
-
-      - name: Upload tagged stable build to S3 latest Bucket
-        if:                 github.event_name == 'push' && github.ref_type == 'tag'
-        working-directory:  ${{ runner.temp }}\shadow_build_dir\staging
-        run: |
-              aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              aws s3 cp ${{ env.ARTIFACT }} s3://qgroundcontrol/latest/${{ env.ARTIFACT }} --region us-west-2 --acl public-read
-
+      - name: Upload Build File
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ env.ARTIFACT }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          source: 'staging'

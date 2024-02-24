@@ -204,7 +204,7 @@ Item {
             color:              qgcPal.text
             selectionColor:     qgcPal.text
             selectedTextColor:  qgcPal.window
-            onLinkActivated: {
+            onLinkActivated: (link) => {
                 if (link.startsWith('param://')) {
                     var paramName = link.substr(8);
                     fact = controller.getParameterFact(-1, paramName, true)
