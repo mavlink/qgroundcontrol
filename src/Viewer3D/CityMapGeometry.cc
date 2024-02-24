@@ -33,6 +33,7 @@ void CityMapGeometry::setOsmFilePath(QVariant value)
         return;
     }
 
+    clearViewer();
     _mapLoadedFlag = 0;
     _osmFilePath = value.toString();
     emit osmFilePathChanged();
@@ -89,4 +90,11 @@ void CityMapGeometry::updateViewer()
         }
         update();
     }
+}
+
+void CityMapGeometry::clearViewer()
+{
+    clear();
+    _vertexData.clear();
+    update();
 }
