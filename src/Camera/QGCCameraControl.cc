@@ -2179,16 +2179,13 @@ void
 QGCCameraControl::_checkForVideoStreams()
 {
     if(_info.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
-        //-- Skip it if using Taisync as it has its own video settings
-        if(!qgcApp()->toolbox()->videoManager()->isTaisync()) {
-            connect(&_streamInfoTimer, &QTimer::timeout, this, &QGCCameraControl::_streamTimeout);
-            _streamInfoTimer.setSingleShot(false);
-            connect(&_streamStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_streamStatusTimeout);
-            _streamStatusTimer.setSingleShot(true);
-            //-- Request all streams
-            _requestStreamInfo(0);
-            _streamInfoTimer.start(2000);
-        }
+        connect(&_streamInfoTimer, &QTimer::timeout, this, &QGCCameraControl::_streamTimeout);
+        _streamInfoTimer.setSingleShot(false);
+        connect(&_streamStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_streamStatusTimeout);
+        _streamStatusTimer.setSingleShot(true);
+        //-- Request all streams
+        _requestStreamInfo(0);
+        _streamInfoTimer.start(2000);
     }
 }
 
