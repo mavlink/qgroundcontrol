@@ -647,9 +647,27 @@ const QVariantList& APMFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
     if (_toolIndicatorList.size() == 0) {
         // First call the base class to get the standard QGC list
         _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
+
+        // Find the generic flight mode indicator and replace with the custom one
+        for (int i=0; i<_toolIndicatorList.size(); i++) {
+            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMFlightModeIndicator.qml"));
+                break;
+            }
+        }
+
+        // Find the generic battery indicator and replace with the custom one
+        for (int i=0; i<_toolIndicatorList.size(); i++) {
+            if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMBatteryIndicator.qml"));
+                break;
+            }
+        }
+
         // Then add the forwarding support indicator
         _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/APMSupportForwardingIndicator.qml")));
     }
+
     return _toolIndicatorList;
 }
 
@@ -1177,4 +1195,9 @@ void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* 
         -1,                                   // throttle, no change
         0                                     // 0: absolute speed, 1: relative to current
         );                                    // param 5-7 unused
+}
+
+QVariant APMFirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
+{
+    return QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMMainStatusIndicatorContentItem.qml"));
 }
