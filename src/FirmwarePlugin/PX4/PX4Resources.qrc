@@ -36,7 +36,7 @@
     <qresource prefix="/PX4/Indicators">
         <file alias="PX4FlightModeIndicator.qml">PX4FlightModeIndicator.qml</file>
         <file alias="PX4BatteryIndicator.qml">PX4BatteryIndicator.qml</file>
-        <file alias="PX4MainStatusIndicatorExpandedItem.qml">PX4MainStatusIndicatorExpandedItem.qml</file>
+        <file alias="PX4MainStatusIndicatorContentItem.qml">PX4MainStatusIndicatorContentItem.qml</file>
     </qresource>
 
     <qresource prefix="/json">
