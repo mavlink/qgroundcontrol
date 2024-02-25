@@ -3806,10 +3806,10 @@ QString Vehicle::vehicleImageOutline() const
         return QString();
 }
 
-QVariant Vehicle::mainStatusIndicatorExpandedItem()
+QVariant Vehicle::mainStatusIndicatorContentItem()
 {
     if(_firmwarePlugin) {
-        return _firmwarePlugin->mainStatusIndicatorExpandedItem(this);
+        return _firmwarePlugin->mainStatusIndicatorContentItem(this);
     }
     return QVariant();
 }

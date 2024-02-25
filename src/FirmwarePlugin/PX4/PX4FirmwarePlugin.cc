@@ -739,9 +739,9 @@ bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
     return false;
 }
 
-QVariant PX4FirmwarePlugin::mainStatusIndicatorExpandedItem(const Vehicle*) const
+QVariant PX4FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
 {
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4MainStatusIndicatorExpandedItem.qml"));
+    return QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4MainStatusIndicatorContentItem.qml"));
 }
 
 const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle*)
