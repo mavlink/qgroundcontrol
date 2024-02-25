@@ -50,33 +50,4 @@ ColumnLayout {
             sliderPreferredWidth:   ScreenTools.defaultFontPixelWidth * 20
         }
     }
-
-    SettingsGroupLayout {
-        Layout.fillWidth: true
-
-        GridLayout {
-            columns:            2
-            rowSpacing:         ScreenTools.defaultFontPixelHeight / 2
-            columnSpacing:      ScreenTools.defaultFontPixelWidth *2
-            Layout.fillWidth:   true
-
-            QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Parameters") }
-            QGCButton {
-                text: qsTr("Configure")
-                onClicked: {                            
-                    mainWindow.showVehicleSetupTool(qsTr("Parameters"))
-                    mainWindow.closeIndicatorDrawer()
-                }
-            }
-
-            QGCLabel { Layout.fillWidth: true; text: qsTr("Initial Vehicle Setup") }
-            QGCButton {
-                text: qsTr("Configure")
-                onClicked: {                            
-                    mainWindow.showVehicleSetupTool()
-                    mainWindow.closeIndicatorDrawer()
-                }
-            }
-        }
-    }
 }
