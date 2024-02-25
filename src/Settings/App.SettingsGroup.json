@@ -264,13 +264,6 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":             "enableTaisyncVideo",
-    "shortDesc": "Enable Taisync Video Support",
-    "longDesc":  "Enable Taisync Video Support",
-    "type":             "bool",
-    "default":     true
-},
-{
     "name":         "qLocaleLanguage",
     "shortDesc":    "Language",
     "type":         "uint32",
