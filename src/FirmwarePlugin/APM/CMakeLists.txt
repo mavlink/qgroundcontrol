@@ -1,4 +1,7 @@
 add_custom_target(APMFirmwarePluginQml
-SOURCES
-    APMSensorParams.qml
+    SOURCES
+        APMBatteryIndicator.qml
+        APMFlightModeIndicator.qml
+        APMMainStatusIndicatorContentItem.qml
+        APMSensorParams.qml
 )

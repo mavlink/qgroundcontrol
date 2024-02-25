@@ -84,6 +84,7 @@ public:
     double              minimumEquivalentAirspeed       (Vehicle* vehicle) override;
     bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
     void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
+    QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
 
 protected:
     /// All access to singleton is through stack specific implementation

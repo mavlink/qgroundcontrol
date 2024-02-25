@@ -34,6 +34,11 @@
         <file alias="QGroundControl/ArduPilot/APMSensorIdDecoder.qml">APMSensorIdDecoder.qml</file>
         <file alias="QGroundControl/ArduPilot/qmldir">QGroundControl.ArduPilot.qmldir</file>
     </qresource>
+    <qresource prefix="/APM/Indicators">
+        <file alias="APMBatteryIndicator.qml">APMBatteryIndicator.qml</file>
+        <file alias="APMFlightModeIndicator.qml">APMFlightModeIndicator.qml</file>
+        <file alias="APMMainStatusIndicatorContentItem.qml">APMMainStatusIndicatorContentItem.qml</file>
+    </qresource>
     <qresource prefix="/json">
         <file alias="APM-MavCmdInfoCommon.json">APM-MavCmdInfoCommon.json</file>
         <file alias="APM-MavCmdInfoFixedWing.json">APM-MavCmdInfoFixedWing.json</file>
