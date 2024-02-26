@@ -27,7 +27,7 @@ ColumnLayout {
     
     Connections {
         target: _activeJoystick
-        onRawButtonPressedChanged: {
+        onRawButtonPressedChanged: (index, pressed) => {
             if (buttonActionRepeater.itemAt(index)) {
                 buttonActionRepeater.itemAt(index).pressed = pressed
             }
@@ -40,7 +40,6 @@ ColumnLayout {
     ColumnLayout {
         id:         flowColumn
         width:      parent.width
-        anchors.centerIn:   parent
         spacing:    ScreenTools.defaultFontPixelHeight
 
         // Note for reminding the use of multiple buttons for the same action
