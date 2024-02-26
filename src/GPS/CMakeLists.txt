@@ -1,6 +1,6 @@
 
 
-add_library(gps
+qt_add_library(gps
 	Drivers/src/ashtech.cpp
 	Drivers/src/gps_helper.cpp
 	Drivers/src/mtk.cpp
