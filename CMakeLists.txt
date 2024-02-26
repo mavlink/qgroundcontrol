@@ -48,6 +48,9 @@ else ()
     add_definitions(-DDAILY_BUILD)
 endif ()
 
+include(CMakeDependentOption)
+cmake_dependent_option(BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+
 #######################################################
 #               OS Configuration
 #######################################################
@@ -276,10 +279,6 @@ else()
     list(APPEND QGC_RESOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/src/UTMSP/dummy/utmsp_dummy.qrc
     )
-endif()
-
-if(BUILD_TESTING)
-    list(APPEND QGC_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/test/UnitTest.qrc)
 endif()
 
 #######################################################
