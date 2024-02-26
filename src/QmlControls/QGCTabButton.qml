@@ -29,13 +29,10 @@ TabButton {
     property real   backRadius:     ScreenTools.buttonBorderRadius
     property real   heightFactor:   0.5
 
-    property alias wrapMode:            text.wrapMode
-    property alias horizontalAlignment: text.horizontalAlignment
-
     property bool   _showHighlight:     enabled && (pressed | checked)
-
-    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth
-    property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
+    property int    _horizontalPadding: ScreenTools.defaultFontPixelWidth
+    property int    _verticalPadding:   Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
+    property bool   _showIcon:          control.icon.source !== ""
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -49,14 +46,32 @@ TabButton {
         color:          _showHighlight ? qgcPal.buttonHighlight : qgcPal.button
     }
 
-    contentItem: Text {
-        id:                     text
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        antialiasing:           true
-        text:                   control.text
-        font.pointSize:         pointSize
-        font.family:            ScreenTools.normalFontFamily
-        color:                  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    contentItem: Item {
+        implicitWidth:  _showIcon ? icon.width : text.implicitWidth
+        implicitHeight: _showIcon ? icon.height : text.implicitHeight
+        baselineOffset: text.y + text.baselineOffset
+
+        QGCColoredImage {
+            id:                     icon
+            anchors.centerIn:       parent
+            source:                 control.icon.source
+            height:                 source === "" ? 0 : ScreenTools.defaultFontPixelHeight
+            width:                  height
+            color:                  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            fillMode:               Image.PreserveAspectFit
+            sourceSize.height:      height
+            visible:                _showIcon
+        }
+
+        Text {
+            id:                     text
+            anchors.centerIn:       parent
+            antialiasing:           true
+            text:                   control.text
+            font.pointSize:         control.pointSize
+            font.family:            ScreenTools.normalFontFamily
+            color:                  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            visible:                !_showIcon
+        }
     }
 }
