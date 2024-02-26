@@ -1,5 +1,5 @@
 
-qt_add_library(Camera
+qt_add_library(Camera STATIC
 	QGCCameraControl.cc
 	QGCCameraIO.cc
 	QGCCameraManager.cc
