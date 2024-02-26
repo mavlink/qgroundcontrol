@@ -50,24 +50,21 @@ jobs:
           host:         linux
           target:       desktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtquick3d
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: true
           cache: true
 
       - name: Install github environment dependencies for unit test running
-        run:  sudo apt-get install libxcb-xinerama0
+        run:  sudo apt-get install -y libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
 
       - name: Install QGC source dependencies
         run:  sudo apt-get install -y libsdl2-dev
-
-      - name: Install source dependencies required to run unit tests in workflow container
-        run:  sudo apt-get install -y libxkbcommon-x11-0 libxcb-cursor0
 
       - name: Install Gstreamer dev packages
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
       - name: Install post-link dependencies
-        run:  sudo apt-get install -y binutils patchelf
+        run:  sudo apt-get install -y binutils patchelf ninja-build
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
@@ -75,8 +72,9 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              qmake -r ${SOURCE_DIR}/qgroundcontrol.pro CONFIG+=debug CONFIG+=${BUILD_TYPE}
-              make -j2
+              cmake -S ${SOURCE_DIR} -B ${SOURCE_DIR}/shadow_build_dir/ -G Ninja -DCMAKE_BUILD_TYPE=Debug
+              cmake --build ${SOURCE_DIR}/shadow_build_dir/ --target all
+              cmake --install ${SOURCE_DIR}/shadow_build_dir
 
       - name: Setup for unit tests
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -87,4 +85,4 @@ jobs:
 
       - name: Run unit tests
         working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run:                xvfb-run -a ./staging/qgroundcontrol-start.sh --unittest
+        run:                xvfb-run -a ${SOURCE_DIR}/shadow_build_dir/staging/bin/QGroundControl --unittest
