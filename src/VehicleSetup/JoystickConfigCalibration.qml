@@ -99,7 +99,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 Connections {
                     target: controller
-                    onAxisValueChanged: {
+                    onAxisValueChanged: (axis, value) => {
                         if (axisMonitorRepeater.itemAt(axis)) {
                             axisMonitorRepeater.itemAt(axis).axis.axisValue = value
                         }
