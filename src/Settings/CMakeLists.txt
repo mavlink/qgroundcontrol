@@ -1,5 +1,5 @@
 
-add_library(Settings
+qt_add_library(Settings
 	ADSBVehicleManagerSettings.cc
 	ADSBVehicleManagerSettings.h
 	APMMavlinkStreamRateSettings.cc

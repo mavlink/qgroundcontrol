@@ -1,5 +1,5 @@
 
-add_library(MissionManager
+qt_add_library(MissionManager
 	BlankPlanCreator.cc
 	BlankPlanCreator.h
 	CameraCalc.cc
