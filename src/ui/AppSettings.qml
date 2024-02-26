@@ -80,9 +80,10 @@ Rectangle {
                 model:  settingsPagesModel
 
                 Button {
+                    Layout.fillWidth:   true
+                    text:               name
                     padding:            ScreenTools.defaultFontPixelWidth / 2
                     autoExclusive:      true
-                    Layout.fillWidth:   true
                     visible:            pageVisible()
 
                     background: Rectangle {
