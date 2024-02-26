@@ -1,5 +1,5 @@
 
-add_library(AnalyzeView
+qt_add_library(AnalyzeView
 	ExifParser.cc
 	ExifParser.h
 	GeoTagController.cc

@@ -27,7 +27,7 @@ endif ()
 #######################################################
 #             Source Files
 #######################################################
-add_library(${PROJECT_NAME} STATIC
+qt_add_library(${PROJECT_NAME} STATIC
         ${EXTRA_SRC}
 
         CmdLineOptParser.cc
