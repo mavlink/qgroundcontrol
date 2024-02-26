@@ -25,6 +25,7 @@ Item {
     property var    map                                                 ///< Map control to place item in
     property bool   polygonInteractive: true
     property bool   interactive: true
+    property var    vehicle
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
