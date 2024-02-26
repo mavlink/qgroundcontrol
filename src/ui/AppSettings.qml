@@ -81,6 +81,7 @@ Rectangle {
 
                 Button {
                     Layout.fillWidth:   true
+                    text:               name
                     padding:            ScreenTools.defaultFontPixelWidth / 2
                     autoExclusive:      true
                     icon.source:        iconUrl
