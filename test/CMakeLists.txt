@@ -2,6 +2,7 @@ if (BUILD_TESTING)
     qt_add_library(qgctest
         STATIC
             UnitTestList.cc
+            UnitTest.qrc
     )
 
     add_custom_target(check
