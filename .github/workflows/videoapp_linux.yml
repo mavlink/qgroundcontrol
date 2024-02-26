@@ -57,22 +57,16 @@ jobs:
           cache: true
 
       - name: Install github environment dependencies for unit test running
-        run:  sudo apt-get install libxcb-xinerama0
+        run:  sudo apt-get install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
 
       - name: Install QGC source dependencies
         run:  sudo apt-get install -y libsdl2-dev
 
-      - name: Install source dependencies required to run unit tests in workflow container
-        run:  sudo apt-get install -y libxkbcommon-x11-0 libxcb-cursor0
-
       - name: Install Gstreamer dev packages
         run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
 
-      - name: Install ninja
-        run:  sudo apt-get install ninja-build
-
       - name: Install post-link dependencies
-        run:  sudo apt-get install -y binutils patchelf
+        run:  sudo apt-get install -y binutils patchelf ninja-build
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
@@ -80,6 +74,6 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-          cmake -S ${SOURCE_DIR}/VideoReceiverApp -B ${SOURCE_DIR}/VideoReceiverApp/build/ -G Ninja
-          cmake --build ${SOURCE_DIR}/VideoReceiverApp/build/ --target all
+          cmake -S ${SOURCE_DIR}/VideoReceiverApp -B ${SOURCE_DIR}/VideoReceiverApp/shadow_build_dir/ -G Ninja
+          cmake --build ${SOURCE_DIR}/VideoReceiverApp/shadow_build_dir/ --target all
 
