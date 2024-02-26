@@ -18,7 +18,11 @@ You can use it to:
 # UI Overview
 The screenshot above shows the main elements of the 3D View. 
 
-To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), from the toolbar on the left, select the 3D View icon as shown below:
+<font color="red">**Enabling the 3D View:** </font>The 3D View is disabled by default. To enable it, go to **Application Settings** ->**Fly View** tab, and under the **3D View** settings group, toggle the **Enabled** switch as shown below:
+
+![3D View](../../../assets/viewer_3d/enable_3d_view.jpg)
+
+To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), from the toolbar on the left, select the 3D View icon as illustrated below:
 
 ![3D View](../../../assets/viewer_3d/open_3d_viewer.jpg)
 
@@ -33,17 +37,14 @@ Once the 3D View is opened, you can navigate through the 3D environment by using
     - **To rotate**: Use two fingers, then tap and move your fingers while keeping them together.
     - **To zoom**: Use a pinch with two fingers and move them together or apart to zoom in or out.
 
-To visualize the 3D map of a particular area in the 3D viewer, you have to download the .osm file of that area from the [OpenStreetMap](https://www.openstreetmap.org/#map=16/47.3964/8.5498) website and then import it through the Setting menu. More details on the Setting menu can be found in the next section.
-# Setting icon ![Setting icons](../../../assets/viewer_3d/icon_3d_view.jpg) 
-This icon will open a pop-up window for setting up the 3D View as shown below:
+To visualize the 3D map of a particular area in the 3D viewer, you have to download the .osm file of that area from the [OpenStreetMap](https://www.openstreetmap.org/#map=16/47.3964/8.5498) website and then import it through the **3D View** settings. More details on the **3D View** settings can be found in the next section.
+# Settings
+You can change the settings of the 3D View from **Application Settings** ->**Fly View** tab under the **3D View** settings group.
+The following properties can be modified in the 3D View settings group:
 
-![Setting Window](../../../assets/viewer_3d/viewer_3d_setting_window.jpg)
-
-The following properties can be modified in the setting window:
-- **3D Map File**: The path to the .osm file of a region of interest to be visualized in the QGC. The .osm file can be uploaded by clicking on the "Select File" button.
+- **Enabled**: To enable or disable the 3D View.
+- **3D Map File**: The path to the .osm file of a region of interest to be visualized in the QGC. The .osm file can be uploaded by clicking on the **Select File** button. To clear the 3D View from the previously loaded .osm file, you can click on the **Clear** button.
 - **Average Building Level Height**: This parameter determines the height of each storey of the buildings, as in .osm file sometimes the height of the buildings is specified in terms of the level/storey. 
 - **Vehicle Altitude Bias**: This refers to the bias in the altitude of vehicles and their missions with respect to the ground level. It is helpful in cases where the estimated altitude of the vehicle by its flight control is biased, as the relative altitude is currently used in the 3D View.
-
-To apply the changes you have to press the "OK" button, otherwise, the changes will be discarded.
 
 
