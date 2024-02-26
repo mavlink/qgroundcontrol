@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.21.1 FATAL_ERROR)
 #######################################################
 
 project(QGroundControl LANGUAGES C CXX)
+# set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0)
 
 #######################################################
 #            CMake Configuration Options
@@ -15,6 +16,7 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebIn
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/staging)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -23,10 +25,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include(FeatureSummary)
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_compile_options(-Wall -Wextra)
-endif()
 
 # CMake build type
 # Debug Release RelWithDebInfo MinSizeRel Coverage
@@ -48,6 +46,9 @@ else ()
     add_definitions(-DDAILY_BUILD)
 endif ()
 
+include(CMakeDependentOption)
+cmake_dependent_option(BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+
 #######################################################
 #               OS Configuration
 #######################################################
@@ -63,7 +64,7 @@ endif ()
 option(QT6_DISABLE_DNSENGINE "Disable DNS Engine" OFF)
 
 # Compilation error for deprecated functions
-add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
+add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x060600)
 add_compile_definitions(QT_DEBUG_FIND_PACKAGE=ON)
 if (QT6_DISABLE_DNSENGINE)
     message(STATUS "DNS Engine disabled")
@@ -77,12 +78,14 @@ message(STATUS "Qt spec: ${QT_MKSPEC}")
 
 
 # Find Qt6 libraries
-find_package(Qt6 ${QT_VERSION}
+find_package(Qt6
+        REQUIRED
         COMPONENTS
                 Bluetooth
                 Charts
                 Concurrent
                 Core
+                Core5Compat
                 Location
                 Multimedia
                 Network
@@ -97,21 +100,13 @@ find_package(Qt6 ${QT_VERSION}
                 TextToSpeech
                 Widgets
                 Xml
-        REQUIRED
-                Core5Compat
+        OPTIONAL_COMPONENTS
+                SerialPort
         HINTS
                 ${QT_LIBRARY_HINTS}
 )
 
-if(NOT QT_MKSPEC MATCHES "winrt")
-    find_package(Qt6 ${QT_VERSION}
-            COMPONENTS
-            SerialPort
-            REQUIRED
-            HINTS
-            ${QT_LIBRARY_HINTS}
-    )
-endif()
+qt_standard_project_setup(REQUIRES 6.6.0)
 
 # this is required since user can have Qt5 and Qt6 installed at the same time, and then Qt_DIR
 # might point to Qt5, but we want to use Qt6
@@ -149,7 +144,6 @@ add_feature_info(DEBUG_QML DEBUG_QML "Build QGroundControl with QML debugging/pr
 if(DEBUG_QML)
     message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
     add_definitions(-DQMLJSDEBUGGER)
-    add_definitions(-DQT_DECLARATIVE_DEBUG)
     add_definitions(-DQT_QML_DEBUG)
 endif()
 
@@ -169,25 +163,12 @@ add_definitions(
         -DQGC_ORG_DOMAIN="org.qgroundcontrol"
 )
 
-
 #######################################################
 #                QGroundControl Git Information
 #######################################################
 
 include(Git)
 message(STATUS "QGroundControl version: ${APP_VERSION_STR}")
-
-#######################################################
-#                ccache Configuration
-#######################################################
-# Configuring ccache if it's available and not disabled
-
-# bzd tymczasowo
-option(CCACHE "Use ccache if available" OFF)
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
-endif()
 
 #######################################################
 #                GStreamer Configuration
@@ -278,30 +259,56 @@ else()
     )
 endif()
 
-if(BUILD_TESTING)
+if (BUILD_TESTING)
     list(APPEND QGC_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/test/UnitTest.qrc)
+endif()
+
+if(APPLE)
+    set(MACOSX_BUNDLE_ICON_FILE macx.icns)
+    set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/macx.icns")
+    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    list(APPEND QGC_RESOURCES
+            ${app_icon_macos}
+    )
 endif()
 
 #######################################################
 #               QGroundControl Target
 #######################################################
 
-if(ANDROID)
-    add_library(${PROJECT_NAME} SHARED ${QGC_RESOURCES})
-elseif(APPLE)
-    set(MACOSX_BUNDLE_ICON_FILE macx.icns)
-    set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/macx.icns")
-    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-    qt_add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${QGC_RESOURCES} ${app_icon_macos})
-else()
-    add_executable(${PROJECT_NAME} ${QGC_RESOURCES})
+qt_add_executable(${PROJECT_NAME} ${QGC_RESOURCES})
+
+if(APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE TRUE)
+elseif(WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
+elseif(ANDROID)
+    add_android_openssl_libraries(${PROJECT_NAME})
+
+    #set_target_properties(${PROJECT_NAME}
+    #    PROPERTIES
+    #        QT_ANDROID_ABIS ${ANDROID_ABI}
+    #        QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS_APP}"
+    #        QT_ANDROID_MIN_SDK_VERSION 26
+    #        QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/deploy
+    #        QT_ANDROID_SDK_BUILD_TOOLS_REVISION 34.0.0
+    #        QT_ANDROID_TARGET_SDK_VERSION 33
+    #        QT_ANDROID_VERSION_NAME '0.1'
+    #        QT_ANDROID_VERSION_CODE 0.1
+    #        QT_QML_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ui/qml # ${CMAKE_BINARY_DIR}/qml
+    #)
+    #QT_ANDROID_DEPLOY_RELEASE
+    #QT_ANDROID_KEYSTORE_PATH
+    #QT_ANDROID_KEYSTORE_ALIAS
+    #QT_ANDROID_KEYSTORE_STORE_PASS
+    #QT_ANDROID_KEYSTORE_KEY_PASS
+    #QT_ANDROID_SIGN_APK
+    #QT_ENABLE_VERBOSE_DEPLOYMENT
+    #QT_HOST_PATH
+    #QT_PATH_ANDROID_ABI_arm64-v8a
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
-
-if(ANDROID)
-    add_android_openssl_libraries(${PROJECT_NAME})
-endif()
 
 #######################################################
 #               Testing Configuration
@@ -319,6 +326,12 @@ endif()
 include(GNUInstallDirs)
 
 # Files/directories to install
+#install(
+#    TARGETS ${PROJECT_NAME}
+#    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#)
 install(
         TARGETS ${PROJECT_NAME}
         DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -345,6 +358,10 @@ install(
         FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
 )
+if(NOT ANDROID)
+    qt_generate_deploy_qml_app_script(TARGET ${PROJECT_NAME} OUTPUT_SCRIPT deploy_script)
+    install(SCRIPT ${deploy_script})
+endif()
 
 #######################################################
 #               Serial Port Configuration
@@ -356,4 +373,4 @@ if(NOT QT_MKSPEC MATCHES "winrt")
         )
 endif()
 
-include(QGCDeploy)
+#include(QGCDeploy)

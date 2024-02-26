@@ -1,5 +1,5 @@
 
-add_library(Geo
+qt_add_library(Geo STATIC
 	Constants.hpp
 	Math.cpp
 	Math.hpp

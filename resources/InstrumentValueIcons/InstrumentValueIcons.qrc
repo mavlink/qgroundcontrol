@@ -85,6 +85,7 @@
 		<file alias="screen-full.svg">screen-full.svg</file>
 		<file alias="education.svg">education.svg</file>
 		<file alias="vector.svg">vector.svg</file>
+		<file alias="drone.svg">drone.svg</file>
 		<file alias="load-balancer.svg">load-balancer.svg</file>
 		<file alias="paste.svg">paste.svg</file>
 		<file alias="conversation.svg">conversation.svg</file>

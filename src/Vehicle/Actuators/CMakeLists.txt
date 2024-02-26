@@ -1,5 +1,5 @@
 
-add_library(Actuators
+qt_add_library(Actuators STATIC
 	ActuatorActions.cc
 	ActuatorActions.h
 	ActuatorOutputs.cc

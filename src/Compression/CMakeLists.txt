@@ -1,7 +1,7 @@
 
 set(XZ_EMBEDDED_DIR ${CMAKE_SOURCE_DIR}/libs/xz-embedded)
 
-add_library(compression
+qt_add_library(compression STATIC
 	QGCLZMA.cc
 	QGCLZMA.h
 	QGCZlib.cc

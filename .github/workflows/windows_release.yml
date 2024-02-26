@@ -59,7 +59,7 @@ jobs:
           target:       desktop
           arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtquick3d
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: false
           cache: true
 
@@ -91,13 +91,13 @@ jobs:
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
 
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}\shadow_build_dir
-
       - name: Set up Visual Studio shell
         uses: egor-tensin/vs-shell@v2
         with:
           arch: x64
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}\shadow_build_dir
 
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir

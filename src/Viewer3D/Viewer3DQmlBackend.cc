@@ -63,9 +63,8 @@ void Viewer3DQmlBackend::_gpsRefChangedEvent(QGeoCoordinate newGpsRef, bool isRe
         _gpsRef = newGpsRef;
         _gpsRefSet = GPS_REF_SET_BY_MAP;
         emit gpsRefChanged();
+        qDebug() << "3D viewer gps reference set by osm map:" << _gpsRef.latitude() << _gpsRef.longitude() << _gpsRef.altitude();
     }else{
         _gpsRefSet = GPS_REF_NOT_SET;
     }
-
-    qDebug() << "3D viewer gps reference set by osm map:" << _gpsRef.latitude() << _gpsRef.longitude() << _gpsRef.altitude();
 }

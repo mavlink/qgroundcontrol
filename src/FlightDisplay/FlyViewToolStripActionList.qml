@@ -24,13 +24,13 @@ ToolStripActionList {
             iconSource:     "/qmlimages/Plan.svg"
             onTriggered:{
                 mainWindow.showPlanView()
-                mapIcon.showFlyMap()
+                viewer3DWindow.close()
             }
         },
         ToolStripAction {
             property bool _is3DViewOpen: viewer3DWindow.isOpen
 
-            id: mapIcon
+            id: view3DIcon
             visible: _viewer3DEnabled
             text:           qsTr("3D View")
             iconSource:     "/qmlimages/Viewer3D/City3DMapIcon.svg"
@@ -44,7 +44,7 @@ ToolStripActionList {
 
             on_Is3DViewOpenChanged: {
                 if(_is3DViewOpen === true){
-                    mapIcon.iconSource =     "/qmlimages/PaperPlane.svg"
+                    view3DIcon.iconSource =     "/qmlimages/PaperPlane.svg"
                     text=           qsTr("Fly")
                 }else{
                     viewer3DWindow.close()

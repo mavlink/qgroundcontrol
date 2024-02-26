@@ -2,7 +2,7 @@
 add_subdirectory(MapItems)
 add_subdirectory(Widgets)
 
-add_library(FlightMap
+qt_add_library(FlightMap STATIC
 	#Widgets/ValuesWidgetController.cc
 )
 
