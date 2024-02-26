@@ -24,7 +24,7 @@ ToolStripActionList {
             iconSource:     "/qmlimages/Plan.svg"
             onTriggered:{
                 mainWindow.showPlanView()
-                view3DIcon.showFlyMap()
+                viewer3DWindow.close()
             }
         },
         ToolStripAction {
