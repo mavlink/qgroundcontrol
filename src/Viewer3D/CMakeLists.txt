@@ -1,5 +1,5 @@
 
-add_library(Viewer3D
+qt_add_library(Viewer3D
     CityMapGeometry.cc
     CityMapGeometry.h
     earcut.hpp

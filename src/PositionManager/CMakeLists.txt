@@ -1,5 +1,5 @@
 
-add_library(PositionManager
+qt_add_library(PositionManager
 	PositionManager.cpp
 	SimulatedPosition.cc
 )

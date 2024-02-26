@@ -11,7 +11,7 @@ if(BUILD_TESTING)
 	)
 endif()
 
-add_library(comm
+qt_add_library(comm
 	#BluetoothLink.cc
 	#BluetoothLink.h
 	LinkConfiguration.cc
