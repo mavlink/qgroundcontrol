@@ -1,6 +1,6 @@
 find_package(Qt6 COMPONENTS Core Network REQUIRED)
 
-qt_add_library(AirLink
+qt_add_library(AirLink STATIC
     AirlinkLink.cc
     AirlinkLink.h
     AirLinkManager.cc
