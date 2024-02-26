@@ -20,6 +20,10 @@ qt_add_library(MissionManager STATIC
 	GeoFenceController.h
 	GeoFenceManager.cc
 	GeoFenceManager.h
+	KMLDomDocument.cc
+    KMLDomDocument.h
+    KMLHelper.cc
+    KMLHelper.h
 	KMLPlanDomDocument.cc
 	KMLPlanDomDocument.h
 	LandingComplexItem.cc
@@ -63,6 +67,10 @@ qt_add_library(MissionManager STATIC
 	RallyPointManager.cc
 	RallyPointManager.h
 	Section.h
+    ShapeFileHelper.cc
+    ShapeFileHelper.h
+    SHPFileHelper.cc
+    SHPFileHelper.h
 	SimpleMissionItem.cc
 	SimpleMissionItem.h
 	SpeedSection.cc
@@ -96,6 +104,8 @@ add_custom_Target(MisionManagerQml
 )
 
 target_link_libraries(MissionManager
+	PRIVATE
+		shp
 	PUBLIC
 		Qt6::Xml
 		qgc

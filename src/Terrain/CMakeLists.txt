@@ -1,6 +1,8 @@
 
 qt_add_library(Terrain STATIC
 	TerrainQuery.cc
+    TerrainTile.cc
+    TerrainTile.h
 )
 
 target_link_libraries(Terrain
