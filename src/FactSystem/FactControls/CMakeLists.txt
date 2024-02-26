@@ -1,4 +1,4 @@
-qt_add_library(FactControls
+qt_add_library(FactControls STATIC
     FactPanelController.cc
 )
 

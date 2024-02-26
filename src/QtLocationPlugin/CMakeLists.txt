@@ -1,5 +1,5 @@
 
-qt_add_library(QtLocationPlugin
+qt_add_library(QtLocationPlugin STATIC
 	BingMapProvider.cpp
 	ElevationMapProvider.cpp
 	EsriMapProvider.cpp
