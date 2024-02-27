@@ -32,7 +32,7 @@ TabButton {
     property bool   _showHighlight:     enabled && (pressed | checked)
     property int    _horizontalPadding: ScreenTools.defaultFontPixelWidth
     property int    _verticalPadding:   Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
-    property bool   _showIcon:          control.icon.source !== ""
+    property bool   _showIcon:          control.icon.source != ""
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
