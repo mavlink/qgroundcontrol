@@ -30,8 +30,6 @@ release
 qgroundcontrol.xcodeproj/**
 doc/html
 doc/doxy.log
-deploy/mac
-deploy/linux
 controller_log*
 user_config.pri
 *.app
@@ -76,7 +74,6 @@ ui_*
 
 # android
 android/local.properties
-android/gradle.properties
 
 # doxygen
 src/html/

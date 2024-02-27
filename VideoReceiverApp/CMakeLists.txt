@@ -14,7 +14,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/staging)
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
 set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml" CACHE STRING "Extra QML Import Paths" FORCE)
@@ -38,9 +38,9 @@ if(ANDROID)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             QT_ANDROID_ABIS ${ANDROID_ABI}
-            QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS_APP}"
+            #QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS_APP}"
             QT_ANDROID_MIN_SDK_VERSION 30
-            QT_ANDROID_PACKAGE_SOURCE_DIR android
+            QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
             QT_ANDROID_SDK_BUILD_TOOLS_REVISION 34.0.0
             QT_ANDROID_TARGET_SDK_VERSION 33
             QT_ANDROID_VERSION_NAME '1.0'
@@ -53,29 +53,25 @@ elseif(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
-find_package(PkgConfig)
-pkg_check_modules(GST
-    gstreamer-1.0>=1.16
-    gstreamer-video-1.0>=1.16
-    gstreamer-gl-1.0>=1.16
-    egl
-)
+set(QGC_ROOT ${CMAKE_SOURCE_DIR}/..)
 
+add_subdirectory(${QGC_ROOT}/libs/qmlglsink qmlglsink.build)
 if(NOT GST_FOUND)
     message(FATAL_ERROR "No GStreamer!")
 endif()
-
-set(QGC_ROOT ${CMAKE_SOURCE_DIR}/..)
-
 include_directories(VideoReceiver
+    PRIVATE
+        ${QGC_ROOT}/src
+        ${QGC_ROOT}/src/Settings
+)
+add_subdirectory(${QGC_ROOT}/src/VideoReceiver VideoReceiver.build)
+
+target_include_directories(VideoReceiver
     PRIVATE
         ${GST_INCLUDE_DIRS}
         ${QGC_ROOT}/src
         ${QGC_ROOT}/src/Settings
 )
-
-add_subdirectory(${QGC_ROOT}/libs/qmlglsink qmlglsink.build)
-add_subdirectory(${QGC_ROOT}/src/VideoReceiver VideoReceiver.build)
 
 target_sources(${PROJECT_NAME} PRIVATE ${QGC_ROOT}/src/QGCLoggingCategory.cc)
 
@@ -90,7 +86,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 qt_add_qml_module(${PROJECT_NAME}
-    URI VideoReceiverapp
+    URI videoreceiverapp
     VERSION 1.0
     QML_FILES
         main.qml
