@@ -361,6 +361,8 @@ private:
     static const char* _buttonActionEmergencyStop;
     static const char* _buttonActionGripperGrab;
     static const char* _buttonActionGripperRelease;
+    static const char* _buttonActionLand;
+
 
 
 private slots:

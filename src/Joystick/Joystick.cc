@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "Joystick.h"
 #include "QGC.h"
 #include "AutoPilotPlugin.h"
@@ -67,6 +66,7 @@ const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Cente
 const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
 const char* Joystick::_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
 const char* Joystick::_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
+const char* Joystick::_buttonActionLand =               QT_TR_NOOP("Land");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -1064,6 +1064,11 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if(buttonDown) {
             emit gripperAction(GRIPPER_ACTION_RELEASE);
         }
+    } else if(action == _buttonActionLand) {
+        if(buttonDown) {
+            emit setFlightMode(_buttonActionLand);
+        }
+
     } else {
         if (buttonDown && _activeVehicle) {
             for (auto& item : _customMavCommands) {
@@ -1158,6 +1163,7 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLand));
 
     for (auto& item : _customMavCommands) {
         _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
