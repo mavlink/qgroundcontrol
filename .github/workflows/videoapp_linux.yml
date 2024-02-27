@@ -43,6 +43,7 @@ jobs:
           restore-keys: ${{ runner.os }}-Debug
           max-size: "1G"
           append-timestamp: false
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
