@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.mavlink.qgroundcontrol</id>
+
+  <name>QGroundControl</name>
+  <summary>UAS ground control station</summary>
+  <developer_name>Dronecode Project, Inc.</developer_name>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0 AND Apache-2.0</project_license>
+
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+    <control>gamepad</control>
+  </recommends>
+
+  <description>
+    <p>
+      Intuitive and Powerful Ground Control Station for the MAVLink protocol.
+    </p>
+  </description>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release date="@REL_DATE@" version="@REL_VERSION@"/>
+  </releases>
+
+  <launchable type="desktop-id">org.mavlink.qgroundcontrol.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://docs.qgroundcontrol.com/assets/quickstart/ConnectedVehicle.jpg</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">http://qgroundcontrol.com/</url>
+  <url type="help">https://docs.qgroundcontrol.com/master/en/index.html</url>
+  <url type="bugtracker">https://github.com/mavlink/qgroundcontrol/issues</url>
+
+  <categories>
+    <category>Utility</category>
+    <category>Maps</category>
+  </categories>
+
+  <provides>
+    <binary>QGroundControl</binary>
+  </provides>
+</component>

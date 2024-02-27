@@ -56,7 +56,7 @@ installer {
             message(Keystore password not available - using debug signing)
             APK_LOCATION = $$OUT_PWD/android-build/build/outputs/apk/debug/android-build-debug.apk
         } else {
-            SIGN_OPTIONS = "--release --sign $${SOURCE_DIR}/android/android_release.keystore QGCAndroidKeyStore --storepass $$(ANDROID_KEYSTORE_PASSWORD)"
+            SIGN_OPTIONS = "--release --sign $${SOURCE_DIR}/deploy/android/android_release.keystore QGCAndroidKeyStore --storepass $$(ANDROID_KEYSTORE_PASSWORD)"
             APK_LOCATION = $$OUT_PWD/android-build/build/outputs/apk/release/android-build-release-signed.apk
         }
 
