@@ -26,8 +26,6 @@
 #include <QJsonArray>
 #include <QNetworkProxy>
 
-#include "zlib.h"
-
 const char* FirmwareUpgradeController::_manifestFirmwareJsonKey =               "firmware";
 const char* FirmwareUpgradeController::_manifestBoardIdJsonKey =                "board_id";
 const char* FirmwareUpgradeController::_manifestMavTypeJsonKey =                "mav-type";
