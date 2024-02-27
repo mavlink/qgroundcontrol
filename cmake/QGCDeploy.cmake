@@ -45,10 +45,6 @@ elseif(APPLE)
 			hdiutil convert /tmp/tmp.dmg -format UDBZ -o ${CMAKE_BINARY_DIR}/package/QGroundControl.dmg
 	)
 
-	set_target_properties(QGroundControl PROPERTIES 
-        MACOSX_BUNDLE YES
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in)
-
 elseif(WIN32)
 	if(MSVC) # Check if we are using the Visual Studio compiler
 		set_target_properties(${PROJECT_NAME} PROPERTIES

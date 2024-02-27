@@ -209,6 +209,8 @@ if (ENABLE_VIDEOSTREAMING)
         message(STATUS "GStreamer egl libs: ${GST_EGL_LIBS}")
     endif ()
 
+    add_definitions(-DQGC_GST_STREAMING)
+
     message(STATUS "gst found ${GST_FOUND}")
 endif ()
 
@@ -279,7 +281,9 @@ endif()
 qt_add_executable(${PROJECT_NAME} ${QGC_RESOURCES})
 
 if(APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE TRUE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES 
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in) # According to cmake docs this should happen automatically. But it doesn't work so we add manually.
 elseif(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 elseif(ANDROID)
