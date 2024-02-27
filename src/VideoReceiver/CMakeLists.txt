@@ -10,7 +10,7 @@ if (GST_FOUND)
     	GstVideoReceiver.cc
     	GstVideoReceiver.h
     )
-   
+
     set(EXTRA_LIBRARIES qmlglsink ${GST_LINK_LIBRARIES})
 endif()
 

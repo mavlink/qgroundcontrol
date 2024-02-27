@@ -1,6 +1,6 @@
 
 set(EXTRA_SRC)
-if(BUILD_TESTING)
+if(QGC_BUILD_TESTING)
 	list(APPEND EXTRA_SRC
 		MockLink.cc
 		MockLink.h
@@ -12,8 +12,8 @@ if(BUILD_TESTING)
 endif()
 
 qt_add_library(comm STATIC
-	#BluetoothLink.cc
-	#BluetoothLink.h
+	BluetoothLink.cc
+	BluetoothLink.h
 	LinkConfiguration.cc
 	LinkConfiguration.h
 	LinkInterface.cc
@@ -50,10 +50,19 @@ target_link_libraries(comm
 		Qt6::Test
 		Qt6::TextToSpeech
 		Qt6::Widgets
+		Qt6::Bluetooth
 )
 
-if (NOT QT6_DISABLE_DNSENGINE)
+if(NOT QT6_DISABLE_DNSENGINE)
 	target_link_libraries(comm PUBLIC qmdnsengine)
-endif ()
+endif()
 
-target_include_directories(comm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(comm PUBLIC QGC_ENABLE_BLUETOOTH)
+
+target_include_directories(comm
+    PUBLIC
+    	${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0
+        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0/all
+        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0/common
+)
