@@ -1,0 +1,21 @@
+configs:
+    dev:
+        'qt_deps_unpack_parent_dir': '/home/vagrant'
+
+        'qt_deps_unpack_dir': '/home/vagrant/Qt'
+        'qt_deps_bin_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/bin'
+        'qt_deps_lib_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/lib'
+        'qt_deps_plugins_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/plugins'
+        'qt_deps_qml_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/qml'
+
+        'project_root_dir': '/vagrant'
+
+        'qt_deps_dir': '/vagrant/shadow-build/release/Qt'
+        'qt_deps_bin_dir': '/vagrant/shadow-build/release/Qt/bin'
+        'qt_deps_lib_dir': '/vagrant/shadow-build/release/Qt/libs'
+        'qt_deps_plugins_dir': '/vagrant/shadow-build/release/Qt/plugins'
+        'qt_deps_qml_dir': '/vagrant/shadow-build/release/Qt/qml'
+
+        'spec': 'linux-g++-64'
+        'shadow_build_dir': '/vagrant/shadow-build'
+        'pro': '/vagrant/qgroundcontrol.pro'
