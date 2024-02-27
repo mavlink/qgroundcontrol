@@ -1,9 +1,12 @@
-name: Linux Debug and Test
+name: MacOS Debug and Tests
 
 on:
   push:
     branches:
-    - 'master'
+      - 'master'
+      - 'Stable*'
+    tags:
+      - 'v*'
     paths-ignore:
       - 'docs/**'
   pull_request:
@@ -19,19 +22,18 @@ defaults:
 env:
   SOURCE_DIR:   ${{ github.workspace }}
   QT_VERSION:   6.6.*
+  ARTIFACT:     QGroundControl.dmg
   BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
 jobs:
   build:
-    runs-on:  ubuntu-20.04
+    runs-on:  macos-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - run: sudo apt update
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -52,24 +54,25 @@ jobs:
         with:
           version:      ${{ env.QT_VERSION }}
           aqtversion:   ==3.1.*
-          host:         linux
+          host:         mac
           target:       desktop
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
+          setup-python: false
           cache: true
 
-      - name: Install github environment dependencies for unit test running
-        run:  sudo apt-get install -y libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
+      - name: Install Dependencies
+        run: |
+          brew install ninja
+          brew install SDL2
 
-      - name: Install QGC source dependencies
-        run:  sudo apt-get install -y libsdl2-dev
-
-      - name: Install Gstreamer dev packages
-        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
-
-      - name: Install post-link dependencies
-        run:  sudo apt-get install -y binutils patchelf ninja-build
+      - name: Install Gstreamer
+        run: |
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-devel-1.18.6-x86_64.pkg
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-1.18.6-x86_64.pkg
+            for package in *.pkg ;
+              do sudo installer -verbose -pkg "$package" -target /
+            done
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
@@ -81,13 +84,6 @@ jobs:
               cmake --build ${SOURCE_DIR}/shadow_build_dir/ --target all
               cmake --install ${SOURCE_DIR}/shadow_build_dir
 
-      - name: Setup for unit tests
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run:  |
-              mkdir -p ~/.config/QtProject/
-              cp ${SOURCE_DIR}/test/qtlogging.ini ~/.config/QtProject/
-              export QT_FATAL_WARNINGS=1
-
-      - name: Run unit tests
-        working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run:                xvfb-run -a ${SOURCE_DIR}/shadow_build_dir/staging/bin/QGroundControl --unittest
+      # - name: Run unit tests
+      #  working-directory: ${{ runner.temp }}/shadow_build_dir
+      #  run: open ${SOURCE_DIR}/shadow_build_dir/staging/QGroundControl.app --args --unittest
