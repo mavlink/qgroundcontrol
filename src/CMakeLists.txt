@@ -38,8 +38,6 @@ qt_add_library(${PROJECT_NAME} STATIC
         KMLDomDocument.h
         KMLHelper.cc
         KMLHelper.h
-        LogCompressor.cc
-        LogCompressor.h
         main.cc
         QGC.cc
         QGC.h
@@ -47,8 +45,6 @@ qt_add_library(${PROJECT_NAME} STATIC
         QGCApplication.h
         QGCCachedFileDownload.cc
         QGCCachedFileDownload.h
-        QGCComboBox.cc
-        QGCComboBox.h
         QGCConfig.h
         QGCFileDownload.cc
         QGCFileDownload.h

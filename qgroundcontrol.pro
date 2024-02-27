@@ -38,9 +38,9 @@ QML_IMPORT_PATH += $$PWD/src/QmlControls
 #
 
 MacBuild {
-    QMAKE_INFO_PLIST    = Custom-Info.plist
+    QMAKE_INFO_PLIST    = deploy/mac/Custom-Info.plist
     ICON                = $${SOURCE_DIR}/resources/icons/macx.icns
-    OTHER_FILES        += Custom-Info.plist
+    OTHER_FILES        += deploy/mac/Custom-Info.plist
     LIBS               += -framework ApplicationServices
 }
 
@@ -441,7 +441,6 @@ HEADERS += \
     src/JsonHelper.h \
     src/KMLDomDocument.h \
     src/KMLHelper.h \
-    src/LogCompressor.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
@@ -497,7 +496,6 @@ HEADERS += \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCCachedFileDownload.h \
-    src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCFileDownload.h \
     src/QGCLoggingCategory.h \
@@ -701,7 +699,6 @@ SOURCES += \
     src/JsonHelper.cc \
     src/KMLDomDocument.cc \
     src/KMLHelper.cc \
-    src/LogCompressor.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
@@ -755,7 +752,6 @@ SOURCES += \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCCachedFileDownload.cc \
-    src/QGCComboBox.cc \
     src/QGCFileDownload.cc \
     src/QGCLoggingCategory.cc \
     src/QGCMapPalette.cc \
@@ -1250,9 +1246,9 @@ LinuxBuild {
     share_icons.path = $${PREFIX}/share/icons/hicolor/128x128/apps/
     share_icons.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
     share_metainfo.path = $${PREFIX}/share/metainfo/
-    share_metainfo.files = $${IN_PWD}/deploy/org.mavlink.qgroundcontrol.metainfo.xml
+    share_metainfo.files = $${IN_PWD}/deploy/linux/org.mavlink.qgroundcontrol.metainfo.xml
     share_applications.path = $${PREFIX}/share/applications/
-    share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
+    share_applications.files = $${IN_PWD}/deploy/linux/qgroundcontrol.desktop
 
     INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
 }
