@@ -345,6 +345,11 @@ int main(int argc, char *argv[])
 #endif
 #endif // QT_DEBUG
 
+#ifdef Q_OS_DARWIN
+    // Gstreamer video playback requires OpenGL
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+#endif
+    
     QQuickStyle::setStyle("Basic");
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
