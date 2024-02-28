@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-#ifndef __mobile__
 #pragma once
 
 #include <QObject>
@@ -209,5 +208,3 @@ public:
 private:
     QSharedPointer<T> _unitTest;
 };
-
-#endif
