@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>QGroundControl Application</DisplayName>
+    <Description>Install QGroundControl.</Description>
+    <Version>1.0.0-1</Version>
+    <ReleaseDate>2024-02-28</ReleaseDate>
+    <Name>org.mavlink.qgroundcontrol</Name>
+    <Licenses>
+        <License name="License Agreement" file="license.txt" />
+    </Licenses>
+    <Default>true</Default>
+    <UpdateText>Update!</UpdateText>
+</Package>
