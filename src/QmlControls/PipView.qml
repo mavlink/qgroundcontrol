@@ -19,14 +19,11 @@ Item {
     id:         _root
     width:      _pipSize
     height:     _pipSize * (9/16)
-    z:          pipZOrder + 1
     visible:    item2 && item2.pipState !== item2.pipState.window && show
 
     property var    item1:                  null    // Required
     property var    item2:                  null    // Optional, may come and go
     property string item1IsFullSettingsKey          // Settings key to save whether item1 was saved in full mode
-    property real   fullZOrder:             0       // zOrder for items in full mode
-    property real   pipZOrder:              1       // zOrder for items in pip mode
     property bool   show:                   true
 
     readonly property string _pipExpandedSettingsKey: "IsPIPVisible"
@@ -34,6 +31,7 @@ Item {
     property var    _fullItem
     property var    _pipOrWindowItem
     property alias  _windowContentItem: window.contentItem
+    property alias  _pipContentItem:    pipContent
     property bool   _isExpanded:        true
     property real   _pipSize:           parent.width * 0.2
     property real   _maxSize:           0.75                // Percentage of parent control size
@@ -43,12 +41,6 @@ Item {
     Component.onCompleted: {
         _initForItems()
         _componentComplete = true
-    }
-
-    onShowChanged: {
-        if (_pipOrWindowItem && _pipOrWindowItem.pipState.state !== _pipOrWindowItem.pipState.windowState) {
-            _pipOrWindowItem.visible = show
-        }
     }
 
     onItem2Changed: _initForItems()
@@ -70,7 +62,6 @@ Item {
             item1.pipState.state = item1.pipState.fullState
             _fullItem = item1
             _pipOrWindowItem = null
-            item1.visible = true
         }
         _setPipIsExpanded(QGroundControl.loadBoolGlobalSetting(_pipExpandedSettingsKey, true))
     }
@@ -96,9 +87,6 @@ Item {
     function _setPipIsExpanded(isExpanded) {
         QGroundControl.saveBoolGlobalSetting(_pipExpandedSettingsKey, isExpanded)
         _isExpanded = isExpanded
-        if (_pipOrWindowItem) {
-            _pipOrWindowItem.visible = isExpanded
-        }
     }
 
     Window {
@@ -108,11 +96,16 @@ Item {
             var item = contentItem.children[0]
             if (item) {
                 item.pipState.windowAboutToClose()
-                item.pipState.state = item.pipState.windowClosingState
                 item.pipState.state = item.pipState.pipState
-                item.visible = _root.show
             }
         }
+    }
+
+    Item {
+        id:             pipContent
+        anchors.fill:   parent
+        visible:        _isExpanded
+        clip:           true
     }
 
     MouseArea {

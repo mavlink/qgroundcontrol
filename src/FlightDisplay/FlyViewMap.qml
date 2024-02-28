@@ -31,13 +31,8 @@ FlightMap {
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 
-    property Item pipState: _pipState
-    QGCPipState {
-        id:         _pipState
-        pipOverlay: _pipOverlay
-        isDark:     _isFullWindowItemDark
-    }
-
+    property Item   pipView
+    property Item   pipState:                   _pipState
     property var    rightPanelWidth
     property var    planMasterController
     property bool   pipMode:                    false   // true: map is shown in a small pip mode
@@ -202,6 +197,12 @@ FlightMap {
         if (_keepMapCenteredOnVehicle && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             _root.center = _activeVehicleCoordinate
         }
+    }
+
+    PipState {
+        id:         _pipState
+        pipView:    _root.pipView
+        isDark:     _isFullWindowItemDark
     }
 
     Timer {
