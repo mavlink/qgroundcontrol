@@ -15,16 +15,17 @@ import QGroundControl.Controllers
 import QGroundControl.ScreenTools
 
 Item {
-    id:         _root
-    visible:    QGroundControl.videoManager.hasVideo
+    id: _root
+
+    property Item pipView
+    property Item pipState: videoPipState
 
     property int    _track_rec_x:       0
     property int    _track_rec_y:       0
 
-    property Item pipState: videoPipState
-    QGCPipState {
+    PipState {
         id:         videoPipState
-        pipOverlay: _pipOverlay
+        pipView:    _root.pipView
         isDark:     true
 
         onWindowAboutToOpen: {
