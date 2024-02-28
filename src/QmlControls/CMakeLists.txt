@@ -106,8 +106,8 @@ add_custom_target(QmlControlsQml
 		QGCMouseArea.qml
 		QGCMovableItem.qml
 		QGCOptionsComboBox.qml
-		QGCPipOverlay.qml
-		QGCPipState.qml
+		PipView.qml
+		PipState.qml
 		QGCPopupDialogContainer.qml
 		QGCPopupDialog.qml
 		QGCRadioButton.qml

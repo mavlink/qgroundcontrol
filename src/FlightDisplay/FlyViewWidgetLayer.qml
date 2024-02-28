@@ -114,7 +114,7 @@ Item {
     Loader {
         id:                         virtualJoystickMultiTouch
         z:                          QGroundControl.zOrderTopMost + 1
-        width:                      parent.width  - (_pipOverlay.width / 2)
+        width:                      parent.width  - (_pipView.width / 2)
         height:                     Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
         visible:                    _virtualJoystickEnabled && !QGroundControl.videoManager.fullScreen && !(_activeVehicle ? _activeVehicle.usingHighLatencyLink : false)
         anchors.bottom:             parent.bottom

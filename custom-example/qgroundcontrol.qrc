@@ -147,7 +147,7 @@
 		<file alias="QGroundControl/Controls/QGCMovableItem.qml">../src/QmlControls/QGCMovableItem.qml</file>
 		<file alias="QGroundControl/Controls/QGCPopupDialog.qml">../src/QmlControls/QGCPopupDialog.qml</file>
 		<file alias="QGroundControl/Controls/QGCPipOverlay.qml">../src/QmlControls/QGCPipOverlay.qml</file>
-		<file alias="QGroundControl/Controls/QGCPipState.qml">../src/QmlControls/QGCPipState.qml</file>
+		<file alias="QGroundControl/Controls/PipState.qml">../src/QmlControls/PipState.qml</file>
 		<file alias="QGroundControl/Controls/QGCRadioButton.qml">../src/QmlControls/QGCRadioButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCSimpleMessageDialog.qml">../src/QmlControls/QGCSimpleMessageDialog.qml</file>
 		<file alias="QGroundControl/Controls/QGCSlider.qml">../src/QmlControls/QGCSlider.qml</file>
