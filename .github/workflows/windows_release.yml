@@ -93,7 +93,7 @@ jobs:
             cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
 
       - name: Set up Visual Studio shell
-        uses: egor-tensin/vs-shell@v2
+        uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
 
@@ -105,12 +105,6 @@ jobs:
         run:  |
               qmake -r ${{ env.SOURCE_DIR }}\qgroundcontrol.pro CONFIG+=installer CONFIG+=${{ env. BUILD_TYPE }}
               ${{ runner.temp }}\jom\jom -j2
-
-      - name: Save PDB artifact
-        uses: actions/upload-artifact@master
-        with:
-          name: qgroundcontrol.pdb
-          path: ${{ runner.temp }}\shadow_build_dir\staging\qgroundcontrol.pdb
 
       - name: Upload Build File
         uses: ./.github/actions/upload
