@@ -103,7 +103,7 @@ To see a complete list of all available components in the installer _Select Comp
 
 1. Install Additional Packages (Platform Specific)
 
-   - **Ubuntu:** `bash ./qgroundcontrol/tool/setup/ubuntu.sh`
+   - **Ubuntu:** `bash ./qgroundcontrol/tools/setup/ubuntu.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **OSX** [Setup](https://doc.qt.io/qt-6/macos.html)
