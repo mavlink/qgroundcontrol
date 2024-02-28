@@ -80,10 +80,10 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              cmake -S ${SOURCE_DIR} -B ${SOURCE_DIR}/shadow_build_dir/ -G Ninja -DCMAKE_BUILD_TYPE=Debug
-              cmake --build ${SOURCE_DIR}/shadow_build_dir/ --target all
-              cmake --install ${SOURCE_DIR}/shadow_build_dir
+              cmake -S ${{ env.SOURCE_DIR }} -B ${{ runner.temp }}/shadow_build_dir/ -G Ninja -DCMAKE_BUILD_TYPE=Debug
+              cmake --build ${{ runner.temp }}/shadow_build_dir/ --target all --config Debug
+              cmake --install ${{ runner.temp }}/shadow_build_dir
 
       # - name: Run unit tests
       #  working-directory: ${{ runner.temp }}/shadow_build_dir
-      #  run: open ${SOURCE_DIR}/shadow_build_dir/staging/QGroundControl.app --args --unittest
+      #  run: open ${{ runner.temp }}/shadow_build_dir/staging/QGroundControl.app --args --unittest

@@ -64,14 +64,10 @@ jobs:
           setup-python: true
           cache: true
 
-      - name: Install QGC source dependencies
-        run:  sudo apt-get install -y libsdl2-dev
-
-      - name: Install Gstreamer
-        run:  sudo apt-get install -y libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev
-
-      - name: Install post-link dependencies
-        run:  sudo apt-get install -y binutils patchelf
+      - name: Install Dependencies
+        run:  |
+              chmod a+x ./tools/setup/ubuntu.sh
+              ./tools/setup/ubuntu.sh
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
