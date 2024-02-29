@@ -32,16 +32,18 @@ Node {
         var _geo2EnuCopy = goe2Enu
 
         for (var i = 1; i < _missionController.visualItems.count; i++) {
-            var _missionItem = _missionController.visualItems.get(i)
-            _geo2EnuCopy.coordinate = _missionItem.coordinate
-            _geo2EnuCopy.coordinate.altitude = 0
-            missionWaypointListModel.append({
-                                                "x": _geo2EnuCopy.localCoordinate.x,
-                                                "y": _geo2EnuCopy.localCoordinate.y,
-                                                "z": _missionItem.altitude.value,
-                                                "isTakeoffItem": _missionItem.isTakeoffItem,
-                                                "index": _missionItem.sequenceNumber,
-                                            })
+            var _missionItem = _missionController.visualItems.get(i); // list of all properties in VisualMissionItem.h and SimpleMissionItem.h
+            if(_missionItem.specifiesCoordinate){
+                _geo2EnuCopy.coordinate = _missionItem.coordinate;
+                _geo2EnuCopy.coordinate.altitude = 0;
+                missionWaypointListModel.append({
+                                                    "x": _geo2EnuCopy.localCoordinate.x,
+                                                    "y": _geo2EnuCopy.localCoordinate.y,
+                                                    "z": _missionItem.altitude.value,
+                                                    "abbreviation": _missionItem.abbreviation,
+                                                    "index": _missionItem.sequenceNumber,
+                                                });
+            }
         }
     }
 
@@ -49,25 +51,28 @@ Node {
         missionPathModel.clear()
         var _geo2EnuCopy = goe2Enu
 
+        var _missionItemPrevious = _missionController.visualItems.get(1)
         for (var i = 2; i < _missionController.visualItems.count; i++) {
-            var _missionItem = _missionController.visualItems.get(i-1)
-            _geo2EnuCopy.coordinate = _missionItem.coordinate
-            _geo2EnuCopy.coordinate.altitude = 0
-            var p1 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _missionItem.altitude.value)
+            var _missionItem = _missionController.visualItems.get(i)
+            if(_missionItem.abbreviation !== "ROI" && _missionItem.specifiesCoordinate){
+                _geo2EnuCopy.coordinate = _missionItemPrevious.coordinate;
+                _geo2EnuCopy.coordinate.altitude = 0;
+                var p1 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _missionItemPrevious.altitude.value);
 
-            _missionItem = _missionController.visualItems.get(i)
-            _geo2EnuCopy.coordinate = _missionItem.coordinate
-            _geo2EnuCopy.coordinate.altitude = 0
-            var p2 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _missionItem.altitude.value)
+                _geo2EnuCopy.coordinate = _missionItem.coordinate;
+                _geo2EnuCopy.coordinate.altitude = 0;
+                var p2 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _missionItem.altitude.value);
 
-            missionPathModel.append({
-                                        "x_1": p1.x,
-                                        "y_1": p1.y,
-                                        "z_1": p1.z,
-                                        "x_2": p2.x,
-                                        "y_2": p2.y,
-                                        "z_2": p2.z,
-                                    })
+                missionPathModel.append({
+                                            "x_1": p1.x,
+                                            "y_1": p1.y,
+                                            "z_1": p1.z,
+                                            "x_2": p2.x,
+                                            "y_2": p2.y,
+                                            "z_2": p2.z,
+                                        });
+                _missionItemPrevious = _missionItem;
+            }
         }
     }
 

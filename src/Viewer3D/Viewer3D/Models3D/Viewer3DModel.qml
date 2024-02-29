@@ -97,8 +97,14 @@ View3D {
             osmParser: (viewer3DManager)?(viewer3DManager.osmParser):(null)
         }
 
-        materials: [ DefaultMaterial {
-                diffuseColor: "gray"
+        materials: [
+            PrincipledMaterial {
+                baseColor: "gray"
+                metalness: 0.1
+                roughness: 0.5
+                specularAmount: 1.0
+                indexOfRefraction: 4.0
+                opacity: 1.0
             }
         ]
     }
