@@ -23,6 +23,7 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Rectangle {
+    implicitWidth:  mainLayout.width + (_margins * 2)
     implicitHeight: mainLayout.height + (_margins * 2)
     color:          Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
     radius:         _margins
@@ -114,7 +115,7 @@ Rectangle {
         
         if (mavlinkCameraCaptureVideoOrPhotos) {
             if(_mavlinkCameraInVideoMode) {
-                _mavlinkCamera.toggleVideo()
+                _mavlinkCamera.toggleVideoRecording()
             } else {
                 if(_mavlinkCameraInPhotoMode && !_mavlinkCameraPhotoCaptureIsIdle && _mavlinkCameraElapsedMode) {
                     _mavlinkCamera.stopTakePhoto()
@@ -149,477 +150,535 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    QGCColoredImage {
+    RowLayout {
+        id:                 mainLayout
         anchors.margins:    _margins
         anchors.top:        parent.top
-        anchors.right:      parent.right
-        source:             "/res/gear-black.svg"
-        mipmap:             true
-        height:             ScreenTools.defaultFontPixelHeight
-        width:              height
-        sourceSize.height:  height
-        color:              qgcPal.text
-        fillMode:           Image.PreserveAspectFit
-        visible:            !_onlySimpleCameraAvailable
+        anchors.left:       parent.left
+        spacing:            _margins
 
-        QGCMouseArea {
-            fillItem:   parent
-            onClicked:  settingsDialogComponent.createObject(mainWindow).open()
-        }
-    }
-
-    ColumnLayout {
-        id:                         mainLayout
-        anchors.margins:            _margins
-        anchors.top:                parent.top
-        anchors.horizontalCenter:   parent.horizontalCenter
-        spacing:                    ScreenTools.defaultFontPixelHeight / 2
-
-        // Photo/Video Mode Selector
-        // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
-        // using the unified properties/functions.
-        Rectangle {
-            Layout.alignment:   Qt.AlignHCenter
-            width:              ScreenTools.defaultFontPixelWidth * 10
-            height:             width / 2
-            color:              qgcPal.windowShadeLight
-            radius:             height * 0.5
-            visible:            _showModeIndicator
-
-            //-- Video Mode
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width:                  parent.height
-                height:                 parent.height
-                color:                  _modeIndicatorPhotoMode ? qgcPal.windowShadeLight : qgcPal.window
-                radius:                 height * 0.5
-                anchors.left:           parent.left
-                border.color:           qgcPal.text
-                border.width:           _modeIndicatorPhotoMode ? 0 : 1
-
-                QGCColoredImage {
-                    height:             parent.height * 0.5
-                    width:              height
-                    anchors.centerIn:   parent
-                    source:             "/qmlimages/camera_video.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    color:              _modeIndicatorPhotoMode ? qgcPal.text : qgcPal.colorGreen
-                    MouseArea {
-                        anchors.fill:   parent
-                        enabled:        _switchToVideoModeAllowed
-                        onClicked:      setCameraMode(false)
-                    }
-                }
-            }
-            //-- Photo Mode
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width:                  parent.height
-                height:                 parent.height
-                color:                  _modeIndicatorPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
-                radius:                 height * 0.5
-                anchors.right:          parent.right
-                border.color:           qgcPal.text
-                border.width:           _modeIndicatorPhotoMode ? 1 : 0
-                QGCColoredImage {
-                    height:             parent.height * 0.5
-                    width:              height
-                    anchors.centerIn:   parent
-                    source:             "/qmlimages/camera_photo.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    color:              _modeIndicatorPhotoMode ? qgcPal.colorGreen : qgcPal.text
-                    MouseArea {
-                        anchors.fill:   parent
-                        enabled:        _switchToPhotoModeAllowed
-                        onClicked:      setCameraMode(true)
-                    }
-                }
-            }
-        }
-
-        RowLayout {
-            Layout.alignment:   Qt.AlignHCenter
-            spacing:            0
-            visible:            _showModeIndicator && !_mavlinkCamera && _simpleCameraAvailable && _videoStreamInPhotoMode
-
-            QGCRadioButton {
-                id:             videoGrabRadio
-                font.pointSize: ScreenTools.smallFontPointSize
-                text:           qsTr("Video Grab")
-            }
-            QGCRadioButton {
-                font.pointSize: ScreenTools.smallFontPointSize
-                text:           qsTr("Camera Trigger")
-                checked:        true
-            }
-        }
-
-        // Take Photo, Start/Stop Video button
-        // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
-        // using the unified properties/functions.
-        Rectangle {
-            Layout.alignment:   Qt.AlignHCenter
-            color:              Qt.rgba(0,0,0,0)
-            width:              ScreenTools.defaultFontPixelWidth * 6
-            height:             width
-            radius:             width * 0.5
-            border.color:       qgcPal.buttonText
-            border.width:       3
-
-            Rectangle {
-                anchors.centerIn:   parent
-                width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
-                height:             width
-                radius:             _isShootingInCurrentMode ? 0 : width * 0.5
-                color:              _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
-            }
-
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        _canShootInCurrentMode
-                onClicked:      toggleShooting()
-            }
-        }
-
-        // Tracking button
-        Rectangle {
-            Layout.alignment:   Qt.AlignHCenter
-            color:              _mavlinkCamera && _mavlinkCamera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
-            width:              ScreenTools.defaultFontPixelWidth * 6
-            height:             width
-            radius:             width * 0.5
-            border.color:       qgcPal.buttonText
-            border.width:       3
-            visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
-            QGCColoredImage {
-                height:             parent.height * 0.5
-                width:              height
-                anchors.centerIn:   parent
-                source:             "/qmlimages/TrackingIcon.svg"
-                fillMode:           Image.PreserveAspectFit
-                sourceSize.height:  height
-                color:              qgcPal.text
-                MouseArea {
-                    anchors.fill:   parent
-                    onClicked: {
-                        _mavlinkCamera.trackingEnabled = !_mavlinkCamera.trackingEnabled;
-                        if(!_mavlinkCamera.trackingEnabled) {
-                            !_mavlinkCamera.stopTracking()
-                        }
-                    }
-                }
-            }
-        }
-        QGCLabel {
-            Layout.alignment:   Qt.AlignHCenter
-            text:               qsTr("Camera Tracking")
-            font.pointSize:     ScreenTools.defaultFontPointSize
-            visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
-        }
-
-        //-- Status Information
         ColumnLayout {
-            Layout.alignment:   Qt.AlignHCenter
-            spacing:            0
+            Layout.fillHeight:  true
+            spacing:            _margins
+            visible:            _mavlinkCamera && _mavlinkCamera.hasZoom
 
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
-                text:               _cameraName
-                visible:            _cameraName !== ""
+                text:               qsTr("Zoom")
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
-            QGCLabel {
+
+            QGCSlider {
                 Layout.alignment:   Qt.AlignHCenter
-                text:               (_mavlinkCameraInVideoMode && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _mavlinkCamera.recordTimeStr : "00:00:00"
-                font.pointSize:     ScreenTools.largeFontPointSize
-                visible:            _mavlinkCameraInVideoMode && _mavlinkCamera.capturesVideo
-            }
-            QGCLabel {
-                Layout.alignment:   Qt.AlignHCenter
-                text:               _activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-                font.pointSize:     ScreenTools.largeFontPointSize
-                visible:            _modeIndicatorPhotoMode
-            }
-            QGCLabel {
-                Layout.alignment:   Qt.AlignHCenter
-                text:               _mavlinkCamera ? qsTr("Free Space: ") + _mavlinkCamera.storageFreeStr : ""
-                font.pointSize:     ScreenTools.defaultFontPointSize
-                visible:            _mavlinkCameraStorageReady
-            }
-            QGCLabel {
-                Layout.alignment:   Qt.AlignHCenter
-                text:               _mavlinkCamera ? qsTr("Battery: ") + _mavlinkCamera.batteryRemainingStr : ""
-                font.pointSize:     ScreenTools.defaultFontPointSize
-                visible:            _mavlinkCameraBatteryReady
+                Layout.fillHeight:  true
+                orientation:        Qt.Vertical
+                to:                 100
+                from:               0
+                value:              _mavlinkCamera ? _mavlinkCamera.zoomLevel : 0
+                live:               true
+                onValueChanged:     _mavlinkCamera.zoomLevel = value
             }
         }
-    }
-
-    Component {
-        id: settingsDialogComponent
-
-        QGCPopupDialog {
-            title:      qsTr("Settings")
-            buttons:    Dialog.Close
+        
+        ColumnLayout {
+            spacing: _margins * 2
 
             ColumnLayout {
                 spacing: _margins
 
-                GridLayout {
-                    id:     gridLayout
-                    flow:   GridLayout.TopToBottom
-                    rows:   dynamicRows + (_mavlinkCamera ? _mavlinkCamera.activeSettings.length : 0)
+                QGCLabel {
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               _cameraName
+                    visible:            _cameraName !== ""
+                }
 
-                    property int dynamicRows: 10
+                // Photo/Video Mode Selector
+                // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
+                // using the unified properties/functions.
+                Rectangle {
+                    Layout.alignment:   Qt.AlignHCenter
+                    width:              ScreenTools.defaultFontPixelWidth * 10
+                    height:             width / 2
+                    color:              qgcPal.windowShadeLight
+                    radius:             height * 0.5
+                    visible:            _showModeIndicator
 
-                    // First column
-                    QGCLabel {
-                        text:               qsTr("Camera")
-                        visible:            _multipleMavlinkCameras
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                    //-- Video Mode
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width:                  parent.height
+                        height:                 parent.height
+                        color:                  _modeIndicatorPhotoMode ? qgcPal.windowShadeLight : qgcPal.window
+                        radius:                 height * 0.5
+                        anchors.left:           parent.left
+                        border.color:           qgcPal.text
+                        border.width:           _modeIndicatorPhotoMode ? 0 : 1
+
+                        QGCColoredImage {
+                            height:             parent.height * 0.5
+                            width:              height
+                            anchors.centerIn:   parent
+                            source:             "/qmlimages/camera_video.svg"
+                            fillMode:           Image.PreserveAspectFit
+                            sourceSize.height:  height
+                            color:              _modeIndicatorPhotoMode ? qgcPal.text : qgcPal.colorGreen
+                            MouseArea {
+                                anchors.fill:   parent
+                                enabled:        _switchToVideoModeAllowed
+                                onClicked:      setCameraMode(false)
+                            }
+                        }
+                    }
+                    //-- Photo Mode
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width:                  parent.height
+                        height:                 parent.height
+                        color:                  _modeIndicatorPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
+                        radius:                 height * 0.5
+                        anchors.right:          parent.right
+                        border.color:           qgcPal.text
+                        border.width:           _modeIndicatorPhotoMode ? 1 : 0
+                        QGCColoredImage {
+                            height:             parent.height * 0.5
+                            width:              height
+                            anchors.centerIn:   parent
+                            source:             "/qmlimages/camera_photo.svg"
+                            fillMode:           Image.PreserveAspectFit
+                            sourceSize.height:  height
+                            color:              _modeIndicatorPhotoMode ? qgcPal.colorGreen : qgcPal.text
+                            MouseArea {
+                                anchors.fill:   parent
+                                enabled:        _switchToPhotoModeAllowed
+                                onClicked:      setCameraMode(true)
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.alignment:   Qt.AlignHCenter
+                    spacing:            0
+                    visible:            _showModeIndicator && !_mavlinkCamera && _simpleCameraAvailable && _videoStreamInPhotoMode
+
+                    QGCRadioButton {
+                        id:             videoGrabRadio
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        text:           qsTr("Video Grab")
+                    }
+                    QGCRadioButton {
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        text:           qsTr("Camera Trigger")
+                        checked:        true
+                    }
+                }
+
+                // Take Photo, Start/Stop Video button
+                // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
+                // using the unified properties/functions.
+                Rectangle {
+                    Layout.alignment:   Qt.AlignHCenter
+                    color:              Qt.rgba(0,0,0,0)
+                    width:              ScreenTools.defaultFontPixelWidth * 6
+                    height:             width
+                    radius:             width * 0.5
+                    border.color:       qgcPal.buttonText
+                    border.width:       3
+
+                    Rectangle {
+                        anchors.centerIn:   parent
+                        width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                        height:             width
+                        radius:             _isShootingInCurrentMode ? 0 : width * 0.5
+                        color:              _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
                     }
 
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        _canShootInCurrentMode
+                        onClicked:      toggleShooting()
+                    }
+                }
+
+                // Record time / Capture count
+                Rectangle {
+                    Layout.alignment:   Qt.AlignHCenter
+                    color:              _capturing ? qgcPal.colorRed : "transparent"
+                    width:              childrenRect.width + _margins
+                    height:             childrenRect.height
+                    radius:             _margins / 2
+
+                    property bool _capturing:   videoRecordTime.recording || photoCaptureCount.capturing
+
+                    // Video record time
                     QGCLabel {
-                        text:               qsTr("Video Stream")
-                        visible:            _multipleMavlinkCameraStreams
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        id:                 videoRecordTime
+                        anchors.centerIn:   parent
+                        text:               recording ? _mavlinkCamera.recordTimeStr : "00:00:00"
+                        font.pointSize:     ScreenTools.largeFontPointSize
+                        visible:            !_modeIndicatorPhotoMode
+
+                        property bool recording: _mavlinkCamera && _mavlinkCamera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
                     }
 
+                    // Photo capture count
                     QGCLabel {
-                        text:               qsTr("Thermal View Mode")
-                        visible:            _mavlinkCameraHasThermalVideoStream
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        id:                 photoCaptureCount
+                        anchors.centerIn:   parent
+                        text:               _activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+                        font.pointSize:     ScreenTools.largeFontPointSize
+                        visible:            _modeIndicatorPhotoMode
+
+                        property bool capturing: _mavlinkCamera && (_mavlinkCamera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IN_PROGRESS || _mavlinkCamera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS)
                     }
+                }
+
+                //-- Status Information
+                ColumnLayout {
+                    Layout.alignment:   Qt.AlignHCenter
+                    spacing:            0
 
                     QGCLabel {
-                        text:               qsTr("Blend Opacity")
-                        visible:            _mavlinkCameraHasThermalVideoStream && _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        Layout.alignment:   Qt.AlignHCenter
+                        text:               _mavlinkCamera ? qsTr("Free Space: ") + _mavlinkCamera.storageFreeStr : ""
+                        font.pointSize:     ScreenTools.defaultFontPointSize
+                        visible:            _mavlinkCameraStorageReady
                     }
+                    QGCLabel {
+                        Layout.alignment:   Qt.AlignHCenter
+                        text:               _mavlinkCamera ? qsTr("Battery: ") + _mavlinkCamera.batteryRemainingStr : ""
+                        font.pointSize:     ScreenTools.defaultFontPointSize
+                        visible:            _mavlinkCameraBatteryReady
+                    }
+                }
+            }
 
-                    // Mavlink Camera Protocol active settings
-                    Repeater {
-                        model: _mavlinkCamera ? _mavlinkCamera.activeSettings : []
+            ColumnLayout {
+                id:                 trackingControls
+                Layout.alignment:   Qt.AlignHCenter
+                spacing:            _margins
+                visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
+
+                Rectangle {
+                    Layout.alignment:   Qt.AlignHCenter
+                    color:              _mavlinkCamera && _mavlinkCamera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+                    width:              ScreenTools.defaultFontPixelWidth * 6
+                    height:             width
+                    radius:             width * 0.5
+                    border.color:       qgcPal.buttonText
+                    border.width:       3
+                    
+                    QGCColoredImage {
+                        height:             parent.height * 0.5
+                        width:              height
+                        anchors.centerIn:   parent
+                        source:             "/qmlimages/TrackingIcon.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.height:  height
+                        color:              qgcPal.text
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked: {
+                                _mavlinkCamera.trackingEnabled = !_mavlinkCamera.trackingEnabled;
+                                if(!_mavlinkCamera.trackingEnabled) {
+                                    !_mavlinkCamera.stopTracking()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                QGCLabel {
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               qsTr("Camera Tracking")
+                    font.pointSize:     ScreenTools.defaultFontPointSize
+                    visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
+                }
+            }
+
+            QGCColoredImage {
+                Layout.alignment:   Qt.AlignHCenter
+                source:             "/res/gear-black.svg"
+                mipmap:             true
+                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                Layout.preferredWidth:   Layout.preferredHeight
+                sourceSize.height:  Layout.preferredHeight
+                color:              qgcPal.text
+                fillMode:           Image.PreserveAspectFit
+                visible:            !_onlySimpleCameraAvailable
+
+                QGCMouseArea {
+                    fillItem:   parent
+                    onClicked:  settingsDialogComponent.createObject(mainWindow).open()
+                }
+            }
+        }
+
+        Component {
+            id: settingsDialogComponent
+
+            QGCPopupDialog {
+                title:      qsTr("Settings")
+                buttons:    Dialog.Close
+
+                ColumnLayout {
+                    spacing: _margins
+
+                    GridLayout {
+                        id:     gridLayout
+                        flow:   GridLayout.TopToBottom
+                        rows:   dynamicRows + (_mavlinkCamera ? _mavlinkCamera.activeSettings.length : 0)
+
+                        property int dynamicRows: 10
+
+                        // First column
+                        QGCLabel {
+                            text:               qsTr("Camera")
+                            visible:            _multipleMavlinkCameras
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
                         QGCLabel {
-                            text: _mavlinkCamera.getFact(modelData).shortDescription
+                            text:               qsTr("Video Stream")
+                            visible:            _multipleMavlinkCameraStreams
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
                         }
-                    }
 
-                    QGCLabel {
-                        text:               qsTr("Photo Mode")
-                        visible:            _mavlinkCameraHasModes
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
-                    }
+                        QGCLabel {
+                            text:               qsTr("Thermal View Mode")
+                            visible:            _mavlinkCameraHasThermalVideoStream
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    QGCLabel {
-                        text:               qsTr("Photo Interval (seconds)")
-                        visible:            _mavlinkCameraInPhotoMode && _mavlinkCamera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
-                    }
+                        QGCLabel {
+                            text:               qsTr("Blend Opacity")
+                            visible:            _mavlinkCameraHasThermalVideoStream && _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    QGCLabel {
-                        text:               qsTr("Video Grid Lines")
-                        visible:            _anyVideoStreamAvailable
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
-                    }
+                        // Mavlink Camera Protocol active settings
+                        Repeater {
+                            model: _mavlinkCamera ? _mavlinkCamera.activeSettings : []
 
-                    QGCLabel {
-                        text:               qsTr("Video Screen Fit")
-                        visible:            _anyVideoStreamAvailable
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
-                    }
+                            QGCLabel {
+                                text: _mavlinkCamera.getFact(modelData).shortDescription
+                            }
+                        }
 
-                    QGCLabel {
-                        text:               qsTr("Reset Camera Defaults")
-                        visible:            _mavlinkCamera
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
-                    }
+                        QGCLabel {
+                            text:               qsTr("Photo Mode")
+                            visible:            _mavlinkCameraHasModes
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    QGCLabel {
-                        text:               qsTr("Storage")
-                        visible:            _mavlinkCameraStorageSupported
-                        onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
-                    }
+                        QGCLabel {
+                            text:               qsTr("Photo Interval (seconds)")
+                            visible:            _mavlinkCameraInPhotoMode && _mavlinkCamera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    // Second column
-                    QGCComboBox {
-                        Layout.fillWidth:   true
-                        sizeToContents:     true
-                        model:              _mavlinkCameraManager ? _mavlinkCameraManager.cameraLabels : []
-                        currentIndex:       _mavlinkCameraManagerCurCameraIndex
-                        visible:            _multipleMavlinkCameras
-                        onActivated: (index) => { _mavlinkCameraManager.currentCamera = index }
-                    }
+                        QGCLabel {
+                            text:               qsTr("Video Grid Lines")
+                            visible:            _anyVideoStreamAvailable
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    QGCComboBox {
-                        Layout.fillWidth:   true
-                        sizeToContents:     true
-                        model:              _mavlinkCamera ? _mavlinkCamera.streamLabels : []
-                        currentIndex:       _mavlinCameraCurStreamIndex
-                        visible:            _multipleMavlinkCameraStreams
-                        onActivated: (index) => { _mavlinkCamera.currentStream = index }
-                    }
+                        QGCLabel {
+                            text:               qsTr("Video Screen Fit")
+                            visible:            _anyVideoStreamAvailable
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    QGCComboBox {
-                        Layout.fillWidth:   true
-                        sizeToContents:     true
-                        model:              [ qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture") ]
-                        currentIndex:       _mavlinkCamera ? _mavlinkCamera.thermalMode : -1
-                        visible:            _mavlinkCameraHasThermalVideoStream
-                        onActivated: (index) => { _mavlinkCamera.thermalMode = index }
-                    }
+                        QGCLabel {
+                            text:               qsTr("Reset Camera Defaults")
+                            visible:            _mavlinkCamera
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    QGCSlider {
-                        Layout.fillWidth:           true
-                        to:               100
-                        from:               0
-                        value:                      _mavlinkCamera ? _mavlinkCamera.thermalOpacity : 0
-                        live:   true
-                        visible:                    _mavlinkCameraHasThermalVideoStream && _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
-                        onValueChanged:             _mavlinkCamera.thermalOpacity = value
-                    }
+                        QGCLabel {
+                            text:               qsTr("Storage")
+                            visible:            _mavlinkCameraStorageSupported
+                            onVisibleChanged:   gridLayout.dynamicRows += visible ? 1 : -1
+                        }
 
-                    // Mavlink Camera Protocol active settings
-                    Repeater {
-                        model: _mavlinkCamera ? _mavlinkCamera.activeSettings : []
-
-                        RowLayout {
+                        // Second column
+                        QGCComboBox {
                             Layout.fillWidth:   true
-                            spacing:            ScreenTools.defaultFontPixelWidth
+                            sizeToContents:     true
+                            model:              _mavlinkCameraManager ? _mavlinkCameraManager.cameraLabels : []
+                            currentIndex:       _mavlinkCameraManagerCurCameraIndex
+                            visible:            _multipleMavlinkCameras
+                            onActivated: (index) => { _mavlinkCameraManager.currentCamera = index }
+                        }
 
-                            property var    _fact:      _mavlinkCamera.getFact(modelData)
-                            property bool   _isBool:    _fact.typeIsBool
-                            property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 0
-                            property bool   _isSlider:  _fact && !isNaN(_fact.increment)
-                            property bool   _isEdit:    !_isBool && !_isSlider && _fact.enumStrings.length < 1
+                        QGCComboBox {
+                            Layout.fillWidth:   true
+                            sizeToContents:     true
+                            model:              _mavlinkCamera ? _mavlinkCamera.streamLabels : []
+                            currentIndex:       _mavlinCameraCurStreamIndex
+                            visible:            _multipleMavlinkCameraStreams
+                            onActivated: (index) => { _mavlinkCamera.currentStream = index }
+                        }
 
-                            FactComboBox {
+                        QGCComboBox {
+                            Layout.fillWidth:   true
+                            sizeToContents:     true
+                            model:              [ qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture") ]
+                            currentIndex:       _mavlinkCamera ? _mavlinkCamera.thermalMode : -1
+                            visible:            _mavlinkCameraHasThermalVideoStream
+                            onActivated: (index) => { _mavlinkCamera.thermalMode = index }
+                        }
+
+                        QGCSlider {
+                            Layout.fillWidth:           true
+                            to:               100
+                            from:               0
+                            value:                      _mavlinkCamera ? _mavlinkCamera.thermalOpacity : 0
+                            live:   true
+                            visible:                    _mavlinkCameraHasThermalVideoStream && _mavlinkCamera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                            onValueChanged:             _mavlinkCamera.thermalOpacity = value
+                        }
+
+                        // Mavlink Camera Protocol active settings
+                        Repeater {
+                            model: _mavlinkCamera ? _mavlinkCamera.activeSettings : []
+
+                            RowLayout {
                                 Layout.fillWidth:   true
-                                sizeToContents:     true
-                                fact:               parent._fact
-                                indexModel:         false
-                                visible:            parent._isCombo
-                            }
-                            FactTextField {
-                                Layout.fillWidth:   true
-                                fact:               parent._fact
-                                visible:            parent._isEdit
-                            }
-                            QGCSlider {
-                                Layout.fillWidth:           true
-                                to:               parent._fact.max
-                                from:               parent._fact.min
-                                stepSize:                   parent._fact.increment
-                                visible:                    parent._isSlider
-                                live:   false
-                                property bool initialized:  false
+                                spacing:            ScreenTools.defaultFontPixelWidth
 
-                                onValueChanged: {
-                                    if (!initialized) {
-                                        return
+                                property var    _fact:      _mavlinkCamera.getFact(modelData)
+                                property bool   _isBool:    _fact.typeIsBool
+                                property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 0
+                                property bool   _isSlider:  _fact && !isNaN(_fact.increment)
+                                property bool   _isEdit:    !_isBool && !_isSlider && _fact.enumStrings.length < 1
+
+                                FactComboBox {
+                                    Layout.fillWidth:   true
+                                    sizeToContents:     true
+                                    fact:               parent._fact
+                                    indexModel:         false
+                                    visible:            parent._isCombo
+                                }
+                                FactTextField {
+                                    Layout.fillWidth:   true
+                                    fact:               parent._fact
+                                    visible:            parent._isEdit
+                                }
+                                QGCSlider {
+                                    Layout.fillWidth:           true
+                                    to:               parent._fact.max
+                                    from:               parent._fact.min
+                                    stepSize:                   parent._fact.increment
+                                    visible:                    parent._isSlider
+                                    live:   false
+                                    property bool initialized:  false
+
+                                    onValueChanged: {
+                                        if (!initialized) {
+                                            return
+                                        }
+                                        parent._fact.value = value
                                     }
-                                    parent._fact.value = value
+
+                                    Component.onCompleted: {
+                                        value = parent._fact.value
+                                        initialized = true
+                                    }
                                 }
-
-                                Component.onCompleted: {
-                                    value = parent._fact.value
-                                    initialized = true
-                                }
-                            }
-                            QGCSwitch {
-                                checked:        parent._fact ? parent._fact.value : false
-                                visible:        parent._isBool
-                                onClicked:      parent._fact.value = checked ? 1 : 0
-                            }
-                        }
-                    }
-
-                    QGCComboBox {
-                        Layout.fillWidth:   true
-                        sizeToContents:     true
-                        model:              [ qsTr("Single"), qsTr("Time Lapse") ]
-                        currentIndex:       _mavlinkCamera ? _mavlinkCamera.photoMode : 0
-                        visible:            _mavlinkCameraHasModes
-                        onActivated: (index) => { _mavlinkCamera.photoMode = index }
-                    }
-
-                    QGCSlider {
-                        Layout.fillWidth:           true
-                        to:               60
-                        from:               1
-                        stepSize:                   1
-                        value:                      _mavlinkCamera ? _mavlinkCamera.photoLapse : 5
-                        displayValue:               true
-                        live:   true
-                        visible:                    _mavlinkCameraInPhotoMode && _mavlinkCamera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
-                        onValueChanged: {
-                            if (_mavlinkCamera) {
-                                _mavlinkCamera.photoLapse = value
-                            }
-                        }
-                    }
-
-                    QGCSwitch {
-                        checked:            _videoStreamSettings.gridLines.rawValue
-                        visible:            _anyVideoStreamAvailable
-                        onClicked:          _videoStreamSettings.gridLines.rawValue = checked ? 1 : 0
-                    }
-
-                    FactComboBox {
-                        Layout.fillWidth:   true
-                        sizeToContents:     true
-                        fact:               _videoStreamSettings.videoFit
-                        indexModel:         false
-                        visible:            _anyVideoStreamAvailable
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Reset")
-                        visible:            _mavlinkCamera
-                        onClicked:          resetPrompt.open()
-                        MessageDialog {
-                            id:                 resetPrompt
-                            title:              qsTr("Reset Camera to Factory Settings")
-                            text:               qsTr("Confirm resetting all settings?")
-                            buttons:            MessageDialog.Yes | MessageDialog.No
-
-                            onButtonClicked: function (button, role) {
-                                switch (button) {
-                                case MessageDialog.Yes:
-                                    _mavlinkCamera.resetSettings()
-                                    resetPrompt.close()
-                                    break;
-                                case MessageDialog.No:
-                                    resetPrompt.close()
-                                    break;
+                                QGCSwitch {
+                                    checked:        parent._fact ? parent._fact.value : false
+                                    visible:        parent._isBool
+                                    onClicked:      parent._fact.value = checked ? 1 : 0
                                 }
                             }
                         }
-                    }
 
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Format")
-                        visible:            _mavlinkCameraStorageSupported
-                        onClicked:          formatPrompt.open()
-                        MessageDialog {
-                            id:                 formatPrompt
-                            title:              qsTr("Format Camera Storage")
-                            text:               qsTr("Confirm erasing all files?")
-                            buttons:            MessageDialog.Yes | MessageDialog.No
+                        QGCComboBox {
+                            Layout.fillWidth:   true
+                            sizeToContents:     true
+                            model:              [ qsTr("Single"), qsTr("Time Lapse") ]
+                            currentIndex:       _mavlinkCamera ? _mavlinkCamera.photoMode : 0
+                            visible:            _mavlinkCameraHasModes
+                            onActivated: (index) => { _mavlinkCamera.photoMode = index }
+                        }
 
-                            onButtonClicked: function (button, role) {
-                                switch (button) {
-                                case MessageDialog.Yes:
-                                    _mavlinkCamera.formatCard()
-                                    formatPrompt.close()
-                                    break;
-                                case MessageDialog.No:
-                                    formatPrompt.close()
-                                    break;
+                        QGCSlider {
+                            Layout.fillWidth:           true
+                            to:               60
+                            from:               1
+                            stepSize:                   1
+                            value:                      _mavlinkCamera ? _mavlinkCamera.photoLapse : 5
+                            displayValue:               true
+                            live:   true
+                            visible:                    _mavlinkCameraInPhotoMode && _mavlinkCamera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                            onValueChanged: {
+                                if (_mavlinkCamera) {
+                                    _mavlinkCamera.photoLapse = value
+                                }
+                            }
+                        }
+
+                        QGCSwitch {
+                            checked:            _videoStreamSettings.gridLines.rawValue
+                            visible:            _anyVideoStreamAvailable
+                            onClicked:          _videoStreamSettings.gridLines.rawValue = checked ? 1 : 0
+                        }
+
+                        FactComboBox {
+                            Layout.fillWidth:   true
+                            sizeToContents:     true
+                            fact:               _videoStreamSettings.videoFit
+                            indexModel:         false
+                            visible:            _anyVideoStreamAvailable
+                        }
+
+                        QGCButton {
+                            Layout.fillWidth:   true
+                            text:               qsTr("Reset")
+                            visible:            _mavlinkCamera
+                            onClicked:          resetPrompt.open()
+                            MessageDialog {
+                                id:                 resetPrompt
+                                title:              qsTr("Reset Camera to Factory Settings")
+                                text:               qsTr("Confirm resetting all settings?")
+                                buttons:            MessageDialog.Yes | MessageDialog.No
+
+                                onButtonClicked: function (button, role) {
+                                    switch (button) {
+                                    case MessageDialog.Yes:
+                                        _mavlinkCamera.resetSettings()
+                                        resetPrompt.close()
+                                        break;
+                                    case MessageDialog.No:
+                                        resetPrompt.close()
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        QGCButton {
+                            Layout.fillWidth:   true
+                            text:               qsTr("Format")
+                            visible:            _mavlinkCameraStorageSupported
+                            onClicked:          formatPrompt.open()
+                            MessageDialog {
+                                id:                 formatPrompt
+                                title:              qsTr("Format Camera Storage")
+                                text:               qsTr("Confirm erasing all files?")
+                                buttons:            MessageDialog.Yes | MessageDialog.No
+
+                                onButtonClicked: function (button, role) {
+                                    switch (button) {
+                                    case MessageDialog.Yes:
+                                        _mavlinkCamera.formatCard()
+                                        formatPrompt.close()
+                                        break;
+                                    case MessageDialog.No:
+                                        formatPrompt.close()
+                                        break;
+                                    }
                                 }
                             }
                         }
