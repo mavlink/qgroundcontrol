@@ -356,13 +356,13 @@ QGCCameraControl::toggleMode()
 
 //-----------------------------------------------------------------------------
 bool
-QGCCameraControl::toggleVideo()
+QGCCameraControl::toggleVideoRecording()
 {
     if(!_resetting) {
         if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-            return stopVideo();
+            return stopVideoRecording();
         } else {
-            return startVideo();
+            return startVideoRecording();
         }
     }
     return false;
@@ -432,10 +432,10 @@ QGCCameraControl::stopTakePhoto()
 
 //-----------------------------------------------------------------------------
 bool
-QGCCameraControl::startVideo()
+QGCCameraControl::startVideoRecording()
 {
     if(!_resetting) {
-        qCDebug(CameraControlLog) << "startVideo()";
+        qCDebug(CameraControlLog) << "startVideoRecording()";
         //-- Check if camera can capture videos or if it can capture it while in Photo Mode
         if(!capturesVideo() || (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
             return false;
@@ -445,8 +445,8 @@ QGCCameraControl::startVideo()
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_START_CAPTURE,                // Command id
                 false,                                      // Don't Show Error (handle locally)
-                0,                                          // Reserved (Set to 0)
-                0);                                         // CAMERA_CAPTURE_STATUS Frequency
+                0,                                          // All streams
+                0);                                         // CAMERA_CAPTURE_STATUS streaming frequency
             return true;
         }
     }
@@ -455,10 +455,10 @@ QGCCameraControl::startVideo()
 
 //-----------------------------------------------------------------------------
 bool
-QGCCameraControl::stopVideo()
+QGCCameraControl::stopVideoRecording()
 {
     if(!_resetting) {
-        qCDebug(CameraControlLog) << "stopVideo()";
+        qCDebug(CameraControlLog) << "stopVideoRecording()";
         if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
@@ -1504,7 +1504,14 @@ QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 void
 QGCCameraControl::handleStorageInfo(const mavlink_storage_information_t& st)
 {
-    qCDebug(CameraControlLog) << "handleStorageInfo:" << st.available_capacity << st.status << st.storage_count << st.storage_id << st.total_capacity << st.used_capacity;
+    qCDebug(CameraControlLog) << "handleStorageInfo:" 
+        << "\n\tStorage id:" << st.storage_id 
+        << "\n\tStorage count:" << st.storage_count 
+        << "\n\tStatus:"<< storageStatusToStr(st.status)
+        << "\n\tTotal capacity:" << st.total_capacity 
+        << "\n\tUsed capacity:" << st.used_capacity
+        << "\n\tAvailable capacity:" << st.available_capacity;
+    
     if(st.status == STORAGE_STATUS_READY) {
         uint32_t t = static_cast<uint32_t>(st.total_capacity);
         if(_storageTotal != t) {
@@ -1539,7 +1546,12 @@ void
 QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap)
 {
     //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
-    qCDebug(CameraControlLog) << "handleCaptureStatus:" << cap.available_capacity << cap.image_interval << cap.image_status << cap.recording_time_ms << cap.video_status;
+    qCDebug(CameraControlLog).noquote() << "handleCaptureStatus:" 
+        << "\n\tImage status:" << captureImageStatusToStr(cap.image_status)
+        << "\n\tVideo status:" << captureVideoStatusToStr(cap.video_status)
+        << "\n\tInterval:" << cap.image_interval 
+        << "\n\tRecording time (ms):" << cap.recording_time_ms
+        << "\n\tCapacity:" << cap.available_capacity;
     //-- Disk Free Space
     uint32_t a = static_cast<uint32_t>(cap.available_capacity);
     if(_storageFree != a) {
@@ -2409,4 +2421,48 @@ QGCCameraControl::_requestTrackingStatus()
                              true,
                              MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
                              500000); // Interval (us)
+}
+
+QString QGCCameraControl::captureImageStatusToStr(uint8_t image_status)
+{
+    switch (image_status) {
+        case 0:
+            return QStringLiteral("Idle");
+        case 1:
+            return QStringLiteral("Capturing");
+        case 2:
+            return QStringLiteral("Idle: Interval set");
+        case 3:
+            return QStringLiteral("Capturing: Interval set");
+        default:
+            return QStringLiteral("Unknown");
+    }
+}
+
+QString QGCCameraControl::captureVideoStatusToStr(uint8_t video_status)
+{
+    switch (video_status) {
+        case 0:
+            return QStringLiteral("Idle");
+        case 1:
+            return QStringLiteral("Capturing");
+        default:
+            return QStringLiteral("Unknown");
+    }
+}
+
+QString QGCCameraControl::storageStatusToStr(uint8_t status)
+{
+    switch (status) {
+        case STORAGE_STATUS_EMPTY:
+            return QStringLiteral("Empty");
+        case STORAGE_STATUS_UNFORMATTED:
+            return QStringLiteral("Unformatted");
+        case STORAGE_STATUS_READY:
+            return QStringLiteral("Ready");
+        case STORAGE_STATUS_NOT_SUPPORTED:
+            return QStringLiteral("Not Supported");
+        default:
+            return QStringLiteral("Unknown");
+    }
 }

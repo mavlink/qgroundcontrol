@@ -445,7 +445,7 @@ QGCCameraManager::_startVideoRecording()
 {
     QGCCameraControl* pCamera = currentCameraInstance();
     if(pCamera) {
-        pCamera->startVideo();
+        pCamera->startVideoRecording();
     }
 }
 
@@ -455,7 +455,7 @@ QGCCameraManager::_stopVideoRecording()
 {
     QGCCameraControl* pCamera = currentCameraInstance();
     if(pCamera) {
-        pCamera->stopVideo();
+        pCamera->stopVideoRecording();
     }
 }
 
@@ -465,7 +465,7 @@ QGCCameraManager::_toggleVideoRecording()
 {
     QGCCameraControl* pCamera = currentCameraInstance();
     if(pCamera) {
-        pCamera->toggleVideo();
+        pCamera->toggleVideoRecording();
     }
 }
 

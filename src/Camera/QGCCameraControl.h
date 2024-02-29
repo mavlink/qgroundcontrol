@@ -212,24 +212,24 @@ public:
     Q_PROPERTY(bool         trackingImageStatus READ trackingImageStatus                            NOTIFY trackingImageStatusChanged)
     Q_PROPERTY(QRectF       trackingImageRect   READ trackingImageRect                              NOTIFY trackingImageStatusChanged)
 
-    Q_INVOKABLE virtual void setVideoMode   ();
-    Q_INVOKABLE virtual void setPhotoMode   ();
-    Q_INVOKABLE virtual void toggleMode     ();
-    Q_INVOKABLE virtual bool takePhoto      ();
-    Q_INVOKABLE virtual bool stopTakePhoto  ();
-    Q_INVOKABLE virtual bool startVideo     ();
-    Q_INVOKABLE virtual bool stopVideo      ();
-    Q_INVOKABLE virtual bool toggleVideo    ();
-    Q_INVOKABLE virtual void resetSettings  ();
-    Q_INVOKABLE virtual void formatCard     (int id = 1);
-    Q_INVOKABLE virtual void stepZoom       (int direction);
-    Q_INVOKABLE virtual void startZoom      (int direction);
-    Q_INVOKABLE virtual void stopZoom       ();
-    Q_INVOKABLE virtual void stopStream     ();
-    Q_INVOKABLE virtual void resumeStream   ();
-    Q_INVOKABLE virtual void startTracking  (QRectF rec);
-    Q_INVOKABLE virtual void startTracking  (QPointF point, double radius);
-    Q_INVOKABLE virtual void stopTracking   ();
+    Q_INVOKABLE virtual void setVideoMode       ();
+    Q_INVOKABLE virtual void setPhotoMode       ();
+    Q_INVOKABLE virtual void toggleMode         ();
+    Q_INVOKABLE virtual bool takePhoto          ();
+    Q_INVOKABLE virtual bool stopTakePhoto      ();
+    Q_INVOKABLE virtual bool startVideoRecording();
+    Q_INVOKABLE virtual bool stopVideoRecording ();
+    Q_INVOKABLE virtual bool toggleVideoRecording();
+    Q_INVOKABLE virtual void resetSettings      ();
+    Q_INVOKABLE virtual void formatCard         (int id = 1);
+    Q_INVOKABLE virtual void stepZoom           (int direction);
+    Q_INVOKABLE virtual void startZoom          (int direction);
+    Q_INVOKABLE virtual void stopZoom           ();
+    Q_INVOKABLE virtual void stopStream         ();
+    Q_INVOKABLE virtual void resumeStream       ();
+    Q_INVOKABLE virtual void startTracking      (QRectF rec);
+    Q_INVOKABLE virtual void startTracking      (QPointF point, double radius);
+    Q_INVOKABLE virtual void stopTracking       ();
 
     virtual int         version             () { return _version; }
     virtual QString     modelName           () { return _modelName; }
@@ -407,6 +407,9 @@ private:
     QStringList     _loadExclusions         (QDomNode option);
     QStringList     _loadUpdates            (QDomNode option);
     QString         _getParamName           (const char* param_id);
+    QString         captureImageStatusToStr (uint8_t image_status);
+    QString         captureVideoStatusToStr (uint8_t video_status);
+    QString         storageStatusToStr      (uint8_t status);
 
 protected:
     Vehicle*                            _vehicle            = nullptr;
