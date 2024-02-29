@@ -392,6 +392,7 @@ INCLUDEPATH += \
     src/ui/toolbar \
     src/ui/uas \
     src/Viewer3D \
+    src/Utilities
 
 #
 # Plugin API
@@ -440,9 +441,9 @@ HEADERS += \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/Joystick/JoystickMavCommand.h \
-    src/JsonHelper.h \
-    src/KMLDomDocument.h \
-    src/KMLHelper.h \
+    src/Utilities/JsonHelper.h \
+    src/MissionManager/KMLDomDocument.h \
+    src/MissionManager/KMLHelper.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
@@ -495,16 +496,16 @@ HEADERS += \
     src/Geo/MGRS.hpp \
     src/Geo/TransverseMercator.hpp \
     src/Geo/PolarStereographic.hpp \
-    src/QGC.h \
+    src/Utilities/QGC.h \
     src/QGCApplication.h \
-    src/QGCCachedFileDownload.h \
+    src/Utilities/QGCCachedFileDownload.h \
     src/QGCConfig.h \
-    src/QGCFileDownload.h \
-    src/QGCLoggingCategory.h \
-    src/QGCMapPalette.h \
-    src/QGCPalette.h \
-    src/QGCQGeoCoordinate.h \
-    src/QGCTemporaryFile.h \
+    src/Utilities/QGCFileDownload.h \
+    src/Utilities/QGCLoggingCategory.h \
+    src/QmlControls/QGCMapPalette.h \
+    src/QmlControls/QGCPalette.h \
+    src/Utilities/QGCQGeoCoordinate.h \
+    src/Utilities/QGCTemporaryFile.h \
     src/QGCToolbox.h \
     src/QmlControls/AppMessages.h \
     src/QmlControls/EditPositionDialogController.h \
@@ -543,10 +544,10 @@ HEADERS += \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
-    src/ShapeFileHelper.h \
-    src/SHPFileHelper.h \
+    src/Utilities/ShapeFileHelper.h \
+    src/Utilities/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
-    src/TerrainTile.h \
+    src/Terrain/TerrainTile.h \
     src/Vehicle/Actuators/ActuatorActions.h \
     src/Vehicle/Actuators/Actuators.h \
     src/Vehicle/Actuators/ActuatorOutputs.h \
@@ -607,7 +608,7 @@ HEADERS += \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
     src/comm/UdpIODevice.h \
-    src/uas/UASMessageHandler.h \
+    src/Vehicle/UASMessageHandler.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
     src/Viewer3D/CityMapGeometry.h \
@@ -670,13 +671,15 @@ HEADERS += \
 
 iOSBuild {
     OBJECTIVE_SOURCES += \
-        src/MobileScreenMgr.mm \
+        src/Utilities/MobileScreenMgr.mm \
 }
 
 AndroidBuild {
     SOURCES += \
-        src/MobileScreenMgr.cc \
-        src/Joystick/JoystickAndroid.cc \
+        src/Utilities/MobileScreenMgr.cc \
+        src/Joystick/JoystickAndroid.cc
+
+    HEADERS += src/Utilities/MobileScreenMgr.h
 }
 
 SOURCES += \
@@ -700,9 +703,9 @@ SOURCES += \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/Joystick/JoystickMavCommand.cc \
-    src/JsonHelper.cc \
-    src/KMLDomDocument.cc \
-    src/KMLHelper.cc \
+    src/Utilities/JsonHelper.cc \
+    src/MissionManager/KMLDomDocument.cc \
+    src/MissionManager/KMLHelper.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/CameraSection.cc \
     src/MissionManager/CameraSpec.cc \
@@ -753,15 +756,15 @@ SOURCES += \
     src/Geo/MGRS.cpp \
     src/Geo/TransverseMercator.cpp \
     src/Geo/PolarStereographic.cpp \
-    src/QGC.cc \
+    src/Utilities/QGC.cc \
     src/QGCApplication.cc \
-    src/QGCCachedFileDownload.cc \
-    src/QGCFileDownload.cc \
-    src/QGCLoggingCategory.cc \
-    src/QGCMapPalette.cc \
-    src/QGCPalette.cc \
-    src/QGCQGeoCoordinate.cc \
-    src/QGCTemporaryFile.cc \
+    src/Utilities/QGCCachedFileDownload.cc \
+    src/Utilities/QGCFileDownload.cc \
+    src/Utilities/QGCLoggingCategory.cc \
+    src/QmlControls/QGCMapPalette.cc \
+    src/QmlControls/QGCPalette.cc \
+    src/Utilities/QGCQGeoCoordinate.cc \
+    src/Utilities/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
     src/QmlControls/AppMessages.cc \
     src/QmlControls/EditPositionDialogController.cc \
@@ -800,10 +803,10 @@ SOURCES += \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
-    src/ShapeFileHelper.cc \
-    src/SHPFileHelper.cc \
+    src/Utilities/ShapeFileHelper.cc \
+    src/Utilities/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
-    src/TerrainTile.cc\
+    src/Terrain/TerrainTile.cc \
     src/Vehicle/Actuators/ActuatorActions.cc \
     src/Vehicle/Actuators/Actuators.cc \
     src/Vehicle/Actuators/ActuatorOutputs.cc \
@@ -865,7 +868,7 @@ SOURCES += \
     src/comm/UDPLink.cc \
     src/comm/UdpIODevice.cc \
     src/main.cc \
-    src/uas/UASMessageHandler.cc \
+    src/Vehicle/UASMessageHandler.cc \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
     src/Viewer3D/CityMapGeometry.cc \

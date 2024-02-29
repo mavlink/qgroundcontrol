@@ -11,6 +11,10 @@ qt_add_library(QmlControls STATIC
 	HorizontalFactValueGrid.h
 	InstrumentValueData.cc
 	InstrumentValueData.h
+    QGCMapPalette.cc
+    QGCMapPalette.h
+    QGCPalette.cc
+    QGCPalette.h
 	ParameterEditorController.cc
 	ParameterEditorController.h
 	QGCFileDialogController.cc
