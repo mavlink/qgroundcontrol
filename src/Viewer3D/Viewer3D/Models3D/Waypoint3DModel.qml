@@ -29,10 +29,44 @@ Node{
             id: nose
             source: "#Cone"
             materials: [ DefaultMaterial {
-                    diffuseColor: ( waypointBody.missionItem.isTakeoffItem)?("green"):("black")
-
+                    diffuseColor: {
+                        let _abbreviation = abbreviation;
+                        if(_abbreviation === "Takeoff"){
+                            return "green";
+                        }else if(abbreviation === "ROI"){
+                            return "red"
+                        }
+                        return "black"
+                    }
                 }
             ]
+        }
+    }
+
+    Node
+    {
+        Text {
+            color: "black"
+            text: {
+                let _abbreviation = abbreviation;
+                if(_abbreviation === "Takeoff"){
+                    return "T";
+                }else if(abbreviation === "ROI"){
+                    return "R"
+                }
+                return ""
+            }
+            font.pixelSize: 20
+        }
+
+        eulerRotation{
+            x:90
+            y:0
+            z:0
+        }
+        position{
+            z: 30
+            x: -6
         }
     }
 }
