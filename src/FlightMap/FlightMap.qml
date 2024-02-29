@@ -111,7 +111,7 @@ Map {
     }
 
     Connections {
-        target: GroundControl.settingsManager.flightMapSettings.mapProvider
+        target: QGroundControl.settingsManager.flightMapSettings.mapProvider
         function onRawValueChanged() { updateActiveMapType() }
     }
 
