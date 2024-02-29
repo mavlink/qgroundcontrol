@@ -630,14 +630,14 @@ FlightMap {
         }
     }
 
-    onMapClicked: (mouse) => {
+    onMapClicked: (position) => {
         if (!globals.guidedControllerFlyView.guidedUIVisible && 
             (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
             orbitMapCircle.hide()
             gotoLocationItem.hide()
-            var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            var clickCoord = _root.toCoordinate(Qt.point(position.x, position.y), false /* clipToViewPort */)
             clickMenu.coord = clickCoord
-            clickMenu.setCoordinates(mouse.x, mouse.y)
+            clickMenu.setCoordinates(position.x, position.y)
             clickMenu.open()
         }
     }
