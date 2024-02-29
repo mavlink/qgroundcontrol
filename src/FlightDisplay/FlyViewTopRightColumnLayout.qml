@@ -50,8 +50,7 @@ ColumnLayout {
 
     PhotoVideoControl {
         id:                     photoVideoControl
-        Layout.alignment:       Qt.AlignVCenter
-        Layout.fillWidth:       true
+        Layout.alignment:       Qt.AlignVCenter | Qt.AlignRight
 
         property real rightEdgeCenterInset: visible ? parent.width - x : 0
     }
