@@ -16,7 +16,6 @@ ToolStripActionList {
     id: _root
 
     signal displayPreFlightChecklist
-    property bool   _viewer3DEnabled:        QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
 
     model: [
         ToolStripAction {
@@ -28,7 +27,8 @@ ToolStripActionList {
             }
         },
         ToolStripAction {
-            property bool _is3DViewOpen: viewer3DWindow.isOpen
+            property bool _is3DViewOpen:            viewer3DWindow.isOpen
+            property bool   _viewer3DEnabled:       QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
 
             id: view3DIcon
             visible: _viewer3DEnabled
@@ -47,7 +47,6 @@ ToolStripActionList {
                     view3DIcon.iconSource =     "/qmlimages/PaperPlane.svg"
                     text=           qsTr("Fly")
                 }else{
-                    viewer3DWindow.close()
                     iconSource =     "/qmlimages/Viewer3D/City3DMapIcon.svg"
                     text =           qsTr("3D View")
                 }

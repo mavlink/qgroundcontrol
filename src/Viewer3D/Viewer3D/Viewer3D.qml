@@ -24,15 +24,16 @@ Item{
         if(_viewer3DEnabled === true){
             view3DManagerLoader.sourceComponent = viewer3DManagerComponent
             view3DManagerLoader.active = true;
-            viewer3DBody.z = 1
             isOpen = true;
         }
     }
 
     function close(){
-        viewer3DBody.z = 0
         isOpen = false;
     }
+
+    visible: isOpen
+    enabled: isOpen
 
     on_Viewer3DEnabledChanged: {
         if(_viewer3DEnabled === false){
