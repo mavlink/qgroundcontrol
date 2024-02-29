@@ -38,5 +38,7 @@
     <string>Camera devices used for FPV</string>
     <key>NSLocationUsageDescription</key>
     <string>Location used for ground control station position</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Bluetooth is used to connect to vehicles</string>
 </dict>
 </plist>
