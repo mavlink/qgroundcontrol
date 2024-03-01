@@ -161,7 +161,8 @@ LinuxBuild {
         position \
         sqldrivers \
         texttospeech \
-        multimedia
+        multimedia \
+        tls
 
     UseWayland {
         QT_PLUGIN_LIST += \
