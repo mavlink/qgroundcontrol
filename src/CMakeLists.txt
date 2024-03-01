@@ -122,6 +122,7 @@ target_link_libraries(${PROJECT_NAME}
             Qt6::QuickWidgets
             Qt6::Widgets
             Qt6::Core5Compat
+            Qt6::SerialPort
 
             ADSB
             AnalyzeView
@@ -151,13 +152,6 @@ target_link_libraries(${PROJECT_NAME}
             VideoManager
             Viewer3D
 )
-
-if(NOT QT_MKSPEC MATCHES "winrt")
-    target_link_libraries(${PROJECT_NAME}
-        PUBLIC
-            Qt6::SerialPort
-        )
-endif()
 
 if(NOT ${QGC_AIRLINK_DISABLED})
     target_link_libraries(${PROJECT_NAME} PUBLIC AirLink)
