@@ -34,7 +34,6 @@ if(NOT QT_MKSPEC)
 		set(QT_MKSPEC gcc_64)
 	elseif(WIN32)
 		set(QT_MKSPEC msvc2017_64)
-		#set(QT_MKSPEC winrt_x64_msvc2017)
 	endif()
 endif()
 
