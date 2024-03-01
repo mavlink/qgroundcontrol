@@ -158,7 +158,7 @@ Map {
             }
         }
 
-        onActiveTranslationChanged: (delta) => map.pan(-delta.x, -delta.y)
+        onActiveTranslationChanged: (delta) => _map.pan(-delta.x, -delta.y)
     }
 
     TapHandler {
