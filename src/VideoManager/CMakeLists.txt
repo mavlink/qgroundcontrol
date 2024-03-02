@@ -1,3 +1,5 @@
+# QGC_DISABLE_UVC
+
 qt_add_library(VideoManager STATIC
     GLVideoItemStub.cc
     GLVideoItemStub.h

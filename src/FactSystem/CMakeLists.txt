@@ -19,7 +19,7 @@ qt_add_library(FactSystem STATIC
 )
 
 target_link_libraries(FactSystem
-	PRIVATE
+        PRIVATE
 		qgc
 		FactControls
 )

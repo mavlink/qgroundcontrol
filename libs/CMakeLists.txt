@@ -1,28 +1,46 @@
 add_subdirectory(libevents)
-
-if(ANDROID)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/OpenSSL/android_openssl/android_openssl.cmake)
-    add_subdirectory(qtandroidserialport)
-elseif(WIN32)
-    add_subdirectory(sdl2)
-    add_subdirectory(zlib)
-endif()
-
-option(QGC_ENABLE_VIDEOSTREAMING "Enable video streaming" ON)
-if(QGC_ENABLE_VIDEOSTREAMING)
-    message(STATUS "Enabling video streaming support")
-    add_subdirectory(qmlglsink)
-else()
-    message(STATUS "Video streaming disabled")
-endif()
+add_subdirectory(OpenSSL)
+add_subdirectory(qtandroidserialport)
+add_subdirectory(sdl2)
+add_subdirectory(zlib)
+add_subdirectory(qmlglsink)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force qmdnsengine & shapelib to build as static" FORCE)
 add_subdirectory(shapelib)
+add_subdirectory(qmdnsengine)
 
-option(QGC_QT6_DISABLE_DNSENGINE "Disable DNS Engine" OFF)
-if(QGC_QT6_DISABLE_DNSENGINE)
-    message(STATUS "DNS Engine disabled")
-    add_compile_definitions(QT6_DISABLE_DNSENGINE=ON)
-else()
-    add_subdirectory(qmdnsengine)
-endif()
+qt_add_library(xz STATIC
+    xz-embedded/linux/include/linux/xz.h
+    xz-embedded/linux/include/linux/decompress/unxz.h
+    # xz-embedded/linux/lib/decompress_unxz.c
+    xz-embedded/linux/lib/xz/xz_crc32.c
+    xz-embedded/linux/lib/xz/xz_crc64.c
+    xz-embedded/linux/lib/xz/xz_dec_bcj.c
+    xz-embedded/linux/lib/xz/xz_dec_lzma2.c
+    xz-embedded/linux/lib/xz/xz_dec_stream.c
+    # xz-embedded/linux/lib/xz/xz_dec_syms.c
+    # xz-embedded/linux/lib/xz/xz_dec_test.c
+    xz-embedded/linux/lib/xz/xz_lzma2.h
+    xz-embedded/linux/lib/xz/xz_private.h
+    xz-embedded/linux/lib/xz/xz_stream.h
+    # xz-embedded/userspace/boottest.c
+    # xz-embedded/userspace/buftest.c
+    # xz-embedded/userspace/bytetest.c
+    xz-embedded/userspace/xz_config.h
+    # xz-embedded/userspace/xzminidec.c
+)
+
+target_include_directories(xz
+    PUBLIC
+        xz-embedded/linux/include
+        xz-embedded/linux/include/linux
+        xz-embedded/linux/include/linux/decompress
+        xz-embedded/linux/lib/xz
+        xz-embedded/userspace
+)
+
+target_compile_definitions(xz
+    PUBLIC
+        XZ_DEC_ANY_CHECK
+        XZ_USE_CRC64
+)

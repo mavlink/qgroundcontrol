@@ -12,7 +12,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
-#ifdef __android__
+#ifdef Q_OS_ANDROID
 #include "AndroidInterface.h"
 #endif
 
@@ -95,13 +95,13 @@ DECLARE_SETTINGGROUP(App, "")
 
     if (!userHasModifiedSavePath) {
 #ifdef __mobile__
-    #ifdef __ios__
+    #ifdef Q_OS_IOS
         // This will expose the directories directly to the File iOs app
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.absolutePath());
     #else
         QString rootDirPath;
-        #ifdef __android__
+        #ifdef Q_OS_ANDROID
         if (androidSaveToSDCard()->rawValue().toBool()) {
                 rootDirPath = AndroidInterface::getSDCardPath();
             qDebug() << "AndroidInterface::getSDCardPath();" << rootDirPath;

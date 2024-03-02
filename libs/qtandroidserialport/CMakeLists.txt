@@ -1,9 +1,15 @@
+if(ANDROID)
+	find_package(Qt6 REQUIRED COMPONENTS Core)
 
-if (ANDROID)
-	add_library(qtandroidserialport
+	qt_add_library(qtandroidserialport STATIC
 		src/qserialport.cpp
+		src/qserialport.h
+		src/qserialport_p.h
 		src/qserialport_android.cpp
+		src/qserialport_android_p.h
 		src/qserialportinfo.cpp
+		src/qserialportinfo.h
+		src/qserialportinfo_p.h
 		src/qserialportinfo_android.cpp
 	)
 
