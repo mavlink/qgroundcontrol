@@ -427,7 +427,9 @@ HEADERS += \
     src/AnalyzeView/MavlinkConsoleController.h \
     src/Audio/AudioOutput.h \
     src/Vehicle/Autotune.h \
-    src/Camera/QGCCameraControl.h \
+    src/Camera/MavlinkCameraControl.h \
+    src/Camera/SimulatedCameraControl.h \
+    src/Camera/VehicleCameraControl.h \
     src/Camera/QGCCameraIO.h \
     src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
@@ -686,7 +688,9 @@ SOURCES += \
     src/AnalyzeView/MavlinkConsoleController.cc \
     src/Audio/AudioOutput.cc \
     src/Vehicle/Autotune.cpp \
-    src/Camera/QGCCameraControl.cc \
+    src/Camera/MavlinkCameraControl.cc \
+    src/Camera/SimulatedCameraControl.cc \
+    src/Camera/VehicleCameraControl.cc \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
