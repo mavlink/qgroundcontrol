@@ -14,7 +14,6 @@ add_custom_target(UiToolbarQml
 		ModeIndicator.qml
 		MultiVehicleSelector.qml
 		RCRSSIIndicator.qml
-		ROIIndicator.qml
 		SignalStrength.qml
 		TelemetryRSSIIndicator.qml
 		VTOLModeIndicator.qml
