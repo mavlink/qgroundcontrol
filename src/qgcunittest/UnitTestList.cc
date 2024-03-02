@@ -25,6 +25,7 @@
 #include "MissionManagerTest.h"
 //#include "RadioConfigTest.h"
 #include "MavlinkLogTest.h"
+#include "NetCdfTest.h"
 //#include "MainWindowTest.h"
 //#include "FileManagerTest.h"
 #include "ParameterManagerTest.h"
@@ -51,6 +52,8 @@
 #include "VehicleLinkManagerTest.h"
 #include "LandingComplexItemTest.h"
 #include "InitialConnectTest.h"
+
+UT_REGISTER_TEST(NetCdfTest)
 
 UT_REGISTER_TEST(ComponentInformationCacheTest)
 UT_REGISTER_TEST(ComponentInformationTranslationTest)

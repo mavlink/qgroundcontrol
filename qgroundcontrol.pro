@@ -25,6 +25,19 @@ message(Qt version $$[QT_VERSION])
     }
 }
 
+# these are unused until if/when we start building our own netCDF libs
+# Specify the path where you want to build netCDF-C++
+NETCDF_BUILD_PATH = $$OUT_PWD/netcdf-cxx4-build
+
+# Specify the path to netcdf-cxx4 source code
+NETCDF_SOURCE_PATH = $$OUT_PWD/libs/netcdf-cxx4
+
+# Execute the build commands for netCDF-C++
+# system("mkdir $$NETCDF_BUILD_PATH") # Create the build directory
+# system("cd $$NETCDF_BUILD_PATH && $$NETCDF_SOURCE_PATH/configure")
+# system("cd $$NETCDF_BUILD_PATH && make")
+# system("cd $$NETCDF_BUILD_PATH && make install") # You might need sudo for this line
+
 include(QGCCommon.pri)
 
 TARGET   = QGroundControl
@@ -440,6 +453,7 @@ HEADERS += \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
     src/GPS/Drivers/src/base_station.h \
+    src/qgcunittest/NetCdfTest.h
 
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     HEADERS += \
@@ -454,6 +468,7 @@ SOURCES += \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
     src/api/QmlComponentInfo.cc \
+    src/qgcunittest/NetCdfTest.cc
 
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     SOURCES += \
@@ -1449,3 +1464,8 @@ LinuxBuild {
 
     INSTALLS += target share_qgroundcontrol share_icons share_metainfo share_applications
 }
+
+LIBS += -L$$quote("C:/Program Files/netCDF 4.9.2/lib/") -lnetcdf -lhdf -lhdf5 -lhdf5_hl -lhdf5_tools -ljpeg -llibcurl_imp -llibhdf -llibhdf5 -llibhdf5_hl -llibhdf5_tools -llibmfhdf -llibxdr -lmfhdf -lxdr -lzlib -lzlibstatic
+INCLUDEPATH += $$quote("C:/Program Files/netCDF 4.9.2/include")
+DEPENDPATH += $$quote("C:/Program Files/netCDF 4.9.2/include")
+
