@@ -154,7 +154,9 @@ private:
     void                _updateSerialPorts          (void);
     void                _removeConfiguration        (LinkConfiguration* config);
     void                _addUDPAutoConnectLink      (void);
+#ifdef QGC_ZEROCONF_ENABLED
     void                _addZeroConfAutoConnectLink (void);
+#endif
     void                _addMAVLinkForwardingLink   (void);
     bool                _isSerialPortConnected      (void);
     void                _createDynamicForwardLink   (const char* linkName, QString hostName);

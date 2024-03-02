@@ -79,7 +79,7 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-#if defined(__android__)
+#if defined(Q_OS_ANDROID)
 #include <jni.h>
 #include "AndroidInterface.h"
 #include "JoystickAndroid.h"
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
     AppMessages::installHandler();
 
 #ifdef Q_OS_MAC
-#ifndef __ios__
+#ifndef Q_OS_IOS
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
     QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 #endif
     {
 
-#ifdef __android__
+#ifdef Q_OS_ANDROID
         AndroidInterface::checkStoragePermissions();
 #endif
         if (!app->_initForNormalAppBoot()) {

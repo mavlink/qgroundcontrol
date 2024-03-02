@@ -1,5 +1,6 @@
 find_package(Threads REQUIRED)
 
+option(CONFIG_UTM_ADAPTER "Enable UTM Adapter" OFF) # TODO: Make this QGC_CONFIG_UTM_ADAPTER
 if(CONFIG_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
     add_library(UTMSP
@@ -39,7 +40,7 @@ target_include_directories(UTMSP PUBLIC services )
 target_link_libraries(UTMSP
 
 PRIVATE
-        libevents_parser
+        nlohmann_json
 PUBLIC
         Qt6::Core
         Qt6::Location

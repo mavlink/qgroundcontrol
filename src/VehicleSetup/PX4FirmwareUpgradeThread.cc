@@ -19,7 +19,7 @@
 
 #include <QTimer>
 #include <QDebug>
-#ifdef __android__
+#ifdef Q_OS_ANDROID
 #include "qserialport.h"
 #else
 #include <QSerialPort>

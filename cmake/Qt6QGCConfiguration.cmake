@@ -19,14 +19,6 @@ if(DEFINED ENV{QT_MKSPEC})
 	set(QT_MKSPEC $ENV{QT_MKSPEC})
 endif()
 
-if(UNIX AND NOT APPLE AND NOT ANDROID)
-	set(LINUX TRUE)
-endif()
-
-if(APPLE AND NOT IOS)
-	set(MACOS TRUE)
-endif()
-
 if(NOT QT_MKSPEC)
 	if(APPLE)
 		set(QT_MKSPEC clang_64)

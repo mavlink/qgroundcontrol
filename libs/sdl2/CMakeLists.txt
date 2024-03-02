@@ -1,14 +1,26 @@
-set(SDL2_LIB_BASE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/msvc/lib)
+qt_add_library(sdl2 STATIC)
 
-add_library(sdl2 SHARED IMPORTED GLOBAL)
+if(WIN32)
+    set(SDL2_LIB_BASE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/msvc/lib)
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)  # 64 bits
-    set(SDL2_LIB_BASE_PATH ${SDL2_LIB_BASE_PATH}/x64)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)  # 64 bits
+        set(SDL2_LIB_BASE_PATH ${SDL2_LIB_BASE_PATH}/x64)
+    endif()
+
+    target_link_libraries(sdl2 INTERFACE ${SDL2_LIB_BASE_PATH}/SDL2.lib)
+    target_include_directories(sdl2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/msvc/include)
+    set_property(TARGET sdl2 PROPERTY IMPORTED_IMPLIB_RELEASE "${SDL2_LIB_BASE_PATH}/SDL2.lib")
+    set_property(TARGET sdl2 PROPERTY IMPORTED_LOCATION_RELEASE "${SDL2_LIB_BASE_PATH}/SDL2.dll")
+    set_property(TARGET sdl2 PROPERTY IMPORTED_IMPLIB_DEBUG "${SDL2_LIB_BASE_PATH}/SDL2.lib")
+    set_property(TARGET sdl2 PROPERTY IMPORTED_LOCATION_DEBUG "${SDL2_LIB_BASE_PATH}/SDL2.dll")
+elseif(NOT ANDROID)
+    find_package(SDL2 REQUIRED)
+        if(IS_DIRECTORY "${SDL2_INCLUDE_DIRS}")
+            target_include_directories(sdl2 INTERFACE ${SDL2_INCLUDE_DIRS})
+            string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
+            target_link_libraries(sdl2 INTERFACE ${SDL2_LIBRARIES})
+        else()
+            target_include_directories(sdl2 INTERFACE ${SDL2_DIR})
+            target_link_libraries(sdl2 INTERFACE SDL2::SDL2)
+        endif()
 endif()
-
-target_link_libraries(sdl2 INTERFACE ${SDL2_LIB_BASE_PATH}/SDL2.lib)
-target_include_directories(sdl2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/msvc/include)
-set_property(TARGET sdl2 PROPERTY IMPORTED_IMPLIB_RELEASE "${SDL2_LIB_BASE_PATH}/SDL2.lib")
-set_property(TARGET sdl2 PROPERTY IMPORTED_LOCATION_RELEASE "${SDL2_LIB_BASE_PATH}/SDL2.dll")
-set_property(TARGET sdl2 PROPERTY IMPORTED_IMPLIB_DEBUG "${SDL2_LIB_BASE_PATH}/SDL2.lib")
-set_property(TARGET sdl2 PROPERTY IMPORTED_LOCATION_DEBUG "${SDL2_LIB_BASE_PATH}/SDL2.dll")
