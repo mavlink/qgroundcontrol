@@ -1,8 +1,10 @@
 
 qt_add_library(Camera STATIC
-	QGCCameraControl.cc
+	MavlinkCameraControl.cc
+	VehicleCameraControl.cc
 	QGCCameraIO.cc
 	QGCCameraManager.cc
+	SimulatedCameraControl.cc
 )
 
 target_link_libraries(Camera
