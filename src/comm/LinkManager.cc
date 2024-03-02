@@ -42,11 +42,13 @@
 #include <AirlinkLink.h>
 #endif
 
+#ifdef QGC_ZEROCONF_ENABLED
 #include <qmdnsengine/browser.h>
 #include <qmdnsengine/cache.h>
 #include <qmdnsengine/mdns.h>
 #include <qmdnsengine/server.h>
 #include <qmdnsengine/service.h>
+#endif
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
@@ -443,6 +445,7 @@ void LinkManager::_addMAVLinkForwardingLink(void)
     }
 }
 
+#ifdef QGC_ZEROCONF_ENABLED
 void LinkManager::_addZeroConfAutoConnectLink(void)
 {
     if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
@@ -513,6 +516,7 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
         }
     });
 }
+#endif
 
 void LinkManager::_updateAutoConnectLinks(void)
 {
@@ -522,7 +526,9 @@ void LinkManager::_updateAutoConnectLinks(void)
 
     _addUDPAutoConnectLink();
     _addMAVLinkForwardingLink();
+#ifdef QGC_ZEROCONF_ENABLED
     _addZeroConfAutoConnectLink();
+#endif
 
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
@@ -551,7 +557,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 #ifndef NO_SERIAL_LINK
     QStringList                 currentPorts;
     QList<QGCSerialPortInfo>    portList;
-#ifdef __android__
+#ifdef Q_OS_ANDROID
     // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
     // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
     // bug after we connect the first serial port we stop probing for additional ports.

@@ -19,7 +19,7 @@
 
 #include "SettingsManager.h"
 
-#if defined(__ios__)
+#if defined(Q_OS_IOS)
 #include <sys/utsname.h>
 #endif
 
@@ -42,7 +42,7 @@ ScreenToolsController::hasTouch() const
 QString
 ScreenToolsController::iOSDevice() const
 {
-#if defined(__ios__)
+#if defined(Q_OS_IOS)
     struct utsname systemInfo;
     uname(&systemInfo);
     return QString(systemInfo.machine);

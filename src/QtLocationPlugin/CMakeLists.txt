@@ -1,5 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Core5Compat Location Network Qml Sql)
 
+# QGC_NO_GOOGLE_MAPS
+
 qt_add_plugin(QGCLocation
     STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
