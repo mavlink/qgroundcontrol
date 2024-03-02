@@ -14,7 +14,6 @@ add_custom_target(UiToolbarQml
 		MultiVehicleSelector.qml
         PlanViewToolBar.qml
 		RCRSSIIndicator.qml
-		ROIIndicator.qml
 		SignalStrength.qml
 		TelemetryRSSIIndicator.qml
 )
