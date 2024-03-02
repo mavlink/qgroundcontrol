@@ -120,11 +120,7 @@ ApplicationWindow {
     }
 
     function showPlanView() {
-        stackView.push(planViewComponenent)
-    }
-
-    function popView() {
-        stackView.pop()
+        planView.visible = true
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
@@ -243,11 +239,24 @@ ApplicationWindow {
         color:          QGroundControl.globalPalette.window
     }
 
-    StackView {
-        id:             stackView
-        anchors.fill:   parent
+    FlyView { 
+        id:                     flightView
+        anchors.fill:           parent
+        utmspSendActTrigger:    _utmspSendActTrigger
+    }
 
-        initialItem: FlyView { id: flightView; utmspSendActTrigger: _utmspSendActTrigger}
+    PlanView {
+        id:             planView
+        anchors.fill:   parent
+        visible:        false
+
+        onActivationParamsSent:{
+            if(_utmspEnabled){
+                _startTimeStamp = startTime
+                _showVisible = activate
+                _flightID = flightID
+            }
+        }
     }
 
     footer: LogReplayStatusBar {
@@ -416,21 +425,6 @@ ApplicationWindow {
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: planViewComponenent
-
-        PlanView {
-            id: planView
-            onActivationParamsSent:{
-                if(_utmspEnabled){
-                    _startTimeStamp = startTime
-                    _showVisible = activate
-                    _flightID = flightID
                 }
             }
         }
