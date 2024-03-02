@@ -98,15 +98,12 @@ target_link_libraries(Vehicle
 	PRIVATE
 		Actuators
 		compression
-		libevents_generated
-		libevents_parser
-		libevents_health_and_arming_checks
 	PUBLIC
 		qgc
+		libevents
 )
 
 target_include_directories(Vehicle
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
-		${CMAKE_SOURCE_DIR}/libs/libevents
 )

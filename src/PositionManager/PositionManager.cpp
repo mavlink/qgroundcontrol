@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 #include <QSerialPortInfo>
 #endif
 

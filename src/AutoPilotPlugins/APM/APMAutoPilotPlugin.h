@@ -64,7 +64,7 @@ protected:
     APMFollowComponent*         _followComponent;
 #endif
 
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 private slots:
     void _checkForBadCubeBlack(void);
 #endif
