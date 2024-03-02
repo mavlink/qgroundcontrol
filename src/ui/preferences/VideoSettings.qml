@@ -20,22 +20,24 @@ import QGroundControl.ScreenTools
 
 SettingsPage {
     property var    _settingsManager:            QGroundControl.settingsManager
+    property var    _videoManager:              QGroundControl.videoManager
     property var    _videoSettings:             _settingsManager.videoSettings
     property string _videoSource:               _videoSettings.videoSource.rawValue
-    property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
+    property bool   _isGst:                     _videoManager.isGStreamer
     property bool   _isUDP264:                  _isGst && _videoSource === _videoSettings.udp264VideoSource
     property bool   _isUDP265:                  _isGst && _videoSource === _videoSettings.udp265VideoSource
     property bool   _isRTSP:                    _isGst && _videoSource === _videoSettings.rtspVideoSource
     property bool   _isTCP:                     _isGst && _videoSource === _videoSettings.tcpVideoSource
     property bool   _isMPEGTS:                  _isGst && _videoSource === _videoSettings.mpegtsVideoSource
-    property bool   _videoAutoStreamConfig:     QGroundControl.videoManager.autoStreamConfigured
-    property bool   _showSaveVideoSettings:     _isGst || _videoAutoStreamConfig
+    property bool   _videoAutoStreamConfig:     _videoManager.autoStreamConfigured
     property real   _urlFieldWidth:             ScreenTools.defaultFontPixelWidth * 25
     property bool   _requiresUDPPort:           _isUDP264 || _isUDP265 || _isMPEGTS
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Video Source")
+        headingDescription: _videoAutoStreamConfig ? qsTr("Mavlink camera stream is automatically configured") : ""
+        enabled:            !_videoAutoStreamConfig
 
         LabelledFactComboBox {
             Layout.fillWidth:   true
@@ -111,8 +113,7 @@ SettingsPage {
 
     SettingsGroupLayout {
         Layout.fillWidth: true
-        heading:            qsTr("Video Storage")
-        visible:            _showSaveVideoSettings
+        heading:            qsTr("Local Video Storage")
         
         LabelledFactComboBox {
             Layout.fillWidth:   true

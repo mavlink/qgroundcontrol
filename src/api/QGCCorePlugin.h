@@ -36,7 +36,7 @@ class VideoReceiver;
 class VideoSink;
 class PlanMasterController;
 class QGCCameraManager;
-class QGCCameraControl;
+class MavlinkCameraControl;
 class QQuickItem;
 
 Q_MOC_INCLUDE("QGCOptions.h")
@@ -204,12 +204,12 @@ signals:
     void toolBarIndicatorsChanged   ();
 
 protected:
-    bool                _showTouchAreas;
-    bool                _showAdvancedUI;
-    Vehicle*            _activeVehicle  = nullptr;
-    QGCCameraManager*   _cameraManager  = nullptr;
-    QGCCameraControl*   _currentCamera  = nullptr;
-    QVariantList        _toolBarIndicatorList;
+    bool                    _showTouchAreas;
+    bool                    _showAdvancedUI;
+    Vehicle*                _activeVehicle  = nullptr;
+    QGCCameraManager*       _cameraManager  = nullptr;
+    MavlinkCameraControl*  _currentCamera  = nullptr;
+    QVariantList            _toolBarIndicatorList;
 
 private:
     QGCCorePlugin_p*    _p;

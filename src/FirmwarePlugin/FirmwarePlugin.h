@@ -7,12 +7,8 @@
  *
  ****************************************************************************/
 
-
+#pragma once
 /// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef FirmwarePlugin_H
-#define FirmwarePlugin_H
 
 #include "QGCMAVLink.h"
 #include "VehicleComponent.h"
@@ -26,7 +22,7 @@
 #include <QVariantList>
 
 class Vehicle;
-class QGCCameraControl;
+class MavlinkCameraControl;
 class QGCCameraManager;
 class Autotune;
 
@@ -313,7 +309,7 @@ public:
     virtual QGCCameraManager* createCameraManager(Vehicle *vehicle);
 
     /// Camera control.
-    virtual QGCCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
+    virtual MavlinkCameraControl* createCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
 
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*>* factGroups(void);
@@ -426,5 +422,3 @@ public:
 private:
     QList<FirmwarePluginFactory*> _factoryList;
 };
-
-#endif

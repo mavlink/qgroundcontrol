@@ -470,6 +470,9 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
+#if 0
+    // I believe this should no longer be needed with new PhtoVideoControl implmenentation.
+    // Leaving in for now, just in case it need to come back.
     if(_cameraManager) {
         // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
         // the dangling pointer access will cause a runtime fault
@@ -479,6 +482,7 @@ void Vehicle::prepareDelete()
         emit cameraManagerChanged();
         qApp->processEvents();
     }
+#endif
 }
 
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)

@@ -17,6 +17,7 @@
 #include "QGCCameraManager.h"
 #include "RadioComponentController.h"
 #include "Autotune.h"
+#include "VehicleCameraControl.h"
 
 #include <QRegularExpression>
 #include <QDebug>
@@ -1021,9 +1022,9 @@ QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
     return new QGCCameraManager(vehicle);
 }
 
-QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
+MavlinkCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
 {
-    return new QGCCameraControl(info, vehicle, compID, parent);
+    return new VehicleCameraControl(info, vehicle, compID, parent);
 }
 
 uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
