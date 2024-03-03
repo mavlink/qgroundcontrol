@@ -34,3 +34,14 @@ elseif (WIN32)
 		/wd4244 # warning C4244: '=': conversion from 'double' to 'float', possible loss of data
     )
 endif()
+
+if(ANDROID OR IOS)
+	set(MOBILE TRUE)
+	add_compile_definitions(__mobile__)
+endif()
+
+if(ANDROID)
+	add_compile_definitions(__android__)
+elseif(IOS)
+	add_compile_definitions(__ios__)
+endif()

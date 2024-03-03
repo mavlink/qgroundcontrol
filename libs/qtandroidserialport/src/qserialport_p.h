@@ -77,7 +77,9 @@ public:
     QSerialPort::Parity parity;
     QSerialPort::StopBits stopBits;
     QSerialPort::FlowControl flowControl;
-    QSerialPort::DataErrorPolicy policy;
+    #if QT_DEPRECATED_SINCE(5, 2)
+        QSerialPort::DataErrorPolicy policy;
+    #endif
     bool settingsRestoredOnClose;
     QSerialPort * const q_ptr;
 };
