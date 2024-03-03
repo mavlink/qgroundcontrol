@@ -48,6 +48,7 @@
 #include <QCoreApplication>
 
 #include "qserialport_android_p.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "AndroidSerialPortLog")
 
@@ -519,11 +520,13 @@ bool QSerialPortPrivate::setFlowControl(QSerialPort::FlowControl flowControl)
     return true;
 }
 
+#if QT_DEPRECATED_SINCE(5, 2)
 bool QSerialPortPrivate::setDataErrorPolicy(QSerialPort::DataErrorPolicy policy)
 {
     this->policy = policy;
     return true;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void QSerialPortPrivate::newDataArrived(char *bytesA, int lengthA)
