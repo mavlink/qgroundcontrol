@@ -255,7 +255,9 @@ Q_SIGNALS:
     void parityChanged(QSerialPort::Parity parity);
     void stopBitsChanged(QSerialPort::StopBits stopBits);
     void flowControlChanged(QSerialPort::FlowControl flowControl);
-    void dataErrorPolicyChanged(QSerialPort::DataErrorPolicy policy);
+    #if QT_DEPRECATED_SINCE(5, 2)
+        void dataErrorPolicyChanged(QSerialPort::DataErrorPolicy policy);
+    #endif
     void dataTerminalReadyChanged(bool set);
     void requestToSendChanged(bool set);
     void errorOccurred(QSerialPort::SerialPortError serialPortError);

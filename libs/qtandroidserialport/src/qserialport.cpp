@@ -71,7 +71,9 @@ QSerialPortPrivateData::QSerialPortPrivateData(QSerialPort *q)
     , parity(QSerialPort::NoParity)
     , stopBits(QSerialPort::OneStop)
     , flowControl(QSerialPort::NoFlowControl)
+#if QT_DEPRECATED_SINCE(5, 2)
     , policy(QSerialPort::IgnorePolicy)
+#endif
 #if QT_DEPRECATED_SINCE(5,3)
     , settingsRestoredOnClose(true)
 #endif

@@ -10,9 +10,11 @@ if(LINUX OR ANDROID)
     set(GST_DEPENDENCIES ${GST_DEPENDENCIES} egl)
 endif()
 
-pkg_check_modules(GST
-    ${GST_DEPENDENCIES}
-)
+if(NOT ANDROID)
+	pkg_check_modules(GST
+	    ${GST_DEPENDENCIES}
+	)
+endif()
 
 message(STATUS "GStreamer libs: ${GST_LIBRARIES}")
 message(STATUS "GStreamer include dirs: ${GST_INCLUDE_DIRS}")

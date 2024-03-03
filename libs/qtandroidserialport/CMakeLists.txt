@@ -8,7 +8,11 @@ if (ANDROID)
 	)
 
 	target_link_libraries(qtandroidserialport
+		PRIVATE
+			qgc
+		PUBLIC
+			Qt6::CorePrivate
 	)
 
-	target_include_directories(qtandroidserialport INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+	target_include_directories(qtandroidserialport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 endif()

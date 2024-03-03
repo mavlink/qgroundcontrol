@@ -125,6 +125,7 @@ bool QSerialPortInfo::isBusy() const
     return resultL;
 }
 
+#if QT_DEPRECATED_SINCE(5, 2)
 bool QSerialPortInfo::isValid() const
 {
     QJniObject jstrL = QJniObject::fromString(d_ptr->portName);
@@ -137,6 +138,7 @@ bool QSerialPortInfo::isValid() const
     cleanJavaException();
     return resultL;
 }
+#endif
 
 QString QSerialPortInfoPrivate::portNameToSystemLocation(const QString &source)
 {
