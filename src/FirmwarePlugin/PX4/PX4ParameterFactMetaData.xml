@@ -1956,8 +1956,8 @@
       <decimal>3</decimal>
     </parameter>
     <parameter name="EKF2_MAG_ACCLIM" default="0.5" type="FLOAT">
-      <short_desc>Horizontal acceleration threshold used by automatic selection of magnetometer fusion method</short_desc>
-      <long_desc>This parameter is used when the magnetometer fusion method is set automatically (EKF2_MAG_TYPE = 0). If the filtered horizontal acceleration is greater than this parameter value, then the EKF will use 3-axis magnetometer fusion.</long_desc>
+      <short_desc>Horizontal acceleration threshold used for heading observability check</short_desc>
+      <long_desc>The heading is assumed to be observable when the body acceleration is greater than this parameter when a global position/velocity aiding source is active.</long_desc>
       <min>0.0</min>
       <max>5.0</max>
       <unit>m/s^2</unit>
@@ -2040,14 +2040,6 @@
         <value code="1">Magnetic heading</value>
         <value code="5">None</value>
       </values>
-    </parameter>
-    <parameter name="EKF2_MAG_YAWLIM" default="0.20" type="FLOAT">
-      <short_desc>Yaw rate threshold used by automatic selection of magnetometer fusion method</short_desc>
-      <long_desc>This parameter is used when the magnetometer fusion method is set automatically (EKF2_MAG_TYPE = 0). If the filtered yaw rate is greater than this parameter value, then the EKF will use 3-axis magnetometer fusion.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>rad/s</unit>
-      <decimal>2</decimal>
     </parameter>
     <parameter name="EKF2_MCOEF" default="0.15" type="FLOAT">
       <short_desc>Propeller momentum drag coefficient used for multi-rotor wind estimation</short_desc>
