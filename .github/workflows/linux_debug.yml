@@ -84,4 +84,4 @@ jobs:
 
       - name: Run unit tests
         working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run:                xvfb-run -a ${{ runner.temp }}/shadow_build_dir/staging/bin/QGroundControl --unittest
+        run:  xvfb-run -a ${{ runner.temp }}/shadow_build_dir/QGroundControl*.AppImage --unittest
