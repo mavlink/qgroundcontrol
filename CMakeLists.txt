@@ -56,6 +56,10 @@ message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt version: ${QT_VERSION}")
 message(STATUS "Qt spec: ${QT_MKSPEC}")
 
+if(LINUX)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/AppDir/usr)
+endif()
+
 # Find Qt6 libraries
 find_package(Qt6
     REQUIRED
@@ -92,8 +96,8 @@ qt_policy(
     SET QTP0002 NEW
 )
 
-set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
-set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml" CACHE STRING "Extra QML Import Paths" FORCE)
+# set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
+# set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml" CACHE STRING "Extra QML Import Paths" FORCE)
 
 #######################################################
 #                QML Configuration
@@ -242,6 +246,14 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     BUNDLE  DESTINATION .
 )
+if(NOT ANDROID)
+    qt_generate_deploy_qml_app_script(
+        TARGET ${PROJECT_NAME}
+        OUTPUT_SCRIPT deploy_script
+        MACOS_BUNDLE_POST_BUILD
+    )
+    install(SCRIPT ${deploy_script})
+endif()
 install(
     DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
@@ -265,12 +277,5 @@ if(LINUX)
         FILES ${CMAKE_BINARY_DIR}/metainfo/org.mavlink.qgroundcontrol.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
     )
-endif()
-if(NOT ANDROID)
-    qt_generate_deploy_qml_app_script(
-        TARGET ${PROJECT_NAME}
-        OUTPUT_SCRIPT deploy_script
-        MACOS_BUNDLE_POST_BUILD
-    )
-    install(SCRIPT ${deploy_script})
+    install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateAppImage.cmake")
 endif()
