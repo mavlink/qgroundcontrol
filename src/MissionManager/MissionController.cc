@@ -2017,7 +2017,7 @@ void MissionController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_missionManager, &MissionManager::sendComplete,             this, &MissionController::_managerSendComplete);
     connect(_missionManager, &MissionManager::removeAllComplete,        this, &MissionController::_managerRemoveAllComplete);
     connect(_missionManager, &MissionManager::inProgressChanged,        this, &MissionController::_inProgressChanged);
-    connect(_missionManager, &MissionManager::progressPct,              this, &MissionController::_progressPctChanged);
+    connect(_missionManager, &MissionManager::progressPctChanged,       this, &MissionController::_progressPctChanged);
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &MissionController::_currentMissionIndexChanged);
     connect(_missionManager, &MissionManager::lastCurrentIndexChanged,  this, &MissionController::resumeMissionIndexChanged);
     connect(_missionManager, &MissionManager::resumeMissionReady,       this, &MissionController::resumeMissionReady);
@@ -2368,7 +2368,7 @@ bool MissionController::_isROICancelItem(SimpleMissionItem* simpleItem)
 void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 {
     if (_visualItems && (force || sequenceNumber != _currentPlanViewSeqNum)) {
-        qDebug() << "setCurrentPlanViewSeqNum";
+        qCDebug(MissionControllerLog) << "setCurrentPlanViewSeqNum";
         bool    foundLand =             false;
         int     takeoffSeqNum =         -1;
         int     landSeqNum =            -1;
@@ -2469,10 +2469,8 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                         for (int j=viIndex-1; j>0; j--) {
                             VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
                             if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
-                                qDebug() << "Found";
                                 VisualItemPair splitPair(pPrev, pVI);
                                 if (_flightPathSegmentHashTable.contains(splitPair)) {
-                                    qDebug() << "Split segment added in setCurrentPlanViewSeqNum";
                                     _splitSegment = _flightPathSegmentHashTable[splitPair];
                                 } else {
                                     // The recalc of flight path segments hasn't happened yet since it is delayed and compressed.
