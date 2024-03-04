@@ -166,7 +166,6 @@ Item {
         Component.onCompleted: {
             _planMasterController.start()
             _missionController.setCurrentPlanViewSeqNum(0, true)
-            globals.planMasterControllerPlanView = _planMasterController
         }
 
         onPromptForPlanUsageOnVehicleChange: {
@@ -329,7 +328,8 @@ Item {
     }
 
     PlanViewToolBar {
-        id: planToolBar
+        id:                     planToolBar
+        planMasterController:   _planMasterController
     }
 
     Item {

@@ -82,7 +82,7 @@ signals:
     void error                      (int errorCode, const QString& errorMsg);
     void currentIndexChanged        (int currentIndex);
     void lastCurrentIndexChanged    (int lastCurrentIndex);
-    void progressPct                (double progressPercentPct);
+    void progressPctChanged         (double progressPercentPct);
     void removeAllComplete          (bool error);
     void sendComplete               (bool error);
     void resumeMissionReady         (void);

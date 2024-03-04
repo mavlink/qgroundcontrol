@@ -341,7 +341,7 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
         } else {
             qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
             vehicle->_missionManager->loadFromVehicle();
-            connect(vehicle->_missionManager, &MissionManager::progressPct, connectMachine,
+            connect(vehicle->_missionManager, &MissionManager::progressPctChanged, connectMachine,
                     &InitialConnectStateMachine::gotProgressUpdate);
         }
     }
@@ -353,7 +353,7 @@ void InitialConnectStateMachine::_stateRequestGeoFence(StateMachine* stateMachin
     Vehicle*                    vehicle         = connectMachine->_vehicle;
     SharedLinkInterfacePtr      sharedLink      = vehicle->vehicleLinkManager()->primaryLink().lock();
 
-    disconnect(vehicle->_missionManager, &MissionManager::progressPct, connectMachine,
+    disconnect(vehicle->_missionManager, &MissionManager::progressPctChanged, connectMachine,
                &InitialConnectStateMachine::gotProgressUpdate);
 
     if (!sharedLink) {
@@ -367,7 +367,7 @@ void InitialConnectStateMachine::_stateRequestGeoFence(StateMachine* stateMachin
             if (vehicle->_geoFenceManager->supported()) {
                 qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence";
                 vehicle->_geoFenceManager->loadFromVehicle();
-                connect(vehicle->_geoFenceManager, &GeoFenceManager::progressPct, connectMachine,
+                connect(vehicle->_geoFenceManager, &GeoFenceManager::progressPctChanged, connectMachine,
                         &InitialConnectStateMachine::gotProgressUpdate);
             } else {
                 qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: skipped due to no support";
@@ -383,7 +383,7 @@ void InitialConnectStateMachine::_stateRequestRallyPoints(StateMachine* stateMac
     Vehicle*                    vehicle         = connectMachine->_vehicle;
     SharedLinkInterfacePtr      sharedLink      = vehicle->vehicleLinkManager()->primaryLink().lock();
 
-    disconnect(vehicle->_geoFenceManager, &GeoFenceManager::progressPct, connectMachine,
+    disconnect(vehicle->_geoFenceManager, &GeoFenceManager::progressPctChanged, connectMachine,
                &InitialConnectStateMachine::gotProgressUpdate);
 
     if (!sharedLink) {
@@ -396,7 +396,7 @@ void InitialConnectStateMachine::_stateRequestRallyPoints(StateMachine* stateMac
         } else {
             if (vehicle->_rallyPointManager->supported()) {
                 vehicle->_rallyPointManager->loadFromVehicle();
-                connect(vehicle->_rallyPointManager, &RallyPointManager::progressPct, connectMachine,
+                connect(vehicle->_rallyPointManager, &RallyPointManager::progressPctChanged, connectMachine,
                         &InitialConnectStateMachine::gotProgressUpdate);
             } else {
                 qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: skipping due to no support";
@@ -411,7 +411,7 @@ void InitialConnectStateMachine::_stateSignalInitialConnectComplete(StateMachine
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
-    disconnect(vehicle->_rallyPointManager, &RallyPointManager::progressPct, connectMachine,
+    disconnect(vehicle->_rallyPointManager, &RallyPointManager::progressPctChanged, connectMachine,
                &InitialConnectStateMachine::gotProgressUpdate);
 
     connectMachine->advance();
