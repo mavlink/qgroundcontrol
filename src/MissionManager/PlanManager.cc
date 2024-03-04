@@ -45,7 +45,7 @@ void PlanManager::_writeMissionItemsWorker(void)
 {
     _lastMissionRequest = -1;
 
-    emit progressPct(0);
+    emit progressPctChanged(0);
 
     qCDebug(PlanManagerLog) << QStringLiteral("writeMissionItems %1 count:").arg(_planTypeString()) << _writeMissionItems.count();
 
@@ -466,7 +466,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
         return;
     }
 
-    emit progressPct((double)seq / (double)_missionItemCountToRead);
+    emit progressPctChanged((double)seq / (double)_missionItemCountToRead);
     
     _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
@@ -511,7 +511,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
         return;
     }
 
-    emit progressPct((double)missionRequestSeq / (double)_writeMissionItems.count());
+    emit progressPctChanged((double)missionRequestSeq / (double)_writeMissionItems.count());
 
     _lastMissionRequest = missionRequestSeq;
     if (!_itemIndicesToWrite.contains(missionRequestSeq)) {
@@ -803,7 +803,7 @@ QString PlanManager::_missionResultToString(MAV_MISSION_RESULT result)
 
 void PlanManager::_finishTransaction(bool success, bool apmGuidedItemWrite)
 {
-    emit progressPct(1);
+    emit progressPctChanged(1);
     _disconnectFromMavlink();
 
     _itemIndicesToRead.clear();
@@ -870,7 +870,7 @@ void PlanManager::_removeAllWorker(void)
 {
     qCDebug(PlanManagerLog) << "_removeAllWorker";
 
-    emit progressPct(0);
+    emit progressPctChanged(0);
 
     _connectToMavlink();
 

@@ -25,11 +25,11 @@ Rectangle {
     height: ScreenTools.toolbarHeight
     color:  qgcPal.toolbarBackground
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _planMasterController:  globals.planMasterControllerPlanView
-    property bool   _controllerValid:       _planMasterController !== undefined && _planMasterController !== null
-    property real   _controllerProgressPct: _controllerValid ? _planMasterController.missionController.progressPct : 0
+    property var    planMasterController
 
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property real   _controllerProgressPct: planMasterController.missionController.progressPct
+    
     QGCPalette { id: qgcPal }
 
     /// Bottom single pixel divider
@@ -70,9 +70,10 @@ Rectangle {
         flickableDirection:     Flickable.HorizontalFlick
 
         PlanToolBarIndicators {
-            id:                 toolIndicators
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
+            id:                     toolIndicators
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            planMasterController:   _root.planMasterController
         }
     }
 
@@ -148,11 +149,15 @@ Rectangle {
     }
     // Progress bar
     Connections {
-        target: _controllerValid ? _planMasterController.missionController : null
+        target: planMasterController.missionController
 
         onProgressPctChanged: {
             if (_controllerProgressPct === 1) {
-                resetProgressTimer.start()
+                if (_root.visible) {
+                    resetProgressTimer.start()
+                } else {
+                    progressBar.visible = false
+                }
             } else if (_controllerProgressPct > 0) {
                 progressBar.visible = true
             }
@@ -161,7 +166,7 @@ Rectangle {
 
     Timer {
         id:             resetProgressTimer
-        interval:       4000
+        interval:       3000
         onTriggered:    progressBar.visible = false
     }
 }
