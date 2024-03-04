@@ -90,8 +90,6 @@ ApplicationWindow {
         readonly property var       planMasterControllerFlyView:    flightView.planController
         readonly property var       guidedControllerFlyView:        flightView.guidedController
 
-        property var                planMasterControllerPlanView:   null
-        property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
         property bool               validationError:                false   // There is a FactTextField somewhere with a validation error
 
         // Property to manage RemoteID quick acces to settings page
@@ -193,7 +191,7 @@ ApplicationWindow {
     property string closeDialogTitle: qsTr("Close %1").arg(QGroundControl.appName)
 
     function checkForUnsavedMission() {
-        if (globals.planMasterControllerPlanView && globals.planMasterControllerPlanView.dirty) {
+        if (planView._planMasterController.dirty) {
             showMessageDialog(closeDialogTitle,
                               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,

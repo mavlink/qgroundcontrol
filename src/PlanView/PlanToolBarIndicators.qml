@@ -14,8 +14,10 @@ import QGroundControl.UTMSP
 Item {
     width: missionStats.width + _margins
 
-    property var    _planMasterController:      globals.planMasterControllerPlanView
-    property var    _currentMissionItem:        globals.currentPlanMissionItem          ///< Mission item to display status for
+    property var    planMasterController
+
+    property var    _planMasterController:      planMasterController
+    property var    _currentMissionItem:        _planMasterController.missionController.currentPlanViewItem ///< Mission item to display status for
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
     property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
@@ -49,8 +51,6 @@ Item {
     property int    _batteryChangePoint:        _controllerValid ? _planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? _planMasterController.missionController.batteriesRequired : -1
     property bool   _batteryInfoAvailable:      _batteryChangePoint >= 0 || _batteriesRequired >= 0
-    property real   _controllerProgressPct:     _controllerValid ? _planMasterController.missionController.progressPct : 0
-    property bool   _syncInProgress:            _controllerValid ? _planMasterController.missionController.syncInProgress : false
     property real   _gradient:                  _currentMissionItemValid && _currentMissionItem.distance > 0 ?
                                                     (_currentItemIsVTOLTakeoff ?
                                                          0 :
