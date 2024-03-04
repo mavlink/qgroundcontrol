@@ -4,6 +4,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QGeoCoordinate>
+#include <QList>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 
@@ -84,11 +85,11 @@ private:
         int16_t gridSizeLon;
     } TileInfo_t;
 
-    TileInfo_t          _tileInfo;
-    int16_t**           _data;                                          /// 2D elevation data array
-    double              _cellSizeLat;                                   /// data grid size in latitude direction
-    double              _cellSizeLon;                                   /// data grid size in longitude direction
-    bool                _isValid;                                       /// data loaded is valid
+    TileInfo_t              _tileInfo;
+    QList<QList<int16_t>>   _elevationData; // 2D elevation data array
+    double                  _cellSizeLat;   /// data grid size in latitude direction
+    double                  _cellSizeLon;   /// data grid size in longitude direction
+    bool                    _isValid;       /// data loaded is valid
 
     // Json keys
     static const char*  _jsonStatusKey;
