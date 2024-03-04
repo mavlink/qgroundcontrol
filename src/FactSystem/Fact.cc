@@ -579,11 +579,21 @@ QString Fact::group(void) const
 
 void Fact::setMetaData(FactMetaData* metaData, bool setDefaultFromMetaData)
 {
+    QVariant previousCookedValue;
+    if (_metaData) {
+        QVariant previousCookedValue = cookedValue();
+    } else {
+        previousCookedValue = rawValue();
+    }
+
     _metaData = metaData;
     if (setDefaultFromMetaData && metaData->defaultValueAvailable()) {
         setRawValue(rawDefaultValue());
     }
-    emit valueChanged(cookedValue());
+
+    if (previousCookedValue != cookedValue()) {
+        emit valueChanged(cookedValue());
+    }
 }
 
 bool Fact::valueEqualsDefault(void) const
