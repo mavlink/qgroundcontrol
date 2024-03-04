@@ -66,16 +66,16 @@ TerrainTile::TerrainTile(const QByteArray& byteArray)
         return;
     }
 
-    _data = new int16_t*[_tileInfo.gridSizeLat];
+    _elevationData.resize(_tileInfo.gridSizeLat);
     for (int k = 0; k < _tileInfo.gridSizeLat; k++) {
-        _data[k] = new int16_t[_tileInfo.gridSizeLon];
+        _elevationData[k].resize(_tileInfo.gridSizeLon);
     }
 
     int valueIndex = 0;
     const int16_t* pTileData = reinterpret_cast<const int16_t*>(&reinterpret_cast<const uint8_t*>(byteArray.constData())[cTileHeaderBytes]);
     for (int i = 0; i < _tileInfo.gridSizeLat; i++) {
         for (int j = 0; j < _tileInfo.gridSizeLon; j++) {
-            _data[i][j] = pTileData[valueIndex++];
+            _elevationData[i][j] = pTileData[valueIndex++];
         }
     }
 
@@ -84,20 +84,12 @@ TerrainTile::TerrainTile(const QByteArray& byteArray)
 
 TerrainTile::~TerrainTile()
 {
-    if (!_data) {
-        return;
-    }
 
-    for (unsigned i = 0; i < static_cast<unsigned>(_tileInfo.gridSizeLat); i++) {
-        delete[] _data[i];
-    }
-
-    delete[] _data;
 }
 
 double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
-    if (!_isValid || !_data) {
+    if (!_isValid) {
         qCWarning(TerrainTileLog) << this << "Request for elevation, but tile is invalid.";
         return qQNaN();
     }
@@ -116,7 +108,13 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         return qQNaN();
     }
 
-    const auto elevation = _data[latIndex][lonIndex];
+    if (latIndex >= _elevationData.size() || lonIndex >= _elevationData[latIndex].size()) {
+        qCWarning(TerrainTileLog).noquote() << this << "Internal error: _elevationData size inconsistent _tileInfo << coordinate" << coordinate 
+            << "\n\t_tillIndo.gridSizeLat: " << _tileInfo.gridSizeLat << " _tileInfo.gridSizeLon: " << _tileInfo.gridSizeLon
+            << "\n\t_data.size(): " << _elevationData.size() << " _elevationData[latIndex].size(): " << _elevationData[latIndex].size();
+        return qQNaN();
+    }
+    const auto elevation = _elevationData[latIndex][lonIndex];
 
     // Print warning if elevation is outside min/max of tile meta data
     if (elevation < _tileInfo.minElevation) {
