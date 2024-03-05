@@ -161,7 +161,7 @@ VideoEnabled {
 }
 
 HEADERS += \
-    $$PWD/KLVDecoder.h
+    $$PWD/KLVMetadata.h
 
 SOURCES += \
-    $$PWD/KLVDecoder.cpp
+    $$PWD/KLVMetadata.cpp

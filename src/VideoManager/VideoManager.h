@@ -56,6 +56,7 @@ public:
     Q_PROPERTY(bool             decoding                READ    decoding                                    NOTIFY decodingChanged)
     Q_PROPERTY(bool             recording               READ    recording                                   NOTIFY recordingChanged)
     Q_PROPERTY(QSize            videoSize               READ    videoSize                                   NOTIFY videoSizeChanged)
+    Q_PROPERTY(uint64_t         lastKlvTimestamp        READ    lastKlvTimestamp                            NOTIFY klvTimestampChanged)
 
     virtual bool        hasVideo            ();
     virtual bool        isGStreamer         ();
@@ -86,6 +87,10 @@ public:
     QSize videoSize(void) {
         const quint32 size = _videoSize;
         return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
+    }
+
+    uint64_t lastKlvTimestamp(void) {
+        return _lastKlvTimestamp;
     }
 
 // FIXME: AV: they should be removed after finishing multiple video stream support
@@ -129,6 +134,7 @@ signals:
     void recordingChanged           ();
     void recordingStarted           ();
     void videoSizeChanged           ();
+    void klvTimestampChanged        ();
 
 protected slots:
     void _videoSourceChanged        ();
@@ -171,6 +177,7 @@ protected:
     QAtomicInteger<bool>    _streaming              = false;
     QAtomicInteger<bool>    _decoding               = false;
     QAtomicInteger<bool>    _recording              = false;
+    uint64_t                _lastKlvTimestamp       = 0;
     QAtomicInteger<quint32> _videoSize              = 0;
     VideoSettings*          _videoSettings          = nullptr;
     QString                 _uvcVideoSourceID;

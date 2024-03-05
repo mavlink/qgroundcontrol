@@ -20,7 +20,7 @@
 #include <QUrl>
 #include <QDateTime>
 #include <QSysInfo>
-#include <KLVDecoder.h>
+#include <KLVMetadata.h>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -764,13 +764,15 @@ GstVideoReceiver::_makeSource(const QString& uri)
     bool isTcpMPEGTS= uri.contains("tcp://",    Qt::CaseInsensitive);
     bool isUdpMPEGTS= uri.contains("mpegts://", Qt::CaseInsensitive);
 
-    GstElement* source  = nullptr;
-    GstElement* buffer  = nullptr;
-    GstElement* tsdemux = nullptr;
-    GstElement* parser  = nullptr;
-    GstElement* bin     = nullptr;
-    GstElement* srcbin  = nullptr;
-    GstElement* appsink = nullptr;
+    GstElement* source     = nullptr;
+    GstElement* buffer     = nullptr;
+    GstElement* tsdemux    = nullptr;
+    GstElement* parser     = nullptr;
+    GstElement* bin        = nullptr;
+    GstElement* srcbin     = nullptr;
+    GstElement* appsink    = nullptr;
+    GstElement* videoQueue = nullptr;
+    GstElement* klvQueue   = nullptr;
 
     do {
         QUrl url(uri);
@@ -841,23 +843,46 @@ GstVideoReceiver::_makeSource(const QString& uri)
 
             gst_bin_add(GST_BIN(bin), tsdemux);
 
+            // Create appsink for receiving metadata and a queue before it as pipeline will be split
             if ((appsink = gst_element_factory_make("appsink", nullptr)) == nullptr) {
                 qCCritical(VideoReceiverLog) << "gst_element_factory_make('appsink') failed";
                 break;
             }
+            if ((klvQueue = gst_element_factory_make("queue", nullptr)) == nullptr) {
+                qCCritical(VideoReceiverLog) << "gst_element_factory_make('queue') failed";
+                break;
+            }
 
+
+            if ((videoQueue = gst_element_factory_make("queue", nullptr)) == nullptr) {
+                qCCritical(VideoReceiverLog) << "gst_element_factory_make('queue') failed";
+                break;
+            }
+
+            g_object_set(appsink, "sync", false, nullptr);
             g_object_set(appsink, "emit-signals", true, nullptr);
             g_signal_connect(appsink, "new-sample", G_CALLBACK(_onNewMedatada), this);
 
+            gst_bin_add_many(GST_BIN(bin), klvQueue, videoQueue, appsink, nullptr);
 
-            gst_bin_add(GST_BIN(bin), appsink);
-            gst_object_ref(appsink);
-
-
+            // Link source to tsdemux
             if (!gst_element_link(source, tsdemux)) {
                 qCCritical(VideoReceiverLog) << "gst_element_link() failed";
                 break;
             }
+
+            // Link queue and appsink. Queue will be linked to tsdemux when the pad is available
+            if (!gst_element_link(klvQueue, appsink)) {
+                qCCritical(VideoReceiverLog) << "gst_element_link() failed";
+                break;
+            }
+
+            // Link queue and parser. Queue will be linked to tsdemux when the pad is available
+            if (!gst_element_link(videoQueue, parser)) {
+                qCCritical(VideoReceiverLog) << "gst_element_link() failed";
+                break;
+            }
+
 
             source = tsdemux;
         }
@@ -887,8 +912,8 @@ GstVideoReceiver::_makeSource(const QString& uri)
             }
         } else if (tsdemux != nullptr) {
             // If the stream type is mpeg-ts and demuxer was created, the stream will be splitted into metadata and video here
-            g_signal_connect(tsdemux, "pad-added", G_CALLBACK(_linkMedatadaPad), appsink);
-            g_signal_connect(source, "pad-added", G_CALLBACK(_linkVideoPad), parser);
+            g_signal_connect(tsdemux, "pad-added", G_CALLBACK(_linkMedatadaPad), klvQueue);
+            g_signal_connect(source, "pad-added", G_CALLBACK(_linkVideoPad), videoQueue);
         } else {
             g_signal_connect(source, "pad-added", G_CALLBACK(_linkVideoPad), parser);
         }
@@ -915,6 +940,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
     if (tsdemux != nullptr) {
         gst_object_unref(tsdemux);
         tsdemux = nullptr;
+        source = nullptr;
     }
 
     if (buffer != nullptr) {
@@ -924,11 +950,6 @@ GstVideoReceiver::_makeSource(const QString& uri)
 
     if (source != nullptr) {
         gst_object_unref(source);
-        source = nullptr;
-    }
-
-    if (appsink != nullptr) {
-        gst_object_unref(appsink);
         source = nullptr;
     }
 
@@ -1605,7 +1626,7 @@ GstVideoReceiver::_videoSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer u
 
 //                    seg->start = buf->pts;
 
-//                    gst_pad_send_event(pad, gst_event_new_segment(seg));
+//                    gst_pad_send_event(parecordingStartedd, gst_event_new_segment(seg));
 
 //                    gst_segment_free(seg);
 //                    seg = nullptr;
@@ -1687,8 +1708,7 @@ gboolean GstVideoReceiver::_padHasMetadataCaps(GstPad* pad) {
 
 
 GstFlowReturn GstVideoReceiver::_onNewMedatada(GstElement *sink, gpointer user_data) {
-    GstVideoReceiver* self = static_cast<GstVideoReceiver *>(user_data);
-    Q_UNUSED(self);
+    GstVideoReceiver* pThis = static_cast<GstVideoReceiver *>(user_data);
 
     GstSample *sample;
 
@@ -1703,20 +1723,19 @@ GstFlowReturn GstVideoReceiver::_onNewMedatada(GstElement *sink, gpointer user_d
             GstMapInfo map;
             gst_buffer_map(gstBuffer, &map, GST_MAP_READ);
 
-            qDebug() << "KLV packet received";
-            auto decoder = KLVDecoder();
-            decoder.decode(map.data, map.size);
-            auto allValues = decoder.getAllMetadata();
+            qCDebug(VideoReceiverLog) << "KLV packet received";
+            auto metadata = KLVMetadata(map.data, map.size);
+            auto allValues = metadata.getAllMetadata();
 
-            auto timestamp = decoder.getTimestamp();
+            auto timestamp = metadata.getTimestamp();
             if (timestamp.has_value()) {
-                qDebug() << "Timestamp: " << timestamp.value();
+                qCDebug(VideoReceiverLog) << "Timestamp: " << timestamp.value();
             }
 
-            auto missionID = decoder.getMissionID();
-            if (missionID.has_value()) {
-                qDebug() << "Mission id: " << missionID.value();
-            }
+            // Emit the signal with newly received metadata
+            pThis->_dispatchSignal([&]() {
+                emit pThis->klvMetadataReceived(metadata);
+            });
 
             gst_sample_unref(sample);
             return GST_FLOW_OK;
