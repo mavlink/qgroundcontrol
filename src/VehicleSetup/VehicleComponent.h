@@ -28,6 +28,8 @@ class AutoPilotPlugin;
 class VehicleComponent : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
     Q_PROPERTY(QString  name                    READ name                   CONSTANT)
     Q_PROPERTY(QString  description             READ description            CONSTANT)

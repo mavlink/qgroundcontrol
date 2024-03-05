@@ -16,7 +16,8 @@
 class Autotune : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     explicit Autotune(Vehicle *vehicle);

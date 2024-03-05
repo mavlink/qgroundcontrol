@@ -51,6 +51,8 @@ class OsmParser : public QObject
     };
 
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
     // Q_PROPERTY(float buildingLevelHeight READ buildingLevelHeight WRITE setBuildingLevelHeight NOTIFY buildingLevelHeightChanged)
 

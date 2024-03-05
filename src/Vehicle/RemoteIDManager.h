@@ -26,6 +26,8 @@ class QGCPositionManager;
 class RemoteIDManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     RemoteIDManager(Vehicle* vehicle);

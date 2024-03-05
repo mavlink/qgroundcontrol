@@ -27,6 +27,7 @@ Q_MOC_INCLUDE("MissionController.h")
 class TerrainProfile : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     TerrainProfile(QQuickItem *parent = nullptr);

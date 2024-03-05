@@ -83,6 +83,7 @@ signals:
 class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     ParameterEditorController(void);

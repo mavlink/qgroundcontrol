@@ -29,6 +29,8 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 class QGCVideoStreamInfo : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t* si);
@@ -63,6 +65,8 @@ private:
 class MavlinkCameraControl : public FactGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     friend class QGCCameraParamIO;
 
 public:

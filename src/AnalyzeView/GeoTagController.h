@@ -77,6 +77,7 @@ private:
 class GeoTagController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 public:
     GeoTagController();
     ~GeoTagController();

@@ -14,6 +14,7 @@ class Viewer3DSettings;
 class CityMapGeometry : public QQuick3DGeometry
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(QString modelName READ modelName WRITE setModelName NOTIFY modelNameChanged)
     Q_PROPERTY(OsmParser* osmParser READ osmParser WRITE setOsmParser NOTIFY osmParserChanged)
 

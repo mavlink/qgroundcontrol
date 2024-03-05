@@ -51,6 +51,8 @@ private:
 class LogReplayLink : public LinkInterface
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     LogReplayLink(SharedLinkConfigurationPtr& config);
@@ -139,6 +141,8 @@ private:
 class LogReplayLinkController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     Q_PROPERTY(LogReplayLink*   link            READ link               WRITE setLink               NOTIFY linkChanged)

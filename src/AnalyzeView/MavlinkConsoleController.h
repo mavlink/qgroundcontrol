@@ -25,6 +25,7 @@ class Vehicle;
 class MavlinkConsoleController : public QStringListModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     MavlinkConsoleController();

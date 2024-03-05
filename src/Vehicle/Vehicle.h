@@ -110,7 +110,8 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 class Vehicle : public FactGroup
 {
     Q_OBJECT
-
+    // QML_ELEMENT
+    // QML_UNCREATABLE("")
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
     friend class VehicleBatteryFactGroup;           // Allow VehicleBatteryFactGroup to call _addFactGroup

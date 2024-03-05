@@ -12,11 +12,14 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 // A bounding "cube" for small surface areas (doesn't take in consideration earth's curvature)
 // Coordinate system makes NW Up Left Bottom (0,0,0) and SE Bottom Right Top (y,x,z)
 class QGCGeoBoundingCube : public QObject {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     QGCGeoBoundingCube(QObject* parent = nullptr);
 

@@ -45,6 +45,8 @@ class MissionCommandTreeTest;
 class MissionCommandTree : public QGCTool
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest = false);

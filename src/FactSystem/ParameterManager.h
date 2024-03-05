@@ -32,7 +32,8 @@ class ParameterEditorController;
 class ParameterManager : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     friend class ParameterEditorController;
 
 public:

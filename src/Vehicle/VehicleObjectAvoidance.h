@@ -20,6 +20,8 @@ class Vehicle;
 class VehicleObjectAvoidance : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     VehicleObjectAvoidance(Vehicle* vehicle, QObject* parent = nullptr);
 

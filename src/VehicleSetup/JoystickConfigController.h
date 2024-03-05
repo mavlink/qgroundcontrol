@@ -32,6 +32,7 @@ namespace Ui {
 class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
 
     //friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
 

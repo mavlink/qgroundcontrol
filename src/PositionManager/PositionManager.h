@@ -11,7 +11,7 @@
 
 #include <QGeoPositionInfoSource>
 #include <QNmeaPositionInfoSource>
-
+#include <QtQmlIntegration/QtQmlIntegration>
 #include <QVariant>
 
 #include "QGCToolbox.h"
@@ -19,6 +19,8 @@
 
 class QGCPositionManager : public QGCTool {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     static constexpr size_t MinHorizonalAccuracyMeters = 100;

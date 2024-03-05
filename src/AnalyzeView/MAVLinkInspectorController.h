@@ -179,6 +179,8 @@ private:
 /// MAVLink message charting controller
 class MAVLinkChartController : public QObject {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     MAVLinkChartController(MAVLinkInspectorController* parent, int index);
 
@@ -241,6 +243,7 @@ private:
 class MAVLinkInspectorController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 public:
     MAVLinkInspectorController();
     ~MAVLinkInspectorController();

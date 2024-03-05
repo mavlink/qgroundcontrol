@@ -36,6 +36,8 @@ class MissionController;
 class MissionItem : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     MissionItem(QObject* parent = nullptr);

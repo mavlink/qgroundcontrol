@@ -21,6 +21,7 @@
 class QGCMapCircle : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     QGCMapCircle(QObject* parent = nullptr);

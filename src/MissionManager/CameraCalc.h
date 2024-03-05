@@ -18,6 +18,8 @@ class PlanMasterController;
 class CameraCalc : public CameraSpec
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent = nullptr);

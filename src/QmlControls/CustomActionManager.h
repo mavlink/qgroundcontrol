@@ -14,6 +14,7 @@
 class CustomActionManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(QmlObjectListModel*  actions     READ  actions     NOTIFY  actionsChanged)
     Q_PROPERTY(bool                 hasActions  READ  hasActions  NOTIFY  actionsChanged)

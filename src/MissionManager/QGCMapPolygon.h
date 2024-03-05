@@ -23,6 +23,8 @@
 class QGCMapPolygon : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     QGCMapPolygon(QObject* parent = nullptr);

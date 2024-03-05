@@ -21,6 +21,8 @@ class InstrumentValueData;
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     FactValueGrid(QQuickItem *parent = nullptr);

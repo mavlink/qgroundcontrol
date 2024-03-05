@@ -31,6 +31,7 @@ namespace Ui {
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     ESP8266ComponentController      ();

@@ -18,6 +18,8 @@ class Vehicle;
 class TrajectoryPoints : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     TrajectoryPoints(Vehicle* vehicle, QObject* parent = nullptr);

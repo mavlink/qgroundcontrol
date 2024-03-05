@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #define MAVLINK_USE_MESSAGE_INFO
 #define MAVLINK_EXTERNAL_RX_STATUS  // Single m_mavlink_status instance is in QGCApplication.cc
@@ -51,6 +52,8 @@ extern mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 class QGCMAVLink : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    // QML_SINGLETON
 
 public:
     // Creating an instance of QGCMAVLink is only meant to be used for the Qml Singleton

@@ -34,6 +34,8 @@ class TerrainAtCoordinateQuery;
 class VisualMissionItem : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     VisualMissionItem(PlanMasterController* masterController, bool flyView);

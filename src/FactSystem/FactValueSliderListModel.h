@@ -10,13 +10,15 @@
 #pragma once
 
 #include <QAbstractListModel>
-
+#include <QtQmlIntegration/QtQmlIntegration>
 #include "Fact.h"
 
 /// Provides a list model of values for incrementing/decrementing the value of a Fact
 class FactValueSliderListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     FactValueSliderListModel(Fact& fact, QObject* parent = nullptr);

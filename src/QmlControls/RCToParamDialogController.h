@@ -11,12 +11,13 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
-
+#include <QtQmlIntegration/QtQmlIntegration>
 #include "FactSystem.h"
 
 class RCToParamDialogController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     
 public:
     RCToParamDialogController(void);

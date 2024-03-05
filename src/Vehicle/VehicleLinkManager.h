@@ -27,6 +27,8 @@ class VehicleLinkManagerTest;
 class VehicleLinkManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
     friend class Vehicle;
     friend class VehicleLinkManagerTest;

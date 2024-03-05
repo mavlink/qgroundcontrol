@@ -27,6 +27,8 @@ class SimulatedCameraControl;
 class QGCCameraManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();

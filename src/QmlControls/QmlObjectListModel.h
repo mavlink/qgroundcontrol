@@ -12,10 +12,13 @@
 #define QmlObjectListModel_H
 
 #include <QAbstractListModel>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class QmlObjectListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     QmlObjectListModel(QObject* parent = nullptr);

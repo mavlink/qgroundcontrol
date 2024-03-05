@@ -13,11 +13,14 @@
 #include <QList>
 #include <QGeoCoordinate>
 #include <QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 /// Routines for loading polygons or polylines from KML or SHP files.
 class ShapeFileHelper : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    // QML_SINGLETON
 
 public:
     enum ShapeType {

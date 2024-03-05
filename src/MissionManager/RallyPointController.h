@@ -24,6 +24,8 @@ class GeoFenceManager;
 class RallyPointController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     RallyPointController(PlanMasterController* masterController, QObject* parent = nullptr);

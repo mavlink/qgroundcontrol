@@ -25,6 +25,8 @@ class GeoFenceManager;
 class GeoFenceController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     GeoFenceController(PlanMasterController* masterController, QObject* parent = nullptr);

@@ -42,6 +42,8 @@ Q_MOC_INCLUDE("MissionCommandTree.h")
 class QGroundControlQmlGlobal : public QGCTool
 {
     Q_OBJECT
+    QML_ELEMENT
+    // QML_SINGLETON
 
 public:
     QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox);

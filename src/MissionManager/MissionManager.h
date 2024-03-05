@@ -16,6 +16,8 @@ Q_DECLARE_LOGGING_CATEGORY(MissionManagerLog)
 class MissionManager : public PlanManager
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     MissionManager(Vehicle* vehicle);

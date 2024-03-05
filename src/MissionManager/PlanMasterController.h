@@ -25,6 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 class PlanMasterController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     
 public:
     PlanMasterController(QObject* parent = nullptr);

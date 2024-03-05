@@ -13,7 +13,7 @@
 
 #include <QObject>
 #include <QUrl>
-
+#include <QtQmlIntegration/QtQmlIntegration>
 #include "QGCLoggingCategory.h"
 
 Q_DECLARE_LOGGING_CATEGORY(QGCFileDialogControllerLog)
@@ -21,6 +21,7 @@ Q_DECLARE_LOGGING_CATEGORY(QGCFileDialogControllerLog)
 class QGCFileDialogController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     /// Return all file in the specified path which match the specified extension

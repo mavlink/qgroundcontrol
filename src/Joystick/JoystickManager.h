@@ -25,6 +25,8 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 class JoystickManager : public QGCTool
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     JoystickManager(QGCApplication* app, QGCToolbox* toolbox);

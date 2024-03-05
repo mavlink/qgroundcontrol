@@ -18,6 +18,7 @@
 #include <QSharedPointer>
 #include <QDebug>
 #include <QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include <memory>
 
@@ -36,6 +37,8 @@ Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
 class LinkInterface : public QThread
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
     friend class LinkManager;
 

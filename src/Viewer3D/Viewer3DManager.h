@@ -14,7 +14,7 @@ class SettingsManager;
 class Viewer3DManager : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
     Q_PROPERTY(OsmParser* osmParser MEMBER _osmParser CONSTANT)
     Q_PROPERTY(Viewer3DQmlBackend* qmlBackend MEMBER _qmlBackend CONSTANT)
 

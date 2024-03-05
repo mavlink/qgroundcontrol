@@ -26,6 +26,9 @@
 class ScreenToolsController : public QQuickItem
 {
     Q_OBJECT
+    QML_ELEMENT
+    // QML_SINGLETON
+
 public:
     ScreenToolsController();
 

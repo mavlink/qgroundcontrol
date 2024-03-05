@@ -34,6 +34,7 @@
 class FirmwareUpgradeController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     
 public:
         typedef enum {

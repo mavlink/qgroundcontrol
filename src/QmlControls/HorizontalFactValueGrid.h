@@ -19,6 +19,7 @@ class InstrumentValueData;
 class HorizontalFactValueGrid : public FactValueGrid
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     HorizontalFactValueGrid(QQuickItem *parent = nullptr);

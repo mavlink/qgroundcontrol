@@ -15,6 +15,7 @@
 class CustomAction: public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
     Q_PROPERTY(QString label   READ label   CONSTANT)
 

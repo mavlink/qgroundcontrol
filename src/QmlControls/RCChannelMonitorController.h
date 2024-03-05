@@ -20,6 +20,7 @@
 class RCChannelMonitorController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     RCChannelMonitorController(void);

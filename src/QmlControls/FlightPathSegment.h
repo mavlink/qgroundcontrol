@@ -22,6 +22,8 @@ Q_DECLARE_LOGGING_CATEGORY(FlightPathSegmentLog)
 class FlightPathSegment : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     enum SegmentType {

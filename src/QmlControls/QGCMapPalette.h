@@ -13,6 +13,7 @@
 
 #include <QObject>
 #include <QColor>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 /*!
  QGCMapPalette is a variant of QGCPalette which is used to hold colors used for display over
@@ -39,6 +40,7 @@
 class QGCMapPalette : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     
     Q_PROPERTY(bool lightColors READ lightColors WRITE setLightColors NOTIFY paletteChanged)
 

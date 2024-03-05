@@ -43,6 +43,8 @@ typedef QHash<VisualItemPair, FlightPathSegment*> FlightPathSegmentHashTable;
 class MissionController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     MissionController(PlanMasterController* masterController, QObject* parent = nullptr);

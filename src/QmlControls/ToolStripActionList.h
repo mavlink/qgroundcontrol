@@ -11,10 +11,12 @@
 
 #include <QObject>
 #include <QQmlListProperty>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class ToolStripActionList : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     
 public:
     ToolStripActionList(QObject* parent = nullptr);
