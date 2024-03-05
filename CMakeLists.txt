@@ -95,8 +95,8 @@ qt_policy(
     SET QTP0002 NEW
 )
 
-# set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
-# set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml" CACHE STRING "Extra QML Import Paths" FORCE)
+set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
+set(QML_IMPORT_PATH ${CMAKE_SOURCE_DIR}/qml ${CMAKE_BINARY_DIR}/imports CACHE STRING "Extra QML Import Paths" FORCE)
 
 #######################################################
 #                QML Configuration
@@ -143,7 +143,6 @@ add_compile_definitions(
 
 include(Git)
 message(STATUS "QGroundControl version: ${APP_VERSION_STR}")
-# set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0)
 
 #######################################################
 #                QGroundControl Resources
@@ -173,7 +172,7 @@ endif()
 
 if(WIN32)
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc)
-elseif(APPLE)
+elseif(MACOS)
     set(MACOSX_BUNDLE_ICON_FILE macx.icns)
     set(app_icon_macos "${CMAKE_SOURCE_DIR}/resources/icons/macx.icns")
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
@@ -186,11 +185,21 @@ endif()
 
 qt_add_executable(${PROJECT_NAME} ${QGC_RESOURCES})
 
-if(APPLE)
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+        QT_RESOURCE_PREFIX "/qgc"
+)
+
+if(MACOS)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/deploy/mac/MacOSXBundleInfo.plist.in
+    )
+elseif(IOS)
+    set_target_properties(${PROJECT_NAME}
+       PROPERTIES
+           QT_IOS_LAUNCH_SCREEN ${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib
     )
 elseif(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -200,27 +209,17 @@ elseif(ANDROID)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             QT_ANDROID_ABIS ${ANDROID_ABI}
-            #QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS_APP}"
             QT_ANDROID_MIN_SDK_VERSION 26
             QT_ANDROID_TARGET_SDK_VERSION 33
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
-            #QT_ANDROID_SDK_BUILD_TOOLS_REVISION 34.0.0
             QT_ANDROID_VERSION_NAME ${APP_VERSION_STR}
-            #QT_ANDROID_VERSION_CODE 0.1
-            #QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}/ui/qml # ${CMAKE_BINARY_DIR}/qml
-            #QT_ANDROID_DEPLOY_RELEASE
-            #QT_ANDROID_KEYSTORE_PATH
-            #QT_ANDROID_KEYSTORE_ALIAS
-            #QT_ANDROID_KEYSTORE_STORE_PASS
-            #QT_ANDROID_KEYSTORE_KEY_PASS
-            #QT_ANDROID_SIGN_APK
-            #QT_ENABLE_VERBOSE_DEPLOYMENT
-            #QT_HOST_PATH
-            #QT_PATH_ANDROID_ABI_arm64-v8a
+            # QT_ANDROID_VERSION_CODE 5.0
+            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}/src
     )
 
-elseif(LINUX)
-
+    if(CMAKE_BUILD_TYPE STREQUAL "Release" AND ANDROID_KEYSTORE_PASSWORD)
+        set(QT_ANDROID_SIGN_APK TRUE)
+    endif()
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
