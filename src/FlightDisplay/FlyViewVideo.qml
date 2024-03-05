@@ -132,10 +132,10 @@ Item {
                 currentScaleMode = (currentScaleMode + 1) % numScaleModes;
             }
 
-            let x0 = Math.floor(Math.max(0, target_canvas.rect_center_x - target_canvas.rect_width / 2));
-            let y0 = Math.floor(Math.max(0, target_canvas.rect_center_y - target_canvas.rect_height / 2));
-            let x1 = Math.floor(Math.min(width, target_canvas.rect_center_x + target_canvas.rect_width / 2));
-            let y1 = Math.floor(Math.min(height, target_canvas.rect_center_y + target_canvas.rect_height / 2));
+            let x0 = Math.floor(Math.max(0, targetCanvas.rectCenterX - targetCanvas.rectWidth / 2));
+            let y0 = Math.floor(Math.max(0, targetCanvas.rectCenterY - targetCanvas.rectHeight / 2));
+            let x1 = Math.floor(Math.min(width, targetCanvas.rectCenterX + targetCanvas.rectWidth / 2));
+            let y1 = Math.floor(Math.min(height, targetCanvas.rectCenterY + targetCanvas.rectHeight / 2));
 
             //calculate offset between video stream rect and background (black stripes)
             let offset_x = (parent.width - videoStreaming.getWidth()) / 2
@@ -155,10 +155,12 @@ Item {
 
 
             //use point message if rectangle is very small
-            if (target_canvas.rect_width < 10 && target_canvas.rect_height < 10) {
+            if (targetCanvas.rectWidth < 10 && targetCanvas.rectHeight < 10) {
                 let pt  = Qt.point((rec_start_x + x1) / 2, (y0 + y1) / 2)
                 videoStreaming._camera.startTracking(pt, radius / videoStreaming.getWidth())
             } else {
+                let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
+                console.log("Latest timestamp in js: " + latestFrameTimestamp);
                 let rec = Qt.rect(x0, y0, x1 - rect_start_x, y1 - y0)
                 videoStreaming._camera.startTracking(rec)
             }
@@ -171,32 +173,32 @@ Item {
             console.log(wheel)
             console.log(wheel.angleDelta)
             if (currentScaleMode == scaleModeHorizontal || currentScaleMode == scaleModeBoth) {
-                target_canvas.rect_width += Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER);
+                targetCanvas.rectWidth += Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER);
             }
             if (currentScaleMode == scaleModeVertical || currentScaleMode == scaleModeBoth) {
-                target_canvas.rect_height += Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER);
+                targetCanvas.rectHeight += Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER);
             }
 
-            target_canvas.requestPaint();
+            targetCanvas.requestPaint();
         }
 
 
         onPositionChanged: (mouse) => {
-            target_canvas.rect_center_x = mouse.x;
-            target_canvas.rect_center_y = mouse.y;
-            target_canvas.requestPaint();
+            targetCanvas.rectCenterX = mouse.x;
+            targetCanvas.rectCenterY = mouse.y;
+            targetCanvas.requestPaint();
         }
 
         Canvas {
-            property int rect_center_x
-            property int rect_center_y
+            property int rectCenterX
+            property int rectCenterY
 
-            property int rect_width: 100
-            property int rect_height: 100
+            property int rectWidth: 100
+            property int rectHeight: 100
 
             anchors.fill: parent
 
-            id: target_canvas
+            id: targetCanvas
             onPaint: {
                 const BORDER_WIDTH = 3;
                 const BORDER_COLOR = '#11BB11';
@@ -208,19 +210,19 @@ Item {
                    return;
                }
 
-                let rect_start_x = Math.floor(Math.max(0, rect_center_x - rect_width / 2));
-                let rect_start_y = Math.floor(Math.max(0, rect_center_y - rect_height / 2));
-                let rect_end_x = Math.floor(Math.min(width, rect_center_x + rect_width / 2));
-                let rect_end_y = Math.floor(Math.min(height, rect_center_y + rect_height / 2));
+                let rectStartX = Math.floor(Math.max(0, rectCenterX - rectWidth / 2));
+                let rectStartY = Math.floor(Math.max(0, rectCenterY - rectHeight / 2));
+                let rectEndX = Math.floor(Math.min(width, rectCenterX + rectWidth / 2));
+                let rectEndY = Math.floor(Math.min(height, rectCenterY + rectHeight / 2));
 
                 ctx.strokeStyle = BORDER_COLOR;
                 ctx.lineWidth = BORDER_WIDTH;
                 ctx.beginPath();
-                ctx.moveTo(rect_start_x, rect_start_y);
-                ctx.lineTo(rect_start_x, rect_end_y);
-                ctx.lineTo(rect_end_x, rect_end_y);
-                ctx.lineTo(rect_end_x, rect_start_y);
-                ctx.lineTo(rect_start_x, rect_start_y);
+                ctx.moveTo(rectStartX, rectStartY);
+                ctx.lineTo(rectStartX, rectEndY);
+                ctx.lineTo(rectEndX, rectEndY);
+                ctx.lineTo(rectEndX, rectStartY);
+                ctx.lineTo(rectStartX, rectStartY);
                 ctx.stroke();
 
             }
