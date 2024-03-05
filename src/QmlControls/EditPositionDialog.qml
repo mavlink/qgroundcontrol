@@ -27,8 +27,12 @@ QGCPopupDialog {
     property alias coordinate:                  controller.coordinate
     property bool  showSetPositionFromVehicle:  true
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
+    property real _margin:          ScreenTools.defaultFontPixelWidth / 2
+    property real _textFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
+    property bool _showGeographic:  coordinateSystemCombo.comboBox.currentIndex === 0
+    property bool _showUTM:         coordinateSystemCombo.comboBox.currentIndex === 1
+    property bool _showMGRS:        coordinateSystemCombo.comboBox.currentIndex === 2
+    property bool _showVehicle:     coordinateSystemCombo.comboBox.currentIndex === 3
 
     EditPositionDialogController {
         id: controller
@@ -37,101 +41,110 @@ QGCPopupDialog {
     }
 
     ColumnLayout {
-        spacing: ScreenTools.defaultFontPixelHeight / 2
+        spacing: _margin
 
-        SettingsGroupLayout {
-            heading:   qsTr("Geographic Position")
+        LabelledComboBox {
+            id:                 coordinateSystemCombo
+            Layout.fillWidth:   true
+            label:              qsTr("Coordinate System")
+            model:              showSetPositionFromVehicle && globals.activeVehicle ? 
+                                    [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference"), qsTr("Vehicle Position") ] :
+                                    [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference") ]
+        }
 
-            LabelledFactTextField {
-                label:              qsTr("Latitude")
-                fact:               controller.latitude
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Latitude")
+            fact:               controller.latitude
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showGeographic
+        }
 
-            LabelledFactTextField {
-                label:              qsTr("Longitude")
-                fact:               controller.longitude
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Longitude")
+            fact:               controller.longitude
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showGeographic
+        }
 
-            LabelledButton {
-                label:               qsTr("Set position")
-                buttonText:          qsTr("Move")
-                onClicked: {
-                    controller.setFromGeo()
-                    root.close()
-                }
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showGeographic
+            onClicked: {
+                controller.setFromGeo()
+                root.close()
             }
         }
 
-        SettingsGroupLayout {
-            heading:   qsTr("UTM Position")
+        LabelledFactTextField {
+            label:              qsTr("Zone")
+            fact:               controller.zone
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            LabelledFactTextField {
-                label:              qsTr("Zone")
-                fact:               controller.zone
-                Layout.fillWidth:   true
-            }
+        LabelledFactComboBox {
+            label:              qsTr("Hemisphere")
+            fact:               controller.hemisphere
+            indexModel:         false
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            LabelledFactComboBox {
-                label:              qsTr("Hemisphere")
-                fact:               controller.hemisphere
-                indexModel:         false
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Easting")
+            fact:               controller.easting
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            LabelledFactTextField {
-                label:              qsTr("Easting")
-                fact:               controller.easting
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Northing")
+            fact:               controller.northing
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            LabelledFactTextField {
-                label:              qsTr("Northing")
-                fact:               controller.northing
-                Layout.fillWidth:   true
-            }
-
-            LabelledButton {
-                label:               qsTr("Set position")
-                buttonText:          qsTr("Move")
-                onClicked: {
-                    controller.setFromUTM()
-                    root.close()
-                }
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showUTM
+            onClicked: {
+                controller.setFromUTM()
+                root.close()
             }
         }
 
-        SettingsGroupLayout {
-            heading:  qsTr("MGRS Position")
+        LabelledFactTextField {
+            label:              qsTr("MGRS")
+            fact:               controller.mgrs
+            visible:            _showMGRS
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+        }
 
-            LabelledFactTextField {
-                label:              qsTr("MGRS")
-                fact:               controller.mgrs
-                Layout.fillWidth:   true
-            }
-
-            LabelledButton {
-                label:               qsTr("Set position")
-                buttonText:          qsTr("Move")
-                onClicked: {
-                    controller.setFromMGRS()
-                    root.close()
-                }
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showMGRS
+            onClicked: {
+                controller.setFromMGRS()
+                root.close()
             }
         }
 
-        SettingsGroupLayout {
-            heading:    qsTr("Set From Vehicle Position")
-            visible:    showSetPositionFromVehicle
-
-            LabelledButton {
-                label:               qsTr("Set position")
-                buttonText:          qsTr("Move")
-                onClicked: {
-                    controller.setFromVehicle()
-                    root.close()
-                }
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showVehicle
+            onClicked: {
+                controller.setFromVehicle()
+                root.close()
             }
         }
     }
