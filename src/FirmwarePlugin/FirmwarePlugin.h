@@ -380,6 +380,8 @@ protected:
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
 
+    const QVariantList& _toolIndicators(const Vehicle* vehicle);
+
 protected:
     QVariantList _toolIndicatorList;
     QVariantList _modeIndicatorList;
