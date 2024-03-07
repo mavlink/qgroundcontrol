@@ -628,7 +628,7 @@ ApplicationWindow {
                 if (criticalVehicleMessagePopup.dropMessageIndicatorOnClose) {
                     criticalVehicleMessagePopup.dropMessageIndicatorOnClose = false;
                     QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages();
-                    flyView.toolbar.dropMessageIndicatorTool();
+                    flyView.dropMessageIndicatorTool();
                 }
             }
         }
