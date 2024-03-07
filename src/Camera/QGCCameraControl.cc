@@ -2385,7 +2385,7 @@ QGCCameraControl::setTrackingEnabled(bool set)
 
 //-----------------------------------------------------------------------------
 void
-QGCCameraControl::startTracking(QRectF rec)
+QGCCameraControl::startTracking(QRectF rec, uint64_t timestamp)
 {
     if(_trackingMarquee != rec) {
         _trackingMarquee = rec;
@@ -2394,7 +2394,12 @@ QGCCameraControl::startTracking(QRectF rec)
                                   << static_cast<float>(rec.x()) << ", "
                                   << static_cast<float>(rec.y()) << "] - ["
                                   << static_cast<float>(rec.x() + rec.width()) << ", "
-                                  << static_cast<float>(rec.y() + rec.height()) << "]";
+                                  << static_cast<float>(rec.y() + rec.height()) << "]"
+                                  << "Timestamp: " << timestamp;
+
+        // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
+        uint32_t timestampLow = static_cast<uint32_t>(timestamp);
+        uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
 
         _vehicle->sendMavCommand(_compID,
                                  MAV_CMD_CAMERA_TRACK_RECTANGLE,
@@ -2402,7 +2407,9 @@ QGCCameraControl::startTracking(QRectF rec)
                                  static_cast<float>(rec.x()),
                                  static_cast<float>(rec.y()),
                                  static_cast<float>(rec.x() + rec.width()),
-                                 static_cast<float>(rec.y() + rec.height()));
+                                 static_cast<float>(rec.y() + rec.height()),
+                                 *reinterpret_cast<float *>(&timestampLow),
+                                 *reinterpret_cast<float *>(&timestampHigh));
     }
 }
 
@@ -2430,14 +2437,20 @@ QGCCameraControl::startTracking(QPointF point, double radius)
 
 //-----------------------------------------------------------------------------
 void
-QGCCameraControl::stopTracking()
+QGCCameraControl::stopTracking(uint64_t timestamp)
 {
     qCDebug(CameraControlLog) << "Stop Tracking";
+
+    // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
+    uint32_t timestampLow = static_cast<uint32_t>(timestamp);
+    uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
 
     //-- Stop Tracking
     _vehicle->sendMavCommand(_compID,
                              MAV_CMD_CAMERA_STOP_TRACKING,
-                             true);
+                             true,
+                             *reinterpret_cast<float *>(&timestampLow),
+                             *reinterpret_cast<float *>(&timestampHigh));
 
     //-- Stop Sending Tracking Status
     _vehicle->sendMavCommand(_compID,

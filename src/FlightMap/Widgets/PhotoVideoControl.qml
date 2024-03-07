@@ -307,7 +307,9 @@ Rectangle {
                     onClicked: {
                         _mavlinkCamera.trackingEnabled = !_mavlinkCamera.trackingEnabled;
                         if(!_mavlinkCamera.trackingEnabled) {
-                            !_mavlinkCamera.stopTracking()
+                            let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
+                            console.log("Latest timestamp in js: " + latestFrameTimestamp);
+                            !_mavlinkCamera.stopTracking(latestFrameTimestamp);
                         }
                     }
                 }
