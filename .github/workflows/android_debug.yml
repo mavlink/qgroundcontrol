@@ -125,5 +125,6 @@ jobs:
               -DANDROID_ABI=${{ matrix.eabi }} \
               -DANDROID_PLATFORM=android-23 \
               -DBUILD_TESTING:BOOL=OFF \
-              -DQT_HOST_PATH:PATH=${{ env.QT_HOST_PATH }}
+              -DQT_HOST_PATH:PATH=${{ env.QT_HOST_PATH }} \
+              -DQT_DEBUG_FIND_PACKAGE=ON
             cmake --build ${{ runner.temp }}/shadow_build_dir/ --target all
