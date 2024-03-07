@@ -70,6 +70,10 @@ Item {
         toolstrip.adjustToolInset(newToolInset)
     }
 
+    function dropMessageIndicatorTool() {
+        toolbar.dropMessageIndicatorTool();
+    }
+
     QGCToolInsets {
         id:                     _toolInsets
         leftEdgeBottomInset:    _pipView.leftEdgeBottomInset
