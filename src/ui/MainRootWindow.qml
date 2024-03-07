@@ -118,12 +118,10 @@ ApplicationWindow {
     }
 
     function showPlanView() {
-        flyView.visible = false
         planView.visible = true
     }
 
     function showFlyView() {
-        flyView.visible = true
         planView.visible = false
     }
 
