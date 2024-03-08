@@ -19,7 +19,7 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
-#include "JoystickMavCommand.h"
+#include "CustomActionManager.h"
 
 // JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
@@ -303,7 +303,7 @@ protected:
     QStringList                     _availableActionTitles;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
-    QList<JoystickMavCommand> _customMavCommands;
+    CustomActionManager _customActionManager;
 
     static const float  _minAxisFrequencyHz;
     static const float  _maxAxisFrequencyHz;
