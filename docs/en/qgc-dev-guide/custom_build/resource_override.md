@@ -1,8 +1,11 @@
 # Resource Overrides
 
-A "resource" in QGC source code terminology is anything found in the [qgroundcontrol.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgroundcontrol.qrc) and [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc) file. By overriding a resource you can replace it with your own version of it. This could be as simple as a single icon, or as complex as replacing an entire Vehicle Setup page of qml ui code.
+A "resource" in QGC source code terminology is anything found in Qt resources file:
+* [qgroundcontrol.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgroundcontrol.qrc) and 
+* [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc) file. 
+* [InstrumentValueIcons.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/resources/InstrumenValueIcons/InstrumentValueIcons.qrc)
 
-Be aware that using resource overrides does not isolate you from upstream QGC changes like the plugin architecture does. In a sense you are directly modify the upstream QGC resources used by the main code.
+By overriding a resource you can replace it with your own version of it. This could be as simple as a single icon, or as complex as replacing an entire Vehicle Setup page of qml ui code. Be aware that using resource overrides does not isolate you from upstream QGC changes like the plugin architecture does. In a sense you are directly modify the upstream QGC resources used by the main code.
 
 ## Exclusion Files
 
@@ -14,7 +17,7 @@ You must include the custom version of the overriden resouce in you custom build
 
 ## Generating the new modified versions of standard QGC resource file
 
-This is done using the `updateqrc.py` python script. It will read the upstream `qgroundcontrol.qrc` and `qgcresources.qrc` file and the corresponding exclusion files and output new versions of these files in your custom directory. These new versions will not have the resources you specified to exclude in them. The build system for custom builds uses these generated files (if they exist) to build with instead of the upstream versions. The generated version of these file should be added to your repo. Also whenever you update the upstream portion of QGC in your custom repo you must re-run `python updateqrc.py` to generate new version of the files since the upstream resources may have changed.
+This is done using the resource update python scripts:`python updateqrc.py` and `python updateinstrumentqrc.py`. It will read the upstream resouce files and the corresponding exclusion files and output new versions of these files in your custom directory. These new versions will not have the resources you specified to exclude in them. The build system for custom builds uses these generated files (if they exist) to build with instead of the upstream versions. The generated version of these file should be added to your repo. Also whenever you update the upstream portion of QGC in your custom repo you must re-run the scripts to generate new versions of the files since the upstream resources may have changed.
 
 ## Custom Build Example
 
