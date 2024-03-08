@@ -21,6 +21,8 @@ qt_add_library(Viewer3D STATIC
     Viewer3DTerrainTexture.cc
     Viewer3DTileQuery.h
     Viewer3DTileQuery.cc
+    OsmParserThread.cc
+    OsmParserThread.h
 
 )
 

@@ -9,7 +9,7 @@ Viewer3DTileReply::Viewer3DTileReply(int zoomLevel, int tileX, int tileY, int ma
     _timeoutCounter = 0;
     _timeoutTimer = new QTimer(this);
     _networkManager = new QNetworkAccessManager(this);
-    _networkManager->setTransferTimeout(5000);
+    _networkManager->setTransferTimeout(9000);
     // connect(_networkManager, &QNetworkAccessManager::finished, this, &Viewer3DTileReply::requestFinished);
 
     _tile.x = tileX;
@@ -20,7 +20,7 @@ Viewer3DTileReply::Viewer3DTileReply(int zoomLevel, int tileX, int tileY, int ma
     _mapId = mapId;
     prepareDownload();
 
-    _timeoutTimer->start(6000);
+    _timeoutTimer->start(10000);
     connect(_timeoutTimer, &QTimer::timeout, this, &Viewer3DTileReply::timeoutTimerEvent);
 }
 
@@ -58,12 +58,16 @@ void Viewer3DTileReply::requestError()
 
 void Viewer3DTileReply::timeoutTimerEvent()
 {
-    if(_timeoutCounter > 3){
-        disconnect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
-        disconnect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
-        disconnect(_timeoutTimer, &QTimer::timeout, this, &Viewer3DTileReply::timeoutTimerEvent);
-        emit tileGiveUp(_tile);
+    if(_timeoutCounter > 5){
+        _timeoutCounter = 0;
+        _networkManager->setTransferTimeout(14000);
         _timeoutTimer->stop();
+        _timeoutTimer->start(15000);
+        // disconnect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::requestFinished);
+        // disconnect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::requestError);
+        // disconnect(_timeoutTimer, &QTimer::timeout, this, &Viewer3DTileReply::timeoutTimerEvent);
+        // emit tileGiveUp(_tile);
+        // _timeoutTimer->stop();
     }else if(_tile.data.isEmpty()){
         emit tileError(_tile);
         prepareDownload();

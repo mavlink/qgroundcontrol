@@ -622,6 +622,7 @@ HEADERS += \
     src/Viewer3D/Viewer3DTerrainGeometry.h \
     src/Viewer3D/Viewer3DTerrainTexture.h \
     src/Viewer3D/Viewer3DTileQuery.h \
+    src/Viewer3D/OsmParserThread.h \
 
 AndroidBuild {
     HEADERS += \
@@ -884,6 +885,7 @@ SOURCES += \
     src/Viewer3D/Viewer3DTerrainGeometry.cc \
     src/Viewer3D/Viewer3DTerrainTexture.cc \
     src/Viewer3D/Viewer3DTileQuery.cc \
+    src/Viewer3D/OsmParserThread.cc \
 
 DebugBuild {
 SOURCES += \
