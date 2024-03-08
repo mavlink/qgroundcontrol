@@ -110,9 +110,6 @@ Item {
     property Fact cal_acc0_id:      controller.getParameterFact(-1, "CAL_ACC0_ID")
 
     property Fact sens_board_rot:   controller.getParameterFact(-1, "SENS_BOARD_ROT")
-    property Fact sens_board_x_off: controller.getParameterFact(-1, "SENS_BOARD_X_OFF")
-    property Fact sens_board_y_off: controller.getParameterFact(-1, "SENS_BOARD_Y_OFF")
-    property Fact sens_board_z_off: controller.getParameterFact(-1, "SENS_BOARD_Z_OFF")
     property Fact sens_dpres_off:   controller.getParameterFact(-1, "SENS_DPRES_OFF")
 
     // Id > = signals compass available, rot < 0 signals internal compass
