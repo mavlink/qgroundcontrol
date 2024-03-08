@@ -91,7 +91,9 @@ Node {
                                                     "itemName": getItemName(_missionItem),
                                                     "index": _missionItem.sequenceNumber,
                                                 });
-                _missionItemPrevious = _missionItem;
+                if(getItemName(_missionItem) === "L" || getItemName(_missionItem) === "W"){
+                    _missionItemPrevious = _missionItem;
+                }
             }
         }
     }
