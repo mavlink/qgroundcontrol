@@ -5,8 +5,6 @@ qt_add_library(Joystick STATIC
 	Joystick.h
 	JoystickManager.cc
 	JoystickManager.h
-	JoystickMavCommand.cc
-	JoystickMavCommand.h
 )
 
 if(ANDROID)

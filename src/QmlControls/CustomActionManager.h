@@ -7,31 +7,38 @@
  *
  ****************************************************************************/
 
+#pragma once
+
 #include <QObject>
 #include <QmlObjectListModel.h>
 
+#include "Fact.h"
 
+/// Loads the specified action file and provides access to the actions it contains.
+/// Action files are loaded from the default CustomActions directory.
+/// The actions file name is filename only, no path.
 class CustomActionManager : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QmlObjectListModel*  actions     READ  actions     NOTIFY  actionsChanged)
-    Q_PROPERTY(bool                 hasActions  READ  hasActions  NOTIFY  actionsChanged)
+    Q_PROPERTY(Fact*                actionFileNameFact  READ  actionFileNameFact WRITE setActionFileNameFact    NOTIFY actionFileNameFactChanged)
+    Q_PROPERTY(QmlObjectListModel*  actions             READ  actions                                           CONSTANT)
 
 public:
-    CustomActionManager(void);
+    CustomActionManager(QObject* parent = nullptr);
+    CustomActionManager(Fact* actionFileNameFact, QObject* parent = nullptr);
 
-    QmlObjectListModel* actions(void) { return &_actions; }
-    bool hasActions(void) { return  _actions.count() > 0; }
+    Fact*               actionFileNameFact      (void) { return _actionFileNameFact; }
+    void                setActionFileNameFact   (Fact* actionFileNameFact);
+    QmlObjectListModel* actions                 (void) { return &_actions; }
 
 signals:
-    void actionsChanged();
+    void actionFileNameFactChanged();
 
 private slots:
-    void _loadFromJson(QVariant path);
+    void _loadActionsFile(void);
 
 private:
+    Fact*               _actionFileNameFact;
     QmlObjectListModel  _actions;
-    bool _hasActions;
-
 };
