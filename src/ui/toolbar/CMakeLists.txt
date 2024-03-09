@@ -16,6 +16,7 @@ add_custom_target(UiToolbarQml
         PlanViewToolBar.qml
 		RCRSSIIndicator.qml
 		RemoteIDIndicator.qml
+		RemoteIDIndicatorPage.qml
 		SignalStrength.qml
 		TelemetryRSSIIndicator.qml
 )
