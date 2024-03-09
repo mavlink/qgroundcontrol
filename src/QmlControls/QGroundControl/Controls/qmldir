@@ -106,6 +106,7 @@ RallyPointItemEditor                    1.0 RallyPointItemEditor.qml
 RallyPointMapVisuals                    1.0 RallyPointMapVisuals.qml
 RCChannelMonitor                        1.0 RCChannelMonitor.qml
 RCToParamDialog                         1.0 RCToParamDialog.qml
+RemoteIDIndicatorPage                   1.0 RemoteIDIndicatorPage.qml
 QCRoundButton                           1.0 QGCRoundButton.qml
 SectionHeader                           1.0 SectionHeader.qml
 SetupPage                               1.0 SetupPage.qml
