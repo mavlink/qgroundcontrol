@@ -72,7 +72,6 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "AppMessages.h"
-#include "SimulatedPosition.h"
 #include "PositionManager.h"
 #include "FollowMe.h"
 #include "MissionCommandTree.h"

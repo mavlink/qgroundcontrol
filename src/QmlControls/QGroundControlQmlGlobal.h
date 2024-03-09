@@ -12,7 +12,6 @@
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "SettingsFact.h"
-#include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "ADSBVehicleManager.h"
