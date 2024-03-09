@@ -107,6 +107,7 @@
         <file alias="QGroundControl/Controls/LabelledButton.qml">src/QmlControls/LabelledButton.qml</file>
         <file alias="QGroundControl/Controls/LabelledComboBox.qml">src/QmlControls/LabelledComboBox.qml</file>
         <file alias="QGroundControl/Controls/LabelledLabel.qml">src/QmlControls/LabelledLabel.qml</file>
+        <file alias="QGroundControl/Controls/RemoteIDIndicatorPage.qml">src/ui/toolbar/RemoteIDIndicatorPage.qml</file>
         <file alias="QGroundControl/Controls/SettingsGroupLayout.qml">src/QmlControls/SettingsGroupLayout.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueValue.qml">src/QmlControls/InstrumentValueValue.qml</file>
