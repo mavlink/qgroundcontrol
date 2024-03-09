@@ -308,12 +308,12 @@
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewInsetViewer.qml">src/FlightDisplay/FlyViewInsetViewer.qml</file>
         <file alias="Viewer3D/Viewer3D.qml">src/Viewer3D/Viewer3D/Viewer3D.qml</file>
-        <file alias="Viewer3D/qmldir">src/Viewer3D/Viewer3D/qmldir</file>
+        <file alias="Viewer3D/qmldir">src/QmlControls/Viewer3D/qmldir</file>
         <file alias="Viewer3D/Models3D/CameraLightModel.qml">src/Viewer3D/Viewer3D/Models3D/CameraLightModel.qml</file>
         <file alias="Viewer3D/Models3D/Viewer3DModel.qml">src/Viewer3D/Viewer3D/Models3D/Viewer3DModel.qml</file>
-        <file alias="Viewer3D/Models3D/qmldir">src/Viewer3D/Viewer3D/Models3D/qmldir</file>
+        <file alias="Viewer3D/Models3D/qmldir">src/QmlControls/Viewer3D/Models3D/qmldir</file>
         <file alias="Viewer3D/Models3D/Drones/DroneModelDjiF450.qml">src/Viewer3D/Viewer3D/Models3D/Drones/DroneModelDjiF450.qml</file>
-        <file alias="Viewer3D/Models3D/Drones/qmldir">src/Viewer3D/Viewer3D/Models3D/Drones/qmldir</file>
+        <file alias="Viewer3D/Models3D/Drones/qmldir">src/QmlControls/Viewer3D/Models3D/Drones/qmldir</file>
         <file alias="Viewer3D/Models3D/Drones/Djif450/DroneModel_arm_1/node.mesh">src/Viewer3D/Viewer3D/Models3D/Drones/Djif450/DroneModel_arm_1/node.mesh</file>
         <file alias="Viewer3D/Models3D/Drones/Djif450/DroneModel_arm_1/DroneModel_arm_1.qml">src/Viewer3D/Viewer3D/Models3D/Drones/Djif450/DroneModel_arm_1/DroneModel_arm_1.qml</file>
         <file alias="Viewer3D/Models3D/Drones/Djif450/DroneModel_arm_2/node.mesh">src/Viewer3D/Viewer3D/Models3D/Drones/Djif450/DroneModel_arm_2/node.mesh</file>
