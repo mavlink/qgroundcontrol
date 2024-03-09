@@ -1,0 +1,40 @@
+{
+    "version":      1,
+    "fileType":     "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "gimbalRoll",
+    "shortDesc":        "Gimbal Roll",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "gimbalPitch",
+    "shortDesc":        "Gimbal Pitch",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "gimbalYaw",
+    "shortDesc":        "Gimbal Yaw",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "gimbalAzimuth",
+    "shortDesc":        "Azimuth",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "deviceId",
+    "shortDesc":        "gimbal device Id",
+    "type":             "uint8"
+}
+]
+}
