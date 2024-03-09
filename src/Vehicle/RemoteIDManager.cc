@@ -111,6 +111,12 @@ void RemoteIDManager::_handleArmStatus(mavlink_message_t& message)
         return;
     }
 
+    if (!_available) {
+        _available = true;
+        emit availableChanged();
+        qCDebug(RemoteIDManagerLog) << "Receiving ODID_ARM_STATUS for first time. Mavlink Open Drone ID support is available.";
+    }
+
     // We set the targetsystem
     if (_targetSystem != message.sysid) {
         _targetSystem = message.sysid;
