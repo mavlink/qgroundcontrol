@@ -5,6 +5,7 @@ add_custom_target(UiToolbarQml
 		FlightModeMenuIndicator.qml
         FlyViewToolBar.qml
 		GPSIndicator.qml
+		GPSIndicatorPage.qml
 		GPSRTKIndicator.qml
 		JoystickIndicator.qml
 		LinkIndicator.qml
@@ -14,6 +15,7 @@ add_custom_target(UiToolbarQml
 		MultiVehicleSelector.qml
         PlanViewToolBar.qml
 		RCRSSIIndicator.qml
+		RemoteIDIndicator.qml
 		SignalStrength.qml
 		TelemetryRSSIIndicator.qml
 )
