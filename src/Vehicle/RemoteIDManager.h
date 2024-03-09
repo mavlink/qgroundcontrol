@@ -30,13 +30,14 @@ class RemoteIDManager : public QObject
 public:
     RemoteIDManager(Vehicle* vehicle);
 
-    Q_PROPERTY (bool    armStatusGood       READ armStatusGood      NOTIFY armStatusGoodChanged)
-    Q_PROPERTY (QString armStatusError      READ armStatusError     NOTIFY armStatusErrorChanged)
-    Q_PROPERTY (bool    commsGood           READ commsGood          NOTIFY commsGoodChanged)
-    Q_PROPERTY (bool    gcsGPSGood          READ gcsGPSGood         NOTIFY gcsGPSGoodChanged)
-    Q_PROPERTY (bool    basicIDGood         READ basicIDGood        NOTIFY basicIDGoodChanged)
-    Q_PROPERTY (bool    emergencyDeclared   READ emergencyDeclared  NOTIFY emergencyDeclaredChanged)
-    Q_PROPERTY (bool    operatorIDGood      READ operatorIDGood     NOTIFY operatorIDGoodChanged)
+    Q_PROPERTY(bool    available            READ available          NOTIFY availableChanged)             ///< true: the vehicle supports Mavlink Open Drone ID messages
+    Q_PROPERTY(bool    armStatusGood        READ armStatusGood      NOTIFY armStatusGoodChanged)
+    Q_PROPERTY(QString armStatusError       READ armStatusError     NOTIFY armStatusErrorChanged)
+    Q_PROPERTY(bool    commsGood            READ commsGood          NOTIFY commsGoodChanged)
+    Q_PROPERTY(bool    gcsGPSGood           READ gcsGPSGood         NOTIFY gcsGPSGoodChanged)
+    Q_PROPERTY(bool    basicIDGood          READ basicIDGood        NOTIFY basicIDGoodChanged)
+    Q_PROPERTY(bool    emergencyDeclared    READ emergencyDeclared  NOTIFY emergencyDeclaredChanged)
+    Q_PROPERTY(bool    operatorIDGood       READ operatorIDGood     NOTIFY operatorIDGoodChanged)
 
 
     Q_INVOKABLE void checkOperatorID(const QString& operatorID);
@@ -45,6 +46,7 @@ public:
     // Declare emergency
     Q_INVOKABLE void setEmergency(bool declare);
 
+    bool    available           (void) const { return _available; }
     bool    armStatusGood       (void) const { return _armStatusGood; }
     QString armStatusError      (void) const { return _armStatusError; }
     bool    commsGood           (void) const { return _commsGood; }
@@ -67,6 +69,7 @@ public:
     };
 
 signals:
+    void availableChanged();
     void armStatusGoodChanged();
     void armStatusErrorChanged();
     void commsGoodChanged();
@@ -107,6 +110,7 @@ private:
     QGCPositionManager* _positionManager;
 
     // Flags ODID
+    bool    _available = false;
     bool    _armStatusGood;
     QString _armStatusError;
     bool    _commsGood;
