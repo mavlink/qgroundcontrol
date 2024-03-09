@@ -1,0 +1,19 @@
+{
+    "version":  1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "air temperature",
+    "shortDesc":        "the air temperature as measured with Met sensors",
+    "type":             "float",
+    "default":          0
+},
+{
+    "name":             "relative humidity",
+    "shortDesc":        "the air temperature as measured with Met sensors",
+    "type":             "float",
+    "default":          0
+}
+]
+}

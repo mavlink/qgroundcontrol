@@ -11,6 +11,7 @@
 
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
+#include "DataBalancer.h"
 
 class VehicleTemperatureFactGroup : public FactGroup
 {
@@ -22,10 +23,14 @@ public:
     Q_PROPERTY(Fact* temperature1       READ temperature1       CONSTANT)
     Q_PROPERTY(Fact* temperature2       READ temperature2       CONSTANT)
     Q_PROPERTY(Fact* temperature3       READ temperature3       CONSTANT)
+    /* TD test */
+    Q_PROPERTY(Fact* temperature4       READ temperature4       CONSTANT)
 
     Fact* temperature1 () { return &_temperature1Fact; }
     Fact* temperature2 () { return &_temperature2Fact; }
     Fact* temperature3 () { return &_temperature3Fact; }
+    /* TD test */
+    Fact* temperature4 () { return &_temperature4Fact; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
@@ -33,6 +38,8 @@ public:
     static const char* _temperature1FactName;
     static const char* _temperature2FactName;
     static const char* _temperature3FactName;
+    /* TD test */
+    static const char* _temperature4FactName;
 
     static const char* _settingsGroup;
 
@@ -44,8 +51,11 @@ private:
     void _handleScaledPressure3 (mavlink_message_t& message);
     void _handleHighLatency     (mavlink_message_t& message);
     void _handleHighLatency2    (mavlink_message_t& message);
+    DataBalancer balancer;
 
     Fact            _temperature1Fact;
     Fact            _temperature2Fact;
     Fact            _temperature3Fact;
+    /* TD test */
+    Fact            _temperature4Fact;
 };

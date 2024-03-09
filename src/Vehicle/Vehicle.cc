@@ -115,6 +115,7 @@ const char* Vehicle::_terrainFactGroupName =            "terrain";
 const char* Vehicle::_hygrometerFactGroupName =         "hygrometer";
 const char* Vehicle::_generatorFactGroupName =          "generator";
 const char* Vehicle::_efiFactGroupName =                "efi";
+//const char* Vehicle::_METFactGroupName =               "MET";  //findMe
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -180,6 +181,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hygrometerFactGroup          (this)
     , _generatorFactGroup           (this)
     , _efiFactGroup                 (this)
+    //, _METFactGroup                 (this)  //findMe
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
@@ -472,6 +474,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
     _addFactGroup(&_efiFactGroup,               _efiFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
+    //_addFactGroup(&_METFactGroup,               _METFactGroupName);  //findMe
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
@@ -641,6 +644,135 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
 
+    // check the message ID before anything can touch it
+    static int existsForBreakpoint = 0;
+
+    // we also want to decode the first 512 bytes into 32 byte numbers
+    // need to bypass some limitations of the Qt Creator debugger - it has problems showing contents of pointers to arrays
+    float messageFloats1 = 0;
+    //float messageFloats2 = 0;
+    float messageFloats3 = 0;
+    float messageFloats4 = 0;
+    //float messageFloats5 = 0;
+    //float messageFloats6 = 0;
+    //float messageFloats7 = 0;
+    //float messageFloats8 = 0;
+    //float messageFloats9 = 0;
+    //float messageFloats10 = 0;
+    //float messageFloats11 = 0;
+    //float messageFloats12 = 0;
+    //float messageFloats13 = 0;
+    //float messageFloats14 = 0;
+    //float messageFloats15 = 0;
+    //float messageFloats16 = 0;
+    //uint32_t messageInt1 = 0;
+    uint32_t messageInt2 = 0;
+    //uint32_t messageInt3 = 0;
+    //uint32_t messageInt4 = 0;
+    uint32_t messageInt5 = 0;
+    uint32_t messageInt6 = 0;
+    uint32_t messageInt7 = 0;
+    uint32_t messageInt8 = 0;
+    uint32_t messageInt9 = 0;
+    uint32_t messageInt10 = 0;
+    uint32_t messageInt11 = 0;
+    uint32_t messageInt12 = 0;
+    uint32_t messageInt13 = 0;
+    uint32_t messageInt14 = 0;
+    uint32_t messageInt15 = 0;
+    uint32_t messageInt16 = 0;
+    uint8_t messageByte1 = 0;
+    uint32_t helper = 0;
+
+    //float (messageFloats[16]) = {0};
+    //int messageInts[16] = {0};
+
+    if (message.msgid == 0)
+    {
+        // this is the catch for the heartbeat message
+        existsForBreakpoint = existsForBreakpoint + 0;
+    }
+
+    if (message.msgid == MAVLINK_MSG_ID_CASS_SENSOR_RAW)
+    {
+        // the message does make it to here
+        existsForBreakpoint++; // how many CASS formatted messages we've found
+
+        // each uint64_t contains the bits for two floats
+        // I extract the first 16 floats because when I was examining it in the debugger nother after those looked interesting
+        // helper exists because I am too stupid to figure out how to put it all on one line. Not so sure it matters, though
+        // you can also do this with type punning, but I wanted to keep these modifications contained to this file
+        // some are okay as ints, other make the most sense as floats
+        helper = static_cast<uint32_t>((message.payload64[0] & 0xFFFFFFFF00000000) >> 32);
+        messageFloats1 = *reinterpret_cast<float*>(&helper);
+
+        //helper = static_cast<uint32_t>(message.payload64[0] & 0xFFFFFFFF);
+        //messageFloats2 = *reinterpret_cast<float*>(&helper);
+        messageInt2 = static_cast<uint32_t>(message.payload64[0] & 0xFFFFFFFF);
+
+        helper = static_cast<uint32_t>((message.payload64[1] & 0xFFFFFFFF00000000) >> 32);
+        messageFloats3 = *reinterpret_cast<float*>(&helper);
+
+        helper = static_cast<uint32_t>(message.payload64[1] & 0xFFFFFFFF);
+        messageFloats4 = *reinterpret_cast<float*>(&helper);
+
+        //helper = static_cast<uint32_t>((message.payload64[2] & 0xFFFFFFFF00000000) >> 32);
+        //messageFloats5 = *reinterpret_cast<float*>(&helper);
+        messageInt5 = static_cast<uint32_t>((message.payload64[2] & 0xFFFFFFFF00000000) >> 32);
+
+        //helper = static_cast<uint32_t>(message.payload64[2] & 0xFFFFFFFF);
+        //messageFloats6 = *reinterpret_cast<float*>(&helper);
+        messageInt6 = helper = static_cast<uint32_t>(message.payload64[2] & 0xFFFFFFFF);
+
+        //helper = static_cast<uint32_t>((message.payload64[3] & 0xFFFFFFFF00000000) >> 32);
+        //messageFloats7 = *reinterpret_cast<float*>(&helper);
+        messageInt7 = static_cast<uint32_t>((message.payload64[3] & 0xFFFFFFFF00000000) >> 32);
+
+        //helper = static_cast<uint32_t>(message.payload64[3] & 0xFFFFFFFF);
+        //messageFloats8 = *reinterpret_cast<float*>(&helper);
+        messageInt8 = static_cast<uint32_t>(message.payload64[3] & 0xFFFFFFFF);
+        messageByte1 = static_cast<uint8_t>(messageInt8 & 0xFF); // last byte of this is the message type
+
+        //helper = static_cast<uint32_t>((message.payload64[4] & 0xFFFFFFFF00000000) >> 32);
+        //messageFloats9 = *reinterpret_cast<float*>(&helper);
+        messageInt9 = static_cast<uint32_t>((message.payload64[4] & 0xFFFFFFFF00000000) >> 32);
+
+        //helper = static_cast<uint32_t>(message.payload64[4] & 0xFFFFFFFF);
+        //messageFloats10 = *reinterpret_cast<float*>(&helper);
+        messageInt10 = static_cast<uint32_t>(message.payload64[4] & 0xFFFFFFFF);
+
+        //helper = static_cast<uint32_t>((message.payload64[5] & 0xFFFFFFFF00000000) >> 32);
+        //messageFloats11 = *reinterpret_cast<float*>(&helper);
+        messageInt11 = static_cast<uint32_t>((message.payload64[5] & 0xFFFFFFFF00000000) >> 32);
+
+        //helper = static_cast<uint32_t>(message.payload64[5] & 0xFFFFFFFF);
+        //messageFloats12 = *reinterpret_cast<float*>(&helper);
+        messageInt12 = static_cast<uint32_t>(message.payload64[5] & 0xFFFFFFFF);
+
+        //helper = static_cast<uint32_t>((message.payload64[6] & 0xFFFFFFFF00000000) >> 32);
+        //messageFloats13 = *reinterpret_cast<float*>(&helper);
+        messageInt13 = static_cast<uint32_t>((message.payload64[6] & 0xFFFFFFFF00000000) >> 32);
+
+        //helper = static_cast<uint32_t>(message.payload64[6] & 0xFFFFFFFF);
+        //messageFloats14 = *reinterpret_cast<float*>(&helper);
+        messageInt14 = static_cast<uint32_t>(message.payload64[6] & 0xFFFFFFFF);
+
+        //helper = static_cast<uint32_t>((message.payload64[7] & 0xFFFFFFFF00000000) >> 32);
+        //messageFloats15 = *reinterpret_cast<float*>(&helper);
+        messageInt15 = static_cast<uint32_t>((message.payload64[7] & 0xFFFFFFFF00000000) >> 32);
+
+        //helper = static_cast<uint32_t>(message.payload64[7] & 0xFFFFFFFF);
+        //messageFloats16 = *reinterpret_cast<float*>(&helper);
+        messageInt16 = static_cast<uint32_t>(message.payload64[7] & 0xFFFFFFFF);
+
+        if (messageFloats1 < 275.5 && messageByte1 == 0)
+        {
+            existsForBreakpoint = existsForBreakpoint + 0;
+        }
+
+        existsForBreakpoint = existsForBreakpoint + 0;
+    }
+
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
         return;
@@ -665,11 +797,27 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
+
+
+    //auto groupOfFacts = factGroups();
+    /* Looks like one of the factGroups is killing the message, so we need to find out which one */
+
+
     for (FactGroup* factGroup : factGroups()) {
+
+        if (message.msgid == MAVLINK_MSG_ID_CASS_SENSOR_RAW)
+        {
+            existsForBreakpoint = existsForBreakpoint + 0;
+        }
+
         factGroup->handleMessage(this, message);
     }
 
     switch (message.msgid) {
+    case MAVLINK_MSG_ID_CASS_SENSOR_RAW:
+        existsForBreakpoint++;
+        //our message vanishes before reaching here
+        break;
     case MAVLINK_MSG_ID_HOME_POSITION:
         _handleHomePosition(message);
         break;
