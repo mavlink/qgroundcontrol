@@ -161,11 +161,6 @@ void RemoteIDManager::_handleArmStatus(mavlink_message_t& message)
 // Function that sends messages periodically
 void RemoteIDManager::_sendMessages()
 {
-    // We only send RemoteID messages if we have it enabled in General settings
-    if (!_settings->enable()->rawValue().toBool()) {
-        return;
-    }
-
     // We always try to send System
     _sendSystem();
 

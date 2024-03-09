@@ -17,7 +17,6 @@ DECLARE_SETTINGGROUP(RemoteID, "RemoteID")
     qmlRegisterUncreatableType<RemoteIDSettings>("QGroundControl.SettingsManager", 1, 0, "RemoteIDSettings", "Reference only"); \
 }
 
-DECLARE_SETTINGSFACT(RemoteIDSettings,  enable)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorID)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorIDValid)
 DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorIDType)
