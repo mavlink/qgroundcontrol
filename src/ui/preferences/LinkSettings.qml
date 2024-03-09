@@ -14,13 +14,44 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
 SettingsPage {
-    property var _linkManager: QGroundControl.linkManager
+    property var _linkManager:          QGroundControl.linkManager
+    property var _autoConnectSettings:  QGroundControl.settingsManager.autoConnectSettings
 
     SettingsGroupLayout {
+        heading:        qsTr("AutoConnect")
+        visible:        _autoConnectSettings.visible
+
+        Repeater {
+            id: autoConnectRepeater
+
+            model: [ 
+                _autoConnectSettings.autoConnectPixhawk,
+                _autoConnectSettings.autoConnectSiKRadio,
+                _autoConnectSettings.autoConnectPX4Flow,
+                _autoConnectSettings.autoConnectLibrePilot,
+                _autoConnectSettings.autoConnectUDP,
+                _autoConnectSettings.autoConnectZeroConf,
+            ]
+
+            property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("Zero-Conf") ]
+
+            FactCheckBoxSlider {
+                Layout.fillWidth:   true
+                text:               autoConnectRepeater.names[index]
+                fact:               modelData
+                visible:            modelData.visible
+            }
+        }
+    }
+
+    SettingsGroupLayout {
+        heading: qsTr("Links")
+
         Repeater {
             model: _linkManager.linkConfigurations
             
