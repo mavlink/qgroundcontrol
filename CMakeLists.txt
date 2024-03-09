@@ -183,7 +183,7 @@ endif()
 #               QGroundControl Target
 #######################################################
 
-qt_add_executable(${PROJECT_NAME} ${QGC_RESOURCES})
+qt_add_executable(${PROJECT_NAME} src/main.cc ${QGC_RESOURCES})
 
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
@@ -214,7 +214,7 @@ elseif(ANDROID)
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
             QT_ANDROID_VERSION_NAME ${APP_VERSION_STR}
             # QT_ANDROID_VERSION_CODE 5.0
-            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}/src
+            QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
     )
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release" AND ANDROID_KEYSTORE_PASSWORD)
@@ -230,7 +230,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
 
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
-    target_link_libraries(qgc PRIVATE qgctest)
+    target_link_libraries(${PROJECT_NAME} PRIVATE qgctest)
 endif()
 
 #######################################################
