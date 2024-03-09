@@ -34,6 +34,8 @@ const char* AppSettings::logFileExtension =         "ulg";
 const char* AppSettings::parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
 const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
 const char* AppSettings::missionDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Missions");
+const char* AppSettings::messagesDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Messages");
+const char* AppSettings::messagesRawDirectory =     QT_TRANSLATE_NOOP("AppSettings", "Messages/Raw");
 const char* AppSettings::logDirectory =             QT_TRANSLATE_NOOP("AppSettings", "Logs");
 const char* AppSettings::videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
 const char* AppSettings::photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
@@ -236,6 +238,8 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(parameterDirectory);
         savePathDir.mkdir(telemetryDirectory);
         savePathDir.mkdir(missionDirectory);
+        savePathDir.mkdir(messagesDirectory);
+        savePathDir.mkdir(messagesRawDirectory);
         savePathDir.mkdir(logDirectory);
         savePathDir.mkdir(videoDirectory);
         savePathDir.mkdir(photoDirectory);
@@ -295,6 +299,16 @@ QString AppSettings::videoSavePath(void)
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
         return dir.filePath(videoDirectory);
+    }
+    return QString();
+}
+
+QString AppSettings::messagesRawSavePath(void)
+{
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(messagesRawDirectory);
     }
     return QString();
 }

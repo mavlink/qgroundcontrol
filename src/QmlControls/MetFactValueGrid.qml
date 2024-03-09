@@ -25,7 +25,7 @@ T.MetFactValueGrid {
     Layout.preferredWidth:  topLayout.width
     Layout.preferredHeight: topLayout.height
 
-    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
+    property real   _margins:               ScreenTools.defaultFontPixelWidth * 0.75
     property int    _rowMax:                2
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -45,8 +45,8 @@ T.MetFactValueGrid {
                     GridLayout {
                         rows:           object.count
                         columns:        2
-                        rowSpacing:     0
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth / 4
+                        rowSpacing:     _margins
+                        columnSpacing:  _margins
                         flow:           GridLayout.TopToBottom
 
                         Repeater {
@@ -55,7 +55,7 @@ T.MetFactValueGrid {
 
                             InstrumentValueLabel {
                                 Layout.fillHeight:      true
-                                Layout.alignment:       Qt.AlignRight
+                                Layout.alignment:       Qt.AlignLeft
                                 instrumentValueData:    object
                             }
                         }

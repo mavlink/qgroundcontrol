@@ -293,19 +293,17 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSettingsGroup)
 {
-    qDebug() << "Got to factValueGridCreateDefaultSettings!";
     FactValueGrid factValueGrid(defaultSettingsGroup);
 
     bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship;
-    qDebug() << "Showing default settings group:";
-    qDebug() << defaultSettingsGroup;
-    qDebug() << "MetFactValueGrid::metDataDefaultSettingsGroup:";
-    qDebug() << MetFactValueGrid::metDataDefaultSettingsGroup;
+
+    // temporary setup until correct MET facts are available
     if(defaultSettingsGroup == MetFactValueGrid::metDataDefaultSettingsGroup) {
         factValueGrid.setFontSize(FactValueGrid::MediumFontSize);
 
         factValueGrid.appendColumn();
         // need to append row for each item after the first
+        factValueGrid.appendRow();
         factValueGrid.appendRow();
         factValueGrid.appendRow();
         factValueGrid.appendRow();
@@ -318,27 +316,33 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         /* TD test */
         value->setFact("Temperature", "temperature4");
         value->setIcon("");
-        value->setText(value->fact()->shortDescription());
+        value->setText("Pressure:"/*value->fact()->shortDescription()*/);
+        value->setShowUnits(true);
+
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Temperature", "temperature2");
+        value->setIcon("");
+        value->setText("Air Temp:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact("Hygrometer", "Humidity");
         value->setIcon("");
-        value->setText(value->fact()->shortDescription());
+        value->setText("Rel Humidity:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
 
         value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact("Wind", "speed");
         // value->setIcon("");
-        value->setText(value->fact()->shortDescription());
+        value->setText("Wind Speed:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
 
         value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact("Wind", "Direction");
         // value->setIcon("");
-        value->setText(value->fact()->shortDescription());
+        value->setText("Wind Direction:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
     } else {

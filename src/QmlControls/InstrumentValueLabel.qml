@@ -29,6 +29,7 @@ ColumnLayout {
     property real   _tightHeight:               _rgFontSizeTightHeights[instrumentValueData.factValueGrid.fontSize]
     property bool   _iconVisible:               instrumentValueData.rangeType === InstrumentValueData.IconSelectRange || instrumentValueData.icon
     property var    _color:                     instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
+    property real   _fontSize:                      _rgFontSizes[instrumentValueData.factValueGrid.fontSize]
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -76,7 +77,7 @@ ColumnLayout {
     QGCLabel {
         Layout.alignment:   _verticalOrientation ? Qt.AlignHCenter : Qt.AlignVCenter
         height:             _tightHeight
-        font.pointSize:     ScreenTools.smallFontPointSize
+        font.pointSize:     _fontSize
         text:               instrumentValueData.text
         color:              _color
         opacity:            instrumentValueData.currentOpacity

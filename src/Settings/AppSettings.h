@@ -73,6 +73,7 @@ public:
     DEFINE_SETTINGFACT(apmStartMavlinkStreams)
 
     Q_PROPERTY(QString missionSavePath          READ missionSavePath            NOTIFY savePathsChanged)
+    Q_PROPERTY(QString messagesRawSavePath      READ messagesRawSavePath        NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath        READ parameterSavePath          NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath        READ telemetrySavePath          NOTIFY savePathsChanged)
     Q_PROPERTY(QString logSavePath              READ logSavePath                NOTIFY savePathsChanged)
@@ -91,6 +92,7 @@ public:
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
 
     QString missionSavePath       ();
+    QString messagesRawSavePath   ();
     QString parameterSavePath     ();
     QString telemetrySavePath     ();
     QString logSavePath           ();
@@ -120,6 +122,8 @@ public:
     static const char* parameterDirectory;
     static const char* telemetryDirectory;
     static const char* missionDirectory;
+    static const char* messagesDirectory;
+    static const char* messagesRawDirectory;
     static const char* logDirectory;
     static const char* videoDirectory;
     static const char* photoDirectory;
