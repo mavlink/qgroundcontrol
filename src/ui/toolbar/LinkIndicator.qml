@@ -20,56 +20,34 @@ import QGroundControl.Vehicle
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          primaryLinkSelector.width
+    width:          linkCombo.width
 
     property bool showIndicator: false
 
-    property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-    property var _rgLinkNames:      _activeVehicle ? _activeVehicle.vehicleLinkManager.linkNames : [ ]
-    property var _rgLinkStatus:     _activeVehicle ? _activeVehicle.vehicleLinkManager.linkStatuses : [ ]
-    property var _rgMenuItems:      [ ]
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property var    _rgLinkNames:       _activeVehicle ? _activeVehicle.vehicleLinkManager.linkNames : [ ]
+    property var    _rgLinkStatus:      _activeVehicle ? _activeVehicle.vehicleLinkManager.linkStatuses : [ ]
+    property string _primaryLinkName:   _activeVehicle ? _activeVehicle.vehicleLinkManager.primaryLinkName : ""
 
-    function updateLinkSelectionMenu() {
-        // Remove old menu items
-        var i
-        for (i = 0; i < _rgMenuItems.length; i++) {
-            linkSelectionMenu.removeItem(_rgMenuItems[i])
+    function updateComboModel() {
+        var linkModel = []
+        for (var i = 0; i < _rgLinkNames.length; i++) {
+            var linkStatus = _rgLinkStatus[i]
+            linkModel.push(_rgLinkNames[i] + (linkStatus === "" ? "" : " " + _rgLinkStatus[i]))
         }
-        _rgMenuItems.length = 0
-
-        // Add new items
-        for (i = 0; i < _rgLinkNames.length; i++) {
-            var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": _rgLinkNames[i] + " " + _rgLinkStatus[i] })
-            _rgMenuItems.push(menuItem)
-            linkSelectionMenu.insertItem(i, menuItem)
-        }
-
+        linkCombo.model = linkModel
+        linkCombo.currentIndex = -1
         showIndicator = _rgLinkNames.length > 1
     }
 
-    Component.onCompleted:  updateLinkSelectionMenu()
-    on_RgLinkNamesChanged:  updateLinkSelectionMenu()
-    on_RgLinkStatusChanged: updateLinkSelectionMenu()
+    Component.onCompleted:  updateComboModel()
+    on_RgLinkNamesChanged:  updateComboModel()
+    on_RgLinkStatusChanged: updateComboModel()
 
-    QGCLabel {
-        id:                     primaryLinkSelector
-        anchors.verticalCenter: parent.verticalCenter
-        text:                   _activeVehicle ? _activeVehicle.vehicleLinkManager.primaryLinkName : ""
-        font.pointSize:         ScreenTools.mediumFontPointSize
-        color:                  qgcPal.buttonText
-
-        MouseArea {
-            anchors.fill:   parent
-            onClicked:      linkSelectionMenu.popup()
-        }
-    }
-
-    QGCMenu { id: linkSelectionMenu }
-
-    Component {
-        id: linkSelectionMenuItemComponent
-        QGCMenuItem {
-            onTriggered: _activeVehicle.vehicleLinkManager.primaryLinkName = text
-        }
+    QGCComboBox {
+        id:             linkCombo
+        sizeToContents: true
+        alternateText:  _primaryLinkName
+        onActivated:    (index) => { _activeVehicle.vehicleLinkManager.primaryLinkName = _rgLinkNames[index]; currentIndex = -1 }
     }
 }

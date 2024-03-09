@@ -548,6 +548,8 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
         qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
         return false;
     }
+
+    return false; // Some compilers as too stupid to understand that all paths are covered
 }
 
 void LinkManager::_updateAutoConnectLinks(void)
