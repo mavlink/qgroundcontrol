@@ -18,7 +18,6 @@ public:
     RemoteIDSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
 
-    DEFINE_SETTINGFACT(enable)
     DEFINE_SETTINGFACT(operatorID)
     DEFINE_SETTINGFACT(operatorIDValid)
     DEFINE_SETTINGFACT(operatorIDType)
