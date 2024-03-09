@@ -13,8 +13,6 @@
 #include <QColor>
 #include <QThread>
 
-#include "QGCConfig.h"
-
 namespace QGC
 {
 

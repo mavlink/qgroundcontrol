@@ -22,7 +22,6 @@
 #include <dns_sd.h>
 #endif
 
-#include "QGCConfig.h"
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 

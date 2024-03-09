@@ -25,7 +25,6 @@
 // We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
 Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
 
-#include "QGCConfig.h"
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 

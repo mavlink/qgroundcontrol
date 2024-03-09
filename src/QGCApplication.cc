@@ -33,6 +33,7 @@
 #include "GStreamer.h"
 #endif
 
+#include "QGCConfig.h"
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "CmdLineOptParser.h"
