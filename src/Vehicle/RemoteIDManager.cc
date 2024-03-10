@@ -20,6 +20,9 @@ QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "RemoteIDManagerLog")
 
 #define AREA_COUNT 1
 #define AREA_RADIUS 0
+#define MAVLINK_UNKNOWN_METERS -1000.0f
+#define MAVLINK_UNKNOWN_LAT 0
+#define MAVLINK_UNKNOWN_LON 0
 #define SENDING_RATE_MSEC 1000
 #define ALLOWED_GPS_DELAY 5000
 #define RID_TIMEOUT 2500 // Messages should be arriving at 1 Hz, so we set a 2 second timeout
@@ -342,15 +345,15 @@ void RemoteIDManager::_sendSystem()
                                                     _id_or_mac_unknown,
                                                     _settings->locationType()->rawValue().toUInt(),
                                                     _settings->classificationType()->rawValue().toUInt(),
-                                                    _gcsGPSGood ? ( gcsPosition.latitude()  * 1.0e7 ) : 0, // If position not valid, send a 0
-                                                    _gcsGPSGood ? ( gcsPosition.longitude() * 1.0e7 ) : 0, // If position not valid, send a 0
+                                                    _gcsGPSGood ? ( gcsPosition.latitude()  * 1.0e7 ) : MAVLINK_UNKNOWN_LAT,
+                                                    _gcsGPSGood ? ( gcsPosition.longitude() * 1.0e7 ) : MAVLINK_UNKNOWN_LON,
                                                     AREA_COUNT,
                                                     AREA_RADIUS,
-                                                    -1000.0f,
-                                                    -1000.0f,
+                                                    MAVLINK_UNKNOWN_METERS,
+                                                    MAVLINK_UNKNOWN_METERS,
                                                     _settings->categoryEU()->rawValue().toUInt(),
                                                     _settings->classEU()->rawValue().toUInt(),
-                                                    _gcsGPSGood ? gcsPosition.altitude() : 0, // If position not valid, send a 0
+                                                    _gcsGPSGood ? gcsPosition.altitude() : MAVLINK_UNKNOWN_METERS,
                                                     _timestamp2019()), // Time stamp needs to be since 00:00:00 1/1/2019
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
