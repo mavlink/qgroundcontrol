@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(AnalyzeView STATIC
 	ExifParser.cc
@@ -34,7 +35,6 @@ target_link_libraries(AnalyzeView
 	PUBLIC
 		Qt6::Charts
 		Qt6::Location
-		Qt6::SerialPort
 		Qt6::TextToSpeech
 		Qt6::Widgets
 )
