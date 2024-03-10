@@ -82,14 +82,6 @@ public:
     bool    hasProductIdentifier;
 };
 
-class QSerialPortInfoPrivateDeleter
-{
-public:
-    static void cleanup(QSerialPortInfoPrivate *p) {
-        delete p;
-    }
-};
-
 QT_END_NAMESPACE
 
 #endif // QSERIALPORTINFO_P_H

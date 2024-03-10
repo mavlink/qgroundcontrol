@@ -1,10 +1,12 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
 qt_add_library(FactControls STATIC
     FactPanelController.cc
+	FactPanelController.h
 )
 
 add_custom_target(FactControlsQml
 	SOURCES
-		FactPanelController.h
 		AltitudeFactTextField.qml
 		FactBitmask.qml
 		FactCheckBox.qml
@@ -20,4 +22,9 @@ add_custom_target(FactControlsQml
         LabelledFactSlider.qml
 )
 
-target_link_libraries(FactControls qgc)
+target_link_libraries(FactControls
+	PUBLIC
+		qgc
+)
+
+target_include_directories(FactControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

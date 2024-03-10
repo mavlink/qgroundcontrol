@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <QtCore/QtSystemDetection>
 #ifdef Q_OS_ANDROID
     #include "qserialportinfo.h"
 #else

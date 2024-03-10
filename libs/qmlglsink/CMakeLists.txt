@@ -95,7 +95,7 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 				${GST_LINK_LIBRARIES}
 		)
 
-		target_include_directories(qmlglsink PRIVATE ${GST_INCLUDE_DIRS})
+		target_include_directories(qmlglsink PUBLIC ${GST_INCLUDE_DIRS})
 		if (MSVC)
 			target_include_directories(qmlglsink PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/windows)
 		else()

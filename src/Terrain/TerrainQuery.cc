@@ -24,6 +24,7 @@
 #include <QJsonArray>
 #include <QTimer>
 #include <QtLocation/private/qgeotilespec_p.h>
+#include <QtLocation/private/qgeotiledmapreply_p.h>
 
 #include <cmath>
 
