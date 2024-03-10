@@ -120,10 +120,6 @@
 #include "SerialLink.h"
 #endif
 
-#ifndef __mobile__
-#include "GPS/GPSManager.h"
-#endif
-
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
@@ -337,17 +333,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
-#ifndef __mobile__
-    _gpsRtkFactGroup = new GPSRTKFactGroup(this);
-   GPSManager *gpsManager = _toolbox->gpsManager();
-   if (gpsManager) {
-       connect(gpsManager, &GPSManager::onConnect,          this, &QGCApplication::_onGPSConnect);
-       connect(gpsManager, &GPSManager::onDisconnect,       this, &QGCApplication::_onGPSDisconnect);
-       connect(gpsManager, &GPSManager::surveyInStatus,     this, &QGCApplication::_gpsSurveyInStatus);
-       connect(gpsManager, &GPSManager::satelliteUpdate,    this, &QGCApplication::_gpsNumSatellites);
-   }
-#endif /* __mobile__ */
-
     _checkForNewVersion();
 }
 
@@ -413,7 +398,6 @@ void QGCApplication::_shutdown()
     // Close out all Qml before we delete toolbox. This way we don't get all sorts of null reference complaints from Qml.
     delete _qmlAppEngine;
     delete _toolbox;
-    delete _gpsRtkFactGroup;
 }
 
 QGCApplication::~QGCApplication()
@@ -889,33 +873,6 @@ bool QGCApplication::_parseVersionText(const QString& versionString, int& majorV
     }
 
     return false;
-}
-
-
-void QGCApplication::_onGPSConnect()
-{
-    _gpsRtkFactGroup->connected()->setRawValue(true);
-}
-
-void QGCApplication::_onGPSDisconnect()
-{
-    _gpsRtkFactGroup->connected()->setRawValue(false);
-}
-
-void QGCApplication::_gpsSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active)
-{
-    _gpsRtkFactGroup->currentDuration()->setRawValue(duration);
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(static_cast<double>(accuracyMM) / 1000.0);
-    _gpsRtkFactGroup->currentLatitude()->setRawValue(latitude);
-    _gpsRtkFactGroup->currentLongitude()->setRawValue(longitude);
-    _gpsRtkFactGroup->currentAltitude()->setRawValue(altitude);
-    _gpsRtkFactGroup->valid()->setRawValue(valid);
-    _gpsRtkFactGroup->active()->setRawValue(active);
-}
-
-void QGCApplication::_gpsNumSatellites(int numSatellites)
-{
-    _gpsRtkFactGroup->numSatellites()->setRawValue(numSatellites);
 }
 
 QString QGCApplication::cachedParameterMetaDataFile(void)
