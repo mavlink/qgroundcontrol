@@ -118,7 +118,7 @@ QSerialPortInfo::QSerialPortInfo(const QSerialPortInfoPrivate &dd)
 QSerialPortInfo::~QSerialPortInfo()
 {
 }
-#if 0
+
 /*! \fn void QSerialPortInfo::swap(QSerialPortInfo &other)
 
     Swaps QSerialPortInfo \a other with this QSerialPortInfo. This operation is
@@ -137,7 +137,7 @@ QSerialPortInfo& QSerialPortInfo::operator=(const QSerialPortInfo &other)
     QSerialPortInfo(other).swap(*this);
     return *this;
 }
-#endif
+
 /*!
     Returns the name of the serial port.
 

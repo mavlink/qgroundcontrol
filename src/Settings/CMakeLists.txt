@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(Settings STATIC
 	ADSBVehicleManagerSettings.cc
@@ -22,12 +23,12 @@ qt_add_library(Settings STATIC
 	FlightModeSettings.h
 	FlyViewSettings.cc
 	FlyViewSettings.h
-    MapsSettings.cc
-    MapsSettings.h
 	OfflineMapsSettings.cc
 	OfflineMapsSettings.h
 	PlanViewSettings.cc
 	PlanViewSettings.h
+	RemoteIDSettings.cc
+	RemoteIDSettings.h
 	RTKSettings.cc
 	RTKSettings.h
 	SettingsGroup.cc
@@ -38,10 +39,10 @@ qt_add_library(Settings STATIC
 	UnitsSettings.h
 	VideoSettings.cc
 	VideoSettings.h
+    MapsSettings.cc
+    MapsSettings.h
     Viewer3DSettings.cc
     Viewer3DSettings.h
-	RemoteIDSettings.h
-	RemoteIDSettings.cc
 )
 
 target_link_libraries(Settings
@@ -51,4 +52,3 @@ target_link_libraries(Settings
 )
 
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
