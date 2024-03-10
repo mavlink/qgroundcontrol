@@ -6,10 +6,10 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
 ColumnLayout {
-    id:             control    
-    spacing:        _margins / 2
-    implicitWidth:  _contentLayout.implicitWidth + (_margins * 2)
-    implicitHeight: _contentLayout.implicitHeight + (_margins * 2)
+    id:                 control    
+    spacing:            _margins / 2
+    implicitWidth:      _contentLayout.implicitWidth + (_margins * 2)
+    implicitHeight:     _contentLayout.implicitHeight + (_margins * 2)
 
     default property alias contentItem: _contentLayout.data
 
