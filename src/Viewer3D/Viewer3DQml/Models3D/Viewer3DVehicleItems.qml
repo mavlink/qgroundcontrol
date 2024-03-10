@@ -25,6 +25,7 @@ Node {
     property var  _missionController:           (_planMasterController)?(_planMasterController.missionController):(null)
     property var _viewer3DSetting:              QGroundControl.settingsManager.viewer3DSettings
     property var _altitudeBias:                 _viewer3DSetting.altitudeBias.rawValue
+    property bool _rtlActive:                   false
 
 
     function isItemAcceptable(missionItem){
@@ -67,8 +68,9 @@ Node {
     function addMissionItemsToListModel() {
         missionWaypointListModel.clear()
         var _geo2EnuCopy = goe2Enu
-        var launchItemCoordinate;
-        var _missionItemPrevious;
+        var launchItemCoordinate = null;
+        var _missionItemPrevious = null;
+        _rtlActive = false;
 
         for (var i = 0; i < _missionController.visualItems.count; i++) {
             var _missionItem = _missionController.visualItems.get(i); // list of all properties in VisualMissionItem.h and SimpleMissionItem.h
@@ -78,7 +80,8 @@ Node {
             }
             if(isItemAcceptable(_missionItem)){
                 if(isReturnToLaunchItem(_missionItem)){
-                    _geo2EnuCopy.coordinate = launchItemCoordinate;
+                    _rtlActive = true;
+                    _geo2EnuCopy.coordinate = (_vehicle.homePosition)?(_vehicle.homePosition):(_missionItem.coordinate);
                     _geo2EnuCopy.coordinate.altitude = _missionItemPrevious.altitude.value;
                 }else{
                     _geo2EnuCopy.coordinate = _missionItem.coordinate;
@@ -125,7 +128,7 @@ Node {
                 var p1 = Qt.vector3d(_geo2EnuCopy.localCoordinate.x, _geo2EnuCopy.localCoordinate.y, _geo2EnuCopy.coordinate.altitude);
 
                 if(isReturnToLaunchItem(_missionItem)){
-                    _geo2EnuCopy.coordinate = launchItemCoordinate;
+                    _geo2EnuCopy.coordinate = (_vehicle.homePosition)?(_vehicle.homePosition):(_missionItem.coordinate);;
                     _geo2EnuCopy.coordinate.altitude = _missionItemPrevious.altitude.value;
                 }else{
                     _geo2EnuCopy.coordinate = _missionItem.coordinate;
@@ -206,6 +209,16 @@ Node {
             addMissionItemsToListModel()
             addSegmentToMissionPathModel()
 
+        }
+    }
+
+    Connections {
+        target: _vehicle
+        onHomePositionChanged: {
+            if(_rtlActive){
+                addMissionItemsToListModel()
+                addSegmentToMissionPathModel()
+            }
         }
     }
 }

@@ -1,4 +1,7 @@
+add_subdirectory(Viewer3DQml)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Quick3D)
+
 
 qt_add_library(Viewer3D STATIC
     Viewer3DManager.cc
