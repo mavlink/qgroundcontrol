@@ -660,7 +660,7 @@ HEADERS += \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
-    src/GPS/RTCM/RTCMMavlink.h \
+    src/GPS/RTCMMavlink.h \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
     src/GPS/sensor_gps.h \
@@ -905,7 +905,7 @@ SOURCES += \
     src/GPS/Drivers/src/sbf.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
-    src/GPS/RTCM/RTCMMavlink.cc \
+    src/GPS/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
 }

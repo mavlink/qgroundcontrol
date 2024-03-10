@@ -9,7 +9,9 @@
 
 #include "QGroundControlQmlGlobal.h"
 #include "LinkManager.h"
-
+#ifndef __mobile__
+#include "GPSManager.h"
+#endif
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
@@ -79,7 +81,9 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
-    _gpsRtkFactGroup        = qgcApp()->gpsRtkFactGroup();
+#ifndef __mobile__
+    _gpsRtkFactGroup        = toolbox->gpsManager()->gpsRtkFactGroup();
+#endif
     _adsbVehicleManager     = toolbox->adsbVehicleManager();
     _globalPalette          = new QGCPalette(this);
 #ifndef QGC_AIRLINK_DISABLED
