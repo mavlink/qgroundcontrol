@@ -244,7 +244,7 @@ Rectangle {
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
                         radius:                 radiusFlags
-                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
+                        visible:                commsGood && _activeRID ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU) : false
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -378,43 +378,43 @@ Rectangle {
                             // In case we change from EU to FAA having the location Type to FIXED, since its not supported in FAA
                             // we need to change it to Live GNSS
                             onActivated: (index) => {
-                                if (currentIndex == RemoteIDSettings.RegionOperation.FAA && QGroundControl.settingsManager.remoteIDSettings.locationType.value != RemoteIDSettings.LocationType.LIVE)
-                                QGroundControl.settingsManager.remoteIDSettings.locationType.value = RemoteIDSettings.LocationType.LIVE
+                                if (currentIndex == RemoteIDIndicatorPage.RegionOperation.FAA && QGroundControl.settingsManager.remoteIDSettings.locationType.value != RemoteIDIndicatorPage.LocationType.LIVE)
+                                QGroundControl.settingsManager.remoteIDSettings.locationType.value = RemoteIDIndicatorPage.LocationType.LIVE
                             }
                         }
 
                         QGCLabel {
                             text:               QGroundControl.settingsManager.remoteIDSettings.classificationType.shortDescription
-                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
                             Layout.fillWidth:   true
                         }
                         FactComboBox {
                             fact:               QGroundControl.settingsManager.remoteIDSettings.classificationType
-                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
                             Layout.fillWidth:   true
                             sizeToContents:     true
                         }
 
                         QGCLabel {
                             text:               QGroundControl.settingsManager.remoteIDSettings.categoryEU.shortDescription
-                            visible:            (_classificationType == RemoteIDSettings.ClassificationType.EU) && (_regionOperation == RemoteIDSettings.RegionOperation.EU)
+                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
                             Layout.fillWidth:   true
                         }
                         FactComboBox {
                             fact:               QGroundControl.settingsManager.remoteIDSettings.categoryEU
-                            visible:            (_classificationType == RemoteIDSettings.ClassificationType.EU) && (_regionOperation == RemoteIDSettings.RegionOperation.EU)
+                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
                             Layout.fillWidth:   true
                             sizeToContents:     true
                         }
 
                         QGCLabel {
                             text:               QGroundControl.settingsManager.remoteIDSettings.classEU.shortDescription
-                            visible:            (_classificationType == RemoteIDSettings.ClassificationType.EU) && (_regionOperation == RemoteIDSettings.RegionOperation.EU)
+                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
                             Layout.fillWidth:   true
                         }
                         FactComboBox {
                             fact:               QGroundControl.settingsManager.remoteIDSettings.classEU
-                            visible:            (_classificationType == RemoteIDSettings.ClassificationType.EU) && (_regionOperation == RemoteIDSettings.RegionOperation.EU)
+                            visible:            (_classificationType == RemoteIDIndicatorPage.ClassificationType.EU) && (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU)
                             Layout.fillWidth:   true
                             sizeToContents:     true
                         }
@@ -475,7 +475,7 @@ Rectangle {
 
                             onActivated: (index) => {
                                 // FAA doesnt allow to set a Fixed position. Is either Live GNSS or Takeoff
-                                if (_regionOperation == RemoteIDSettings.RegionOperation.FAA) {
+                                if (_regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA) {
                                     if (currentIndex != 1) {
                                        QGroundControl.settingsManager.remoteIDSettings.locationType.value = 1
                                         currentIndex = 1
@@ -496,33 +496,33 @@ Rectangle {
 
                         QGCLabel {
                             text:               qsTr("Latitude Fixed(-90 to 90)")
-                            visible:            _locationType == RemoteIDSettings.LocationType.FIXED
+                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
                             Layout.fillWidth:   true
                         }
                         FactTextField {
-                            visible:            _locationType == RemoteIDSettings.LocationType.FIXED
+                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
                             Layout.fillWidth:   true
                             fact:               QGroundControl.settingsManager.remoteIDSettings.latitudeFixed
                         }
 
                         QGCLabel {
                             text:               qsTr("Longitude Fixed(-180 to 180)")
-                            visible:            _locationType == RemoteIDSettings.LocationType.FIXED
+                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
                             Layout.fillWidth:   true
                         }
                         FactTextField {
-                            visible:            _locationType == RemoteIDSettings.LocationType.FIXED
+                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
                             Layout.fillWidth:   true
                             fact:               QGroundControl.settingsManager.remoteIDSettings.longitudeFixed
                         }
 
                         QGCLabel {
                             text:               qsTr("Altitude Fixed")
-                            visible:            _locationType == RemoteIDSettings.LocationType.FIXED
+                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
                             Layout.fillWidth:   true
                         }
                         FactTextField {
-                            visible:            _locationType == RemoteIDSettings.LocationType.FIXED
+                            visible:            _locationType == RemoteIDIndicatorPage.LocationType.FIXED
                             Layout.fillWidth:   true
                             fact:               QGroundControl.settingsManager.remoteIDSettings.altitudeFixed
                         }
@@ -530,58 +530,58 @@ Rectangle {
                         QGCLabel {
                             text:               qsTr("Latitude")
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
                         QGCLabel {
                             text:               gcsPosition.isValid ? gcsPosition.latitude : "N/A"
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
 
                         QGCLabel {
                             text:               qsTr("Longitude")
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
                         QGCLabel {
                             text:               gcsPosition.isValid ? gcsPosition.longitude : "N/A"
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
 
                         QGCLabel {
-                            text:               _regionOperation == RemoteIDSettings.RegionOperation.FAA ?
+                            text:               _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA ?
                                                 qsTr("Altitude") + qsTr(" (Mandatory)") :
                                                 qsTr("Altitude")
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
                         QGCLabel {
                             text:               gcsPosition.isValid && !isNaN(gcsPosition.altitude) ? gcsPosition.altitude : "N/A"
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
 
                         QGCLabel {
                             text:               qsTr("Heading")
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
                         QGCLabel {
                             text:               gcsPosition.isValid && !isNaN(gcsHeading) ? gcsHeading : "N/A"
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
 
                         QGCLabel {
                             text:               qsTr("Hor. Accuracy")
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
                         QGCLabel {
                             text:               gcsPosition.isValid && gcsHDOP ? ( gcsHDOP + " m" ) : "N/A"
                             Layout.fillWidth:   true
-                            visible:            _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                            visible:            _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         }
                     }
 
@@ -590,7 +590,7 @@ Rectangle {
                         visible:                    !ScreenTools.isMobile
                                                     && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
                                                     && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
-                                                    && _locationType != RemoteIDSettings.LocationType.TAKEOFF
+                                                    && _locationType != RemoteIDIndicatorPage.LocationType.TAKEOFF
                         anchors.margins:            _margins
                         anchors.top:                gpsGridData.bottom
                         anchors.horizontalCenter:   parent.horizontalCenter
@@ -770,7 +770,7 @@ Rectangle {
                     Layout.fillWidth:       true
 
                     border.width:   _borderWidth
-                    border.color:   (_regionOperation == RemoteIDSettings.RegionOperation.EU || QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value) ?
+                    border.color:   (_regionOperation == RemoteIDIndicatorPage.RegionOperation.EU || QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value) ?
                                     (_activeRID && !_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorRed : color) : color
 
                     GridLayout {
@@ -801,7 +801,7 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            text:               _regionOperation == RemoteIDSettings.RegionOperation.FAA ?
+                            text:               _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA ?
                                                 QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription :
                                                 QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(" (Mandatory)")
                             visible:            QGroundControl.settingsManager.remoteIDSettings.operatorID.visible
@@ -833,14 +833,14 @@ Rectangle {
                         // Spacer
                         QGCLabel {
                             text:               ""
-                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
                             Layout.alignment:   Qt.AlignHCenter
                             Layout.fillWidth:   true
                         }
 
                         QGCLabel {
                             text:               QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(QGroundControl.settingsManager.remoteIDSettings.operatorIDValid.rawValue == true ? " valid" : " invalid")
-                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.EU
                             Layout.alignment:   Qt.AlignHCenter
                             Layout.fillWidth:   true
                         }
@@ -848,11 +848,11 @@ Rectangle {
                         QGCLabel {
                             text:               QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.shortDescription
                             Layout.fillWidth:   true
-                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.FAA
+                            visible:            _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA
                         }
                         FactCheckBox {
                             fact:       QGroundControl.settingsManager.remoteIDSettings.sendOperatorID
-                            visible:    _regionOperation == RemoteIDSettings.RegionOperation.FAA
+                            visible:    _regionOperation == RemoteIDIndicatorPage.RegionOperation.FAA
                             onClicked: {
                                 if (checked) {
                                     if (_activeVehicle) {

@@ -75,7 +75,6 @@ QGCPopupDialog {
     }
 
     Component.onCompleted: {
-        console.log("ParameterEditor")
         if (validate) {
             valueField.text = validateValue
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
@@ -116,11 +115,12 @@ QGCPopupDialog {
             }
 
             QGCComboBox {
-                id:         factCombo
-                width:      _editFieldWidth
-                model:      fact.enumStrings
-                visible:    _showCombo
-                focus:      setFocus && visible
+                id:             factCombo
+                width:          _editFieldWidth
+                model:          fact.enumStrings
+                sizeToContents: true
+                visible:        _showCombo
+                focus:          setFocus && visible
 
                 Component.onCompleted: {
                     // We can't bind directly to fact.enumIndex since that would add an unknown value
