@@ -46,6 +46,12 @@
     "decimalPlaces":    2,
     "units":            "m"
 },
+{    "name":            "rangefinderTarget",
+    "shortDesc": "RFTarget",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
 {   "name":             "rollPitchToggle",
     "shortDesc": "Roll/Pitch Toggle",
     "type":             "int16",
