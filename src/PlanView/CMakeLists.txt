@@ -1,3 +1,5 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
 add_custom_target(PlanViewQml
 	SOURCES
 		CameraCalcCamera.qml

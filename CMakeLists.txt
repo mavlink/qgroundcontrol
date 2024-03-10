@@ -149,9 +149,6 @@ message(STATUS "QGroundControl version: ${APP_VERSION_STR}")
 #                QGroundControl Resources
 #######################################################
 
-add_subdirectory(libs)
-add_subdirectory(src)
-
 set(QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/qgcimages.qrc
     ${CMAKE_SOURCE_DIR}/qgcresources.qrc
@@ -186,10 +183,15 @@ endif()
 
 qt_add_executable(${PROJECT_NAME} src/main.cc ${QGC_RESOURCES})
 
+add_subdirectory(libs)
+add_subdirectory(src)
+
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
         QT_RESOURCE_PREFIX "/qgc"
 )
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.h)
 
 if(Qt6LinguistTools_FOUND)
     file(GLOB TS_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)

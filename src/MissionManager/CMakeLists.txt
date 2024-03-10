@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(MissionManager STATIC
 	BlankPlanCreator.cc
@@ -103,7 +104,4 @@ target_link_libraries(MissionManager
 		qgc
 )
 
-target_include_directories(MissionManager
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(MissionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

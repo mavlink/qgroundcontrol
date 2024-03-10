@@ -1,3 +1,5 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
 add_custom_target(PX4AutoPilotPluginQml
 	SOURCES
 		AirframeComponent.qml
@@ -17,7 +19,7 @@ add_custom_target(PX4AutoPilotPluginQml
 		SafetyComponent.qml
 		SafetyComponentSummary.qml
 		SensorsComponent.qml
-		SensorsComponentSummaryFixedWing.qml
 		SensorsComponentSummary.qml
+		SensorsComponentSummaryFixedWing.qml
 		SensorsSetup.qml
 )

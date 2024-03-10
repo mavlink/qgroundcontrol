@@ -1,37 +1,39 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
-add_custom_target(FligthDisplayQml
+add_custom_target(FlightDisplayQml
 	SOURCES
 		DefaultChecklist.qml
 		FixedWingChecklist.qml
 		FlightDisplayViewDummy.qml
 		FlightDisplayViewUVC.qml
 		FlightDisplayViewVideo.qml
-        FlyViewBottomRightRowLayout.qml
+		FlyView.qml
 		FlyViewCustomLayer.qml
 		FlyViewInstrumentPanel.qml
 		FlyViewMap.qml
 		FlyViewMissionCompleteDialog.qml
 		FlyViewPreFlightChecklistPopup.qml
-		FlyView.qml
-		FlyViewToolStripActionList.qml
 		FlyViewToolStrip.qml
-        FlyViewTopRightColumnLayout.qml
+		FlyViewToolStripActionList.qml
 		FlyViewVideo.qml
 		FlyViewWidgetLayer.qml
+		GripperMenu.qml
 		GuidedActionActionList.qml
 		GuidedActionConfirm.qml
+		GuidedActionGripper.qml
 		GuidedActionLand.qml
 		GuidedActionList.qml
 		GuidedActionPause.qml
 		GuidedActionRTL.qml
 		GuidedActionsController.qml
 		GuidedActionTakeoff.qml
-		GuidedActionGripper.qml
-		GripperMenu.qml
-		GuidedValueSlider.qml
 		GuidedToolStripAction.qml
+		GuidedValueSlider.qml
 		MultiRotorChecklist.qml
 		MultiVehicleList.qml
+		ObstacleDistanceOverlay.qml
+		ObstacleDistanceOverlayMap.qml
+		ObstacleDistanceOverlayVideo.qml
 		PreFlightBatteryCheck.qml
 		PreFlightCheckList.qml
 		PreFlightCheckListShowAction.qml
@@ -48,8 +50,6 @@ add_custom_target(FligthDisplayQml
 		VehicleWarnings.qml
 		VirtualJoystick.qml
 		VTOLChecklist.qml
-		ObstacleDistanceOverlay.qml
-		ObstacleDistanceOverlayMap.qml
-		ObstacleDistanceOverlayVideo.qml
+        FlyViewBottomRightRowLayout.qml
+        FlyViewTopRightColumnLayout.qml
 )
-
