@@ -19,8 +19,8 @@ qt_add_library(gps STATIC
 	GPSPositionMessage.h
 	GPSProvider.cc
 	GPSProvider.h
-	RTCM/RTCMMavlink.cc
-	RTCM/RTCMMavlink.h
+	RTCMMavlink.cc
+	RTCMMavlink.h
 	satellite_info.h
 	sensor_gnss_relative.h
 	sensor_gps.h
@@ -37,5 +37,4 @@ target_include_directories(gps
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
 		Drivers/src
-		RTCM
 )

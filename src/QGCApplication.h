@@ -31,7 +31,6 @@
 #include "AudioOutput.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
-#include "GPSRTKFactGroup.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -88,8 +87,6 @@ public:
 
     /// Is Internet available?
     bool isInternetAvailable();
-
-    FactGroup* gpsRtkFactGroup(void)  { return _gpsRtkFactGroup; }
 
     QTranslator& qgcJSONTranslator(void) { return _qgcTranslatorJSON; }
 
@@ -180,10 +177,6 @@ private slots:
     void _missingParamsDisplay                      (void);
     void _qgcCurrentStableVersionDownloadComplete   (QString remoteFile, QString localFile, QString errorMsg);
     bool _parseVersionText                          (const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
-    void _onGPSConnect                              (void);
-    void _onGPSDisconnect                           (void);
-    void _gpsSurveyInStatus                         (float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
-    void _gpsNumSatellites                          (int numSatellites);
     void _showDelayedAppMessages                    (void);
 
 private:
@@ -206,7 +199,6 @@ private:
     int                 _majorVersion           = 0;
     int                 _minorVersion           = 0;
     int                 _buildVersion           = 0;
-    GPSRTKFactGroup*    _gpsRtkFactGroup        = nullptr;
     QGCToolbox*         _toolbox                = nullptr;
     QQuickWindow*       _mainRootWindow         = nullptr;
     bool                _bluetoothAvailable     = false;
