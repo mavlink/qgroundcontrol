@@ -29,6 +29,22 @@ if(MOBILE)
 	)
 endif()
 
+set(BUILD_SHAPELIB_CONTRIB OFF CACHE INTERNAL "")
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+set(BUILD_TESTING OFF CACHE INTERNAL "")
+
+if(QGC_FETCH_DEPENDS)
+	include(FetchContent)
+	FetchContent_Declare(shapelib
+		GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
+		GIT_TAG v1.6.0
+	    GIT_SHALLOW TRUE
+	)
+	FetchContent_MakeAvailable(shapelib)
+else()
+	add_subdirectory(${CMAKE_SOURCE_DIR}/libs/shapelib shapelib.build)
+endif()
+
 target_link_libraries(Utilities
 	PRIVATE
 		Qt6::Qml
