@@ -49,7 +49,6 @@
 
 #include <QtLocation/private/qgeotilefetcher_p.h>
 #include <QTimer>
-#include "QGCMapUrlEngine.h"
 
 class QGeoTiledMappingManagerEngine;
 class QNetworkAccessManager;

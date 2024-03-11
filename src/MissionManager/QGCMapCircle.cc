@@ -8,13 +8,8 @@
  ****************************************************************************/
 
 #include "QGCMapCircle.h"
-#include "QGCGeo.h"
 #include "JsonHelper.h"
-#include "QGCQGeoCoordinate.h"
-
-#include <QGeoRectangle>
-#include <QDebug>
-#include <QJsonArray>
+#include "FactSystem.h"
 
 const char* QGCMapCircle::jsonCircleKey =   "circle";
 const char* QGCMapCircle::_jsonCenterKey =  "center";

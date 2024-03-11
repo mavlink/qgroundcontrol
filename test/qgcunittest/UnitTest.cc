@@ -15,10 +15,7 @@
 #include "SettingsManager.h"
 #include "MockLink.h"
 #include "LinkManager.h"
-
-#include <QRandomGenerator>
-#include <QTemporaryFile>
-#include <QTime>
+#include "QGC.h"
 
 bool UnitTest::_messageBoxRespondedTo = false;
 bool UnitTest::_badResponseButton = false;

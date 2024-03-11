@@ -9,6 +9,9 @@
 
 
 #include "QGCCachedFileDownload.h"
+#include "QGCFileDownload.h"
+
+#include <QNetworkDiskCache>
 
 QGCCachedFileDownload::QGCCachedFileDownload(QObject* parent, const QString& cacheDirectory)
     : QObject(parent), _fileDownload(new QGCFileDownload(this)), _diskCache(new QNetworkDiskCache(this))

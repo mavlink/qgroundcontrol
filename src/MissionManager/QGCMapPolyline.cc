@@ -13,13 +13,9 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "KMLHelper.h"
+#include "QGCLoggingCategory.h"
 
-#include <QGeoRectangle>
-#include <QDebug>
-#include <QJsonArray>
 #include <QLineF>
-#include <QFile>
-#include <QDomDocument>
 
 const char* QGCMapPolyline::jsonPolylineKey = "polyline";
 

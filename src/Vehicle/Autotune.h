@@ -11,7 +11,7 @@
 
 #include <QTimer>
 #include "Vehicle.h"
-#include "MAVLinkProtocol.h"
+#include "QGCMAVLink.h"
 
 class Autotune : public QObject
 {

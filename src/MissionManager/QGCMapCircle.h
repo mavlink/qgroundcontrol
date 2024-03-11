@@ -11,11 +11,8 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
-#include <QVariantList>
-#include <QPolygon>
 
-#include "QmlObjectListModel.h"
-#include "FactSystem.h"
+#include "Fact.h"
 
 /// The QGCMapCircle represents a circular area which can be displayed on a Map control.
 class QGCMapCircle : public QObject

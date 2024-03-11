@@ -14,9 +14,9 @@
 
 #include <QObject>
 #include <QThread>
+#include <QtCore/QLoggingCategory>
 #include <atomic>
 
-#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 #include "CustomActionManager.h"

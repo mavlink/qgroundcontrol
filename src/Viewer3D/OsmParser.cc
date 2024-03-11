@@ -1,7 +1,4 @@
 #include "OsmParser.h"
-
-#include <QThread>
-
 #include "earcut.hpp"
 #include "Viewer3DUtils.h"
 #include "QGCApplication.h"

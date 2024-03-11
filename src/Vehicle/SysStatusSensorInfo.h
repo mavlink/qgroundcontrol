@@ -10,8 +10,8 @@
 #pragma once
 
 #include "QGCMAVLink.h"
-#include "QmlObjectListModel.h"
 
+#include <QtCore/QMap>
 #include <QObject>
 
 /// Class which represents sensor info from the SYS_STATUS mavlink message

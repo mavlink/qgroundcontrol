@@ -9,8 +9,7 @@
 
 #include "FlyViewSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(FlyView, "FlyView")
 {

@@ -10,7 +10,6 @@
 #include <QSharedPointer>
 
 #include "EventHandler.h"
-#include "QGCLoggingCategory.h"
 
 Q_DECLARE_METATYPE(QSharedPointer<events::parser::ParsedEvent>);
 

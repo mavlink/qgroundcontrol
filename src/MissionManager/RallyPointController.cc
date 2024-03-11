@@ -13,14 +13,12 @@
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
-#include "ParameterManager.h"
 #include "JsonHelper.h"
-#include "SimpleMissionItem.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
+#include "QGCLoggingCategory.h"
 
-#include <QJsonDocument>
 #include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(RallyPointControllerLog, "RallyPointControllerLog")

@@ -3,7 +3,6 @@
 #include <QFile>
 #include <QStandardPaths>
 #endif
-#include "QGCMapEngine.h"
 #include "TerrainTile.h"
 
 /*

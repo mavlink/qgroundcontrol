@@ -13,9 +13,9 @@
 #include "PlanElementController.h"
 #include "RallyPointManager.h"
 #include "Vehicle.h"
-#include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
+
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(RallyPointControllerLog)
 

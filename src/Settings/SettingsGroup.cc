@@ -11,8 +11,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCApplication.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 static const char* kJsonFile = ":/json/%1.SettingsGroup.json";
 

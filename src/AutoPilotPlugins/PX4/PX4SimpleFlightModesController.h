@@ -11,11 +11,6 @@
 #ifndef PX4SimpleFlightModesController_H
 #define PX4SimpleFlightModesController_H
 
-#include <QObject>
-#include <QQuickItem>
-#include <QList>
-#include <QStringList>
-
 #include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 #include "Vehicle.h"

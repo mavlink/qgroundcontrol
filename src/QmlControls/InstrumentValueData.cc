@@ -11,8 +11,7 @@
 #include "FactValueGrid.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
-
-#include <QSettings>
+#include "QGC.h"
 
 const char*  InstrumentValueData::vehicleFactGroupName =   "Vehicle";
 

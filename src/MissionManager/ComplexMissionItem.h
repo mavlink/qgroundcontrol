@@ -10,14 +10,11 @@
 #pragma once
 
 #include "VisualMissionItem.h"
-#include "QGCGeo.h"
 #include "QGCToolbox.h"
 #include "SettingsManager.h"
 #include "KMLPlanDomDocument.h"
 #include "QmlObjectListModel.h"
 #include "FlightPathSegment.h"
-
-#include <QSettings>
 
 class PlanMasterController;
 class MissionController;

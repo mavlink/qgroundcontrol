@@ -21,9 +21,9 @@
 #include "QGCMapEngineManager.h"
 #include "QGCFileDownload.h"
 #include "TerrainTile.h"
+#include "QGCLoggingCategory.h"
 
-#include <QSettings>
-#include <math.h>
+#include <QtNetwork/QNetworkProxy>
 
 QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QGCCachedTileSetLog")
 

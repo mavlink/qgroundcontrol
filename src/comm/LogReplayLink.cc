@@ -13,7 +13,6 @@
 #include "QGCApplication.h"
 
 #include <QFileInfo>
-#include <QtEndian>
 #include <QSignalSpy>
 
 const char*  LogReplayLinkConfiguration::_logFilenameKey = "logFilename";

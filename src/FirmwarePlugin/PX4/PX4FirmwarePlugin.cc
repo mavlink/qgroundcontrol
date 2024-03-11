@@ -15,9 +15,6 @@
 #include "AirframeComponentController.h"
 #include "SensorsComponentController.h"
 #include "PowerComponentController.h"
-#include "RadioComponentController.h"
-#include "QGCCameraManager.h"
-#include "QGCFileDownload.h"
 #include "SettingsManager.h"
 #include "PlanViewSettings.h"
 

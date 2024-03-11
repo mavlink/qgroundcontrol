@@ -12,6 +12,7 @@
 #include "QGeoMapReplyQGC.h"
 #include "QGCFileDownload.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QUrl>
 #include <QUrlQuery>
@@ -25,7 +26,6 @@
 #include <QTimer>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
-
 #include <cmath>
 
 QGC_LOGGING_CATEGORY(TerrainQueryLog, "TerrainQueryLog")

@@ -12,9 +12,9 @@
 #include <QObject>
 #include <QGeoCoordinate>
 #include <QTimer>
+#include <QtCore/QLoggingCategory>
 
 #include "TerrainQuery.h"
-#include "QGCLoggingCategory.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FlightPathSegmentLog)
 

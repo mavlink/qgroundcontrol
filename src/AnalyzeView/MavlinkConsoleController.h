@@ -9,10 +9,7 @@
 
 #pragma once
 
-#include "QmlObjectListModel.h"
 #include "QGCPalette.h"
-#include "Fact.h"
-#include "FactMetaData.h"
 #include <QObject>
 #include <QString>
 #include <QMetaObject>

@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 #include "StateMachine.h"
 #include "ComponentInformationCache.h"
 #include "ComponentInformationTranslation.h"
 
 #include <QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 

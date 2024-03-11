@@ -10,8 +10,7 @@
 #include "CustomMavlinkActionsSettings.h"
 #include "QGCApplication.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 #include <QFile>
 
 DECLARE_SETTINGGROUP(CustomMavlinkActions, "CustomMavlinkActions")

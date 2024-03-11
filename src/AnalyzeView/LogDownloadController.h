@@ -17,8 +17,6 @@
 #include <QLocale>
 #include <QElapsedTimer>
 
-#include <memory>
-
 #include "AutoPilotPlugin.h"
 #include "QmlObjectListModel.h"
 

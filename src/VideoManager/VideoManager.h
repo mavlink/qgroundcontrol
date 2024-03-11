@@ -11,13 +11,6 @@
 #ifndef VideoManager_H
 #define VideoManager_H
 
-#include <QObject>
-#include <QTimer>
-#include <QTime>
-#include <QUrl>
-
-#include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 #include "VideoReceiver.h"
 #include "QGCToolbox.h"
 #include "SubtitleWriter.h"

@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "RallyPointManager.h"
-#include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(RallyPointManagerLog, "RallyPointManagerLog")

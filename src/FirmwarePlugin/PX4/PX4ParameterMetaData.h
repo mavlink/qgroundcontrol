@@ -10,13 +10,10 @@
 #pragma once
 
 #include <QObject>
-#include <QMap>
-#include <QXmlStreamReader>
 #include <QLoggingCategory>
 
-#include "FactSystem.h"
-#include "AutoPilotPlugin.h"
-#include "Vehicle.h"
+#include "QGCMAVLink.h"
+#include "FactMetaData.h"
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>

@@ -12,7 +12,6 @@
 #define MotorComponent_H
 
 #include "VehicleComponent.h"
-#include "Fact.h"
 
 class MotorComponent : public VehicleComponent
 {

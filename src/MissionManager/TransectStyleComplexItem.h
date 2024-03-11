@@ -12,11 +12,11 @@
 #include "ComplexMissionItem.h"
 #include "MissionItem.h"
 #include "SettingsFact.h"
-#include "QGCLoggingCategory.h"
-#include "QGCMapPolyline.h"
 #include "QGCMapPolygon.h"
 #include "CameraCalc.h"
 #include "TerrainQuery.h"
+
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(TransectStyleComplexItemLog)
 

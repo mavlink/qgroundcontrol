@@ -14,8 +14,7 @@
 
 #include "RadioComponentController.h"
 #include "QGCApplication.h"
-
-#include <QElapsedTimer>
+#include "QGCLoggingCategory.h"
 #include <QSettings>
 
 QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "RadioComponentControllerLog")

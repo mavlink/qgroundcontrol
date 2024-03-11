@@ -10,16 +10,13 @@
 #include "StructureScanComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
-#include "QGCGeo.h"
 #include "QGroundControlQmlGlobal.h"
-#include "QGCQGeoCoordinate.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "QGCQGeoCoordinate.h"
+#include "QGCLoggingCategory.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
-
-#include <QPolygonF>
+#include "QGC.h"
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 

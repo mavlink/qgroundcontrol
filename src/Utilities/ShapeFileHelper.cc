@@ -12,8 +12,6 @@
 #include "KMLHelper.h"
 #include "SHPFileHelper.h"
 
-#include <QFile>
-
 const char* ShapeFileHelper::_errorPrefix = QT_TR_NOOP("Shape file load failed. %1");
 
 QVariantList ShapeFileHelper::determineShapeType(const QString& file)

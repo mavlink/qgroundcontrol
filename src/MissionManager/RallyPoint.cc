@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-#include <QStringList>
-#include <QDebug>
-
 #include "RallyPoint.h"
 
 const char* RallyPoint::_longitudeFactName =    "Longitude";

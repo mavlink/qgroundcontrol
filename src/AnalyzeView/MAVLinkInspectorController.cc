@@ -10,7 +10,11 @@
 #include "MAVLinkInspectorController.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "QGC.h"
+#include "QGCLoggingCategory.h"
+
 #include <QtCharts/QLineSeries>
+#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(MAVLinkInspectorLog, "MAVLinkInspectorLog")
 

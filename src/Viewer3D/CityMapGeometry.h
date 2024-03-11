@@ -3,7 +3,6 @@
 #define CITYMAPGEOMETRY_H
 
 #include <QQuick3DGeometry>
-#include <QTimer>
 
 #include "OsmParser.h"
 
