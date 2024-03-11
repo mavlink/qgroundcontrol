@@ -2,7 +2,6 @@ add_subdirectory(libevents)
 add_subdirectory(OpenSSL)
 add_subdirectory(qtandroidserialport)
 add_subdirectory(sdl2)
-add_subdirectory(zlib)
 add_subdirectory(qmlglsink)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force qmdnsengine & shapelib to build as static" FORCE)
