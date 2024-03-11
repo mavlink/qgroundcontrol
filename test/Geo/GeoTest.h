@@ -24,16 +24,20 @@ class GeoTest : public UnitTest
     Q_OBJECT
 
 public:
-    GeoTest(void)
-        : _origin(47.3764, 8.5481, 0.0) /// Use ETH campus (47.3764° N, 8.5481° E)
-    { }
+    GeoTest(void) = default;
 
 private slots:
     void _convertGeoToNed_test(void);
     void _convertGeoToNedAtOrigin_test(void);
     void _convertNedToGeo_test(void);
     void _convertNedToGeoAtOrigin_test(void);
-private:
-    QGeoCoordinate _origin;
-};
 
+    void _convertGeoToUTM_test(void);
+    void _convertUTMToGeo_test(void);
+    void _convertGeoToMGRS_test(void);
+    void _convertMGRSToGeo_test(void);
+
+private:
+     /// Use ETH campus (47.3764° N, 8.5481° E)
+    const QGeoCoordinate m_origin{47.3764, 8.5481, 0.0};
+};

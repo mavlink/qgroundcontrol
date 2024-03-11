@@ -141,7 +141,7 @@ bool SHPFileHelper::loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordi
 
     for (int i=0; i<shpObject->nVertices; i++) {
         QGeoCoordinate coord;
-        if (!utmZone || !convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
+        if (!utmZone || !QGCGeo::convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
             coord.setLatitude(shpObject->padfY[i]);
             coord.setLongitude(shpObject->padfX[i]);
         }
