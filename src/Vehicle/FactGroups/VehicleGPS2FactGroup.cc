@@ -32,7 +32,7 @@ void VehicleGPS2FactGroup::_handleGps2Raw(mavlink_message_t& message)
 
     lat()->setRawValue              (gps2Raw.lat * 1e-7);
     lon()->setRawValue              (gps2Raw.lon * 1e-7);
-    mgrs()->setRawValue             (convertGeoToMGRS(QGeoCoordinate(gps2Raw.lat * 1e-7, gps2Raw.lon * 1e-7)));
+    mgrs()->setRawValue             (QGCGeo::convertGeoToMGRS(QGeoCoordinate(gps2Raw.lat * 1e-7, gps2Raw.lon * 1e-7)));
     count()->setRawValue            (gps2Raw.satellites_visible == 255 ? 0 : gps2Raw.satellites_visible);
     hdop()->setRawValue             (gps2Raw.eph == UINT16_MAX ? qQNaN() : gps2Raw.eph / 100.0);
     vdop()->setRawValue             (gps2Raw.epv == UINT16_MAX ? qQNaN() : gps2Raw.epv / 100.0);

@@ -493,13 +493,6 @@ HEADERS += \
     src/PositionManager/PositionManager.h \
     src/PositionManager/SimulatedPosition.h \
     src/Geo/QGCGeo.h \
-    src/Geo/Constants.hpp \
-    src/Geo/Math.hpp \
-    src/Geo/Utility.hpp \
-    src/Geo/UTMUPS.hpp \
-    src/Geo/MGRS.hpp \
-    src/Geo/TransverseMercator.hpp \
-    src/Geo/PolarStereographic.hpp \
     src/Utilities/QGC.h \
     src/QGCApplication.h \
     src/Utilities/QGCCachedFileDownload.h \
@@ -763,12 +756,6 @@ SOURCES += \
     src/PositionManager/PositionManager.cpp \
     src/PositionManager/SimulatedPosition.cc \
     src/Geo/QGCGeo.cc \
-    src/Geo/Math.cpp \
-    src/Geo/Utility.cpp \
-    src/Geo/UTMUPS.cpp \
-    src/Geo/MGRS.cpp \
-    src/Geo/TransverseMercator.cpp \
-    src/Geo/PolarStereographic.cpp \
     src/Utilities/QGC.cc \
     src/QGCApplication.cc \
     src/Utilities/QGCCachedFileDownload.cc \

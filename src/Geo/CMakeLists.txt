@@ -1,36 +1,34 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 
-# include(FetchContent)
-# FetchContent_Declare(geographiclib
-# 	GIT_REPOSITORY https://github.com/geographiclib/geographiclib.git
-# 	GIT_TAG v2.3
-# 	GIT_SHALLOW TRUE
-# )
-# FetchContent_MakeAvailable(geographiclib)
-
 qt_add_library(Geo STATIC
-	Constants.hpp
-	Math.cpp
-	Math.hpp
-	MGRS.cpp
-	MGRS.hpp
-	PolarStereographic.cpp
-	PolarStereographic.hpp
 	QGCGeo.cc
 	QGCGeo.h
-	TransverseMercator.cpp
-	TransverseMercator.hpp
-	Utility.cpp
-	Utility.h
-	Utility.hpp
-	UTMUPS.cpp
-	UTMUPS.hpp
 )
+
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+set(BUILD_BOTH_LIBS OFF CACHE INTERNAL "")
+set(BUILD_DOCUMENTATION OFF CACHE INTERNAL "")
+set(BUILD_MANPAGES OFF CACHE INTERNAL "")
+
+include(FetchContent)
+FetchContent_Declare(geographiclib
+	GIT_REPOSITORY https://github.com/geographiclib/geographiclib.git
+	GIT_TAG r2.3
+	GIT_SHALLOW TRUE
+)
+FetchContent_GetProperties(geographiclib)
+if(NOT geographiclib_POPULATED)
+	FetchContent_Populate(geographiclib)
+	add_subdirectory(${geographiclib_SOURCE_DIR} ${geographiclib_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+# FetchContent_MakeAvailable(geographiclib)
 
 target_link_libraries(Geo
 	PRIVATE
-		Qt6::Core
+		GeographicLib::GeographicLib
+		Utilities
 	PUBLIC
+		Qt6::Core
 		Qt6::Positioning
 )
 

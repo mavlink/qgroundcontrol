@@ -98,7 +98,7 @@ QGeoCoordinate QGCMapPolyline::_coordFromPointF(const QPointF& point) const
 
     if (_polylinePath.count() > 0) {
         QGeoCoordinate tangentOrigin = _polylinePath[0].value<QGeoCoordinate>();
-        convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &coord);
+        QGCGeo::convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, coord);
     }
 
     return coord;
@@ -110,7 +110,7 @@ QPointF QGCMapPolyline::_pointFFromCoord(const QGeoCoordinate& coordinate) const
         double y, x, down;
         QGeoCoordinate tangentOrigin = _polylinePath[0].value<QGeoCoordinate>();
 
-        convertGeoToNed(coordinate, tangentOrigin, &y, &x, &down);
+        QGCGeo::convertGeoToNed(coordinate, tangentOrigin, y, x, down);
         return QPointF(x, -y);
     }
 
@@ -281,7 +281,7 @@ QList<QPointF> QGCMapPolyline::nedPolyline(void)
                 // This avoids a nan calculation that comes out of convertGeoToNed
                 x = y = 0;
             } else {
-                convertGeoToNed(vertex, tangentOrigin, &y, &x, &down);
+                QGCGeo::convertGeoToNed(vertex, tangentOrigin, y, x, down);
             }
             nedPolyline += QPointF(x, y);
         }
@@ -324,7 +324,7 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 
         // Add first vertex
         QGeoCoordinate coord;
-        convertNedToGeo(rgOffsetEdges[0].p1().y(), rgOffsetEdges[0].p1().x(), 0, tangentOrigin, &coord);
+        QGCGeo::convertNedToGeo(rgOffsetEdges[0].p1().y(), rgOffsetEdges[0].p1().x(), 0, tangentOrigin, coord);
         rgNewPolyline.append(coord);
 
         // Intersect the offset edges to generate new central vertices
@@ -335,13 +335,13 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
                 // Two lines are colinear
                 newVertex = rgOffsetEdges[i].p2();
             }
-            convertNedToGeo(newVertex.y(), newVertex.x(), 0, tangentOrigin, &coord);
+            QGCGeo::convertNedToGeo(newVertex.y(), newVertex.x(), 0, tangentOrigin, coord);
             rgNewPolyline.append(coord);
         }
 
         // Add last vertex
         int lastIndex = rgOffsetEdges.count() - 1;
-        convertNedToGeo(rgOffsetEdges[lastIndex].p2().y(), rgOffsetEdges[lastIndex].p2().x(), 0, tangentOrigin, &coord);
+        QGCGeo::convertNedToGeo(rgOffsetEdges[lastIndex].p2().y(), rgOffsetEdges[lastIndex].p2().x(), 0, tangentOrigin, coord);
         rgNewPolyline.append(coord);
     }
 

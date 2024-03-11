@@ -231,3 +231,24 @@ contains (DEFINES, CONFIG_UTM_ADAPTER){
     INCLUDEPATH += $$PWD/libs/libevents/libevents/libs/cpp/parse/nlohmann_json/include
     LIBS += -lboost_system -lboost_thread -lssl -lcrypto
 }
+
+HEADERS += \
+    libs/GeographicLib/Constants.hpp \
+    libs/GeographicLib/Math.hpp \
+    libs/GeographicLib/Utility.hpp \
+    libs/GeographicLib/UTMUPS.hpp \
+    libs/GeographicLib/MGRS.hpp \
+    libs/GeographicLib/TransverseMercator.hpp \
+    libs/GeographicLib/PolarStereographic.hpp \
+
+SOURCES += \
+    libs/GeographicLib/Math.cpp \
+    libs/GeographicLib/Utility.cpp \
+    libs/GeographicLib/UTMUPS.cpp \
+    libs/GeographicLib/MGRS.cpp \
+    libs/GeographicLib/TransverseMercator.cpp \
+    libs/GeographicLib/PolarStereographic.cpp \
+
+INCLUDEPATH += \
+    libs \
+    libs/GeographicLib

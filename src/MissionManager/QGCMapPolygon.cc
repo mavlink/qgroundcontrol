@@ -118,7 +118,7 @@ QGeoCoordinate QGCMapPolygon::_coordFromPointF(const QPointF& point) const
 
     if (_polygonPath.count() > 0) {
         QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
-        convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, &coord);
+        QGCGeo::convertNedToGeo(-point.y(), point.x(), 0, tangentOrigin, coord);
     }
 
     return coord;
@@ -130,7 +130,7 @@ QPointF QGCMapPolygon::_pointFFromCoord(const QGeoCoordinate& coordinate) const
         double y, x, down;
         QGeoCoordinate tangentOrigin = _polygonPath[0].value<QGeoCoordinate>();
 
-        convertGeoToNed(coordinate, tangentOrigin, &y, &x, &down);
+        QGCGeo::convertGeoToNed(coordinate, tangentOrigin, y, x, down);
         return QPointF(x, -y);
     }
 
@@ -412,7 +412,7 @@ QList<QPointF> QGCMapPolygon::nedPolygon(void) const
                 // This avoids a nan calculation that comes out of convertGeoToNed
                 x = y = 0;
             } else {
-                convertGeoToNed(vertex, tangentOrigin, &y, &x, &down);
+                QGCGeo::convertGeoToNed(vertex, tangentOrigin, y, x, down);
             }
             nedPolygon += QPointF(x, y);
         }
@@ -464,7 +464,7 @@ void QGCMapPolygon::offset(double distance)
                 return;
             }
             QGeoCoordinate coord;
-            convertNedToGeo(newVertex.y(), newVertex.x(), 0, tangentOrigin, &coord);
+            QGCGeo::convertNedToGeo(newVertex.y(), newVertex.x(), 0, tangentOrigin, coord);
             rgNewPolygon.append(coord);
         }
     }
