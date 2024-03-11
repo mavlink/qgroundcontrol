@@ -25,7 +25,7 @@ Rectangle {
     color:              qgcPal.window
     radius:             ScreenTools.defaultFontPixelWidth / 2
 
-    property real _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
+    property real _toolsMargin:           ScreenTools.defaultFontPixelWidth
     property real _altMsgMinWidth:        ScreenTools.defaultFontPixelWidth * 10
     property bool _fileNameTouched:       false
     property real _fontSize:              ScreenTools.defaultFontPointSize
@@ -65,13 +65,14 @@ Rectangle {
 
     Text {
         id: flightNameError
-        height: (_fileNameTouched && !controller.flightNameValid) ? undefined : 0
-        text: qsTr("Flight name is invalid")
+
+        text: qsTr("Invalid Flight Name")
         color: qgcPal.colorRed
         visible: _fileNameTouched && !controller.flightNameValid
-        font.pointSize: _smallFontSize
-        anchors.top: flightInput.bottom
-        anchors.left: flightInput.left
+        font.pointSize: _fontSize
+        anchors.verticalCenter: flightInput.verticalCenter
+        anchors.left: flightInput.right
+
         anchors.leftMargin: _toolsMargin
         anchors.topMargin: _toolsMargin
     }
@@ -89,198 +90,197 @@ Rectangle {
         anchors.topMargin: _toolsMargin
     }
 
-    // divider line
-    Rectangle {
-        width: parent.width - 2 * _toolsMargin
-        height: 1
-        color: qgcPal.text
-        anchors.top: flightNameError.bottom
-        anchors.left: parent.left
-        anchors.leftMargin: _toolsMargin
-        anchors.topMargin: _toolsMargin
-    }
-
     // altitude message data grid
-    RowLayout {
-        id: almHeaders
-        anchors.top: flightNameError.bottom
+    Rectangle {
+        color: qgcPal.windowShade
+        anchors.top: flightInput.bottom
         anchors.left: parent.left
-        anchors.leftMargin: _toolsMargin
-        anchors.topMargin: _toolsMargin
-
-        QGCLabel {
-            text: qsTr("Alt\n(m)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-        
-        QGCLabel {
-            text: qsTr("Time\n(s)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-
-        QGCLabel {
-            text: qsTr("Press\n(mB)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-
-        QGCLabel {
-            text: qsTr("Temp\n(C)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-
-        QGCLabel {
-            text: qsTr("RelHum\n(%)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-
-        QGCLabel {
-            text: qsTr("WSpeed\n(m/s)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-
-        QGCLabel {
-            text: qsTr("WDir\n(deg)")
-            font.pointSize: _fontSize
-            color: qgcPal.text
-            Layout.minimumWidth: _altMsgMinWidth
-        }
-    }
-    Flickable {
-        id: altitudeFlickable
-        anchors.top: almHeaders.bottom
-        anchors.topMargin: _toolsMargin
-        anchors.leftMargin: _toolsMargin
-        width: parent.width - 2 * _toolsMargin
-        height: Math.min(contentHeight, 250)
-        boundsBehavior: Flickable.StopAtBounds
-        contentWidth: width
-        contentHeight: almGrid.implicitHeight
-        clip: true
-        flickableDirection: Flickable.VerticalFlick
-    
-        MouseArea {
-            anchors.fill: parent
-
-            onWheel: {
-                // if(wheel.y > altitudeFlickable.height || wheel.y < 0) {
-                //     return
-                // }
-                altitudeFlickable.cancelFlick()
-                if (wheel.angleDelta.y > 0) {
-                    altitudeFlickable.flick(0, 500)
-                } else {
-                    altitudeFlickable.flick(0, -500)
-                }
-                wheel.accepted = true
-            }
-        }
+        anchors.topMargin: _toolsMargin * 2
+        anchors.bottom: parent.bottom
+        width: parent.width
+        Layout.fillWidth: true
 
         GridLayout {
-            id: almGrid
-            anchors.fill: parent
-            anchors.topMargin: _toolsMargin
+            id: almHeaders
+            anchors.top: parent.top
+            anchors.left: parent.left
             anchors.leftMargin: _toolsMargin
+            anchors.topMargin: _toolsMargin
+            width: parent.width
             columns: 7
             rowSpacing: _toolsMargin
             columnSpacing: _toolsMargin
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      0
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).altitude.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("Alt\n(m)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      1
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).time.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("Time\n(s)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      2
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).pressure.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("Press\n(mB)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      3
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).temperature.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("Temp\n(C)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      4
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).relativeHumidity.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("RelHum\n(%)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      5
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).windSpeed.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("WSpeed\n(m/s)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
 
-            Repeater {
-                model: controller.tempAltLevelMsgList.count
-                delegate: QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      6
-                        Layout.minimumWidth: _altMsgMinWidth
-                        text: controller.tempAltLevelMsgList.get(index).windDirection.toFixed(2)
-                        font.pointSize: _fontSize
-                        color: qgcPal.text
-                }
+            QGCLabel {
+                text: qsTr("WDir\n(deg)")
+                font.pointSize: _fontSize
+                color: qgcPal.text
+                Layout.minimumWidth: _altMsgMinWidth
             }
         }
+        Flickable {
+            id: altitudeFlickable
+            anchors.top: almHeaders.bottom
+            anchors.left: parent.left
+            width: parent.width
+            anchors.bottom: parent.bottom
+            boundsBehavior: Flickable.StopAtBounds
+            contentWidth: width
+            contentHeight: almGrid.implicitHeight
+            clip: true
+            flickableDirection: Flickable.VerticalFlick
 
-        ScrollBar.vertical: ScrollBar { }
+            MouseArea {
+                anchors.fill: parent
+
+                onWheel: {
+                    altitudeFlickable.cancelFlick()
+                    if (wheel.angleDelta.y > 0) {
+                        altitudeFlickable.flick(0, 500)
+                    } else {
+                        altitudeFlickable.flick(0, -500)
+                    }
+                    wheel.accepted = true
+                }
+            }
+
+            GridLayout {
+                id: almGrid
+                anchors.fill: parent
+                anchors.topMargin: _toolsMargin
+                anchors.leftMargin: _toolsMargin
+                columns: 7
+                rowSpacing: _toolsMargin
+                columnSpacing: _toolsMargin
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      0
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).altitude.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      1
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).time.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      2
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).pressure.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      3
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).temperature.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      4
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).relativeHumidity.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      5
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).windSpeed.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+
+                Repeater {
+                    model: controller.tempAltLevelMsgList.count
+                    delegate: QGCLabel {
+                            Layout.row:         index
+                            Layout.column:      6
+                            Layout.minimumWidth: _altMsgMinWidth
+                            text: controller.tempAltLevelMsgList.get(index).windDirection.toFixed(2)
+                            font.pointSize: _fontSize
+                            color: qgcPal.text
+                    }
+                }
+            }
+
+            ScrollBar.vertical: ScrollBar { }
+        }
     }
 }

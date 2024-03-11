@@ -22,6 +22,8 @@ import QGroundControl               1.0
 
 T.MetFactValueGrid {
     id:                     _root
+    height:                 topLayout.height
+    width:                  topLayout.width
     Layout.preferredWidth:  topLayout.width
     Layout.preferredHeight: topLayout.height
 

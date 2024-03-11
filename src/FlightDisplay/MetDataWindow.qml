@@ -27,93 +27,43 @@ Rectangle {
     color:              qgcPal.window
     radius:             ScreenTools.defaultFontPixelWidth / 2
 
-    property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
+
+    property real _toolsMargin:           ScreenTools.defaultFontPixelWidth
     property real _fontSize:              ScreenTools.defaultFontPointSize
 
     MetFlightDataRecorder {
         id:             metFlightData
         width:          parent.width
-        height:         250
         anchors.top:    parent.top
-    }
+        anchors.bottom: valueAreaBackground.top
+        anchors.bottomMargin: _toolsMargin
 
-    // // divider line
-    // Rectangle {
-    //     width: parent.width - 2 * _toolsMargin
-    //     height: 1
-    //     color: qgcPal.text
-    //     anchors.top: metFlightData.top
-    //     anchors.topMargin: _toolsMargin
-    //     anchors.left: parent.left
-    //     anchors.leftMargin: _toolsMargin
-    // }
+    }
 
     Rectangle {
         id: valueAreaBackground
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: _toolsMargin
-        anchors.topMargin: _toolsMargin
         color: qgcPal.window
-        width: parent.width / 2
-        height: 250
+
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: _toolsMargin
+        height: childrenRect.height
+        width: childrenRect.width + _toolsMargin
+
         MetFactValueGrid {
             id:                     valueArea
             defaultSettingsGroup:   metDataDefaultSettingsGroup
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.leftMargin: _toolsMargin
         }
     }
 
-    Rectangle {
-        id:                                 goToFileBackground
-        anchors.bottom:                     parent.bottom
-        anchors.bottomMargin:               _toolsMargin
-        anchors.right:                      parent.right
-        anchors.rightMargin:                _toolsMargin
-
-        width:                              parent.width / 2
-        height:                             valueAreaBackground.height
-
-        color:                              qgcPal.window
-
-        QGCButton {
-            id:                             goToFileButton
-            width:                          80 * 1.25
-            height:                         80
-            anchors.centerIn:               parent
-
-            contentItem: Item {
-                id:                         _content
-                anchors.fill:               goToFileButton
-
-                QGCColoredImage {
-                    id:                     icon
-                    source:                  "/InstrumentValueIcons/document.svg"
-                    height:                 goToFileLabel.height
-                    width:                  height
-                    color:                  goToFileLabel.color
-                    fillMode:               Image.PreserveAspectFit
-                    sourceSize.height:      height
-                    anchors.top:            parent.top
-                    anchors.topMargin:      _toolsMargin
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                QGCLabel {
-                    id:                         goToFileLabel
-                    font.pointSize:             _fontSize
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    anchors.bottom:             parent.bottom
-                    text:                       qsTr("Go to File")
-                    color:                      qgcPal.text
-                }
-            }
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      metFlightData.goToFile()  
-            }
-            background: Item {
-                anchors.fill: parent
-            }
-        }
+    QGCButton {
+        id:                             goToFileButton
+        anchors.right:                  parent.right
+        anchors.bottom:                 parent.bottom
+        anchors.margins:                _toolsMargin
+        text:                           qsTr("Go to File")
+        onClicked:                      metFlightData.goToFile()  
     }
 }
