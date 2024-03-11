@@ -7,6 +7,17 @@ qt_add_library(compression STATIC
 	QGCZlib.h
 )
 
+set(ZLIB_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+
+include(FetchContent)
+FetchContent_Declare(zlib
+	GIT_REPOSITORY https://github.com/madler/zlib.git
+	GIT_TAG v1.3.1
+	GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(zlib)
+
 target_link_libraries(compression
 	PRIVATE
         zlib
