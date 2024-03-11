@@ -18,6 +18,11 @@
 #pragma once
 
 #include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(QGCGeoLog)
+
+namespace QGCGeo {
 
 /**
  * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East,
@@ -28,7 +33,7 @@
  * @param[out] y East component of coordinate in local plane.
  * @param[out] z Down component of coordinate in local plane.
  */
-void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z);
+	void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, double &x, double &y, double &z);
 
 /**
  * @brief Transform a local (East, North, and Down) coordinate into a geodetic coordinate.
@@ -38,7 +43,7 @@ void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, dou
  * @param[in] origin Geoedetic origin for LTP.
  * @param[out] coord Geodetic coordinate to hold result.
  */
-void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord);
+	void convertNedToGeo(double x, double y, double z, const QGeoCoordinate &origin, QGeoCoordinate &coord);
 
 // LatLonToUTMXY
 // Converts a latitude/longitude pair to x and y coordinates in the
@@ -58,7 +63,7 @@ void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
 // Returns:
 //   The UTM zone used for calculating the values of x and y.
 //   If conversion failed the function returns 0
-int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northing);
+	int convertGeoToUTM(const QGeoCoordinate& coord, double &easting, double &northing);
 
 // UTMXYToLatLon
 //
@@ -79,7 +84,7 @@ int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northi
 //
 // Returns:
 // The function returns true if conversion succeeded.
-bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord);
+	bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate &coord);
 
 // Converts a latitude/longitude pair to MGRS string
 //
@@ -89,7 +94,7 @@ bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, 
 // Returns:
 //   The MGRS coordinate string
 //   If conversion fails the function returns empty string
-QString convertGeoToMGRS(const QGeoCoordinate& coord);
+	QString convertGeoToMGRS(const QGeoCoordinate &coord);
 
 // Converts MGRS string to a latitude/longitude pair.
 //
@@ -102,4 +107,5 @@ QString convertGeoToMGRS(const QGeoCoordinate& coord);
 //
 // Returns:
 // The function returns true if conversion succeeded.
-bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord);
+    bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord);
+}

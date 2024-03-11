@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.22.1)
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
 if(NOT CMAKE_BUILD_TYPE)
