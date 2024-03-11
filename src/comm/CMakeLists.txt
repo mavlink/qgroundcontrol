@@ -56,8 +56,23 @@ target_link_libraries(comm
 
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf Compatibility" OFF)
 if(QGC_ZEROCONF_ENABLED)
+	set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+	set(BUILD_DOC OFF CACHE INTERNAL "")
+	set(BUILD_EXAMPLES OFF CACHE INTERNAL "")
+	set(BUILD_TESTS OFF CACHE INTERNAL "")
+
+	if(QGC_FETCH_DEPENDS)
+		include(FetchContent)
+		FetchContent_Declare(
+	        qmdnsengine
+			GIT_REPOSITORY https://github.com/nitroshare/qmdnsengine.git
+			GIT_TAG d61e497
+		)
+		FetchContent_MakeAvailable(qmdnsengine)
+	else()
+		add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qmdnsengine qmdnsengine.build)
+	endif()
 	target_link_libraries(comm PRIVATE qmdnsengine)
-	target_include_directories(comm PRIVATE ${CMAKE_SOURCE_DIR}/libs)
 endif()
 
 target_compile_definitions(comm PUBLIC QGC_ENABLE_BLUETOOTH)
