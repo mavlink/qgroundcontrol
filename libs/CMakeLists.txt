@@ -1,6 +1,5 @@
 add_subdirectory(libevents)
 add_subdirectory(qtandroidserialport)
-add_subdirectory(sdl2)
 add_subdirectory(qmlglsink)
 
 qt_add_library(xz STATIC

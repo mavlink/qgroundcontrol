@@ -19,16 +19,18 @@ if(ANDROID)
 			Qt6::CorePrivate
 	)
 else()
-	target_sources(Joystick
-		PRIVATE
-			JoystickSDL.cc
-			JoystickSDL.h
-	)
-
-	target_link_libraries(Joystick
-		PUBLIC
-			sdl2
-	)
+	include(BuildSdl2)
+	if(SDL2_FOUND)
+		target_sources(Joystick
+			PRIVATE
+				JoystickSDL.cc
+				JoystickSDL.h
+		)
+    	target_link_libraries(Joystick
+    		PUBLIC
+    			SDL2::SDL2
+    	)
+	endif()
 endif()
 
 target_link_libraries(Joystick
