@@ -1,7 +1,6 @@
 add_subdirectory(libevents)
 add_subdirectory(OpenSSL)
 add_subdirectory(qtandroidserialport)
-add_subdirectory(sdl2)
 add_subdirectory(zlib)
 add_subdirectory(qmlglsink)
 
