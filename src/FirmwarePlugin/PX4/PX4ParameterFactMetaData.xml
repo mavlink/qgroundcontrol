@@ -1058,6 +1058,16 @@
       <long_desc>This number is incremented automatically after every flight on disarming in order to remember the next flight UUID. The first flight is 0.</long_desc>
       <min>0</min>
     </parameter>
+    <parameter name="COM_FLTT_LOW_ACT" default="3" type="INT32">
+      <short_desc>Remaining flight time low failsafe</short_desc>
+      <long_desc>Action the system takes when the remaining flight time is below the estimated time it takes to reach the RTL destination.</long_desc>
+      <increment>1</increment>
+      <values>
+        <value code="0">None</value>
+        <value code="1">Warning</value>
+        <value code="3">Return</value>
+      </values>
+    </parameter>
     <parameter name="COM_FLT_PROFILE" default="0" type="INT32">
       <short_desc>User Flight Profile</short_desc>
       <long_desc>Describes the intended use of the vehicle. Can be used by ground control software or log post processing. This param does not influence the behavior within the firmware. This means for example the control logic is independent of the setting of this param (but depends on other params).</long_desc>
