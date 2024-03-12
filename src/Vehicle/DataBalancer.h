@@ -7,20 +7,55 @@
 #include "FactGroup.h"
 
 typedef struct {
-    uint64_t time; /* drone's frame of reference */
+    uint32_t time; /* drone's frame of reference */
     /* cass sensor type 0 (iMet temp) */
     float iMetTemp;
     /* rest of variables... */
 } BalancedDataRecord;
 
+typedef struct {
+    /* Original data, either as calculated or directly from the mavlink messages */
+    uint32_t timeMilliseconds; /* Since UAV boot */
+    int32_t altitudeMillimetersMSL;
+    float absolutePressureMillibars; /* mB == hPa */
+    float temperatureKelvin;
+    float relativeHumidity;
+    float windSpeedMetersPerSecond;
+    float windBearingDegrees; /* True or magnetic north? */
+    int32_t latitudeDegreesE7;
+    int32_t longitudeDegreesE7;
+    float rollRadians;
+    float pitchRadians;
+    float yawRadians;
+    float rollRateRadiansPerSecond;
+    float pitchRateRadiansPerSecond;
+    float yawRateRadiansPerSecond;
+    float zVelocityMetersPerSecondInverted; /* mavlink uses flipped z axis */
+    float groundSpeedMetersPerSecond;
+
+    /* Converted (With possible negligable loss) to more human understandable units */
+    double timeSeconds; /* Since UAV boot */
+    double altitudeMetersMSL; /* meters */
+    float temperatureCelsius;
+    float latitudeDegrees;
+    float longitudeDegrees;
+    float rollDegrees;
+    float pitchDegrees;
+    float yawDegrees;
+    float rollRateDegreesPerSecond;
+    float pitchRateDegreesPerSecond;
+    float yawRateDegreesPerSecond;
+    float zVelocityMetersPerSecond;
+} IMetData;
+
 class DataBalancer{
 
     BalancedDataRecord data;
 
-    uint64_t timeOffset = 0; /* difference between this PC and drone time in milliseconds */
-    uint64_t timeOffsetAlt = 0; /* same thing for non-cass messages */
-    uint64_t lastUpdate = UINT64_MAX; /* time since last BalancedDataRecord creation */
-    uint64_t balancedDataFrequency = 1000; /* min milliseconds between BalancedDataRecord creation */
+    uint32_t timeOffset = 0; /* difference between this PC and drone time in milliseconds */
+    uint32_t timeOffsetAlt = 0; /* same thing for non-cass messages */
+    uint32_t lastUpdate = UINT32_MAX; /* time since last BalancedDataRecord creation */
+    uint32_t balancedDataFrequency = 1000; /* min milliseconds between BalancedDataRecord creation */
 
     /* ring buffers, one for each type of message. Should just store the relevent contents of the message, but this is bloated enough it doesn't matter */
     size_t static constexpr bufSize = 8;
