@@ -241,7 +241,7 @@ public:
 
     /// Returns the internal resource parameter meta date file.
     /// Important: Only CompInfoParam code should use this method
-    virtual QString _internalParameterMetaDataFile(Vehicle* /*vehicle*/) { return QString(); }
+    virtual QString _internalParameterMetaDataFile(const Vehicle* /*vehicle*/) const { return QString(); }
 
     /// Loads the specified parameter meta data file.
     /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
@@ -338,8 +338,8 @@ public:
 
     /// Used to check if running current version is equal or higher than the one being compared.
     /// returns 1 if current > compare, 0 if current == compare, -1 if current < compare
-    int versionCompare(Vehicle* vehicle, QString& compare);
-    int versionCompare(Vehicle* vehicle, int major, int minor, int patch);
+    int versionCompare(const Vehicle* vehicle, QString& compare) const;
+    int versionCompare(const Vehicle* vehicle, int major, int minor, int patch) const;
 
     /// Allows the Firmware plugin to override the facts meta data.
     ///     @param vehicleType - Type of current vehicle

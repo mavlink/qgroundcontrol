@@ -1094,7 +1094,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
     }
 }
 
-int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int patch)
+int FirmwarePlugin::versionCompare(const Vehicle* vehicle, int major, int minor, int patch) const
 {
     int currMajor = vehicle->firmwareMajorVersion();
     int currMinor = vehicle->firmwareMinorVersion();
@@ -1113,7 +1113,7 @@ int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int p
     return -1;
 }
 
-int FirmwarePlugin::versionCompare(Vehicle* vehicle, QString& compare)
+int FirmwarePlugin::versionCompare(const Vehicle* vehicle, QString& compare) const
 {
     QStringList versionNumbers = compare.split(".");
     if(versionNumbers.size() != 3) {
