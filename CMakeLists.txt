@@ -225,7 +225,8 @@ elseif(ANDROID)
 
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
-            QT_ANDROID_ABIS ${ANDROID_ABI}
+            QT_ANDROID_ABIS "${QT_ANDROID_ABIS}"
+            QT_ANDROID_BUILD_ALL_ABIS OFF
             QT_ANDROID_MIN_SDK_VERSION 26
             QT_ANDROID_TARGET_SDK_VERSION 33
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android

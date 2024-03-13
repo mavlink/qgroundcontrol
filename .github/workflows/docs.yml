@@ -1,48 +1,46 @@
-name: Deploy Docs
+name: Docs
 
 on:
   push:
     branches:
-      - 'master'
+      - master
       - 'Stable*'
     tags:
       - 'v*'
     paths:
-      - docs/**
+      - 'docs/**'
   pull_request:
-    branches:
-      - '*'
     paths:
-      - docs/**
+      - 'docs/**'
 
   workflow_dispatch:
 
 env:
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  DOCS_DEPLOY: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Not needed if lastUpdated is not enabled
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
+
       - name: Install dependencies
         run: npm ci
+
       - name: Build with VitePress
         run: |
           npm run docs:build
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+        if: env.DOCS_DEPLOY
         uses: actions/upload-artifact@v4
         with:
           name: qgc_docs_build
@@ -50,7 +48,7 @@ jobs:
           retention-days: 1
 
   deploy:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+    if: env.DOCS_DEPLOY
     needs: build
     runs-on: ubuntu-latest
 
@@ -60,20 +58,20 @@ jobs:
         with:
           name: qgc_docs_build
           path: ~/_book
-        
+
       - name: Deploy
-        run: |
-          git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
-          rm -rf docs.qgroundcontrol.com/${BRANCH_NAME}
-          mkdir -p docs.qgroundcontrol.com/${BRANCH_NAME}
-          cp -r ~/_book/* docs.qgroundcontrol.com/${BRANCH_NAME}/
-          cd docs.qgroundcontrol.com
-          git config user.email "bot@px4.io"
-          git config user.name "PX4BuildBot"
-          git add ${BRANCH_NAME}
-          git commit -a -m "QGC docs build update `date`"
-          git push origin master
-          
         env:
           GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
           GIT_PASS: ${{ secrets.PX4BUILDBOT_PASS }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
+          rm -rf docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
+          mkdir -p docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
+          cp -r ~/_book/* docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}/
+          cd docs.qgroundcontrol.com
+          git config user.email "bot@px4.io"
+          git config user.name "PX4BuildBot"
+          git add ${{ env.BRANCH_NAME }}
+          git commit -a -m "QGC docs build update `date`"
+          git push origin master
