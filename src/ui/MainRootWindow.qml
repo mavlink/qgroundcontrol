@@ -246,12 +246,14 @@ ApplicationWindow {
     FlyView { 
         id:                     flyView
         anchors.fill:           parent
+        enabled:                !toolDrawer.visible //The DragHandler in FlightMap.qml needs to be disabled when the toolDrawer is open, otherwise touch signals bleed through the pages
         utmspSendActTrigger:    _utmspSendActTrigger
     }
 
     PlanView {
         id:             planView
         anchors.fill:   parent
+        enabled:                !toolDrawer.visible //The DragHandler in FlightMap.qml needs to be disabled when the toolDrawer is open, otherwise touch signals bleed through the pages
         visible:        false
 
         onActivationParamsSent:{
