@@ -147,42 +147,18 @@ Map {
         property:           "zoomLevel"
     }
 
-    MouseArea {
-        anchors.fill:       parent
-        acceptedButtons:    Qt.LeftButton
+    DragHandler {
+        target: null
 
-        property real startMouseX: 0
-        property real startMouseY: 0
-        property real lastMouseX: 0
-        property real lastMouseY: 0
-
-        onClicked: (mouse) => {
-            var deltaX = Math.abs(startMouseX - lastMouseX)
-            var deltaY = Math.abs(startMouseY - lastMouseY)
-            if (deltaX < 5 && deltaY < 5) {
-                mapClicked(mouse)
+        onActiveChanged: {
+            if (active) {
+                mapPanStart()
+            } else {
+                mapPanStop()
             }
         }
 
-        onPressed: (mouse) => {
-            lastMouseX = Math.round(mouse.x)
-            lastMouseY = Math.round(mouse.y)
-            startMouseX = lastMouseX
-            startMouseY = lastMouseY
-            mapPanStart()
-        }
-
-        onPositionChanged: (mouse) => { 
-            var newMouseX = Math.round(mouse.x)
-            var newMouseY = Math.round(mouse.y)
-            _map.pan(lastMouseX - newMouseX, lastMouseY - newMouseY)     
-            lastMouseX = newMouseX
-            lastMouseY = newMouseY
-        }
-
-        onReleased: {
-            mapPanStop()
-        }
+        onActiveTranslationChanged: (delta) => _map.pan(-delta.x, -delta.y)
     }
 
     TapHandler {
