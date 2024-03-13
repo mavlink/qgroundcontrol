@@ -71,7 +71,7 @@ public:
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
     QString             missionCommandOverrides         (QGCMAVLink::VehicleClass_t vehicleClass) const override;
-    QString             _internalParameterMetaDataFile  (Vehicle* vehicle) override;
+    QString             _internalParameterMetaDataFile  (const Vehicle* vehicle) const override;
     FactMetaData*       _getMetaDataForFact             (QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType) override;
     void                _getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) override { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
     QObject*            _loadParameterMetaData          (const QString& metaDataFile) override;
