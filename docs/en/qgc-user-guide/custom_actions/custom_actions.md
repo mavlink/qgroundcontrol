@@ -6,7 +6,7 @@ Both the Fly View and Joysticks support the ability execute arbitrary mavlink co
 
 The custom actions available are defined in a JSON file. The format of that file is as follows:
 
-'''
+```
 {
     "version":    1,
     "fileType":   "CustomActions",
@@ -29,7 +29,7 @@ The custom actions available are defined in a JSON file. The format of that file
 }
 ]
 }
-'''
+```
 
 Fields:
 * actions (required) - An array of json objects, one for each command
