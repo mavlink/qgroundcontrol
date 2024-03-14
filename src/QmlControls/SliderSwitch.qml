@@ -1,8 +1,8 @@
-import QtQuick                  2.15
-import QtQuick.Controls         2.15
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 /// The SliderSwitch control implements a sliding switch control similar to the power off
 /// control on an iPhone. It supports holding the space bar to slide the switch.
@@ -24,7 +24,7 @@ Rectangle {
     property real _dragStopX:                   _root.width - (_diameter + _border)
     property bool _waitingForLastAutoRepeat:    false
 
-    Keys.onSpacePressed: {
+    Keys.onSpacePressed: (event) => {
         if (visible && event.modifiers === Qt.NoModifier && event.isAutoRepeat && !sliderDragArea.drag.active) {
             event.accepted = true
             if (_waitingForLastAutoRepeat) {

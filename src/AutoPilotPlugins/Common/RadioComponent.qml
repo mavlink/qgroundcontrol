@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 2.4
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.Palette
 
 SetupPage {
     id:             radioPage
@@ -58,7 +58,7 @@ SetupPage {
 
                 QGCPopupDialog {
                     title:      qsTr("Spektrum Bind")
-                    buttons:    StandardButton.Ok | StandardButton.Cancel
+                    buttons:    Dialog.Ok | Dialog.Cancel
 
                     onAccepted: { controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
 
@@ -199,7 +199,7 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onRollChannelRCValueChanged: rollLoader.item.rcValue = rcValue
+                            onRollChannelRCValueChanged: (rcValue) => rollLoader.item.rcValue = rcValue
                         }
                     }
 
@@ -228,7 +228,7 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onPitchChannelRCValueChanged: pitchLoader.item.rcValue = rcValue
+                            onPitchChannelRCValueChanged: (rcValue) => pitchLoader.item.rcValue = rcValue
                         }
                     }
 
@@ -257,7 +257,7 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            onYawChannelRCValueChanged: yawLoader.item.rcValue = rcValue
+                            onYawChannelRCValueChanged: (rcValue) => yawLoader.item.rcValue = rcValue
                         }
                     }
 
@@ -285,7 +285,7 @@ SetupPage {
 
                         Connections {
                             target:                             controller
-                            onThrottleChannelRCValueChanged:    throttleLoader.item.rcValue = rcValue
+                            onThrottleChannelRCValueChanged:    (rcValue) => throttleLoader.item.rcValue = rcValue
                         }
                     }
                 } // Column - Attitude Control labels
@@ -323,7 +323,7 @@ SetupPage {
                                     mainWindow.showMessageDialog(qsTr("Zero Trims"),
                                                                  qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
                                                                      (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
-                                                                 StandardButton.Ok,
+                                                                 Dialog.Ok,
                                                                  function() { controller.nextButtonClicked() })
                                 }
                             } else {
@@ -392,7 +392,7 @@ SetupPage {
                         text:       qsTr("Copy Trims")
                         onClicked:  mainWindow.showMessageDialog(qsTr("Copy Trims"),
                                                                  qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
-                                                                 StandardButton.Ok | StandardButton.Cancel,
+                                                                 Dialog.Ok | Dialog.Cancel,
                                                                  function() { controller.copyTrims() })
                     }
                 }

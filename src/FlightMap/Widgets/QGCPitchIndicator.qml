@@ -14,9 +14,9 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick 2.3
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.Controls 1.0
+import QtQuick
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 Rectangle {
     property real pitchAngle:       0

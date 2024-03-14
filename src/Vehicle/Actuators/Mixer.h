@@ -224,7 +224,7 @@ public:
     int ruleApplyIdentifierIdx() const { return _ruleApplyIdentifierIdx; }
     void setRuleApplyIdentifierIdx(int idx) { _ruleApplyIdentifierIdx = idx; }
 
-    virtual void allInstancesInitialized(QmlObjectListModel* configInstances) {}
+    virtual void allInstancesInitialized([[maybe_unused]] QmlObjectListModel* configInstances) {}
 
 signals:
     void visibleChanged();

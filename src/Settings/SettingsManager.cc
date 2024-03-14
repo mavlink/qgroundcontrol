@@ -19,6 +19,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _autoConnectSettings          (nullptr)
     , _videoSettings                (nullptr)
     , _flightMapSettings            (nullptr)
+    , _flightModeSettings           (nullptr)
     , _rtkSettings                  (nullptr)
     , _flyViewSettings              (nullptr)
     , _planViewSettings             (nullptr)
@@ -26,10 +27,14 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _offlineMapsSettings          (nullptr)
     , _firmwareUpgradeSettings      (nullptr)
     , _adsbVehicleManagerSettings   (nullptr)
+    , _batteryIndicatorSettings     (nullptr)
+    , _mapsSettings                 (nullptr)
+    , _viewer3DSettings             (nullptr)
 #if !defined(NO_ARDUPILOT_DIALECT)
     , _apmMavlinkStreamRateSettings (nullptr)
 #endif
     , _remoteIDSettings             (nullptr)
+    , _customMavlinkActionsSettings (nullptr)
 {
 
 }
@@ -45,6 +50,7 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _autoConnectSettings =          new AutoConnectSettings         (this);
     _videoSettings =                new VideoSettings               (this);
     _flightMapSettings =            new FlightMapSettings           (this);
+    _flightModeSettings =           new FlightModeSettings          (this);
     _rtkSettings =                  new RTKSettings                 (this);
     _flyViewSettings =              new FlyViewSettings             (this);
     _planViewSettings =             new PlanViewSettings            (this);
@@ -52,8 +58,12 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _offlineMapsSettings =          new OfflineMapsSettings         (this);
     _firmwareUpgradeSettings =      new FirmwareUpgradeSettings     (this);
     _adsbVehicleManagerSettings =   new ADSBVehicleManagerSettings  (this);
+    _batteryIndicatorSettings =     new BatteryIndicatorSettings    (this);
+    _mapsSettings =                 new MapsSettings                (this);
+    _viewer3DSettings =             new Viewer3DSettings            (this);
 #if !defined(NO_ARDUPILOT_DIALECT)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 #endif
     _remoteIDSettings =             new RemoteIDSettings            (this); 
+    _customMavlinkActionsSettings = new CustomMavlinkActionsSettings(this);
 }

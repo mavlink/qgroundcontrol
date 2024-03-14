@@ -7,15 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
+import QGroundControl
+import QGroundControl.Controls
 
 // Base class for all first run prompt dialogs
 QGCPopupDialog {
-    buttons: StandardButton.Ok
+    buttons: Dialog.Ok
 
     property int  promptId
     property bool markAsShownOnClose: true

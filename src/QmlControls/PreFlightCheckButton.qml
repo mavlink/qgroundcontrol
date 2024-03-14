@@ -7,13 +7,12 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 /// The PreFlightCheckButton supports creating a button which the user then has to verify/click to confirm a check.
 /// It also supports failing the check based on values from within the system: telemetry or QGC app values. These

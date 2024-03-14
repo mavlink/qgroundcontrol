@@ -162,16 +162,19 @@ public:
     static MockLink* startAPMArduSubMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduRoverMockLink      (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
-    // Special commands for testing COMMAND_LONG handlers. By default all commands except for MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY should retry.
+    // Special commands for testing Vehicle::sendMavCommandWithHandler
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED            = MAV_CMD_USER_1;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED              = MAV_CMD_USER_2;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED    = MAV_CMD_USER_3;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED      = MAV_CMD_USER_4;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE                       = MAV_CMD_USER_5;
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY              = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 1);
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED       = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 2);
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED         = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 3);
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK         = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 4);
 
-    void clearSendMavCommandCounts(void) { _sendMavCommandCountMap.clear(); }
-    int sendMavCommandCount(MAV_CMD command) { return _sendMavCommandCountMap[command]; }
+    void clearReceivedMavCommandCounts(void) { _receivedMavCommandCountMap.clear(); }
+    int receivedMavCommandCount(MAV_CMD command) { return _receivedMavCommandCountMap[command]; }
 
     typedef enum {
         FailRequestMessageNone,
@@ -220,6 +223,7 @@ private:
     void _handleParamRequestRead        (const mavlink_message_t& msg);
     void _handleFTP                     (const mavlink_message_t& msg);
     void _handleCommandLong             (const mavlink_message_t& msg);
+    void _handleInProgressCommandLong   (const mavlink_command_long_t& request);
     void _handleManualControl           (const mavlink_message_t& msg);
     void _handlePreFlightCalibration    (const mavlink_command_long_t& request);
     void _handleLogRequestList          (const mavlink_message_t& msg);
@@ -244,6 +248,10 @@ private:
 
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
+
+    /// Creates a file with random contents of the specified size.
+    /// @return Fully qualified path to created file
+    static QString _createRandomFile(uint32_t byteCount);
 
     uint8_t                     _mavlinkAuxChannel              = std::numeric_limits<uint8_t>::max();
     QMutex                      _mavlinkAuxMutex;
@@ -310,7 +318,7 @@ private:
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
 
-    QMap<MAV_CMD, int>  _sendMavCommandCountMap;
+    QMap<MAV_CMD, int>                          _receivedMavCommandCountMap;
     QMap<int, QMap<QString, QVariant>>          _mapParamName2Value;
     QMap<int, QMap<QString, MAV_PARAM_TYPE>>    _mapParamName2MavParamType;
 

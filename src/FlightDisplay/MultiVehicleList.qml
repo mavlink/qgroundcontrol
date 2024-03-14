@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Vehicle
+import QGroundControl.FlightMap
 
 Item {
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2

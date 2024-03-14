@@ -7,20 +7,19 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtLocation               5.3
-import QtPositioning            5.3
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtLocation
+import QtPositioning
+import QtQuick.Layouts
 
-import QGroundControl                           1.0
-import QGroundControl.ScreenTools               1.0
-import QGroundControl.Controls                  1.0
-import QGroundControl.Palette                   1.0
-import QGroundControl.Vehicle                   1.0
-import QGroundControl.FlightMap                 1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Vehicle
+import QGroundControl.FlightMap
 
 /// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
 /// without affecting the underlying functionality.
@@ -58,6 +57,7 @@ Item {
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
     readonly property string actionListTitle:               qsTr("Action")
+    readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string forceArmMessage:                   qsTr("WARNING: This will force arming of the vehicle bypassing any safety checks.")
@@ -83,6 +83,7 @@ Item {
     readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
+    readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -111,6 +112,8 @@ Item {
     readonly property int actionChangeSpeed:                25
     readonly property int actionGripper:                    26
     readonly property int actionSetHome:                    27
+    readonly property int actionSetEstimatorOrigin:         28
+  
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -121,25 +124,27 @@ Item {
     property bool   _canStartMission:           _activeVehicle ? (_checklistPassed && (!_activeVehicle.healthAndArmingCheckReport.supported || _activeVehicle.healthAndArmingCheckReport.canStartMission)) : false
     property bool   _initialConnectComplete:    _activeVehicle ? _activeVehicle.initialConnectComplete : false
 
-    property bool showEmergenyStop:     _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
-    property bool showArm:              _guidedActionsEnabled && !_vehicleArmed && _canArm
-    property bool showForceArm:         _guidedActionsEnabled && !_vehicleArmed
-    property bool showDisarm:           _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
-    property bool showRTL:              _guidedActionsEnabled && _vehicleArmed && _activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
-    property bool showTakeoff:          _guidedActionsEnabled && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canTakeoff
-    property bool showLand:             _guidedActionsEnabled && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
-    property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
-    property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
-    property bool showPause:            _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
-    property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
-    property bool showChangeSpeed:      _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _speedLimitsAvailable
-    property bool showOrbit:            _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive
-    property bool showROI:              _guidedActionsEnabled && _vehicleFlying && __roiSupported && !_missionActive
-    property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
-    property bool showGotoLocation:     _guidedActionsEnabled && _vehicleFlying
-    property bool showSetHome:          _guidedActionsEnabled
-    property bool showActionList:       _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort || actionList.hasCustomActions)
-    property bool showGripper:          _initialConnectComplete ? _activeVehicle.hasGripper : false
+    property bool showEmergenyStop:         _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
+    property bool showArm:                  _guidedActionsEnabled && !_vehicleArmed && _canArm
+    property bool showForceArm:             _guidedActionsEnabled && !_vehicleArmed
+    property bool showDisarm:               _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
+    property bool showRTL:                  _guidedActionsEnabled && _vehicleArmed && _activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
+    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canTakeoff
+    property bool showLand:                 _guidedActionsEnabled && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
+    property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
+    property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
+    property bool showPause:                _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
+    property bool showChangeAlt:            _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
+    property bool showChangeSpeed:          _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive && _speedLimitsAvailable
+    property bool showOrbit:                _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive
+    property bool showROI:                  _guidedActionsEnabled && _vehicleFlying && __roiSupported && !_missionActive
+    property bool showLandAbort:            _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
+    property bool showGotoLocation:         _guidedActionsEnabled && _vehicleFlying
+    property bool showSetHome:              _guidedActionsEnabled
+    property bool showActionList:           _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort || actionList.hasCustomActions)
+    property bool showGripper:              _initialConnectComplete ? _activeVehicle.hasGripper : false
+    property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
+
     property string changeSpeedTitle:   _fixedWing ? changeAirspeedTitle : changeCruiseSpeedTitle
     property string changeSpeedMessage: _fixedWing ? changeAirspeedMessage : changeCruiseSpeedMessage
 
@@ -190,22 +195,24 @@ Item {
     function setupSlider(actionCode) {
         // generic defaults
         guidedValueSlider.configureAsLinearSlider()
+        guidedValueSlider.setIsSpeedSlider(false)
 
         if (actionCode === actionTakeoff) {
                 guidedValueSlider.setMinVal(_activeVehicle.minimumTakeoffAltitude())
                 guidedValueSlider.setValue(_activeVehicle ? _activeVehicle.minimumTakeoffAltitude() : 0)
                 guidedValueSlider.setDisplayText("Height")
         } else if (actionCode === actionChangeSpeed) {
-            if (_activeVehicle.vtolInFwdFlight) {
+            guidedValueSlider.setIsSpeedSlider(true)
+            if (_fixedWing) {
                 guidedValueSlider.setDisplayText("Set Airspeed")
-                guidedValueSlider.setMinVal(_activeVehicle.minimumEquivalentAirspeed())
-                guidedValueSlider.setMaxVal(_activeVehicle.maximumEquivalentAirspeed())
-                guidedValueSlider.setValue(_activeVehicle.airSpeedSetpoint.rawValue)
-            } else {
+                guidedValueSlider.setMinVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.minimumEquivalentAirspeed()).toFixed(1))
+                guidedValueSlider.setMaxVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumEquivalentAirspeed()).toFixed(1))
+                guidedValueSlider.setValue(_activeVehicle.airSpeed.value)
+            } else if (!_fixedWing && _activeVehicle.haveMRSpeedLimits) {
                 guidedValueSlider.setDisplayText("Set Speed")
-                guidedValueSlider.setMinVal(0.1)
-                guidedValueSlider.setMaxVal(_activeVehicle.maximumHorizontalSpeedMultirotor())
-                guidedValueSlider.setValue(_activeVehicle.maximumHorizontalSpeedMultirotor()/2)
+                guidedValueSlider.setMinVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(0.1).toFixed(1))
+                guidedValueSlider.setMaxVal(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()).toFixed(1))
+                guidedValueSlider.setValue(QGroundControl.unitsConversion.metersSecondToAppSettingsSpeedUnits(_activeVehicle.maximumHorizontalSpeedMultirotor()/2).toFixed(1))
             }
         } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setDisplayText("New Alt(rel)")
@@ -517,6 +524,10 @@ Item {
             confirmDialog.message = setHomeMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showSetHome })
             break
+        case actionSetEstimatorOrigin:
+            confirmDialog.title = setEstimatorOriginTitle
+            confirmDialog.message = setEstimatorOriginMessage
+            break
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -599,10 +610,12 @@ Item {
             break
         case actionChangeSpeed:
             if (_activeVehicle) {
+                // We need to convert back to m/s as that is what mavlink standard uses for MAV_CMD_DO_CHANGE_SPEED
+                var metersSecondSpeed = QGroundControl.unitsConversion.appSettingsSpeedUnitsToMetersSecond(sliderOutputValue).toFixed(1)
                 if (_activeVehicle.vtolInFwdFlight || _activeVehicle.fixedWing) {
-                   _activeVehicle.guidedModeChangeEquivalentAirspeed(sliderOutputValue)
+                   _activeVehicle.guidedModeChangeEquivalentAirspeedMetersSecond(metersSecondSpeed)
                 } else {
-                    _activeVehicle.guidedModeChangeGroundSpeed(sliderOutputValue)
+                    _activeVehicle.guidedModeChangeGroundSpeedMetersSecond(metersSecondSpeed)
                 }
             }
             break
@@ -611,6 +624,9 @@ Item {
             break
         case actionSetHome:
             _activeVehicle.doSetHome(actionData)
+            break
+        case actionSetEstimatorOrigin:
+            _activeVehicle.setEstimatorOrigin(actionData)
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

@@ -1,153 +1,112 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.21.1 FATAL_ERROR)
 
-project(VideoReceiverApp LANGUAGES C CXX)
+project(VideoReceiverApp VERSION 1.0 LANGUAGES C CXX)
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
 
-set(CMAKE_CXX_STANDARD 14)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickWidgets Multimedia)
+
+qt_standard_project_setup(REQUIRES 6.6.1)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_INCLUDE_CURRENT_DIR OFF)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/staging)
 
-include(FeatureSummary)
+set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "Install path for QML" FORCE)
+set(QML_IMPORT_PATH "${CMAKE_BINARY_DIR}/qml" CACHE STRING "Extra QML Import Paths" FORCE)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_compile_options(-Wall -Wextra -Wno-address-of-packed-member)
+qt_policy(
+    SET QTP0001 NEW
+    SET QTP0002 NEW
+)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message("Release build")
+    set(QT_QML_DEBUG OFF)
+else()
+    message("Debug build")
+    set(QT_QML_DEBUG ON)
 endif()
 
-# CMake build type
-# Debug Release RelWithDebInfo MinSizeRel Coverage
-if (NOT CMAKE_BUILD_TYPE)
-    # default to release with debug symbols
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+qt_add_executable(${PROJECT_NAME} main.cpp)
+
+if(ANDROID)
+    set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+            QT_ANDROID_ABIS ${ANDROID_ABI}
+            #QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS_APP}"
+            QT_ANDROID_MIN_SDK_VERSION 30
+            QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android
+            QT_ANDROID_SDK_BUILD_TOOLS_REVISION 34.0.0
+            QT_ANDROID_TARGET_SDK_VERSION 33
+            QT_ANDROID_VERSION_NAME '1.0'
+            QT_ANDROID_VERSION_CODE 1.0
+            QT_QML_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    target_sources(${PROJECT_NAME} PRIVATE android/init.cpp)
+elseif(WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
 set(QGC_ROOT ${CMAKE_SOURCE_DIR}/..)
 
-# Add folder where are supportive functions
-list(APPEND CMAKE_MODULE_PATH ${QGC_ROOT}/cmake)
-
-# Configure Qt5 to get necessary variables
-include(Qt5QGCConfiguration)
-message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "Qt version: ${QT_VERSION}")
-message(STATUS "Qt spec: ${QT_MKSPEC}")
-
-set(COMPANY "Auterion")
-set(COPYRIGHT "Copyright (c) 2020 VideoReceiverApp. All rights reserved.")
-set(IDENTIFIER "labs.auterion.VideoReceiverApp")
-
-include(Git)
-message(STATUS "VideoReceiverApp version: ${APP_VERSION_STR}")
-
-#=============================================================================
-# ccache
-#
-option(CCACHE "Use ccache if available" ON)
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
-endif()
-
-#=============================================================================
-# Compile QML
-#
-option(COMPILE_QML "Pre-compile QML files using the Qt Quick compiler." FALSE)
-add_feature_info(COMPILE_QML COMPILE_QML "Pre-compile QML files using the Qt Quick compiler.")
-if(COMPILE_QML)
-    find_package(Qt5QuickCompiler)
-
-    set_package_properties(Qt5QuickCompiler PROPERTIES
-        DESCRIPTION "Pre-compile QML files using the Qt Quick compiler."
-        TYPE OPTIONAL
-        )
-endif()
-
-#=============================================================================
-# Debug QML
-#
-option(DEBUG_QML "Build VideoReceiverApp with QML debugging/profiling support." FALSE)
-add_feature_info(DEBUG_QML DEBUG_QML "Build VideoReceiverApp with QML debugging/profiling support.")
-if(DEBUG_QML)
-    message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
-    add_definitions(-DQMLJSDEBUGGER)
-    add_definitions(-DQT_DECLARATIVE_DEBUG)
-    add_definitions(-DQT_QML_DEBUG)
-endif()
-
-#=============================================================================
-# GStreamer
-#
-find_package(PkgConfig)
-pkg_check_modules(GST
-    gstreamer-1.0>=1.14
-    gstreamer-video-1.0>=1.14
-    gstreamer-gl-1.0>=1.14
-    egl
-    )
-
-if (GST_FOUND)
-    include_directories(
-        ${GST_INCLUDE_DIRS}
-        )
-endif()
-
-#=============================================================================
-# Qt5
-#
-find_package(Qt5 ${QT_VERSION}
-    COMPONENTS
-    Bluetooth
-    Charts
-    Concurrent
-    Core
-    Location
-    Multimedia
-    Network
-    Positioning
-    Quick
-    QuickWidgets
-    OpenGL
-    Sql
-    Svg
-    Test
-    TextToSpeech
-    Widgets
-    Xml
-    REQUIRED
-    HINTS
-    ${QT_LIBRARY_HINTS}
-    )
-
-# Sets the default flags for compilation and linking.
-include(CompileOptions)
-
-include_directories(
-    ${QGC_ROOT}/src
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${Qt5Location_PRIVATE_INCLUDE_DIRS}
-    VideoReceiver
-    )
-
 add_subdirectory(${QGC_ROOT}/libs/qmlglsink qmlglsink.build)
+if(NOT GST_FOUND)
+    message(FATAL_ERROR "No GStreamer!")
+endif()
+include_directories(VideoReceiver
+    PRIVATE
+        ${QGC_ROOT}/src
+        ${QGC_ROOT}/src/Settings
+)
 add_subdirectory(${QGC_ROOT}/src/VideoReceiver VideoReceiver.build)
 
-set(VIDEORECIVERAPP_SOURCES main.cpp ${QGC_ROOT}/src/QGCLoggingCategory.cc)
-set(VIDEORECIVERAPP_RESOURCES qml.qrc)
+target_include_directories(VideoReceiver
+    PRIVATE
+        ${GST_INCLUDE_DIRS}
+        ${QGC_ROOT}/src
+        ${QGC_ROOT}/src/Settings
+)
 
-if(ANDROID)
-    add_library(VideoReceiverApp SHARED ${VIDEORECIVERAPP_SOURCES} ${VIDEORECIVERAPP_RESOURCES})
-else()
-    add_executable(VideoReceiverApp ${VIDEORECIVERAPP_SOURCES} ${VIDEORECIVERAPP_RESOURCES})
-endif()
+target_sources(${PROJECT_NAME} PRIVATE ${QGC_ROOT}/src/QGCLoggingCategory.cc)
 
-target_link_libraries(VideoReceiverApp
+target_link_libraries(${PROJECT_NAME}
     PRIVATE
         VideoReceiver
-        Qt5::Core
-        Qt5::Multimedia
-        Qt5::OpenGL
-        Qt5::Quick
-        Qt5::QuickWidgets
+        Qt6::Core
+        Qt6::Multimedia
+        Qt6::OpenGL
+        Qt6::Quick
+        Qt6::QuickWidgets
 )
+
+qt_add_qml_module(${PROJECT_NAME}
+    URI videoreceiverapp
+    VERSION 1.0
+    QML_FILES
+        main.qml
+    IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+    IMPORTS
+        QtCore
+        QtQuick
+        QtQuick.Layouts
+        QtQuick.Window
+        QtMultimedia
+)
+
+install(
+    TARGETS ${PROJECT_NAME}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+if(NOT ANDROID)
+    qt_generate_deploy_qml_app_script(TARGET ${PROJECT_NAME} OUTPUT_SCRIPT deploy_script)
+    install(SCRIPT ${deploy_script})
+endif()

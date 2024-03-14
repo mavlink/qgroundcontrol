@@ -50,16 +50,17 @@
 
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-Q_EXTERN_C Q_DECL_EXPORT const char *qt_plugin_query_metadata();
-Q_EXTERN_C Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QObject) *qt_plugin_instance();
+#ifndef CMAKE_LOCATION_PLUGIN
+extern "C" Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QPluginMetaData) qt_plugin_query_metadata_v2();
+extern "C" Q_DECL_EXPORT QT_PREPEND_NAMESPACE(QObject) *qt_plugin_instance();
 
 //-----------------------------------------------------------------------------
 const QT_PREPEND_NAMESPACE(QStaticPlugin) qt_static_plugin_QGeoServiceProviderFactoryQGC()
 {
-    QT_PREPEND_NAMESPACE(QStaticPlugin) plugin = { qt_plugin_instance, qt_plugin_query_metadata};
-    return plugin;
+   QT_PREPEND_NAMESPACE(QStaticPlugin) plugin = { qt_plugin_instance, qt_plugin_query_metadata_v2};
+   return plugin;
 }
-
+#endif
 //-----------------------------------------------------------------------------
 QGeoCodingManagerEngine*
 QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(

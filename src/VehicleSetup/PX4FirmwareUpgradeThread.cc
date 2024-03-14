@@ -19,7 +19,11 @@
 
 #include <QTimer>
 #include <QDebug>
+#ifdef Q_OS_ANDROID
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgradeThreadController* controller)
     : _controller(controller)

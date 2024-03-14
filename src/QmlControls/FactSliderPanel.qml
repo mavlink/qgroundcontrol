@@ -8,16 +8,15 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Column {
     /// ListModel must contains elements which look like this:
@@ -40,7 +39,7 @@ Column {
         id: controller
     }
 
-    QGCPalette { id: palette; colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Column {
         id:                 sliderOuterColumn
@@ -57,7 +56,7 @@ Column {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             sliderColumn.y + sliderColumn.height + _margins
-                color:              palette.windowShade
+                color:              qgcPal.windowShade
 
                 Column {
                     id:                 sliderColumn
@@ -78,10 +77,10 @@ Column {
                     Slider {
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        minimumValue:       min
-                        maximumValue:       max
+                        from:       min
+                        to:       max
                         stepSize:           step
-                        tickmarksEnabled:   true
+                        //tickmarksEnabled:   true  // FIXME_QT6
                         value:              _fact.value
                         id:                 slider
                         property int handleWidth: 0
@@ -94,10 +93,12 @@ Column {
                             }
                         }
 
+                        // FIXME-QT6 - Controls 2 doesn't do styling this way
+                        /*
                         style: SliderStyle {
                             tickmarks: Repeater {
                                 id: repeater
-                                model: control.stepSize > 0 ? 1 + (control.maximumValue - control.minimumValue) / control.stepSize : 0
+                                model: control.stepSize > 0 ? 1 + (control.to - control.from) / control.stepSize : 0
                                 property int unused: get()
                                 function get() {
                                     slider.handleWidth = styleData.handleWidth
@@ -105,7 +106,7 @@ Column {
                                 }
 
                                 Rectangle {
-                                    color: Qt.hsla(palette.text.hslHue, palette.text.hslSaturation, palette.text.hslLightness, 0.5)
+                                    color: Qt.hsla(qgcPal.text.hslHue, qgcPal.text.hslSaturation, qgcPal.text.hslLightness, 0.5)
                                     width: 2
                                     height: 4
                                     y: repeater.height
@@ -113,6 +114,7 @@ Column {
                                 }
                             }
                         }
+                        */
                     }
 
                     Item { // spacing
@@ -125,17 +127,17 @@ Column {
                         anchors.right:      parent.right
                         QGCLabel {
                             id: leftValueLabel
-                            text: slider.minimumValue
+                            text: slider.from
                             horizontalAlignment: Text.AlignLeft
                         }
                         Item {
                             QGCLabel {
-                                visible: slider.value != slider.minimumValue && slider.value != slider.maximumValue
+                                visible: slider.value != slider.from && slider.value != slider.to
                                 text: Math.round(slider._fact.value*100000)/100000
                                 x: getX()
                                 function getX() {
-                                    var span = slider.maximumValue - slider.minimumValue
-                                    var x = slider.handleWidth / 2 + (slider.value-slider.minimumValue)/span * (slider.width-slider.handleWidth) - width / 2
+                                    var span = slider.to - slider.from
+                                    var x = slider.handleWidth / 2 + (slider.value-slider.from)/span * (slider.width-slider.handleWidth) - width / 2
                                     // avoid overlapping text
                                     var minX = leftValueLabel.x + leftValueLabel.width + _margins/2
                                     if (x < minX) x = minX
@@ -147,7 +149,7 @@ Column {
                         }
                         QGCLabel {
                             id: rightValueLabel
-                            text: slider.maximumValue
+                            text: slider.to
                             Layout.alignment: Qt.AlignRight
                         }
                     }

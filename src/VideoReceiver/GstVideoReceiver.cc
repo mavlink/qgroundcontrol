@@ -385,10 +385,10 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if (_needDispatch()) {
         GstElement* videoSink = GST_ELEMENT(sink);
-        gst_object_ref(videoSink);
+        // gst_object_ref(videoSink);
         _slotHandler.dispatch([this, videoSink]() mutable {
             startDecoding(videoSink);
-            gst_object_unref(videoSink);
+            // gst_object_unref(videoSink);
         });
         return;
     }
@@ -753,7 +753,6 @@ GstVideoReceiver::_makeSource(const QString& uri)
         return nullptr;
     }
 
-    bool isTaisync  = uri.contains("tsusb://",  Qt::CaseInsensitive);
     bool isUdp264   = uri.contains("udp://",    Qt::CaseInsensitive);
     bool isRtsp     = uri.contains("rtsp://",   Qt::CaseInsensitive);
     bool isUdp265   = uri.contains("udp265://", Qt::CaseInsensitive);
@@ -778,7 +777,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
             if ((source = gst_element_factory_make("rtspsrc", "source")) != nullptr) {
                 g_object_set(static_cast<gpointer>(source), "location", qPrintable(uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
             }
-        } else if(isUdp264 || isUdp265 || isUdpMPEGTS || isTaisync) {
+        } else if(isUdp264 || isUdp265 || isUdpMPEGTS) {
             if ((source = gst_element_factory_make("udpsrc", "source")) != nullptr) {
                 g_object_set(static_cast<gpointer>(source), "uri", QString("udp://%1:%2").arg(qPrintable(url.host()), QString::number(url.port())).toUtf8().data(), nullptr);
 

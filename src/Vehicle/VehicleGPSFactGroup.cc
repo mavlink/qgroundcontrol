@@ -11,15 +11,6 @@
 #include "Vehicle.h"
 #include "QGCGeo.h"
 
-const char* VehicleGPSFactGroup::_latFactName =                 "lat";
-const char* VehicleGPSFactGroup::_lonFactName =                 "lon";
-const char* VehicleGPSFactGroup::_mgrsFactName =                "mgrs";
-const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
-const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
-const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
-const char* VehicleGPSFactGroup::_countFactName =               "count";
-const char* VehicleGPSFactGroup::_lockFactName =                "lock";
-
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
     , _latFact              (0, _latFactName,               FactMetaData::valueTypeDouble)

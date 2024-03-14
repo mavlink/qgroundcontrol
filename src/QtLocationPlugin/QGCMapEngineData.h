@@ -76,7 +76,7 @@ class QGCCacheTile : public QObject
 {
     Q_OBJECT
 public:
-    QGCCacheTile    (const QString hash, const QByteArray img, const QString format, QString type, qulonglong set = UINT64_MAX)
+    QGCCacheTile    (const QString& hash, const QByteArray& img, const QString& format, const QString& type, qulonglong set = UINT64_MAX)
         : _set(set)
         , _hash(hash)
         , _img(img)

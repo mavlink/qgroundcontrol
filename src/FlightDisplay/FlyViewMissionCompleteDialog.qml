@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Controls 2.4
-import QtQuick.Dialogs  1.3
-import QtQuick.Layouts  1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 /// Dialog which shows up when a flight completes. Prompts the user for things like whether they should remove the plan from the vehicle.
 Item {
@@ -60,7 +60,7 @@ Item {
         QGCPopupDialog {
             id:         missionCompleteDialog
             title:      qsTr("Flight Plan complete")
-            buttons:    StandardButton.Close
+            buttons:    Dialog.Close
 
             property var activeVehicleCopy: _activeVehicle
             onActiveVehicleCopyChanged:

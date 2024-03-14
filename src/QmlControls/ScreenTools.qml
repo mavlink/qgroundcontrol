@@ -1,11 +1,11 @@
 pragma Singleton
 
-import QtQuick          2.12
-import QtQuick.Controls 1.2
-import QtQuick.Window   2.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
 
-import QGroundControl                       1.0
-import QGroundControl.ScreenToolsController 1.0
+import QGroundControl
+import QGroundControl.ScreenToolsController
 
 /*!
  The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
@@ -17,7 +17,7 @@ import QGroundControl.ScreenToolsController 1.0
 
  Usage:
 
-        import QGroundControl.ScreenTools 1.0
+        import QGroundControl.ScreenTools
 
         Rectangle {
             anchors.fill:       parent
@@ -75,9 +75,16 @@ Item {
         return Screen.pixelDensity
     }
 
+    // These properties allow us to create simulated mobile sizing for a desktop build.
+    // This makes testing the UI for smaller mobile sizing much easier.
+    // The 731x411 size is the size of the Herelink screen which is our target lower bound
+    property real screenWidth:  ScreenToolsController.fakeMobile ? 731 : Screen.width
+    property real screenHeight: ScreenToolsController.fakeMobile ? 411 : Screen.height
+
     property bool isAndroid:                        ScreenToolsController.isAndroid
     property bool isiOS:                            ScreenToolsController.isiOS
     property bool isMobile:                         ScreenToolsController.isMobile
+    property bool isFakeMobile:                     ScreenToolsController.fakeMobile
     property bool isWindows:                        ScreenToolsController.isWindows
     property bool isDebug:                          ScreenToolsController.isDebug
     property bool isMac:                            ScreenToolsController.isMacOS
@@ -87,19 +94,21 @@ Item {
     property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
     property bool isSerialAvailable:                ScreenToolsController.isSerialAvailable
 
-    readonly property real minTouchMillimeters:     10      ///< Minimum touch size in millimeters
-    property real minTouchPixels:                   0       ///< Minimum touch size in pixels
+    readonly property real minTouchMillimeters:     5   ///< Minimum touch size in millimeters
+    property real minTouchPixels:                   0   ///< Minimum touch size in pixels (calculatedd from minTouchMillimeters and realPixelDensity)
 
     // The implicit heights/widths for our custom control set
     property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
-    property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.0))
+    property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 1.2 : 1.0))
     property real implicitRadioButtonHeight:        implicitCheckBoxHeight
+    property real implicitTextFieldWidth:           defaultFontPixelWidth * 13
     property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real comboBoxPadding:                  defaultFontPixelWidth
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
+    property real buttonBorderRadius:               defaultFontPixelWidth / 2
     // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
     property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
     property real radioButtonIndicatorSize:         checkBoxIndicatorSize
@@ -150,7 +159,7 @@ Item {
             // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing
             minTouchPixels      = defaultFontPixelHeight * 3
         }
-        toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
+        toolbarHeight           = defaultFontPixelHeight * 3
         toolbarHeight           = toolbarHeight * QGroundControl.corePlugin.options.toolbarHeightMultiplier
     }
 

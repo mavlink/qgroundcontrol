@@ -23,7 +23,11 @@
 #include <QThread>
 #include <QTimer>
 #include <QTime>
+#ifdef Q_OS_ANDROID
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 #include <stdint.h>
 

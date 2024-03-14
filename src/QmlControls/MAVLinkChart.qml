@@ -1,13 +1,13 @@
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Layouts              1.11
-import QtCharts                     2.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtCharts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 ChartView {
     id:                 chartView
@@ -97,7 +97,7 @@ ChartView {
                 height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.timeScales
                 currentIndex:       chartController ? chartController.rangeXIndex : 0
-                onActivated:        { if(chartController) chartController.rangeXIndex = index; }
+                onActivated: (index) => { if(chartController) chartController.rangeXIndex = index; }
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCLabel {
@@ -110,7 +110,7 @@ ChartView {
                 height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.rangeList
                 currentIndex:       chartController ? chartController.rangeYIndex : 0
-                onActivated:        { if(chartController) chartController.rangeYIndex = index; }
+                onActivated: (index) => { if(chartController) chartController.rangeYIndex = index; }
                 Layout.alignment:   Qt.AlignVCenter
             }
         }

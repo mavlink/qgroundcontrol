@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
+import QtQuick
 
 Rectangle {
     anchors.fill:               parent

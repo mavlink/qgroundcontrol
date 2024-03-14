@@ -51,7 +51,7 @@ FirmwarePlugin* APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
         case MAV_TYPE_VTOL_TILTROTOR:
         case MAV_TYPE_VTOL_FIXEDROTOR:
         case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_RESERVED4:
+        case MAV_TYPE_VTOL_TILTWING:
         case MAV_TYPE_VTOL_RESERVED5:
         case MAV_TYPE_FIXED_WING:
             if (!_arduPlanePluginInstance) {

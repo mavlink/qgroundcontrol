@@ -56,7 +56,6 @@ public:
     ~CustomPlugin();
 
     // Overrides from QGCCorePlugin
-    QVariantList&           settingsPages                   (void) final;
     QGCOptions*             options                         (void) final;
     QString                 brandImageIndoor                (void) const final;
     QString                 brandImageOutdoor               (void) const final;

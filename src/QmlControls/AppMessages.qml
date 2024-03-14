@@ -7,19 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 Item {
     id:         _root
@@ -85,9 +84,8 @@ Item {
                 id:             writeDialog
                 folder:         QGroundControl.settingsManager.appSettings.logSavePath
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
-                selectExisting: false
                 title:          qsTr("Select log save file")
-                onAcceptedForSave: {
+                onAcceptedForSave: (file) => {
                     debugMessageModel.writeMessages(file);
                     visible = false;
                 }
@@ -157,7 +155,7 @@ Item {
 
         QGCPopupDialog {
             title:      qsTr("Logging categories")
-            buttons:    StandardButton.Close
+            buttons:    Dialog.Close
 
             ColumnLayout {
                 RowLayout {

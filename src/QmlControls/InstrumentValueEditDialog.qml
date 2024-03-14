@@ -7,28 +7,28 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Dialogs  1.3
-import QtQuick.Layouts  1.2
-import QtQuick.Controls 2.5
+import QtQuick
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controllers
+import QGroundControl.Palette
 
 QGCPopupDialog {
     id:         root
     title:      qsTr("Value Display")
-    buttons:    StandardButton.Close
+    buttons:    Dialog.Close
 
     property var instrumentValueData
 
-    QGCPalette { id: qgcPal;            colorGroupEnabled: parent.enabled }
-    QGCPalette { id: qgcPalDisabled;    colorGroupEnabled: false }
+    QGCPalette { id: qgcPal;        colorGroupEnabled: parent.enabled }
+    QGCPalette { id: qgcPalDisable; colorGroupEnabled: false }
 
     Loader {
         sourceComponent: instrumentValueData.fact ? editorComponent : noFactComponent
@@ -56,7 +56,7 @@ QGCPopupDialog {
                 model:                  instrumentValueData.factGroupNames
                 sizeToContents:         true
                 Component.onCompleted:  currentIndex = find(instrumentValueData.factGroupName)
-                onActivated: {
+                onActivated: (index) => {
                     instrumentValueData.setFact(currentText, "")
                     instrumentValueData.icon = ""
                     instrumentValueData.text = instrumentValueData.fact.shortDescription
@@ -73,7 +73,7 @@ QGCPopupDialog {
                 model:                  instrumentValueData.factValueNames
                 sizeToContents:         true
                 Component.onCompleted:  currentIndex = find(instrumentValueData.factName)
-                onActivated: {
+                onActivated: (index) => {
                     instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
                     instrumentValueData.icon = ""
                     instrumentValueData.text = instrumentValueData.fact.shortDescription
@@ -106,7 +106,7 @@ QGCPopupDialog {
                 fillMode:           Image.PreserveAspectFit
                 mipmap:             true
                 smooth:             true
-                color:              enabled ? qgcPal.text : qgcPalDisabled.text
+                color:              enabled ? qgcPal.text : qgcPalDisable.text
                 enabled:            iconRadio.checked
 
                 MouseArea {
@@ -151,7 +151,7 @@ QGCPopupDialog {
                 model:              instrumentValueData.factValueGrid.fontSizeNames
                 currentIndex:       instrumentValueData.factValueGrid.fontSize
                 sizeToContents:     true
-                onActivated:        instrumentValueData.factValueGrid.fontSize = index
+                onActivated: (index) => { instrumentValueData.factValueGrid.fontSize = index }
             }
 
             QGCCheckBox {
@@ -169,7 +169,7 @@ QGCPopupDialog {
                 model:              instrumentValueData.rangeTypeNames
                 currentIndex:       instrumentValueData.rangeType
                 sizeToContents:     true
-                onActivated:        instrumentValueData.rangeType = index
+                onActivated: (index) => { instrumentValueData.rangeType = index }
             }
 
             Loader {
@@ -192,13 +192,19 @@ QGCPopupDialog {
                     case InstrumentValueData.OpacityRange:
                         sourceComponent = opacityRangeDialog
                         break
-                    case InstrumentValueData.IconSelvalueedectRange:
+                    case InstrumentValueData.IconSelectRange:
                         sourceComponent = iconRangeDialog
                         break
                     }
                 }
 
-                Component.onCompleted: updateSourceComponent()
+                Component.onCompleted: {
+                    updateSourceComponent()
+                    if (sourceComponent) {
+                        height = item.childrenRect.height
+                        width = item.childrenRect.width
+                    }
+                }
 
                 Connections {
                     target:             instrumentValueData
@@ -231,7 +237,7 @@ QGCPopupDialog {
             ColorDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
-                currentColor:   instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
+                selectedColor:  instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
                 onAccepted:     updateColorValue(colorIndex, color)
 
                 property int colorIndex: 0
@@ -329,7 +335,7 @@ QGCPopupDialog {
         id: iconRangeDialog
 
         Item {
-            width:  childrenRect.widthvalueed
+            width:  childrenRect.width
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
@@ -514,7 +520,7 @@ QGCPopupDialog {
 
         QGCPopupDialog {
             title:      qsTr("Select Icon")
-            buttons:    StandardButton.Close
+            buttons:    Dialog.Close
 
             property var     iconNames
             property string  icon

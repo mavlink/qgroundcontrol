@@ -27,10 +27,10 @@ signals:
     void modelChanged(void);
 
 private:
-    static void     append  (QQmlListProperty<QObject>* qmlListProperty, QObject* value);
-    static int      count   (QQmlListProperty<QObject>* qmlListProperty);
-    static QObject* at      (QQmlListProperty<QObject>*, int index);
-    static void     clear   (QQmlListProperty<QObject>* qmlListProperty);
+    static void         append  (QQmlListProperty<QObject>* qmlListProperty, QObject* value);
+    static qsizetype    count   (QQmlListProperty<QObject>* qmlListProperty);
+    static QObject*     at      (QQmlListProperty<QObject>*, qsizetype index);
+    static void         clear   (QQmlListProperty<QObject>* qmlListProperty);
 
     QList<QObject*> _objectList;
 };

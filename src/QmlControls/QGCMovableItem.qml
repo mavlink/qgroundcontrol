@@ -1,6 +1,6 @@
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QGroundControl.ScreenTools 1.0
+import QtQuick
+import QtQuick.Controls
+import QGroundControl.ScreenTools
 
 // This item can be dragged around within its parent.
 // Double click issues a signal the parent can use to
@@ -28,14 +28,14 @@ Item {
         drag.maximumX:      root.parent.width  - (root.width  * tform.xScale)
         drag.maximumY:      root.parent.height - (root.height * tform.yScale)
         drag.filterChildren: true
-        onPressed: {
+        onPressed: (mouse) => {
             root.anchors.left  = undefined
             root.anchors.right = undefined
         }
         onDoubleClicked: {
             root.resetRequested();
         }
-        onWheel:
+        onWheel: (wheel) =>
         {
             var zoomFactor = 1;
             if(wheel.angleDelta.y > 0)

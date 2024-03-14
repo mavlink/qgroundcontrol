@@ -15,6 +15,8 @@
 
 class LinkInterface;
 
+Q_MOC_INCLUDE("LinkInterface.h")
+
 /// Interface holding link specific settings.
 class LinkConfiguration : public QObject
 {
@@ -55,6 +57,9 @@ public:
 #endif
 #ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
+#endif
+#ifndef QGC_AIRLINK_DISABLED
+        Airlink,
 #endif
         TypeLogReplay,
         TypeLast        // Last type value (type >= TypeLast == invalid)

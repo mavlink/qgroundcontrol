@@ -1,16 +1,17 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 
-add_library(PositionManager
+qt_add_library(PositionManager STATIC
 	PositionManager.cpp
+	PositionManager.h
 	SimulatedPosition.cc
+	SimulatedPosition.h
 )
 
 target_link_libraries(PositionManager
 	PUBLIC
+		Qt6::Core
+		Qt6::Positioning
 		qgc
 )
 
-target_include_directories(PositionManager
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-	)
-
+target_include_directories(PositionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

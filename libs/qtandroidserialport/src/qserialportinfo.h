@@ -42,7 +42,6 @@ QT_BEGIN_NAMESPACE
 
 class QSerialPort;
 class QSerialPortInfoPrivate;
-class QSerialPortInfoPrivateDeleter;
 
 class QSerialPortInfo
 {
@@ -78,13 +77,13 @@ public:
     static QList<qint32> standardBaudRates();
     static QList<QSerialPortInfo> availablePorts();
 
-    QScopedPointer<QSerialPortInfoPrivate, QSerialPortInfoPrivateDeleter> d_ptr;
+    std::unique_ptr<QSerialPortInfoPrivate> d_ptr;
 
 private:
     QSerialPortInfo(const QSerialPortInfoPrivate &dd);
     friend QList<QSerialPortInfo> availablePortsByUdev(bool &ok);
     friend QList<QSerialPortInfo> availablePortsBySysfs(bool &ok);
-    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok);
+    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices();
 };
 
 inline bool QSerialPortInfo::isNull() const

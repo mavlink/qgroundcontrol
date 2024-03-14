@@ -21,7 +21,6 @@
 #include <limits.h>
 
 #include "Fact.h"
-#include "UASInterface.h"
 
 // Note how the Qt headers, System, headers and the QGroundControl headers above are kept in separate groups
 

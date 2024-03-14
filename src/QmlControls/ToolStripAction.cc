@@ -59,6 +59,42 @@ void ToolStripAction::setShowAlternateIcon(bool showAlternateIcon)
 
 }
 
+void ToolStripAction::setbiColorIcon(bool biColorIcon)
+{
+    if (biColorIcon != _biColorIcon) {
+        _biColorIcon = biColorIcon;
+        emit biColorIconChanged(biColorIcon);
+    }
+
+}
+
+void ToolStripAction::setfullColorIcon(bool fullColorIcon)
+{
+    if (fullColorIcon != _fullColorIcon) {
+        _fullColorIcon = fullColorIcon;
+        emit fullColorIconChanged(fullColorIcon);
+    }
+
+}
+
+void ToolStripAction::setNonExclusive(bool nonExclusive)
+{
+    if (nonExclusive != _nonExclusive) {
+        _nonExclusive = nonExclusive;
+        emit nonExclusiveChanged(nonExclusive);
+    }
+
+}
+
+void ToolStripAction::setToolStripIndex(int toolStripIndex)
+{
+    if (toolStripIndex != _toolStripIndex) {
+        _toolStripIndex = toolStripIndex;
+        emit toolStripIndexChanged(toolStripIndex);
+    }
+
+}
+
 void ToolStripAction::setText(const QString& text)
 {
     if (text != _text) {

@@ -11,15 +11,17 @@
 #include "Joystick.h"
 #include "QGC.h"
 #include "AutoPilotPlugin.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
 #include "QGCCameraManager.h"
-#include "QGCCameraControl.h"
+#include "VehicleCameraControl.h"
+#include "CustomAction.h"
+#include "SettingsManager.h"
+#include "CustomMavlinkActionsSettings.h"
 
 #include <QSettings>
 
-QGC_LOGGING_CATEGORY(JoystickLog,       "JoystickLog")
+// JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")
 
 const char* Joystick::_settingsGroup =                  "Joysticks";
@@ -67,6 +69,8 @@ const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Cente
 const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
 const char* Joystick::_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
 const char* Joystick::_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
+const char* Joystick::_buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
+const char* Joystick::_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -100,13 +104,14 @@ AssignableButtonAction::AssignableButtonAction(QObject* parent, QString action_,
 }
 
 Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager)
-    : _name(name)
-    , _axisCount(axisCount)
-    , _buttonCount(buttonCount)
-    , _hatCount(hatCount)
-    , _hatButtonCount(4 * hatCount)
-    , _totalButtonCount(_buttonCount+_hatButtonCount)
-    , _multiVehicleManager(multiVehicleManager)
+    : _name                 (name)
+    , _axisCount            (axisCount)
+    , _buttonCount          (buttonCount)
+    , _hatCount             (hatCount)
+    , _hatButtonCount       (4 * hatCount)
+    , _totalButtonCount     (_buttonCount+_hatButtonCount)
+    , _multiVehicleManager  (multiVehicleManager)
+    , _customActionManager  (qgcApp()->toolbox()->settingsManager()->customMavlinkActionsSettings()->joystickActionsFile())
 {
     qRegisterMetaType<GRIPPER_ACTIONS>();
 
@@ -124,8 +129,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
     _loadSettings();
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
-
-    _customMavCommands = JoystickMavCommand::load("JoystickMavCommands.json");
+    connect(qgcApp()->toolbox()->multiVehicleManager()->vehicles(), &QmlObjectListModel::countChanged, this, &Joystick::_vehicleCountChanged);
 }
 
 void Joystick::stop()
@@ -219,6 +223,20 @@ void Joystick::_activeVehicleChanged(Vehicle* activeVehicle)
         settings.beginGroup(_settingsGroup);
         int mode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
         setTXMode(mode);
+    }
+}
+void Joystick::_flightModesChanged()
+{
+    _buildActionList(_activeVehicle);
+}
+
+void Joystick::_vehicleCountChanged(int count)
+{
+    if(count == 0)
+    {
+        // then the last vehicle has been deleted
+        qCDebug(JoystickLog) << "Stopping joystick thread due to last active vehicle deletion";
+        this->stopPolling();
     }
 }
 
@@ -475,7 +493,6 @@ float Joystick::_adjustRange(int value, Calibration_t calibration, bool withDead
     return std::max(-1.0f, std::min(correctedValue, 1.0f));
 }
 
-
 void Joystick::run()
 {
     //-- Joystick thread
@@ -490,7 +507,9 @@ void Joystick::run()
     while (!_exitThread) {
         _update();
         _handleButtons();
-        _handleAxis();
+        if (axisCount() != 0) {
+            _handleAxis();
+        }
         QGC::SLEEP::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
     }
     _close();
@@ -704,11 +723,14 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
+            disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
+            disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
+            disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
         // If joystick is not calibrated, disable it
-        if ( !_calibrated ) {
+        if ( axisCount() != 0 && !_calibrated ) {
             vehicle->setJoystickEnabled(false);
         }
         // Update qml in case of joystick transition
@@ -727,6 +749,9 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             connect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
+            connect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
+            connect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
+            connect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
     }
     if (!isRunning()) {
@@ -747,6 +772,9 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             disconnect(this, &Joystick::gripperAction,      _activeVehicle, &Vehicle::setGripperAction);
+            disconnect(this, &Joystick::landingGearDeploy,  _activeVehicle, &Vehicle::landingGearDeploy);
+            disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
+            disconnect(_activeVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         }
         _exitThread = true;
     }
@@ -998,7 +1026,7 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) emit setVtolInFwdFlight(true);
     } else if (action == _buttonActionVTOLMultiRotor) {
         if (buttonDown) emit setVtolInFwdFlight(false);
-    } else if (_activeVehicle->flightModes().contains(action) || _activeVehicle->extraJoystickFlightModes().contains(action)) {
+    } else if (_activeVehicle->flightModes().contains(action)) {
         if (buttonDown) emit setFlightMode(action);
     } else if(action == _buttonActionContinuousZoomIn || action == _buttonActionContinuousZoomOut) {
         if (buttonDown) {
@@ -1044,11 +1072,16 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if(buttonDown) {
             emit gripperAction(GRIPPER_ACTION_RELEASE);
         }
+    } else if(action == _buttonActionLandingGearDeploy) {
+        if (buttonDown) emit landingGearDeploy();
+    } else if(action == _buttonActionLandingGearRetract) {
+        if (buttonDown) emit landingGearRetract();
     } else {
         if (buttonDown && _activeVehicle) {
-            for (auto& item : _customMavCommands) {
-                if (action == item.name()) {
-                    item.send(_activeVehicle);
+            for (int i=0; i<_customActionManager.actions()->count(); i++) {
+                auto customAction = _customActionManager.actions()->value<CustomAction*>(i);
+                if (action == customAction->label()) {
+                    customAction->sendTo(_activeVehicle);
                     return;
                 }
             }
@@ -1115,10 +1148,6 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
         foreach(auto mode, list) {
             _assignableButtonActions.append(new AssignableButtonAction(this, mode));
         }
-        list = activeVehicle->extraJoystickFlightModes();
-        foreach(auto mode, list) {
-            _assignableButtonActions.append(new AssignableButtonAction(this, mode));
-        }
     }
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionVTOLFixedWing));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionVTOLMultiRotor));
@@ -1142,9 +1171,12 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperGrab));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGripperRelease));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearDeploy));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionLandingGearRetract));
 
-    for (auto& item : _customMavCommands) {
-        _assignableButtonActions.append(new AssignableButtonAction(this, item.name()));
+    for (int i=0; i<_customActionManager.actions()->count(); i++) {
+        auto customAction = _customActionManager.actions()->value<CustomAction*>(i);
+        _assignableButtonActions.append(new AssignableButtonAction(this, customAction->label()));
     }
 
     for(int i = 0; i < _assignableButtonActions.count(); i++) {

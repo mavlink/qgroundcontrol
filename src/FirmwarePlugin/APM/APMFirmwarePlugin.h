@@ -71,7 +71,7 @@ public:
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
     QString             missionCommandOverrides         (QGCMAVLink::VehicleClass_t vehicleClass) const override;
-    QString             _internalParameterMetaDataFile  (Vehicle* vehicle) override;
+    QString             _internalParameterMetaDataFile  (const Vehicle* vehicle) const override;
     FactMetaData*       _getMetaDataForFact             (QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType) override;
     void                _getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) override { APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion); }
     QObject*            _loadParameterMetaData          (const QString& metaDataFile) override;
@@ -80,6 +80,11 @@ public:
     QString             getHobbsMeter                   (Vehicle* vehicle) override; 
     bool                hasGripper                      (const Vehicle* vehicle) const override;
     const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
+    double              maximumEquivalentAirspeed       (Vehicle* vehicle) override;
+    double              minimumEquivalentAirspeed       (Vehicle* vehicle) override;
+    bool                fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) override;
+    void                guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) override;
+    QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
 
 protected:
     /// All access to singleton is through stack specific implementation
@@ -102,7 +107,7 @@ private:
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _handleOutgoingParamSetThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
     void _soloVideoHandshake(void);
-    bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
+    virtual bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
     void _handleRCChannels(Vehicle* vehicle, mavlink_message_t* message);
     void _handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t* message);
     QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
@@ -137,4 +142,7 @@ public:
 
     QTime lastBatteryStatusTime;
     QTime lastHomePositionTime;
+
+    bool  MAV_CMD_DO_REPOSITION_supported = false;
+    bool  MAV_CMD_DO_REPOSITION_unsupported = false;
 };

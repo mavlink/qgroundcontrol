@@ -12,10 +12,6 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 
-#ifdef UNITTEST_BUILD
-#include "UnitTest.h"
-#endif
-
 #include <QDebug>
 #include <QFile>
 #include <QMutexLocker>
@@ -55,6 +51,9 @@ constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK;
 
 // The LinkManager is only forward declared in the header, so a static_assert is here instead to ensure we update if the value changes.
 static_assert(LinkManager::invalidMavlinkChannel() == std::numeric_limits<uint8_t>::max(), "update MockLink::_mavlinkAuxChannel");
@@ -424,13 +423,13 @@ void MockLink::_sendSysStatus(void)
                 _vehicleComponentId,
                 static_cast<uint8_t>(mavlinkChannel()),
                 &msg,
-                0,          // onboard_control_sensors_present
-                0,          // onboard_control_sensors_enabled
-                0,          // onboard_control_sensors_health
-                250,        // load
-                4200 * 4,   // voltage_battery
-                8000,       // current_battery
-                _battery1PctRemaining, // battery_remaining
+                MAV_SYS_STATUS_SENSOR_GPS,  // onboard_control_sensors_present
+                0,                          // onboard_control_sensors_enabled
+                0,                          // onboard_control_sensors_health
+                250,                        // load
+                4200 * 4,                   // voltage_battery
+                8000,                       // current_battery
+                _battery1PctRemaining,      // battery_remaining
                 0,0,0,0,0,0,0,0,0);
     respondWithMavlinkMessage(msg);
 }
@@ -560,14 +559,14 @@ void MockLink::_writeBytes(const QByteArray bytes)
 void MockLink::_writeBytesQueued(const QByteArray bytes)
 {
     if (_inNSH) {
-        _handleIncomingNSHBytes(bytes.constData(), bytes.count());
+        _handleIncomingNSHBytes(bytes.constData(), bytes.length());
     } else {
         if (bytes.startsWith(QByteArray("\r\r\r"))) {
             _inNSH  = true;
-            _handleIncomingNSHBytes(&bytes.constData()[3], bytes.count() - 3);
+            _handleIncomingNSHBytes(&bytes.constData()[3], bytes.length() - 3);
         }
 
-        _handleIncomingMavlinkBytes((uint8_t *)bytes.constData(), bytes.count());
+        _handleIncomingMavlinkBytes((uint8_t *)bytes.constData(), bytes.length());
     }
 }
 
@@ -1052,6 +1051,53 @@ void MockLink::_handleFTP(const mavlink_message_t& msg)
     _mockLinkFTP->mavlinkMessageReceived(msg);
 }
 
+void MockLink::_handleInProgressCommandLong(const mavlink_command_long_t& request)
+{
+    uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
+
+    switch (request.command) {
+    case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED:
+        // Test command which sends in progress messages and then acceptance ack
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED:
+        // Test command which sends in progress messages and then failure ack
+        commandResult = MAV_RESULT_FAILED;
+        break;
+    case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK:
+        // Test command which sends in progress messages and then never sends final result ack
+        break;
+    }
+
+    mavlink_message_t commandAck;
+
+    mavlink_msg_command_ack_pack_chan(_vehicleSystemId,
+                                      _vehicleComponentId,
+                                      mavlinkChannel(),
+                                      &commandAck,
+                                      request.command,
+                                      MAV_RESULT_IN_PROGRESS,
+                                      1,    // progress
+                                      0,    // result_param2
+                                      0,    // target_system
+                                      0);   // target_component
+    respondWithMavlinkMessage(commandAck);
+
+    if (request.command != MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK) {
+        mavlink_msg_command_ack_pack_chan(_vehicleSystemId,
+                                        _vehicleComponentId,
+                                        mavlinkChannel(),
+                                        &commandAck,
+                                        request.command,
+                                        commandResult,
+                                        0,    // progress
+                                        0,    // result_param2
+                                        0,    // target_system
+                                        0);   // target_component
+        respondWithMavlinkMessage(commandAck);
+    }
+}
+
 void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 {
     static bool firstCmdUser3 = true;
@@ -1063,7 +1109,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 
     mavlink_msg_command_long_decode(&msg, &request);
 
-    _sendMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
+    _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
 
     switch (request.command) {
     case MAV_CMD_COMPONENT_ARM_DISARM:
@@ -1111,7 +1157,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         commandResult = MAV_RESULT_FAILED;
         break;
     case MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED:
-        // Test command which returns MAV_RESULT_ACCEPTED on second attempt
+        // Test command which does not respond to first request and returns MAV_RESULT_ACCEPTED on second attempt
         if (firstCmdUser3) {
             firstCmdUser3 = false;
             return;
@@ -1121,7 +1167,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         }
         break;
     case MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED:
-        // Test command which returns MAV_RESULT_FAILED on second attempt
+        // Test command which does not respond to first request and returns MAV_RESULT_FAILED on second attempt
         if (firstCmdUser4) {
             firstCmdUser4 = false;
             return;
@@ -1132,7 +1178,12 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         break;
     case MAV_CMD_MOCKLINK_NO_RESPONSE:
     case MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY:
-        // No response
+        // Test command which never responds
+        return;
+    case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED:
+    case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED:
+    case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK:
+        _handleInProgressCommandLong(request);
         return;
     }
 
@@ -1544,6 +1595,24 @@ void MockLink::_handleLogRequestList(const mavlink_message_t& msg)
     respondWithMavlinkMessage(responseMsg);
 }
 
+QString MockLink::_createRandomFile(uint32_t byteCount)
+{
+    QTemporaryFile tempFile;
+
+    tempFile.setAutoRemove(false);
+    if (tempFile.open()) {
+        for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
+            unsigned char byte = (QRandomGenerator::global()->generate() * 0xFF) / RAND_MAX;
+            tempFile.write((char *)&byte, 1);
+        }
+        tempFile.close();
+        return tempFile.fileName();
+    } else {
+        qWarning() << "MockLink::createRandomFile open failed" << tempFile.errorString();
+        return QString();
+    }
+}
+
 void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
 {
     mavlink_log_request_data_t request;
@@ -1552,7 +1621,7 @@ void MockLink::_handleLogRequestData(const mavlink_message_t& msg)
 
     if (_logDownloadFilename.isEmpty()) {
 #ifdef UNITTEST_BUILD
-        _logDownloadFilename = UnitTest::createRandomFile(_logDownloadFileSize);
+        _logDownloadFilename = _createRandomFile(_logDownloadFileSize);
 #endif
     }
 

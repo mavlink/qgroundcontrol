@@ -1,15 +1,21 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
 add_custom_target(UiPreferencesQml
 	SOURCES
 		BluetoothSettings.qml
-		DebugWindow.qml
 		GeneralSettings.qml
 		HelpSettings.qml
 		LinkSettings.qml
 		LogReplaySettings.qml
-		MavlinkSettings.qml
-		MockLink.qml
-		MockLinkSettings.qml
+		PX4LogTransferSettings.qml
 		SerialSettings.qml
 		TcpSettings.qml
 		UdpSettings.qml
+        ADSBServerSettings.qml
+        FlyViewSettings.qml
+        MapSettings.qml
+        OfflineMapInfo.qml
+        PlanViewSettings.qml
+        TelemetrySettings.qml
+        VideoSettings.qml
 )

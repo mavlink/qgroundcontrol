@@ -1,3 +1,17 @@
+Logging Support
+The scene graph has support for a number of logging categories. These can be useful in tracking down both performance issues and bugs in addition to being helpful to Qt contributors.
+
+qt.scenegraph.time.texture - logs the time spent doing texture uploads
+qt.scenegraph.time.compilation - logs the time spent doing shader compilation
+qt.scenegraph.time.renderer - logs the time spent in the various steps of the renderer
+qt.scenegraph.time.renderloop - logs the time spent in the various steps of the render loop. With the threaded render loop this gives an insight into the time elapsed between the various frame preparation steps both on the GUI and the render thread. It can therefore also be a useful troubleshooting tool, for example, to confirm how vsync-based throttling and other low-level Qt enablers, such as QWindow::requestUpdate(), affect the rendering and presentation pipeline.
+qt.scenegraph.time.glyph - logs the time spent preparing distance field glyphs
+qt.scenegraph.general - logs general information about various parts of the scene graph and the graphics stack
+qt.scenegraph.renderloop - creates a detailed log of the various stages involved in rendering. This log mode is primarily useful for developers working on Qt.
+The legacy QSG_INFO environment variable is also available. Setting it to a non-zero value enables the qt.scenegraph.general category.
+
+Note: When encountering graphics problems, or when in doubt which render loop or graphics API is in use, always start the application with at least qt.scenegraph.general and qt.rhi.* enabled, or QSG_INFO=1 set. This will then print some essential information onto the debug output during initialization.
+
 # VideoReceiverApp
  
 ## Application
@@ -43,8 +57,6 @@ for example:
  ```udp://<interface>:<port>``` - H.264 over RTP/UDP
  
  ```udp265://<interface>:<port>``` - H.265 over RTP/UDP
- 
- ```tsusb://<interface>:<port>``` - Taisync's forwarded H.264 byte aligned NALU stream over UDP
  
  ```tcp://<host>:<port>``` - MPEG-2 TS over TCP
  

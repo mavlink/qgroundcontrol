@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 /// Base view control for all Setup pages
 Item {
@@ -60,6 +60,7 @@ Item {
             width:              availableWidth
             spacing:            _margins
             layoutDirection:    Qt.RightToLeft
+            visible:            showAdvanced || (pageDescription !== "" && !ScreenTools.isShortScreen)
 
             QGCCheckBox {
                 id:         advancedCheckBox
@@ -86,11 +87,13 @@ Item {
                 }
             }
         }
+
         Loader {
             id:                 pageLoader
             anchors.topMargin:  _margins
             anchors.top:        headingRow.bottom
         }
+
         // Overlay to display when vehicle is armed and this setup page needs
         // to be disabled
         Rectangle {

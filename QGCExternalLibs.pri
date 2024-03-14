@@ -54,7 +54,8 @@ isEmpty(MAVLINK_CONF) {
         MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
         message($$sprintf("Using user-supplied mavlink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
     } else {
-        MAVLINK_CONF = ardupilotmega
+        MAVLINK_CONF = all
+        message($$sprintf("Using MAVLink dialect '%1'.", $$MAVLINK_CONF))
     }
 }
 
@@ -67,39 +68,19 @@ contains (CONFIG, QGC_DISABLE_APM_MAVLINK) {
     CONFIG  += ArdupilotEnabled
 }
 
-# First we select the dialect, checking for valid user selection
-# Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake
-!isEmpty(MAVLINK_CONF) {
-    message($$sprintf("Using MAVLink dialect '%1'.", $$MAVLINK_CONF))
-}
-
 # Then we add the proper include paths dependent on the dialect.
 INCLUDEPATH += $$MAVLINKPATH
 
-exists($$MAVLINKPATH/common) {
-    !isEmpty(MAVLINK_CONF) {
-        count(MAVLINK_CONF, 1) {
-            exists($$MAVLINKPATH/$$MAVLINK_CONF) {
-                INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-                DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
-            } else {
-                error($$sprintf("MAVLink dialect '%1' does not exist at '%2'!", $$MAVLINK_CONF, $$MAVLINKPATH_REL))
-            }
-        } else {
-            error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
-        }
+count(MAVLINK_CONF, 1) {
+    exists($$MAVLINKPATH/$$MAVLINK_CONF) {
+        INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
+        DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
     } else {
-        INCLUDEPATH += $$MAVLINKPATH/common
+        error($$sprintf("MAVLink dialect '%1' does not exist at '%2'!", $$MAVLINK_CONF, $$MAVLINKPATH_REL))
     }
 } else {
-    error($$sprintf("MAVLink folder does not exist at '%1'! Run 'git submodule init && git submodule update' on the command line.",$$MAVLINKPATH_REL))
+    error(Only a single mavlink dialect can be specified in MAVLINK_CONF)
 }
-
-#
-# [REQUIRED] EIGEN matrix library
-# NOMINMAX constant required to make internal min/max work.
-INCLUDEPATH += libs/eigen
-DEFINES += NOMINMAX
 
 #
 # [REQUIRED] Events submodule
@@ -129,7 +110,7 @@ SOURCES += \
 WindowsBuild {
     INCLUDEPATH +=  $$SOURCE_DIR/libs/zlib/windows/include
     LIBS += -L$$SOURCE_DIR/libs/zlib/windows/lib
-    LIBS += -lzlibstat
+    LIBS += -lzlibstatic
 } else {
     LIBS += -lz
 }
@@ -226,39 +207,9 @@ MacBuild {
 # Include Android OpenSSL libs
 AndroidBuild {
     include($$SOURCE_DIR/libs/OpenSSL/android_openssl/openssl.pri)
-    message("ANDROID_EXTRA_LIBS")
-    message($$ANDROID_TARGET_ARCH)
-    message($$ANDROID_EXTRA_LIBS)
-}
-
-# Pairing
-contains(DEFINES, QGC_ENABLE_PAIRING) {
-    MacBuild {
-        #- Pairing is generally not supported on macOS. This is here solely for development.
-        exists(/usr/local/Cellar/openssl/1.0.2t/include) {
-            INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2t/include
-            LIBS += -L/usr/local/Cellar/openssl/1.0.2t/lib
-            LIBS += -lcrypto
-        } else {
-            # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
-            # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
-            DEFINES -= QGC_ENABLE_PAIRING
-        }
-    } else:WindowsBuild {
-        #- Pairing is not supported on Windows
-        DEFINES -= QGC_ENABLE_PAIRING
-    } else {
-        LIBS += -lcrypto
-        AndroidBuild {
-            contains(QT_ARCH, arm) {
-                LIBS += $$ANDROID_EXTRA_LIBS
-                INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
-            } else {
-                LIBS += $$ANDROID_EXTRA_LIBS
-                INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Android/arch-x86/include
-            }
-        }
-    }
+    #message("ANDROID_EXTRA_LIBS")
+    #message($$ANDROID_TARGET_ARCH)
+    #message($$ANDROID_EXTRA_LIBS)
 }
 
 #
@@ -276,4 +227,10 @@ contains (DEFINES, DISABLE_ZEROCONF) {
     DEFINES += QGC_ZEROCONF_ENABLED
 } else {
     message("Skipping support for Zeroconf (unsupported platform)")
+}
+
+# UTM Adapter Enabled
+contains (DEFINES, CONFIG_UTM_ADAPTER){
+    INCLUDEPATH += $$PWD/libs/libevents/libevents/libs/cpp/parse/nlohmann_json/include
+    LIBS += -lboost_system -lboost_thread -lssl -lcrypto
 }

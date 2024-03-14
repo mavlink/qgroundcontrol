@@ -8,15 +8,15 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:                 lightsPage
@@ -196,7 +196,7 @@ SetupPage {
                             textRole:           "text"
                             currentIndex:       lights1OutIndex
 
-                            onActivated: setRCFunction(lightsOutModel.get(index).value, lights1Function)
+                            onActivated: (index) => { setRCFunction(lightsOutModel.get(index).value, lights1Function) }
                         }
 
                         QGCLabel {
@@ -217,7 +217,7 @@ SetupPage {
                             textRole:           "text"
                             currentIndex:       lights2OutIndex
 
-                            onActivated: setRCFunction(lightsOutModel.get(index).value, lights2Function)
+                            onActivated: (index) => { setRCFunction(lightsOutModel.get(index).value, lights2Function) }
                         }
 
                         QGCLabel {
@@ -237,7 +237,7 @@ SetupPage {
                             model:              [1,2,3,4,5,6,7,8,9,10]
                             currentIndex:       lightsSteps-1
 
-                            onActivated: calcStepSize(index+1)
+                            onActivated: (index) => { calcStepSize(index+1) }
                         }
                     } // Rectangle
                 } // Item

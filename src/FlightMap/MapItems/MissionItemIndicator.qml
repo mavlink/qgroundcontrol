@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 
-import QtQuick      2.3
-import QtLocation   5.3
+import QtQuick
+import QtLocation
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Vehicle
 
 /// Marker for displaying a mission item on the map
 MapQuickItem {

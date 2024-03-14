@@ -7,19 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.Palette               1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.MultiVehicleManager
+import QGroundControl.Palette
 
 Rectangle {
     id:             remoteIDRoot
@@ -47,6 +46,7 @@ Rectangle {
 
     // General properties
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property var  _offlineVehicle:      QGroundControl.multiVehicleManager.offlineEditingVehicle
     property int  _regionOperation:     QGroundControl.settingsManager.remoteIDSettings.region.value
     property int  _locationType:        QGroundControl.settingsManager.remoteIDSettings.locationType.value
     property int  _classificationType:  QGroundControl.settingsManager.remoteIDSettings.classificationType.value
@@ -189,7 +189,7 @@ Rectangle {
                             font.bold:              true
                         }
                     }
-                    
+
                     Rectangle {
                         id:                     gpsFlag
                         Layout.preferredHeight: flagsHeight
@@ -239,7 +239,7 @@ Rectangle {
                     }
 
                     Rectangle {
-                        id:                     operaotrIDFlag
+                        id:                     operatorIDFlag
                         Layout.preferredHeight: flagsHeight
                         Layout.preferredWidth:  flagsWidth
                         color:                  _activeRID ? (_activeVehicle.remoteIDManager.operatorIDGood ? qgcPal.colorGreen : qgcPal.colorRed) : qgcPal.colorGrey
@@ -377,7 +377,7 @@ Rectangle {
                             sizeToContents:     true
                             // In case we change from EU to FAA having the location Type to FIXED, since its not supported in FAA
                             // we need to change it to Live GNSS
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (currentIndex == RemoteIDSettings.RegionOperation.FAA && QGroundControl.settingsManager.remoteIDSettings.locationType.value != RemoteIDSettings.LocationType.LIVE)
                                 QGroundControl.settingsManager.remoteIDSettings.locationType.value = RemoteIDSettings.LocationType.LIVE
                             }
@@ -423,7 +423,7 @@ Rectangle {
                 // -----------------------------------------------------------------------------------------
 
                 // ----------------------------------------- GPS -------------------------------------------
-                // Data representation and connection options for GCS GPS. 
+                // Data representation and connection options for GCS GPS.
                 QGCLabel {
                     id:                 gpsLabel
                     text:               qsTr("GPS GCS")
@@ -473,12 +473,12 @@ Rectangle {
                             Layout.fillWidth:   true
                             sizeToContents:     true
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 // FAA doesnt allow to set a Fixed position. Is either Live GNSS or Takeoff
                                 if (_regionOperation == RemoteIDSettings.RegionOperation.FAA) {
                                     if (currentIndex != 1) {
                                        QGroundControl.settingsManager.remoteIDSettings.locationType.value = 1
-                                        currentIndex = 1 
+                                        currentIndex = 1
                                     }
                                 } else {
                                     // TODO: this lines below efectively disable TAKEOFF option. Uncoment when we add support for it
@@ -526,7 +526,7 @@ Rectangle {
                             Layout.fillWidth:   true
                             fact:               QGroundControl.settingsManager.remoteIDSettings.altitudeFixed
                         }
-                        
+
                         QGCLabel {
                             text:               qsTr("Latitude")
                             Layout.fillWidth:   true
@@ -550,7 +550,7 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            text:               _regionOperation == RemoteIDSettings.RegionOperation.FAA ? 
+                            text:               _regionOperation == RemoteIDSettings.RegionOperation.FAA ?
                                                 qsTr("Altitude") + qsTr(" (Mandatory)") :
                                                 qsTr("Altitude")
                             Layout.fillWidth:   true
@@ -608,7 +608,7 @@ Rectangle {
                             model:  ListModel {
                             }
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (index != -1) {
                                     QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
                                 }
@@ -638,7 +638,7 @@ Rectangle {
                             Layout.preferredWidth:  _comboFieldWidth
                             model:                  [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (index != -1) {
                                     QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
                                 }
@@ -693,7 +693,7 @@ Rectangle {
                         visible:                    QGroundControl.settingsManager.remoteIDSettings.basicIDType.visible
 
                     }
-                    
+
                     GridLayout {
                         id:                         basicIDGrid
                         anchors.margins:            _margins
@@ -784,13 +784,13 @@ Rectangle {
 
                         QGCLabel {
                             text:               QGroundControl.settingsManager.remoteIDSettings.operatorIDType.shortDescription
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorIDType.visible 
+                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorIDType.visible
                             Layout.fillWidth:   true
                         }
                         FactComboBox {
                             id:                 operatorIDFactComboBox
                             fact:               QGroundControl.settingsManager.remoteIDSettings.operatorIDType
-                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorIDType.visible && (QGroundControl.settingsManager.remoteIDSettings.operatorIDType.enumValues.length > 1) 
+                            visible:            QGroundControl.settingsManager.remoteIDSettings.operatorIDType.visible && (QGroundControl.settingsManager.remoteIDSettings.operatorIDType.enumValues.length > 1)
                             Layout.fillWidth:   true
                             sizeToContents:     true
                         }
@@ -801,7 +801,7 @@ Rectangle {
                         }
 
                         QGCLabel {
-                            text:               _regionOperation == RemoteIDSettings.RegionOperation.FAA ? 
+                            text:               _regionOperation == RemoteIDSettings.RegionOperation.FAA ?
                                                 QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription :
                                                 QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(" (Mandatory)")
                             visible:            QGroundControl.settingsManager.remoteIDSettings.operatorID.visible
@@ -814,12 +814,35 @@ Rectangle {
                             visible:            QGroundControl.settingsManager.remoteIDSettings.operatorID.visible
                             Layout.fillWidth:   true
                             maximumLength:      20 // Maximum defined by Mavlink definition of OPEN_DRONE_ID_OPERATOR_ID message
-                            onEditingFinished: {
+	                    onTextChanged: {
                                 if (_activeVehicle) {
-                                    _activeVehicle.remoteIDManager.checkOperatorID() 
+                                    _activeVehicle.remoteIDManager.checkOperatorID(text)
+                                } else {
+                                    _offlineVehicle.remoteIDManager.checkOperatorID(text)
                                 }
                             }
-                            
+                            onEditingFinished: {
+                                if (_activeVehicle) {
+                                    _activeVehicle.remoteIDManager.setOperatorID()
+                                } else {
+                                    _offlineVehicle.remoteIDManager.setOperatorID()
+                                }
+                            }
+                        }
+
+                        // Spacer
+                        QGCLabel {
+                            text:               ""
+                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.fillWidth:   true
+                        }
+
+                        QGCLabel {
+                            text:               QGroundControl.settingsManager.remoteIDSettings.operatorID.shortDescription + qsTr(QGroundControl.settingsManager.remoteIDSettings.operatorIDValid.rawValue == true ? " valid" : " invalid")
+                            visible:            _regionOperation == RemoteIDSettings.RegionOperation.EU
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.fillWidth:   true
                         }
 
                         QGCLabel {
@@ -833,7 +856,7 @@ Rectangle {
                             onClicked: {
                                 if (checked) {
                                     if (_activeVehicle) {
-                                        _activeVehicle.remoteIDManager.checkOperatorID() 
+                                        _activeVehicle.remoteIDManager.setOperatorID()
                                     }
                                 }
                             }
@@ -899,7 +922,7 @@ Rectangle {
                             visible:    QGroundControl.settingsManager.remoteIDSettings.sendSelfID.visible
                         }
                     }
-                        
+
                     QGCLabel {
                         id:                         selfIDnote
                         width:                      selfIDGrid.width

@@ -11,6 +11,7 @@
 #define VideoSettings_H
 
 #include "SettingsGroup.h"
+#include "VideoDecoderOptions.h"
 
 class VideoSettings : public SettingsGroup
 {
@@ -37,14 +38,6 @@ public:
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(forceVideoDecoder)
 
-    enum VideoDecoderOptions {
-        ForceVideoDecoderDefault = 0,
-        ForceVideoDecoderSoftware,
-        ForceVideoDecoderNVIDIA,
-        ForceVideoDecoderVAAPI,
-        ForceVideoDecoderDirectX3D,
-        ForceVideoDecoderVideoToolbox,
-    };
     Q_ENUM(VideoDecoderOptions)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
@@ -73,6 +66,8 @@ public:
     static const char* videoSource3DRSolo;
     static const char* videoSourceParrotDiscovery;
     static const char* videoSourceYuneecMantisG;
+    static const char* videoSourceHerelinkAirUnit;
+    static const char* videoSourceHerelinkHotspot;
 
 signals:
     void streamConfiguredChanged    (bool configured);

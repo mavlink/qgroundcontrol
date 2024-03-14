@@ -28,39 +28,44 @@
 
 class UrlFactory : public QObject {
     Q_OBJECT
+
 public:
+    static const char* kCopernicusElevationProviderKey;
+    static const char* kCopernicusElevationProviderNotice;
 
     UrlFactory      ();
     ~UrlFactory     ();
 
-    QNetworkRequest getTileURL          (QString type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
-    QNetworkRequest getTileURL          (int id, int x, int y, int zoom, QNetworkAccessManager* networkManager);
+    typedef QPair<QString, MapProvider*> ProviderPair;
 
-    QString         getImageFormat      (QString type, const QByteArray& image);
-    QString         getImageFormat      (int id , const QByteArray& image);
+    QNetworkRequest getTileURL          (const QString& type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
+    QNetworkRequest getTileURL          (int qtMapId, int x, int y, int zoom, QNetworkAccessManager* networkManager);
 
-    quint32  averageSizeForType  (QString type);
+    QString         getImageFormat      (const QString& type, const QByteArray& image);
+    QString         getImageFormat      (int qtMapId, const QByteArray& image);
 
-    int long2tileX(QString mapType, double lon, int z);
-    int lat2tileY(QString mapType, double lat, int z);
+    quint32  averageSizeForType  (const QString& type);
 
-    QHash<QString, MapProvider*> getProviderTable(){return _providersTable;}
+    int long2tileX(const QString& mapType, double lon, int z);
+    int lat2tileY (const QString& mapType, double lat, int z);
 
-    int getIdFromType(QString type);
-    QString getTypeFromId(int id);
-    MapProvider* getMapProviderFromId(int id);
+    QStringList     getProviderTypes                ();
+    int             getQtMapIdFromProviderType      (const QString& type);
+    QString         getProviderTypeFromQtMapId      (int qtMapId);
+    MapProvider*    getMapProviderFromQtMapId       (int qtMapId);
+    MapProvider*    getMapProviderFromProviderType  (const QString& type);
+    int             hashFromProviderType            (const QString& type);
+    QString         providerTypeFromHash            (int tileHash);
 
     QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat,
                             double bottomRightLon, double bottomRightLat,
-                            QString mapType);
+                            const QString& mapType);
 
-    bool isElevation(int mapId);
+    bool isElevation(int qtMapId);
 
-  private:
-    int             _timeout;
-    QHash<QString, MapProvider*> _providersTable;
-    void registerProvider(QString Name, MapProvider* provider);
-
+private:
+    int                   _timeout;
+    QList<ProviderPair>   _providers;
 };
 
 #endif

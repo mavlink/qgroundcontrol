@@ -31,6 +31,10 @@ class TakeoffMissionItem;
 class QDomDocument;
 class PlanViewSettings;
 
+Q_MOC_INCLUDE("FlightPathSegment.h")
+Q_MOC_INCLUDE("VisualMissionItem.h")
+Q_MOC_INCLUDE("TakeoffMissionItem.h")
+
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;

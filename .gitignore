@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.cache/
 cmake-build-*/
 out/
 libs/lib/Frameworks/GStreamer.framework
@@ -29,8 +30,6 @@ release
 qgroundcontrol.xcodeproj/**
 doc/html
 doc/doxy.log
-deploy/mac
-deploy/linux
 controller_log*
 user_config.pri
 *.app
@@ -75,7 +74,6 @@ ui_*
 
 # android
 android/local.properties
-android/gradle.properties
 
 # doxygen
 src/html/
@@ -86,3 +84,8 @@ src/latex/
 Qt*-linux*.tar.*
 
 .vs/
+
+# vitepress - user guide
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/

@@ -31,5 +31,5 @@ QString APMMotorComponent::motorIndexToLetter(int index)
 {
     char letter = 'A';
 
-    return QString(letter + index);
+    return QString(char(letter + index));
 }

@@ -7,14 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 ColumnLayout {
     spacing: _rowSpacing
@@ -34,7 +34,7 @@ ColumnLayout {
             Layout.preferredWidth:  _secondColumnWidth
             enabled:                QGroundControl.linkManager.serialPorts.length > 0
 
-            onActivated: {
+            onActivated: (index) => {
                 if (index != -1) {
                     if (index >= QGroundControl.linkManager.serialPortStrings.length) {
                         // This item was adding at the end, must use added text as name
@@ -76,7 +76,7 @@ ColumnLayout {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  QGroundControl.linkManager.serialBaudRates
 
-            onActivated: {
+            onActivated: (index) => {
                 if (index != -1) {
                     subEditConfig.baud = parseInt(QGroundControl.linkManager.serialBaudRates[index])
                 }
@@ -121,7 +121,7 @@ ColumnLayout {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [qsTr("None"), qsTr("Even"), qsTr("Odd")]
 
-            onActivated: {
+            onActivated: (index) => {
                 // Hard coded values from qserialport.h
                 switch (index) {
                 case 0:
@@ -159,7 +159,7 @@ ColumnLayout {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [ "5", "6", "7", "8" ]
             currentIndex:           Math.max(Math.min(subEditConfig.dataBits - 5, 0), 3)
-            onActivated:            subEditConfig.dataBits = index + 5
+            onActivated: (index) => { subEditConfig.dataBits = index + 5 }
         }
 
         QGCLabel { text: qsTr("Stop Bits") }
@@ -167,7 +167,7 @@ ColumnLayout {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [ "1", "2" ]
             currentIndex:           Math.max(Math.min(subEditConfig.stopBits - 1, 0), 1)
-            onActivated:            subEditConfig.stopBits = index + 1
+            onActivated: (index) => { subEditConfig.stopBits = index + 1 }
         }
     }
 }

@@ -22,7 +22,7 @@ Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 class RemoteIDSettings;
 class QGCPositionManager;
 
-// Supporting Opend Dron ID protocol
+// Supporting Open Drone ID protocol
 class RemoteIDManager : public QObject
 {
     Q_OBJECT
@@ -30,21 +30,23 @@ class RemoteIDManager : public QObject
 public:
     RemoteIDManager(Vehicle* vehicle);
 
-    Q_PROPERTY (bool    armStatusGood       READ armStatusGood      NOTIFY armStatusGoodChanged)
-    Q_PROPERTY (QString armStatusError      READ armStatusError     NOTIFY armStatusErrorChanged)
-    Q_PROPERTY (bool    commsGood           READ commsGood          NOTIFY commsGoodChanged)
-    Q_PROPERTY (bool    gcsGPSGood          READ gcsGPSGood         NOTIFY gcsGPSGoodChanged)
-    Q_PROPERTY (bool    basicIDGood         READ basicIDGood        NOTIFY basicIDGoodChanged)
-    Q_PROPERTY (bool    emergencyDeclared   READ emergencyDeclared  NOTIFY emergencyDeclaredChanged)
-    Q_PROPERTY (bool    operatorIDGood      READ operatorIDGood     NOTIFY operatorIDGoodChanged)
+    Q_PROPERTY(bool    available            READ available          NOTIFY availableChanged)             ///< true: the vehicle supports Mavlink Open Drone ID messages
+    Q_PROPERTY(bool    armStatusGood        READ armStatusGood      NOTIFY armStatusGoodChanged)
+    Q_PROPERTY(QString armStatusError       READ armStatusError     NOTIFY armStatusErrorChanged)
+    Q_PROPERTY(bool    commsGood            READ commsGood          NOTIFY commsGoodChanged)
+    Q_PROPERTY(bool    gcsGPSGood           READ gcsGPSGood         NOTIFY gcsGPSGoodChanged)
+    Q_PROPERTY(bool    basicIDGood          READ basicIDGood        NOTIFY basicIDGoodChanged)
+    Q_PROPERTY(bool    emergencyDeclared    READ emergencyDeclared  NOTIFY emergencyDeclaredChanged)
+    Q_PROPERTY(bool    operatorIDGood       READ operatorIDGood     NOTIFY operatorIDGoodChanged)
 
 
-    // Check that the information filled by the pilot operatorID is good
-    Q_INVOKABLE void checkOperatorID();
+    Q_INVOKABLE void checkOperatorID(const QString& operatorID);
+    Q_INVOKABLE void setOperatorID();
 
     // Declare emergency
     Q_INVOKABLE void setEmergency(bool declare);
 
+    bool    available           (void) const { return _available; }
     bool    armStatusGood       (void) const { return _armStatusGood; }
     QString armStatusError      (void) const { return _armStatusError; }
     bool    commsGood           (void) const { return _commsGood; }
@@ -67,6 +69,7 @@ public:
     };
 
 signals:
+    void availableChanged();
     void armStatusGoodChanged();
     void armStatusErrorChanged();
     void commsGoodChanged();
@@ -84,7 +87,7 @@ private slots:
 private:
     void _handleArmStatus(mavlink_message_t& message);
 
-    // Self ID 
+    // Self ID
     void        _sendSelfIDMsg ();
     const char* _getSelfIDDescription();
 
@@ -97,13 +100,17 @@ private:
 
     // Basic ID
     void        _sendBasicID();
-    
+
+    bool _isEUOperatorIDValid(const QString& operatorID) const;
+    QChar _calculateLuhnMod36(const QString& input) const;
+
     MAVLinkProtocol*    _mavlink;
     Vehicle*            _vehicle;
     RemoteIDSettings*   _settings;
     QGCPositionManager* _positionManager;
 
     // Flags ODID
+    bool    _available = false;
     bool    _armStatusGood;
     QString _armStatusError;
     bool    _commsGood;
@@ -119,7 +126,7 @@ private:
 
     // After emergency cleared, this makes sure the non emergency selfID message makes it to the vehicle
     bool        _enforceSendingSelfID;
-    
+
     static const uint8_t* _id_or_mac_unknown;
 
     // Timers

@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             airframePage
@@ -88,7 +88,7 @@ SetupPage {
                 Layout.fillWidth:   true
                 spacing:            _boxSpace
 
-                ExclusiveGroup {
+                ButtonGroup {
                     id: airframeTypeExclusive
                 }
 
@@ -152,7 +152,7 @@ SetupPage {
                                     // Although this item is invisible we still use it to manage state
                                     id:             airframeCheckBox
                                     checked:        object.frameClass === _frameClass.rawValue
-                                    exclusiveGroup: airframeTypeExclusive
+                                    buttonGroup: airframeTypeExclusive
                                     visible:        false
 
                                     onCheckedChanged: {
@@ -174,7 +174,7 @@ SetupPage {
                                     Layout.fillWidth:   true
                                     model:              object.frameTypeEnumStrings
                                     visible:            airframeCheckBox.checked && object.frameTypeSupported
-                                    onActivated:        _frameType.rawValue = object.frameTypeEnumValues[index]
+                                    onActivated: (index) => { _frameType.rawValue = object.frameTypeEnumValues[index] }
 
                                     property bool valid: true
 

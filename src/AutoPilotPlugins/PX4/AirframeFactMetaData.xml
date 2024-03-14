@@ -120,18 +120,12 @@
     </airframe>
   </airframe_group>
   <airframe_group name="Quadrotor +" image="QuadRotorPlus">
-    <airframe name="Generic 10&quot; Quad + geometry" id="5001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;">
+    <airframe name="Generic Quad + geometry" id="5001" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Copter</class>
-      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor +</type>
     </airframe>
   </airframe_group>
   <airframe_group name="Quadrotor H" image="QuadRotorH">
-    <airframe name="Reaper 500 Quad" id="4040" maintainer="Blankered">
-      <class>Copter</class>
-      <maintainer>Blankered</maintainer>
-      <type>Quadrotor H</type>
-    </airframe>
     <airframe name="BetaFPV Beta75X 2S Brushless Whoop" id="4041" maintainer="Beat Kueng &lt;beat-kueng@gmx.net&gt;">
       <class>Copter</class>
       <maintainer>Beat Kueng &lt;beat-kueng@gmx.net&gt;</maintainer>
@@ -206,11 +200,6 @@
     <airframe name="COEX Clover 4" id="4500" maintainer="Oleg Kalachev &lt;okalachev@gmail.com&gt;">
       <class>Copter</class>
       <maintainer>Oleg Kalachev &lt;okalachev@gmail.com&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe name="Crazyflie 2" id="4900" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;">
-      <class>Copter</class>
-      <maintainer>Dennis Shtatov &lt;densht@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="Crazyflie 2.1" id="4901" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;">
@@ -297,9 +286,8 @@
     </airframe>
   </airframe_group>
   <airframe_group name="Underwater Robot" image="AirframeUnknown">
-    <airframe name="Generic Underwater Robot" id="60000" maintainer="">
+    <airframe name="Generic Underwater Robot" id="60000" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Underwater Robot</class>
-      <maintainer />
       <type>Underwater Robot</type>
     </airframe>
     <airframe name="HippoCampus UUV (Unmanned Underwater Vehicle)" id="60001" maintainer="Daniel Duecker &lt;daniel.duecker@tuhh.de&gt;">

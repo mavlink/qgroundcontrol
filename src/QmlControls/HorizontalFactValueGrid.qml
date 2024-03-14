@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Layouts  1.2
-import QtQuick.Controls 2.5
-import QtQml            2.12
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQml
 
-import QGroundControl.Templates     1.0 as T
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl               1.0
+import QGroundControl.Templates as T
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.Palette
+import QGroundControl.FlightMap
+import QGroundControl
 
 T.HorizontalFactValueGrid {
     id:                     _root
@@ -172,7 +172,7 @@ T.HorizontalFactValueGrid {
 
         property var mappedLabelValueColumnLayoutPosition: _root.mapFromItem(labelValueColumnLayout, labelValueColumnLayout.x, labelValueColumnLayout.y)
 
-        onClicked: {
+        onClicked: (mouse) => {
             var columnGridLayoutItem = labelValueColumnLayout.childAt(mouse.x, mouse.y)
             //console.log(mouse.x, mouse.y, columnGridLayoutItem)
             var mappedMouse = labelValueColumnLayout.mapToItem(columnGridLayoutItem, mouse.x, mouse.y)

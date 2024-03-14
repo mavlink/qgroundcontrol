@@ -22,6 +22,8 @@ class MissionController;
 class QmlObjectListModel;
 class FlightPathSegment;
 
+Q_MOC_INCLUDE("MissionController.h")
+
 class TerrainProfile : public QQuickItem
 {
     Q_OBJECT

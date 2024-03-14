@@ -7,20 +7,20 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 ColumnLayout {
-    width: availableWidth
-    anchors.fill: parent
+    property real _availableHeight: availableHeight
+    property real _availableWidth:  availableWidth
     property Fact _mcPosMode:       controller.getParameterFact(-1, "MPC_POS_MODE", false)
 
     GridLayout {
@@ -38,7 +38,10 @@ ColumnLayout {
     }
 
     PIDTuning {
-        width: availableWidth
+        id:                 pidTuning
+        availableWidth:     _availableWidth
+        availableHeight:    _availableHeight - pidTuning.y
+
         property var horizontal: QtObject {
             property string name: qsTr("Horizontal")
             property string plotTitle: qsTr("Horizontal (Y direction, sidewards)")

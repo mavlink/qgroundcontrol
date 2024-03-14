@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Layouts  1.11
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Rectangle {
     color:          qgcPal.window
@@ -38,21 +38,28 @@ Rectangle {
             QGCLabel {
                 linkColor:          qgcPal.text
                 text:               "<a href=\"https://docs.qgroundcontrol.com\">https://docs.qgroundcontrol.com</a>"
-                onLinkActivated:    Qt.openUrlExternally(link)
+                onLinkActivated:    (link) => Qt.openUrlExternally(link)
             }
 
             QGCLabel { text: qsTr("PX4 Users Discussion Forum") }
             QGCLabel {
                 linkColor:          qgcPal.text
                 text:               "<a href=\"http://discuss.px4.io/c/qgroundcontrol\">http://discuss.px4.io/c/qgroundcontrol</a>"
-                onLinkActivated:    Qt.openUrlExternally(link)
+                onLinkActivated:    (link) => Qt.openUrlExternally(link)
             }
 
             QGCLabel { text: qsTr("ArduPilot Users Discussion Forum") }
             QGCLabel {
                 linkColor:          qgcPal.text
                 text:               "<a href=\"https://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol\">https://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol</a>"
-                onLinkActivated:    Qt.openUrlExternally(link)
+                onLinkActivated:    (link) => Qt.openUrlExternally(link)
+            }
+
+            QGCLabel { text: qsTr("QGroundControl Discord Channel") }
+            QGCLabel {
+                linkColor:          qgcPal.text
+                text:               "<a href=\"https://discord.com/channels/1022170275984457759/1022185820683255908\">https://discord.com/channels/1022170275984457759/1022185820683255908</a>"
+                onLinkActivated:    (link) => Qt.openUrlExternally(link)
             }
         }
     }

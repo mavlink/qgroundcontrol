@@ -72,7 +72,6 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "AppMessages.h"
-#include "SimulatedPosition.h"
 #include "PositionManager.h"
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
@@ -106,9 +105,11 @@
 #include "CustomAction.h"
 #include "CustomActionManager.h"
 
-#if defined(QGC_ENABLE_PAIRING)
-#include "PairingManager.h"
-#endif
+#include "CityMapGeometry.h"
+#include "Viewer3DQmlBackend.h"
+#include "Viewer3DQmlVariableTypes.h"
+#include "OsmParser.h"
+#include "Viewer3DManager.h"
 
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
@@ -206,27 +207,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                     "sudo apt-get remove modemmanager</pre>").arg(qgcApp()->applicationName())));
             return;
         }
-        // Determine if we have the correct permissions to access USB serial devices
-        QFile permFile("/etc/group");
-        if(permFile.open(QIODevice::ReadOnly)) {
-            while(!permFile.atEnd()) {
-                QString line = permFile.readLine();
-                if (line.contains("dialout") && !line.contains(getenv("USER"))) {
-                    permFile.close();
-                    _exitWithError(QString(
-                        tr("The current user does not have the correct permissions to access serial devices. "
-                           "You should also remove modemmanager since it also interferes.<br/><br/>"
-                           "If you are using Ubuntu, execute the following commands to fix these issues:<br/>"
-                           "<pre>sudo usermod -a -G dialout $USER<br/>"
-                           "sudo apt-get remove modemmanager</pre>")));
-                    return;
-                }
-            }
-            permFile.close();
-        }
-
-        // Always set style to default, this way QT_QUICK_CONTROLS_STYLE environment variable doesn't cause random changes in ui
-        QQuickStyle::setStyle("Default");
     }
 #endif
 #endif
@@ -406,7 +386,7 @@ void QGCApplication::setLanguage()
     _app->removeTranslator(&_qgcTranslatorQtLibs);
     if (_locale.name() != "en_US") {
         QLocale::setDefault(_locale);
-        if(_qgcTranslatorQtLibs.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
+        if(_qgcTranslatorQtLibs.load("qt_" + _locale.name(), QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
             _app->installTranslator(&_qgcTranslatorQtLibs);
         } else {
             qCWarning(LocalizationLog) << "Qt lib localization for" << _locale.name() << "is not present";
@@ -448,7 +428,8 @@ void QGCApplication::_initCommon()
     static const char* kQGCControllers  = "QGroundControl.Controllers";
     static const char* kQGCVehicle      = "QGroundControl.Vehicle";
     static const char* kQGCTemplates    = "QGroundControl.Templates";
-
+    static const char* kQGCViewer3D     = "QGroundControl.Viewer3D";
+    
     QSettings settings;
 
     // Register our Qml objects
@@ -456,12 +437,19 @@ void QGCApplication::_initCommon()
     qmlRegisterType<QGCPalette>     ("QGroundControl.Palette", 1, 0, "QGCPalette");
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
+    // For 3D viewer types
+    qmlRegisterType<GeoCoordinateType>                  (kQGCViewer3D, 1, 0, "GeoCoordinateType");
+    qmlRegisterType<CityMapGeometry>                    (kQGCViewer3D, 1, 0, "CityMapGeometry");
+    qmlRegisterType<Viewer3DManager>                    (kQGCViewer3D, 1, 0, "Viewer3DManager");
+    qmlRegisterUncreatableType<Viewer3DQmlBackend>      (kQGCViewer3D, 1, 0, "Viewer3DQmlBackend",          kRefOnly);
+    qmlRegisterUncreatableType<OsmParser>               (kQGCViewer3D, 1, 0, "OsmParser",                   kRefOnly);
+    
     qmlRegisterUncreatableType<Vehicle>                 (kQGCVehicle,                       1, 0, "Vehicle",                    kRefOnly);
     qmlRegisterUncreatableType<MissionManager>          (kQGCVehicle,                       1, 0, "MissionManager",             kRefOnly);
     qmlRegisterUncreatableType<ParameterManager>        (kQGCVehicle,                       1, 0, "ParameterManager",           kRefOnly);
     qmlRegisterUncreatableType<VehicleObjectAvoidance>  (kQGCVehicle,                       1, 0, "VehicleObjectAvoidance",     kRefOnly);
     qmlRegisterUncreatableType<QGCCameraManager>        (kQGCVehicle,                       1, 0, "QGCCameraManager",           kRefOnly);
-    qmlRegisterUncreatableType<QGCCameraControl>        (kQGCVehicle,                       1, 0, "QGCCameraControl",           kRefOnly);
+    qmlRegisterUncreatableType<MavlinkCameraControl>   (kQGCVehicle,                       1, 0, "MavlinkCameraControl",      kRefOnly);
     qmlRegisterUncreatableType<QGCVideoStreamInfo>      (kQGCVehicle,                       1, 0, "QGCVideoStreamInfo",         kRefOnly);
     qmlRegisterUncreatableType<LinkInterface>           (kQGCVehicle,                       1, 0, "LinkInterface",              kRefOnly);
     qmlRegisterUncreatableType<VehicleLinkManager>      (kQGCVehicle,                       1, 0, "VehicleLinkManager",         kRefOnly);
@@ -483,9 +471,6 @@ void QGCApplication::_initCommon()
     qmlRegisterType<LogReplayLinkController>        (kQGroundControl,                       1, 0, "LogReplayLinkController");
 #if !defined(QGC_DISABLE_MAVLINK_INSPECTOR)
     qmlRegisterUncreatableType<MAVLinkChartController> (kQGroundControl,                    1, 0, "MAVLinkChart",               kRefOnly);
-#endif
-#if defined(QGC_ENABLE_PAIRING)
-    qmlRegisterUncreatableType<PairingManager>      (kQGroundControl,                       1, 0, "PairingManager",             kRefOnly);
 #endif
 
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",      1, 0, "AutoPilotPlugin",            kRefOnly);
@@ -571,6 +556,33 @@ bool QGCApplication::_initForNormalAppBoot()
     if (msgHandler) {
         msgHandler->showErrorsInToolbar();
     }
+
+    #ifdef Q_OS_LINUX
+    #ifndef __mobile__
+    #ifndef NO_SERIAL_LINK
+        if (!_runningUnitTests) {
+            // Determine if we have the correct permissions to access USB serial devices
+            QFile permFile("/etc/group");
+            if(permFile.open(QIODevice::ReadOnly)) {
+                while(!permFile.atEnd()) {
+                    QString line = permFile.readLine();
+                    if (line.contains("dialout") && !line.contains(getenv("USER"))) {
+                        permFile.close();
+                        showAppMessage(QString(
+                            tr("The current user does not have the correct permissions to access serial devices. "
+                               "You should also remove modemmanager since it also interferes.<br/><br/>"
+                               "If you are using Ubuntu, execute the following commands to fix these issues:<br/>"
+                               "<pre>sudo usermod -a -G dialout $USER<br/>"
+                               "sudo apt-get remove modemmanager</pre>")));
+                        break;
+                    }
+                }
+                permFile.close();
+            }
+        }
+    #endif
+    #endif
+    #endif
 
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
@@ -805,7 +817,8 @@ QQuickWindow* QGCApplication::mainRootWindow()
 void QGCApplication::showSetupView()
 {
     if(_rootQmlObject()) {
-        QMetaObject::invokeMethod(_rootQmlObject(), "showSetupTool");
+      QVariant arg = "";
+      QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleSetupTool", Q_ARG(QVariant, arg));
     }
 }
 
@@ -825,7 +838,6 @@ bool QGCApplication::isInternetAvailable()
 
 void QGCApplication::_checkForNewVersion()
 {
-#ifndef __mobile__
     if (!_runningUnitTests) {
         if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
             QString versionCheckFile = toolbox()->corePlugin()->stableVersionCheckFileUrl();
@@ -836,15 +848,10 @@ void QGCApplication::_checkForNewVersion()
             }
         }
     }
-#endif
 }
 
 void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
-#ifdef __mobile__
-    Q_UNUSED(localFile)
-    Q_UNUSED(errorMsg)
-#else
     if (errorMsg.isEmpty()) {
         QFile versionFile(localFile);
         if (versionFile.open(QIODevice::ReadOnly)) {
@@ -867,7 +874,6 @@ void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFi
     }
 
     sender()->deleteLater();
-#endif
 }
 
 bool QGCApplication::_parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion)
@@ -1024,7 +1030,7 @@ bool QGCApplication::compressEvent(QEvent*event, QObject* receiver, QPostEventLi
 bool QGCApplication::event(QEvent *e)
 {
     if (e->type() == QEvent::Quit) {
-        // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit even here only.
+        // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit event here only.
         // This in turn causes the standard QGC shutdown sequence to not run. So in this case we close the window ourselves such that the
         // signal is sent and the normal shutdown sequence runs.
         bool forceClose = _mainRootWindow->property("_forceClose").toBool();

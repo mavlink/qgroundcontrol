@@ -7,78 +7,95 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Controls.Private 1.0
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Slider {
-    id:             _root
+    id:             control
     implicitHeight: ScreenTools.implicitSliderHeight
+    leftPadding:    0
+    rightPadding:   0
+    topPadding:     0
+    bottomPadding:  0
 
-    // Value indicator starts display from zero instead of min value
-    property bool zeroCentered: false
-    property bool displayValue: false
-    property bool indicatorBarVisible: true
+    // FIXME-QT6 - This property used to be available in Control 1. Now we will need to implement the visuals ourselves
+    property bool tickmarksEnabled: false
 
-    style: SliderStyle {
-        groove: Item {
-            anchors.verticalCenter: parent.verticalCenter
-            implicitWidth:          Math.round(ScreenTools.defaultFontPixelHeight * 4.5)
-            implicitHeight:         Math.round(ScreenTools.defaultFontPixelHeight * 0.3)
+    
+    property bool zeroCentered:         false   // Value indicator starts display from zero instead of min value
+    property bool displayValue:         false
+    property bool indicatorBarVisible:  true
+
+    property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
+    property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
+
+    background: Rectangle {
+        x:              control.horizontal ? 
+                            control.leftPadding : 
+                            control.leftPadding + control.availableWidth / 2 - width / 2
+        y:              control.horizontal ? 
+                            control.topPadding + control.availableHeight / 2 - height / 2 :
+                            control.topPadding
+        implicitWidth:  control.horizontal ? control._implicitBarLength : control._barHeight
+        implicitHeight: control.horizontal ? control._barHeight : control._implicitBarLength
+        width:          control.horizontal ? control.availableWidth : implicitWidth
+        height:         control.horizontal ? implicitHeight : control.availableHeight
+        radius:         control._barHeight / 2
+        color:          qgcPal.button
+        border.width:   1
+        border.color:   qgcPal.buttonText
+    }
+
+    // FIXME-QT6: Indicator portion of slider not yet supported
+/*
+        Item {
+            id:     indicatorBar
+            clip:   true
+            visible: indicatorBarVisible
+            x:      control.zeroCentered ? zeroCenteredIndicatorStart : 0
+            width:  control.zeroCentered ? centerIndicatorWidth : control.visualPosition
+            height: parent.height
+
+            property real zeroValuePosition:            (Math.abs(control.from) / (control.to - control.from)) * parent.width
+            property real zeroCenteredIndicatorStart:   Math.min(control.visualPosition, zeroValuePosition)
+            property real zeroCenteredIndicatorStop:    Math.max(control.visualPosition, zeroValuePosition)
+            property real centerIndicatorWidth:         zeroCenteredIndicatorStop - zeroCenteredIndicatorStart
 
             Rectangle {
-                radius:         height / 2
                 anchors.fill:   parent
-                color:          qgcPal.button
-                border.width:   1
-                border.color:   qgcPal.buttonText
-            }
-
-            Item {
-                id:     indicatorBar
-                clip:   true
-                visible: indicatorBarVisible
-                x:      _root.zeroCentered ? zeroCenteredIndicatorStart : 0
-                width:  _root.zeroCentered ? centerIndicatorWidth : styleData.handlePosition
-                height: parent.height
-
-                property real zeroValuePosition:            (Math.abs(control.minimumValue) / (control.maximumValue - control.minimumValue)) * parent.width
-                property real zeroCenteredIndicatorStart:   Math.min(styleData.handlePosition, zeroValuePosition)
-                property real zeroCenteredIndicatorStop:    Math.max(styleData.handlePosition, zeroValuePosition)
-                property real centerIndicatorWidth:         zeroCenteredIndicatorStop - zeroCenteredIndicatorStart
-
-                Rectangle {
-                    anchors.fill:   parent
-                    color:          qgcPal.colorBlue
-                    border.color:   Qt.darker(color, 1.2)
-                    radius:         height/2
-                }
+                color:          qgcPal.colorBlue
+                border.color:   Qt.darker(color, 1.2)
+                radius:         height/2
             }
         }
+    }*/
 
-        handle: Rectangle {
-            anchors.centerIn: parent
-            color:          qgcPal.button
-            border.color:   qgcPal.buttonText
-            border.width:   1
-            implicitWidth:  _radius * 2
-            implicitHeight: _radius * 2
-            radius:         _radius
+    handle: Rectangle {
+        x:              control.horizontal ? 
+                            control.leftPadding + control.visualPosition * (control.availableWidth - width) :
+                            control.leftPadding + control.availableWidth / 2 - width / 2
+        y:              control.horizontal ? 
+                            control.topPadding + control.availableHeight / 2 - height / 2 :
+                            control.topPadding + control.visualPosition * (control.availableHeight - height)
+        implicitWidth:  _radius * 2
+        implicitHeight: _radius * 2
+        color:          qgcPal.button
+        border.color:   qgcPal.buttonText
+        border.width:   1
+        radius:         _radius
 
-            property real _radius: Math.round(_root.implicitHeight / 2)
+        property real _radius: ScreenTools.isMobile ? ScreenTools.minTouchPixels / 2 : ScreenTools.defaultFontPixelHeight / 2
 
-            Label {
-                text:               _root.value.toFixed( _root.maximumValue <= 1 ? 1 : 0)
-                visible:            _root.displayValue
-                anchors.centerIn:   parent
-                font.family:        ScreenTools.normalFontFamily
-                font.pointSize:     ScreenTools.smallFontPointSize
-                color:              qgcPal.buttonText
-            }
+        Label {
+            text:               control.value.toFixed( control.to <= 1 ? 1 : 0)
+            visible:            control.displayValue
+            anchors.centerIn:   parent
+            font.family:        ScreenTools.normalFontFamily
+            font.pointSize:     ScreenTools.smallFontPointSize
+            color:              qgcPal.buttonText
         }
     }
 }

@@ -43,10 +43,12 @@
 #include <QtCore/qelapsedtimer.h>
 #include <QtCore/qsocketnotifier.h>
 #include <QtCore/qmap.h>
-#include <QtAndroidExtras/QtAndroidExtras>
-#include <QtAndroidExtras/QAndroidJniObject>
+#include <QJniObject>
+#include <QJniEnvironment>
+#include <QCoreApplication>
 
 #include "qserialport_android_p.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "AndroidSerialPortLog")
 
@@ -54,14 +56,20 @@ QT_BEGIN_NAMESPACE
 
 #define BAD_PORT 0
 
-static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
 static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jlong userDataA)
 {
     Q_UNUSED(envA);
     Q_UNUSED(thizA);
-    if (userDataA != 0)
-        (reinterpret_cast<QSerialPortPrivate*>(userDataA))->q_ptr->close();
+
+    qCDebug(AndroidSerialPortLog) << "Device disconnected";
+
+    if (userDataA != 0) {
+        auto serialPort = reinterpret_cast<QSerialPortPrivate*>(userDataA);
+        qCDebug(AndroidSerialPortLog) << "Device disconnected" << serialPort->systemLocation.toLatin1().data();
+        serialPort->q_ptr->close();
+    }
 }
 
 static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyteArray dataA)
@@ -116,7 +124,7 @@ static void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
 
 void cleanJavaException()
 {
-    QAndroidJniEnvironment env;
+    QJniEnvironment env;
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
         env->ExceptionClear();
@@ -150,15 +158,15 @@ void QSerialPortPrivate::setNativeMethods(void)
         {"qgcLogWarning",               "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogWarning)}
     };
 
-    QAndroidJniEnvironment jniEnv;
+    QJniEnvironment jniEnv;
     if (jniEnv->ExceptionCheck()) {
         jniEnv->ExceptionDescribe();
         jniEnv->ExceptionClear();
     }
 
-    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    jclass objectClass = jniEnv->FindClass(kJniQGCActivityClassName);
     if(!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniClassName;
+        qWarning() << "Couldn't find class:" << kJniQGCActivityClassName;
         return;
     }
 
@@ -181,13 +189,13 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
     rwMode = mode;
     qCDebug(AndroidSerialPortLog) << "Opening" << systemLocation.toLatin1().data();
 
-    QAndroidJniObject jnameL = QAndroidJniObject::fromString(systemLocation);
+    QJniObject jnameL = QJniObject::fromString(systemLocation);
     cleanJavaException();
-    deviceId = QAndroidJniObject::callStaticMethod<jint>(
-        kJniClassName,
+    deviceId = QJniObject::callStaticMethod<jint>(
+        kJniQGCActivityClassName,
         "open",
         "(Landroid/content/Context;Ljava/lang/String;J)I",
-        QtAndroid::androidActivity().object(),
+        QNativeInterface::QAndroidApplication::context(),
         jnameL.object<jstring>(),
         reinterpret_cast<jlong>(this));
     cleanJavaException();
@@ -214,8 +222,8 @@ void QSerialPortPrivate::close()
 
     qCDebug(AndroidSerialPortLog) << "Closing" << systemLocation.toLatin1().data();
     cleanJavaException();
-    jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
-        kJniClassName,
+    jboolean resultL = QJniObject::callStaticMethod<jboolean>(
+        kJniQGCActivityClassName,
         "close",
         "(I)Z",
         deviceId);
@@ -239,8 +247,8 @@ bool QSerialPortPrivate::setParameters(int baudRateA, int dataBitsA, int stopBit
     }
 
     cleanJavaException();
-    jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
-        kJniClassName,
+    jboolean resultL = QJniObject::callStaticMethod<jboolean>(
+        kJniQGCActivityClassName,
         "setParameters",
         "(IIIII)Z",
         deviceId,
@@ -269,8 +277,8 @@ void QSerialPortPrivate::stopReadThread()
     if (isReadStopped)
         return;
     cleanJavaException();
-    QAndroidJniObject::callStaticMethod<void>(
-        kJniClassName,
+    QJniObject::callStaticMethod<void>(
+        kJniQGCActivityClassName,
         "stopIoManager",
         "(I)V",
         deviceId);
@@ -285,8 +293,8 @@ void QSerialPortPrivate::startReadThread()
     if (!isReadStopped)
         return;
     cleanJavaException();
-    QAndroidJniObject::callStaticMethod<void>(
-        kJniClassName,
+    QJniObject::callStaticMethod<void>(
+        kJniQGCActivityClassName,
         "startIoManager",
         "(I)V",
         deviceId);
@@ -307,8 +315,8 @@ bool QSerialPortPrivate::setDataTerminalReady(bool set)
         return false;
     }
     cleanJavaException();
-    bool res = QAndroidJniObject::callStaticMethod<jboolean>(
-        kJniClassName,
+    bool res = QJniObject::callStaticMethod<jboolean>(
+        kJniQGCActivityClassName,
         "setDataTerminalReady",
         "(IZ)Z",
         deviceId,
@@ -325,8 +333,8 @@ bool QSerialPortPrivate::setRequestToSend(bool set)
         return false;
     }
     cleanJavaException();
-    bool res = QAndroidJniObject::callStaticMethod<jboolean>(
-        kJniClassName,
+    bool res = QJniObject::callStaticMethod<jboolean>(
+        kJniQGCActivityClassName,
         "setRequestToSend",
         "(IZ)Z",
         deviceId,
@@ -363,8 +371,8 @@ bool QSerialPortPrivate::clear(QSerialPort::Directions directions)
     }
 
     cleanJavaException();
-    bool res = QAndroidJniObject::callStaticMethod<jboolean>(
-        kJniClassName,
+    bool res = QJniObject::callStaticMethod<jboolean>(
+        kJniQGCActivityClassName,
         "purgeBuffers",
         "(IZZ)Z",
         deviceId,
@@ -512,11 +520,13 @@ bool QSerialPortPrivate::setFlowControl(QSerialPort::FlowControl flowControl)
     return true;
 }
 
+#if QT_DEPRECATED_SINCE(5, 2)
 bool QSerialPortPrivate::setDataErrorPolicy(QSerialPort::DataErrorPolicy policy)
 {
     this->policy = policy;
     return true;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void QSerialPortPrivate::newDataArrived(char *bytesA, int lengthA)
@@ -615,13 +625,13 @@ qint64 QSerialPortPrivate::writeToPort(const char *data, qint64 maxSize)
         return 0;
     }
 
-    QAndroidJniEnvironment jniEnv;
+    QJniEnvironment jniEnv;
     jbyteArray jarrayL = jniEnv->NewByteArray(static_cast<jsize>(maxSize));
     jniEnv->SetByteArrayRegion(jarrayL, 0, static_cast<jsize>(maxSize), (jbyte*)data);
     if (jniEnv->ExceptionCheck())
         jniEnv->ExceptionClear();
-    int resultL = QAndroidJniObject::callStaticMethod<jint>(
-        kJniClassName,
+    int resultL = QJniObject::callStaticMethod<jint>(
+        kJniQGCActivityClassName,
         "write",
         "(I[BI)I",
         deviceId,

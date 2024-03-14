@@ -10,7 +10,6 @@
 #include "MultiVehicleManager.h"
 #include "AutoPilotPlugin.h"
 #include "MAVLinkProtocol.h"
-#include "UAS.h"
 #include "QGCApplication.h"
 #include "FollowMe.h"
 #include "ParameterManager.h"
@@ -19,7 +18,7 @@
 #include "QGCOptions.h"
 #include "LinkManager.h"
 
-#if defined (__ios__) || defined(__android__)
+#if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
 #include "MobileScreenMgr.h"
 #endif
 
@@ -150,7 +149,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         setActiveVehicle(vehicle);
     }
 
-#if defined (__ios__) || defined(__android__)
+#if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
     if(_vehicles.count() == 1) {
         //-- Once a vehicle is connected, keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::keepScreenOn";
@@ -205,8 +204,6 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
         qWarning() << "Vehicle not found in map!";
     }
 
-    vehicle->uas()->shutdownVehicle();
-
     // First we must signal that a vehicle is no longer available.
     _activeVehicleAvailable = false;
     _parameterReadyVehicleAvailable = false;
@@ -215,7 +212,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle* vehicle)
     emit vehicleRemoved(vehicle);
     vehicle->prepareDelete();
 
-#if defined (__ios__) || defined(__android__)
+#if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
     if(_vehicles.count() == 0) {
         //-- Once no vehicles are connected, we no longer need to keep screen from going off
         qCDebug(MultiVehicleManagerLog) << "QAndroidJniObject::restoreScreenOn";

@@ -8,17 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick                          2.11
-import QtQuick.Controls                 2.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl                   1.0
-import QGroundControl.FlightDisplay     1.0
-import QGroundControl.FlightMap         1.0
-import QGroundControl.ScreenTools       1.0
-import QGroundControl.Controls          1.0
-import QGroundControl.Palette           1.0
-import QGroundControl.Vehicle           1.0
-import QGroundControl.Controllers       1.0
+import QGroundControl
+import QGroundControl.FlightDisplay
+import QGroundControl.FlightMap
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Vehicle
+import QGroundControl.Controllers
 
 Item {
     id:     root
@@ -35,6 +35,13 @@ Item {
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
+
+    function getWidth() {
+        return videoBackground.getWidth()
+    }
+    function getHeight() {
+        return videoBackground.getHeight()
+    }
 
     property double _thermalHeightFactor: 0.85 //-- TODO
 
@@ -65,6 +72,7 @@ Item {
         }
 
     Rectangle {
+        id:             videoBackground
         anchors.fill:   parent
         color:          "black"
         visible:        QGroundControl.videoManager.decoding
@@ -148,12 +156,12 @@ Item {
         Item {
             id:                 thermalItem
             width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_FULL ? parent.height : (_camera.thermalMode === QGCCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
+            height:             _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_FULL ? parent.height : (_camera.thermalMode === MavlinkCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
             anchors.centerIn:   parent
-            visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== QGCCameraControl.THERMAL_OFF
+            visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== MavlinkCameraControl.THERMAL_OFF
             function pipOrNot() {
                 if(_camera) {
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP) {
+                    if(_camera.thermalMode === MavlinkCameraControl.THERMAL_PIP) {
                         anchors.centerIn    = undefined
                         anchors.top         = parent.top
                         anchors.topMargin   = mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
@@ -180,7 +188,7 @@ Item {
                 objectName:     "thermalVideo"
                 anchors.fill:   parent
                 receiver:       QGroundControl.videoManager.thermalVideoReceiver
-                opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+                opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }
         //-- Zoom

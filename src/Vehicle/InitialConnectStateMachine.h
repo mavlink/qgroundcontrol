@@ -37,11 +37,13 @@ signals:
 
 private slots:
     void gotProgressUpdate(float progressValue);
+    void standardModesRequestCompleted();
 
 private:
     static void _stateRequestAutopilotVersion           (StateMachine* stateMachine);
     static void _stateRequestProtocolVersion            (StateMachine* stateMachine);
     static void _stateRequestCompInfo                   (StateMachine* stateMachine);
+    static void _stateRequestStandardModes              (StateMachine* stateMachine);
     static void _stateRequestCompInfoComplete           (void* requestAllCompleteFnData);
     static void _stateRequestParameters                 (StateMachine* stateMachine);
     static void _stateRequestMission                    (StateMachine* stateMachine);

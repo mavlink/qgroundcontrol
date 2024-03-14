@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 AnalyzePage {
     id:                 geoTagPage
@@ -65,20 +65,18 @@ AnalyzePage {
             //-- Log File
             QGCButton {
                 text:               qsTr("Select log file")
-                onClicked:          openLogFile.open()
+                onClicked:          openLogFile.openForLoad()
                 Layout.minimumWidth:_minWidth
                 Layout.maximumWidth:_maxWidth
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                FileDialog {
+                QGCFileDialog {
                     id:             openLogFile
                     title:          qsTr("Select log file")
-                    folder:         shortcuts.home
                     nameFilters:    [qsTr("ULog file (*.ulg)"), qsTr("PX4 log file (*.px4log)"), qsTr("All Files (*)")]
                     defaultSuffix:  "ulg"
-                    selectExisting: true
-                    onAccepted: {
-                        geoController.logFile = openLogFile.fileUrl
+                    onAcceptedForLoad: (file) => {
+                        geoController.logFile = openLogFile.file
                         close()
                     }
                 }
@@ -93,19 +91,17 @@ AnalyzePage {
             //-- Image Directory
             QGCButton {
                 text:               qsTr("Select image directory")
-                onClicked:          selectImageDir.open()
+                onClicked:          selectImageDir.openForLoad()
                 Layout.minimumWidth:_minWidth
                 Layout.maximumWidth:_maxWidth
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                FileDialog {
+                QGCFileDialog {
                     id:             selectImageDir
                     title:          qsTr("Select image directory")
-                    folder:         shortcuts.home
                     selectFolder:   true
-                    selectExisting: true
-                    onAccepted: {
-                        geoController.imageDirectory = selectImageDir.folder
+                    onAcceptedForLoad: (file) => {
+                        geoController.imageDirectory = selectImageDir.file
                         close()
                     }
                 }
@@ -120,19 +116,17 @@ AnalyzePage {
             //-- Save Directory
             QGCButton {
                 text:               qsTr("(Optionally) Select save directory")
-                onClicked:          selectDestDir.open()
+                onClicked:          selectDestDir.openForLoad()
                 Layout.minimumWidth:_minWidth
                 Layout.maximumWidth:_maxWidth
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                FileDialog {
+                QGCFileDialog {
                     id:             selectDestDir
                     title:          qsTr("Select save directory")
-                    folder:         shortcuts.home
                     selectFolder:   true
-                    selectExisting: true
-                    onAccepted: {
-                        geoController.saveDirectory = selectDestDir.folder
+                    onAcceptedForLoad: (file) => {
+                        geoController.saveDirectory = selectDestDir.file
                         close()
                     }
                 }

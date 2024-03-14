@@ -15,10 +15,11 @@
 #include <QFontDatabase>
 #include <QScreen>
 #include <QFontMetrics>
+#include <QInputDevice>
 
 #include "SettingsManager.h"
 
-#if defined(__ios__)
+#if defined(Q_OS_IOS)
 #include <sys/utsname.h>
 #endif
 
@@ -30,13 +31,18 @@ ScreenToolsController::ScreenToolsController()
 bool
 ScreenToolsController::hasTouch() const
 {
-    return QTouchDevice::devices().count() > 0 || isMobile();
+    for (const auto& inputDevice: QInputDevice::devices()) {
+        if (inputDevice->type() == QInputDevice::DeviceType::TouchScreen) {
+            return true;
+        }
+    }
+    return false;
 }
 
 QString
 ScreenToolsController::iOSDevice() const
 {
-#if defined(__ios__)
+#if defined(Q_OS_IOS)
     struct utsname systemInfo;
     uname(&systemInfo);
     return QString(systemInfo.machine);

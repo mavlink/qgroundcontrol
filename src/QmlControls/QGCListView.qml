@@ -1,11 +1,12 @@
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl.Palette 1.0
+import QGroundControl.Palette
 
 /// QGC version of ListVIew control that shows horizontal/vertial scroll indicators
 ListView {
     id:             root
     boundsBehavior: Flickable.StopAtBounds
+    clip:           true
 
     property color indicatorColor: qgcPal.text
 

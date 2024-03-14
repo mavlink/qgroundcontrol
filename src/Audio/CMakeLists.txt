@@ -1,29 +1,17 @@
+find_package(Qt6 REQUIRED COMPONENTS Core TextToSpeech Widgets)
 
-set(EXTRA_SRC)
-if(BUILD_TESTING)
-	list(APPEND EXTRA_SRC
-		AudioOutputTest.cc
-	)
-endif()
-
-add_library(Audio
+qt_add_library(Audio STATIC
 	AudioOutput.cc
-	${EXTRA_SRC}
+	AudioOutput.h
 )
 
 target_link_libraries(Audio
 	PRIVATE
+		Qt6::Widgets
 		qgc
 	PUBLIC
-		Qt5::Core
-		Qt5::Qml
-		Qt5::TextToSpeech
-		Qt5::Widgets
+		Qt6::Core
+		Qt6::TextToSpeech
 )
 
 target_include_directories(Audio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-if(BUILD_TESTING)
-	add_qgc_test(AudioOutputTest)
-endif()
-

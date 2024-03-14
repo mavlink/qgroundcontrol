@@ -20,7 +20,11 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QQuickItem>
+#ifdef Q_OS_ANDROID
+#include "qserialport.h"
+#else
 #include <QSerialPort>
+#endif
 
 #include <stdint.h>
 
@@ -225,9 +229,6 @@ private:
     QPixmap _boardIcon;             ///< Icon used to display image of board
     
     QString _firmwareFilename;      ///< Image which we are going to flash to the board
-    
-    QNetworkAccessManager*  _downloadManager;       ///< Used for firmware file downloading across the internet
-    QNetworkReply*          _downloadNetworkReply;  ///< Used for firmware file downloading across the internet
     
     /// @brief Thread controller which is used to run bootloader commands on separate thread
     PX4FirmwareUpgradeThreadController* _threadController;

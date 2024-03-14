@@ -1,10 +1,9 @@
-import QtQuick                      2.5
-import QtQuick.Controls             2.12
-import QtQuick.Controls.Styles      1.4
-import QtQuick.Layouts              1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 QGCButton {
     id:             control     //This is a button rework from DonLakeFlyer's QGCButton that allows to contain a text and an Icon with a column look and the same capabilites
@@ -50,8 +49,8 @@ QGCButton {
                 QGCLabel {
                     id: textLabel
                     text:                       control.text
-                    font.family:                ScreenTools.normalFontFamily
-                    font.pointSize:             control.pointSize
+                    font.family:                control.font.family
+                    font.pointSize:             control.font.pointSize
                     color:                      _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
                     anchors.baseline:           iconSource !== "" ? parent.bottom : undefined
                     anchors.centerIn:           iconSource === "" ? parent : undefined   

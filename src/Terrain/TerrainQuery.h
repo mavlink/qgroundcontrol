@@ -19,7 +19,6 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
-#include <QtLocation/private/qgeotiledmapreply_p.h>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
@@ -179,7 +178,7 @@ private:
     typedef struct {
         TerrainAtCoordinateQuery*   terrainAtCoordinateQuery;
         bool                        queryObjectDestroyed;
-        int                         cCoord;
+        qsizetype                   cCoord;
     } SentRequestInfo_t;
 
 

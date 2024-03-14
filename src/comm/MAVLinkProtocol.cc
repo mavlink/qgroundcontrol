@@ -21,9 +21,6 @@
 #include <QFileInfo>
 
 #include "MAVLinkProtocol.h"
-#include "UASInterface.h"
-#include "UASInterface.h"
-#include "UAS.h"
 #include "LinkManager.h"
 #include "QGCMAVLink.h"
 #include "QGC.h"
@@ -171,7 +168,7 @@ void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
 
         b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
 
-        int len = b.count();
+        int len = b.length();
 
         if(_tempLogFile.write(b) != len)
         {

@@ -1,12 +1,13 @@
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.2
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import Qt.labs.platform as Labs
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.Controllers
 
 /// This control is meant to be a direct replacement for the standard Qml FileDialog control.
 /// It differs for mobile builds which uses a completely custom file picker.
@@ -17,8 +18,8 @@ Item {
     property string folder              // Due to Qt bug with file url parsing this must be an absolute path
     property var    nameFilters:    []  // Important: Only name filters with simple wildcarding like *.foo are supported.
     property string title
-    property bool   selectExisting: true
     property bool   selectFolder:   false
+    property string defaultSuffix:  ""
 
     signal acceptedForLoad(string file)
     signal acceptedForSave(string file)
@@ -28,7 +29,10 @@ Item {
         _openForLoad = true
         if (_mobileDlg && folder.length !== 0) {
             mobileFileOpenDialogComponent.createObject(mainWindow).open()
+        } else if (selectFolder) {
+            fullFolderDialog.open()
         } else {
+            fullFileDialog.fileMode = FileDialog.OpenFile
             fullFileDialog.open()
         }
     }
@@ -38,6 +42,7 @@ Item {
         if (_mobileDlg && folder.length !== 0) {
             mobileFileSaveDialogComponent.createObject(mainWindow).open()
         } else {
+            fullFileDialog.fileMode = FileDialog.SaveFile
             fullFileDialog.open()
         }
     }
@@ -89,20 +94,28 @@ Item {
 
     FileDialog {
         id:             fullFileDialog
-        folder:         "file:///" + _root.folder
+        currentFolder:  "file:///" + _root.folder
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
-        selectExisting: _root.selectExisting
-        selectMultiple: false
-        selectFolder:   _root.selectFolder
+        defaultSuffix:  _root.defaultSuffix
 
         onAccepted: {
-            if (_openForLoad) {
-                _root.acceptedForLoad(controller.urlToLocalFile(fileUrl))
+            var fullPath = controller.urlToLocalFile(selectedFile)
+            if (fileMode == FileDialog.OpenFile) {
+                _root.acceptedForLoad(fullPath)
             } else {
-                _root.acceptedForSave(controller.urlToLocalFile(fileUrl))
+                _root.acceptedForSave(fullPath)
             }
         }
+        onRejected: _root.rejected()
+    }
+
+    Labs.FolderDialog {
+        id:             fullFolderDialog
+        currentFolder:  "file:///" + _root.folder
+        title:          _root.title
+
+        onAccepted: _root.acceptedForLoad(controller.urlToLocalFile(folder))
         onRejected: _root.rejected()
     }
 
@@ -112,7 +125,7 @@ Item {
         QGCPopupDialog {
             id:         mobileFileOpenDialog
             title:      _root.title
-            buttons:    StandardButton.Cancel
+            buttons:    Dialog.Cancel
 
             Column {
                 id:         fileOpenColumn
@@ -174,7 +187,7 @@ Item {
         QGCPopupDialog {
             id:         mobileFileSaveDialog
             title:      _root.title
-            buttons:    StandardButton.Cancel | StandardButton.Ok
+            buttons:    Dialog.Cancel | Dialog.Ok
 
             onAccepted: {
                 if (filenameTextField.text == "") {

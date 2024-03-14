@@ -7,27 +7,32 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
-import QtQuick.Dialogs  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 QGCPopupDialog {
     id:         root
     title:      qsTr("Edit Position")
-    buttons:    mainWindow.showDialogDefaultWidth, StandardButton.Close
+    buttons:    Dialog.Close
 
-    property alias coordinate: controller.coordinate
+    property alias coordinate:                  controller.coordinate
+    property bool  showSetPositionFromVehicle:  true
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
+    property real _margin:          ScreenTools.defaultFontPixelWidth / 2
+    property real _textFieldWidth:  ScreenTools.defaultFontPixelWidth * 20
+    property bool _showGeographic:  coordinateSystemCombo.comboBox.currentIndex === 0
+    property bool _showUTM:         coordinateSystemCombo.comboBox.currentIndex === 1
+    property bool _showMGRS:        coordinateSystemCombo.comboBox.currentIndex === 2
+    property bool _showVehicle:     coordinateSystemCombo.comboBox.currentIndex === 3
 
     EditPositionDialogController {
         id: controller
@@ -35,120 +40,111 @@ QGCPopupDialog {
         Component.onCompleted: initValues()
     }
 
-    Column {
-        id:         column
-        width:      40 * ScreenTools.defaultFontPixelWidth
-        spacing:    ScreenTools.defaultFontPixelHeight
+    ColumnLayout {
+        spacing: _margin
 
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columnSpacing:  _margin
-            rowSpacing:     _margin
-            columns:        2
+        LabelledComboBox {
+            id:                 coordinateSystemCombo
+            Layout.fillWidth:   true
+            label:              qsTr("Coordinate System")
+            model:              showSetPositionFromVehicle && globals.activeVehicle ? 
+                                    [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference"), qsTr("Vehicle Position") ] :
+                                    [ qsTr("Geographic"), qsTr("Universal Transverse Mercator"), qsTr("Military Grid Reference") ]
+        }
 
-            QGCLabel {
-                text: qsTr("Latitude")
-            }
-            FactTextField {
-                fact:               controller.latitude
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Latitude")
+            fact:               controller.latitude
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showGeographic
+        }
 
-            QGCLabel {
-                text: qsTr("Longitude")
-            }
-            FactTextField {
-                fact:               controller.longitude
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Longitude")
+            fact:               controller.longitude
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showGeographic
+        }
 
-            QGCButton {
-                text:               qsTr("Set Geographic")
-                Layout.alignment:   Qt.AlignRight
-                Layout.columnSpan:  2
-                onClicked: {
-                    controller.setFromGeo()
-                    root.close()
-                }
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showGeographic
+            onClicked: {
+                controller.setFromGeo()
+                root.close()
             }
+        }
 
-            Item { width: 1; height: ScreenTools.defaultFontPixelHeight; Layout.columnSpan: 2}
+        LabelledFactTextField {
+            label:              qsTr("Zone")
+            fact:               controller.zone
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            QGCLabel {
-                text: qsTr("Zone")
-            }
-            FactTextField {
-                fact:               controller.zone
-                Layout.fillWidth:   true
-            }
+        LabelledFactComboBox {
+            label:              qsTr("Hemisphere")
+            fact:               controller.hemisphere
+            indexModel:         false
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            QGCLabel {
-                text: qsTr("Hemisphere")
-            }
-            FactComboBox {
-                fact:               controller.hemisphere
-                indexModel:         false
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Easting")
+            fact:               controller.easting
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            QGCLabel {
-                text: qsTr("Easting")
-            }
-            FactTextField {
-                fact:               controller.easting
-                Layout.fillWidth:   true
-            }
+        LabelledFactTextField {
+            label:              qsTr("Northing")
+            fact:               controller.northing
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+            visible:            _showUTM
+        }
 
-            QGCLabel {
-                text: qsTr("Northing")
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showUTM
+            onClicked: {
+                controller.setFromUTM()
+                root.close()
             }
-            FactTextField {
-                fact:               controller.northing
-                Layout.fillWidth:   true
+        }
+
+        LabelledFactTextField {
+            label:              qsTr("MGRS")
+            fact:               controller.mgrs
+            visible:            _showMGRS
+            textFieldPreferredWidth: _textFieldWidth
+            Layout.fillWidth:   true
+        }
+
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showMGRS
+            onClicked: {
+                controller.setFromMGRS()
+                root.close()
             }
+        }
 
-            QGCButton {
-                text:               qsTr("Set UTM")
-                Layout.alignment:   Qt.AlignRight
-                Layout.columnSpan:  2
-                onClicked: {
-                    controller.setFromUTM()
-                    root.close()
-                }
-            }
-
-            Item { width: 1; height: ScreenTools.defaultFontPixelHeight; Layout.columnSpan: 2}
-
-            QGCLabel {
-                text:              qsTr("MGRS")
-            }
-            FactTextField {
-                fact:              controller.mgrs
-                Layout.fillWidth:  true
-            }
-
-            QGCButton {
-                text:              qsTr("Set MGRS")
-                Layout.alignment:  Qt.AlignRight
-                Layout.columnSpan: 2
-                onClicked: {
-                    controller.setFromMGRS()
-                    root.close()
-                }
-            }
-
-            Item { width: 1; height: ScreenTools.defaultFontPixelHeight; Layout.columnSpan: 2}
-
-            QGCButton {
-                text:              qsTr("Set From Vehicle Position")
-                visible:           QGroundControl.multiVehicleManager.activeVehicle && QGroundControl.multiVehicleManager.activeVehicle.coordinate.isValid
-                Layout.alignment:  Qt.AlignRight
-                Layout.columnSpan: 2
-                onClicked: {
-                    controller.setFromVehicle()
-                    root.close()
-                }
+        LabelledButton {
+            label:               qsTr("Set position")
+            buttonText:          qsTr("Move")
+            visible:             _showVehicle
+            onClicked: {
+                controller.setFromVehicle()
+                root.close()
             }
         }
     }

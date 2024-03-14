@@ -1,0 +1,19 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":         "flyViewActionsFile",
+    "shortDesc":    "Name of JSON custom actions file for Fly View",
+    "type":         "string",
+    "default":      ""
+},
+{
+    "name":         "joystickActionsFile",
+    "shortDesc":    "Name of JSON custom actions file for Joysticks",
+    "type":         "string",
+    "default":      ""
+}
+]
+}

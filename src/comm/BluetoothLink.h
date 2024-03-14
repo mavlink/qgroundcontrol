@@ -20,7 +20,6 @@
 #include <qbluetoothserviceinfo.h>
 #include <qbluetoothservicediscoveryagent.h>
 
-#include "QGCConfig.h"
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
@@ -38,9 +37,9 @@ public:
     {
         *this = other;
     }
-    bool operator==(const BluetoothData& other)
+    bool operator==(const BluetoothData& other) const
     {
-#ifdef __ios__
+#ifdef Q_OS_IOS
         return uuid == other.uuid && name == other.name;
 #else
         return name == other.name && address == other.address;
@@ -49,7 +48,7 @@ public:
     BluetoothData& operator=(const BluetoothData& other)
     {
         name = other.name;
-#ifdef __ios__
+#ifdef Q_OS_IOS
         uuid = other.uuid;
 #else
         address = other.address;
@@ -57,7 +56,7 @@ public:
         return *this;
     }
     QString name;
-#ifdef __ios__
+#ifdef Q_OS_IOS
     QBluetoothUuid uuid;
 #else
     QString address;
@@ -135,7 +134,7 @@ public slots:
     void    deviceConnected     (void);
     void    deviceDisconnected  (void);
     void    deviceError         (QBluetoothSocket::SocketError error);
-#ifdef __ios__
+#ifdef Q_OS_IOS
     void    serviceDiscovered   (const QBluetoothServiceInfo &info);
     void    discoveryFinished   (void);
 #endif
@@ -153,7 +152,7 @@ private:
     void _createSocket      (void);
 
     QBluetoothSocket*                   _targetSocket    = nullptr;
-#ifdef __ios__
+#ifdef Q_OS_IOS
     QBluetoothServiceDiscoveryAgent*    _discoveryAgent = nullptr;
 #endif
     bool                                _shutDown       = false;

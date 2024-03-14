@@ -20,11 +20,9 @@
 #include <QString>
 #include <QDebug>
 #include <QVariantList>
-#include <QtCharts/QAbstractSeries>
+#include <QAbstractSeries>
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorLog)
-
-QT_CHARTS_USE_NAMESPACE
 
 class QGCMAVLinkMessage;
 class QGCMAVLinkSystem;

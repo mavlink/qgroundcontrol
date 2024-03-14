@@ -17,7 +17,6 @@
 #include <QObject>
 #include <QQuickItem>
 
-#include "UASInterface.h"
 #include "FactPanelController.h"
 
 /// Power Component MVC Controller for PowerComponent.qml.

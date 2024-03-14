@@ -17,6 +17,7 @@
 #include "QGCCameraManager.h"
 #include "RadioComponentController.h"
 #include "Autotune.h"
+#include "VehicleCameraControl.h"
 
 #include <QRegularExpression>
 #include <QDebug>
@@ -276,14 +277,14 @@ void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicl
 }
 
 void
-FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle*, double)
+FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void
-FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle*, double)
+FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double)
 {
     // Not supported by generic vehicle
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
@@ -317,9 +318,9 @@ QString FirmwarePlugin::vehicleImageOutline(const Vehicle*) const
     return QStringLiteral("/qmlimages/vehicleArrowOutline.svg");
 }
 
-QString FirmwarePlugin::vehicleImageCompass(const Vehicle*) const
+QVariant FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
 {
-    return QStringLiteral("/qmlimages/compassInstrumentArrow.svg");
+    return QVariant();
 }
 
 const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
@@ -327,11 +328,12 @@ const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
     //-- Default list of indicators for all vehicles.
     if(_toolIndicatorList.size() == 0) {
         _toolIndicatorList = QVariantList({
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
         });
     }
@@ -343,7 +345,6 @@ const QVariantList& FirmwarePlugin::modeIndicators(const Vehicle*)
     //-- Default list of indicators for all vehicles.
     if(_modeIndicatorList.size() == 0) {
         _modeIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ROIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
         });
@@ -949,8 +950,8 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
     // Only try arming the vehicle a single time. Doing retries on arming with a delay can lead to safety issues.
     vehicle->setArmed(true, false /* showError */);
 
-    // Wait 1000 msecs for vehicle to arm
-    for (int i=0; i<10; i++) {
+    // Wait 1500 msecs for vehicle to arm (waiting for the next heartbeat)
+    for (int i = 0; i < 15; i++) {
         if (vehicle->armed()) {
             vehicleArmed = true;
             break;
@@ -1020,9 +1021,9 @@ QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
     return new QGCCameraManager(vehicle);
 }
 
-QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
+MavlinkCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
 {
-    return new QGCCameraControl(info, vehicle, compID, parent);
+    return new VehicleCameraControl(info, vehicle, compID, parent);
 }
 
 uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
@@ -1093,7 +1094,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
     }
 }
 
-int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int patch)
+int FirmwarePlugin::versionCompare(const Vehicle* vehicle, int major, int minor, int patch) const
 {
     int currMajor = vehicle->firmwareMajorVersion();
     int currMinor = vehicle->firmwareMinorVersion();
@@ -1112,7 +1113,7 @@ int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int p
     return -1;
 }
 
-int FirmwarePlugin::versionCompare(Vehicle* vehicle, QString& compare)
+int FirmwarePlugin::versionCompare(const Vehicle* vehicle, QString& compare) const
 {
     QStringList versionNumbers = compare.split(".");
     if(versionNumbers.size() != 3) {

@@ -1,13 +1,6 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
-set(EXTRA_SRC)
-if(BUILD_TESTING)
-	list(APPEND EXTRA_SRC
-		LogDownloadTest.cc
-		LogDownloadTest.h
-	)
-endif()
-
-add_library(AnalyzeView
+qt_add_library(AnalyzeView STATIC
 	ExifParser.cc
 	ExifParser.h
 	GeoTagController.cc
@@ -22,8 +15,6 @@ add_library(AnalyzeView
 	PX4LogParser.h
 	ULogParser.cc
 	ULogParser.h
-
-	${EXTRA_SRC}
 )
 
 add_custom_target(AnalyzeViewQml
@@ -42,11 +33,10 @@ target_link_libraries(AnalyzeView
 		qgc
 
 	PUBLIC
-		Qt5::Charts
-		Qt5::Location
-		Qt5::SerialPort
-		Qt5::TextToSpeech
-		Qt5::Widgets
+		Qt6::Charts
+		Qt6::Location
+		Qt6::TextToSpeech
+		Qt6::Widgets
 )
 
 target_include_directories(AnalyzeView INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

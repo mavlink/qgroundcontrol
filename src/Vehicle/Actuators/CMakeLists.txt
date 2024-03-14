@@ -1,5 +1,6 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
-add_library(Actuators
+qt_add_library(Actuators STATIC
 	ActuatorActions.cc
 	ActuatorActions.h
 	ActuatorOutputs.cc
@@ -18,6 +19,9 @@ add_library(Actuators
 	MotorAssignment.h
 )
 
-target_link_libraries(Actuators PRIVATE
-	qgc)
+target_link_libraries(Actuators
+	PRIVATE
+		qgc
+)
 
+target_include_directories(Actuators PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

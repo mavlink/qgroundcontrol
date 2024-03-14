@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.MultiVehicleManager   1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Palette               1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.MultiVehicleManager
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 //-------------------------------------------------------------------------
 //-- VTOL Mode Indicator
@@ -32,7 +32,7 @@ QGCComboBox {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _fwdFlight:     _activeVehicle.vtolInFwdFlight
 
-    onActivated: {
+    onActivated: (index) => {
         if (index == 0) {
             if (_fwdFlight) {
                 mainWindow.vtolTransitionToMRFlightRequest()

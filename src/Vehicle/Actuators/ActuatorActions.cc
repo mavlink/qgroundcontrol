@@ -25,8 +25,11 @@ QString Config::typeToLabel() const
     return "";
 }
 
-Action::Action(QObject *parent, const Config &action, const QString &label, int outputFunction,
-        Vehicle *vehicle)
+Action::Action([[maybe_unused]] QObject *parent,
+               const Config &action,
+               const QString &label,
+               int outputFunction,
+               Vehicle *vehicle)
     : _label(label), _outputFunction(outputFunction), _type(action.type), _vehicle(vehicle)
 {
 }
@@ -39,11 +42,10 @@ void Action::trigger()
     sendMavlinkRequest();
 }
 
-void Action::ackHandlerEntry(void* resultHandlerData, int compId, MAV_RESULT commandResult, uint8_t progress,
-        Vehicle::MavCmdResultFailureCode_t failureCode)
+void Action::ackHandlerEntry(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     Action* action = (Action*)resultHandlerData;
-    action->ackHandler(commandResult, failureCode);
+    action->ackHandler(static_cast<MAV_RESULT>(ack.result), failureCode);
 }
 
 void Action::ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode)
@@ -58,9 +60,12 @@ void Action::sendMavlinkRequest()
 {
     qCDebug(ActuatorsConfigLog) << "Sending actuator action, function:" << _outputFunction << "type:" << (int)_type;
 
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+    handlerInfo.resultHandler       = ackHandlerEntry;
+    handlerInfo.resultHandlerData   = this;
+
     _vehicle->sendMavCommandWithHandler(
-            ackHandlerEntry,                  // Ack callback
-            this,                             // Ack callback data
+            &handlerInfo,
             MAV_COMP_ID_AUTOPILOT1,           // the ID of the autopilot
             MAV_CMD_CONFIGURE_ACTUATOR,       // the mavlink command
             (int)_type,                       // action type
@@ -73,7 +78,7 @@ void Action::sendMavlinkRequest()
     _commandInProgress = true;
 }
 
-ActionGroup::ActionGroup(QObject *parent, const QString &label, Config::Type type)
+ActionGroup::ActionGroup([[maybe_unused]] QObject *parent, const QString &label, Config::Type type)
     : _label(label), _type(type)
 {
 }

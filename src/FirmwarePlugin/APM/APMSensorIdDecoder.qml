@@ -10,14 +10,13 @@
 
 // Based on https://github.com/ArduPilot/MAVProxy/blob/9bf8b00fbc355650b060e546110877c7898baa81/MAVProxy/modules/lib/mp_util.py#L384
 
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.Controls 1.0
+import QGroundControl.FactSystem
+import QGroundControl.Palette
+import QGroundControl.Controls
 
 QGCLabel {
     property Fact fact: Fact { }

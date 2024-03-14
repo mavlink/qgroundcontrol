@@ -196,7 +196,7 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
 
     bool found = false;
     foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
-        if (flightMode.compare(info.name, Qt::CaseInsensitive) == 0) {
+        if (flightMode.compare(*info.name, Qt::CaseInsensitive) == 0) {
             union px4_custom_mode px4_mode;
 
             px4_mode.data = 0;
@@ -494,14 +494,12 @@ typedef struct {
     double              newAMSLAlt;
 } PauseVehicleThenChangeAltData_t;
 
-static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, uint8_t progress, Vehicle::MavCmdResultFailureCode_t failureCode)
+static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
-    Q_UNUSED(progress);
-
-    if (commandResult != MAV_RESULT_ACCEPTED) {
+    if (ack.result != MAV_RESULT_ACCEPTED) {
         switch (failureCode) {
         case Vehicle::MavCmdResultCommandResultOnly:
-            qDebug() << QStringLiteral("MAV_CMD_DO_REPOSITION error(%1)").arg(commandResult);
+            qDebug() << QStringLiteral("MAV_CMD_DO_REPOSITION error(%1)").arg(ack.result);
             break;
         case Vehicle::MavCmdResultFailureNoResponseToCommand:
             qDebug() << "MAV_CMD_DO_REPOSITION no response from vehicle";
@@ -513,7 +511,7 @@ static void _pauseVehicleThenChangeAltResultHandler(void* resultHandlerData, int
     }
 
     PauseVehicleThenChangeAltData_t* pData = static_cast<PauseVehicleThenChangeAltData_t*>(resultHandlerData);
-    pData->plugin->_changeAltAfterPause(resultHandlerData, commandResult == MAV_RESULT_ACCEPTED /* pauseSucceeded */);
+    pData->plugin->_changeAltAfterPause(resultHandlerData, ack.result == MAV_RESULT_ACCEPTED /* pauseSucceeded */);
 }
 
 void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pauseSucceeded)
@@ -557,9 +555,12 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     resultData->newAMSLAlt  = vehicle->homePosition().altitude() + newAltRel;
 
     if (pauseVehicle) {
+        Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+        handlerInfo.resultHandler       = _pauseVehicleThenChangeAltResultHandler;
+        handlerInfo.resultHandlerData   = resultData;
+
         vehicle->sendMavCommandWithHandler(
-                    _pauseVehicleThenChangeAltResultHandler,
-                    resultData,
+                    &handlerInfo,
                     vehicle->defaultComponentId(),
                     MAV_CMD_DO_REPOSITION,
                     -1.0f,                                  // Don't change groundspeed
@@ -571,7 +572,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 }
 
-void PX4FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle* vehicle, double groundspeed)
+void PX4FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle* vehicle, double groundspeed)
 {
 
     vehicle->sendMavCommand(
@@ -585,7 +586,7 @@ void PX4FirmwarePlugin::guidedModeChangeGroundSpeed(Vehicle* vehicle, double gro
         NAN, NAN,NAN);                        // param 5-7 unused
 }
 
-void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeed(Vehicle* vehicle, double airspeed_equiv)
+void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv)
 {
 
     vehicle->sendMavCommand(
@@ -736,4 +737,35 @@ bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
         return _hasGripper;
     }
     return false;
+}
+
+QVariant PX4FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
+{
+    return QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4MainStatusIndicatorContentItem.qml"));
+}
+
+const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
+{
+    if (_toolIndicatorList.size() == 0) {
+        // First call the base class to get the standard QGC list
+        _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
+
+        // Find the generic flight mode indicator and replace with the custom one
+        for (int i=0; i<_toolIndicatorList.size(); i++) {
+            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4FlightModeIndicator.qml"));
+                break;
+            }
+        }
+
+        // Find the generic battery indicator and replace with the custom one
+        for (int i=0; i<_toolIndicatorList.size(); i++) {
+            if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
+                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4BatteryIndicator.qml"));
+                break;
+            }
+        }
+    }
+
+    return _toolIndicatorList;
 }

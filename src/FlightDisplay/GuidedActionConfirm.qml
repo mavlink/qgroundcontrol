@@ -7,22 +7,22 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Controls 2.4
-import QtQuick.Layouts  1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
     id:         _root
-    width:      ScreenTools.defaultFontPixelWidth * 45
+    width:      ScreenTools.defaultFontPixelWidth * 35
     height:     mainLayout.height + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
     color:      qgcPal.window
-    visible:    false
+    visible:    _utmspEnabled === true ? utmspSliderTrigger: false
 
     property var    guidedController
     property var    guidedValueSlider
@@ -37,6 +37,10 @@ Rectangle {
 
     property real _margins:         ScreenTools.defaultFontPixelWidth / 2
     property bool _emergencyAction: action === guidedController.actionEmergencyStop
+
+    // Properties of UTM adapter
+    property bool   utmspSliderTrigger
+    property bool   _utmspEnabled:                       QGroundControl.utmspSupported
 
     Component.onCompleted: guidedController.confirmDialog = this
 
@@ -94,7 +98,8 @@ Rectangle {
             Layout.fillWidth:       true
             horizontalAlignment:    Text.AlignHCenter
             wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.mediumFontPointSize
+            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.bold:              true
         }
 
         QGCCheckBox {
@@ -112,6 +117,8 @@ Rectangle {
                 id:                 slider
                 confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
                 Layout.fillWidth:   true
+                enabled: _utmspEnabled === true? utmspSliderTrigger : true
+                opacity: if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}
 
                 onAccept: {
                     _root.visible = false

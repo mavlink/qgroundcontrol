@@ -17,6 +17,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QStack>
+#include <QtCore5Compat/QRegExp>
 
 static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
 
@@ -39,42 +40,42 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
 {
     QVariant var(string);
 
-    int convertTo = QVariant::Int; // keep compiler warning happy
+    QMetaType::Type convertTo = QMetaType::Int; // keep compiler warning happy
     switch (type) {
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
     case FactMetaData::valueTypeUint64:
-        convertTo = QVariant::UInt;
+        convertTo = QMetaType::UInt;
         break;
     case FactMetaData::valueTypeInt8:
     case FactMetaData::valueTypeInt16:
     case FactMetaData::valueTypeInt32:
     case FactMetaData::valueTypeInt64:
-        convertTo = QVariant::Int;
+        convertTo = QMetaType::Int;
         break;
     case FactMetaData::valueTypeFloat:
         convertTo = QMetaType::Float;
         break;
     case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
-        convertTo = QVariant::Double;
+        convertTo = QMetaType::Double;
         break;
     case FactMetaData::valueTypeString:
         qWarning() << kInvalidConverstion;
-        convertTo = QVariant::String;
+        convertTo = QMetaType::QString;
         break;
     case FactMetaData::valueTypeBool:
         qWarning() << kInvalidConverstion;
-        convertTo = QVariant::Bool;
+        convertTo = QMetaType::Bool;
         break;
     case FactMetaData::valueTypeCustom:
         qWarning() << kInvalidConverstion;
-        convertTo = QVariant::ByteArray;
+        convertTo = QMetaType::QByteArray;
         break;
     }
 
-    *convertOk = var.convert(convertTo);
+    *convertOk = var.convert(QMetaType(convertTo));
 
     return var;
 }
@@ -90,7 +91,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
         case MAV_TYPE_VTOL_TILTROTOR:
         case MAV_TYPE_VTOL_FIXEDROTOR:
         case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_RESERVED4:
+        case MAV_TYPE_VTOL_TILTWING:
         case MAV_TYPE_VTOL_RESERVED5:
             vehicleName = "ArduPlane";
             break;
@@ -132,7 +133,7 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
 QString APMParameterMetaData::_groupFromParameterName(const QString& name)
 {
     QString group = name.split('_').first();
-    return group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
+    return group.remove(QRegularExpression("[0-9]*$")); // remove any numbers from the end
 }
 
 
@@ -143,7 +144,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
     }
     _parameterMetaDataLoaded = true;
 
-    QRegExp parameterCategories = QRegExp("ArduCopter|ArduPlane|APMrover2|Rover|ArduSub|AntennaTracker");
+    auto parameterCategories = QRegularExpression("ArduCopter|ArduPlane|APMrover2|Rover|ArduSub|AntennaTracker");
     QString currentCategory;
 
     qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;

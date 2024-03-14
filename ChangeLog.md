@@ -2,7 +2,13 @@
 
 Note: This file only contains high level features or important fixes.
 
-## 4.1 - Daily build
+## 5.0 - Daily Build
+
+* New combined compass and attitude instrument
+* You can select between multiple instruments by clicking on the instrument conntrol on a desktop build or press and hold on mobile builds
+* Support for Fly View and Joystick custom mavlink actions has changed. Both the name and formation of the command file is different now. Go to QGC docs to understand how it works now.
+
+## 4.1
 
 ### 4.1.2 - Not yet released
 * Bug: Radio setup - Fix double send of `MAV_CMD_PREFLIGHT_CALIBRATION` causing "Unable to send command" error.

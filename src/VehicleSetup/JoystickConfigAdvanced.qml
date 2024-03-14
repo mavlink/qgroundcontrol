@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 Item {
     width:                  grid.width  + (ScreenTools.defaultFontPixelWidth  * 2)
@@ -77,8 +77,8 @@ Item {
             QGCSlider {
                 id:             expoSlider
                 width:          ScreenTools.defaultFontPixelWidth * 20
-                minimumValue:   0
-                maximumValue:   0.75
+                from:   0
+                to:   0.75
                 Component.onCompleted: value = -_activeJoystick.exponential
                 onValueChanged: _activeJoystick.exponential = -value
              }

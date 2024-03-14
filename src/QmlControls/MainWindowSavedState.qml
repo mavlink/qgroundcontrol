@@ -7,13 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
-import QtQuick.Window   2.11
-import QtQuick.Controls 2.4
-import Qt.labs.settings 1.0
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtCore
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.ScreenTools
 
 Item {
     property Window window

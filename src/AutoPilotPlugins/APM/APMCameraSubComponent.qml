@@ -8,17 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl                 1.0
-import QGroundControl.FactSystem      1.0
-import QGroundControl.FactControls    1.0
-import QGroundControl.Palette         1.0
-import QGroundControl.Controls        1.0
-import QGroundControl.ScreenTools     1.0
-import QGroundControl.SettingsManager 1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.SettingsManager
 
 SetupPage {
     id:             cameraPage
@@ -33,7 +32,7 @@ SetupPage {
 
             FactPanelController { id: controller; }
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property bool _oldFW:               !(globals.activeVehicle.firmwareMajorVersion > 3 || globals.activeVehicle.firmwareMinorVersion > 5 || globals.activeVehicle.firmwarePatchVersion >= 2)
 
@@ -97,8 +96,8 @@ SetupPage {
                     gimbalSettingsLoader.sourceComponent = gimbalSettings
                 }
                 calcGimbalOutValues()
-                slide.minimumValue = 10
-                slide.maximumValue = 127
+                slide.from = 10
+                slide.to = 127
                 slide.value = slide._fact.value
                 slide._loadComplete = true
             }
@@ -219,6 +218,8 @@ SetupPage {
                 property var  _fact:            controller.getParameterFact(-1, "MNT_JSTICK_SPD")
                 property bool _loadComplete:    false
 
+                /*
+                // FIXME-QT6 - Controls 2 doesn't style controls this way
                 // Override style to make handles smaller than default
                 style: SliderStyle {
                     handle: Rectangle {
@@ -233,6 +234,7 @@ SetupPage {
                         property real _radius: Math.round(ScreenTools.defaultFontPixelHeight * 0.35)
                     }
                 }
+                */
 
                 onValueChanged: {
                     if (_loadComplete) {
@@ -242,15 +244,15 @@ SetupPage {
 
                 MouseArea {
                     anchors.fill: parent
-                    onWheel: {
+                    onWheel: (wheel) => {
                         // do nothing
                         wheel.accepted = true;
                     }
-                    onPressed: {
+                    onPressed: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }
-                    onReleased: {
+                    onReleased: (mouse) => {
                         // propogate/accept
                         mouse.accepted = false;
                     }
@@ -294,7 +296,7 @@ SetupPage {
                             id:     rectangle
                             height: innerColumn.height + _margins*2
                             width:  innerColumn.width + _margins*2
-                            color:  palette.windowShade
+                            color:  qgcPal.windowShade
 
                             // Section Content - 3 Rows
                             Column {
@@ -328,7 +330,7 @@ SetupPage {
                                                 textRole:       "text"
                                                 currentIndex:   gimbalOutIndex
 
-                                                onActivated: setRCFunction(gimbalOutModel.get(index).value, rcFunction)
+                                                onActivated: (index) => { setRCFunction(gimbalOutModel.get(index).value, rcFunction) }
                                             }
                                         }
 
@@ -458,7 +460,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
                         height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                        color:              palette.windowShade
+                        color:              qgcPal.windowShade
 
                         QGCLabel {
                             id:                 gimbalTypeLabel

@@ -11,6 +11,7 @@
         <file alias="PX4RadioComponentSummary.qml">../../AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml</file>
         <file alias="PX4SimpleFlightModes.qml">../../AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml</file>
         <file alias="PX4FlightBehaviorCopter.qml">../../AutoPilotPlugins/PX4/PX4FlightBehaviorCopter.qml</file>
+        <file alias="PX4TuningComponent.qml">../../AutoPilotPlugins/PX4/PX4TuningComponent.qml</file>
         <file alias="PX4TuningComponentCopter.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml</file>
         <file alias="PX4TuningComponentCopterAll.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterAll.qml</file>
         <file alias="PX4TuningComponentCopterAttitude.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml</file>
@@ -32,6 +33,12 @@
         <file alias="QGroundControl/PX4/qmldir">../../QmlControls/QGroundControl/PX4/qmldir</file>
         <file alias="QGroundControl/PX4/BatteryParams.qml">../../AutoPilotPlugins/PX4/BatteryParams.qml</file>
     </qresource>
+    <qresource prefix="/PX4/Indicators">
+        <file alias="PX4FlightModeIndicator.qml">PX4FlightModeIndicator.qml</file>
+        <file alias="PX4BatteryIndicator.qml">PX4BatteryIndicator.qml</file>
+        <file alias="PX4MainStatusIndicatorContentItem.qml">PX4MainStatusIndicatorContentItem.qml</file>
+    </qresource>
+
     <qresource prefix="/json">
         <file alias="PX4-MavCmdInfoCommon.json">PX4-MavCmdInfoCommon.json</file>
         <file alias="PX4-MavCmdInfoFixedWing.json">PX4-MavCmdInfoFixedWing.json</file>

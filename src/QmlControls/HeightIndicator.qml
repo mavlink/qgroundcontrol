@@ -1,9 +1,9 @@
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 ColumnLayout {
     id:         _root

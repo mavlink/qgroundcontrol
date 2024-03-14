@@ -71,7 +71,9 @@ QSerialPortPrivateData::QSerialPortPrivateData(QSerialPort *q)
     , parity(QSerialPort::NoParity)
     , stopBits(QSerialPort::OneStop)
     , flowControl(QSerialPort::NoFlowControl)
+#if QT_DEPRECATED_SINCE(5, 2)
     , policy(QSerialPort::IgnorePolicy)
+#endif
 #if QT_DEPRECATED_SINCE(5,3)
     , settingsRestoredOnClose(true)
 #endif
@@ -1367,7 +1369,7 @@ void QSerialPort::setError(QSerialPort::SerialPortError serialPortError, const Q
     else
         setErrorString(errorString);
 
-    emit error(serialPortError);
+    emit errorOccurred(serialPortError);
 }
 
 void QSerialPort::setNativeMethods(void)

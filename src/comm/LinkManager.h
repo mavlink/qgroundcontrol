@@ -28,6 +28,7 @@
 
 #ifndef NO_SERIAL_LINK
     #include "SerialLink.h"
+    #include "QGCSerialPortInfo.h"
 #endif
 
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
@@ -154,11 +155,13 @@ private:
     void                _updateSerialPorts          (void);
     void                _removeConfiguration        (LinkConfiguration* config);
     void                _addUDPAutoConnectLink      (void);
+#ifdef QGC_ZEROCONF_ENABLED
     void                _addZeroConfAutoConnectLink (void);
+#endif
     void                _addMAVLinkForwardingLink   (void);
     bool                _isSerialPortConnected      (void);
     void                _createDynamicForwardLink   (const char* linkName, QString hostName);
-
+    bool                _allowAutoConnectToBoard    (QGCSerialPortInfo::BoardType_t boardType);
 #ifndef NO_SERIAL_LINK
     bool                _portAlreadyConnected       (const QString& portName);
 #endif

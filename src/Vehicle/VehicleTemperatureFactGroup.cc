@@ -10,10 +10,6 @@
 #include "VehicleSetpointFactGroup.h"
 #include "Vehicle.h"
 
-const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
-const char* VehicleTemperatureFactGroup::_temperature2FactName =      "temperature2";
-const char* VehicleTemperatureFactGroup::_temperature3FactName =      "temperature3";
-
 VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/TemperatureFact.json", parent)
     , _temperature1Fact    (0, _temperature1FactName,     FactMetaData::valueTypeDouble)

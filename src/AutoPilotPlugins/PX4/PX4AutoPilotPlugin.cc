@@ -11,7 +11,6 @@
 #include "PX4AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
 #include "AirframeComponentController.h"
-#include "UAS.h"
 #include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
 #include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
 #include "QGCApplication.h"
@@ -48,7 +47,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
         return;
     }
 
-    _airframeFacts = new PX4AirframeLoader(this, _vehicle->uas(), this);
+    _airframeFacts = new PX4AirframeLoader(this, this);
     Q_CHECK_PTR(_airframeFacts);
 
     PX4AirframeLoader::loadAirframeMetaData();

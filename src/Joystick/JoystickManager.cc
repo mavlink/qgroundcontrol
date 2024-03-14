@@ -18,7 +18,7 @@
     #define __sdljoystick__
 #endif
 
-#ifdef __android__
+#ifdef Q_OS_ANDROID
     #include "JoystickAndroid.h"
 #endif
 
@@ -59,7 +59,7 @@ void JoystickManager::init() {
         return;
     }
     _setActiveJoystickFromSettings();
-#elif defined(__android__)
+#elif defined(Q_OS_ANDROID)
     if (!JoystickAndroid::init(this)) {
         return;
     }
@@ -77,7 +77,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 #ifdef __sdljoystick__
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
-#elif defined(__android__)
+#elif defined(Q_OS_ANDROID)
     newMap = JoystickAndroid::discover(_multiVehicleManager);
 #endif
 
@@ -175,14 +175,15 @@ QString JoystickManager::activeJoystickName(void)
     return _activeJoystick ? _activeJoystick->name() : QString();
 }
 
-void JoystickManager::setActiveJoystickName(const QString& name)
+bool JoystickManager::setActiveJoystickName(const QString& name)
 {
-    if (!_name2JoystickMap.contains(name)) {
+    if (_name2JoystickMap.contains(name)) {
+        setActiveJoystick(_name2JoystickMap[name]);
+        return true;
+    } else {
         qCWarning(JoystickManagerLog) << "Set active not in map" << name;
-        return;
+        return false;
     }
-
-    setActiveJoystick(_name2JoystickMap[name]);
 }
 
 /*
@@ -209,7 +210,7 @@ void JoystickManager::_updateAvailableJoysticks()
             break;
         }
     }
-#elif defined(__android__)
+#elif defined(Q_OS_ANDROID)
     _joystickCheckTimerCounter--;
     _setActiveJoystickFromSettings();
     if (_joystickCheckTimerCounter <= 0) {

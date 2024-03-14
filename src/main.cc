@@ -17,14 +17,14 @@
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
+#include <QQuickStyle>
+#include <QQuickWindow>
 
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "AppMessages.h"
 
-#ifndef NO_SERIAL_LINK
-    #include "SerialLink.h"
-#endif
+#include <iostream>
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
@@ -49,7 +49,6 @@
 #include <QtBluetooth/QBluetoothSocket>
 #endif
 
-#include <iostream>
 #include "QGCMapEngine.h"
 
 /* SDL does ugly things to main() */
@@ -80,12 +79,10 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 
 #endif
 
-#if defined(__android__)
+#if defined(Q_OS_ANDROID)
 #include <jni.h>
+#include "AndroidInterface.h"
 #include "JoystickAndroid.h"
-#if defined(QGC_ENABLE_PAIRING)
-#include "PairingManager.h"
-#endif
 #if !defined(NO_SERIAL_LINK)
 #include "qserialport.h"
 #endif
@@ -133,7 +130,7 @@ gst_android_init(JNIEnv* env, jobject context)
 }
 
 //-----------------------------------------------------------------------------
-static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+static const char kJniQGCActivityClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
 void setNativeMethods(void)
 {
@@ -141,15 +138,15 @@ void setNativeMethods(void)
         {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
     };
 
-    QAndroidJniEnvironment jniEnv;
+    QJniEnvironment jniEnv;
     if (jniEnv->ExceptionCheck()) {
         jniEnv->ExceptionDescribe();
         jniEnv->ExceptionClear();
     }
 
-    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    jclass objectClass = jniEnv->FindClass(kJniQGCActivityClassName);
     if(!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniClassName;
+        qWarning() << "Couldn't find class:" << kJniQGCActivityClassName;
         return;
     }
 
@@ -172,6 +169,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     Q_UNUSED(reserved);
 
+    qDebug() << "JNI_OnLoa QGC called";
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
@@ -190,27 +188,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
     JoystickAndroid::setNativeMethods();
 
-#if defined(QGC_ENABLE_PAIRING)
-    PairingManager::setNativeMethods();
-#endif
-
     return JNI_VERSION_1_6;
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#ifdef __android__
-#include <QtAndroid>
-bool checkAndroidWritePermission() {
-    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-    if(r == QtAndroid::PermissionResult::Denied) {
-        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
-        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-        if(r == QtAndroid::PermissionResult::Denied) {
-             return false;
-        }
-   }
-   return true;
 }
 #endif
 
@@ -221,7 +199,9 @@ bool checkAndroidWritePermission() {
 void sigHandler(int s)
 {
     std::signal(s, SIG_DFL);
-    QApplication::instance()->quit();
+    qgcApp()->mainRootWindow()->close();
+    QEvent event{QEvent::Quit};
+    qgcApp()->event(&event);
 }
 
 #endif /* Q_OS_LINUX */
@@ -269,7 +249,7 @@ int main(int argc, char *argv[])
     AppMessages::installHandler();
 
 #ifdef Q_OS_MAC
-#ifndef __ios__
+#ifndef Q_OS_IOS
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
     QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
@@ -365,7 +345,12 @@ int main(int argc, char *argv[])
 #endif
 #endif // QT_DEBUG
 
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#ifdef Q_OS_DARWIN
+    // Gstreamer video playback requires OpenGL
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+#endif
+
+    QQuickStyle::setStyle("Basic");
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
     if(app->isErrorState()) {
@@ -412,8 +397,8 @@ int main(int argc, char *argv[])
 #endif
     {
 
-#ifdef __android__
-        checkAndroidWritePermission();
+#ifdef Q_OS_ANDROID
+        AndroidInterface::checkStoragePermissions();
 #endif
         if (!app->_initForNormalAppBoot()) {
             return -1;

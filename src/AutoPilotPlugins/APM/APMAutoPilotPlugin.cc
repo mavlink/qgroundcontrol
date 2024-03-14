@@ -9,7 +9,6 @@
 
 
 #include "APMAutoPilotPlugin.h"
-#include "UAS.h"
 #include "APMParameterMetaData.h"
 #include "APMFirmwarePlugin.h"
 #include "ArduCopterFirmwarePlugin.h"
@@ -33,7 +32,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 #include <QSerialPortInfo>
 #endif
 
@@ -60,7 +59,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _followComponent          (nullptr)
 #endif
 {
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
 #endif
 }
@@ -130,7 +129,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
 
-            if(_vehicle->parameterManager()->parameterExists(-1, "MNT_RC_IN_PAN")) {
+            if(_vehicle->parameterManager()->parameterExists(-1, "MNT1_TYPE")) {
                 _cameraComponent = new APMCameraComponent(_vehicle, this);
                 _cameraComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_cameraComponent));
@@ -201,7 +200,7 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
     return QString();
 }
 
-#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+#if !defined(NO_SERIAL_LINK) && !defined(Q_OS_ANDROID)
 /// The following code is executed when the Vehicle is parameter ready. It checks for the service bulletin against Cube Blacks.
 void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
 {

@@ -1,19 +1,10 @@
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Network Test)
 
-set(EXTRA_SRC)
-if(BUILD_TESTING)
-	list(APPEND EXTRA_SRC
-		MockLink.cc
-		MockLink.h
-		MockLinkFTP.cc
-		MockLinkFTP.h
-		MockLinkMissionItemHandler.cc
-		MockLinkMissionItemHandler.h
-	)
-endif()
+# NO_SERIAL_LINK # TODO: Make this QGC_NO_SERIAL_LINK
 
-add_library(comm
-	#BluetoothLink.cc
-	#BluetoothLink.h
+qt_add_library(comm STATIC
+	BluetoothLink.cc
+	BluetoothLink.h
 	LinkConfiguration.cc
 	LinkConfiguration.h
 	LinkInterface.cc
@@ -22,8 +13,6 @@ add_library(comm
 	LinkManager.h
 	LogReplayLink.cc
 	LogReplayLink.h
-	MavlinkMessagesTimer.cc
-	MavlinkMessagesTimer.h
 	MAVLinkProtocol.cc
 	MAVLinkProtocol.h
 	QGCMAVLink.cc
@@ -38,19 +27,48 @@ add_library(comm
 	UdpIODevice.h
 	UDPLink.cc
 	UDPLink.h
-
-	${EXTRA_SRC}
 )
+
+if(QGC_BUILD_TESTING)
+	target_sources(comm
+		PRIVATE
+			MockLink.cc
+			MockLink.h
+			MockLinkFTP.cc
+			MockLinkFTP.h
+			MockLinkMissionItemHandler.cc
+			MockLinkMissionItemHandler.h
+	)
+endif()
 
 target_link_libraries(comm
+	PRIVATE
+		Qt6::Test
 	PUBLIC
 		qgc
-		Qt5::Location
-		Qt5::SerialPort
-		Qt5::Test
-		Qt5::TextToSpeech
-		Qt5::Widgets
-		qmdnsengine
+		Qt6::Widgets
+		Qt6::Bluetooth
+		Qt6::Network
 )
 
-target_include_directories(comm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+if(ANDROID)
+    target_link_libraries(comm PUBLIC qtandroidserialport)
+else()
+	target_link_libraries(comm PUBLIC Qt6::SerialPort)
+endif()
+
+option(QGC_ZEROCONF_ENABLED "Enable ZeroConf Compatibility" OFF)
+if(QGC_ZEROCONF_ENABLED)
+	target_link_libraries(comm PRIVATE qmdnsengine)
+	target_include_directories(comm PRIVATE ${CMAKE_SOURCE_DIR}/libs)
+endif()
+
+target_compile_definitions(comm PUBLIC QGC_ENABLE_BLUETOOTH)
+
+target_include_directories(comm
+    PUBLIC
+    	${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0
+        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0/all
+        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0/common
+)

@@ -8,12 +8,11 @@
  ****************************************************************************/
 
 
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.Palette 1.0
-import QGroundControl.ScreenTools 1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 Rectangle {
     property string flightModeName          ///< User visible name for this  flight mode
@@ -73,7 +72,7 @@ Rectangle {
                     currentIndex:   modeChannelIndex
                     enabled:        modeChannelEnabled
 
-                    onActivated: modeChannelIndexSelected(index)
+                    onActivated: (index) =>  { modeChannelIndexSelected(index) }
                 }
 
                 QGCLabel {

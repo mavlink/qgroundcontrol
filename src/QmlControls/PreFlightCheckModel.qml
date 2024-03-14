@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick      2.3
-import QtQml.Models 2.1
+import QtQuick
+import QtQml.Models
 
 ObjectModel {
     id: _root

@@ -99,12 +99,11 @@ void ActuatorOutput::getAllChannelFunctions(QList<Fact*> &allFunctions) const
     });
 }
 
-bool ActuatorOutput::hasExistingOutputFunctionParams() const
-{
+bool ActuatorOutput::hasExistingOutputFunctionParams() const {
     bool hasExistingOutputFunction = false;
-    forEachOutputFunction([&hasExistingOutputFunction](ActuatorOutputSubgroup*, ChannelConfigInstance*, Fact* fact) {
-        hasExistingOutputFunction = true;
-    });
+    forEachOutputFunction([&hasExistingOutputFunction](
+            ActuatorOutputSubgroup *, ChannelConfigInstance *,
+            [[maybe_unused]] Fact *fact) { hasExistingOutputFunction = true; });
     return hasExistingOutputFunction;
 }
 

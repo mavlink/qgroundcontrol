@@ -8,53 +8,22 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.ScreenTools
 
-SetupPage {
-    id:             tuningPage
-    pageComponent:  pageComponent
-
-    Component {
-        id: pageComponent
-
-        Item {
-            width: availableWidth
-            height: availableHeight
-
-            FactPanelController {
-                id:         controller
-            }
-
-            QGCTabBar {
-                id:             bar
-                width:          parent.width
-                anchors.top:    parent.top
-
-                QGCTabButton {
-                    text:       qsTr("Multirotor")
-                }
-                //QGCTabButton {
-                //    text:       qsTr("Fixedwing")
-                //}
-            }
-
-            property var pages:  [
-                "PX4TuningComponentCopterAll.qml",
-                //"PX4TuningComponentPlaneAll.qml"
-            ]
-
-            Loader {
-                source:            pages[bar.currentIndex]
-                width:             parent.width
-                anchors.top:       bar.bottom
-                anchors.topMargin: ScreenTools.defaultFontPixelWidth
-                anchors.bottom:    parent.bottom
-            }
+PX4TuningComponent {
+    model: ListModel {
+        ListElement {
+            buttonText: qsTr("Multirotor")
+            tuningPage: "PX4TuningComponentCopterAll.qml"
         }
-    } // Component - pageComponent
+        //ListElement {
+        //    buttonText: qsTr("Fixed Wing")
+        //    tuningPage: "PX4TuningComponentPlaneAll.qml"
+        //}
+    }
 }

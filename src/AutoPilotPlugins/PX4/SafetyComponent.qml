@@ -8,18 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Layouts          1.2
-import QtGraphicalEffects       1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
 
 SetupPage {
     id:             safetyPage
@@ -39,7 +37,7 @@ SetupPage {
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _labelWidth:      ScreenTools.defaultFontPixelWidth  * 30
-            property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth  * 24
+            property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth  * 20
             property real _imageHeight:     ScreenTools.defaultFontPixelHeight * 3
             property real _imageWidth:      _imageHeight * 2
 
@@ -172,7 +170,7 @@ SetupPage {
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.fillWidth:   true
                                 currentIndex:       _collisionPrevention ? (_collisionPrevention.rawValue > 0 ? 1 : 0) : 0
-                                onActivated: {
+                                onActivated: (index) => {
                                     if(_collisionPrevention) {
                                         _collisionPrevention.value = index > 0 ? 5 : -1
                                         console.log('Collision prevention enabled: ' + _collisionPrevention.value)
@@ -191,7 +189,7 @@ SetupPage {
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.fillWidth:   true
                                 currentIndex:       _objectAvoidance ? (_objectAvoidance.value === 0 ? 0 : 1) : 0
-                                onActivated: {
+                                onActivated: (index) => {
                                     if(_objectAvoidance) {
                                         _objectAvoidance.value = index > 0 ? 1 : 0
                                     }
@@ -210,11 +208,11 @@ SetupPage {
                                 Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 2
                                 Layout.fillWidth:   true
                                 Layout.fillHeight:  true
-                                maximumValue:       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(15)
-                                minimumValue:       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(1)
+                                to:       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(15)
+                                from:       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(1)
                                 stepSize:           1
                                 displayValue:       true
-                                updateValueWhileDragging:   false
+                                live:   false
                                 Layout.alignment:   Qt.AlignVCenter
                                 value: {
                                     if (_collisionPrevention && _collisionPrevention.rawValue > 0) {
@@ -614,7 +612,7 @@ SetupPage {
                                 Component.onCompleted: {
                                     currentIndex = _enableLogging ? (_enableLogging.value >= 0 ? 1 : 0) : 0
                                 }
-                                onActivated: {
+                                onActivated: (index) => {
                                     if(_enableLogging) {
                                         _enableLogging.value = index > 0 ? 0 : -1
                                     }

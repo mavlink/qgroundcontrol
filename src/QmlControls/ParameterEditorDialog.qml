@@ -7,23 +7,23 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 2.15
-import QtQuick.Layouts  1.15
-import QtQuick.Dialogs  1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.ScreenTools
 
 QGCPopupDialog {
     id:         root
     title:      qsTr("Parameter Editor")
-    buttons:    StandardButton.Cancel | StandardButton.Save
+    buttons:    Dialog.Save | (validate ? 0 : Dialog.Cancel)
 
     property Fact   fact
     property bool   showRCToParam:  false
@@ -31,13 +31,12 @@ QGCPopupDialog {
     property string validateValue
     property bool   setFocus:       true    ///< true: focus is set to text field on display, false: focus not set (works around strange virtual keyboard bug with FactValueSlider
 
-    signal valueChanged
-
     property real   _editFieldWidth:            ScreenTools.defaultFontPixelWidth * 20
     property bool   _longDescriptionAvailable:  fact.longDescription != ""
     property bool   _editingParameter:          fact.componentId != 0
-    property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI || !_editingParameter
-    property bool   _allowDefaultReset:         fact.defaultValueAvailable && (QGroundControl.corePlugin.showAdvancedUI || !_editingParameter)
+    property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI && _editingParameter
+    property bool   _allowDefaultReset:         fact.defaultValueAvailable
+    property bool   _showCombo:                 fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
 
     ParameterEditorController { id: controller; }
 
@@ -47,16 +46,13 @@ QGCPopupDialog {
         if (bitmaskColumn.visible && !manualEntry.checked) {
             fact.value = bitmaskValue();
             fact.valueChanged(fact.value)
-            valueChanged()
         } else if (factCombo.visible && !manualEntry.checked) {
             fact.enumIndex = factCombo.currentIndex
-            valueChanged()
         } else {
             var errorString = fact.validate(valueField.text, forceSave.checked)
             if (errorString === "") {
                 fact.value = valueField.text
                 fact.valueChanged(fact.value)
-                valueChanged()
             } else {
                 validationError.text = errorString
                 if (_allowForceSave) {
@@ -65,11 +61,6 @@ QGCPopupDialog {
                 preventClose = true
             }
         }
-    }
-
-    function reject() {
-        fact.valueChanged(fact.value)
-        close()
     }
 
     function bitmaskValue() {
@@ -84,16 +75,20 @@ QGCPopupDialog {
     }
 
     Component.onCompleted: {
+        console.log("ParameterEditor")
         if (validate) {
+            valueField.text = validateValue
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             if (_allowForceSave) {
                 forceSave.visible = true
             }
+        } else {
+            valueField.text = fact.valueString
         }
     }
 
     ColumnLayout {
-        width:      editRow.width
+        width:      Math.min(mainWindow.width * .75, Math.max(ScreenTools.defaultFontPixelWidth * 60, editRow.width))
         spacing:    globals.defaultTextHeight
 
         QGCLabel {
@@ -111,14 +106,13 @@ QGCPopupDialog {
             QGCTextField {
                 id:                 valueField
                 width:              _editFieldWidth
-                text:               validate ? validateValue : fact.valueString
                 unitsLabel:         fact.units
                 showUnits:          fact.units != ""
-                focus:              setFocus
-                inputMethodHints:   (fact.typeIsString || ScreenTools.isiOS) ?
-                                        Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
+                focus:              setFocus && visible
+                inputMethodHints:   (fact.typeIsString || ScreenTools.isiOS) ? // iOS numeric keyboard has no done button, we can't use it
+                                        Qt.ImhNone :
                                         Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
-                visible:            fact.enumStrings.length === 0 || validate || manualEntry.checked
+                visible:            !_showCombo || validate || manualEntry.checked
             }
 
             QGCComboBox {
@@ -126,8 +120,7 @@ QGCPopupDialog {
                 width:      _editFieldWidth
                 model:      fact.enumStrings
                 visible:    _showCombo
-
-                property bool _showCombo: fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
+                focus:      setFocus && visible
 
                 Component.onCompleted: {
                     // We can't bind directly to fact.enumIndex since that would add an unknown value

@@ -16,7 +16,8 @@
 #include <QVariantList>
 
 #ifndef QGC_DISABLE_UVC
-#include <QCameraInfo>
+#include <QMediaDevices>
+#include <QCameraDevice>
 #endif
 
 const char* VideoSettings::videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
@@ -29,6 +30,8 @@ const char* VideoSettings::videoSourceMPEGTS            = QT_TRANSLATE_NOOP("Vid
 const char* VideoSettings::videoSource3DRSolo           = QT_TRANSLATE_NOOP("VideoSettings", "3DR Solo (requires restart)");
 const char* VideoSettings::videoSourceParrotDiscovery   = QT_TRANSLATE_NOOP("VideoSettings", "Parrot Discovery");
 const char* VideoSettings::videoSourceYuneecMantisG     = QT_TRANSLATE_NOOP("VideoSettings", "Yuneec Mantis G");
+const char* VideoSettings::videoSourceHerelinkAirUnit   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink AirUnit");
+const char* VideoSettings::videoSourceHerelinkHotspot   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink Hotspot");
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -48,10 +51,17 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
 #endif
+
+#ifdef QGC_HERELINK_AIRUNIT_VIDEO
+    videoSourceList.append(videoSourceHerelinkAirUnit);
+#else
+    videoSourceList.append(videoSourceHerelinkHotspot);
+#endif
+
 #ifndef QGC_DISABLE_UVC
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    for (const QCameraInfo &cameraInfo: cameras) {
-        videoSourceList.append(cameraInfo.description());
+    QList<QCameraDevice> videoInputs = QMediaDevices::videoInputs();
+    for (const auto& cameraDevice: videoInputs) {
+        videoSourceList.append(cameraDevice.description());
     }
 #endif
     if (videoSourceList.count() == 0) {
@@ -215,6 +225,16 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
+    }
+    //-- If Herelink Air unit, good to go
+    if(vSource == videoSourceHerelinkAirUnit) {
+        qCDebug(VideoManagerLog) << "Stream configured for Herelink Air Unit";
+        return true;
+    }
+    //-- If Herelink Hotspot, good to go
+    if(vSource == videoSourceHerelinkHotspot) {
+        qCDebug(VideoManagerLog) << "Stream configured for Herelink Hotspot";
+        return true;
     }
     return false;
 }

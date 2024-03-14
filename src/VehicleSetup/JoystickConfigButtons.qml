@@ -7,25 +7,27 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Dialogs              1.3
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
 
 ColumnLayout {
     width:                  availableWidth
     height:                 (globals.activeVehicle.supportsJSButton ? buttonCol.height : flowColumn.height) + (ScreenTools.defaultFontPixelHeight * 2)
+    spacing:                ScreenTools.defaultFontPixelHeight
+    
     Connections {
         target: _activeJoystick
-        onRawButtonPressedChanged: {
+        onRawButtonPressedChanged: (index, pressed) => {
             if (buttonActionRepeater.itemAt(index)) {
                 buttonActionRepeater.itemAt(index).pressed = pressed
             }
@@ -34,16 +36,19 @@ ColumnLayout {
             }
         }
     }
+
     ColumnLayout {
         id:         flowColumn
-        y:          ScreenTools.defaultFontPixelHeight / 2
         width:      parent.width
-        spacing:    ScreenTools.defaultFontPixelHeight / 2
+        spacing:    ScreenTools.defaultFontPixelHeight
+
+        // Note for reminding the use of multiple buttons for the same action
         QGCLabel {
             Layout.preferredWidth:  parent.width
             wrapMode:               Text.WordWrap
-            text:                   qsTr("Assigning the same action to multiple buttons requires the press of all those buttons for the action to be taken. This is useful to prevent accidental button presses for critical actions like Arm or Emergency Stop.")
+            text:                   qsTr(" Multiple buttons that have the same action must be pressed simultaneously to invoke the action.")
         }
+        
         Flow {
             id:                     buttonFlow
             Layout.preferredWidth:  parent.width
@@ -87,7 +92,7 @@ ColumnLayout {
 
                         Component.onCompleted:  _findCurrentButtonAction()
                         onModelChanged:         _findCurrentButtonAction()
-                        onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
+                        onActivated: (index) => { _activeJoystick.setButtonAction(modelData, textAt(index)) }
                     }
                     QGCCheckBox {
                         id:                         repeatCheck

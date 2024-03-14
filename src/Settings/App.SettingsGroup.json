@@ -174,9 +174,17 @@
 {
     "name":             "savePath",
     "shortDesc": "Application save directory",
-    "longDesc":  "Directory to which all data files  are saved/loaded from",
+    "longDesc":  "Directory to which all data files are saved/loaded from",
     "type":             "string",
     "default":     ""
+},
+{
+    "name":                 "androidSaveToSDCard",
+    "shortDesc":            "Save to SD card",
+    "longDesc":             "Application data is saved to the sd card",
+    "type":                 "bool",
+    "default":              false,
+    "qgcRebootRequired":    true
 },
 {
     "name":             "userBrandImageIndoor",
@@ -256,27 +264,6 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":             "enableTaisync",
-    "shortDesc": "Enable Taisync Module Support",
-    "longDesc":  "Enable Taisync Module Support",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "enableTaisyncVideo",
-    "shortDesc": "Enable Taisync Video Support",
-    "longDesc":  "Enable Taisync Video Support",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "enableMicrohard",
-    "shortDesc": "Enable Microhard Module Support",
-    "longDesc":  "Enable Microhard Module Support",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":         "qLocaleLanguage",
     "shortDesc":    "Language",
     "type":         "uint32",
@@ -324,7 +311,8 @@
     "shortDesc": "Host name",
     "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
     "type":             "string",
-    "default":     "localhost:14445"
+    "default":     "localhost:14445",
+    "qgcRebootRequired":    true
 },
 {
     "name":      "forwardMavlinkAPMSupportHostName",
@@ -332,6 +320,18 @@
     "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
     "type":      "string",
     "default":   "support.ardupilot.org:xxxx"
+},
+{
+    "name": "loginAirLink",
+    "shortDesc": "AirLink User Name",
+    "type": "string",
+    "default": ""
+},
+{
+    "name": "passAirLink",
+    "shortDesc": "AirLink Password",
+    "type": "string",
+    "default": ""
 }
 ]
 }

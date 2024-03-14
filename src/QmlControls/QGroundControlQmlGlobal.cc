@@ -13,6 +13,9 @@
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
+#ifdef QT_DEBUG
+#include "MockLink.h"
+#endif
 
 static const char* kQmlGlobalKeyName = "QGCQml";
 
@@ -79,14 +82,11 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _gpsRtkFactGroup        = qgcApp()->gpsRtkFactGroup();
     _adsbVehicleManager     = toolbox->adsbVehicleManager();
     _globalPalette          = new QGCPalette(this);
-#if defined(QGC_ENABLE_PAIRING)
-    _pairingManager         = toolbox->pairingManager();
+#ifndef QGC_AIRLINK_DISABLED
+    _airlinkManager         = toolbox->airlinkManager();
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    _taisyncManager         = toolbox->taisyncManager();
-#endif
-#if defined(QGC_GST_MICROHARD_ENABLED)
-    _microhardManager       = toolbox->microhardManager();
+#ifdef CONFIG_UTM_ADAPTER
+    _utmspManager            = toolbox->utmspManager();
 #endif
 }
 
@@ -262,11 +262,14 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
 QString QGroundControlQmlGlobal::qgcVersion(void) const
 {
     QString versionStr = qgcApp()->applicationVersion();
-#ifdef __androidArm32__
-    versionStr += QStringLiteral(" %1").arg(tr("32 bit"));
-#elif __androidArm64__
-    versionStr += QStringLiteral(" %1").arg(tr("64 bit"));
-#endif
+    if(QSysInfo::buildAbi().contains("32"))
+    {
+        versionStr += QStringLiteral(" %1").arg(tr("32 bit"));
+    }
+    else if(QSysInfo::buildAbi().contains("64"))
+    {
+        versionStr += QStringLiteral(" %1").arg(tr("64 bit"));
+    }
     return versionStr;
 }
 

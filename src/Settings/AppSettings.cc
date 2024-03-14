@@ -12,6 +12,10 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 
+#ifdef Q_OS_ANDROID
+#include "AndroidInterface.h"
+#endif
+
 #include <QQmlEngine>
 #include <QtQml>
 #include <QStandardPaths>
@@ -26,6 +30,7 @@ const char* AppSettings::telemetryFileExtension =   "tlog";
 const char* AppSettings::kmlFileExtension =         "kml";
 const char* AppSettings::shpFileExtension =         "shp";
 const char* AppSettings::logFileExtension =         "ulg";
+const char* AppSettings::tilesetFileExtension =     "qgctiledb";
 
 const char* AppSettings::parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
 const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
@@ -90,15 +95,31 @@ DECLARE_SETTINGGROUP(App, "")
 
     if (!userHasModifiedSavePath) {
 #ifdef __mobile__
-    #ifdef __ios__
+    #ifdef Q_OS_IOS
         // This will expose the directories directly to the File iOs app
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.absolutePath());
     #else
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
-        savePathFact->setRawValue(rootDir.filePath(appName));
+        QString rootDirPath;
+        #ifdef Q_OS_ANDROID
+        if (androidSaveToSDCard()->rawValue().toBool()) {
+                rootDirPath = AndroidInterface::getSDCardPath();
+            qDebug() << "AndroidInterface::getSDCardPath();" << rootDirPath;
+                if (rootDirPath.isEmpty() || !QDir(rootDirPath).exists()) {
+                    rootDirPath.clear();
+                    qgcApp()->showAppMessage(tr("Save to SD card specified for application data. But no SD card present. Using internal storage."));
+                } else if (!QFileInfo(rootDirPath).isWritable()) {
+                    rootDirPath.clear();
+                    qgcApp()->showAppMessage(tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
+                }
+            }
+        #endif
+        if (rootDirPath.isEmpty()) {
+            rootDirPath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        }
+        savePathFact->setRawValue(QDir(rootDirPath).filePath(appName));
     #endif
-        savePathFact->setVisible(false);
+    savePathFact->setVisible(false);
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
         savePathFact->setRawValue(rootDir.filePath(appName));
@@ -128,6 +149,7 @@ DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
+DECLARE_SETTINGSFACT(AppSettings, androidSaveToSDCard)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)
 DECLARE_SETTINGSFACT(AppSettings, mapboxToken)
@@ -140,9 +162,6 @@ DECLARE_SETTINGSFACT(AppSettings, defaultFirmwareType)
 DECLARE_SETTINGSFACT(AppSettings, gstDebugLevel)
 DECLARE_SETTINGSFACT(AppSettings, followTarget)
 DECLARE_SETTINGSFACT(AppSettings, apmStartMavlinkStreams)
-DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
-DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
-DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, usePairing)
 DECLARE_SETTINGSFACT(AppSettings, saveCsvTelemetry)
@@ -150,6 +169,8 @@ DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlink)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkHostName)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkAPMSupportHostName)
+DECLARE_SETTINGSFACT(AppSettings, loginAirLink)
+DECLARE_SETTINGSFACT(AppSettings, passAirLink)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

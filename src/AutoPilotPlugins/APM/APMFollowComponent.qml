@@ -8,18 +8,18 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
 
 SetupPage {
     id:             followPage
@@ -251,7 +251,7 @@ SetupPage {
                             Layout.fillWidth:   true
                             model:              [ qsTr("Maintain Current Offsets"), qsTr("Specify Offsets")]
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 if (index == 0) {
                                     _followOffsetX.rawValue = _followOffsetY.rawValue = _followOffsetZ.rawValue = 0
                                     _setUIFromParams()
@@ -270,7 +270,7 @@ SetupPage {
                             Layout.fillWidth:       true
                             model:                  rgText
                             visible:                !_roverFirmware
-                            onActivated:            _followYawBehavior.rawValue = rgValues[index]
+                            onActivated: (index) => { _followYawBehavior.rawValue = rgValues[index] }
 
                             property var rgText:    [ qsTr("Maintain current vehicle orientation"), qsTr("Point at ground station location"), qsTr("Same direction as ground station movement") ]
                             property var rgValues:  [ _followYawBehaviorNone, _followYawBehaviorFace, _followYawBehaviorFlight ]
@@ -432,7 +432,7 @@ SetupPage {
                     MouseArea {
                         anchors.fill: parent
 
-                        onClicked: {
+                        onClicked: (mouse) => {
                             // Translate x,y to centered
                             var x = mouse.x - (width / 2)
                             var y = (height - mouse.y) - (height / 2)

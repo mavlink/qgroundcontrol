@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.PX4           1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Controllers
+import QGroundControl.PX4
 
 // Note: This setup supports back compat on battery parameter naming
 //  Older firmware: Single battery setup using BAT_* naming
@@ -413,7 +413,7 @@ SetupPage {
 
                 QGCPopupDialog {
                     title:      qsTr("Calculate Voltage Divider")
-                    buttons:    StandardButton.Close
+                    buttons:    Dialog.Close
 
                     property alias batteryIndex: batParams.batteryIndex
 
@@ -439,7 +439,7 @@ SetupPage {
                             columns:    2
 
                             QGCLabel { text: qsTr("Measured voltage:") }
-                            QGCTextField { id: measuredVoltage }
+                            QGCTextField { id: measuredVoltage; numericValuesOnly: true }
 
                             QGCLabel { text: qsTr("Vehicle voltage:") }
                             QGCLabel { text: _batteryFactGroup.voltage.valueString }
@@ -471,7 +471,7 @@ SetupPage {
 
                 QGCPopupDialog {
                     title:      qsTr("Calculate Amps per Volt")
-                    buttons:    StandardButton.Close
+                    buttons:    Dialog.Close
 
                     property alias batteryIndex: batParams.batteryIndex
 
@@ -497,7 +497,7 @@ SetupPage {
                             columns:    2
 
                             QGCLabel { text: qsTr("Measured current:") }
-                            QGCTextField { id: measuredCurrent }
+                            QGCTextField { id: measuredCurrent; numericValuesOnly: true }
 
                             QGCLabel { text: qsTr("Vehicle current:") }
                             QGCLabel { text: _batteryFactGroup.current.valueString }
@@ -530,7 +530,7 @@ SetupPage {
                 QGCPopupDialog {
                     id:                     escCalibrationDlg
                     title:                  qsTr("ESC Calibration")
-                    buttons:                StandardButton.Ok
+                    buttons:                Dialog.Ok
                     acceptButtonEnabled:    false
 
                     Connections {

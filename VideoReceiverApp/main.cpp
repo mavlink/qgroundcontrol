@@ -1,131 +1,41 @@
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
+#include <QtCore/QCommandLineParser>
+#include <QtCore/QDebug>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMessageLogContext>
+#include <QtCore/QRunnable>
+#include <QtCore/QTimer>
+#include <QtCore/QtLogging>
+#include <QtGui/QGuiApplication>
+#include <QtQml/QQmlApplicationEngine>
+#include <QtQuick/QQuickWindow>
 
-#include <QQuickWindow>
-#include <QQuickItem>
-#include <QRunnable>
-#include <QCommandLineParser>
-#include <QTimer>
-
+#include "GstVideoReceiver.h"
+#include "GStreamer.h"
+#include "VideoReceiver.h"
 #include <gst/gst.h>
 
-#include "QGCLoggingCategory.h"
+static Q_LOGGING_CATEGORY(AppLog, "VideoReceiverApp")
 
-QGC_LOGGING_CATEGORY(AppLog, "VideoReceiverApp")
-
-#if defined(__android__)
-#include <QtAndroidExtras>
-
-#include <jni.h>
-
-#include <android/log.h>
-
-static jobject _class_loader = nullptr;
-static jobject _context = nullptr;
-
-extern "C" {
-    void gst_amc_jni_set_java_vm(JavaVM *java_vm);
-
-    jobject gst_android_get_application_class_loader(void) {
-        return _class_loader;
-    }
-}
-
-static void
-gst_android_init(JNIEnv* env, jobject context)
+void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-    jobject class_loader = nullptr;
-
-    jclass context_cls = env->GetObjectClass(context);
-
-    if (!context_cls) {
-        return;
-    }
-
-    jmethodID get_class_loader_id = env->GetMethodID(context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        return;
-    }
-
-    class_loader = env->CallObjectMethod(context, get_class_loader_id);
-
-    if (env->ExceptionCheck()) {
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-        return;
-    }
-
-    _context = env->NewGlobalRef(context);
-    _class_loader = env->NewGlobalRef(class_loader);
+    (void) fprintf(stderr, "%s", qPrintable(qFormatLogMessage(type, context, msg)));
 }
-
-static const char kJniClassName[] {"labs/mavlink/VideoReceiverApp/QGLSinkActivity"};
-
-static void setNativeMethods(void)
-{
-    JNINativeMethod javaMethods[] {
-        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
-    };
-
-    QAndroidJniEnvironment jniEnv;
-
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
-
-    jclass objectClass = jniEnv->FindClass(kJniClassName);
-
-    if (!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniClassName;
-        return;
-    }
-
-    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
-
-    if (val < 0) {
-        qWarning() << "Error registering methods: " << val;
-    } else {
-        qDebug() << "Main Native Functions Registered";
-    }
-
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
-}
-
-jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-    Q_UNUSED(reserved);
-
-    JNIEnv* env;
-
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-        return -1;
-    }
-
-    setNativeMethods();
-
-    gst_amc_jni_set_java_vm(vm);
-
-    return JNI_VERSION_1_6;
-}
-#endif
-
-#include <GStreamer.h>
-#include <VideoReceiver.h>
 
 class VideoReceiverApp : public QRunnable
 {
 public:
-    VideoReceiverApp(QCoreApplication& app, bool qmlAllowed)
+    VideoReceiverApp(const QCoreApplication &app, bool qmlAllowed)
         : _app(app)
         , _qmlAllowed(qmlAllowed)
     {}
+
+    ~VideoReceiverApp() override
+    {
+        qCDebug(AppLog) << "VideoReceiverApp::~VideoReceiverApp()";
+        if (this->_videoSink)
+            gst_object_unref (GST_ELEMENT(this->_videoSink));
+
+    }
 
     void run();
 
@@ -139,14 +49,14 @@ protected:
     void _dispatch(std::function<void()> code);
 
 private:
-    QCoreApplication& _app;
+    const QCoreApplication& _app;
     bool _qmlAllowed;
     VideoReceiver* _receiver = nullptr;
     QQuickWindow* _window = nullptr;
     QQuickItem* _widget = nullptr;
     void* _videoSink = nullptr;
     QString _url;
-    unsigned _timeout = 5;
+    unsigned _timeout = 20;
     unsigned _connect = 1;
     bool _decode = true;
     unsigned _stopDecodingAfter = 0;
@@ -163,12 +73,15 @@ private:
 void
 VideoReceiverApp::run()
 {
+    qCDebug(AppLog) << "VideoReceiverApp::run()";
     if((_videoSink = GStreamer::createVideoSink(nullptr, _widget)) == nullptr) {
         qCDebug(AppLog) << "createVideoSink failed";
         return;
     }
 
     _receiver->startDecoding(_videoSink);
+    qCDebug(AppLog) << "VideoReceiverApp::run() after startDecoding";
+
 }
 
 int
@@ -291,6 +204,7 @@ VideoReceiverApp::exec()
     QQmlApplicationEngine engine;
 
     if (_decode && _qmlAllowed) {
+        qCDebug(AppLog) << "Using QML";
         engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
         _window = static_cast<QQuickWindow*>(engine.rootObjects().first());
@@ -299,8 +213,6 @@ VideoReceiverApp::exec()
         _widget = _window->findChild<QQuickItem*>("videoItem");
         Q_ASSERT(_widget != nullptr);
     }
-
-    startStreaming();
 
     QObject::connect(_receiver, &VideoReceiver::timeout, [](){
         qCDebug(AppLog) << "Streaming timeout";
@@ -379,13 +291,24 @@ VideoReceiverApp::exec()
             } else {
                 qCDebug(AppLog) << "Closing...";
                 delete _receiver;
+                _receiver = nullptr;
                 _app.exit();
             }
         });
      });
 
+    startStreaming();
+    qCDebug(AppLog) << "after startStreaming()";
 
-    return _app.exec();
+    int ret = _app.exec();
+    qCDebug(AppLog) << "VideoReceiverApp::exec()";
+    auto element = GST_ELEMENT(_videoSink);
+    gst_element_set_state (element, GST_STATE_NULL);
+    gst_object_unref (element);
+
+    gst_deinit ();
+
+    return ret;
 }
 
 void
@@ -405,6 +328,7 @@ VideoReceiverApp::startStreaming()
 void
 VideoReceiverApp::startDecoding()
 {
+    qCDebug(AppLog) << "VideoReceiverApp::startDecoding()";
     if (_qmlAllowed) {
         _window->scheduleRenderJob(this, QQuickWindow::BeforeSynchronizingStage);
     } else {
@@ -452,45 +376,27 @@ VideoReceiverApp::_dispatch(std::function<void()> code)
     timer->moveToThread(qApp->thread());
     timer->setSingleShot(true);
     QObject::connect(timer, &QTimer::timeout, [=](){
+        qCDebug(AppLog) << "dispatching code";
         code();
         timer->deleteLater();
     });
     QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
 }
 
-
-static bool isQtApp(const char* app)
-{
-    const char* s;
-
-#if defined(Q_OS_WIN)
-    if ((s = strrchr(app, '\\')) != nullptr) {
-#else
-    if ((s = strrchr(app, '/')) != nullptr) {
-#endif
-        s += 1;
-    } else {
-        s = app;
-    }
-
-    return s[0] == 'Q' || s[0] == 'q';
-}
-
 int main(int argc, char *argv[])
 {
-    if (argc < 1) {
-        return 0;
-    }
+    if (argc < 1) return 0;
 
     GStreamer::initialize(argc, argv, 3);
+    gst_init(&argc, &argv);
 
-    if (isQtApp(argv[0])) {
-        QGuiApplication app(argc, argv);
-        VideoReceiverApp videoApp(app, true);
-        return videoApp.exec();
-    } else {
-        QCoreApplication app(argc, argv);
-        VideoReceiverApp videoApp(app, false);
-        return videoApp.exec();
-    }
+    qSetMessagePattern("%{category} %{type}: %{message} (%{file}:%{line})\n");
+    #ifndef Q_OS_ANDROID
+        (void) qInstallMessageHandler(myMessageHandler);
+    #endif
+    QGuiApplication app(argc, argv);
+    const bool runAsQtApp = QString(argv[0]).startsWith("q",  Qt::CaseInsensitive);
+    VideoReceiverApp videoApp(app, runAsQtApp);
+
+    return videoApp.exec();
 }

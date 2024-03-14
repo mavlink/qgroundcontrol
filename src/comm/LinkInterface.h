@@ -23,7 +23,6 @@
 
 #include "QGCMAVLink.h"
 #include "LinkConfiguration.h"
-#include "MavlinkMessagesTimer.h"
 
 class LinkManager;
 
@@ -108,8 +107,6 @@ private:
     bool    _decodedFirstMavlinkPacket  = false;
     bool    _isPX4Flow                  = false;
     int     _vehicleReferenceCount      = 0;
-
-    QMap<int /* vehicle id */, MavlinkMessagesTimer*> _mavlinkMessagesTimers;
 };
 
 typedef std::shared_ptr<LinkInterface>  SharedLinkInterfacePtr;

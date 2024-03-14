@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Layouts              1.11
-import QtQuick.Dialogs              1.3
-import QtQuick.Window               2.2
-import QtCharts                     2.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtQuick.Window
+import QtCharts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 AnalyzePage {
     headerComponent:    headerComponent
@@ -52,7 +52,7 @@ AnalyzePage {
                     model:          controller.systemNames
                     sizeToContents: true
                     visible:        controller.systemNames.length > 1
-                    onActivated:    controller.setActiveSystem(controller.systems.get(index).id);
+                    onActivated: (index) =>  { controller.setActiveSystem(controller.systems.get(index).id) }
 
                     Connections {
                         target: controller
@@ -73,7 +73,7 @@ AnalyzePage {
                     model:          curSystem ? curSystem.compIDsStr : []
                     sizeToContents: true
                     visible:        curSystem ? curSystem.compIDsStr.length > 2 : false
-                    onActivated: {
+                    onActivated: (index) => {
                         if(curSystem && curSystem.compIDsStr.length > 1) {
                             if(index < 1)
                                 curCompID = 0

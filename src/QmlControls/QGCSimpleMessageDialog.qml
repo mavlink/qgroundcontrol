@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.15
-import QtQuick.Layouts  1.15
+import QtQuick
+import QtQuick.Layouts
 
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 QGCPopupDialog {
     property alias  text:           label.text

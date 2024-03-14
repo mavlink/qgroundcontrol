@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQml.Models                 2.1
-import QtQuick.Layouts              1.12
+import QtQuick
+import QtQuick.Controls
+import QtQml.Models
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
+import QGroundControl.Vehicle
 
 ColumnLayout {
     spacing: 0.8 * ScreenTools.defaultFontPixelWidth

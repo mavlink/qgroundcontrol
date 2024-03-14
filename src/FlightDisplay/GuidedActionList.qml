@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Controls
+import QGroundControl.Controllers
+import QGroundControl.FlightDisplay
+import QGroundControl.Palette
 
 /// Dialog showing list of available guided actions
 Rectangle {
@@ -38,6 +38,7 @@ Rectangle {
     property real _margins:             Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
     property real _actionWidth:         ScreenTools.defaultFontPixelWidth * 25
     property real _actionHorizSpacing:  ScreenTools.defaultFontPixelHeight * 2
+    property var  _flyViewSettings:     QGroundControl.settingsManager.flyViewSettings
 
     property var _model: [
         {
@@ -79,9 +80,10 @@ Rectangle {
     ]
 
     property var _customManager: CustomActionManager {
-        id: customManager
+        id:                 customManager
+        actionFileNameFact: QGroundControl.settingsManager.customMavlinkActionsSettings.flyViewActionsFile
     }
-    readonly property bool hasCustomActions: QGroundControl.settingsManager.flyViewSettings.enableCustomActions.rawValue && customManager.hasActions
+    readonly property bool hasCustomActions: customManager.actions.count > 0
 
     QGCPalette { id: qgcPal }
 
@@ -154,12 +156,11 @@ Rectangle {
 
                     ColumnLayout {
                         spacing:            ScreenTools.defaultFontPixelHeight / 2
-                        visible:            _root.hasCustomActions
                         Layout.fillHeight:  true
 
                         QGCLabel {
                             id:                     customMessage
-                            text:                   "Custom Action #" + (index + 1)
+                            text:                   object.description
                             horizontalAlignment:    Text.AlignHCenter
                             wrapMode:               Text.WordWrap
                             Layout.minimumWidth:    _actionWidth

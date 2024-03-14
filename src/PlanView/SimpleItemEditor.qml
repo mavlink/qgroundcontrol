@@ -1,14 +1,13 @@
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Controls.Styles      1.4
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.Palette
 
 // Editor for Simple mission items
 Rectangle {

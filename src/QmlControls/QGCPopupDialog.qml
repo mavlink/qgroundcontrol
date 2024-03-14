@@ -7,15 +7,15 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.12
-import QtQuick.Controls             2.4
-import QtQuick.Layouts              1.12
-import QtQuick.Dialogs              1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 // Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
 //
@@ -40,17 +40,16 @@ import QGroundControl.ScreenTools   1.0
 //  * Dialog will automatically close after accepted/rejected signal processing. You can prevent this by setting
 //      preventClose = true prior to returning from your signal handlers.
 Popup {
-    id:                 _root
+    id:                 root
+    width:  mainWindow.width
+    height: mainWindow.height
     parent:             Overlay.overlay
-    anchors.centerIn:   parent
-    width:              mainColumnLayout.width + (padding * 2)
-    height:             mainColumnLayout.y + mainColumnLayout.height + padding
-    padding:            2
     modal:              true
     focus:              true
+    margins:            0
 
     property string title
-    property var    buttons:                StandardButton.Ok
+    property var    buttons:                Dialog.Ok
     property bool   acceptAllowed:          acceptButton.visible
     property bool   rejectAllowed:          rejectButton.visible
     property alias  acceptButtonEnabled:    acceptButton.enabled
@@ -62,54 +61,24 @@ Popup {
     signal accepted
     signal rejected
 
-    property var    _pal:               QGroundControl.globalPalette
+    property var    _qgcPal:            QGroundControl.globalPalette
     property real   _frameSize:         ScreenTools.defaultFontPixelWidth
     property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
-    property real   _popupDoubleInset:  ScreenTools.defaultFontPixelHeight * 2
-    property real   _maxContentWidth:   parent.width - _popupDoubleInset
-    property real   _maxContentHeight:  parent.height - titleRowLayout.height - _popupDoubleInset
 
-    background: Item {
-        Rectangle {
-            anchors.left:   parent.left
-            anchors.top:    parent.top
-            width:          _frameSize
-            height:         _frameSize
-            color:          _pal.text
-            visible:        enabled
-        }
+    background: QGCMouseArea {
+        width:  mainWindow.width
+        height: mainWindow.height
 
-        Rectangle {
-            anchors.right:  parent.right
-            anchors.top:    parent.top
-            width:          _frameSize
-            height:         _frameSize
-            color:          _pal.text
-            visible:        enabled
-        }
-
-        Rectangle {
-            anchors.left:   parent.left
-            anchors.bottom: parent.bottom
-            width:          _frameSize
-            height:         _frameSize
-            color:          _pal.text
-            visible:        enabled
-        }
-
-        Rectangle {
-            anchors.right:  parent.right
-            anchors.bottom: parent.bottom
-            width:          _frameSize
-            height:         _frameSize
-            color:          _pal.text
-            visible:        enabled
-        }
-
-        Rectangle {
-            anchors.margins:    _root.padding
-            anchors.fill:       parent
-            color:              _pal.window
+        onClicked: {
+            if (closePolicy & Popup.CloseOnPressOutside) {
+                if (rejectAllowed) {
+                    focus = true    // Take focus to force FactTextFields to validate
+                    _reject()
+                } else if (acceptAllowed) {
+                    focus = true    // Take focus to force FactTextFields to validate
+                    _accept()
+                }
+            }
         }
     }
 
@@ -123,12 +92,12 @@ Popup {
     onClosed: {
         Qt.inputMethod.hide()
         if (destroyOnClose) {
-            _root.destroy()
+            root.destroy()
         }
     }
 
     function _accept() {
-        if (acceptAllowed) {
+        if (acceptAllowed && !globals.validationError) {
             accepted()
             if (preventClose) {
                 preventClose = false
@@ -139,7 +108,7 @@ Popup {
     }
 
     function _reject() {
-        if (rejectAllowed) {
+        if (rejectAllowed && !globals.validationError) {
             rejected()
             if (preventClose) {
                 preventClose = false
@@ -155,66 +124,65 @@ Popup {
         acceptButton.visible = false
         rejectButton.visible = false
         // Accept role buttons
-        if (buttons & StandardButton.Ok) {
+        if (buttons & Dialog.Ok) {
             acceptButton.text = qsTr("Ok")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Open) {
+        } else if (buttons & Dialog.Open) {
             acceptButton.text = qsTr("Open")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Save) {
+        } else if (buttons & Dialog.Save) {
             acceptButton.text = qsTr("Save")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Apply) {
+        } else if (buttons & Dialog.Apply) {
             acceptButton.text = qsTr("Apply")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Open) {
+        } else if (buttons & Dialog.Open) {
             acceptButton.text = qsTr("Open")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.SaveAll) {
+        } else if (buttons & Dialog.SaveAll) {
             acceptButton.text = qsTr("Save All")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Yes) {
+        } else if (buttons & Dialog.Yes) {
             acceptButton.text = qsTr("Yes")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.YesToAll) {
+        } else if (buttons & Dialog.YesToAll) {
             acceptButton.text = qsTr("Yes to All")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Retry) {
+        } else if (buttons & Dialog.Retry) {
             acceptButton.text = qsTr("Retry")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Reset) {
+        } else if (buttons & Dialog.Reset) {
             acceptButton.text = qsTr("Reset")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.RestoreToDefaults) {
+        } else if (buttons & Dialog.RestoreToDefaults) {
             acceptButton.text = qsTr("Restore to Defaults")
             acceptButton.visible = true
-        } else if (buttons & StandardButton.Ignore) {
+        } else if (buttons & Dialog.Ignore) {
             acceptButton.text = qsTr("Ignore")
             acceptButton.visible = true
         }
 
         // Reject role buttons
-        if (buttons & StandardButton.Cancel) {
+        if (buttons & Dialog.Cancel) {
             rejectButton.text = qsTr("Cancel")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.Close) {
+        } else if (buttons & Dialog.Close) {
             rejectButton.text = qsTr("Close")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.No) {
+        } else if (buttons & Dialog.No) {
             rejectButton.text = qsTr("No")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.NoToAll) {
+        } else if (buttons & Dialog.NoToAll) {
             rejectButton.text = qsTr("No to All")
             rejectButton.visible = true
-        } else if (buttons & StandardButton.Abort) {
+        } else if (buttons & Dialog.Abort) {
             rejectButton.text = qsTr("Abort")
             rejectButton.visible = true
         }
 
-        if (rejectButton.visible) {
-            closePolicy = Popup.NoAutoClose | Popup.CloseOnEscape
-        } else {
-            closePolicy = Popup.NoAutoClose
+        closePolicy = Popup.NoAutoClose
+        if (rejectAllowed) {
+            closePolicy |= Popup.CloseOnEscape
         }
     }
 
@@ -223,23 +191,31 @@ Popup {
     }
 
     Rectangle {
-        width:  titleRowLayout.width
-        height: titleRowLayout.height
-        color:  qgcPal.windowShade
+        x:              mainLayout.x - _contentMargin
+        y:              mainLayout.y - _contentMargin
+        width:          mainLayout.width + _contentMargin * 2
+        height:         mainLayout.height + _contentMargin * 2
+        color:          _qgcPal.windowShade
+        radius:         root.padding / 2
+        border.width:   1
+        border.color:   _qgcPal.windowShadeLight
     }
 
     ColumnLayout {
-        id:         mainColumnLayout
+        id:                 mainLayout
+        anchors.centerIn:   parent
+        x:          _contentMargin
+        y:          _contentMargin
         spacing:    _contentMargin
 
         RowLayout {
-            id:                 titleRowLayout
-            Layout.fillWidth:   true
+            id:                     titleRowLayout
+            Layout.fillWidth:       true
+            spacing:                _contentMargin
 
             QGCLabel {
-                Layout.leftMargin:  ScreenTools.defaultFontPixelWidth
                 Layout.fillWidth:   true
-                text:               _root.title
+                text:               root.title
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 verticalAlignment:	Text.AlignVCenter
             }
@@ -256,27 +232,29 @@ Popup {
             }
         }
 
-        QGCFlickable {
-            id:                     mainFlickable
-            Layout.preferredWidth:  Math.min(Math.max(marginItem.width, mainColumnLayout.width), _maxContentWidth)
-            Layout.preferredHeight: Math.min(marginItem.height, _maxContentHeight)
-            contentWidth:           marginItem.width
-            contentHeight:          marginItem.height
+        Rectangle {
+            Layout.fillWidth:       true
+            Layout.preferredWidth:  Math.min(maxAvailableWidth, totalContentWidth)
+            Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
+            color:                  _qgcPal.window
 
-            Item {
-                id:     marginItem
-                width:  dialogContentParent.width + (_contentMargin * 2)
-                height: dialogContentParent.height + _contentMargin
+            property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
+            property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5
+            property real totalContentWidth:    dialogContentParent.childrenRect.width + _contentMargin * 2
+            property real totalContentHeight:   dialogContentParent.childrenRect.height + _contentMargin * 2
+
+            QGCFlickable {
+                anchors.margins:    _contentMargin
+                anchors.fill:       parent
+                contentWidth:       dialogContentParent.childrenRect.width
+                contentHeight:      dialogContentParent.childrenRect.height
 
                 Item {
                     id:     dialogContentParent
-                    x:      _contentMargin
-                    width:  childrenRect.width
-                    height: childrenRect.height
                     focus:  true
 
-                    Keys.onReleased: {
-                        if (event.key === Qt.Key_Escape) {
+                    Keys.onReleased: (event) => {
+                        if (event.key === Qt.Key_Escape && rejectAllowed) {
                             _reject()
                             event.accepted = true
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -284,7 +262,6 @@ Popup {
                             event.accepted = true
                         }
                     }
-
                 }
             }
         }

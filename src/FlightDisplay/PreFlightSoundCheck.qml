@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
+import QGroundControl
+import QGroundControl.Controls
 
 PreFlightCheckButton {
     name:                   qsTr("Sound output")

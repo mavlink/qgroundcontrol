@@ -7,21 +7,21 @@
  *
  ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtLocation                   5.3
-import QtPositioning                5.3
-import QtQuick.Dialogs              1.2
-import QtQuick.Layouts              1.11
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl
+import QGroundControl.Controllers
+import QGroundControl.Controls
+import QGroundControl.FlightDisplay
+import QGroundControl.FlightMap
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 FlightMap {
     id:                         _root
@@ -31,13 +31,8 @@ FlightMap {
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 
-    property Item pipState: _pipState
-    QGCPipState {
-        id:         _pipState
-        pipOverlay: _pipOverlay
-        isDark:     _isFullWindowItemDark
-    }
-
+    property Item   pipView
+    property Item   pipState:                   _pipState
     property var    rightPanelWidth
     property var    planMasterController
     property bool   pipMode:                    false   // true: map is shown in a small pip mode
@@ -80,22 +75,16 @@ FlightMap {
 
     onZoomLevelChanged: {
         if (_saveZoomLevelSetting) {
-            QGroundControl.flightMapZoom = zoomLevel
+            QGroundControl.flightMapZoom = _root.zoomLevel
         }
     }
     onCenterChanged: {
-        QGroundControl.flightMapPosition = center
+        QGroundControl.flightMapPosition = _root.center
     }
 
     // We track whether the user has panned or not to correctly handle automatic map positioning
-    Connections {
-        target: gesture
-
-        function onPanStarted() {       _disableVehicleTracking = true }
-        function onFlickStarted() {     _disableVehicleTracking = true }
-        function onPanFinished() {      panRecenterTimer.restart() }
-        function onFlickFinished() {    panRecenterTimer.restart() }
-    }
+    onMapPanStart:  _disableVehicleTracking = true
+    onMapPanStop:   panRecenterTimer.restart()
 
     function pointInRect(point, rect) {
         return point.x > rect.x &&
@@ -126,17 +115,59 @@ FlightMap {
         animateLong.start()
     }
 
-    function _insetRect() {
+    // returns the rectangle formed by the four center insets
+    // used for checking if vehicle is under ui, and as a target for recentering the view
+    function _insetCenterRect() {
         return Qt.rect(toolInsets.leftEdgeCenterInset,
                        toolInsets.topEdgeCenterInset,
                        _root.width - toolInsets.leftEdgeCenterInset - toolInsets.rightEdgeCenterInset,
                        _root.height - toolInsets.topEdgeCenterInset - toolInsets.bottomEdgeCenterInset)
     }
 
+    // returns the four rectangles formed by the 8 corner insets
+    // used for detecting if the vehicle has flown under the instrument panel, virtual joystick etc
+    function _insetCornerRects() {
+        var rects = {
+        "topleft":      Qt.rect(0,0,
+                               toolInsets.leftEdgeTopInset,
+                               toolInsets.topEdgeLeftInset),
+        "topright":     Qt.rect(_root.width-toolInsets.rightEdgeTopInset,0,
+                               toolInsets.rightEdgeTopInset,
+                               toolInsets.topEdgeRightInset),
+        "bottomleft":   Qt.rect(0,_root.height-toolInsets.bottomEdgeLeftInset,
+                               toolInsets.leftEdgeBottomInset,
+                               toolInsets.bottomEdgeLeftInset),
+        "bottomright":  Qt.rect(_root.width-toolInsets.rightEdgeBottomInset,_root.height-toolInsets.bottomEdgeRightInset,
+                               toolInsets.rightEdgeBottomInset,
+                               toolInsets.bottomEdgeRightInset)}
+        return rects
+    }
+
     function recenterNeeded() {
         var vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-        var insetRect = _insetRect()
-        return !pointInRect(vehiclePoint, insetRect)
+        var centerRect = _insetCenterRect()
+        //return !pointInRect(vehiclePoint,insetRect)
+
+        // If we are outside the center inset rectangle, recenter
+        if(!pointInRect(vehiclePoint, centerRect)){
+            return true
+        }
+
+        // if we are inside the center inset rectangle
+        // then additionally check if we are underneath one of the corner inset rectangles
+        var cornerRects = _insetCornerRects()
+        if(pointInRect(vehiclePoint, cornerRects["topleft"])){
+            return true
+        } else if(pointInRect(vehiclePoint, cornerRects["topright"])){
+            return true
+        } else if(pointInRect(vehiclePoint, cornerRects["bottomleft"])){
+            return true
+        } else if(pointInRect(vehiclePoint, cornerRects["bottomright"])){
+            return true
+        }
+
+        // if we are inside the center inset rectangle, and not under any corner elements
+        return false
     }
 
     function updateMapToVehiclePosition() {
@@ -151,8 +182,8 @@ FlightMap {
                 if (firstVehiclePositionReceived && recenterNeeded()) {
                     // Move the map such that the vehicle is centered within the inset area
                     var vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-                    var insetRect = _insetRect()
-                    var centerInsetPoint = Qt.point(insetRect.x + insetRect.width / 2, insetRect.y + insetRect.height / 2)
+                    var centerInsetRect = _insetCenterRect()
+                    var centerInsetPoint = Qt.point(centerInsetRect.x + centerInsetRect.width / 2, centerInsetRect.y + centerInsetRect.height / 2)
                     var centerOffset = Qt.point((_root.width / 2) - centerInsetPoint.x, (_root.height / 2) - centerInsetPoint.y)
                     var vehicleOffsetPoint = Qt.point(vehiclePoint.x + centerOffset.x, vehiclePoint.y + centerOffset.y)
                     var vehicleOffsetCoord = _root.toCoordinate(vehicleOffsetPoint, false /* clipToViewport */)
@@ -166,6 +197,12 @@ FlightMap {
         if (_keepMapCenteredOnVehicle && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             _root.center = _activeVehicleCoordinate
         }
+    }
+
+    PipState {
+        id:         _pipState
+        pipView:    _root.pipView
+        isDark:     _isFullWindowItemDark
     }
 
     Timer {
@@ -227,10 +264,10 @@ FlightMap {
         }
 
         Connections {
-            target:                 _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            onPointAdded:           trajectoryPolyline.addCoordinate(coordinate)
-            onUpdateLastPoint:      trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
-            onPointsCleared:        trajectoryPolyline.path = []
+            target:                             _activeVehicle ? _activeVehicle.trajectoryPoints : null
+            onPointAdded: (coordinate) =>       trajectoryPolyline.addCoordinate(coordinate)
+            onUpdateLastPoint: (coordinate) =>  trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
+            onPointsCleared:                    trajectoryPolyline.path = []
         }
     }
 
@@ -265,6 +302,7 @@ FlightMap {
             heading:        object.heading
             alert:          object.alert
             map:            _root
+            size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 2.5
             z:              QGroundControl.zOrderVehicles
         }
     }
@@ -451,24 +489,23 @@ FlightMap {
         z:              QGroundControl.zOrderMapItems
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
+
         sourceItem: MissionItemIndexLabel {
             checked:    true
             index:      -1
             label:      qsTr("ROI here", "Make this a Region Of Interest")
+
+            onClicked: (position) => {
+                var roiEditMenu = popupMenuComponent.createObject(_root, { coord: roiLocationItem.coordinate, contentItemComponent: roiEditMenuComponent })
+                var clickPoint = mapToItem(_root, position.x, position.y)
+                roiEditMenu.setPosition(clickPoint.x, clickPoint.y)
+                roiEditMenu.open()
+            }
         }
 
         //-- Visibilty controlled by actual state
         function show(coord) {
             roiLocationItem.coordinate = coord
-        }
-
-        function hide() {
-        }
-
-        function actionConfirmed() {
-        }
-
-        function actionCancelled() {
         }
     }
 
@@ -494,27 +531,26 @@ FlightMap {
         }
     }
 
-
-    // Handle guided mode clicks
-    MouseArea {
-        anchors.fill: parent
+    Component {
+        id: popupMenuComponent
 
         Popup {
-            id: clickMenu
+            id: mapClickMenu
             modal: true
 
             property var coord
+            property var contentItemComponent
 
-            function setCoordinates(mouseX, mouseY) {
+            function setPosition(mouseX, mouseY) {
                 var newX = mouseX
                 var newY = mouseY
 
                 // Filtering coordinates
-                if (newX + clickMenu.width > _root.width) {
-                    newX = _root.width - clickMenu.width
+                if (newX + mapClickMenu.width > _root.width) {
+                    newX = _root.width - mapClickMenu.width
                 }
-                if (newY + clickMenu.height > _root.height) {
-                    newY = _root.height - clickMenu.height
+                if (newY + mapClickMenu.height > _root.height) {
+                    newY = _root.height - mapClickMenu.height
                 }
 
                 // Set coordiantes
@@ -528,72 +564,136 @@ FlightMap {
                 border.color: qgcPal.text
             }
 
-            ColumnLayout {
-                id: mainLayout
-                spacing: ScreenTools.defaultFontPixelWidth / 2
+            contentItem: Loader {
+                sourceComponent: contentItemComponent
 
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "Go to location"
-                    visible: globals.guidedControllerFlyView.showGotoLocation
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        gotoLocationItem.show(clickMenu.coord)
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, clickMenu.coord, gotoLocationItem)
+                property var mapClickCoord: mapClickMenu.coord
+                property var popup:         mapClickMenu
+            }
+        }
+    }
+
+    Component {
+        id: mapClickMenuComponent
+
+        ColumnLayout {
+            id: mainLayout
+            spacing: ScreenTools.defaultFontPixelWidth / 2
+
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Go to location")
+                visible:            globals.guidedControllerFlyView.showGotoLocation
+                onClicked: {
+                    if (popup.opened) {
+                        popup.close()
                     }
+                    gotoLocationItem.show(mapClickCoord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
                 }
+            }
 
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "Orbit at location"
-                    visible: globals.guidedControllerFlyView.showOrbit
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        orbitMapCircle.show(clickMenu.coord)
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, clickMenu.coord, orbitMapCircle)
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Orbit at location")
+                visible:            globals.guidedControllerFlyView.showOrbit
+                onClicked: {
+                    if (popup.opened) {
+                        popup.close()
                     }
+                    orbitMapCircle.show(mapClickCoord)
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, mapClickCoord, orbitMapCircle)
                 }
+            }
 
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "ROI at location"
-                    visible: globals.guidedControllerFlyView.showROI
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        roiLocationItem.show(clickMenu.coord)
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("ROI at location")
+                visible:            globals.guidedControllerFlyView.showROI
+                onClicked: {
+                    if (popup.opened) {
+                        popup.close()
                     }
+                    roiLocationItem.show(mapClickCoord)
+                    globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
                 }
+            }
 
-                QGCButton {
-                    Layout.fillWidth: true
-                    text: "Set home here"
-                    visible: globals.guidedControllerFlyView.showSetHome
-                    onClicked: {
-                        if (clickMenu.opened) {
-                            clickMenu.close()
-                        }
-                        globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, clickMenu.coord)
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Set home here")
+                visible:            globals.guidedControllerFlyView.showSetHome
+                onClicked: {
+                    if (popup.opened) {
+                        popup.close()
                     }
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, mapClickCoord)
+                }
+            }
+
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Set Estimator Origin")
+                visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
+                onClicked: {
+                    if (popup.opened) {
+                        popup.close()
+                    }
+                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
+                }
+            }        
+        }
+    }
+
+    Component {
+        id: roiEditPositionDialogComponent
+
+        EditPositionDialog {
+            title:                  qsTr("Edit ROI Position")
+            coordinate:             roiLocationItem.coordinate
+            onCoordinateChanged: {
+                roiLocationItem.coordinate = coordinate
+                _activeVehicle.guidedModeROI(coordinate)
+            }
+        }
+    }
+
+    Component {
+        id: roiEditMenuComponent
+
+        ColumnLayout {
+            id: mainLayout
+            spacing: ScreenTools.defaultFontPixelWidth / 2
+
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Cancel ROI")
+                onClicked: {
+                    _activeVehicle.stopGuidedModeROI()
+                    popup.close()
+                }
+            }
+
+            QGCButton {
+                Layout.fillWidth:   true
+                text:               qsTr("Edit Position")
+                onClicked: {         
+                    roiEditPositionDialogComponent.createObject(mainWindow, { showSetPositionFromVehicle: false }).open()
+                    popup.close()
                 }
             }
         }
+    }
 
-        onClicked: {
-            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome)) {
-                orbitMapCircle.hide()
-                gotoLocationItem.hide()
-                var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-                clickMenu.coord = clickCoord
-                clickMenu.setCoordinates(mouse.x, mouse.y)
-                clickMenu.open()
-            }
+    onMapClicked: (position) => {
+        if (!globals.guidedControllerFlyView.guidedUIVisible && 
+            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
+            orbitMapCircle.hide()
+            gotoLocationItem.hide()
+            var clickCoord = _root.toCoordinate(Qt.point(position.x, position.y), false /* clipToViewPort */)
+            var mapClickMenu = popupMenuComponent.createObject(_root, { coord: clickCoord, contentItemComponent: mapClickMenuComponent })
+            mapClickMenu.setPosition(position.x, position.y)
+            mapClickMenu.open()
         }
     }
 
@@ -603,7 +703,7 @@ FlightMap {
         anchors.left:       parent.left
         anchors.top:        parent.top
         mapControl:         _root
-        buttonsOnLeft:      false
+        buttonsOnLeft:      true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state === mapControl.pipState.windowState
 
         property real centerInset: visible ? parent.height - y : 0

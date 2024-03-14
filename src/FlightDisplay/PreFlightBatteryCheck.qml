@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-import QtQuick 2.3
+import QtQuick
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
-import QGroundControl.Vehicle   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.Vehicle
 
 // This class stores the data and functions of the check list but NOT the GUI (which is handled somewhere else).
 PreFlightCheckButton {

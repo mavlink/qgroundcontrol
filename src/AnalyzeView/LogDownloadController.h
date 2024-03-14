@@ -19,48 +19,14 @@
 
 #include <memory>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
+#include "QmlObjectListModel.h"
 
 class  MultiVehicleManager;
-class  UASInterface;
 class  Vehicle;
-class  QGCLogEntry;
 struct LogDownloadData;
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadLog)
-
-//-----------------------------------------------------------------------------
-class QGCLogModel : public QAbstractListModel
-{
-    Q_OBJECT
-public:
-
-    enum QGCLogModelRoles {
-        ObjectRole = Qt::UserRole + 1
-    };
-
-    QGCLogModel(QObject *parent = nullptr);
-
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_INVOKABLE QGCLogEntry* get(int index);
-
-    int         count           (void) const;
-    void        append          (QGCLogEntry* entry);
-    void        clear           (void);
-    QGCLogEntry*operator[]      (int i);
-
-    int         rowCount        (const QModelIndex & parent = QModelIndex()) const;
-    QVariant    data            (const QModelIndex & index, int role = Qt::DisplayRole) const;
-
-signals:
-    void        countChanged    ();
-
-protected:
-    QHash<int, QByteArray> roleNames() const;
-private:
-    QList<QGCLogEntry*> _logEntries;
-};
 
 //-----------------------------------------------------------------------------
 class QGCLogEntry : public QObject {
@@ -116,13 +82,13 @@ class LogDownloadController : public QObject
 public:
     LogDownloadController(void);
 
-    Q_PROPERTY(QGCLogModel* model           READ model              NOTIFY modelChanged)
+    Q_PROPERTY(QmlObjectListModel* model    READ model              NOTIFY modelChanged)
     Q_PROPERTY(bool         requestingList  READ requestingList     NOTIFY requestingListChanged)
     Q_PROPERTY(bool         downloadingLogs READ downloadingLogs    NOTIFY downloadingLogsChanged)
 
-    QGCLogModel*    model                   () { return &_logEntriesModel; }
-    bool            requestingList          () const{ return _requestingLogEntries; }
-    bool            downloadingLogs         () const{ return _downloadingLogs; }
+    QmlObjectListModel* model           () { return &_logEntriesModel; }
+    bool                requestingList  () const{ return _requestingLogEntries; }
+    bool                downloadingLogs () const{ return _downloadingLogs; }
 
     Q_INVOKABLE void refresh                ();
     Q_INVOKABLE void download               (QString path = QString());
@@ -139,8 +105,8 @@ signals:
 
 private slots:
     void _setActiveVehicle  (Vehicle* vehicle);
-    void _logEntry          (UASInterface *uas, uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
-    void _logData           (UASInterface *uas, uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data);
+    void _logEntry          (uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
+    void _logData           (uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data);
     void _processDownload   ();
 
 private:
@@ -161,10 +127,9 @@ private:
 
     QGCLogEntry* _getNextSelected();
 
-    UASInterface*       _uas;
     LogDownloadData*    _downloadData;
     QTimer              _timer;
-    QGCLogModel         _logEntriesModel;
+    QmlObjectListModel  _logEntriesModel;
     Vehicle*            _vehicle;
     bool                _requestingLogEntries;
     bool                _downloadingLogs;

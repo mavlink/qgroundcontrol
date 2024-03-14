@@ -1,9 +1,8 @@
-import QtQuick                  2.11
-import QtQuick.Controls         2.4
-import QtQuick.Controls.Styles  1.4
+import QtQuick
+import QtQuick.Controls
 
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette
+import QGroundControl.ScreenTools
 
 RadioButton {
     id:             control

@@ -38,42 +38,42 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
 {
     QVariant var(string);
 
-    int convertTo = QVariant::Int; // keep compiler warning happy
+    QMetaType::Type convertTo = QMetaType::Int; // keep compiler warning happy
     switch (type) {
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
     case FactMetaData::valueTypeUint64:
-        convertTo = QVariant::UInt;
+        convertTo = QMetaType::UInt;
         break;
     case FactMetaData::valueTypeInt8:
     case FactMetaData::valueTypeInt16:
     case FactMetaData::valueTypeInt32:
     case FactMetaData::valueTypeInt64:
-        convertTo = QVariant::Int;
+        convertTo = QMetaType::Int;
         break;
     case FactMetaData::valueTypeFloat:
         convertTo = QMetaType::Float;
         break;
     case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
-        convertTo = QVariant::Double;
+        convertTo = QMetaType::Double;
         break;
     case FactMetaData::valueTypeString:
         qWarning() << kInvalidConverstion;
-        convertTo = QVariant::String;
+        convertTo = QMetaType::QString;
         break;
     case FactMetaData::valueTypeBool:
         qWarning() << kInvalidConverstion;
-        convertTo = QVariant::Bool;
+        convertTo = QMetaType::Bool;
         break;
     case FactMetaData::valueTypeCustom:
         qWarning() << kInvalidConverstion;
-        convertTo = QVariant::ByteArray;
+        convertTo = QMetaType::QByteArray;
         break;
     }
     
-    *convertOk = var.convert(convertTo);
+    *convertOk = var.convert(QMetaType(convertTo));
     
     return var;
 }

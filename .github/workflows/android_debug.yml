@@ -1,0 +1,130 @@
+# The 32 and 64 bit version of these actions should be kept in sync
+name: Android 32/64-bit Debug
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches:
+    - '*'
+    paths-ignore:
+      - 'docs/**'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_DIR:   ${{ github.workspace }}
+  QT_VERSION:   6.6.*
+  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
+
+jobs:
+  build:
+    runs-on:  ubuntu-latest
+
+    strategy:
+      matrix:
+       include:
+         - architecture: 32bits
+           eabi: armeabi-v7a
+           arch: android_armv7
+           ARTIFACT: QGroundControl32.apk
+         - architecture: 64bits
+           eabi: arm64-v8a
+           arch: android_arm64_v8a
+           ARTIFACT: QGroundControl64.apk
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - run: sudo apt update
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-${{ matrix.arch }}-Release
+          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-Release
+          max-size: "2G"
+          append-timestamp: false
+
+      - name: Get all tags for correct version determination
+        working-directory:  ${{ github.workspace }}
+        run: |
+          git fetch --all --tags -f --depth 1
+
+      - name: Install Qt for Linux
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      ${{ env.QT_VERSION }}
+          aqtversion:   ==3.1.*
+          host:         linux
+          target:       desktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          setup-python: true
+          cache:        false
+
+      - name: Install Qt6 for Android
+        uses: jurplel/install-qt-action@v3
+        with:
+          version:      ${{ env.QT_VERSION }}
+          aqtversion:   ==3.1.*
+          host:         linux
+          target:       android
+          arch:         ${{ matrix.arch }}
+          extra:        --autodesktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          setup-python: true
+          cache:        true
+
+      - name: Remove Android SDKs to force usage of android-33 only
+        run: |
+            ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-33-ext5"
+            ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-33-ext4"
+            ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34"
+            ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34-ext8"
+
+      - name:               Install gstreamer
+        working-directory:  ${{ github.workspace }}
+        run: |
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz
+            mkdir gstreamer-1.0-android-universal-1.18.5
+            tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
+
+      - name: Update android manifest
+        if: github.ref_name != 'Stable'
+        run: ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${{ github.ref_name }}
+
+      - name: Install dependencies
+        run:  sudo apt-get install -y ninja-build
+
+      - name: Setup env
+        run: echo "QT_HOST_PATH=${Qt6_DIR}/../gcc_64" >> $GITHUB_ENV
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run:  |
+            chmod a+x ${Qt6_DIR}/bin/qt-cmake
+            ${Qt6_DIR}/bin/qt-cmake -S ${{ env.SOURCE_DIR }} -B ${{ runner.temp }}/shadow_build_dir/ -G Ninja \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DANDROID_ABI=${{ matrix.eabi }} \
+              -DANDROID_PLATFORM=android-23 \
+              -DBUILD_TESTING:BOOL=OFF \
+              -DQT_HOST_PATH:PATH=${{ env.QT_HOST_PATH }} \
+              -DQT_DEBUG_FIND_PACKAGE=ON
+            cmake --build ${{ runner.temp }}/shadow_build_dir/ --target all

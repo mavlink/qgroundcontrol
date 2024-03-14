@@ -1,18 +1,20 @@
-/*!
- * @file
- *   @brief Camera Controller
- *   @author Gus Grubba <gus@auterion.com>
+/****************************************************************************
  *
- */
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-#include "QGCCameraControl.h"
+#include "MavlinkCameraControl.h"
 #include "QGCCameraIO.h"
 
 QGC_LOGGING_CATEGORY(CameraIOLog, "CameraIOLog")
 QGC_LOGGING_CATEGORY(CameraIOLogVerbose, "CameraIOLogVerbose")
 
 //-----------------------------------------------------------------------------
-QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicle *vehicle)
+QGCCameraParamIO::QGCCameraParamIO(MavlinkCameraControl *control, Fact* fact, Vehicle *vehicle)
     : QObject(control)
     , _control(control)
     , _fact(fact)
@@ -174,7 +176,7 @@ QGCCameraParamIO::_sendParameter()
         case FactMetaData::valueTypeCustom:
         {
             QByteArray custom = _fact->rawValue().toByteArray();
-            memcpy(union_value.bytes, custom.data(), static_cast<size_t>(std::max(custom.size(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN)));
+            memcpy(union_value.bytes, custom.data(), static_cast<size_t>(std::max(custom.size(), static_cast<qsizetype>(MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN))));
         }
             break;
         default:

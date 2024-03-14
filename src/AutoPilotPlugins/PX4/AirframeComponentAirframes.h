@@ -19,7 +19,6 @@
 #include <QList>
 #include <QMap>
 
-#include "UASInterface.h"
 #include "AutoPilotPlugin.h"
 
 /// MVC Controller for AirframeComponent.qml.

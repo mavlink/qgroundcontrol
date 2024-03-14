@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 Rectangle {
     id:     settingsView
@@ -32,17 +32,30 @@ Rectangle {
 
     property bool _commingFromRIDSettings:  false
 
+    function showSettingsPage(settingsPage) {
+        for (var i=0; i<buttonRepeater.count; i++) {
+            var button = buttonRepeater.itemAt(i)
+            if (button.text === settingsPage) {
+                button.clicked()
+                break
+            }
+        }
+    }
+
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
         //-- Default Settings
         if (globals.commingFromRIDIndicator) {
-            __rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
+            rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
             globals.commingFromRIDIndicator = false
         } else {
-            __rightPanel.source = QGroundControl.corePlugin.settingsPages[QGroundControl.corePlugin.defaultSettings].url
+            rightPanel.source =  "/qml/GeneralSettings.qml"
         }
     }
+
+
+    SettingsPagesModel { id: settingsPagesModel }
 
     QGCFlickable {
         id:                 buttonList
@@ -58,25 +71,52 @@ Rectangle {
 
         ColumnLayout {
             id:         buttonColumn
-            spacing:    _verticalMargin
+            spacing:    ScreenTools.defaultFontPixelHeight / 4
 
             property real _maxButtonWidth: 0
 
             Repeater {
-                model:  QGroundControl.corePlugin.settingsPages
-                QGCButton {
-                    height:             _buttonHeight
-                    text:               modelData.title
-                    autoExclusive:      true
+                id:     buttonRepeater
+                model:  settingsPagesModel
+
+                Button {
                     Layout.fillWidth:   true
-                    visible:            modelData.url != "qrc:/qml/RemoteIDSettings.qml" ? true : QGroundControl.settingsManager.remoteIDSettings.enable.rawValue
+                    text:               name
+                    padding:            ScreenTools.defaultFontPixelWidth / 2
+                    autoExclusive:      true
+                    icon.source:        iconUrl
+                    visible:            pageVisible()
+
+                    background: Rectangle {
+                        color:  checked ? qgcPal.buttonHighlight : "transparent"
+                        radius: ScreenTools.defaultFontPixelWidth / 2
+                    }
+
+                    contentItem: RowLayout {
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCColoredImage {
+                            source: iconUrl
+                            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            width:  ScreenTools.defaultFontPixelHeight
+                            height: ScreenTools.defaultFontPixelHeight
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth:       true
+                            text:                   name
+                            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            horizontalAlignment:    QGCLabel.AlignLeft
+                        }
+                    }
 
                     onClicked: {
+                        focus = true
                         if (mainWindow.preventViewSwitch()) {
                             return
                         }
-                        if (__rightPanel.source !== modelData.url) {
-                            __rightPanel.source = modelData.url
+                        if (rightPanel.source !== url) {
+                            rightPanel.source = url
                         }
                         checked = true
                     }
@@ -92,7 +132,7 @@ Rectangle {
                         if (_commingFromRIDSettings) {
                             checked = false
                             _commingFromRIDSettings = false
-                            if (modelData.url == "qrc:/qml/RemoteIDSettings.qml") {
+                            if (modelData.url == "/qml/RemoteIDSettings.qml") {
                                 checked = true
                             }
                         }
@@ -116,7 +156,7 @@ Rectangle {
 
     //-- Panel Contents
     Loader {
-        id:                     __rightPanel
+        id:                     rightPanel
         anchors.leftMargin:     _horizontalMargin
         anchors.rightMargin:    _horizontalMargin
         anchors.topMargin:      _verticalMargin

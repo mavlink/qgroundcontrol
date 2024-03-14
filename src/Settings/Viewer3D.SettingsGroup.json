@@ -1,0 +1,33 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "enabled",
+    "shortDesc":        "Enable the 3D viewer",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "osmFilePath",
+    "shortDesc":        "Path to the OSM file for the 3D viewer.",
+    "type":             "string",
+    "default":          "Please select an OSM file"
+},
+{
+    "name":             "buildingLevelHeight",
+    "shortDesc":        "Average Height for each level of the buildings",
+    "type":             "double",
+    "units":            "m",
+    "default":          3
+},
+{
+    "name":             "altitudeBias",
+    "shortDesc":        "Altitude bias for vehicles in the 3D View",
+    "type":             "double",
+    "units":            "m",
+    "default":          0
+}
+]
+}

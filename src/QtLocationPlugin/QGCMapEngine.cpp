@@ -17,10 +17,10 @@
  */
 #include "QGCApplication.h"
 #include "AppSettings.h"
+#include "MapsSettings.h"
 #include "SettingsManager.h"
 
 #include <math.h>
-#include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
 #include <stdio.h>
@@ -41,9 +41,6 @@ struct stQGeoTileCacheQGCMapTypes {
     const char* name;
     QString type;
 };
-
-static const char* kMaxDiskCacheKey = "MaxDiskCache";
-static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
 //-----------------------------------------------------------------------------
 // Singleton
@@ -85,8 +82,6 @@ QGCMapEngine::QGCMapEngine()
         , _userAgent("Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0")
     #endif
 #endif
-    , _maxDiskCache(0)
-    , _maxMemCache(0)
     , _prunning(false)
     , _cacheWasReset(false)
     , _isInternetActive(false)
@@ -200,7 +195,7 @@ QGCMapEngine::addTask(QGCMapTask* task)
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngine::cacheTile(QString type, int x, int y, int z, const QByteArray& image, const QString &format, qulonglong set)
+QGCMapEngine::cacheTile(const QString& type, int x, int y, int z, const QByteArray& image, const QString &format, qulonglong set)
 {
     QString hash = getTileHash(type, x, y, z);
     cacheTile(type, hash, image, format, set);
@@ -208,7 +203,7 @@ QGCMapEngine::cacheTile(QString type, int x, int y, int z, const QByteArray& ima
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
+QGCMapEngine::cacheTile(const QString& type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
 {
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
     //-- If we are allowed to persist data, save tile to cache
@@ -220,22 +215,23 @@ QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& ima
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::getTileHash(QString type, int x, int y, int z)
+QGCMapEngine::getTileHash(const QString& type, int x, int y, int z)
 {
-    return QString::asprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
+    int hash = urlFactory()->hashFromProviderType(type);
+    return QString::asprintf("%010d%08d%08d%03d", hash, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::hashToType(const QString& hash)
+QGCMapEngine::tileHashToType(const QString& tileHash)
 {
-    QString type = hash.mid(0,10);
-    return urlFactory()->getTypeFromId(type.toInt());
+    int providerHash = tileHash.mid(0,10).toInt();
+    return urlFactory()->providerTypeFromHash(providerHash);
 }
 
 //-----------------------------------------------------------------------------
 	QGCFetchTileTask*
-QGCMapEngine::createFetchTileTask(QString type, int x, int y, int z)
+QGCMapEngine::createFetchTileTask(const QString& type, int x, int y, int z)
 {
 	QString hash = getTileHash(type, x, y, z);
 	QGCFetchTileTask* task = new QGCFetchTileTask(hash);
@@ -244,7 +240,7 @@ QGCMapEngine::createFetchTileTask(QString type, int x, int y, int z)
 
 //-----------------------------------------------------------------------------
 	QGCTileSet
-QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType)
+QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, const QString& mapType)
 {
 	if(zoom <  1) zoom = 1;
 	if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
@@ -257,57 +253,21 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
 QStringList
 QGCMapEngine::getMapNameList()
 {
-    return QStringList(getQGCMapEngine()->urlFactory()->getProviderTable().keys());
+    return getQGCMapEngine()->urlFactory()->getProviderTypes();
 }
 
 //-----------------------------------------------------------------------------
 quint32
 QGCMapEngine::getMaxDiskCache()
 {
-    if(!_maxDiskCache) {
-        QSettings settings;
-        _maxDiskCache = settings.value(kMaxDiskCacheKey, 1024).toUInt();
-    }
-    return _maxDiskCache;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setMaxDiskCache(quint32 size)
-{
-    QSettings settings;
-    settings.setValue(kMaxDiskCacheKey, size);
-    _maxDiskCache = size;
+    return qgcApp()->toolbox()->settingsManager()->mapsSettings()->maxCacheDiskSize()->rawValue().toUInt();
 }
 
 //-----------------------------------------------------------------------------
 quint32
 QGCMapEngine::getMaxMemCache()
 {
-    if(!_maxMemCache) {
-        QSettings settings;
-#ifdef __mobile__
-        _maxMemCache = settings.value(kMaxMemCacheKey, 16).toUInt();
-#else
-        _maxMemCache = settings.value(kMaxMemCacheKey, 128).toUInt();
-#endif
-    }
-    //-- Size in MB
-    if(_maxMemCache > 1024)
-        _maxMemCache = 1024;
-    return _maxMemCache;
-}
-
-//-----------------------------------------------------------------------------
-void
-QGCMapEngine::setMaxMemCache(quint32 size)
-{
-    //-- Size in MB
-    if(size > 1024)
-        size = 1024;
-    QSettings settings;
-    settings.setValue(kMaxMemCacheKey, size);
-    _maxMemCache = size;
+    return qgcApp()->toolbox()->settingsManager()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt();
 }
 
 //-----------------------------------------------------------------------------
@@ -368,7 +328,7 @@ QGCMapEngine::_pruned()
 
 //-----------------------------------------------------------------------------
 int
-QGCMapEngine::concurrentDownloads(QString type)
+QGCMapEngine::concurrentDownloads(const QString& type)
 {
     Q_UNUSED(type);
     // TODO : We may want different values depending on

@@ -35,8 +35,8 @@ public:
     Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
     Q_PROPERTY(Fact*                breachReturnAltitude    READ breachReturnAltitude                               CONSTANT)
 
-    // Hack to expose PX4 circular fence controlled by GF_MAX_HOR_DIST
-    Q_PROPERTY(double               paramCircularFence  READ paramCircularFence                             NOTIFY paramCircularFenceChanged)
+    // Radius of the "paramCircularFence" which is called the "Geofence Failsafe" in PX4 and the "Circular Geofence" on ArduPilot
+    Q_PROPERTY(double               paramCircularFence      READ paramCircularFence                                 NOTIFY paramCircularFenceChanged)
 
     /// Add a new inclusion polygon to the fence
     ///     @param topLeft: Top left coordinate or map viewport
@@ -58,6 +58,11 @@ public:
 
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
+
+#ifdef CONFIG_UTM_ADAPTER
+    Q_INVOKABLE void loadFlightPlanData(void);
+    Q_INVOKABLE bool loadUploadFlag(void);
+#endif
 
     double  paramCircularFence  (void);
     Fact*   breachReturnAltitude(void) { return &_breachReturnAltitudeFact; }
@@ -90,6 +95,11 @@ signals:
     void loadComplete                   (void);
     void paramCircularFenceChanged      (void);
 
+#ifdef CONFIG_UTM_ADAPTER
+    void uploadFlagSent         (bool flag);
+    void polygonBoundarySent    (QList<QGeoCoordinate> coords);
+#endif
+
 private slots:
     void _polygonDirtyChanged       (bool dirty);
     void _setDirty                  (void);
@@ -114,11 +124,18 @@ private:
     Fact                _breachReturnAltitudeFact;
     double              _breachReturnDefaultAltitude =  qQNaN();
     bool                _itemsRequested =               false;
-    Fact*               _px4ParamCircularFenceFact =    nullptr;
+
+    Fact*               _px4ParamCircularFenceFact =        nullptr;
+    Fact*               _apmParamCircularFenceRadiusFact =  nullptr;
+    Fact*               _apmParamCircularFenceEnabledFact = nullptr;
+    Fact*               _apmParamCircularFenceTypeFact =    nullptr;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _px4ParamCircularFence;
+    static const char* _apmParamCircularFenceRadius;
+    static const char* _apmParamCircularFenceEnabled;
+    static const char* _apmParamCircularFenceType;
 
     static const int _jsonCurrentVersion = 2;
 

@@ -8,16 +8,16 @@
  ****************************************************************************/
 
 
-import QtQuick              2.3
-import QtQuick.Controls     1.2
-import QtQuick.Layouts      1.2
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
+import QGroundControl.Vehicle
 
 SetupPage {
     id:             tuningPage
@@ -156,12 +156,12 @@ SetupPage {
                                 text: qsTr("Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 rollPitch
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0.08
-                                maximumValue:       0.4
+                                from:       0.08
+                                to:       0.4
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
 
@@ -189,12 +189,12 @@ SetupPage {
                                 text: qsTr("Slide to the right to climb more aggressively or slide to the left to climb more gently")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 climb
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0.3
-                                maximumValue:       1.0
+                                from:       0.3
+                                to:       1.0
                                 stepSize:           0.02
                                 tickmarksEnabled:   true
                                 value:              _rateClimbP.value
@@ -222,12 +222,12 @@ SetupPage {
                                 text: qsTr("Slide to the left for soft control, slide to the right for crisp control")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 id:                 atcInputTC
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       _atcInputTC.min
-                                maximumValue:       _atcInputTC.max
+                                from:       _atcInputTC.min
+                                to:       _atcInputTC.max
                                 stepSize:           _atcInputTC.increment
                                 tickmarksEnabled:   true
 
@@ -252,11 +252,11 @@ SetupPage {
                                 text: qsTr("Adjust the amount the motors spin to indicate armed")
                             }
 
-                            Slider {
+                            QGCSlider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0
-                                maximumValue:       Math.max(0.3, _motSpinArm.rawValue)
+                                from:       0
+                                to:       Math.max(0.3, _motSpinArm.rawValue)
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
                                 value:              _motSpinArm.rawValue
@@ -288,11 +288,11 @@ SetupPage {
                                 visible:    _motSpinMin.rawValue < _motSpinArm.rawValue
                             }
 
-                            Slider {
+                            QGCSlider {
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
-                                minimumValue:       0
-                                maximumValue:       Math.max(0.3, _motSpinMin.rawValue)
+                                from:       0
+                                to:       Math.max(0.3, _motSpinMin.rawValue)
                                 stepSize:           0.01
                                 tickmarksEnabled:   true
                                 value:              _motSpinMin.rawValue
@@ -358,7 +358,7 @@ SetupPage {
                                         model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
                                         currentIndex:   _autoTuneSwitchChannelIndex
 
-                                        onActivated: {
+                                        onActivated: (index) => {
                                             var channel = index
 
                                             if (channel > 0) {

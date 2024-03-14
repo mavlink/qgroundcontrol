@@ -1,3 +1,5 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
 add_custom_target(PlanViewQml
 	SOURCES
 		CameraCalcCamera.qml
@@ -15,7 +17,6 @@ add_custom_target(PlanViewQml
 		MissionSettingsEditor.qml
 		PlanEditToolbar.qml
 		PlanToolBarIndicators.qml
-		PlanToolBar.qml
 		PlanView.qml
 		RallyPointEditorHeader.qml
 		RallyPointItemEditor.qml

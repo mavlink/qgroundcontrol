@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick
+import QtQuick.Controls
+import QtLocation
+import QtPositioning
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl
+import QGroundControl.ScreenTools
+import QGroundControl.Palette
+import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 /// Base control for both Survey and Corridor Scan map visuals
 Item {
@@ -25,6 +25,7 @@ Item {
     property var    map                                                 ///< Map control to place item in
     property bool   polygonInteractive: true
     property bool   interactive: true
+    property var    vehicle
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon

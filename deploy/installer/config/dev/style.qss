@@ -1,0 +1,25 @@
+QWidget
+{
+    color: white;
+    background-color: rgb(65, 65, 65);
+}
+
+QPushButton
+{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(150, 150, 150, 60%), stop:1 rgba(50, 50, 50, 60%));
+    border-color: rgb(60, 60, 60);
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 9px;
+    min-height: 20px;
+    max-height: 20px;
+    min-width: 60px;
+    max-width: 60px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+QPushButton:pressed, QPushButton:checked
+{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(50, 50, 50, 60%), stop:1 rgba(150, 150, 150, 60%));
+}

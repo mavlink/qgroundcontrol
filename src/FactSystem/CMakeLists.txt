@@ -1,25 +1,12 @@
-
 add_subdirectory(FactControls)
 
-set(EXTRA_SRC)
-if(BUILD_TESTING)
-	list(APPEND EXTRA_SRC
-		FactSystemTestBase.cc
-		FactSystemTestBase.h
-		FactSystemTestGeneric.cc
-		FactSystemTestGeneric.h
-		FactSystemTestPX4.cc
-		FactSystemTestPX4.h
-		ParameterManagerTest.cc
-		ParameterManagerTest.h
-	)
-endif()
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
-add_library(FactSystem
+qt_add_library(FactSystem STATIC
 	Fact.cc
+	Fact.h
 	FactGroup.cc
 	FactGroup.h
-	Fact.h
 	FactMetaData.cc
 	FactMetaData.h
 	FactSystem.cc
@@ -30,21 +17,12 @@ add_library(FactSystem
 	ParameterManager.h
 	SettingsFact.cc
 	SettingsFact.h
-
-	FactSystemTest.qml
-
-	${EXTRA_SRC}
 )
 
 target_link_libraries(FactSystem
-	PRIVATE
+    PUBLIC
 		qgc
 		FactControls
 )
 
-target_include_directories(FactSystem
-	INTERFACE
-		${CMAKE_CURRENT_SOURCE_DIR}
-	PUBLIC
-		FactControls
-)
+target_include_directories(FactSystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

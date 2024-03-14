@@ -13,7 +13,6 @@
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
-#include "UAS.h"
 #include "JsonHelper.h"
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
@@ -174,8 +173,9 @@ void ParameterManager::mavlinkMessageReceived(mavlink_message_t message)
         mavlink_msg_param_value_decode(&message, &param_value);
 
         // This will null terminate the name string
-        QByteArray bytes(param_value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
-        QString parameterName(bytes);
+        char parameterNameWithNull[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN] = {};
+        strncpy(parameterNameWithNull, param_value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+        QString parameterName(parameterNameWithNull);
 
         mavlink_param_union_t paramUnion;
         paramUnion.param_float  = param_value.param_value;
@@ -1265,7 +1265,7 @@ QString ParameterManager::_remapParamNameToVersion(const QString& paramName)
 
     qCDebug(ParameterManagerLog) << "_remapParamNameToVersion" << paramName << majorVersion << minorVersion;
 
-    mappedParamName = paramName.right(paramName.count() - 2);
+    mappedParamName = paramName.right(paramName.length() - 2);
 
     if (majorVersion == Vehicle::versionNotSetValue) {
         // Vehicle version unknown

@@ -19,6 +19,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapEngineManager.h"
+#include "QGCFileDownload.h"
 #include "TerrainTile.h"
 
 #include <QSettings>
@@ -249,6 +250,7 @@ void QGCCachedTileSet::_prepareDownload()
 #endif
             QNetworkReply* reply = _networkManager->get(request);
             reply->setParent(0);
+            QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*reply);
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
             connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
             _replies.insert(tile->hash(), reply);
@@ -286,8 +288,8 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            QString type = getQGCMapEngine()->hashToType(hash);
-            if (type == "Airmap Elevation" ) {
+            QString type = getQGCMapEngine()->tileHashToType(hash);
+            if (type == UrlFactory::kCopernicusElevationProviderKey) {
                 image = TerrainTile::serializeFromAirMapJson(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);

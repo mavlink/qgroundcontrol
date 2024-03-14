@@ -1,13 +1,13 @@
-import QtQuick 2.12
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs 1.2
-import QtQuick.Layouts 1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactControls
+import QGroundControl.FactSystem
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             actuatorPage
@@ -44,7 +44,7 @@ SetupPage {
                         font.pointSize:         ScreenTools.mediumFontPointSize
                         visible:                actuators.mixer.helpUrl
                         textFormat:             Text.RichText
-                        onLinkActivated: {
+                        onLinkActivated: (link) => {
                             Qt.openUrlExternally(link);
                         }
                     }
@@ -163,7 +163,7 @@ SetupPage {
                     cache:             false
                     MouseArea {
                         anchors.fill:  parent
-                        onClicked: {
+                        onClicked: (mouse) => {
                             if (mouse.button == Qt.LeftButton) {
                                 actuators.imageClicked(mouse.x, mouse.y);
                             }
@@ -267,7 +267,7 @@ SetupPage {
 
                                 ActuatorSlider {
                                     channel: object
-                                    onActuatorValueChanged: {
+                                    onActuatorValueChanged: (value) =>{
                                         if (isNaN(value)) {
                                             actuators.actuatorTest.stopControl(index);
                                             stop();
@@ -379,22 +379,26 @@ SetupPage {
                                 MessageDialog {
                                     id:         motorAssignmentConfirmDialog
                                     visible:    false
-                                    icon:       StandardIcon.Warning
-                                    standardButtons: StandardButton.Yes | StandardButton.No
+                                    //icon:       StandardIcon.Warning
+                                    buttons:    MessageDialog.Yes | MessageDialog.No
                                     title:      qsTr("Motor Order Identification and Assignment")
-                                    text: actuators.motorAssignmentMessage
-                                    onYes: {
-                                        console.log(actuators.motorAssignmentActive)
-                                        actuators.startMotorAssignment()
+                                    text:       actuators.motorAssignmentMessage
+                                    onButtonClicked: function (button, role) {
+                                        switch (button) {
+                                        case MessageDialog.Yes:
+                                            console.log(actuators.motorAssignmentActive)
+                                            actuators.startMotorAssignment()
+                                            break;
+                                        }
                                     }
                                 }
                                 MessageDialog {
                                     id:         motorAssignmentFailureDialog
                                     visible:    false
-                                    icon:       StandardIcon.Critical
-                                    standardButtons: StandardButton.Ok
+                                    //icon:       StandardIcon.Critical
+                                    buttons:    MessageDialog.Ok
                                     title:      qsTr("Error")
-                                    text: actuators.motorAssignmentMessage
+                                    text:       actuators.motorAssignmentMessage
                                 }
                             }
                             QGCButton {

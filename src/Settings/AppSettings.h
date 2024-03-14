@@ -44,6 +44,7 @@ public:
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(showLargeCompass)
     DEFINE_SETTINGFACT(savePath)
+    DEFINE_SETTINGFACT(androidSaveToSDCard)
     DEFINE_SETTINGFACT(useChecklist)
     DEFINE_SETTINGFACT(enforceChecklist)
     DEFINE_SETTINGFACT(mapboxToken)
@@ -55,9 +56,6 @@ public:
     DEFINE_SETTINGFACT(defaultFirmwareType)
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
-    DEFINE_SETTINGFACT(enableTaisync)
-    DEFINE_SETTINGFACT(enableTaisyncVideo)
-    DEFINE_SETTINGFACT(enableMicrohard)
     DEFINE_SETTINGFACT(qLocaleLanguage)
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(usePairing)
@@ -66,6 +64,8 @@ public:
     DEFINE_SETTINGFACT(forwardMavlink)
     DEFINE_SETTINGFACT(forwardMavlinkHostName)
     DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
+    DEFINE_SETTINGFACT(loginAirLink)
+    DEFINE_SETTINGFACT(passAirLink)
 
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
@@ -88,6 +88,7 @@ public:
     Q_PROPERTY(QString kmlFileExtension         MEMBER kmlFileExtension         CONSTANT)
     Q_PROPERTY(QString shpFileExtension         MEMBER shpFileExtension         CONSTANT)
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
+    Q_PROPERTY(QString tilesetFileExtension     MEMBER tilesetFileExtension     CONSTANT)
 
     QString missionSavePath       ();
     QString parameterSavePath     ();
@@ -114,7 +115,8 @@ public:
     static const char* kmlFileExtension;
     static const char* shpFileExtension;
     static const char* logFileExtension;
-
+    static const char* tilesetFileExtension;
+    
     // Child directories of savePath for specific file types
     static const char* parameterDirectory;
     static const char* telemetryDirectory;

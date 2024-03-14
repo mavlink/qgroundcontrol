@@ -11,11 +11,9 @@
 
 #include <QObject>
 
-#include "UASInterface.h"
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
 #include "APMSensorsComponent.h"
-#include "APMCompassCal.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog)
@@ -97,7 +95,6 @@ public:
         CalTypeAccel,
         CalTypeGyro,
         CalTypeOnboardCompass,
-        CalTypeOffboardCompass,
         CalTypeLevelHorizon,
         CalTypeCompassMot,
         CalTypePressure,
@@ -161,7 +158,6 @@ private:
     
     void _updateAndEmitShowOrientationCalArea(bool show);
 
-    APMCompassCal           _compassCal;
     APMSensorsComponent*    _sensorsComponent;
 
     QQuickItem* _statusLog;

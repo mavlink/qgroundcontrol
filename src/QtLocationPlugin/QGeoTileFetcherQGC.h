@@ -58,7 +58,7 @@ class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
     Q_OBJECT
 public:
-    explicit QGeoTileFetcherQGC             (QGeoTiledMappingManagerEngine *parent = 0);
+    explicit QGeoTileFetcherQGC             (QGeoTiledMappingManagerEngine *parent = nullptr);
     ~QGeoTileFetcherQGC();
 public slots:
     void                    timeout         ();

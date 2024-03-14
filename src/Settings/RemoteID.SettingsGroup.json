@@ -4,17 +4,18 @@
     "QGC.MetaData.Facts":
 [
 {
-    "name":         "enable",
-    "shortDesc":    "Show Drone ID settings page when enabled",
-    "type":         "bool",
-    "default":      false
-},
-{
     "name":         "operatorID",
     "shortDesc":    "Operator ID",
     "longDesc":     "Operator ID. Maximum 20 characters.",
     "type":         "string",
     "default":      ""
+},
+{
+    "name":         "operatorIDValid",
+    "shortDesc":    "Operator ID is valid",
+    "longDesc":     "Operator ID has been checked using checksum.",
+    "type":         "bool",
+    "default":      false
 },
 {
     "name":         "operatorIDType",

@@ -8,17 +8,15 @@
  ****************************************************************************/
 
 
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
-import QtQuick.Controls.Styles      1.4
-import QtQuick.Layouts              1.2
-import QtGraphicalEffects           1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Controls
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             cameraPage
@@ -130,7 +128,7 @@ SetupPage {
                             enabled:            !_rebooting
                             Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
-                            onActivated: {
+                            onActivated: (index) => {
                                 applyAndRestart.visible = true
                             }
                         }
@@ -145,7 +143,7 @@ SetupPage {
                             enabled:            !_rebooting && (_camTriggerInterface ? true : false)
                             Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
-                            onActivated: {
+                            onActivated: (index) => {
                                 applyAndRestart.visible = true
                             }
                         }

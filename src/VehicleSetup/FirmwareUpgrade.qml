@@ -8,19 +8,18 @@
  ****************************************************************************/
 
 
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Dialogs 1.2
-import QtQuick.Layouts 1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
 
-import QGroundControl               1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactSystem
+import QGroundControl.FactControls
+import QGroundControl.Palette
+import QGroundControl.Controllers
+import QGroundControl.ScreenTools
 
 SetupPage {
     id:             firmwarePage
@@ -75,9 +74,8 @@ SetupPage {
                 id:                 customFirmwareDialog
                 title:              qsTr("Select Firmware File")
                 nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
-                selectExisting:     true
                 folder:             QGroundControl.settingsManager.appSettings.logSavePath
-                onAcceptedForLoad: {
+                onAcceptedForLoad: (file) => {
                     controller.flashFirmwareUrl(file)
                     close()
                 }
@@ -140,7 +138,7 @@ SetupPage {
                 QGCPopupDialog {
                     id:         firmwareSelectDialog
                     title:      qsTr("Firmware Setup")
-                    buttons:    StandardButton.Ok | StandardButton.Cancel
+                    buttons:    Dialog.Ok | Dialog.Cancel
 
                     property bool showFirmwareTypeSelection:    _advanced.checked
                     property bool px4Flow:                      controller.px4FlowBoard
@@ -428,7 +426,7 @@ SetupPage {
                             textRole:           "text"
                             model:              _singleFirmwareMode ? singleFirmwareModeTypeList : (px4Flow ? px4FlowTypeList : firmwareBuildTypeList)
 
-                            onActivated: {
+                            onActivated: (index) => {
                                 controller.selectedFirmwareBuildType = model.get(index).firmwareType
                                 if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
                                     firmwareWarningMessageVisible = true
@@ -479,14 +477,13 @@ SetupPage {
                 Layout.preferredWidth:              parent.width
                 Layout.fillHeight:  true
                 readOnly:           true
-                frameVisible:       false
                 font.pointSize:     ScreenTools.defaultFontPointSize
                 textFormat:         TextEdit.RichText
                 text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
+                color:              qgcPal.text
 
-                style: TextAreaStyle {
-                    textColor:          qgcPal.text
-                    backgroundColor:    qgcPal.windowShade
+                background: Rectangle {
+                    color: qgcPal.windowShade
                 }
             }
         } // ColumnLayout
