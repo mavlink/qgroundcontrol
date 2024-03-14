@@ -45,7 +45,7 @@ elseif(WIN32)
 endif()
 
 add_compile_definitions(
-    QT_DISABLE_DEPRECATED_BEFORE=0x060600
+    QT_DISABLE_DEPRECATED_BEFORE=0x060700
     QT_DEBUG_FIND_PACKAGE=ON
 )
 
