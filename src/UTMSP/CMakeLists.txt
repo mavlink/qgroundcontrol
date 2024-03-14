@@ -1,47 +1,58 @@
+find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Threads REQUIRED)
+
+qt_add_library(UTMSP STATIC)
 
 option(CONFIG_UTM_ADAPTER "Enable UTM Adapter" OFF) # TODO: Make this QGC_CONFIG_UTM_ADAPTER
 if(CONFIG_UTM_ADAPTER)
     message(STATUS "UTMSP is Initialized")
-    add_library(UTMSP
-            UTMSPRestInterface.cpp
-            UTMSPBlenderRestInterface.cpp
-            UTMSPAuthorization.cpp
-            UTMSPNetworkRemoteIDManager.cpp
+    target_sources(UTMSP
+        PRIVATE
             UTMSPAircraft.cpp
-            UTMSPOperator.cpp
+            UTMSPAircraft.h
+            UTMSPAuthorization.cpp
+            UTMSPAuthorization.h
+            UTMSPBlenderRestInterface.cpp
+            UTMSPBlenderRestInterface.h
             UTMSPFlightPlanManager.cpp
-            UTMSPServiceController.cpp
-            UTMSPVehicle.cpp
+            UTMSPFlightPlanManager.h
             UTMSPManager.cpp
-            )
+            UTMSPManager.h
+            UTMSPNetworkRemoteIDManager.cpp
+            UTMSPNetworkRemoteIDManager.h
+            UTMSPOperator.cpp
+            UTMSPOperator.h
+            UTMSPRestInterface.cpp
+            UTMSPRestInterface.h
+            UTMSPServiceController.cpp
+            UTMSPServiceController.h
+            UTMSPVehicle.cpp
+            UTMSPVehicle.h
+    )
 
     add_custom_target(UTMSPQml
         SOURCES
-        UTMSPAdapterEditor.qml
-        UTMSPMapVisuals.qml
-        UTMSPActivationStatusBar.qml
-        )
-
+            UTMSPActivationStatusBar.qml
+            UTMSPAdapterEditor.qml
+            UTMSPMapVisuals.qml
+    )
 else()
-    # If CONFIG_UTM_ADAPTER is not set, use utmsp_dummy.qrc
     message(STATUS "UTMSP: Dummy is Initialized")
 
-    add_library(UTMSP
-            dummy/utmsp_dummy.qrc
+    set(UTMSP_RESOURCES)
+
+    qt_add_resources(UTMSP_RESOURCES dummy/utmsp_dummy.qrc)
+
+    target_sources(UTMSP
+        PRIVATE
+            ${UTMSP_RESOURCES}
     )
-
-    target_include_directories(UTMSP PUBLIC dummy)
-
 endif()
 
-target_include_directories(UTMSP PUBLIC services )
-
 target_link_libraries(UTMSP
-
-PRIVATE
+    PRIVATE
         nlohmann_json
-PUBLIC
+    PUBLIC
         Qt6::Core
         Qt6::Location
         Qt6::Widgets
@@ -49,4 +60,8 @@ PUBLIC
         qgc
 )
 
-target_include_directories(UTMSP INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(UTMSP
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        services
+)

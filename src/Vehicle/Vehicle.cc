@@ -4024,12 +4024,12 @@ void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t tota
     }
 }
 
-int  Vehicle::versionCompare(QString& compare)
+int Vehicle::versionCompare(QString& compare) const
 {
     return _firmwarePlugin->versionCompare(this, compare);
 }
 
-int  Vehicle::versionCompare(int major, int minor, int patch)
+int Vehicle::versionCompare(int major, int minor, int patch) const
 {
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }

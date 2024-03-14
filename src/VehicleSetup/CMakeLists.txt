@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
 qt_add_library(VehicleSetup STATIC
 	Bootloader.cc
@@ -17,11 +18,11 @@ qt_add_library(VehicleSetup STATIC
 add_custom_target(VehicleSetupQml
 	SOURCES
 		FirmwareUpgrade.qml
+		JoystickConfig.qml
 		JoystickConfigAdvanced.qml
 		JoystickConfigButtons.qml
 		JoystickConfigCalibration.qml
 		JoystickConfigGeneral.qml
-		JoystickConfig.qml
 		PX4FlowSensor.qml
 		SetupParameterEditor.qml
 		SetupView.qml
@@ -35,4 +36,4 @@ target_link_libraries(VehicleSetup
 		qgc
 )
 
-target_include_directories(VehicleSetup INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(VehicleSetup PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

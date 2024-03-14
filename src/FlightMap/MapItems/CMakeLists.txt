@@ -1,9 +1,11 @@
-add_custom_target(FligthMapItemsQml
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
+add_custom_target(FlightMapItemsQml
 	SOURCES
 		CameraTriggerIndicator.qml
 		CustomMapItems.qml
-		MissionItemIndicatorDrag.qml
 		MissionItemIndicator.qml
+		MissionItemIndicatorDrag.qml
 		MissionItemView.qml
 		MissionLineView.qml
 		PlanMapItems.qml

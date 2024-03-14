@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Positioning)
 
 qt_add_library(Geo STATIC
 	Constants.hpp
@@ -19,12 +20,13 @@ qt_add_library(Geo STATIC
 )
 
 target_link_libraries(Geo
+	PRIVATE
+		Qt6::Core
 	PUBLIC
-		qgc
+		Qt6::Positioning
 )
 
 target_include_directories(Geo
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
 )
-
