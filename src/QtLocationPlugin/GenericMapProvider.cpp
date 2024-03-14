@@ -52,6 +52,13 @@ QString LINZBasemapMapProvider::_getURL(const int x, const int y, const int zoom
     return LINZBasemapMapUrl.arg(zoom).arg(x).arg(y);
 }
 
+// src\QtLocationPlugin\GenericMapProvider.cpp:79
+QString GaodeSatMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+
+    return QStringLiteral("http://webst01.is.autonavi.com/appmaptile?style=6&x=%1&y=%2&z=%3").arg(x).arg(y).arg(zoom);   //高德影像 OK
+}
+
 QString CustomURLMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager)
     QString url = qgcApp()->toolbox()->settingsManager()->appSettings()->customURL()->rawValue().toString();

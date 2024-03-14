@@ -155,3 +155,20 @@ class VWorldSatMapProvider : public MapProvider {
   private:
     const QString _versionBingMaps = QStringLiteral("563");
 };
+
+//custom add
+//D:\gcs\qgc-src\v4.0.11\qgroundcontrol\src\QtLocationPlugin\GenericMapProvider.h:80
+class GaodeSatMapProvider : public MapProvider {
+    Q_OBJECT
+public:
+    GaodeSatMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral("webapi.amap.com"), QStringLiteral("jpg"),
+                      AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {}
+    //"webapi.amap.com" 和 "jpg" 似乎不重要，懂地朋友还请赐教
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+
+private:
+    const QString _versionBingMaps = QStringLiteral("563");
+};
+

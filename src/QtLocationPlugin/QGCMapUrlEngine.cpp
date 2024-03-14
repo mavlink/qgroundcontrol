@@ -46,7 +46,7 @@ UrlFactory::UrlFactory() :
     _providers.append(ProviderPair("Google Hybrid", new GoogleHybridMapProvider(this)));
     _providers.append(ProviderPair("Google Labels", new GoogleLabelsMapProvider(this)));
 #endif
-
+    _providers.append(ProviderPair("AMAP(CN",new GaodeSatMapProvider(this)));
     _providers.append(ProviderPair("Bing Road", new BingRoadMapProvider(this)));
     _providers.append(ProviderPair("Bing Satellite", new BingSatelliteMapProvider(this)));
     _providers.append(ProviderPair("Bing Hybrid", new BingHybridMapProvider(this)));
