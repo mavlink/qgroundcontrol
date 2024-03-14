@@ -35,7 +35,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.apk
-      QT_VERSION: 6.6.3
+      QT_VERSION: 6.*.*
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}

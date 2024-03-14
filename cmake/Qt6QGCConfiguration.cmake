@@ -6,7 +6,7 @@ if(NOT QT_VERSION)
 	# if QT version not specified then use any available version
 	file(GLOB FOUND_QT_VERSIONS
 		LIST_DIRECTORIES true
-		$ENV{HOME}/Qt/6.6.*
+		$ENV{HOME}/Qt/6.*.*
 	)
 	if(NOT FOUND_QT_VERSIONS)
 		return()

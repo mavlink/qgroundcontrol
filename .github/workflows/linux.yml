@@ -31,7 +31,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl-x86_64.AppImage
-      QT_VERSION: 6.6.3
+      QT_VERSION: 6.*.*
 
     defaults:
       run:

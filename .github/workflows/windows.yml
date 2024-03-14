@@ -34,7 +34,7 @@ jobs:
         shell: cmd
 
     env:
-      QT_VERSION: 6.6.3
+      QT_VERSION: 6.*.*
       GST_VERSION: 1.22.11
       ARTIFACT: QGroundControl-Installer.exe
 
