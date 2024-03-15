@@ -15,13 +15,21 @@ typedef struct {
 
 typedef struct {
     /* Original data, either as calculated or directly from the mavlink messages */
-    uint32_t timeMilliseconds; /* Since UAV boot */
+    uint32_t timeUAVMilliseconds; /* Since UAV boot */
+    uint64_t timeUnixMilliseconds;
+    uint64_t timeUAVBootMilliseconds; /* UAV boot time from Unix reference frame */
     int32_t altitudeMillimetersMSL;
     float absolutePressureMillibars; /* mB == hPa */
-    float temperatureKelvin;
-    float relativeHumidity;
+    float temperature0Kelvin; /* msg 227 type 0 element 0 */
+    float temperature1Kelvin; /* msg 227 type 0 element 1 */
+    float temperature2Kelvin; /* msg 227 type 0 element 2 */
+    float relativeHumidity; /* average of msg 227 type 1 elements 0, 1, and 2 */
+    float relativeHumidity0; /* msg 227 type 1 element 0 */
+    float relativeHumidity1; /* msg 227 type 1 element 1 */
+    float relativeHumidity2; /* msg 227 type 1 element 3 */    
     float windSpeedMetersPerSecond;
     float windBearingDegrees; /* True or magnetic north? */
+    // up to here
     int32_t latitudeDegreesE7;
     int32_t longitudeDegreesE7;
     float rollRadians;
@@ -34,9 +42,12 @@ typedef struct {
     float groundSpeedMetersPerSecond;
 
     /* Converted (With possible negligable loss) to more human understandable units */
-    double timeSeconds; /* Since UAV boot */
-    double altitudeMetersMSL; /* meters */
-    float temperatureCelsius;
+    double timeUAVSeconds;
+    double timeUnixSeconds;
+    double timeUAVBootSeconds;
+    double altitudeMetersMSL;
+    float temperatureCelsius; /* average of msg 227 type 0 elements 0, 1, and 2 */
+    // up to this line
     float latitudeDegrees;
     float longitudeDegrees;
     float rollDegrees;
@@ -49,15 +60,17 @@ typedef struct {
 } IMetData;
 
 class DataBalancer{
+    IMetData data;
 
-    BalancedDataRecord data;
-
-    uint32_t timeOffset = 0; /* difference between this PC and drone time in milliseconds */
-    uint32_t timeOffsetAlt = 0; /* same thing for non-cass messages */
-    uint32_t lastUpdate = UINT32_MAX; /* time since last BalancedDataRecord creation */
+    uint64_t UAVBootMilliseconds = 0; /* UAV boot time from Unix reference frame */
+    uint64_t timeOffsetAlt = 0; /* same thing for non-cass messages */
+    uint64_t lastUpdate = UINT64_MAX; /* time since last IMetDataRaw creation */
     uint32_t balancedDataFrequency = 1000; /* min milliseconds between BalancedDataRecord creation */
 
+
+    /* Deprecated - we don't actually need these */
     /* ring buffers, one for each type of message. Should just store the relevent contents of the message, but this is bloated enough it doesn't matter */
+    /*
     size_t static constexpr bufSize = 8;
 
     size_t cass0Head = 0;
@@ -70,7 +83,38 @@ class DataBalancer{
     size_t head3 = 0;
     size_t head4 = 0;
 
-    size_t cass0Count = 0;
+    mavlink_cass_sensor_raw_t cass0Buf[bufSize];
+    */
+
+    size_t cassTemp0Count = 0;
+    float cassTemp0Avg = .0f;
+    size_t cassTemp1Count = 0;
+    float cassTemp1Avg = .0f;
+    size_t cassTemp2Count = 0;
+    float cassTemp2Avg = .0f;
+    size_t cassRH0Count = 0;
+    float cassRH0Avg = .0f;
+    size_t cassRH1Count = 0;
+    float cassRH1Avg = .0f;
+    size_t cassRH2Count = 0;
+    float cassRH2Avg = .0f;
+    size_t altMmCount = 0;
+    int32_t altMmAvg = 0;
+    size_t pressureCount = 0;
+    float pressureAvg = .0f;
+    size_t rollCount = 0;
+    float rollAvg = .0f;
+    size_t pitchCount = 0;
+    float pitchAvg = .0f;
+    size_t yawCount = 0;
+    float yawAvg = .0f;
+    size_t rollRateCount = 0;
+    float rollRateAvg = .0f;
+    size_t pitchRateCount = 0;
+    float pitchRateAvg = .0f;
+    size_t yawRateCount = 0;
+    float yawRateAvg = .0f;
+
     size_t cass1Count = 0;
     size_t cass2Count = 0;
     size_t cass3Count = 0;
@@ -80,12 +124,9 @@ class DataBalancer{
     size_t count3 = 0;
     size_t count4 = 0;
 
-    mavlink_cass_sensor_raw_t cass0Buf[bufSize];
-    float cass0Avg = .0f;    
-    /* more buffers here, of various types, with averages */
-
 public:
-    void update(const mavlink_message_t* m, Fact* fact);    
+    void update(const mavlink_message_t* m, Fact* fact);
+    static void calcWindProps(IMetData* d);
 };
 
 #endif // DATABALANCER_H
