@@ -3,9 +3,7 @@
 
 #define DEGREES(radians) ((radians) * (180.0 / M_PI))
 
-float windBearingDegrees(IMetData* d){
-    float coefA = 39.4f;
-    float coefB = -5.71f;
+void calcWindProps(IMetData* d){
     float croll = cos(d->rollRadians);
     float sroll = sin(d->rollRadians);
     float cpitch = cos(d->pitchRadians);
@@ -17,7 +15,12 @@ float windBearingDegrees(IMetData* d){
         {sroll * spitch * cyaw + croll * syaw,      -sroll * spitch * syaw + croll * cyaw,      -sroll * cpitch },
         {-croll * spitch * cyaw + sroll * syaw,     croll * spitch * syaw + sroll * cyaw,       croll * cpitch  }
     };
-    return DEGREES(atan2(R[1][2], R[0][2]));
+    d->windBearingDegrees = DEGREES(atan2(R[1][2], R[0][2]));
+    d->windSpeedMetersPerSecond = 39.4f * sqrt(tan(acos(R[2][2]))) - 5.71f;
+}
+
+void calcGroundSpeed(IMetData* d){
+    d->groundSpeedMetersPerSecond = sqrt((d->xVelocityMetersPerSecond * d->xVelocityMetersPerSecond) + (d->yVelocityMetersPerSecond * d->yVelocityMetersPerSecond));
 }
 
 void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
@@ -28,24 +31,15 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
         mavlink_cass_sensor_raw_t s;
         mavlink_msg_cass_sensor_raw_decode(m, &s);
 
-        /* if first cass message, calculate the cass boot time. Do the same thing for altTime in the other cases, provided they have a timestamp at all */
         if (UAVBootMilliseconds == 0){
             UAVBootMilliseconds = currentTime - s.time_boot_ms;
         }
 
         switch(s.app_datatype){
-        case 0:{ /* iMet temp */
-            /* Deprecated, not using ring buffers any more
-            cass0Buf[cass0Head] = s;
-            cass0Head = (1 + cass0Head) % bufSize;
-            */
+        case 0:{ /* iMet temp */            
             cassTemp0Avg = ((cassTemp0Avg * cassTemp0Count) + s.values[0]) / (cassTemp0Count++ + 1);
             cassTemp1Avg = ((cassTemp1Avg * cassTemp1Count) + s.values[1]) / (cassTemp1Count++ + 1);
             cassTemp2Avg = ((cassTemp2Avg * cassTemp2Count) + s.values[2]) / (cassTemp2Count++ + 1);
-
-            /* This allows for considering only the most recent x number of messages, optional feature
-            if (cassTemp0Count < (bufSize - 1)) cassTemp0Count++;
-            */
             break;
         }
         case 1:{ /* iMet RH */            
@@ -63,21 +57,29 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
         }
         break;
     }
-    case 32:        
+    case MAVLINK_MSG_ID_LOCAL_POSITION_NED:{
+        mavlink_global_position_int_t s;
+        mavlink_msg_global_position_int_decode(m, &s);
+        zVelocityAvg = ((zVelocityAvg * zVelocityCount) + s.vz) / (zVelocityCount++ + 1);
+        xVelocityAvg = ((xVelocityAvg * xVelocityCount) + s.vx) / (xVelocityCount++ + 1);
+        yVelocityAvg = ((yVelocityAvg * yVelocityCount) + s.vy) / (yVelocityCount++ + 1);
         break;
-    case 33:{
+    }
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:{
         mavlink_global_position_int_t s;
         mavlink_msg_global_position_int_decode(m, &s);
         altMmAvg = (((int64_t)altMmAvg * altMmCount) + s.alt) / (altMmCount++ + 1);
+        latitudeAvg = (((int64_t)latitudeAvg * latitudeCount) + s.lat) / (latitudeCount++ + 1);
+        longitudeAvg = (((int64_t)longitudeAvg * longitudeCount) + s.lon) / (longitudeCount++ + 1);
         break;
     }
-    case 137:{
+    case MAVLINK_MSG_ID_SCALED_PRESSURE2:{
         mavlink_scaled_pressure2_t s;
         mavlink_msg_scaled_pressure2_decode(m, &s);
         pressureAvg = ((pressureAvg * pressureCount) + s.press_abs) / (pressureCount++ + 1);
         break;
     }
-    case 30:
+    case MAVLINK_MSG_ID_ATTITUDE:{
         mavlink_attitude_t s;
         mavlink_msg_attitude_decode(m, &s);
         rollAvg = ((rollAvg * rollCount) + s.roll) / (rollCount++ + 1);
@@ -88,10 +90,17 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
         yawRateAvg = ((yawRateAvg * yawRateCount) + s.yawspeed) / (yawRateCount++ + 1);
         break;
     }
+    case MAVLINK_MSG_ID_HEARTBEAT:{
+        mavlink_heartbeat_t s;
+        mavlink_msg_heartbeat_decode(m, &s);
+        data.heartBeatCustomMode = s.custom_mode;
+    }
+    }
 
     /* Some fields not yet ready... */
     if (!(cassTemp0Count > 0 && cassTemp1Count > 0 && cassTemp1Count > 0 && cassRH0Count > 0 && cassRH1Count > 0 && cassRH2Count > 0 && altMmCount > 0 &&
-          pressureCount > 0 && rollCount > 0 && pitchCount > 0 && yawCount > 0 && rollRateCount > 0 && pitchRateCount > 0 && yawRateCount > 0)) return;
+          pressureCount > 0 && rollCount > 0 && pitchCount > 0 && yawCount > 0 && rollRateCount > 0 && pitchRateCount > 0 && yawRateCount > 0 &&
+          latitudeCount > 0 && longitudeCount > 0 && zVelocityCount > 0 && xVelocityCount > 0 && yVelocityCount > 0)) return;
 
     /* Too soon... */
     if ((currentTime - lastUpdate) < balancedDataFrequency) return;
@@ -126,9 +135,17 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
     data.rollRateDegreesPerSecond = DEGREES(data.rollRateRadiansPerSecond);
     data.pitchRateDegreesPerSecond = DEGREES(data.pitchRateRadiansPerSecond);
     data.yawRateDegreesPerSecond = DEGREES(data.yawRateRadiansPerSecond);
-
-    data.windBearingDegrees
-
+    calcWindProps(&data);
+    data.latitudeDegreesE7 = latitudeAvg;
+    data.longitudeDegreesE7 = longitudeAvg;
+    data.latitudeDegrees = (double)latitudeAvg / 10e7;
+    data.longitudeDegrees = (double)longitudeAvg / 10e7;
+    data.zVelocityMetersPerSecondInverted = zVelocityAvg;
+    data.xVelocityMetersPerSecond = xVelocityAvg;
+    data.yVelocityMetersPerSecond = yVelocityAvg;
+    data.zVelocityMetersPerSecond = -data.zVelocityMetersPerSecondInverted;
+    calcGroundSpeed(&data);
+    data.ascending = data.heartBeatCustomMode == 3 && data.zVelocityMetersPerSecond > 2.5f;
 
     /* Update facts */
     tempFact->setRawValue(cassTemp0Avg);
@@ -148,6 +165,11 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
     rollRateCount = 0;
     pitchRateCount = 0;
     yawRateCount = 0;
+    latitudeCount = 0;
+    longitudeCount = 0;
+    zVelocityCount = 0;
+    xVelocityCount = 0;
+    yVelocityCount = 0;
     lastUpdate = currentTime;
 }
 
