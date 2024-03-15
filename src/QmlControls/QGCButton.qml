@@ -25,6 +25,7 @@ Button {
     property real   backRadius:     ScreenTools.buttonBorderRadius
     property real   heightFactor:   0.5
     property string iconSource:     ""
+    property real   fontWeight:     Font.Normal // default for qml Text
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
@@ -67,6 +68,7 @@ Button {
                 text:                   control.text
                 font.pointSize:         control.font.pointSize
                 font.family:            control.font.family
+                font.weight:            fontWeight
                 color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
                 visible:                control.text !== "" 
             }
