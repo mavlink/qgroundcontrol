@@ -31,6 +31,7 @@
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 #include "GPSRTKFactGroup.h"
+#include "MetDataLogManager.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -216,6 +217,7 @@ private:
     bool                _error                  = false;
     QElapsedTimer       _msecsElapsedTime;
 
+    MetDataLogManager*   _metDataLogManager;
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 
     class CompressedSignalList {

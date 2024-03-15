@@ -572,6 +572,8 @@ bool QGCApplication::_initForNormalAppBoot()
                 QQuickWindow::BeforeSynchronizingStage);
     }
 
+    _metDataLogManager = new MetDataLogManager();
+
     // Safe to show popup error messages now that main window is created
     UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
     if (msgHandler) {

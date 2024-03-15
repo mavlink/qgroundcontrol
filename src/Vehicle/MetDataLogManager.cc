@@ -16,7 +16,7 @@ MetDataLogManager::~MetDataLogManager()
 void MetDataLogManager::_initializeMetRawCsv()
 {
     QString now = QDateTime::currentDateTime().toString("MM-dd-yyyy_hh-mm-ss");
-    QString metRawFileName = QString("RAW%1.csv").arg(now);
+    QString metRawFileName = QString("RAW_%1.csv").arg(now);
     QDir saveDir(qgcApp()->toolbox()->settingsManager()->appSettings()->messagesRawSavePath());
     _metRawCsvFile.setFileName(saveDir.absoluteFilePath(metRawFileName));
 
@@ -35,12 +35,11 @@ void MetDataLogManager::_writeMetRawCsvLine()
 {
     // Only save the logs after the the vehicle gets armed, unless "Save logs even if vehicle was not armed" is checked
     Vehicle* _activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-    if(!_metRawCsvFile.isOpen() &&
-        (_activeVehicle->armed() || qgcApp()->toolbox()->settingsManager()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool())){
+    if(!_metRawCsvFile.isOpen() && _activeVehicle && _activeVehicle->armed()) {
         _initializeMetRawCsv();
     }
 
-    if(!_metRawCsvFile.isOpen()){
+    if(!_metRawCsvFile.isOpen() || !_activeVehicle || !_activeVehicle->armed()) {
         return;
     }
 
@@ -49,20 +48,23 @@ void MetDataLogManager::_writeMetRawCsvLine()
 
     FactGroup* factGroup = nullptr;
     //if (_factGroupName == "Vehicle") {
-    factGroup = _activeVehicle->getFactGroup("Vehicle");
+        // factGroup = _activeVehicle;
     //} else {
-    //    factGroup = _activeVehicle->getFactGroup(_factGroupName);
+       factGroup = _activeVehicle->getFactGroup("temperature");
     //}
 
     if (!factGroup) {
         return;
     }
 
-
     // Write timestamp to csv file
     metFactValues << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"));
     // Write Vehicle's own facts
     for (const auto &factName : metFactNames) {
+        if(!factGroup->factExists(factName)) {
+            qCWarning(VehicleLog) << "Fact does not exist: " << factName;
+            continue;
+        }
         metFactValues << factGroup->getFact(factName)->cookedValueString();
     }
     // write facts from Vehicle's FactGroups
