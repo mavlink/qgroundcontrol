@@ -382,6 +382,7 @@ INCLUDEPATH += \
     src/Vehicle/LibEvents \
     src/Audio \
     src/comm \
+    src/comm/MockLink \
     src/input \
     src/lib/qmapcontrol \
     src/uas \
@@ -634,9 +635,9 @@ AndroidBuild {
 
 DebugBuild {
 HEADERS += \
-    src/comm/MockLink.h \
-    src/comm/MockLinkFTP.h \
-    src/comm/MockLinkMissionItemHandler.h \
+    src/comm/MockLink/MockLink.h \
+    src/comm/MockLink/MockLinkFTP.h \
+    src/comm/MockLink/MockLinkMissionItemHandler.h \
 }
 
 WindowsBuild {
@@ -893,9 +894,9 @@ SOURCES += \
 
 DebugBuild {
 SOURCES += \
-    src/comm/MockLink.cc \
-    src/comm/MockLinkFTP.cc \
-    src/comm/MockLinkMissionItemHandler.cc \
+    src/comm/MockLink/MockLink.cc \
+    src/comm/MockLink/MockLinkFTP.cc \
+    src/comm/MockLink/MockLinkMissionItemHandler.cc \
 }
 
 !contains(DEFINES, NO_SERIAL_LINK) {

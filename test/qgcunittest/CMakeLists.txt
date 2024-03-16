@@ -16,6 +16,7 @@ qt_add_library(qgcunittest
 
 target_link_libraries(qgcunittest
 	PUBLIC
+		MockLink
 		qgc
 		Qt6::Test
 )

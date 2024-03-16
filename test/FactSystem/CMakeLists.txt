@@ -12,6 +12,7 @@ target_link_libraries(FactSystemTest
     PRIVATE
         AutoPilotPlugins
         comm
+        MockLink
         qgc
         Settings
         Vehicle

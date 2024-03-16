@@ -10,6 +10,7 @@ qt_add_library(VehicleTest
 
 target_link_libraries(VehicleTest
 	PUBLIC
+		MockLink
 		qgc
 		qgcunittest
 )
