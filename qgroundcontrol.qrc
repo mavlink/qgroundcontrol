@@ -415,13 +415,13 @@
         <file alias="Viewer3D.SettingsGroup.json">src/Settings/Viewer3D.SettingsGroup.json</file>
     </qresource>
     <qresource prefix="/MockLink">
-        <file alias="APMArduSubMockLink.params">src/comm/APMArduSubMockLink.params</file>
-        <file alias="PX4MockLink.params">src/comm/PX4MockLink.params</file>
-        <file alias="General.MetaData.json">src/comm/MockLink.General.MetaData.json</file>
-        <file alias="General.MetaData.json.xz">src/comm/MockLink.General.MetaData.json.xz</file>
-        <file alias="Parameter.MetaData.json.xz">src/comm/MockLink.Parameter.MetaData.json.xz</file>
-        <file alias="Parameter.MetaData.json">src/comm/MockLink.Parameter.MetaData.json</file>
-        <file alias="Arduplane.params.ftp.bin">src/comm/Mocklink.Arduplane.params.ftp.bin</file>
+        <file alias="APMArduSubMockLink.params">src/comm/MockLink/APMArduSubMockLink.params</file>
+        <file alias="PX4MockLink.params">src/comm/MockLink/PX4MockLink.params</file>
+        <file alias="General.MetaData.json">src/comm/MockLink/MockLink.General.MetaData.json</file>
+        <file alias="General.MetaData.json.xz">src/comm/MockLink/MockLink.General.MetaData.json.xz</file>
+        <file alias="Parameter.MetaData.json.xz">src/comm/MockLink/MockLink.Parameter.MetaData.json.xz</file>
+        <file alias="Parameter.MetaData.json">src/comm/MockLink/MockLink.Parameter.MetaData.json</file>
+        <file alias="Arduplane.params.ftp.bin">src/comm/MockLink/Mocklink.Arduplane.params.ftp.bin</file>
     </qresource>
     <qresource prefix="/ShaderVertex">
         <file alias="earthMaterial.vert">src/Viewer3D/Shaders/earthMaterial.vert</file>
