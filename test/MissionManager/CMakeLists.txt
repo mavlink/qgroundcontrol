@@ -31,6 +31,7 @@ target_link_libraries(MissionManagerTest
     PRIVATE
         api
         FirmwarePlugin
+        MockLink
 	PUBLIC
 		qgc
 		qgcunittest

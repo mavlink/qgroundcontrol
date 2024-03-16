@@ -7,6 +7,7 @@ qt_add_library(AnalyzeViewTest
 target_link_libraries(AnalyzeViewTest
         PRIVATE
                 AnalyzeView
+                MockLink
 	PUBLIC
 		qgcunittest
 )

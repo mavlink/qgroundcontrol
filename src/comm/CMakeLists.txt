@@ -1,5 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Core Network Qml Test Widgets)
 
+add_subdirectory(MockLink)
+
 qt_add_library(comm STATIC
 	LinkConfiguration.cc
 	LinkConfiguration.h
@@ -21,26 +23,13 @@ qt_add_library(comm STATIC
 	UDPLink.h
 )
 
-target_include_directories(comm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-if(QGC_BUILD_TESTING)
-	target_sources(comm
-		PRIVATE
-			MockLink.cc
-			MockLink.h
-			MockLinkFTP.cc
-			MockLinkFTP.h
-			MockLinkMissionItemHandler.cc
-			MockLinkMissionItemHandler.h
-	)
-endif()
-
 target_link_libraries(comm
 	PRIVATE
 		Qt6::Qml
 		Qt6::Test
 		Qt6::Widgets
 		AirLink
+		MockLink
 		Settings
 		Vehicle
 	PUBLIC
@@ -58,6 +47,8 @@ if(NOT MOBILE)
 			PositionManager
 	)
 endif()
+
+target_include_directories(comm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 option(QGC_NO_SERIAL_LINK "Disable Serial Links" OFF)
 if(QGC_NO_SERIAL_LINK)
