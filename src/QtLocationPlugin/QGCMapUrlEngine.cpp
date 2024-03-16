@@ -23,7 +23,6 @@ QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 #include <QByteArray>
 #include <QEventLoop>
 #include <QNetworkReply>
-#include <QtCore5Compat/QRegExp>
 #include <QString>
 #include <QTimer>
 
