@@ -69,8 +69,6 @@ void VehicleTemperatureFactGroup::_handleHighLatency(mavlink_message_t& message)
     mavlink_high_latency_t highLatency;
     mavlink_msg_high_latency_decode(&message, &highLatency);
     temperature1()->setRawValue(highLatency.temperature_air);
-    /* TD test */
-    //temperature4()->setRawValue(69);
     _setTelemetryAvailable(true);
 }
 
@@ -79,8 +77,6 @@ void VehicleTemperatureFactGroup::_handleHighLatency2(mavlink_message_t& message
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
     temperature1()->setRawValue(highLatency2.temperature_air);
-    /* TD test */
-    //temperature4()->setRawValue(69);
     _setTelemetryAvailable(true);
 }
 
@@ -89,8 +85,6 @@ void VehicleTemperatureFactGroup::_handleScaledPressure(mavlink_message_t& messa
     mavlink_scaled_pressure_t pressure;
     mavlink_msg_scaled_pressure_decode(&message, &pressure);
     temperature1()->setRawValue(pressure.temperature / 100.0);
-    /* TD test */
-    //temperature4()->setRawValue(69);
     _setTelemetryAvailable(true);
 }
 

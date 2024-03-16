@@ -85,7 +85,8 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
         rollAvg = ((rollAvg * rollCount) + s.roll) / (rollCount++ + 1);
         pitchAvg = ((pitchAvg * pitchCount) + s.pitch) / (pitchCount++ + 1);
         yawAvg = ((yawAvg * yawCount) + s.yaw) / (yawCount++ + 1);
-        rollRateAvg = ((rollRateAvg * rollRateCount) + s.rollspeed) / (rollRateCount++ + 1);
+        rollRateAvg = ((rollRateAvg * rollRateCount) + s.rollspeed) / (rollRateCount + 1);
+        rollRateCount++;
         pitchRateAvg = ((pitchRateAvg * pitchRateCount) + s.pitchspeed) / (pitchRateCount++ + 1);
         yawRateAvg = ((yawRateAvg * yawRateCount) + s.yawspeed) / (yawRateCount++ + 1);
         break;
