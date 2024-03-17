@@ -106,8 +106,9 @@ class DataBalancer{
     float xVelocityAvg = .0f;
     size_t yVelocityCount = 0;
     float yVelocityAvg = .0f;
-
-    void update(const mavlink_message_t* m, Fact* fact);    
+public:
+    void update(const mavlink_message_t* m, Fact* fact);
+private:
     static void calcWindProps(IMetData* d);
     static void calcGroundSpeed(IMetData* d);
 };

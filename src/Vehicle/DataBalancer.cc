@@ -3,7 +3,7 @@
 
 #define DEGREES(radians) ((radians) * (180.0 / M_PI))
 
-void calcWindProps(IMetData* d){
+void DataBalancer::calcWindProps(IMetData* d){
     float croll = cos(d->rollRadians);
     float sroll = sin(d->rollRadians);
     float cpitch = cos(d->pitchRadians);
@@ -19,7 +19,7 @@ void calcWindProps(IMetData* d){
     d->windSpeedMetersPerSecond = 39.4f * sqrt(tan(acos(R[2][2]))) - 5.71f;
 }
 
-void calcGroundSpeed(IMetData* d){
+void DataBalancer::calcGroundSpeed(IMetData* d){
     d->groundSpeedMetersPerSecond = sqrt((d->xVelocityMetersPerSecond * d->xVelocityMetersPerSecond) + (d->yVelocityMetersPerSecond * d->yVelocityMetersPerSecond));
 }
 
