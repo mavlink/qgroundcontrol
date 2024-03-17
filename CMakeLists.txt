@@ -134,7 +134,6 @@ find_package(Qt6
         Sql
         Svg
         Test
-        TextToSpeech
         Widgets
         Xml
     OPTIONAL_COMPONENTS

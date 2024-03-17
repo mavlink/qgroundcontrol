@@ -5,8 +5,9 @@ qt_add_library(AudioTest
 )
 
 target_link_libraries(AudioTest
+        PRIVATE
+                Audio
 	PUBLIC
-		qgc
 		qgcunittest
 )
 
