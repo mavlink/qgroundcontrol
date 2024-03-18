@@ -214,9 +214,9 @@ void
 QGCMAVLinkMessage::updateFreq()
 {
     quint64 msgCount = _count - _lastCount;
-    _messageHz = (0.2 * _messageHz) + (0.8 * msgCount);
+    _actualRateHz = (0.2 * _actualRateHz) + (0.8 * msgCount);
     _lastCount = _count;
-    emit freqChanged();
+    emit actualRateHzChanged();
 }
 
 void QGCMAVLinkMessage::setSelected(bool sel)
@@ -225,6 +225,15 @@ void QGCMAVLinkMessage::setSelected(bool sel)
         _selected = sel;
         _updateFields();
         emit selectedChanged();
+    }
+}
+
+void QGCMAVLinkMessage::setTargetRateHz(int32_t rate)
+{
+    if(rate != _targetRateHz)
+    {
+        _targetRateHz = rate;
+        emit targetRateHzChanged();
     }
 }
 
@@ -485,12 +494,12 @@ QGCMAVLinkSystem::~QGCMAVLinkSystem()
 
 //-----------------------------------------------------------------------------
 QGCMAVLinkMessage*
-QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t cid)
+QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t compId)
 {
     for(int i = 0; i < _messages.count(); i++) {
         QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
         if(m) {
-            if(m->id() == id && m->cid() == cid) {
+            if(m->id() == id && m->compId() == compId) {
                 return m;
             }
         }
@@ -540,6 +549,16 @@ QGCMAVLinkSystem::setSelected(int sel)
     }
 }
 
+QGCMAVLinkMessage* QGCMAVLinkSystem::selectedMsg()
+{
+    QGCMAVLinkMessage* selectedMsg = nullptr;
+    if(_messages.count())
+    {
+        selectedMsg = qobject_cast<QGCMAVLinkMessage*>(_messages.get(_selected));
+    }
+    return selectedMsg;
+}
+
 //-----------------------------------------------------------------------------
 static bool
 messages_sort(QObject* a, QObject* b)
@@ -564,7 +583,7 @@ QGCMAVLinkSystem::append(QGCMAVLinkMessage* message)
         message->setSelected(true);
     }
     _messages.append(message);
-    //-- Sort messages by id and then cid
+    //-- Sort messages by id and then compId
     if (_messages.count() > 0) {
         _messages.beginReset();
         std::sort(_messages.objectList()->begin(), _messages.objectList()->end(), messages_sort);
@@ -588,10 +607,10 @@ QGCMAVLinkSystem::_checkCompID(QGCMAVLinkMessage* message)
     if(_compIDsStr.isEmpty()) {
         _compIDsStr << tr("Comp All");
     }
-    if(!_compIDs.contains(static_cast<int>(message->cid()))) {
-        int cid = static_cast<int>(message->cid());
-        _compIDs.append(cid);
-        _compIDsStr << tr("Comp %1").arg(cid);
+    if(!_compIDs.contains(static_cast<int>(message->compId()))) {
+        int compId = static_cast<int>(message->compId());
+        _compIDs.append(compId);
+        _compIDsStr << tr("Comp %1").arg(compId);
         emit compIDsChanged();
     }
 }
@@ -731,12 +750,11 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
     connect(multiVehicleManager, &MultiVehicleManager::vehicleAdded,   this, &MAVLinkInspectorController::_vehicleAdded);
     connect(multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkInspectorController::_vehicleRemoved);
+    connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
     MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
     connect(mavlinkProtocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
     connect(&_updateFrequencyTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshFrequency);
     _updateFrequencyTimer.start(1000);
-    MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
-    connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
     _timeScaleSt.append(new TimeScale_st(this, tr("5 Sec"),   5 * 1000));
     _timeScaleSt.append(new TimeScale_st(this, tr("10 Sec"), 10 * 1000));
     _timeScaleSt.append(new TimeScale_st(this, tr("30 Sec"), 30 * 1000));
@@ -839,13 +857,28 @@ MAVLinkInspectorController::_refreshFrequency()
 void
 MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
 {
-    QGCMAVLinkSystem* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
-    if(v) {
-        v->messages()->clearAndDeleteContents();
-    } else {
-        v = new QGCMAVLinkSystem(this, static_cast<uint8_t>(vehicle->id()));
-        _systems.append(v);
+    QGCMAVLinkSystem* sys = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    if(sys)
+    {
+        sys->messages()->clearAndDeleteContents();
+    }
+    else
+    {
+        sys = new QGCMAVLinkSystem(this, static_cast<uint8_t>(vehicle->id()));
+        _systems.append(sys);
         _systemNames.append(tr("System %1").arg(vehicle->id()));
+        connect(vehicle, &Vehicle::mavlinkMsgIntervalsChanged, sys, [sys](uint8_t compid, uint16_t msgId, int32_t rate)
+        {
+            for(int i = 0; i < sys->messages()->count(); i++)
+            {
+                QGCMAVLinkMessage* msg = qobject_cast<QGCMAVLinkMessage*>(sys->messages()->get(i));
+                if((msg->compId() == compid) && (msg->id() == msgId))
+                {
+                    msg->setTargetRateHz(rate);
+                    break;
+                }
+            }
+        });
     }
     emit systemsChanged();
 }
@@ -943,3 +976,36 @@ void MAVLinkInspectorController::setActiveSystem(int systemId)
     }
 }
 
+void MAVLinkInspectorController::setMessageInterval(int32_t rate)
+{
+    if(!_activeSystem) return;
+
+    MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
+    if(!multiVehicleManager) return;
+
+    const uint8_t sysId = _selectedSystemID();
+    if(sysId == 0) return;
+
+    Vehicle* vehicle = multiVehicleManager->getVehicleById(sysId);
+    if(!vehicle) return;
+
+    QGCMAVLinkMessage* msg = _activeSystem->selectedMsg();
+    if(!msg) return;
+
+    const uint8_t compId = _selectedComponentID();
+    if(compId == 0) return;
+
+    // TODO: Make QGCMAVLinkMessage a part of comm and use signals/slots for msg rate changes
+    vehicle->setMessageRate(compId, msg->id(), rate);
+}
+
+uint8_t MAVLinkInspectorController::_selectedSystemID() const
+{
+    return _activeSystem ? _activeSystem->id() : 0;
+}
+
+uint8_t MAVLinkInspectorController::_selectedComponentID() const
+{
+    QGCMAVLinkMessage* msg = _activeSystem->selectedMsg();
+    return (msg ? msg->compId() : 0);
+}
