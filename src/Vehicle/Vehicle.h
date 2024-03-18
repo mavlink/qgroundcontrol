@@ -1541,6 +1541,26 @@ private:
     // We use this to limit above terrain altitude queries based on distance and altitude change
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
+
+public:
+    int32_t getMessageRate(uint8_t compId, uint16_t msgId);
+    void setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate);
+
+signals:
+    void mavlinkMsgIntervalsChanged(uint8_t compid, uint16_t msgId, int32_t rate);
+
+private:
+    void _handleMessageInterval(const mavlink_message_t& message);
+
+    static void _requestMessageMessageIntervalResultHandler(void* resultHandlerData, MAV_RESULT result, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    void _requestMessageInterval(uint8_t compId, uint16_t msgId);
+
+    static void _setMessageRateCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+
+    typedef QPair<uint8_t, uint16_t> MavCompMsgId;
+    QHash<MavCompMsgId, int32_t> _mavlinkMsgIntervals;
+    QMultiHash<uint8_t, uint16_t> _unsupportedMessageIds;
+    uint16_t _lastSetMsgIntervalMsgId = 0;
 };
 
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)
