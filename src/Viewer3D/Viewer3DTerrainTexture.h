@@ -54,6 +54,7 @@ public:
 
     float textureDownloadProgress() const;
     void setTextureDownloadProgress(float newTextureDownloadProgress);
+    void setTextureGeometry(MapTileQuery::TileStatistics_t tileInfo);
 
 private:
 

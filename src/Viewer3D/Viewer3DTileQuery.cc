@@ -6,7 +6,7 @@
 #define DEG_TO_RAD          PI/180.0f
 #define RAD_TO_DEG          180.0f/PI
 #define MAX_TILE_COUNTS     200
-#define MAX_ZOOM_LEVEL      20
+#define MAX_ZOOM_LEVEL      23
 
 
 enum RequestStat{
@@ -37,6 +37,7 @@ void MapTileQuery::loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileM
             Viewer3DTileReply* _reply = new Viewer3DTileReply(zoomLevel, x, y, _mapId, this);
             connect(_reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
             connect(_reply, &Viewer3DTileReply::tileGiveUp, this, &MapTileQuery::tileGiveUp);
+            connect(_reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
         }
     }
     totalTilesCount = _mapToBeLoaded.tileList.size();
@@ -79,17 +80,19 @@ MapTileQuery::TileStatistics_t MapTileQuery::findAndLoadMapTiles(int zoomLevel, 
     return _output;
 }
 
-MapTileQuery::TileStatistics_t MapTileQuery::adaptiveMapTilesLoader(QString mapType, int mapId, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2)
+void MapTileQuery::adaptiveMapTilesLoader(QString mapType, int mapId, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2)
 {
-    int zoomLevel;
     _mapId = mapId;
     _mapType = mapType;
-    for(zoomLevel=MAX_ZOOM_LEVEL; zoomLevel>0; zoomLevel--){
-        if(maxTileCount(zoomLevel, coordinate_1, coordinate_2) < MAX_TILE_COUNTS){
+    for(_zoomLevel=MAX_ZOOM_LEVEL; _zoomLevel>0; _zoomLevel--){
+        if(maxTileCount(_zoomLevel, coordinate_1, coordinate_2) < MAX_TILE_COUNTS){
             break;
         }
     }
-    return findAndLoadMapTiles(zoomLevel, coordinate_1, coordinate_2);
+
+    _textureCoordinateMin = coordinate_1;
+    _textureCoordinateMax = coordinate_2;
+    emit textureGeometryReady(findAndLoadMapTiles(_zoomLevel, coordinate_1, coordinate_2));
 }
 
 int MapTileQuery::maxTileCount(int zoomLevel, QGeoCoordinate coordinateMin, QGeoCoordinate coordinateMax)
@@ -191,6 +194,7 @@ void MapTileQuery::tileDone(Viewer3DTileReply::tileInfo_t _tileData)
     }
     disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
     disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &MapTileQuery::tileGiveUp);
+    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
     reply->deleteLater();
 }
 
@@ -199,7 +203,20 @@ void MapTileQuery::tileGiveUp(Viewer3DTileReply::tileInfo_t _tileData)
     Viewer3DTileReply* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
     disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
     disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &MapTileQuery::tileGiveUp);
+    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
     reply->deleteLater();
+}
+
+void MapTileQuery::tileEmpty(Viewer3DTileReply::tileInfo_t _tileData)
+{
+    Viewer3DTileReply* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
+    disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
+    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
+    reply->deleteLater();
+    if(_tileData.zoomLevel > 0 && _tileData.zoomLevel == _zoomLevel){
+        _zoomLevel -= 1;
+        emit textureGeometryReady(findAndLoadMapTiles(_zoomLevel, _textureCoordinateMin, _textureCoordinateMax));
+    }
 }
 
 QString MapTileQuery::getTileKey(int mapId, int x, int y, int zoomLevel)

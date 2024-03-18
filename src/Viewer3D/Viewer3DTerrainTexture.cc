@@ -13,7 +13,7 @@ Viewer3DTerrainTexture::Viewer3DTerrainTexture()
 
     setTextureGeometryDone(false);
     setTextureLoaded(false);
-    setTextureDownloadProgress(0.0);
+    setTextureDownloadProgress(100.0);
 
     // connect(_flightMapSettings->mapProvider(), &Fact::rawValueChanged, this, &Viewer3DTerrainTexture::mapTypeChangedEvent);
     connect(_flightMapSettings->mapType(), &Fact::rawValueChanged, this, &Viewer3DTerrainTexture::mapTypeChangedEvent);
@@ -34,13 +34,11 @@ void Viewer3DTerrainTexture::loadTexture()
         if(!_terrainTileLoader){
             _terrainTileLoader = new MapTileQuery(this);
             connect(_terrainTileLoader, &MapTileQuery::loadingMapCompleted, this, &Viewer3DTerrainTexture::updateTexture);
+            connect(_terrainTileLoader, &MapTileQuery::textureGeometryReady, this, &Viewer3DTerrainTexture::setTextureGeometry);
         }
-        MapTileQuery::TileStatistics_t tileInfo = _terrainTileLoader->adaptiveMapTilesLoader(_mapType, _mapId,
-                                                                                             _osmParser->getMapBoundingBoxCoordinate().first,
-                                                                                             _osmParser->getMapBoundingBoxCoordinate().second);
-        setRoiMinCoordinate(tileInfo.coordinateMin);
-        setRoiMaxCoordinate(tileInfo.coordinateMax);
-        setTileCount(tileInfo.tileCounts);
+        _terrainTileLoader->adaptiveMapTilesLoader(_mapType, _mapId,
+                                                   _osmParser->getMapBoundingBoxCoordinate().first,
+                                                   _osmParser->getMapBoundingBoxCoordinate().second);
         connect(_terrainTileLoader, &MapTileQuery::mapTileDownloaded, this, &Viewer3DTerrainTexture::setTextureDownloadProgress);
     }
 }
@@ -171,4 +169,11 @@ void Viewer3DTerrainTexture::setTextureDownloadProgress(float newTextureDownload
     }
     _textureDownloadProgress = newTextureDownloadProgress;
     emit textureDownloadProgressChanged();
+}
+
+void Viewer3DTerrainTexture::setTextureGeometry(MapTileQuery::TileStatistics_t tileInfo)
+{
+    setRoiMinCoordinate(tileInfo.coordinateMin);
+    setRoiMaxCoordinate(tileInfo.coordinateMax);
+    setTileCount(tileInfo.tileCounts);
 }

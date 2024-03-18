@@ -104,7 +104,7 @@ public:
     Q_OBJECT
 public:
     explicit MapTileQuery(QObject *parent = nullptr);
-    TileStatistics_t adaptiveMapTilesLoader(QString mapType, int mapId, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2);
+    void adaptiveMapTilesLoader(QString mapType, int mapId, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2);
     int maxTileCount(int zoomLevel, QGeoCoordinate coordinateMin, QGeoCoordinate coordinateMax);
     QByteArray getMapData(){ return _mapToBeLoaded.getMapData();}
     QSize getMapSize(){ return QSize(_mapToBeLoaded.mapWidth, _mapToBeLoaded.mapHeight);}
@@ -114,8 +114,9 @@ private:
     MapTileContainer_t _mapToBeLoaded;
     int totalTilesCount, downloadedTilesCount;
     int _mapId;
+    int _zoomLevel;
     QString _mapType;
-
+    QGeoCoordinate _textureCoordinateMin, _textureCoordinateMax;
 
     void loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileMaxIndex);
     TileStatistics_t findAndLoadMapTiles(int zoomLevel, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2);
@@ -126,12 +127,14 @@ private:
     QGeoCoordinate pixelXYToLatLong(QPoint pixel, int zoomLevel);
     void tileDone(Viewer3DTileReply::tileInfo_t _tileData);
     void tileGiveUp(Viewer3DTileReply::tileInfo_t _tileData);
+    void tileEmpty(Viewer3DTileReply::tileInfo_t _tileData);
     void httpReadyRead();
     QString getTileKey(int mapId, int x, int y, int zoomLevel);
 
 signals:
     void loadingMapCompleted();
     void mapTileDownloaded(float progress);
+    void textureGeometryReady(TileStatistics_t tileInfo);
 };
 
 #endif // VIEWER3DTILEQUERY_H
