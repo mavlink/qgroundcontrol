@@ -536,6 +536,22 @@ FlightMap {
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        
+        onClicked: {
+            if (!globals.guidedControllerFlyView.guidedUIVisible && 
+                (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
+                orbitMapCircle.hide()
+                gotoLocationItem.hide()
+                var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+                var mapClickMenu = popupMenuComponent.createObject(_root, { coord: clickCoord, contentItemComponent: mapClickMenuComponent })
+                mapClickMenu.setPosition(mouse.x, mouse.y)
+                mapClickMenu.open()
+            }
+        }
+    }
+    
     Component {
         id: popupMenuComponent
 
@@ -635,18 +651,6 @@ FlightMap {
                     globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, mapClickCoord)
                 }
             }
-
-            QGCButton {
-                Layout.fillWidth:   true
-                text:               qsTr("Set Estimator Origin")
-                visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
-                onClicked: {
-                    if (popup.opened) {
-                        popup.close()
-                    }
-                    globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
-                }
-            }        
         }
     }
 
@@ -687,18 +691,6 @@ FlightMap {
                     popup.close()
                 }
             }
-        }
-    }
-
-    onMapClicked: (position) => {
-        if (!globals.guidedControllerFlyView.guidedUIVisible && 
-            (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI || globals.guidedControllerFlyView.showSetHome || globals.guidedControllerFlyView.showSetEstimatorOrigin)) {
-            orbitMapCircle.hide()
-            gotoLocationItem.hide()
-            var clickCoord = _root.toCoordinate(Qt.point(position.x, position.y), false /* clipToViewPort */)
-            var mapClickMenu = popupMenuComponent.createObject(_root, { coord: clickCoord, contentItemComponent: mapClickMenuComponent })
-            mapClickMenu.setPosition(position.x, position.y)
-            mapClickMenu.open()
         }
     }
 
