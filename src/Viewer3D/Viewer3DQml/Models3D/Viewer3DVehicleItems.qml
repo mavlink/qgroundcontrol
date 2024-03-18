@@ -34,6 +34,7 @@ Node {
                                    20, // Return To Launch
                                    22, //Takeoff
                                    195, // ROI
+                                   201, // ROI DEPRECATED
                                ]; // based on MavCmdInfoCommon.json file
         return acceptableCmdIds.includes(missionItem.command);
     }
@@ -52,6 +53,10 @@ Node {
             return qsTr("L");
         }
 
+        if(missionItem.isTakeoffItem){
+            return qsTr("T"); //Takeoff
+        }
+
         if(missionItem.specifiesCoordinate){
             switch(missionItem.command){
             case 16:
@@ -60,6 +65,8 @@ Node {
                 return qsTr("T"); //Takeoff
             case 195:
                 return qsTr("R"); //ROI
+            case 201:
+                return qsTr("R"); //ROI DEPRECATED
             }
         }
         return qsTr("null")

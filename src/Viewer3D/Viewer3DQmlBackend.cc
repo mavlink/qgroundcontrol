@@ -36,6 +36,7 @@ void Viewer3DQmlBackend::_activeVehicleChangedEvent(Vehicle *vehicle)
             _gpsRefSet = GPS_REF_NOT_SET;
         }
     }else{
+        _activeVehicleCoordinateChanged(_activeVehicle->coordinate());
         connect(_activeVehicle, &Vehicle::coordinateChanged, this, &Viewer3DQmlBackend::_activeVehicleCoordinateChanged);
     }
 }

@@ -32,6 +32,7 @@ private:
     QTimer* _timeoutTimer;
     int _mapId;
     int _timeoutCounter;
+    static QByteArray       _bingNoTileImage;
 
     void prepareDownload();
     void requestFinished();
@@ -40,6 +41,7 @@ private:
 
 signals:
     void tileDone(tileInfo_t);
+    void tileEmpty(tileInfo_t);
     void tileError(tileInfo_t);
     void tileGiveUp(tileInfo_t);
 };
