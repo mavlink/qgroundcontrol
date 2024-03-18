@@ -89,9 +89,11 @@ class QGCMAVLinkMessage : public QObject {
     Q_OBJECT
 public:
     Q_PROPERTY(quint32              id              READ id             CONSTANT)
-    Q_PROPERTY(quint32              cid             READ cid            CONSTANT)
+    Q_PROPERTY(quint32              sysId           READ sysId          CONSTANT)
+    Q_PROPERTY(quint32              compId          READ compId         CONSTANT)
     Q_PROPERTY(QString              name            READ name           CONSTANT)
-    Q_PROPERTY(qreal                messageHz       READ messageHz      NOTIFY freqChanged)
+    Q_PROPERTY(qreal                actualRateHz    READ actualRateHz   NOTIFY actualRateHzChanged)
+    Q_PROPERTY(int32_t              targetRateHz    READ targetRateHz   NOTIFY targetRateHzChanged)
     Q_PROPERTY(quint64              count           READ count          NOTIFY countChanged)
     Q_PROPERTY(QmlObjectListModel*  fields          READ fields         CONSTANT)
     Q_PROPERTY(bool                 fieldSelected   READ fieldSelected  NOTIFY fieldSelectedChanged)
@@ -100,33 +102,38 @@ public:
     QGCMAVLinkMessage   (QObject* parent, mavlink_message_t* message);
     ~QGCMAVLinkMessage  ();
 
-    quint32             id              () const{ return _message.msgid;  }
-    quint8              cid             () const{ return _message.compid; }
-    QString             name            () { return _name;  }
-    qreal               messageHz       () const{ return _messageHz; }
-    quint64             count           () const{ return _count; }
-    quint64             lastCount       () const{ return _lastCount; }
+    quint32             id              () const { return _message.msgid;  }
+    quint8              sysId           () const { return _message.sysid; }
+    quint8              compId          () const { return _message.compid; }
+    QString             name            () const { return _name;  }
+    qreal               actualRateHz    () const { return _actualRateHz; }
+    int32_t             targetRateHz    () const { return _targetRateHz; }
+    quint64             count           () const { return _count; }
+    quint64             lastCount       () const { return _lastCount; }
     QmlObjectListModel* fields          () { return &_fields; }
-    bool                fieldSelected   () const{ return _fieldSelected; }
-    bool                selected        () const{ return _selected; }
+    bool                fieldSelected   () const { return _fieldSelected; }
+    bool                selected        () const { return _selected; }
 
     void                updateFieldSelection();
     void                update          (mavlink_message_t* message);
     void                updateFreq      ();
     void                setSelected     (bool sel);
+    void                setTargetRateHz (int32_t rate);
 
 signals:
-    void countChanged                   ();
-    void freqChanged                    ();
-    void fieldSelectedChanged           ();
-    void selectedChanged                ();
+    void countChanged();
+    void actualRateHzChanged();
+    void targetRateHzChanged();
+    void fieldSelectedChanged();
+    void selectedChanged();
 
 private:
     void _updateFields(void);
 
     QmlObjectListModel  _fields;
     QString             _name;
-    qreal               _messageHz      = 0.0;
+    qreal               _actualRateHz   = 0.0;
+    int32_t             _targetRateHz   = 0;
     uint64_t            _count          = 1;
     uint64_t            _lastCount      = 0;
     mavlink_message_t   _message;
@@ -155,9 +162,10 @@ public:
     int                 selected        () const{ return _selected; }
 
     void                setSelected     (int sel);
-    QGCMAVLinkMessage*  findMessage     (uint32_t id, uint8_t cid);
+    QGCMAVLinkMessage*  findMessage     (uint32_t id, uint8_t compId);
     int                 findMessage     (QGCMAVLinkMessage* message);
     void                append          (QGCMAVLinkMessage* message);
+    QGCMAVLinkMessage*  selectedMsg     ();
 
 signals:
     void compIDsChanged                 ();
@@ -255,6 +263,7 @@ public:
     Q_INVOKABLE MAVLinkChartController* createChart     ();
     Q_INVOKABLE void                    deleteChart     (MAVLinkChartController* chart);
     Q_INVOKABLE void                    setActiveSystem (int systemId);
+    Q_INVOKABLE void                    setMessageInterval(int32_t rate);
 
     QmlObjectListModel* systems     () { return &_systems;     }
     QmlObjectListModel* charts      () { return &_charts;       }
@@ -299,8 +308,9 @@ private:
 
 private:
 
-    int                 _selectedSystemID       = 0;        ///< Currently selected system
-    int                 _selectedComponentID    = 0;        ///< Currently selected component
+    uint8_t             _selectedSystemID() const;
+    uint8_t             _selectedComponentID() const;
+
     QStringList         _timeScales;
     QStringList         _rangeList;
     QGCMAVLinkSystem*   _activeSystem           = nullptr;
