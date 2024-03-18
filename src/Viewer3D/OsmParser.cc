@@ -1,6 +1,5 @@
 #include "OsmParser.h"
 #include "earcut.hpp"
-#include "Viewer3DUtils.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 
