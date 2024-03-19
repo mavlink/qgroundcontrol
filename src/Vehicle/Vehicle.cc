@@ -2887,6 +2887,8 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
                     static_cast<float>(centerCoord.longitude()),
                     static_cast<float>(centerCoord.altitude()));
     }
+    // This is picked by qml to display coordinate over map
+    emit roiCoordChanged(centerCoord);
 }
 
 void Vehicle::stopGuidedModeROI()
