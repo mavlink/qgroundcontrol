@@ -1021,6 +1021,7 @@ signals:
     void mavlinkStatusChanged           ();
 
     void isROIEnabledChanged            ();
+    void roiCoordChanged                (const QGeoCoordinate& centerCoord);
     void initialConnectComplete         ();
 
     void sensorsParametersResetAck      (bool success);
