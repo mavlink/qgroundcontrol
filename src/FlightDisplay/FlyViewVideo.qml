@@ -88,6 +88,13 @@ Item {
         }
     }
 
+    OnScreenGimbalController {
+        id:                 onScreenGimbalController
+        anchors.fill:       parent
+        screenX:            flyViewVideoMouseArea.mouseX
+        screenY:            flyViewVideoMouseArea.mouseY
+    }
+
     MouseArea {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
@@ -104,9 +111,13 @@ Item {
         property var trackingROI:   null
         property var trackingStatus: trackingStatusComponent.createObject(flyViewVideoMouseArea, {})
 
+        onClicked:       onScreenGimbalController.clickControl()
         onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
 
+
         onPressed: {
+            onScreenGimbalController.pressControl()
+
             _track_rec_x = mouse.x
             _track_rec_y = mouse.y
 
@@ -138,6 +149,8 @@ Item {
             }
         }
         onReleased: {
+            onScreenGimbalController.releaseControl()
+            
             //if there is already a selection, delete it
             if (trackingROI !== null) {
                 trackingROI.destroy();
