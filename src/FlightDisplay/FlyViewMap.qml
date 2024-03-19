@@ -495,6 +495,13 @@ FlightMap {
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
 
+        Connections {
+            target: _activeVehicle
+            onRoiCoordChanged: {
+                roiLocationItem.show(centerCoord)
+            }
+        }
+
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -638,7 +645,6 @@ FlightMap {
                     if (popup.opened) {
                         popup.close()
                     }
-                    roiLocationItem.show(mapClickCoord)
                     globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
                 }
             }
