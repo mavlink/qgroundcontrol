@@ -85,12 +85,22 @@ Item {
         }
     }
 
+    OnScreenGimbalController {
+        id:                 onScreenGimbalController
+        anchors.fill:       parent
+        screenX:            flyViewVideoMouseArea.mouseX
+        screenY:            flyViewVideoMouseArea.mouseY
+    }
+
     MouseArea {
-        id: flyViewVideoMouseArea
+        id:                 flyViewVideoMouseArea
         anchors.fill:       parent
         enabled:            pipState.state === pipState.fullState
-        hoverEnabled: true
+        hoverEnabled:       true
         onDoubleClicked:    QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+        onClicked:          onScreenGimbalController.clickControl()
+        onPressed:          onScreenGimbalController.pressControl()
+        onReleased:         onScreenGimbalController.releaseControl()
     }
 
     ProximityRadarVideoView{
