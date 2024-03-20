@@ -116,6 +116,7 @@ bool Actuators::isMultirotor() const
 void Actuators::load(const QString &json_file)
 {
     QFile file;
+    qDebug() << json_file;
     file.setFileName(json_file);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json_data = file.readAll();
@@ -222,30 +223,40 @@ void Actuators::parametersChanged()
                 const Mixer::ActuatorType& actuatorType = actuatorTypes[actuatorTypeName];
                 if (function >= actuatorType.functionMin && function <= actuatorType.functionMax) {
                     bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor;
+
                     bool isBidirectional = false;
                     float min_value = actuatorType.values.min;
                     float default_value = actuatorType.values.defaultVal;
 
                     if(isMotor){
-                        QString bidirectional_param("CA_R_REV");
-                        quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
-                        quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
 
-                        if(is_bidi == 1){
+                        for (const auto param : actuatorType.perItemParams) {
 
-                            min_value = -1.0f;
-                            default_value = 0.0f;
-                            isBidirectional = true;
+                            qDebug() << "perItemParameter: " << param.name << " " << param.label;
 
+                            if(param.label == "Bidirectional"){
+                                QString param_bidirectional(param.name);
+
+                                quint8 bitset_bidirectional = getFact(param_bidirectional)->rawValue().toInt();
+                                quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
+
+                                if(is_bidi == 1){
+
+                                    min_value = -1.0f;
+                                    default_value = 0.0f;
+                                    isBidirectional = true;
+
+                                }
+                            }
                         }
-                        num_motor++;
-
+                        num_motor += 1;
                     }
 
-                    // qDebug() << "testinng: " << actuatorType.values.min << actuatorType.values.max << actuatorType.values.defaultVal;
+                    qDebug() << "testinng: " << actuatorType.reversible << actuatorType.values.min << actuatorType.values.max << actuatorType.values.defaultVal;
+
                     actuators.append(
                             new ActuatorTesting::Actuator(&_actuatorTest, label, min_value, actuatorType.values.max,
-                                    default_value, function, isMotor, isBidirectional));
+                                    default_value, function, isMotor, actuatorType.reversible));
                     found = true;
                     break;
                 }
@@ -587,8 +598,11 @@ bool Actuators::parseJson(const QJsonDocument &json)
         QJsonArray perItemParametersJson = actuatorTypeVal["per-item-parameters"].toArray();
         for (const auto&& perItemParameterJson : perItemParametersJson) {
             QJsonValue perItemParameter = perItemParameterJson.toObject();
+
+            // Lets print something here to identify
             Parameter param{};
             param.parse(perItemParameter);
+            qDebug() << "perItemParameter: " << param.name << " " << param.label;
             actuatorType.perItemParams.append(param);
         }
         actuatorTypes[actuatorTypeName] = actuatorType;

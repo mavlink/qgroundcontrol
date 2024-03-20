@@ -252,7 +252,7 @@ SetupPage {
                                         stopTimer();
                                         for (var channelIdx=0; channelIdx<sliderRepeater.count; channelIdx++) {
                                             var channelSlider = sliderRepeater.itemAt(channelIdx);
-                                            if (channelSlider.channel.isMotor && !channelSlider.channel.isBidirectional) {
+                                            if (channelSlider.channel.isMotor) {
                                                 channelSlider.value = sliderValue;
                                             }
                                         }

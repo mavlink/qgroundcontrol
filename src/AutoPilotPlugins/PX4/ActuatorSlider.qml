@@ -11,10 +11,15 @@ Column {
 
     // If the default value is NaN, we add a small range
     // below, which snaps into place
-    property var snap:                isNaN(channel.defaultValue)
+    property var isBidirectionalMotor:       channel.isBidirectional
+    property var isStandardMotor:           channel.isMotor && !channel.isBidirectional
+    property var isServo:                   !channel.isMotor
+    // We should always snap if its a motor.
+    property var snap:                channel.isMotor
     property var span:                channel.max - channel.min
     property var snapRange:           span * 0.15
-    property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
+    property var defaultVal:          channel.isBidirectional ? 0.0 : channel.isStandardMotor ? channel.min - snapRange : channel.defaultVal
+    // property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
     property var blockUpdates:        true // avoid slider changes on startup
 
     id:                               root
@@ -37,7 +42,8 @@ Column {
     QGCSlider {
         id:                         channelSlider
         orientation:                Qt.Vertical
-        minimumValue:               snap ? channel.min - snapRange : channel.min
+        minimumValue:               isBidirectionalMotor ? channel.min : isStandardMotor ? channel.min - snapRange : channel.min
+        // minimumValue:               snap ? channel.min - snapRange : channel.min
         maximumValue:               channel.max
         stepSize:                   (channel.max-channel.min)/100
         value:                      defaultVal
@@ -49,7 +55,8 @@ Column {
         onValueChanged: {
             if (blockUpdates)
                 return;
-            if (snap) {
+
+            if(isStandardMotor){
                 if (value < channel.min) {
                     if (value < channel.min - snapRange/2) {
                         value = channel.min - snapRange;
@@ -58,6 +65,24 @@ Column {
                     }
                 }
             }
+            else if(isBidirectionalMotor){
+
+                if (value > channel.defaultValue - snapRange/2 && value < channel.defaultValue) {
+                    value = channel.defaultValue
+
+                } else if (value < channel.defaultValue + snapRange/2 && value > channel.defaultValue) {
+                    value = channel.defaultValue
+
+                // } else if(value < channel.defaultValue - snapRange/2) {
+                //     value = channel.defaultValue - snapRange
+
+                // } else if(value > channel.defaultValue + snapRange/2) {
+                //     value = channel.defaultValue + snapRange
+
+
+                }
+            }
+
             sendTimer.start()
         }
 
@@ -69,9 +94,30 @@ Column {
             running:          false
             onTriggered:      {
                 var sendValue = channelSlider.value;
-                if (sendValue < channel.min - snapRange/2) {
-                    sendValue = channel.defaultValue;
+
+                if(isStandardMotor){
+
+                    if (sendValue < channel.min - snapRange/2) {
+                        sendValue = channel.defaultValue;
+                    }
+
                 }
+                else if(isBidirectionalMotor){
+
+                    if (sendValue > channel.defaultValue - snapRange && sendValue < channel.defaultValue) {
+                        sendValue = channel.defaultValue;
+                    }
+                    else if (sendValue < channel.defaultValue + snapRange && sendValue > channel.defaultValue) {
+                        sendValue = channel.defaultValue;
+                    }
+                    else if(sendValue > channel.defaultValue + snapRange){
+                        sendValue = sendValue - channel.defaultValue + snapRange
+                    }
+                    else if(sendValue < channel.defaultValue - snapRange){
+                        sendValue = sendValue + channel.defaultValue + snapRange
+                    }
+                }
+                
                 root.actuatorValueChanged(sendValue, channelSlider.value)
             }
         }
