@@ -28,7 +28,7 @@ void MetDataLogManager::_initializeMetRawCsv()
     QTextStream stream(&_metRawCsvFile);
 
     qCDebug(VehicleLog) << "Facts logged to csv:" << metFactHeaders;
-    stream << "Time," << metFactHeaders.join(",") << "\n";
+    stream << metFactHeaders.join(",") << "\n";
 }
 
 void MetDataLogManager::_writeMetRawCsvLine()
@@ -47,19 +47,13 @@ void MetDataLogManager::_writeMetRawCsvLine()
     QTextStream stream(&_metRawCsvFile);
 
     FactGroup* factGroup = nullptr;
-    //if (_factGroupName == "Vehicle") {
-        // factGroup = _activeVehicle;
-    //} else {
-       factGroup = _activeVehicle->getFactGroup("temperature");
-    //}
+    factGroup = _activeVehicle->getFactGroup("temperature");
 
     if (!factGroup) {
         return;
     }
 
     // Write timestamp to csv file
-    metFactValues << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"));
-    // Write Vehicle's own facts
     for (const auto &factName : metFactNames) {
         if(!factGroup->factExists(factName)) {
             qCWarning(VehicleLog) << "Fact does not exist: " << factName;
@@ -67,12 +61,6 @@ void MetDataLogManager::_writeMetRawCsvLine()
         }
         metFactValues << factGroup->getFact(factName)->cookedValueString();
     }
-    // write facts from Vehicle's FactGroups
-    //for (const QString& groupName: factGroupNames()) {
-        for (const QString& factName : factGroup->factNames()) {
-            metFactValues << factGroup->getFact(factName)->cookedValueString();
-        }
-    //}
 
     stream << metFactValues.join(",") << "\n";
 }

@@ -314,35 +314,35 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex++);
         //value->setFact("Temperature", "temperature3");
         /* TD test */
-        value->setFact("Temperature", "ascending");
-        value->setIcon("");
-        value->setText("ascending:"/*value->fact()->shortDescription()*/);
-        value->setShowUnits(true);
-
-        value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Temperature", "zVelocityMetersPerSecond");
-        value->setIcon("");
-        value->setText("zVel_ms:"/*value->fact()->shortDescription()*/);
-        value->setShowUnits(true);
-
-        value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Temperature", "timeUAVBootMilliseconds");
-        value->setIcon("");
-        value->setText("uav_b_ms:"/*value->fact()->shortDescription()*/);
-        value->setShowUnits(true);
-
-
-        value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Temperature", "altitudeMillimetersMSL");
-        // value->setIcon("");
-        value->setText("alt_mm:"/*value->fact()->shortDescription()*/);
-        value->setShowUnits(true);
-
-
-        value = column->value<InstrumentValueData*>(rowIndex++);
         value->setFact("Temperature", "absolutePressureMillibars");
+        value->setIcon("");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Temperature", "temperatureCelsius");
+        value->setIcon("");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Temperature", "relativeHumidity");
+        value->setIcon("");
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+
+
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Temperature", "windSpeedMetersPerSecond");
         // value->setIcon("");
-        value->setText("press_mb:"/*value->fact()->shortDescription()*/);
+        value->setText(value->fact()->shortDescription());
+        value->setShowUnits(true);
+
+
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Temperature", "windBearingDegrees");
+        // value->setIcon("");
+        value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
 
     } else {
