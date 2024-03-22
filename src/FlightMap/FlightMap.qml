@@ -159,6 +159,8 @@ Map {
         }
 
         onActiveTranslationChanged: (delta) => _map.pan(-delta.x, -delta.y)
+
+        grabPermissions: PointerHandler.TakeOverForbidden
     }
 
     TapHandler {
