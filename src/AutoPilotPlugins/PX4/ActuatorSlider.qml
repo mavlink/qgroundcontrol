@@ -11,10 +11,16 @@ Column {
 
     // If the default value is NaN, we add a small range
     // below, which snaps into place
-    property var snap:                isNaN(channel.defaultValue)
+    property var isBidirectionalMotor:  channel.isBidirectional
+    property var isStandardMotor:           channel.isMotor && !channel.isBidirectional
+    property var snap:                channel.isMotor
+
+    // property var snap:                isNaN(channel.defaultValue)
     property var span:                channel.max - channel.min
     property var snapRange:           span * 0.15
-    property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
+    // property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
+    property var defaultVal:          channel.isBidirectional ? (channel.max + channel.min)/2 : channel.isStandardMotor ? channel.min - snapRange : channel.defaultVal
+
     property var blockUpdates:        true // avoid slider changes on startup
 
     id:                               root
@@ -28,7 +34,7 @@ Column {
     }
 
     function stop() {
-        channelSlider.value = defaultVal;
+        channelSlider.value = 0.0;
         stopTimer();
     }
 
@@ -37,10 +43,11 @@ Column {
     QGCSlider {
         id:                         channelSlider
         orientation:                Qt.Vertical
-        minimumValue:               snap ? channel.min - snapRange : channel.min
+        minimumValue:               isBidirectionalMotor ? channel.min : isStandardMotor ? channel.min - snapRange : channel.min
+        // minimumValue:               snap ? channel.min - snapRange : channel.min
         maximumValue:               channel.max
         stepSize:                   (channel.max-channel.min)/100
-        value:                      defaultVal
+        value:                      0.0
         updateValueWhileDragging:   true
         anchors.horizontalCenter:   parent.horizontalCenter
         height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
@@ -49,7 +56,8 @@ Column {
         onValueChanged: {
             if (blockUpdates)
                 return;
-            if (snap) {
+
+            if(isStandardMotor){
                 if (value < channel.min) {
                     if (value < channel.min - snapRange/2) {
                         value = channel.min - snapRange;
@@ -57,7 +65,25 @@ Column {
                         value = channel.min;
                     }
                 }
+
+            } else if(isBidirectionalMotor){
+
+                if (value > channel.defaultValue - snapRange/2 && value < 0.0) {
+                    value = 0.0
+
+                } else if (value < channel.defaultValue + snapRange/2 && value > 0.0) {
+                    value = 0.0
+
+                // } else if(value < channel.defaultValue - snapRange/2) {
+                //     value = channel.defaultValue - snapRange
+
+                // } else if(value > channel.defaultValue + snapRange/2) {
+                //     value = channel.defaultValue + snapRange
+
+
+                }
             }
+
             sendTimer.start()
         }
 
@@ -69,8 +95,28 @@ Column {
             running:          false
             onTriggered:      {
                 var sendValue = channelSlider.value;
-                if (sendValue < channel.min - snapRange/2) {
-                    sendValue = channel.defaultValue;
+
+                if(isStandardMotor){
+
+                    if (sendValue < channel.min - snapRange/2) {
+                        sendValue = channel.defaultValue;
+                    }
+
+                }
+                else if(isBidirectionalMotor){
+
+                    if (sendValue > 0.0 - snapRange && sendValue < 0.0) {
+                        sendValue = 0.0
+                    }
+                    else if (sendValue < 0.0 + snapRange && sendValue > 0.0) {
+                        sendValue = channel.defaultValue;
+                    }
+                    else if(sendValue > 0.0 + snapRange){
+                        sendValue = sendValue - 0.0 + snapRange
+                    }
+                    else if(sendValue < 0.0 - snapRange){
+                        sendValue = sendValue + 0.0 + snapRange
+                    }
                 }
                 root.actuatorValueChanged(sendValue, channelSlider.value)
             }
