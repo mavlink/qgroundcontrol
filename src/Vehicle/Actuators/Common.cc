@@ -27,6 +27,15 @@ void Parameter::parse(const QJsonValue& jsonValue)
     } else if (displayOptionStr != "") {
         qCDebug(ActuatorsConfigLog) << "Unknown param display option (show-as):" << displayOptionStr;
     }
+
+    QString functionStr = jsonValue["function"].toString();
+
+    if (functionStr == "reversible") {
+        function = Function::Reversible;
+    } else if (functionStr == "") {
+        function = Function::Default;
+    }
+
     advanced = jsonValue["advanced"].toBool(false);
 }
 

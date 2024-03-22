@@ -32,10 +32,16 @@ struct Parameter {
         Bitset,             ///< integer displayed as boolean (checkbox), where the index defines the bit
     };
 
+    enum class Function {
+        Default,
+        Reversible,
+    };
+
     QString label{};
     QString name{};                                       ///< vehicle parameter name, this may have an index in the form '${i}'
     int indexOffset{};                                    ///< extra offset to the ${i} index, or bitset shift offset
     DisplayOption displayOption{DisplayOption::Default};
+    Function function{Function::Default};
     bool advanced{false};                                 ///< whether this should only be shown as advanced option
 
     void parse(const QJsonValue& jsonValue);

@@ -200,6 +200,32 @@ void Actuators::parametersChanged()
     QList<ActuatorTesting::Actuator*> actuators;
     QSet<int> uniqueConfiguredFunctions;
     const Mixer::ActuatorTypes &actuatorTypes = _mixer.actuatorTypes();
+
+    quint8 bitset_bidirectional = 0;
+    for (const auto& actuatorTypeName : actuatorTypes.keys()) {
+
+        const Mixer::ActuatorType& actuatorType = actuatorTypes[actuatorTypeName];
+        bool isMotor = ActuatorGeometry::typeFromStr(actuatorTypeName) == ActuatorGeometry::Type::Motor;
+
+        if(isMotor){
+
+            auto parameterIter = actuatorTypes[actuatorTypeName].perItemParams.constBegin();
+            while(parameterIter != actuatorTypes[actuatorTypeName].perItemParams.constEnd() ){
+
+                qDebug() << "testinng: " << parameterIter->name;
+                // qDebug() << "testinng: " << parameterIter->function;
+                if(parameterIter->function == Parameter::Function::Reversible){
+                    QString bidirectional_param(parameterIter->name);
+                    bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
+                    qDebug() << "bid :" << bitset_bidirectional;
+                        
+                    break;
+                }
+                    parameterIter++;
+            }
+        }
+    }
+
     int num_motor = 0;
     for (int function : allFunctions) {
         if (uniqueConfiguredFunctions.find(function) != uniqueConfiguredFunctions.end()) { // only add once
@@ -225,21 +251,19 @@ void Actuators::parametersChanged()
                     bool isBidirectional = false;
                     float min_value = actuatorType.values.min;
                     float default_value = actuatorType.values.defaultVal;
+                    // float max_value = actuatorType.values.max;
+                    if(isMotor && actuatorType.values.reversible){
 
-                    if(isMotor){
-                        QString bidirectional_param("CA_R_REV");
-                        quint8 bitset_bidirectional = getFact(bidirectional_param)->rawValue().toInt();
                         quint8 is_bidi = (bitset_bidirectional >> num_motor) & 0b1;
 
                         if(is_bidi == 1){
 
-                            min_value = -1.0f;
-                            default_value = 0.0f;
                             isBidirectional = true;
-
+                            min_value = -actuatorType.values.max;
+                            default_value = 0.0;
                         }
                         num_motor++;
-
+                        qDebug() << "reversible: " << actuatorType.values.reversible << " " << isBidirectional;
                     }
 
                     // qDebug() << "testinng: " << actuatorType.values.min << actuatorType.values.max << actuatorType.values.defaultVal;
