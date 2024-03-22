@@ -323,7 +323,7 @@ QVariant FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
     return QVariant();
 }
 
-const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
+const QVariantList& FirmwarePlugin::_toolIndicators(const Vehicle*)
 {
     //-- Default list of indicators for all vehicles.
     if(_toolIndicatorList.size() == 0) {
@@ -337,6 +337,19 @@ const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
         });
     }
+    return _toolIndicatorList;
+}
+
+const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
+{
+    // This is making believe its the custom plugin override.
+
+    // Call the base class to fill in the list with the regular QGC stuff.
+    FirmwarePlugin::_toolIndicators(vehicle);
+
+    // Now add the new camera change indicator
+    _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/HerelinkCameraSwitchIndicator.qml")));
+
     return _toolIndicatorList;
 }
 

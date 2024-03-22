@@ -3,6 +3,7 @@
         <file alias="ArmedIndicator.qml">src/ui/toolbar/ArmedIndicator.qml</file>
         <file alias="GPSIndicator.qml">src/ui/toolbar/GPSIndicator.qml</file>
         <file alias="GPSRTKIndicator.qml">src/ui/toolbar/GPSRTKIndicator.qml</file>
+        <file alias="HerelinkCameraSwitchIndicator.qml">src/ui/toolbar/HerelinkCameraSwitchIndicator.qml</file>
         <file alias="JoystickIndicator.qml">src/ui/toolbar/JoystickIndicator.qml</file>
         <file alias="LinkIndicator.qml">src/ui/toolbar/LinkIndicator.qml</file>
         <file alias="MessageIndicator.qml">src/ui/toolbar/MessageIndicator.qml</file>
