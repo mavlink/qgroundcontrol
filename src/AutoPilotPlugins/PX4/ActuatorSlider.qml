@@ -13,9 +13,8 @@ Column {
     // below, which snaps into place
     property var isBidirectionalMotor:  channel.isBidirectional
     property var isStandardMotor:           channel.isMotor && !channel.isBidirectional
-    property var snap:                channel.isMotor
 
-    // property var snap:                isNaN(channel.defaultValue)
+    property var snap:                isNaN(channel.defaultValue)
     property var span:                channel.max - channel.min
     property var snapRange:           span * 0.15
     // property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
@@ -34,7 +33,7 @@ Column {
     }
 
     function stop() {
-        channelSlider.value = 0.0;
+        channelSlider.value = channel.defaultValue
         stopTimer();
     }
 
@@ -43,11 +42,11 @@ Column {
     QGCSlider {
         id:                         channelSlider
         orientation:                Qt.Vertical
-        minimumValue:               isBidirectionalMotor ? channel.min : isStandardMotor ? channel.min - snapRange : channel.min
+        minimumValue:               isStandardMotor ? channel.min - snapRange : channel.min
         // minimumValue:               snap ? channel.min - snapRange : channel.min
         maximumValue:               channel.max
         stepSize:                   (channel.max-channel.min)/100
-        value:                      0.0
+        value:                      channel.defaultValue
         updateValueWhileDragging:   true
         anchors.horizontalCenter:   parent.horizontalCenter
         height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
