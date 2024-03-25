@@ -260,7 +260,7 @@ void Actuators::parametersChanged()
 
                             isBidirectional = true;
                             min_value = -actuatorType.values.max;
-                            default_value = 0.0;
+                            // default_value = 0.0;
                         }
                         num_motor++;
                         // qDebug() << "reversible: " << actuatorType.values.reversible << " " << isBidirectional;

@@ -33,7 +33,7 @@ Column {
     }
 
     function stop() {
-        channelSlider.value = channel.defaultValue
+        channelSlider.value = channel.isBidirectional ? (channel.min + channel.max)/2 : channel.defaultValue
         stopTimer();
     }
 
@@ -46,7 +46,7 @@ Column {
         // minimumValue:               snap ? channel.min - snapRange : channel.min
         maximumValue:               channel.max
         stepSize:                   (channel.max-channel.min)/100
-        value:                      channel.defaultValue
+        value:                      isBidirectionalMotor ? (channel.min + channel.max)/2 : channel.defaultValue
         updateValueWhileDragging:   true
         anchors.horizontalCenter:   parent.horizontalCenter
         height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
@@ -66,12 +66,13 @@ Column {
                 }
 
             } else if(isBidirectionalMotor){
+                var mid = (channel.max + channel.min)/2
 
-                if (value > channel.defaultValue - snapRange/2 && value < 0.0) {
-                    value = 0.0
+                if (value > mid - snapRange/2 && value < mid) {
+                    value = mid
 
-                } else if (value < channel.defaultValue + snapRange/2 && value > 0.0) {
-                    value = 0.0
+                } else if (value < mid + snapRange/2 && value > mid) {
+                    value = mid
 
                 // } else if(value < channel.defaultValue - snapRange/2) {
                 //     value = channel.defaultValue - snapRange
@@ -104,17 +105,18 @@ Column {
                 }
                 else if(isBidirectionalMotor){
 
-                    if (sendValue > 0.0 - snapRange && sendValue < 0.0) {
-                        sendValue = 0.0
+                    var mid = (channel.max + channel.min)/2
+                    if (sendValue > mid - snapRange/2 && sendValue < mid) {
+                        sendValue = channel.defaultValue
                     }
-                    else if (sendValue < 0.0 + snapRange && sendValue > 0.0) {
-                        sendValue = channel.defaultValue;
+                    else if (sendValue < mid + snapRange/2 && sendValue > mid) {
+                        sendValue = channel.defaultValue
                     }
-                    else if(sendValue > 0.0 + snapRange){
-                        sendValue = sendValue - 0.0 + snapRange
+                    else if(sendValue > mid + snapRange/2){
+                        sendValue = sendValue - snapRange/2
                     }
-                    else if(sendValue < 0.0 - snapRange){
-                        sendValue = sendValue + 0.0 + snapRange
+                    else if(sendValue < mid - snapRange/2){
+                        sendValue = sendValue + snapRange/2
                     }
                 }
                 
