@@ -116,7 +116,6 @@ bool Actuators::isMultirotor() const
 void Actuators::load(const QString &json_file)
 {
     QFile file;
-    qDebug() << json_file;
     file.setFileName(json_file);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json_data = file.readAll();
