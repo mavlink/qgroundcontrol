@@ -205,12 +205,58 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _pitchRateDegreesPerSecondFact.setRawValue      (qQNaN());
     _yawRateDegreesPerSecondFact.setRawValue      (qQNaN());
     _zVelocityMetersPerSecondFact.setRawValue      (qQNaN());
+
+
 }
 
 void VehicleTemperatureFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
 {
     /* TD test */
-    balancer.update(&message, temperature4());
+    Fact iMetFactArray[42];
+    iMetFactArray[0] = &_timeUAVMillisecondsFact;
+    iMetFactArray[1] = &_timeUnixMillisecondsFact;
+    iMetFactArray[2] = &_timeUAVBootMillisecondsFact;
+    iMetFactArray[3] = &_altitudeMillimetersMSLFact;
+    iMetFactArray[4] = &_absolutePressureMillibarsFact;
+    iMetFactArray[5] = &_temperature0KelvinFact;
+    iMetFactArray[6] = &_temperature1KelvinFact;
+    iMetFactArray[7] = &_temperature2KelvinFact;
+    iMetFactArray[8] = &_relativeHumidityFact;
+    iMetFactArray[9] = &_relativeHumidity0Fact;
+    iMetFactArray[10] = &_relativeHumidity1Fact;
+    iMetFactArray[11] = &_relativeHumidity2Fact;
+    iMetFactArray[12] = &_windSpeedMetersPerSecondFact;
+    iMetFactArray[13] = &_windBearingDegreesFact;
+    iMetFactArray[14] = &_latitudeDegreesE7Fact;
+    iMetFactArray[15] = &_longitudeDegreesE7Fact;
+    iMetFactArray[16] = &_rollRadiansFact;
+    iMetFactArray[17] = &_pitchRadiansFact;
+    iMetFactArray[18] = &_yawRadiansFact;
+    iMetFactArray[19] = &_rollRateRadiansPerSecondFact;
+    iMetFactArray[20] = &_pitchRateRadiansPerSecondFact;
+    iMetFactArray[21] = &_yawRateRadiansPerSecondFact;
+    iMetFactArray[22] = &_zVelocityMetersPerSecondInvertedFact;
+    iMetFactArray[23] = &_xVelocityMetersPerSecondFact;
+    iMetFactArray[24] = &_yVelocityMetersPerSecondFact;
+    iMetFactArray[25] = &_groundSpeedMetersPerSecondFact;
+    iMetFactArray[26] = &_heartBeatCustomModeFact;
+    iMetFactArray[27] = &_ascendingFact;
+    iMetFactArray[28] = &_timeUAVSecondsFact;
+    iMetFactArray[29] = &_timeUnixSecondsFact;
+    iMetFactArray[30] = &_timeUAVBootSecondsFact;
+    iMetFactArray[31] = &_altitudeMetersMSLFact;
+    iMetFactArray[32] = &_temperatureCelsiusFact;
+    iMetFactArray[33] = &_latitudeDegreesFact;
+    iMetFactArray[34] = &_longitudeDegreesFact;
+    iMetFactArray[35] = &_rollDegreesFact;
+    iMetFactArray[36] = &_pitchDegreesFact;
+    iMetFactArray[37] = &_yawDegreesFact;
+    iMetFactArray[38] = &_rollRateDegreesPerSecondFact;
+    iMetFactArray[39] = &_pitchRateDegreesPerSecondFact;
+    iMetFactArray[40] = &_yawRateDegreesPerSecondFact;
+    iMetFactArray[41] = &_zVelocityMetersPerSecondFact;
+
+    balancer.update(&message, temperature4(), iMetFactArray);
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_SCALED_PRESSURE:

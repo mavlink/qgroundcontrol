@@ -5,6 +5,7 @@
 #include "ardupilotmega/mavlink_msg_cass_sensor_raw.h"
 #include "mavlink_types.h"
 #include "FactGroup.h"
+//#include "VehicleTemperatureFactGroup.h"
 
 typedef struct {
     uint32_t time; /* drone's frame of reference */
@@ -107,7 +108,7 @@ class DataBalancer{
     size_t yVelocityCount = 0;
     float yVelocityAvg = .0f;
 public:
-    void update(const mavlink_message_t* m, Fact* fact);
+    void update(const mavlink_message_t* m, Fact* fact, Fact* facts);
 private:
     static void calcWindProps(IMetData* d);
     static void calcGroundSpeed(IMetData* d);

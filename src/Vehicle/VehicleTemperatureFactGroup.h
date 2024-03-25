@@ -225,5 +225,5 @@ private:
     Fact            _rollRateDegreesPerSecondFact;
     Fact            _pitchRateDegreesPerSecondFact;
     Fact            _yawRateDegreesPerSecondFact;
-    Fact            _zVelocityMetersPerSecondFact;
+    Fact            _zVelocityMetersPerSecondFact;    
 };

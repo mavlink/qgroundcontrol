@@ -23,7 +23,7 @@ void DataBalancer::calcGroundSpeed(IMetData* d){
     d->groundSpeedMetersPerSecond = sqrt((d->xVelocityMetersPerSecond * d->xVelocityMetersPerSecond) + (d->yVelocityMetersPerSecond * d->yVelocityMetersPerSecond));
 }
 
-void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
+void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact, Fact* facts){
     uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     switch(m->msgid){        
@@ -37,15 +37,21 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
 
         switch(s.app_datatype){
         case 0:{ /* iMet temp */            
-            cassTemp0Avg = ((cassTemp0Avg * cassTemp0Count) + s.values[0]) / (cassTemp0Count++ + 1);
-            cassTemp1Avg = ((cassTemp1Avg * cassTemp1Count) + s.values[1]) / (cassTemp1Count++ + 1);
-            cassTemp2Avg = ((cassTemp2Avg * cassTemp2Count) + s.values[2]) / (cassTemp2Count++ + 1);
+            cassTemp0Avg = ((cassTemp0Avg * cassTemp0Count) + s.values[0]) / (cassTemp0Count + 1);
+            cassTemp1Avg = ((cassTemp1Avg * cassTemp1Count) + s.values[1]) / (cassTemp1Count + 1);
+            cassTemp2Avg = ((cassTemp2Avg * cassTemp2Count) + s.values[2]) / (cassTemp2Count + 1);
+            cassTemp0Count++;
+            cassTemp1Count++;
+            cassTemp2Count++;
             break;
         }
         case 1:{ /* iMet RH */            
-            cassRH0Avg = ((cassRH0Avg * cassRH0Count) + s.values[0]) / (cassRH0Count++ + 1);
-            cassRH1Avg = ((cassRH1Avg * cassRH1Count) + s.values[1]) / (cassRH1Count++ + 1);
-            cassRH2Avg = ((cassRH2Avg * cassRH2Count) + s.values[2]) / (cassRH2Count++ + 1);
+            cassRH0Avg = ((cassRH0Avg * cassRH0Count) + s.values[0]) / (cassRH0Count + 1);
+            cassRH1Avg = ((cassRH1Avg * cassRH1Count) + s.values[1]) / (cassRH1Count + 1);
+            cassRH2Avg = ((cassRH2Avg * cassRH2Count) + s.values[2]) / (cassRH2Count + 1);
+            cassRH0Count++;
+            cassRH1Count++;
+            cassRH2Count++;
             break;
         }
         case 2:{ /* temp from RH */
@@ -60,35 +66,47 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
     case MAVLINK_MSG_ID_LOCAL_POSITION_NED:{
         mavlink_global_position_int_t s;
         mavlink_msg_global_position_int_decode(m, &s);
-        zVelocityAvg = ((zVelocityAvg * zVelocityCount) + s.vz) / (zVelocityCount++ + 1);
-        xVelocityAvg = ((xVelocityAvg * xVelocityCount) + s.vx) / (xVelocityCount++ + 1);
-        yVelocityAvg = ((yVelocityAvg * yVelocityCount) + s.vy) / (yVelocityCount++ + 1);
+        zVelocityAvg = ((zVelocityAvg * zVelocityCount) + s.vz) / (zVelocityCount + 1);
+        xVelocityAvg = ((xVelocityAvg * xVelocityCount) + s.vx) / (xVelocityCount + 1);
+        yVelocityAvg = ((yVelocityAvg * yVelocityCount) + s.vy) / (yVelocityCount + 1);
+        zVelocityCount++;
+        xVelocityCount++;
+        yVelocityCount++;
         break;
     }
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:{
         mavlink_global_position_int_t s;
         mavlink_msg_global_position_int_decode(m, &s);
-        altMmAvg = (((int64_t)altMmAvg * altMmCount) + s.alt) / (altMmCount++ + 1);
-        latitudeAvg = (((int64_t)latitudeAvg * latitudeCount) + s.lat) / (latitudeCount++ + 1);
-        longitudeAvg = (((int64_t)longitudeAvg * longitudeCount) + s.lon) / (longitudeCount++ + 1);
+        altMmAvg = (((int64_t)altMmAvg * altMmCount) + s.alt) / (altMmCount + 1);
+        latitudeAvg = (((int64_t)latitudeAvg * latitudeCount) + s.lat) / (latitudeCount + 1);
+        longitudeAvg = (((int64_t)longitudeAvg * longitudeCount) + s.lon) / (longitudeCount + 1);
+        altMmCount++;
+        latitudeCount++;
+        longitudeCount++;
         break;
     }
     case MAVLINK_MSG_ID_SCALED_PRESSURE2:{
         mavlink_scaled_pressure2_t s;
         mavlink_msg_scaled_pressure2_decode(m, &s);
-        pressureAvg = ((pressureAvg * pressureCount) + s.press_abs) / (pressureCount++ + 1);
+        pressureAvg = ((pressureAvg * pressureCount) + s.press_abs) / (pressureCount + 1);
+        pressureCount++;
         break;
     }
     case MAVLINK_MSG_ID_ATTITUDE:{
         mavlink_attitude_t s;
         mavlink_msg_attitude_decode(m, &s);
-        rollAvg = ((rollAvg * rollCount) + s.roll) / (rollCount++ + 1);
-        pitchAvg = ((pitchAvg * pitchCount) + s.pitch) / (pitchCount++ + 1);
-        yawAvg = ((yawAvg * yawCount) + s.yaw) / (yawCount++ + 1);
-        rollRateAvg = ((rollRateAvg * rollRateCount) + s.rollspeed) / (rollRateCount + 1);
+        rollAvg = ((rollAvg * rollCount) + s.roll) / (rollCount + 1);
+        pitchAvg = ((pitchAvg * pitchCount) + s.pitch) / (pitchCount + 1);
+        yawAvg = ((yawAvg * yawCount) + s.yaw) / (yawCount + 1);
+        rollRateAvg = ((rollRateAvg * rollRateCount) + s.rollspeed) / (rollRateCount + 1);        
+        pitchRateAvg = ((pitchRateAvg * pitchRateCount) + s.pitchspeed) / (pitchRateCount + 1);
+        yawRateAvg = ((yawRateAvg * yawRateCount) + s.yawspeed) / (yawRateCount + 1);
+        rollCount++;
+        pitchCount++;
+        yawCount++;
         rollRateCount++;
-        pitchRateAvg = ((pitchRateAvg * pitchRateCount) + s.pitchspeed) / (pitchRateCount++ + 1);
-        yawRateAvg = ((yawRateAvg * yawRateCount) + s.yawspeed) / (yawRateCount++ + 1);
+        pitchRateCount++;
+        yawRateCount++;
         break;
     }
     case MAVLINK_MSG_ID_HEARTBEAT:{
@@ -150,6 +168,48 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact){
 
     /* Update facts */
     tempFact->setRawValue(cassTemp0Avg);
+    facts[0].setRawValue(data.timeUAVMilliseconds);
+    facts[1].setRawValue(data.timeUnixMilliseconds);
+    facts[2].setRawValue(data.timeUAVBootMilliseconds);
+    facts[3].setRawValue(data.altitudeMillimetersMSL);
+    facts[4].setRawValue(data.absolutePressureMillibars);
+    facts[5].setRawValue(data.temperature0Kelvin);
+    facts[6].setRawValue(data.temperature1Kelvin);
+    facts[7].setRawValue(data.temperature2Kelvin);
+    facts[8].setRawValue(data.relativeHumidity);
+    facts[9].setRawValue(data.relativeHumidity0);
+    facts[10].setRawValue(data.relativeHumidity1);
+    facts[11].setRawValue(data.relativeHumidity2);
+    facts[12].setRawValue(data.windSpeedMetersPerSecond);
+    facts[13].setRawValue(data.windBearingDegrees);
+    facts[14].setRawValue(data.latitudeDegreesE7);
+    facts[15].setRawValue(data.longitudeDegreesE7);
+    facts[16].setRawValue(data.rollRadians);
+    facts[17].setRawValue(data.pitchRadians);
+    facts[18].setRawValue(data.yawRadians);
+    facts[19].setRawValue(data.rollRateRadiansPerSecond);
+    facts[20].setRawValue(data.pitchRateRadiansPerSecond);
+    facts[21].setRawValue(data.yawRateRadiansPerSecond);
+    facts[22].setRawValue(data.zVelocityMetersPerSecondInverted);
+    facts[23].setRawValue(data.xVelocityMetersPerSecond);
+    facts[24].setRawValue(data.yVelocityMetersPerSecond);
+    facts[25].setRawValue(data.groundSpeedMetersPerSecond);
+    facts[26].setRawValue(data.heartBeatCustomMode);
+    facts[27].setRawValue(data.ascending);
+    facts[28].setRawValue(data.timeUAVSeconds);
+    facts[29].setRawValue(data.timeUnixSeconds);
+    facts[30].setRawValue(data.timeUAVBootSeconds);
+    facts[31].setRawValue(data.altitudeMetersMSL);
+    facts[32].setRawValue(data.temperatureCelsius);
+    facts[33].setRawValue(data.latitudeDegrees);
+    facts[34].setRawValue(data.longitudeDegrees);
+    facts[35].setRawValue(data.rollDegrees);
+    facts[36].setRawValue(data.pitchDegrees);
+    facts[37].setRawValue(data.yawDegrees);
+    facts[38].setRawValue(data.rollRateDegreesPerSecond);
+    facts[39].setRawValue(data.pitchRateDegreesPerSecond);
+    facts[40].setRawValue(data.yawRateDegreesPerSecond);
+    facts[41].setRawValue(data.zVelocityMetersPerSecond);
 
     /* Reset counters and lastUpdate */
     cassTemp0Count = 0;
