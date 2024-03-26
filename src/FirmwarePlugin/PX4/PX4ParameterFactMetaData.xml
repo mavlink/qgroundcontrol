@@ -606,6 +606,39 @@
       <max>6.0</max>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="FW_AT_SYSID_F0" default="1." type="FLOAT">
+      <short_desc>Start frequency of the injected signal</short_desc>
+      <long_desc>Can be set lower or higher than the end frequency</long_desc>
+      <min>0.1</min>
+      <max>30.0</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="FW_AT_SYSID_F1" default="20." type="FLOAT">
+      <short_desc>End frequency of the injected signal</short_desc>
+      <long_desc>Can be set lower or higher than the start frequency</long_desc>
+      <min>0.1</min>
+      <max>30.0</max>
+      <unit>Hz</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter name="FW_AT_SYSID_TIME" default="10." type="FLOAT">
+      <short_desc>Maneuver time for each axis</short_desc>
+      <long_desc>Duration of the input signal sent on each axis during system identification</long_desc>
+      <min>5</min>
+      <max>120</max>
+      <unit>s</unit>
+      <decimal>0</decimal>
+    </parameter>
+    <parameter name="FW_AT_SYSID_TYPE" default="0" type="INT32">
+      <short_desc>Input signal type</short_desc>
+      <long_desc>Type of signal used during system identification to excite the system.</long_desc>
+      <values>
+        <value code="0">Step</value>
+        <value code="1">Linear sine sweep</value>
+        <value code="2">Logarithmic sine sweep</value>
+      </values>
+    </parameter>
     <parameter name="MC_AT_APPLY" default="1" type="INT32">
       <short_desc>Controls when to apply the new gains</short_desc>
       <long_desc>After the auto-tuning sequence is completed, a new set of gains is available and can be applied immediately or after landing. WARNING Applying the gains in air is dangerous as there is no guarantee that those new gains will be able to stabilize the drone properly.</long_desc>
