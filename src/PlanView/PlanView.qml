@@ -69,7 +69,6 @@ Item {
     readonly property int       _layerUTMSP:                4 // Additional Tab button when UTMSP is enabled
     readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
-    signal activationParamsSent(string startTime, bool activate, string flightID)
 
     function mapCenter() {
         var coordinate = editorMap.center
@@ -919,7 +918,15 @@ Item {
         mainWindow.showMessageDialog(qsTr("Clear"),
                                      qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?"),
                                      Dialog.Yes | Dialog.Cancel,
-                                     function() { _planMasterController.removeAllFromVehicle(); _missionController.setCurrentPlanViewSeqNum(0, true); if(_utmspEnabled){_resetRegisterFlightPlan = true; QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);}})
+                                     function() { _planMasterController.removeAllFromVehicle();
+                                                  _missionController.setCurrentPlanViewSeqNum(0, true);
+                                                  if(_utmspEnabled)
+                                                    {_resetRegisterFlightPlan = true;
+                                                      QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);
+                                                      UTMSPStateStorage.startTimeStamp = "";
+                                                      UTMSPStateStorage.showActivationTab = false;
+                                                      UTMSPStateStorage.flightID = "";
+                                                      UTMSPStateStorage.enableMissionUploadButton = false;}})
     }
 
     //- ToolStrip DropPanel Components
@@ -1287,12 +1294,6 @@ Item {
                 PauseAnimation { duration: 2000 }
                 NumberAnimation { from: 3.5; to: 2.5; duration: 500 }
             }
-        }
-    }
-    Connections{
-        target: utmspEditor
-        function onTimeStampSent(timestamp, activateflag, id){
-            activationParamsSent(timestamp,activateflag, id)
         }
     }
 

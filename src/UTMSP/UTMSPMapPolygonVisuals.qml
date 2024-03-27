@@ -641,7 +641,7 @@ Item {
             availableWidth:                 mapControl.centerViewport.width
 
             QGCButton {
-                _horizontalPadding: 0
+                _horizontalPadding: 2
                 text:               qsTr("Automatic")
                 visible:            !mapPolygon.traceMode
                 onClicked:          _resetPolygon()
@@ -649,7 +649,7 @@ Item {
 
 
             QGCButton {
-                _horizontalPadding: 0
+                _horizontalPadding: 2
                 text:               mapPolygon.traceMode ? qsTr("Done fencing") : qsTr("Mannual")
                 onClicked: {
                     if (mapPolygon.traceMode) {
