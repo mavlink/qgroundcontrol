@@ -7,7 +7,6 @@ add_subdirectory(qmlglsink)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force qmdnsengine & shapelib to build as static" FORCE)
 add_subdirectory(shapelib)
-add_subdirectory(qmdnsengine)
 
 qt_add_library(xz STATIC
     xz-embedded/linux/include/linux/xz.h
