@@ -408,7 +408,7 @@ public:
     Q_INVOKABLE void guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed);
 
     /// Command vehicle to orbit given center point
-    ///     @param centerCoord Orit around this point
+    ///     @param centerCoord Orbit around this point
     ///     @param radius Distance from vehicle to centerCoord
     ///     @param amslAltitude Desired vehicle altitude
     Q_INVOKABLE void guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude);
