@@ -100,10 +100,10 @@ Item {
         border.color:   qgcPal.textFieldText
         width:          ScreenTools.defaultFontPixelWidth * 83.33
         height:         ScreenTools.defaultFontPixelHeight * 8.33
-        anchors.right:  parent.right
+        anchors.left:   parent.left
         anchors.bottom: parent.bottom
         opacity:        0.7
-        visible:        activationApproval
+        visible:        false
         radius:         ScreenTools.defaultFontPixelWidth * 0.833
 
         QGCColoredImage {
