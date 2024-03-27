@@ -42,6 +42,9 @@ QGCFlickable {
     property bool   submissionFlag
     property bool   triggerSubmitButton
     property bool   resetRegisterFlightPlan
+    property var    endDay
+    property var    endMonth
+    property var    endYear
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 15)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -59,6 +62,18 @@ QGCFlickable {
         var topLeftCoord = flightMap.toCoordinate(Qt.point(rect.x, rect.y),false)
         var bottomRightCoord = flightMap.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),false)
         myGeoFenceController.addInclusionPolygon(topLeftCoord,bottomRightCoord)
+    }
+
+    function loadEndDateTime(){
+        var endHour = endhours.model[endhours.currentIndex]
+        var startHour = starthours.model[starthours.currentIndex]
+        var endDate = new Date();
+        if (endHour < startHour){
+            endDate.setDate(endDate.getDate() + 1);
+        }
+        endDay = endDate.getDate();
+        endMonth = endDate.getMonth() + 1;
+        endYear = endDate.getFullYear();
     }
 
     Rectangle {
@@ -1277,6 +1292,7 @@ QGCFlickable {
                         submissionTimer.interval = 2500
                         submissionTimer.repeat = false
                         submissionTimer.start()
+                        loadEndDateTime()
                         var minAltitude   = minSlider.value.toFixed(0)
                         var maxAltitude   = maxSlider.value.toFixed(0)
                         var startDay      = scrollDate.model[scrollDate.currentIndex]
@@ -1289,7 +1305,7 @@ QGCFlickable {
                         var endMinute     = endMinutes.model[endMinutes.currentIndex]
                         var endSecond     = endSeconds.model[endSeconds.currentIndex]
                         var startDateTime = startYear + "-" + startMonth + "-" + startDay + "T" + startHour + ":" + startMinute + ":" + startSecond+ "." + "000000" + "Z"
-                        var endDateTime   = startYear + "-" + startMonth + "-" + startDay + "T" + endHour + ":" + endMinute + ":" + endSecond+ "." + "000000" + "Z"
+                        var endDateTime   = endYear + "-" + endMonth + "-" + endDay + "T" + endHour + ":" + endMinute + ":" + endSecond+ "." + "000000" + "Z"
                         var activateTD    = startYear + "-" + String(startMonth).padStart(2, '0') + "-" + String(startDay).padStart(2, '0') + "T" + String(startHour).padStart(2, '0') + ":" + String(startMinute).padStart(2, '0') + ":" + String(startSecond).padStart(2, '0') + "." + "000000" + "Z"
                         resetGeofencePolygonTriggered()
                         myGeoFenceController.loadFlightPlanData()
