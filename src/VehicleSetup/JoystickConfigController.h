@@ -15,9 +15,9 @@
 #define JoystickConfigController_H
 
 #include <QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 
 #include "FactPanelController.h"
-#include "QGCLoggingCategory.h"
 #include "Joystick.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)

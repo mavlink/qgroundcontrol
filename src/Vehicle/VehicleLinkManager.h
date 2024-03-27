@@ -11,8 +11,7 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QDebug>
-#include <QLoggingCategory>
+#include <QtCore/QLoggingCategory>
 #include <QElapsedTimer>
 
 #include "QGCMAVLink.h"

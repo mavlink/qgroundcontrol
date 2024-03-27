@@ -9,10 +9,6 @@
 
 
 #include "APMAutoPilotPlugin.h"
-#include "APMParameterMetaData.h"
-#include "APMFirmwarePlugin.h"
-#include "ArduCopterFirmwarePlugin.h"
-#include "ArduRoverFirmwarePlugin.h"
 #include "VehicleComponent.h"
 #include "APMAirframeComponent.h"
 #include "APMFlightModesComponent.h"
@@ -25,7 +21,6 @@
 #include "APMCameraComponent.h"
 #include "APMLightsComponent.h"
 #include "APMSubFrameComponent.h"
-#include "APMFollowComponent.h"
 #include "ESP8266Component.h"
 #include "APMHeliComponent.h"
 #include "APMRemoteSupportComponent.h"

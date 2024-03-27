@@ -14,11 +14,10 @@
 #ifndef SENSORSCOMPONENTCONTROLLER_H
 #define SENSORSCOMPONENTCONTROLLER_H
 
-#include <QObject>
 #include <QQuickItem>
+#include <QtCore/QLoggingCategory>
 
 #include "FactPanelController.h"
-#include "QGCLoggingCategory.h"
 
 Q_DECLARE_LOGGING_CATEGORY(SensorsComponentControllerLog)
 

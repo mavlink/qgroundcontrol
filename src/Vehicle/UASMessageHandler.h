@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <QObject>
 #include <QVector>
 #include <QMutex>
 

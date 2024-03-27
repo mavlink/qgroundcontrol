@@ -7,13 +7,9 @@
  *
  ****************************************************************************/
 
-#include <QStringList>
-#include <QDebug>
-
 #include "TakeoffMissionItem.h"
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
-#include "JsonHelper.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"

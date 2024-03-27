@@ -11,16 +11,10 @@
 
 #include <QObject>
 #include <QString>
-
-#include <functional>
-#include <cmath>
-
 #include <QQuickImageProvider>
-#include <QVector2D>
 #include <QPainter>
 
 #include <QGCPalette.h>
-
 #include "Common.h"
 
 

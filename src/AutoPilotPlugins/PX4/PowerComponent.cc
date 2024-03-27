@@ -12,7 +12,7 @@
 ///     @author Gus Grubba <gus@auterion.com>
 
 #include "PowerComponent.h"
-#include "PX4AutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

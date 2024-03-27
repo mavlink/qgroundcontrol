@@ -17,10 +17,7 @@
 #include <QJsonArray>
 #include <QJsonParseError>
 #include <QObject>
-#include <QRegularExpression>
-#include <QRegularExpressionMatch>
 #include <QFile>
-#include <QTranslator>
 
 const char* JsonHelper::jsonVersionKey                      = "version";
 const char* JsonHelper::jsonGroundStationKey                = "groundStation";

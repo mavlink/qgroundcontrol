@@ -14,6 +14,7 @@
 #include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 

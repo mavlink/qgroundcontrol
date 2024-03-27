@@ -9,8 +9,7 @@
 
 #include "ADSBVehicleManagerSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(ADSBVehicleManager, "ADSBVehicleManager")
 {

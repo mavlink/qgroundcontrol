@@ -9,7 +9,6 @@
 
 #include <QTime>
 #include <QDateTime>
-#include <QLocale>
 #include <QQuaternion>
 #include <QVector3D>
 
@@ -24,14 +23,12 @@
 #include "PlanMasterController.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
-#include "FlightPathSegment.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
 #include "MissionCommandTree.h"
 #include "SettingsManager.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCCorePlugin.h"
-#include "QGCOptions.h"
 #include "ADSBVehicleManager.h"
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
@@ -40,7 +37,6 @@
 #include "PositionManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "TrajectoryPoints.h"
-#include "QGCGeo.h"
 #include "TerrainProtocolHandler.h"
 #include "ParameterManager.h"
 #include "FTPManager.h"
@@ -49,10 +45,10 @@
 #include "VehicleBatteryFactGroup.h"
 #include "EventHandler.h"
 #include "Actuators/Actuators.h"
+#include "QGC.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
-#include "Autotune.h"
 #include "RemoteIDManager.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")

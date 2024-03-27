@@ -9,9 +9,11 @@
 
 #pragma once
 
-#include "QGCFileDownload.h"
+#include <QtCore/QString>
+#include <QtCore/QObject>
 
-#include <QNetworkDiskCache>
+class QGCFileDownload;
+class QNetworkDiskCache;
 
 class QGCCachedFileDownload : public QObject
 {

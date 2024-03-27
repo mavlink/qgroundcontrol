@@ -9,7 +9,6 @@
 
 
 #include <QStringList>
-#include <QDebug>
 
 #include "SimpleMissionItem.h"
 #include "FirmwarePluginManager.h"
@@ -20,6 +19,7 @@
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "PlanMasterController.h"
+#include "QGC.h"
 
 FactMetaData* SimpleMissionItem::_altitudeMetaData =        nullptr;
 FactMetaData* SimpleMissionItem::_commandMetaData =         nullptr;

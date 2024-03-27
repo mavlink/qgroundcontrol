@@ -10,9 +10,6 @@
 #ifndef GeoTagController_H
 #define GeoTagController_H
 
-#include "QmlObjectListModel.h"
-#include "Fact.h"
-#include "FactMetaData.h"
 #include <QObject>
 #include <QString>
 #include <QThread>

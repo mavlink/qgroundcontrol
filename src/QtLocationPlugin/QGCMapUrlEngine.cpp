@@ -18,14 +18,11 @@
 
 #include "QGCMapUrlEngine.h"
 #include "QGCLoggingCategory.h"
-QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 
 #include <QByteArray>
-#include <QEventLoop>
-#include <QNetworkReply>
-#include <QtCore5Compat/QRegExp>
 #include <QString>
-#include <QTimer>
+
+QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 
 const char* UrlFactory::kCopernicusElevationProviderKey = "Copernicus Elevation";
 const char* UrlFactory::kCopernicusElevationProviderNotice = "© Airbus Defence and Space GmbH";

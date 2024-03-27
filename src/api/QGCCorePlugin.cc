@@ -21,7 +21,6 @@
 #include "VideoReceiver.h"
 #endif
 #include "QGCLoggingCategory.h"
-#include "QGCCameraManager.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 

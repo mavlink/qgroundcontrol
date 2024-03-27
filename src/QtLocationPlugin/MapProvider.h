@@ -12,8 +12,6 @@
 #include <QByteArray>
 #include <QString>
 
-#include <cmath>
-
 #include "QGCTileSet.h" 
 #include <QtLocation/private/qgeomaptype_p.h>
 

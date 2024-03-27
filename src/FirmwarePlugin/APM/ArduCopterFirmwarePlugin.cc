@@ -12,8 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "ArduCopterFirmwarePlugin.h"
-#include "QGCApplication.h"
-#include "MissionManager.h"
 #include "ParameterManager.h"
 
 bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;

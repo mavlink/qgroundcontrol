@@ -9,8 +9,7 @@
 
 #include "BrandImageSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(BrandImage, "Branding")
 {

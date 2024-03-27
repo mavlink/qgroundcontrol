@@ -16,12 +16,11 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
 #include "Fact.h"
 #include <QObject>
 #include <QTimer>
-#include <QDateTime>
 #include <QFile>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(SubtitleWriterLog)
 

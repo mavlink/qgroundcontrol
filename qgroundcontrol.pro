@@ -378,6 +378,7 @@ INCLUDEPATH += \
     src/Settings \
     src/Terrain \
     src/Vehicle \
+    src/Vehicle/Actuators \
     src/Audio \
     src/comm \
     src/input \

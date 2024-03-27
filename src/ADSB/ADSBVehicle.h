@@ -13,8 +13,6 @@
 #include <QGeoCoordinate>
 #include <QElapsedTimer>
 
-#include "QGCMAVLink.h"
-
 class ADSBVehicle : public QObject
 {
     Q_OBJECT

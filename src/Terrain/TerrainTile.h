@@ -1,10 +1,9 @@
 #ifndef TERRAINTILE_H
 #define TERRAINTILE_H
 
-#include "QGCLoggingCategory.h"
-
 #include <QGeoCoordinate>
 #include <QList>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 

@@ -9,9 +9,6 @@
 
 #pragma once
 
-#include <QObject>
-#include <QTimer>
-#include <QThread>
 #include <QStringList>
 #include <QTextToSpeech>
 

@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "ActuatorActions.h"
-
 #include "QGCApplication.h"
 
 using namespace ActuatorActions;

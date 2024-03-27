@@ -13,7 +13,7 @@
 #include <QObject>
 #include <QGeoCoordinate>
 
-#include "FactSystem.h"
+#include "Fact.h"
 
 /// This class is used to encapsulate the QGeoCoordinate associated with a Rally Point into a QObject such
 /// that it can be used in a QmlObjectListMode for Qml.

@@ -11,9 +11,9 @@
 
 
 #include <QString>
-#include <QRegularExpressionMatch>
 #include <QVector3D>
 #include <QJsonValue>
+#include <QtCore/QLoggingCategory>
 
 #include <stdint.h>
 

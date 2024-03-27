@@ -11,8 +11,6 @@
 
 #include "FactGroup.h"
 
-#include <QGeoCoordinate>
-
 class TerrainFactGroup : public FactGroup
 {
     Q_OBJECT

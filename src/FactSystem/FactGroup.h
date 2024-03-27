@@ -11,7 +11,6 @@
 
 #include "Fact.h"
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 
 #include <QStringList>
 #include <QMap>

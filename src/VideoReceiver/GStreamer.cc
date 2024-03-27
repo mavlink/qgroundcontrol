@@ -18,6 +18,7 @@
 
 #include "GStreamer.h"
 #include "GstVideoReceiver.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "GStreamerLog")
 QGC_LOGGING_CATEGORY(GStreamerAPILog, "GStreamerAPILog")

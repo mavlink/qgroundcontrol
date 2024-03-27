@@ -14,7 +14,6 @@
 
 #include "APMLightsComponent.h"
 #include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
 
 APMLightsComponent::APMLightsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)

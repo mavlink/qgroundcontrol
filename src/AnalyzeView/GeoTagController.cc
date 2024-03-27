@@ -9,10 +9,8 @@
 
 #include "GeoTagController.h"
 #include "QGCLoggingCategory.h"
-#include <math.h>
 #include <QtEndian>
 #include <QDebug>
-#include <cfloat>
 #include <QDir>
 #include <QUrl>
 

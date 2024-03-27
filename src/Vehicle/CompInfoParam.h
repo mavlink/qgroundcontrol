@@ -11,9 +11,9 @@
 
 #include "CompInfo.h"
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 #include "FactMetaData.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QObject>
 
 class FactMetaData;

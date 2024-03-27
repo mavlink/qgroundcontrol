@@ -16,7 +16,6 @@
 #include "ActuatorOutputs.h"
 #include "ActuatorTesting.h"
 #include "Mixer.h"
-#include "GeometryImage.h"
 #include "MotorAssignment.h"
 
 

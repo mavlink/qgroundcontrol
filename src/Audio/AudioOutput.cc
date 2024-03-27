@@ -7,13 +7,11 @@
  *
  ****************************************************************************/
 
-#include <QApplication>
 #include <QDebug>
 #include <QRegularExpression>
 
 #include "AudioOutput.h"
 #include "QGCApplication.h"
-#include "QGC.h"
 #include "SettingsManager.h"
 
 AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)

@@ -10,6 +10,7 @@
 
 #include "JoystickManager.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QQmlEngine>
 

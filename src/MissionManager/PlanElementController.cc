@@ -9,10 +9,6 @@
 
 #include "PlanElementController.h"
 #include "PlanMasterController.h"
-#include "QGCApplication.h"
-#include "MultiVehicleManager.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
 
 PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
     : QObject           (parent)

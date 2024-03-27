@@ -14,10 +14,10 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 #include "QGCCameraManager.h"
-#include "VehicleCameraControl.h"
 #include "CustomAction.h"
 #include "SettingsManager.h"
 #include "CustomMavlinkActionsSettings.h"
+#include "QGCLoggingCategory.h"
 
 #include <QSettings>
 
