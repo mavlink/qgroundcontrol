@@ -22,7 +22,7 @@ defaults:
 
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   6.6.*
+  QT_VERSION:   6.6.3
   BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
 
 jobs:
@@ -53,8 +53,8 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.arch }}-Release
-          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-Release
+          key: ${{ runner.os }}-${{ matrix.arch }}-Debug
+          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-Debug
           max-size: "2G"
           append-timestamp: false
 
@@ -63,30 +63,35 @@ jobs:
         run: |
           git fetch --all --tags -f --depth 1
 
-      - name: Install Qt for Linux
-        uses: jurplel/install-qt-action@v3
+      - uses: actions/checkout@v4
         with:
-          version:      ${{ env.QT_VERSION }}
-          aqtversion:   ==3.1.*
-          host:         linux
-          target:       desktop
-          dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
-          cache:        false
+          repository: jurplel/install-qt-action
+          ref: master
+          path: install-qt-action
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: install-qt-action/action/
+
+      - name: Build jurplel/install-qt-action
+        run: |
+          cd install-qt-action/action/
+          npm ci || npm install
+          npm run build
+        shell: bash
 
       - name: Install Qt6 for Android
-        uses: jurplel/install-qt-action@v3
+        uses: ./install-qt-action/action/
         with:
           version:      ${{ env.QT_VERSION }}
-          aqtversion:   ==3.1.*
           host:         linux
           target:       android
           arch:         ${{ matrix.arch }}
-          extra:        --autodesktop
           dir:          ${{ runner.temp }}
+          extra:        --autodesktop
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
           cache:        true
 
       - name: Remove Android SDKs to force usage of android-33 only
@@ -110,21 +115,18 @@ jobs:
       - name: Install dependencies
         run:  sudo apt-get install -y ninja-build
 
-      - name: Setup env
-        run: echo "QT_HOST_PATH=${Qt6_DIR}/../gcc_64" >> $GITHUB_ENV
-
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-            chmod a+x ${Qt6_DIR}/bin/qt-cmake
-            ${Qt6_DIR}/bin/qt-cmake -S ${{ env.SOURCE_DIR }} -B ${{ runner.temp }}/shadow_build_dir/ -G Ninja \
+            chmod a+x ${QT_ROOT_DIR}/bin/qt-cmake
+            ${QT_ROOT_DIR}/bin/qt-cmake -S ${{ env.SOURCE_DIR }} -B ${{ runner.temp }}/shadow_build_dir/ -G Ninja \
               -DCMAKE_BUILD_TYPE=Debug \
               -DANDROID_ABI=${{ matrix.eabi }} \
               -DANDROID_PLATFORM=android-23 \
               -DBUILD_TESTING:BOOL=OFF \
-              -DQT_HOST_PATH:PATH=${{ env.QT_HOST_PATH }} \
+              -DQT_HOST_PATH:PATH=${QT_ROOT_DIR}/../gcc_64 \
               -DQT_DEBUG_FIND_PACKAGE=ON
             cmake --build ${{ runner.temp }}/shadow_build_dir/ --target all
