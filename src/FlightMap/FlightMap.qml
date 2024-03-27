@@ -149,6 +149,7 @@ Map {
 
     DragHandler {
         target: null
+        grabPermissions: PointerHandler.TakeOverForbidden
 
         onActiveChanged: {
             if (active) {
