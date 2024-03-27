@@ -42,7 +42,21 @@ Item {
 
     signal activationTriggered(bool value)
 
+    onActivationApprovalChanged: {
+        if(activationApproval === true){
+            approvetag.visible = true
+            activatetag.visible = false
+            activationBar.visible = true
+            activationTriggered(false)
+            displayActivationTabTimer.start()
+        }
+        else{
+            activationBar.visible = false
+        }
+    }
+
     Timer {
+        id: displayActivationTabTimer
         interval: 1000
         running:  activationApproval
         repeat:   activationApproval
@@ -58,6 +72,7 @@ Item {
                     approvetag.visible = false
                     activatetag.visible = true
                     activationTriggered(true)
+                    displayActivationTabTimer.stop()
                     hideTimer.start()
                 }else{
                     approvetag.visible = false
