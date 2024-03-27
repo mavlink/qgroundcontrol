@@ -1,4 +1,7 @@
+add_subdirectory(Viewer3DQml)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Quick3D)
+
 
 qt_add_library(Viewer3D STATIC
     Viewer3DManager.cc
@@ -13,6 +16,17 @@ qt_add_library(Viewer3D STATIC
     Viewer3DQmlVariableTypes.h
     Viewer3DUtils.cc
     Viewer3DUtils.h
+    Viewer3DTileReply.h
+    Viewer3DTileReply.cc
+    Viewer3DTerrainGeometry.h
+    Viewer3DTerrainGeometry.cc
+    Viewer3DTerrainTexture.h
+    Viewer3DTerrainTexture.cc
+    Viewer3DTileQuery.h
+    Viewer3DTileQuery.cc
+    OsmParserThread.cc
+    OsmParserThread.h
+
 )
 
 target_link_libraries(Viewer3D

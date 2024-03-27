@@ -30,11 +30,12 @@ Node{
             source: "#Cone"
             materials: [ DefaultMaterial {
                     diffuseColor: {
-                        let _abbreviation = abbreviation;
-                        if(_abbreviation === "Takeoff"){
+                        if(itemName === "T"){
                             return "green";
-                        }else if(abbreviation === "ROI"){
+                        }else if(itemName === "R"){
                             return "red"
+                        }else if(itemName === "L"){
+                            return "orange"
                         }
                         return "black"
                     }
@@ -47,15 +48,7 @@ Node{
     {
         Text {
             color: "black"
-            text: {
-                let _abbreviation = abbreviation;
-                if(_abbreviation === "Takeoff"){
-                    return "T";
-                }else if(abbreviation === "ROI"){
-                    return "R"
-                }
-                return ""
-            }
+            text: (itemName ==="W")?(Number(index)):(itemName)
             font.pixelSize: 20
         }
 

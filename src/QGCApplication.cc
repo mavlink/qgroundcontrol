@@ -110,6 +110,8 @@
 #include "Viewer3DQmlVariableTypes.h"
 #include "OsmParser.h"
 #include "Viewer3DManager.h"
+#include "Viewer3DTerrainGeometry.h"
+#include "Viewer3DTerrainTexture.h"
 
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
@@ -428,7 +430,6 @@ void QGCApplication::_initCommon()
     static const char* kQGCControllers  = "QGroundControl.Controllers";
     static const char* kQGCVehicle      = "QGroundControl.Vehicle";
     static const char* kQGCTemplates    = "QGroundControl.Templates";
-    static const char* kQGCViewer3D     = "QGroundControl.Viewer3D";
     
     QSettings settings;
 
@@ -438,11 +439,13 @@ void QGCApplication::_initCommon()
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
     // For 3D viewer types
-    qmlRegisterType<GeoCoordinateType>                  (kQGCViewer3D, 1, 0, "GeoCoordinateType");
-    qmlRegisterType<CityMapGeometry>                    (kQGCViewer3D, 1, 0, "CityMapGeometry");
-    qmlRegisterType<Viewer3DManager>                    (kQGCViewer3D, 1, 0, "Viewer3DManager");
-    qmlRegisterUncreatableType<Viewer3DQmlBackend>      (kQGCViewer3D, 1, 0, "Viewer3DQmlBackend",          kRefOnly);
-    qmlRegisterUncreatableType<OsmParser>               (kQGCViewer3D, 1, 0, "OsmParser",                   kRefOnly);
+    qmlRegisterType<GeoCoordinateType>                  ("QGroundControl.Viewer3D", 1, 0, "GeoCoordinateType");
+    qmlRegisterType<CityMapGeometry>                    ("QGroundControl.Viewer3D", 1, 0, "CityMapGeometry");
+    qmlRegisterType<Viewer3DManager>                    ("QGroundControl.Viewer3D", 1, 0, "Viewer3DManager");
+    qmlRegisterUncreatableType<Viewer3DQmlBackend>      ("QGroundControl.Viewer3D", 1, 0, "Viewer3DQmlBackend",          kRefOnly);
+    qmlRegisterUncreatableType<OsmParser>               ("QGroundControl.Viewer3D", 1, 0, "OsmParser",                   kRefOnly);
+    qmlRegisterType<Viewer3DTerrainGeometry>            ("QGroundControl.Viewer3D", 1, 0, "Viewer3DTerrainGeometry");
+    qmlRegisterType<Viewer3DTerrainTexture>             ("QGroundControl.Viewer3D", 1, 0, "Viewer3DTerrainTexture");
     
     qmlRegisterUncreatableType<Vehicle>                 (kQGCVehicle,                       1, 0, "Vehicle",                    kRefOnly);
     qmlRegisterUncreatableType<MissionManager>          (kQGCVehicle,                       1, 0, "MissionManager",             kRefOnly);

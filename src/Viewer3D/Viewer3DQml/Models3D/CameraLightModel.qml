@@ -13,6 +13,8 @@ Node {
     property real _pan: 0.001
     property real _zoom: 1500
 
+    property real lightsBrightness: 0.3
+
     function resetCamera(){
         camNode.position = Qt.vector3d(0, 0, 0);
         camNode.eulerRotation = Qt.vector3d(90, 0, 0);
@@ -32,26 +34,32 @@ Node {
 
     DirectionalLight {
         eulerRotation.x: 180
+        brightness: lightsBrightness
     }
 
     DirectionalLight {
         eulerRotation.x: 0
+        brightness: 0.6
     }
 
     DirectionalLight {
         eulerRotation.x: 90
+        brightness: lightsBrightness
     }
 
     DirectionalLight {
         eulerRotation.x: 270
+        brightness: lightsBrightness
     }
 
     DirectionalLight {
         eulerRotation.y: 90
+        brightness: lightsBrightness
     }
 
     DirectionalLight {
         eulerRotation.y: -90
+        brightness: lightsBrightness
     }
 
     Node {

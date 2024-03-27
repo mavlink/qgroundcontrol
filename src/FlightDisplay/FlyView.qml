@@ -135,6 +135,7 @@ Item {
             mapControl:             _mapControl
             visible:                !QGroundControl.videoManager.fullScreen
             utmspActTrigger:        utmspSendActTrigger
+            isViewer3DOpen:         viewer3DWindow.isOpen
         }
 
         FlyViewCustomLayer {

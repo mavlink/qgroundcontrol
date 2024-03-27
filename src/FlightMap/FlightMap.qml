@@ -141,7 +141,7 @@ Map {
         // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
         // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
         // and we don't yet distinguish mice and trackpads on Wayland either
-        acceptedDevices:    Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland" ? 
+        acceptedDevices:    Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland" ?
                                 PointerDevice.Mouse | PointerDevice.TouchPad : PointerDevice.Mouse
         rotationScale:      1 / 120
         property:           "zoomLevel"
