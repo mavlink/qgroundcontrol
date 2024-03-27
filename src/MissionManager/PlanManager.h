@@ -15,8 +15,6 @@
 
 #include "MissionItem.h"
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
-#include "LinkInterface.h"
 
 class Vehicle;
 class MissionCommandTree;

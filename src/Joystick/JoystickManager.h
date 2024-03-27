@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
 #include "Joystick.h"
 #include "MultiVehicleManager.h"
 #include "QGCToolbox.h"

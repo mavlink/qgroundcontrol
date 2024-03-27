@@ -10,7 +10,6 @@
 #pragma once
 
 #include <QObject>
-#include <QVariant>
 #include <QQmlComponent>
 
 class ToolStripAction : public QObject

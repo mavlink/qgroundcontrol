@@ -10,10 +10,7 @@
 #include "ParameterEditorController.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
-#include "SettingsManager.h"
 #include "AppSettings.h"
-
-#include <QStandardPaths>
 
 ParameterEditorController::ParameterEditorController(void)
     : _parameterMgr(_vehicle->parameterManager())

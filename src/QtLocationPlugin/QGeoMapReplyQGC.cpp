@@ -51,6 +51,7 @@
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QFile>
+#include <QtNetwork/QNetworkProxy>
 #include "TerrainTile.h"
 
 int         QGeoTiledMapReplyQGC::_requestCount = 0;

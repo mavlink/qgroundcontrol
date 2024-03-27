@@ -12,8 +12,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SensorsComponent.h"
-#include "PX4AutoPilotPlugin.h"
-#include "SensorsComponentController.h"
+#include "ParameterManager.h"
 
 const char* SensorsComponent::_airspeedBreakerParam =   "CBRK_AIRSPD_CHK";
 const char* SensorsComponent::_airspeedDisabledParam =  "FW_ARSP_MODE";

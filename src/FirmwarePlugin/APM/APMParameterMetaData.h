@@ -13,13 +13,11 @@
 
 #include <QObject>
 #include <QMap>
-#include <QPointer>
 #include <QXmlStreamReader>
 #include <QLoggingCategory>
 
-#include "FactSystem.h"
-#include "AutoPilotPlugin.h"
-#include "Vehicle.h"
+#include "QGCMAVLink.h"
+#include "FactMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)

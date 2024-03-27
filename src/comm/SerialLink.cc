@@ -10,7 +10,6 @@
 #include <QTimer>
 #include <QDebug>
 #include <QSettings>
-#include <QMutexLocker>
 
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
@@ -22,7 +21,6 @@
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
-#include "QGCSerialPortInfo.h"
 #include "LinkManager.h"
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")

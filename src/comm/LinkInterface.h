@@ -10,18 +10,10 @@
 #pragma once
 
 #include <QThread>
-#include <QDateTime>
 #include <QLoggingCategory>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QMetaType>
-#include <QSharedPointer>
-#include <QDebug>
-#include <QTimer>
 
 #include <memory>
 
-#include "QGCMAVLink.h"
 #include "LinkConfiguration.h"
 
 class LinkManager;

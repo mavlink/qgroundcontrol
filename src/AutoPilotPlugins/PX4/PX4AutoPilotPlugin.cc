@@ -10,9 +10,6 @@
 
 #include "PX4AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
-#include "AirframeComponentController.h"
-#include "FirmwarePlugin/PX4/PX4ParameterMetaData.h"  // FIXME: Hack
-#include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"  // FIXME: Hack
 #include "QGCApplication.h"
 #include "FlightModesComponent.h"
 #include "PX4RadioComponent.h"

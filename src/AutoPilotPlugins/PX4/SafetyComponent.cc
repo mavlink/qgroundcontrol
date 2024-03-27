@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SafetyComponent.h"
-#include "PX4AutoPilotPlugin.h"
 
 SafetyComponent::SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

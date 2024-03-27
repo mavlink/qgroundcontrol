@@ -11,12 +11,12 @@
 
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
-#include "SettingsFact.h"
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "ADSBVehicleManager.h"
 #include "QGCPalette.h"
 #include "QmlUnitsConversion.h"
+#include "QGCMapUrlEngine.h"
 #ifndef QGC_AIRLINK_DISABLED
 #include "AirLinkManager.h"
 #else

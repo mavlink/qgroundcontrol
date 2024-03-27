@@ -9,9 +9,6 @@
 
 #pragma once
 
-#include "FactSystem.h"
-#include "QmlObjectListModel.h"
-#include "QGCApplication.h"
 #include "FactValueGrid.h"
 
 class InstrumentValueData;

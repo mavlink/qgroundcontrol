@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "APMMotorComponent.h"
-#include "APMSubMotorComponentController.h"
 
 APMMotorComponent::APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     MotorComponent(vehicle, autopilot, parent),

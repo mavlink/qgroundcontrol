@@ -18,6 +18,7 @@
 
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
+#include "QGCLoggingCategory.h"
 
 #include <QVariant>
 #include <QtSql/QSqlQuery>
@@ -27,6 +28,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QSettings>
+#include <QtNetwork/QNetworkProxy>
 
 #include "time.h"
 

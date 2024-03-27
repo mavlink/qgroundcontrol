@@ -11,8 +11,9 @@
 
 #include "StateMachine.h"
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
 

@@ -8,9 +8,6 @@
  ****************************************************************************/
 
 #include <QList>
-#include <QApplication>
-#include <QDebug>
-#include <QSignalSpy>
 
 #include <memory>
 
@@ -45,6 +42,8 @@
 #include <qmdnsengine/server.h>
 #include <qmdnsengine/service.h>
 #endif
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")

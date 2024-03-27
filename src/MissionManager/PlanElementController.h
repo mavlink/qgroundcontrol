@@ -12,9 +12,6 @@
 
 #include <QObject>
 
-#include "Vehicle.h"
-#include "MultiVehicleManager.h"
-
 class PlanMasterController;
 
 Q_MOC_INCLUDE("PlanMasterController.h")

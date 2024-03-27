@@ -12,12 +12,12 @@
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 #include "KMLPlanDomDocument.h"
 #include "QGCGeoBoundingCube.h"
 #include "QGroundControlQmlGlobal.h"
 
 #include <QHash>
+#include <QtCore/QLoggingCategory>
 
 class FlightPathSegment;
 class VisualMissionItem;

@@ -13,16 +13,15 @@
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "FirmwarePlugin.h"
-#include "JsonHelper.h"
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
 #include "FTPManager.h"
+#include "QGC.h"
 
 #include <QEasingCurve>
 #include <QFile>
-#include <QDebug>
 #include <QVariantAnimation>
-#include <QJsonArray>
+#include <QtCore/QStandardPaths>
 
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")

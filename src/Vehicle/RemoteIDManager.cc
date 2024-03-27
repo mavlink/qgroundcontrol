@@ -11,8 +11,8 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "RemoteIDSettings.h"
-#include "QGCQGeoCoordinate.h"
 #include "PositionManager.h"
+#include "QGCLoggingCategory.h"
 
 #include <QDebug>
 

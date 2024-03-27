@@ -18,13 +18,12 @@
 #include "QGCZlib.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
+#include "QGCLoggingCategory.h"
 
 #include <QStandardPaths>
-#include <QRegularExpression>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QNetworkProxy>
 
 const char* FirmwareUpgradeController::_manifestFirmwareJsonKey =               "firmware";
 const char* FirmwareUpgradeController::_manifestBoardIdJsonKey =                "board_id";

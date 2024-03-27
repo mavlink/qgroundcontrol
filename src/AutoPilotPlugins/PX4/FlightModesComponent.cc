@@ -12,7 +12,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "FlightModesComponent.h"
-#include "PX4AutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 struct SwitchListItem {
     const char* param;

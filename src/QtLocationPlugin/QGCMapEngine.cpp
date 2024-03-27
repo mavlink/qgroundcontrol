@@ -20,10 +20,8 @@
 #include "MapsSettings.h"
 #include "SettingsManager.h"
 
-#include <math.h>
 #include <QStandardPaths>
 #include <QDir>
-#include <stdio.h>
 
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"

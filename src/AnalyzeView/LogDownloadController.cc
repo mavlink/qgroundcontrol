@@ -16,6 +16,7 @@
 #include "ParameterManager.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
+#include "QGCLoggingCategory.h"
 
 #include <QDebug>
 #include <QSettings>

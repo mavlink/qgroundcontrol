@@ -10,13 +10,10 @@
 #include "LandingComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
-#include "QGCGeo.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
-#include "FlightPathSegment.h"
 #include "TakeoffMissionItem.h"
-
-#include <QPolygonF>
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")
 

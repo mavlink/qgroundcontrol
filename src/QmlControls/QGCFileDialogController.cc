@@ -9,12 +9,9 @@
 
 
 #include "QGCFileDialogController.h"
+#include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
-
-#include <QStandardPaths>
-#include <QDebug>
 #include <QDir>
 
 QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QGCFileDialogControllerLog")

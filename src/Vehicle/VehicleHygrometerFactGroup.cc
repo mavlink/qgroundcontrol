@@ -9,7 +9,6 @@
 
 #include "VehicleHygrometerFactGroup.h"
 #include "Vehicle.h"
-#include "QGCGeo.h"
 
 VehicleHygrometerFactGroup::VehicleHygrometerFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/HygrometerFact.json", parent)

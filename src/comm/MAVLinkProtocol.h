@@ -9,18 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QMutex>
 #include <QString>
-#include <QTimer>
-#include <QFile>
-#include <QMap>
 #include <QByteArray>
 #include <QLoggingCategory>
 
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
-#include "QGC.h"
 #include "QGCTemporaryFile.h"
 #include "QGCToolbox.h"
 

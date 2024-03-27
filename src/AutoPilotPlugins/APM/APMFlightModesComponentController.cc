@@ -9,10 +9,8 @@
 
 
 #include "APMFlightModesComponentController.h"
-#include "QGCMAVLink.h"
 
 #include <QVariant>
-#include <QQmlProperty>
 
 bool APMFlightModesComponentController::_typeRegistered = false;
 

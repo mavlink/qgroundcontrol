@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "Actuators.h"
+#include "GeometryImage.h"
 
 #include <QString>
 #include <QFile>

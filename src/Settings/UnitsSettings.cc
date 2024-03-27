@@ -9,8 +9,7 @@
 
 #include "UnitsSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(Units, "Units")
 {

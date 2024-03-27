@@ -9,10 +9,6 @@
 
 
 #include "PX4SimpleFlightModesController.h"
-#include "QGCMAVLink.h"
-
-#include <QVariant>
-#include <QQmlProperty>
 
 PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
     : _activeFlightMode(0)

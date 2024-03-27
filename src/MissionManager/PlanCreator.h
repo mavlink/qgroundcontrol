@@ -11,7 +11,7 @@
 
 #include <QObject>
 #include <QString>
-#include "QGeoCoordinate"
+#include <QGeoCoordinate>
 
 class PlanMasterController;
 class MissionController;

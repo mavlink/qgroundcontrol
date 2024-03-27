@@ -14,10 +14,9 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include <QObject>
-#include <QQuickItem>
+#include <QtCore/QLoggingCategory>
 
 #include "AutoPilotPlugin.h"
-#include "QGCLoggingCategory.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FactPanelControllerLog)
 

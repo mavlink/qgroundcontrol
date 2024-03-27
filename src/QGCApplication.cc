@@ -34,6 +34,7 @@
 #endif
 
 #include "QGC.h"
+#include "QGCConfig.h"
 #include "QGCApplication.h"
 #include "CmdLineOptParser.h"
 #include "UDPLink.h"

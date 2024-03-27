@@ -11,8 +11,7 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 #include <QVariantList>
 
 #ifndef QGC_DISABLE_UVC

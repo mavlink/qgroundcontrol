@@ -11,6 +11,7 @@
 #include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 

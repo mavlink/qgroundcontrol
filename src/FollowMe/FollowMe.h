@@ -11,11 +11,6 @@
 #pragma once
 
 #include <QTimer>
-#include <QObject>
-#include <QThread>
-#include <QGeoPositionInfo>
-#include <QGeoPositionInfoSource>
-#include <QElapsedTimer>
 
 #include "QGCToolbox.h"
 #include "MAVLinkProtocol.h"
