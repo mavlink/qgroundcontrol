@@ -36,16 +36,10 @@ QGCFlickable {
     property var    mapControl
     property var    flightMap
     property var    currentMissionItems
-    property int    currentYear         :   new Date().getFullYear()
-    property int    currentMonth        :   new Date().getMonth() + 1
-    property int    currentHour         :   (new Date()).getHours()
-    property int    currentMin          :   (new Date()).getMinutes()
-    property int    currentDate         :   (new Date()).getDay()
     property var    myActiveVehicle     :   QGroundControl.multiVehicleManager.activeVehicle
     property var    flightID
     property var    startTimeStamp
     property bool   submissionFlag
-    property bool   approvalFlag
     property bool   triggerSubmitButton
     property bool   resetRegisterFlightPlan
 
@@ -57,7 +51,6 @@ QGCFlickable {
     signal responseSent(string response, bool responseFlag)                     // Send the flight blender response to PlanVeiw
     signal vehicleIDSent(string id)                                             // Send Vehcile ID to PlanView
     signal resetGeofencePolygonTriggered()                                      // Send FlightPlan Trigger Value to PlanView
-    signal timeStampSent(string timestamp, bool activateflag, string id)        // Send the flight timestamp to UTMSPActivationStatusBar
     signal removeFlightPlanTriggered()
 
     // Set default Geofence Polygon
@@ -153,9 +146,9 @@ QGCFlickable {
 
                     // Logout button
                     QGCButton{
-                        width:      ScreenTools.defaultFontPixelWidth * 7.5
-                        height:     ScreenTools.defaultFontPixelHeight * 1.389
-                        text:       "Logout"
+                        text:       qsTr("Logout")
+                        width:      ScreenTools.defaultFontPixelWidth * 7.8
+                        height:     ScreenTools.defaultFontPixelHeight * 2
                         visible:    !UTMSPStateStorage.loginState
                         onClicked:{
                             UTMSPStateStorage.loginState = !UTMSPStateStorage.loginState
@@ -177,7 +170,6 @@ QGCFlickable {
 
                     Row{
                         spacing: _margin * 5
-                        visible: UTMSPStateStorage.loginState
 
                         QGCLabel{
                             id:     notifyText
@@ -218,7 +210,7 @@ QGCFlickable {
                     Column{
                         spacing:_margin * 1.667
 
-                        QGCLabel        { text: qsTr("User ID") }
+                        QGCTextField        { text: qsTr("User ID") }
                         FactTextField {
                             id:                     userName
                             width:                  ScreenTools.defaultFontPixelWidth * 50
@@ -234,7 +226,7 @@ QGCFlickable {
                     Column{
                         spacing: _margin * 1.5
 
-                        QGCLabel { text: qsTr("Password:") }
+                        QGCTextField { text: qsTr("Password:") }
                         FactTextField {
                             id:                     password
                             width:                  ScreenTools.defaultFontPixelWidth * 50
@@ -571,9 +563,9 @@ QGCFlickable {
                             model: myGeoFenceController.polygons
                             delegate: QGCButton {
                                 text: qsTr("Delete")
-                                width: ScreenTools.defaultFontPixelWidth * 6.667
+                                width: ScreenTools.defaultFontPixelWidth * 7.667
                                 height: ScreenTools.defaultFontPixelHeight * 1.667
-                                x: ScreenTools.defaultFontPixelWidth * 43
+                                x: ScreenTools.defaultFontPixelWidth * 41
                                 y: ScreenTools.defaultFontPixelHeight * 2
                                 onClicked: {
                                     myGeoFenceController.deletePolygon(index)
@@ -1285,24 +1277,24 @@ QGCFlickable {
                         submissionTimer.interval = 2500
                         submissionTimer.repeat = false
                         submissionTimer.start()
-                        var minAltitude = minSlider.value.toFixed(0)
-                        var maxAltitude = maxSlider.value.toFixed(0)
-                        var sday        = scrollDate.model[scrollDate.currentIndex]
-                        var smonth      = scrollMonth.currentIndex + 1
-                        var syear       = scrollYear.model[scrollYear.currentIndex]
-                        var shour       = starthours.model[starthours.currentIndex]
-                        var sminute     = startMinutes.model[startMinutes.currentIndex]
-                        var ssecond     = startSeconds.model[startSeconds.currentIndex]
-                        var ehour       = endhours.model[endhours.currentIndex]
-                        var eminute     = endMinutes.model[endMinutes.currentIndex]
-                        var esecond     = endSeconds.model[endSeconds.currentIndex]
-                        var st          = syear + "-" + smonth + "-" + sday + "T" + shour + ":" + sminute + ":" + ssecond+ "." + "000000" + "Z"
-                        var et          = syear + "-" + smonth + "-" + sday + "T" + ehour + ":" + eminute + ":" + esecond+ "." + "000000" + "Z"
-                        var activateTD  = syear + "-" + String(smonth).padStart(2, '0') + "-" + String(sday).padStart(2, '0') + "T" + String(shour).padStart(2, '0') + ":" + String(sminute).padStart(2, '0') + ":" + String(ssecond).padStart(2, '0') + "." + "000000" + "Z"
+                        var minAltitude   = minSlider.value.toFixed(0)
+                        var maxAltitude   = maxSlider.value.toFixed(0)
+                        var startDay      = scrollDate.model[scrollDate.currentIndex]
+                        var startMonth    = scrollMonth.currentIndex + 1
+                        var startYear     = scrollYear.model[scrollYear.currentIndex]
+                        var startHour     = starthours.model[starthours.currentIndex]
+                        var startMinute   = startMinutes.model[startMinutes.currentIndex]
+                        var startSecond   = startSeconds.model[startSeconds.currentIndex]
+                        var endHour       = endhours.model[endhours.currentIndex]
+                        var endMinute     = endMinutes.model[endMinutes.currentIndex]
+                        var endSecond     = endSeconds.model[endSeconds.currentIndex]
+                        var startDateTime = startYear + "-" + startMonth + "-" + startDay + "T" + startHour + ":" + startMinute + ":" + startSecond+ "." + "000000" + "Z"
+                        var endDateTime   = startYear + "-" + startMonth + "-" + startDay + "T" + endHour + ":" + endMinute + ":" + endSecond+ "." + "000000" + "Z"
+                        var activateTD    = startYear + "-" + String(startMonth).padStart(2, '0') + "-" + String(startDay).padStart(2, '0') + "T" + String(startHour).padStart(2, '0') + ":" + String(startMinute).padStart(2, '0') + ":" + String(startSecond).padStart(2, '0') + "." + "000000" + "Z"
                         resetGeofencePolygonTriggered()
                         myGeoFenceController.loadFlightPlanData()
-                        QGroundControl.utmspManager.utmspVehicle.updateStartDateTime(st.toString())
-                        QGroundControl.utmspManager.utmspVehicle.updateEndDateTime(et.toString())
+                        QGroundControl.utmspManager.utmspVehicle.updateStartDateTime(startDateTime.toString())
+                        QGroundControl.utmspManager.utmspVehicle.updateEndDateTime(endDateTime.toString())
                         QGroundControl.utmspManager.utmspVehicle.updateMinAltitude(minAltitude)
                         QGroundControl.utmspManager.utmspVehicle.updateMaxAltitude(maxAltitude)
                         QGroundControl.utmspManager.utmspVehicle.triggerFlightAuthorization()
@@ -1315,6 +1307,9 @@ QGCFlickable {
                         startTimeStamp = activateTD
                         submissionFlag = responseFlag
                         responseSent(responseJson,responseFlag)
+                        UTMSPStateStorage.startTimeStamp = activateTD
+                        UTMSPStateStorage.showActivationTab = responseFlag
+                        UTMSPStateStorage.flightID = flightID
                     }
                 }
 
@@ -1324,8 +1319,7 @@ QGCFlickable {
                     onTriggered: {
                         if(submissionFlag === true)
                         {
-                            approvalFlag = myGeoFenceController.loadUploadFlag()
-                            timeStampSent(startTimeStamp,approvalFlag,flightID)
+                            UTMSPStateStorage.enableMissionUploadButton = true
                             submitFlightPlan.visible = false
                             geoSwitch.checked = false
                             deletePolygon.visible = false
@@ -1349,6 +1343,11 @@ QGCFlickable {
                         deleteFlightPlan.visible = false
                         geoSwitch.enabled = true
                         QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false)
+                        QGroundControl.utmspManager.utmspVehicle.loadTelemetryFlag(false)
+                        UTMSPStateStorage.startTimeStamp = ""
+                        UTMSPStateStorage.showActivationTab = false
+                        UTMSPStateStorage.flightID = ""
+                        UTMSPStateStorage.enableMissionUploadButton = false
                     }
                 }
             }
