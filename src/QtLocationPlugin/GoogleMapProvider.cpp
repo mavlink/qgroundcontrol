@@ -13,7 +13,8 @@
 #include <QStandardPaths>
 #endif
 #include <QtGlobal>
-#include <QtCore5Compat/QRegExp>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QRegularExpressionMatch>
 
 #include "QGCMapEngine.h"
 
@@ -77,19 +78,27 @@ void GoogleMapProvider::_googleVersionCompleted() {
     }
 #endif
 
-    QRegExp reg(QStringLiteral("\"*https?://mt\\D?\\d..*/vt\\?lyrs=m@(\\d*)"), Qt::CaseInsensitive);
-    if (reg.indexIn(html) != -1) {
-        _versionGoogleMap = QString(QStringLiteral("m@%1")).arg(reg.capturedTexts().value(1, QString()));
+    static const QRegularExpression regMap( "\"*https?://mt\\D?\\d..*/vt\\?lyrs=m@(\\d*)", QRegularExpression::CaseInsensitiveOption );
+    const QRegularExpressionMatch matchMap = regMap.match( html );
+    if( matchMap.hasMatch() )
+    {
+        _versionGoogleMap = QString( "m@%1" ).arg( matchMap.captured( 1 ) );
     }
-    reg = QRegExp(QStringLiteral("\"*https?://khm\\D?\\d.googleapis.com/kh\\?v=(\\d*)"), Qt::CaseInsensitive);
-    if (reg.indexIn(html) != -1) {
-        _versionGoogleSatellite = reg.capturedTexts().value(1);
+
+    static const QRegularExpression regSatellite( "\"*https?://khm\\D?\\d.googleapis.com/kh\\?v=(\\d*)", QRegularExpression::CaseInsensitiveOption );
+    const QRegularExpressionMatch matchSatellite = regSatellite.match( html );
+    if( matchSatellite.hasMatch() )
+    {
+        _versionGoogleSatellite = matchSatellite.captured( 1 );
     }
-    reg = QRegExp(QStringLiteral("\"*https?://mt\\D?\\d..*/vt\\?lyrs=t@(\\d*),r@(\\d*)"), Qt::CaseInsensitive);
-    if (reg.indexIn(html) != -1) {
-        const QStringList gc  = reg.capturedTexts();
-        _versionGoogleTerrain = QString(QStringLiteral("t@%1,r@%2")).arg(gc.value(1), gc.value(2));
+
+    static const QRegularExpression regTerrain( "\"*https?://mt\\D?\\d..*/vt\\?lyrs=t@(\\d*),r@(\\d*)", QRegularExpression::CaseInsensitiveOption );
+    const QRegularExpressionMatch matchTerrain = regTerrain.match( html );
+    if( matchTerrain.hasMatch() )
+    {
+        _versionGoogleTerrain = QString( "t@%1,r@%2" ).arg( matchTerrain.captured( 1 ), matchTerrain.captured( 2 ) );
     }
+
     _googleReply->deleteLater();
     _googleReply = nullptr;
 }

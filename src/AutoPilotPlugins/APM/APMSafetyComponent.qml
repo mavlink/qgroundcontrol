@@ -10,7 +10,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
@@ -551,25 +550,19 @@ SetupPage {
                         height: landSpeedField.y + landSpeedField.height + _margins
                         color:  ggcPal.windowShade
 
-                        Image {
+                        QGCColoredImage {
                             id:                 icon
+                            visible:            _showIcon
                             anchors.margins:    _margins
                             anchors.left:       parent.left
                             anchors.top:        parent.top
                             height:             ScreenTools.defaultFontPixelWidth * 20
                             width:              ScreenTools.defaultFontPixelWidth * 20
+                            color:              ggcPal.text
                             sourceSize.width:   width
                             mipmap:             true
                             fillMode:           Image.PreserveAspectFit
-                            visible:            false
                             source:             "/qmlimages/ReturnToHomeAltitude.svg"
-                        }
-
-                        ColorOverlay {
-                            anchors.fill:   icon
-                            source:         icon
-                            color:          ggcPal.text
-                            visible:        _showIcon
                         }
 
                         QGCRadioButton {
