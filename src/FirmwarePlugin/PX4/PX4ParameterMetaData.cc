@@ -12,13 +12,12 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "PX4ParameterMetaData.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 #include <QFile>
-#include <QFileInfo>
 #include <QDir>
 #include <QDebug>
+#include <QXmlStreamReader>
 
 static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
 

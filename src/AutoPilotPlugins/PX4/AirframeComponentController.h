@@ -15,10 +15,7 @@
 #define AIRFRAMECOMPONENTCONTROLLER_H
 
 #include <QObject>
-#include <QQuickItem>
-#include <QList>
 
-#include "AutoPilotPlugin.h"
 #include "FactPanelController.h"
 
 /// MVC Controller for AirframeComponent.qml.

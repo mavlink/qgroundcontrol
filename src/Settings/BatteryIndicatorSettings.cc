@@ -9,8 +9,7 @@
 
 #include "BatteryIndicatorSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(BatteryIndicator, "BatteryIndicator")
 {

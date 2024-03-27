@@ -10,11 +10,11 @@
 #pragma once
 
 #include "FirmwarePlugin.h"
-#include "QGCLoggingCategory.h"
 #include "APMParameterMetaData.h"
 #include "FollowMe.h"
 
 #include <QAbstractSocket>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 

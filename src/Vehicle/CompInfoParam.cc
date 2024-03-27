@@ -13,8 +13,8 @@
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
-#include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QtCore5Compat/QRegExp>

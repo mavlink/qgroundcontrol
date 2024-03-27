@@ -10,13 +10,13 @@
 #pragma once
 
 #include "FactGroup.h"
-#include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
 #include <QObject>
 #include <QSizeF>
 #include <QRectF>
 #include <QPointF>
+#include <QtCore/QLoggingCategory>
 
 class QGCCameraParamIO;
 

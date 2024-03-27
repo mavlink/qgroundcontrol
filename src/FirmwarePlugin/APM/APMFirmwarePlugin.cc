@@ -18,7 +18,6 @@
 #include "APMSubMotorComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
-#include "QGCFileDownload.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
@@ -27,6 +26,7 @@
 #include "ArduRoverFirmwarePlugin.h"
 #include "ArduSubFirmwarePlugin.h"
 #include "LinkManager.h"
+#include "QGCLoggingCategory.h"
 
 #include <QTcpSocket>
 #include <QtCore5Compat/QRegExp>

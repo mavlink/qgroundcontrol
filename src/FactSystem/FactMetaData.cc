@@ -14,7 +14,6 @@
 
 #include <QDebug>
 #include <QtMath>
-#include <QJsonParseError>
 #include <QJsonArray>
 
 #include <limits>

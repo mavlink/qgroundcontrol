@@ -13,7 +13,6 @@
 
 #include "APMSafetyComponent.h"
 #include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
 
 APMSafetyComponent::APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)

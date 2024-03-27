@@ -9,8 +9,7 @@
 
 #include "RTKSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(RTK, "RTK")
 {

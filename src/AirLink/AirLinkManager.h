@@ -10,9 +10,6 @@
 #pragma once
 
 #include "QGCToolbox.h"
-#include "QGCLoggingCategory.h"
-#include "Fact.h"
-#include "LinkConfiguration.h"
 
 #include <QTimer>
 #include <QTime>

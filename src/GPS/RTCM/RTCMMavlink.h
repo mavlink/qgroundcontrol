@@ -14,7 +14,7 @@
 #include <QElapsedTimer>
 
 #include "QGCToolbox.h"
-#include "MAVLinkProtocol.h"
+#include "QGCMAVLink.h"
 
 /**
  ** class RTCMMavlink

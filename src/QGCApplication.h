@@ -16,6 +16,7 @@
 #include <QSet>
 #include <QMetaMethod>
 #include <QMetaObject>
+#include <QTranslator>
 
 // These private headers are require to implement the signal compress support below
 #include <private/qthread_p.h>

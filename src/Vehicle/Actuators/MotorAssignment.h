@@ -13,9 +13,9 @@
 #include <QString>
 #include <QTimer>
 
-#include "Common.h"
-
 #include "QmlControls/QmlObjectListModel.h"
+#include "Vehicle.h"
+
 
 /**
  * Handles automatic motor ordering assignment by spinning individual motors, and then having the user

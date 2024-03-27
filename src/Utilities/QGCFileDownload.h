@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QNetworkReply>
+#include <QtNetwork/QNetworkReply>
 
 class QGCFileDownload : public QNetworkAccessManager
 {

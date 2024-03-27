@@ -9,13 +9,11 @@
 
 
 #include "APMSensorsComponentController.h"
-#include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"
-
+#include "QGCLoggingCategory.h"
 #include <QVariant>
-#include <QQmlProperty>
 
 QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "APMSensorsComponentControllerLog")
 QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsComponentControllerVerboseLog")

@@ -11,7 +11,6 @@
 #include <QTimer>
 #include <QList>
 #include <QDebug>
-#include <iostream>
 
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothLocalDevice>
@@ -20,7 +19,6 @@
 
 #include "QGCApplication.h"
 #include "BluetoothLink.h"
-#include "QGC.h"
 #include "LinkManager.h"
 
 BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr& config)

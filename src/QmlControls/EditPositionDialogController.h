@@ -12,7 +12,7 @@
 #include <QObject>
 #include <QGeoCoordinate>
 
-#include "FactSystem.h"
+#include "Fact.h"
 
 class EditPositionDialogController : public QObject
 {

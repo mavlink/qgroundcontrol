@@ -11,8 +11,6 @@
 #pragma once
 
 #include "VehicleComponent.h"
-#include "Fact.h"
-
 #include "Actuators/Actuators.h"
 
 class ActuatorComponent : public VehicleComponent

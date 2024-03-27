@@ -8,14 +8,10 @@
  ****************************************************************************/
 
 #include "CompInfoGeneral.h"
-
 #include "JsonHelper.h"
-#include "FactMetaData.h"
 #include "FirmwarePlugin.h"
-#include "FirmwarePluginManager.h"
-#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
-#include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonArray>
 

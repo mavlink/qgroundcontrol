@@ -10,8 +10,6 @@
 #pragma once
 
 #include "FirmwarePlugin.h"
-#include "ParameterManager.h"
-#include "PX4ParameterMetaData.h"
 
 class PX4FirmwarePlugin : public FirmwarePlugin
 {

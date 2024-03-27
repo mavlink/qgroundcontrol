@@ -9,12 +9,11 @@
 
 #pragma once
 
-#include "FactSystem.h"
 #include "QmlObjectListModel.h"
-#include "QGCApplication.h"
+#include "QGCMAVLink.h"
 
-#include <QGridLayout>
 #include <QSettings>
+#include <QtQuick/QQuickItem>
 
 class InstrumentValueData;
 

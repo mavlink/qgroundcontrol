@@ -12,7 +12,7 @@
 
 #include <QFile>
 #include <QVariant>
-#include <QtDebug>
+#include <QtCore/QDebug>
 #include <QRegularExpression>
 
 const char* SHPFileHelper::_errorPrefix = QT_TR_NOOP("SHP file load failed. %1");

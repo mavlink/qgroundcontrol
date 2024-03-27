@@ -11,7 +11,7 @@
 
 #include <QObject>
 
-#include "MAVLinkProtocol.h"
+#include "QGCMAVLink.h"
 #include "Vehicle.h"
 
 class CustomAction: public QObject

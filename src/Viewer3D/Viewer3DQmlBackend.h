@@ -2,8 +2,6 @@
 #define Viewer3DQmlBackend_H
 
 #include <QObject>
-#include <qqml.h>
-#include <QString>
 
 #include "OsmParser.h"
 #include "Viewer3DSettings.h"
@@ -11,6 +9,7 @@
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 class Viewer3DSettings;
+class Vehicle;
 
 class Viewer3DQmlBackend : public QObject
 {

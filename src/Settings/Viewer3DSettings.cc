@@ -9,8 +9,7 @@
 
 #include "Viewer3DSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(Viewer3D, "Viewer3D")
 {

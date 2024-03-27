@@ -8,8 +8,10 @@
  ****************************************************************************/
 
 #include "ActuatorComponent.h"
-
 #include "QGCApplication.h"
+#include "GeometryImage.h"
+
+#include <QtQml/QQmlApplicationEngine>
 
 static bool imageProviderAdded{false};
 

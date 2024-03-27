@@ -16,9 +16,10 @@
 
 #include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
-#include "QGCLoggingCategory.h"
-#include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
+#include "QGCTileSet.h"
+
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineManagerLog)
 

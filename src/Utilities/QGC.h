@@ -9,11 +9,7 @@
 
 #pragma once
 
-#include <QDateTime>
-#include <QColor>
 #include <QThread>
-
-#include "QGCConfig.h"
 
 namespace QGC
 {

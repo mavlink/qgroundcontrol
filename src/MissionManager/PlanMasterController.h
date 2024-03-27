@@ -10,13 +10,13 @@
 #pragma once
 
 #include <QObject>
+#include <QtCore/QLoggingCategory>
 
 #include "MissionController.h"
 #include "GeoFenceController.h"
 #include "RallyPointController.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)

@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 
 #include <QObject>

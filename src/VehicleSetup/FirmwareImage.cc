@@ -10,9 +10,7 @@
 #include "FirmwareImage.h"
 #include "QGCLoggingCategory.h"
 #include "JsonHelper.h"
-#include "QGCMAVLink.h"
 #include "QGCApplication.h"
-#include "FirmwarePlugin.h"
 #include "CompInfoParam.h"
 #include "Bootloader.h"
 
@@ -21,7 +19,6 @@
 #include <QTextStream>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QSettings>
 #include <QFileInfo>
 #include <QDir>
 

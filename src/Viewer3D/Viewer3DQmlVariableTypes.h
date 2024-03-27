@@ -1,7 +1,7 @@
 #ifndef VIEWER3DQMLVARIABLETYPES_H
 #define VIEWER3DQMLVARIABLETYPES_H
+
 #include <QObject>
-#include <qqml.h>
 #include <QGeoCoordinate>
 
 #include "Viewer3DUtils.h"

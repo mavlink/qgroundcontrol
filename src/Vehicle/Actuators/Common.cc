@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "Common.h"
+#include "QGCLoggingCategory.h"
 
 #include <QDebug>
 

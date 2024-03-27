@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "VehicleClockFactGroup.h"
-#include "Vehicle.h"
 
 VehicleClockFactGroup::VehicleClockFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/ClockFact.json", parent)

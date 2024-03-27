@@ -11,10 +11,10 @@
 #include "MissionController.h"
 #include "QmlObjectListModel.h"
 #include "FlightPathSegment.h"
-#include "SimpleMissionItem.h"
 #include "ComplexMissionItem.h"
+#include "QGCLoggingCategory.h"
 
-#include <QSGSimpleRectNode>
+#include <QSGFlatColorMaterial>
 
 QGC_LOGGING_CATEGORY(TerrainProfileLog, "TerrainProfileLog")
 

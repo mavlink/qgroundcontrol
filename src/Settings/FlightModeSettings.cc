@@ -7,14 +7,9 @@
  *
  ****************************************************************************/
 
-#include "QGCApplication.h"
 #include "FlightModeSettings.h"
-#include "QGCMapEngine.h"
-#include "AppSettings.h"
-#include "SettingsManager.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(FlightMode, "FlightMode")
 {

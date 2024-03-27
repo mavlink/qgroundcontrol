@@ -12,9 +12,9 @@
 #define MAVLinkLogManager_H
 
 #include <QObject>
+#include <QtCore/QLoggingCategory>
 
 #include "QmlObjectListModel.h"
-#include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
 #include "Vehicle.h"
 

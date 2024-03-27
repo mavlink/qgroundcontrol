@@ -7,6 +7,7 @@
 
 #include "VehicleCameraControl.h"
 #include "QGCCameraIO.h"
+#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
 #include "QGCMapEngine.h"
@@ -15,10 +16,12 @@
 #include "QGCLZMA.h"
 #include "QGCCorePlugin.h"
 
+#include <QtNetwork/QNetworkAccessManager>
 #include <QDir>
-#include <QStandardPaths>
 #include <QDomDocument>
 #include <QDomNodeList>
+#include <QtQml/QQmlEngine>
+#include <QtNetwork/QNetworkProxy>
 
 static const char* kCondition       = "condition";
 static const char* kControl         = "control";

@@ -10,8 +10,6 @@
 #pragma once
 
 #include "TerrainTile.h"
-#include "QGCMapEngineData.h"
-#include "QGCLoggingCategory.h"
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -19,6 +17,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
+#include <QtCore/QMutex>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)

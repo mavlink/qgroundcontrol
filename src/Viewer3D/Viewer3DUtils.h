@@ -1,5 +1,6 @@
 #ifndef VIEWER3DUTILS_H
 #define VIEWER3DUTILS_H
+
 #include "math.h"
 
 #include <QGeoCoordinate>

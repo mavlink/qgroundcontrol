@@ -1,6 +1,5 @@
 #include "MapboxMapProvider.h"
 #include "QGCApplication.h"
-#include "QGCMapEngine.h"
 #include "SettingsManager.h"
 
 static const QString MapBoxUrl = QStringLiteral("https://api.mapbox.com/styles/v1/mapbox/%1/tiles/%2/%3/%4?access_token=%5");

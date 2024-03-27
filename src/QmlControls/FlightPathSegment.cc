@@ -9,6 +9,7 @@
 
 #include "FlightPathSegment.h"
 #include "QGC.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "FlightPathSegmentLog")
 

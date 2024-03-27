@@ -12,6 +12,8 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 
+#include <QtQml/QQmlEngine>
+
 //-----------------------------------------------------------------------------
 SimulatedCameraControl::SimulatedCameraControl(Vehicle* vehicle, QObject* parent)
     : MavlinkCameraControl  (parent)

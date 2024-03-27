@@ -1,7 +1,4 @@
 #include "CityMapGeometry.h"
-
-#include<QThread>
-
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 

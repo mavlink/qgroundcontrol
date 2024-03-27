@@ -11,10 +11,6 @@
 
 #include <QString>
 #include <QList>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QQueue>
-#include <QByteArray>
 #include <QBluetoothDeviceInfo>
 #include <QtBluetooth/QBluetoothSocket>
 #include <qbluetoothserviceinfo.h>

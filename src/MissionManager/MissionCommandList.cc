@@ -8,19 +8,12 @@
  ****************************************************************************/
 
 #include "MissionCommandList.h"
-#include "FactMetaData.h"
-#include "Vehicle.h"
-#include "FirmwarePluginManager.h"
-#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionCommandUIInfo.h"
+#include "QGCLoggingCategory.h"
 
 #include <QStringList>
-#include <QJsonDocument>
-#include <QJsonParseError>
 #include <QJsonArray>
-#include <QDebug>
-#include <QFile>
 
 const char* MissionCommandList::qgcFileType =           "MavCmdInfo";
 const char* MissionCommandList::_versionJsonKey =       "version";
