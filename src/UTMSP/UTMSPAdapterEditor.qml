@@ -210,8 +210,8 @@ QGCFlickable {
                     Column{
                         spacing:_margin * 1.667
 
-                        QGCTextField        { text: qsTr("User ID") }
-                        FactTextField {
+                        QGCLabel        { text: qsTr("User ID") }
+                        QGCTextField {
                             id:                     userName
                             width:                  ScreenTools.defaultFontPixelWidth * 50
                             height:                 ScreenTools.defaultFontPixelHeight * 1.667
@@ -226,8 +226,8 @@ QGCFlickable {
                     Column{
                         spacing: _margin * 1.5
 
-                        QGCTextField { text: qsTr("Password:") }
-                        FactTextField {
+                        QGCLabel { text: qsTr("Password:") }
+                        QGCTextField {
                             id:                     password
                             width:                  ScreenTools.defaultFontPixelWidth * 50
                             height:                 ScreenTools.defaultFontPixelHeight * 1.667
