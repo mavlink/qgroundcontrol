@@ -34,21 +34,21 @@
 },
 {
     "name":         "selfIDFree",
-    "shortDesc":    "Self ID",
+    "shortDesc":    "Flight Purpose",
     "longDesc":     "Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.",
     "type":         "string",
     "default":      ""
 },
 {
     "name":         "selfIDEmergency",
-    "shortDesc":    "Self ID",
+    "shortDesc":    "Emergency Text",
     "longDesc":     "Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.",
     "type":         "string",
     "default":      "Pilot Emergency Status"
 },
 {
     "name":         "selfIDExtended",
-    "shortDesc":    "Self ID",
+    "shortDesc":    "Extended Status",
     "longDesc":     "Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.",
     "type":         "string",
     "default":      ""
@@ -57,7 +57,7 @@
     "name":         "selfIDType",
     "shortDesc":    "Self ID type",
     "type":         "uint8",
-    "enumStrings":  "Free Text,Emergency,Extended Status",
+    "enumStrings":  "Flight Purpose,Emergency,Extended Status",
     "enumValues":   "0,1,2",
     "default":      0
 },
@@ -78,7 +78,7 @@
     "name":         "basicIDType",
     "shortDesc":    "Basic ID Type",
     "type":         "uint8",
-    "enumStrings":  "None, SerialNumber(ANSI/CTA-2063), CAA, UTM(RFC4122), Specific",
+    "enumStrings":  "None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific",
     "enumValues":   "0,1,2,3,4",
     "default":      2
 },
@@ -86,7 +86,7 @@
     "name":         "basicIDUaType",
     "shortDesc":    "UA type",
     "type":         "uint8",
-    "enumStrings":  "Undefined,Airplane/FixedWing,Helicopter/Multirrotor, Gyroplane, VTOL, Ornithopter, Glider, Kite, Free Ballon, Captive Ballon, Airship, Parachute, Rocket, Tethered powered aircraft, Ground Obstacle, Other",
+    "enumStrings":  "Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other",
     "enumValues":   "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
     "default":      0
 },
@@ -111,58 +111,62 @@
     "shortDesc":    "Location Type",
     "longDesc":     "Operator location Type",
     "type":         "uint8",
-    "enumStrings":  "Takeoff(Not Supported),Live GNNS, Fixed",
-    "enumValues":   "0,1,2",
+    "enumStrings":  "Live,Fixed",
+    "enumValues":   "1,2",
     "default":      1
 },
 {
-    "name":         "latitudeFixed",
-    "shortDesc":    "Latitude Fixed",
-    "longDesc":     "Fixed latitude to send on SYSTEM message",
-    "type":         "double",
-    "decimalPlaces":7,
-    "default":      0
+    "name":             "latitudeFixed",
+    "shortDesc":        "Latitude Fixed",
+    "longDesc":         "Fixed latitude to send on SYSTEM message",
+    "type":             "double",
+    "minValue":         "-90",
+    "maxValue":         "90",
+    "decimalPlaces":    7,
+    "default":          0
 },
 {
-    "name":         "longitudeFixed",
-    "shortDesc":    "Longitude Fixed",
-    "longDesc":     "Fixed Longitude to send on SYSTEM message",
-    "type":         "double",
-    "decimalPlaces":7,
-    "default":      0
+    "name":             "longitudeFixed",
+    "shortDesc":        "Longitude Fixed",
+    "longDesc":         "Fixed Longitude to send on SYSTEM message",
+    "type":             "double",
+    "minValue":         "-180",
+    "maxValue":         "180",
+    "decimalPlaces":    7,
+    "default":          0
 },
 {
-    "name":         "altitudeFixed",
-    "shortDesc":    "Altitude Fixed",
-    "longDesc":     "Fixed Altitude to send on SYSTEM message",
-    "type":         "double",
-    "decimalPlaces":7,
-    "default":      0
+    "name":             "altitudeFixed",
+    "shortDesc":        "Altitude Fixed",
+    "longDesc":         "Fixed Altitude to send on SYSTEM message",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          0
 },
 {
     "name":         "classificationType",
     "shortDesc":    "Classification Type",
-    "longDesc":     "Classification Type of UA",
+    "longDesc":     "Classification Type of UAS",
     "type":         "uint8",
-    "enumStrings":  "Undefined,EU",
+    "enumStrings":  "Undeclared,EU",
     "enumValues":   "0,1",
     "default":      0
 },
 {
     "name":         "categoryEU",
-    "shortDesc":    "Category EU",
+    "shortDesc":    "Category",
     "longDesc":     "Category of the UAS in the EU region",
     "type":         "uint8",
-    "enumStrings":  "Undeclared,Open, Specific, Certified",
+    "enumStrings":  "Undeclared,Open,Specific,Certified",
     "enumValues":   "0,1,2,3",
     "default":      0
 },
 {
     "name":         "classEU",
-    "shortDesc":    "Class EU",
+    "shortDesc":    "Class",
     "longDesc":     "Class of the UAS in the EU region",
     "type":         "uint8",
-    "enumStrings":  "Undeclared,Class 0, Class 1, Class 2, Class 3, Class 4, Class 5, Class 6",
+    "enumStrings":  "Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6",
     "enumValues":   "0,1,2,3,4,5,6,7",
     "default":      0
 }
