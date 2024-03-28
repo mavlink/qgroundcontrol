@@ -21,6 +21,7 @@ import QGroundControl.Controllers
 import QGroundControl.ScreenTools
 
 AnalyzePage {
+    id: root
     headerComponent:    headerComponent
     pageComponent:      pageComponent
     allowPopout:        true
@@ -109,9 +110,9 @@ AnalyzePage {
                         model:      curSystem ? curSystem.messages : []
                         delegate:   MAVLinkMessageButton {
                             text:       object.name + (object.fieldSelected ?  " *" : "")
-                            compID:     object.cid
+                            compID:     object.compId
                             checked:    curSystem ? (curSystem.selected === index) : false
-                            messageHz:  object.messageHz
+                            messageHz:  object.actualRateHz
                             visible:    curCompID === 0 || curCompID === compID
                             onClicked: {
                                 curSystem.selected = index
@@ -124,7 +125,7 @@ AnalyzePage {
             //-- Message Data
             QGCFlickable {
                 id:                 messageGrid
-                visible:            curMessage !== null && (curCompID === 0 || curCompID === curMessage.cid)
+                visible:            curMessage !== null && (curCompID === 0 || curCompID === curMessage.compId)
                 flickableDirection: Flickable.VerticalFlick
                 width:              parent.width - buttonGrid.width - ScreenTools.defaultFontPixelWidth
                 height:             parent.height
@@ -139,24 +140,63 @@ AnalyzePage {
                         columnSpacing:  ScreenTools.defaultFontPixelWidth
                         rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
                         QGCLabel {
-                            text:       qsTr("Message:")
+                            text: qsTr("Message:")
                             Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
                         }
                         QGCLabel {
-                            color:      qgcPal.buttonHighlight
-                            text:       curMessage ? curMessage.name + ' (' + curMessage.id + ') ' + curMessage.messageHz.toFixed(1) + 'Hz' : ""
+                            color: qgcPal.buttonHighlight
+                            text: curMessage ? curMessage.name + ' (' + curMessage.id + ')' : ""
                         }
-                        QGCLabel {
-                            text:       qsTr("Component:")
-                        }
-                        QGCLabel {
-                            text:       curMessage ? curMessage.cid : ""
-                        }
-                        QGCLabel {
-                            text:       qsTr("Count:")
-                        }
-                        QGCLabel {
-                            text:       curMessage ? curMessage.count : ""
+
+                        QGCLabel { text: qsTr("Component:") }
+                        QGCLabel { text: curMessage ? curMessage.compId : "" }
+
+                        QGCLabel { text: qsTr("Count:") }
+                        QGCLabel { text: curMessage ? curMessage.count : "" }
+
+                        QGCLabel { text: qsTr("Actual Rate:") }
+                        QGCLabel { text: curMessage ? curMessage.actualRateHz.toFixed(1) + qsTr("Hz") : "" }
+
+                        QGCLabel { text: qsTr("Set Rate:") }
+                        QGCComboBox {
+                            id: msgRateCombo
+                            textRole: "text"
+                            valueRole: "value"
+                            model: [
+                                { value: -1, text: qsTr("Disabled") },
+                                { value: 0, text: qsTr("Default") },
+                                { value: 1, text: qsTr("1Hz") },
+                                { value: 2, text: qsTr("2Hz") },
+                                { value: 3, text: qsTr("3Hz") },
+                                { value: 4, text: qsTr("4Hz") },
+                                { value: 5, text: qsTr("5Hz") },
+                                { value: 6, text: qsTr("6Hz") },
+                                { value: 7, text: qsTr("7Hz") },
+                                { value: 8, text: qsTr("8Hz") },
+                                { value: 9, text: qsTr("9Hz") },
+                                { value: 10, text: qsTr("10Hz") },
+                                { value: 25, text: qsTr("25Hz") },
+                                { value: 50, text: qsTr("50Hz") },
+                                { value: 100, text: qsTr("100Hz") }
+                            ]
+                            Layout.alignment: Qt.AlignLeft
+                            sizeToContents: true
+                            Component.onCompleted: reset()
+                            onActivated: (index) => controller.setMessageInterval(currentValue)
+                            function reset() { currentIndex = indexOfValue(0) }
+                            Connections {
+                                target: root
+                                function onCurMessageChanged() { msgRateCombo.reset() }
+                            }
+                            Connections {
+                                target: curMessage
+                                function onTargetRateHzChanged() {
+                                    const target_index = indexOfValue(curMessage.targetRateHz)
+                                    if(target_index != -1) {
+                                        currentIndex = target_index
+                                    }
+                                }
+                            }
                         }
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
