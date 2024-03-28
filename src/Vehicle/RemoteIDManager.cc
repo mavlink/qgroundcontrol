@@ -423,7 +423,7 @@ void RemoteIDManager::setOperatorID()
         _operatorIDGood = _settings->operatorIDValid()->rawValue() == true;
         if (_operatorIDGood) {
             // Strip private part
-            _settings->operatorID()->setRawValue(operatorID.sliced(0, 16));
+            _settings->operatorID()->setRawValue(operatorID.mid(0, 16));
         }
 
     } else {
@@ -443,15 +443,15 @@ bool RemoteIDManager::_isEUOperatorIDValid(const QString& operatorID) const
         return false;
     }
 
-    const QString countryCode = operatorID.sliced(0,3);
+    const QString countryCode = operatorID.mid(0,3);
     if (!countryCode.isUpper()) {
         qCDebug(RemoteIDManagerLog) << "OperatorID country code not uppercase";
         return false;
     }
 
-    const QString number = operatorID.sliced(3, 12);
+    const QString number = operatorID.mid(3, 12);
     const QChar checksum = operatorID.at(15);
-    const QString secret = containsDash ? operatorID.sliced(17, 3) : operatorID.sliced(16, 3);
+    const QString secret = containsDash ? operatorID.mid(17, 3) : operatorID.mid(16, 3);
     const QString combination = number + secret;
 
     const QChar result = _calculateLuhnMod36(combination);
