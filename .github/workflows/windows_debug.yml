@@ -63,26 +63,13 @@ jobs:
           setup-python: true
           cache:        true
 
-      - name: Download Gstreamer
-        uses: suisei-cn/actions-download-file@v1.6.0
+      - name: Setup GStreamer
+        uses: blinemedical/setup-gstreamer@v1
         with:
-          url:    https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-msvc-x86_64-1.18.1.msi
-          target: ${{ runner.temp }}\
-
-      - name: Download Gstreamer dev
-        uses: suisei-cn/actions-download-file@v1.6.0
-        with:
-          url:    https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi
-          target: ${{ runner.temp }}\
-
-      - name: Install Gstreamer
-        run:  |
-            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
-            cmd /c start /wait msiexec /package ${{ runner.temp }}\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi /passive ADDLOCAL=ALL
+          version: 1.18.6
 
       - name: Install Dependencies
-        run:  |
-            python -m pip install ninja
+        run:  python -m pip install ninja
 
       - name: Set up Visual Studio shell
         uses: ilammy/msvc-dev-cmd@v1

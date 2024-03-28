@@ -26,3 +26,4 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends i
     libxcb-xinerama0 \
     libxkbcommon-x11-0 \
     libxcb-cursor0 \
+    libdrm-dev

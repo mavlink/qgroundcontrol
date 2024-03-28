@@ -17,17 +17,17 @@ LinuxBuild {
 }
 
 SOURCES += \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstplugin.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqml6glsink.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqsg6glnode.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqt6element.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqt6glutility.cc \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/qt6glitem.cc 
+    libs/qmlglsink/qt6/gstplugin.cc \
+    libs/qmlglsink/qt6/gstqml6glsink.cc \
+    libs/qmlglsink/qt6/gstqsg6glnode.cc \
+    libs/qmlglsink/qt6/gstqt6element.cc \
+    libs/qmlglsink/qt6/gstqt6glutility.cc \
+    libs/qmlglsink/qt6/qt6glitem.cc
 
 HEADERS += \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqml6glsink.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqsg6glnode.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqt6elements.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqt6gl.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/gstqt6glutility.h \
-    libs/qmlglsink/gst-plugins-good/ext/qt6/qt6glitem.h
+    libs/qmlglsink/qt6/gstqml6glsink.h \
+    libs/qmlglsink/qt6/gstqsg6glnode.h \
+    libs/qmlglsink/qt6/gstqt6elements.h \
+    libs/qmlglsink/qt6/gstqt6gl.h \
+    libs/qmlglsink/qt6/gstqt6glutility.h \
+    libs/qmlglsink/qt6/qt6glitem.h
