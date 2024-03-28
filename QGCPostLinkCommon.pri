@@ -111,6 +111,8 @@ LinuxBuild {
         libQt6DBus.so.6 \
         libQt6OpenGLWidgets.so.6 \
         libQt6QuickControls2.so.6 \
+        libQt6QuickControls2Basic.so.6 \
+        libQt6QuickControls2BasicStyleImpl.so.6 \
         libQt6SerialPort.so.6 \
         libQt6Gui.so.6 \ 
         libQt6PositioningQuick.so.6 \
