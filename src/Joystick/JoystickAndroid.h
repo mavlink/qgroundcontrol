@@ -23,6 +23,7 @@ public:
 private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
+    int  _getAndroidHatAxis(int axisHatCode);
 
     virtual bool _open          ();
     virtual void _close         ();
@@ -40,7 +41,7 @@ private:
     static int * _androidBtnList; //list of all possible android buttons
     static int _androidBtnListCount;
 
-    static int ACTION_DOWN, ACTION_UP;
+    static int ACTION_DOWN, ACTION_UP, AXIS_HAT_X, AXIS_HAT_Y;
     static QMutex m_mutex;
 
     int deviceId;
