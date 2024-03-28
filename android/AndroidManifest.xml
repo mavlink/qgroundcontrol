@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.qtproject.example"
+    package="org.mavlink.qgroundcontrol"
     android:installLocation="auto"
-    
+
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">
 
@@ -22,7 +22,9 @@
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:fullBackupOnly="false"
-        android:icon="@drawable/icon">
+        android:icon="@drawable/icon"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name="org.mavlink.qgroundcontrol.QGCActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
@@ -50,6 +52,10 @@
             <meta-data
                 android:name="android.app.extract_android_style"
                 android:value="minimal" />
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
         </activity>
 
         <provider

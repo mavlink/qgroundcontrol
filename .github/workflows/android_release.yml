@@ -50,6 +50,12 @@ jobs:
 
       - run: sudo apt update
 
+      - name: Setup Java environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -95,11 +101,6 @@ jobs:
             wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.18.5/gstreamer-1.0-android-universal-1.18.5.tar.xz
             mkdir gstreamer-1.0-android-universal-1.18.5
             tar xf gstreamer-1.0-android-universal-1.18.5.tar.xz -C gstreamer-1.0-android-universal-1.18.5
-
-      - name: Update android manifest
-        if: github.ref_name != 'Stable'
-        run: |
-            ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${{ github.ref_name }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
