@@ -2,11 +2,11 @@
 
 The _Safety Setup_ page allows you to configure (vehicle specific) failsafe settings.
 
-::: tip
+:::tip
 The setup page covers the most important safety options; other failsafe settings can be set via the [parameters](../setup_view/parameters.md) described in the failsafe documentation for each vehicle type.
 :::
 
-::: info
+:::tip
 _QGroundControl_ does not support polygon fences or rally points on ArduPilot.
 :::
 
@@ -16,15 +16,17 @@ The Copter safety page is shown below.
 
 ![Safety Setup - Copter (Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
 
-::: info
+:::info
 For additional safety settings and information see: [Failsafe](http://ardupilot.org/copter/docs/failsafe-landing-page.html).
 :::
 
 ### Battery Failsafe {#battery_failsafe_copter}
 
-This panel sets the [Battery Failsafe](http://ardupilot.org/copter/docs/failsafe-battery.html) parameters. You can set low and critical thresholds for voltage and/or remaining capacity and define the action if the failsafe value is breached. The thresholds can be disabled by setting them to zero.
+This panel sets the [Battery Failsafe](http://ardupilot.org/copter/docs/failsafe-battery.html) parameters.
+You can set low and critical thresholds for voltage and/or remaining capacity and define the action if the failsafe value is breached.
+The thresholds can be disabled by setting them to zero.
 
-::: tip
+:::tip
 If there is a second battery (enabled in the [Power Setup](../setup_view/power.md)) a second panel will be displayed with the same settings.
 :::
 
@@ -53,7 +55,8 @@ The configuration options are:
 
 ### Geofence {#geofence_copter}
 
-This panel sets the parameters for the cylindrical [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html). You can set whether the fence radius or height are enabled, the maximum values for causing a breach, and the action in the event of a breach.
+This panel sets the parameters for the cylindrical [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html).
+You can set whether the fence radius or height are enabled, the maximum values for causing a breach, and the action in the event of a breach.
 
 ![Safety Setup - Geofence (Copter)](../../../assets/setup/safety/safety_arducopter_geofence.jpg)
 
@@ -99,7 +102,7 @@ The Plane safety page is shown below.
 
 ![Safety Setup - Plane (Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
-::: info
+:::info
 For additional safety settings and information see: [Plane Failsafe Function](http://ardupilot.org/plane/docs/apms-failsafe-function.html) and [Advanced Failsafe Configuration](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html).
 :::
 
@@ -142,7 +145,7 @@ The Rover safety page is shown below.
 
 ![Safety Setup - Rover (Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
 
-::: info
+:::info
 For additional safety settings and information see: [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
 :::
 
@@ -173,7 +176,7 @@ The Sub safety page is shown below.
 
 ![Safety Setup - Sub (Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
 
-::: info
+:::info
 For additional safety settings and information see: [Failsafes](https://www.ardusub.com/operators-manual/failsafes.html).
 :::
 

@@ -1,13 +1,13 @@
 # 안전 설정 (ArduPilot)
 
-*안전 설정*에서는 (기체별) 비상 안전 설정을 설정합니다.
+The _Safety Setup_ page allows you to configure (vehicle specific) failsafe settings.
 
-::: tip
-설정 페이지에서는 가장 중요한 안전 옵션을 설정합니다. 다른 안전 장치 설정은 각 차량 유형에 대한 안전 장치 설명서에 설명된 [매개변수](../setup_view/parameters.md)를 통하여 설정할 수 있습니다.
+:::tip
+다른 안전 장치 설정은 각 차량 유형에 대한 안전 장치 설명서에 설명된 [매개변수](../setup_view/parameters.md)를 통하여 설정할 수 있습니다.
 :::
 
-::: info
-*QGroundControl*은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 지원하지 않습니다.
+:::tip
+_QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 지원하지 않습니다.
 :::
 
 ## 콥터
@@ -16,15 +16,17 @@
 
 ![안전 설정 - 콥터(Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
 
-::: info
+:::info
 추가 안전 설정 및 정보는 [안전장치](http://ardupilot.org/copter/docs/failsafe-landing-page.html)를 참고하십시오.
 :::
 
 ### 배터리 안전장치 {#battery_failsafe_copter}
 
-이 패널은 [배터리 안전장치](http://ardupilot.org/copter/docs/failsafe-battery.html) 매개변수를 설정합니다. 전압 및 남은 용량에 대해 낮거나 중요한 임계값을 설정하고 안전 장치 값이 위반되는 경우 조치를 정의할 수 있습니다. 임계값을 0으로 설정하여 비활성화할 수 있습니다.
+이 패널은 [배터리 안전장치](http://ardupilot.org/copter/docs/failsafe-battery.html) 매개변수를 설정합니다.
+전압 및 남은 용량에 대해 낮거나 중요한 임계값을 설정하고 안전 장치 값이 위반되는 경우 조치를 정의할 수 있습니다.
+임계값을 0으로 설정하여 비활성화할 수 있습니다.
 
-::: tip
+:::tip
 두 번째 배터리가 있는 경우([전원 설정](../setup_view/power.md)에서 활성화됨) 두 번째 패널이 동일한 설정으로 표시됩니다.
 :::
 
@@ -34,10 +36,10 @@
 
 - **Low action**([BATT_FS_LOW_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action)) - 없음, Land, RTL, SmartRTL, SmartRTL 또는 Land, Terminate 중 하나를 선택합니다.
 - **Critical action**([BATT_FS_CRT_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-crt-act-critical-battery-failsafe-action)) - 없음, Land, RTL, SmartRTL, SmartRTL 또는 Land, Terminate 중 하나를 선택합니다.
-- **Low voltage threshold**([BATT_LOW_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-low-volt-low-battery-voltage)) - *낮은 동작*을 트리거하는 배터리 전압입니다.
-- **Critical voltage threshold<**([BATT_CRT_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-crt-volt-critical-battery-voltage))- *중요 작업*을 트리거하는 배터리 전압입니다.
-- **Low mAh threshold**([BATT_LOW_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-low-mah-low-battery-capacity)) - *낮은 작업*을 트리거하는 배터리 용량입니다.
-- **Critical mAh threshold**([BATT_CRT_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-crt-mah-battery-critical-capacity)) - *중요한 작업*을 트리거하는 배터리 용량입니다.
+- **Low voltage threshold**([BATT_LOW_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-low-volt-low-battery-voltage)) - _낮은 동작_을 트리거하는 배터리 전압입니다.
+- **Critical voltage threshold<**([BATT_CRT_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-crt-volt-critical-battery-voltage))- _중요 작업_을 트리거하는 배터리 전압입니다.
+- **Low mAh threshold**([BATT_LOW_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-low-mah-low-battery-capacity)) - _낮은 작업_을 트리거하는 배터리 용량입니다.
+- **Critical mAh threshold**([BATT_CRT_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-crt-mah-battery-critical-capacity)) - _중요한 작업_을 트리거하는 배터리 용량입니다.
 
 ### 일반적인 안전장치 트리거 {#failsafe_triggers_copter}
 
@@ -53,7 +55,8 @@
 
 ### 지오펜스 {#geofence_copter}
 
-이 패널은 원통형 [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html)에 대한 매개변수를 설정합니다. 울타리 반경 또는 높이 활성화 여부, 위반 최대값 및 위반 시 조치를 설정할 수 있습니다.
+이 패널은 원통형 [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html)에 대한 매개변수를 설정합니다.
+울타리 반경 또는 높이 활성화 여부, 위반 최대값 및 위반 시 조치를 설정할 수 있습니다.
 
 ![안전 설정 - 지오펜스(콥터)](../../../assets/setup/safety/safety_arducopter_geofence.jpg)
 
@@ -99,7 +102,7 @@
 
 ![안전 설정 - 비행기(Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
-::: info
+:::info
 추가 안전 설정 및 정보는 [비행기 안전 장치 기능](http://ardupilot.org/plane/docs/apms-failsafe-function.html) 및 [고급 안전 장치 설정](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html)을 참고하십시오.
 :::
 
@@ -142,7 +145,7 @@
 
 ![안전 설정 - 로버(Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
 
-::: info
+:::info
 추가 안전 설정 및 정보는 [비상안전장치](http://ardupilot.org/rover/docs/rover-failsafes.html)를 참고하십시오.
 :::
 
@@ -167,13 +170,13 @@
 
 [시동 점검](#arming_checks_copter)은 헬리콥터와 동일합니다.
 
-## 잠수정
+## Sub
 
 잠수정의 안전 페이지는 아래와 같습니다.
 
 ![안전 설정 - 잠수정(Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
 
-::: info
+:::info
 추가 안전 설정 및 정보는 [비상안전장치](https://www.ardusub.com/operators-manual/failsafes.html)를 참고하십시오.
 :::
 

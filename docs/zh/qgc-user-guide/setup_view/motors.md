@@ -2,8 +2,9 @@
 
 Motor Setup is used to test individual motors/servos (for example, to verify that motors spin in the correct direction).
 
-::: tip
-These instructions apply to PX4 and to most vehicle types on ArduPilot. Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../setup_view/motors_ardusub.md)).
+:::tip
+These instructions apply to PX4 and to most vehicle types on ArduPilot.
+Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../setup_view/motors_ardusub.md)).
 :::
 
 ![Motors Test](../../../assets/setup/Motors.png)
@@ -19,7 +20,9 @@ To test the motors:
    :::
 
 2. (_PX4-only_) Enable safety switch - if used.
+
 3. Slide the switch to enable motor sliders (labeled: _Propellers are removed - Enable motor sliders_).
+
 4. Adjust the individual sliders to spin the motors and confirm they spin in the correct direction.
 
    ::: info

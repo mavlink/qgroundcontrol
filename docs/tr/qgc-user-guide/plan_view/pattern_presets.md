@@ -2,7 +2,7 @@
 
 Yaygın olarak kullanılan ayarları adlandırılmış bir ön ayar olarak kaydetmenize olanak sağlar.
 
-::: info
+:::info
 Şuan için sadece Gözlem modu tarafından desteklenmektedir. Diğer modların desteği için geliştirme devam etmektedir.
 :::
 

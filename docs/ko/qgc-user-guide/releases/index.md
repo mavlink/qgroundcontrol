@@ -1,3 +1,3 @@
-# 배포
+# Releases
 
-배포 및 일일 빌드에 대하여 설명합니다.
+This section contains information about releases and daily builds.

@@ -805,7 +805,8 @@ QQuickWindow* QGCApplication::mainRootWindow()
 void QGCApplication::showSetupView()
 {
     if(_rootQmlObject()) {
-        QMetaObject::invokeMethod(_rootQmlObject(), "showSetupTool");
+      QVariant arg = "";
+      QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleSetupTool", Q_ARG(QVariant, arg));
     }
 }
 
@@ -1017,7 +1018,7 @@ bool QGCApplication::compressEvent(QEvent*event, QObject* receiver, QPostEventLi
 bool QGCApplication::event(QEvent *e)
 {
     if (e->type() == QEvent::Quit) {
-        // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit even here only.
+        // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit event here only.
         // This in turn causes the standard QGC shutdown sequence to not run. So in this case we close the window ourselves such that the
         // signal is sent and the normal shutdown sequence runs.
         bool forceClose = _mainRootWindow->property("_forceClose").toBool();

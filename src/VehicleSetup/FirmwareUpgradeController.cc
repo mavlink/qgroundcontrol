@@ -62,7 +62,7 @@ static QMap<int, QString> px4_board_name_map {
     {54, "px4_fmu-v6u_default"},
     {56, "px4_fmu-v6c_default"},
     {57, "ark_fmu-v6x_default"},
-    {58, "px4_fmu-v6xrt_default"},
+    {35, "px4_fmu-v6xrt_default"},
     {55, "sky-drones_smartap-airlink_default"},
     {88, "airmind_mindpx-v2_default"},
     {12, "bitcraze_crazyflie_default"},
@@ -91,6 +91,7 @@ static QMap<int, QString> px4_board_name_map {
     {1009, "cuav_nora_default"},
     {1010, "cuav_x7pro_default"},
     {1017, "mro_pixracerpro_default"},
+    {1022, "mro_ctrl-zero-classic_default"},
     {1023, "mro_ctrl-zero-h7_default"},
     {1024, "mro_ctrl-zero-h7-oem_default"},
     {1048, "holybro_kakuteh7_default"},
@@ -505,8 +506,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
 {
     Q_ASSERT(_statusLog);
     
-    QVariant returnedValue;
-    QVariant varText;
+    QString varText;
     
     if (critical) {
         varText = QString("<font color=\"yellow\">%1</font>").arg(text);
@@ -516,8 +516,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
     
     QMetaObject::invokeMethod(_statusLog,
                               "append",
-                              Q_RETURN_ARG(QVariant, returnedValue),
-                              Q_ARG(QVariant, varText));
+                              Q_ARG(QString, varText));
 }
 
 void FirmwareUpgradeController::_errorCancel(const QString& msg)

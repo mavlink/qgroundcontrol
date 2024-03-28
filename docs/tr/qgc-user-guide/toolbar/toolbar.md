@@ -1,6 +1,7 @@
 # Ana Araç Çubuğu
 
-Ana araç çubuğu, farklı uygulama görünümlerine erişmenize ve bağlı araçlarınız için öndemli durumların bilgisine ulaşmanıza olanak sağlar. Araç çubuğu, "PlanView" haricindeki tüm ekranlarda aynıdır (sizi "Fly" görünümüne geri götüren tek bir simgeye sahiptir).
+Ana araç çubuğu, farklı uygulama görünümlerine erişmenize ve bağlı araçlarınız için öndemli durumların bilgisine ulaşmanıza olanak sağlar.
+Araç çubuğu, "PlanView" haricindeki tüm ekranlarda aynıdır (sizi "Fly" görünümüne geri götüren tek bir simgeye sahiptir).
 
 ## Seç-Görüntüle Simgeler
 
@@ -18,7 +19,8 @@ Aşağıdaki simgeler ana _Views _ arasında geçiş yapmak için kullanılır. 
 
 ## Durum Simgeleri
 
-Durum simgeleri _QGroundControl_ bir araca bağlıyken gözükür. Bunlar araçla ilgili önemli bilgileri gösterir ve üstlerine tıklayarak daha ayrıntılı bilgilere erişilebilir.
+Durum simgeleri _QGroundControl_ bir araca bağlıyken gözükür.
+Bunlar araçla ilgili önemli bilgileri gösterir ve üstlerine tıklayarak daha ayrıntılı bilgilere erişilebilir.
 
 ![](../../../assets/toolbar/toolbar_status_message.jpg) ![yield](../../../assets/toolbar/toolbar_status_critical.jpg) **Vehicle Messages** <br />Click to show a list of messages from the vehicle. Note that version on the right is displayed when there are critical messages.
 

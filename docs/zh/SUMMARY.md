@@ -5,9 +5,11 @@
   - [Download and Install](qgc-user-guide/getting_started/download_and_install.md)
   - [Toolbar/Menu](qgc-user-guide/toolbar/toolbar.md)
   - [Support](qgc-user-guide/support/support.md)
+
 - [Fly](qgc-user-guide/fly_view/fly_view.md)
   - [Replay Flight Data](qgc-user-guide/fly_view/replay_flight_data.md)
   - [Video Overlay](qgc-user-guide/fly_view/video_overlay.md)
+
 - [Plan](qgc-user-guide/plan_view/plan_view.md)
   - [GeoFence](qgc-user-guide/plan_view/plan_geofence.md)
   - [Rally Points](qgc-user-guide/plan_view/plan_rally_points.md)
@@ -17,6 +19,7 @@
     - [Corridor Scan](qgc-user-guide/plan_view/pattern_corridor_scan.md)
     - [Fixed Wing Landing Pattern](qgc-user-guide/plan_view/pattern_fixed_wing_landing.md)
     - [Pattern Presets](qgc-user-guide/plan_view/pattern_presets.md)
+
 - [Vehicle Setup](qgc-user-guide/setup_view/setup_view.md)
   - [Firmware](qgc-user-guide/setup_view/firmware.md)
   - [Airframe](qgc-user-guide/setup_view/airframe.md)
@@ -42,6 +45,7 @@
   - [Camera](qgc-user-guide/setup_view/camera.md)
   - [Joystick](qgc-user-guide/setup_view/joystick.md)
   - [Parameters](qgc-user-guide/setup_view/parameters.md)
+
 - [Application Settings](qgc-user-guide/settings_view/settings_view.md)
   - [General](qgc-user-guide/settings_view/general.md)
     - [CSV Logging](qgc-user-guide/settings_view/csv.md)
@@ -49,11 +53,13 @@
   - [MAVLink](qgc-user-guide/settings_view/mavlink.md)
   - [Console Logging](qgc-user-guide/settings_view/console_logging.md)
   - [Virtual Joystick (PX4)](qgc-user-guide/settings_view/virtual_joystick.md)
+
 - [Analyze](qgc-user-guide/analyze_view/index.md)
   - [Log Download](qgc-user-guide/analyze_view/log_download.md)
   - [GeoTag Images (PX4)](qgc-user-guide/analyze_view/geotag_images.md)
   - [MAVLink Console (PX4)](qgc-user-guide/analyze_view/mavlink_console.md)
   - [MAVLink Inspector](qgc-user-guide/analyze_view/mavlink_inspector.md)
+
 - [Releases](qgc-user-guide/releases/index.md)
   - [Release Notes](qgc-user-guide/releases/release_notes.md)
     - [v4.0 (Additional Notes)](qgc-user-guide/releases/stable_v4.0_additional.md)
@@ -62,6 +68,7 @@
   - [Daily Builds](qgc-user-guide/releases/daily_builds.md)
   - [Daily Build New Features](qgc-user-guide/releases/daily_build_new_features.md)
   - [Privacy Policy](qgc-user-guide/releases/privacy_policy.md)
+
 - [Troubleshooting](qgc-user-guide/troubleshooting/index.md)
 
   - [Setup Problems](qgc-user-guide/troubleshooting/qgc_setup.md)

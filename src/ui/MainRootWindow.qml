@@ -126,22 +126,6 @@ ApplicationWindow {
         return _rgPreventViewSwitch[_rgPreventViewSwitch.length - 1]
     }
 
-    function viewSwitch(currentToolbar) {
-        toolDrawer.visible      = false
-        toolDrawer.toolSource   = ""
-        flightView.visible      = false
-        planView.visible        = false
-        toolbar.currentToolbar  = currentToolbar
-    }
-
-    function showFlyView() {
-        if (!flightView.visible) {
-            mainWindow.showPreFlightChecklistIfNeeded()
-        }
-        viewSwitch(toolbar.flyViewToolbar)
-        flightView.visible = true
-    }
-
     function showPlanView() {
         viewSwitch(toolbar.planViewToolbar)
         planView.visible = true
@@ -452,6 +436,11 @@ ApplicationWindow {
         property alias toolSource:  toolDrawerLoader.source
         property alias toolIcon:    toolIcon.source
 
+        // Unload the loader only after closed, otherwise we will see a "blank" loader in the meantime
+        onClosed: {
+            toolDrawer.toolSource = ""
+        }
+        
         Rectangle {
             id:             toolDrawerToolbar
             anchors.left:   parent.left
@@ -508,7 +497,6 @@ ApplicationWindow {
                 width:              (backTextLabel.x + backTextLabel.width) - backIcon.x
                 onClicked: {
                     toolDrawer.visible      = false
-                    toolDrawer.toolSource   = ""
                 }
             }
         }

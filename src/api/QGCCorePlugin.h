@@ -16,6 +16,7 @@
 
 #include <QObject>
 #include <QVariantList>
+#include <QFile>
 
 /// @file
 /// @brief Core Plugin Interface for QGroundControl
@@ -178,6 +179,9 @@ public:
     ///     signals toolbarIndicatorsChanged
     /// @return A list of QUrl with the indicators
     virtual const QVariantList& toolBarIndicators(void);
+
+    /// Returns a true if xml definition file of a providen camera name exists, and loads it to file argument, to allow definition files to be loaded from resources
+    virtual bool getOfflineCameraDefinitionFile(QString cameraname, QFile& file) { Q_UNUSED(cameraname); Q_UNUSED(file); return false; }
 
     /// Returns the list of first run prompt ids which need to be displayed according to current settings
     Q_INVOKABLE QVariantList firstRunPromptsToShow(void);

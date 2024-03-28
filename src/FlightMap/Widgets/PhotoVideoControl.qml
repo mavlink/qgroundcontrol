@@ -284,6 +284,42 @@ Rectangle {
             }
         }
 
+        // Tracking button
+        Rectangle {
+            Layout.alignment:   Qt.AlignHCenter
+            color:              _mavlinkCamera && _mavlinkCamera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+            width:              ScreenTools.defaultFontPixelWidth * 6
+            height:             width
+            radius:             width * 0.5
+            border.color:       qgcPal.buttonText
+            border.width:       3
+            visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
+            QGCColoredImage {
+                height:             parent.height * 0.5
+                width:              height
+                anchors.centerIn:   parent
+                source:             "/qmlimages/TrackingIcon.svg"
+                fillMode:           Image.PreserveAspectFit
+                sourceSize.height:  height
+                color:              qgcPal.text
+                MouseArea {
+                    anchors.fill:   parent
+                    onClicked: {
+                        _mavlinkCamera.trackingEnabled = !_mavlinkCamera.trackingEnabled;
+                        if(!_mavlinkCamera.trackingEnabled) {
+                            !_mavlinkCamera.stopTracking()
+                        }
+                    }
+                }
+            }
+        }
+        QGCLabel {
+            Layout.alignment:   Qt.AlignHCenter
+            text:               qsTr("Camera Tracking")
+            font.pointSize:     ScreenTools.defaultFontPointSize
+            visible:            _mavlinkCamera && _mavlinkCamera.hasTracking
+        }
+
         //-- Status Information
         ColumnLayout {
             Layout.alignment:   Qt.AlignHCenter

@@ -45,6 +45,10 @@ Or this one:
 ```
 gst-launch-1.0 udpsrc port=5600 ! application/x-rtp ! rtpjitterbuffer ! rtph264depay ! avdec_h264 ! videoconvert ! autovideosink
 ```
+Or this one, note that removing rtpjitterbuffer would reduce video latency as low latency mode is doing:
+```
+gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! parsebin ! decodebin ! autovideosink fps-update-interval=1000 sync=false
+```
 
 ### Additional Protocols
 

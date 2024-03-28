@@ -91,7 +91,7 @@ void GPSManager::disconnectGPS(void)
 
 void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
 {
-    qCDebug(RTKGPSLog) << QString("GPS: got position update: alt=%1, long=%2, lat=%3").arg(msg.position_data.alt).arg(msg.position_data.lon).arg(msg.position_data.lat);
+    qCDebug(RTKGPSLog) << QString("GPS: got position update: alt=%1, long=%2, lat=%3").arg(msg.position_data.altitude_msl_m).arg(msg.position_data.longitude_deg).arg(msg.position_data.latitude_deg);
 }
 void GPSManager::GPSSatelliteUpdate(GPSSatelliteMessage msg)
 {

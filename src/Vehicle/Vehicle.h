@@ -305,6 +305,7 @@ public:
     Q_PROPERTY(Fact* timeToHome         READ timeToHome         CONSTANT)
     Q_PROPERTY(Fact* missionItemIndex   READ missionItemIndex   CONSTANT)
     Q_PROPERTY(Fact* headingToNextWP    READ headingToNextWP    CONSTANT)
+    Q_PROPERTY(Fact* distanceToNextWP   READ distanceToNextWP   CONSTANT)
     Q_PROPERTY(Fact* headingToHome      READ headingToHome      CONSTANT)
     Q_PROPERTY(Fact* distanceToGCS      READ distanceToGCS      CONSTANT)
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
@@ -373,7 +374,7 @@ public:
     /// @return Minumum equivalent airspeed.
     Q_INVOKABLE double minimumEquivalentAirspeed();
 
-    /// Command vehicle to move to specified location (altitude is included and relative)
+    /// Command vehicle to move to specified location (altitude is ignored)
     Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
 
     /// Command vehicle to change altitude
@@ -408,6 +409,12 @@ public:
 
     /// Command vehicle to abort landing
     Q_INVOKABLE void abortLanding(double climbOutAltitude);
+
+    /// Command vichecle to deploy landing gear
+    Q_INVOKABLE void landingGearDeploy();
+
+    /// Command vichecle to retract landing gear
+    Q_INVOKABLE void landingGearRetract();
 
     Q_INVOKABLE void startMission();
 
@@ -699,6 +706,7 @@ public:
     Fact* timeToHome                        () { return &_timeToHomeFact; }
     Fact* missionItemIndex                  () { return &_missionItemIndexFact; }
     Fact* headingToNextWP                   () { return &_headingToNextWPFact; }
+    Fact* distanceToNextWP                  () { return &_distanceToNextWPFact; }
     Fact* headingToHome                     () { return &_headingToHomeFact; }
     Fact* distanceToGCS                     () { return &_distanceToGCSFact; }
     Fact* hobbs                             () { return &_hobbsFact; }
@@ -744,6 +752,7 @@ public:
     ///     @param showError true: Display error to user if command failed, false:  no error shown
     /// Signals: mavCommandResult on success or failure
     void sendMavCommand(int compId, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+    void sendMavCommandDelayed(int compId, MAV_CMD command, bool showError, int milliseconds, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
     void sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
 
     ///
@@ -1407,6 +1416,7 @@ private:
     Fact _timeToHomeFact;
     Fact _missionItemIndexFact;
     Fact _headingToNextWPFact;
+    Fact _distanceToNextWPFact;
     Fact _headingToHomeFact;
     Fact _distanceToGCSFact;
     Fact _hobbsFact;
@@ -1467,6 +1477,7 @@ private:
     static const char* _timeToHomeFactName;
     static const char* _missionItemIndexFactName;
     static const char* _headingToNextWPFactName;
+    static const char* _distanceToNextWPFactName;
     static const char* _headingToHomeFactName;
     static const char* _distanceToGCSFactName;
     static const char* _hobbsFactName;

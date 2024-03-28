@@ -42,6 +42,7 @@ Item {
     property string _instructionText:           _polygonToolsText
     property var    _savedVertices:             [ ]
     property bool   _savedCircleMode
+    property bool   _isVertexBeingDragged:      false
 
     property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
     property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
@@ -62,7 +63,10 @@ Item {
 
     function addEditingVisuals() {
         if (_objMgrEditingVisuals.empty) {
-            _objMgrEditingVisuals.createObjects([ dragHandlesComponent, splitHandlesComponent, centerDragHandleComponent ], mapControl, false /* addToMap */)
+            _objMgrEditingVisuals.createObjects(
+                [ dragHandlesComponent, splitHandlesComponent, centerDragHandleComponent, edgeLengthHandlesComponent ], 
+                mapControl, 
+                false /* addToMap */)
         }
     }
 
@@ -289,6 +293,65 @@ Item {
     }
 
     Component {
+        id: edgeLengthHandleComponent
+
+        MapQuickItem {
+            id:             mapQuickItem
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  sourceItem.height / 2
+            visible:        !_circleMode
+
+            property int vertexIndex
+            property real distance
+
+            property var _unitsConversion: QGroundControl.unitsConversion
+
+            sourceItem: Text {
+              text:     _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(distance).toFixed(1) + " " +
+                        _unitsConversion.appSettingsHorizontalDistanceUnitsString
+              color:    "white"
+            }
+        }
+    }
+
+    Component {
+        id: edgeLengthHandlesComponent
+
+        Repeater {
+            model: _isVertexBeingDragged ? mapPolygon.path : undefined
+
+            delegate: Item {
+                property var _edgeLengthHandle
+                property var _vertices:     mapPolygon.path
+
+                function _setHandlePosition() {
+                    var nextIndex = index + 1
+                    if (nextIndex > _vertices.length - 1) {
+                        nextIndex = 0
+                    }
+                    var distance = _vertices[index].distanceTo(_vertices[nextIndex])
+                    var azimuth = _vertices[index].azimuthTo(_vertices[nextIndex])
+                    _edgeLengthHandle.coordinate =_vertices[index].atDistanceAndAzimuth(distance / 3, azimuth)
+                    _edgeLengthHandle.distance = distance
+                }
+
+                Component.onCompleted: {
+                    _edgeLengthHandle = edgeLengthHandleComponent.createObject(mapControl)
+                    _edgeLengthHandle.vertexIndex = index
+                    _setHandlePosition()
+                    mapControl.addMapItem(_edgeLengthHandle)
+                }
+
+                Component.onDestruction: {
+                    if (_edgeLengthHandle) {
+                        _edgeLengthHandle.destroy()
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
         id: splitHandleComponent
 
         MapQuickItem {
@@ -347,11 +410,12 @@ Item {
         id: dragAreaComponent
 
         MissionItemIndicatorDrag {
-            id:         dragArea
-            mapControl: _root.mapControl
-            z:          _zorderDragHandle
-            visible:    !_circleMode
-            onDragStop: mapPolygon.verifyClockwiseWinding()
+            id:             dragArea
+            mapControl:     _root.mapControl
+            z:              _zorderDragHandle
+            visible:        !_circleMode
+            onDragStart:    _isVertexBeingDragged = true
+            onDragStop:     { _isVertexBeingDragged = false; mapPolygon.verifyClockwiseWinding() }
 
             property int polygonVertex
 

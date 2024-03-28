@@ -10,7 +10,7 @@ Click the **Set Logging** button to enable/disable logging information displayed
 
 The most commmonly used logging options are listed below.
 
-| Option(s)                                                                           | Description                                                                                    |
+| Option(s)                                                        | Description                                                                                    |
 | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `LinkManagerLog`, `MultiVehicleManagerLog`                                          | Debug connection problems.                                                                     |
 | `LinkManagerVerboseLog`                                                             | Debug serial ports not being detected. Very noisy continuous output of available serial ports. |
@@ -32,18 +32,32 @@ How you do this and where the traces are output vary by OS:
     bash
     cd "\Program Files (x86)\qgroundcontrol"
     qgroundcontrol --logging:full
+
+    ```sh
+    cd "\Program Files (x86)\qgroundcontrol"
+    qgroundcontrol --logging:full
+    ```
+
   - When _QGroundControl_ starts you should see a separate console window open which will have the log output
 
 - OSX
 
   - You must run _QGroundControl_ from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it:
-    bash
-    cd /Applications/qgroundcontrol.app/Contents/MacOS/
-    ./qgroundcontrol --logging:full
+
+    ```sh
+    Once Terminal is open paste the following into it:
+        bash
+        cd /Applications/qgroundcontrol.app/Contents/MacOS/
+        ./qgroundcontrol --logging:full
+    ```
+
   - Log traces will output to the Terminal window.
 
 - Linux
 
-  -     bash
-        ./qgroundcontrol-start.sh --logging:full
+  ```sh
+  bash
+  ./qgroundcontrol-start.sh --logging:full
+  ```
+
   - Log traces will output to the shell you are running from.
