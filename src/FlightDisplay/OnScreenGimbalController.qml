@@ -29,7 +29,8 @@ Item {
     property var  activeGimbal:                 gimbalController ? gimbalController.activeGimbal : undefined
     property bool gimbalAvailable:              activeGimbal != undefined
     property var  gimbalControllerSettings:     QGroundControl.settingsManager.gimbalControllerSettings
-    property bool shouldProcessClicks:          gimbalControllerSettings.EnableOnScreenControl.value && activeGimbal ? true : false
+    property bool cameraTrackingEnabled:        false // Used to ignore clicks when camera tracking operation is active, otherwise it would collide with these gimbal controls
+    property bool shouldProcessClicks:          gimbalControllerSettings.EnableOnScreenControl.value && activeGimbal && !cameraTrackingEnabled ? true : false
 
     function clickControl() {
         if (!shouldProcessClicks) {
