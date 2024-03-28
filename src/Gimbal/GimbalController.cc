@@ -485,8 +485,8 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError) 
                 showError,
                 pitch,
                 yaw,
-                0,
-                0,
+                NAN,
+                NAN,
                 flags,
                 0,
                 _activeGimbal->deviceId()->rawValue().toUInt());
@@ -518,8 +518,8 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
                 showError,
                 pitch,
                 yaw,
-                0,
-                0,
+                NAN,
+                NAN,
                 flags,
                 0,
                 _activeGimbal->deviceId()->rawValue().toUInt());
@@ -566,8 +566,8 @@ void GimbalController::sendPitchYawFlags(uint32_t flags)
                 true,
                 _activeGimbal->absolutePitch()->rawValue().toFloat(),
                 yaw_in_vehicle_frame ? _activeGimbal->bodyYaw()->rawValue().toFloat() : _activeGimbal->absoluteYaw()->rawValue().toFloat(),
-                static_cast<float>(qQNaN()),
-                static_cast<float>(qQNaN()),
+                NAN,
+                NAN,
                 flags,
                 0,
                 _activeGimbal->deviceId()->rawValue().toUInt());
