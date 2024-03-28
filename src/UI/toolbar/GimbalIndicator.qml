@@ -65,12 +65,17 @@ Item {
 
                 // These are simple buttons that can be grouped on this Repeater
                 Repeater {
+                    id: simpleGimbalButtonsRepeater
+                    property var hasControl:              gimbalController && gimbalController.activeGimbal && gimbalController.activeGimbal.gimbalHaveControl
+                    property var acqControlButtonEnabled: QGroundControl.settingsManager.gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl.rawValue
+
                     model: [
-                        {id: "yawLock",   text: activeGimbal.yawLock ? qsTr("Yaw <br> Follow") : qsTr("Yaw <br> Lock")  },
-                        {id: "center",    text: qsTr("Center")                                                          },
-                        {id: "tilt90",    text: qsTr("Tilt 90")                                                         },
-                        {id: "pointHome", text: qsTr("Point <br> Home")                                                 },
-                        {id: "retract",   text: qsTr("Retract")                                                         }
+                        {id: "yawLock",   text: activeGimbal.yawLock ? qsTr("Yaw <br> Follow") : qsTr("Yaw <br> Lock")  , visible: true                    },
+                        {id: "center",    text: qsTr("Center")                                                          , visible: true                    },
+                        {id: "tilt90",    text: qsTr("Tilt 90")                                                         , visible: true                    },
+                        {id: "pointHome", text: qsTr("Point <br> Home")                                                 , visible: true                    },
+                        {id: "retract",   text: qsTr("Retract")                                                         , visible: true                    },
+                        {id: "acqControl",text: hasControl ? qsTr("Release <br> Control") : qsTr("Acquire <br> Control"), visible: acqControlButtonEnabled }
                     ]
 
                     QGCButton {
@@ -79,7 +84,11 @@ Item {
                            {"center":       function(){ gimbalController.centerGimbal() }                               },
                            {"tilt90":       function(){ gimbalController.sendPitchBodyYaw(-90, 0) }                     },
                            {"pointHome":    function(){ activeVehicle.guidedModeROI(activeVehicle.homePosition) }       },
-                           {"retract":      function(){ gimbalController.toggleGimbalRetracted(true) }                  }
+                           {"retract":      function(){ gimbalController.toggleGimbalRetracted(true) }                  },
+                           // This button changes its action depending on gimbal being under control or not
+                           {"acqControl":   function(){ simpleGimbalButtonsRepeater.hasControl ? 
+                                                            gimbalController.releaseGimbalControl() : 
+                                                                gimbalController.acquireGimbalControl() }               }
                         ]
 
                         Layout.preferredWidth: Layout.preferredHeight
@@ -87,6 +96,7 @@ Item {
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         text: modelData.text
                         fontWeight: Font.DemiBold
+                        visible: modelData.visible
                         pointSize: ScreenTools.smallFontPointSize
                         backRadius: panelRadius * 0.5
                         onClicked: {
@@ -302,6 +312,15 @@ Item {
                         id:                 gimbalAzimutIndicatorCheckbox
                         text:               "  " + qsTr("Use Azimuth instead of local yaw on top toolbar indicator")
                         fact:               QGroundControl.settingsManager.gimbalControllerSettings.toolbarIndicatorShowAzimuth
+                        Layout.columnSpan:  2
+                        checkedValue:       1
+                        uncheckedValue:     0
+                    }
+
+                    FactCheckBox {
+                        id:                 showAcquireControlCheckbox
+                        text:               "  " + qsTr("Show Acquire/Release control button")
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl
                         Layout.columnSpan:  2
                         checkedValue:       1
                         uncheckedValue:     0
