@@ -1,0 +1,108 @@
+name: MacOS
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+      - 'android/**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'android/**'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        BuildType: [Debug, Release]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-tags: true
+
+      - name: Set up Cache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
+          max-size: 2G
+          append-timestamp: false
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: 6.6.*
+          aqtversion: ==3.1.*
+          host: mac
+          target: desktop
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          setup-python: true
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          brew update
+          brew install ninja SDL2
+
+      - name: Setup GStreamer
+        uses: blinemedical/setup-gstreamer@v1
+        with:
+          version: 1.18.6
+
+      - name: Create build directory
+        run: mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        env:
+          STABLE_BUILD: ${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') }}
+        run: |
+          if [ ${{ matrix.BuildType }} == Debug ]
+          then
+            cmake -S ${{ github.workspace }} -B . -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} \
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+          else
+            qmake -r ${{ github.workspace }}/qgroundcontrol.pro \
+              CONFIG+=installer \
+              CONFIG+=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'StableBuild' || 'DailyBuild' }}
+          fi
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: |
+          if [ ${{ matrix.BuildType }} == Debug ]
+          then
+            cmake --build . --target all --config ${{ matrix.BuildType }}
+          else
+            make -j$((`sysctl -n hw.ncpu`+1))
+          fi
+
+      - name: Install
+        if: matrix.BuildType == 'Debug'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: cmake --install .
+
+      - name: Upload Build File
+        if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: QGroundControl.dmg
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
