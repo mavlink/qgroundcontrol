@@ -49,6 +49,12 @@
     "shortDesc":         "Show Azimuth instead of local yaw on top toolbar gimbal indicator",
     "type":              "bool",
     "default":           true
+},
+{
+    "name":              "toolbarIndicatorShowAcquireReleaseControl",
+    "shortDesc":         "Show Azimuth Acquire/release buttons in the gimbal buttons panel",
+    "type":              "bool",
+    "default":           false
 }
 ]
 }
