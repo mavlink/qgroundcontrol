@@ -28,7 +28,7 @@ void MetDataLogManager::_initializeMetRawCsv()
     QTextStream stream(&_metRawCsvFile);
 
     qCDebug(VehicleLog) << "Facts logged to csv:" << metFactHeaders;
-    stream << metFactHeaders.join(",") << "\n";
+    stream << metFactHeaders.join(",") << "\r\n";
 }
 
 void MetDataLogManager::_writeMetRawCsvLine()
@@ -59,8 +59,8 @@ void MetDataLogManager::_writeMetRawCsvLine()
             qCWarning(VehicleLog) << "Fact does not exist: " << factName;
             continue;
         }
-        metFactValues << factGroup->getFact(factName)->cookedValueString();
+        metFactValues << factGroup->getFact(factName)->rawValueString();
     }
 
-    stream << metFactValues.join(",") << "\n";
+    stream << metFactValues.join(",") << "\r\n";
 }

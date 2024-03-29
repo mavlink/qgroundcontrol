@@ -34,97 +34,97 @@
 {
     "name":             "altitudeMetersMSL",
     "shortDesc":        "Altitude (MSL)",
-    "type":             "double",
+    "type":             "int32",
     "decimalPlaces":    1,
     "units":            "m"
 },
 {
     "name":             "timeUnixMilliseconds",
     "shortDesc":        "Time (Unix)",
-    "type":             "int",
+    "type":             "uint64",
     "units":            "ms"
 },
 {
     "name":            "absolutePressureMillibars",
     "shortDesc":       "Pressure",
-    "type":            "double",
+    "type":            "float",
     "decimalPlaces":   2,
     "units":           "mB"
 },
 {
     "name":             "temperatureCelsius",
     "shortDesc":        "Temperature",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    2,
     "units":            "C"
 },
 {
     "name":             "relativeHumidity",
     "shortDesc":        "Rel Humidity",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    2,
     "units":            "%"
 },
 {
     "name":             "windSpeedMetersPerSecond",
     "shortDesc":        "Wind Speed",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "m/s"
 },
 {
     "name":             "windBearingDegrees",
     "shortDesc":        "Wind Direction",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    0,
     "units":            "degrees"
 },
 {
     "name":             "latitudeDegrees",
     "shortDesc":        "Latitude",
-    "type":             "double",
+    "type":             "int32",
     "decimalPlaces":    6,
     "units":            "degrees"
 },
 {
     "name":             "longitudeDegrees",
     "shortDesc":        "Longitude",
-    "type":             "double",
+    "type":             "int32",
     "decimalPlaces":    6,
     "units":            "degrees"
 },
 {
     "name":             "rollDegrees",
     "shortDesc":        "Roll",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "degrees"
 },
 {
     "name":             "rollRateDegreesPerSecond",
     "shortDesc":        "Roll Rate",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "degrees/s"
 },
 {
     "name":             "pitchDegrees",
     "shortDesc":        "Pitch",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "degrees"
 },
 {
     "name":             "pitchRateDegreesPerSecond",
     "shortDesc":        "Pitch Rate",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "degrees/s"
 },
 {
     "name":             "yawDegrees",
     "shortDesc":        "Yaw",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "degrees"
 }
@@ -132,21 +132,21 @@
 {
     "name":             "yawRateDegreesPerSecond",
     "shortDesc":        "Yaw Rate",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "degrees/s"
 },
 {
     "name":             "zVelocityMetersPerSecond",
     "shortDesc":        "Ascent Rate",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "m/s"
 },
 {
     "name":             "groundSpeedMetersPerSecond",
     "shortDesc":        "Speed Over Ground",
-    "type":             "double",
+    "type":             "float",
     "decimalPlaces":    1,
     "units":            "m/s"
 }

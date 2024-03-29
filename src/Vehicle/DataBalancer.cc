@@ -1,4 +1,9 @@
+#pragma once
+
 #include "DataBalancer.h"
+#include "Vehicle.h"
+#include "QGCApplication.h"
+#include "VehicleTemperatureFactGroup.h"
 #include <chrono>
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -128,7 +133,10 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
     /* Some fields not yet ready... */
     if (!(cassTemp0Count > 0 && cassTemp1Count > 0 && cassTemp1Count > 0 && cassRH0Count > 0 && cassRH1Count > 0 && cassRH2Count > 0 && altMmCount > 0 &&
           pressureCount > 0 && rollCount > 0 && pitchCount > 0 && yawCount > 0 && rollRateCount > 0 && pitchRateCount > 0 && yawRateCount > 0 &&
-          latitudeCount > 0 && longitudeCount > 0 && zVelocityCount > 0 && xVelocityCount > 0 && yVelocityCount > 0)) return;
+          latitudeCount > 0 && longitudeCount > 0 && zVelocityCount > 0 && xVelocityCount > 0 && yVelocityCount > 0)
+    ) {
+        return;
+    }
 
     /* Too soon... */
     if ((currentTime - lastUpdate) < balancedDataFrequency) return;
