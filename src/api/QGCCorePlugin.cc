@@ -314,35 +314,35 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex++);
         //value->setFact("Temperature", "temperature3");
         /* TD test */
-        value->setFact("Temperature", "temperature4");
+        value->setFact("Temperature", "ascending");
         value->setIcon("");
-        value->setText("Pressure:"/*value->fact()->shortDescription()*/);
+        value->setText("ascending:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Temperature", "temperature2");
+        value->setFact("Temperature", "zVelocityMetersPerSecond");
         value->setIcon("");
-        value->setText("Air Temp:"/*value->fact()->shortDescription()*/);
+        value->setText("zVel_ms:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Hygrometer", "Humidity");
+        value->setFact("Temperature", "timeUAVBootMilliseconds");
         value->setIcon("");
-        value->setText("Rel Humidity:"/*value->fact()->shortDescription()*/);
+        value->setText("uav_b_ms:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Wind", "speed");
+        value->setFact("Temperature", "altitudeMillimetersMSL");
         // value->setIcon("");
-        value->setText("Wind Speed:"/*value->fact()->shortDescription()*/);
+        value->setText("alt_mm:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Wind", "Direction");
+        value->setFact("Temperature", "absolutePressureMillibars");
         // value->setIcon("");
-        value->setText("Wind Direction:"/*value->fact()->shortDescription()*/);
+        value->setText("press_mb:"/*value->fact()->shortDescription()*/);
         value->setShowUnits(true);
 
     } else {

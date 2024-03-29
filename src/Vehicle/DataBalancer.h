@@ -5,14 +5,14 @@
 #include "ardupilotmega/mavlink_msg_cass_sensor_raw.h"
 #include "mavlink_types.h"
 #include "FactGroup.h"
-//#include "VehicleTemperatureFactGroup.h"
 
-typedef struct {
-    uint32_t time; /* drone's frame of reference */
-    /* cass sensor type 0 (iMet temp) */
-    float iMetTemp;
-    /* rest of variables... */
-} BalancedDataRecord;
+/*  Deprecated */
+// typedef struct {
+//     uint32_t time; /* drone's frame of reference */
+//     /* cass sensor type 0 (iMet temp) */
+//     float iMetTemp;
+//     /* rest of variables... */
+// } BalancedDataRecord;
 
 typedef struct {
     /* Original data, either as calculated or directly from the mavlink messages */
@@ -42,10 +42,9 @@ typedef struct {
     float xVelocityMetersPerSecond;
     float yVelocityMetersPerSecond;
     float groundSpeedMetersPerSecond;
-    uint32_t heartBeatCustomMode;
-    bool ascending;
+    uint32_t heartBeatCustomMode;    
 
-    /* Converted (With possible negligable loss) to more human understandable units */
+    /* Converted (With possible negligable loss) to more human understandable units or types. */
     double timeUAVSeconds;
     double timeUnixSeconds;
     double timeUAVBootSeconds;
@@ -60,10 +59,14 @@ typedef struct {
     float pitchRateDegreesPerSecond;
     float yawRateDegreesPerSecond;    
     float zVelocityMetersPerSecond;
+    bool ascending;
+    bool lastState;
+    size_t ascents;
 } IMetData;
 
 class DataBalancer{
     IMetData data;
+    bool dataInit = false;
 
     uint64_t UAVBootMilliseconds = 0; /* UAV boot time from Unix reference frame */    
     uint64_t lastUpdate = UINT64_MAX; /* time since last IMetDataRaw creation */
@@ -108,7 +111,15 @@ class DataBalancer{
     size_t yVelocityCount = 0;
     float yVelocityAvg = .0f;
 public:
-    void update(const mavlink_message_t* m, Fact* fact, Fact* facts);
+    void update(const mavlink_message_t* m, Fact* timeUAVMilliseconds, Fact* timeUnixMilliseconds, Fact* timeUAVBootMilliseconds, Fact* altitudeMillimetersMSL,
+                Fact* absolutePressureMillibars, Fact* temperature0Kelvin, Fact* temperature1Kelvin, Fact* temperature2Kelvin, Fact* relativeHumidity,
+                Fact* relativeHumidity0, Fact* relativeHumidity1, Fact* relativeHumidity2, Fact* windSpeedMetersPerSecond, Fact* windBearingDegrees,
+                Fact* latitudeDegreesE7, Fact* longitudeDegreesE7, Fact* rollRadians, Fact* pitchRadians, Fact* yawRadians, Fact* rollRateRadiansPerSecond,
+                Fact* pitchRateRadiansPerSecond, Fact* yawRateRadiansPerSecond, Fact* zVelocityMetersPerSecondInverted, Fact* xVelocityMetersPerSecond,
+                Fact* yVelocityMetersPerSecond, Fact* groundSpeedMetersPerSecond, Fact* heartBeatCustomMode, Fact* ascending, Fact* timeUAVSeconds,
+                Fact* timeUnixSeconds, Fact* timeUAVBootSeconds, Fact* altitudeMetersMSL, Fact* temperatureCelsius, Fact* latitudeDegrees, Fact* longitudeDegrees,
+                Fact* rollDegrees, Fact* pitchDegrees, Fact* yawDegrees, Fact* rollRateDegreesPerSecond, Fact* pitchRateDegreesPerSecond,
+                Fact* yawRateDegreesPerSecond, Fact* zVelocityMetersPerSecond, Fact* lastState, Fact* ascents);
 private:
     static void calcWindProps(IMetData* d);
     static void calcGroundSpeed(IMetData* d);

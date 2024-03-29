@@ -67,6 +67,8 @@ public:
     Q_PROPERTY(Fact* pitchRateDegreesPerSecond       READ pitchRateDegreesPerSecond       CONSTANT)
     Q_PROPERTY(Fact* yawRateDegreesPerSecond       READ yawRateDegreesPerSecond       CONSTANT)
     Q_PROPERTY(Fact* zVelocityMetersPerSecond       READ zVelocityMetersPerSecond       CONSTANT)
+    Q_PROPERTY(Fact* lastState       READ lastState       CONSTANT)
+    Q_PROPERTY(Fact* ascents       READ ascents       CONSTANT)
 
     Fact* temperature1 () { return &_temperature1Fact; }
     Fact* temperature2 () { return &_temperature2Fact; }
@@ -115,6 +117,8 @@ public:
     Fact* pitchRateDegreesPerSecond () { return &_pitchRateDegreesPerSecondFact; }
     Fact* yawRateDegreesPerSecond () { return &_yawRateDegreesPerSecondFact; }
     Fact* zVelocityMetersPerSecond () { return &_zVelocityMetersPerSecondFact; }
+    Fact* lastState () { return &_lastStateFact; }
+    Fact* ascents () { return &_ascentsFact; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
@@ -166,6 +170,8 @@ public:
     static const char* _pitchRateDegreesPerSecondFactName;
     static const char* _yawRateDegreesPerSecondFactName;
     static const char* _zVelocityMetersPerSecondFactName;
+    static const char* _lastStateFactName;
+    static const char* _ascentsFactName;
 
     static const char* _settingsGroup;
 
@@ -225,5 +231,7 @@ private:
     Fact            _rollRateDegreesPerSecondFact;
     Fact            _pitchRateDegreesPerSecondFact;
     Fact            _yawRateDegreesPerSecondFact;
-    Fact            _zVelocityMetersPerSecondFact;    
+    Fact            _zVelocityMetersPerSecondFact;
+    Fact            _lastStateFact;
+    Fact            _ascentsFact;
 };

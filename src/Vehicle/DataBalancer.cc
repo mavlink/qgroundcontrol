@@ -1,6 +1,7 @@
 #include "DataBalancer.h"
 #include <chrono>
 
+#define _CRT_SECURE_NO_WARNINGS
 #define DEGREES(radians) ((radians) * (180.0 / M_PI))
 
 void DataBalancer::calcWindProps(IMetData* d){
@@ -23,7 +24,15 @@ void DataBalancer::calcGroundSpeed(IMetData* d){
     d->groundSpeedMetersPerSecond = sqrt((d->xVelocityMetersPerSecond * d->xVelocityMetersPerSecond) + (d->yVelocityMetersPerSecond * d->yVelocityMetersPerSecond));
 }
 
-void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact, Fact* facts){
+void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds, Fact* timeUnixMilliseconds, Fact* timeUAVBootMilliseconds, Fact* altitudeMillimetersMSL,
+                          Fact* absolutePressureMillibars, Fact* temperature0Kelvin, Fact* temperature1Kelvin, Fact* temperature2Kelvin, Fact* relativeHumidity,
+                          Fact* relativeHumidity0, Fact* relativeHumidity1, Fact* relativeHumidity2, Fact* windSpeedMetersPerSecond, Fact* windBearingDegrees,
+                          Fact* latitudeDegreesE7, Fact* longitudeDegreesE7, Fact* rollRadians, Fact* pitchRadians, Fact* yawRadians, Fact* rollRateRadiansPerSecond,
+                          Fact* pitchRateRadiansPerSecond, Fact* yawRateRadiansPerSecond, Fact* zVelocityMetersPerSecondInverted, Fact* xVelocityMetersPerSecond,
+                          Fact* yVelocityMetersPerSecond, Fact* groundSpeedMetersPerSecond, Fact* heartBeatCustomMode, Fact* ascending, Fact* timeUAVSeconds,
+                          Fact* timeUnixSeconds, Fact* timeUAVBootSeconds, Fact* altitudeMetersMSL, Fact* temperatureCelsius, Fact* latitudeDegrees, Fact* longitudeDegrees,
+                          Fact* rollDegrees, Fact* pitchDegrees, Fact* yawDegrees, Fact* rollRateDegreesPerSecond, Fact* pitchRateDegreesPerSecond,
+                          Fact* yawRateDegreesPerSecond, Fact* zVelocityMetersPerSecond, Fact* lastState, Fact* ascents){
     uint64_t currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     switch(m->msgid){        
@@ -123,7 +132,15 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact, Fact* fact
 
     /* Too soon... */
     if ((currentTime - lastUpdate) < balancedDataFrequency) return;
-    
+        
+    /* Initialization */
+    if (!dataInit) {
+        data.ascents = 0;
+        data.lastState = false;
+        data.ascending = false;
+        dataInit = true;
+    }
+
     /* Create IMetData */
     data.timeUAVMilliseconds = currentTime - UAVBootMilliseconds;
     data.timeUnixMilliseconds = currentTime;
@@ -141,7 +158,7 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact, Fact* fact
     data.relativeHumidity0 = cassRH0Avg;
     data.relativeHumidity1 = cassRH1Avg;
     data.relativeHumidity2 = cassRH2Avg;
-    data.relativeHumidity = (cassTemp0Avg + cassTemp1Avg + cassTemp2Avg) / 3;
+    data.relativeHumidity = (cassRH0Avg + cassRH1Avg + cassRH2Avg) / 3;
     data.rollRadians = rollAvg;
     data.pitchRadians = pitchAvg;
     data.yawRadians = yawAvg;
@@ -157,59 +174,124 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* tempFact, Fact* fact
     calcWindProps(&data);
     data.latitudeDegreesE7 = latitudeAvg;
     data.longitudeDegreesE7 = longitudeAvg;
-    data.latitudeDegrees = (double)latitudeAvg / 10e7;
-    data.longitudeDegrees = (double)longitudeAvg / 10e7;
+    data.latitudeDegrees = (double)latitudeAvg / 10e6;
+    data.longitudeDegrees = (double)longitudeAvg / 10e6;
     data.zVelocityMetersPerSecondInverted = zVelocityAvg;
     data.xVelocityMetersPerSecond = xVelocityAvg;
     data.yVelocityMetersPerSecond = yVelocityAvg;
     data.zVelocityMetersPerSecond = -data.zVelocityMetersPerSecondInverted;
     calcGroundSpeed(&data);
-    data.ascending = data.heartBeatCustomMode == 3 && data.zVelocityMetersPerSecond > 2.5f;
 
-    /* Update facts */
-    tempFact->setRawValue(cassTemp0Avg);
-    facts[0].setRawValue(data.timeUAVMilliseconds);
-    facts[1].setRawValue(data.timeUnixMilliseconds);
-    facts[2].setRawValue(data.timeUAVBootMilliseconds);
-    facts[3].setRawValue(data.altitudeMillimetersMSL);
-    facts[4].setRawValue(data.absolutePressureMillibars);
-    facts[5].setRawValue(data.temperature0Kelvin);
-    facts[6].setRawValue(data.temperature1Kelvin);
-    facts[7].setRawValue(data.temperature2Kelvin);
-    facts[8].setRawValue(data.relativeHumidity);
-    facts[9].setRawValue(data.relativeHumidity0);
-    facts[10].setRawValue(data.relativeHumidity1);
-    facts[11].setRawValue(data.relativeHumidity2);
-    facts[12].setRawValue(data.windSpeedMetersPerSecond);
-    facts[13].setRawValue(data.windBearingDegrees);
-    facts[14].setRawValue(data.latitudeDegreesE7);
-    facts[15].setRawValue(data.longitudeDegreesE7);
-    facts[16].setRawValue(data.rollRadians);
-    facts[17].setRawValue(data.pitchRadians);
-    facts[18].setRawValue(data.yawRadians);
-    facts[19].setRawValue(data.rollRateRadiansPerSecond);
-    facts[20].setRawValue(data.pitchRateRadiansPerSecond);
-    facts[21].setRawValue(data.yawRateRadiansPerSecond);
-    facts[22].setRawValue(data.zVelocityMetersPerSecondInverted);
-    facts[23].setRawValue(data.xVelocityMetersPerSecond);
-    facts[24].setRawValue(data.yVelocityMetersPerSecond);
-    facts[25].setRawValue(data.groundSpeedMetersPerSecond);
-    facts[26].setRawValue(data.heartBeatCustomMode);
-    facts[27].setRawValue(data.ascending);
-    facts[28].setRawValue(data.timeUAVSeconds);
-    facts[29].setRawValue(data.timeUnixSeconds);
-    facts[30].setRawValue(data.timeUAVBootSeconds);
-    facts[31].setRawValue(data.altitudeMetersMSL);
-    facts[32].setRawValue(data.temperatureCelsius);
-    facts[33].setRawValue(data.latitudeDegrees);
-    facts[34].setRawValue(data.longitudeDegrees);
-    facts[35].setRawValue(data.rollDegrees);
-    facts[36].setRawValue(data.pitchDegrees);
-    facts[37].setRawValue(data.yawDegrees);
-    facts[38].setRawValue(data.rollRateDegreesPerSecond);
-    facts[39].setRawValue(data.pitchRateDegreesPerSecond);
-    facts[40].setRawValue(data.yawRateDegreesPerSecond);
-    facts[41].setRawValue(data.zVelocityMetersPerSecond);
+    /* Ascent detection
+     * This does something in non-steady state conditions, and nothing in steady state conditions.
+     * If you want to look at the IMetData directly, the data is valid if (dataInit && data.ascending).
+    */
+    data.ascending = data.heartBeatCustomMode == 3 && data.zVelocityMetersPerSecond > 2.5f;
+    if(data.ascending && !data.lastState) {
+        data.ascents++;
+        /* This is where we hook in for these.
+        createFlightFile(ascents)
+        updateGUIAscentsValue(ascents)
+        */
+    }
+
+    if (!data.ascending && data.lastState){
+        /* This is where we hook in for this.
+        resetDataProcessing()
+        */
+    }
+
+    data.lastState = data.ascending;
+
+    /* temporary logging/debugging */
+    FILE* f = fopen("log.txt", "w");
+    if (!f) return;
+    fprintf(f, "timeUAVMilliseconds: %d\n", data.timeUAVMilliseconds);
+    fprintf(f, "timeUnixMilliseconds: %llu\n", data.timeUnixMilliseconds);
+    fprintf(f, "timeUAVBootMilliseconds: %llu\n", data.timeUAVBootMilliseconds);
+    fprintf(f, "altitudeMillimetersMSL: %d\n", data.altitudeMillimetersMSL);
+    fprintf(f, "absolutePressureMillibars: %f\n", data.absolutePressureMillibars);
+    fprintf(f, "temperature0Kelvin: %f\n", data.temperature0Kelvin);
+    fprintf(f, "temperature1Kelvin: %f\n", data.temperature1Kelvin);
+    fprintf(f, "temperature2Kelvin: %f\n", data.temperature2Kelvin);
+    fprintf(f, "relativeHumidity: %f\n", data.relativeHumidity);
+    fprintf(f, "relativeHumidity0: %f\n", data.relativeHumidity0);
+    fprintf(f, "relativeHumidity1: %f\n", data.relativeHumidity1);
+    fprintf(f, "relativeHumidity2: %f\n", data.relativeHumidity2);
+    fprintf(f, "windSpeedMetersPerSecond: %f\n", data.windSpeedMetersPerSecond);
+    fprintf(f, "windBearingDegrees: %f\n", data.windBearingDegrees);
+    fprintf(f, "latitudeDegreesE7: %d\n", data.latitudeDegreesE7);
+    fprintf(f, "longitudeDegreesE7: %d\n", data.longitudeDegreesE7);
+    fprintf(f, "rollRadians: %f\n", data.rollRadians);
+    fprintf(f, "pitchRadians: %f\n", data.pitchRadians);
+    fprintf(f, "yawRadians: %f\n", data.yawRadians);
+    fprintf(f, "rollRateRadiansPerSecond: %f\n", data.rollRateRadiansPerSecond);
+    fprintf(f, "pitchRateRadiansPerSecond: %f\n", data.pitchRateRadiansPerSecond);
+    fprintf(f, "yawRateRadiansPerSecond: %f\n", data.yawRateRadiansPerSecond);
+    fprintf(f, "zVelocityMetersPerSecondInverted: %f\n", data.zVelocityMetersPerSecondInverted);
+    fprintf(f, "xVelocityMetersPerSecond: %f\n", data.xVelocityMetersPerSecond);
+    fprintf(f, "yVelocityMetersPerSecond: %f\n", data.yVelocityMetersPerSecond);
+    fprintf(f, "groundSpeedMetersPerSecond: %f\n", data.groundSpeedMetersPerSecond);
+    fprintf(f, "heartBeatCustomMode: %d\n", data.heartBeatCustomMode);
+    fprintf(f, "ascending: %d\n", data.ascending);
+    fprintf(f, "timeUAVSeconds: %f\n", data.timeUAVSeconds);
+    fprintf(f, "timeUnixSeconds: %f\n", data.timeUnixSeconds);
+    fprintf(f, "timeUAVBootSeconds: %f\n", data.timeUAVBootSeconds);
+    fprintf(f, "altitudeMetersMSL: %f\n", data.altitudeMetersMSL);
+    fprintf(f, "temperatureCelsius: %f\n", data.temperatureCelsius);
+    fprintf(f, "latitudeDegrees: %f\n", data.latitudeDegrees);
+    fprintf(f, "longitudeDegrees: %f\n", data.longitudeDegrees);
+    fprintf(f, "rollDegrees: %f\n", data.rollDegrees);
+    fprintf(f, "pitchDegrees: %f\n", data.pitchDegrees);
+    fprintf(f, "yawDegrees: %f\n", data.yawDegrees);
+    fprintf(f, "rollRateDegreesPerSecond: %f\n", data.rollRateDegreesPerSecond);
+    fprintf(f, "pitchRateDegreesPerSecond: %f\n", data.pitchRateDegreesPerSecond);
+    fprintf(f, "yawRateDegreesPerSecond: %f\n", data.yawRateDegreesPerSecond);
+    fprintf(f, "zVelocityMetersPerSecond: %f\n", data.zVelocityMetersPerSecond);
+    fclose(f);
+
+    timeUAVMilliseconds->setRawValue(data.timeUAVMilliseconds);
+    timeUnixMilliseconds->setRawValue(data.timeUnixMilliseconds);
+    timeUAVBootMilliseconds->setRawValue(data.timeUAVBootMilliseconds);
+    altitudeMillimetersMSL->setRawValue(data.altitudeMillimetersMSL);
+    absolutePressureMillibars->setRawValue(data.absolutePressureMillibars);
+    temperature0Kelvin->setRawValue(data.temperature0Kelvin);
+    temperature1Kelvin->setRawValue(data.temperature1Kelvin);
+    temperature2Kelvin->setRawValue(data.temperature2Kelvin);
+    relativeHumidity->setRawValue(data.relativeHumidity);
+    relativeHumidity0->setRawValue(data.relativeHumidity0);
+    relativeHumidity1->setRawValue(data.relativeHumidity1);
+    relativeHumidity2->setRawValue(data.relativeHumidity2);
+    windSpeedMetersPerSecond->setRawValue(data.windSpeedMetersPerSecond);
+    windBearingDegrees->setRawValue(data.windBearingDegrees);
+    latitudeDegreesE7->setRawValue(data.latitudeDegreesE7);
+    longitudeDegreesE7->setRawValue(data.longitudeDegreesE7);
+    rollRadians->setRawValue(data.rollRadians);
+    pitchRadians->setRawValue(data.pitchRadians);
+    yawRadians->setRawValue(data.yawRadians);
+    rollRateRadiansPerSecond->setRawValue(data.rollRateRadiansPerSecond);
+    pitchRateRadiansPerSecond->setRawValue(data.pitchRateRadiansPerSecond);
+    yawRateRadiansPerSecond->setRawValue(data.yawRateRadiansPerSecond);
+    zVelocityMetersPerSecondInverted->setRawValue(data.zVelocityMetersPerSecondInverted);
+    xVelocityMetersPerSecond->setRawValue(data.xVelocityMetersPerSecond);
+    yVelocityMetersPerSecond->setRawValue(data.yVelocityMetersPerSecond);
+    groundSpeedMetersPerSecond->setRawValue(data.groundSpeedMetersPerSecond);
+    heartBeatCustomMode->setRawValue(data.heartBeatCustomMode);
+    ascending->setRawValue(data.ascending);
+    timeUAVSeconds->setRawValue(data.timeUAVSeconds);
+    timeUnixSeconds->setRawValue(data.timeUnixSeconds);
+    timeUAVBootSeconds->setRawValue(data.timeUAVBootSeconds);
+    altitudeMetersMSL->setRawValue(data.altitudeMetersMSL);
+    temperatureCelsius->setRawValue(data.temperatureCelsius);
+    latitudeDegrees->setRawValue(data.latitudeDegrees);
+    longitudeDegrees->setRawValue(data.longitudeDegrees);
+    rollDegrees->setRawValue(data.rollDegrees);
+    pitchDegrees->setRawValue(data.pitchDegrees);
+    yawDegrees->setRawValue(data.yawDegrees);
+    rollRateDegreesPerSecond->setRawValue(data.rollRateDegreesPerSecond);
+    pitchRateDegreesPerSecond->setRawValue(data.pitchRateDegreesPerSecond);
+    yawRateDegreesPerSecond->setRawValue(data.yawRateDegreesPerSecond);
+    zVelocityMetersPerSecond->setRawValue(data.zVelocityMetersPerSecond);
 
     /* Reset counters and lastUpdate */
     cassTemp0Count = 0;
