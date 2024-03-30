@@ -21,28 +21,28 @@ class MetDataLogManager : public QObject
         QFile               _metRawCsvFile;
 
         QStringList metFactHeaders = {
-            "ASL",
-            "Time",
-            "Pressure",
-            "Air Temp",
-            "Rel Hum",
-            "Wind Speed",
-            "Wind Direction",
-            "Latitude",
-            "Longitude",
-            "Roll",
-            "Roll Rate",
-            "Pitch",
-            "Pitch Rate",
-            "Yaw",
-            "Yaw Rate",
-            "Ascent Rate",
-            "Speed Over Ground"
+            "Time (s)",
+            "ASL (m)",
+            "Pressure (mB)",
+            "Air Temp (C)",
+            "Rel Hum (%)",
+            "Wind Speed (m/s)",
+            "Wind Direction (deg)",
+            "Latitude (deg)",
+            "Longitude (deg)",
+            "Roll (deg)",
+            "Roll Rate (deg/s)",
+            "Pitch (deg)",
+            "Pitch Rate (deg/s)",
+            "Yaw (deg)",
+            "Yaw Rate (deg/s)",
+            "Ascent Rate (m/s)",
+            "Speed Over Ground (m/s)"
         };
 
         QStringList metFactNames = {
+            "timeUnixSeconds",
             "altitudeMetersMSL",
-            "timeUnixMilliseconds",
             "absolutePressureMillibars",
             "temperatureCelsius",
             "relativeHumidity",

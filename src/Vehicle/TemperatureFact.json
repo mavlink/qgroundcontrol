@@ -45,6 +45,13 @@
     "units":            "ms"
 },
 {
+    "name":             "timeUnixSeconds",
+    "shortDesc":        "Time (Unix)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "s"
+},
+{
     "name":            "absolutePressureMillibars",
     "shortDesc":       "Pressure",
     "type":            "float",
@@ -82,14 +89,14 @@
 {
     "name":             "latitudeDegrees",
     "shortDesc":        "Latitude",
-    "type":             "int32",
+    "type":             "double",
     "decimalPlaces":    6,
     "units":            "degrees"
 },
 {
     "name":             "longitudeDegrees",
     "shortDesc":        "Longitude",
-    "type":             "int32",
+    "type":             "double",
     "decimalPlaces":    6,
     "units":            "degrees"
 },

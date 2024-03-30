@@ -51,18 +51,18 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
 
         switch(s.app_datatype){
         case 0:{ /* iMet temp */            
-            cassTemp0Avg = ((cassTemp0Avg * cassTemp0Count) + s.values[0]) / (cassTemp0Count + 1);
-            cassTemp1Avg = ((cassTemp1Avg * cassTemp1Count) + s.values[1]) / (cassTemp1Count + 1);
-            cassTemp2Avg = ((cassTemp2Avg * cassTemp2Count) + s.values[2]) / (cassTemp2Count + 1);
+            cassTemp0Avg = ((cassTemp0Avg * cassTemp0Count) + s.values[0]) / (int64_t)(cassTemp0Count + 1);
+            cassTemp1Avg = ((cassTemp1Avg * cassTemp1Count) + s.values[1]) / (int64_t)(cassTemp1Count + 1);
+            cassTemp2Avg = ((cassTemp2Avg * cassTemp2Count) + s.values[2]) / (int64_t)(cassTemp2Count + 1);
             cassTemp0Count++;
             cassTemp1Count++;
             cassTemp2Count++;
             break;
         }
         case 1:{ /* iMet RH */            
-            cassRH0Avg = ((cassRH0Avg * cassRH0Count) + s.values[0]) / (cassRH0Count + 1);
-            cassRH1Avg = ((cassRH1Avg * cassRH1Count) + s.values[1]) / (cassRH1Count + 1);
-            cassRH2Avg = ((cassRH2Avg * cassRH2Count) + s.values[2]) / (cassRH2Count + 1);
+            cassRH0Avg = ((cassRH0Avg * cassRH0Count) + s.values[0]) / (int64_t)(cassRH0Count + 1);
+            cassRH1Avg = ((cassRH1Avg * cassRH1Count) + s.values[1]) / (int64_t)(cassRH1Count + 1);
+            cassRH2Avg = ((cassRH2Avg * cassRH2Count) + s.values[2]) / (int64_t)(cassRH2Count + 1);
             cassRH0Count++;
             cassRH1Count++;
             cassRH2Count++;
@@ -78,22 +78,31 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
         break;
     }
     case MAVLINK_MSG_ID_LOCAL_POSITION_NED:{
-        mavlink_global_position_int_t s;
-        mavlink_msg_global_position_int_decode(m, &s);
-        zVelocityAvg = ((zVelocityAvg * zVelocityCount) + s.vz) / (zVelocityCount + 1);
-        xVelocityAvg = ((xVelocityAvg * xVelocityCount) + s.vx) / (xVelocityCount + 1);
-        yVelocityAvg = ((yVelocityAvg * yVelocityCount) + s.vy) / (yVelocityCount + 1);
-        zVelocityCount++;
+        mavlink_local_position_ned_t s;
+        mavlink_msg_local_position_ned_decode(m, &s);
+        xVelocityAvg = ((xVelocityAvg * xVelocityCount) + s.vx) / (int64_t)(xVelocityCount + 1);
+        yVelocityAvg = ((yVelocityAvg * yVelocityCount) + s.vy) / (int64_t)(yVelocityCount + 1);
+        zVelocityAvg = ((zVelocityAvg * zVelocityCount) + s.vz) / (int64_t)(zVelocityCount + 1);
         xVelocityCount++;
         yVelocityCount++;
+        zVelocityCount++;
         break;
     }
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:{
         mavlink_global_position_int_t s;
         mavlink_msg_global_position_int_decode(m, &s);
-        altMmAvg = (((int64_t)altMmAvg * altMmCount) + s.alt) / (altMmCount + 1);
-        latitudeAvg = (((int64_t)latitudeAvg * latitudeCount) + s.lat) / (latitudeCount + 1);
-        longitudeAvg = (((int64_t)longitudeAvg * longitudeCount) + s.lon) / (longitudeCount + 1);
+        altMmAvg =     ((int64_t)(altMmAvg     * altMmCount)     + s.alt) / (int64_t)(altMmCount + 1);
+        latitudeAvg =  ((int64_t)(latitudeAvg  * latitudeCount)  + s.lat) / (int64_t)(latitudeCount + 1);
+        
+        //handle averaging near 180th meridian
+        int32_t sLonNormalized = s.lon;
+        if (longitudeCount > 0 && (longitudeAvg - s.lon) > 180e7) {
+            sLonNormalized += 360e7;
+        } else if (longitudeCount > 0 && (longitudeAvg - s.lon) < -180e7) {
+            sLonNormalized -= 360e7;
+        }
+
+        longitudeAvg = ((int64_t)(longitudeAvg * longitudeCount) + sLonNormalized) / (int64_t)(longitudeCount + 1);
         altMmCount++;
         latitudeCount++;
         longitudeCount++;
@@ -109,12 +118,12 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
     case MAVLINK_MSG_ID_ATTITUDE:{
         mavlink_attitude_t s;
         mavlink_msg_attitude_decode(m, &s);
-        rollAvg = ((rollAvg * rollCount) + s.roll) / (rollCount + 1);
-        pitchAvg = ((pitchAvg * pitchCount) + s.pitch) / (pitchCount + 1);
-        yawAvg = ((yawAvg * yawCount) + s.yaw) / (yawCount + 1);
-        rollRateAvg = ((rollRateAvg * rollRateCount) + s.rollspeed) / (rollRateCount + 1);        
-        pitchRateAvg = ((pitchRateAvg * pitchRateCount) + s.pitchspeed) / (pitchRateCount + 1);
-        yawRateAvg = ((yawRateAvg * yawRateCount) + s.yawspeed) / (yawRateCount + 1);
+        rollAvg =      ((rollAvg      * rollCount)      + s.roll)       / (int64_t)(rollCount + 1);
+        pitchAvg =     ((pitchAvg     * pitchCount)     + s.pitch)      / (int64_t)(pitchCount + 1);
+        yawAvg =       ((yawAvg       * yawCount)       + s.yaw)        / (int64_t)(yawCount + 1);
+        rollRateAvg =  ((rollRateAvg  * rollRateCount)  + s.rollspeed)  / (int64_t)(rollRateCount + 1);        
+        pitchRateAvg = ((pitchRateAvg * pitchRateCount) + s.pitchspeed) / (int64_t)(pitchRateCount + 1);
+        yawRateAvg =   ((yawRateAvg   * yawRateCount)   + s.yawspeed)   / (int64_t)(yawRateCount + 1);
         rollCount++;
         pitchCount++;
         yawCount++;
@@ -182,8 +191,8 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
     calcWindProps(&data);
     data.latitudeDegreesE7 = latitudeAvg;
     data.longitudeDegreesE7 = longitudeAvg;
-    data.latitudeDegrees = (double)latitudeAvg / 10e6;
-    data.longitudeDegrees = (double)longitudeAvg / 10e6;
+    data.latitudeDegrees = (double)latitudeAvg / 1e7;
+    data.longitudeDegrees = (double)longitudeAvg / 1e7;
     data.zVelocityMetersPerSecondInverted = zVelocityAvg;
     data.xVelocityMetersPerSecond = xVelocityAvg;
     data.yVelocityMetersPerSecond = yVelocityAvg;
@@ -210,53 +219,6 @@ void DataBalancer::update(const mavlink_message_t* m, Fact* timeUAVMilliseconds,
     }
 
     data.lastState = data.ascending;
-
-    /* temporary logging/debugging */
-    FILE* f = fopen("log.txt", "w");
-    if (!f) return;
-    fprintf(f, "timeUAVMilliseconds: %d\n", data.timeUAVMilliseconds);
-    fprintf(f, "timeUnixMilliseconds: %llu\n", data.timeUnixMilliseconds);
-    fprintf(f, "timeUAVBootMilliseconds: %llu\n", data.timeUAVBootMilliseconds);
-    fprintf(f, "altitudeMillimetersMSL: %d\n", data.altitudeMillimetersMSL);
-    fprintf(f, "absolutePressureMillibars: %f\n", data.absolutePressureMillibars);
-    fprintf(f, "temperature0Kelvin: %f\n", data.temperature0Kelvin);
-    fprintf(f, "temperature1Kelvin: %f\n", data.temperature1Kelvin);
-    fprintf(f, "temperature2Kelvin: %f\n", data.temperature2Kelvin);
-    fprintf(f, "relativeHumidity: %f\n", data.relativeHumidity);
-    fprintf(f, "relativeHumidity0: %f\n", data.relativeHumidity0);
-    fprintf(f, "relativeHumidity1: %f\n", data.relativeHumidity1);
-    fprintf(f, "relativeHumidity2: %f\n", data.relativeHumidity2);
-    fprintf(f, "windSpeedMetersPerSecond: %f\n", data.windSpeedMetersPerSecond);
-    fprintf(f, "windBearingDegrees: %f\n", data.windBearingDegrees);
-    fprintf(f, "latitudeDegreesE7: %d\n", data.latitudeDegreesE7);
-    fprintf(f, "longitudeDegreesE7: %d\n", data.longitudeDegreesE7);
-    fprintf(f, "rollRadians: %f\n", data.rollRadians);
-    fprintf(f, "pitchRadians: %f\n", data.pitchRadians);
-    fprintf(f, "yawRadians: %f\n", data.yawRadians);
-    fprintf(f, "rollRateRadiansPerSecond: %f\n", data.rollRateRadiansPerSecond);
-    fprintf(f, "pitchRateRadiansPerSecond: %f\n", data.pitchRateRadiansPerSecond);
-    fprintf(f, "yawRateRadiansPerSecond: %f\n", data.yawRateRadiansPerSecond);
-    fprintf(f, "zVelocityMetersPerSecondInverted: %f\n", data.zVelocityMetersPerSecondInverted);
-    fprintf(f, "xVelocityMetersPerSecond: %f\n", data.xVelocityMetersPerSecond);
-    fprintf(f, "yVelocityMetersPerSecond: %f\n", data.yVelocityMetersPerSecond);
-    fprintf(f, "groundSpeedMetersPerSecond: %f\n", data.groundSpeedMetersPerSecond);
-    fprintf(f, "heartBeatCustomMode: %d\n", data.heartBeatCustomMode);
-    fprintf(f, "ascending: %d\n", data.ascending);
-    fprintf(f, "timeUAVSeconds: %f\n", data.timeUAVSeconds);
-    fprintf(f, "timeUnixSeconds: %f\n", data.timeUnixSeconds);
-    fprintf(f, "timeUAVBootSeconds: %f\n", data.timeUAVBootSeconds);
-    fprintf(f, "altitudeMetersMSL: %f\n", data.altitudeMetersMSL);
-    fprintf(f, "temperatureCelsius: %f\n", data.temperatureCelsius);
-    fprintf(f, "latitudeDegrees: %f\n", data.latitudeDegrees);
-    fprintf(f, "longitudeDegrees: %f\n", data.longitudeDegrees);
-    fprintf(f, "rollDegrees: %f\n", data.rollDegrees);
-    fprintf(f, "pitchDegrees: %f\n", data.pitchDegrees);
-    fprintf(f, "yawDegrees: %f\n", data.yawDegrees);
-    fprintf(f, "rollRateDegreesPerSecond: %f\n", data.rollRateDegreesPerSecond);
-    fprintf(f, "pitchRateDegreesPerSecond: %f\n", data.pitchRateDegreesPerSecond);
-    fprintf(f, "yawRateDegreesPerSecond: %f\n", data.yawRateDegreesPerSecond);
-    fprintf(f, "zVelocityMetersPerSecond: %f\n", data.zVelocityMetersPerSecond);
-    fclose(f);
 
     timeUAVMilliseconds->setRawValue(data.timeUAVMilliseconds);
     timeUnixMilliseconds->setRawValue(data.timeUnixMilliseconds);
