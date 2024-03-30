@@ -107,6 +107,7 @@
 #include "RemoteIDManager.h"
 #include "CustomAction.h"
 #include "CustomActionManager.h"
+#include "MetDataLogManager.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -469,6 +470,7 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<VehicleLinkManager>      (kQGCVehicle,                       1, 0, "VehicleLinkManager",         kRefOnly);
     qmlRegisterUncreatableType<Autotune>                (kQGCVehicle,                       1, 0, "Autotune",                   kRefOnly);
     qmlRegisterUncreatableType<RemoteIDManager>         (kQGCVehicle,                       1, 0, "RemoteIDManager",            kRefOnly);
+    qmlRegisterUncreatableType<MetDataLogManager>       (kQGCVehicle,                       1, 0, "MetDataLogManager",          kRefOnly);
 
     qmlRegisterUncreatableType<MissionController>       (kQGCControllers,                   1, 0, "MissionController",          kRefOnly);
     qmlRegisterUncreatableType<GeoFenceController>      (kQGCControllers,                   1, 0, "GeoFenceController",         kRefOnly);
@@ -569,6 +571,8 @@ bool QGCApplication::_initForNormalAppBoot()
         rootWindow->scheduleRenderJob (new FinishVideoInitialization (toolbox()->videoManager()),
                 QQuickWindow::BeforeSynchronizingStage);
     }
+
+    _metDataLogManager = new MetDataLogManager();
 
     // Safe to show popup error messages now that main window is created
     UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();

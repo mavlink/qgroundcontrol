@@ -314,35 +314,35 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
         InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex++);
         //value->setFact("Temperature", "temperature3");
         /* TD test */
-        value->setFact("Temperature", "temperature4");
+        value->setFact("Temperature", "absolutePressureMillibars");
         value->setIcon("");
-        value->setText("Pressure:"/*value->fact()->shortDescription()*/);
+        value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Temperature", "temperature2");
+        value->setFact("Temperature", "temperatureCelsius");
         value->setIcon("");
-        value->setText("Air Temp:"/*value->fact()->shortDescription()*/);
+        value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Hygrometer", "Humidity");
+        value->setFact("Temperature", "relativeHumidity");
         value->setIcon("");
-        value->setText("Rel Humidity:"/*value->fact()->shortDescription()*/);
+        value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
 
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Wind", "speed");
+        value->setFact("Temperature", "windSpeedMetersPerSecond");
         // value->setIcon("");
-        value->setText("Wind Speed:"/*value->fact()->shortDescription()*/);
+        value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
 
 
         value = column->value<InstrumentValueData*>(rowIndex++);
-        value->setFact("Wind", "Direction");
+        value->setFact("Temperature", "windBearingDegrees");
         // value->setIcon("");
-        value->setText("Wind Direction:"/*value->fact()->shortDescription()*/);
+        value->setText(value->fact()->shortDescription());
         value->setShowUnits(true);
 
     } else {
