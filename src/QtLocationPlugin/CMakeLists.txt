@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Core5Compat Location Network Qml Sql)
+find_package(Qt6 REQUIRED COMPONENTS Core Location Network Qml Sql)
 
 # QGC_NO_GOOGLE_MAPS
 
@@ -48,8 +48,6 @@ qt_add_plugin(QGCLocation STATIC
 target_compile_definitions(QGCLocation PRIVATE CMAKE_LOCATION_PLUGIN)
 
 target_link_libraries(QGCLocation
-	PRIVATE
-		Qt6::Core5Compat
 	PUBLIC
 		Qt6::Core
 		Qt6::Location
