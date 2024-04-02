@@ -29,11 +29,10 @@
 #include "QGCLoggingCategory.h"
 
 #include <QTcpSocket>
-#include <QtCore5Compat/QRegExp>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QRegularExpressionMatch>
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
-
-static const QRegularExpression APM_FRAME_REXP("^Frame: ");
 
 const char* APMFirmwarePlugin::_artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
 const int   APMFirmwarePlugin::_artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller
@@ -261,21 +260,18 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* /*vehicle*/, mavlink_
     // APM user facing calibration messages come through as high severity, we need to parse them out
     // and lower the severity on them so that they don't pop in the users face.
 
-    QString messageText = _getMessageText(message);
+    const QString messageText = _getMessageText(message);
     if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
         _adjustCalibrationMessageSeverity(message);
         return true;
     }
 
-    if (messageText.contains(APM_FRAME_REXP)) {
-        // We need to parse the Frame: message in order to determine whether the motors are coaxial or not
-        QRegExp frameTypeRegex("^Frame: (\\S*)");
-        if (frameTypeRegex.indexIn(messageText) != -1) {
-            QString frameType = frameTypeRegex.cap(1);
-            if (!frameType.isEmpty() && (frameType == QStringLiteral("Y6") || frameType == QStringLiteral("OCTA_QUAD") || frameType == QStringLiteral("COAX"))) {
-                _coaxialMotors = true;
-            }
-        }
+    static const QRegularExpression APM_FRAME_REXP("^Frame: (\\S*)");
+    const QRegularExpressionMatch match = APM_FRAME_REXP.match(messageText);
+    if (match.hasMatch()) {
+        static const QSet<QString> coaxialFrames = {"Y6", "OCTA_QUAD", "COAX", "QUAD/PLUS"};
+        const QString frameType = match.captured(1);
+        _coaxialMotors = coaxialFrames.contains(frameType);
     }
 
     return true;
@@ -367,7 +363,7 @@ QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
 
     // Ensure NUL-termination
     b[b.length()-1] = '\0';
-    return QString(b);
+    return QString::fromLocal8Bit(b, std::strlen(b.constData()));
 }
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const

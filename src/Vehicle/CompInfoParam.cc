@@ -17,7 +17,8 @@
 
 #include <QJsonDocument>
 #include <QJsonArray>
-#include <QtCore5Compat/QRegExp>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QRegularExpressionMatch>
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 
@@ -106,13 +107,13 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
                 const RegexFactMetaDataPair_t& pair = _indexedNameMetaDataList[i];
 
                 QString indexedName = pair.first;
-                QString indexedRegex("(\\d+)");
+                const QString indexedRegex("(\\d+)");
                 indexedName.replace(_indexedNameTag, indexedRegex);
 
-                QRegularExpression      regex(indexedName);
-                QRegularExpressionMatch match = regex.match(name);
+                const QRegularExpression      regex(indexedName);
+                const QRegularExpressionMatch match = regex.match(name);
 
-                QStringList captured = match.capturedTexts();
+                const QStringList captured = match.capturedTexts();
                 if (captured.count() == 2) {
                     factMetaData = new FactMetaData(*pair.second, this);
                     factMetaData->setName(name);
@@ -179,17 +180,20 @@ QString CompInfoParam::_parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT fi
 
         if (!cacheHit) {
             // No direct hit, look for lower param set version
-            QString wildcard = QString("%1.%2.*.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType);
-            QStringList cacheHits = cacheDir.entryList(QStringList(wildcard), QDir::Files, QDir::Name);
+            const QString wildcard = QString("%1.%2.*.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType);
+            const QStringList cacheHits = cacheDir.entryList(QStringList(wildcard), QDir::Files, QDir::Name);
 
             // Find the highest major version number which is below the vehicles major version number
             int cacheHitIndex = -1;
             cacheMajorVersion = -1;
-            QRegExp regExp(QString("%1\\.%2\\.(\\d*)\\.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType));
-            for (int i=0; i< cacheHits.count(); i++) {
-                if (regExp.exactMatch(cacheHits[i]) && regExp.captureCount() == 1) {
-                    int majorVersion = regExp.capturedTexts()[0].toInt();
-                    if (majorVersion > cacheMajorVersion && majorVersion < wantedMajorVersion) {
+
+            const QString pattern = QString("%1\\.%2\\.(\\d*)\\.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType);
+            const QRegularExpression regex(pattern);
+            for (int i = 0; i < cacheHits.count(); i++) {
+                const QRegularExpressionMatch match = regex.match(cacheHits[i]);
+                if (match.hasMatch() && match.lastCapturedIndex() == 0) {
+                    const int majorVersion = match.captured(1).toInt();
+                    if ((majorVersion > cacheMajorVersion) && (majorVersion < wantedMajorVersion)) {
                         cacheMajorVersion = majorVersion;
                         cacheHitIndex = i;
                     }
