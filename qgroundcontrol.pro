@@ -257,7 +257,6 @@ QT += \
     xml \
     texttospeech \
     core-private \
-    core5compat \
     quick3d
 
 # Multimedia only used if QVC is enabled

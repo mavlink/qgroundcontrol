@@ -95,7 +95,6 @@ LinuxBuild {
         libQt6QmlWorkerScript.so.6 \
         libQt6QuickShapes.so.6 \
         libQt6XcbQpa.so.6 \
-        libQt6Core5Compat.so.6 \
         libQt6Network.so.6 \ 
         libQt6QmlXmlListModel.so.6 \
         libQt6Quick.so.6 \

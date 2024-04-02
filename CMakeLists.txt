@@ -67,7 +67,6 @@ find_package(Qt6
         Charts
         Concurrent
         Core
-        Core5Compat
         Location
         Multimedia
         Network
