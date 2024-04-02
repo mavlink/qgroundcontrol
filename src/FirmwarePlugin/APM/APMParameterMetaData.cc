@@ -13,7 +13,8 @@
 
 #include <QFile>
 #include <QStack>
-#include <QtCore5Compat/QRegExp>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QRegularExpressionMatch>
 
 static const char* kInvalidConverstion = "Internal Error: No support for string parameters";
 
@@ -128,8 +129,9 @@ QString APMParameterMetaData::mavTypeToString(MAV_TYPE vehicleTypeEnum)
 
 QString APMParameterMetaData::_groupFromParameterName(const QString& name)
 {
+    static const QRegularExpression regex = QRegularExpression("[0-9]*$");
     QString group = name.split('_').first();
-    return group.remove(QRegularExpression("[0-9]*$")); // remove any numbers from the end
+    return group.remove(regex); // remove any numbers from the end
 }
 
 
@@ -140,7 +142,6 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
     }
     _parameterMetaDataLoaded = true;
 
-    auto parameterCategories = QRegularExpression("ArduCopter|ArduPlane|APMrover2|Rover|ArduSub|AntennaTracker");
     QString currentCategory;
 
     qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
@@ -202,6 +203,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 if (xml.attributes().hasAttribute("name")) {
                     // we will handle metadata only for specific MAV_TYPEs and libraries
                     const QString nameValue = xml.attributes().value("name").toString();
+                    static const QRegularExpression parameterCategories = QRegularExpression("ArduCopter|ArduPlane|APMrover2|Rover|ArduSub|AntennaTracker");
                     if (nameValue.contains(parameterCategories)) {
                         xmlState.push(XmlStateFoundParameters);
                         currentCategory = nameValue;
@@ -625,15 +627,14 @@ FactMetaData* APMParameterMetaData::getMetaDataForFact(const QString& name, MAV_
 
 void APMParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
 {
-    majorVersion = -1;
-    minorVersion = -1;
-
-    // Meta data version is hacked in for now based on file name
-    QRegExp regExp(".*\\.(\\d)\\.(\\d)\\.xml$");
-    if (regExp.exactMatch(metaDataFile) && regExp.captureCount() == 2) {
-        majorVersion = regExp.cap(2).toInt();
-        minorVersion = 0;
+    static const QRegularExpression regex(".*\\.(\\d)\\.(\\d)\\.xml$");
+    const QRegularExpressionMatch match = regex.match(metaDataFile);
+    if (match.hasMatch() && match.lastCapturedIndex() == 2) {
+        majorVersion = match.captured(1).toInt();
+        minorVersion = match.captured(2).toInt();
     } else {
-        qWarning() << QStringLiteral("Unable to parse version from parameter meta data file name: '%1'").arg(metaDataFile);
+        majorVersion = -1;
+        minorVersion = -1;
+        qCWarning(APMParameterMetaDataLog) << QStringLiteral("Unable to parse version from parameter meta data file name: '%1'").arg(metaDataFile);
     }
 }

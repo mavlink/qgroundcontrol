@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 
 import QGroundControl.Palette
 
@@ -35,9 +35,10 @@ Item {
         sourceSize.height:  height
     }
 
-    ColorOverlay {
-        anchors.fill:       image
-        source:             image
-        color:              parent.color
+    MultiEffect {
+        source: image
+        anchors.fill: image
+        colorizationColor: parent.color
+        colorization: 1.0
     }
 }
