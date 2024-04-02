@@ -15,6 +15,7 @@ on:
     - '*'
     paths-ignore:
       - 'docs/**'
+      - '.github/workflows/**'
 
 defaults:
   run:
@@ -53,27 +54,16 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.arch }}-Release
-          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-Release
+          key: ${{ runner.os }}-${{ matrix.arch }}-Debug
+          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-Debug
           max-size: "2G"
           append-timestamp: false
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
 
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
         run: |
           git fetch --all --tags -f --depth 1
-
-      - name: Install Qt for Linux
-        uses: jurplel/install-qt-action@v3
-        with:
-          version:      ${{ env.QT_VERSION }}
-          aqtversion:   ==3.1.*
-          host:         linux
-          target:       desktop
-          dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
-          cache:        false
 
       - name: Install Qt6 for Android
         uses: jurplel/install-qt-action@v3
@@ -87,7 +77,7 @@ jobs:
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: true
-          cache:        true
+          cache: true
 
       - name: Remove Android SDKs to force usage of android-33 only
         run: |
@@ -95,6 +85,9 @@ jobs:
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-33-ext4"
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34"
             ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --uninstall "platforms;android-34-ext8"
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name:               Install gstreamer
         working-directory:  ${{ github.workspace }}
@@ -105,26 +98,12 @@ jobs:
 
       - name: Update android manifest
         if: github.ref_name != 'Stable'
-        run: ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${{ github.ref_name }}
-
-      - name: Install dependencies
-        run:  sudo apt-get install -y ninja-build
-
-      - name: Setup env
-        run: echo "QT_HOST_PATH=${Qt6_DIR}/../gcc_64" >> $GITHUB_ENV
-
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+        run: |
+            ${SOURCE_DIR}/tools/update_android_manifest_package.sh ${{ github.ref_name }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-            chmod a+x ${Qt6_DIR}/bin/qt-cmake
-            ${Qt6_DIR}/bin/qt-cmake -S ${{ env.SOURCE_DIR }} -B ${{ runner.temp }}/shadow_build_dir/ -G Ninja \
-              -DCMAKE_BUILD_TYPE=Debug \
-              -DANDROID_ABI=${{ matrix.eabi }} \
-              -DANDROID_PLATFORM=android-23 \
-              -DBUILD_TESTING:BOOL=OFF \
-              -DQT_HOST_PATH:PATH=${{ env.QT_HOST_PATH }} \
-              -DQT_DEBUG_FIND_PACKAGE=ON
-            cmake --build ${{ runner.temp }}/shadow_build_dir/ --target all
+            ls /home/runner/work/_temp/Qt/${{ env.QT_VERSION }}
+            qmake -r ${SOURCE_DIR}/qgroundcontrol.pro -spec android-clang CONFIG+=debug CONFIG+=installer ANDROID_ABIS="${{ matrix.eabi }}"
+            make -j2
