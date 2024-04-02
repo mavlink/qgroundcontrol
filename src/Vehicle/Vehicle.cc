@@ -225,6 +225,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     _prearmErrorTimer.setInterval(_prearmErrorTimeoutMSecs);
     _prearmErrorTimer.setSingleShot(true);
 
+
     // Send MAV_CMD ack timer
     _mavCommandResponseCheckTimer.setSingleShot(false);
     _mavCommandResponseCheckTimer.setInterval(_mavCommandResponseCheckTimeoutMSecs);
