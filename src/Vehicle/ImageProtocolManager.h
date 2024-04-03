@@ -12,8 +12,8 @@
 #include <QObject>
 #include <QByteArray>
 #include <QImage>
+#include <QtCore/QLoggingCategory>
 
-#include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ImageProtocolManagerLog)

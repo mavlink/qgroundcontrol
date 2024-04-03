@@ -11,10 +11,7 @@
 #ifndef RCChannelMonitorController_H
 #define RCChannelMonitorController_H
 
-#include <QTimer>
-
 #include "FactPanelController.h"
-#include "QGCLoggingCategory.h"
 #include "AutoPilotPlugin.h"
 
 class RCChannelMonitorController : public FactPanelController

@@ -1,7 +1,7 @@
 #include "JoystickAndroid.h"
 #include "JoystickManager.h"
+#include "QGCLoggingCategory.h"
 
-#include <QQmlEngine>
 #include <QJniEnvironment>
 #include <QJniObject>
 

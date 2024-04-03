@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "FTPManager.h"
-#include "QGC.h"
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QFile>
 #include <QDir>

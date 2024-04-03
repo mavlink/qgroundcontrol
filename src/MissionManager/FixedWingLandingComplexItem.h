@@ -13,7 +13,8 @@
 #include "LandingComplexItem.h"
 #include "MissionItem.h"
 #include "Fact.h"
-#include "QGCLoggingCategory.h"
+
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(FixedWingLandingComplexItemLog)
 

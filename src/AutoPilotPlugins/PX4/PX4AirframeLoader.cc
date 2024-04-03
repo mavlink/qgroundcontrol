@@ -20,6 +20,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
+#include <QtCore/QXmlStreamReader>
 
 QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "PX4AirframeLoaderLog")
 

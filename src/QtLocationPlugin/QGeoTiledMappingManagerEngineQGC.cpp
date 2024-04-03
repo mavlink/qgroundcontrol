@@ -54,7 +54,6 @@
 #include <QtLocation/private/qgeofiletilecache_p.h>
 
 #include <QDir>
-#include <QStandardPaths>
 
 //-----------------------------------------------------------------------------
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)

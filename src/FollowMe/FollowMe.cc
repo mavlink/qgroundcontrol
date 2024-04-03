@@ -18,6 +18,7 @@
 #include "PositionManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(FollowMeLog, "FollowMeLog")
 

@@ -12,6 +12,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "AirframeComponentAirframes.h"
+#include <QtCore/QFile>
 
 QMap<QString, AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirframes::rgAirframeTypes;
 

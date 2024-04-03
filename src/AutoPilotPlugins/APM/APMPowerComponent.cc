@@ -10,8 +10,6 @@
 
 #include "APMPowerComponent.h"
 #include "APMAutoPilotPlugin.h"
-#include "APMAirframeComponent.h"
-#include "ParameterManager.h"
 
 APMPowerComponent::APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent),

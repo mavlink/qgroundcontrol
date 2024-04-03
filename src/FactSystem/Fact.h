@@ -14,8 +14,6 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
-#include <QDebug>
-#include <QAbstractListModel>
 
 class FactValueSliderListModel;
 

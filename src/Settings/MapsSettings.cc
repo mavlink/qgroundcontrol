@@ -9,8 +9,8 @@
 
 #include "MapsSettings.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtCore/QSettings>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(Maps, "Maps")
 {

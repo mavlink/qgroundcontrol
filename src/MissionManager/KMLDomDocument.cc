@@ -9,13 +9,6 @@
 
 #include "KMLDomDocument.h"
 #include "QGCPalette.h"
-#include "QGCApplication.h"
-#include "MissionCommandTree.h"
-#include "MissionCommandUIInfo.h"
-#include "FactMetaData.h"
-
-#include <QDomDocument>
-#include <QStringList>
 
 const char* KMLDomDocument::balloonStyleName = "BalloonStyle";
 

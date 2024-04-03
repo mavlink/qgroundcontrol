@@ -11,9 +11,7 @@
 #ifndef APMSubMotorComponentController_H
 #define APMSubMotorComponentController_H
 
-#include <QObject>
 #include "FactPanelController.h"
-#include "Vehicle.h"
 
 /// MVC Controller for APMSubMotorComponent.qml.
 class APMSubMotorComponentController : public FactPanelController

@@ -9,7 +9,7 @@
 
 
 #include "PX4RadioComponent.h"
-#include "PX4AutoPilotPlugin.h"
+#include "ParameterManager.h"
 
 PX4RadioComponent::PX4RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

@@ -13,7 +13,6 @@
 
 #include "ScreenToolsController.h"
 #include <QFontDatabase>
-#include <QScreen>
 #include <QFontMetrics>
 #include <QInputDevice>
 

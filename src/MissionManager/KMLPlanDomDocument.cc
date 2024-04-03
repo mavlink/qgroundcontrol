@@ -16,9 +16,6 @@
 #include "ComplexMissionItem.h"
 #include "QmlObjectListModel.h"
 
-#include <QDomDocument>
-#include <QStringList>
-
 const char* KMLPlanDomDocument::_missionLineStyleName =     "MissionLineStyle";
 const char* KMLPlanDomDocument::surveyPolygonStyleName =   "SurveyPolygonStyle";
 

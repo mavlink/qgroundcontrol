@@ -10,14 +10,14 @@
 #include "MAVLinkLogManager.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "QGCLoggingCategory.h"
 
-#include <QQmlContext>
-#include <QQmlProperty>
 #include <QQmlEngine>
-#include <QtQml>
 #include <QSettings>
 #include <QHttpPart>
 #include <QNetworkReply>
+#include <QtNetwork/QNetworkProxy>
+#include <QtCore/QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 

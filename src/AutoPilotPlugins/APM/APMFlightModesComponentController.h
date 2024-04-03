@@ -11,9 +11,6 @@
 #ifndef APMFlightModesComponentController_H
 #define APMFlightModesComponentController_H
 
-#include <QObject>
-#include <QQuickItem>
-#include <QList>
 #include <QStringList>
 
 #include "AutoPilotPlugin.h"

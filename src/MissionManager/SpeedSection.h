@@ -10,7 +10,7 @@
 #pragma once
 
 #include "Section.h"
-#include "FactSystem.h"
+#include "Fact.h"
 #include "QmlObjectListModel.h"
 
 class PlanMasterController;

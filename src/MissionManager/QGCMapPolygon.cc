@@ -15,12 +15,7 @@
 #include "ShapeFileHelper.h"
 #include "QGCLoggingCategory.h"
 
-#include <QGeoRectangle>
-#include <QDebug>
-#include <QJsonArray>
 #include <QLineF>
-#include <QFile>
-#include <QDomDocument>
 
 const char* QGCMapPolygon::jsonPolygonKey = "polygon";
 

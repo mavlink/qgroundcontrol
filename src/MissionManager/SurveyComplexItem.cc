@@ -17,6 +17,7 @@
 #include "AppSettings.h"
 #include "PlanMasterController.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QPolygonF>
 

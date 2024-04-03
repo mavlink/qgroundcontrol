@@ -10,18 +10,13 @@
 #include "TransectStyleComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
-#include "QGCGeo.h"
-#include "QGCQGeoCoordinate.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-
-#include <QPolygonF>
+#include "QGC.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "TransectStyleComplexItemLog")
 

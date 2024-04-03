@@ -1,13 +1,7 @@
 #pragma once
 
 #include "MapProvider.h"
-#include <cmath>
 
-#include <QByteArray>
-#include <QMutex>
-#include <QNetworkProxy>
-#include <QNetworkReply>
-#include <QPoint>
 #include <QString>
 
 static const quint32 AVERAGE_AIRMAP_ELEV_SIZE = 2786;

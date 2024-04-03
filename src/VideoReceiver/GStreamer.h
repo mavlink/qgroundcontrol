@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QLoggingCategory>
+#include <QtCore/QLoggingCategory>
 #include <QQuickItem>
 
 #include "Settings/VideoDecoderOptions.h"

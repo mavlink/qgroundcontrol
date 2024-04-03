@@ -9,7 +9,6 @@
 
 #include "MotorAssignment.h"
 #include "ActuatorOutputs.h"
-
 #include "QGCApplication.h"
 
 #include <vector>

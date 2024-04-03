@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -14,10 +14,10 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 #include "QGCCameraManager.h"
-#include "VehicleCameraControl.h"
 #include "CustomAction.h"
 #include "SettingsManager.h"
 #include "CustomMavlinkActionsSettings.h"
+#include "QGCLoggingCategory.h"
 
 #include <QSettings>
 
@@ -778,6 +778,7 @@ void Joystick::stopPolling(void)
         }
         _exitThread = true;
     }
+    _activeVehicle = nullptr;
 }
 
 void Joystick::setCalibration(int axis, Calibration_t& calibration)

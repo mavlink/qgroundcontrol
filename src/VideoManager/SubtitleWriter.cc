@@ -20,6 +20,8 @@
 #include "FactValueGrid.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
+#include "QGCLoggingCategory.h"
+
 #include <QDateTime>
 #include <QString>
 #include <QDate>

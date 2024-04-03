@@ -10,7 +10,6 @@
 #include "QGCZlib.h"
 
 #include <QFile>
-#include <QDir>
 #include <QtDebug>
 
 #include "zlib.h"

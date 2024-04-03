@@ -11,8 +11,8 @@
 
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QObject>
 #include <QGeoCoordinate>
 

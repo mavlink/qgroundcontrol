@@ -10,8 +10,9 @@
 #pragma once
 
 #include "MissionItem.h"
-#include "Vehicle.h"
 #include "QmlObjectListModel.h"
+
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(SectionLog)
 

@@ -10,8 +10,6 @@
 
 #include "APMSensorsComponent.h"
 #include "APMAutoPilotPlugin.h"
-#include "APMSensorsComponentController.h"
-#include "APMAirframeComponent.h"
 #include "ParameterManager.h"
 
 // These two list must be kept in sync

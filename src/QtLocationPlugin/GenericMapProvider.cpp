@@ -6,6 +6,7 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+
 #include "GenericMapProvider.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"

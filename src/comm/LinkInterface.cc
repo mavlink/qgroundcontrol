@@ -10,6 +10,9 @@
 #include "LinkInterface.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+
+#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
 

@@ -20,8 +20,8 @@
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "BlankPlanCreator.h"
+#include "QGCLoggingCategory.h"
 
-#include <QDomDocument>
 #include <QJsonDocument>
 #include <QFileInfo>
 

@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "ComponentInformationCache.h"
+#include "QGCLoggingCategory.h"
 
 #include <QFile>
 #include <QDirIterator>

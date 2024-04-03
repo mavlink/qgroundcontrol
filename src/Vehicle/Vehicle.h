@@ -14,7 +14,6 @@
 #include <QVariantList>
 #include <QGeoCoordinate>
 #include <QTime>
-#include <QQueue>
 #include <QSharedPointer>
 
 #include "FactGroup.h"
@@ -23,7 +22,6 @@
 #include "MAVLinkProtocol.h"
 #include "MAVLinkStreamConfig.h"
 #include "UASMessageHandler.h"
-#include "SettingsFact.h"
 #include "QGCMapCircle.h"
 #include "TerrainFactGroup.h"
 #include "SysStatusSensorInfo.h"
@@ -394,7 +392,7 @@ public:
     /// @return Minumum equivalent airspeed.
     Q_INVOKABLE double minimumEquivalentAirspeed();
 
-    /// Command vehicle to move to specified location (altitude is included and relative)
+    /// Command vehicle to move to specified location (altitude is ignored)
     Q_INVOKABLE void guidedModeGotoLocation(const QGeoCoordinate& gotoCoord);
 
     /// Command vehicle to change altitude
@@ -410,7 +408,7 @@ public:
     Q_INVOKABLE void guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed);
 
     /// Command vehicle to orbit given center point
-    ///     @param centerCoord Orit around this point
+    ///     @param centerCoord Orbit around this point
     ///     @param radius Distance from vehicle to centerCoord
     ///     @param amslAltitude Desired vehicle altitude
     Q_INVOKABLE void guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude);

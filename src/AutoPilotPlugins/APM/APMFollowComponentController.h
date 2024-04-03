@@ -11,6 +11,7 @@
 
 #include "FactPanelController.h"
 #include "ArduRoverFirmwarePlugin.h"
+#include "SettingsFact.h"
 
 class APMFollowComponentController : public FactPanelController
 {

@@ -10,10 +10,7 @@
 #include "GeoFenceManager.h"
 #include "Vehicle.h"
 #include "QmlObjectListModel.h"
-#include "ParameterManager.h"
-#include "QGCApplication.h"
-#include "QGCMapPolygon.h"
-#include "QGCMapCircle.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GeoFenceManagerLog, "GeoFenceManagerLog")
 

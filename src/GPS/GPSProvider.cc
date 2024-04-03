@@ -10,8 +10,6 @@
 
 #include "GPSProvider.h"
 #include "QGCLoggingCategory.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
 
 #define GPS_RECEIVE_TIMEOUT 1200
 

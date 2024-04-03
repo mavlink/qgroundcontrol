@@ -10,8 +10,7 @@
 #include "AutoConnectSettings.h"
 #include "LinkManager.h"
 
-#include <QQmlEngine>
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(AutoConnect, "LinkManager")
 {

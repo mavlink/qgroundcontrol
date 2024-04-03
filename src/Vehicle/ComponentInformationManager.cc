@@ -16,6 +16,7 @@
 #include "CompInfoEvents.h"
 #include "CompInfoActuators.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 
 #include <QStandardPaths>
 

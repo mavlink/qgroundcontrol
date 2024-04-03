@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "Vehicle.h"
+#include "FactGroup.h"
 
 class GPSRTKFactGroup : public FactGroup
 {

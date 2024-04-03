@@ -9,7 +9,6 @@
 
 #include "QGCMAVLink.h"
 
-#include <QtGlobal>
 #include <QDebug>
 
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;

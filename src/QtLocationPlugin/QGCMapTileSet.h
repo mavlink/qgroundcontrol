@@ -21,13 +21,11 @@
 
 #include <QObject>
 #include <QString>
-#include <QHash>
 #include <QDateTime>
-#include <QImage>
+#include <QtNetwork/QNetworkReply>
+#include <QtCore/QLoggingCategory>
 
-#include "QGCLoggingCategory.h"
 #include "QGCMapEngineData.h"
-#include "QGCMapUrlEngine.h"
 
 Q_DECLARE_LOGGING_CATEGORY(QGCCachedTileSetLog)
 

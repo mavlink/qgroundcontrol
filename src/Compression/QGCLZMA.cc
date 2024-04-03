@@ -10,7 +10,6 @@
 #include "QGCLZMA.h"
 
 #include <QFile>
-#include <QDir>
 #include <QtDebug>
 
 #include <mutex>
