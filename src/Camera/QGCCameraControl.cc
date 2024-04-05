@@ -155,6 +155,19 @@ read_value(QDomNode& element, const char* tagName, QString& target)
     return true;
 }
 
+/*!
+ * \brief reinterpret_int_as_float move integer value into a float bitwise
+ * Doing so using *reinterpret_cast<float *>(&vlaue)) does not work as it breask streict aliasing
+ */
+static float reinterpret_int_as_float(uint32_t value)
+{
+    char buf[4];
+    std::memcpy(buf, &value, sizeof(uint32_t));
+    float res;
+    std::memcpy(&res, buf, sizeof(float));
+    return res;
+}
+
 //-----------------------------------------------------------------------------
 QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
     : FactGroup(0, parent, true /* ignore camel case */)
@@ -2408,8 +2421,8 @@ QGCCameraControl::startTracking(QRectF rec, uint64_t timestamp)
                                  static_cast<float>(rec.y()),
                                  static_cast<float>(rec.x() + rec.width()),
                                  static_cast<float>(rec.y() + rec.height()),
-                                 *reinterpret_cast<float *>(&timestampLow),
-                                 *reinterpret_cast<float *>(&timestampHigh));
+                                 reinterpret_int_as_float(timestampLow),
+                                 reinterpret_int_as_float(timestampHigh));
 
         // Ask the camera to continuously send tracking status
         _vehicle->sendMavCommand(_compID,
@@ -2463,8 +2476,8 @@ QGCCameraControl::stopTracking(uint64_t timestamp)
     _vehicle->sendMavCommand(_compID,
                              MAV_CMD_CAMERA_STOP_TRACKING,
                              true,
-                             *reinterpret_cast<float *>(&timestampLow),
-                             *reinterpret_cast<float *>(&timestampHigh));
+                             reinterpret_int_as_float(timestampLow),
+                             reinterpret_int_as_float(timestampHigh));
 
     //-- Stop Sending Tracking Status
     _vehicle->sendMavCommand(_compID,

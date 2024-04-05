@@ -1,0 +1,13 @@
+diff --git a/src/Vehicle/MultiVehicleManager.cc b/src/Vehicle/MultiVehicleManager.cc
+index 948d1c0b1..b515d49c5 100644
+--- a/src/Vehicle/MultiVehicleManager.cc
++++ b/src/Vehicle/MultiVehicleManager.cc
+@@ -78,7 +78,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
+ 
+     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
+         // Special case for PX4 Flow
+-        if ((vehicleId != 81 || componentId != 50)) {
++        if ((vehicleId != 81 || componentId != 50) && componentId != 100) {
+             // Don't create vehicles for components other than the autopilot
+             qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
+                                               << link->linkConfiguration()->name()
