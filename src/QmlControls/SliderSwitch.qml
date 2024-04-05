@@ -22,32 +22,23 @@ Rectangle {
     property real _diameter:                    height - (_border * 2)
     property real _dragStartX:                  _border
     property real _dragStopX:                   _root.width - (_diameter + _border)
-    property bool _waitingForLastAutoRepeat:    false
 
     Keys.onSpacePressed: (event) => {
-        if (visible && event.modifiers === Qt.NoModifier && event.isAutoRepeat && !sliderDragArea.drag.active) {
+        if (visible && event.modifiers === Qt.NoModifier && !sliderDragArea.drag.active) {
             event.accepted = true
-            if (_waitingForLastAutoRepeat) {
-                resetSpaceBarSliding()
-                accept()
-            } else {
-                sliderAnimation.start()
-                spaceBarTimout.restart()
-            }
+            sliderAnimation.start()
+        }
+    }
+
+    Keys.onReleased: (event) => {
+        if (visible && event.key === Qt.Key_Space) {
+            event.accepted = true
+            resetSpaceBarSliding()
         }
     }
 
     function resetSpaceBarSliding() {
-        _waitingForLastAutoRepeat = false
-        spaceBarTimout.stop()
         slider.reset()
-    }
-
-    Timer {
-        id:             spaceBarTimout
-        interval:       200
-        repeat:         false
-        onTriggered:    _root.resetSpaceBarSliding()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
@@ -90,7 +81,11 @@ Rectangle {
             from:       _dragStartX
             to:         _dragStopX
             running:    false
-            onFinished: _waitingForLastAutoRepeat = true
+
+            onFinished: {
+                slider.reset()
+                _root.accept()
+            }
         }
 
         function reset() {
