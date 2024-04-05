@@ -82,6 +82,16 @@ jobs:
           npm run build
         shell: bash
 
+      - name: Install Qt6 for Linux
+        uses: ./install-qt-action/action/
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         linux
+          target:       desktop
+          dir:          ${{ runner.temp }}
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          cache:        true
+
       - name: Install Qt6 for Android
         uses: ./install-qt-action/action/
         with:
