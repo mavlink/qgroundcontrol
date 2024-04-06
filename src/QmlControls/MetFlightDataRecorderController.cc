@@ -9,12 +9,10 @@
 
 #include <AppSettings.h>
 #include "MetFlightDataRecorderController.h"
+#include "MetDataLogManager.h"
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include <QSettings>
-// for test data only
-#include <cstdlib>
-#include <ctime>
 
 double generateRandomDouble(double lowerBound, double upperBound) {
     double randomValue = lowerBound + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX/(upperBound-lowerBound)));
@@ -23,20 +21,41 @@ double generateRandomDouble(double lowerBound, double upperBound) {
 
 MetFlightDataRecorderController::MetFlightDataRecorderController(QQuickItem* parent)
 {
+    connect(this, &MetFlightDataRecorderController::flightFileNameChanged, qgcApp()->toolbox()->metDataLogManager(), &MetDataLogManager::setFlightFileName);
+    connect(&_altLevelMsgTimer, &QTimer::timeout, this, &MetFlightDataRecorderController::addAltLevelMsg);
+    _altLevelMsgTimer.start(1000);
+}
 
-    // test data
-    srand(time(nullptr));
-    for(int i = 0; i < 15; i++) {
-        tempAltLevelMsg_t* tempAltLevelMsg = new tempAltLevelMsg_t();
-        tempAltLevelMsg->altitude = generateRandomDouble(0, 1000);
-        tempAltLevelMsg->time = generateRandomDouble(0, 2000);
-        tempAltLevelMsg->pressure = generateRandomDouble(0, 100);
-        tempAltLevelMsg->temperature = generateRandomDouble(-50, 50);
-        tempAltLevelMsg->relativeHumidity = generateRandomDouble(0, 100);
-        tempAltLevelMsg->windSpeed = generateRandomDouble(0, 200);
-        tempAltLevelMsg->windDirection = generateRandomDouble(0, 360);
-        _tempAltLevelMsgList.append(tempAltLevelMsg);
+void MetFlightDataRecorderController::addAltLevelMsg()
+{
+
+    Vehicle* _activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+    if(!_activeVehicle || !_activeVehicle->armed()) {
+        return;
     }
+    FactGroup* factGroup = nullptr;
+    factGroup = _activeVehicle->getFactGroup("temperature");
+    if(!factGroup) {
+        return;
+    }
+
+    // // truncate time string to nearest second
+    QString time = factGroup->getFact("timeUnixSeconds")->rawValueString();
+    if(time.indexOf('.') != -1) {
+        time.truncate(time.indexOf('.'));
+    }
+
+    tempAltLevelMsg_t* tempAltLevelMsg = new tempAltLevelMsg_t();
+    tempAltLevelMsg->altitude         = factGroup->getFact("altitudeMetersMSL"        )->rawValueString();
+    tempAltLevelMsg->time             = time;
+    tempAltLevelMsg->pressure         = factGroup->getFact("absolutePressureMillibars")->rawValueString();
+    tempAltLevelMsg->temperature      = factGroup->getFact("temperatureCelsius"       )->rawValueString();
+    tempAltLevelMsg->relativeHumidity = factGroup->getFact("relativeHumidity"         )->rawValueString();
+    tempAltLevelMsg->windSpeed        = factGroup->getFact("windSpeedMetersPerSecond" )->rawValueString();
+    tempAltLevelMsg->windDirection    = factGroup->getFact("windBearingDegrees"       )->rawValueString();
+    _tempAltLevelMsgList.append(tempAltLevelMsg);
+
+    emit tempAltLevelMsgListChanged();
 }
 
 void MetFlightDataRecorderController::setFlightFileName(QString _flightFileName)
@@ -54,14 +73,13 @@ void MetFlightDataRecorderController::setFlightFileName(QString _flightFileName)
         this->flightNameValid = isValid;
         emit flightNameValidChanged();
     }
+    if(isValid) {
+        emit flightFileNameChanged(_flightFileName);
+    }
 }
 
 void MetFlightDataRecorderController::goToFile()
 {
-    // open file explorer window
-    // system("explorer C:\\");
-
-    qDebug() << "Opening file explorer window";
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->messagesRawSavePath();
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->messagesAltLevelSavePath();
     QDesktopServices::openUrl(QUrl::fromLocalFile(savePath));
 }

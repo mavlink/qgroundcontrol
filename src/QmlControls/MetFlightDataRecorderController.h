@@ -18,22 +18,22 @@ class tempAltLevelMsg_t : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(double altitude MEMBER altitude NOTIFY msgChanged)
-    Q_PROPERTY(double time MEMBER time NOTIFY msgChanged)
-    Q_PROPERTY(double pressure MEMBER pressure NOTIFY msgChanged)
-    Q_PROPERTY(double temperature MEMBER temperature NOTIFY msgChanged)
-    Q_PROPERTY(double relativeHumidity MEMBER relativeHumidity NOTIFY msgChanged)
-    Q_PROPERTY(double windSpeed MEMBER windSpeed NOTIFY msgChanged)
-    Q_PROPERTY(double windDirection MEMBER windDirection NOTIFY msgChanged)
+    Q_PROPERTY(QString altitude MEMBER altitude NOTIFY msgChanged)
+    Q_PROPERTY(QString time MEMBER time NOTIFY msgChanged)
+    Q_PROPERTY(QString pressure MEMBER pressure NOTIFY msgChanged)
+    Q_PROPERTY(QString temperature MEMBER temperature NOTIFY msgChanged)
+    Q_PROPERTY(QString relativeHumidity MEMBER relativeHumidity NOTIFY msgChanged)
+    Q_PROPERTY(QString windSpeed MEMBER windSpeed NOTIFY msgChanged)
+    Q_PROPERTY(QString windDirection MEMBER windDirection NOTIFY msgChanged)
 
     public:
-        double altitude;
-        double time;
-        double pressure;
-        double temperature;
-        double relativeHumidity;
-        double windSpeed;
-        double windDirection;
+        QString altitude;
+        QString time;
+        QString pressure;
+        QString temperature;
+        QString relativeHumidity;
+        QString windSpeed;
+        QString windDirection;
 
     signals:
         void msgChanged();
@@ -63,13 +63,16 @@ public slots:
 
 signals:
     void flightNameValidChanged();
+    void flightFileNameChanged(QString flightFileNameChanged);
     void ascentNumberChanged();
     void tempAltLevelMsgListChanged();
 
 private:
     Q_DISABLE_COPY(MetFlightDataRecorderController)
     const QString flightNameValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_,+=(`~!@#$%^&(){}[];\"'. ";
-    QmlObjectListModel _tempAltLevelMsgList;
+    QmlObjectListModel _tempAltLevelMsgList;    
+    QTimer _altLevelMsgTimer;
+    void addAltLevelMsg();
 };
 
 QML_DECLARE_TYPE(MetFlightDataRecorderController)

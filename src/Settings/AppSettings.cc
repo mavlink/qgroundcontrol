@@ -31,16 +31,17 @@ const char* AppSettings::kmlFileExtension =         "kml";
 const char* AppSettings::shpFileExtension =         "shp";
 const char* AppSettings::logFileExtension =         "ulg";
 
-const char* AppSettings::parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
-const char* AppSettings::telemetryDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
-const char* AppSettings::missionDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Missions");
+const char* AppSettings::parameterDirectory =        QT_TRANSLATE_NOOP("AppSettings", "Parameters");
+const char* AppSettings::telemetryDirectory =        QT_TRANSLATE_NOOP("AppSettings", "Telemetry");
+const char* AppSettings::missionDirectory =          QT_TRANSLATE_NOOP("AppSettings", "Missions");
 const char* AppSettings::messagesDirectory =         QT_TRANSLATE_NOOP("AppSettings", "Messages");
-const char* AppSettings::messagesRawDirectory =     QT_TRANSLATE_NOOP("AppSettings", "Messages/Raw");
-const char* AppSettings::logDirectory =             QT_TRANSLATE_NOOP("AppSettings", "Logs");
-const char* AppSettings::videoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Video");
-const char* AppSettings::photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
-const char* AppSettings::crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
-const char* AppSettings::customActionsDirectory =   QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
+const char* AppSettings::messagesRawDirectory =      QT_TRANSLATE_NOOP("AppSettings", "Messages/Raw");
+const char* AppSettings::messagesAltLevelDirectory = QT_TRANSLATE_NOOP("AppSettings", "Messages/AltitudeLevel");
+const char* AppSettings::logDirectory =              QT_TRANSLATE_NOOP("AppSettings", "Logs");
+const char* AppSettings::videoDirectory =            QT_TRANSLATE_NOOP("AppSettings", "Video");
+const char* AppSettings::photoDirectory =            QT_TRANSLATE_NOOP("AppSettings", "Photo");
+const char* AppSettings::crashDirectory =            QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
+const char* AppSettings::customActionsDirectory =    QT_TRANSLATE_NOOP("AppSettings", "CustomActions");
 
 // Release languages are 90%+ complete
 QList<int> AppSettings::_rgReleaseLanguages = {
@@ -240,6 +241,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(missionDirectory);
         savePathDir.mkdir(messagesDirectory);
         savePathDir.mkdir(messagesRawDirectory);
+        savePathDir.mkdir(messagesAltLevelDirectory);
         savePathDir.mkdir(logDirectory);
         savePathDir.mkdir(videoDirectory);
         savePathDir.mkdir(photoDirectory);
@@ -309,6 +311,16 @@ QString AppSettings::messagesRawSavePath(void)
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
         return dir.filePath(messagesRawDirectory);
+    }
+    return QString();
+}
+
+QString AppSettings::messagesAltLevelSavePath(void)
+{
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(messagesAltLevelDirectory);
     }
     return QString();
 }

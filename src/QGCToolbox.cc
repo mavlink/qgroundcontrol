@@ -17,6 +17,7 @@
 #include "JoystickManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
+#include "MetDataLogManager.h"
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "QGCImageProvider.h"
@@ -69,6 +70,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
+    _metDataLogManager      = new MetDataLogManager         (app, this);
     _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = new PairingManager            (app, this);
@@ -105,6 +107,7 @@ void QGCToolbox::setChildToolboxes(void)
     _qgcPositionManager->setToolbox(this);
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
+    _metDataLogManager->setToolbox(this);
     _adsbVehicleManager->setToolbox(this);
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager->setToolbox(this);
