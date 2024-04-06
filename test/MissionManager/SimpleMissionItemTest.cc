@@ -121,7 +121,7 @@ bool SimpleMissionItemTest::_classMatch(QGCMAVLink::VehicleClass_t vehicleClass,
 
 void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode, const ItemExpected_t* rgExpected)
 {
-    qDebug() << "vehicleClass:vtolMode" << QGCMAVLink::vehicleClassToString(vehicleClass) << QGCMAVLink::vehicleClassToString(vtolMode);
+    qDebug() << "vehicleClass:vtolMode" << QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass) << QGCMAVLink::vehicleClassToUserVisibleString(vtolMode);
 
     PlanMasterController planController(MAV_AUTOPILOT_PX4, QGCMAVLink::vehicleClassToMavType(vehicleClass));
 

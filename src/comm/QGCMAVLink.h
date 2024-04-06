@@ -87,7 +87,8 @@ public:
     static bool                     isVTOL                      (MAV_TYPE mavType);
     static VehicleClass_t           vehicleClass                (MAV_TYPE mavType);
     static MAV_TYPE                 vehicleClassToMavType       (VehicleClass_t vehicleClass) { return static_cast<MAV_TYPE>(vehicleClass); }
-    static QString                  vehicleClassToString        (VehicleClass_t vehicleClass);
+    static QString                  vehicleClassToUserVisibleString(VehicleClass_t vehicleClass);
+    static QString                  vehicleClassToInternalString(VehicleClass_t vehicleClass);
     static QList<VehicleClass_t>    allVehicleClasses           (void);
 
     static QString                  mavResultToString           (MAV_RESULT result);
