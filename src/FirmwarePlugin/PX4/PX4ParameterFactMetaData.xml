@@ -1690,16 +1690,15 @@
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="EKF2_DECL_TYPE" default="7" type="INT32">
+    <parameter name="EKF2_DECL_TYPE" default="3" type="INT32">
       <short_desc>Integer bitmask controlling handling of magnetic declination</short_desc>
-      <long_desc>Set bits in the following positions to enable functions. 0 : Set to true to use the declination from the geo_lookup library when the GPS position becomes available, set to false to always use the EKF2_MAG_DECL value. 1 : Set to true to save the EKF2_MAG_DECL parameter to the value returned by the EKF when the vehicle disarms. 2 : Set to true to always use the declination as an observation when 3-axis magnetometer fusion is being used.</long_desc>
+      <long_desc>Set bits in the following positions to enable functions. 0 : Set to true to use the declination from the geo_lookup library when the GPS position becomes available, set to false to always use the EKF2_MAG_DECL value. 1 : Set to true to save the EKF2_MAG_DECL parameter to the value returned by the EKF when the vehicle disarms.</long_desc>
       <min>0</min>
-      <max>7</max>
+      <max>3</max>
       <reboot_required>true</reboot_required>
       <bitmask>
         <bit index="0">use geo_lookup declination</bit>
         <bit index="1">save EKF2_MAG_DECL on disarm</bit>
-        <bit index="2">use declination as an observation</bit>
       </bitmask>
     </parameter>
     <parameter name="EKF2_DRAG_CTRL" default="0" type="INT32" boolean="true">
