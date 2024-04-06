@@ -525,6 +525,7 @@ public:
     MAV_TYPE vehicleType() const { return _vehicleType; }
     QGCMAVLink::VehicleClass_t vehicleClass(void) const { return QGCMAVLink::vehicleClass(_vehicleType); }
     Q_INVOKABLE QString vehicleTypeName() const;
+    Q_INVOKABLE QString vehicleClassInternalName() const;
 
     /// Sends a message to the specified link
     /// @return true: message sent, false: Link no longer connected

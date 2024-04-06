@@ -141,7 +141,7 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
     }
 }
 
-QString QGCMAVLink::vehicleClassToString(VehicleClass_t vehicleClass)
+QString QGCMAVLink::vehicleClassToUserVisibleString(VehicleClass_t vehicleClass)
 {
     switch (vehicleClass) {
     case VehicleClassAirship:
@@ -160,6 +160,28 @@ QString QGCMAVLink::vehicleClassToString(VehicleClass_t vehicleClass)
         return QT_TRANSLATE_NOOP("Vehicle Class", "Generic");
     default:
         return QT_TRANSLATE_NOOP("Vehicle Class", "Unknown");
+    }
+}
+
+QString QGCMAVLink::vehicleClassToInternalString(VehicleClass_t vehicleClass)
+{
+    switch (vehicleClass) {
+    case VehicleClassAirship:
+        return QStringLiteral("Airship");
+    case VehicleClassFixedWing:
+        return QStringLiteral("FixedWing");
+    case VehicleClassRoverBoat:
+        return QStringLiteral("RoverBoat");
+    case VehicleClassSub:
+        return QStringLiteral("Sub");
+    case VehicleClassMultiRotor:
+        return QStringLiteral("MultiRotor");
+    case VehicleClassVTOL:
+        return QStringLiteral("VTOL");
+    case VehicleClassGeneric:
+        return QStringLiteral("Generic");
+    default:
+        return QStringLiteral("Unknown");
     }
 }
 
