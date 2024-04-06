@@ -10,8 +10,74 @@
     "default":      "Offboard"
 },
 {
-    "name":         "apmHiddenFlightModes",
-    "shortDesc":    "Comma separated list of hidden flight modes",
+    "name":         "px4HiddenFlightModesMultiRotor",
+    "shortDesc":    "Comma separated list of hidden flight modes for MultiRotor",
+    "type":         "string",
+    "default2":      "Manual,Offboard,Rattitude,Precision Land"
+},
+{
+    "name":         "px4HiddenFlightModesFixedWing",
+    "shortDesc":    "Comma separated list of hidden flight modes for FixedWing",
+    "type":         "string",
+    "default":      "Offboard,Acro,Rattitude"
+},
+{
+    "name":         "px4HiddenFlightModesVTOL",
+    "shortDesc":    "Comma separated list of hidden flight modes for VTOL",
+    "type":         "string",
+    "default":      "Offboard,Rattitude,Precision Land"
+},
+{
+    "name":         "px4HiddenFlightModesRoverBoat",
+    "shortDesc":    "Comma separated list of hidden flight modes for RoverBoat",
+    "type":         "string",
+    "default":      "Offboard"
+},
+{
+    "name":         "px4HiddenFlightModesSub",
+    "shortDesc":    "Comma separated list of hidden flight modes for Sub",
+    "type":         "string",
+    "default":      "Offboard"
+},
+{
+    "name":         "px4HiddenFlightModesAirship",
+    "shortDesc":    "Comma separated list of hidden flight modes for Airship",
+    "type":         "string",
+    "default":      "Offboard"
+},
+{
+    "name":         "apmHiddenFlightModesMultiRotor",
+    "shortDesc":    "Comma separated list of hidden flight modes for MultiRotor",
+    "type":         "string",
+    "default":      "Acro,Circle,Drift,Sport,Flip,Brake,Throw,Guided,Guided No GPS,Flow Hold,ZigZag,Turtle,Autotune,SystemID,AutoRotate"
+},
+{
+    "name":         "apmHiddenFlightModesFixedWing",
+    "shortDesc":    "Comma separated list of hidden flight modes for FixedWing",
+    "type":         "string",
+    "default":      "Circle,Training,Acro,FBW B,Cruise,Autotune,QuadPlane Stabilize,Guided,QuadPlane Hover,QuadPlane Loiter,QuadPlane Land,QuadPlane RTL,QuadPlane AutoTune,QuadPlane Acro,Thermal"
+},
+{
+    "name":         "apmHiddenFlightModesVTOL",
+    "shortDesc":    "Comma separated list of hidden flight modes for VTOL",
+    "type":         "string",
+    "default":      ""
+},
+{
+    "name":         "apmHiddenFlightModesRoverBoat",
+    "shortDesc":    "Comma separated list of hidden flight modes for RoverBoat",
+    "type":         "string",
+    "default":      ""
+},
+{
+    "name":         "apmHiddenFlightModesSub",
+    "shortDesc":    "Comma separated list of hidden flight modes for Sub",
+    "type":         "string",
+    "default":      ""
+},
+{
+    "name":         "apmHiddenFlightModesAirship",
+    "shortDesc":    "Comma separated list of hidden flight modes for Airship",
     "type":         "string",
     "default":      ""
 }
