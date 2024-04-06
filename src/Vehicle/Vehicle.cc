@@ -2607,6 +2607,11 @@ QString Vehicle::vehicleTypeName() const {
     return typeNames[_vehicleType];
 }
 
+QString Vehicle::vehicleClassInternalName() const
+{
+    return QGCMAVLink::vehicleClassToInternalString(vehicleClass());
+}
+
 /// Returns the string to speak to identify the vehicle
 QString Vehicle::_vehicleIdSpeech()
 {
