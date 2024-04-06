@@ -29,6 +29,7 @@ RowLayout {
 
     property real fontPointSize:    ScreenTools.largeFontPointSize
     property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
+    property bool allowEditMode:    true
     property bool editMode:         false
 
     RowLayout {
@@ -81,22 +82,32 @@ RowLayout {
             id:         modeColumn
             spacing:    ScreenTools.defaultFontPixelWidth / 2
 
-            property var  activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
-            property var  flightModeSettings:       QGroundControl.settingsManager.flightModeSettings
-            property var  hiddenFlightModesFact:    null
-            property var  hiddenFlightModesList:    [] 
+            property var    activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
+            property var    flightModeSettings:       QGroundControl.settingsManager.flightModeSettings
+            property var    hiddenFlightModesFact:    null
+            property var    hiddenFlightModesList:    [] 
 
             Component.onCompleted: {
+                // Hidden flight modes are classified by firmware and vehicle class
+                var hiddenFlightModesPropPrefix
                 if (activeVehicle.px4Firmware) {
-                    hiddenFlightModesFact = flightModeSettings.px4HiddenFlightModes
+                    hiddenFlightModesPropPrefix = "px4HiddenFlightModes"
                 } else if (activeVehicle.apmFirmware) {
-                    hiddenFlightModesFact = flightModeSettings.apmHiddenFlightModes
+                    hiddenFlightModesPropPrefix = "apmHiddenFlightModes"
                 } else {
-                    modeEditCheckBox.enabled = false
+                    control.allowEditMode = false
                 }
-                // Split string into list of flight modes
-                if (hiddenFlightModesFact) {
-                    hiddenFlightModesList = hiddenFlightModesFact.value.split(",")
+                if (control.allowEditMode) {
+                    var hiddenFlightModesProp = hiddenFlightModesPropPrefix + activeVehicle.vehicleClassInternalName()
+                    if (flightModeSettings.hasOwnProperty(hiddenFlightModesProp)) {
+                        hiddenFlightModesFact = flightModeSettings[hiddenFlightModesProp]
+                        // Split string into list of flight modes
+                        if (hiddenFlightModesFact && hiddenFlightModesFact.value !== "") {
+                            hiddenFlightModesList = hiddenFlightModesFact.value.split(",")
+                        }
+                    } else {
+                        control.allowEditMode = false
+                    }
                 }
                 hiddenModesLabel.calcVisible()
             }
@@ -190,7 +201,8 @@ RowLayout {
                 Layout.fillWidth:  true
 
                 RowLayout {
-                    Layout.fillWidth: true
+                    Layout.fillWidth:   true
+                    enabled:            control.allowEditMode
 
                     QGCLabel {
                         Layout.fillWidth:   true
