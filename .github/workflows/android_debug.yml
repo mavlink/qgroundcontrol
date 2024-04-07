@@ -101,7 +101,7 @@ jobs:
           arch:         ${{ matrix.arch }}
           dir:          ${{ runner.temp }}
           extra:        --autodesktop
-          modules:      qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           cache:        true
 
       - name: Remove Android SDKs to force usage of android-33 only

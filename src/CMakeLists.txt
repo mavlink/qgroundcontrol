@@ -52,6 +52,7 @@ target_link_libraries(qgc
 		Qt6::QuickControls2
 		Qt6::QuickWidgets
 		Qt6::Widgets
+		Qt6::Core5Compat
 
 		ADSB
 		AirLink
