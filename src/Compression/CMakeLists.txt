@@ -9,6 +9,7 @@ qt_add_library(compression STATIC
 
 set(ZLIB_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+set(SKIP_INSTALL_ALL ON CACHE INTERNAL "")
 
 include(FetchContent)
 FetchContent_Declare(zlib
