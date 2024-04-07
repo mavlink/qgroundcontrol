@@ -37,9 +37,13 @@ include(FetchContent)
 FetchContent_Declare(shapelib
 	GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
 	GIT_TAG v1.6.0
-    GIT_SHALLOW TRUE
+	GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(shapelib)
+FetchContent_GetProperties(shapelib)
+if(NOT shapelib_POPULATED)
+	FetchContent_Populate(shapelib)
+	add_subdirectory(${shapelib_SOURCE_DIR} ${shapelib_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 target_link_libraries(Utilities
 	PRIVATE
