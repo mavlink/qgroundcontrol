@@ -1,0 +1,99 @@
+name: Linux Build
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+      - 'android/**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'android/**'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ARTIFACT: QGroundControl-x86_64.AppImage
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        BuildType: [Debug, Release]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-tags: true
+
+      - name: Set up Cache
+        uses: hendrikmuhs/ccache-action@v1.2
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
+          max-size: 1G
+          append-timestamp: false
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: 6.6.3
+          aqtversion: ==3.1.*
+          host: linux
+          target: desktop
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          setup-python: true
+          cache: true
+
+      - name: Install Dependencies
+        run:  |
+              chmod a+x ./tools/setup/ubuntu.sh
+              ./tools/setup/ubuntu.sh
+
+      - name: Create build directory
+        run:  mkdir ${{ runner.temp }}/shadow_build_dir
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: cmake -S ${{ github.workspace }} -B . -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} \
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+
+      - name: Create AppImage
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: cmake --install .
+
+      - name: Run unit tests
+        if: matrix.BuildType == 'Debug'
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: |
+              mkdir -p ~/.config/QtProject/
+              cp ${{ github.workspace }}/test/qtlogging.ini ~/.config/QtProject/
+              xvfb-run -a ./${{ env.ARTIFACT }} --unittest
+
+      - name: Upload Build File
+        uses: ./.github/actions/upload
+        if: matrix.BuildType == 'Release'
+        with:
+          artifact_name: ${{ env.ARTIFACT }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          source: '.'

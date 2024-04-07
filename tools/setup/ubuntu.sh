@@ -17,7 +17,6 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends i
 	make \
 	ninja-build \
 	rsync \
-	libsdl2-dev \
     libgstreamer-plugins-base1.0-dev \
     libgstreamer1.0-0:amd64 \
     libgstreamer1.0-dev \
