@@ -519,8 +519,7 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = nullptr;
 
-    delete _gimbalController;
-    _gimbalController = nullptr;
+    deleteGimbalController();
 }
 
 void Vehicle::prepareDelete()
@@ -533,6 +532,14 @@ void Vehicle::prepareDelete()
         delete tmpCameras;
         emit cameraManagerChanged();
         qApp->processEvents();
+    }
+}
+
+void Vehicle::deleteGimbalController()
+{
+    if (_gimbalController) {
+        delete _gimbalController;
+        _gimbalController = nullptr;
     }
 }
 
