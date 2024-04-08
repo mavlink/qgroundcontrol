@@ -37,6 +37,9 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
 
     MultiVehicleManager*    vehicleMgr  = qgcApp()->toolbox()->multiVehicleManager();
     Vehicle*                vehicle     = vehicleMgr->activeVehicle();
+    
+    // Gimbal controller sends message requests when receiving heartbeats, trying to find a gimbal, and it messes with this test so we disable it
+    vehicle->deleteGimbalController();
 
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(testCase.failureMode);
