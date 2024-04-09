@@ -1,39 +1,38 @@
-name: MacOS Debug and Tests
+name: MacOS Build
 
 on:
   push:
     branches:
-      - 'master'
+      - master
       - 'Stable*'
     tags:
       - 'v*'
     paths-ignore:
       - 'docs/**'
+      - 'android/**'
   pull_request:
-    branches:
-    - '*'
     paths-ignore:
       - 'docs/**'
+      - 'android/**'
 
 defaults:
   run:
     shell: bash
 
-env:
-  SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   6.6.*
-  ARTIFACT:     QGroundControl.dmg
-  BUILD_TYPE:   ${{ fromJSON('["DailyBuild", "StableBuild"]')[ github.ref_type == 'tag' || contains(github.ref, 'Stable_' ) ] }}
-
 jobs:
   build:
-    runs-on:  macos-latest
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        BuildType: [Debug, Release]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-tags: true
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -41,28 +40,25 @@ jobs:
           create-symlink: true
           key: ${{ runner.os }}-Debug
           restore-keys: ${{ runner.os }}-Debug
-          max-size: "2G"
+          max-size: 2G
           append-timestamp: false
-
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version:      ${{ env.QT_VERSION }}
+          version:      6.6.3
           aqtversion:   ==3.1.*
           host:         mac
           target:       desktop
           dir:          ${{ runner.temp }}
           modules:      qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: false
-          cache: true
+          cache:        true
 
       - name: Install Dependencies
-        run: brew install ninja SDL2
+        run: |
+          brew update
+          brew install ninja
 
       - name: Setup GStreamer
         uses: blinemedical/setup-gstreamer@v1
@@ -72,13 +68,25 @@ jobs:
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
+      - name: Configure
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: cmake -S ${{ github.workspace }} -B . -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} \
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run:  |
-              cmake -S ${{ env.SOURCE_DIR }} -B ${{ runner.temp }}/shadow_build_dir/ -G Ninja -DCMAKE_BUILD_TYPE=Debug
-              cmake --build ${{ runner.temp }}/shadow_build_dir/ --target all --config Debug
-              cmake --install ${{ runner.temp }}/shadow_build_dir
+        run: cmake --build . --target all --config ${{ matrix.BuildType }}
 
-      # - name: Run unit tests
-      #  working-directory: ${{ runner.temp }}/shadow_build_dir
-      #  run: open ${{ runner.temp }}/shadow_build_dir/staging/QGroundControl.app --args --unittest
+      - name: Create AppImage
+        working-directory: ${{ runner.temp }}/shadow_build_dir
+        run: cmake --install .
+
+      - name: Upload Build File
+        uses: ./.github/actions/upload
+        if: matrix.BuildType == 'Release'
+        with:
+          artifact_name: QGroundControl.dmg
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          source: ''
