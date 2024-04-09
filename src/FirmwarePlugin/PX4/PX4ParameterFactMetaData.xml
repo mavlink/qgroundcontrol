@@ -4537,7 +4537,7 @@
         <value code="2">Require a landing</value>
         <value code="3">Require a takeoff and a landing</value>
         <value code="4">Require both a takeoff and a landing, or neither</value>
-        <value code="5">Same as previous, but require a landing if in air and no valid VTOL landing approach is present</value>
+        <value code="5">Same as previous when landed, in-air require landing only if no valid VTOL approach is present</value>
       </values>
     </parameter>
     <parameter name="MIS_YAW_ERR" default="12.0" type="FLOAT">
