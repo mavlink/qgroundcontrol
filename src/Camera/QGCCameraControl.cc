@@ -1671,27 +1671,28 @@ QGCCameraControl::handleTrackingImageStatus(const mavlink_camera_tracking_image_
             qCDebug(CameraControlLog) << "Tracking off";
         } else {
             if (_trackingImageStatus.tracking_mode == 2) {
-                _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
-                                            QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
+                // _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
+                //                             QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
             } else {
                 float r = _trackingImageStatus.radius;
                 if (qIsNaN(r) || r <= 0 ) {
                     r = 0.05f;
                 }
                 // Bottom is NAN so that we can draw perfect square using video aspect ratio
-                _trackingImageRect = QRectF(QPointF(_trackingImageStatus.point_x - r, _trackingImageStatus.point_y - r),
-                                            QPointF(_trackingImageStatus.point_x + r, NAN));
+                // _trackingImageRect = QRectF(QPointF(_trackingImageStatus.point_x - r, _trackingImageStatus.point_y - r),
+                //                             QPointF(_trackingImageStatus.point_x + r, NAN));
             }
             // get rectangle into [0..1] boundaries
-            _trackingImageRect.setLeft(std::min(std::max(_trackingImageRect.left(), 0.0), 1.0));
-            _trackingImageRect.setTop(std::min(std::max(_trackingImageRect.top(), 0.0), 1.0));
-            _trackingImageRect.setRight(std::min(std::max(_trackingImageRect.right(), 0.0), 1.0));
-            _trackingImageRect.setBottom(std::min(std::max(_trackingImageRect.bottom(), 0.0), 1.0));
+            // _trackingImageRect.setLeft(std::min(std::max(_trackingImageRect.left(), 0.0), 1.0));
+            // _trackingImageRect.setTop(std::min(std::max(_trackingImageRect.top(), 0.0), 1.0));
+            // _trackingImageRect.setRight(std::min(std::max(_trackingImageRect.right(), 0.0), 1.0));
+            // _trackingImageRect.setBottom(std::min(std::max(_trackingImageRect.bottom(), 0.0), 1.0));
 
-            qCDebug(CameraControlLog) << "Tracking Image Status [left:" << _trackingImageRect.left()
-                                      << "top:" << _trackingImageRect.top()
-                                      << "right:" << _trackingImageRect.right()
-                                      << "bottom:" << _trackingImageRect.bottom() << "]";
+            qCDebug(CameraControlLog)
+                << "Tracking Image Status [left:" << _trackingImageStatus.rec_top_x
+                << "top:" << _trackingImageStatus.rec_top_y
+                << "right:" << _trackingImageStatus.rec_bottom_x
+                << "bottom:" << _trackingImageStatus.rec_bottom_y << "]";
         }
 
         emit trackingImageStatusChanged();
