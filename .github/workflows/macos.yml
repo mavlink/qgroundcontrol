@@ -51,7 +51,7 @@ jobs:
           host:         mac
           target:       desktop
           dir:          ${{ runner.temp }}
-          modules:      qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          modules:      qtcharts qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qt5compat
           setup-python: false
           cache:        true
 
