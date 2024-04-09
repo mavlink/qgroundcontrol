@@ -1,24 +1,24 @@
-name: 'Upload Release'
-description: 'Uploads a built release file'
+name: Upload Release
+description: Uploads a built release file
 inputs:
   artifact_name:
-    description: 'artifact name'
+    description: artifact name
     required: true
   aws_key_id:
-    description: 'aws key id'
+    description: aws key id
     required: true
   aws_secret_access_key:
-    description: 'aws secret access key'
+    description: aws secret access key
     required: true
   source:
+    description: source location
     required: false
-    type: string
-    default: 'package'
+    default: package
 runs:
   using: "composite"
   steps:
     - name: Save artifact
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact_name }}
         path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}/${{ inputs.artifact_name }}
@@ -27,16 +27,16 @@ runs:
       if: github.event_name == 'push'
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: |
-            aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
-            aws configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
-            aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }} --region us-west-2 --acl public-read
+        aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
+        aws configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
+        aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }} --region us-west-2 --acl public-read
       shell: bash
 
     - name: Upload tagged stable build to S3 latest Bucket
       if: github.event_name == 'push' && github.ref_type == 'tag'
       working-directory: ${{ runner.temp }}/shadow_build_dir/${{ inputs.source }}
       run: |
-            aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
-            aws configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
-            aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --region us-west-2 --acl public-read
+        aws configure set aws_access_key_id ${{ inputs.aws_key_id }}
+        aws configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
+        aws s3 cp ${{ inputs.artifact_name }} s3://qgroundcontrol/latest/${{ inputs.artifact_name }} --region us-west-2 --acl public-read
       shell: bash
