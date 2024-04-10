@@ -37,10 +37,10 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-Debug
-          restore-keys: ${{ runner.os }}-Debug
-          max-size: 2G
+          create-symlink:   true
+          key:              ${{ runner.os }}-${{ matrix.BuildType }}
+          restore-keys:     ${{ runner.os }}-${{ matrix.BuildType }}          
+          max-size:         2G
           append-timestamp: false
 
       - name: Install Qt
