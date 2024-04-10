@@ -26,18 +26,17 @@ include(FetchContent)
 include(ExternalProject)
 include(GNUInstallDirs)
 
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
+cmake_print_variables(CMAKE_BUILD_TYPE)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 option(QGC_STABLE_BUILD "Stable build option" OFF)
-if(QGC_STABLE_BUILD)
-    message(STATUS "Stable Build")
-else()
-    message(STATUS "Daily Build")
+cmake_print_variables(QGC_STABLE_BUILD)
+if(NOT QGC_STABLE_BUILD)
     add_compile_definitions(DAILY_BUILD)
 endif()
 
@@ -51,15 +50,28 @@ include(CompileOptions)
 #######################################################
 
 include(Qt6QGCConfiguration)
-message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "Qt version: ${QT_VERSION}")
-message(STATUS "Qt spec: ${QT_MKSPEC}")
+cmake_print_variables(QT_VERSION QT_MKSPEC)
 
 if(LINUX)
     set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/AppDir/usr)
+elseif(ANDROID)
+    cmake_print_variables(QT_ANDROID_APPLICATION_ARGUMENTS QT_HOST_PATH)
+
+    set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
+    # set(QT_ANDROID_DEPLOYMENT_TYPE ON CACHE BOOL "Deployment Type")
+    cmake_dependent_option(QT_ANDROID_SIGN_APK "Enable Signing APK" ON "CMAKE_BUILD_TYPE STREQUAL Release" OFF)
+    if(QT_ANDROID_SIGN_APK)
+        message(STATUS "Signing APK")
+        message(STATUS "QT_ANDROID_KEYSTORE_PATH $ENV{QT_ANDROID_KEYSTORE_PATH}")
+        message(STATUS "QT_ANDROID_KEYSTORE_ALIAS $ENV{QT_ANDROID_KEYSTORE_ALIAS}")
+        # QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
+    endif()
+
+    if(NOT Qt6LinguistTools_DIR)
+        set(Qt6LinguistTools_DIR ${QT_HOST_PATH}/lib/cmake/Qt6LinguistTools)
+    endif()
 endif()
 
-# Find Qt6 libraries
 find_package(Qt6
     REQUIRED
     COMPONENTS
@@ -143,7 +155,7 @@ add_compile_definitions(
 #######################################################
 
 include(Git)
-message(STATUS "QGroundControl version: ${APP_VERSION_STR}")
+cmake_print_variables(APP_VERSION_STR)
 
 #######################################################
 #                QGroundControl Resources
@@ -230,14 +242,13 @@ elseif(ANDROID)
             QT_ANDROID_MIN_SDK_VERSION 26
             QT_ANDROID_TARGET_SDK_VERSION 33
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
-            QT_ANDROID_VERSION_NAME ${APP_VERSION_STR}
-            # QT_ANDROID_VERSION_CODE 5.0
+            QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
+            # QT_ANDROID_VERSION_CODE "${CMAKE_PROJECT_VERSION}"
             QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
     )
 
-    if(CMAKE_BUILD_TYPE STREQUAL "Release" AND ANDROID_KEYSTORE_PASSWORD)
-        set(QT_ANDROID_SIGN_APK TRUE)
-    endif()
+    # get_target_property(QGC_ANDROID_DEPLOY_FILE ${PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
+    # cmake_print_variables(QGC_ANDROID_DEPLOY_FILE)
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
@@ -262,14 +273,17 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     BUNDLE  DESTINATION .
 )
-if(NOT ANDROID)
-    qt_generate_deploy_qml_app_script(
-        TARGET ${PROJECT_NAME}
-        OUTPUT_SCRIPT deploy_script
-        MACOS_BUNDLE_POST_BUILD
-    )
-    install(SCRIPT ${deploy_script})
-endif()
+
+qt_generate_deploy_qml_app_script(
+    TARGET ${PROJECT_NAME}
+    OUTPUT_SCRIPT deploy_script
+    # DEPLOY_TOOL_OPTIONS
+    MACOS_BUNDLE_POST_BUILD
+    NO_UNSUPPORTED_PLATFORM_ERROR
+    DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+)
+install(SCRIPT ${deploy_script})
+
 install(
     DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
