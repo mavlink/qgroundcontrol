@@ -60,11 +60,14 @@ jobs:
           brew update
           brew install ninja
 
-      - name: Setup GStreamer
-        uses: blinemedical/setup-gstreamer@v1
-        with:
-          version: 1.18.6
-
+      - name: Install Gstreamer
+        run: |
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-devel-1.18.6-x86_64.pkg
+            wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.6/gstreamer-1.0-1.18.6-x86_64.pkg
+            for package in *.pkg ;
+              do sudo installer -verbose -pkg "$package" -target /
+            done
+  
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
