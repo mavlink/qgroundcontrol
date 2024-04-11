@@ -72,10 +72,8 @@ jobs:
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja \
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} \
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+        working-directory:  ${{ runner.temp }}/shadow_build_dir
+        run:                cmake -S ${{ github.workspace }} -B . -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
@@ -83,7 +81,8 @@ jobs:
 
       - name: Create DMG
         working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run:                cmake --install .
+        run:                cmake --install . --config ${{ matrix.BuildType }}
+        if:                 matrix.BuildType == 'Release'
 
       - name: Upload Build File
         uses: ./.github/actions/upload
