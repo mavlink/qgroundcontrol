@@ -8238,7 +8238,7 @@
       <min>1</min>
       <max>100</max>
     </parameter>
-    <parameter name="SENS_AFBR_MODE" default="1" type="INT32">
+    <parameter name="SENS_AFBR_MODE" default="0" type="INT32">
       <short_desc>AFBR Rangefinder Mode</short_desc>
       <long_desc>This parameter defines the mode of the AFBR Rangefinder.</long_desc>
       <min>0</min>
@@ -8257,7 +8257,7 @@
       <min>1</min>
       <max>100</max>
     </parameter>
-    <parameter name="SENS_AFBR_THRESH" default="5" type="INT32">
+    <parameter name="SENS_AFBR_THRESH" default="4" type="INT32">
       <short_desc>AFBR Rangefinder Short/Long Range Threshold</short_desc>
       <long_desc>This parameter defines the threshold for switching between short and long range mode. The mode will switch from short to long range when the distance is greater than the threshold plus the hysteresis. The mode will switch from long to short range when the distance is less than the threshold minus the hysteresis.</long_desc>
       <min>1</min>
