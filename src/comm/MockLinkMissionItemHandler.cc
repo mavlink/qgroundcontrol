@@ -155,14 +155,17 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
         
         mavlink_message_t   responseMsg;
         
-        mavlink_msg_mission_count_pack_chan(_mockLink->vehicleId(),
-                                            MAV_COMP_ID_AUTOPILOT1,
-                                            _mockLink->mavlinkChannel(),
-                                            &responseMsg,               // Outgoing message
-                                            msg.sysid,                  // Target is original sender
-                                            msg.compid,                 // Target is original sender
-                                            itemCount,                  // Number of mission items
-                                            _requestType);
+        mavlink_msg_mission_count_pack_chan(
+            _mockLink->vehicleId(),
+            MAV_COMP_ID_AUTOPILOT1,
+            _mockLink->mavlinkChannel(),
+            &responseMsg,               // Outgoing message
+            msg.sysid,                  // Target is original sender
+            msg.compid,                 // Target is original sender
+            itemCount,                  // Number of mission items
+            _requestType,
+            0
+        );
         _mockLink->respondWithMavlinkMessage(responseMsg);
     }
 }
@@ -330,14 +333,17 @@ void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType)
     
     mavlink_message_t message;
     
-    mavlink_msg_mission_ack_pack_chan(_mockLink->vehicleId(),
-                                      MAV_COMP_ID_AUTOPILOT1,
-                                      _mockLink->mavlinkChannel(),
-                                      &message,
-                                      _mavlinkProtocol->getSystemId(),
-                                      _mavlinkProtocol->getComponentId(),
-                                      ackType,
-                                      _requestType);
+    mavlink_msg_mission_ack_pack_chan(
+        _mockLink->vehicleId(),
+        MAV_COMP_ID_AUTOPILOT1,
+        _mockLink->mavlinkChannel(),
+        &message,
+        _mavlinkProtocol->getSystemId(),
+        _mavlinkProtocol->getComponentId(),
+        ackType,
+        _requestType,
+        0
+    );
     _mockLink->respondWithMavlinkMessage(message);
 }
 
