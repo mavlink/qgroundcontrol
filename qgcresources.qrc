@@ -99,9 +99,6 @@
         <file alias="radioYawLeft.png">resources/calibration/mode2/radioYawLeft.png</file>
         <file alias="radioYawRight.png">resources/calibration/mode2/radioYawRight.png</file>
     </qresource>
-    <qresource prefix="/db/mapping/joystick">
-        <file alias="gamecontrollerdb.txt">resources/SDL_GameControllerDB/gamecontrollerdb.txt</file>
-    </qresource>
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
     </qresource>

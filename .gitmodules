@@ -1,27 +1,6 @@
 [submodule "src/GPS/Drivers"]
 	path = src/GPS/Drivers
 	url = https://github.com/PX4/GpsDrivers.git
-[submodule "libs/mavlink/include/mavlink/v2.0"]
-	path = libs/mavlink/include/mavlink/v2.0
-	url = https://github.com/mavlink/c_library_v2.git
-[submodule "libs/OpenSSL/android_openssl"]
-	path = libs/OpenSSL/android_openssl
-	url = https://github.com/KDAB/android_openssl
-[submodule "libs/xz-embedded"]
-	path = libs/xz-embedded
-	url = https://github.com/Auterion/xz-embedded.git
-[submodule "libs/libevents/libevents"]
-	path = libs/libevents/libevents
-	url = https://github.com/mavlink/libevents.git
-[submodule "libs/shapelib"]
-	path = libs/shapelib
-	url = https://github.com/OSGeo/shapelib.git
 [submodule "src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository"]
 	path = src/FirmwarePlugin/APM/ArduPilot-Parameter-Repository
 	url = https://github.com/ArduPilot/ArduPilot-Parameter-Repository
-[submodule "libs/qmdnsengine"]
-	path = libs/qmdnsengine
-	url = https://github.com/nitroshare/qmdnsengine.git
-[submodule "resources/SDL_GameControllerDB"]
-	path = resources/SDL_GameControllerDB
-	url = https://github.com/mdqinc/SDL_GameControllerDB.git
