@@ -4458,17 +4458,20 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     float newThrustCommand =    thrust * axesScaling;
 
     mavlink_msg_manual_control_pack_chan(
-                static_cast<uint8_t>(_mavlink->getSystemId()),
-                static_cast<uint8_t>(_mavlink->getComponentId()),
-                sharedLink->mavlinkChannel(),
-                &message,
-                static_cast<uint8_t>(_id),
-                static_cast<int16_t>(newPitchCommand),
-                static_cast<int16_t>(newRollCommand),
-                static_cast<int16_t>(newThrustCommand),
-                static_cast<int16_t>(newYawCommand),
-                buttons,
-                0, 0, 0, 0);
+        static_cast<uint8_t>(_mavlink->getSystemId()),
+        static_cast<uint8_t>(_mavlink->getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        static_cast<uint8_t>(_id),
+        static_cast<int16_t>(newPitchCommand),
+        static_cast<int16_t>(newRollCommand),
+        static_cast<int16_t>(newThrustCommand),
+        static_cast<int16_t>(newYawCommand),
+        buttons, 0,
+        0,
+        0, 0,
+        0, 0, 0, 0, 0, 0
+    );
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
