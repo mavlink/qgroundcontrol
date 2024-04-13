@@ -48,12 +48,30 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 		list(APPEND GST_TARGET_MODULES egl)
 	endif()
 
+	# find_library(GSTREAMER_${_upper_name}_LIBRARY
+    #      NAMES
+    #      	gst${_lower_name}-${_abi_version}
+    #      HINTS
+    #      	${PKG_GSTREAMER_${_upper_name}_LIBRARY_DIRS}
+    #         ${PKG_GSTREAMER_${_upper_name}_LIBDIR}
+    # )
+
+    # find_path(GSTREAMER_${_upper_name}_INCLUDE_DIR
+	# 	gst/${_lower_name}/${_header}
+	# 	HINTS
+	# 		${PKG_GSTREAMER_${_upper_name}_INCLUDE_DIRS}
+	# 		PKG_GSTREAMER_${_upper_name}_INCLUDEDIR}
+	# 	PATH_SUFFIXES gstreamer-${_abi_version}
+    # )
+
 	set(GSTREAMER_ROOT)
 	if(WIN32)
 		if(EXISTS $ENV{GSTREAMER_ROOT_X86_64})
 			set(GSTREAMER_ROOT $ENV{GSTREAMER_ROOT_X86_64})
 		elseif(EXISTS $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
 			set(GSTREAMER_ROOT $ENV{GSTREAMER_1_0_ROOT_MSVC_X86_64})
+		else()
+			set(GSTREAMER_ROOT "C:/gstreamer/1.0/msvc_x86_64")
 		endif()
 	elseif(MACOS)
 		set(GSTREAMER_ROOT "/Library/Frameworks/GStreamer.framework")
@@ -110,6 +128,7 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 			set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_ROOT}/Versions/Current/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 			pkg_check_modules(GST IMPORTED_TARGET ${GST_TARGET_MODULES})
 		else()
+			set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_ROOT}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 			pkg_check_modules(GST IMPORTED_TARGET ${GST_TARGET_MODULES})
 		endif()
 
@@ -131,7 +150,15 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 		        target_link_options(qmlglsink PUBLIC ${GST_LDFLAGS} ${GST_LDFLAGS_OTHER})
 		        target_compile_options(qmlglsink PUBLIC ${GST_CFLAGS} ${GST_CFLAGS_OTHER})
 	    		target_include_directories(qmlglsink PUBLIC ${GST_INCLUDE_DIRS})
+	    		if(WIN32)
+	    			cmake_path(CONVERT "${GSTREAMER_ROOT}/bin/*.dll" TO_CMAKE_PATH_LIST GST_WIN_BINS_PATH)
+	    			file(GLOB GST_WIN_BINS ${GST_WIN_BINS_PATH})
+		    		cmake_print_variables(GST_WIN_BINS_PATH GST_WIN_BINS)
+		    		# TODO: Only install needed libs
+		    		install(FILES ${GST_WIN_BINS} DESTINATION ${CMAKE_INSTALL_BINDIR})
+		    	endif()
 	    	endif()
+	    	# file(GET_RUNTIME_DEPENDENCIES)
 		endif()
 	else()
 		message(WARNING "Gstreamer Not Found")
