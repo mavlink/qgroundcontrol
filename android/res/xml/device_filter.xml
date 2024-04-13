@@ -3,4 +3,3 @@
     <!-- Allow anything connected -->
     <usb-device />
 </resources>
-

@@ -293,6 +293,7 @@ int main(int argc, char *argv[])
 
 #ifdef Q_OS_ANDROID
         AndroidInterface::checkStoragePermissions();
+        QNativeInterface::QAndroidApplication::hideSplashScreen(333);
 #endif
         if (!app->_initForNormalAppBoot()) {
             return -1;
