@@ -20,20 +20,13 @@ jobs:
     strategy:
       matrix:
         BuildType: [Debug, Release]
-        arch: [android_armv7, android_arm64_v8a]
-        include:
-          - eabi: armeabi-v7a
-            arch: android_armv7
-            ARTIFACT: QGroundControl32.apk
-          - eabi: arm64-v8a
-            arch: android_arm64_v8a
-            ARTIFACT: QGroundControl64.apk
 
     defaults:
       run:
         shell: bash
 
     env:
+      ARTIFACT: QGroundControl.apk
       QT_VERSION: 6.6.3
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
@@ -80,19 +73,55 @@ jobs:
           target: desktop
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: true
+          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
-      - name: Install Qt6 for Android
+      - name: Install Qt6 for Android (armv7)
         uses: ./install-qt-action/action/
         with:
           version: ${{ env.QT_VERSION }}
           host: linux
           target: android
-          arch: ${{ matrix.arch }}
+          arch: android_armv7
           dir: ${{ runner.temp }}
           extra: --autodesktop
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: true
+          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+
+      - name: Install Qt6 for Android (arm64_v8a)
+        uses: ./install-qt-action/action/
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: android
+          arch: android_arm64_v8a
+          dir: ${{ runner.temp }}
+          extra: --autodesktop
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+
+      - name: Install Qt6 for Android (x86)
+        uses: ./install-qt-action/action/
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: android
+          arch: android_x86
+          dir: ${{ runner.temp }}
+          extra: --autodesktop
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+
+      - name: Install Qt6 for Android (x86_64)
+        uses: ./install-qt-action/action/
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: android
+          arch: android_x86_64
+          dir: ${{ runner.temp }}
+          extra: --autodesktop
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install gstreamer
         working-directory: ${{ github.workspace }}
@@ -106,20 +135,30 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y ninja-build
 
-      - name: Set Environment
+      - name: Setup Environment
         run: |
           mkdir ${{ runner.temp }}/shadow_build_dir
-          chmod a+x ${QT_ROOT_DIR}/bin/qt-cmake
+          echo "QT_HOST_PATH=${{ runner.temp }}/Qt/${{env.QT_VERSION}}/gcc_64" >> $GITHUB_ENV
+          echo "QT_TARGET_PATH=${{ runner.temp }}/Qt/${{env.QT_VERSION}}/android_arm64_v8a" >> $GITHUB_ENV
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: ${QT_ROOT_DIR}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+        run: cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DANDROID_ABI=${{ matrix.eabi }}
+              -DCMAKE_SYSTEM_NAME=Android
+              -DCMAKE_FIND_ROOT_PATH:PATH=${{env.QT_TARGET_PATH}}
+              -DCMAKE_PREFIX_PATH:PATH=${{env.QT_TARGET_PATH}}
+              -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake
+              -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
+              -DANDROID_NDK_ROOT=$ANDROID_NDK_ROOT
+              -DANDROID_ABI="arm64-v8a"
               -DANDROID_PLATFORM=android-23
-              -DQT_HOST_PATH:PATH=${QT_ROOT_DIR}/../gcc_64
+              -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a"
+              -DQT_ANDROID_BUILD_ALL_ABIS=OFF
+              -DQT_HOST_PATH:PATH=${{env.QT_HOST_PATH}}
               -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
               -DQT_DEBUG_FIND_PACKAGE=ON
+              -DQT_ANDROID_MULTI_ABI_FORWARD_VARS=="QGC_STABLE_BUILD"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
@@ -128,13 +167,13 @@ jobs:
 
       - name: Prepare APK
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cp ./android-build/*.apk ./${{ matrix.ARTIFACT }}
+        run: cp ./android-build/*.apk ./${{ env.ARTIFACT }}
 
       - name: Upload Build File
         uses: ./.github/actions/upload
         if: matrix.BuildType == 'Release'
         with:
-          artifact_name: ${{ matrix.ARTIFACT }}
+          artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           source: ''
