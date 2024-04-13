@@ -26,6 +26,11 @@ QList<QSerialPortInfo> AndroidSerial::availableDevices()
         "()[Ljava/lang/String;"
     );
 
+    if (!result.isValid()) {
+        // No devices found
+        return serialPortInfoList;
+    }
+
     QJniEnvironment env;
     jobjectArray objArray = result.object<jobjectArray>();
     const int count = env->GetArrayLength(objArray);
@@ -39,17 +44,17 @@ QList<QSerialPortInfo> AndroidSerial::availableDevices()
         env->DeleteLocalRef(string);
 
         QSerialPortInfoPrivate priv;
-        priv.portName               = strList.get(0);
-        priv.device                 = strList.get(0);
+        priv.portName               = strList.at(0);
+        priv.device                 = strList.at(0);
         priv.description            = "";
-        priv.manufacturer           = strList.get(1);
+        priv.manufacturer           = strList.at(1);
         priv.serialNumber           = "";
-        priv.vendorIdentifier       = strList.get(3).toInt();
-        priv.productIdentifier      = strList.get(2).toInt();
+        priv.vendorIdentifier       = strList.at(3).toInt();
+        priv.productIdentifier      = strList.at(2).toInt();
         priv.hasVendorIdentifier    = (priv.vendorIdentifier != 0) ? true: false;
         priv.hasProductIdentifier   = (priv.productIdentifier != 0) ? true: false;
 
-        serialPortInfoList.append(priv);
+        // serialPortInfoList.append(priv);
     }
 
     return serialPortInfoList;
@@ -117,8 +122,10 @@ QByteArray AndroidSerial::read(int deviceId, int length, int timeout)
     );
     AndroidInterface::cleanJavaException();
 
-    QByteArray data = QByteArray::fromRawData(jarray, result);
-    data.setRawData(jarray, result);
+    jbyte * bytes = jniEnv->GetByteArrayElements(jarray, nullptr);
+    const jsize len = jniEnv->GetArrayLength(jarray);
+    QByteArray data = QByteArray::fromRawData(bytes, len);
+    jniEnv->ReleaseByteArrayElements(jarray, bytes, JNI_ABORT);
 
     return data;
 }
@@ -157,13 +164,13 @@ void AndroidSerial::setParameters(int deviceId, int baudRate, int dataBits, int 
     AndroidInterface::cleanJavaException();
 }
 
-int AndroidSerial::getCarrierDetect(int deviceId)
+bool AndroidSerial::getCarrierDetect(int deviceId)
 {
     AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
+    const bool result = QJniObject::callStaticMethod<jint>(
         AndroidInterface::getQGCActivityClassName(),
         "getCarrierDetect",
-        "(I)I",
+        "(I)Z",
         deviceId
     );
     AndroidInterface::cleanJavaException();
@@ -171,13 +178,13 @@ int AndroidSerial::getCarrierDetect(int deviceId)
     return result;
 }
 
-int AndroidSerial::getClearToSend(int deviceId)
+bool AndroidSerial::getClearToSend(int deviceId)
 {
     AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
+    const bool result = QJniObject::callStaticMethod<jint>(
         AndroidInterface::getQGCActivityClassName(),
         "getClearToSend",
-        "(I)I",
+        "(I)Z",
         deviceId
     );
     AndroidInterface::cleanJavaException();
@@ -185,13 +192,13 @@ int AndroidSerial::getClearToSend(int deviceId)
     return result;
 }
 
-int AndroidSerial::getDataSetReady(int deviceId)
+bool AndroidSerial::getDataSetReady(int deviceId)
 {
     AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
+    const bool result = QJniObject::callStaticMethod<jint>(
         AndroidInterface::getQGCActivityClassName(),
         "getDataSetReady",
-        "(I)I",
+        "(I)Z",
         deviceId
     );
     AndroidInterface::cleanJavaException();
@@ -199,13 +206,13 @@ int AndroidSerial::getDataSetReady(int deviceId)
     return result;
 }
 
-int AndroidSerial::getDataTerminalReady(int deviceId)
+bool AndroidSerial::getDataTerminalReady(int deviceId)
 {
     AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
+    const bool result = QJniObject::callStaticMethod<jint>(
         AndroidInterface::getQGCActivityClassName(),
         "getDataTerminalReady",
-        "(I)I",
+        "(I)Z",
         deviceId
     );
     AndroidInterface::cleanJavaException();
@@ -226,13 +233,13 @@ void AndroidSerial::setDataTerminalReady(int deviceId, bool set)
     AndroidInterface::cleanJavaException();
 }
 
-int AndroidSerial::getRequestToSend(int deviceId)
+bool AndroidSerial::getRequestToSend(int deviceId)
 {
     AndroidInterface::cleanJavaException();
-    const int result = QJniObject::callStaticMethod<jint>(
+    const bool result = QJniObject::callStaticMethod<jint>(
         AndroidInterface::getQGCActivityClassName(),
         "getRequestToSend",
-        "(I)I",
+        "(I)Z",
         deviceId
     );
     AndroidInterface::cleanJavaException();
@@ -275,7 +282,7 @@ void AndroidSerial::setBreak(int deviceId, bool set)
         "setBreak",
         "(IZ)V",
         deviceId,
-        input,
+        set
     );
     AndroidInterface::cleanJavaException();
 }

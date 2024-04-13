@@ -89,6 +89,11 @@ public class QGCActivity extends QtActivity
         IntentFilter bluetoothFilter = new IntentFilter();
         bluetoothFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         bluetoothFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        // if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        //     _instance.registerReceiver(_instance._usbReceiver, filter, RECEIVER_EXPORTED);
+        // } else {
+        //     _instance.registerReceiver(_instance._usbReceiver, filter);
+        // }
         registerReceiver(receiver, bluetoothFilter);
 
         _usbSerialInterface = new UsbSerialInterface(this);

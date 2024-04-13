@@ -65,6 +65,11 @@ public class UsbSerialInterface implements SerialInputOutputManager.Listener
         usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         usbFilter.addAction(ACTION_USB_PERMISSION);
         context.registerReceiver(receiver, usbFilter);
+        // if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        //     _instance.registerReceiver(_instance._usbReceiver, filter, RECEIVER_EXPORTED);
+        // } else {
+        //     _instance.registerReceiver(_instance._usbReceiver, filter);
+        // }
 
     	_usbDrivers = new ArrayList<UsbSerialDriver>();
 

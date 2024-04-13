@@ -2,16 +2,19 @@
 
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
 #include <QtSerialPort/QSerialPortInfo>
+
+Q_DECLARE_LOGGING_CATEGORY(AndroidSerialLog);
 
 class AndroidSerial
 {
 public:
     static void onNewData(int deviceId, QByteArray data);
     static QList<QSerialPortInfo> availableDevices();
-    static int open(int deviceId);
-    static void close(int deviceId);
-    static bool isOpen(int deviceId);
+    static int open(QString portName);
+    static void close(QString portName);
+    static bool isOpen(QString portName);
     static QByteArray read(int deviceId, int length, int timeout);
     static void write(int deviceId, QByteArrayView data, int length, int timeout, bool async);
     static void setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity);

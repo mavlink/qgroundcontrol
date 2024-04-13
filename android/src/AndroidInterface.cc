@@ -6,7 +6,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/private/qandroidextras_p.h>
 
-static Q_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.interface");
+Q_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.interface");
 
 void AndroidInterface::cleanJavaException()
 {
