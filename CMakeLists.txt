@@ -241,9 +241,18 @@ elseif(ANDROID)
     include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
     add_android_openssl_libraries(${PROJECT_NAME})
 
+    cmake_print_variables(
+        QT_ANDROID_ABIS
+        QT_ANDROID_BUILD_ALL_ABIS
+        QT_PATH_ANDROID_ABI_armeabi-v7a
+        QT_PATH_ANDROID_ABI_arm64-v8a
+        QT_PATH_ANDROID_ABI_x86
+        QT_PATH_ANDROID_ABI_x86_64
+    )
+
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
-            QT_ANDROID_ABIS ${ANDROID_ABI}
+            # QT_ANDROID_ABIS ${ANDROID_ABI}
             QT_ANDROID_MIN_SDK_VERSION 26
             QT_ANDROID_TARGET_SDK_VERSION 33
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
