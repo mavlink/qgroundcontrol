@@ -46,7 +46,6 @@
 #endif
 
 #ifdef QT_DEBUG
-    #include "CmdLineOptParser.h"
     #ifdef Q_OS_WIN
         #include <crtdbg.h>
     #endif
@@ -201,51 +200,13 @@ int main(int argc, char *argv[])
 
     Q_IMPORT_PLUGIN(QGeoServiceProviderFactoryQGC)
 
-    bool runUnitTests = false;          // Run unit tests
-
-#ifdef QT_DEBUG
-    // We parse a small set of command line options here prior to QGCApplication in order to handle the ones
-    // which need to be handled before a QApplication object is started.
-
-    bool stressUnitTests = false;       // Stress test unit tests
-    bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
-
-    QString unitTestOptions;
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--unittest",             &runUnitTests,          &unitTestOptions },
-        { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
-        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
-    if (stressUnitTests) {
-        runUnitTests = true;
-    }
-
-    if (quietWindowsAsserts) {
-#ifdef Q_OS_WIN
-        _CrtSetReportHook(WindowsCrtReportHook);
-#endif
-    }
-
-#ifdef Q_OS_WIN
-    if (runUnitTests) {
-        // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
-        // hanging.
-        DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
-    }
-#endif
-#endif // QT_DEBUG
-
 #ifdef Q_OS_DARWIN
     // Gstreamer video playback requires OpenGL
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 #endif
 
     QQuickStyle::setStyle("Basic");
-    QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
+    QGCApplication* app = new QGCApplication(argc, argv);
     Q_CHECK_PTR(app);
     if(app->isErrorState()) {
         app->exec();
@@ -269,15 +230,27 @@ int main(int argc, char *argv[])
 
     int exitCode = 0;
 
-#ifdef UNITTEST_BUILD
-    if (runUnitTests) {
+#if defined(QT_DEBUG) && defined(UNITTEST_BUILD)
+    #ifdef Q_OS_WIN
+        if (quietWindowsAsserts) {
+            _CrtSetReportHook(WindowsCrtReportHook);
+        }
+        if (app->runningUnitTests()) {
+            // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
+            // hanging.
+            const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+            (void) SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+        }
+    #endif
+
+    if (app->runningUnitTests()) {
         for (int i=0; i < (stressUnitTests ? 20 : 1); i++) {
             if (!app->_initForUnitTests()) {
                 return -1;
             }
 
             // Run the test
-            int failures = UnitTest::run(unitTestOptions);
+            int failures = UnitTest::run(app->unitTests());
             if (failures == 0) {
                 qDebug() << "ALL TESTS PASSED";
                 exitCode = 0;

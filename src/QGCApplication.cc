@@ -184,12 +184,17 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
     return new ShapeFileHelper;
 }
 
-QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-    : QApplication          (argc, argv)
-    , _runningUnitTests     (unitTesting)
+QGCApplication::QGCApplication(int &argc, char* argv[])
+    : QApplication(argc, argv)
 {
     _app = this;
     _msecsElapsedTime.start();
+
+    (void) _parseCommandLine();
+    // TODO: put in main and rearrange following code into init
+    // if(app->parseCommands()) {
+    //     app->exec();
+    // }
 
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
@@ -210,24 +215,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
-
-    // Parse command line options
-
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
-    QString loggingOptions;
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
@@ -302,8 +289,10 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         parameter.remove();
     }
 
-    // Set up our logging filters
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
+    if(logging) {
+        // Set up our logging filters
+        QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
+    }
 
     // Initialize Bluetooth
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -334,6 +323,49 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox->setChildToolboxes();
 
     _checkForNewVersion();
+}
+
+bool QGCApplication::_parseCommandLine()
+{
+    QCommandLineParser parser;
+    // const CommandLineParseResult cmdLineResult = parseCommandLine(&parser);
+    // _cmdLineResult = parseCommandLine(&parser);
+
+    switch (parseResult.statusCode) {
+        case Status::Ok:
+            _runningUnitTests = cmdLineResult.runningUnitTests;
+            _fakeMobile = cmdLineResult.fakeMobile;
+            _logOutput = cmdLineResult.logOutput;
+            break;
+
+        case Status::Error:
+            std::fputs(qPrintable(parseResult.errorString.value_or(u"Unknown error occurred"_s)),
+                       stderr);
+            std::fputs("\n\n", stderr);
+            std::fputs(qPrintable(parser.helpText()), stderr);
+
+            QString errorMessage = parseResult.errorString.value_or(u"Unknown error occurred"_qs);
+            QMessageBox::warning(0, QGuiApplication::applicationDisplayName(),
+                                 "<html><head/><body><h2>" + errorMessage + "</h2><pre>"
+                                 + parser.helpText() + "</pre></body></html>");
+            return false;
+
+        case Status::VersionRequested:
+            parser.showVersion();
+            QMessageBox::information(0, QGuiApplication::applicationDisplayName(),
+                             QGuiApplication::applicationDisplayName() + ' '
+                             + QCoreApplication::applicationVersion());
+            break;
+
+        case Status::HelpRequested:
+            parser.showHelp();
+            QMessageBox::warning(0, QGuiApplication::applicationDisplayName(),
+                         "<html><head/><body><pre>"
+                         + parser.helpText() + "</pre></body></html>");
+            break;
+    }
+
+    return true;
 }
 
 void QGCApplication::_exitWithError(QString errorMessage)
