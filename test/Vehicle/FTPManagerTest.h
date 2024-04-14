@@ -16,7 +16,14 @@ class FTPManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _testLostPackets           (void);
+    void _testLostPackets                               (void);
+    void _testListDirectory                             (void);
+    void _testListDirectoryNoResponse                   (void);
+    void _testListDirectoryNakResponse                  (void);
+    void _testListDirectoryNoSecondResponse             (void);
+    void _testListDirectoryNoSecondResponseAllowRetry   (void);
+    void _testListDirectoryNakSecondResponse            (void);
+    void _testListDirectoryBadSequence                  (void);
 
     // Overrides from UnitTest
     void cleanup(void) override;
@@ -24,6 +31,7 @@ private slots:
 private:
     void _performSizeBasedTestCases (void);
     void _performTestCases          (void);
+
     typedef struct {
         const char* file;
     } TestCase_t;
