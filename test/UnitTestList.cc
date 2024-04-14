@@ -26,7 +26,6 @@
 //#include "RadioConfigTest.h"
 #include "MavlinkLogTest.h"
 //#include "MainWindowTest.h"
-//#include "FileManagerTest.h"
 #include "ParameterManagerTest.h"
 #include "MissionCommandTreeTest.h"
 //#include "LogDownloadTest.h"
@@ -70,7 +69,6 @@ UT_REGISTER_TEST(SimpleMissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)
 UT_REGISTER_TEST(MissionManagerTest)
 //UT_REGISTER_TEST(RadioConfigTest)
-//UT_REGISTER_TEST(FileManagerTest)
 UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
 //UT_REGISTER_TEST(LogDownloadTest)
