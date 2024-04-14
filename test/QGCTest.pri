@@ -59,7 +59,6 @@ ReleaseBuild {
         $$PWD/MissionManager/TransectStyleComplexItemTestBase.h \
         $$PWD/MissionManager/VisualMissionItemTest.h \
         #$$PWD/qgcunittest/FileDialogTest.h \
-        #$$PWD/qgcunittest/FileManagerTest.h \
         #$$PWD/qgcunittest/MainWindowTest.h \
         #$$PWD/qgcunittest/MessageBoxTest.h \
         #$$PWD/qgcunittest/RadioConfigTest.h \
@@ -108,7 +107,6 @@ ReleaseBuild {
         $$PWD/MissionManager/TransectStyleComplexItemTestBase.cc \
         $$PWD/MissionManager/VisualMissionItemTest.cc \
         #$$PWD/qgcunittest/FileDialogTest.cc \
-        #$$PWD/qgcunittest/FileManagerTest.cc \
         #$$PWD/qgcunittest/MainWindowTest.cc \
         #$$PWD/qgcunittest/MessageBoxTest.cc \
         #$$PWD/qgcunittest/RadioConfigTest.cc \

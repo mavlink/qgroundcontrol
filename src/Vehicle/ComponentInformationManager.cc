@@ -385,7 +385,7 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(float progress)
     const int maxDownloadTimeSec = 40;
     if (elapsedSec > 10 && progress < 0.5 && totalDownloadTime > maxDownloadTimeSec) {
         qCDebug(ComponentInformationManagerLog) << "Slow download, aborting. Total time (s):" << totalDownloadTime;
-        _compInfo->vehicle->ftpManager()->cancel();
+        _compInfo->vehicle->ftpManager()->cancelDownload();
     }
 }
 
