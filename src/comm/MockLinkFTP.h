@@ -31,12 +31,13 @@ public:
     
     /// @brief By calling setErrorMode with one of these modes you can cause the server to simulate an error.
     typedef enum {
-        errModeNone,                ///< No error, respond correctly
-        errModeNoResponse,          ///< No response to any request, client should eventually time out with no Ack
-        errModeNakResponse,         ///< Nak all requests
-        errModeNoSecondResponse,    ///< No response to subsequent request to initial command
-        errModeNakSecondResponse,   ///< Nak subsequent request to initial command
-        errModeBadSequence          ///< Return response with bad sequence number
+        errModeNone,                        ///< No error, respond correctly
+        errModeNoResponse,                  ///< No response to any request, client should eventually time out with no Ack
+        errModeNakResponse,                 ///< Nak all requests
+        errModeNoSecondResponse,            ///< No response to subsequent request to initial command
+        errModeNoSecondResponseAllowRetry,  ///< No response to subsequent request to initial command, error will be cleared after this so retry will succeed
+        errModeNakSecondResponse,           ///< Nak subsequent request to initial command
+        errModeBadSequence                  ///< Return response with bad sequence number
     } ErrorMode_t;
     
     /// @brief Sets the error mode for command responses. This allows you to simulate various server errors.

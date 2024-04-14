@@ -44,11 +44,9 @@ void MockLinkFTP::ensureNullTemination(MavlinkFTP::Request* request)
 ///         File list returned is set using the setFileList method.
 void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber)
 {
-    // FIXME: Does not support directories that span multiple packets
-    
-    MavlinkFTP::Request  ackResponse{};
-    QString                     path;
-    uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
+    MavlinkFTP::Request ackResponse{};
+    QString             path;
+    uint16_t            outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     ensureNullTemination(request);
 
@@ -59,42 +57,45 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
         return;
     }
     
-    // Offset requested is past the end of the list
-    if (request->hdr.offset > (uint32_t)_fileList.size()) {
-        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrEOF, outgoingSeqNumber, MavlinkFTP::kCmdListDirectory);
-        return;
+    if (request->hdr.offset > 0) {
+        if (_errMode == errModeNakSecondResponse) {
+            // Nak error all subsequent requests
+            _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdListDirectory);
+            return;
+        } else if (_errMode == errModeNoSecondResponse) {
+            // No response for all subsequent requests
+            return;
+        } else if (_errMode == errModeNoSecondResponseAllowRetry) {
+            // No response to this request, subsequent requests will succeed
+            _errMode = errModeNone;
+            return;
+        }
     }
-    
+
     ackResponse.hdr.opcode = MavlinkFTP::kRspAck;
     ackResponse.hdr.req_opcode = MavlinkFTP::kCmdListDirectory;
     ackResponse.hdr.session = 0;
     ackResponse.hdr.offset = request->hdr.offset;
     ackResponse.hdr.size = 0;
 
-    if (request->hdr.offset == 0) {
-        // Requesting first batch of file names
-        Q_ASSERT(_fileList.size());
+    // MockLink sends two directory entries per packet for a maximum of 3 packets, 6 total entries
+    if (request->hdr.offset <= 5) {
         char *bufPtr = (char *)&ackResponse.data[0];
-        for (int i=0; i<_fileList.size(); i++) {
-            strcpy(bufPtr, _fileList[i].toStdString().c_str());
-            uint8_t cchFilename = static_cast<uint8_t>(strlen(bufPtr));
-            Q_ASSERT(cchFilename);
-            ackResponse.hdr.size += cchFilename + 1;
-            bufPtr += cchFilename + 1;
-        }
-
-        _sendResponse(senderSystemId, senderComponentId, &ackResponse, outgoingSeqNumber);
-    } else if (_errMode == errModeNakSecondResponse) {
-        // Nak error all subsequent requests
-        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdListDirectory);
-        return;
-    } else if (_errMode == errModeNoSecondResponse) {
-        // No response for all subsequent requests
-        return;
+        QString dirEntry = QStringLiteral("Ffile%1.txt").arg(request->hdr.offset);
+        auto cchDirEntry = dirEntry.length();
+        strncpy(bufPtr, dirEntry.toStdString().c_str(), cchDirEntry);
+        ackResponse.hdr.size += dirEntry.length() + 1;
+        bufPtr += cchDirEntry + 1;
+        dirEntry = QStringLiteral("Ffile%1.txt").arg(request->hdr.offset + 1);
+        cchDirEntry = dirEntry.length();
+        strncpy(bufPtr, dirEntry.toStdString().c_str(), cchDirEntry);
+        ackResponse.hdr.size += dirEntry.length() + 1;
     } else {
-        // FIXME: Does not support directories that span multiple packets
-        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrEOF, outgoingSeqNumber, MavlinkFTP::kCmdListDirectory);
+        ackResponse.hdr.opcode = MavlinkFTP::kRspNak;
+        ackResponse.data[0] = MavlinkFTP::kErrEOF;
+        ackResponse.hdr.size = 1;
     }
+    _sendResponse(senderSystemId, senderComponentId, &ackResponse, outgoingSeqNumber);
 }
 
 void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber)
