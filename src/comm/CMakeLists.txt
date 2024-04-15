@@ -77,6 +77,10 @@ endif()
 
 target_compile_definitions(comm PUBLIC QGC_ENABLE_BLUETOOTH)
 
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# 	target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
+# endif()
+
 target_include_directories(comm
     PUBLIC
     	${CMAKE_CURRENT_SOURCE_DIR}

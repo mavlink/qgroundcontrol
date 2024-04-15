@@ -32,6 +32,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
 
     steps:
       - name: Checkout repo
@@ -39,6 +40,16 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+
+      - name: Set up Cache
+        uses: hendrikmuhs/ccache-action@v1.2
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-Android-${{ matrix.BuildType }}
+          max-size: 1G
+          append-timestamp: false
 
       - name: Setup Java Environment
         uses: actions/setup-java@v4
@@ -77,6 +88,7 @@ jobs:
 
       - name: Install Qt6 for Android (armv7)
         uses: ./install-qt-action/action/
+        if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
         with:
           version: ${{ env.QT_VERSION }}
           host: linux
@@ -89,6 +101,7 @@ jobs:
 
       - name: Install Qt6 for Android (arm64_v8a)
         uses: ./install-qt-action/action/
+        if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
         with:
           version: ${{ env.QT_VERSION }}
           host: linux
@@ -101,6 +114,7 @@ jobs:
 
       - name: Install Qt6 for Android (x86)
         uses: ./install-qt-action/action/
+        if: contains( env.QT_ANDROID_ABIS, 'x86')
         with:
           version: ${{ env.QT_VERSION }}
           host: linux
@@ -113,6 +127,7 @@ jobs:
 
       - name: Install Qt6 for Android (x86_64)
         uses: ./install-qt-action/action/
+        if: contains( env.QT_ANDROID_ABIS, 'x86_64')
         with:
           version: ${{ env.QT_VERSION }}
           host: linux
@@ -135,30 +150,17 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y ninja-build
 
-      - name: Setup Environment
-        run: |
-          mkdir ${{ runner.temp }}/shadow_build_dir
-          echo "QT_HOST_PATH=${{ runner.temp }}/Qt/${{env.QT_VERSION}}/gcc_64" >> $GITHUB_ENV
-          echo "QT_TARGET_PATH=${{ runner.temp }}/Qt/${{env.QT_VERSION}}/android_arm64_v8a" >> $GITHUB_ENV
+      - run: mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DCMAKE_SYSTEM_NAME=Android
-              -DCMAKE_FIND_ROOT_PATH:PATH=${{env.QT_TARGET_PATH}}
-              -DCMAKE_PREFIX_PATH:PATH=${{env.QT_TARGET_PATH}}
-              -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake
-              -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
-              -DANDROID_NDK_ROOT=$ANDROID_NDK_ROOT
-              -DANDROID_ABI="arm64-v8a"
-              -DANDROID_PLATFORM=android-23
-              -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a"
+              -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
-              -DQT_HOST_PATH:PATH=${{env.QT_HOST_PATH}}
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
               -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
               -DQT_DEBUG_FIND_PACKAGE=ON
-              -DQT_ANDROID_MULTI_ABI_FORWARD_VARS=="QGC_STABLE_BUILD"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
