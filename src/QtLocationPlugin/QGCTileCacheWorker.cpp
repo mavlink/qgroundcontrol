@@ -1200,7 +1200,7 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
             socket->deleteLater();
         });
     } else {
-        qDebug(QGCTileCacheLog) << "No Internet Access";
+        qCDebug(QGCTileCacheLog) << "No Internet Access";
         emit internetStatus(false);
     }
 #endif

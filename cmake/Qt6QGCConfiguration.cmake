@@ -52,4 +52,5 @@ elseif(LINUX)
 	list(APPEND QT_LIBRARY_HINTS $ENV{HOME}/Qt/${QT_VERSION}/${QT_MKSPEC})
 endif()
 
-message(STATUS "lib hints ${QT_LIBRARY_HINTS}")
+include(CMakePrintHelpers)
+cmake_print_variables(QT_VERSION QT_MKSPEC QT_LIBRARY_HINTS)

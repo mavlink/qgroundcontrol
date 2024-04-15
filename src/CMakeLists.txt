@@ -8,8 +8,6 @@ qt_add_library(qgc STATIC
 	QGCToolbox.h
 )
 
-set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS APP_VERSION_STR="${APP_VERSION_STR}")
-
 add_subdirectory(ADSB)
 add_subdirectory(AirLink)
 add_subdirectory(AnalyzeView)
