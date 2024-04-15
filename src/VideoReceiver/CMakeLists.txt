@@ -30,4 +30,8 @@ if(GST_FOUND)
             qmlglsink
             Settings
     )
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_definitions(VideoReceiver PRIVATE QGC_INSTALL_RELEASE)
+    endif()
 endif()
