@@ -514,6 +514,10 @@
       <unit>rad/s</unit>
       <decimal>3</decimal>
     </parameter>
+    <parameter name="ATT_EN" default="0" type="INT32" boolean="true">
+      <short_desc>standalone attitude estimator enable (unsupported)</short_desc>
+      <long_desc>Enable standalone quaternion based attitude estimator.</long_desc>
+    </parameter>
     <parameter name="ATT_EXT_HDG_M" default="0" type="INT32">
       <short_desc>External heading usage mode (from Motion capture/Vision)</short_desc>
       <long_desc>Set to 1 to use heading estimate from vision. Set to 2 to use heading from motion capture.</long_desc>
@@ -1719,6 +1723,9 @@
       <max>5.0</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
+    </parameter>
+    <parameter name="EKF2_EN" default="1" type="INT32" boolean="true">
+      <short_desc>EKF2 enable</short_desc>
     </parameter>
     <parameter name="EKF2_EVA_NOISE" default="0.1" type="FLOAT">
       <short_desc>Measurement noise for vision angle observations used to lower bound or replace the uncertainty included in the message</short_desc>
@@ -4101,6 +4108,9 @@
       <max>100</max>
       <unit>m</unit>
       <decimal>2</decimal>
+    </parameter>
+    <parameter name="LPE_EN" default="0" type="INT32" boolean="true">
+      <short_desc>Local position estimator enable (unsupported)</short_desc>
     </parameter>
     <parameter name="LPE_EPH_MAX" default="3.0" type="FLOAT">
       <short_desc>Max EPH allowed for GPS initialization</short_desc>
@@ -9485,16 +9495,6 @@
         <value code="0">HITL and SIH disabled</value>
         <value code="1">HITL enabled</value>
         <value code="2">SIH enabled</value>
-      </values>
-    </parameter>
-    <parameter name="SYS_MC_EST_GROUP" default="2" type="INT32">
-      <short_desc>Set multicopter estimator group</short_desc>
-      <long_desc>Set the group of estimators used for multicopters and VTOLs</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="1">local_position_estimator, attitude_estimator_q (unsupported)</value>
-        <value code="2">ekf2 (recommended)</value>
-        <value code="3">Q attitude estimator (no position)</value>
       </values>
     </parameter>
     <parameter name="SYS_RGB_MAXBRT" default="1." type="FLOAT">
