@@ -114,7 +114,7 @@ View3D {
             margins: ScreenTools.defaultFontPixelWidth
         }
         width:          ScreenTools.screenWidth * 0.2
-        progressText: "Loading Map: "
+        progressText: qsTr("Downloading Imageries: ")
     }
 
     Binding{

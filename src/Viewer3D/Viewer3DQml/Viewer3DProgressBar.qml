@@ -16,7 +16,7 @@ Rectangle{
     id: progressBody
 
     property real progressValue: 100.0
-    property string progressText: "Progress"
+    property string progressText: qsTr("Progress")
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -54,7 +54,7 @@ Rectangle{
 
         QGCLabel {
             anchors.horizontalCenter: parent.horizontalCenter
-            text:                progressText + Number(Math.floor(progressBody.progressValue)) + qsTr(" %")
+            text:                progressText + Number(Math.floor(progressBody.progressValue)) + " %"
             color:              qgcPal.text
             font.family:        ScreenTools.demiboldFontFamily
             font.pointSize:     ScreenTools.mediumFontPointSize
