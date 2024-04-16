@@ -253,7 +253,7 @@ SettingsPage {
                     text:       qsTr("Select File")
 
                     onClicked: {
-                        var filename = qsTr(_viewer3DOsmFilePath.rawValue);
+                        var filename = _viewer3DOsmFilePath.rawValue;
                         const found = filename.match(/(.*)[\/\\]/);
                         if(found){
                             filename = found[1]||''; // extracting the directory from the file path
