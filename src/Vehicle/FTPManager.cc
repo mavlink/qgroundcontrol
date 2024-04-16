@@ -484,7 +484,8 @@ void FTPManager::_listDirectoryWorker(bool firstRequest)
     request.hdr.opcode  = MavlinkFTP::kCmdListDirectory;
     request.hdr.offset  = _listDirectoryState.expectedOffset;
     request.hdr.size    = sizeof(request.data);
-
+    _fillRequestDataWithString(&request, _listDirectoryState.fullPathOnVehicle);
+    
     if (firstRequest) {
         _listDirectoryState.retryCount = 0;
     } else {
