@@ -50,6 +50,7 @@
 #include "MockLink.h"
 #endif
 #include "RemoteIDManager.h"
+#include "AudioOutput.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -929,7 +930,7 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
 
     if (readAloud) {
         if (!skipSpoken) {
-            qgcApp()->toolbox()->audioOutput()->say(messageText);
+            _say(messageText);
         }
     }
     emit textMessageReceived(id(), compId, severity, messageText.toHtmlEscaped(), "");
@@ -2510,7 +2511,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 
 void Vehicle::_say(const QString& text)
 {
-    _toolbox->audioOutput()->say(text.toLower());
+    AudioOutput::instance()->say(text.toLower());
 }
 
 bool Vehicle::airship() const
@@ -4365,7 +4366,7 @@ void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
                     break;
             }
 
-            qgcApp()->toolbox()->audioOutput()->say(breachTypeStr + " " + tr("fence breached"));
+            _say(breachTypeStr + " " + tr("fence breached"));
         }
     } else {
         lastUpdate = now;

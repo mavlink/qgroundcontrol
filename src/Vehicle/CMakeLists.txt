@@ -97,11 +97,12 @@ qt_add_library(Vehicle STATIC
 
 target_link_libraries(Vehicle
 	PRIVATE
+		Audio
 		compression
 	PUBLIC
 		qgc
 		libevents
-                Actuators
+		Actuators
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

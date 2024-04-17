@@ -7,191 +7,186 @@
  *
  ****************************************************************************/
 
-#include <QDebug>
-#include <QRegularExpression>
-
 #include "AudioOutput.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
 
-AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool   (app, toolbox)
-    , _tts      (nullptr)
+#include <QtCore/QRegularExpression>
+
+#define MAX_TEXT_QUEUE_SIZE 20U
+
+Q_LOGGING_CATEGORY( AudioOutputLog, "qgc.audio.audiooutput" );
+// qt.speech.tts.flite
+// qt.speech.tts.android
+
+const QHash<QString, QString> AudioOutput::s_textHash = {
+    { "ERR",            "error" },
+    { "POSCTL",         "Position Control" },
+    { "ALTCTL",         "Altitude Control" },
+    { "AUTO_RTL",       "auto return to launch" },
+    { "RTL",            "return To launch" },
+    { "ACCEL",          "accelerometer" },
+    { "RC_MAP_MODE_SW", "RC mode switch" },
+    { "REJ",            "rejected" },
+    { "WP",             "waypoint" },
+    { "CMD",            "command" },
+    { "COMPID",         "component eye dee" },
+    { "params",         "parameters" },
+    { "id",             "I.D." },
+    { "ADSB",           "A.D.S.B." },
+    { "EKF",            "E.K.F." },
+    { "PREARM",         "pre arm" },
+    { "PITOT",          "pee toe" },
+};
+
+Q_APPLICATION_STATIC( AudioOutput, s_audioOutput );
+
+AudioOutput* AudioOutput::instance()
 {
-    if (qgcApp()->runningUnitTests()) {
-        // Cloud based unit tests don't have speech capabilty. If you try to crank up
-        // speech engine it will pop a qWarning which prevents usage of QT_FATAL_WARNINGS
-        return;
-    }
-
-    _tts = new QTextToSpeech(this);
-
-    //-- Force TTS engine to English as all incoming messages from the autopilot
-    //   are in English and not localized.
-#ifdef Q_OS_LINUX
-    _tts->setLocale(QLocale("en_US"));
-#endif
-    connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
+    return s_audioOutput();
 }
 
-void AudioOutput::say(const QString& inText)
+AudioOutput::AudioOutput( QObject* parent )
+    : QTextToSpeech( QStringLiteral("none"), parent )
 {
-    if (!_tts) {
-        qDebug() << "say" << inText;
-        return;
-    }
+    #ifdef QT_DEBUG
+        ( void ) connect( this, &QTextToSpeech::stateChanged, []( QTextToSpeech::State state ) {
+            qCInfo( AudioOutputLog ) << Q_FUNC_INFO << "State:" << state;
+        });
+        ( void ) connect( this, &QTextToSpeech::errorOccurred, []( QTextToSpeech::ErrorReason reason, const QString &errorString ) {
+            ( void ) reason;
+            qCInfo( AudioOutputLog ) << Q_FUNC_INFO << "Error:" << errorString;
+        });
+    #endif
 
-    bool muted = qgcApp()->toolbox()->settingsManager()->appSettings()->audioMuted()->rawValue().toBool();
-    muted |= qgcApp()->runningUnitTests();
-    if (!muted && !qgcApp()->runningUnitTests()) {
-        QString text = fixTextMessageForAudio(inText);
-        if(_tts->state() == QTextToSpeech::Speaking) {
-            if(!_texts.contains(text)) {
-                //-- Some arbitrary limit
-                if(_texts.size() > 20) {
-                    _texts.removeFirst();
-                }
-                _texts.append(text);
+    if ( !QTextToSpeech::availableEngines().isEmpty() ) {
+        if ( setEngine( QString() ) ) { // Autoselect engine by priority
+            if ( availableLocales().contains( QLocale( "en_US" ) ) ) {
+                setLocale( QLocale( "en_US" ) );
             }
-        } else {
-            _tts->say(text);
+
+            ( void ) connect( this, &QTextToSpeech::volumeChanged, [ this ]( double volume ) {
+                ( void ) volume;
+                const bool muted = isMuted();
+                if ( muted != m_lastMuted ) {
+                    emit mutedChanged( muted );
+                    m_lastMuted = muted;
+                }
+            });
         }
     }
 }
 
-void AudioOutput::_stateChanged(QTextToSpeech::State state)
+bool AudioOutput::isMuted() const
 {
-    if(state == QTextToSpeech::Ready) {
-        if(_texts.size()) {
-            QString text = _texts.first();
-            _texts.removeFirst();
-            _tts->say(text);
-        }
+    return qFuzzyIsNull( volume() );
+}
+
+void AudioOutput::setMuted( bool enable )
+{
+    if ( enable != isMuted() ) {
+        ( void ) QMetaObject::invokeMethod( this, "setVolume", Qt::AutoConnection, enable ? 0. : 100. );
     }
 }
 
-bool AudioOutput::getMillisecondString(const QString& string, QString& match, int& number) {
-    static QRegularExpression re("([0-9]+ms)");
-    QRegularExpressionMatchIterator i = re.globalMatch(string);
-    while (i.hasNext()) {
-        QRegularExpressionMatch qmatch = i.next();
-        if (qmatch.hasMatch()) {
-            match = qmatch.captured(0);
-            number = qmatch.captured(0).replace("ms", "").toInt();
-            return true;
-        }
+void AudioOutput::say( const QString& text, AudioOutput::TextMods textMods )
+{
+    if ( !engineCapabilities().testFlag( QTextToSpeech::Capability::Speak ) ) {
+        qCWarning( AudioOutputLog ) << Q_FUNC_INFO << "Speech Not Supported:" << text;
+        return;
     }
-    return false;
+
+    if ( m_textQueueSize > MAX_TEXT_QUEUE_SIZE ) {
+        ( void ) QMetaObject::invokeMethod( this, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default );
+    }
+
+    QString outText = AudioOutput::fixTextMessageForAudio( text );
+
+    if ( textMods.testFlag( AudioOutput::TextMod::Translate ) ) {
+        outText = QCoreApplication::translate("AudioOutput", outText.toStdString().c_str() );
+    }
+
+    qsizetype index = -1;
+    ( void ) QMetaObject::invokeMethod( this, "enqueue", Qt::AutoConnection, qReturnArg( m_textQueueSize ), outText );
+    if ( index != -1 ) {
+        m_textQueueSize = index;
+    }
 }
 
-QString AudioOutput::fixTextMessageForAudio(const QString& string) {
-    QString match;
-    QString newNumber;
+bool AudioOutput::getMillisecondString( const QString& string, QString& match, int& number )
+{
+    static const QRegularExpression regexp( "([0-9]+ms)" );
+
+    bool result = false;
+
+    for ( const QRegularExpressionMatch &tempMatch : regexp.globalMatch( string ) ) {
+        if ( tempMatch.hasMatch() ) {
+            match = tempMatch.captured( 0 );
+            number = tempMatch.captured( 0 ).replace( "ms", "" ).toInt();
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+
+QString AudioOutput::fixTextMessageForAudio( const QString& string )
+{
     QString result = string;
 
-    //-- Look for codified terms
-    if(result.contains("ERR ", Qt::CaseInsensitive)) {
-        result.replace("ERR ", "error ", Qt::CaseInsensitive);
-    }
-    if(result.contains("ERR:", Qt::CaseInsensitive)) {
-        result.replace("ERR:", "error.", Qt::CaseInsensitive);
-    }
-    if(result.contains("POSCTL", Qt::CaseInsensitive)) {
-        result.replace("POSCTL", "Position Control", Qt::CaseInsensitive);
-    }
-    if(result.contains("ALTCTL", Qt::CaseInsensitive)) {
-        result.replace("ALTCTL", "Altitude Control", Qt::CaseInsensitive);
-    }
-    if(result.contains("AUTO_RTL", Qt::CaseInsensitive)) {
-        result.replace("AUTO_RTL", "auto Return To Launch", Qt::CaseInsensitive);
-    } else if(result.contains("RTL", Qt::CaseInsensitive)) {
-        result.replace("RTL", "Return To Launch", Qt::CaseInsensitive);
-    }
-    if(result.contains("ACCEL ", Qt::CaseInsensitive)) {
-        result.replace("ACCEL ", "accelerometer ", Qt::CaseInsensitive);
-    }
-    if(result.contains("RC_MAP_MODE_SW", Qt::CaseInsensitive)) {
-        result.replace("RC_MAP_MODE_SW", "RC mode switch", Qt::CaseInsensitive);
-    }
-    if(result.contains("REJ.", Qt::CaseInsensitive)) {
-        result.replace("REJ.", "Rejected", Qt::CaseInsensitive);
-    }
-    if(result.contains("WP", Qt::CaseInsensitive)) {
-        result.replace("WP", "way point", Qt::CaseInsensitive);
-    }
-    if(result.contains("CMD", Qt::CaseInsensitive)) {
-        result.replace("CMD", "command", Qt::CaseInsensitive);
-    }
-    if(result.contains("COMPID", Qt::CaseInsensitive)) {
-        result.replace("COMPID", "component eye dee", Qt::CaseInsensitive);
-    }
-    if(result.contains(" params ", Qt::CaseInsensitive)) {
-        result.replace(" params ", " parameters ", Qt::CaseInsensitive);
-    }
-    if(result.contains(" id ", Qt::CaseInsensitive)) {
-        result.replace(" id ", " eye dee ", Qt::CaseInsensitive);
-    }
-    if(result.contains(" ADSB ", Qt::CaseInsensitive)) {
-        result.replace(" ADSB ", " Hey Dee Ess Bee ", Qt::CaseInsensitive);
-    }
-    if(result.contains(" EKF ", Qt::CaseInsensitive)) {
-        result.replace(" EKF ", " Eee Kay Eff ", Qt::CaseInsensitive);
-    }
-    if(result.contains("PREARM", Qt::CaseInsensitive)) {
-        result.replace("PREARM", "pre arm", Qt::CaseInsensitive);
-    }
-    if(result.contains("PITOT", Qt::CaseInsensitive)) {
-        result.replace("PITOT", "pee toe", Qt::CaseInsensitive);
+    for ( const QString& word: string.split( ' ', Qt::SkipEmptyParts ) ) {
+        if ( s_textHash.contains( word.toUpper() ) ) {
+            result.replace( word, s_textHash.value( word.toUpper() ) );
+        }
     }
 
     // Convert negative numbers
-    QRegularExpression re(QStringLiteral("(-)[0-9]*\\.?[0-9]"));
-    QRegularExpressionMatch reMatch = re.match(result);
-    while (reMatch.hasMatch()) {
-        if (!reMatch.captured(1).isNull()) {
-            // There is a negative prefix
-            result.replace(reMatch.capturedStart(1), reMatch.capturedEnd(1) - reMatch.capturedStart(1), tr(" negative "));
+    static const QRegularExpression negNumRegex( QStringLiteral( "(-)[0-9]*\\.?[0-9]" ) );
+    QRegularExpressionMatch negNumRegexMatch = negNumRegex.match( result );
+    while ( negNumRegexMatch.hasMatch() ) {
+        if ( !negNumRegexMatch.captured( 1 ).isNull() ) {
+            result.replace( negNumRegexMatch.capturedStart( 1 ), negNumRegexMatch.capturedEnd( 1 ) - negNumRegexMatch.capturedStart( 1 ), tr(" negative "));
         }
-        reMatch = re.match(result);
+        negNumRegexMatch = negNumRegex.match( result );
     }
 
     // Convert real number with decimal point
-    re.setPattern(QStringLiteral("([0-9]+)(\\.)([0-9]+)"));
-    reMatch = re.match(result);
-    while (reMatch.hasMatch()) {
-        if (!reMatch.captured(2).isNull()) {
-            // There is a decimal point
-            result.replace(reMatch.capturedStart(2), reMatch.capturedEnd(2) - reMatch.capturedStart(2), tr(" point "));
+    static const QRegularExpression realNumRegex( QStringLiteral( "([0-9]+)(\\.)([0-9]+)" ) );
+    QRegularExpressionMatch realNumRegexMatch = realNumRegex.match( result );
+    while ( realNumRegexMatch.hasMatch() ) {
+        if ( !realNumRegexMatch.captured( 2 ).isNull() ) {
+            result.replace(realNumRegexMatch.capturedStart( 2 ), realNumRegexMatch.capturedEnd( 2 ) - realNumRegexMatch.capturedStart( 2 ), tr( " point " ));
         }
-        reMatch = re.match(result);
+        realNumRegexMatch = realNumRegex.match( result );
     }
 
     // Convert meter postfix after real number
-    re.setPattern(QStringLiteral("[0-9]*\\.?[0-9]\\s?(m)([^A-Za-z]|$)"));
-    reMatch = re.match(result);
-    while (reMatch.hasMatch()) {
-        if (!reMatch.captured(1).isNull()) {
-            // There is a meter postfix
-            result.replace(reMatch.capturedStart(1), reMatch.capturedEnd(1) - reMatch.capturedStart(1), tr(" meters"));
+    static const QRegularExpression realNumMeterRegex( QStringLiteral( "[0-9]*\\.?[0-9]\\s?(m)([^A-Za-z]|$)" ) );
+    QRegularExpressionMatch realNumMeterRegexMatch = realNumMeterRegex.match( result );
+    while ( realNumMeterRegexMatch.hasMatch() ) {
+        if ( !realNumMeterRegexMatch.captured( 1 ).isNull( ) ) {
+            result.replace( realNumMeterRegexMatch.capturedStart( 1 ), realNumMeterRegexMatch.capturedEnd( 1 ) - realNumMeterRegexMatch.capturedStart( 1 ), tr(" meters"));
         }
-        reMatch = re.match(result);
+        realNumMeterRegexMatch = realNumMeterRegex.match( result );
     }
 
+    QString match;
     int number;
-    if(getMillisecondString(string, match, number) && number > 1000) {
-        if(number < 60000) {
-            int seconds = number / 1000;
-            newNumber = QString("%1 second%2").arg(seconds).arg(seconds > 1 ? "s" : "");
+    if ( getMillisecondString( string, match, number ) && ( number > 1000 ) ) {
+        QString newNumber;
+        if ( number < 60000 ) {
+            const int seconds = number / 1000;
+            newNumber = QString( "%1 second%2" ).arg( seconds ).arg( seconds > 1 ? "s" : "" );
         } else {
-            int minutes = number / 60000;
-            int seconds = (number - (minutes * 60000)) / 1000;
-            if (!seconds) {
-                newNumber = QString("%1 minute%2").arg(minutes).arg(minutes > 1 ? "s" : "");
+            const int minutes = number / 60000;
+            const int seconds = ( number - ( minutes * 60000 ) ) / 1000;
+            if ( !seconds ) {
+                newNumber = QString( "%1 minute%2" ).arg( minutes ).arg( minutes > 1 ? "s" : "" );
             } else {
-                newNumber = QString("%1 minute%2 and %3 second%4").arg(minutes).arg(minutes > 1 ? "s" : "").arg(seconds).arg(seconds > 1 ? "s" : "");
+                newNumber = QString( "%1 minute%2 and %3 second%4" ).arg( minutes ).arg( minutes > 1 ? "s" : "" ).arg( seconds ).arg( seconds > 1 ? "s" : "" );
             }
         }
-        result.replace(match, newNumber);
+        result.replace( match, newNumber );
     }
+
     return result;
 }
