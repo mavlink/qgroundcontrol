@@ -10,7 +10,6 @@
 
 #include "FactSystem.h"
 #include "FirmwarePluginManager.h"
-#include "AudioOutput.h"
 #ifndef __mobile__
 #include "GPSManager.h"
 #endif
@@ -64,7 +63,6 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 
     //-- Scan and load plugins
     _scanAndLoadPlugins(app);
-    _audioOutput            = new AudioOutput               (app, this);
     _factSystem             = new FactSystem                (app, this);
     _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
 #ifndef __mobile__
@@ -100,7 +98,6 @@ void QGCToolbox::setChildToolboxes(void)
     _settingsManager->setToolbox(this);
 
     _corePlugin->setToolbox(this);
-    _audioOutput->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
 #ifndef __mobile__

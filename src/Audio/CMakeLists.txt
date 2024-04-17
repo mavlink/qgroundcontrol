@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core TextToSpeech Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml TextToSpeech)
 
 qt_add_library(Audio STATIC
 	AudioOutput.cc
@@ -7,10 +7,10 @@ qt_add_library(Audio STATIC
 
 target_link_libraries(Audio
 	PRIVATE
-		Qt6::Widgets
-		qgc
+		Utilities
 	PUBLIC
 		Qt6::Core
+		Qt6::QmlIntegration
 		Qt6::TextToSpeech
 )
 

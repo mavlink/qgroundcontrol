@@ -148,7 +148,6 @@ target_link_libraries(QmlControls
 	PUBLIC
 		Qt6::Concurrent
 		Qt6::Location
-		Qt6::TextToSpeech
 		Qt6::Widgets
 )
 
