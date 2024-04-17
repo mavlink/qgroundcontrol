@@ -36,7 +36,7 @@ public:
     bool isMuted() const;
     void setMuted( bool enable );
 
-    void say( const QString& text, AudioOutput::TextMods textMods = TextMod::None );
+    void read( const QString& text, AudioOutput::TextMods textMods = TextMod::None );
 
     static AudioOutput* instance();
     static bool getMillisecondString( const QString& string, QString& match, int& number );
@@ -47,7 +47,7 @@ signals:
 
 private:
     qsizetype m_textQueueSize = 0;
-    bool m_lastMuted = false;
+    bool m_muted = false;
     static const QHash<QString, QString> s_textHash;
 };
 Q_DECLARE_OPERATORS_FOR_FLAGS( AudioOutput::TextMods )
