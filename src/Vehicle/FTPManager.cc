@@ -518,13 +518,7 @@ void FTPManager::_listDirectoryAckOrNak(const MavlinkFTP::Request* ackOrNak)
             return;
         }
 
-        qCDebug(FTPManagerLog) << QString("_listDirectoryAckOrNak: Ack offset(%1) size(%2)").arg(ackOrNak->hdr.offset).arg(ackOrNak->hdr.size);
-
-        if (ackOrNak->hdr.offset != _listDirectoryState.expectedOffset) {
-            qCDebug(FTPManagerLog) << "_listDirectoryAckOrNak: incoming offset incorrect offset:expectedOffset" <<ackOrNak->hdr.offset << _listDirectoryState.expectedOffset;
-            _listDirectoryComplete(tr("List directory failed"));
-            return;
-        }
+        qCDebug(FTPManagerLog) << QString("_listDirectoryAckOrNak: Ack size(%1)").arg(ackOrNak->hdr.size);
 
         // Parse entries in ackOrNak->data into _listDirectoryState.rgDirectoryList
         const char* curDataPtr = (const char*)ackOrNak->data;
