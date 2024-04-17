@@ -9754,12 +9754,32 @@
       <decimal>10</decimal>
       <increment>1.0</increment>
     </parameter>
+    <parameter name="VOXL_ESC_T_OVER" default="0" type="INT32">
+      <short_desc>UART ESC Over-Temperature Threshold (Degrees C)</short_desc>
+      <long_desc>Only applicable to ESCs that report temperature</long_desc>
+      <min>0</min>
+      <max>200</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+      </values>
+    </parameter>
     <parameter name="VOXL_ESC_T_PERC" default="90" type="INT32">
       <short_desc>UART ESC Turtle Mode Crash Flip Motor Percent</short_desc>
       <min>1</min>
       <max>100</max>
       <decimal>10</decimal>
       <increment>1</increment>
+    </parameter>
+    <parameter name="VOXL_ESC_T_WARN" default="0" type="INT32">
+      <short_desc>UART ESC Temperature Warning Threshold (Degrees C)</short_desc>
+      <long_desc>Only applicable to ESCs that report temperature</long_desc>
+      <min>0</min>
+      <max>200</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- Disabled</value>
+      </values>
     </parameter>
     <parameter name="VOXL_ESC_VLOG" default="0" type="INT32">
       <short_desc>UART ESC verbose logging</short_desc>
