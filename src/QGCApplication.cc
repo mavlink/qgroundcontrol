@@ -105,7 +105,7 @@
 #include "RemoteIDManager.h"
 #include "CustomAction.h"
 #include "CustomActionManager.h"
-
+#include "AudioOutput.h"
 #include "CityMapGeometry.h"
 #include "Viewer3DQmlBackend.h"
 #include "Viewer3DQmlVariableTypes.h"
@@ -521,6 +521,11 @@ void QGCApplication::_initCommon()
 bool QGCApplication::_initForNormalAppBoot()
 {
     QSettings settings;
+
+    ( void ) connect( toolbox()->settingsManager()->appSettings()->audioMuted(), &Fact::valueChanged, AudioOutput::instance(), []( QVariant value )
+    {
+        AudioOutput::instance()->setMuted( value.toBool() );
+    });
 
     _qmlAppEngine = toolbox()->corePlugin()->createQmlApplicationEngine(this);
     toolbox()->corePlugin()->createRootWindow(_qmlAppEngine);

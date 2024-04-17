@@ -15,7 +15,6 @@
 
 class FactSystem;
 class FirmwarePluginManager;
-class AudioOutput;
 class GPSManager;
 class JoystickManager;
 class FollowMe;
@@ -48,7 +47,6 @@ public:
     QGCToolbox(QGCApplication* app);
 
     FirmwarePluginManager*      firmwarePluginManager   () { return _firmwarePluginManager; }
-    AudioOutput*                audioOutput             () { return _audioOutput; }
     JoystickManager*            joystickManager         () { return _joystickManager; }
     LinkManager*                linkManager             () { return _linkManager; }
     MAVLinkProtocol*            mavlinkProtocol         () { return _mavlinkProtocol; }
@@ -79,7 +77,6 @@ private:
     void _scanAndLoadPlugins(QGCApplication *app);
 
 
-    AudioOutput*                _audioOutput            = nullptr;
     FactSystem*                 _factSystem             = nullptr;
     FirmwarePluginManager*      _firmwarePluginManager  = nullptr;
 #ifndef __mobile__

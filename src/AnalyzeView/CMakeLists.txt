@@ -35,7 +35,6 @@ target_link_libraries(AnalyzeView
 	PUBLIC
 		Qt6::Charts
 		Qt6::Location
-		Qt6::TextToSpeech
 		Qt6::Widgets
 )
 

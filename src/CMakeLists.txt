@@ -46,6 +46,7 @@ add_subdirectory(Viewer3D)
 #######################################################
 target_link_libraries(qgc
 	PRIVATE
+		Audio
 	PUBLIC
 		Qt6::QuickControls2
 		Qt6::QuickWidgets
@@ -56,7 +57,6 @@ target_link_libraries(qgc
 		AirLink
 		AnalyzeView
 		api
-		Audio
 		AutoPilotPlugins
 		Camera
 		comm
