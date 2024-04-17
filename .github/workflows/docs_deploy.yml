@@ -15,14 +15,9 @@ on:
 
   workflow_dispatch:
 
-env:
-  DOCS_DEPLOY: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      DOCS_DEPLOY: ${{ env.DOCS_DEPLOY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,7 +37,6 @@ jobs:
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        if: env.DOCS_DEPLOY
         uses: actions/upload-artifact@v4
         with:
           name: qgc_docs_build
@@ -50,9 +44,9 @@ jobs:
           retention-days: 1
 
   deploy:
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
     needs: build
     runs-on: ubuntu-latest
-    if: needs.build.outputs.DOCS_DEPLOY
 
     steps:
       - name: Download Artifact
