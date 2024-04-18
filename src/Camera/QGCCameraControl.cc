@@ -2398,8 +2398,7 @@ QGCCameraControl::setTrackingEnabled(bool set)
 }
 
 //-----------------------------------------------------------------------------
-void
-QGCCameraControl::startTracking(QRectF rec, uint64_t timestamp)
+void QGCCameraControl::startTracking(QRectF rec, QString timestamp)
 {
     if(_trackingMarquee != rec) {
         _trackingMarquee = rec;
@@ -2411,9 +2410,10 @@ QGCCameraControl::startTracking(QRectF rec, uint64_t timestamp)
                                   << static_cast<float>(rec.y() + rec.height()) << "]"
                                   << "Timestamp: " << timestamp;
 
+        uint64_t uint_timestamp = timestamp.toULongLong();
         // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
-        uint32_t timestampLow = static_cast<uint32_t>(timestamp);
-        uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
+        uint32_t timestampLow = static_cast<uint32_t>(uint_timestamp);
+        uint32_t timestampHigh = static_cast<uint32_t>(uint_timestamp >> 32);
 
         _vehicle->sendMavCommand(_compID,
                                  MAV_CMD_CAMERA_TRACK_RECTANGLE,
@@ -2464,14 +2464,14 @@ QGCCameraControl::startTracking(QPointF point, double radius)
 }
 
 //-----------------------------------------------------------------------------
-void
-QGCCameraControl::stopTracking(uint64_t timestamp)
+void QGCCameraControl::stopTracking(QString timestamp)
 {
     qCDebug(CameraControlLog) << "Stop Tracking";
 
+    uint64_t uint_timestamp = timestamp.toULongLong();
     // FIXME: we put the 64-bit timestamp into fifth and sixth parameters here which is not a good practice in MavLink
-    uint32_t timestampLow = static_cast<uint32_t>(timestamp);
-    uint32_t timestampHigh = static_cast<uint32_t>(timestamp >> 32);
+    uint32_t timestampLow = static_cast<uint32_t>(uint_timestamp);
+    uint32_t timestampHigh = static_cast<uint32_t>(uint_timestamp >> 32);
 
     //-- Stop Tracking
     _vehicle->sendMavCommand(_compID,

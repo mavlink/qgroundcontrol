@@ -56,7 +56,8 @@ public:
     Q_PROPERTY(bool             decoding                READ    decoding                                    NOTIFY decodingChanged)
     Q_PROPERTY(bool             recording               READ    recording                                   NOTIFY recordingChanged)
     Q_PROPERTY(QSize            videoSize               READ    videoSize                                   NOTIFY videoSizeChanged)
-    Q_PROPERTY(uint64_t         lastKlvTimestamp        READ    lastKlvTimestamp                            NOTIFY klvTimestampChanged)
+    // KLV timestamp is atually a uint64. However, JS number cannot correctly handle such big numbers, so we use Stringe
+    Q_PROPERTY(QString          lastKlvTimestamp        READ    lastKlvTimestamp                            NOTIFY klvTimestampChanged)
 
     virtual bool        hasVideo            ();
     virtual bool        isGStreamer         ();
@@ -89,8 +90,9 @@ public:
         return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
     }
 
-    uint64_t lastKlvTimestamp(void) {
-        return _lastKlvTimestamp;
+    QString lastKlvTimestamp(void)
+    {
+        return QString::number(static_cast<qulonglong>(_lastKlvTimestamp));
     }
 
 // FIXME: AV: they should be removed after finishing multiple video stream support
