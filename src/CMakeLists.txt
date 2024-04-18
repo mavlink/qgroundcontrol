@@ -60,7 +60,6 @@ target_link_libraries(qgc
 		AutoPilotPlugins
 		Camera
 		comm
-		compression
 		FactSystem
 		FirmwarePlugin
 		FlightMap
