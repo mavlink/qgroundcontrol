@@ -38,16 +38,6 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
-      - name: Set up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
@@ -59,6 +49,7 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: true
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
+          tools: 'tools_cmake tools_ninja'
 
       - name: Install Dependencies
         run:  |
