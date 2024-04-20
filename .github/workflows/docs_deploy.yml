@@ -15,6 +15,9 @@ on:
 
   workflow_dispatch:
 
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -59,7 +62,6 @@ jobs:
         env:
           GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
           GIT_PASS: ${{ secrets.PX4BUILDBOT_PASS }}
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
           git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
           rm -rf docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
