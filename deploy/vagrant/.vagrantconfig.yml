@@ -3,10 +3,10 @@ configs:
         'qt_deps_unpack_parent_dir': '/home/vagrant'
 
         'qt_deps_unpack_dir': '/home/vagrant/Qt'
-        'qt_deps_bin_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/bin'
-        'qt_deps_lib_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/lib'
-        'qt_deps_plugins_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/plugins'
-        'qt_deps_qml_unpack_dir': '/home/vagrant/Qt/5.15.2/gcc_64/qml'
+        'qt_deps_bin_unpack_dir': '/home/vagrant/Qt/6.6.3/gcc_64/bin'
+        'qt_deps_lib_unpack_dir': '/home/vagrant/Qt/6.6.3/gcc_64/lib'
+        'qt_deps_plugins_unpack_dir': '/home/vagrant/Qt/6.6.3/gcc_64/plugins'
+        'qt_deps_qml_unpack_dir': '/home/vagrant/Qt/6.6.3/gcc_64/qml'
 
         'project_root_dir': '/vagrant'
 

@@ -14,16 +14,11 @@ env_global = [
 ]
 
 packages = [
-  'build-essential',
-  'fuse',
-  'git',
-  'libgstreamer-plugins-base1.0-dev',
-  'libgstreamer1.0-0:amd64',
-  'libgstreamer1.0-dev',
-  'libsdl2-dev',
   'libudev-dev',
   'speech-dispatcher',
-  'wget'
+  'wget',
+  'xubuntu-desktop',
+  'qtcreator',
 ]
 
 
@@ -60,6 +55,13 @@ Vagrant.configure(2) do |config|
   # qgroundcontrol on the host machine with:
   # "cd shadow-build/release; ./qgroundcontrol-start.sh"
 
+  # rm -rf /vagrant/shadow_build
+  # mkdir /vagrant/shadow_build
+  # cd /vagrant/shadow_build
+  # time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF  # 34s
+  # time cmake --build . --target all --config Release  # 75m
+  # time cmake --install . --config Release
+
   $config_shell = <<-'SHELL'
      set -e
      set -x
@@ -70,7 +72,12 @@ Vagrant.configure(2) do |config|
      sudo apt-get update -y
      # we need this long command to keep packages (grub-pc esp.) from prompting for input
      sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs} xubuntu-desktop qtcreator
+
+     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs}
+
+     # use common package installation:
+     /usr/bin/env bash /vagrant/tools/setup/ubuntu.sh
+
      sudo systemctl set-default graphical.target
 
      echo 'Initialising submodules'
@@ -84,28 +91,29 @@ Vagrant.configure(2) do |config|
      apt-get install -y patchelf
 
      dir="%{qt_deps_unpack_dir}"
-     version="5.15.2"
+     version="6.6"
      host="linux"
      target="desktop"
-     modules="qtcharts"
+     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d"
      su - vagrant -c "rm -rf ${dir}"
      su - vagrant -c "mkdir -p ${dir}"
      su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
 
-     mkdir -p /vagrant/shadow-build
+     # appimage requires FUSE, so allow Vagrant to use FUSE:
+     perl -pe 's/#user_allow_other/user_allow_other/' -i /etc/fuse.conf
 
      # write out a pair of scripts to make rebuilding on the VM easy:
-     su - vagrant -c "cat <<QMAKE >do-qmake.sh
+     su - vagrant -c "cat <<CONFIGURE >do-configure.sh
 #!/bin/bash
 
 set -e
 set -x
 
-cd %{shadow_build_dir}
-export LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir}
-export PATH=%{qt_deps_bin_unpack_dir}:\$PATH
-qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}
-QMAKE
+rm -rf /vagrant/shadow_build
+mkdir /vagrant/shadow_build
+cd /vagrant/shadow_build
+time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF  # 34s
+CONFIGURE
 "
 
      su - vagrant -c "cat <<MAKE >do-make.sh
@@ -114,20 +122,22 @@ QMAKE
 set -e
 set -x
 
-cd %{shadow_build_dir}
-export LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir}
-export PATH=%{qt_deps_bin_unpack_dir}:\$PATH
-make -j${JOBS}
+cd /vagrant/shadow_build
+
+time cmake --build . --target all --config Release  # 75m
+rm -rf AppDir
+time cmake --install . --config Release
 MAKE
 "
-    su - vagrant -c "chmod +x do-qmake.sh do-make.sh"
+
+    su - vagrant -c "chmod +x do-configure.sh do-make.sh"
 
     # increase the allowed number of open files (the link step takes a
     # lot of open filehandles!):
 echo '*               soft    nofile          2048' >/etc/security/limits.d/fileno.conf
 
     # now run the scripts:
-    su - vagrant -c ./do-qmake.sh
+    su - vagrant -c ./do-configure.sh
     su - vagrant -c ./do-make.sh
 
    SHELL
