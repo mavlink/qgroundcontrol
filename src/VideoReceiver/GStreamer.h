@@ -1,13 +1,14 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
-#include <QQuickItem>
+#include <QtQuick/QQuickItem>
 
 #include "Settings/VideoDecoderOptions.h"
-#include "VideoReceiver.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GStreamerLog)
 Q_DECLARE_LOGGING_CATEGORY(GStreamerAPILog)
+
+class VideoReceiver;
 
 class GStreamer {
 public:

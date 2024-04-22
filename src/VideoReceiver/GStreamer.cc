@@ -14,7 +14,7 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-#include <QDebug>
+#include <QtCore/QDebug>
 
 #include "GStreamer.h"
 #include "GstVideoReceiver.h"

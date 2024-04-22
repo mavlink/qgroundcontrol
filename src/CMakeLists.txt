@@ -93,7 +93,7 @@ if(ANDROID)
 
     target_link_libraries(qgc
         PUBLIC
-            qtandroidserialport
+            Qt6::CorePrivate
     )
 
     target_include_directories(qgc PUBLIC ${CMAKE_SOURCE_DIR}/android/src)

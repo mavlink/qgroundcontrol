@@ -52,6 +52,8 @@ target_link_libraries(comm
 )
 
 if(ANDROID)
+	add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qtandroidserialport qtandroidserialport.build)
+
     target_link_libraries(comm PUBLIC qtandroidserialport)
 else()
 	target_link_libraries(comm PUBLIC Qt6::SerialPort)

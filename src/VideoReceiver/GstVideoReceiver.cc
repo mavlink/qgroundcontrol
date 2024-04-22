@@ -17,9 +17,9 @@
 #include "GstVideoReceiver.h"
 #include "QGCLoggingCategory.h"
 
-#include <QDebug>
-#include <QUrl>
-#include <QDateTime>
+#include <QtCore/QDebug>
+#include <QtCore/QUrl>
+#include <QtCore/QDateTime>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 

@@ -95,6 +95,8 @@ qt_add_library(Vehicle STATIC
 	VehicleHygrometerFactGroup.h
 )
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/libevents libevents.build)
+
 target_link_libraries(Vehicle
 	PRIVATE
 		Audio

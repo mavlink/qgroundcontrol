@@ -27,7 +27,7 @@ else()
 				JoystickSDL.h
 		)
     	target_link_libraries(Joystick
-    		PUBLIC
+    		PRIVATE
     			SDL2::SDL2
     	)
 	endif()
