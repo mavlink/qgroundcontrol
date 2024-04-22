@@ -16,11 +16,11 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
-#include <QTimer>
-#include <QThread>
-#include <QWaitCondition>
-#include <QMutex>
-#include <QQueue>
+#include <QtCore/QTimer>
+#include <QtCore/QThread>
+#include <QtCore/QWaitCondition>
+#include <QtCore/QMutex>
+#include <QtCore/QQueue>
 
 #include "VideoReceiver.h"
 
