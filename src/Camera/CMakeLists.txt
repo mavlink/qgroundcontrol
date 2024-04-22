@@ -14,6 +14,8 @@ qt_add_library(Camera STATIC
 )
 
 target_link_libraries(Camera
+	PRIVATE
+		Compression
 	PUBLIC
 		qgc
 )

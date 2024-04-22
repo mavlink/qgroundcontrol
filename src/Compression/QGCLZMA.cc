@@ -9,8 +9,8 @@
 
 #include "QGCLZMA.h"
 
-#include <QFile>
-#include <QtDebug>
+#include <QtCore/QFile>
+#include <QtCore/QtDebug>
 
 #include <mutex>
 

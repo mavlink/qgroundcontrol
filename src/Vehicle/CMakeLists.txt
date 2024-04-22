@@ -98,7 +98,7 @@ qt_add_library(Vehicle STATIC
 target_link_libraries(Vehicle
 	PRIVATE
 		Audio
-		compression
+		Compression
 	PUBLIC
 		qgc
 		libevents
