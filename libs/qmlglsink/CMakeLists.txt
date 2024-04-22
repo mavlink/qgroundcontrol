@@ -208,9 +208,6 @@ if(QGC_ENABLE_VIDEOSTREAMING)
 	        PRIVATE
 	            HAVE_QT_QPA_HEADER
 	            QT_QPA_HEADER=<QtGui/qpa/qplatformnativeinterface.h>
-	        PUBLIC
-	            QGC_GST_STREAMING
-	            QGC_CMAKE_GST
 	    )
 	    if(LINUX)
 	    	target_compile_definitions(qmlglsink PRIVATE HAVE_QT_X11)

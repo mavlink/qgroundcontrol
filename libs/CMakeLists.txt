@@ -1,3 +1,0 @@
-add_subdirectory(libevents)
-add_subdirectory(qtandroidserialport)
-add_subdirectory(qmlglsink)

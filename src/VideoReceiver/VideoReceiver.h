@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QSize>
+#include <QtCore/QObject>
+#include <QtCore/QSize>
 
 class VideoReceiver : public QObject
 {

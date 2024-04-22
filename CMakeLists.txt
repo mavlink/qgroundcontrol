@@ -276,7 +276,6 @@ add_compile_definitions(
     APP_VERSION_STR="${APP_VERSION_STR}"
 )
 
-add_subdirectory(libs)
 add_subdirectory(src)
 target_link_libraries(${PROJECT_NAME} PRIVATE qgc)
 if(QGC_BUILD_TESTING)
