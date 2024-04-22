@@ -159,12 +159,13 @@ Item {
         id: batteryValuesAvailableComponent
 
         QtObject {
-            property bool functionAvailable:        battery.function.rawValue !== MAVLink.MAV_BATTERY_FUNCTION_UNKNOWN
-            property bool temperatureAvailable:     !isNaN(battery.temperature.rawValue)
-            property bool currentAvailable:         !isNaN(battery.current.rawValue)
-            property bool mahConsumedAvailable:     !isNaN(battery.mahConsumed.rawValue)
-            property bool timeRemainingAvailable:   !isNaN(battery.timeRemaining.rawValue)
-            property bool chargeStateAvailable:     battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED
+            property bool functionAvailable:         battery.function.rawValue !== MAVLink.MAV_BATTERY_FUNCTION_UNKNOWN
+            property bool temperatureAvailable:      !isNaN(battery.temperature.rawValue)
+            property bool currentAvailable:          !isNaN(battery.current.rawValue)
+            property bool mahConsumedAvailable:      !isNaN(battery.mahConsumed.rawValue)
+            property bool timeRemainingAvailable:    !isNaN(battery.timeRemaining.rawValue)
+            property bool percentRemainingAvailable: !isNaN(battery.percentRemaining.rawValue)
+            property bool chargeStateAvailable:      battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED
         }
     }
 
@@ -222,6 +223,7 @@ Item {
                     LabelledLabel {
                         label:      qsTr("Remaining")
                         labelText:  object.percentRemaining.valueString + " " + object.percentRemaining.units
+                        visible:    batteryValuesAvailable.percentRemainingAvailable
                     }
 
                     LabelledLabel {
