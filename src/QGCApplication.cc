@@ -529,6 +529,7 @@ bool QGCApplication::_initForNormalAppBoot()
     {
         AudioOutput::instance()->setMuted( value.toBool() );
     });
+    AudioOutput::instance()->setMuted( toolbox()->settingsManager()->appSettings()->audioMuted()->rawValue().toBool() );
 
     _qmlAppEngine = toolbox()->corePlugin()->createQmlApplicationEngine(this);
     toolbox()->corePlugin()->createRootWindow(_qmlAppEngine);
