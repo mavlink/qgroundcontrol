@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Network Test)
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Network Test Widgets)
 
 # NO_SERIAL_LINK # TODO: Make this QGC_NO_SERIAL_LINK
 
@@ -56,6 +56,7 @@ if(ANDROID)
 
     target_link_libraries(comm PUBLIC qtandroidserialport)
 else()
+	find_package(Qt6 REQUIRED COMPONENTS SerialPort)
 	target_link_libraries(comm PUBLIC Qt6::SerialPort)
 endif()
 
