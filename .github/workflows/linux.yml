@@ -65,6 +65,13 @@ jobs:
               chmod a+x ./tools/setup/ubuntu.sh
               ./tools/setup/ubuntu.sh
 
+      - name: Install Vulkan
+        run: |
+          wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
+          sudo apt update
+          sudo apt install vulkan-sdk
+
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
