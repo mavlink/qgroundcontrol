@@ -8,12 +8,13 @@
  ****************************************************************************/
 
 #include "AudioOutput.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QRegularExpression>
 
 #define MAX_TEXT_QUEUE_SIZE 20U
 
-Q_LOGGING_CATEGORY( AudioOutputLog, "qgc.audio.audiooutput" );
+QGC_LOGGING_CATEGORY( AudioOutputLog, "qgc.audio.audiooutput" );
 // qt.speech.tts.flite
 // qt.speech.tts.android
 
@@ -47,29 +48,26 @@ AudioOutput* AudioOutput::instance()
 AudioOutput::AudioOutput( QObject* parent )
     : QTextToSpeech( QStringLiteral("none"), parent )
 {
-    #ifdef QT_DEBUG
-        ( void ) connect( this, &QTextToSpeech::stateChanged, []( QTextToSpeech::State state ) {
-            qCInfo( AudioOutputLog ) << Q_FUNC_INFO << "State:" << state;
-        });
-        ( void ) connect( this, &QTextToSpeech::errorOccurred, []( QTextToSpeech::ErrorReason reason, const QString &errorString ) {
-            ( void ) reason;
-            qCInfo( AudioOutputLog ) << Q_FUNC_INFO << "Error:" << errorString;
-        });
-    #endif
+    ( void ) connect( this, &QTextToSpeech::stateChanged, []( QTextToSpeech::State state ) {
+        qCDebug( AudioOutputLog ) << Q_FUNC_INFO << "State:" << state;
+    });
+    ( void ) connect( this, &QTextToSpeech::errorOccurred, []( QTextToSpeech::ErrorReason reason, const QString &errorString ) {
+        qCDebug( AudioOutputLog ) << Q_FUNC_INFO << "Error: (" << reason << ") " << errorString;
+    });
+    ( void ) connect( this, &QTextToSpeech::volumeChanged, []( double volume ) {
+        qCDebug( AudioOutputLog ) << Q_FUNC_INFO << "volume:" << volume;
+    });
 
     if ( !QTextToSpeech::availableEngines().isEmpty() ) {
         if ( setEngine( QString() ) ) { // Autoselect engine by priority
+            qCDebug( AudioOutputLog ) << Q_FUNC_INFO << "engine:" << engine();
             if ( availableLocales().contains( QLocale( "en_US" ) ) ) {
                 setLocale( QLocale( "en_US" ) );
             }
 
-            ( void ) connect( this, &QTextToSpeech::volumeChanged, [ this ]( double volume ) {
-                ( void ) volume;
-                const bool muted = isMuted();
-                if ( muted != m_lastMuted ) {
-                    emit mutedChanged( muted );
-                    m_lastMuted = muted;
-                }
+            ( void ) connect( this, &AudioOutput::mutedChanged, [ this ]( bool muted ) {
+                qCDebug( AudioOutputLog ) << Q_FUNC_INFO << "muted:" << muted;
+                ( void ) QMetaObject::invokeMethod( this, "setVolume", Qt::AutoConnection, muted ? 0. : 1. );
             });
         }
     }
@@ -77,18 +75,23 @@ AudioOutput::AudioOutput( QObject* parent )
 
 bool AudioOutput::isMuted() const
 {
-    return qFuzzyIsNull( volume() );
+    return m_muted;
 }
 
 void AudioOutput::setMuted( bool enable )
 {
     if ( enable != isMuted() ) {
-        ( void ) QMetaObject::invokeMethod( this, "setVolume", Qt::AutoConnection, enable ? 0. : 100. );
+        m_muted = enable;
+        emit mutedChanged( m_muted );
     }
 }
 
-void AudioOutput::say( const QString& text, AudioOutput::TextMods textMods )
+void AudioOutput::read( const QString& text, AudioOutput::TextMods textMods )
 {
+    if( m_muted ) {
+        return;
+    }
+
     if ( !engineCapabilities().testFlag( QTextToSpeech::Capability::Speak ) ) {
         qCWarning( AudioOutputLog ) << Q_FUNC_INFO << "Speech Not Supported:" << text;
         return;
