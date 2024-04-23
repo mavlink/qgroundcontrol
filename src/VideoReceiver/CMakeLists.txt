@@ -35,6 +35,7 @@ if(GST_FOUND)
             Settings
     )
 
+    message(FATAL_ERROR "GST_FOUND: ${GST_FOUND}")
     target_compile_definitions(VideoReceiver PUBLIC QGC_GST_STREAMING)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")

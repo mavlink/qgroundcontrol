@@ -32,6 +32,7 @@
 #include "GStreamer.h"
 #include "VideoSettings.h"
 #else
+#error Boom
 #include "GLVideoItemStub.h"
 #endif
 
