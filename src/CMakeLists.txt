@@ -1,3 +1,13 @@
+find_package(Qt6
+    REQUIRED
+    COMPONENTS
+        Core
+        Core5Compat
+        QuickControls2
+        QuickWidgets
+        Widgets
+)
+
 qt_add_library(qgc STATIC
 	CmdLineOptParser.cc
 	CmdLineOptParser.h

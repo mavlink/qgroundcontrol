@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml Multimedia)
 
 qt_add_library(Settings STATIC
 	ADSBVehicleManagerSettings.cc
@@ -46,9 +46,12 @@ qt_add_library(Settings STATIC
 )
 
 target_link_libraries(Settings
+	PRIVATE
+		Qt6::Multimedia
 	PUBLIC
 		qgc
-		Qt6::Multimedia
+		Qt6::Core
+		Qt6::Qml
 )
 
 target_include_directories(Settings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

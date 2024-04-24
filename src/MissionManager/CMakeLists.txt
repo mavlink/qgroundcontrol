@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Xml)
 
 qt_add_library(MissionManager STATIC
 	BlankPlanCreator.cc
@@ -102,6 +102,7 @@ target_link_libraries(MissionManager
 	PUBLIC
 		Qt6::Xml
 		qgc
+		UTMSP
 )
 
 target_include_directories(MissionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

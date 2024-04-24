@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Test)
 
 qt_add_library(qgcunittest
 	STATIC
