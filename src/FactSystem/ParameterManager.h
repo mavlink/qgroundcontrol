@@ -9,20 +9,23 @@
 
 #pragma once
 
-#include <QObject>
-#include <QMap>
-#include <QLoggingCategory>
-#include <QDir>
+#include "QGCMAVLink.h"
+#include "Fact.h"
 
-#include "MAVLinkProtocol.h"
-#include "AutoPilotPlugin.h"
-#include "Vehicle.h"
+#include <QtCore/QObject>
+#include <QtCore/QMap>
+#include <QtCore/QDir>
+#include <QtCore/QTimer>
+#include <QtCore/QString>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
 class ParameterEditorController;
+class Vehicle;
+class MAVLinkProtocol;
 
 class ParameterManager : public QObject
 {
@@ -86,7 +89,7 @@ public:
 
     bool pendingWrites(void);
 
-    Vehicle* vehicle(void) { return _vehicle; }
+    Vehicle* vehicle(void);
 
     static MAV_PARAM_TYPE               factTypeToMavType(FactMetaData::ValueType_t factType);
     static FactMetaData::ValueType_t    mavTypeToFactType(MAV_PARAM_TYPE mavType);

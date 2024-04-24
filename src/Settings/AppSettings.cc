@@ -10,13 +10,16 @@
 #include "AppSettings.h"
 #include "QGCPalette.h"
 #include "QGCApplication.h"
+#include "QGCMAVLink.h"
 
 #ifdef Q_OS_ANDROID
 #include "AndroidInterface.h"
 #endif
 
 #include <QtQml/QQmlEngine>
-#include <QStandardPaths>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QDir>
+#include <QtCore/QSettings>
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";

@@ -9,13 +9,15 @@
 
 #pragma once
 
-#include <QObject>
 
-#include "FirmwarePlugin.h"
 #include "QGCMAVLink.h"
 #include "QGCToolbox.h"
 
+#include <QtCore/QObject>
+
 class QGCApplication;
+class FirmwarePlugin;
+class FirmwarePluginFactory;
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
 

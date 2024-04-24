@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml)
 
 qt_add_library(api STATIC
 	QGCCorePlugin.cc
@@ -12,8 +12,20 @@ qt_add_library(api STATIC
 )
 
 target_link_libraries(api
+	PRIVATE
+		Qt6::Qml
+		FactSystem
+		Joystick
+		Settings
+		Utilities
+		VideoReceiver
+		VideoManager
 	PUBLIC
+		Qt6::Core
+		Qt6::Gui
+		comm
 		qgc
+		QmlControls
 )
 
 target_include_directories(api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

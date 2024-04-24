@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QUrl>
-#include <QColor>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QUrl>
+#include <QtGui/QColor>
 
 class QGCOptions;
 

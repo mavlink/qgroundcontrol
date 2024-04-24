@@ -28,6 +28,8 @@
 #define ArduSubFirmwarePlugin_H
 
 #include "APMFirmwarePlugin.h"
+#include "FactGroup.h"
+
 class APMSubmarineFactGroup : public FactGroup
 {
     Q_OBJECT

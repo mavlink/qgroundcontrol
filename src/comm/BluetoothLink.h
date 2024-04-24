@@ -9,19 +9,19 @@
 
 #pragma once
 
-#include <QString>
-#include <QList>
-#include <QBluetoothDeviceInfo>
-#include <QtBluetooth/QBluetoothSocket>
-#include <qbluetoothserviceinfo.h>
-#include <qbluetoothservicediscoveryagent.h>
-
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
-class QBluetoothDeviceDiscoveryAgent;
+#include <QtCore/QString>
+#include <QtCore/QList>
+#include <QtBluetooth/QBluetoothDeviceInfo>
+#include <QtBluetooth/QBluetoothSocket>
+#ifdef Q_OS_IOS
+#include <QtBluetooth/QBluetoothServiceInfo>
 class QBluetoothServiceDiscoveryAgent;
-class LinkManager;
+#endif
+
+class QBluetoothDeviceDiscoveryAgent;
 
 class BluetoothData
 {

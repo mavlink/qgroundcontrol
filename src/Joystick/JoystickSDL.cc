@@ -1,7 +1,8 @@
 #include "JoystickSDL.h"
+#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <QTextStream>
+#include <QtCore/QTextStream>
 
 JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager)
     : Joystick(name,axisCount,buttonCount,hatCount,multiVehicleManager)

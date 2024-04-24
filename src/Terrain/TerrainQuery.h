@@ -11,12 +11,12 @@
 
 #include "TerrainTile.h"
 
-#include <QObject>
-#include <QGeoCoordinate>
-#include <QGeoRectangle>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QTimer>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoRectangle>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtCore/QTimer>
 #include <QtCore/QMutex>
 #include <QtCore/QLoggingCategory>
 

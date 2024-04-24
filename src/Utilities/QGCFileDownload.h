@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 class QGCFileDownload : public QNetworkAccessManager
 {

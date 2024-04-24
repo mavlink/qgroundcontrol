@@ -12,6 +12,9 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGC.h"
+#include "MultiVehicleManager.h"
+#include "Vehicle.h"
+#include "FactGroup.h"
 
 const char*  InstrumentValueData::vehicleFactGroupName =   "Vehicle";
 

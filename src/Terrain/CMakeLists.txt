@@ -11,11 +11,12 @@ target_link_libraries(Terrain
 	PRIVATE
 		Qt6::LocationPrivate
 		qgc
+		QGCLocation
+		Utilities
 	PUBLIC
 		Qt6::Core
 		Qt6::Network
 		Qt6::Positioning
-		Utilities
 )
 
 target_include_directories(Terrain PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

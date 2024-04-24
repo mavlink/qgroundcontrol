@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 
 /// This is a QGeoCoordinate within a QObject such that it can be used on a QmlObjectListModel
 class QGCQGeoCoordinate : public QObject

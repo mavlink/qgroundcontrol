@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-#ifndef SettingsManager_H
-#define SettingsManager_H
+#pragma once
 
-#include "MultiVehicleManager.h"
 #include "QGCToolbox.h"
 #include "AppSettings.h"
 #include "UnitsSettings.h"
@@ -111,5 +109,3 @@ private:
     RemoteIDSettings*               _remoteIDSettings;
     CustomMavlinkActionsSettings*   _customMavlinkActionsSettings;
 };
-
-#endif

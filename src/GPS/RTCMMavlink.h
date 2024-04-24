@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QElapsedTimer>
-
 #include "QGCToolbox.h"
 #include "QGCMAVLink.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QElapsedTimer>
 
 /**
  ** class RTCMMavlink

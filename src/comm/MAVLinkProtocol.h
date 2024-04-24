@@ -9,14 +9,14 @@
 
 #pragma once
 
-#include <QString>
-#include <QByteArray>
-#include <QLoggingCategory>
-
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
 #include "QGCTemporaryFile.h"
 #include "QGCToolbox.h"
+
+#include <QtCore/QString>
+#include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
 
 class LinkManager;
 class MultiVehicleManager;

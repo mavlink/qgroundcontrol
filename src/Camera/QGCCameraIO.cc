@@ -11,6 +11,9 @@
 #include "QGCCameraIO.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
+#include "QGCToolbox.h"
+#include "LinkInterface.h"
+#include "Vehicle.h"
 
 #include <QtQml/QQmlEngine>
 

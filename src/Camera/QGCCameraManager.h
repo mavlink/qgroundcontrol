@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include <QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "MavlinkCameraControl.h"
 
-#include <QObject>
-#include <QTimer>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 

@@ -148,6 +148,7 @@ target_link_libraries(QmlControls
 		Qt6::Widgets
 	PUBLIC
 		qgc
+                AirLink
 		FactSystem
 		UTMSP
 )

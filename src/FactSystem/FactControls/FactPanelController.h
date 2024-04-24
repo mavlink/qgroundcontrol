@@ -13,12 +13,14 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include <QObject>
+#include "Vehicle.h"
+
+#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
-#include "AutoPilotPlugin.h"
-
 Q_DECLARE_LOGGING_CATEGORY(FactPanelControllerLog)
+
+class AutoPilotPlugin;
 
 /// FactPanelController is used for handling missing Facts from C++ code.
 class FactPanelController : public QObject

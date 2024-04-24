@@ -14,7 +14,7 @@
 #ifdef Q_OS_ANDROID
     #include "qserialportinfo.h"
 #else
-    #include <QSerialPortInfo>
+    #include <QtSerialPort/QSerialPortInfo>
 #endif
 
 #include <QtCore/QLoggingCategory>

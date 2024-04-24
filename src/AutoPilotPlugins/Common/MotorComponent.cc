@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "MotorComponent.h"
+#include "AutoPilotPlugin.h"
 
 MotorComponent::MotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

@@ -9,15 +9,16 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QJsonDocument>
-
 #include "ActuatorOutputs.h"
 #include "ActuatorTesting.h"
 #include "Mixer.h"
 #include "MotorAssignment.h"
 
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QJsonDocument>
+
+class Vehicle;
 
 class Actuators : public QObject
 {

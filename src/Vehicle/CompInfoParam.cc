@@ -14,6 +14,7 @@
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>

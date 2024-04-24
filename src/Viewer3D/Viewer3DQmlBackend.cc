@@ -1,6 +1,7 @@
 #include "Viewer3DQmlBackend.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "MultiVehicleManager.h"
 #include "Vehicle.h"
 
 #define GPS_REF_NOT_SET                 0

@@ -25,6 +25,7 @@
 ///     @author Rustom Jehangir <rusty@bluerobotics.com>
 
 #include "ArduSubFirmwarePlugin.h"
+#include "Vehicle.h"
 
 bool ArduSubFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduSubFirmwarePlugin::_remapParamName;

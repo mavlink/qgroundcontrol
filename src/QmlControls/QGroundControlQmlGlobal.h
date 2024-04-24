@@ -12,23 +12,26 @@
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "AppSettings.h"
-#include "ADSBVehicleManager.h"
-#include "QGCPalette.h"
 #include "QmlUnitsConversion.h"
-#include "QGCMapUrlEngine.h"
-#ifndef QGC_AIRLINK_DISABLED
-#include "AirLinkManager.h"
-#else
-class AirLinkManager;
-#endif
-#ifdef CONFIG_UTM_ADAPTER
-#include "UTMSPManager.h"
-#endif
+
+#include <QtCore/QTimer>
+#include <QtPositioning/QGeoCoordinate>
 
 class QGCToolbox;
 class LinkManager;
+class FactGroup;
+class QGCPalette;
+class AirLinkManager;
+class UTMSPManager;
+class ADSBVehicleManager;
+class MultiVehicleManager;
+class QGCPositionManager;
+class SettingsManager;
+class QGCCorePlugin;
+class MissionCommandTree;
 
+Q_MOC_INCLUDE("QGCPalette.h")
+Q_MOC_INCLUDE("FactGroup.h")
 Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("QGCMapEngineManager.h")
 Q_MOC_INCLUDE("PositionManager.h")
@@ -37,6 +40,15 @@ Q_MOC_INCLUDE("MAVLinkLogManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("QGCCorePlugin.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
+Q_MOC_INCLUDE("ADSBVehicleManager.h")
+Q_MOC_INCLUDE("MultiVehicleManager.h")
+Q_MOC_INCLUDE("PositionManager.h")
+#ifdef CONFIG_UTM_ADAPTER
+Q_MOC_INCLUDE("UTMSPManager.h")
+#endif
+#ifndef QGC_AIRLINK_DISABLED
+Q_MOC_INCLUDE("AirLinkManager.h")
+#endif
 
 class QGroundControlQmlGlobal : public QGCTool
 {
@@ -185,8 +197,8 @@ public:
     qreal zOrderTrajectoryLines     () { return 48; }
     qreal zOrderWaypointLines       () { return 47; }
 
-    bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
-    int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
+    bool    isVersionCheckEnabled   ();
+    int     mavlinkSystemID         ();
 #if defined(NO_ARDUPILOT_DIALECT)
     bool    hasAPMSupport           () { return false; }
 #else
@@ -199,8 +211,8 @@ public:
     bool    hasMAVLinkInspector     () { return true; }
 #endif
 
-    QString elevationProviderName   () { return UrlFactory::kCopernicusElevationProviderKey; }
-    QString elevationProviderNotice () { return UrlFactory::kCopernicusElevationProviderNotice; }
+    QString elevationProviderName   ();
+    QString elevationProviderNotice ();
 
     bool    singleFirmwareSupport   ();
     bool    singleVehicleSupport    ();
@@ -214,9 +226,9 @@ public:
     void    setFlightMapPosition        (QGeoCoordinate& coordinate);
     void    setFlightMapZoom            (double zoom);
 
-    QString parameterFileExtension  (void) const  { return AppSettings::parameterFileExtension; }
-    QString missionFileExtension    (void) const    { return AppSettings::missionFileExtension; }
-    QString telemetryFileExtension  (void) const  { return AppSettings::telemetryFileExtension; }
+    QString parameterFileExtension  (void) const;
+    QString missionFileExtension    (void) const;
+    QString telemetryFileExtension  (void) const;
 
     QString qgcVersion              (void) const;
 

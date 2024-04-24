@@ -9,33 +9,36 @@
 
 #pragma once
 
-#include <QList>
-#include <QtCore/QTimer>
-#include <QtCore/QLoggingCategory>
-#include <limits>
-
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #include "QGCToolbox.h"
-#include "MAVLinkProtocol.h"
-#if !defined(__mobile__)
-#include "LogReplayLink.h"
-#include "UdpIODevice.h"
-#endif
 #include "QmlObjectListModel.h"
 
 #ifndef NO_SERIAL_LINK
-    #include "SerialLink.h"
     #include "QGCSerialPortInfo.h"
+    #ifndef __mobile__
+        #include "UdpIODevice.h"
+    #endif
 #endif
+
+#include <QtCore/QList>
+#include <QtCore/QStringList>
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
+
+#include <limits>
 
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 
 class QGCApplication;
+class MAVLinkProtocol;
 class UDPConfiguration;
 class AutoConnectSettings;
 class LogReplayLink;
+#ifndef NO_SERIAL_LINK
+    class SerialLink;
+#endif
 
 /// @brief Manage communication links
 ///

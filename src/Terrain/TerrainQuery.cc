@@ -14,16 +14,16 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QUrl>
-#include <QUrlQuery>
-#include <QNetworkRequest>
-#include <QNetworkProxy>
-#include <QNetworkReply>
-#include <QSslConfiguration>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QTimer>
+#include <QtCore/QUrl>
+#include <QtCore/QUrlQuery>
+#include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QNetworkProxy>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QSslConfiguration>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonArray>
+#include <QtCore/QTimer>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 #include <cmath>

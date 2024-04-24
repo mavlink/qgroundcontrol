@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include <QObject>
-#include <QList>
-#include <QGeoCoordinate>
-
-#include "shapefil.h"
 
 #include "ShapeFileHelper.h"
+#include "shapefil.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QList>
+#include <QtPositioning/QGeoCoordinate>
 
 /// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.

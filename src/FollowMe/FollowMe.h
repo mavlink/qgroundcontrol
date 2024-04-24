@@ -10,14 +10,13 @@
 
 #pragma once
 
-#include <QTimer>
-
 #include "QGCToolbox.h"
-#include "MAVLinkProtocol.h"
-
-class Vehicle;
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(FollowMeLog)
+
+class Vehicle;
 
 class FollowMe : public QGCTool
 {

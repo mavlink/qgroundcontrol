@@ -1,10 +1,7 @@
-#ifndef PX4LOGPARSER_H
-#define PX4LOGPARSER_H
-
-#include <QGeoCoordinate>
-#include <QDebug>
+#pragma once
 
 #include "GeoTagController.h"
+#include <QtCore/QByteArray>
 
 class PX4LogParser
 {
@@ -16,5 +13,3 @@ public:
 private:
 
 };
-
-#endif // PX4LOGPARSER_H

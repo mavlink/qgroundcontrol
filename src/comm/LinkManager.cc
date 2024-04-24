@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-#include <QList>
-
-#include <memory>
-
 #include "LinkManager.h"
 #include "QGCApplication.h"
 #include "UDPLink.h"
 #include "TCPLink.h"
 #include "SettingsManager.h"
 #include "LogReplayLink.h"
+#include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
+#include "QGCLoggingCategory.h"
+
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
@@ -43,7 +43,14 @@
 #include <qmdnsengine/service.h>
 #endif
 
-#include "QGCLoggingCategory.h"
+#ifndef NO_SERIAL_LINK
+    #include "SerialLink.h"
+#endif
+
+#include <QtQml/QtQml>
+#include <QtCore/QList>
+
+#include <memory>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")

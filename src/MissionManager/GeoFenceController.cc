@@ -22,6 +22,7 @@
 #include "PlanMasterController.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "FactSystem.h"
 #include "QGCLoggingCategory.h"
 
 #include <QJsonArray>

@@ -10,6 +10,7 @@
 #include "MAVLinkInspectorController.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 

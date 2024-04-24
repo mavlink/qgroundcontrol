@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include <QThread>
-#include <QLoggingCategory>
+#include "LinkConfiguration.h"
+
+#include <QtCore/QThread>
+#include <QtCore/QLoggingCategory>
 
 #include <memory>
-
-#include "LinkConfiguration.h"
 
 class LinkManager;
 

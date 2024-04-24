@@ -11,10 +11,10 @@
 #include "JsonHelper.h"
 #include "QGCLoggingCategory.h"
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QtMath>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonArray>
+#include <QtCore/QtNumeric>
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog");
 

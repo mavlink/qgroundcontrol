@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "MockLink.h"
 #include "LinkManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "MultiSignalSpyV2.h"
 

@@ -16,6 +16,7 @@
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGC.h"
+#include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "TransectStyleComplexItemLog")

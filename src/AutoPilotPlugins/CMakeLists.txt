@@ -102,8 +102,11 @@ qt_add_library(AutoPilotPlugins STATIC
 )
 
 target_link_libraries(AutoPilotPlugins
-        PRIVATE
-                qgc
+	PUBLIC
+		Qt6::Core
+		Qt6::Quick
+    PRIVATE
+        qgc
 )
 
 target_include_directories(AutoPilotPlugins

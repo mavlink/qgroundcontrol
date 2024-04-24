@@ -12,12 +12,8 @@
 #include "JsonHelper.h"
 #include "QGCApplication.h"
 
-#include <QDebug>
-#include <QtMath>
-#include <QJsonArray>
-
-#include <limits>
-#include <cmath>
+#include <QtCore/QtMath>
+#include <QtCore/QJsonArray>
 
 // Conversion Constants
 // Time

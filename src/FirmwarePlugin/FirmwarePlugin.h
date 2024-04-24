@@ -17,14 +17,16 @@
 #include "RallyPointManager.h"
 #include "FollowMe.h"
 
-#include <QList>
-#include <QString>
-#include <QVariantList>
+#include <QtCore/QList>
+#include <QtCore/QString>
+#include <QtCore/QVariantList>
 
 class Vehicle;
 class MavlinkCameraControl;
 class QGCCameraManager;
 class Autotune;
+class LinkInterface;
+class FactGroup;
 
 /// This is the base class for Firmware specific plugins
 ///

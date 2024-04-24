@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QUrl>
+#include <QtCore/QObject>
+#include <QtCore/QUrl>
 
 /// @file
 /// @brief Core Plugin Interface for QGroundControl. Settings element.

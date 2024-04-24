@@ -26,7 +26,6 @@
 #include "VideoManager.h"
 #include "MAVLinkLogManager.h"
 #include "QGCCorePlugin.h"
-#include "QGCOptions.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "ADSBVehicleManager.h"

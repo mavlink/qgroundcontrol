@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
 
-#include <QmlObjectListModel.h>
-
-#include <QTimer>
+#include "QmlObjectListModel.h"
 #include "Vehicle.h"
-#include "MAVLinkProtocol.h"
+#include "QGCMAVLink.h"
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QTimer>
 
 namespace ActuatorTesting {
 

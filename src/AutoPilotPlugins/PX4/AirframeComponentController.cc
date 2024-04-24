@@ -13,8 +13,10 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "QGC.h"
+#include "FactSystem.h"
 
-#include <QVariant>
+#include <QtCore/QVariant>
+#include <QtQml/QtQml>
 
 bool AirframeComponentController::_typesRegistered = false;
 

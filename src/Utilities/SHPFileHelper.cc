@@ -10,10 +10,9 @@
 #include "SHPFileHelper.h"
 #include "QGCGeo.h"
 
-#include <QFile>
-#include <QVariant>
+#include <QtCore/QFile>
 #include <QtCore/QDebug>
-#include <QRegularExpression>
+#include <QtCore/QRegularExpression>
 
 const char* SHPFileHelper::_errorPrefix = QT_TR_NOOP("SHP file load failed. %1");
 

@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "QGCApplication.h"
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
 #include "FactMetaData.h"
@@ -16,6 +16,7 @@
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
 #include "VideoManager.h"
+#include "JoystickManager.h"
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"
 #include "VideoReceiver.h"
@@ -24,8 +25,9 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 
-#include <QtQml>
-#include <QQmlEngine>
+#include <QtQml/QQmlEngine>
+#include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlContext>
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Default Implementation
