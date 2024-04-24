@@ -92,10 +92,11 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     enable_testing()
 endif()
 
+set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
+
 if(ANDROID)
     cmake_print_variables(QT_ANDROID_APPLICATION_ARGUMENTS QT_HOST_PATH)
 
-    set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
     # QT_USE_TARGET_ANDROID_BUILD_DIR
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD)
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QT_HOST_PATH)
@@ -221,26 +222,32 @@ if(Qt6LinguistTools_FOUND)
     qt_add_translations(${PROJECT_NAME} TS_FILES ${TS_SOURCES}) # TODO: Update to new qt_add_translations form in Qt6.7
 endif()
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.h)
+target_precompile_headers(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/pch.h)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES QT_RESOURCE_PREFIX "/qgc")
 
+include(Git)
+
 if(WIN32)
-    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
+    set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+            WIN32_EXECUTABLE TRUE
+            QT_TARGET_RC_ICONS "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico"
+    )
     add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/deploy/mac/MacOSXBundleInfo.plist.in
-            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
-            MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-            MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2018 QGroundControl. All rights reserved."
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/deploy/mac/MacOSXBundleInfo.plist.in"
+            MACOSX_BUNDLE_BUNDLE_NAME "${PROJECT_NAME}"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2020 QGroundControl. All rights reserved."
             MACOSX_BUNDLE_GUI_IDENTIFIER "io.mavlink.qgroundcontrol"
-            MACOSX_BUNDLE_ICON_FILE "${CMAKE_SOURCE_DIR}/resources/icons/macx.icns"
-            # MACOSX_BUNDLE_INFO_STRING
-            # MACOSX_BUNDLE_LONG_VERSION_STRING
-            # MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+            MACOSX_BUNDLE_ICON_FILE "macx.icns"
+            MACOSX_BUNDLE_INFO_STRING "Open Source Ground Control App"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
     )
 elseif(IOS)
     enable_language(OBJC)
@@ -254,14 +261,26 @@ elseif(ANDROID)
     include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
     add_android_openssl_libraries(${PROJECT_NAME})
 
+    set(ANDROID_PLATFORM_ARCHITECTURE_CODE)
+    if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
+        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "032")
+    elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
+        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "064")
+    elseif(${ANDROID_ABI} STREQUAL "x86")
+        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "132")
+    elseif(${ANDROID_ABI} STREQUAL "x86_64")
+        set(ANDROID_PLATFORM_ARCHITECTURE_CODE "164")
+    endif()
+    set(ANDROID_VERSION_CODE "${ANDROID_PLATFORM_ARCHITECTURE_CODE}${PROJECT_VERSION_MAJOR}${PROJECT_VERSION_MINOR}")
+
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
             # QT_ANDROID_ABIS ${ANDROID_ABI}
             QT_ANDROID_MIN_SDK_VERSION 26
             QT_ANDROID_TARGET_SDK_VERSION 34
             QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
-            QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
-            # QT_ANDROID_VERSION_CODE "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+            QT_ANDROID_VERSION_NAME ${CMAKE_PROJECT_VERSION}
+            QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
             QT_QML_ROOT_PATH ${CMAKE_SOURCE_DIR}
     )
     # get_target_property(QGC_ANDROID_DEPLOY_FILE ${PROJECT_NAME} QT_ANDROID_DEPLOYMENT_SETTINGS_FILE)
@@ -269,7 +288,6 @@ elseif(LINUX)
 
 endif()
 
-include(Git)
 add_compile_definitions(
     QGC_APPLICATION_NAME="QGroundControl"
     QGC_ORG_NAME="QGroundControl.org"

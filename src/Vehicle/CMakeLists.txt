@@ -105,6 +105,7 @@ target_link_libraries(Vehicle
 		qgc
 		libevents
 		Actuators
+		UTMSP
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

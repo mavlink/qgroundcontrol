@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml Concurrent Location Widgets)
 
 qt_add_library(QmlControls STATIC
 	AppMessages.cc
@@ -142,13 +142,14 @@ add_custom_target(QmlControlsQml
 )
 
 target_link_libraries(QmlControls
-	PUBLIC
-		qgc
-		FactSystem
-	PUBLIC
+	PRIVATE
 		Qt6::Concurrent
 		Qt6::Location
 		Qt6::Widgets
+	PUBLIC
+		qgc
+		FactSystem
+		UTMSP
 )
 
 target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
