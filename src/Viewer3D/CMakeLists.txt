@@ -1,7 +1,6 @@
 add_subdirectory(Viewer3DQml)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Quick3D)
-
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Multimedia Network Positioning Quick3D Xml)
 
 qt_add_library(Viewer3D STATIC
     Viewer3DManager.cc
@@ -26,13 +25,18 @@ qt_add_library(Viewer3D STATIC
     Viewer3DTileQuery.cc
     OsmParserThread.cc
     OsmParserThread.h
-
 )
 
 target_link_libraries(Viewer3D
 	PUBLIC
 		qgc
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Multimedia
+        Qt6::Network
+        Qt6::Positioning
         Qt6::Quick3D
+        Qt6::Xml
 )
 
 target_include_directories(Viewer3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

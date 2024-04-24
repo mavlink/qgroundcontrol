@@ -20,7 +20,9 @@ if(ANDROID)
 	)
 else()
 	include(BuildSdl2)
+	build_sdl2()
 	if(SDL2_FOUND)
+		message(STATUS "Building JoystickSDL")
 		target_sources(Joystick
 			PRIVATE
 				JoystickSDL.cc

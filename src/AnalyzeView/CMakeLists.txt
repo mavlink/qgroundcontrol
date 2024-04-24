@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Charts Location Widgets)
 
 qt_add_library(AnalyzeView STATIC
 	ExifParser.cc
