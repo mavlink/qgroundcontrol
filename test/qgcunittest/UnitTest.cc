@@ -10,6 +10,7 @@
 #include "UnitTest.h"
 #include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"

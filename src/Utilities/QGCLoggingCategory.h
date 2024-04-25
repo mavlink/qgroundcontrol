@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QLoggingCategory>
-#include <QStringList>
-#include <QObject>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QStringList>
+#include <QtCore/QObject>
 
 // Add Global logging categories (not class specific) here using Q_DECLARE_LOGGING_CATEGORY
 Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
@@ -22,7 +22,6 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(GeotaggingLog)
 Q_DECLARE_LOGGING_CATEGORY(RTKGPSLog)
 Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
-Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(LocalizationLog)
 Q_DECLARE_LOGGING_CATEGORY(VideoAllLog) // turns on all individual QGC video logs
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)

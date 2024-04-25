@@ -10,13 +10,16 @@
 
 #pragma once
 
-#include "GPSProvider.h"
-#include "RTCMMavlink.h"
-#include "GPSRTKFactGroup.h"
-#include <QGCToolbox.h>
+#include "QGCToolbox.h"
+#include "GPSPositionMessage.h"
 
-#include <QString>
-#include <QObject>
+#include <QtCore/QString>
+#include <QtCore/QObject>
+
+class GPSRTKFactGroup;
+class FactGroup;
+class RTCMMavlink;
+class GPSProvider;
 
 /**
  ** class GPSManager
@@ -33,8 +36,8 @@ public:
 
     void connectGPS     (const QString& device, const QString& gps_type);
     void disconnectGPS  (void);
-    bool connected      (void) const { return _gpsProvider && _gpsProvider->isRunning(); }
-    FactGroup* gpsRtkFactGroup(void) { return _gpsRtkFactGroup; }
+    bool connected      (void) const;
+    FactGroup* gpsRtkFactGroup(void);
 
 signals:
     void onConnect();

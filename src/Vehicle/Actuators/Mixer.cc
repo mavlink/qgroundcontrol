@@ -8,10 +8,8 @@
  ****************************************************************************/
 
 #include "Mixer.h"
-
-#include <QDebug>
-
-#include <cmath>
+#include "FactSystem.h"
+#include "ParameterManager.h"
 
 using namespace Mixer;
 

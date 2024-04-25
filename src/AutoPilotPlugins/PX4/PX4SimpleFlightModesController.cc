@@ -9,6 +9,7 @@
 
 
 #include "PX4SimpleFlightModesController.h"
+#include "FactSystem.h"
 
 PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
     : _activeFlightMode(0)

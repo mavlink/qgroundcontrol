@@ -23,6 +23,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QSettings>
+#include <QtCore/QRegularExpression>
 #include <QStorageInfo>
 #include <QtQml/QQmlEngine>
 

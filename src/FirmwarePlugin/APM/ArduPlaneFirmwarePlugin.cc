@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "ArduPlaneFirmwarePlugin.h"
+#include "Vehicle.h"
 
 bool ArduPlaneFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduPlaneFirmwarePlugin::_remapParamName;

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QObject>
+#include <QtCore/QObject>
 
 /// Set of meta data which describes a camera available on the vehicle
 class CameraMetaData : public QObject

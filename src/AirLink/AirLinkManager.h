@@ -11,10 +11,7 @@
 
 #include "QGCToolbox.h"
 
-#include <QTimer>
-#include <QTime>
-#include <QNetworkReply>
-#include <QMutex>
+#include <QtNetwork/QNetworkReply>
 
 class AppSettings;
 class QGCApplication;

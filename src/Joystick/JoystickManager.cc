@@ -9,19 +9,16 @@
 
 
 #include "JoystickManager.h"
-#include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
-
-#include <QQmlEngine>
-
+#include "MultiVehicleManager.h"
 #ifndef __mobile__
     #include "JoystickSDL.h"
     #define __sdljoystick__
 #endif
-
 #ifdef Q_OS_ANDROID
     #include "JoystickAndroid.h"
 #endif
+#include "QGCLoggingCategory.h"
+#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
 

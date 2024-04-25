@@ -56,12 +56,16 @@ add_subdirectory(Viewer3D)
 #######################################################
 target_link_libraries(qgc
 	PRIVATE
-		Audio
-	PUBLIC
+		Qt6::Quick
 		Qt6::QuickControls2
 		Qt6::QuickWidgets
-		Qt6::Widgets
 		Qt6::Core5Compat
+		Qt6::Bluetooth
+		Audio
+	PUBLIC
+		Qt6::Core
+		Qt6::CorePrivate
+		Qt6::Widgets
 
 		ADSB
 		AirLink

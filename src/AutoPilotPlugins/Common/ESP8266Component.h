@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef ESP8266Component_H
-#define ESP8266Component_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -35,5 +34,3 @@ private:
     const QString   _name;
     QVariantList    _summaryItems;
 };
-
-#endif

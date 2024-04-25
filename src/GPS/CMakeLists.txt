@@ -27,9 +27,12 @@ qt_add_library(gps STATIC
 )
 
 target_link_libraries(gps
+	PRIVATE
+		comm
+		Settings
+		Utilities
 	PUBLIC
 		Qt6::Core
-		comm
 		qgc
 )
 

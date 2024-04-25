@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef GENERICAUTOPILOT_H
-#define GENERICAUTOPILOT_H
+#pragma once
 
 #include "AutoPilotPlugin.h"
 
@@ -29,5 +28,3 @@ public:
     const QVariantList& vehicleComponents(void) final;
     QString prerequisiteSetup(VehicleComponent* component) const final;
 };
-
-#endif

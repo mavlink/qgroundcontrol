@@ -10,9 +10,9 @@
 
 #include "FactGroup.h"
 
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QQmlEngine>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonArray>
+#include <QtQml/QQmlEngine>
 
 FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent, bool ignoreCamelCase)
     : QObject(parent)

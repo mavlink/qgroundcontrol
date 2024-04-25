@@ -11,9 +11,9 @@
 
 #include "FactMetaData.h"
 
-#include <QObject>
-#include <QString>
-#include <QVariant>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
 
 class FactValueSliderListModel;
 

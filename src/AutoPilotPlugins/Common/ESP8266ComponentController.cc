@@ -15,7 +15,7 @@
 #include "ESP8266ComponentController.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
-#include <QHostAddress>
+#include <QtNetwork/QHostAddress>
 
 QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "ESP8266ComponentControllerLog")
 

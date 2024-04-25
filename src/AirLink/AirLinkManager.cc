@@ -13,8 +13,7 @@
 #include "LinkManager.h"
 #include "SettingsManager.h"
 
-#include <QSettings>
-#include <QDebug>
+#include <QtCore/QSettings>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonArray>
 

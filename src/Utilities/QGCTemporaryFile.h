@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QFile>
+#include <QtCore/QFile>
 
 /// @file
 ///     @brief This class mimics QTemporaryFile. We have our own implementation due to the fact that

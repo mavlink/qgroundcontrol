@@ -14,8 +14,10 @@
 
 #include "RadioComponentController.h"
 #include "QGCApplication.h"
+#include "FactSystem.h"
 #include "QGCLoggingCategory.h"
-#include <QSettings>
+
+#include <QtCore/QSettings>
 
 QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "RadioComponentControllerLog")
 QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "RadioComponentControllerVerboseLog")

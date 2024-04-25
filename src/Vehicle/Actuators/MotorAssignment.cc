@@ -8,8 +8,9 @@
  ****************************************************************************/
 
 #include "MotorAssignment.h"
-#include "ActuatorOutputs.h"
 #include "QGCApplication.h"
+#include "ActuatorOutputs.h"
+#include "QmlObjectListModel.h"
 
 #include <vector>
 

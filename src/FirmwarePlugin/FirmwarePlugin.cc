@@ -19,7 +19,7 @@
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 
-#include <QRegularExpression>
+#include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 

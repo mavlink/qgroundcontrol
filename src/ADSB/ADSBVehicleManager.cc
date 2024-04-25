@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "ADSBVehicleManager.h"
-#include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "ADSBVehicleManagerSettings.h"
 
-#include <QDebug>
+#include <QtNetwork/QTcpSocket>
+#include <QtPositioning/QGeoCoordinate>
 
 ADSBVehicleManager::ADSBVehicleManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -27,7 +27,7 @@ void ADSBVehicleManager::setToolbox(QGCToolbox* toolbox)
     _adsbVehicleCleanupTimer.setSingleShot(false);
     _adsbVehicleCleanupTimer.start(1000);
 
-    ADSBVehicleManagerSettings* settings = qgcApp()->toolbox()->settingsManager()->adsbVehicleManagerSettings();
+    ADSBVehicleManagerSettings* settings = toolbox->settingsManager()->adsbVehicleManagerSettings();
     if (settings->adsbServerConnectEnabled()->rawValue().toBool()) {
         _tcpLink = new ADSBTCPLink(settings->adsbServerHostAddress()->rawValue().toString(), settings->adsbServerPort()->rawValue().toInt(), this);
         connect(_tcpLink, &ADSBTCPLink::adsbVehicleUpdate,  this, &ADSBVehicleManager::adsbVehicleUpdate,   Qt::QueuedConnection);

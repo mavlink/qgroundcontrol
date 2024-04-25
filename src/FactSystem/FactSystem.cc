@@ -15,7 +15,7 @@
 #include "FactGroup.h"
 #include "FactPanelController.h"
 
-#include <QtQml>
+#include <QtQml/QtQml>
 
 const char* FactSystem::_factSystemQmlUri = "QGroundControl.FactSystem";
 

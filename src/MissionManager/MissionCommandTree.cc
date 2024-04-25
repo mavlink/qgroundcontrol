@@ -11,6 +11,7 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
+#include "FirmwarePlugin.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
 

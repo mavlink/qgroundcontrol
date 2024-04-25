@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 
-#ifndef QGCToolbox_h
-#define QGCToolbox_h
+#pragma once
 
-#include <QObject>
+
+#include <QtCore/QObject>
 
 class FactSystem;
 class FirmwarePluginManager;
@@ -124,5 +124,3 @@ protected:
     QGCApplication* _app;
     QGCToolbox*     _toolbox;
 };
-
-#endif

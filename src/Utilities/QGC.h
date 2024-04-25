@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QThread>
+#include <QtCore/QThread>
 
 namespace QGC
 {

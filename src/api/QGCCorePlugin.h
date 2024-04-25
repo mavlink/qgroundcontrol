@@ -14,9 +14,9 @@
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 
-#include <QObject>
-#include <QVariantList>
-#include <QFile>
+#include <QtCore/QObject>
+#include <QtCore/QVariantList>
+#include <QtCore/QFile>
 
 /// @file
 /// @brief Core Plugin Interface for QGroundControl

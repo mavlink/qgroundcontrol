@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QString>
+#include <QtCore/QString>
 
 class QGCLZMA
 {

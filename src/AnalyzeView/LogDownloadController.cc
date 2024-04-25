@@ -14,15 +14,13 @@
 #include "QGCToolbox.h"
 #include "QGCMapEngine.h"
 #include "ParameterManager.h"
+#include "FactSystem.h"
 #include "Vehicle.h"
 #include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <QDebug>
-#include <QSettings>
-#include <QUrl>
-#include <QBitArray>
-#include <QtCore/qmath.h>
+#include <QtCore/QBitArray>
+#include <QtCore/QtMath>
 
 #define kTimeOutMilliseconds 500
 #define kGUIRateMilliseconds 17

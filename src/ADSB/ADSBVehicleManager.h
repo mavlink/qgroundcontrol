@@ -13,12 +13,11 @@
 #include "QmlObjectListModel.h"
 #include "ADSBVehicle.h"
 
-#include <QThread>
-#include <QTcpSocket>
-#include <QTimer>
-#include <QGeoCoordinate>
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
 
 class ADSBVehicleManagerSettings;
+class QTcpSocket;
 
 class ADSBTCPLink : public QThread
 {

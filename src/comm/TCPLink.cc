@@ -7,12 +7,11 @@
  *
  ****************************************************************************/
 
-#include <QList>
-#include <QDebug>
-#include <QHostInfo>
-#include <QSignalSpy>
-
 #include "TCPLink.h"
+
+#include <QtCore/QList>
+#include <QtNetwork/QTcpSocket>
+#include <QtTest/QSignalSpy>
 
 TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)

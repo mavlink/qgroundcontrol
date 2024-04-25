@@ -17,6 +17,9 @@
 #include "PowerComponentController.h"
 #include "SettingsManager.h"
 #include "PlanViewSettings.h"
+#include "ParameterManager.h"
+#include "FactSystem.h"
+#include "Vehicle.h"
 
 #include <QDebug>
 

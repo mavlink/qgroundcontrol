@@ -11,8 +11,11 @@
 #include "InstrumentValueData.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
-#include <QSettings>
+#include <QtCore/QSettings>
+#include <QtCore/QDir>
 
 const char* FactValueGrid::_columnsKey          = "columns";
 const char* FactValueGrid::_rowsKey             = "rows";

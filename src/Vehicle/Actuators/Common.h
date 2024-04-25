@@ -9,18 +9,17 @@
 
 #pragma once
 
+#include "Fact.h"
 
-#include <QString>
-#include <QVector3D>
-#include <QJsonValue>
+#include <QtCore/QString>
+#include <QtCore/QJsonValue>
 #include <QtCore/QLoggingCategory>
+#include <QtGui/QVector3D>
 
-#include <stdint.h>
-
-#include "ParameterManager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ActuatorsConfigLog)
 
+class ParameterManager;
 
 /**
  * Represents a per-channel or per-item vehicle configuration parameter

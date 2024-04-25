@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "UdpIODevice.h"
-#include <algorithm>
+
 
 UdpIODevice::UdpIODevice(QObject *parent) : QUdpSocket(parent)
 {

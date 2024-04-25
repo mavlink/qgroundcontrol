@@ -17,9 +17,9 @@
 
 #include "QGCTemporaryFile.h"
 
-#include <QDir>
-#include <QRandomGenerator>
-#include <QStandardPaths>
+#include <QtCore/QDir>
+#include <QtCore/QRandomGenerator>
+#include <QtCore/QStandardPaths>
 
 QGCTemporaryFile::QGCTemporaryFile(const QString& fileTemplate, QObject* parent) :
     QFile(parent),

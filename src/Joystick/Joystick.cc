@@ -17,9 +17,12 @@
 #include "CustomAction.h"
 #include "SettingsManager.h"
 #include "CustomMavlinkActionsSettings.h"
+#include "Vehicle.h"
+#include "MultiVehicleManager.h"
+#include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
-#include <QSettings>
+#include <QtCore/QSettings>
 
 // JoystickLog Category declaration moved to QGCLoggingCategory.cc to allow access in Vehicle
 QGC_LOGGING_CATEGORY(JoystickValuesLog, "JoystickValuesLog")

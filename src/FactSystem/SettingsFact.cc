@@ -12,7 +12,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCApplication.h"
 
-#include <QSettings>
+#include <QtCore/QSettings>
 #include <QtQml/QQmlEngine>
 
 SettingsFact::SettingsFact(QObject* parent)

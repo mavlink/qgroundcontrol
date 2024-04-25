@@ -1,10 +1,6 @@
-find_package(Qt6 REQUIRED COMPONENTS Bluetooth Core Network Test Widgets)
-
-# NO_SERIAL_LINK # TODO: Make this QGC_NO_SERIAL_LINK
+find_package(Qt6 REQUIRED COMPONENTS Core Network Qml Test Widgets)
 
 qt_add_library(comm STATIC
-	BluetoothLink.cc
-	BluetoothLink.h
 	LinkConfiguration.cc
 	LinkConfiguration.h
 	LinkInterface.cc
@@ -17,10 +13,6 @@ qt_add_library(comm STATIC
 	MAVLinkProtocol.h
 	QGCMAVLink.cc
 	QGCMAVLink.h
-	QGCSerialPortInfo.cc
-	QGCSerialPortInfo.h
-	SerialLink.cc
-	SerialLink.h
 	TCPLink.cc
 	TCPLink.h
 	UdpIODevice.cc
@@ -43,22 +35,57 @@ endif()
 
 target_link_libraries(comm
 	PRIVATE
+		Qt6::Qml
 		Qt6::Test
-	PUBLIC
-		qgc
 		Qt6::Widgets
-		Qt6::Bluetooth
+		AirLink
+		Settings
+		Vehicle
+	PUBLIC
+		Qt6::Core
 		Qt6::Network
+		qgc
+		QmlControls
+		Utilities
 )
 
-if(ANDROID)
-	add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qtandroidserialport qtandroidserialport.build)
-
-    target_link_libraries(comm PUBLIC qtandroidserialport)
-else()
-	find_package(Qt6 REQUIRED COMPONENTS SerialPort)
-	target_link_libraries(comm PUBLIC Qt6::SerialPort)
+if(NOT MOBILE)
+	target_link_libraries(comm
+		PRIVATE
+			gps
+			PositionManager
+	)
 endif()
+
+option(QGC_NO_SERIAL_LINK "Disable Serial Links" OFF)
+if(QGC_NO_SERIAL_LINK)
+	target_compile_definitions(comm PUBLIC NO_SERIAL_LINK)
+else()
+	if(ANDROID)
+		add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qtandroidserialport qtandroidserialport.build)
+	    target_link_libraries(comm PUBLIC qtandroidserialport)
+	else()
+		find_package(Qt6 REQUIRED COMPONENTS SerialPort)
+		target_link_libraries(comm PUBLIC Qt6::SerialPort)
+	endif()
+	target_sources(comm
+		PRIVATE
+			QGCSerialPortInfo.cc
+			QGCSerialPortInfo.h
+			SerialLink.cc
+			SerialLink.h
+	)
+endif()
+
+# option(QGC_NO_SERIAL_LINK "Enable Bluetooth Links" ON)
+target_compile_definitions(comm PUBLIC QGC_ENABLE_BLUETOOTH)
+find_package(Qt6 REQUIRED COMPONENTS Bluetooth)
+target_link_libraries(comm PUBLIC Qt6::Bluetooth)
+target_sources(comm
+	PRIVATE
+		BluetoothLink.cc
+		BluetoothLink.h
+)
 
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf Compatibility" OFF)
 if(QGC_ZEROCONF_ENABLED)
@@ -76,9 +103,8 @@ if(QGC_ZEROCONF_ENABLED)
 	FetchContent_MakeAvailable(qmdnsengine)
 
 	target_link_libraries(comm PRIVATE qmdnsengine)
+	target_compile_definitions(comm PUBLIC QGC_ZEROCONF_ENABLED)
 endif()
-
-target_compile_definitions(comm PUBLIC QGC_ENABLE_BLUETOOTH)
 
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 # 	target_compile_options(comm PRIVATE -Wno-address-of-packed-member)

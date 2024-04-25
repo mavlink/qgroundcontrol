@@ -16,15 +16,15 @@
 
 #include "SubtitleWriter.h"
 #include "QGCApplication.h"
-#include "QGCCorePlugin.h"
+#include "MultiVehicleManager.h"
+#include "Fact.h"
 #include "FactValueGrid.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "QGCLoggingCategory.h"
 
-#include <QDateTime>
-#include <QString>
-#include <QDate>
+#include <QtCore/QDateTime>
+#include <QtCore/QString>
 
 QGC_LOGGING_CATEGORY(SubtitleWriterLog, "SubtitleWriterLog")
 

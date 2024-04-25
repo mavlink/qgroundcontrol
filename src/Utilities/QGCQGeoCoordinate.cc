@@ -9,7 +9,7 @@
 
 #include "QGCQGeoCoordinate.h"
 
-#include <QQmlEngine>
+#include <QtQml/QQmlEngine>
 
 QGCQGeoCoordinate::QGCQGeoCoordinate(const QGeoCoordinate& coord, QObject* parent)
     : QObject       (parent)

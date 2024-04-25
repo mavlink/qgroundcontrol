@@ -9,7 +9,7 @@
 
 #include "QGCOptions.h"
 
-#include <QtQml>
+#include <QtQml/QQmlEngine>
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Application Options

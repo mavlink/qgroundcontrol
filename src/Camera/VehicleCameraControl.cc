@@ -15,11 +15,14 @@
 #include "FTPManager.h"
 #include "QGCLZMA.h"
 #include "QGCCorePlugin.h"
+#include "Vehicle.h"
+#include "LinkInterface.h"
 
 #include <QtNetwork/QNetworkAccessManager>
-#include <QDir>
-#include <QDomDocument>
-#include <QDomNodeList>
+#include <QtCore/QDir>
+#include <QtCore/QSettings>
+#include <QtXml/QDomDocument>
+#include <QtXml/QDomNodeList>
 #include <QtQml/QQmlEngine>
 #include <QtNetwork/QNetworkProxy>
 

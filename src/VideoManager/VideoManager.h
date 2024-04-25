@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef VideoManager_H
-#define VideoManager_H
+#pragma once
 
 #include "VideoReceiver.h"
 #include "QGCToolbox.h"
@@ -165,5 +164,3 @@ protected:
     bool                    _fullScreen             = false;
     Vehicle*                _activeVehicle          = nullptr;
 };
-
-#endif

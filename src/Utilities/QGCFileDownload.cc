@@ -10,9 +10,9 @@
 
 #include "QGCFileDownload.h"
 
-#include <QFileInfo>
-#include <QStandardPaths>
-#include <QNetworkProxy>
+#include <QtCore/QFileInfo>
+#include <QtCore/QStandardPaths>
+#include <QtNetwork/QNetworkProxy>
 
 QGCFileDownload::QGCFileDownload(QObject* parent)
     : QNetworkAccessManager(parent)

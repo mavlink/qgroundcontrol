@@ -13,6 +13,7 @@
 
 #include "FactSystemTestBase.h"
 #include "LinkManager.h"
+#include "FactSystem.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif

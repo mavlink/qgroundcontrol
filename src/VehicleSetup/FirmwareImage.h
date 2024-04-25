@@ -11,16 +11,14 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef FirmwareImage_H
-#define FirmwareImage_H
+#pragma once
 
-#include <QObject>
-#include <QString>
-#include <QByteArray>
-#include <QList>
-#include <QTextStream>
 
-#include <stdint.h>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
+#include <QtCore/QTextStream>
 
 /// Support for Intel Hex firmware file
 class FirmwareImage : public QObject
@@ -99,4 +97,3 @@ private:
     static const char* _jsonMavAutopilotKey;
 };
 
-#endif

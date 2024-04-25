@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 #include "ActuatorOutputs.h"
-
-#include <QDebug>
+#include "FactSystem.h"
+#include "ParameterManager.h"
 
 using namespace ActuatorOutputs;
 
