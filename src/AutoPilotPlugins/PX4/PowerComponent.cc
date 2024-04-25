@@ -13,6 +13,8 @@
 
 #include "PowerComponent.h"
 #include "ParameterManager.h"
+#include "FactSystem.h"
+#include "Vehicle.h"
 
 PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

@@ -9,12 +9,14 @@
 
 #include "Actuators.h"
 #include "GeometryImage.h"
+#include "FactSystem.h"
+#include "ParameterManager.h"
+#include "Vehicle.h"
 
-#include <QString>
-#include <QFile>
-#include <QtGlobal>
-#include <QJsonArray>
-#include <QJsonObject>
+#include <QtCore/QString>
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
 
 #include <algorithm>
 

@@ -1,10 +1,7 @@
-#ifndef EXIFPARSER_H
-#define EXIFPARSER_H
-
-#include <QGeoCoordinate>
-#include <QDebug>
+#pragma once
 
 #include "GeoTagController.h"
+#include <QtCore/QByteArray>
 
 class ExifParser
 {
@@ -14,5 +11,3 @@ public:
     double readTime(QByteArray& buf);
     bool write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geotag);
 };
-
-#endif // EXIFPARSER_H

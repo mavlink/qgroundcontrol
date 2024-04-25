@@ -12,7 +12,7 @@
 
 #include "sensor_gps.h"
 #include "satellite_info.h"
-#include <QMetaType>
+#include <QtCore/QMetaType>
 
 /**
  ** struct GPSPositionMessage
@@ -22,7 +22,6 @@ struct GPSPositionMessage
 {
     sensor_gps_s position_data;
 };
-
 Q_DECLARE_METATYPE(GPSPositionMessage);
 
 

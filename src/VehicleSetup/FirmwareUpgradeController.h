@@ -10,20 +10,19 @@
 #pragma once
 
 #include "PX4FirmwareUpgradeThread.h"
+#include "QGCSerialPortInfo.h"
 #include "FirmwareImage.h"
 #include "Fact.h"
 
-#include <QObject>
-#include <QTimer>
-#include <QPixmap>
-#include <QQuickItem>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtGui/QPixmap>
+#include <QtQuick/QQuickItem>
 #ifdef Q_OS_ANDROID
-#include "qserialport.h"
+#include "qserialportinfo.h"
 #else
-#include <QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
 #endif
-
-#include <stdint.h>
 
 /// Supported firmware types. If you modify these you will need to update the qml file as well.
 

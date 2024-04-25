@@ -12,7 +12,9 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "SensorsComponent.h"
+#include "FactSystem.h"
 #include "ParameterManager.h"
+#include "Vehicle.h"
 
 const char* SensorsComponent::_airspeedBreakerParam =   "CBRK_AIRSPD_CHK";
 const char* SensorsComponent::_airspeedDisabledParam =  "FW_ARSP_MODE";

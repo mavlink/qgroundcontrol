@@ -6,10 +6,15 @@ qt_add_library(FollowMe STATIC
 )
 
 target_link_libraries(FollowMe
-	PUBLIC
-		Qt6::Core
+	PRIVATE
 		Qt6::Positioning
 		comm
+		PositionManager
+		Settings
+		Utilities
+		Vehicle
+	PUBLIC
+		Qt6::Core
 		qgc
 )
 

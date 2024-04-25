@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#ifndef VIDEODECODEROPTIONS_H
-#define VIDEODECODEROPTIONS_H
+#pragma once
+
 
 enum VideoDecoderOptions {
     ForceVideoDecoderDefault = 0,
@@ -18,5 +18,3 @@ enum VideoDecoderOptions {
     ForceVideoDecoderDirectX3D,
     ForceVideoDecoderVideoToolbox,
 };
-
-#endif //VIDEODECODEROPTIONS_H

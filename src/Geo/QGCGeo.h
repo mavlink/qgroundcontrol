@@ -15,10 +15,9 @@
 ///     @link http://dspace.dsto.defence.gov.au/dspace/bitstream/1947/3538/1/DSTO-TN-0432.pdf
 ///     @author David Goodman <dagoodma@gmail.com>
 
-#ifndef QGCGEO_H
-#define QGCGEO_H
+#pragma once
 
-#include <QGeoCoordinate>
+#include <QtPositioning/QGeoCoordinate>
 
 /**
  * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East,
@@ -104,5 +103,3 @@ QString convertGeoToMGRS(const QGeoCoordinate& coord);
 // Returns:
 // The function returns true if conversion succeeded.
 bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord);
-
-#endif // QGCGEO_H

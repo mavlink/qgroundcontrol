@@ -1,6 +1,4 @@
 #include "ULogParser.h"
-#include <math.h>
-#include <QDateTime>
 
 ULogParser::ULogParser()
 {

@@ -7,28 +7,14 @@
  *
  ****************************************************************************/
 
-#include <QtGlobal>
-#include <QApplication>
-#include <QIcon>
-#include <QSslSocket>
-#include <QMessageBox>
-#include <QProcessEnvironment>
-#include <QHostAddress>
-#include <QUdpSocket>
-#include <QtPlugin>
-#include <QStringListModel>
-#include <QQuickStyle>
-#include <QQuickWindow>
-
-#include "QGC.h"
 #include "QGCApplication.h"
+#include "QGC.h"
 #include "AppMessages.h"
-
-#include <iostream>
-
+#include "QGCMapEngine.h"
+#include "Vehicle.h"
 #ifndef __mobile__
     #ifndef NO_SERIAL_LINK
-        #include <QSerialPort>
+        #include <QtSerialPort/QSerialPort>
     #endif
     #include "QGCSerialPortInfo.h"
     #include "RunGuard.h"
@@ -52,11 +38,16 @@
     #endif
 #endif
 
+#include <QtWidgets/QApplication>
+#include <QtGui/QIcon>
+#include <QtWidgets/QMessageBox>
+#include <QtCore/QProcessEnvironment>
+#include <QtCore/QtPlugin>
+#include <QtQuickControls2/QQuickStyle>
+#include <QtQuick/QQuickWindow>
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothSocket>
 #endif
-
-#include "QGCMapEngine.h"
 
 /* SDL does ugly things to main() */
 #ifdef main
@@ -72,6 +63,7 @@
 #ifdef Q_OS_WIN
 
 #include <windows.h>
+#include <iostream>
 
 /// @brief CRT Report Hook installed using _CrtSetReportHook. We install this hook when
 /// we don't want asserts to pop a dialog on windows.

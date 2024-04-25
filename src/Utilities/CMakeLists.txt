@@ -49,7 +49,11 @@ target_link_libraries(Utilities
 	PRIVATE
 		Qt6::Qml
 		shp
+		FactSystem
+		Geo
 		qgc
+		QmlControls
+		Settings
 	PUBLIC
 		Qt6::Core
 		Qt6::Network

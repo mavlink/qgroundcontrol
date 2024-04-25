@@ -23,8 +23,13 @@ add_custom_target(FactControlsQml
 )
 
 target_link_libraries(FactControls
-	PUBLIC
+	PRIVATE
+		AutoPilotPlugins
+		FactSystem
 		qgc
+		Utilities
+	PUBLIC
+		Vehicle
 )
 
 target_include_directories(FactControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -12,8 +12,8 @@
 
 #include "QGCMAVLink.h"
 
-#include <QStringList>
-#include <QFile>
+#include <QtCore/QStringList>
+#include <QtCore/QFile>
 
 class MockLink;
 

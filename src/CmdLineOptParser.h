@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include <QString>
-#include <cstring>
+#include <QtCore/QString>
 
 /// @brief Structure used to pass command line options to the ParseCmdLineOptions function.
 typedef struct {

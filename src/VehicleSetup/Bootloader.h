@@ -17,8 +17,6 @@
 #include <QSerialPort>
 #endif
 
-#include <stdint.h>
-
 /// Bootloader Utility routines. Works with PX4 and 3DR Radio bootloaders.
 class Bootloader : public QObject
 {

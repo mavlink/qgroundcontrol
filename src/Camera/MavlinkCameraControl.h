@@ -12,10 +12,10 @@
 #include "FactGroup.h"
 #include "QmlObjectListModel.h"
 
-#include <QObject>
-#include <QSizeF>
-#include <QRectF>
-#include <QPointF>
+#include <QtCore/QObject>
+#include <QtCore/QSizeF>
+#include <QtCore/QRectF>
+#include <QtCore/QPointF>
 #include <QtCore/QLoggingCategory>
 
 class QGCCameraParamIO;

@@ -14,6 +14,7 @@
 #include "FollowMe.h"
 
 #include <QAbstractSocket>
+#include <QtCore/QMutex>
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)

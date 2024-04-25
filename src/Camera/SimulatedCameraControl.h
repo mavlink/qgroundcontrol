@@ -11,8 +11,8 @@
 
 #include "MavlinkCameraControl.h"
 
-#include <QTimer>
-#include <QElapsedTimer>
+#include <QtCore/QTimer>
+#include <QtCore/QElapsedTimer>
 
 class VideoManager;
 class Vehicle;

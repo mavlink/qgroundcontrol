@@ -9,11 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QtCore/QLoggingCategory>
-
 #include "FactPanelController.h"
 #include "APMSensorsComponent.h"
+
+#include <QtQuick/QQuickItem>
+#include <QtCore/QObject>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog)

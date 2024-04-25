@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef SyslinkComponent_H
-#define SyslinkComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -37,4 +36,3 @@ private:
     QVariantList    _summaryItems;
 };
 
-#endif

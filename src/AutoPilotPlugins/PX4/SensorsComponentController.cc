@@ -10,6 +10,7 @@
 #include "SensorsComponentController.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
+#include "FactSystem.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")

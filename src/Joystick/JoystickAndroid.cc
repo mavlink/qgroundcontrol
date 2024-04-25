@@ -1,9 +1,10 @@
 #include "JoystickAndroid.h"
 #include "JoystickManager.h"
+#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <QJniEnvironment>
-#include <QJniObject>
+#include <QtCore/QJniEnvironment>
+#include <QtCore/QJniObject>
 
 int JoystickAndroid::_androidBtnListCount;
 int *JoystickAndroid::_androidBtnList;

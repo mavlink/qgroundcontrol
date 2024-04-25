@@ -7,15 +7,14 @@
  *
  ****************************************************************************/
 
-#include <QDebug>
-#include <QString>
-
-#include <cmath>
-#include <limits>
-
 #include "QGCGeo.h"
 #include "UTMUPS.hpp"
 #include "MGRS.hpp"
+
+#include <QtCore/QString>
+
+#include <cmath>
+#include <limits>
 
 // These defines are private
 #define M_DEG_TO_RAD (M_PI / 180.0)

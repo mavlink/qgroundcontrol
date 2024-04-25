@@ -46,6 +46,7 @@
 #include "EventHandler.h"
 #include "Actuators/Actuators.h"
 #include "QGC.h"
+#include "FactSystem.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QSettings>
+#include <QtCore/QSettings>
 
 #include <memory>
 

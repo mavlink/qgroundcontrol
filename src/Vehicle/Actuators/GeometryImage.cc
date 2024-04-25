@@ -9,7 +9,7 @@
 
 #include "GeometryImage.h"
 
-#include <QDir>
+#include <QtCore/QDir>
 
 #include <array>
 

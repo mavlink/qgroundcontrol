@@ -21,7 +21,7 @@
 #include "MockLink.h"
 #endif
 #ifndef QGC_AIRLINK_DISABLED
-#include <AirlinkLink.h>
+#include "AirlinkLink.h"
 #endif
 
 #define LINK_SETTING_ROOT "LinkConfigurations"

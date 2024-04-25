@@ -9,7 +9,7 @@
 
 #include "QGCMAVLink.h"
 
-#include <QDebug>
+#include <QtCore/QDebug>
 
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;

@@ -7,21 +7,19 @@
  *
  ****************************************************************************/
 
-#include <QTimer>
-#include <QDebug>
-#include <QSettings>
-
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
-#include <QSerialPort>
-#endif
-
 #include "SerialLink.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#ifdef Q_OS_ANDROID
 #include "LinkManager.h"
+#endif
+#ifdef Q_OS_ANDROID
+#include "qserialportinfo.h"
+#else
+#include <QtSerialPort/QSerialPortInfo>
+#endif
+#include <QtCore/QSettings>
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 

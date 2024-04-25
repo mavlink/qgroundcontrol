@@ -9,8 +9,10 @@
 
 
 #include "APMFlightModesComponentController.h"
+#include "FactSystem.h"
 
-#include <QVariant>
+#include <QtCore/QVariant>
+#include <QtQml/QtQml>
 
 bool APMFlightModesComponentController::_typeRegistered = false;
 

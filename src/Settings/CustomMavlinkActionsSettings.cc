@@ -11,7 +11,8 @@
 #include "QGCApplication.h"
 
 #include <QtQml/QQmlEngine>
-#include <QFile>
+#include <QtCore/QFile>
+#include <QtCore/QSettings>
 
 DECLARE_SETTINGGROUP(CustomMavlinkActions, "CustomMavlinkActions")
 {
