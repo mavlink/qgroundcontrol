@@ -3633,6 +3633,7 @@
         <value code="2">away from home</value>
         <value code="3">along trajectory</value>
         <value code="4">towards waypoint (yaw first)</value>
+        <value code="5">yaw fixed</value>
       </values>
     </parameter>
     <parameter name="NAV_ACC_RAD" default="10.0" type="FLOAT">
