@@ -9,16 +9,19 @@
 
 #pragma once
 
-#include <QString>
-#include <QMutex>
-#include <LinkInterface.h>
 
-#include <QTcpSocket>
+#include "LinkInterface.h"
+#include "LinkConfiguration.h"
+
+#include <QtCore/QString>
+#include <QtCore/QMutex>
+#include <QtNetwork/QAbstractSocket>
 
 //#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
 
 class TCPLinkTest;
 class LinkManager;
+class QTcpSocket;
 
 #define QGC_TCP_PORT 5760
 

@@ -14,8 +14,6 @@
 
 #include "CmdLineOptParser.h"
 
-#include <QString>
-
 /// @brief Implements a simple command line parser which sets booleans to true if the option is found.
 void ParseCmdLineOptions(int&           argc,                   ///< count of arguments in argv
                          char*          argv[],                 ///< command line arguments

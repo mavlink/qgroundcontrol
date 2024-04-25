@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QVariant>
-#include <QJsonObject>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
+#include <QtCore/QJsonObject>
 
 /// Holds the meta data associated with a Fact.
 ///

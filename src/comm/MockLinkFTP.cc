@@ -10,6 +10,7 @@
 
 #include "MockLinkFTP.h"
 #include "MockLink.h"
+#include "QGCTemporaryFile.h"
 
 const MockLinkFTP::ErrorMode_t MockLinkFTP::rgFailureModes[] = {
     MockLinkFTP::errModeNoResponse,

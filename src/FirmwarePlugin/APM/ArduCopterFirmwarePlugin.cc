@@ -13,6 +13,8 @@
 
 #include "ArduCopterFirmwarePlugin.h"
 #include "ParameterManager.h"
+#include "Vehicle.h"
+#include "FactSystem.h"
 
 bool ArduCopterFirmwarePlugin::_remapParamNameIntialized = false;
 FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remapParamName;

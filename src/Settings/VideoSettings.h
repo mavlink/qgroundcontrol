@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef VideoSettings_H
-#define VideoSettings_H
+#pragma once
 
 #include "SettingsGroup.h"
 #include "VideoDecoderOptions.h"
@@ -82,5 +81,3 @@ private:
     bool _noVideo = false;
 
 };
-
-#endif

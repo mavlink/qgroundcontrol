@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#ifndef SettingsGroup_H
-#define SettingsGroup_H
+#pragma once
+
 
 #include "SettingsFact.h"
 
@@ -71,5 +71,3 @@ protected:
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
 };
-
-#endif

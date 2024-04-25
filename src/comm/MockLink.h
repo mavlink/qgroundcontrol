@@ -9,15 +9,17 @@
 
 #pragma once
 
-#include <QElapsedTimer>
-#include <QGeoCoordinate>
-#include <QLoggingCategory>
-#include <QMap>
-#include <QMutex>
-
 #include "MockLinkMissionItemHandler.h"
 #include "MockLinkFTP.h"
 #include "QGCMAVLink.h"
+#include "LinkInterface.h"
+#include "LinkConfiguration.h"
+
+#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QMap>
+#include <QtCore/QMutex>
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)

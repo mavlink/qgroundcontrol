@@ -7,19 +7,17 @@
  *
  ****************************************************************************/
 
-#include <QtGlobal>
-#include <QTimer>
-#include <QList>
-#include <QDebug>
+#include "BluetoothLink.h"
+#include "QGCApplication.h"
+#include "LinkManager.h"
 
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtBluetooth/QBluetoothUuid>
 #include <QtBluetooth/QBluetoothSocket>
-
-#include "QGCApplication.h"
-#include "BluetoothLink.h"
-#include "LinkManager.h"
+#ifdef Q_OS_IOS
+#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
+#endif
 
 BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr& config)
     : LinkInterface     (config)

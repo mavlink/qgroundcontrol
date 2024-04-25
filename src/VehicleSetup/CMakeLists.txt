@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
 qt_add_library(VehicleSetup STATIC
 	Bootloader.cc
@@ -31,9 +31,21 @@ add_custom_target(VehicleSetupQml
 
 target_link_libraries(VehicleSetup
 	PRIVATE
+		Qt6::Qml
+		api
 		Compression
-	PUBLIC
+		FactSystem
 		qgc
+		Settings
+		Utilities
+		Vehicle
+	PUBLIC
+		Qt6::Core
+		Qt6::Gui
+		Qt6::Quick
+		comm
+		FactControls
+		Joystick
 )
 
 target_include_directories(VehicleSetup PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

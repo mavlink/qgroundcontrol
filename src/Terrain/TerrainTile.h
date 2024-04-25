@@ -1,8 +1,7 @@
-#ifndef TERRAINTILE_H
-#define TERRAINTILE_H
+#pragma once
 
-#include <QGeoCoordinate>
-#include <QList>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
@@ -102,5 +101,3 @@ private:
     static const char*  _jsonAvgElevationKey;
     static const char*  _jsonCarpetKey;
 };
-
-#endif // TERRAINTILE_H

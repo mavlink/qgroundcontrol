@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <QJsonObject>
-#include <QVariantList>
-#include <QGeoCoordinate>
-#include <QCoreApplication>
+#include <QtCore/QJsonObject>
+#include <QtCore/QVariantList>
+#include <QtCore/QCoreApplication>
+#include <QtPositioning/QGeoCoordinate>
 
 /// @file
 /// @author Don Gagne <don@thegagnes.com>

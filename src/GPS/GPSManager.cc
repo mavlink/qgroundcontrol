@@ -9,10 +9,14 @@
 
 
 #include "GPSManager.h"
-#include "QGCLoggingCategory.h"
+#include "GPSProvider.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "RTKSettings.h"
+#include "GPSRTKFactGroup.h"
+#include "RTCMMavlink.h"
+#include "QGCLoggingCategory.h"
+
 
 GPSManager::GPSManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -128,6 +132,10 @@ void GPSManager::disconnectGPS(void)
     _gpsProvider = nullptr;
     _rtcmMavlink = nullptr;
 }
+
+bool GPSManager::connected() const { return _gpsProvider && _gpsProvider->isRunning(); }
+
+FactGroup* GPSManager::gpsRtkFactGroup(void) { return _gpsRtkFactGroup; }
 
 void GPSManager::GPSPositionUpdate(GPSPositionMessage msg)
 {

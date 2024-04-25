@@ -8,7 +8,8 @@
  ****************************************************************************/
 #pragma once
 
-#include <QUdpSocket>
+#include <QtCore/QByteArray>
+#include <QtNetwork/QUdpSocket>
 
 /**
  * @brief QUdpSocket implementation of canReadLine() readLineData() in server mode.

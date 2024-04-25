@@ -11,8 +11,9 @@
 #include "QGCLoggingCategory.h"
 #include "QGC.h"
 
-#include <QDebug>
-#include <QtMath>
+#include <QtCore/QtNumeric>
+
+QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog, "ADSBVehicleManagerLog")
 
 ADSBVehicle::ADSBVehicle(const ADSBVehicleInfo_t & vehicleInfo, QObject* parent)
     : QObject       (parent)

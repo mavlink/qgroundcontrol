@@ -9,9 +9,14 @@
 
 #include "QGroundControlQmlGlobal.h"
 #include "LinkManager.h"
+#include "MAVLinkProtocol.h"
+#include "QGCMapUrlEngine.h"
+#include "FirmwarePluginManager.h"
+#include "AppSettings.h"
 #ifndef __mobile__
 #include "GPSManager.h"
 #endif
+#include "QGCPalette.h"
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
@@ -319,4 +324,39 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
 
     // Should never get here but makes some compilers happy
     return QString();
+}
+
+bool QGroundControlQmlGlobal::isVersionCheckEnabled()
+{
+    return _toolbox->mavlinkProtocol()->versionCheckEnabled();
+}
+
+int QGroundControlQmlGlobal::mavlinkSystemID()
+{
+    return _toolbox->mavlinkProtocol()->getSystemId();
+}
+
+QString QGroundControlQmlGlobal::elevationProviderName()
+{
+    return UrlFactory::kCopernicusElevationProviderKey;
+}
+
+QString QGroundControlQmlGlobal::elevationProviderNotice()
+{
+    return UrlFactory::kCopernicusElevationProviderNotice;
+}
+
+QString QGroundControlQmlGlobal::parameterFileExtension() const
+{
+    return AppSettings::parameterFileExtension;
+}
+
+QString QGroundControlQmlGlobal::missionFileExtension() const
+{
+    return AppSettings::missionFileExtension;
+}
+
+QString QGroundControlQmlGlobal::telemetryFileExtension() const
+{
+    return AppSettings::telemetryFileExtension;
 }

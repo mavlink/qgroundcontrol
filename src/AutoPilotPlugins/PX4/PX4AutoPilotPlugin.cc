@@ -17,6 +17,9 @@
 #include "PowerComponent.h"
 #include "SafetyComponent.h"
 #include "SensorsComponent.h"
+#include "FactSystem.h"
+#include "ParameterManager.h"
+#include "Vehicle.h"
 
 /// @file
 ///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.

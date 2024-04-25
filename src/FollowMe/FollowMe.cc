@@ -7,18 +7,18 @@
  *
  ****************************************************************************/
 
-#include <QElapsedTimer>
-#include <cmath>
-
+#include "FollowMe.h"
 #include "MultiVehicleManager.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
-#include "FollowMe.h"
 #include "Vehicle.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
+
+#include <QtPositioning/QGeoPositionInfo>
+#include <cmath>
 
 QGC_LOGGING_CATEGORY(FollowMeLog, "FollowMeLog")
 

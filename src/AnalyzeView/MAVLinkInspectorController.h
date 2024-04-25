@@ -13,13 +13,15 @@
 
 #pragma once
 
-#include "Vehicle.h"
-
-#include <QObject>
-#include <QString>
-#include <QDebug>
-#include <QVariantList>
-#include <QAbstractSeries>
+#include "QGCMAVLink.h"
+#include "QmlObjectListModel.h"
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QTimer>
+#include <QtCore/QDateTime>
+#include <QtCore/QVariantList>
+#include <QtCore/QLoggingCategory>
+#include <QtCharts/QAbstractSeries>
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorLog)
 
@@ -27,6 +29,8 @@ class QGCMAVLinkMessage;
 class QGCMAVLinkSystem;
 class MAVLinkChartController;
 class MAVLinkInspectorController;
+class Vehicle;
+class LinkInterface;
 
 //-----------------------------------------------------------------------------
 /// MAVLink message field

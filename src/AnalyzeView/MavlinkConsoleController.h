@@ -10,10 +10,10 @@
 #pragma once
 
 #include "QGCPalette.h"
-#include <QObject>
-#include <QString>
-#include <QMetaObject>
-#include <QStringListModel>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QMetaObject>
+#include <QtCore/QStringListModel>
 
 // Fordward decls
 class Vehicle;

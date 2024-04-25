@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-#ifndef RunGuard_H
-#define RunGuard_H
+#pragma once
 
-#include <QObject>
-#include <QSharedMemory>
-#include <QSystemSemaphore>
+
+#include <QtCore/QObject>
+#include <QtCore/QSharedMemory>
+#include <QtCore/QSystemSemaphore>
 
 class RunGuard
 {
@@ -34,5 +34,3 @@ private:
 
     Q_DISABLE_COPY( RunGuard )
 };
-
-#endif

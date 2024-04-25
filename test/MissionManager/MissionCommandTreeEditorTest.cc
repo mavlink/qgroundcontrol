@@ -10,6 +10,8 @@
 #include "MissionCommandTreeEditorTest.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "FirmwarePlugin.h"
+#include "FirmwarePluginManager.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 

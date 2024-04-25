@@ -11,14 +11,13 @@
 ///     @brief Joystick Config Qml Controller
 ///     @author Don Gagne <don@thegagnes.com
 
-#ifndef JoystickConfigController_H
-#define JoystickConfigController_H
-
-#include <QElapsedTimer>
-#include <QtCore/QLoggingCategory>
+#pragma once
 
 #include "FactPanelController.h"
 #include "Joystick.h"
+
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
 
@@ -254,4 +253,3 @@ private:
     JoystickManager*    _joystickManager;
 };
 
-#endif // JoystickConfigController_H

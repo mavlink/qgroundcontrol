@@ -2,8 +2,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(AirLink STATIC)
 
-option(QGC_AIRLINK_DISABLED "Enable airlink" OFF)
-if(NOT ${QGC_AIRLINK_DISABLED})
+option(QGC_AIRLINK_DISABLED "Enable airlink" ON)
+if(NOT QGC_AIRLINK_DISABLED)
     find_package(Qt6 COMPONENTS Network REQUIRED)
 
     target_sources(AirLink
@@ -20,11 +20,13 @@ if(NOT ${QGC_AIRLINK_DISABLED})
     )
 
     target_link_libraries(AirLink
+        PRIVATE
+            api
+            Settings
         PUBLIC
             Qt6::Core
             Qt6::Network
-            FactSystem
-            Settings
+            comm
             qgc
     )
 

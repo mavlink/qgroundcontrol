@@ -1,9 +1,12 @@
 #include "AirlinkLink.h"
-#include <QGC.h>
-#include <QGCApplication.h>
-#include <AppSettings.h>
-#include <SettingsManager.h>
-#include <AirLinkManager.h>
+#include "AirLinkManager.h"
+#include "QGCApplication.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
+#include "MAVLinkProtocol.h"
+
+#include <QtNetwork/QUdpSocket>
+
 
 AirlinkConfiguration::AirlinkConfiguration(const QString &name) : UDPConfiguration(name)
 {

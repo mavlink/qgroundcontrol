@@ -7,20 +7,19 @@
  *
  ****************************************************************************/
 
-#include <QDebug>
-#include <QApplication>
-#include <QSettings>
-#include <QStandardPaths>
-#include <QMetaType>
-#include <QDir>
-#include <QFileInfo>
-
 #include "MAVLinkProtocol.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
 #include "SettingsManager.h"
+
+#include <QtWidgets/QApplication>
+#include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QMetaType>
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 

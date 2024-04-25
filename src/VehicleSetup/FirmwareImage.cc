@@ -14,13 +14,12 @@
 #include "CompInfoParam.h"
 #include "Bootloader.h"
 
-#include <QDebug>
-#include <QFile>
-#include <QTextStream>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QFileInfo>
-#include <QDir>
+#include <QtCore/QFile>
+#include <QtCore/QTextStream>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QFileInfo>
+#include <QtCore/QDir>
 
 const char* FirmwareImage::_jsonBoardIdKey =            "board_id";
 const char* FirmwareImage::_jsonParamXmlSizeKey =       "parameter_xml_size";

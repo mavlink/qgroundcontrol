@@ -9,6 +9,8 @@
 
 #include "APMAirframeComponent.h"
 #include "ParameterManager.h"
+#include "FactSystem.h"
+#include "Vehicle.h"
 
 const char* APMAirframeComponent::_frameClassParam = "FRAME_CLASS";
 

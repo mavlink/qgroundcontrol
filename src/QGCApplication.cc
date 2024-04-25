@@ -16,18 +16,16 @@
  *
  */
 
-#include <QFile>
-#include <QRegularExpression>
-#include <QFontDatabase>
-#include <QQuickWindow>
-#include <QQuickImageProvider>
-#include <QQuickStyle>
+#include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
+#include <QtGui/QFontDatabase>
+#include <QtQuick/QQuickWindow>
+#include <QtQuick/QQuickImageProvider>
+#include <QtQuickControls2/QQuickStyle>
 
 #ifdef QGC_ENABLE_BLUETOOTH
-#include <QBluetoothLocalDevice>
+#include <QtBluetooth/QBluetoothLocalDevice>
 #endif
-
-#include <QDebug>
 
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"
@@ -39,6 +37,7 @@
 #include "CmdLineOptParser.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
+#include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "QGCTemporaryFile.h"
 #include "QGCPalette.h"
@@ -78,6 +77,7 @@
 #include "MissionCommandTree.h"
 #include "QGCMapPolygon.h"
 #include "QGCMapCircle.h"
+#include "QGCMapEngine.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
@@ -113,6 +113,8 @@
 #include "Viewer3DManager.h"
 #include "Viewer3DTerrainGeometry.h"
 #include "Viewer3DTerrainTexture.h"
+#include "FactSystem.h"
+#include "LinkConfiguration.h"
 
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
@@ -122,10 +124,6 @@
 #include "SerialLink.h"
 #endif
 
-#ifdef QGC_RTLAB_ENABLED
-#include "OpalLink.h"
-#endif
-
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
 #include <unistd.h>
@@ -133,7 +131,6 @@
 #endif
 #endif
 
-#include "QGCMapEngine.h"
 
 class FinishVideoInitialization : public QRunnable
 {

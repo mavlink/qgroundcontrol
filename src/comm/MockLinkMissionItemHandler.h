@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include <QObject>
-#include <QMap>
-#include <QTimer>
-
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
-#include "MAVLinkProtocol.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QMap>
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
 
 class MockLink;
+class MAVLinkProtocol;
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog)
 

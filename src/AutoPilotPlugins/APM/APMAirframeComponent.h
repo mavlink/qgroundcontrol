@@ -13,6 +13,9 @@
 
 #include "VehicleComponent.h"
 
+class AutoPilotPlugin;
+class Fact;
+
 class APMAirframeComponent : public VehicleComponent
 {
     Q_OBJECT

@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Qml Xml)
 
 qt_add_library(Camera STATIC
 	MavlinkCameraControl.cc
@@ -15,8 +15,22 @@ qt_add_library(Camera STATIC
 
 target_link_libraries(Camera
 	PRIVATE
+		Qt6::Network
+		Qt6::Qml
+		Qt6::Xml
+		api
 		Compression
+		FirmwarePlugin
+		Joystick
+		QGCLocation
+		Settings
+		Vehicle
+		VideoManager
 	PUBLIC
+		Qt6::Core
+		comm
+		FactSystem
+		QmlControls
 		qgc
 )
 

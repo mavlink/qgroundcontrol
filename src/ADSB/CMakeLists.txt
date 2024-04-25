@@ -8,11 +8,13 @@ qt_add_library(ADSB STATIC
 )
 
 target_link_libraries(ADSB
+	PRIVATE
+		Qt6::Network
+		Settings
+		Utilities
 	PUBLIC
 		Qt6::Core
-		Qt6::Network
 		Qt6::Positioning
-		comm
 		qgc
 		QmlControls
 )

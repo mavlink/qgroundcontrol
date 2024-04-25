@@ -10,8 +10,10 @@
 
 #include "MockLinkMissionItemHandler.h"
 #include "MockLink.h"
+#include "MAVLinkProtocol.h"
+#include "QGCLoggingCategory.h"
 
-#include <QDebug>
+#include <QtCore/QDebug>
 
 QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "MockLinkMissionItemHandlerLog")
 

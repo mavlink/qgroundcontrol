@@ -10,16 +10,19 @@
 
 #include "GPSProvider.h"
 #include "QGCLoggingCategory.h"
-
-#define GPS_RECEIVE_TIMEOUT 1200
-
-#include <QDebug>
-
 #include "Drivers/src/ubx.h"
 #include "Drivers/src/sbf.h"
 #include "Drivers/src/ashtech.h"
 #include "Drivers/src/base_station.h"
 #include "definitions.h"
+
+#ifdef Q_OS_ANDROID
+#include "qserialport.h"
+#else
+#include <QSerialPort>
+#endif
+
+#define GPS_RECEIVE_TIMEOUT 1200
 
 //#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
                                //additionally make sure to call connectGPS(""), eg. from QGCToolbox.cc

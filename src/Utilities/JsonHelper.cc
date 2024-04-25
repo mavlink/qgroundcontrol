@@ -14,10 +14,11 @@
 #include "FactMetaData.h"
 #include "QGCApplication.h"
 
-#include <QJsonArray>
-#include <QJsonParseError>
-#include <QObject>
-#include <QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonParseError>
+#include <QtCore/QObject>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 
 const char* JsonHelper::jsonVersionKey                      = "version";
 const char* JsonHelper::jsonGroundStationKey                = "groundStation";

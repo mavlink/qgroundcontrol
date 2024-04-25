@@ -9,9 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
-#include <QElapsedTimer>
+#include <QtCore/QObject>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoCoordinate>
+
+Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 
 class ADSBVehicle : public QObject
 {

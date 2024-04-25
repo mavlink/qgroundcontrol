@@ -9,7 +9,7 @@
 
 #include "RunGuard.h"
 
-#include <QCryptographicHash>
+#include <QtCore/QCryptographicHash>
 
 namespace
 {

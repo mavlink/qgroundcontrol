@@ -16,11 +16,15 @@
 #include "ComponentInformationManager.h"
 #include "CompInfoParam.h"
 #include "FTPManager.h"
+#include "Vehicle.h"
+#include "AutoPilotPlugin.h"
+#include "MAVLinkProtocol.h"
+#include "FactSystem.h"
 #include "QGC.h"
 
-#include <QEasingCurve>
-#include <QFile>
-#include <QVariantAnimation>
+#include <QtCore/QEasingCurve>
+#include <QtCore/QFile>
+#include <QtCore/QVariantAnimation>
 #include <QtCore/QStandardPaths>
 
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
@@ -1421,6 +1425,8 @@ bool ParameterManager::pendingWrites(void)
 
     return false;
 }
+
+Vehicle* ParameterManager::vehicle(void) { return _vehicle; }
 
 
 /* Parse the binary parameter file and inject the parameters in the qgc

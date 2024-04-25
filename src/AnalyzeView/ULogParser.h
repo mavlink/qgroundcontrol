@@ -1,11 +1,12 @@
-#ifndef ULOGPARSER_H
-#define ULOGPARSER_H
+#pragma once
 
-#include <QGeoCoordinate>
-#include <QDebug>
-#include <QCoreApplication>
 
 #include "GeoTagController.h"
+#include <QtCore/QByteArray>
+#include <QtCore/QMap>
+#include <QtCore/QString>
+#include <QtCore/QCoreApplication>
+
 
 #define ULOG_FILE_HEADER_LEN 16
 
@@ -68,5 +69,3 @@ private:
 	};
 
 };
-
-#endif // ULOGPARSER_H

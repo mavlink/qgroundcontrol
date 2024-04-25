@@ -11,6 +11,9 @@
 #include "QGCApplication.h"
 #include "JoystickManager.h"
 #include "SimulatedCameraControl.h"
+#include "MultiVehicleManager.h"
+#include "Vehicle.h"
+#include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtQml/QQmlEngine>

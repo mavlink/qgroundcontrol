@@ -13,6 +13,8 @@
 
 #include "MotorComponent.h"
 
+class AutoPilotPlugin;
+
 class APMMotorComponent : public MotorComponent
 {
     Q_OBJECT

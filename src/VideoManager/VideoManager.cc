@@ -7,32 +7,30 @@
  *
  ****************************************************************************/
 
-
-#include <QQmlEngine>
-#include <QDir>
-#include <QQuickWindow>
-
-#ifndef QGC_DISABLE_UVC
-#include <QMediaDevices>
-#include <QCameraDevice>
-#include <QtCore/QPermissions>
-#endif
-
 #include "QGCApplication.h"
 #include "VideoManager.h"
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
-#include "Settings/SettingsManager.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 #include "QGCCameraManager.h"
 #include "QGCLoggingCategory.h"
+#include <QtQml/QQmlEngine>
 
 #if defined(QGC_GST_STREAMING)
 #include "GStreamer.h"
 #include "VideoSettings.h"
+#include <QtCore/QDir>
 #else
 #include "GLVideoItemStub.h"
+#endif
+
+#ifndef QGC_DISABLE_UVC
+#include <QtMultimedia/QMediaDevices>
+#include <QtMultimedia/QCameraDevice>
+#include <QtCore/QPermissions>
+#include <QtQuick/QQuickWindow>
 #endif
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")

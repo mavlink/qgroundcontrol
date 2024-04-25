@@ -9,15 +9,14 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-
-#include <functional>
-
 #include "Common.h"
 #include "ActuatorActions.h"
+#include "QmlObjectListModel.h"
 
-#include <QmlObjectListModel.h>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+
+#include <functional>
 
 namespace ActuatorOutputs {
 

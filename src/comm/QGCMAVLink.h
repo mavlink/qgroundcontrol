@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QList>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QList>
 
 #define MAVLINK_USE_MESSAGE_INFO
 #define MAVLINK_EXTERNAL_RX_STATUS  // Single m_mavlink_status instance is in QGCApplication.cc

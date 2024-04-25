@@ -11,16 +11,17 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef VEHICLECOMPONENT_H
-#define VEHICLECOMPONENT_H
+#pragma once
 
-#include <QObject>
-#include <QQmlContext>
-#include <QQuickItem>
-
-#include "Vehicle.h"
+#include <QtCore/QObject>
+#include <QtCore/QUrl>
+#include <QtCore/QVariant>
+#include <QtCore/QStringList>
 
 class AutoPilotPlugin;
+class Vehicle;
+class QQuickItem;
+class QQmlContext;
 
 /// A vehicle component is an object which abstracts the physical portion of a vehicle into a set of
 /// configurable values and user interface.
@@ -78,5 +79,3 @@ protected:
     Vehicle*            _vehicle;
     AutoPilotPlugin*    _autopilot;
 };
-
-#endif
