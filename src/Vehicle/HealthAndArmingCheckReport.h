@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <libevents/libs/cpp/parse/health_and_arming_checks.h>
+#include <libevents_includes.h>
 
 #include <QtCore/QObject>
 #include <QtCore/QString>

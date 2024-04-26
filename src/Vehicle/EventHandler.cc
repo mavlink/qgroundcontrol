@@ -72,7 +72,7 @@ void EventHandler::gotEvent(const mavlink_event_t& event)
         return;
     }
 
-    std::unique_ptr<events::parser::ParsedEvent> parsed_event = _parser.parse(event);
+    std::unique_ptr<events::parser::ParsedEvent> parsed_event = _parser.parse(events::EventType(event));
     if (parsed_event == nullptr) {
         qCWarning(EventsLog) << "Got Event w/o known metadata: ID:" << event.id << "comp id:" << _compid;
         return;
