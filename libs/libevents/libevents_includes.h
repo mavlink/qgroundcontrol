@@ -7,11 +7,6 @@
  *
  ****************************************************************************/
 
-/*
- * This header defines the events::EventType type.
- *
- */
-
 #pragma once
 
 #include <cstdlib>
@@ -26,12 +21,9 @@ void qgc_events_parser_debug_printf(const char *fmt, ...);
 //#define LIBEVENTS_PARSER_DEBUG_PRINTF qgc_events_parser_debug_printf
 #define LIBEVENTS_DEBUG_PRINTF qgc_events_parser_debug_printf
 
-#include "MAVLinkProtocol.h"
+#include <MAVLinkProtocol.h>
 
-namespace events
-{
-using EventType = mavlink_event_t;
-} // namespace events
-
-
-
+#include "libevents/libs/cpp/protocol/receive.h"
+#include "libevents/libs/cpp/parse/health_and_arming_checks.h"
+#include "libevents/libs/cpp/parse/parser.h"
+#include "libevents/libs/cpp/generated/events_generated.h"
