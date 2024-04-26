@@ -122,7 +122,7 @@ target_link_libraries(Vehicle
 		Qt6::Core
 		Qt6::Gui
 		Qt6::Positioning
-        libevents
+		libevents_wrapper
 		comm
 		FactSystem
                 MissionManager

@@ -15,10 +15,7 @@
 
 #include <functional>
 
-#include <libevents/libs/cpp/protocol/receive.h>
-#include <libevents/libs/cpp/parse/health_and_arming_checks.h>
-#include <libevents/libs/cpp/parse/parser.h>
-#include <libevents/libs/cpp/generated/events_generated.h>
+#include <libevents_includes.h>
 
 class EventHandler : public QObject
 {

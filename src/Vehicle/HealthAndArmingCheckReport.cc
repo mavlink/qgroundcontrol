@@ -11,7 +11,6 @@
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 
-#include <libevents/libs/cpp/generated/events_generated.h>
 
 HealthAndArmingCheckReport::HealthAndArmingCheckReport(QObject *parent)
     : QObject(parent)

@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-#include "libevents_definitions.h"
-
 #include <QGCLoggingCategory.h>
+
+#include "libevents_includes.h"
 
 QGC_LOGGING_CATEGORY(EventsLog, "EventsLog");
 
@@ -24,4 +24,3 @@ void qgc_events_parser_debug_printf(const char *fmt, ...) {
     if (len > 0) msg[len-1] = '\0'; // remove newline
     qCDebug(EventsLog) << msg;
 }
-
