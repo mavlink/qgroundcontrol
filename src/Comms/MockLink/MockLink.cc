@@ -1323,7 +1323,11 @@ void MockLink::_sendGpsRawInt(void)
                                       0,                                    // Altitude uncertainty in meters * 1000 (positive for up).
                                       0,                                    // Speed uncertainty in meters * 1000 (positive for up).
                                       0,                                    // Heading / track uncertainty in degrees * 1e5.
-                                      65535);                               // Yaw not provided
+                                      65535,                                // Yaw not provided
+                                      0,                                    // No system errors
+                                      0,                                    // No authentication info provided
+                                      0,                                    // No jamming info provided
+                                      0);                                   // No spoofing info provided
     respondWithMavlinkMessage(msg);
 }
 

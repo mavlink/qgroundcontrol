@@ -19,23 +19,29 @@ class VehicleGPSFactGroup : public FactGroup
 public:
     VehicleGPSFactGroup(QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact* lat                READ lat                CONSTANT)
-    Q_PROPERTY(Fact* lon                READ lon                CONSTANT)
-    Q_PROPERTY(Fact* mgrs               READ mgrs               CONSTANT)
-    Q_PROPERTY(Fact* hdop               READ hdop               CONSTANT)
-    Q_PROPERTY(Fact* vdop               READ vdop               CONSTANT)
-    Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
-    Q_PROPERTY(Fact* count              READ count              CONSTANT)
-    Q_PROPERTY(Fact* lock               READ lock               CONSTANT)
+    Q_PROPERTY(Fact* lat                    READ lat                    CONSTANT)
+    Q_PROPERTY(Fact* lon                    READ lon                    CONSTANT)
+    Q_PROPERTY(Fact* mgrs                   READ mgrs                   CONSTANT)
+    Q_PROPERTY(Fact* hdop                   READ hdop                   CONSTANT)
+    Q_PROPERTY(Fact* vdop                   READ vdop                   CONSTANT)
+    Q_PROPERTY(Fact* courseOverGround       READ courseOverGround       CONSTANT)
+    Q_PROPERTY(Fact* count                  READ count                  CONSTANT)
+    Q_PROPERTY(Fact* lock                   READ lock                   CONSTANT)
+    Q_PROPERTY(Fact* systemErrors           READ systemErrors           CONSTANT)
+    Q_PROPERTY(Fact* spoofingState          READ spoofingState          CONSTANT)
+    Q_PROPERTY(Fact* authenticationState    READ authenticationState    CONSTANT)
 
-    Fact* lat               () { return &_latFact; }
-    Fact* lon               () { return &_lonFact; }
-    Fact* mgrs              () { return &_mgrsFact; }
-    Fact* hdop              () { return &_hdopFact; }
-    Fact* vdop              () { return &_vdopFact; }
-    Fact* courseOverGround  () { return &_courseOverGroundFact; }
-    Fact* count             () { return &_countFact; }
-    Fact* lock              () { return &_lockFact; }
+    Fact* lat                   () { return &_latFact; }
+    Fact* lon                   () { return &_lonFact; }
+    Fact* mgrs                  () { return &_mgrsFact; }
+    Fact* hdop                  () { return &_hdopFact; }
+    Fact* vdop                  () { return &_vdopFact; }
+    Fact* courseOverGround      () { return &_courseOverGroundFact; }
+    Fact* count                 () { return &_countFact; }
+    Fact* lock                  () { return &_lockFact; }
+    Fact* systemErrors          () { return &_systemErrorsFact; }
+    Fact* spoofingState         () { return &_spoofingStateFact; }
+    Fact* authenticationState   () { return &_authenticationStateFact; }
 
     // Overrides from FactGroup
     virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message) override;
@@ -53,6 +59,9 @@ protected:
     const QString _courseOverGroundFactName =    QStringLiteral("courseOverGround");
     const QString _countFactName =               QStringLiteral("count");
     const QString _lockFactName =                QStringLiteral("lock");
+    const QString _systemErrorsFactName =        QStringLiteral("systemErrors");
+    const QString _spoofingStateFactName =       QStringLiteral("spoofingState");
+    const QString _authenticationStateFactName = QStringLiteral("authenticationState");
 
     Fact _latFact;
     Fact _lonFact;
@@ -62,4 +71,7 @@ protected:
     Fact _courseOverGroundFact;
     Fact _countFact;
     Fact _lockFact;
+    Fact _systemErrorsFact;
+    Fact _spoofingStateFact;
+    Fact _authenticationStateFact;
 };
