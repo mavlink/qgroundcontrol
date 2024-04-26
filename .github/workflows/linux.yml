@@ -14,10 +14,10 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'android/**'
-      - './github/workflows/docs_deploy.yml'
-      - './github/workflows/android.yml'
-      - './github/workflows/macos.yml'
-      - './github/workflows/windows.yml'
+      - '.github/workflows/docs_deploy.yml'
+      - '.github/workflows/android.yml'
+      - '.github/workflows/macos.yml'
+      - '.github/workflows/windows.yml'
 
 jobs:
   build:

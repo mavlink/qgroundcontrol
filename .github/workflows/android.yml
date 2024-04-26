@@ -12,10 +12,10 @@ on:
   pull_request:
     paths-ignore:
       - 'docs/**'
-      - './github/workflows/docs_deploy.yml'
-      - './github/workflows/linux.yml'
-      - './github/workflows/macos.yml'
-      - './github/workflows/windows.yml'
+      - '.github/workflows/docs_deploy.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/macos.yml'
+      - '.github/workflows/windows.yml'
 
 jobs:
   build:
