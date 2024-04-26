@@ -50,7 +50,7 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           setup-python: true
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake tools_ninja'
+          tools: 'tools_cmake'
 
       - name: Install Dependencies
         run: choco install --no-progress cmake ninja -y
