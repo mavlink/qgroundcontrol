@@ -13,8 +13,6 @@
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_ANDROID
 #include "LinkManager.h"
-#endif
-#ifdef Q_OS_ANDROID
 #include "qserialportinfo.h"
 #else
 #include <QtSerialPort/QSerialPortInfo>
@@ -29,6 +27,7 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : LinkInterface(config, isPX4Flow)
     , _serialConfig(qobject_cast<SerialConfiguration*>(config.get()))
 {
+    qRegisterMetaType<QSerialPort::SerialPortError>();
     qCDebug(SerialLinkLog) << "Create SerialLink portName:baud:flowControl:parity:dataButs:stopBits" << _serialConfig->portName() << _serialConfig->baud() << _serialConfig->flowControl()
                            << _serialConfig->parity() << _serialConfig->dataBits() << _serialConfig->stopBits();
 }

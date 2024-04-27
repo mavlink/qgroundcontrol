@@ -110,16 +110,13 @@
 #include "Viewer3DTerrainTexture.h"
 #include "LinkConfiguration.h"
 
-#ifndef __mobile__
-#include "FirmwareUpgradeController.h"
-#endif
-
 #ifndef NO_SERIAL_LINK
+#include "FirmwareUpgradeController.h"
 #include "SerialLink.h"
 #endif
 
 #ifdef Q_OS_LINUX
-#ifndef __mobile__
+#ifndef Q_OS_ANDROID
 #include <unistd.h>
 #include <sys/types.h>
 #endif
@@ -185,7 +182,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _msecsElapsedTime.start();
 
 #ifdef Q_OS_LINUX
-#ifndef __mobile__
+#ifndef Q_OS_ANDROID
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             _exitWithError(QString(
@@ -486,10 +483,8 @@ void QGCApplication::_initCommon()
     qmlRegisterType<ToolStripAction>                ("QGroundControl.Controls",             1, 0, "ToolStripAction");
     qmlRegisterType<ToolStripActionList>            ("QGroundControl.Controls",             1, 0, "ToolStripActionList");
 
-#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     qmlRegisterType<FirmwareUpgradeController>      (kQGCControllers,                       1, 0, "FirmwareUpgradeController");
-#endif
 #endif
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
@@ -543,7 +538,7 @@ bool QGCApplication::_initForNormalAppBoot()
     }
 
     #ifdef Q_OS_LINUX
-    #ifndef __mobile__
+    #ifndef Q_OS_ANDROID
     #ifndef NO_SERIAL_LINK
         if (!_runningUnitTests) {
             // Determine if we have the correct permissions to access USB serial devices

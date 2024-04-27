@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "QGCSerialPortInfo.h"
 #include "JsonHelper.h"
 #include "QGCLoggingCategory.h"
@@ -46,7 +45,7 @@ QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardManufac
 QGCSerialPortInfo::QGCSerialPortInfo(void) :
     QSerialPortInfo()
 {
-
+    qRegisterMetaType<QGCSerialPortInfo>();
 }
 
 QGCSerialPortInfo::QGCSerialPortInfo(const QSerialPort & port) :
@@ -240,7 +239,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
             const BoardRegExpFallback_t& boardFallback = _boardDescriptionFallbackList[i];
 
             if (description().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
-#ifndef __android
+#ifndef Q_OS_ANDROID
                 if (boardFallback.androidOnly) {
                     continue;
                 }
@@ -255,7 +254,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
             const BoardRegExpFallback_t& boardFallback = _boardManufacturerFallbackList[i];
 
             if (manufacturer().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
-#ifndef __android
+#ifndef Q_OS_ANDROID
                 if (boardFallback.androidOnly) {
                     continue;
                 }

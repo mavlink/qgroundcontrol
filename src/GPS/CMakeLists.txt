@@ -1,56 +1,61 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
-# include(FetchContent)
-# FetchContent_Declare(gps_drivers
-#     GIT_REPOSITORY https://github.com/PX4/PX4-GPSDrivers.git
-#     GIT_TAG main
-#     GIT_SHALLOW TRUE
-# )
-# FetchContent_GetProperties(gps_drivers)
-# if(NOT gps_drivers_POPULATED)
-# 	FetchContent_Populate(gps_drivers)
-# 	add_subdirectory(${gps_drivers_SOURCE_DIR} ${gps_drivers_BINARY_DIR} EXCLUDE_FROM_ALL)
-# endif()
+qt_add_library(gps STATIC)
 
-qt_add_library(gps STATIC
-	definitions.h
-	Drivers/src/ashtech.cpp
-	Drivers/src/ashtech.h
-	Drivers/src/gps_helper.cpp
-	Drivers/src/gps_helper.h
-	Drivers/src/mtk.cpp
-	Drivers/src/mtk.h
-	Drivers/src/rtcm.cpp
-	Drivers/src/rtcm.h
-	Drivers/src/sbf.cpp
-	Drivers/src/sbf.h
-	Drivers/src/ubx.cpp
-	Drivers/src/ubx.h
-	GPSManager.cc
-	GPSManager.h
-	GPSPositionMessage.h
-	GPSProvider.cc
-	GPSProvider.h
-	RTCMMavlink.cc
-	RTCMMavlink.h
-	satellite_info.h
-	sensor_gnss_relative.h
-	sensor_gps.h
-)
+if(NOT QGC_NO_SERIAL_LINK)
+	# include(FetchContent)
+	# FetchContent_Declare(gps_drivers
+	#     GIT_REPOSITORY https://github.com/PX4/PX4-GPSDrivers.git
+	#     GIT_TAG main
+	#     GIT_SHALLOW TRUE
+	# )
+	# FetchContent_GetProperties(gps_drivers)
+	# if(NOT gps_drivers_POPULATED)
+	# 	FetchContent_Populate(gps_drivers)
+	# 	add_subdirectory(${gps_drivers_SOURCE_DIR} ${gps_drivers_BINARY_DIR} EXCLUDE_FROM_ALL)
+	# endif()
 
-target_link_libraries(gps
-	PRIVATE
-		comm
-		Settings
-		Utilities
-                Vehicle
-	PUBLIC
-		Qt6::Core
-		qgc
-)
+	target_sources(gps
+		PRIVATE
+			definitions.h
+			Drivers/src/ashtech.cpp
+			Drivers/src/ashtech.h
+			Drivers/src/gps_helper.cpp
+			Drivers/src/gps_helper.h
+			Drivers/src/mtk.cpp
+			Drivers/src/mtk.h
+			Drivers/src/rtcm.cpp
+			Drivers/src/rtcm.h
+			Drivers/src/sbf.cpp
+			Drivers/src/sbf.h
+			Drivers/src/ubx.cpp
+			Drivers/src/ubx.h
+			GPSManager.cc
+			GPSManager.h
+			GPSPositionMessage.h
+			GPSProvider.cc
+			GPSProvider.h
+			RTCMMavlink.cc
+			RTCMMavlink.h
+			satellite_info.h
+			sensor_gnss_relative.h
+			sensor_gps.h
+	)
 
-target_include_directories(gps
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-		Drivers/src
-)
+	target_link_libraries(gps
+		PRIVATE
+			Settings
+			Utilities
+			Vehicle
+		PUBLIC
+			Qt6::Core
+			comm
+			qgc
+	)
+
+	target_include_directories(gps
+		PUBLIC
+			${CMAKE_CURRENT_SOURCE_DIR}
+			Drivers/src
+	)
+endif()
