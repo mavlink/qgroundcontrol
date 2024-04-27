@@ -13,7 +13,9 @@ target_include_directories(VideoReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qmlglsink qmlglsink.build)
 
-if(GST_FOUND)
+if(GST_QT6_PLUGIN_FOUND)
+    message(STATUS "Building VideoReceiver")
+
     find_package(Qt6 REQUIRED COMPONENTS Quick)
 
     target_sources(VideoReceiver
