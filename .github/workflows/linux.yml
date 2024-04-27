@@ -42,6 +42,16 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
+      - name: Set Up Cache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
+          key: ${{ runner.os }}-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
+          max-size: 2G
+          append-timestamp: false
+          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
