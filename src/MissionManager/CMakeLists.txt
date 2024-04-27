@@ -105,6 +105,7 @@ target_link_libraries(MissionManager
                 Geo
 	PUBLIC
 		Qt6::Xml
+		comm
 		qgc
                 Settings
 		UTMSP

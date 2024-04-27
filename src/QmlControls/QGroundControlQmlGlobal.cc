@@ -14,7 +14,7 @@
 #include "QGCMapUrlEngine.h"
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #endif
 #include "QGCPalette.h"
@@ -86,7 +86,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _corePlugin             = toolbox->corePlugin();
     _firmwarePluginManager  = toolbox->firmwarePluginManager();
     _settingsManager        = toolbox->settingsManager();
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     _gpsRtkFactGroup        = toolbox->gpsManager()->gpsRtkFactGroup();
 #endif
     _adsbVehicleManager     = toolbox->adsbVehicleManager();

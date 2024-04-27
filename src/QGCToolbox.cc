@@ -10,7 +10,7 @@
 
 #include "FactSystem.h"
 #include "FirmwarePluginManager.h"
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
 #include "GPSManager.h"
 #endif
 #include "JoystickManager.h"
@@ -64,7 +64,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _scanAndLoadPlugins(app);
     _factSystem             = new FactSystem                (app, this);
     _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     _gpsManager             = new GPSManager                (app, this);
 #endif
     _imageProvider          = new QGCImageProvider          (app, this);
@@ -99,7 +99,7 @@ void QGCToolbox::setChildToolboxes(void)
     _corePlugin->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     _gpsManager->setToolbox(this);
 #endif
     _imageProvider->setToolbox(this);
