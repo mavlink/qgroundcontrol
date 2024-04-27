@@ -41,7 +41,7 @@ plugin_init (GstPlugin * plugin)
 
 static void registerMetatypes()
 {
-    qmlRegisterType<Qt6GLVideoItem> ("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
+    qmlRegisterType<Qt6GLVideoItem> ("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 }
 
 Q_CONSTRUCTOR_FUNCTION(registerMetatypes)

@@ -16,9 +16,9 @@
 
 import QtQuick
 import QtQuick.Controls
-import org.freedesktop.gstreamer.GLVideoItem
+import org.freedesktop.gstreamer.Qt6GLVideoItem
 
-GstGLVideoItem {
+GstGLQt6VideoItem {
     id: videoBackground
     property var receiver
 }

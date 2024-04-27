@@ -57,12 +57,14 @@ jobs:
           tools: 'tools_cmake'
 
       - name: Install Dependencies
-        run: choco install --no-progress cmake ninja -y
+        run: |
+          choco install --no-progress ninja -y
+          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
 
       - name: Install Gstreamer
         uses: blinemedical/setup-gstreamer@v1
         with:
-          version: 1.18.6
+          version: 1.22.11
         # run: choco install --no-progress gstreamer gstreamer-devel --version=1.18.6
 
       - name: Set up Visual Studio shell

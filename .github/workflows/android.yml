@@ -133,15 +133,6 @@ jobs:
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
-      - name: Install gstreamer
-        working-directory: ${{ github.workspace }}
-        env:
-          GST_VERSION: 1.18.5
-        run: |
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/${GST_VERSION}/gstreamer-1.0-android-universal-${GST_VERSION}.tar.xz
-            mkdir gstreamer-1.0-android-universal-${GST_VERSION}
-            tar xf gstreamer-1.0-android-universal-${GST_VERSION}.tar.xz -C gstreamer-1.0-android-universal-${GST_VERSION}
-
       - name: Install dependencies
         run: sudo apt-get install -y ninja-build
 
