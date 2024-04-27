@@ -32,11 +32,12 @@ endif()
 set(BUILD_SHAPELIB_CONTRIB OFF CACHE INTERNAL "")
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
 set(BUILD_TESTING OFF CACHE INTERNAL "")
+set(BUILD_APPS OFF CACHE INTERNAL "")
 
 include(FetchContent)
 FetchContent_Declare(shapelib
 	GIT_REPOSITORY https://github.com/OSGeo/shapelib.git
-	GIT_TAG v1.6.0
+	GIT_TAG 6fe5012
 	GIT_SHALLOW TRUE
 )
 FetchContent_GetProperties(shapelib)
@@ -60,8 +61,4 @@ target_link_libraries(Utilities
 		Qt6::Positioning
 )
 
-target_include_directories(Utilities
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/libs/shapelib
-)
+target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
