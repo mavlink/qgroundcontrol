@@ -56,7 +56,7 @@ jobs:
           tools: 'tools_cmake'
 
       - name: Install Dependencies
-        run:  |
+        run: |
               chmod a+x ./tools/setup/ubuntu.sh
               ./tools/setup/ubuntu.sh
 
@@ -74,6 +74,9 @@ jobs:
           sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
           sudo apt update
           sudo apt install vulkan-sdk
+
+      # - name: Build GStreamer
+        # uses: ./.github/actions/gstreamer
 
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
