@@ -1,23 +1,7 @@
-name: Windows
+name: Windows-Arm64
 
 on:
-  push:
-    branches:
-      - master
-      - 'Stable*'
-    tags:
-      - 'v*'
-    paths-ignore:
-      - 'docs/**'
-      - 'android/**'
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - 'android/**'
-      - '.github/workflows/docs_deploy.yml'
-      - '.github/workflows/android.yml'
-      - '.github/workflows/linux.yml'
-      - '.github/workflows/macos.yml'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -42,42 +26,65 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
+      - name: Install SCCache
+        run: |
+          choco install --no-progress sccache ninja -y
+          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
+          key: ${{ runner.os }}-Arm64-${{ matrix.BuildType }}
+          restore-keys: ${{ runner.os }}-Arm64-${{ matrix.BuildType }}
           max-size: 2G
           append-timestamp: false
           variant: sccache
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+      - uses: actions/checkout@v4
+        with:
+          repository: jurplel/install-qt-action
+          ref: master
+          path: install-qt-action
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: install-qt-action/action/
+
+      - name: Build jurplel/install-qt-action
+        run: |
+          cd .\install-qt-action\action
+          npm ci || npm install
+          npm run build
+
+      - name: Install Qt6 for Windows (MSVC)
+        uses: ./install-qt-action/action/
         with:
           version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: windows
           target: desktop
           arch: win64_msvc2019_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
           cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
+
+      - name: Install Qt6 for Windows (ARM64)
+        uses: ./install-qt-action/action/
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_arm64
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
         run: |
           choco install --no-progress ninja -y
           choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
-
-      - name: Install Vulkan
-        working-directory: ${{ runner.temp }}
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
-          .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
-          echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
 
       - name: Install Gstreamer
         uses: blinemedical/setup-gstreamer@v1
@@ -95,9 +102,10 @@ jobs:
 
       - name: Configure
         working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja ^
+        run: ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} ^
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }} ^
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}\..\msvc2019_64"
 
       - name: Build
         working-directory: ${{ runner.temp }}\shadow_build_dir
@@ -107,11 +115,9 @@ jobs:
         working-directory: ${{ runner.temp }}\shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
-      - name: Upload Build File
-        uses: ./.github/actions/upload
+      - name: Save Installer
+        uses: actions/upload-artifact@v4
         if: matrix.BuildType == 'Release'
         with:
-          artifact_name: ${{ env.ARTIFACT }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/shadow_build_dir/${{ env.ARTIFACT }}
