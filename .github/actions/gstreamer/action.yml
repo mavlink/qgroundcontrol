@@ -1,0 +1,91 @@
+name: Build GStreamer
+description: Builds GStreamer using Meson
+inputs:
+  gst_version:
+    description: Version of GStreamer to Build
+    required: true
+    default: 1.22.11
+  build_type:
+    description: Build Type "release" or "debug"
+    required: true
+    default: release
+  working_directory:
+    description: Where to clone GStreamer source
+    required: true
+    default: ${{ runner.temp }}
+  install_directory:
+    description: Where to install GStreamer Build
+    required: true
+    default: ${{ runner.temp }}/gst
+runs:
+  using: "composite"
+  steps:
+    - name: Clone GStreamer
+      working-directory: ${{ inputs.working_directory }}
+      run: git clone --depth 1 --branch ${{ inputs.gst_version }} https://github.com/GStreamer/gstreamer.git
+      shell: bash
+
+    - name: Configure GStreamer
+      working-directory: ${{ inputs.working_directory }}/gstreamer
+      run: meson setup
+        --prefix=${{ inputs.install_directory }}
+        --buildtype=${{ inputs.build_type }}
+        --default-library=static
+        --wrap-mode=forcefallback
+        --strip
+        -Dauto_features=disabled
+        -Dgst-full-libraries=gstreamer,base,controller,net,app,audio,fft,pbutils,riff,rtp,rtsp,tag,video,gl,codecparsers,photography
+        -Dgpl=enabled
+        -Dlibav=enabled
+        -Dorc=enabled
+        -Dbase=enabled
+        -Dgst-plugins-base:gl=enabled
+        -Dgst-plugins-base:gl_platform=glx
+        -Dgst-plugins-base:gl_winsys=x11
+        -Dgst-plugins-base:x11=enabled
+        -Dgst-plugins-base:playback=enabled
+        -Dgst-plugins-base:tcp=enabled
+        -Dgood=enabled
+        -Dgst-plugins-good:qt6=enabled
+        -Dgst-plugins-good:qt-x11=enabled
+        -Dgst-plugins-good:qt-method=auto
+        -Dgst-plugins-good:isomp4=enabled
+        -Dgst-plugins-good:matroska=enabled
+        -Dgst-plugins-good:rtp=enabled
+        -Dgst-plugins-good:rtpmanager=enabled
+        -Dgst-plugins-good:rtsp=enabled
+        -Dgst-plugins-good:udp=enabled
+        -Dbad=enabled
+        -Dgst-plugins-bad:gl=enabled
+        -Dgst-plugins-bad:mpegtsdemux=enabled
+        -Dgst-plugins-bad:rtp=enabled
+        -Dgst-plugins-bad:videoparsers=enabled
+        -Dgst-plugins-bad:sdp=enabled
+        -Dgst-plugins-bad:x11=enabled
+        -Dugly=enabled
+        -Dgst-plugins-ugly:x264=enabled
+        builddir
+        # -Dqt6=enabled
+        # -Dgst-full-target-type=static_library
+        # -Dgst-plugins-base:gl_platform=glx,egl
+        # -Dgst-plugins-base:gl_winsys=x11,egl,wayland
+        # -Dgst-plugins-good:qt-wayland=enabled
+        # -Dgst-plugins-good:qt-egl=enabled
+        # -Dgst-plugins-bad:xshm=enabled
+        # -Dgst-plugins-bad:wayland=enabled
+      shell: bash
+
+    - name: Compile GStreamer
+      working-directory: ${{ inputs.working_directory }}/gstreamer
+      run: meson compile -C builddir
+      shell: bash
+
+    - name: Install GStreamer
+      working-directory: ${{ inputs.working_directory }}/gstreamer
+      run: meson install -C builddir
+      shell: bash
+
+    - name: Setup Environment
+      working-directory: ${{ runner.temp }}/gstreamer
+      run: echo "PKG_CONFIG_PATH=${{ runner.temp }}/gst/lib/x86_64-linux-gnu/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
+      shell: bash
