@@ -12,6 +12,7 @@
 #include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
 #include <QQmlEngine>
 #include <QSettings>

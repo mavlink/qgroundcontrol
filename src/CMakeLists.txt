@@ -61,53 +61,57 @@ target_link_libraries(qgc
 		Qt6::QuickWidgets
 		Qt6::Core5Compat
 		Qt6::Bluetooth
-		Audio
+                api
+                ADSB
+                AirLink
+                AnalyzeView
+                Audio
+                AutoPilotPlugins
+                Camera
+                comm
+                FactSystem
+                FirmwarePlugin
+                FlightMap
+                FollowMe
+                gps
+                Joystick
+                MissionManager
+                QmlControls
+                Settings
+                Terrain
+                Utilities
+                UTMSP
+                Vehicle
+                VehicleSetup
+                Viewer3D
 	PUBLIC
 		Qt6::Core
 		Qt6::CorePrivate
 		Qt6::Widgets
 
-		ADSB
-		AirLink
-		AnalyzeView
-		api
-		AutoPilotPlugins
-		Camera
-		comm
-		FactSystem
-		FirmwarePlugin
-		FlightMap
-		FollowMe
-		Geo
-		gps
-		Joystick
-		MissionManager
-		PositionManager
-		QmlControls
-		QGCLocation
-		Settings
-		Terrain
-		Utilities
-		UTMSP
-		Vehicle
-		VehicleSetup
-		VideoManager
-		Viewer3D
+                PositionManager
+                QGCLocation
+                VideoManager
 )
 
 target_include_directories(qgc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ANDROID)
     target_sources(qgc
-        PUBLIC
-            ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cpp
+        PRIVATE
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.cc
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.h
+        PUBLIC
+            ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cpp
     )
 
     target_link_libraries(qgc
-        PUBLIC
+        PRIVATE
             Qt6::CorePrivate
+        PUBLIC
+            Qt6::Core
+            comm
+            Joystick
     )
 
     target_include_directories(qgc PUBLIC ${CMAKE_SOURCE_DIR}/android/src)

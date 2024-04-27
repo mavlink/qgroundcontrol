@@ -10,10 +10,9 @@
 #include "GoogleMapProvider.h"
 #include "QGCMapEngine.h"
 #if defined(DEBUG_GOOGLE_MAPS)
-#include <QFile>
-#include <QStandardPaths>
+#include <QtCore/QFile>
+#include <QtCore/QStandardPaths>
 #endif
-#include <QtGlobal>
 #include <QtNetwork/QNetworkProxy>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>

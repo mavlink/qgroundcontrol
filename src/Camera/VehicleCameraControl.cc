@@ -25,6 +25,7 @@
 #include <QtXml/QDomNodeList>
 #include <QtQml/QQmlEngine>
 #include <QtNetwork/QNetworkProxy>
+#include <QtNetwork/QNetworkReply>
 
 static const char* kCondition       = "condition";
 static const char* kControl         = "control";

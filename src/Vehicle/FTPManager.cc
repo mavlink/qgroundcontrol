@@ -13,9 +13,8 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QFile>
-#include <QDir>
-#include <string>
+#include <QtCore/QFile>
+#include <QtCore/QDir>
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "FTPManagerLog")
 

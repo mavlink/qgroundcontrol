@@ -17,10 +17,13 @@
 //#define DEBUG_GOOGLE_MAPS
 
 #include "QGCMapUrlEngine.h"
+#include "GoogleMapProvider.h"
+#include "BingMapProvider.h"
+#include "GenericMapProvider.h"
+#include "EsriMapProvider.h"
+#include "MapboxMapProvider.h"
+#include "ElevationMapProvider.h"
 #include "QGCLoggingCategory.h"
-
-#include <QByteArray>
-#include <QString>
 
 QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 

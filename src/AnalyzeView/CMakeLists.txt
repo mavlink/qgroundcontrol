@@ -42,6 +42,7 @@ target_link_libraries(AnalyzeView
 		Vehicle
 	PUBLIC
 		Qt6::Core
+                AutoPilotPlugins
 		QmlControls
 )
 

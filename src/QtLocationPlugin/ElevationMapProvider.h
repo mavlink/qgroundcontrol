@@ -2,7 +2,7 @@
 
 #include "MapProvider.h"
 
-#include <QString>
+#include <QtCore/QString>
 
 static const quint32 AVERAGE_AIRMAP_ELEV_SIZE = 2786;
 

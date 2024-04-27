@@ -21,10 +21,10 @@ qt_add_library(MissionManager STATIC
 	GeoFenceController.h
 	GeoFenceManager.cc
 	GeoFenceManager.h
-    KMLDomDocument.cc
-    KMLDomDocument.h
-    KMLHelper.cc
-    KMLHelper.h
+	KMLDomDocument.cc
+	KMLDomDocument.h
+	KMLHelper.cc
+	KMLHelper.h
 	KMLPlanDomDocument.cc
 	KMLPlanDomDocument.h
 	LandingComplexItem.cc
@@ -99,10 +99,16 @@ add_custom_Target(MisionManagerQml
 )
 
 target_link_libraries(MissionManager
+        PRIVATE
+                api
+                FirmwarePlugin
+                Geo
 	PUBLIC
 		Qt6::Xml
 		qgc
+                Settings
 		UTMSP
+                Vehicle
 )
 
 target_include_directories(MissionManager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

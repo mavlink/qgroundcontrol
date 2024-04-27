@@ -9,10 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-
-#include <QmlObjectListModel.h>
 #include <libevents/libs/cpp/parse/health_and_arming_checks.h>
+
+#include <QtCore/QObject>
+#include <QtCore/QString>
+
+class QmlObjectListModel;
 
 class HealthAndArmingCheckProblem : public QObject
 {
@@ -46,6 +48,7 @@ private:
 class HealthAndArmingCheckReport : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
 public:
 
     Q_PROPERTY(bool supported                              READ supported               NOTIFY updated)
@@ -56,7 +59,7 @@ public:
     Q_PROPERTY(QString gpsState                            READ gpsState                NOTIFY updated)
     Q_PROPERTY(QmlObjectListModel* problemsForCurrentMode  READ problemsForCurrentMode  NOTIFY updated)
 
-    HealthAndArmingCheckReport();
+    HealthAndArmingCheckReport(QObject *parent = nullptr);
     virtual ~HealthAndArmingCheckReport();
 
     bool supported() const { return _supported; }
@@ -87,6 +90,6 @@ private:
     int _takeoffModeGroup{-1};
     int _missionModeGroup{-1};
 
-    QmlObjectListModel* _problemsForCurrentMode = new QmlObjectListModel(this); ///< list of HealthAndArmingCheckProblem*
+    QmlObjectListModel* _problemsForCurrentMode = nullptr; ///< list of HealthAndArmingCheckProblem*
 };
 

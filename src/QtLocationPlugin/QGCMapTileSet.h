@@ -16,21 +16,21 @@
  *
  */
 
-#ifndef QGC_MAP_TILE_SET_H
-#define QGC_MAP_TILE_SET_H
-
-#include <QObject>
-#include <QString>
-#include <QDateTime>
-#include <QtNetwork/QNetworkReply>
-#include <QtCore/QLoggingCategory>
+#pragma once
 
 #include "QGCMapEngineData.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QDateTime>
+#include <QtNetwork/QNetworkReply>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCCachedTileSetLog)
 
 class QGCTile;
 class QGCMapEngineManager;
+class QNetworkAccessManager;
 
 //-----------------------------------------------------------------------------
 class QGCCachedTileSet : public QObject
@@ -187,6 +187,3 @@ private:
     QGCMapEngineManager* _manager;
     bool        _selected;
 };
-
-#endif // QGC_MAP_TILE_SET_H
-

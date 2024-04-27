@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-
 #include "MapProvider.h"
+
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkRequest>
 
 MapProvider::MapProvider(
     const QString &referrer, 

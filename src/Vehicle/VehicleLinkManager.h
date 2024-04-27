@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include <QObject>
-#include <QTimer>
-#include <QtCore/QLoggingCategory>
-#include <QElapsedTimer>
-
 #include "QGCMAVLink.h"
 #include "LinkInterface.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QElapsedTimer>
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLinkManagerLog)
 

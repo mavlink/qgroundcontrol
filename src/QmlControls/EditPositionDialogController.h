@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
-
 #include "Fact.h"
+
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 
 class EditPositionDialogController : public QObject
 {

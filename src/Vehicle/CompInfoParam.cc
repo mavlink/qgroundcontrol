@@ -16,10 +16,11 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-#include <QJsonDocument>
-#include <QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonArray>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
+#include <QtCore/QDir>
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 

@@ -44,14 +44,13 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOMAPREPLYQGC_H
-#define QGEOMAPREPLYQGC_H
+#pragma once
+
+#include "QGCMapEngineData.h"
 
 #include <QtNetwork/QNetworkReply>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
-#include <QTimer>
-
-#include "QGCMapEngineData.h"
+#include <QtCore/QTimer>
 
 class QGeoTiledMapReplyQGC : public QGeoTiledMapReply
 {
@@ -84,5 +83,3 @@ private:
     static QByteArray       _bingNoTileImage;
     static int              _requestCount;
 };
-
-#endif // QGEOMAPREPLYQGC_H

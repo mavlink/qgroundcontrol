@@ -9,14 +9,15 @@
 
 #pragma once
 
-#include "Vehicle.h"
 #include "QGCMAVLink.h"
 
 #include <QtCore/QLoggingCategory>
-#include <QObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <QtPositioning/QGeoCoordinate>
 
 class TerrainFactGroup;
+class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainProtocolHandlerLog)
 

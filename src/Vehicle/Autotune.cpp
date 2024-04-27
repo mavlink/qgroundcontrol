@@ -7,11 +7,8 @@
  *
  ****************************************************************************/
 
-#include <QtGlobal>
-
-#include "QGCApplication.h"
 #include "Autotune.h"
-
+#include "QGCApplication.h"
 
 //-----------------------------------------------------------------------------
 Autotune::Autotune(Vehicle *vehicle) :

@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
+
+#include <QtCore/QObject>
 
 class CustomAction: public QObject
 {

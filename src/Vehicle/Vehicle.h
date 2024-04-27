@@ -9,19 +9,10 @@
 
 #pragma once
 
-#include <QElapsedTimer>
-#include <QObject>
-#include <QVariantList>
-#include <QGeoCoordinate>
-#include <QTime>
-#include <QSharedPointer>
-
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
-#include "MAVLinkProtocol.h"
 #include "MAVLinkStreamConfig.h"
-#include "UASMessageHandler.h"
 #include "QGCMapCircle.h"
 #include "TerrainFactGroup.h"
 #include "SysStatusSensorInfo.h"
@@ -39,25 +30,20 @@
 #include "VehicleEstimatorStatusFactGroup.h"
 #include "VehicleHygrometerFactGroup.h"
 #include "VehicleLinkManager.h"
-#include "MissionManager.h"
-#include "GeoFenceManager.h"
-#include "RallyPointManager.h"
-#include "FTPManager.h"
-#include "ImageProtocolManager.h"
 #include "HealthAndArmingCheckReport.h"
-#include "TerrainQuery.h"
-#include "StandardModes.h"
 #include "VehicleGeneratorFactGroup.h"
 #include "VehicleEFIFactGroup.h"
 
-#ifdef CONFIG_UTM_ADAPTER
-#include "UTMSPVehicle.h"
-#include "UTMSPManager.h"
-#endif
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QObject>
+#include <QtCore/QVariantList>
+#include <QtCore/QTime>
+#include <QtCore/QTimer>
+#include <QtCore/QSharedPointer>
+#include <QtPositioning/QGeoCoordinate>
 
 class Actuators;
 class EventHandler;
-class UAS;
 class FirmwarePlugin;
 class FirmwarePluginManager;
 class AutoPilotPlugin;
@@ -80,17 +66,17 @@ class LinkManager;
 class InitialConnectStateMachine;
 class Autotune;
 class RemoteIDManager;
+class MAVLinkProtocol;
+class MissionManager;
+class GeoFenceManager;
+class RallyPointManager;
+class FTPManager;
+class ImageProtocolManager;
+class TerrainAtCoordinateQuery;
+class StandardModes;
 #ifdef CONFIG_UTM_ADAPTER
 class UTMSPVehicle;
 #endif
-
-Q_MOC_INCLUDE("AutoPilotPlugin.h")
-Q_MOC_INCLUDE("TrajectoryPoints.h")
-Q_MOC_INCLUDE("ParameterManager.h")
-Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
-Q_MOC_INCLUDE("Autotune.h")
-Q_MOC_INCLUDE("RemoteIDManager.h")
-Q_MOC_INCLUDE("QGCCameraManager.h")
 
 #ifndef OPAQUE_PTR_VEHICLE
     #define OPAQUE_PTR_VEHICLE
@@ -108,6 +94,13 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 class Vehicle : public FactGroup
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("AutoPilotPlugin.h")
+    Q_MOC_INCLUDE("TrajectoryPoints.h")
+    Q_MOC_INCLUDE("ParameterManager.h")
+    Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
+    Q_MOC_INCLUDE("Autotune.h")
+    Q_MOC_INCLUDE("RemoteIDManager.h")
+    Q_MOC_INCLUDE("QGCCameraManager.h")
 
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
@@ -1173,8 +1166,6 @@ private:
     QFile               _csvLogFile;
 
     bool            _joystickEnabled = false;
-
-    UAS* _uas = nullptr;
 
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;

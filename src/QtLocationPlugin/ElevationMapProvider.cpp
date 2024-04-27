@@ -1,8 +1,4 @@
 #include "ElevationMapProvider.h"
-#if defined(DEBUG_GOOGLE_MAPS)
-#include <QFile>
-#include <QStandardPaths>
-#endif
 #include "TerrainTile.h"
 
 /*

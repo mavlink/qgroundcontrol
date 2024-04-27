@@ -10,12 +10,12 @@
 #pragma once
 
 #include "Fact.h"
-#include "QmlObjectListModel.h"
 #include "FactValueGrid.h"
 
-#include <QObject>
+#include <QtCore/QObject>
 
 class Vehicle;
+class QmlObjectListModel;
 
 class InstrumentValueData : public QObject
 {
