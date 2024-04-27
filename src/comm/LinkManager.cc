@@ -21,9 +21,9 @@
 #include "BluetoothLink.h"
 #endif
 
-#ifndef __mobile__
-#include "GPSManager.h"
 #include "PositionManager.h"
+#ifndef NO_SERIAL_LINK
+#include "GPSManager.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -75,10 +75,8 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(nullptr)
     , _mavlinkProtocol(nullptr)
-    #ifndef __mobile__
     #ifndef NO_SERIAL_LINK
     , _nmeaPort(nullptr)
-    #endif
     #endif
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
@@ -88,10 +86,8 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
 LinkManager::~LinkManager()
 {
-#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     delete _nmeaPort;
-#endif
 #endif
 }
 
@@ -104,7 +100,6 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
 
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
-
 }
 
 // This should only be used by Qml code
@@ -384,24 +379,6 @@ void LinkManager::loadLinkConfigurationList()
     _configurationsLoaded = true;
 }
 
-#ifndef NO_SERIAL_LINK
-bool LinkManager::_portAlreadyConnected(const QString& portName)
-{
-    QString searchPort = portName.trimmed();
-
-    for (int i=0; i<_rgLinks.count(); i++) {
-        SharedLinkConfigurationPtr linkConfig = _rgLinks[i]->linkConfiguration();
-        SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(linkConfig.get());
-        if (serialConfig) {
-            if (serialConfig->portName() == searchPort) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-#endif
-
 void LinkManager::_addUDPAutoConnectLink(void)
 {
     if (_autoConnectSettings->autoConnectUDP()->rawValue().toBool()) {
@@ -520,44 +497,6 @@ void LinkManager::_addZeroConfAutoConnectLink(void)
 }
 #endif
 
-bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType)
-{
-    switch (boardType) {
-    case QGCSerialPortInfo::BoardTypePixhawk:
-        if (_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    case QGCSerialPortInfo::BoardTypePX4Flow:
-        if (_autoConnectSettings->autoConnectPX4Flow()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    case QGCSerialPortInfo::BoardTypeSiKRadio:
-        if (_autoConnectSettings->autoConnectSiKRadio()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    case QGCSerialPortInfo::BoardTypeOpenPilot:
-        if (_autoConnectSettings->autoConnectLibrePilot()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-#ifndef __mobile__
-    case QGCSerialPortInfo::BoardTypeRTKGPS:
-        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
-            return true;
-        }
-        break;
-#endif
-    default:
-        qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
-        return false;
-    }
-
-    return false; // Some compilers as too stupid to understand that all paths are covered
-}
-
 void LinkManager::_updateAutoConnectLinks(void)
 {
     if (_connectionsSuspended || qgcApp()->runningUnitTests()) {
@@ -570,8 +509,6 @@ void LinkManager::_updateAutoConnectLinks(void)
     _addZeroConfAutoConnectLink();
 #endif
 
-#ifndef __mobile__
-#ifndef NO_SERIAL_LINK
     // check to see if nmea gps is configured for UDP input, if so, set it up to connect
     if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port") {
         if (_nmeaSocket.localPort() != _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt()
@@ -581,6 +518,7 @@ void LinkManager::_updateAutoConnectLinks(void)
             _nmeaSocket.bind(QHostAddress::AnyIPv4, _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt());
             _toolbox->qgcPositionManager()->setNmeaSourceDevice(&_nmeaSocket);
         }
+#ifndef NO_SERIAL_LINK
         //close serial port
         if (_nmeaPort) {
             _nmeaPort->close();
@@ -588,11 +526,10 @@ void LinkManager::_updateAutoConnectLinks(void)
             _nmeaPort = nullptr;
             _nmeaDeviceName = "";
         }
+#endif
     } else {
         _nmeaSocket.close();
     }
-#endif
-#endif
 
 #ifndef NO_SERIAL_LINK
     QStringList                 currentPorts;
@@ -625,8 +562,6 @@ void LinkManager::_updateAutoConnectLinks(void)
         QGCSerialPortInfo::BoardType_t boardType;
         QString boardName;
 
-#ifndef NO_SERIAL_LINK
-#ifndef __mobile__
         // check to see if nmea gps is configured for current Serial port, if so, set it up to connect
         if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
@@ -647,78 +582,71 @@ void LinkManager::_updateAutoConnectLinks(void)
                 _nmeaPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
             }
-        } else
-#endif
-#endif
-            if (portInfo.getBoardInfo(boardType, boardName)) {
-                // Should we be auto-connecting to this board type?
-                if (!_allowAutoConnectToBoard(boardType)) {
+        } else if (portInfo.getBoardInfo(boardType, boardName)) {
+            // Should we be auto-connecting to this board type?
+            if (!_allowAutoConnectToBoard(boardType)) {
+                continue;
+            }
+
+            if (portInfo.isBootloader()) {
+                // Don't connect to bootloader
+                qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
+                continue;
+            }
+            if (_portAlreadyConnected(portInfo.systemLocation()) || _autoConnectRTKPort == portInfo.systemLocation()) {
+                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
+            } else if (!_autoconnectPortWaitList.contains(portInfo.systemLocation())) {
+                // We don't connect to the port the first time we see it. The ability to correctly detect whether we
+                // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
+                // and only connect on the second pass we leave enough time for the board to boot up.
+                qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation() << boardName;
+                _autoconnectPortWaitList[portInfo.systemLocation()] = 1;
+            } else if (++_autoconnectPortWaitList[portInfo.systemLocation()] * _autoconnectUpdateTimerMSecs > _autoconnectConnectDelayMSecs) {
+                SerialConfiguration* pSerialConfig = nullptr;
+                _autoconnectPortWaitList.remove(portInfo.systemLocation());
+                switch (boardType) {
+                case QGCSerialPortInfo::BoardTypePixhawk:
+                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    pSerialConfig->setUsbDirect(true);
+                    break;
+                case QGCSerialPortInfo::BoardTypePX4Flow:
+                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    break;
+                case QGCSerialPortInfo::BoardTypeSiKRadio:
+                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    break;
+                case QGCSerialPortInfo::BoardTypeOpenPilot:
+                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
+                    break;
+                case QGCSerialPortInfo::BoardTypeRTKGPS:
+                    qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
+                    _autoConnectRTKPort = portInfo.systemLocation();
+                    _toolbox->gpsManager()->connectGPS(portInfo.systemLocation(), boardName);
+                    break;
+                default:
+                    qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
                     continue;
                 }
+                if (pSerialConfig) {
+                    qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
+                    pSerialConfig->setBaud      (boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
+                    pSerialConfig->setDynamic   (true);
+                    pSerialConfig->setPortName  (portInfo.systemLocation());
+                    pSerialConfig->setAutoConnect(true);
 
-                if (portInfo.isBootloader()) {
-                    // Don't connect to bootloader
-                    qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
-                    continue;
-                }
-                if (_portAlreadyConnected(portInfo.systemLocation()) || _autoConnectRTKPort == portInfo.systemLocation()) {
-                    qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
-                } else if (!_autoconnectPortWaitList.contains(portInfo.systemLocation())) {
-                    // We don't connect to the port the first time we see it. The ability to correctly detect whether we
-                    // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
-                    // and only connect on the second pass we leave enough time for the board to boot up.
-                    qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation() << boardName;
-                    _autoconnectPortWaitList[portInfo.systemLocation()] = 1;
-                } else if (++_autoconnectPortWaitList[portInfo.systemLocation()] * _autoconnectUpdateTimerMSecs > _autoconnectConnectDelayMSecs) {
-                    SerialConfiguration* pSerialConfig = nullptr;
-                    _autoconnectPortWaitList.remove(portInfo.systemLocation());
-                    switch (boardType) {
-                    case QGCSerialPortInfo::BoardTypePixhawk:
-                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
-                        pSerialConfig->setUsbDirect(true);
-                        break;
-                    case QGCSerialPortInfo::BoardTypePX4Flow:
-                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
-                        break;
-                    case QGCSerialPortInfo::BoardTypeSiKRadio:
-                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
-                        break;
-                    case QGCSerialPortInfo::BoardTypeOpenPilot:
-                        pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName).arg(portInfo.portName().trimmed()));
-                        break;
-#ifndef __mobile__
-                    case QGCSerialPortInfo::BoardTypeRTKGPS:
-                        qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
-                        _autoConnectRTKPort = portInfo.systemLocation();
-                        _toolbox->gpsManager()->connectGPS(portInfo.systemLocation(), boardName);
-                        break;
-#endif
-                    default:
-                        qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
-                        continue;
-                    }
-                    if (pSerialConfig) {
-                        qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
-                        pSerialConfig->setBaud      (boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
-                        pSerialConfig->setDynamic   (true);
-                        pSerialConfig->setPortName  (portInfo.systemLocation());
-                        pSerialConfig->setAutoConnect(true);
-
-                        SharedLinkConfigurationPtr  sharedConfig(pSerialConfig);
-                        createConnectedLink(sharedConfig, boardType == QGCSerialPortInfo::BoardTypePX4Flow);
-                    }
+                    SharedLinkConfigurationPtr  sharedConfig(pSerialConfig);
+                    createConnectedLink(sharedConfig, boardType == QGCSerialPortInfo::BoardTypePX4Flow);
                 }
             }
+        }
     }
 
-#ifndef __mobile__
     // Check for RTK GPS connection gone
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
         _toolbox->gpsManager()->disconnectGPS();
         _autoConnectRTKPort.clear();
     }
-#endif
 
 #endif // NO_SERIAL_LINK
 }
@@ -754,57 +682,12 @@ QStringList LinkManager::linkTypeStrings(void) const
 #ifndef QGC_AIRLINK_DISABLED
         list += tr("AirLink");
 #endif
-#ifndef __mobile__
         list += tr("Log Replay");
-#endif
         if (list.size() != static_cast<int>(LinkConfiguration::TypeLast)) {
             qWarning() << "Internal error";
         }
     }
     return list;
-}
-
-void LinkManager::_updateSerialPorts()
-{
-    _commPortList.clear();
-    _commPortDisplayList.clear();
-#ifndef NO_SERIAL_LINK
-    QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
-    for (const QGCSerialPortInfo &info: portList)
-    {
-        QString port = info.systemLocation().trimmed();
-        _commPortList += port;
-        _commPortDisplayList += SerialConfiguration::cleanPortDisplayname(port);
-    }
-#endif
-}
-
-QStringList LinkManager::serialPortStrings(void)
-{
-    if(!_commPortDisplayList.size())
-    {
-        _updateSerialPorts();
-    }
-    return _commPortDisplayList;
-}
-
-QStringList LinkManager::serialPorts(void)
-{
-    if(!_commPortList.size())
-    {
-        _updateSerialPorts();
-    }
-    return _commPortList;
-}
-
-QStringList LinkManager::serialBaudRates(void)
-{
-#ifdef NO_SERIAL_LINK
-    QStringList foo;
-    return foo;
-#else
-    return SerialConfiguration::supportedBaudRates();
-#endif
 }
 
 bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfiguration* editedConfig)
@@ -965,27 +848,117 @@ LogReplayLink* LinkManager::startLogReplay(const QString& logFile)
     }
 }
 
-bool LinkManager::_isSerialPortConnected(void)
-{
-#ifndef NO_SERIAL_LINK
-    for (SharedLinkInterfacePtr link: _rgLinks) {
-        if (qobject_cast<SerialLink*>(link.get())) {
-            return true;
-        }
-    }
-#endif
-    return false;
-}
-
 void LinkManager::_createDynamicForwardLink(const char* linkName, QString hostName)
 {
     UDPConfiguration* udpConfig = new UDPConfiguration(linkName);
     udpConfig->setDynamic(true);
-    
+
     udpConfig->addHost(hostName);
-    
+
     SharedLinkConfigurationPtr config = addConfiguration(udpConfig);
     createConnectedLink(config);
 
     qCDebug(LinkManagerLog) << "New dynamic MAVLink forwarding port added: " << linkName << " hostname: " << hostName;
 }
+
+#ifndef NO_SERIAL_LINK // Serial Only Functions
+
+bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType)
+{
+    switch (boardType) {
+    case QGCSerialPortInfo::BoardTypePixhawk:
+        if (_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool()) {
+            return true;
+        }
+        break;
+    case QGCSerialPortInfo::BoardTypePX4Flow:
+        if (_autoConnectSettings->autoConnectPX4Flow()->rawValue().toBool()) {
+            return true;
+        }
+        break;
+    case QGCSerialPortInfo::BoardTypeSiKRadio:
+        if (_autoConnectSettings->autoConnectSiKRadio()->rawValue().toBool()) {
+            return true;
+        }
+        break;
+    case QGCSerialPortInfo::BoardTypeOpenPilot:
+        if (_autoConnectSettings->autoConnectLibrePilot()->rawValue().toBool()) {
+            return true;
+        }
+        break;
+    case QGCSerialPortInfo::BoardTypeRTKGPS:
+        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
+            return true;
+        }
+        break;
+    default:
+        qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
+        return false;
+    }
+
+    return false; // Some compilers as too stupid to understand that all paths are covered
+}
+
+bool LinkManager::_portAlreadyConnected(const QString& portName)
+{
+    QString searchPort = portName.trimmed();
+
+    for (int i=0; i<_rgLinks.count(); i++) {
+        SharedLinkConfigurationPtr linkConfig = _rgLinks[i]->linkConfiguration();
+        SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(linkConfig.get());
+        if (serialConfig) {
+            if (serialConfig->portName() == searchPort) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void LinkManager::_updateSerialPorts()
+{
+    _commPortList.clear();
+    _commPortDisplayList.clear();
+    QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
+    for (const QGCSerialPortInfo &info: portList)
+    {
+        QString port = info.systemLocation().trimmed();
+        _commPortList += port;
+        _commPortDisplayList += SerialConfiguration::cleanPortDisplayname(port);
+    }
+}
+
+QStringList LinkManager::serialPortStrings(void)
+{
+    if(!_commPortDisplayList.size())
+    {
+        _updateSerialPorts();
+    }
+    return _commPortDisplayList;
+}
+
+QStringList LinkManager::serialPorts(void)
+{
+    if(!_commPortList.size())
+    {
+        _updateSerialPorts();
+    }
+    return _commPortList;
+}
+
+QStringList LinkManager::serialBaudRates(void)
+{
+    return SerialConfiguration::supportedBaudRates();
+}
+
+bool LinkManager::_isSerialPortConnected(void)
+{
+    for (SharedLinkInterfacePtr link: _rgLinks) {
+        if (qobject_cast<SerialLink*>(link.get())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+#endif // NO_SERIAL_LINK

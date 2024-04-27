@@ -9,6 +9,7 @@ qt_add_library(PositionManager STATIC
 
 target_link_libraries(PositionManager
 	PRIVATE
+		Qt6::PositioningPrivate
 		api
 		Vehicle
 	PUBLIC

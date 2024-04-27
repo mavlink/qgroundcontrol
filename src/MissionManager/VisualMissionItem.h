@@ -18,7 +18,6 @@
 
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
-#include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "MissionController.h"
 
