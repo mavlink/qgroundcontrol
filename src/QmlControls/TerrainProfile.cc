@@ -13,6 +13,7 @@
 #include "FlightPathSegment.h"
 #include "ComplexMissionItem.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
 
 #include <QSGFlatColorMaterial>
 

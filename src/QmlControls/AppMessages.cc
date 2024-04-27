@@ -17,9 +17,9 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
-#include <QStringListModel>
-#include <QtConcurrent>
-#include <QTextStream>
+#include <QtCore/QStringListModel>
+#include <QtConcurrent/QtConcurrent>
+#include <QtCore/QTextStream>
 
 Q_GLOBAL_STATIC(AppLogModel, debug_model)
 

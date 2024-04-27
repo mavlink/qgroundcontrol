@@ -25,6 +25,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QString>
+#include <QtCore/QFileInfo>
 
 QGC_LOGGING_CATEGORY(SubtitleWriterLog, "SubtitleWriterLog")
 

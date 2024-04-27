@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "VTOLLandingComplexItem.h"
+#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "PlanMasterController.h"

@@ -1,6 +1,6 @@
 add_subdirectory(Actuators)
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml)
 
 qt_add_library(Vehicle STATIC
 	Autotune.cpp
@@ -107,13 +107,26 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/libs/libevents libevents.build)
 
 target_link_libraries(Vehicle
 	PRIVATE
-		Audio
-		Compression
-	PUBLIC
-		qgc
-		libevents
+		Qt6::Qml
 		Actuators
+		ADSB
+        api
+		Audio
+                Camera
+		Compression
+		FirmwarePlugin
+        Geo
+        Utilities
 		UTMSP
+	PUBLIC
+		Qt6::Core
+		Qt6::Gui
+		Qt6::Positioning
+        libevents
+		comm
+		FactSystem
+                MissionManager
+        qgc
 )
 
 target_include_directories(Vehicle PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

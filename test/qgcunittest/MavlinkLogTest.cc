@@ -18,6 +18,8 @@
 #include "QGCTemporaryFile.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
+#include "MAVLinkProtocol.h"
 
 const char* MavlinkLogTest::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
 const char* MavlinkLogTest::_logFileExtension = "mavlink";             ///< Extension for log files

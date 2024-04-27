@@ -1,6 +1,8 @@
 #include "Viewer3DTileReply.h"
 
 #include "QGCMapEngine.h"
+#include "MapProvider.h"
+#include "QGCMapUrlEngine.h"
 #include <QFile>
 
 QByteArray  Viewer3DTileReply::_bingNoTileImage;

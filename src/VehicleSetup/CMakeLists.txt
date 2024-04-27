@@ -33,6 +33,7 @@ target_link_libraries(VehicleSetup
 	PRIVATE
 		Qt6::Qml
 		api
+                AutoPilotPlugins
 		Compression
 		FactSystem
 		qgc

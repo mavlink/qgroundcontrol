@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "QGroundControlQmlGlobal.h"
+#include "QGCApplication.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMapUrlEngine.h"
@@ -19,7 +20,6 @@
 #include "QGCPalette.h"
 #include <QSettings>
 #include <QLineF>
-#include <QPointF>
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -359,4 +359,19 @@ QString QGroundControlQmlGlobal::missionFileExtension() const
 QString QGroundControlQmlGlobal::telemetryFileExtension() const
 {
     return AppSettings::telemetryFileExtension;
+}
+
+QString QGroundControlQmlGlobal::appName()
+{
+    return qgcApp()->applicationName();
+}
+
+void QGroundControlQmlGlobal::deleteAllSettingsNextBoot()
+{
+    _app->deleteAllSettingsNextBoot();
+}
+
+void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
+{
+    _app->clearDeleteAllSettingsNextBoot();
 }

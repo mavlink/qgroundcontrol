@@ -44,8 +44,7 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOCODINGMANAGERENGINEQGC_H
-#define QGEOCODINGMANAGERENGINEQGC_H
+#pragma once
 
 #include <QtLocation/QGeoServiceProvider>
 #include <QtLocation/QGeoCodingManagerEngine>
@@ -77,5 +76,3 @@ private:
 };
 
 QT_END_NAMESPACE
-
-#endif // QGEOCODINGMANAGERENGINEQGC_H

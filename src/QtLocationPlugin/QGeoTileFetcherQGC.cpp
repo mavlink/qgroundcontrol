@@ -47,6 +47,7 @@
 #include "QGCMapEngine.h"
 #include "QGeoTileFetcherQGC.h"
 #include "QGeoMapReplyQGC.h"
+#include "QGCMapUrlEngine.h"
 
 #include <QtNetwork/QNetworkRequest>
 #include <QtLocation/private/qgeotilespec_p.h>

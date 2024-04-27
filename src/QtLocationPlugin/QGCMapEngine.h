@@ -16,15 +16,15 @@
  *
  */
 
-#ifndef QGC_MAP_ENGINE_H
-#define QGC_MAP_ENGINE_H
+#pragma once
 
-#include <QString>
-
-#include "QGCMapUrlEngine.h"
 #include "QGCMapEngineData.h"
 #include "QGCTileCacheWorker.h"
+#include "QGCTileSet.h"
 
+#include <QtCore/QString>
+
+class UrlFactory;
 
 //-----------------------------------------------------------------------------
 class QGCMapEngine : public QObject
@@ -90,5 +90,3 @@ private:
 
 extern QGCMapEngine*    getQGCMapEngine();
 extern void             destroyMapEngine();
-
-#endif // QGC_MAP_ENGINE_H

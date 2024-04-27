@@ -18,16 +18,16 @@
 
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
+#include "QGCMapUrlEngine.h"
 #include "QGCLoggingCategory.h"
 
-#include <QVariant>
+#include <QtCore/QVariant>
 #include <QtSql/QSqlQuery>
-#include <QSqlError>
-#include <QDebug>
-#include <QDateTime>
-#include <QApplication>
-#include <QFile>
-#include <QSettings>
+#include <QtSql/QSqlError>
+#include <QtCore/QDateTime>
+#include <QtWidgets/QApplication>
+#include <QtCore/QFile>
+#include <QtCore/QSettings>
 #include <QtNetwork/QNetworkProxy>
 
 #include "time.h"

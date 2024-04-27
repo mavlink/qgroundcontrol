@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QGeoCoordinate>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 

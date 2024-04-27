@@ -10,8 +10,9 @@
 #pragma once
 
 #include "QGCMAVLink.h"
-#include <QString>
-#include <QMap>
+
+#include <QtCore/QString>
+#include <QtCore/QMap>
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(StandardModesLog)

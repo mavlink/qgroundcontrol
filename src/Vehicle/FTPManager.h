@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QDir>
-#include <QTimer>
-#include <QtCore/QLoggingCategory>
-
 #include "QGCMAVLink.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QDir>
+#include <QtCore/QTimer>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(FTPManagerLog)
 

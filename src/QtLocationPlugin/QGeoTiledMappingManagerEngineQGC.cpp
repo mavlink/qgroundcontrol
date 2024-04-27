@@ -47,13 +47,15 @@
 #include "QGCMapEngine.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "QGeoTileFetcherQGC.h"
+#include "QGCMapUrlEngine.h"
+#include "MapProvider.h"
 
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtLocation/private/qgeotiledmap_p.h>
 #include <QtLocation/private/qgeofiletilecache_p.h>
 
-#include <QDir>
+#include <QtCore/QDir>
 
 //-----------------------------------------------------------------------------
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)

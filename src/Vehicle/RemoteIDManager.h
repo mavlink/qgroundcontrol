@@ -9,18 +9,20 @@
 
 #pragma once
 
-#include <QObject>
-#include <QDateTime>
-#include <QGeoPositionInfo>
-#include <QtCore/QLoggingCategory>
-
 #include "QGCMAVLink.h"
-#include "Vehicle.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QDateTime>
+#include <QtCore/QTimer>
+#include <QtPositioning/QGeoPositionInfo>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 
 class RemoteIDSettings;
 class QGCPositionManager;
+class Vehicle;
+class MAVLinkProtocol;
 
 // Supporting Open Drone ID protocol
 class RemoteIDManager : public QObject

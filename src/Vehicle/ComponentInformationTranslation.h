@@ -9,11 +9,15 @@
 
 #pragma once
 
+#include <QtCore/QJsonObject>
+#include <QtCore/QHash>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtCore/QLoggingCategory>
 
-#include "QGCCachedFileDownload.h"
-
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationTranslationLog)
+
+class QGCCachedFileDownload;
 
 class ComponentInformationTranslation : public QObject
 {

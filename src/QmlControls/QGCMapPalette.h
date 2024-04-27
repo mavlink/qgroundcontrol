@@ -8,11 +8,10 @@
  ****************************************************************************/
 
 
-#ifndef QGCMapPalette_h
-#define QGCMapPalette_h
+#pragma once
 
-#include <QObject>
-#include <QColor>
+#include <QtCore/QObject>
+#include <QtGui/QColor>
 
 /*!
  QGCMapPalette is a variant of QGCPalette which is used to hold colors used for display over
@@ -67,5 +66,3 @@ private:
     static QColor _text[_cColorGroups];
     static QColor _textOutline[_cColorGroups];
 };
-
-#endif

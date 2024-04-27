@@ -12,9 +12,8 @@
 #include "SettingsManager.h"
 #include "RemoteIDSettings.h"
 #include "PositionManager.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
-
-#include <QDebug>
 
 QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "RemoteIDManagerLog")
 

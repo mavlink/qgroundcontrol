@@ -9,6 +9,7 @@ target_link_libraries(FollowMe
 	PRIVATE
 		Qt6::Positioning
 		comm
+                FirmwarePlugin
 		PositionManager
 		Settings
 		Utilities

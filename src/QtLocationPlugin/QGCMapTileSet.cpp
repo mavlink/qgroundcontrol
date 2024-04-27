@@ -21,6 +21,7 @@
 #include "QGCMapEngineManager.h"
 #include "QGCFileDownload.h"
 #include "TerrainTile.h"
+#include "QGCMapUrlEngine.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtNetwork/QNetworkProxy>

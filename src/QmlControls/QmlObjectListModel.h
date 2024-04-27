@@ -8,10 +8,9 @@
  ****************************************************************************/
 
 
-#ifndef QmlObjectListModel_H
-#define QmlObjectListModel_H
+#pragma once
 
-#include <QAbstractListModel>
+#include <QtCore/QAbstractListModel>
 
 class QmlObjectListModel : public QAbstractListModel
 {
@@ -89,5 +88,3 @@ private:
     static const int ObjectRole;
     static const int TextRole;
 };
-
-#endif

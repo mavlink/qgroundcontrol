@@ -9,9 +9,10 @@
 
 #pragma once
 
-#include <QTimer>
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
+
+#include <QtCore/QTimer>
 
 class Autotune : public QObject
 {

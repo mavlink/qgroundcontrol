@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
 #include <QtWidgets/QApplication>
 #include <QtGui/QClipboard>
