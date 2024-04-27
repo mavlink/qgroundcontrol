@@ -54,7 +54,6 @@ target_link_libraries(Joystick
 		AutoPilotPlugins
 		Camera
         FirmwarePlugin
-		qgc
 		Settings
 		Utilities
 		Vehicle
@@ -62,6 +61,7 @@ target_link_libraries(Joystick
 	PUBLIC
 		Qt6::Core
 		comm
+		qgc
 		QmlControls
 )
 

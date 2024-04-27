@@ -62,7 +62,7 @@ public:
     QGCCorePlugin*              corePlugin              () { return _corePlugin; }
     SettingsManager*            settingsManager         () { return _settingsManager; }
     ADSBVehicleManager*         adsbVehicleManager      () { return _adsbVehicleManager; }
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     GPSManager*                 gpsManager              () { return _gpsManager; }
 #endif
 #ifndef QGC_AIRLINK_DISABLED
@@ -79,7 +79,7 @@ private:
 
     FactSystem*                 _factSystem             = nullptr;
     FirmwarePluginManager*      _firmwarePluginManager  = nullptr;
-#ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     GPSManager*                 _gpsManager             = nullptr;
 #endif
     QGCImageProvider*           _imageProvider          = nullptr;

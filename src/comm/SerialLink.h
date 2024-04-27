@@ -145,4 +145,3 @@ private:
     SerialConfiguration*    _serialConfig       = nullptr;
 
 };
-

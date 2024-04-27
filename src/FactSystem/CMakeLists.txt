@@ -24,7 +24,6 @@ target_link_libraries(FactSystem
     	Qt6::Qml
     	api
 		AutoPilotPlugins
-		comm
 		FactControls
 		FirmwarePlugin
 		Settings
@@ -33,6 +32,7 @@ target_link_libraries(FactSystem
 		VehicleComponents
     PUBLIC
     	Qt6::Core
+		comm
 		qgc
 )
 

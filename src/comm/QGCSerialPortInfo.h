@@ -92,4 +92,3 @@ private:
     static QList<BoardRegExpFallback_t>         _boardDescriptionFallbackList;
     static QList<BoardRegExpFallback_t>         _boardManufacturerFallbackList;
 };
-

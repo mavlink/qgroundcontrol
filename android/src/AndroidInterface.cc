@@ -9,7 +9,7 @@
 
 #include "AndroidInterface.h"
 
-#include <QJniObject>
+#include <QtCore/QJniObject>
 #include <QtCore/private/qandroidextras_p.h>
 
 bool AndroidInterface::checkStoragePermissions()

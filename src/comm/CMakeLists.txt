@@ -40,27 +40,11 @@ target_link_libraries(comm
 		Utilities
 )
 
-if(NOT MOBILE)
-	target_link_libraries(comm
-		PRIVATE
-			gps
-			PositionManager
-	)
-endif()
-
 target_include_directories(comm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-option(QGC_NO_SERIAL_LINK "Disable Serial Links" OFF)
 if(QGC_NO_SERIAL_LINK)
 	target_compile_definitions(comm PUBLIC NO_SERIAL_LINK)
 else()
-	if(ANDROID)
-		add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qtandroidserialport qtandroidserialport.build)
-	    target_link_libraries(comm PUBLIC qtandroidserialport)
-	else()
-		find_package(Qt6 REQUIRED COMPONENTS SerialPort)
-		target_link_libraries(comm PUBLIC Qt6::SerialPort)
-	endif()
 	target_sources(comm
 		PRIVATE
 			QGCSerialPortInfo.cc
@@ -68,6 +52,18 @@ else()
 			SerialLink.cc
 			SerialLink.h
 	)
+	target_link_libraries(comm
+		PRIVATE
+			gps
+			PositionManager
+	)
+	if(ANDROID)
+		add_subdirectory(${CMAKE_SOURCE_DIR}/libs/qtandroidserialport qtandroidserialport.build)
+	    target_link_libraries(comm PUBLIC qtandroidserialport)
+	else()
+		find_package(Qt6 REQUIRED COMPONENTS SerialPort)
+		target_link_libraries(comm PUBLIC Qt6::SerialPort)
+	endif()
 endif()
 
 # option(QGC_NO_SERIAL_LINK "Enable Bluetooth Links" ON)

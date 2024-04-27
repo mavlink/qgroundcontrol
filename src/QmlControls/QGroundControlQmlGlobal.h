@@ -80,7 +80,9 @@ public:
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
+#ifndef NO_SERIAL_LINK
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
+#endif
 #ifndef QGC_AIRLINK_DISABLED
     Q_PROPERTY(AirLinkManager*      airlinkManager          READ    airlinkManager          CONSTANT)
 #endif
@@ -173,7 +175,9 @@ public:
     MAVLinkLogManager*      mavlinkLogManager   ()  { return _mavlinkLogManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
+#ifndef NO_SERIAL_LINK
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
+#endif
     ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
     QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
@@ -262,7 +266,9 @@ private:
     QGCCorePlugin*          _corePlugin             = nullptr;
     FirmwarePluginManager*  _firmwarePluginManager  = nullptr;
     SettingsManager*        _settingsManager        = nullptr;
+#ifndef NO_SERIAL_LINK
     FactGroup*              _gpsRtkFactGroup        = nullptr;
+#endif
     AirLinkManager*         _airlinkManager         = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
