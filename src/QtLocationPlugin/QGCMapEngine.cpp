@@ -19,12 +19,12 @@
 #include "AppSettings.h"
 #include "MapsSettings.h"
 #include "SettingsManager.h"
-
-#include <QStandardPaths>
-#include <QDir>
-
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
+#include "QGCMapUrlEngine.h"
+
+#include <QtCore/QStandardPaths>
+#include <QtCore/QDir>
 
 Q_DECLARE_METATYPE(QGCMapTask::TaskType)
 Q_DECLARE_METATYPE(QGCTile)

@@ -27,6 +27,9 @@ qt_add_library(MissionManagerTest
 )
 
 target_link_libraries(MissionManagerTest
+        PRIVATE
+            api
+            FirmwarePlugin
 	PUBLIC
 		qgc
 		qgcunittest

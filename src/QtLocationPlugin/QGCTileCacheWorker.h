@@ -16,16 +16,15 @@
  *
  */
 
-#ifndef QGC_TILE_CACHE_WORKER_H
-#define QGC_TILE_CACHE_WORKER_H
+#pragma once
 
-#include <QString>
-#include <QThread>
-#include <QQueue>
-#include <QMutex>
-#include <QWaitCondition>
+#include <QtCore/QString>
+#include <QtCore/QThread>
+#include <QtCore/QQueue>
+#include <QtCore/QMutex>
+#include <QtCore/QWaitCondition>
 #include <QtSql/QSqlDatabase>
-#include <QHostInfo>
+#include <QtNetwork/QHostInfo>
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCTileCacheLog)
@@ -102,5 +101,3 @@ private:
     int                             _updateTimeout;
     int                             _hostLookupID;
 };
-
-#endif // QGC_TILE_CACHE_WORKER_H

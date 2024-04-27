@@ -44,11 +44,10 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOTILEFETCHERQGC_H
-#define QGEOTILEFETCHERQGC_H
+#pragma once
 
 #include <QtLocation/private/qgeotilefetcher_p.h>
-#include <QTimer>
+#include <QtCore/QTimer>
 
 class QGeoTiledMappingManagerEngine;
 class QNetworkAccessManager;
@@ -67,5 +66,3 @@ private:
     QNetworkAccessManager*  _networkManager;
     QTimer                  _timer;
 };
-
-#endif // QGEOTILEFETCHERQGC_H

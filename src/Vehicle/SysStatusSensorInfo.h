@@ -12,7 +12,7 @@
 #include "QGCMAVLink.h"
 
 #include <QtCore/QMap>
-#include <QObject>
+#include <QtCore/QObject>
 
 /// Class which represents sensor info from the SYS_STATUS mavlink message
 class SysStatusSensorInfo : public QObject

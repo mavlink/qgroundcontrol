@@ -11,8 +11,7 @@
 /// @file
 ///     @author Gus Grubba <gus@auterion.com>
 
-#ifndef OfflineMapsManager_H
-#define OfflineMapsManager_H
+#pragma once
 
 #include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
@@ -145,5 +144,3 @@ private:
     ImportAction _importAction;
     bool        _importReplace;
 };
-
-#endif

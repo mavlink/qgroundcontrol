@@ -8,6 +8,8 @@
  ****************************************************************************/
 
 #include "ComponentInformationManager.h"
+#include "ComponentInformationTranslation.h"
+#include "ComponentInformationCache.h"
 #include "Vehicle.h"
 #include "FTPManager.h"
 #include "QGCLZMA.h"
@@ -16,9 +18,10 @@
 #include "CompInfoEvents.h"
 #include "CompInfoActuators.h"
 #include "QGCApplication.h"
+#include "QGCCachedFileDownload.h"
 #include "QGCLoggingCategory.h"
 
-#include <QStandardPaths>
+#include <QtCore/QStandardPaths>
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
 

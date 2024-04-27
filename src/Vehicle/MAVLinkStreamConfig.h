@@ -9,9 +9,7 @@
 
 #pragma once
 
-#include <QVector>
-
-#include <functional>
+#include <QtCore/QVector>
 
 /**
  * @class MAVLinkStreamConfig

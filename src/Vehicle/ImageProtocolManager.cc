@@ -10,10 +10,6 @@
 #include "ImageProtocolManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <QFile>
-#include <QDir>
-#include <string>
-
 QGC_LOGGING_CATEGORY(ImageProtocolManagerLog, "ImageProtocolManagerLog")
 
 ImageProtocolManager::ImageProtocolManager(void)

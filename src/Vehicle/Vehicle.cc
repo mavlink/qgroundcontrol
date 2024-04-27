@@ -7,11 +7,6 @@
  *
  ****************************************************************************/
 
-#include <QTime>
-#include <QDateTime>
-#include <QQuaternion>
-#include <QVector3D>
-
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
 #include "FirmwarePluginManager.h"
@@ -52,6 +47,19 @@
 #endif
 #include "RemoteIDManager.h"
 #include "AudioOutput.h"
+#include "ImageProtocolManager.h"
+#include "TerrainQuery.h"
+#include "StandardModes.h"
+#include "UASMessageHandler.h"
+#ifdef CONFIG_UTM_ADAPTER
+#include "UTMSPVehicle.h"
+#include "UTMSPManager.h"
+#endif
+
+#include <QtCore/QTime>
+#include <QtCore/QDateTime>
+#include <QtGui/QQuaternion>
+#include <QtGui/QVector3D>
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 

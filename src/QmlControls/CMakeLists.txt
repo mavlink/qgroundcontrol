@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml Concurrent Location Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Concurrent Core Gui Location Positioning Qml Quick Widgets)
 
 qt_add_library(QmlControls STATIC
 	AppMessages.cc
@@ -146,11 +146,26 @@ target_link_libraries(QmlControls
 		Qt6::Concurrent
 		Qt6::Location
 		Qt6::Widgets
+                api
+                FirmwarePlugin
+                Geo
+                gps
+		Settings
 	PUBLIC
-		qgc
+		Qt6::Core
+		Qt6::Gui
+		Qt6::Positioning
+		Qt6::Quick
+		ADSB
                 AirLink
+                comm
+                FactControls
 		FactSystem
+		qgc
+                Terrain
+		Utilities
 		UTMSP
+                Vehicle
 )
 
 target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

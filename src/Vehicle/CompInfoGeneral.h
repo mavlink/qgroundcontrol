@@ -12,8 +12,8 @@
 #include "CompInfo.h"
 
 #include <QtCore/QLoggingCategory>
-#include <QObject>
-#include <QMap>
+#include <QtCore/QObject>
+#include <QtCore/QMap>
 
 class FactMetaData;
 class Vehicle;

@@ -21,6 +21,7 @@
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>

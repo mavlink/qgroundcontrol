@@ -13,18 +13,19 @@
  *  @author Gus Grubba <gus@auterion.com>
  */
 
-#ifndef QGC_MAP_URL_ENGINE_H
-#define QGC_MAP_URL_ENGINE_H
+#pragma once
 
+#include "QGCTileSet.h"
 
-#include "GoogleMapProvider.h"
-#include "BingMapProvider.h"
-#include "GenericMapProvider.h"
-#include "EsriMapProvider.h"
-#include "MapboxMapProvider.h"
-#include "ElevationMapProvider.h"
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
+#include <QtCore/QObject>
+#include <QtNetwork/QNetworkRequest>
 
 #define MAX_MAP_ZOOM (23.0)
+
+class QNetworkAccessManager;
+class MapProvider;
 
 class UrlFactory : public QObject {
     Q_OBJECT
@@ -67,5 +68,3 @@ private:
     int                   _timeout;
     QList<ProviderPair>   _providers;
 };
-
-#endif

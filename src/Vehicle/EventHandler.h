@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QVector>
-#include <QTimer>
+#include <QtCore/QString>
+#include <QtCore/QVector>
+#include <QtCore/QTimer>
 
 #include <functional>
 

@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "LandingComplexItem.h"
+#include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "SimpleMissionItem.h"

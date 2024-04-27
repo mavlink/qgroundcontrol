@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include <QObject>
-#include <QVector>
-#include <QPointF>
-
 #include "QGCMAVLink.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QVector>
+#include <QtCore/QPointF>
 
 class Vehicle;
 

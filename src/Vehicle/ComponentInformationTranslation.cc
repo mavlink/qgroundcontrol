@@ -9,15 +9,16 @@
 
 
 #include "ComponentInformationTranslation.h"
+#include "QGCCachedFileDownload.h"
 #include "JsonHelper.h"
 #include "QGCLZMA.h"
 #include "QGCLoggingCategory.h"
 
-#include <QStandardPaths>
-#include <QDir>
-#include <QJsonArray>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QDir>
+#include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
-#include <QXmlStreamReader>
+#include <QtCore/QXmlStreamReader>
 
 QGC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformationTranslationLog")
 

@@ -44,8 +44,7 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOTILEDMAPPINGMANAGERENGINEQGC_H
-#define QGEOTILEDMAPPINGMANAGERENGINEQGC_H
+#pragma once
 
 #include <QtLocation/QGeoServiceProvider>
 #include <QtLocation/private/qgeotiledmap_p.h>
@@ -71,5 +70,3 @@ public:
 private:
     void _setCache(const QVariantMap &parameters);
 };
-
-#endif // QGEOTILEDMAPPINGMANAGERENGINEQGC_H

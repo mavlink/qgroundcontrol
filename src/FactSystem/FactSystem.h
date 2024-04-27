@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "Fact.h"
 #include "QGCToolbox.h"
 
 /// The components of the FactSystem are a Fact which holds an individual value. FactMetaData holds

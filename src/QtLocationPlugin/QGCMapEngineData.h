@@ -16,11 +16,10 @@
  *
  */
 
-#ifndef QGC_MAP_ENGINE_DATA_H
-#define QGC_MAP_ENGINE_DATA_H
+#pragma once
 
-#include <QObject>
-#include <QString>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 
 class QGCCachedTileSet;
 
@@ -458,5 +457,3 @@ signals:
     void actionProgress         (int percentage);
 
 };
-
-#endif // QGC_MAP_ENGINE_DATA_H

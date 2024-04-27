@@ -47,12 +47,14 @@
 #include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGeoTileFetcherQGC.h"
+#include "TerrainTile.h"
+#include "MapProvider.h"
+#include "QGCMapUrlEngine.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
-#include <QFile>
+#include <QtCore/QFile>
 #include <QtNetwork/QNetworkProxy>
-#include "TerrainTile.h"
 
 int         QGeoTiledMapReplyQGC::_requestCount = 0;
 QByteArray  QGeoTiledMapReplyQGC::_bingNoTileImage;

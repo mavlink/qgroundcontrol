@@ -10,6 +10,7 @@
 #include "SimulatedPosition.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDate>

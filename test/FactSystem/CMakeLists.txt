@@ -8,6 +8,8 @@ qt_add_library(FactSystemTest
 )
 
 target_link_libraries(FactSystemTest
+        PRIVATE
+                AutoPilotPlugins
 	PUBLIC
 		qgc
 		qgcunittest

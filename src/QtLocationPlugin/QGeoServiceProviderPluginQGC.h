@@ -44,12 +44,11 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOSERVICEPROVIDERQGC_H
-#define QGEOSERVICEPROVIDERQGC_H
+#pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QtPlugin>
 #include <QtLocation/QGeoServiceProviderFactory>
-#include <QtPlugin>
 
 class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
 {
@@ -63,5 +62,3 @@ public:
     QGeoRoutingManagerEngine*   createRoutingManagerEngine      (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const override;
     QPlaceManagerEngine*        createPlaceManagerEngine        (const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const override;
 };
-
-#endif // QGEOSERVICEPROVIDERQGC_H

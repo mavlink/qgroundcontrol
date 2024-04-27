@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-#include <QSharedPointer>
 
 #include "EventHandler.h"
 
-Q_DECLARE_METATYPE(QSharedPointer<events::parser::ParsedEvent>);
+#include <QtCore/QSharedPointer>
 
+Q_DECLARE_METATYPE(QSharedPointer<events::parser::ParsedEvent>);
 
 EventHandler::EventHandler(QObject* parent, const QString& profile, handle_event_f handleEventCB,
             send_request_event_message_f sendRequestCB,

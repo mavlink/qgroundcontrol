@@ -15,7 +15,6 @@
 #define FactSystemTestPX4_H
 
 #include "FactSystemTestBase.h"
-#include "AutoPilotPlugin.h"
 
 // Unit Test for Fact System on PX4 autopilot
 class FactSystemTestPX4 : public FactSystemTestBase

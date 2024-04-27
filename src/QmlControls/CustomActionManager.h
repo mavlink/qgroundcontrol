@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QmlObjectListModel.h>
-
 #include "Fact.h"
+#include "QmlObjectListModel.h"
+
+#include <QtCore/QObject>
 
 /// Loads the specified action file and provides access to the actions it contains.
 /// Action files are loaded from the default CustomActions directory.

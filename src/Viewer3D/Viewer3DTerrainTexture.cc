@@ -3,6 +3,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "QGCMapEngine.h"
+#include "QGCMapUrlEngine.h"
 
 
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()

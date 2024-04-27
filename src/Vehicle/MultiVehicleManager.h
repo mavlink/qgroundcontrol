@@ -11,27 +11,29 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef MultiVehicleManager_H
-#define MultiVehicleManager_H
+#pragma once
 
-#include "Vehicle.h"
-#include "QGCMAVLink.h"
-#include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
+#include "QmlObjectListModel.h"
 
+#include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoCoordinate>
 
 class FirmwarePluginManager;
 class FollowMe;
 class JoystickManager;
 class QGCApplication;
 class MAVLinkProtocol;
+class LinkInterface;
+class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
 class MultiVehicleManager : public QGCTool
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("Vehicle.h")
 
 public:
     MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbox);
@@ -119,5 +121,3 @@ private:
     static const int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
     static const char*  _gcsHeartbeatEnabledKey;
 };
-
-#endif
