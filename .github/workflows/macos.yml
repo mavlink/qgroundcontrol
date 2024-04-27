@@ -72,10 +72,10 @@ jobs:
 
       - name: Install Gstreamer
         env:
-          GST_VERSION: 1.18.6
+          GST_VERSION: 1.22.11
         run: |
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-x86_64.pkg
-            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-x86_64.pkg
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
+            wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
             for package in *.pkg ;
               do sudo installer -verbose -pkg "$package" -target /
             done

@@ -70,16 +70,18 @@ LinuxBuild {
         QMAKE_POST_LINK += $$escape_expand(\\n) xcopy \"$$GST_ROOT_WIN\\lib\\gstreamer-1.0\\*.dll\" \"$$DESTDIR_WIN\\gstreamer-plugins\\\" /Y $$escape_expand(\\n)
     }
 } else:AndroidBuild {
-    #- gstreamer assumed to be installed in $$PWD/../../gstreamer-1.0-android-universal-1.18.5/***
+    GST_VERSION = 1.22.11
+    #- gstreamer assumed to be installed in $$PWD/../../gstreamer-1.0-android-universal-$$GST_VERSION/***
+    ANDROID_GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-$$GST_VERSION
     contains(ANDROID_TARGET_ARCH, armeabi-v7a) {
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/armv7
+        GST_ROOT = $$ANDROID_GST_ROOT/armv7
     } else:contains(ANDROID_TARGET_ARCH, arm64-v8a) {
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/arm64
+        GST_ROOT = $$ANDROID_GST_ROOT/arm64
     } else:contains(ANDROID_TARGET_ARCH, x86_64) {
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/x86_64
+        GST_ROOT = $$ANDROID_GST_ROOT/x86_64
     } else {
         message(Unknown ANDROID_TARGET_ARCH $$ANDROID_TARGET_ARCH)
-        GST_ROOT = $$PWD/../../gstreamer-1.0-android-universal-1.18.5/x86
+        GST_ROOT = $$ANDROID_GST_ROOT/x86
     }
     exists($$GST_ROOT) {
         QMAKE_CXXFLAGS  += -pthread
