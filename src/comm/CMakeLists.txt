@@ -95,10 +95,10 @@ if(QGC_ZEROCONF_ENABLED)
 	set(BUILD_TESTS OFF CACHE INTERNAL "")
 
 	include(FetchContent)
-	FetchContent_Declare(
-        qmdnsengine
+	FetchContent_Declare(qmdnsengine
 		GIT_REPOSITORY https://github.com/nitroshare/qmdnsengine.git
 		GIT_TAG d61e497
+		GIT_SHALLOW TRUE
 	)
 	FetchContent_MakeAvailable(qmdnsengine)
 
