@@ -15,6 +15,7 @@
 #include "ParameterManager.h"
 #include "ComponentInformationManager.h"
 #include "MissionManager.h"
+#include "StandardModes.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "InitialConnectStateMachineLog")

@@ -12,6 +12,7 @@
 #include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
+#include "MissionItem.h"
 #include "FactMetaData.h"
 #include "ComplexMissionItem.h"
 #include "QmlObjectListModel.h"

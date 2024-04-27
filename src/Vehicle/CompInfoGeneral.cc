@@ -9,11 +9,10 @@
 
 #include "CompInfoGeneral.h"
 #include "JsonHelper.h"
-#include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
-#include <QJsonDocument>
-#include <QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonArray>
 
 QGC_LOGGING_CATEGORY(CompInfoGeneralLog, "CompInfoGeneralLog")
 

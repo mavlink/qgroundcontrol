@@ -8,20 +8,19 @@
  ****************************************************************************/
 
 
-#ifndef MAVLinkLogManager_H
-#define MAVLinkLogManager_H
+#pragma once
 
-#include <QObject>
-#include <QtCore/QLoggingCategory>
-
-#include "QmlObjectListModel.h"
 #include "QGCToolbox.h"
-#include "Vehicle.h"
+#include "QmlObjectListModel.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkLogManagerLog)
 
 class QNetworkAccessManager;
 class MAVLinkLogManager;
+class Vehicle;
 
 //-----------------------------------------------------------------------------
 class MAVLinkLogFiles : public QObject
@@ -104,7 +103,7 @@ private:
 class MAVLinkLogManager : public QGCTool
 {
     Q_OBJECT
-
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
 public:
     MAVLinkLogManager    (QGCApplication* app, QGCToolbox* toolbox);
     ~MAVLinkLogManager   ();
@@ -229,5 +228,3 @@ private:
     bool                    _logginDenied;
 
 };
-
-#endif

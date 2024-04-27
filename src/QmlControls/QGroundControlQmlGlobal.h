@@ -10,11 +10,11 @@
 #pragma once
 
 #include "QGCToolbox.h"
-#include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
 #include "QmlUnitsConversion.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QTimer>
+#include <QtCore/QPointF>
 #include <QtPositioning/QGeoCoordinate>
 
 class QGCToolbox;
@@ -29,6 +29,7 @@ class QGCPositionManager;
 class SettingsManager;
 class QGCCorePlugin;
 class MissionCommandTree;
+class QGCApplication;
 
 Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("FactGroup.h")
@@ -132,8 +133,8 @@ public:
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
     Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
 
-    Q_INVOKABLE void    deleteAllSettingsNextBoot       () { _app->deleteAllSettingsNextBoot(); }
-    Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  () { _app->clearDeleteAllSettingsNextBoot(); }
+    Q_INVOKABLE void    deleteAllSettingsNextBoot       ();
+    Q_INVOKABLE void    clearDeleteAllSettingsNextBoot  ();
 
     Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
     Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
@@ -162,7 +163,7 @@ public:
 
     // Property accesors
 
-    QString                 appName             ()  { return qgcApp()->applicationName(); }
+    QString                 appName             ();
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }

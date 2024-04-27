@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QQmlListProperty>
+#include <QtCore/QObject>
+#include <QtQml/QQmlListProperty>
 
 class ToolStripActionList : public QObject
 {

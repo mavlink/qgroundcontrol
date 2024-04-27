@@ -39,7 +39,13 @@ qt_add_library(FirmwarePlugin STATIC
 
 target_link_libraries(FirmwarePlugin
 	PRIVATE
+            Camera
 		qgc
+        PUBLIC
+            AutoPilotPlugins
+            FollowMe
+            MissionManager
+            VehicleSetup
 )
 
 target_include_directories(FirmwarePlugin

@@ -11,12 +11,10 @@
 /// @file
 ///     @author Gus Grubba <gus@auterion.com>
 
-#ifndef ScreenToolsController_H
-#define ScreenToolsController_H
+#pragma once
 
-#include "QGCApplication.h"
-#include <QQuickItem>
-#include <QCursor>
+#include <QtQuick/QQuickItem>
+#include <QtGui/QCursor>
 
 /*!
     @brief Screen helper tools for QML widgets
@@ -56,7 +54,7 @@ public:
     bool    fakeMobile          () const { return false; }
 #else
     bool    isMobile            () const { return fakeMobile(); }
-    bool    fakeMobile          () const { return qgcApp()->fakeMobile(); }
+    bool    fakeMobile          () const;
 #endif
 
 #if defined (Q_OS_ANDROID)
@@ -115,5 +113,3 @@ public:
     QString     normalFontFamily    () const;
     QString     boldFontFamily      () const;
 };
-
-#endif

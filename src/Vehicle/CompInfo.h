@@ -11,7 +11,7 @@
 
 #include "QGCMAVLink.h"
 
-#include <QObject>
+#include <QtCore/QObject>
 
 class FactMetaData;
 class Vehicle;

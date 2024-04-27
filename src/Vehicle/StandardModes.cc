@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-#include "Vehicle.h"
 #include "StandardModes.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(StandardModesLog, "StandardModesLog")

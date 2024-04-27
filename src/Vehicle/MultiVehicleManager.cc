@@ -17,13 +17,14 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "LinkManager.h"
+#include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
 #if defined (Q_OS_IOS) || defined(Q_OS_ANDROID)
 #include "MobileScreenMgr.h"
 #endif
 
-#include <QQmlEngine>
+#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "MultiVehicleManagerLog")
 

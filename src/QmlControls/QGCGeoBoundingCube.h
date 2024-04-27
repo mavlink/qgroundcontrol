@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <QObject>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
 
 // A bounding "cube" for small surface areas (doesn't take in consideration earth's curvature)
 // Coordinate system makes NW Up Left Bottom (0,0,0) and SE Bottom Right Top (y,x,z)

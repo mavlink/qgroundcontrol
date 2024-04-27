@@ -31,7 +31,6 @@
 #include "GStreamer.h"
 #endif
 
-#include "QGC.h"
 #include "QGCConfig.h"
 #include "QGCApplication.h"
 #include "CmdLineOptParser.h"
@@ -39,7 +38,6 @@
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
-#include "QGCTemporaryFile.h"
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
 #include "QGCLoggingCategory.h"
@@ -60,11 +58,9 @@
 #include "QGCGeoBoundingCube.h"
 #include "MissionManager.h"
 #include "QGroundControlQmlGlobal.h"
-#include "FlightMapSettings.h"
 #include "FlightPathSegment.h"
 #include "PlanMasterController.h"
 #include "VideoManager.h"
-#include "VideoReceiver.h"
 #include "LogDownloadController.h"
 #if !defined(QGC_DISABLE_MAVLINK_INSPECTOR)
 #include "MAVLinkInspectorController.h"
@@ -88,7 +84,6 @@
 #include "FactValueSliderListModel.h"
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
-#include "FirmwareImage.h"
 #include "MavlinkConsoleController.h"
 #include "GeoTagController.h"
 #include "LogReplayLink.h"
@@ -113,7 +108,6 @@
 #include "Viewer3DManager.h"
 #include "Viewer3DTerrainGeometry.h"
 #include "Viewer3DTerrainTexture.h"
-#include "FactSystem.h"
 #include "LinkConfiguration.h"
 
 #ifndef __mobile__

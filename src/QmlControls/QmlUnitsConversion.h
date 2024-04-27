@@ -7,11 +7,10 @@
  *
  ****************************************************************************/
 
-#ifndef QMLUNITSCONVERSION_H
-#define QMLUNITSCONVERSION_H
+#pragma once
 
-#include <QObject>
-#include <qmath.h>
+#include <QtCore/QObject>
+#include <QtCore/QtMath>
 #include "FactMetaData.h"
 
 class QmlUnitsConversion : public QObject
@@ -71,5 +70,3 @@ public:
     Q_INVOKABLE double degreesToRadians(double degrees) { return qDegreesToRadians(degrees); }
     Q_INVOKABLE double radiansToDegrees(double radians) { return qRadiansToDegrees(radians); }
 };
-
-#endif // QMLUNITSCONVERSION_H

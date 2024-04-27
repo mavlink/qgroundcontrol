@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <QObject>
+#include <QtCore/QObject>
 
 class StateMachine : public QObject
 {

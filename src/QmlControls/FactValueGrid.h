@@ -12,7 +12,7 @@
 #include "QmlObjectListModel.h"
 #include "QGCMAVLink.h"
 
-#include <QSettings>
+#include <QtCore/QSettings>
 #include <QtQuick/QQuickItem>
 
 class InstrumentValueData;

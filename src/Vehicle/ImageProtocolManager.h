@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-#include <QByteArray>
-#include <QImage>
-#include <QtCore/QLoggingCategory>
-
 #include "QGCMAVLink.h"
+
+#include <QtCore/QObject>
+#include <QtCore/QByteArray>
+#include <QtGui/QImage>
+#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(ImageProtocolManagerLog)
 

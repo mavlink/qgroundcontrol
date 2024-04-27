@@ -44,8 +44,7 @@
 **
 ****************************************************************************/
 
-#ifndef QGEOCODEREPLYQGC_H
-#define QGEOCODEREPLYQGC_H
+#pragma once
 
 #include <QtNetwork/QNetworkReply>
 #include <QtLocation/QGeoCodeReply>
@@ -67,5 +66,3 @@ private Q_SLOTS:
 private:
     QNetworkReply *m_reply;
 };
-
-#endif // QGEOCODEREPLYQGC_H

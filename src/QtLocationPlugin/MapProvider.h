@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include <QByteArray>
-#include <QString>
-
-#include "QGCTileSet.h" 
+#include "QGCTileSet.h"
 #include <QtLocation/private/qgeomaptype_p.h>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
 
 static const unsigned char pngSignature[]  = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
 static const unsigned char jpegSignature[] = {0xFF, 0xD8, 0xFF, 0x00};

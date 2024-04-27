@@ -1,10 +1,13 @@
 
 qt_add_library(GeoTest
 	STATIC
-		GeoTest.cc GeoTest.h
+                GeoTest.cc
+                GeoTest.h
 )
 
 target_link_libraries(GeoTest
+        PRIVATE
+                Geo
 	PUBLIC
 		qgc
 		qgcunittest

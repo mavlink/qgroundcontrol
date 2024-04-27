@@ -9,6 +9,7 @@
 
 #include "FTPManagerTest.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 #include "QGCApplication.h"
 #include "MockLink.h"
 #include "FTPManager.h"

@@ -43,6 +43,7 @@ target_link_libraries(gps
 		comm
 		Settings
 		Utilities
+                Vehicle
 	PUBLIC
 		Qt6::Core
 		qgc

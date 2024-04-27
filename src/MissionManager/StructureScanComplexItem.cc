@@ -10,6 +10,7 @@
 #include "StructureScanComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
+#include "QGCApplication.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"

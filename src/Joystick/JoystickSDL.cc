@@ -3,6 +3,8 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QTextStream>
+#include <QtCore/QFile>
+#include <QtCore/QIODevice>
 
 JoystickSDL::JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager)
     : Joystick(name,axisCount,buttonCount,hatCount,multiVehicleManager)

@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QObject>
-
 #include "Fact.h"
+
+#include <QtCore/QObject>
 
 class RCToParamDialogController : public QObject
 {

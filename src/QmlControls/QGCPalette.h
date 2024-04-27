@@ -7,12 +7,11 @@
  *
  ****************************************************************************/
 
-#ifndef QGCPalette_h
-#define QGCPalette_h
+#pragma once
 
-#include <QObject>
-#include <QColor>
-#include <QMap>
+#include <QtCore/QObject>
+#include <QtGui/QColor>
+#include <QtCore/QMap>
 
 #define DECLARE_QGC_COLOR(name, lightDisabled, lightEnabled, darkDisabled, darkEnabled) \
     { \
@@ -187,5 +186,3 @@ private:
     static QMap<int, QMap<int, QMap<QString, QColor>>> _colorInfoMap;   // theme -> colorGroup -> color name -> color
     static QList<QGCPalette*> _paletteObjects;    ///< List of all active QGCPalette objects
 };
-
-#endif

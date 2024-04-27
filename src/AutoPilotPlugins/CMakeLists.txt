@@ -105,7 +105,10 @@ target_link_libraries(AutoPilotPlugins
 	PUBLIC
 		Qt6::Core
 		Qt6::Quick
+                FirmwarePlugin
+                VehicleSetup
     PRIVATE
+        Actuators
         qgc
 )
 

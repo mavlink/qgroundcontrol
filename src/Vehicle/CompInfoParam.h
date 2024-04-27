@@ -14,9 +14,8 @@
 #include "FactMetaData.h"
 
 #include <QtCore/QLoggingCategory>
-#include <QObject>
+#include <QtCore/QObject>
 
-class FactMetaData;
 class Vehicle;
 class FirmwarePlugin;
 

@@ -9,11 +9,12 @@
 
 #pragma once
 
-#include <QObject>
-
 #include "FactPanelController.h"
 #include "QmlObjectListModel.h"
-#include "ParameterManager.h"
+
+#include <QtCore/QObject>
+
+class ParameterManager;
 
 class ParameterEditorGroup : public QObject
 {

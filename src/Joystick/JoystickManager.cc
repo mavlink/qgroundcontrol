@@ -18,6 +18,8 @@
     #include "JoystickAndroid.h"
 #endif
 #include "QGCLoggingCategory.h"
+
+#include <QtCore/QSettings>
 #include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
