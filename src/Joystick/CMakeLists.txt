@@ -18,14 +18,33 @@ if(ANDROID)
 else()
 	include(BuildSdl2)
 	build_sdl2()
+
 	if(SDL2_FOUND)
 		message(STATUS "Building JoystickSDL")
+
 		target_sources(Joystick
 			PRIVATE
 				JoystickSDL.cc
 				JoystickSDL.h
 		)
-    	target_link_libraries(Joystick PRIVATE SDL2::SDL2)
+
+    	target_link_libraries(Joystick PRIVATE SDL2::SDL2-static)
+
+    	include(FetchContent)
+	    FetchContent_Declare(sdl_db
+	        GIT_REPOSITORY https://github.com/mdqinc/SDL_GameControllerDB.git
+	        GIT_TAG master
+	        GIT_SHALLOW TRUE
+	    )
+	    FetchContent_MakeAvailable(sdl_db)
+	    set_source_files_properties(${sdl_db_SOURCE_DIR}/gamecontrollerdb.txt
+		    PROPERTIES
+		        QT_RESOURCE_ALIAS gamecontrollerdb.txt
+		)
+	    qt_add_resources(Joystick "gamecontrollerdb.txt"
+		    PREFIX "/db/mapping/joystick"
+		    FILES ${sdl_db_SOURCE_DIR}/gamecontrollerdb.txt
+	    )
 	endif()
 endif()
 

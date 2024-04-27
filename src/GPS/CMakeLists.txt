@@ -1,5 +1,17 @@
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
+# include(FetchContent)
+# FetchContent_Declare(gps_drivers
+#     GIT_REPOSITORY https://github.com/PX4/PX4-GPSDrivers.git
+#     GIT_TAG main
+#     GIT_SHALLOW TRUE
+# )
+# FetchContent_GetProperties(gps_drivers)
+# if(NOT gps_drivers_POPULATED)
+# 	FetchContent_Populate(gps_drivers)
+# 	add_subdirectory(${gps_drivers_SOURCE_DIR} ${gps_drivers_BINARY_DIR} EXCLUDE_FROM_ALL)
+# endif()
+
 qt_add_library(gps STATIC
 	definitions.h
 	Drivers/src/ashtech.cpp

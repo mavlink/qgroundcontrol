@@ -24,26 +24,31 @@ FetchContent_MakeAvailable(zlib)
 
 ############### XZ
 
-set(XZ_EMBEDDED_DIR ${CMAKE_SOURCE_DIR}/libs/xz-embedded)
+FetchContent_Declare(xz
+    GIT_REPOSITORY https://github.com/tukaani-project/xz-embedded.git
+    GIT_TAG v2024-04-05
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(xz)
 
 qt_add_library(xz STATIC
-    ${XZ_EMBEDDED_DIR}/linux/include/linux/xz.h
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_crc32.c
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_crc64.c
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_dec_lzma2.c
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_dec_stream.c
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_lzma2.h
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_private.h
-    ${XZ_EMBEDDED_DIR}/linux/lib/xz/xz_stream.h
-    ${XZ_EMBEDDED_DIR}/userspace/xz_config.h
+    ${xz_SOURCE_DIR}/linux/include/linux/xz.h
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_crc32.c
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_crc64.c
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_dec_lzma2.c
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_dec_stream.c
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_lzma2.h
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_private.h
+    ${xz_SOURCE_DIR}/linux/lib/xz/xz_stream.h
+    ${xz_SOURCE_DIR}/userspace/xz_config.h
 )
 
 target_include_directories(xz
 	PUBLIC
-        ${XZ_EMBEDDED_DIR}/linux/include/linux
+        ${xz_SOURCE_DIR}/linux/include/linux
     PRIVATE
-        ${XZ_EMBEDDED_DIR}/linux/lib/xz
-        ${XZ_EMBEDDED_DIR}/userspace
+        ${xz_SOURCE_DIR}/linux/lib/xz
+        ${xz_SOURCE_DIR}/userspace
 )
 
 target_compile_definitions(xz
