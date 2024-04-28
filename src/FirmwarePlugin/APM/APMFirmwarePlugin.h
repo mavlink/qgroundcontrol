@@ -113,6 +113,7 @@ private:
     void _handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t* message);
     QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
     QString _versionRegex() override;
+    QString _vehicleClassToString(QGCMAVLink::VehicleClass_t vehicleClass) const;
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into APMFirmwarePluginInstanceData

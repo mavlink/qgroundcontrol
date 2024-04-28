@@ -686,51 +686,66 @@ void APMFirmwarePlugin::_artooSocketError(QAbstractSocket::SocketError socketErr
     qgcApp()->showAppMessage(tr("Error during Solo video link setup: %1").arg(socketError));
 }
 
-QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle* vehicle) const
+QString APMFirmwarePlugin::_vehicleClassToString(QGCMAVLink::VehicleClass_t vehicleClass) const
 {
-    const QGCMAVLink::VehicleClass_t vehicleClass = QGCMAVLink::vehicleClass(vehicle->vehicleType());
-    const int currMajor = vehicle->firmwareMajorVersion();
-    const int currMinor = vehicle->firmwareMinorVersion();
-    QString fileName = QString(":/FirmwarePlugin/APM/APMParameterFactMetaData.{Vehicle}.%1.%2.xml").arg(currMajor).arg(currMinor);
-
     switch (vehicleClass) {
     case QGCMAVLink::VehicleClassMultiRotor:
-        fileName.replace("{Vehicle}", "Copter");
-        if(QFileInfo::exists(fileName))
-        {
-            return fileName;
-        }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
+        return QStringLiteral("Copter");
 
     case QGCMAVLink::VehicleClassFixedWing:
     case QGCMAVLink::VehicleClassVTOL:
-        fileName.replace("{Vehicle}", "Plane");
-        if(QFileInfo::exists(fileName))
-        {
-            return fileName;
-        }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.8.xml");
+        return QStringLiteral("Plane");
 
     case QGCMAVLink::VehicleClassRoverBoat:
-        fileName.replace("{Vehicle}", "Rover");
-        if(QFileInfo::exists(fileName))
-        {
-            return fileName;
-        }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
+        return QStringLiteral("Rover");
 
     case QGCMAVLink::VehicleClassSub:
-        fileName.replace("{Vehicle}", "Sub");
-        if(QFileInfo::exists(fileName))
-        {
-            return fileName;
-        }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml");
+        return QStringLiteral("Sub");
 
     default:
-        qWarning() << Q_FUNC_INFO << "called with bad VehicleClass_t:" << vehicleClass;
+        qCWarning(APMFirmwarePluginLog) << Q_FUNC_INFO << "called with bad VehicleClass_t:" << vehicleClass;
         return QString();
     }
+}
+
+QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle* vehicle) const
+{
+    const QGCMAVLink::VehicleClass_t vehicleClass = QGCMAVLink::vehicleClass(vehicle->vehicleType());
+
+    const QString vehicleName = _vehicleClassToString(vehicleClass);
+    if(vehicleName.isEmpty()) {
+        qCWarning(APMFirmwarePluginLog) << Q_FUNC_INFO << "called with bad VehicleClass_t:" << vehicleClass;
+        return QString();
+    }
+
+    const QString fileNameFormat = QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.%1.%2.%3.xml");
+    int currMajor = vehicle->firmwareMajorVersion();
+    int currMinor = vehicle->firmwareMinorVersion();
+
+    // Find next newest version available
+    while ((currMajor >= 3) && (currMinor > 0)) {
+        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(currMajor).arg(currMinor);
+        if (QFileInfo::exists(tempFileName)) {
+            return tempFileName;
+        }
+        currMinor--;
+        if (currMinor == 0) {
+            currMinor = 10; // Some suitably high possible minor version.
+            currMajor--;
+        }
+    }
+    // currMajor or currMinor were likely invalid (-1)
+
+    // Use oldest version available which should be equivalent to offline params
+    for (int i = 0; i < 10; i++) {
+        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(3).arg(i);
+        if (QFileInfo::exists(tempFileName)) {
+            return tempFileName;
+        }
+    }
+
+    qCWarning(APMFirmwarePluginLog) << Q_FUNC_INFO << "Meta Data File Not Found";
+    return QString();
 }
 
 void APMFirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
