@@ -56,6 +56,8 @@
         <file alias="APMParameterFactMetaData.Plane.4.1.xml">ArduPilot-Parameter-Repository/Plane-4.1/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Plane.4.2.xml">ArduPilot-Parameter-Repository/Plane-4.2/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Plane.4.3.xml">ArduPilot-Parameter-Repository/Plane-4.3/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.Plane.4.4.xml">ArduPilot-Parameter-Repository/Plane-4.3/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.Plane.4.5.xml">ArduPilot-Parameter-Repository/Plane-4.3/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.5.xml">ArduPilot-Parameter-Repository/Copter-3.5/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.6.xml">ArduPilot-Parameter-Repository/Copter-3.6/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.7.xml">ArduPilot-Parameter-Repository/Copter-3.7/apm.pdef.xml</file>
@@ -63,12 +65,16 @@
         <file alias="APMParameterFactMetaData.Copter.4.1.xml">ArduPilot-Parameter-Repository/Copter-4.1/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Copter.4.2.xml">ArduPilot-Parameter-Repository/Copter-4.2/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Copter.4.3.xml">ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.Copter.4.4.xml">ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.Copter.4.5.xml">ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.4.xml">ArduPilot-Parameter-Repository/Rover-3.4/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.5.xml">ArduPilot-Parameter-Repository/Rover-3.5/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.6.xml">ArduPilot-Parameter-Repository/Rover-3.6/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Rover.4.0.xml">ArduPilot-Parameter-Repository/Rover-4.0/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Rover.4.1.xml">ArduPilot-Parameter-Repository/Rover-4.1/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Rover.4.2.xml">ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.Rover.4.4.xml">ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.xml</file>
+        <file alias="APMParameterFactMetaData.Rover.4.5.xml">ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.4.xml">ArduPilot-Parameter-Repository/Sub-3.4/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.5.xml">ArduPilot-Parameter-Repository/Sub-3.5/apm.pdef.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.6.xml">ArduPilot-Parameter-Repository/Sub-3.6/apm.pdef.xml</file>
