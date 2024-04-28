@@ -1,4 +1,4 @@
-name: MacOS
+name: Mac
 
 on:
   push:
@@ -21,19 +21,19 @@ on:
 
 jobs:
   build:
-    runs-on: macos-12
+    runs-on: macos-13
 
     strategy:
       matrix:
         BuildType: [Debug, Release]
 
+    env:
+      ARTIFACT: QGroundControl.dmg
+      QT_VERSION: 6.6.3
+
     defaults:
       run:
         shell: bash
-
-    env:
-      QT_VERSION: 6.6.3
-      ARTIFACT: QGroundControl.dmg
 
     steps:
       - name: Checkout repo
@@ -42,13 +42,13 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
-      - name: Set Up Cache
+      - name: Set up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           create-symlink: true
           key: ${{ runner.os }}-${{ matrix.BuildType }}
           restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 2G
+          max-size: 1G
           append-timestamp: false
           save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
@@ -77,39 +77,28 @@ jobs:
             wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-devel-${{ env.GST_VERSION }}-universal.pkg
             wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.GST_VERSION }}/gstreamer-1.0-${{ env.GST_VERSION }}-universal.pkg
             for package in *.pkg ;
-              do sudo installer -verbose -pkg "$package" -target /
+            do sudo installer -verbose -pkg "$package" -target /
             done
-            echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
-
+  
+      - name: Install Dependencies
+        run:  |
+            brew install ninja
+    
       - name: Create build directory
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: |
-          if [ ${{ matrix.BuildType }} == Debug ]
-          then
-            cmake -S ${{ github.workspace }} -B . -G Ninja \
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} \
+        run: cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DQGC_BUILD_TESTING=${{ matrix.BuildType == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-          else
-            qmake -r ${{ github.workspace }}/qgroundcontrol.pro \
-              CONFIG+=installer \
-              CONFIG+=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'StableBuild' || 'DailyBuild' }}
-          fi
 
       - name: Build
         working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: |
-          if [ ${{ matrix.BuildType }} == Debug ]
-          then
-            cmake --build . --target all --config ${{ matrix.BuildType }}
-          else
-            make -j$((`sysctl -n hw.ncpu`+1))
-          fi
-
-      - name: Install
-        if: matrix.BuildType == 'Debug'
+        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+      
+      - name: Create DMG
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: cmake --install . --config ${{ matrix.BuildType }}
 
