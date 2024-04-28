@@ -45,7 +45,6 @@ jobs:
       - name: Set Up Cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          create-symlink: true
           key: ${{ runner.os }}-${{ matrix.BuildType }}
           restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
           max-size: 2G

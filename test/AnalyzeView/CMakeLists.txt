@@ -8,7 +8,6 @@ target_link_libraries(AnalyzeViewTest
         PRIVATE
                 AnalyzeView
 	PUBLIC
-		qgc
 		qgcunittest
 )
 
