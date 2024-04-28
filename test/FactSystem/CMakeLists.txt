@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
 qt_add_library(FactSystemTest
 	STATIC
@@ -8,10 +9,13 @@ qt_add_library(FactSystemTest
 )
 
 target_link_libraries(FactSystemTest
-        PRIVATE
-                AutoPilotPlugins
+    PRIVATE
+        AutoPilotPlugins
+        comm
+        qgc
+        Settings
+        Vehicle
 	PUBLIC
-		qgc
 		qgcunittest
 )
 

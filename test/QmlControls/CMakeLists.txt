@@ -1,12 +1,6 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+
 qt_add_library(QmlControlsTest STATIC)
-
-target_link_libraries(QmlControlsTest
-	PRIVATE
-		qgc
-		qgcunittest
-)
-
-target_include_directories(QmlControlsTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 qt_add_qml_module(QmlControlsTest
     URI qmlcontrolstest
