@@ -1,0 +1,8 @@
+# action.yml
+name: "QGC Linux Builder"
+description: "Helper action to build QGC in Ubuntu 22.04"
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.build-type }}

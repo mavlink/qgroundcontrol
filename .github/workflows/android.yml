@@ -21,8 +21,17 @@ on:
       - '.github/workflows/macos.yml'
       - '.github/workflows/windows.yml'
 
+env:
+  ARTIFACT: QGroundControl.apk
+  QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
+  QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
+  QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
+
 jobs:
   build:
+    if: false
     runs-on: ubuntu-latest
 
     strategy:
@@ -33,166 +42,77 @@ jobs:
       run:
         shell: bash
 
-    env:
-      ARTIFACT: QGroundControl.apk
-      QT_VERSION: 6.6.3
-      QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
-      QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
-      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: "armeabi-v7a;arm64-v8a"
-      GST_VERSION: 1.22.11
+    outputs:
+      build: ${{ steps.upload.outputs.build }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
           fetch-tags: true
 
-      # Temporary solution
-      - name: Remove unused dependencies
-        run: |
-          rm -rf libs/Frameworks
-          rm -rf libs/sdl2
-          rm -rf libs/OpenSSL
+      - name: Install Dependencies
+        uses: ./.github/actions/dependencies
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -y ninja-build
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-linux-x86_64.tar.xz
-          tar -xvf ccache-*-linux-x86_64.tar.xz
-          cd ccache-*-linux-x86_64
-          sudo make install
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Install Qt
+        uses: ./.github/actions/qt
         with:
-          create-symlink: true
-          key: ${{ runner.os }}-Android-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-Android-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          host: linux
+          arch: desktop
 
-      - name: Setup Java Environment
-        uses: actions/setup-java@v4
+      - name: Install Qt
+        if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
+        uses: ./.github/actions/qt
         with:
-          distribution: temurin
-          java-version: 17
+          host: linux
+          arch: android_armv7
 
-      - uses: actions/checkout@v4
+      - name: Install Qt
+        if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
+        uses: ./.github/actions/qt
         with:
-          repository: jurplel/install-qt-action
-          ref: master
-          path: install-qt-action
+          host: linux
+          arch: android_arm64_v8a
 
-      - uses: actions/setup-node@v4
+      - name: Install Qt
+        if: contains( env.QT_ANDROID_ABIS, 'x86')
+        uses: ./.github/actions/qt
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: install-qt-action/action/
+          host: linux
+          arch: android_x86
 
-      - name: Build jurplel/install-qt-action
-        run: |
-          cd install-qt-action/action/
-          npm ci || npm install
-          npm run build
+      - name: Install Qt
+        if: contains( env.QT_ANDROID_ABIS, 'x86_64')
+        uses: ./.github/actions/qt
+        with:
+          host: linux
+          arch: android_x86_64
+
+      - name: Build QGC
+        uses: ./.github/actions/qgc
+        with:
+          build: ${{ matrix.BuildType }}
+          artifact: ${{ env.ARTIFACT }}
+
+      - name: Publish?
+        id: upload
+        run: echo "build=${{ matrix.BuildType }}" >> "$GITHUB_OUTPUT"
+
+  publish:
+    if: github.event_name == 'push' && needs.build.outputs.build == 'Release'
+    needs: build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
         shell: bash
 
-      - name: Install Qt6 for Linux
-        uses: ./install-qt-action/action/
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: desktop
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
-
-      - name: Install Qt6 for Android (armv7)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'armeabi-v7a')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: android
-          arch: android_armv7
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (arm64_v8a)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'arm64-v8a')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: android
-          arch: android_arm64_v8a
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (x86)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'x86')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: android
-          arch: android_x86
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Install Qt6 for Android (x86_64)
-        uses: ./install-qt-action/action/
-        if: contains( env.QT_ANDROID_ABIS, 'x86_64')
-        with:
-          version: ${{ env.QT_VERSION }}
-          host: linux
-          target: android
-          arch: android_x86_64
-          dir: ${{ runner.temp }}
-          extra: --autodesktop
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-
-      - name: Cleanup
-        run: sudo apt clean
-
-      - name: Create build directory
-        run: mkdir ${{ runner.temp }}/shadow_build_dir
-
-      - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
-              -DQT_ANDROID_BUILD_ALL_ABIS=OFF
-              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
-              -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
-              -DQT_DEBUG_FIND_PACKAGE=ON
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-
-      - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
-
-      - name: Prepare APK
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cp ./android-build/*.apk ./${{ env.ARTIFACT }}
-
-      - name: Upload Build File
+    steps:
+      - name: Publish Build File
+        if: needs.build.outputs.build
         uses: ./.github/actions/upload
-        if: matrix.BuildType == 'Release'
         with:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''

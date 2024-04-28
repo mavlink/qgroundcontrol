@@ -25,6 +25,10 @@ runs:
       run: git clone --depth 1 --branch ${{ inputs.gst_version }} https://github.com/GStreamer/gstreamer.git
       shell: bash
 
+    - name: Install Build Tools
+      run: python3 -m pip install --user meson
+      shell: bash
+
     - name: Configure GStreamer
       working-directory: ${{ inputs.working_directory }}/gstreamer
       run: meson setup

@@ -21,6 +21,9 @@ on:
       - '.github/workflows/macos.yml'
       - '.github/workflows/windows.yml'
 
+env:
+  ARTIFACT: QGroundControl.AppImage
+
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -29,110 +32,53 @@ jobs:
       matrix:
         BuildType: [Debug, Release]
 
-    env:
-      ARTIFACT: QGroundControl-x86_64.AppImage
-      QT_VERSION: 6.6.3
+    defaults:
+      run:
+        shell: bash
+
+    outputs:
+      build: ${{ steps.upload.outputs.build }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-tags: true
+
+      - name: Install Dependencies
+        uses: ./.github/actions/dependencies
+
+      - name: Install Qt
+        uses: ./.github/actions/qt
+        with:
+          host: linux
+          arch: gcc_64
+
+      - name: Build QGC
+        uses: ./.github/actions/qgc
+        with:
+          build: ${{ matrix.BuildType }}
+          artifact: ${{ env.ARTIFACT }}
+
+      - name: Publish?
+        id: upload
+        run: echo "build=${{ matrix.BuildType }}" >> "$GITHUB_OUTPUT"
+
+  publish:
+    if: github.event_name == 'push' && needs.build.outputs.build == 'Release'
+    needs: build
+    runs-on: ubuntu-latest
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-tags: true
-
-      # Temporary solution
-      - name: Remove unused dependencies
-        run: |
-          rm -rf libs/Frameworks
-          rm -rf libs/sdl2
-          rm -rf libs/OpenSSL
-
-      - name: Install Dependencies
-        run: |
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
-          sudo apt clean
-
-      - name: Install Build Tools
-        run: |
-          wget --quiet https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-linux-x86_64.tar.xz
-          tar -xvf ccache-*-linux-x86_64.tar.xz
-          cd ccache-*-linux-x86_64
-          sudo make install
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
-          sudo apt install gcc-13 g++-13
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 --slave /usr/bin/g++ g++ /usr/bin/g++-13 --slave /usr/bin/gcov gcov /usr/bin/gcov-13
-          sudo update-alternatives --set gcc /usr/bin/gcc-13
-          python3 -m pip install --user ninja meson
-
-      - name: Install Vulkan
-        run: |
-          wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
-          sudo apt update
-          sudo apt install vulkan-sdk
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
-          host: linux
-          target: desktop
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
-
-    # - name: Build GStreamer
-    #   uses: ./.github/actions/gstreamer
-
-      - name: Cleanup
-        run: sudo apt clean
-
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}/shadow_build_dir
-
-      - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQGC_BUILD_TESTING=${{ matrix.BuildType == 'Debug' && 'ON' || 'OFF' }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-
-      - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
-
-      - name: Create AppImage
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --install . --config ${{ matrix.BuildType }}
-
-      - name: Run unit tests
-        if: matrix.BuildType == 'Debug'
-        working-directory:  ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
-
-      - name: Upload Build File
+      - name: Publish Build File
+        if: needs.build.outputs.build
         uses: ./.github/actions/upload
-        if: matrix.BuildType == 'Release'
         with:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''

@@ -1,0 +1,39 @@
+name: Install Qt
+description: Install Qt
+inputs:
+  dir:
+    description: Directory to Install Qt
+    default: ${{ runner.temp }}
+  version:
+    description: Version of Qt to Install
+    default: 6.6.3
+  host:
+    description: Host Platform
+    # TODO: Convert from runner.os
+  target:
+    description: Target Platform for Build
+    default: desktop
+  arch:
+    description: Architecture of Target
+  modules:
+    description: Qt Modules To Install
+    default: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.6.x - 3.11.x'
+
+    - name: Install Qt
+      shell: bash
+      run: |
+        pip3 install setuptools wheel py7zr ninja cmake aqtinstall
+        aqt install-qt ${{ inputs.host }} ${{ inputs.target }} ${{ inputs.version }} ${{ inputs.arch }} -O ${{ inputs.dir }} -m ${{ inputs.modules }}
+        echo "PATH=${{ inputs.dir }}/${{ inputs.version }}/${{ inputs.arch }}/bin/:$PATH" >> "$GITHUB_ENV"
+        echo "PKG_CONFIG_PATH=${{ inputs.dir }}/${{ inputs.version }}/${{ inputs.arch }}/lib/pkgconfig:$PKG_CONFIG_PATH" >> "$GITHUB_ENV"
+        echo "LD_LIBRARY_PATH=${{ inputs.dir }}/${{ inputs.version }}/${{ inputs.arch }}/lib:$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+        echo "QT_ROOT_DIR=${{ inputs.dir }}/${{ inputs.version }}/${{ inputs.arch }}" >> "$GITHUB_ENV"
+        echo "QT_PLUGIN_PATH=${{ inputs.dir }}/${{ inputs.version }}/${{ inputs.arch }}/plugins" >> "$GITHUB_ENV"
+        echo "QML2_IMPORT_PATH=${{ inputs.dir }}/${{ inputs.version }}/${{ inputs.arch }}/qml" >> "$GITHUB_ENV"

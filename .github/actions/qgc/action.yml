@@ -1,0 +1,67 @@
+name: Build QGC
+description: Build QGC
+inputs:
+  build:
+    description: Build Type
+    default: Debug
+  artifact:
+    description: Artifact Name
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set Up Cache
+      if: runner.os != 'Windows'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        create-symlink: true
+        key: ${{ runner.os }}-${{ inputs.build }}
+        restore-keys: ${{ runner.os }}-${{ inputs.build }}
+        max-size: 1G
+        append-timestamp: false
+        variant: ${{ runner.os == 'Windows' && 'sccache' || 'ccache' }}
+        save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    - name: Set up Visual Studio shell
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Create build directory
+      working-directory: ${{ runner.temp }}
+      shell: bash
+      run: mkdir build
+
+    - name: Configure
+      working-directory: ${{ runner.temp }}/build
+      shell: bash
+      run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+            -DCMAKE_BUILD_TYPE=${{ inputs.build }}
+            -DQGC_BUILD_TESTING=${{ inputs.build == 'Debug' && 'ON' || 'OFF' }}
+            -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+            -DQT_DEBUG_FIND_PACKAGE=ON
+
+      # run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+      #       -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
+      #       -DQT_ANDROID_BUILD_ALL_ABIS=OFF
+      #       -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
+      #       -DQT_ANDROID_SIGN_APK=${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && 'ON' || 'OFF' }}
+
+    - name: Build
+      shell: bash
+      run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake --build ${{ runner.temp }}/build --target all --config ${{ inputs.build }}
+
+    - name: Install
+      shell: bash
+      run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake --install ${{ runner.temp }}/build --config ${{ inputs.build }}
+
+    - name: Run unit tests
+      if: inputs.build == 'Debug' && runner.os == 'linux'
+      shell: bash
+      run: xvfb-run -a ${{ runner.temp }}/build/*.AppImage --unittest
+
+    - name: Save artifact
+      if: inputs.build == 'Release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ runner.temp }}/build/${{ inputs.artifact }}

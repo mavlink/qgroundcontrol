@@ -1,0 +1,107 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "macOS",
+      "displayName": "macOS configuration using Qt6",
+      "generator": "Ninja",
+      "binaryDir": "${sourceParentDir}/build/qt6-macOS",
+      "toolchainFile": "$penv{Qt6_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
+      }
+    },
+    {
+      "name": "macOS-ccache",
+      "displayName": "macOS configuration using Qt6 and ccache",
+      "inherits": ["dev", "ccache", "macOS"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "macOS",
+      "displayName": "macOS build using Qt6",
+      "configurePreset": "macOS"
+    },
+    {
+      "name": "macOS-ccache",
+      "displayName": "macOS build using Qt6 and ccache",
+      "configurePreset": "macOS-ccache"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "macOS",
+      "displayName": "macOS tests using Qt6",
+      "configurePreset": "macOS",
+      "inherits": ["default"]
+    },
+    {
+      "name": "macOS-ccache",
+      "displayName": "macOS tests using Qt6 and ccache",
+      "configurePreset": "macOS-ccache",
+      "inherits": ["default"]
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "macOS",
+      "displayName": "macOS package using Qt6",
+      "configurePreset": "macOS"
+    },
+    {
+      "name": "macOS-ccache",
+      "displayName": "macOS package using Qt6 and ccache",
+      "configurePreset": "macOS-ccache"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "macOS",
+      "displayName": "macOS workflow using Qt6",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "macOS"
+        },
+        {
+          "type": "build",
+          "name": "macOS"
+        },
+        {
+          "type": "test",
+          "name": "macOS"
+        },
+        {
+          "type": "package",
+          "name": "macOS"
+        }
+      ]
+    },
+    {
+      "name": "macOS-ccache",
+      "displayName": "macOS workflow using Qt6 and ccache",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "macOS-ccache"
+        },
+        {
+          "type": "build",
+          "name": "macOS-ccache"
+        },
+        {
+          "type": "test",
+          "name": "macOS-ccache"
+        },
+        {
+          "type": "package",
+          "name": "macOS-ccache"
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,9 @@ on:
       - '.github/workflows/linux.yml'
       - '.github/workflows/macos.yml'
 
+env:
+  ARTIFACT: QGroundControl-Installer.exe
+
 jobs:
   build:
     runs-on: windows-latest
@@ -31,91 +34,52 @@ jobs:
 
     defaults:
       run:
-        shell: cmd
+        shell: bash
 
-    env:
-      QT_VERSION: 6.6.3
-      GST_VERSION: 1.22.11
-      ARTIFACT: QGroundControl-Installer.exe
+    outputs:
+      build: ${{ steps.upload.outputs.build }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
           fetch-tags: true
 
       - name: Install Dependencies
-        run: |
-          choco install --no-progress sccache ninja -y
-          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
-
-      - name: Install Vulkan
-        working-directory: ${{ runner.temp }}
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
-          .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
-          echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
-
-      - name: Install Gstreamer
-        uses: blinemedical/setup-gstreamer@v1
-        with:
-          version: ${{ env.GST_VERSION }}
-        # run: choco install --no-progress gstreamer gstreamer-devel --version=1.22.8
-
-      - name: Set Up Cache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          create-symlink: true
-          key: ${{ runner.os }}-${{ matrix.BuildType }}
-          restore-keys: ${{ runner.os }}-${{ matrix.BuildType }}
-          max-size: 1G
-          append-timestamp: false
-          variant: sccache
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        uses: ./.github/actions/dependencies
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: ./.github/actions/qt
         with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.*
           host: windows
-          target: desktop
           arch: win64_msvc2019_64
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d
-          setup-python: true
-          cache: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
-          tools: 'tools_cmake'
 
-      - name: Set up Visual Studio shell
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build QGC
+        uses: ./.github/actions/qgc
         with:
-          arch: x64
+          build: ${{ matrix.BuildType }}
+          artifact: ${{ env.ARTIFACT }}
 
-      - name: Create build directory
-        run: mkdir ${{ runner.temp }}\shadow_build_dir
+      - name: Continue?
+        id: upload
+        run: echo "build=${{ matrix.BuildType }}" >> "$GITHUB_OUTPUT"
+        shell: bash
 
-      - name: Configure
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake -S ${{ github.workspace }} -B . -G Ninja ^
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }} ^
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+  publish:
+    if: github.event_name == 'push' && needs.build.outputs.build == 'Release'
+    needs: build
+    runs-on: ubuntu-latest
 
-      - name: Build
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+    defaults:
+      run:
+        shell: bash
 
-      - name: Install
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --install . --config ${{ matrix.BuildType }}
-
-      - name: Upload Build File
+    steps:
+      - name: Publish Build File
+        if: needs.build.outputs.build
         uses: ./.github/actions/upload
-        if: matrix.BuildType == 'Release'
         with:
           artifact_name: ${{ env.ARTIFACT }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          source: ''

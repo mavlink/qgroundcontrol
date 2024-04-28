@@ -1,0 +1,70 @@
+name: Dependencies
+description: Install Dependencies
+inputs:
+  target:
+    description: Target Platform for Build
+    default: desktop
+  gstreamer:
+    description: Version of GStreamer
+    default: 1.22.11
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "macOS" && "${{ inputs.target }}" == "desktop" ]]
+        then
+          brew update
+          brew install p7zip ninja cmake SDL2 ccache
+          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ inputs.gstreamer }}/gstreamer-1.0-devel-${{ inputs.gstreamer }}-universal.pkg
+          wget --quiet https://gstreamer.freedesktop.org/data/pkg/osx/${{ inputs.gstreamer }}/gstreamer-1.0-${{ inputs.gstreamer }}-universal.pkg
+          for package in *.pkg ;
+            do sudo installer -verbose -pkg "$package" -target /
+          done
+          echo "PKG_CONFIG_PATH=/Library/Frameworks/GStreamer.framework/lib/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
+        elif [[ "${{ runner.os }}" == "Linux" && "${{ inputs.target }}" == "desktop" ]]
+        then
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+        elif [[ "${{ runner.os }}" == "Linux" && "${{ inputs.target }}" == "android" ]]
+        then
+          sudo apt-get install -y ninja-build
+          wget --quiet https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-linux-x86_64.tar.xz
+          tar -xvf ccache-*-linux-x86_64.tar.xz
+          cd ccache-*-linux-x86_64
+          sudo make install
+        elif [[ "${{ runner.os }}" == "Windows" && "${{ inputs.target }}" == "desktop" ]]
+        then
+          choco install --no-progress sccache ninja -y
+          choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
+          choco install --no-progress gstreamer gstreamer-devel --version=${{ inputs.gstreamer }}
+        else
+          echo "$RUNNER_OS not supported"
+          exit 1
+        fi
+
+    - name: Install Vulkan
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
+        .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
+        echo "VULKAN_SDK=C:\VulkanSDK\latest" >> "$GITHUB_ENV"
+
+    - name: Setup Java Environment
+      if: inputs.target == 'android'
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    # Temporary Solution due to space limitations
+    - name: Cleanup
+      if: runner.os == 'linux'
+      shell: bash
+      run: |
+        sudo apt clean
+        rm -rf libs/Frameworks
+        rm -rf libs/sdl2
+        rm -rf libs/OpenSSL
