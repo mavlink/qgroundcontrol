@@ -20,7 +20,8 @@
 #endif
 
 BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr& config)
-    : LinkInterface     (config)
+    : LinkInterface(config)
+    , _bluetoothConfig(qobject_cast<BluetoothConfiguration*>(config.get()))
 {
 
 }
@@ -109,7 +110,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(qobject_cast<BluetoothConfiguration*>(_config.get())->device().address), QBluetoothUuid(QBluetoothUuid::ServiceClassUuid::SerialPort));
+    _targetSocket->connectToService(QBluetoothAddress(_bluetoothConfig->device().address), QBluetoothUuid(QBluetoothUuid::ServiceClassUuid::SerialPort));
 #endif
     return true;
 }
@@ -135,7 +136,7 @@ void BluetoothLink::serviceDiscovered(const QBluetoothServiceInfo& info)
 {
     if(!info.device().name().isEmpty() && !_targetSocket)
     {
-        if(_config->device().uuid == info.device().deviceUuid() && _config->device().name == info.device().name())
+        if(_bluetoothConfig->device().uuid == info.device().deviceUuid() && _bluetoothConfig->device().name == info.device().name())
         {
             _createSocket();
             _targetSocket->connectToService(info);
@@ -155,7 +156,7 @@ void BluetoothLink::discoveryFinished()
         if(!_targetSocket)
         {
             _connectState = false;
-            emit communicationError("Could not locate Bluetooth device:", _config->device().name);
+            emit communicationError("Could not locate Bluetooth device:", _bluetoothConfig->device().name);
         }
     }
 }
