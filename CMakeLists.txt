@@ -303,6 +303,7 @@ target_link_libraries(${PROJECT_NAME}
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
+        Qt6::Svg # Used to import QSvgPlugin
         qgc
 )
 if(QGC_BUILD_TESTING)
