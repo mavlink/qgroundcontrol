@@ -27,7 +27,7 @@ target_link_libraries(VideoManager
 
 option(QGC_DISABLE_UVC "Disable UVC Devices" OFF)
 if(QGC_DISABLE_UVC)
-    target_compile_options(VideoManager PUBLIC QGC_DISABLE_UVC)
+    target_compile_definitions(VideoManager PUBLIC QGC_DISABLE_UVC)
 else()
     find_package(Qt6 REQUIRED COMPONENTS Multimedia)
     target_link_libraries(VideoManager PRIVATE Qt6::Multimedia)

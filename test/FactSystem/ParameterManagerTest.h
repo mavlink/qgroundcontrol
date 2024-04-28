@@ -14,7 +14,6 @@
 #include "UnitTest.h"
 #include "MockLink.h"
 #include "MultiSignalSpy.h"
-#include "MockLink.h"
 
 class ParameterManagerTest : public UnitTest
 {

@@ -1,3 +1,4 @@
+find_package(Qt6 REQUIRED COMPONENTS Core Qml)
 
 qt_add_library(MissionManagerTest
 	STATIC
@@ -27,9 +28,9 @@ qt_add_library(MissionManagerTest
 )
 
 target_link_libraries(MissionManagerTest
-        PRIVATE
-            api
-            FirmwarePlugin
+    PRIVATE
+        api
+        FirmwarePlugin
 	PUBLIC
 		qgc
 		qgcunittest
