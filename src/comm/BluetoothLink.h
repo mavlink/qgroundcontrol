@@ -147,6 +147,7 @@ private:
     bool _hardwareConnect   (void);
     void _createSocket      (void);
 
+    BluetoothConfiguration*             _bluetoothConfig;
     QBluetoothSocket*                   _targetSocket    = nullptr;
 #ifdef Q_OS_IOS
     QBluetoothServiceDiscoveryAgent*    _discoveryAgent = nullptr;
