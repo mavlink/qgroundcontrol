@@ -21,6 +21,8 @@ qt_add_library(comm STATIC
 	UDPLink.h
 )
 
+target_include_directories(comm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 if(QGC_BUILD_TESTING)
 	target_sources(comm
 		PRIVATE
@@ -106,14 +108,21 @@ if(QGC_ZEROCONF_ENABLED)
 	target_compile_definitions(comm PUBLIC QGC_ZEROCONF_ENABLED)
 endif()
 
-# if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-# 	target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
-# endif()
+include(FetchContent)
+FetchContent_Declare(mavlink
+	GIT_REPOSITORY https://github.com/mavlink/c_library_v2.git
+	GIT_TAG d9a68c5
+	GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(mavlink)
 
 target_include_directories(comm
     PUBLIC
-    	${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0
-        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0/all
-        ${CMAKE_SOURCE_DIR}/libs/mavlink/include/mavlink/v2.0/common
+        ${mavlink_SOURCE_DIR}
+        ${mavlink_SOURCE_DIR}/all
+        ${mavlink_SOURCE_DIR}/common
 )
+
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# 	target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
+# endif()
