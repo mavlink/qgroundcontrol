@@ -85,19 +85,16 @@ count(MAVLINK_CONF, 1) {
 #
 # [REQUIRED] Events submodule
 HEADERS+= \
-	libs/libevents/libevents/libs/cpp/protocol/receive.h \
+    libs/libevents/libevents/libs/cpp/common/event_type.h \
+    libs/libevents/libevents/libs/cpp/generated/events_generated.h \
 	libs/libevents/libevents/libs/cpp/parse/health_and_arming_checks.h \
 	libs/libevents/libevents/libs/cpp/parse/parser.h \
-	libs/libevents/libevents/libs/cpp/generated/events_generated.h \
-	libs/libevents/libevents_definitions.h
+    libs/libevents/libevents/libs/cpp/protocol/receive.h
 SOURCES += \
-	libs/libevents/libevents/libs/cpp/protocol/receive.cpp \
-	libs/libevents/libevents/libs/cpp/parse/health_and_arming_checks.cpp \
-	libs/libevents/libevents/libs/cpp/parse/parser.cpp \
-	libs/libevents/definitions.cpp
+    libs/libevents/libevents/libs/cpp/parse/health_and_arming_checks.cpp \
+	libs/libevents/libevents/libs/cpp/parse/parser.cpp
 INCLUDEPATH += \
-        libs/libevents \
-        libs/libevents/libs/cpp/parse
+    libs/libevents/libevents/libs/cpp
 #
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib

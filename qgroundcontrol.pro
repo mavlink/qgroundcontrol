@@ -379,6 +379,7 @@ INCLUDEPATH += \
     src/Terrain \
     src/Vehicle \
     src/Vehicle/Actuators \
+    src/Vehicle/LibEvents \
     src/Audio \
     src/comm \
     src/input \
@@ -557,6 +558,9 @@ HEADERS += \
     src/Vehicle/Actuators/GeometryImage.h \
     src/Vehicle/Actuators/Mixer.h \
     src/Vehicle/Actuators/MotorAssignment.h \
+    src/Vehicle/LibEvents/EventHandler.h \
+    src/Vehicle/LibEvents/HealthAndArmingCheckReport.h \
+    src/Vehicle/LibEvents/libevents_includes.h \
     src/Vehicle/CompInfo.h \
     src/Vehicle/CompInfoActuators.h \
     src/Vehicle/CompInfoEvents.h \
@@ -565,10 +569,8 @@ HEADERS += \
     src/Vehicle/ComponentInformationCache.h \
     src/Vehicle/ComponentInformationManager.h \
     src/Vehicle/ComponentInformationTranslation.h \
-    src/Vehicle/EventHandler.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
-    src/Vehicle/HealthAndArmingCheckReport.h \
     src/Vehicle/ImageProtocolManager.h \
     src/Vehicle/InitialConnectStateMachine.h \
     src/Vehicle/MAVLinkLogManager.h \
@@ -820,6 +822,9 @@ SOURCES += \
     src/Vehicle/Actuators/GeometryImage.cc \
     src/Vehicle/Actuators/Mixer.cc \
     src/Vehicle/Actuators/MotorAssignment.cc \
+    src/Vehicle/LibEvents/EventHandler.cc \
+    src/Vehicle/LibEvents/HealthAndArmingCheckReport.cc \
+    src/Vehicle/LibEvents/logging.cpp \
     src/Vehicle/CompInfo.cc \
     src/Vehicle/CompInfoActuators.cc \
     src/Vehicle/CompInfoEvents.cc \
@@ -828,10 +833,8 @@ SOURCES += \
     src/Vehicle/ComponentInformationCache.cc \
     src/Vehicle/ComponentInformationManager.cc \
     src/Vehicle/ComponentInformationTranslation.cc \
-    src/Vehicle/EventHandler.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
-    src/Vehicle/HealthAndArmingCheckReport.cc \
     src/Vehicle/ImageProtocolManager.cc \
     src/Vehicle/InitialConnectStateMachine.cc \
     src/Vehicle/MAVLinkLogManager.cc \
