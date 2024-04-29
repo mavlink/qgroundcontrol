@@ -8,8 +8,9 @@
  ****************************************************************************/
 
 #include "SurveyComplexItemTest.h"
-#include "QGCApplication.h"
-#include "JsonHelper.h"
+#include "SurveyComplexItem.h"
+#include "PlanViewSettings.h"
+#include "MultiSignalSpy.h"
 
 SurveyComplexItemTest::SurveyComplexItemTest(void)
 {
@@ -223,7 +224,7 @@ QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround
         singleTransect.takeFirst();
         singleTransect.takeLast();
     }
-    
+
     for (int i=0; i<_expectedTransectCount; i++) {
         expectedCommands.append(singleTransect);
     }

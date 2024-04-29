@@ -10,7 +10,8 @@
 #pragma once
 
 #include "VisualMissionItemTest.h"
-#include "SimpleMissionItemTest.h"
+
+class Section;
 
 /// Unit test for Sections
 class SectionTest : public VisualMissionItemTest

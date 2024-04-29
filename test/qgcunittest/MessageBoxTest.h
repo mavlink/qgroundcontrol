@@ -20,10 +20,10 @@
 class MessageBoxTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     MessageBoxTest(void);
-    
+
 private slots:
     void _messageBoxExpected_test(void);
     void _messageBoxUnexpected_test(void);

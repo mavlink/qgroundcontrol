@@ -1,17 +1,23 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Qml Quick Test)
 
 qt_add_library(FactSystemTest
 	STATIC
-		FactSystemTestBase.cc FactSystemTestBase.h
-		FactSystemTestGeneric.cc FactSystemTestGeneric.h
-		FactSystemTestPX4.cc FactSystemTestPX4.h
-		ParameterManagerTest.cc ParameterManagerTest.h
+		FactSystemTestBase.cc
+		FactSystemTestBase.h
+		FactSystemTestGeneric.cc
+		FactSystemTestGeneric.h
+		FactSystemTestPX4.cc
+		FactSystemTestPX4.h
+		ParameterManagerTest.cc
+		ParameterManagerTest.h
 )
 
 target_link_libraries(FactSystemTest
     PRIVATE
+    	Qt6::Quick
+    	Qt6::Test
         AutoPilotPlugins
-        comm
+        FactSystem
         qgc
         Settings
         Vehicle

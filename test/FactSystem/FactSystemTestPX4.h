@@ -11,8 +11,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef FactSystemTestPX4_H
-#define FactSystemTestPX4_H
+#pragma once
 
 #include "FactSystemTestBase.h"
 
@@ -20,18 +19,16 @@
 class FactSystemTestPX4 : public FactSystemTestBase
 {
     Q_OBJECT
-    
+
 public:
     FactSystemTestPX4(void);
-    
+
 private slots:
     void init(void);
     void cleanup(void) { _cleanup(); }
-    
+
     void parameter_default_component_id_test(void) { _parameter_default_component_id_test(); }
     void parameter_specific_component_id_test(void) { _parameter_specific_component_id_test(); }
     void qml_test(void) { _qml_test(); }
     void qmlUpdate_test(void) { _qmlUpdate_test(); }
 };
-
-#endif

@@ -12,12 +12,15 @@
 #include "QGCCorePlugin.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
+#include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 
+#include <QtTest/QTest>
+
 MissionCommandTreeEditorTest::MissionCommandTreeEditorTest(void)
 {
-    
+
 }
 
 void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_t firmwareClass, QGCMAVLink::VehicleClass_t vehicleClass)

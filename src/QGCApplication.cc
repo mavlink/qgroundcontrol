@@ -234,13 +234,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APPLICATION_NAME);
     } else {
-#ifdef DAILY_BUILD
-        // This gives daily builds their own separate settings space. Allowing you to use daily and stable builds
-        // side by side without daily screwing up your stable settings.
-        applicationName = QStringLiteral("%1 Daily").arg(QGC_APPLICATION_NAME);
-#else
         applicationName = QGC_APPLICATION_NAME;
-#endif
     }
     setApplicationName(applicationName);
     setOrganizationName(QGC_ORG_NAME);

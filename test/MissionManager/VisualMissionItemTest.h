@@ -10,13 +10,10 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "TCPLink.h"
-#include "MultiSignalSpy.h"
-#include "SimpleMissionItem.h"
-
-#include <QGeoCoordinate>
 
 class PlanMasterController;
+class MultiSignalSpy;
+class VisualMissionItem;
 
 /// Unit test for SimpleMissionItem
 class VisualMissionItemTest : public UnitTest

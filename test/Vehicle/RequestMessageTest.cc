@@ -10,7 +10,8 @@
 #include "RequestMessageTest.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "MockLink.h"
+
+#include <QtTest/QTest>
 
 RequestMessageTest::TestCase_t RequestMessageTest::_rgTestCases[] = {
     {  MockLink::FailRequestMessageNone,                                MAV_RESULT_ACCEPTED,    Vehicle::RequestMessageNoFailure,                   1,                                  false },

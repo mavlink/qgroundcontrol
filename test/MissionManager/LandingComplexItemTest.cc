@@ -8,17 +8,18 @@
  ****************************************************************************/
 
 #include "LandingComplexItemTest.h"
-#include "QGCApplication.h"
-#include "MissionCommandTree.h"
-#include "MissionCommandUIInfo.h"
 #include "CameraSectionTest.h"
 #include "JsonHelper.h"
+#include "PlanMasterController.h"
+#include "MultiSignalSpy.h"
+#include "CameraSection.h"
+#include "SimpleMissionItem.h"
 
 const char* SimpleLandingComplexItem::settingsGroup             = "SimpleLandingComplexItemUnitTest";
 const char* SimpleLandingComplexItem::jsonComplexItemTypeValue  = "utSimpleLandingPattern";
 
 LandingComplexItemTest::LandingComplexItemTest(void)
-{    
+{
     rgSignals[finalApproachCoordinateChangedIndex]  = SIGNAL(finalApproachCoordinateChanged(QGeoCoordinate));
     rgSignals[loiterTangentCoordinateChangedIndex]  = SIGNAL(loiterTangentCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));

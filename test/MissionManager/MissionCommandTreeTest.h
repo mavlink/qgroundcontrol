@@ -7,20 +7,21 @@
  *
  ****************************************************************************/
 
-#ifndef MissionCommandTreeTest_H
-#define MissionCommandTreeTest_H
+#pragma once
 
 #include "UnitTest.h"
-#include "MissionCommandTree.h"
+
+class MissionCommandTree;
+class MissionCommandUIInfo;
 
 /// Unit test for the MissionItem Object
 class MissionCommandTreeTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     MissionCommandTreeTest(void);
-    
+
 private slots:
     void init(void);
     void cleanup(void);
@@ -40,5 +41,3 @@ private:
 
     MissionCommandTree* _commandTree;
 };
-
-#endif

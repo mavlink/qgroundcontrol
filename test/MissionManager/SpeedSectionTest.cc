@@ -8,14 +8,18 @@
  ****************************************************************************/
 
 #include "SpeedSectionTest.h"
-#include "PlanMasterController.h"
+#include "SpeedSection.h"
+#include "SimpleMissionItem.h"
+#include "MultiSignalSpy.h"
+
+#include <QtTest/QTest>
 
 SpeedSectionTest::SpeedSectionTest(void)
     : _spySpeed(nullptr)
     , _spySection(nullptr)
     , _speedSection(nullptr)
 {
-    
+
 }
 
 void SpeedSectionTest::init(void)

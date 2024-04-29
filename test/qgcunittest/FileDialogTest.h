@@ -20,10 +20,10 @@
 class FileDialogTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     FileDialogTest(void);
-    
+
 private slots:
     void _fileDialogExpected_test(void);
     void _fileDialogUnexpected_test(void);

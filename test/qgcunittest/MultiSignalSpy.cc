@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "MultiSignalSpy.h"
-#include <QEventLoop>
-#include <QCoreApplication>
-#include <QDebug>
-#include <QTest>
+
+#include <QtCore/QDebug>
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
 
 /// @file
 ///     @brief This class allows you to keep track of signal counts on a set of signals associated with an object.
@@ -47,7 +47,7 @@ bool MultiSignalSpy::init(QObject*        signalEmitter,    ///< [in] object whi
         qDebug() << "Invalid arguments";
         return false;
     }
-    
+
     _signalEmitter = signalEmitter;
     _rgSignals = rgSignals;
     _cSignals = cSignals;
@@ -62,7 +62,7 @@ bool MultiSignalSpy::init(QObject*        signalEmitter,    ///< [in] object whi
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -72,7 +72,7 @@ bool MultiSignalSpy::_checkSignalByMaskWorker(quint32 mask, bool multipleSignals
         if ((1 << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
-            
+
             if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
                 qDebug() << "Failed index:" << i;
                 _printSignalState(mask);
@@ -80,7 +80,7 @@ bool MultiSignalSpy::_checkSignalByMaskWorker(quint32 mask, bool multipleSignals
             }
         }
     }
-    
+
     return true;
 }
 
@@ -102,7 +102,7 @@ bool MultiSignalSpy::_checkOnlySignalByMaskWorker(quint32 mask, bool multipleSig
             }
         }
     }
-    
+
     return true;
 }
 
@@ -140,7 +140,7 @@ bool MultiSignalSpy::checkNoSignalByMask(quint32 mask)
             }
         }
     }
-    
+
     return true;
 }
 
@@ -164,7 +164,7 @@ void MultiSignalSpy::clearSignalByIndex(quint32 index)
 {
     Q_ASSERT(index < _cSignals);
     Q_ASSERT(_rgSpys[index] != nullptr);
-    
+
     _rgSpys[index]->clear();
 }
 
@@ -204,7 +204,7 @@ bool MultiSignalSpy::waitForSignalByIndex(
     // Check input parameters
     if (msec < -1 || msec == 0)
         return false;
-    
+
     // activate the timeout
     _timeout = false;
     int timerId;
@@ -214,15 +214,15 @@ bool MultiSignalSpy::waitForSignalByIndex(
     } else {
         timerId = 0;
     }
-    
+
     // Begin waiting
     QSignalSpy* spy = _rgSpys[index];
     Q_ASSERT(spy);
-    
+
     while (spy->count() == 0 && !_timeout) {
         QTest::qWait(100);
     }
-    
+
     // Clean up and return status
     if (timerId) {
         killTimer(timerId);

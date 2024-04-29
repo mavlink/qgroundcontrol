@@ -8,17 +8,15 @@
  ****************************************************************************/
 
 
-#ifndef ParameterManagerTest_H
-#define ParameterManagerTest_H
+#pragma once
 
 #include "UnitTest.h"
-#include "MockLink.h"
-#include "MultiSignalSpy.h"
+#include "MockLinkMissionItemHandler.h"
 
 class ParameterManagerTest : public UnitTest
 {
     Q_OBJECT
-    
+
 private slots:
     void _noFailure(void);
     void _requestListNoResponse(void);
@@ -27,9 +25,6 @@ private slots:
     void _FTPnoFailure(void);
     void _FTPChangeParam(void);
 
-
 private:
     void _noFailureWorker(MockConfiguration::FailureMode_t failureMode);
 };
-
-#endif

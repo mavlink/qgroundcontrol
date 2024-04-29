@@ -10,7 +10,9 @@
 #pragma once
 
 #include "VisualMissionItemTest.h"
-#include "SimpleMissionItem.h"
+#include "QGroundControlQmlGlobal.h"
+
+class SimpleMissionItem;
 
 /// Unit test for SimpleMissionItem
 
@@ -36,7 +38,7 @@ typedef struct {
 class SimpleMissionItemTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
+
 public:
     SimpleMissionItemTest(void);
 

@@ -10,11 +10,10 @@
 
 #pragma once
 
-#include "ComponentInformationCache.h"
 
 #include "UnitTest.h"
 
-#include <QString>
+#include <QtCore/QString>
 
 class ComponentInformationCacheTest : public UnitTest
 {

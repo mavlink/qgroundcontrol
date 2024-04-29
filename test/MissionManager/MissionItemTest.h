@@ -10,19 +10,18 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MultiSignalSpy.h"
 #include "MissionItem.h"
-#include "Vehicle.h"
-#include "PlanMasterController.h"
+
+class PlanMasterController;
 
 /// Unit test for the MissionItem Object
 class MissionItemTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     MissionItemTest(void);
-    
+
     void init(void) override;
     void cleanup(void) override;
 

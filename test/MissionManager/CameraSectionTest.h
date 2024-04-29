@@ -10,14 +10,15 @@
 #pragma once
 
 #include "SectionTest.h"
-#include "CameraSection.h"
-#include "PlanMasterController.h"
+
+class CameraSection;
+class PlanMasterController;
 
 /// Unit test for CameraSection
 class CameraSectionTest : public SectionTest
 {
     Q_OBJECT
-    
+
 public:
     CameraSectionTest(void);
 

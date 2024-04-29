@@ -10,23 +10,22 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MultiSignalSpyV2.h"
-#include "CameraCalc.h"
-#include "PlanMasterController.h"
 
-#include <QGeoCoordinate>
+class MultiSignalSpyV2;
+class CameraCalc;
+class PlanMasterController;
 
 class CameraCalcTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     CameraCalcTest(void);
 
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
     void _testDirty             (void);
     void _testAdjustedFootprint (void);

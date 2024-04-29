@@ -14,6 +14,10 @@
 #include "MockLink.h"
 #include "FTPManager.h"
 
+#include <QtCore/QStandardPaths>
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
+
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {  "/general.json" },
 };

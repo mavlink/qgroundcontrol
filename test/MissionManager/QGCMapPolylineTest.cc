@@ -8,8 +8,10 @@
  ****************************************************************************/
 
 #include "QGCMapPolylineTest.h"
-#include "QGCApplication.h"
 #include "QGCQGeoCoordinate.h"
+#include "MultiSignalSpy.h"
+#include "QGCMapPolyline.h"
+#include "QmlObjectListModel.h"
 
 QGCMapPolylineTest::QGCMapPolylineTest(void)
 {

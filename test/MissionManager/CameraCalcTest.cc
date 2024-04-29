@@ -8,8 +8,11 @@
  ****************************************************************************/
 
 #include "CameraCalcTest.h"
-#include "QGCApplication.h"
+#include "CameraCalc.h"
 #include "PlanMasterController.h"
+#include "MultiSignalSpyV2.h"
+
+#include <QtTest/QTest>
 
 CameraCalcTest::CameraCalcTest(void)
 {

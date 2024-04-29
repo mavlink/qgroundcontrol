@@ -19,7 +19,7 @@ class RequestMessageTest : public UnitTest
 
 signals:
     void resultHandlerCalled(void);
-    
+
 private slots:
     void _performTestCases(void);
     void _compIdAllFailure(void);

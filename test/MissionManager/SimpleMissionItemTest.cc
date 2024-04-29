@@ -8,10 +8,13 @@
  ****************************************************************************/
 
 #include "SimpleMissionItemTest.h"
+#include "SimpleMissionItem.h"
 #include "QGCApplication.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "PlanMasterController.h"
+#include "MultiSignalSpy.h"
+
+#include <QtTest/QTest>
 
 static const ItemInfo_t _rgItemInfo[] = {
     { MAV_CMD_NAV_WAYPOINT,     MAV_FRAME_GLOBAL_RELATIVE_ALT },
@@ -69,7 +72,7 @@ const ItemExpected_t _rgItemExpected[] = {
 
 SimpleMissionItemTest::SimpleMissionItemTest(void)
     : _simpleItem(nullptr)
-{    
+{
     rgSimpleItemSignals[commandChangedIndex] =                          SIGNAL(commandChanged(int));
     rgSimpleItemSignals[altitudeModeChangedIndex] =                     SIGNAL(altitudeModeChanged());
     rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =              SIGNAL(friendlyEditAllowedChanged(bool));

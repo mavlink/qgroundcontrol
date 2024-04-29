@@ -14,7 +14,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MainWindowTest.h"
-#include "MockLink.h"
+#include "MainWindow.h"
 #include "QGCMessageBox.h"
 #include "MultiVehicleManager.h"
 
@@ -22,7 +22,7 @@ void MainWindowTest::_connectWindowClose_test(MAV_AUTOPILOT autopilot)
 {
     _createMainWindow();
     _connectMockLink(autopilot);
-    
+
     // On MainWindow close we should get a message box telling the user to disconnect first. Cancel should do nothing.
     setExpectedMessageBox(QGCMessageBox::Cancel);
     _closeMainWindow(true /* cancelExpected */);

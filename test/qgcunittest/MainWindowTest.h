@@ -16,12 +16,12 @@
 #pragma once
 
 #include "UnitTest.h"
-#include "MainWindow.h"
+#include "QGCMAVLink.h"
 
 class MainWindowTest : public UnitTest
 {
     Q_OBJECT
-    
+
 private slots:
     void _connectWindowClosePX4_test(void);
     void _connectWindowCloseGeneric_test(void);

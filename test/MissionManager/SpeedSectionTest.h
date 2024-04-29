@@ -10,7 +10,8 @@
 #pragma once
 
 #include "SectionTest.h"
-#include "SpeedSection.h"
+
+class SpeedSection;
 
 /// Unit test for CameraSection
 class SpeedSectionTest : public SectionTest

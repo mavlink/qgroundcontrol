@@ -7,19 +7,19 @@
  *
  ****************************************************************************/
 
-#ifndef LogDownloadTest_H
-#define LogDownloadTest_H
+#pragma once
 
 #include "UnitTest.h"
-#include "MultiSignalSpy.h"
+
+class MultiSignalSpy;
 
 class LogDownloadTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     LogDownloadTest(void);
-    
+
 private slots:
     //void init(void);
     //void cleanup(void) { _cleanup(); }
@@ -47,5 +47,3 @@ private:
     const char*         _rgLogDownloadControllerSignals[_cLogDownloadControllerSignals];
 
 };
-
-#endif

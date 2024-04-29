@@ -84,6 +84,10 @@ cmake_print_variables(CMAKE_CURRENT_SOURCE_DIR)
 cmake_print_variables(CMAKE_BUILD_TYPE)
 cmake_print_variables(CMAKE_TOOLCHAIN_FILE)
 
+if(WIN32)
+    add_compile_definitions(_USE_MATH_DEFINES)
+endif()
+
 #######################################################
 #               Qt6 Configuration
 #######################################################
@@ -101,10 +105,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
         QT_NO_DEBUG_OUTPUT
     )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    include(CTest)
-    enable_testing()
-
     set(QT_ENABLE_VERBOSE_DEPLOYMENT ON CACHE BOOL "Verbose Deployment")
+endif()
+
+cmake_dependent_option(QT_QML_DEBUG "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+if(QT_QML_DEBUG)
+    message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
+    add_compile_definitions(QT_QML_DEBUG)
 endif()
 
 if(ANDROID)
@@ -171,22 +178,21 @@ qt_policy(
 
 option(QGC_STABLE_BUILD "Stable build option" OFF)
 if(NOT QGC_STABLE_BUILD)
-    add_compile_definitions(DAILY_BUILD)
-endif()
-
-cmake_dependent_option(QGC_BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-if(QGC_BUILD_TESTING)
-    add_compile_definitions(UNITTEST_BUILD) # TODO: QGC_UNITTEST_BUILD
+    add_compile_definitions(
+        DAILY_BUILD
+        QGC_APPLICATION_NAME="${PROJECT_NAME} Daily"
+    )
+else()
+    add_compile_definitions(QGC_APPLICATION_NAME="${PROJECT_NAME}")
 endif()
 
 # option(QGC_CUSTOM_BUILD "Enable Custom Build" OFF)
 
 # option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable Mavlink Inspector" OFF) # This removes QtCharts which is GPL licensed
 
-cmake_dependent_option(QGC_DEBUG_QML "Build QGroundControl with QML debugging/profiling support." OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-if(QGC_DEBUG_QML)
-    message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
-    add_compile_definitions(QT_QML_DEBUG)
+cmake_dependent_option(QGC_BUILD_TESTING "Enable testing" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+if(QGC_BUILD_TESTING)
+    add_compile_definitions(UNITTEST_BUILD)
 endif()
 
 #######################################################
@@ -206,10 +212,6 @@ if(CONFIG_UTM_ADAPTER)
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/src/UTMSP/utmsp.qrc)
 else()
     list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/src/UTMSP/dummy/utmsp_dummy.qrc)
-endif()
-
-if(QGC_BUILD_TESTING)
-    list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/test/UnitTest.qrc)
 endif()
 
 if(WIN32)
@@ -246,7 +248,6 @@ if(WIN32)
             WIN32_EXECUTABLE TRUE
             QT_TARGET_RC_ICONS "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico"
     )
-    add_compile_definitions(_USE_MATH_DEFINES)
 elseif(MACOS)
     set_target_properties(${PROJECT_NAME}
         PROPERTIES
@@ -301,7 +302,6 @@ elseif(LINUX)
 endif()
 
 add_compile_definitions(
-    QGC_APPLICATION_NAME="QGroundControl"
     QGC_ORG_NAME="QGroundControl.org"
     QGC_ORG_DOMAIN="org.qgroundcontrol"
     APP_VERSION_STR="${APP_VERSION_STR}"
@@ -318,6 +318,7 @@ target_link_libraries(${PROJECT_NAME}
         Qt6::Svg # Used to import QSvgPlugin
         qgc
 )
+
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     target_link_libraries(${PROJECT_NAME} PRIVATE qgctest)

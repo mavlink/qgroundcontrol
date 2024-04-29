@@ -9,9 +9,10 @@
 
 #pragma once
 
-#include <QObject>
-#include <QSignalSpy>
-#include <QGeoCoordinate>
+#include <QtCore/QObject>
+#include <QtPositioning/QGeoCoordinate>
+
+class QSignalSpy;
 
 /// @file
 ///     @brief Works just like MultiSignalSpy but the signal arrays are setup automatically through introspection on
@@ -20,7 +21,7 @@
 class MultiSignalSpyV2 : public QObject
 {
     Q_OBJECT
-    
+
 public:
     MultiSignalSpyV2(QObject* parent = nullptr);
     ~MultiSignalSpyV2();
@@ -55,7 +56,7 @@ public:
     void clearAllSignals(void);
 
     bool waitForSignal(const char* signalName, int msec);
-    
+
     QSignalSpy* getSpy(const char* signalName);
 
     // Returns the value type for the first parameter of the signal
@@ -66,7 +67,7 @@ public:
 private:
     // QObject overrides
     void timerEvent(QTimerEvent * event);
-    
+
     void _printSignalState              (quint64 mask);
     bool _checkSignalByMaskWorker       (quint64 mask, bool multipleSignalsAllowed);
     bool _checkOnlySignalByMaskWorker   (quint64 mask, bool multipleSignalsAllowed);

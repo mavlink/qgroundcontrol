@@ -15,9 +15,9 @@
 
 #pragma once
 
-#include <QGeoCoordinate>
-
 #include "UnitTest.h"
+
+#include <QtPositioning/QGeoCoordinate>
 
 class GeoTest : public UnitTest
 {
@@ -33,6 +33,7 @@ private slots:
     void _convertGeoToNedAtOrigin_test(void);
     void _convertNedToGeo_test(void);
     void _convertNedToGeoAtOrigin_test(void);
+
 private:
     QGeoCoordinate _origin;
 };

@@ -8,24 +8,17 @@
  ****************************************************************************/
 
 
-#ifndef MissionManagerTest_H
-#define MissionManagerTest_H
+#pragma once
 
-#include "UnitTest.h"
-#include "MockLink.h"
-#include "MissionManager.h"
-#include "MultiSignalSpy.h"
 #include "MissionControllerManagerTest.h"
-
-#include <QGeoCoordinate>
 
 class MissionManagerTest : public MissionControllerManagerTest
 {
     Q_OBJECT
-    
+
 public:
     MissionManagerTest(void);
-    
+
 private slots:
     //void _testWriteFailureHandlingPX4(void);
     //void _testWriteFailureHandlingAPM(void);
@@ -43,9 +36,7 @@ private:
     void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult, bool shouldFail);
     void _testWriteFailureHandlingWorker(void);
     void _testReadFailureHandlingWorker(void);
-    
+
     static const TestCase_t _rgTestCases[];
     static const size_t     _cTestCases;
 };
-
-#endif

@@ -8,24 +8,19 @@
  ****************************************************************************/
 
 
-#ifndef MissionControllerTest_H
-#define MissionControllerTest_H
+#pragma once
 
-#include "UnitTest.h"
-#include "MockLink.h"
-#include "MissionManager.h"
-#include "MultiSignalSpy.h"
 #include "MissionControllerManagerTest.h"
-#include "PlanMasterController.h"
-#include "MissionController.h"
-#include "SimpleMissionItem.h"
 
-#include <QGeoCoordinate>
+class MissionController;
+class MultiSignalSpy;
+class PlanMasterController;
+class VisualMissionItem;
 
 class MissionControllerTest : public MissionControllerManagerTest
 {
     Q_OBJECT
-    
+
 public:
     MissionControllerTest(void);
 
@@ -88,5 +83,3 @@ private:
     const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
     const char*         _rgVisualItemSignals[_cVisualItemSignals];
 };
-
-#endif
