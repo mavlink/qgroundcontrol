@@ -2,4 +2,18 @@
 <resources>
     <!-- Allow anything connected -->
     <usb-device />
+    <!-- <usb-device vendor-id="1118" product-id="688"></usb-device> -->
+    <!-- <usb-device vendor-id="1027" product-id="24577" /> --> <!-- FT232RL -->
+    <!-- <usb-device vendor-id="1027" product-id="24596" /> --> <!-- FT232H -->
+    <!-- <usb-device vendor-id="1027" product-id="24592" /> --> <!-- FT2232C/D/HL -->
+    <!-- <usb-device vendor-id="1027" product-id="24593" /> --> <!-- FT4232HL -->
+    <!-- <usb-device vendor-id="1027" product-id="24597" /> --> <!-- FT230X -->
+    <!-- <usb-device vendor-id="1027" product-id="24604" /> --> <!-- FT4222 -->
+    <!-- <usb-device vendor-id="1412" product-id="45088" /> --> <!-- REX-USB60F -->
+    <!-- <usb-device vendor-id="1027" product-id="24641" /> --> <!-- FT4233HPQ -->
+    <!-- <usb-device vendor-id="1027" product-id="24643" /> --> <!-- FT4232HPQ -->
+    <!-- <usb-device vendor-id="1027" product-id="24640" /> --> <!-- FT2233HPQ-->
+    <!-- <usb-device vendor-id="1027" product-id="24642" /> --> <!-- FT4232HPQ -->
+    <!-- <usb-device vendor-id="1027" product-id="24645" /> --> <!-- FT232HPQ -->
+    <!-- <usb-device vendor-id="1027" product-id="24644" /> --> <!-- FT233HPQ -->
 </resources>
