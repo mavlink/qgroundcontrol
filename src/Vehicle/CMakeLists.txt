@@ -1,4 +1,5 @@
 add_subdirectory(Actuators)
+add_subdirectory(LibEvents)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Positioning Qml)
 
@@ -21,14 +22,10 @@ qt_add_library(Vehicle STATIC
 	ComponentInformationManager.h
 	ComponentInformationTranslation.cc
 	ComponentInformationTranslation.h
-	EventHandler.cc
-	EventHandler.h
 	FTPManager.cc
 	FTPManager.h
 	GPSRTKFactGroup.cc
 	GPSRTKFactGroup.h
-	HealthAndArmingCheckReport.cc
-	HealthAndArmingCheckReport.h
 	ImageProtocolManager.cc
 	ImageProtocolManager.h
 	InitialConnectStateMachine.cc
@@ -94,16 +91,6 @@ qt_add_library(Vehicle STATIC
 	VehicleHygrometerFactGroup.cc
 	VehicleHygrometerFactGroup.h
 )
-
-# include(FetchContent)
-# FetchContent_Declare(libevents
-# 	GIT_REPOSITORY https://github.com/mavlink/libevents.git
-# 	GIT_TAG main
-# 	GIT_SHALLOW TRUE
-# )
-# FetchContent_MakeAvailable(libevents)
-
-add_subdirectory(${CMAKE_SOURCE_DIR}/libs/libevents libevents.build)
 
 target_link_libraries(Vehicle
 	PRIVATE
