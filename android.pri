@@ -108,6 +108,7 @@ DISTFILES += \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/org/mavlink/qgroundcontrol/UsbIoManager.java
 
 SOURCES += \
+    $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidInit.cpp \
     $$ANDROID_PACKAGE_QGC_SOURCE_DIR/src/AndroidInterface.cc
 
 HEADERS += \
