@@ -71,6 +71,14 @@ jobs:
           choco install --no-progress ninja -y
           choco install --no-progress cmake --installargs 'ADD_CMAKE_TO_PATH=System' --apply-install-arguments-to-dependencies
 
+      - name: Install Vulkan
+        working-directory: ${{ runner.temp }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
+          .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
+          echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
+
       - name: Install Gstreamer
         uses: blinemedical/setup-gstreamer@v1
         with:
