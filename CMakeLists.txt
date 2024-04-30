@@ -158,7 +158,9 @@ find_package(Qt6
         ${QT_LIBRARY_HINTS}
 )
 
-qt_standard_project_setup(REQUIRES 6.6.0)
+# Require 6.6.3 because otherwise libQt6QuickControls2Basic.so.6 &
+# libQt6QuickControls2BasicStyleImpl.so.6 are missing.
+qt_standard_project_setup(REQUIRES 6.6.3)
 
 qt_policy(
     SET QTP0001 NEW
