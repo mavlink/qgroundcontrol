@@ -143,14 +143,18 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef Q_OS_WIN
+    // Unlike Qt5, Qt6 on Windows use Direct3D by default,
+    // so force it to use OpenGL since it is required by qt6glitem
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+
     // Set our own OpenGL buglist
     qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
 
     // Allow for command line override of renderer
     for (int i = 0; i < argc; i++) {
         const QString arg(argv[i]);
-        if (arg == QStringLiteral("-angle")) {
-            QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
+        if (arg == QStringLiteral("-desktop")) {
+            QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
             break;
         } else if (arg == QStringLiteral("-swrast")) {
             QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);

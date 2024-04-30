@@ -254,7 +254,7 @@ gst_qml6_get_gl_wrapcontext (GstGLDisplay * display,
     gst_gl_display_filter_gl_api (display, gst_gl_context_get_gl_api (*wrap_glcontext));
     gst_gl_context_activate (*wrap_glcontext, FALSE);
   }
-#if 0
+#if 1
 #if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
   g_return_val_if_fail (context != NULL, FALSE);
 
