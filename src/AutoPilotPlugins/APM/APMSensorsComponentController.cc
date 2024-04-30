@@ -9,6 +9,7 @@
 
 
 #include "APMSensorsComponentController.h"
+#include "APMSensorsComponent.h"
 #include "QGCApplication.h"
 #include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"

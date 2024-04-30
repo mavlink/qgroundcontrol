@@ -9,13 +9,15 @@
 
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
-#include "Generic/GenericAutoPilotPlugin.h"
+#include "GenericAutoPilotPlugin.h"
+#include "AutoPilotPlugin.h"
 #include "CameraMetaData.h"
 #include "QGCFileDownload.h"
 #include "QGCCameraManager.h"
 #include "RadioComponentController.h"
 #include "Autotune.h"
 #include "VehicleCameraControl.h"
+#include "VehicleComponent.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 

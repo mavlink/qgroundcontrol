@@ -14,8 +14,8 @@
 #ifndef AIRFRAMECOMPONENTAIRFRAMES_H
 #define AIRFRAMECOMPONENTAIRFRAMES_H
 
-#include <QList>
-#include <QMap>
+#include <QtCore/QList>
+#include <QtCore/QMap>
 
 /// MVC Controller for AirframeComponent.qml.
 class AirframeComponentAirframes

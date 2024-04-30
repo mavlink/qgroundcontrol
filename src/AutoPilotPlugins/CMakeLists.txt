@@ -5,117 +5,24 @@ add_subdirectory(PX4)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 qt_add_library(AutoPilotPlugins STATIC
-	APM/APMAirframeComponent.cc
-	APM/APMAirframeComponent.h
-	APM/APMAirframeComponentController.cc
-	APM/APMAirframeComponentController.h
-	APM/APMAutoPilotPlugin.cc
-	APM/APMAutoPilotPlugin.h
-	APM/APMCameraComponent.cc
-	APM/APMCameraComponent.h
-	APM/APMFlightModesComponent.cc
-	APM/APMFlightModesComponent.h
-	APM/APMFlightModesComponentController.cc
-	APM/APMFlightModesComponentController.h
-	APM/APMFollowComponent.cc
-	APM/APMFollowComponent.h
-	APM/APMFollowComponentController.cc
-	APM/APMFollowComponentController.h
-	APM/APMHeliComponent.cc
-	APM/APMHeliComponent.h
-	APM/APMLightsComponent.cc
-	APM/APMLightsComponent.h
-	APM/APMMotorComponent.cc
-	APM/APMMotorComponent.h
-	APM/APMPowerComponent.cc
-	APM/APMPowerComponent.h
-	APM/APMRadioComponent.cc
-	APM/APMRadioComponent.h
-	APM/APMRemoteSupportComponent.cc
-	APM/APMRemoteSupportComponent.h
-	APM/APMSafetyComponent.cc
-	APM/APMSafetyComponent.h
-	APM/APMSensorsComponent.cc
-	APM/APMSensorsComponent.h
-	APM/APMSensorsComponentController.cc
-	APM/APMSensorsComponentController.h
-	APM/APMSubFrameComponent.cc
-	APM/APMSubFrameComponent.h
-	APM/APMSubMotorComponentController.cc
-	APM/APMSubMotorComponentController.h
-	APM/APMTuningComponent.cc
-	APM/APMTuningComponent.h
-
-	Common/ESP8266Component.cc
-	Common/ESP8266Component.h
-	Common/ESP8266ComponentController.cc
-	Common/ESP8266ComponentController.h
-	Common/MotorComponent.cc
-	Common/MotorComponent.h
-	Common/RadioComponentController.cc
-	Common/RadioComponentController.h
-	Common/SyslinkComponent.cc
-	Common/SyslinkComponent.h
-	Common/SyslinkComponentController.cc
-	Common/SyslinkComponentController.h
-
-	Generic/GenericAutoPilotPlugin.cc
-	Generic/GenericAutoPilotPlugin.h
-
-	PX4/ActuatorComponent.cc
-	PX4/ActuatorComponent.h
-	PX4/AirframeComponent.cc
-	PX4/AirframeComponent.h
-	PX4/AirframeComponentAirframes.cc
-	PX4/AirframeComponentAirframes.h
-	PX4/AirframeComponentController.cc
-	PX4/AirframeComponentController.h
-	PX4/CameraComponent.cc
-	PX4/CameraComponent.h
-	PX4/FlightModesComponent.cc
-	PX4/FlightModesComponent.h
-	PX4/PowerComponent.cc
-	PX4/PowerComponent.h
-	PX4/PowerComponentController.cc
-	PX4/PowerComponentController.h
-	PX4/PX4AirframeLoader.cc
-	PX4/PX4AirframeLoader.h
-	PX4/PX4AutoPilotPlugin.cc
-	PX4/PX4AutoPilotPlugin.h
-	PX4/PX4FlightBehavior.cc
-	PX4/PX4FlightBehavior.h
-	PX4/PX4RadioComponent.cc
-	PX4/PX4RadioComponent.h
-	PX4/PX4SimpleFlightModesController.cc
-	PX4/PX4SimpleFlightModesController.h
-	PX4/PX4TuningComponent.cc
-	PX4/PX4TuningComponent.h
-	PX4/SafetyComponent.cc
-	PX4/SafetyComponent.h
-	PX4/SensorsComponent.cc
-	PX4/SensorsComponent.h
-	PX4/SensorsComponentController.cc
-	PX4/SensorsComponentController.h
-
 	AutoPilotPlugin.cc
 	AutoPilotPlugin.h
+	Generic/GenericAutoPilotPlugin.cc
+	Generic/GenericAutoPilotPlugin.h
 )
 
 target_link_libraries(AutoPilotPlugins
+    PRIVATE
+        FirmwarePlugin
+        qgc
+        Vehicle
 	PUBLIC
 		Qt6::Core
-		Qt6::Quick
-                FirmwarePlugin
-                VehicleSetup
-    PRIVATE
-        Actuators
-        qgc
+        VehicleSetup
 )
 
 target_include_directories(AutoPilotPlugins
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
-		APM
-		Common
-		PX4
+		Generic
 )

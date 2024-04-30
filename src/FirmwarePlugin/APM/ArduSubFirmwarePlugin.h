@@ -24,8 +24,7 @@
 /// @file
 ///     @author Rustom Jehangir <rusty@bluerobotics.com>
 
-#ifndef ArduSubFirmwarePlugin_H
-#define ArduSubFirmwarePlugin_H
+#pragma once
 
 #include "APMFirmwarePlugin.h"
 #include "FactGroup.h"
@@ -155,4 +154,3 @@ private:
     QMap<QString, FactGroup*> _nameToFactGroupMap;
     APMSubmarineFactGroup _infoFactGroup;
 };
-#endif

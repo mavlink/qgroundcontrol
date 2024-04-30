@@ -15,6 +15,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "AirframeComponentAirframes.h"
+#include "AutoPilotPlugin.h"
 
 #include <QFile>
 #include <QFileInfo>

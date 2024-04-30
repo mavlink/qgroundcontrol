@@ -13,6 +13,7 @@
 
 #include "APMCameraComponent.h"
 #include "APMAutoPilotPlugin.h"
+#include "Vehicle.h"
 
 APMCameraComponent::APMCameraComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)

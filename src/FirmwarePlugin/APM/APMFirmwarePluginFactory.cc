@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 #include "APMFirmwarePluginFactory.h"
-#include "APM/ArduCopterFirmwarePlugin.h"
-#include "APM/ArduPlaneFirmwarePlugin.h"
-#include "APM/ArduRoverFirmwarePlugin.h"
-#include "APM/ArduSubFirmwarePlugin.h"
+#include "ArduCopterFirmwarePlugin.h"
+#include "ArduPlaneFirmwarePlugin.h"
+#include "ArduRoverFirmwarePlugin.h"
+#include "ArduSubFirmwarePlugin.h"
 
 APMFirmwarePluginFactory APMFirmwarePluginFactory;
 

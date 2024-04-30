@@ -2,8 +2,11 @@ if (QGC_BUILD_TESTING)
     qt_add_library(qgctest
         STATIC
             UnitTestList.cc
-            UnitTest.qrc
     )
+
+    set(UNIT_TESTING_RESOURCES)
+    qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
+    target_sources(qgctest PUBLIC ${UNIT_TESTING_RESOURCES})
 
     add_custom_target(check
         COMMAND ctest --output-on-failure .

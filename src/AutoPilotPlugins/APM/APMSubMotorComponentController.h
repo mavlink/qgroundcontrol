@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef APMSubMotorComponentController_H
-#define APMSubMotorComponentController_H
+#pragma once
 
 #include "FactPanelController.h"
 
@@ -32,5 +31,3 @@ private slots:
 private:
     QString _motorDetectionMessages;
 };
-
-#endif
