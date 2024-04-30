@@ -1,7 +1,0 @@
-if(LINUX)
-    execute_process(COMMAND cd ${CMAKE_SOURCE_DIR}/deploy/installer)
-    execute_process(COMMAND ~/Qt/Tools/QtInstallerFramework/4.*/bin/binarycreator --offline-only -c ./config/config.xml -p ./packages QGCInstaller)
-elseif(WIN32)
-    execute_process(COMMAND cd ${CMAKE_SOURCE_DIR}/deploy/installer)
-    execute_process(COMMAND C:\Qt\Tools\QtInstallerFramework\4.*\bin\binarycreator --offline-only -c .\config\config.xml -p .\packages QGCInstaller)
-endif()
