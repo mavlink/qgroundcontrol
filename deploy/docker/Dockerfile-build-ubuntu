@@ -1,0 +1,33 @@
+#
+# QGroundControl ubuntu build environment
+#
+
+FROM ubuntu:22.04
+LABEL authors="Daniel Agar <daniel@agar.ca>, Patrick José Pereira <patrickelectric@gmail.com>"
+
+ARG QT_VERSION=6.6.3
+ARG QT_MODULES="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QT_PATH /opt/Qt
+ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
+
+ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+
+COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
+RUN /tmp/qt/install-dependencies-debian.sh
+
+# Install Qt
+COPY tools/setup/install-qt-debian.sh /tmp/qt/
+RUN /tmp/qt/install-qt-debian.sh
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+WORKDIR /project/build
+CMD cmake -S /project/source -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF ; \
+	cmake --build . --target all --config Debug ; \
+	cmake --install . --config Debug
