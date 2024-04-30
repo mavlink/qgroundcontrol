@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include "VehicleComponent.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
 
 class Vehicle;
 class FirmwarePlugin;
+class VehicleComponent;
 
 /// This is the base class for AutoPilot plugins
 ///

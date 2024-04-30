@@ -9,7 +9,7 @@
 
 
 #include "APMTuningComponent.h"
-#include "APMAutoPilotPlugin.h"
+#include "Vehicle.h"
 
 APMTuningComponent::APMTuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)

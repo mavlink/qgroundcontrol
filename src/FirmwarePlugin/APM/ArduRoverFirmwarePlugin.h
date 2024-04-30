@@ -11,8 +11,7 @@
 /// @file
 ///     @author Pritam Ghanghas <pritam.ghanghas@gmail.com>
 
-#ifndef ArduRoverFirmwarePlugin_H
-#define ArduRoverFirmwarePlugin_H
+#pragma once
 
 #include "APMFirmwarePlugin.h"
 
@@ -59,5 +58,3 @@ private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
-
-#endif

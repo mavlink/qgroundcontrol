@@ -13,7 +13,6 @@
 ///     @author Rustom Jehangir <rusty@bluerobotics.com>
 
 #include "APMLightsComponent.h"
-#include "APMAutoPilotPlugin.h"
 
 APMLightsComponent::APMLightsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)

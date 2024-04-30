@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef APMLightsComponent_H
-#define APMLightsComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -35,5 +34,3 @@ public:
 private:
     const QString   _name;
 };
-
-#endif

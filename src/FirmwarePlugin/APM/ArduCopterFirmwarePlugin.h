@@ -11,8 +11,7 @@
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef ArduCopterFirmwarePlugin_H
-#define ArduCopterFirmwarePlugin_H
+#pragma once
 
 #include "APMFirmwarePlugin.h"
 
@@ -80,5 +79,3 @@ private:
     static bool _remapParamNameIntialized;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
 };
-
-#endif

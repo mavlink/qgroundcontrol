@@ -8,11 +8,11 @@
  ****************************************************************************/
 
 
-#ifndef APMRadioComponent_H
-#define APMRadioComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
-#include "Fact.h"
+
+class Fact;
 
 class APMRadioComponent : public VehicleComponent
 {
@@ -43,5 +43,3 @@ private:
     QStringList     _mapParams;
     QList<Fact*>    _triggerFacts;
 };
-
-#endif

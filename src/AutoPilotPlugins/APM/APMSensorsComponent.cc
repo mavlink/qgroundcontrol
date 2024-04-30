@@ -9,9 +9,9 @@
 
 
 #include "APMSensorsComponent.h"
-#include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"
 #include "FactSystem.h"
+#include "Vehicle.h"
 
 // These two list must be kept in sync
 

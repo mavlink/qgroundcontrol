@@ -11,8 +11,8 @@
 #include "APMParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 
-#include <QFile>
-#include <QStack>
+#include <QtCore/QFile>
+#include <QtCore/QStack>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 

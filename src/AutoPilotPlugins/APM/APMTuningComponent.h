@@ -8,8 +8,7 @@
  ****************************************************************************/
 
 
-#ifndef APMTuningComponent_H
-#define APMTuningComponent_H
+#pragma once
 
 #include "VehicleComponent.h"
 
@@ -37,5 +36,3 @@ private:
     const QString   _name;
     QVariantList    _summaryItems;
 };
-
-#endif
