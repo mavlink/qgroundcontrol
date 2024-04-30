@@ -10,7 +10,6 @@
 #pragma once
 
 #include "FactPanelController.h"
-#include "ArduRoverFirmwarePlugin.h"
 #include "SettingsFact.h"
 
 class APMFollowComponentController : public FactPanelController
@@ -28,7 +27,7 @@ public:
     Fact* angleFact     (void) { return &_angleFact; }
     Fact* distanceFact  (void) { return &_distanceFact; }
     Fact* heightFact    (void) { return &_heightFact; }
-    bool  roverFirmware (void) { return !!qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin()); }
+    bool  roverFirmware (void);
 
     static const char* settingsGroup;
     static const char* angleName;

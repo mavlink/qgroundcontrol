@@ -1,37 +1,64 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
-add_custom_target(APMAutoPilotPluginQml
-    SOURCES
-        APMAirframeComponent.qml
-        APMAirframeComponentSummary.qml
-        APMCameraComponent.qml
-        APMCameraComponentSummary.qml
-        APMCameraSubComponent.qml
-        APMFlightModesComponent.qml
-        APMFlightModesComponentSummary.qml
-        APMHeliComponent.qml
-        APMLightsComponent.qml
-        APMLightsComponentSummary.qml
-        APMNotSupported.qml
-        APMPowerComponent.qml
-        APMPowerComponentSummary.qml
-        APMRadioComponentSummary.qml
-        APMRemoteSupportComponent.qml
-        APMSafetyComponent.qml
-        APMSafetyComponentCopter.qml
-        APMSafetyComponentPlane.qml
-        APMSafetyComponentRover.qml
-        APMSafetyComponentSub.qml
-        APMSafetyComponentSummary.qml
-        APMSafetyComponentSummaryCopter.qml
-        APMSafetyComponentSummaryPlane.qml
-        APMSafetyComponentSummaryRover.qml
-        APMSafetyComponentSummarySub.qml
-        APMSensorsComponent.qml
-        APMSensorsComponentSummary.qml
-        APMSubFrameComponent.qml
-        APMSubFrameComponentSummary.qml
-        APMSubMotorComponent.qml
-        APMTuningComponentCopter.qml
-        APMTuningComponentSub.qml
+qt_add_library(APMAutoPilotPlugin STATIC
+    APMAirframeComponent.cc
+    APMAirframeComponent.h
+    APMAirframeComponentController.cc
+    APMAirframeComponentController.h
+    APMAutoPilotPlugin.cc
+    APMAutoPilotPlugin.h
+    APMCameraComponent.cc
+    APMCameraComponent.h
+    APMFlightModesComponent.cc
+    APMFlightModesComponent.h
+    APMFlightModesComponentController.cc
+    APMFlightModesComponentController.h
+    APMFollowComponent.cc
+    APMFollowComponent.h
+    APMFollowComponentController.cc
+    APMFollowComponentController.h
+    APMHeliComponent.cc
+    APMHeliComponent.h
+    APMLightsComponent.cc
+    APMLightsComponent.h
+    APMMotorComponent.cc
+    APMMotorComponent.h
+    APMPowerComponent.cc
+    APMPowerComponent.h
+    APMRadioComponent.cc
+    APMRadioComponent.h
+    APMRemoteSupportComponent.cc
+    APMRemoteSupportComponent.h
+    APMSafetyComponent.cc
+    APMSafetyComponent.h
+    APMSensorsComponent.cc
+    APMSensorsComponent.h
+    APMSensorsComponentController.cc
+    APMSensorsComponentController.h
+    APMSubFrameComponent.cc
+    APMSubFrameComponent.h
+    APMSubMotorComponentController.cc
+    APMSubMotorComponentController.h
+    APMTuningComponent.cc
+    APMTuningComponent.h
 )
+
+target_link_libraries(APMAutoPilotPlugin
+    PRIVATE
+        Actuators
+        APMFirmwarePlugin
+        AutoPilotPlugins
+        FactSystem
+        qgc
+        Settings
+        Utilities
+    PUBLIC
+        Qt6::Core
+        Qt6::Quick
+        CommonAutoPilotPlugin
+        FactControls
+        Vehicle
+        VehicleSetup
+)
+
+target_include_directories(APMAutoPilotPlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

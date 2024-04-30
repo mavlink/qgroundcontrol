@@ -11,11 +11,11 @@
 #ifndef PX4AIRFRAMELOADER_H
 #define PX4AIRFRAMELOADER_H
 
-#include <QObject>
-#include <QMap>
-#include <QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QMap>
+#include <QtCore/QLoggingCategory>
 
-#include "AutoPilotPlugin.h"
+class AutoPilotPlugin;
 
 /// @file PX4AirframeLoader.h
 ///     @author Lorenz Meier <lm@qgroundcontrol.org>

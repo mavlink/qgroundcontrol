@@ -10,6 +10,7 @@
 
 #include "APMAutoPilotPlugin.h"
 #include "VehicleComponent.h"
+#include "Vehicle.h"
 #include "APMAirframeComponent.h"
 #include "APMFlightModesComponent.h"
 #include "APMRadioComponent.h"

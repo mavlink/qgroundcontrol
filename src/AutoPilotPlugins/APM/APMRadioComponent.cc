@@ -9,9 +9,10 @@
 
 
 #include "APMRadioComponent.h"
-#include "APMAutoPilotPlugin.h"
 #include "ParameterManager.h"
 #include "FactSystem.h"
+#include "Fact.h"
+#include "Vehicle.h"
 
 APMRadioComponent::APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),

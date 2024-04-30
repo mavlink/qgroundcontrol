@@ -51,6 +51,7 @@
 #include "TerrainQuery.h"
 #include "StandardModes.h"
 #include "UASMessageHandler.h"
+#include "AutoPilotPlugin.h"
 #ifdef CONFIG_UTM_ADAPTER
 #include "UTMSPVehicle.h"
 #include "UTMSPManager.h"

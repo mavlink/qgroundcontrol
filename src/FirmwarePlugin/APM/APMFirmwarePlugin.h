@@ -13,7 +13,7 @@
 #include "APMParameterMetaData.h"
 #include "FollowMe.h"
 
-#include <QAbstractSocket>
+#include <QtNetwork/QAbstractSocket>
 #include <QtCore/QMutex>
 #include <QtCore/QLoggingCategory>
 

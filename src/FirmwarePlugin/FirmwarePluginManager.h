@@ -9,11 +9,11 @@
 
 #pragma once
 
+#include <QtCore/QObject>
 
 #include "QGCMAVLink.h"
 #include "QGCToolbox.h"
 
-#include <QtCore/QObject>
 
 class QGCApplication;
 class FirmwarePlugin;

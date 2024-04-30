@@ -29,7 +29,7 @@
 #include "LinkManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <QTcpSocket>
+#include <QtNetwork/QTcpSocket>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 

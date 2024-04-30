@@ -12,7 +12,7 @@
 #include "FactSystem.h"
 
 #include <QtCore/QVariant>
-#include <QtQml/QtQml>
+#include <QtQml/QQmlEngine>
 
 bool APMFlightModesComponentController::_typeRegistered = false;
 
